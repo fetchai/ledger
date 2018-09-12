@@ -32,7 +32,8 @@ public:
     START_SYNC,
     STOP_SYNC,
     INCOMING_PEERS,
-    OUTGOING_PEERS
+    OUTGOING_PEERS,
+    USE_THESE_PEERS,
   };
 
   LaneControllerProtocol(LaneController *ctrl)
@@ -44,6 +45,8 @@ public:
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
     this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
     this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);
+
+    this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);
   }
 };
 

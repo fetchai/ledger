@@ -10,6 +10,7 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   , lane_management_{lane_management}
   , resolver_proto_{resolver_, *this}
   , client_(muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
+  , local_services_(lane_management_)
 {
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
@@ -46,10 +47,6 @@ void P2PService2::WorkCycle()
 
   // see how many peers we have.
 
-  using first_t  = typename std::tuple_element<0, Muddle::ConnectionData>::type;
-  using second_t = typename std::tuple_element<1, Muddle::ConnectionData>::type;
-  using third_t  = typename std::tuple_element<2, Muddle::ConnectionData>::type;
-
   std::set<Uri> used;
   std::list<Identity> connected_peers;
 
@@ -57,6 +54,8 @@ void P2PService2::WorkCycle()
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Conncount = ", connections.size());
   for(auto const &connection : connections)
   {
+    // need to do some filtering based on channels and services and protocols.
+
     // decompose the tuple
     auto const &address = std::get<0>(connection);
     auto const &uri     = std::get<1>(connection);
@@ -205,7 +204,9 @@ void P2PService2::DistributeUpdatedManifest(Identity identity_of_updated_peer)
     return;
   }
   local_services_ . DistributeManifest(possible_manifest.second);
-  thread_pool_ -> Post( [this](){ this -> Refresh(); });
+  thread_pool_ -> Post( [this](){
+      this -> Refresh();
+    });
 }
 
 void P2PService2::Refresh()

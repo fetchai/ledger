@@ -19,6 +19,7 @@
 
 #include <network/p2pservice/p2p_managed_local_service_state_machine.hpp>
 #include <network/p2pservice/p2p_managed_local_service.hpp>
+#include <network/p2pservice/p2p_managed_local_lane_service.hpp>
 #include <network/p2pservice/p2p_service_defs.hpp>
 
 namespace fetch {
@@ -42,20 +43,31 @@ class P2PManagedLocalServices
   static constexpr char const *LOGGING_NAME = "P2PManagedLocalServices";
 
 public:
-  P2PManagedLocalServices(const Manifest &manifest)
-  {
-    MakeFromManifest(manifest);
-  }
-
-  P2PManagedLocalServices()
+  P2PManagedLocalServices(LaneManagement &lane_management)
+    : lane_management_(lane_management)
   {
   }
 
   void MakeFromManifest(const Manifest &manifest)
   {
     manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
-        this -> services_[ ident ] = std::make_shared<P2PManagedLocalService>(uri, ident);
+        switch(ident . service_type)
+        {
+        case network::LANE:
+          {
+            std::shared_ptr<P2PManagedLocalService> foo(new P2PManagedLocalLaneService(uri, ident, lane_management_));
+            this -> services_[ ident ] = foo;
+            break;
+          }
+        case network::MAINCHAIN:
+        case network::P2P:
+        case network::HTTP:
+          this -> services_[ ident ] = std::make_shared<P2PManagedLocalService>(uri, ident);
+          break;
+        }
       });
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Create services count:", this -> services_ . size());
   }
 
   void Refresh()
@@ -88,6 +100,7 @@ public:
   }
 private:
   Services services_;
+  LaneManagement &lane_management_;
 };
 
 

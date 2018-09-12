@@ -30,53 +30,41 @@ namespace p2p {
  */
 
 
-class P2PManagedLocalService
+class P2PManagedLocalLaneService: public P2PManagedLocalService
 {
+  using Uri = P2PManagedLocalService::Uri;
+  using ServiceType = P2PManagedLocalService::ServiceType;
+  using ServiceIdentifier = P2PManagedLocalService::ServiceIdentifier;
+  using Peers = P2PManagedLocalService::Peers;
+
+  static constexpr char const *LOGGING_NAME = "P2PManagedLocalLaneService";
+
 public:
-  using Uri = network::Uri;
-  using ServiceType = network::ServiceType;
-  using ServiceIdentifier = network::ServiceIdentifier;
-  using Peers = std::unordered_set<Uri>;
-
-  static constexpr char const *LOGGING_NAME = "P2PManagedLocalService";
-
-public:
-  P2PManagedLocalService(Uri uri, ServiceIdentifier service_identifier)
-    : uri_(uri)
-    , service_identifier_(service_identifier)
+  P2PManagedLocalLaneService(Uri uri, ServiceIdentifier service_identifier, LaneManagement &lane_management)
+    : P2PManagedLocalService(uri, service_identifier)
+    , lane_management_(lane_management)
   {
-  }
-
-  virtual void AddPeer(Uri remote_uri)
-  {
-    peers_.insert(remote_uri);
-  }
-  virtual void RemovePeer(Uri remote_uri)
-  {
-    peers_.erase(remote_uri);
   }
 
   virtual void Refresh()
   {
-    //TODO(kll) IMPLEMENT ME!
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PManagedLocalService::Refresh: unimplemented");
-  }
-
-  const std::unordered_set<Uri> &peers() const
-  {
-    return peers_;
-  }
-
-  uint32_t instance_number() const
-  {
-    return service_identifier_ . instance_number;
+    FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.......................................");
+    for(auto& peer : peers())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers: ", peer.ToString());
+    }
+    try
+    {
+      lane_management_ . UseThesePeers(instance_number(), peers());
+    }
+    catch(std::exception ex)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.............BANG! ", ex.what());
+    }
   }
 
 private:
-  P2PManagedLocalServiceStateMachine state_;
-  Uri uri_;
-  ServiceIdentifier service_identifier_;
-  Peers peers_;
+  LaneManagement &lane_management_;
 };
 
 

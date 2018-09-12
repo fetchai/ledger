@@ -152,7 +152,7 @@ public:
           }
           else
           {
-            FETCH_LOG_INFO(LOGGING_NAME,"Client failed to connect: ", ec.message());
+            FETCH_LOG_INFO(LOGGING_NAME,"Client failed to connect on port ",port,": ", ec.message());
             SignalLeave();
           }
         };

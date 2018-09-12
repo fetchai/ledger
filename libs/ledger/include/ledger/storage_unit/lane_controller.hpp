@@ -25,6 +25,7 @@
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/client.hpp"
+#include "network/uri.hpp"
 namespace fetch {
 namespace ledger {
 
@@ -32,6 +33,7 @@ class LaneController
 {
 public:
   using connectivity_details_type  = LaneConnectivityDetails;
+  using Uri                        = fetch::network::Uri;
   using client_type                = fetch::network::TCPClient;
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
@@ -64,6 +66,14 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME,"Lane trying to connect to ", h, ":", ep.port);
 
       if (Connect(h, ep.port)) break;
+    }
+  }
+
+  void RPCConnectToURIs(const std::vector<Uri> &uris)
+  {
+    for(auto &thing : uris)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME,"WILL ATTEMPT TO CONNECT TO: ", thing.ToString());
     }
   }
 
@@ -115,6 +125,19 @@ public:
   {
     std::lock_guard<mutex_type> lock_(services_mutex_);
     return services_[n];
+  }
+
+  void UseThesePeers(std::set<Uri> uris)
+  {
+    auto ident = lane_identity_.lock();
+    if (ident)
+    {
+      for(auto& uri : uris)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, ident -> GetLaneNumber(), " -- UseThesePeers: ", uri.ToString());
+      }
+      // TODO(kll) Write this.
+    }
   }
 
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)

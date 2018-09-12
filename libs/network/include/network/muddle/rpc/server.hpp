@@ -28,8 +28,8 @@ public:
 
   explicit Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
-    , service_(service)
-    , channel_(channel)
+    //, service_(service)
+    //, channel_(channel)
     , subscription_(endpoint_.Subscribe(service, channel))
   {
     if (subscription_)
@@ -107,8 +107,8 @@ private:
   }
 
   MuddleEndpoint &endpoint_;
-  uint16_t const  service_;
-  uint16_t const  channel_;
+  //uint16_t const  service_;
+  //uint16_t const  channel_;
   SubscriptionPtr subscription_;
 
   // begin annoying emulation layer

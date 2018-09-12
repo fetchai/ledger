@@ -145,8 +145,6 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
   // start all the services
   network_manager_.Start();
   muddle_.Start({p2p_port_});
-  p2p_.Start(initial_peers, p2p_port_);
-  lane_services_.Start();
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
@@ -157,9 +155,13 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
     // establish the connection to the lane
     auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
 
+    FETCH_LOG_WARN(LOGGING_NAME, "AddLaneConnection:", "127.0.0.1", lane_port, " ??? ");
+
     // allow the remote control to use connection
     lane_control_.AddClient(i, client);
   }
+  lane_services_.Start();
+
   execution_manager_->Start();
   block_coordinator_.Start();
 
@@ -168,6 +170,7 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
     miner_.Start();
 
   http_.Start(http_port_);
+  p2p_.Start(initial_peers, p2p_port_);
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop

@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 #include "network/peer.hpp"
+#include <functional>
 
 namespace fetch {
 namespace network {
@@ -49,6 +50,11 @@ public:
   bool operator<(Uri const &other) const
   {
     return data_ < other.data_;
+  }
+
+  std::size_t hash() const
+  {
+    return std::hash<std::string>{}(data_);
   }
 
   std::string ToString() const
@@ -85,3 +91,12 @@ public:
 
 }
 }
+
+template<>
+struct std::hash<fetch::network::Uri>
+{
+  std::size_t operator()(const fetch::network::Uri &x) const
+  {
+    return x.hash();
+  }
+};

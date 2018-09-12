@@ -97,7 +97,7 @@ public:
       return p->As<uint32_t>();
     }
 
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @GetLaneNumber");
 
     return 0;
   }
@@ -111,7 +111,7 @@ public:
       return p->As<int>();
     }
 
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @IncomingPeers");
 
     return 0;
   }
@@ -126,9 +126,21 @@ public:
       return p->As<int>();
     }
 
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @OutgoingPeers");
 
     return 0;
+  }
+
+  virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) override
+  {
+    auto ptr = LookupLane(lane);
+
+    if (ptr)
+    {
+      ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+      return;
+    }
+    TODO_FAIL("client connection has died, @UseThesePeers");
   }
 
   bool IsAlive(LaneIndex lane) override
@@ -141,6 +153,9 @@ private:
 
   SharedService LookupLane(LaneIndex lane) const
   {
+
+    FETCH_LOG_INFO(LOGGING_NAME,"LookupLane ", lane, " in ", clients_.size());
+
     FETCH_LOCK(mutex_);
 
 #ifdef NDEBUG
