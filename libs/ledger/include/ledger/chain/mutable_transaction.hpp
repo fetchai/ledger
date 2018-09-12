@@ -21,6 +21,7 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
@@ -37,11 +38,6 @@ class Signature
 public:
   byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
-
-  bool operator==(Signature const &right) const
-  {
-    return signature_data == right.signature_data && type == right.type;
-  }
 
   void Clone()
   {
@@ -70,10 +66,11 @@ struct TransactionSummary
   using digest_type       = byte_array::ConstByteArray;
   using contract_id_type  = byte_array::ConstByteArray;
   using resource_set_type = std::set<resource_type>;
+  using fee_type          = uint64_t;
 
   resource_set_type resources;
   digest_type       transaction_hash;
-  uint64_t          fee{0};
+  fee_type          fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   contract_id_type contract_name;
@@ -135,6 +132,10 @@ public:
   {
     return summary_.transaction_hash;
   }
+  TransactionSummary::fee_type const &fee() const
+  {
+    return summary_.fee;
+  }
 
   enum
   {
@@ -181,6 +182,31 @@ public:
     hash.Update(summary_.fee);
     hash.Update(data_);
     summary_.transaction_hash = hash.Final();
+  }
+
+  template<typename SERIALISER = serializers::ByteArrayBuffer, typename INDENTITIES_CONTAINER>
+  byte_array::ConstByteArray TxDataForSigning(INDENTITIES_CONTAINER const& identities = std::vector<crypto::Identity>()) const
+  {
+    SERIALISER serialiser;
+    serialiser << contract_name() << fee() << resources() << data();
+
+    if (identities.size() == 1)
+    {
+      serialiser << *identities.begin();
+    }
+    else if (identities.size() > 1)
+    {
+      std::vector<crypto::Identity> ids;
+      ids.reserve(identities.size());
+      std::copy(identities.begin(), identities.end(), ids.begin());
+      std::sort(ids.begin(), ids.end());
+      for(auto const& id : ids)
+      {
+        serialiser << id;
+      }
+    }
+
+    return serialiser.data();
   }
 
   bool Verify()

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/wired_transaction.hpp"
+#include "ledger/chain/wire_transaction.hpp"
 #include "core/json/document.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/script/variant.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &transaction, bool const addDebugInfo=false)
+byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addDebugInfo)
 {
   script::Variant tx_v;
   tx_v["ver"] = "1.0";
@@ -32,25 +32,34 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &transaction, b
   if (addDebugInfo)
   {
     script::Variant tx_data_to_sign;
-    tx_data_to_sign["data"] = byte_array::ToBase64(transaction.data());
-    tx_data_to_sign["fee"]  = transaction.summary().fee;
-    tx_data_to_sign["contract_name"] = transaction.contract_name();
+    tx_data_to_sign["data"] = byte_array::ToBase64(tx.data());
+    tx_data_to_sign["fee"]  = tx.summary().fee;
+    tx_data_to_sign["contract_name"] = tx.contract_name();
 
     script::VariantArray resources;
-    resources.CopyFrom(transaction.resources().begin(), transaction.resources().end());
+    resources.CopyFrom(tx.resources().begin(), tx.resources().end());
 
     tx_data_to_sign["resources"] = resources;
-    tx_v.["debug_info"] = tx_data_to_sign;
+    tx_v["dbg"] = tx_data_to_sign;
   }
 
-  //tx_v["data"] =
+  byte_array::ConstByteArray const tx_data_for_signing {tx.TxDataForSigning()};
+  tx_v["data"] = byte_array::ToBase64(tx_data_for_signing);
+  tx_v
   return byte_array::ByteArray();
 }
 
 MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)
 {
-  return Muta
+  return MutableTransaction();
 }
 
-}  // namespace ledger
+byte_array::ByteArray TransactionDataForSignning(MutableTransaction const &transaction)
+{
+
+
+
+}
+
+}  // namespace chain
 }  // namespace fetch

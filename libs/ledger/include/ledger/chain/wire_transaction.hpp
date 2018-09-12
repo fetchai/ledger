@@ -17,24 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
 namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &transaction)
-{
-  script::Variant tx_v;
-  tx_v["ver"] = "1.0";
-  script::Variant tx_data_to_sign;
-  tx_data_to_sign["data"] = transaction.data();
-  tx_data_to_sign["fee"]  = transaction.summary().fee;
-  tx_v[""]
-}
+byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addDebugInfo=false);
+MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction);
 
-MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)
-{}
+byte_array::ByteArray TransactionDataForSignning(MutableTransaction const &transaction);
 
 }  // namespace chain
 }  // namespace fetch

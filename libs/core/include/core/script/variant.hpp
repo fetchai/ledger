@@ -261,6 +261,28 @@ public:
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
+  template<typename FROM_ITERATOR>
+  VariantArray &CopyFrom(FROM_ITERATOR const &from_start_itr, FROM_ITERATOR const &from_end_itr, std::size_t offset = 0)
+  {
+    auto const dist = std::distance(from_start_itr, from_end_itr);
+    std::size_t const from_size = static_cast<std::size_t>(dist);
+    if (offset + from_size > size())
+    {
+      Resize(offset + from_size);
+    }
+
+    FROM_ITERATOR start = from_start_itr;
+    FROM_ITERATOR end = from_end_itr;
+    if (dist < 0)
+    {
+      start = from_end_itr;
+      end = from_start_itr;
+    }
+
+    std::copy(start, end, pointer_+offset);
+    return *this;
+  }
+
 private:
   using Container    = std::vector<Variant>;
   using ContainerPtr = std::shared_ptr<Container>;
