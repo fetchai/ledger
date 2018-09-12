@@ -10,9 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-
-
-add_fetch_test(file_object_test fetch-storage file_object.cpp)
 add_fetch_test(random_access_stack_test fetch-storage random_access_stack.cpp)
 add_fetch_test(versioned_random_access_stack_test fetch-storage versioned_random_access_stack.cpp)
 
@@ -26,3 +23,4 @@ add_fetch_test(object_store_test fetch-storage object_store.cpp)
 add_fetch_test(object_sync_test fetch-storage object_sync.cpp)
 
 add_fetch_gtest(storage fetch-storage gtest/)
+add_fetch_gtest(high_level_storage fetch-storage high_level/)

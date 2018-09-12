@@ -88,6 +88,12 @@ public:
     return LocklessGet(rid, object);
   }
 
+  void Erase(ResourceID const &rid)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    LocklessErase(rid);
+  }
+
   /**
    * Check whether a key has been set
    *
@@ -150,6 +156,11 @@ public:
     return true;
   }
 
+  void LocklessErase(ResourceID const &rid)
+  {
+    store_.Erase(rid);
+  }
+
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
    * have locked (using
@@ -182,7 +193,7 @@ public:
     store_.Set(rid, ser.data());
   }
 
-  std::size_t size() const
+  std::size_t size()
   {
     return store_.size();
   }

@@ -17,6 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+//
+//                      ┌───────────────┐       ┌────▶
+//                      │               │       │
+//                      │               ▼       │
+//  ┌───────┬───────┬───────┬───────┬───────┬───────┐
+//  │Obj1.1 │Obj1.2 │Obj2.1 │Obj1.3 │Obj2.2 │Obj3.1 │
+//  │       │       │       │       │       │       │ .......
+//  └───────┴───────┴───────┴───────┴───────┴───────┘
+//      │       │               ▲
+//      │       │               │
+//      └───────┴───────────────┘
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
@@ -53,11 +65,27 @@ struct FileBlockType
     next     = UNDEFINED;
   }
 
-  uint64_t previous = UNDEFINED;
   uint64_t next     = UNDEFINED;
+
+  // For the head of the list, we can reuse previous
+  union
+  {
+    uint64_t previous = UNDEFINED;
+    uint64_t free;
+  };
+
   uint8_t  data[BYTES];
 };
 
+/**
+ * The FileObject class manages variable length objects using an underlying fixed size stack
+ * structure. Objects are partitioned into block_size chunks and written to the stack as a
+ * doubly linked list.
+ *
+ * Object recovery can then be achieved given the index of the beginning of the object in the stack.
+ *
+ * Note the FileObject only manages the stack.
+ */
 template <typename S = VersionedRandomAccessStack<FileBlockType<>>>
 class FileObject
 {
@@ -77,47 +105,75 @@ public:
   FileObject(FileObject &&other)                = default;
   FileObject &operator=(FileObject &&other) = default;
 
+  /**
+   * Initialise the stack with block 0 being an index to free blocks. Note the file object should
+   * not be used for any non-const operations after construction.
+   * Doing so causes undefined behaviour
+   */
+  FileObject(stack_type &stack, bool initialise)
+    : stack_(stack)
+    , block_number_(0)
+    , block_index_(0)
+    , byte_index_(HEADER_SIZE)
+    , length_(HEADER_SIZE)
+  {
+    if(initialise)
+    {
+      assert(stack.size() == 0);
+      assert(stack.empty() == true);
+
+      block_type block;
+      block.free = 0;
+
+      block_index_ = id_ = stack_.Push(block);
+    }
+  }
+
+  /**
+   * Construct a new file object given a stack.
+   */
   FileObject(stack_type &stack)
     : stack_(stack)
     , block_number_(0)
     , byte_index_(HEADER_SIZE)
     , length_(HEADER_SIZE)
   {
+    // Create a new entry on the stack for this file object
     block_type block;
-    last_position_ = stack_.size();
+    last_position_ = NextFreeIndex();
 
+    // The first 2 * 64 bits provide information about the file length and index on the stack of the
+    // final element
     memcpy(block.data, reinterpret_cast<uint8_t const *>(&last_position_), sizeof(uint64_t));
     memcpy(block.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
            sizeof(uint64_t));
 
-    block_index_ = id_ = stack_.Push(block);
+    // The id of this FileObject is its location on the stack
+    block_index_ = id_ = AddBlock(block);
 
-    block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_)
-    {
-      ++block_count_;
-    }
+    block_count_ = CeilDivide(length_, block_type::BYTES);
   }
 
+  /**
+   * Construct a new file object representing an existing object on the stack.
+   */
   FileObject(stack_type &stack, std::size_t const &position)
     : stack_(stack)
     , block_number_(0)
     , byte_index_(HEADER_SIZE)
   {
+    // Retreive the first block of our file
     block_type first;
     assert(position < stack_.size());
 
     block_index_ = id_ = position;
     stack_.Get(id_, first);
 
+    // Get the relevant data for the object - its length and position of the last block
     memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
     memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
 
-    block_count_ = length_ / block_type::BYTES;
-    if (block_count_ * block_type::BYTES < length_)
-    {
-      ++block_count_;
-    }
+    block_count_ = CeilDivide(length_, block_type::BYTES);
   }
 
   ~FileObject()
@@ -157,7 +213,7 @@ public:
 
     while (block_number_ > next_bn)
     {
-      stack_.Get(block_index_, block);
+      stack_.Get(block_index_, block); // TODO: (HUT) : here
       block_index_ = block.previous;
       --block_number_;
       assert(block_index_ != block_type::UNDEFINED);
@@ -188,7 +244,7 @@ public:
     Seek(0);
 
     length_            = HEADER_SIZE + size;
-    uint64_t   last_bn = length_ / block_type::BYTES;
+    uint64_t   last_bn = CeilDivide(length_, block_type::BYTES);
     block_type block;
 
     while (block_number_ < last_bn)
@@ -204,17 +260,41 @@ public:
       }
     }
 
+    ReleaseBlocks(block.next);
+    block.next = block_type::UNDEFINED;
+    stack_.Set(block_index_, block);
+
     last_position_ = block_index_;
     block_count_   = block_number_;
-
-    // TODO(issue 10): Delete whatever comes after
   }
 
   void Grow(uint64_t size)
   {
     Seek(0);
     size += HEADER_SIZE;
-    throw StorageException("Grow is not implemented yet");
+
+    length_            = HEADER_SIZE + size;
+    uint64_t   last_bn = CeilDivide(length_, block_type::BYTES);
+    block_type block;
+
+    while (block_number_ < last_bn)
+    {
+      if(!(block_index_ == block_type::UNDEFINED))
+      {
+        stack_.Get(block_index_, block);
+        block_index_ = block.next;
+        ++block_number_;
+      }
+      else
+      {
+        block.previous = block_index_;
+        block_index_ = AddBlock(block);
+        ++block_number_;
+      }
+    }
+
+    last_position_ = block_index_;
+    block_count_   = block_number_;
   }
 
   void Write(byte_array::ConstByteArray const &arr)
@@ -250,11 +330,11 @@ public:
     {
       block_type empty;
       empty.previous = block_index_;
-      block.next     = stack_.Push(empty);
+      block.next     = stack_.Push(empty); // TODO: (HUT) : here
     }
 
     memcpy(block.data + byte_index_, bytes, first_bytes);
-    stack_.Set(block_index_, block);
+    stack_.Set(block_index_, block); // TODO: (HUT) : here
     byte_index_ = (byte_index_ + first_bytes) % block_type::BYTES;
 
     if (last_block == 0)
@@ -277,17 +357,17 @@ public:
         ++block_number_;
         block_index_ = block.next;
 
-        stack_.Get(block_index_, block);
+        stack_.Get(block_index_, block); // TODO: (HUT) : here
 
         if (block.next == block_type::UNDEFINED)
         {
           block_type empty;
           empty.previous = block_index_;
-          block.next     = stack_.Push(empty);
+          block.next     = stack_.Push(empty); // TODO: (HUT) : here
         }
 
         memcpy(block.data, bytes + offset, block_type::BYTES);
-        stack_.Set(block_index_, block);
+        stack_.Set(block_index_, block); // TODO: (HUT) : here
 
         offset += block_type::BYTES;
       }
@@ -297,9 +377,9 @@ public:
       {
         ++block_number_;
         block_index_ = block.next;
-        stack_.Get(block_index_, block);
+        stack_.Get(block_index_, block); // TODO: (HUT) : here
         memcpy(block.data, bytes + offset, last_bytes);
-        stack_.Set(block_index_, block);
+        stack_.Set(block_index_, block); // TODO: (HUT) : here
         byte_index_ = last_bytes;
       }
     }
@@ -347,7 +427,7 @@ public:
     assert(block_index_ < stack_.size());
 
     block_type block;
-    stack_.Get(block_index_, block);
+    stack_.Get(block_index_, block); // TODO: (HUT) : here
 
     if ((last_block != 0) && (block.next == block_type::UNDEFINED))
     {
@@ -369,7 +449,7 @@ public:
         ++block_number_;
         block_index_ = block.next;
 
-        stack_.Get(block_index_, block);
+        stack_.Get(block_index_, block); // TODO: (HUT) : here
 
         if (block.next == block_type::UNDEFINED)
         {
@@ -386,7 +466,7 @@ public:
       {
         ++block_number_;
         block_index_ = block.next;
-        stack_.Get(block_index_, block);
+        stack_.Get(block_index_, block); // TODO: (HUT) : here
         memcpy(bytes + offset, block.data, last_bytes);
 
         byte_index_ = last_bytes;
@@ -420,7 +500,7 @@ public:
 
     block_type block;
 
-    stack_.Get(bi, block);
+    stack_.Get(bi, block); // TODO: (HUT) : here
     uint64_t n = std::min(remaining, uint64_t(block_type::BYTES - HEADER_SIZE));
     hasher.Update(block.data + HEADER_SIZE, n);
 
@@ -434,12 +514,25 @@ public:
         throw StorageException("File corrupted");
       }
 
-      stack_.Get(bi, block);
+      stack_.Get(bi, block); // TODO: (HUT) : here
       n = std::min(remaining, uint64_t(block_type::BYTES));
       hasher.Update(block.data, n);
 
       remaining -= n;
     }
+  }
+
+  void Erase()
+  {
+    assert(block_index_ != 0);
+    Seek(0);
+    ReleaseBlocks(block_index_);
+    erased_ = true;
+  }
+
+  bool Erased() const
+  {
+    return erased_;
   }
 
 private:
@@ -452,6 +545,126 @@ private:
   uint64_t block_index_;
   uint64_t byte_index_;
   uint64_t length_ = 0, last_position_;
+  bool erased_ = false;
+
+  /**
+   * Return the number of free blocks in the stack, not including the admin block
+   *
+   * @return: number of free blocks
+   */
+  uint64_t FreeBlocks() const
+  {
+    block_type free_block;
+    stack_.Get(0, free_block);
+    return free_block.free;
+  }
+
+  uint64_t NextFreeIndex()
+  {
+    block_type free_block;
+    stack_.Get(0, free_block);
+
+    if(free_block.free == 0)
+    {
+      return stack_.size();
+    }
+
+    assert(free_block.next != block_type::UNDEFINED);
+
+    return free_block.next;
+  }
+
+  uint64_t AddBlock(block_type const &block)
+  {
+    block_type free_block;
+    stack_.Get(0, free_block);
+
+    if(free_block.free == 0)
+    {
+      return stack_.Push(block);
+    }
+
+    assert(free_block.next != block_type::UNDEFINED);
+
+    uint64_t index = free_block.next;
+    block_type first_free_block;
+
+    stack_.Get(index, first_free_block);
+
+    free_block.next = first_free_block.next;
+    stack_.Set(0, first_free_block);
+
+    if(first_free_block.next != block_type::UNDEFINED)
+    {
+      // Re-use first free block, point next free block back to free LL
+      uint64_t new_first_free = first_free_block.next;
+      stack_.Get(new_first_free, first_free_block);
+      first_free_block.previous = 0;
+      stack_.Set(new_first_free, first_free_block);
+    }
+
+    stack_.Set(index, block);
+
+    return index;
+  }
+
+  void ReleaseBlocks(uint64_t release_index)
+  {
+    assert(release_index != 0);
+
+    uint64_t free_index = 0;
+    block_type free_block;
+    block_type release_block;
+
+    while(release_index != block_type::UNDEFINED)
+    {
+      assert(free_index != block_type::UNDEFINED);
+      assert(release_index != 0);
+
+      stack_.Get(free_index, free_block);
+      stack_.Get(release_index, release_block);
+
+      // In the scenario we are appending to the free chain, since files index forward only the head
+      // needs updating
+      if(free_block.next == block_type::UNDEFINED)
+      {
+        free_block.next = release_index;
+        stack_.Set(free_index, free_block);
+
+        release_block.previous = free_index;
+        stack_.Set(release_index, release_block);
+
+        return;
+      }
+
+      if(free_index > release_index)
+      {
+        free_block.previous = release_index;
+        stack_.Set(free_index, free_block);
+
+        release_index = release_block.next;
+
+        release_block.next = free_index;
+        stack_.Set(release_index, release_block);
+      }
+      else
+      {
+        free_index = free_block.next;
+      }
+    }
+  }
+
+  uint64_t CeilDivide(uint64_t x, uint64_t y) const
+  {
+    uint64_t result = x / y;
+
+    if ((result * y) < x)
+    {
+      ++result;
+    }
+
+    return result;
+  }
 };
 }  // namespace storage
 }  // namespace fetch

@@ -55,6 +55,9 @@
 //
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
+//
+// Nodes in the tree above show their key and the bit the node splits on. Leaves are marked with '*'
+// and match the full key.
 
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
@@ -210,6 +213,9 @@ public:
   void New(Args &&... args)
   {
     stack_.New(std::forward<Args>(args)...);
+
+    root_ = 0;
+    stack_.SetExtraHeader(root_);
   }
 
   template <typename... Args>
@@ -296,11 +302,6 @@ public:
     schedule_update_.clear();
   }
 
-  void Delete(byte_array::ConstByteArray const &key)
-  {
-    throw StorageException("Not implemented");
-  }
-
   void GetElement(uint64_t const &i, index_type &v)
   {
     key_value_pair p;
@@ -361,7 +362,7 @@ public:
 
     bool update_parent = false;
 
-    // Case where the 'nearest' is the root of the tree
+    // Case where the tree is empty
     if (index == index_type(-1))
     {
       kv.key        = key;
@@ -461,7 +462,8 @@ public:
     }
 
     // Depending on whether the underlying stack is caching or not, we write to it or defer writing
-    // to it by scheduling updates until the next flush
+    // to it by scheduling updates until the next flush since changes to a leaf will propagate the
+    // hash recalculation all the way to the root.
     if ((kv.parent != index_type(-1)) && (update_parent))
     {
       if (stack_.DirectWrite())
@@ -473,6 +475,111 @@ public:
         schedule_update_[index] = kv;
       }
     }
+  }
+
+  /**
+   * Erase the element from the tree. This will involve reversing an insertion, that is, deleting
+   * the leaf and its parent. The leaf's sibling node can then be joined to that deleted parent's
+   * parent.
+   *
+   * Note: the hashes of the tree must be recalculated in this instance, since deletion is a costly
+   * operation anyway we do not schedule hash rewrites.
+   */
+  void Erase(byte_array::ConstByteArray const &key_str)
+  {
+    Flush();
+
+    if(size() == 0)
+    {
+      return;
+    }
+
+    // First find the leaf we wish to delete
+    key_type       key(key_str);
+    bool           split      = true;
+    int            pos        = 0;
+    int            left_right = 0;
+    index_type     depth      = 0;
+    key_value_pair kv;
+
+    index_type kv_index = FindNearest(key, kv, split, pos, left_right, depth);
+
+    // Leaf not found
+    if (split)
+    {
+      return;
+    }
+
+    assert(kv.is_leaf() == true);
+
+    // Clear the tree for edge case of only node
+    if(size() == 1)
+    {
+      stack_.Clear();
+      root_ = 0;
+      stack_.SetExtraHeader(root_);
+      return;
+    }
+
+    // TODO: (HUT) : remove
+    if(kv.is_leaf() == false)
+    {
+      throw StorageException("asdf");
+    }
+
+    // Get our sibling, and our parent
+    key_value_pair parent;
+    key_value_pair sibling;
+    index_type parent_index = kv.parent;
+    index_type sibling_index;
+    stack_.Get(parent_index, parent);
+
+    // Determine the sibling left/right from parent left/right
+    if(kv_index == parent.left)
+    {
+      sibling_index = parent.right;
+      stack_.Get(sibling_index, sibling);
+    }
+    else if(kv_index == parent.right)
+    {
+      sibling_index = parent.left;
+      stack_.Get(sibling_index, sibling);
+    }
+    else
+    {
+      throw StorageException("Failed to find element in parent left/right references: tree broken");
+    }
+
+    // Set the sibling in the place of that parent, the split etc. should be able to stay the same
+    sibling.parent = parent.parent;
+
+    // Update that sibling's parents if not root
+    if(sibling.parent != uint64_t(-1))
+    {
+      key_value_pair new_sibling_parent;
+      stack_.Get(sibling.parent, new_sibling_parent);
+
+      // Update parent left/right
+      if(new_sibling_parent.left == parent_index)
+      {
+        new_sibling_parent.left = sibling_index;
+      }
+      else if(new_sibling_parent.right == parent_index)
+      {
+        new_sibling_parent.right = sibling_index;
+      }
+      else
+      {
+        throw StorageException("Failed to erase element in key value index: tree broken");
+      }
+
+      // Update new parents of the sibling
+      UpdateParents(sibling.parent, sibling_index, sibling);
+    }
+
+    // Erase our node and its parent, important to do this at the end since it might shuffle indexes
+    Erase(kv_index);
+    Erase(parent_index);
   }
 
   byte_array::ByteArray Hash()
@@ -487,9 +594,20 @@ public:
     return kv.Hash();
   }
 
-  std::size_t size() const
+  /**
+   * Calculate number of leaves from stack size (contains all nodes). The tree is complete so is
+   * calculable. Leaves + (Leaves - 1) = Nodes
+   *
+   * Note this should always be correct even with the key value index scheduling writes to the stack
+   * since these scheduled operations are never to change the stack size.
+   *
+   * @return: The number of elements in the key value index
+   */
+  std::size_t size()
   {
-    return stack_.size();
+    assert(stack_.size() + 1 != 0);
+    assert((stack_.size() + 1) % 2 == 0);
+    return (stack_.size() + 1) / 2;
   }
 
   void Flush()
@@ -570,7 +688,7 @@ public:
     {
       if (node_iterator_)
       {
-        self_->GetNext(kv_, kv_node_.parent);
+        self_->GetNext(kv_, kv_node_.parent); // TODO: (HUT) : don't store whole kv, just index
       }
       else
       {
@@ -665,7 +783,7 @@ private:
   std::unordered_map<uint64_t, key_value_pair> schedule_update_;
 
   /**
-   * Update the parents of a changed node, since this changes the merkle tree
+   * Recursively update the parents of a changed node, since this changes the merkle tree.
    *
    * @param: pid Address on the stack of the node's parent
    * @param: cid Address on the stack of the node
@@ -679,20 +797,25 @@ private:
     while (pid != index_type(-1))
     {
       stack_.Get(pid, parent);
-      if (cid == parent.left)
+
+      // Update parent hash
       {
-        left = child;
-        stack_.Get(parent.right, right);
-      }
-      else
-      {
-        right = child;
-        stack_.Get(parent.left, left);
+        if (cid == parent.left)
+        {
+          left = child;
+          stack_.Get(parent.right, right);
+        }
+        else
+        {
+          right = child;
+          stack_.Get(parent.left, left);
+        }
+        parent.UpdateNode(left, right);
       }
 
-      parent.UpdateNode(left, right);
       stack_.Set(pid, parent);
 
+      // Move up the tree - parent and its index can be reused as a child
       child = parent;
       cid   = pid;
       pid   = child.parent;
@@ -870,6 +993,52 @@ private:
         kv = parent;
       }
     }
+  }
+
+  /**
+   * Erase the element from the stack. Assume the element is in an undefined state. This is done
+   * by swapping the element with the last element of the stack and popping it off the stack.
+   *
+   * index must refer to a valid location on the stack.
+   *
+   * @param: index Index of the element to erase
+   */
+  void Erase(index_type const &index)
+  {
+    const std::size_t stack_end = stack_.size() - 1;
+
+    assert(index <= stack_end);
+
+    // Get last element on stack
+    key_value_pair last_element;
+    stack_.Get(stack_end, last_element);
+
+    // Get parent of last element, update its index to where the last element is going.
+    if(last_element.parent != index_type(-1))
+    {
+      key_value_pair last_element_parent;
+      stack_.Get(last_element.parent, last_element_parent);
+
+      if(last_element_parent.right == stack_end)
+      {
+        last_element_parent.right = index;
+      }
+      else if(last_element_parent.left == stack_end)
+      {
+        last_element_parent.left = index;
+      }
+      else
+      {
+        throw StorageException("Storage tree referencing broken: parent of node doesn't refer to\
+            node via left or right branches");
+      }
+
+      stack_.Set(last_element.parent, last_element_parent);
+    }
+
+    // Write last element into index location and pop stack
+    stack_.Set(index, last_element);
+    stack_.Pop();
   }
 };
 

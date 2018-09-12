@@ -108,8 +108,7 @@ public:
   /**
    * Represents an open 'document', effectively just a serialized memory block.
    * When modifications are finished to it, it will write the state back to the
-   * store
-   * on destruction. Has a PIMPL to an implementation
+   * store on destruction. Has a PIMPL to an implementation
    */
   class DocumentFile
   {
@@ -133,6 +132,11 @@ public:
                  std::size_t const &pos)
     {
       pointer_ = std::make_shared<DocumentFileImplementation>(s, address, store, pos);
+    }
+
+    void Erase()
+    {
+      pointer_->Erase();
     }
 
     uint64_t Tell()
@@ -209,6 +213,8 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
     file_store_.New(doc_file, doc_diff);
     key_index_.New(index_file, index_diff);
+
+    SetupStore();
   }
 
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
@@ -223,6 +229,14 @@ public:
     std::lock_guard<mutex::Mutex> lock(mutex_);
     file_store_.New(doc_file);
     key_index_.New(index_file);
+
+    SetupStore();
+  }
+
+  void SetupStore()
+  {
+    // Initialise the underlying file store directly
+    file_object_type file(file_store_, true);
   }
 
   Document GetOrCreate(ResourceID const &rid)
@@ -275,23 +289,35 @@ public:
 
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
+    //std::cout << "size1: " << file_store_.size() << std::endl;
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    DocumentFile                  doc = GetDocumentFile(rid, true);
+    doc.Seek(0);
+
+    if (doc.size() > value.size())
     {
-      std::lock_guard<mutex::Mutex> lock(mutex_);
-      DocumentFile                  doc = GetDocumentFile(rid, true);
-      doc.Seek(0);
-
-      if (doc.size() > value.size())
-      {
-        doc.Shrink(value.size());
-      }
-
-      doc.Write(value);
+      doc.Shrink(value.size());
     }
+
+    doc.Write(value);
   }
 
-  std::size_t size() const
+  void Erase(ResourceID const &rid)
   {
-    return file_store_.size();
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    DocumentFile                  doc = GetDocumentFile(rid, false);
+
+    if (!doc)
+    {
+      return;
+    }
+
+    doc.Erase();
+  }
+
+  std::size_t size()
+  {
+    return key_index_.size();
   }
 
   /**
@@ -425,7 +451,16 @@ private:
   {
     doc.Flush();
 
-    key_index_.Set(doc.address(), doc.id(), doc.Hash());
+    bool was_erased = doc.Erased();
+
+    if(was_erased)
+    {
+      key_index_.Erase(doc.address());
+    }
+    else
+    {
+      key_index_.Set(doc.address(), doc.id(), doc.Hash());
+    }
 
     // TODO(issue 10):    file_store_.Flush();
     key_index_.Flush();
