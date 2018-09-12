@@ -172,7 +172,7 @@ public:
   std::size_t capacity() const
   {
     // TODO(private issue #228: why `data_.size() - 1`?)
-    //return data_.size() == 0 ? 0 : data_.size() - 1;
+    // return data_.size() == 0 ? 0 : data_.size() - 1;
     return data_.size();
   }
 
@@ -302,11 +302,11 @@ protected:
 
   // TODO(pbukva): (private issue #229: opening door for buffer overrun for sub arrays - when
   // `start_ > 0` + confusion what method does - absolute vs relative[against `start_`] size)
-  void Resize(std::size_t const &n, bool const relative=true)
+  void Resize(std::size_t const &n, bool const relative = true)
   {
-    auto const orig_size = relative ? data_.size() - start_ : data_.size();
+    auto const orig_size        = relative ? data_.size() - start_ : data_.size();
     auto const size_for_reserve = relative ? start_ + n : n;
-    auto const length = relative ? n : n - start_;
+    auto const length           = relative ? n : n - start_;
     if (orig_size < n)
     {
       Reserve(size_for_reserve);
@@ -327,7 +327,7 @@ protected:
 
     shared_array_type newdata(n);
     std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
-    //TODO(pbukva) (private issue: is this really necessary? It feels like waste of time)
+    // TODO(pbukva) (private issue: is this really necessary? It feels like waste of time)
     newdata.SetZeroAfter(data_.size());
 
     data_        = newdata;
@@ -344,8 +344,8 @@ protected:
     return reinterpret_cast<char *>(data_.pointer());
   }
 
-  template<typename ...Arg>
-  self_type & Append(Arg const &... others)
+  template <typename... Arg>
+  self_type &Append(Arg const &... others)
   {
     AppendInternal(size(), others...);
     return *this;
@@ -370,7 +370,6 @@ private:
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;
   container_type *  arr_pointer_ = nullptr;
-
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)

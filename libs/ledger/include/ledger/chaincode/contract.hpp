@@ -45,24 +45,26 @@ public:
     NOT_FOUND,
   };
 
-  using contract_name_type           = byte_array::ConstByteArray;
-  using transaction_type             = chain::Transaction;
-  using query_type                   = script::Variant;
-  using transaction_handler_type     = std::function<Status(transaction_type const &)>;
-  using transaction_handler_map_type = std::unordered_map<contract_name_type, transaction_handler_type>;
-  using query_handler_type           = std::function<Status(query_type const &, query_type &)>;
-  using query_handler_map_type       = std::unordered_map<contract_name_type, query_handler_type>;
-  using counter_type                 = std::atomic<std::size_t>;
-  using counter_map_type             = std::unordered_map<contract_name_type, counter_type>;
-  using storage_type                 = ledger::StorageInterface;
-  using resource_set_type            = chain::TransactionSummary::resource_set_type;
+  using contract_name_type       = byte_array::ConstByteArray;
+  using transaction_type         = chain::Transaction;
+  using query_type               = script::Variant;
+  using transaction_handler_type = std::function<Status(transaction_type const &)>;
+  using transaction_handler_map_type =
+      std::unordered_map<contract_name_type, transaction_handler_type>;
+  using query_handler_type     = std::function<Status(query_type const &, query_type &)>;
+  using query_handler_map_type = std::unordered_map<contract_name_type, query_handler_type>;
+  using counter_type           = std::atomic<std::size_t>;
+  using counter_map_type       = std::unordered_map<contract_name_type, counter_type>;
+  using storage_type           = ledger::StorageInterface;
+  using resource_set_type      = chain::TransactionSummary::resource_set_type;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(contract_name_type const &name, query_type const &query, query_type &response)
+  Status DispatchQuery(contract_name_type const &name, query_type const &query,
+                       query_type &response)
   {
     Status status{Status::NOT_FOUND};
 

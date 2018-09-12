@@ -23,8 +23,10 @@
 namespace fetch {
 namespace ledger {
 
-constexpr char Identifier::SEPERATOR;
-byte_array::ConstByteArray const Identifier::separator_{reinterpret_cast<byte_array::ConstByteArray::container_type const*>(&Identifier::SEPERATOR), 1};
+constexpr char                   Identifier::SEPARATOR;
+byte_array::ConstByteArray const Identifier::separator_{
+    reinterpret_cast<byte_array::ConstByteArray::container_type const *>(&Identifier::SEPARATOR),
+    1};
 
 /**
  * Construct an identifier from a fully qualified name
@@ -47,7 +49,7 @@ void Identifier::Tokenise()
   std::size_t offset = 0;
   for (;;)
   {
-    std::size_t index = full_.Find(SEPERATOR, offset);
+    std::size_t index = full_.Find(SEPARATOR, offset);
 
     if (index == string_type::NPOS)
     {

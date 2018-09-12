@@ -207,9 +207,9 @@ int main()
 
     SECTION("basic append operations")
     {
-      ByteArray v0("hello");
+      ByteArray      v0("hello");
       ConstByteArray v1("pretty");
-      ByteArray v2("kitty");
+      ByteArray      v2("kitty");
 
       ByteArray array;
       array.Append(v0, " ", v1, " ", v2, " :)");

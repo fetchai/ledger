@@ -56,11 +56,10 @@ public:
   static uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
                                     contract_id_type const &contract, uint32_t log2_num_lanes)
   {
-    ledger::Identifier identifier(contract);
+    ledger::Identifier    identifier(contract);
     byte_array::ByteArray address;
     address.Append(identifier.name_space(), byte_array::ConstByteArray(".state."), resource);
-    return storage::ResourceAddress{address}.lane(
-        log2_num_lanes);
+    return storage::ResourceAddress{address}.lane(log2_num_lanes);
   }
 
   /* Pushes a transaction into the queue of transactions that needs to

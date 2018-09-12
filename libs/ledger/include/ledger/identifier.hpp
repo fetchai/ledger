@@ -37,8 +37,7 @@ public:
   using string_type = byte_array::ConstByteArray;
   using tokens_type = std::vector<byte_array::ByteArray>;
 
-  static constexpr char SEPERATOR = '.';
-  static byte_array::ConstByteArray const separator_;
+  static constexpr char SEPARATOR = '.';
 
   // Construction / Destruction
   Identifier() = default;
@@ -72,8 +71,9 @@ public:
   bool               operator!=(Identifier const &other) const;
 
 private:
-  byte_array::ByteArray full_{};    ///< The fully qualified name
-  tokens_type tokens_{};  ///< The individual elements of the name
+  byte_array::ByteArray                   full_{};    ///< The fully qualified name
+  tokens_type                             tokens_{};  ///< The individual elements of the name
+  static byte_array::ConstByteArray const separator_;
 
   void Tokenise();
 };
@@ -190,7 +190,7 @@ inline bool Identifier::operator!=(Identifier const &other) const
  */
 inline void Identifier::Append(string_type const &element)
 {
-  Identifier id_to_add{ element };
+  Identifier id_to_add{element};
 
   if (full_.size() > 0)
   {

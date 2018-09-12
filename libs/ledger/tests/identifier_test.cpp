@@ -98,7 +98,7 @@ int main()
       {
         id.Append(".foo");
       }
-      catch(std::runtime_error const& ex)
+      catch (std::runtime_error const &ex)
       {
         exception_received = true;
       }
@@ -117,14 +117,14 @@ int main()
       {
         id.Append(".bar");
       }
-      catch(std::runtime_error const& ex)
+      catch (std::runtime_error const &ex)
       {
         exception_received = true;
       }
 
       EXPECT(exception_received);
     };
-   };
+  };
 
   return 0;
 }
