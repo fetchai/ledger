@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 
@@ -107,6 +108,10 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
     main_queue_.splice(main_queue_.end(), pending_);
   }
 
+  std::size_t const num_transactions = main_queue_.size();
+
+  FETCH_LOG_INFO(LOGGING_NAME,"Starting block packing (Backlog: ", num_transactions, ")");
+
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads = Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
 
@@ -150,6 +155,10 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
       main_queue_.splice(main_queue_.begin(), transaction_lists[i]);
     }
   }
+
+  std::size_t const packed_transactions = num_transactions - main_queue_.size();
+
+  FETCH_LOG_INFO(LOGGING_NAME,"Finished block packing (packed: ", packed_transactions, " remaining: ", main_queue_.size(), ")");
 }
 
 /**

@@ -40,6 +40,8 @@ class BasicMiner : public MinerInterface
 {
 public:
 
+  static constexpr char const *LOGGING_NAME = "BasicMiner";
+
   // Construction / Destruction
   explicit BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices);
   BasicMiner(BasicMiner const &) = delete;
