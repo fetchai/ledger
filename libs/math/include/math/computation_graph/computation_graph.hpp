@@ -30,6 +30,7 @@
 #include <sstream>  // std::istringstream
 
 #include "math/free_functions/free_functions.hpp"
+#include "math/ndarray.hpp"
 
 namespace fetch {
 namespace math {
@@ -95,7 +96,8 @@ static OPERATOR_PRECEDENCE GetPrecedence(char &c)
  * binary tree, it will hold some value (or operation), two pointers to it's two children (if any)
  * and one for its parent (if any).
  */
-class ExpressionNode : public std::enable_shared_from_this<ExpressionNode>
+template <typename T, typename ARRAY_TYPE>
+class ExpressionNode : public std::enable_shared_from_this<ExpressionNode<T, ARRAY_TYPE>>
 {
 public:
   std::string name;
@@ -111,6 +113,9 @@ public:
     double val;  // occupies 8 bytes
   };             // the whole union occupies 4 bytes
 
+  // VAL might go unused if the node stores an array since that can't easily be put into a VAL
+  ARRAY_TYPE array;
+
   std::shared_ptr<ExpressionNode> left_node_ptr   = nullptr;
   std::shared_ptr<ExpressionNode> right_node_ptr  = nullptr;
   std::shared_ptr<ExpressionNode> parent_node_ptr = nullptr;
@@ -119,7 +124,12 @@ public:
 
   ExpressionNode()                       = default;
   ExpressionNode(ExpressionNode &&other) = default;
-  ExpressionNode(double num)
+
+  ExpressionNode(ARRAY_TYPE arr)
+  {
+    array = arr;
+  }
+  ExpressionNode(T num)
   {
     val.val = num;
   }
@@ -137,12 +147,12 @@ public:
    */
   void SetChildNodesParent()
   {
-    left_node_ptr->parent_node_ptr  = shared_from_this();
-    right_node_ptr->parent_node_ptr = shared_from_this();
+    left_node_ptr->parent_node_ptr  = this->shared_from_this();
+    right_node_ptr->parent_node_ptr = this->shared_from_this();
   }
 };
 
-// template <typename T>
+template <typename T, typename ARRAY_TYPE>
 class ComputationGraph
 {
 private:
@@ -184,21 +194,31 @@ private:
    */
   void AssignBinaryTree()
   {
-    std::shared_ptr<ExpressionNode> e2 = std::move(expression_graph.back());
+    std::shared_ptr<ExpressionNode<T, ARRAY_TYPE>> e2 = std::move(expression_graph.back());
     expression_graph.pop_back();
-    std::shared_ptr<ExpressionNode> e1 = std::move(expression_graph.back());
+    std::shared_ptr<ExpressionNode<T, ARRAY_TYPE>> e1 = std::move(expression_graph.back());
     expression_graph.pop_back();
 
-    expression_graph.emplace_back(
-        std::make_unique<ExpressionNode>(operator_stack.top(), std::move(e1), std::move(e2)));
+    expression_graph.emplace_back(std::make_unique<ExpressionNode<T, ARRAY_TYPE>>(
+        operator_stack.top(), std::move(e1), std::move(e2)));
     operator_stack.pop();
 
     // instruct the child nodes about their parentage for later traversal
     expression_graph.back()->SetChildNodesParent();
   }
 
+  bool IsRegistered(std::string name, std::string token)
+  {
+    if (name == token)
+    {
+      return true;
+    }
+    return false;
+  }
+
 public:
-  using EXPRESSION_NODE_TYPE  = typename fetch::math::computation_graph::ExpressionNode;
+  using EXPRESSION_NODE_TYPE =
+      typename fetch::math::computation_graph::ExpressionNode<T, ARRAY_TYPE>;
   using EXPRESSION_NODE_GRAPH = std::deque<std::shared_ptr<EXPRESSION_NODE_TYPE>>;
   using OPERATOR_STACK        = std::stack<char, std::deque<char>>;
   //  using EXPRESSION_STACK = std::stack<std::shared_ptr<expression_node_type>,
@@ -206,6 +226,8 @@ public:
 
   EXPRESSION_NODE_GRAPH expression_graph;
   OPERATOR_STACK        operator_stack;
+
+  std::deque<std::pair<std::string, ARRAY_TYPE>> registered_arrays;
 
   ComputationGraph()
   {}
@@ -220,6 +242,16 @@ public:
 
     OPERATOR_STACK empty_operator_stack;
     std::swap(operator_stack, empty_operator_stack);
+  }
+
+  /**
+   * methods for preparing the computation graph for adding predefined arrays
+   * @param input
+   * @param name
+   */
+  void RegisterArray(ARRAY_TYPE input, std::string name)
+  {
+    registered_arrays.push_back(std::pair<std::string, ARRAY_TYPE>(name, input));
   }
 
   /**
@@ -327,22 +359,41 @@ public:
 
     for (std::size_t i = 0; i < tokens.size(); ++i)
     {
-
       // spaces should have been removed
       assert(token_types[i] != TOKEN_TYPE::IGNORE_TYPE);
 
       switch (token_types[i])
       {
       case TOKEN_TYPE::OPEN_PAREN:
+      {
         operator_stack.push('(');
         break;
+      }
       case TOKEN_TYPE::ALPHA:
+      {
+        std::string cur_token = tokens[i];
+        // if token in registered_tokens
+        typename std::deque<std::pair<std::string, ARRAY_TYPE>>::iterator it =
+            std::find_if(registered_arrays.begin(), registered_arrays.end(),
+                         [&cur_token](std::pair<std::string, ARRAY_TYPE> name) {
+                           return (name.first == cur_token);
+                         });
+        if (it != registered_arrays.end())
+        {
+          expression_graph.emplace_back(
+              std::make_unique<ExpressionNode<T, ARRAY_TYPE>>(it->second));
+        }
         // TODO(private issue 231)
         break;
+      }
       case TOKEN_TYPE::NUMERIC:
-        expression_graph.emplace_back(std::make_unique<ExpressionNode>(std::stod(tokens[i])));
+      {
+        expression_graph.emplace_back(
+            std::make_unique<ExpressionNode<T, ARRAY_TYPE>>(std::stod(tokens[i])));
         break;
+      }
       case TOKEN_TYPE::OPERATOR:
+      {
         assert(helper_funcs::IsOperator(tokens[i][0]));
 
         // we now have enough information to combined two numerics and one operator into a sub-tree
@@ -354,9 +405,9 @@ public:
 
         operator_stack.push(tokens[i][0]);
         break;
-
+      }
       case TOKEN_TYPE::CLOSE_PAREN:
-
+      {
         // since its a close parenthesis we should set up the sub-tree for operations inside
         while (operator_stack.top() != '(')
         {
@@ -366,12 +417,17 @@ public:
         // pop the ( off the operator stack
         operator_stack.pop();
         break;
+      }
       case TOKEN_TYPE::NONE:
+      {
         std::cout << "NONE token: " << tokens[i] << std::endl;
         break;
+      }
       case TOKEN_TYPE::IGNORE_TYPE:
+      {
         std::cout << "IGNORE_TYPE token: " << tokens[i] << std::endl;
         break;
+      }
       }
     }
 
@@ -403,8 +459,8 @@ public:
    * @param op
    * @return
    */
-  template <typename T>
-  double compute_op(T l, T r, char op)
+  template <typename S>
+  S compute_op(S l, S r, char op)
   {
     switch (op)
     {
@@ -428,12 +484,12 @@ public:
   /**
    * Runs the computation graph generated from parsing the input string
    */
-  //  void Run(std::vector<>)
-  void Run(double &ret)
+  template <typename S>
+  void Run(S &ret)
   {
     bool unfinished = true;
 
-    std::shared_ptr<ExpressionNode> cur_node_ptr = expression_graph.front();
+    std::shared_ptr<ExpressionNode<T, ARRAY_TYPE>> cur_node_ptr = expression_graph.front();
 
     while (unfinished)
     {
@@ -474,6 +530,56 @@ public:
     }
 
     ret = cur_node_ptr->val.val;
+  }
+
+  /**
+   * Specialization for NDArrays
+   * @param ret
+   */
+  void Run(NDArray<T> &ret)
+  {
+    bool unfinished = true;
+
+    std::shared_ptr<ExpressionNode<T, ARRAY_TYPE>> cur_node_ptr = expression_graph.front();
+
+    while (unfinished)
+    {
+      if (cur_node_ptr->left_node_ptr == nullptr &&
+          cur_node_ptr->right_node_ptr == nullptr)  // ascend - nothing below
+      {
+        cur_node_ptr->evaluated = true;
+        cur_node_ptr            = cur_node_ptr->parent_node_ptr;
+      }
+      else if (cur_node_ptr->left_node_ptr->evaluated &&
+               cur_node_ptr->right_node_ptr->evaluated)  // compute and ascend - both evaluated
+      {
+        // compute the op
+        cur_node_ptr->array     = compute_op(cur_node_ptr->left_node_ptr->array,
+                                         cur_node_ptr->right_node_ptr->array, cur_node_ptr->val.c);
+        cur_node_ptr->evaluated = true;
+
+        // ascend if not root node
+        if (!(cur_node_ptr->parent_node_ptr == nullptr))
+        {
+          cur_node_ptr = cur_node_ptr->parent_node_ptr;
+        }
+        else
+        {
+          unfinished = false;
+        }
+      }
+      else if ((cur_node_ptr->left_node_ptr == nullptr) ||
+               (cur_node_ptr->left_node_ptr->evaluated))  // descend right
+      {
+        cur_node_ptr = cur_node_ptr->right_node_ptr;
+      }
+      else  // descend left
+      {
+        cur_node_ptr = cur_node_ptr->left_node_ptr;
+      }
+    }
+
+    ret = cur_node_ptr->array;
   }
 };
 

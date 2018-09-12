@@ -21,13 +21,17 @@
 #include <iostream>
 
 #include "math/computation_graph/computation_graph.hpp"
+#include "math/ndarray.hpp"
 
 using namespace fetch::math::computation_graph;
 
+using T          = double;
+using ARRAY_TYPE = fetch::math::NDArray<T>;
+
 TEST(computation_graph, simple_arithmetic)
 {
-  double           result;
-  ComputationGraph computation_graph;
+  double                          result;
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
 
   computation_graph.ParseExpression("1 + 2");
   computation_graph.Run(result);
@@ -51,8 +55,8 @@ TEST(computation_graph, simple_arithmetic)
 
 TEST(computation_graph, multi_parenthesis_test)
 {
-  double           result;
-  ComputationGraph computation_graph;
+  double                          result;
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
 
   computation_graph.ParseExpression("(((1 + 2)))");
   computation_graph.Run(result);
@@ -66,8 +70,8 @@ TEST(computation_graph, multi_parenthesis_test)
 
 TEST(computation_graph, odd_num_nodes)
 {
-  double           result;
-  ComputationGraph computation_graph;
+  double                          result;
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
 
   computation_graph.ParseExpression("4 * 6 / 3");
   computation_graph.Run(result);
@@ -76,8 +80,8 @@ TEST(computation_graph, odd_num_nodes)
 
 TEST(computation_graph, multi_digit_nums)
 {
-  double           result;
-  ComputationGraph computation_graph;
+  double                          result;
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
 
   computation_graph.ParseExpression("100 * 62 / 31");
   computation_graph.Run(result);
@@ -86,10 +90,60 @@ TEST(computation_graph, multi_digit_nums)
 
 TEST(computation_graph, decimal_place_nums)
 {
-  double           result;
-  ComputationGraph computation_graph;
+  double                          result;
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
 
   computation_graph.ParseExpression("10.0 * 62.5 / 31.25");
   computation_graph.Run(result);
   ASSERT_TRUE(result == double(20));
+}
+
+TEST(computation_graph, ndarray_add)
+{
+  fetch::math::NDArray<double> arr1{10};
+  fetch::math::NDArray<double> arr2{10};
+  fetch::math::NDArray<double> result_arr{10};
+  fetch::math::NDArray<double> test_result_arr{10};
+  arr1.FillArange(0, 10);
+  arr2.FillArange(0, 10);
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    test_result_arr[i] = i + i;
+  }
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
+
+  computation_graph.RegisterArray(arr1, "x");
+  computation_graph.RegisterArray(arr2, "y");
+
+  computation_graph.ParseExpression("x + y");
+  computation_graph.Run(result_arr);
+  ASSERT_TRUE(result_arr == test_result_arr);
+}
+
+TEST(computation_graph, 2d_ndarray_multiply)
+{
+
+  fetch::math::NDArray<double> arr1{25};
+  arr1.Reshape({5, 5});
+  fetch::math::NDArray<double> arr2{25};
+  arr2.Reshape({5, 5});
+  fetch::math::NDArray<double> result_arr{25};
+  result_arr.Reshape({5, 5});
+  fetch::math::NDArray<double> test_result_arr{25};
+  test_result_arr.Reshape({5, 5});
+
+  arr1.FillArange(0, 25);
+  arr2.FillArange(0, 25);
+  for (std::size_t i = 0; i < 25; ++i)
+  {
+    test_result_arr[i] = i * i;
+  }
+  ComputationGraph<T, ARRAY_TYPE> computation_graph;
+
+  computation_graph.RegisterArray(arr1, "x");
+  computation_graph.RegisterArray(arr2, "y");
+
+  computation_graph.ParseExpression("x * y");
+  computation_graph.Run(result_arr);
+  ASSERT_TRUE(result_arr == test_result_arr);
 }
