@@ -344,15 +344,20 @@ protected:
     return reinterpret_cast<char *>(data_.pointer());
   }
 
+  template<typename ...Arg>
+  self_type & Append(Arg const &... others)
+  {
+    AppendInternal(size(), others...);
+    return *this;
+  }
+
   template <typename T>
   friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
 private:
-  void AppendInternal(std::size_t const acc_size, self_type const &other)
+  void AppendInternal(std::size_t const acc_size)
   {
-    std::size_t const size = acc_size + other.size();
-    Resize(size);
-    std::memcpy(pointer() + acc_size, other.pointer(), other.size());
+    Resize(acc_size);
   }
 
   template <typename... Arg>
@@ -366,13 +371,6 @@ private:
   std::size_t       start_ = 0, length_ = 0;
   container_type *  arr_pointer_ = nullptr;
 
-protected:
-  template<typename ...Arg>
-  self_type & Append(Arg const &... others)
-  {
-    AppendInternal(size(), others...);
-    return *this;
-  }
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
