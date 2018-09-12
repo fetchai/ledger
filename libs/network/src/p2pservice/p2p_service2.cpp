@@ -234,10 +234,10 @@ void P2PService2::PeerTrustEvent(const Identity &          identity
 {
 }
 
-void P2PService2::SetLocalManifest(const Manifest &manifest)
+void P2PService2::SetLocalManifest(Manifest &&manifest)
 {
-  manifest_ = manifest;
-  local_services_ . MakeFromManifest(manifest);
+  manifest_ = std::move(manifest);
+  local_services_ . MakeFromManifest(manifest_);
 
   thread_pool_ -> Post([this](){ this -> Refresh(); });
 }

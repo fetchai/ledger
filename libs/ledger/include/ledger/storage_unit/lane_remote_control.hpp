@@ -36,7 +36,7 @@ public:
   using Promise = service::Promise;
 
   explicit LaneRemoteControl(std::size_t num_lanes)
-    : clients_{num_lanes}
+    : clients_(num_lanes)
   {}
 
   LaneRemoteControl(LaneRemoteControl const &other) = default;
@@ -48,7 +48,10 @@ public:
   void AddClient(LaneIndex lane, WeakService const &client)
   {
     FETCH_LOCK(mutex_);
-    clients_.at(lane) = client;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding lane ", lane);
+
+    clients_[lane] = client.lock();
   }
 
   void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) override
@@ -150,21 +153,16 @@ public:
 
 private:
 
-
   SharedService LookupLane(LaneIndex lane) const
   {
-
     FETCH_LOG_INFO(LOGGING_NAME,"LookupLane ", lane, " in ", clients_.size());
-
     FETCH_LOCK(mutex_);
 
 #ifdef NDEBUG
-    WeakService service = clients_[lane];
+    return clients_[lane].lock();
 #else
-    WeakService service = clients_.at(lane);
+    return clients_.at(lane).lock();
 #endif
-
-    return service.lock();
   }
 
   mutable Mutex mutex_{__LINE__, __FILE__};

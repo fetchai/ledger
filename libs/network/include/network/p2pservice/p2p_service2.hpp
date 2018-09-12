@@ -67,7 +67,7 @@ public:
                       , P2PTrustFeedbackSubject subject
                       , P2PTrustFeedbackQuality quality);
 
-  void SetLocalManifest(const Manifest &manifest);
+  void SetLocalManifest(Manifest &&manifest);
   Manifest GetLocalManifest();
 
   void WorkCycle();

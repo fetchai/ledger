@@ -129,21 +129,11 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
   // Step 1. Start all the components
   //---------------------------------------------------------------
 
-  std::string my_manifest = "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
-
-  for (uint32_t i = 0; i < num_lanes_; ++i)
-  {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += "LANE     " + std::to_string(i) + "     " + "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
-  }
-
-  p2p_.SetLocalManifest(network::Manifest::FromText(my_manifest));
-
-  FETCH_LOG_WARN(LOGGING_NAME, "MANIFEST:", my_manifest);
-
   // start all the services
   network_manager_.Start();
   muddle_.Start({p2p_port_});
+
+  lane_services_.Start();
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
@@ -159,17 +149,18 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
     // allow the remote control to use connection
     lane_control_.AddClient(i, client);
   }
-  lane_services_.Start();
-
   execution_manager_->Start();
   block_coordinator_.Start();
-
 
   if (mining)
     miner_.Start();
 
-  http_.Start(http_port_);
+  // P2P configuration
+  p2p_.SetLocalManifest(GenerateManifest());
   p2p_.Start(initial_peers, p2p_port_);
+
+  // Finally start the HTTP server
+  http_.Start(http_port_);
 
   //---------------------------------------------------------------
   // Step 2. Main monitor loop
@@ -202,6 +193,21 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
+}
+
+Constellation::Manifest Constellation::GenerateManifest() const
+{
+  std::string my_manifest = "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
+
+  for (uint32_t i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    my_manifest += "LANE     " + std::to_string(i) + "     " + "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
+  }
+
+  FETCH_LOG_WARN(LOGGING_NAME, "MANIFEST:", my_manifest);
+
+  return Manifest::FromText(my_manifest);
 }
 
 }  // namespace fetch

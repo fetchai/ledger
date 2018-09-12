@@ -95,6 +95,9 @@ private:
   using HttpModulePtr = std::shared_ptr<HttpModule>;
   using HttpModules = std::vector<HttpModulePtr>;
   using TransactionProcessor = ledger::TransactionProcessor;
+  using Manifest = network::Manifest;
+
+  Manifest GenerateManifest() const;
 
   /// @name Configuration
   /// @{

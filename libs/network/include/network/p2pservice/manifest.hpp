@@ -85,26 +85,13 @@ public:
     return (res != data_.end());
   }
 
+  Manifest() = default;
+  Manifest(Manifest const &other) = default;
+  Manifest(Manifest &&other) = default;
   ~Manifest() = default;
 
-  Manifest(const Manifest &other)
-    : data_(other.data_)
-  {
-  }
-
-  Manifest(Manifest &&other)
-    : data_(std::move(other.data_))
-  {
-  }
-
-  Manifest& operator=(Manifest&& other)
-  {
-    if (&other != this)
-    {
-      data_ = std::move(other.data_);
-    }
-    return *this;
-  }
+  Manifest& operator=(Manifest&& other) = default;
+  Manifest& operator=(Manifest const &other) = default;
 
   size_t size() const
   {
@@ -128,15 +115,6 @@ public:
     }
   }
 
-  Manifest& operator=(const Manifest& other)
-  {
-    if (&other != this)
-    {
-      data_ = other.data_;
-    }
-    return *this;
-  }
-
   std::string ToString() const
   {
     std::string result;
@@ -153,9 +131,6 @@ public:
     return result;
   }
 
-  Manifest()
-  {
-  }
 private:
   std::map<ServiceIdentifier, Uri> data_;
 
