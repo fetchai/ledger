@@ -42,6 +42,8 @@ public:
                            P2PTrustFeedbackSubject subject, P2PTrustFeedbackQuality quality) = 0;
 
   virtual std::vector<PEER_IDENT> GetBestPeers(size_t maximum)                       = 0;
+  virtual std::vector<PEER_IDENT> GetRandomPeers(size_t maximum_count, double minimum_trust) = 0;
+
   virtual size_t                  GetRankOfPeer(const PEER_IDENT &peer_ident)        = 0;
   virtual double                  GetTrustRatingOfPeer(const PEER_IDENT &peer_ident) = 0;
   virtual bool                    IsPeerTrusted(const PEER_IDENT &peer_ident)        = 0;

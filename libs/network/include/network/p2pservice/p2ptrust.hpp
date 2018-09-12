@@ -12,6 +12,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include  <algorithm>
+#include <random>
 
 namespace fetch {
 namespace p2p {
@@ -117,6 +119,30 @@ public:
 
     trust_store_[pos].trust        = trust;
     trust_store_[pos].lastmodified = currenttime;
+  }
+
+  virtual std::vector<PEER_IDENT> GetRandomPeers(size_t maximum_count, double minimum_trust) override
+  {
+    std::vector<PEER_IDENT> result;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    
+    SortIfNeeded();
+
+    lock_type lock(mutex_);
+    for (size_t pos = 0; pos < trust_store_.size(); pos++)
+    {
+      if (trust_store_[pos].trust < minimum_trust)
+      {
+        break;
+      }
+      result.push_back(trust_store_[pos].peer_ident);
+    }
+
+    std::shuffle(result.begin(), result.end(), g);
+    result.resize(std::min(maximum_count, result.size()));
+
+    return result;
   }
 
   virtual std::vector<PEER_IDENT> GetBestPeers(size_t maximum) override
