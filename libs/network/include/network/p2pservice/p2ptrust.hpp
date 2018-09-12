@@ -45,7 +45,7 @@ template <class PEER_IDENT>
 class P2PTrust : public P2PTrustInterface<PEER_IDENT>
 {
 protected:
-  struct Snoopy
+  struct PeerTrustRating
   {
     PEER_IDENT peer_ident;
     double     trust;
@@ -62,9 +62,9 @@ protected:
       trust        = computeCurrentTrust(currenttime);
       lastmodified = currenttime;
     }
-  };  // TODO(kll)
+  };
 
-  using trust_store_type   = std::vector<Snoopy>;
+  using trust_store_type   = std::vector<PeerTrustRating>;
   using ranking_store_type = std::map<PEER_IDENT, size_t>;
   using mutex_type         = mutex::Mutex;
   using lock_type          = std::lock_guard<mutex_type>;
@@ -97,7 +97,7 @@ public:
     size_t pos;
     if (ranking == ranking_store_.end())
     {
-      Snoopy new_record{peer_ident, 0.0, currenttime};
+      PeerTrustRating new_record{peer_ident, 0.0, currenttime};
       pos = trust_store_.size();
       trust_store_.push_back(new_record);
     }
@@ -181,7 +181,7 @@ protected:
       trust_store_[pos].SetCurrentTrust(currenttime);
     }
 
-    std::sort(trust_store_.begin(), trust_store_.end(), [](const Snoopy &a, const Snoopy &b) {
+    std::sort(trust_store_.begin(), trust_store_.end(), [](const PeerTrustRating &a, const PeerTrustRating &b) {
       if (a.trust < b.trust) return true;
       if (a.trust > b.trust) return false;
       return a.peer_ident < b.peer_ident;

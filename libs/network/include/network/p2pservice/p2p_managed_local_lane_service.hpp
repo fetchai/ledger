@@ -55,7 +55,7 @@ public:
     }
     try
     {
-      lane_management_ . UseThesePeers(instance_number(), peers());
+      //lane_management_ . UseThesePeers(instance_number(), peers());
     }
     catch(std::exception ex)
     {

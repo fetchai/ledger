@@ -9,6 +9,7 @@
 #include "network/p2pservice/p2p_resolver_protocol.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_managed_local_service.hpp"
 #include "network/p2pservice/p2p_managed_local_services.hpp"
