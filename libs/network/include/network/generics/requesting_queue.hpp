@@ -19,11 +19,12 @@
 
 #include "network/service/promise.hpp"
 #include "network/generics/promise_of.hpp"
+#include "core/serializers/stl_types.hpp"
 
 namespace fetch {
 namespace network {
 
-template<class KEY, class REQUESTED, class REQUESTED_CONTAINER = std::list<REQUESTED>>
+template<class KEY, class REQUESTED, class REQUESTED_CONTAINER = std::vector<REQUESTED>>
 class RequestingQueueOf
 {
 public:
