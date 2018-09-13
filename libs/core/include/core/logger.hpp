@@ -784,7 +784,7 @@ extern log::details::LogWrapper logger;
 
 // Logging macros
 //#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
-#define FETCH_LOG_DEBUG(name, ...)
+#define FETCH_LOG_DEBUG(name, ...)      (void)name
 #define FETCH_LOG_INFO(name, ...)       fetch::logger.InfoWithName(name, __VA_ARGS__)
 #define FETCH_LOG_WARN(name, ...)       fetch::logger.WarnWithName(name, __VA_ARGS__)
 #define FETCH_LOG_ERROR(name, ...)      fetch::logger.ErrorWithName(name, __VA_ARGS__)

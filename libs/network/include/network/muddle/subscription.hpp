@@ -45,12 +45,6 @@ public:
 
 private:
 
-  static Handle GetNextCounter();
-  static Mutex  counter_lock_;
-  static Handle counter_;
-
-  Handle const handle_ = GetNextCounter();
-
   mutable Mutex callback_lock_{__LINE__, __FILE__};
   MessageCallback callback_;
 };
