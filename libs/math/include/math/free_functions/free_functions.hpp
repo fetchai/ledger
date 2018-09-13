@@ -593,6 +593,27 @@ void Pow(ARRAY_TYPE &x)
 }
 
 /**
+ * square
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Square(ARRAY_TYPE &x)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    x[i] = x[i] * x[i];
+  }
+}
+template <typename ARRAY_TYPE>
+void Square(ARRAY_TYPE &x, ARRAY_TYPE &ret)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    ret[i] = x[i] * x[i];
+  }
+}
+
+/**
  * sine of x
  * @param x
  */
@@ -2189,6 +2210,28 @@ T Sum(ShapeLessArray<T, C> const &obj1)
 {
   T ret;
   Sum(obj1, ret);
+  return ret;
+}
+
+/**
+ * return the mean of all elements in the array
+ * @tparam T
+ * @tparam C
+ * @param obj1
+ * @param ret
+ */
+template <typename T, typename C>
+void Mean(ShapeLessArray<T, C> const &obj1, T &ret)
+{
+
+  Sum(obj1, ret);
+  Divide(ret, T(obj1.size()), ret);
+}
+template <typename T, typename C>
+T Mean(ShapeLessArray<T, C> const &obj1)
+{
+  T ret;
+  Mean(obj1, ret);
   return ret;
 }
 

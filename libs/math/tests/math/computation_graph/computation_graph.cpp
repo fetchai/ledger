@@ -199,3 +199,32 @@ TEST(computation_graph, ndarray_tricky)
 
   ASSERT_TRUE(result_arr == test_result_arr);
 }
+
+// TEST(computation_graph, back_prop)
+//{
+//
+//  fetch::math::NDArray<T> arr1 = fetch::math::NDArray<T>::UniformRandom(100);
+//  fetch::math::NDArray<T> arr2 = fetch::math::NDArray<T>::UniformRandom(100);
+//  fetch::math::NDArray<T> y = fetch::math::NDArray<T>::UniformRandom(100);
+//  fetch::math::NDArray<T> y_hat{100};
+//
+//
+//  T result = -999;
+//  T test_result = -999;
+//
+//  // run on computation_graph
+//  ComputationGraph<T, ARRAY_TYPE> computation_graph;
+//
+//  computation_graph.RegisterArray(arr1, "x");
+//  computation_graph.RegisterArray(arr2, "y");
+//
+//  computation_graph.ParseExpression("(x * y)");
+//  computation_graph.Run(y_hat);
+//
+//  computation_graph.SetLoss("MSE");
+//  computation_graph.Train();
+//
+//  computation_graph.Train();
+//
+//  ASSERT_TRUE(result_arr == test_result_arr);
+//}
