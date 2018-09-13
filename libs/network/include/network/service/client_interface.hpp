@@ -87,7 +87,8 @@ public:
       RemovePromise(prom->id());
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
+
     return prom;
   }
 

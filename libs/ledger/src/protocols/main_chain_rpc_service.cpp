@@ -76,7 +76,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
   // allocate the buffer and serialise the block
   BlockSerializer serializer;
-  serializer.Allocate(counter.size());
+  serializer.Reserve(counter.size());
   serializer << block;
 
   // broadcast the block to the nodes on the network

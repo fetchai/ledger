@@ -48,9 +48,6 @@ public:
   void AddClient(LaneIndex lane, WeakService const &client)
   {
     FETCH_LOCK(mutex_);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding lane ", lane);
-
     clients_[lane] = client.lock();
   }
 

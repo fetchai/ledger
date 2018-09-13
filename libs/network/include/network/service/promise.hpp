@@ -120,14 +120,9 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    if (id_ == 17)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,"P2PService2::Where is this?");
-    }
-
     value_ = value;
 
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Promise ", id_," fulfilled with ",  Schmoo());
+    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Promise ", id_," fulfilled with ",  Schmoo());
 
     UpdateState(State::SUCCESS);
   }
