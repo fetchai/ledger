@@ -62,6 +62,16 @@ public:
     return data_;
   }
 
+  size_t length() const
+  {
+    return data_.length();
+  }
+
+  size_t size() const
+  {
+    return data_.size();
+  }
+
   Peer AsPeer() const
   {
     if (GetProtocol() == "tcp")

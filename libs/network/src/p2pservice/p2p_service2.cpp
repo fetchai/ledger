@@ -1,5 +1,6 @@
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
+#include "network/p2pservice/manifest.hpp"
 
 namespace fetch {
 namespace p2p {
@@ -60,11 +61,25 @@ void P2PService2::WorkCycle()
     auto const &address = std::get<0>(connection);
     auto const &uri     = std::get<1>(connection);
     auto const &state   = std::get<2>(connection);
+    Identity identity{"", address};
 
     FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
 
+    if (uri.length() > 0)
+    {
+      identity_to_uri_[identity] = uri;
+    }
+
+    if (trust_system)
+    {
+      if (!trust_system -> IsPeerKnown(identity))
+      {
+        trust_system -> AddFeedback(identity, PEER, NEW_INFORMATION);
+      }
+    }
+
     used.insert(uri);
-    connected_peers.push_back(Identity{"", address});
+    connected_peers.push_back(identity);
   }
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: port_number ", port_number);
 
@@ -105,26 +120,45 @@ void P2PService2::WorkCycle()
     }
   }
 
-  if (port_number > 8019)
-  {
-    counter ++;
-
-    //if (counter<10)
-    //{
-    //  return;
-    //}
-  }
   // too many? schedule some kickoffs.
 
   // handle manifest updates.
 
-  auto manifest_update_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
-  for( auto& identity : manifest_update_needed_from)
+  auto manifest_updates_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
+  auto manifest_updates_needed_and_not_in_flight = outstanding_manifests_ . FilterOutInflight( manifest_updates_needed_from );
+
+  for( auto& identity : manifest_updates_needed_and_not_in_flight )
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToHex(identity.identifier()));
+    client_ . SetAddress(identity.identifier());
+    auto prom = network::PromiseOf<network::Manifest>(
+      client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
+    );
+    outstanding_manifests_ . Add( identity, prom );
+  }
+
+  outstanding_manifests_ . Resolve();
+
+  while(!outstanding_manifests_ . empty())
+  {
+    std::vector<RequestingManifests::OutputType> outputs;
+    outstanding_manifests_ . Get(outputs, 20);
+    for(auto &it : outputs)
+    {
+      auto new_manifest = it . second;
+      auto new_identity = it . first;
+
+      manifest_cache_ . ProvideUpdate(new_identity, new_manifest, 10);
+      auto cb = [ this, new_identity ](){ this -> DistributeUpdatedManifest(new_identity); };
+      thread_pool_ -> Post( cb );
+    }
+  }
+
+  /*
+for( auto& identity : manifest_updates_needed_from)
   {
     if (
         (promised_manifests_ . find(identity) == promised_manifests_.end())
-        &&
-        (promised_manifests_ . size() < 1)
       )
     {
       FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToHex(identity.identifier()));
@@ -191,7 +225,8 @@ void P2PService2::WorkCycle()
     {
       ++it;
     }
-  }
+    }
+  */
 
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
 }
@@ -218,6 +253,12 @@ network::Manifest P2PService2::GetLocalManifest()
 {
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
   return manifest_;
+}
+
+std::vector<P2PService2::Uri> P2PService2::GetRandomGoodPeers()
+{
+  std::vector<P2PService2::Uri> result;
+  return result;
 }
 
 void P2PService2::PeerIdentificationSucceeded(const P2PService2::Peer &peer, const P2PService2::Identity &identity)

@@ -2,6 +2,7 @@
 
 #include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
+#include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/peer.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -34,6 +35,8 @@ public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Identity = crypto::Identity;
   using Peer   = network::Peer;
+  using Uri   = network::Uri;
+  using Address   = Resolver::Address;
   using TrustInterface = P2PTrustInterface<Identity>;
   using LaneRemoteControl = ledger::LaneRemoteControl;
   using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
@@ -41,10 +44,11 @@ public:
   using Manifest = network::Manifest;
   using Client = muddle::rpc::Client;
   using PromisedManifests = std::map<Identity, network::PromiseOf<network::Manifest>>;
-
-  using Uri = network::Uri;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
+
+  using RequestingManifests = network::RequestingQueueOf<Identity, Manifest>;
+  using RequestingPeers = network::RequestingQueueOf<Identity, Uri>;
 
   enum
   {
@@ -70,12 +74,15 @@ public:
 
   void SetLocalManifest(Manifest &&manifest);
   Manifest GetLocalManifest();
+  std::vector<Uri> GetRandomGoodPeers();
 
   void WorkCycle();
 
 private:
   void DistributeUpdatedManifest(Identity identity_of_updated_peer);
   void Refresh();
+
+  std::map<Identity, Uri> identity_to_uri_;
 
   Muddle  &muddle_;
   MuddleEndpoint &muddle_ep_;
@@ -97,6 +104,7 @@ private:
   P2PManagedLocalServices local_services_;
 
   PromisedManifests promised_manifests_;
+  RequestingManifests outstanding_manifests_;
 
   P2PRemoteManifestCache manifest_cache_;
   int port_number; // for debugging.

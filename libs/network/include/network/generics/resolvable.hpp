@@ -17,30 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
-#include "network/p2pservice/p2p_resolver.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
-namespace p2p {
-
-  class P2PService2;
+namespace network {
 
 /**
- * Protocol for the P2P address resolution protocol
+ * An interface which allows access to the underlying functionality of PromiseOf
  */
-class ResolverProtocol : public service::Protocol
+class Resolvable
 {
 public:
+  using State = service::PromiseState;
+  using PromiseCounter = service::PromiseCounter;
 
-  enum
-  {
-    QUERY = 1,
-    GET_MANIFEST = 2,
-    GET_RANDOM_GOOD_PEERS = 3,
-  };
 
-  explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
+  Resolvable() = default;
+  ~Resolvable() = default;
+
+  Resolvable(Resolvable const &rhs) = default;
+
+  // Operators
+  Resolvable &operator=(Resolvable const &rhs) = default;
+  Resolvable &operator=(Resolvable &&rhs) noexcept = default;
+
+  virtual State GetState() = 0;
+  virtual PromiseCounter id() const = 0;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch

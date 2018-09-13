@@ -38,6 +38,9 @@ public:
   virtual ~P2PTrustInterface() {}
 
   virtual void AddFeedback(const PEER_IDENT &                peer_ident,
+                           P2PTrustFeedbackSubject subject, P2PTrustFeedbackQuality quality) = 0;
+
+  virtual void AddFeedback(const PEER_IDENT &                peer_ident,
                            const byte_array::ConstByteArray &object_ident,
                            P2PTrustFeedbackSubject subject, P2PTrustFeedbackQuality quality) = 0;
 
@@ -47,6 +50,7 @@ public:
   virtual size_t                  GetRankOfPeer(const PEER_IDENT &peer_ident)        = 0;
   virtual double                  GetTrustRatingOfPeer(const PEER_IDENT &peer_ident) = 0;
   virtual bool                    IsPeerTrusted(const PEER_IDENT &peer_ident)        = 0;
+  virtual bool                    IsPeerKnown(const PEER_IDENT &peer_ident) const    = 0;
 };
 }  // namespace p2p
 }  // namespace fetch

@@ -86,6 +86,14 @@ public:
   void sortWillBeNeeded() { dirty_ = true; }
 
   virtual void AddFeedback(const PEER_IDENT &                peer_ident,
+                           P2PTrustFeedbackSubject           subject,
+                           P2PTrustFeedbackQuality           quality) override
+  {
+    static byte_array::ConstByteArray nul;
+    AddFeedback(peer_ident, nul, subject, quality);
+  }
+
+  virtual void AddFeedback(const PEER_IDENT &                peer_ident,
                            const byte_array::ConstByteArray &object_ident,
                            P2PTrustFeedbackSubject           subject,
                            P2PTrustFeedbackQuality           quality) override
@@ -121,12 +129,18 @@ public:
     trust_store_[pos].lastmodified = currenttime;
   }
 
+  virtual bool                    IsPeerKnown(const PEER_IDENT &peer_ident) const override
+  {
+    auto ranking     = ranking_store_.find(peer_ident);
+    return ranking != ranking_store_.end();
+  }
+
   virtual std::vector<PEER_IDENT> GetRandomPeers(size_t maximum_count, double minimum_trust) override
   {
     std::vector<PEER_IDENT> result;
     std::random_device rd;
     std::mt19937 g(rd());
-    
+
     SortIfNeeded();
 
     lock_type lock(mutex_);

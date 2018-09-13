@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/promise.hpp"
+#include "network/generics/resolvable.hpp"
 
 namespace fetch {
 namespace network {
@@ -29,10 +30,11 @@ namespace network {
  * @tparam TYPE The expected return type of the promise
  */
 template <class TYPE>
-class PromiseOf
+class PromiseOf: public Resolvable
 {
 public:
-  using Promise = fetch::service::Promise;
+  using Promise = service::Promise;
+  using State = fetch::service::PromiseState;
   using PromiseBuilder = fetch::service::details::PromiseBuilder;
   using PromiseCounter = fetch::service::PromiseCounter;
 
@@ -54,14 +56,13 @@ public:
   Promise const &GetInnerPromise() const { return promise_; }
   PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
-  using State = fetch::service::PromiseState;
 
-  State GetState()
+  virtual State GetState() override
   {
     return promise_ -> GetState();
   }
 
-  PromiseCounter id() const { return promise_ -> id(); }
+  virtual PromiseCounter id() const override { return promise_ -> id(); }
 
   static std::string DescribeState(State s)
   {
