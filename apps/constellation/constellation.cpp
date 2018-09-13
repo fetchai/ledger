@@ -144,8 +144,6 @@ void Constellation::Run(PeerList const &initial_peers, bool mining)
     // establish the connection to the lane
     auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "AddLaneConnection:", "127.0.0.1", lane_port, " ??? ");
-
     // allow the remote control to use connection
     lane_control_.AddClient(i, client);
   }
@@ -204,8 +202,6 @@ Constellation::Manifest Constellation::GenerateManifest() const
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
     my_manifest += "LANE     " + std::to_string(i) + "     " + "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
   }
-
-  FETCH_LOG_WARN(LOGGING_NAME, "MANIFEST:", my_manifest);
 
   return Manifest::FromText(my_manifest);
 }
