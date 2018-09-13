@@ -16,13 +16,9 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trust_system = std::make_shared<P2PTrust<Identity>>();
-
-  counter = 0;
-
-  // create all the remote control instances
 }
 
-void P2PService2::Start(P2PService2::PeerList const &initial_peer_list, int my_port_number)
+void P2PService2::Start(P2PService2::PeerList const &initial_peer_list, P2PService2::Uri my_uri)
 {
   for(auto &peer : initial_peer_list)
   {
@@ -31,9 +27,9 @@ void P2PService2::Start(P2PService2::PeerList const &initial_peer_list, int my_p
 
   thread_pool_ -> SetInterval(1000);
   thread_pool_ -> Start();
-
-  port_number = my_port_number;
   thread_pool_ -> PostIdle([this](){ this -> WorkCycle(); });
+
+  my_uri_ = my_uri;
 }
 
 void P2PService2::Stop()
@@ -60,7 +56,6 @@ void P2PService2::WorkCycle()
     // decompose the tuple
     auto const &address = std::get<0>(connection);
     auto const &uri     = std::get<1>(connection);
-    auto const &state   = std::get<2>(connection);
     Identity identity{"", address};
 
     FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Conn:", ToHex(addr), " / ", uri.ToString(), " / ", state);
@@ -81,7 +76,6 @@ void P2PService2::WorkCycle()
     used.insert(uri);
     connected_peers.push_back(identity);
   }
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: port_number ", port_number);
 
   // not enough, schedule some connects.
   while((connections.size() < 1000) && (possibles_.size() > 0))
@@ -122,8 +116,54 @@ void P2PService2::WorkCycle()
 
   // too many? schedule some kickoffs.
 
-  // handle manifest updates.
+  // gte more peers if we need them..
 
+  if (possibles_.size() == 0)
+  {
+    auto peerlist_updates_needed_and_not_in_flight = outstanding_peerlists_ . FilterOutInflight( connected_peers );
+    if (peerlist_updates_needed_and_not_in_flight . size() == 0)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
+    }
+    for( auto& identity : peerlist_updates_needed_and_not_in_flight)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get peers from ", ToHex(identity.identifier()));
+      client_ . SetAddress(identity.identifier());
+      auto prom = network::PromiseOf<std::vector<network::Uri>>(
+        client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS)
+      );
+      outstanding_peerlists_ . Add( identity, prom );
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: possibles = ", possibles_.size());
+  }
+
+  outstanding_peerlists_ . Resolve();
+
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding.");
+  while(!outstanding_peerlists_ . empty())
+  {
+    std::vector<RequestingPeerlists::OutputType> outputs;
+    outstanding_peerlists_ . Get(outputs, 20);
+
+    for(auto &it : outputs)
+    {
+      auto new_peer = it . second;
+      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: possible new peer= ", new_peer.ToString());
+      //auto new_identity = it . first; // needed for trust scoring later...
+
+      if (my_uri_ != new_peer)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: remembering possible new peer= ", new_peer.ToString());
+        possibles_ . push_back( new_peer );
+      }
+    }
+  }
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding DONE.");
+
+  // handle manifest updates.=
   auto manifest_updates_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
   auto manifest_updates_needed_and_not_in_flight = outstanding_manifests_ . FilterOutInflight( manifest_updates_needed_from );
 
@@ -153,80 +193,6 @@ void P2PService2::WorkCycle()
       thread_pool_ -> Post( cb );
     }
   }
-
-  /*
-for( auto& identity : manifest_updates_needed_from)
-  {
-    if (
-        (promised_manifests_ . find(identity) == promised_manifests_.end())
-      )
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToHex(identity.identifier()));
-      //FETCH_LOG_WARN(LOGGING_NAME,"P2PService2:: Would get manifest from ", ToHex(identity.identifier()));
-      client_ . SetAddress(identity.identifier());
-
-      auto prom = network::PromiseOf<network::Manifest>(
-        client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
-      );
-      promised_manifests_.insert(
-        std::make_pair(
-          identity,
-          prom
-        )
-      );
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: INFLIGHT get manifest from ", ToBase64(identity.identifier()));
-    }
-  }
-
-  PromisedManifests::iterator it = promised_manifests_.begin();
-  while(it != promised_manifests_.end())
-  {
-    auto status = it -> second.GetState();
-    if (status !=  network::PromiseOf<network::Manifest>::State::WAITING)
-    {
-      if (status == network::PromiseOf<network::Manifest>::State::SUCCESS)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ",
-                       it -> second.id(),".",
-                       it -> second.GetInnerPromise() -> protocol(),".",
-                       it -> second.GetInnerPromise() -> function()
-                       );
-        try
-        {
-          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Reading promised manifest from ", it->second.GetInnerPromise() -> Schmoo());
-
-          auto new_manifest = it->second.Get();
-          auto moo_identity = it->first;
-
-          manifest_cache_ . ProvideUpdate(moo_identity, new_manifest, 10);
-          auto cb = [ this, moo_identity ](){ this -> DistributeUpdatedManifest(moo_identity); };
-          thread_pool_ -> Post( cb );
-
-          it = promised_manifests_ . erase(it);
-          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: Success");
-        }
-        catch(...)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: ERK! whole reading/updating");
-          it = promised_manifests_ . erase(it);
-          throw;
-        }
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: NEW MANIFEST FAILED*****************");
-        it = promised_manifests_ . erase(it);
-      }
-    }
-    else
-    {
-      ++it;
-    }
-    }
-  */
 
   FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
 }
@@ -258,14 +224,26 @@ network::Manifest P2PService2::GetLocalManifest()
 std::vector<P2PService2::Uri> P2PService2::GetRandomGoodPeers()
 {
   std::vector<P2PService2::Uri> result;
+  if (trust_system)
+  {
+    auto peers = trust_system -> GetRandomPeers(20, 0.0);
+    for(auto &peer : peers)
+    {
+      auto iter = identity_to_uri_ . find(peer);
+      if (iter != identity_to_uri_ . end())
+      {
+        result . push_back(iter -> second);
+      }
+    }
+  }
   return result;
 }
 
-void P2PService2::PeerIdentificationSucceeded(const P2PService2::Peer &peer, const P2PService2::Identity &identity)
+void P2PService2::PeerIdentificationSucceeded(const P2PService2::Uri &peer, const P2PService2::Identity &identity)
 {
 }
 
-void P2PService2::PeerIdentificationFailed   (const P2PService2::Peer &peer)
+void P2PService2::PeerIdentificationFailed   (const P2PService2::Uri &peer)
 {
 }
 

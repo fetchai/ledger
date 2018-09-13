@@ -34,7 +34,6 @@ public:
   using CertificatePtr = Muddle::CertificatePtr;
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Identity = crypto::Identity;
-  using Peer   = network::Peer;
   using Uri   = network::Uri;
   using Address   = Resolver::Address;
   using TrustInterface = P2PTrustInterface<Identity>;
@@ -48,7 +47,7 @@ public:
   using ServiceIdentifier = network::ServiceIdentifier;
 
   using RequestingManifests = network::RequestingQueueOf<Identity, Manifest>;
-  using RequestingPeers = network::RequestingQueueOf<Identity, Uri>;
+  using RequestingPeerlists = network::RequestingQueueOf<Identity, Uri>;
 
   enum
   {
@@ -60,14 +59,14 @@ public:
   P2PService2(Muddle &muddle, LaneManagement &lane_management);
   ~P2PService2() = default;
 
-  void Start(PeerList const & initial_peer_list = PeerList{}, int port_number=10000);
+  void Start(PeerList const & initial_peer_list, Uri my_uri);
   void Stop();
 
   Identity const &identity() const { return muddle_ . identity(); }
   MuddleEndpoint& AsEndpoint() { return muddle_ . AsEndpoint(); }
 
-  void PeerIdentificationSucceeded(const Peer &peer, const Identity &identity);
-  void PeerIdentificationFailed   (const Peer &peer);
+  void PeerIdentificationSucceeded(const Uri &peer, const Identity &identity);
+  void PeerIdentificationFailed   (const Uri &peer);
   void PeerTrustEvent(const Identity &          identity
                       , P2PTrustFeedbackSubject subject
                       , P2PTrustFeedbackQuality quality);
@@ -97,19 +96,18 @@ private:
 
   std::shared_ptr<TrustInterface> trust_system;
 
+  Uri my_uri_;
+
   Client client_;
   Manifest manifest_;
   std::map<Identity, Manifest> discovered_peers_;
 
   P2PManagedLocalServices local_services_;
 
-  PromisedManifests promised_manifests_;
   RequestingManifests outstanding_manifests_;
+  RequestingPeerlists outstanding_peerlists_;
 
   P2PRemoteManifestCache manifest_cache_;
-  int port_number; // for debugging.
-  int counter; // for debugging.
-  //std::set
   std::list<network::Uri> possibles_; // addresses we might use in the future.
 };
 

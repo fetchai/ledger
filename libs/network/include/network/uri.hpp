@@ -29,13 +29,13 @@ class Uri
 public:
   // Construction / Destruction
   Uri() = default;
-  Uri(std::string const &uristr)
-  {
-    data_ = uristr;
-  }
+  Uri(std::string const &uristr);
+
   Uri(Uri const &) = default;
   Uri(Uri &&)      = default;
   ~Uri()            = default;
+
+  const char *LOGGING_NAME = "Uri";
 
   std::string GetProtocol() const;
   std::string GetRemainder() const;
@@ -46,6 +46,10 @@ public:
   bool operator==(Uri const &other) const
   {
     return data_ == other.data_;
+  }
+  bool operator!=(Uri const &other) const
+  {
+    return data_ != other.data_;
   }
   bool operator<(Uri const &other) const
   {
