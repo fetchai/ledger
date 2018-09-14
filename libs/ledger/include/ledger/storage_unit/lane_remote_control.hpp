@@ -152,7 +152,8 @@ private:
 
   SharedService LookupLane(LaneIndex lane) const
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"LookupLane ", lane, " in ", clients_.size());
+    FETCH_LOG_DEBUG(LOGGING_NAME,"LookupLane ", lane, " in ", clients_.size());
+    
     FETCH_LOCK(mutex_);
 
 #ifdef NDEBUG

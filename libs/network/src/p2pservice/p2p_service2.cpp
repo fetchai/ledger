@@ -126,7 +126,7 @@ void P2PService2::WorkCycle()
     auto peerlist_updates_needed_and_not_in_flight = outstanding_peerlists_ . FilterOutInflight( connected_peers );
     if (peerlist_updates_needed_and_not_in_flight . size() == 0)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
+      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
     }
 
     for( auto& identity : peerlist_updates_needed_and_not_in_flight)
@@ -147,7 +147,7 @@ void P2PService2::WorkCycle()
 
   outstanding_peerlists_ . Resolve();
 
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding.");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding.");
   while(!outstanding_peerlists_ . empty())
   {
     std::vector<RequestingPeerlists::OutputType> outputs;
@@ -156,17 +156,17 @@ void P2PService2::WorkCycle()
     for(auto &it : outputs)
     {
       auto new_peer = it . second;
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: possible new peer= ", new_peer.ToString());
+      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: possible new peer= ", new_peer.ToString());
       //auto new_identity = it . first; // needed for trust scoring later...
 
       if (my_uri_ != new_peer)
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: remembering possible new peer= ", new_peer.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: remembering possible new peer= ", new_peer.ToString());
         possibles_ . push_back( new_peer );
       }
     }
   }
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding DONE.");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding DONE.");
 
   // handle manifest updates.=
   auto manifest_updates_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
@@ -174,7 +174,7 @@ void P2PService2::WorkCycle()
 
   for( auto& identity : manifest_updates_needed_and_not_in_flight )
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToHex(identity.identifier()));
+    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToBase64(identity.identifier()));
     client_ . SetAddress(identity.identifier());
     auto prom = network::PromiseOf<network::Manifest>(
       client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)
@@ -199,7 +199,7 @@ void P2PService2::WorkCycle()
     }
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: COMPLETE.");
 }
 
 void P2PService2::DistributeUpdatedManifest(Identity identity_of_updated_peer)
@@ -222,7 +222,7 @@ void P2PService2::Refresh()
 
 network::Manifest P2PService2::GetLocalManifest()
 {
-  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
+  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::GetLocalManifest", manifest_ . ToString());
   return manifest_;
 }
 

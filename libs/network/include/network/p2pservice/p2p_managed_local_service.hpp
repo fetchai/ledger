@@ -58,8 +58,6 @@ public:
 
   virtual void Refresh()
   {
-    //TODO(kll) IMPLEMENT ME!
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PManagedLocalService::Refresh: unimplemented");
   }
 
   const std::unordered_set<Uri> &peers() const

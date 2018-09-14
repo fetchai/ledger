@@ -135,7 +135,7 @@ public:
     {
       for(auto& uri : uris)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, ident -> GetLaneNumber(), " -- UseThesePeers: ", uri.ToString());
+        FETCH_LOG_DEBUG(LOGGING_NAME, ident -> GetLaneNumber(), " -- UseThesePeers: ", uri.ToString());
       }
 
 

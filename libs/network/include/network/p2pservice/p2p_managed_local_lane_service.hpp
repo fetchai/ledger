@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <network/p2pservice/p2p_managed_local_service_state_machine.hpp>
-#include <network/p2pservice/p2p_service_defs.hpp>
+#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
@@ -48,18 +50,21 @@ public:
 
   virtual void Refresh()
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.......................................");
+#if 0
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.......................................");
     for(auto& peer : peers())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers: ", peer.ToString());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers: ", peer.ToString());
     }
+#endif
+
     try
     {
-      lane_management_ . UseThesePeers(instance_number(), peers());
+      lane_management_.UseThesePeers(instance_number(), peers());
     }
     catch(std::exception ex)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.............BANG! ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.............BANG! ", ex.what());
     }
   }
 

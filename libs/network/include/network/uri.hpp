@@ -84,7 +84,8 @@ public:
     if (GetProtocol() == "tcp")
     {
       auto s = GetRemainder();
-      FETCH_LOG_WARN("Uri","Converting: ", data_, " -> ", s);
+      FETCH_LOG_DEBUG("Uri","Converting: ", data_, " -> ", s);
+
       return Peer(s);
     }
     throw std::invalid_argument(std::string("'") + data_ + "' is not a valid TCP uri.");

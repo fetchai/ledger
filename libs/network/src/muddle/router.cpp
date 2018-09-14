@@ -527,7 +527,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
   }
   else
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to route packet to handle: ", handle);
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to route packet to handle: ", handle);
   }
 }
 
