@@ -28,7 +28,8 @@ namespace swarm {
 class SwarmProtocol : public fetch::service::Protocol
 {
 public:
-  SwarmProtocol(SwarmNodeInterface *node) : Protocol()
+  SwarmProtocol(SwarmNodeInterface *node)
+    : Protocol()
   {
     this->Expose(protocols::Swarm::CLIENT_NEEDS_PEER, node, &SwarmNodeInterface::ClientNeedsPeer);
   }

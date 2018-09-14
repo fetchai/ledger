@@ -59,7 +59,10 @@ public:
   }
 
   // helpful statistics
-  std::size_t completed_executions() const { return manager_->completed_executions(); }
+  std::size_t completed_executions() const
+  {
+    return manager_->completed_executions();
+  }
 
 private:
   manager_type                manager_;

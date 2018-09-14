@@ -21,7 +21,7 @@
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <unordered_map>
 namespace fetch {

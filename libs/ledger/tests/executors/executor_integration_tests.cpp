@@ -52,7 +52,10 @@ protected:
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
-  ExecutorIntegrationTests() { rng_.seed(42); }
+  ExecutorIntegrationTests()
+  {
+    rng_.seed(42);
+  }
 
   void SetUp() override
   {
@@ -89,7 +92,10 @@ protected:
     {
 
       // wait for the all the clients to connect to everything
-      if (executor_->is_alive() && storage_->IsAlive()) break;
+      if (executor_->is_alive() && storage_->IsAlive())
+      {
+        break;
+      }
 
       std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }

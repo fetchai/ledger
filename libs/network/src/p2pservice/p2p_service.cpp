@@ -243,7 +243,7 @@ void P2PService::NextServiceCycle()
   FETCH_LOG_INFO(LOGGING_NAME, "START SERVICE CYCLE");
 
 
-  std::unordered_map<connected_identity_type, connection_handle_type, crypto::CallableFNV> incoming_conns;
+  std::unordered_map<connected_identity_type, connection_handle_type> incoming_conns;
 
   connected_identities_type incoming;
   connected_identities_type outgoing;

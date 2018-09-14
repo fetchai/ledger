@@ -69,6 +69,7 @@ public:
           messages_.push_back(msg);
         }
 
+        // TODO(EJF): This was changed to simply ProcessMessages() in develop
         // Since this class isn't shared_from_this, try to ensure safety when
         // destructing
         lifeTracker_.Post([this]() { this->ProcessMessages(); });
@@ -85,27 +86,13 @@ public:
     lifeTracker_.reset();
 
     LOG_STACK_TRACE_POINT;
+
     auto ptr = connection_.lock();
+
     if (ptr)
     {
-
-      // Disconnect callbacks
-      if (ptr->Closed())
-      {
-        ptr->ClearClosures();
-        ptr->Close();
-
-        int timeout = 100;
-
-        // Can only guarantee we are not being called when socket is closed
-        while (!ptr->Closed())
-        {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          timeout--;
-
-          if (timeout == 0) break;
-        }
-      }
+      ptr->ClearClosures();
+      ptr->Close();
     }
   }
 
@@ -139,6 +126,25 @@ public:
     return false;
   }
 
+  bool WaitForAlive(std::size_t milliseconds) const
+  {
+    auto ptr = connection_.lock();
+
+    if (ptr)
+    {
+      for (std::size_t i = 0; i < milliseconds; i += 10)
+      {
+        if (ptr->is_alive())
+        {
+          return true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    }
+    return false;
+  }
+
   uint16_t Type() const
   {
     auto ptr = connection_.lock();
@@ -149,7 +155,10 @@ public:
     return uint16_t(-1);
   }
 
-  std::shared_ptr<network::AbstractConnection> connection() { return connection_.lock(); }
+  std::shared_ptr<network::AbstractConnection> connection()
+  {
+    return connection_.lock();
+  }
 
 protected:
   bool DeliverRequest(network::message_type const &msg) override
@@ -157,7 +166,10 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+      {
+        return false;
+      }
 
       ptr->Send(msg);
       return true;
@@ -171,7 +183,10 @@ protected:
     auto ptr = connection_.lock();
     if (ptr)
     {
-      if (ptr->Closed()) return false;
+      if (ptr->Closed())
+      {
+        return false;
+      }
 
       ptr->Send(msg);
       return true;

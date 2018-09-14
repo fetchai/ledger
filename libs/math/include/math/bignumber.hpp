@@ -50,8 +50,12 @@ public:
     }
   }
 
-  BigUnsigned(BigUnsigned const &other) : super_type(other.Copy()) {}
-  BigUnsigned(super_type const &other) : super_type(other.Copy()) {}
+  BigUnsigned(BigUnsigned const &other)
+    : super_type(other.Copy())
+  {}
+  BigUnsigned(super_type const &other)
+    : super_type(other.Copy())
+  {}
 
   BigUnsigned(uint64_t const &number, std::size_t size = 256)
   {
@@ -173,7 +177,10 @@ public:
     return *this;
   }
 
-  uint8_t operator[](std::size_t const &n) const { return super_type::operator[](n); }
+  uint8_t operator[](std::size_t const &n) const
+  {
+    return super_type::operator[](n);
+  }
 
   bool operator<(BigUnsigned const &other) const
   {
@@ -184,7 +191,10 @@ public:
     {
       return s1 < s2;
     }
-    if (s1 == 0) return false;
+    if (s1 == 0)
+    {
+      return false;
+    }
 
     --s1;
     while ((s1 != 0) && (super_type::operator[](s1) == other[s1]))
@@ -195,7 +205,10 @@ public:
     return super_type::operator[](s1) < other[s1];
   }
 
-  bool operator>(BigUnsigned const &other) const { return other < (*this); }
+  bool operator>(BigUnsigned const &other) const
+  {
+    return other < (*this);
+  }
 
   std::size_t TrimmedSize() const
   {

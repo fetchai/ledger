@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/kernels/sign.hpp"
 #include "math/shape_less_array.hpp"
 #include <gtest/gtest.h>
@@ -60,7 +61,9 @@ TEST(ndarray, zeros_out)
   }
 
   // check that sign(0) = 0
-  test_array_2.Sign(test_array);
+  test_array_2 = test_array;
+  fetch::math::Sign(test_array_2);
+
   for (std::size_t i = 0; i < n; ++i)
   {
     ASSERT_TRUE(test_array_2[i] == 0);
@@ -80,7 +83,9 @@ TEST(ndarray, negative_ones)
   }
 
   // check that sign(-) = -1
-  test_array_2.Sign(test_array);
+  test_array_2 = test_array;
+  fetch::math::Sign(test_array_2);
+
   for (std::size_t i = 0; i < n; ++i)
   {
     ASSERT_TRUE(test_array_2[i] == -1);
@@ -99,7 +104,9 @@ TEST(ndarray, positive_ones)
     ASSERT_TRUE(test_array[i] >= 0);
   }
 
-  test_array_2.Sign(test_array);
+  test_array_2 = test_array;
+  fetch::math::Sign(test_array_2);
+
   for (std::size_t i = 0; i < n; ++i)
   {
     ASSERT_TRUE(test_array_2[i] == 1);

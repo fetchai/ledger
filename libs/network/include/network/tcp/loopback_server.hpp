@@ -32,9 +32,16 @@ std::atomic<std::size_t> openSessions{0};
 class BasicLoopback : public std::enable_shared_from_this<BasicLoopback>
 {
 public:
-  BasicLoopback(asio::ip::tcp::tcp::socket socket) : socket_(std::move(socket)) { openSessions++; }
+  BasicLoopback(asio::ip::tcp::tcp::socket socket)
+    : socket_(std::move(socket))
+  {
+    openSessions++;
+  }
 
-  ~BasicLoopback() { openSessions--; }
+  ~BasicLoopback()
+  {
+    openSessions--;
+  }
 
   void Start()
   {
@@ -79,7 +86,8 @@ public:
   static constexpr char const *LOGGING_NAME = "LoopbackServer";
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
-    : port_{port}, networkManager_{num_threads}
+    : port_{port}
+    , networkManager_{num_threads}
   {
     networkManager_.Start();
     networkManager_.Post([this] {
@@ -104,7 +112,10 @@ public:
     }
   }
 
-  ~LoopbackServer() { networkManager_.Stop(); }
+  ~LoopbackServer()
+  {
+    networkManager_.Stop();
+  }
 
 private:
   // IO objects guaranteed to have lifetime less than the
@@ -117,7 +128,10 @@ private:
   void Accept()
   {
     auto strongAccep = acceptor_.lock();
-    if (!strongAccep) return;
+    if (!strongAccep)
+    {
+      return;
+    }
     strongAccep->async_accept(
         [this, strongAccep](std::error_code ec, asio::ip::tcp::tcp::socket socket) {
           if (!ec)

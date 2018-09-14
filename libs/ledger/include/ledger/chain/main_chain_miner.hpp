@@ -53,7 +53,10 @@ public:
   {
   }
 
-  ~MainChainMiner() { Stop(); }
+  ~MainChainMiner()
+  {
+    Stop();
+  }
 
   void Start()
   {

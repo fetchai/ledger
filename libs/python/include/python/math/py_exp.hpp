@@ -18,22 +18,32 @@
 //------------------------------------------------------------------------------
 
 #include "math/exp.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
 namespace math {
 
-template <uint8_t N, uint64_t C, bool O>
-void BuildExp(std::string const &custom_name, pybind11::module &module)
+template <typename A>
+inline A WrapperExp(A const &a, A &b)
 {
-
-  namespace py = pybind11;
-  py::class_<Exp<N, C, O>>(module, custom_name.c_str())
-      .def(py::init<const Exp<N, C, O> &>())
-      .def(py::init<>())
-      //    .def(py::self = py::self )
-      .def("SetCoefficient", &Exp<N, C, O>::SetCoefficient);
+  Exp(a, b);
+  return b;
 }
 
-}  // namespace math
-}  // namespace fetch
+inline void BuildExpStatistics(std::string const &custom_name, pybind11::module &module)
+{
+  using namespace fetch::math::linalg;
+  using namespace fetch::memory;
+
+  namespace py = pybind11;
+  module.def(custom_name.c_str(), &WrapperExp<Matrix<double>>)
+      .def(custom_name.c_str(), &WrapperExp<Matrix<float>>)
+      .def(custom_name.c_str(), &WrapperExp<RectangularArray<double>>)
+      .def(custom_name.c_str(), &WrapperExp<RectangularArray<float>>)
+      .def(custom_name.c_str(), &WrapperExp<NDArray<double>>)
+      .def(custom_name.c_str(), &WrapperExp<NDArray<float>>);
+}
+};  // namespace math
+};  // namespace fetch

@@ -63,8 +63,9 @@ public:
 
   ~TCPClientImplementation()
   {
+    // TODO(EJF): In develop destructing_ = true; was being set here
 #if 1
-    if (!Closed() && !postedClose_)
+    if (!Closed() && !posted_close_)
     {
       Close();
     }
@@ -96,12 +97,18 @@ public:
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       // We get IO objects from the network manager, they will only be strong
       // while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
-      if (!strand) return;
+      if (!strand)
+      {
+        return;
+      }
       {
         std::lock_guard<mutex_type> lock(io_creation_mutex_);
         strand_ = strand;
@@ -109,13 +116,16 @@ public:
 
       strand->post([this, self, host, port, strand] {
         shared_self_type selfLock = self.lock();
-        if (!selfLock) return;
+        if (!selfLock)
+        {
+          return;
+        }
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
           std::lock_guard<mutex_type> lock(io_creation_mutex_);
-          if (!postedClose_)
+          if (!posted_close_)
           {
             socket_ = socket;
           }
@@ -126,7 +136,10 @@ public:
         auto cb = [this, self, res, socket, strand, port](std::error_code ec,
                                                           resolver_type::iterator) {
           shared_self_type selfLock = self.lock();
-          if (!selfLock) return;
+          if (!selfLock)
+          {
+            return;
+          }
 
           LOG_STACK_TRACE_POINT;
 
@@ -200,18 +213,24 @@ public:
     networkManager_.Post([this, self, strand] {
       shared_self_type selfLock   = self.lock();
       auto             strandLock = strand_.lock();
-      if (!selfLock || !strandLock) return;
+      if (!selfLock || !strandLock)
+      {
+        return;
+      }
 
       strandLock->post([this, selfLock] { WriteNext(selfLock); });
     });
   }
 
-  uint16_t Type() const override { return AbstractConnection::TYPE_OUTGOING; }
+  uint16_t Type() const override
+  {
+    return AbstractConnection::TYPE_OUTGOING;
+  }
 
   void Close() override
   {
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
-    postedClose_                          = true;
+    posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
 
@@ -230,7 +249,10 @@ public:
     });
   }
 
-  bool Closed() override { return socket_.expired(); }
+  bool Closed() override
+  {
+    return socket_.expired();
+  }
 
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
@@ -247,7 +269,7 @@ private:
 
   mutable mutex_type can_write_mutex_;
   bool               can_write_{true};
-  bool               postedClose_ = false;
+  bool               posted_close_ = false;
 
   mutable mutex_type callback_mutex_;
   std::atomic<bool>  connected_{false};
@@ -269,7 +291,10 @@ private:
 
     auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {
@@ -332,7 +357,10 @@ private:
     auto      socket = socket_.lock();
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {
@@ -446,14 +474,6 @@ private:
       SignalLeave();
     }
   }
-
-  /*
-  void PushMessage(message_type message)
-  {
-    std::lock_guard< mutex_type > lock(callback_mutex_);
-    if(on_push_message_) on_push_message_(message);
-  }
-  */
 };
 
 }  // namespace network

@@ -49,7 +49,9 @@ public:
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager>              manager)
-    : socket_(std::move(socket)), manager_(std::move(manager)), write_mutex_(__LINE__, __FILE__)
+    : socket_(std::move(socket))
+    , manager_(std::move(manager))
+    , write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
@@ -78,7 +80,10 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
-    if (!ptr) return;
+    if (!ptr)
+    {
+      return;
+    }
 
     ptr->Leave(this->handle());
   }
@@ -87,7 +92,10 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
-    if (!ptr) return;
+    if (!ptr)
+    {
+      return;
+    }
 
     ptr->Join(shared_from_this());
     ReadHeader();
@@ -113,7 +121,10 @@ public:
     }
   }
 
-  uint16_t Type() const override { return AbstractConnection::TYPE_INCOMING; }
+  uint16_t Type() const override
+  {
+    return AbstractConnection::TYPE_INCOMING;
+  }
 
   void Close() override {
     shutting_down_ = true;
@@ -125,11 +136,15 @@ public:
     }
   }
 
-  bool Closed() override {
+  bool Closed() override
+  {
     return static_cast<bool>(socket_.lock());
   }
 
-  bool is_alive() const override { return !static_cast<bool>(socket_.lock()); }
+  bool is_alive() const override
+  {
+    return !static_cast<bool>(socket_.lock());
+  }
 
 private:
   void ReadHeader()
@@ -139,7 +154,10 @@ private:
 
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
-    if (!socket_ptr) return;
+    if (!socket_ptr)
+    {
+      return;
+    }
 
     FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Waiting for next header.");
     auto self(shared_from_this());
@@ -172,7 +190,10 @@ private:
       return;
 
     auto socket_ptr = socket_.lock();
-    if (!socket_ptr) return;
+    if (!socket_ptr)
+    {
+      return;
+    }
 
     byte_array::ByteArray message;
 
@@ -180,7 +201,10 @@ private:
     {
       FETCH_LOG_DEBUG(LOGGING_NAME,"Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
-      if (!ptr) return;
+      if (!ptr)
+      {
+        return;
+      }
       ptr->Leave(this->handle());
       return;
     }
@@ -232,7 +256,10 @@ private:
 
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
-    if (!socket_ptr) return;
+    if (!socket_ptr)
+    {
+      return;
+    }
 
     write_mutex_.lock();
 
@@ -252,7 +279,10 @@ private:
     auto self = shared_from_this();
     auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
       auto ptr = manager_.lock();
-      if (!ptr) return;
+      if (!ptr)
+      {
+        return;
+      }
 
       if (!ec)
       {

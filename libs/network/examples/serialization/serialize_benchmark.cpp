@@ -24,8 +24,8 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
 
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 #include <chrono>
 #include <vector>
 
@@ -49,15 +49,23 @@ std::vector<ByteArray> TestData;
 class Implementation
 {
 public:
-  std::vector<ByteArray> GetData() { return TestData; }
+  std::vector<ByteArray> GetData()
+  {
+    return TestData;
+  }
 
-  ByteArray GetData2() { return TestString; }
+  ByteArray GetData2()
+  {
+    return TestString;
+  }
 };
 
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Implementation(), Protocol()
+  ServiceProtocol()
+    : Implementation()
+    , Protocol()
   {
 
     this->Expose(GET, new CallableClassMember<Implementation, std::vector<ByteArray>()>(
@@ -71,7 +79,8 @@ public:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm) : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager *tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, new ServiceProtocol());
   }

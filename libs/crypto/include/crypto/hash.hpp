@@ -21,6 +21,7 @@
 
 namespace fetch {
 namespace crypto {
+
 template <typename T>
 byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
 {
@@ -28,9 +29,8 @@ byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
 
   hasher.Reset();
   hasher.Update(str);
-  hasher.Final();
-
-  return hasher.digest();
+  return hasher.Final();
 }
+
 }  // namespace crypto
 }  // namespace fetch

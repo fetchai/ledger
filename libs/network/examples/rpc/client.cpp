@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/client.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 #include <iostream>
 using namespace fetch::service;
@@ -56,7 +56,10 @@ int main()
   auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
-  if (p1->IsWaiting()) std::cout << "p1 is not yet fulfilled" << std::endl;
+  if (p1->IsWaiting())
+  {
+    std::cout << "p1 is not yet fulfilled" << std::endl;
+  }
 
   FETCH_LOG_PROMISE();
   p1->Wait();

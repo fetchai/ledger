@@ -81,7 +81,10 @@ public:
   void Start()
   {
     FETCH_LOG_DEBUG(LOGGING_NAME,"Starting syncronisation of blocks");
-    if (running_) return;
+    if (running_)
+    {
+      return;
+    }
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
 
@@ -108,7 +111,6 @@ public:
   void PublishBlock(BlockType const &blk)
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_WARN(LOGGING_NAME,"MINED A BLOCK:" + blk.summarise());
     Publish(BLOCK_PUBLISH, blk);
   }
 
@@ -143,7 +145,10 @@ private:
 
   void IdleUntilPeers()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     if (register_.number_of_services() == 0)
     {
@@ -161,7 +166,10 @@ private:
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME,"Fetching blocks from peer");
 
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     using service_map_type = typename R::service_map_type;
     using service_map_items          = typename service_map_type::value_type;
@@ -346,14 +354,20 @@ private:
 #if 0
   void RealisePromises()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
     std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_size_));
 
     for (auto &p : block_list_promises_)
     {
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
 
       incoming_objects_.clear();
       if (!p.Wait(100, false))
@@ -363,7 +377,10 @@ private:
 
       p.template As<std::vector<BlockType>>(incoming_objects_);
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
       bool                  loose = false;

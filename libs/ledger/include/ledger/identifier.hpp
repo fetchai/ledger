@@ -117,7 +117,10 @@ inline std::string Identifier::name_space() const
  *
  * @return The fully qualified name
  */
-inline std::string const &Identifier::full_name() const { return full_; }
+inline std::string const &Identifier::full_name() const
+{
+  return full_;
+}
 
 /**
  * Parses an fully qualified name
@@ -162,7 +165,10 @@ inline std::string const &Identifier::operator[](std::size_t index) const
  * @param other The reference to the other identifier
  * @return true if both identifiers are the same, otherwise false
  */
-inline bool Identifier::operator==(Identifier const &other) const { return (full_ == other.full_); }
+inline bool Identifier::operator==(Identifier const &other) const
+{
+  return (full_ == other.full_);
+}
 
 /**
  * Inequality operator
@@ -170,7 +176,10 @@ inline bool Identifier::operator==(Identifier const &other) const { return (full
  * @param other The reference to the other identifier
  * @return true if identifiers are not the same, otherwise false
  */
-inline bool Identifier::operator!=(Identifier const &other) const { return (full_ != other.full_); }
+inline bool Identifier::operator!=(Identifier const &other) const
+{
+  return (full_ != other.full_);
+}
 
 /**
  * Append an element to a name

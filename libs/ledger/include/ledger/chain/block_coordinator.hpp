@@ -38,11 +38,15 @@ public:
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
-    : chain_{mainChain}, execution_manager_{executionManager}
+  BlockCoordinator(chain::MainChain &chain, ledger::ExecutionManagerInterface &execution_manager)
+    : chain_{chain}
+    , execution_manager_{execution_manager}
   {}
 
-  ~BlockCoordinator() { Stop(); }
+  ~BlockCoordinator()
+  {
+    Stop();
+  }
 
   /**
    * Called whenever a new block has been generated from the miner

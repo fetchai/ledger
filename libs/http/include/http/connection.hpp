@@ -46,7 +46,9 @@ public:
   static constexpr char const *LOGGING_NAME = "HTTPConnection";
 
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
-    : socket_(std::move(socket)), manager_(manager), write_mutex_(__LINE__, __FILE__)
+    : socket_(std::move(socket))
+    , manager_(manager)
+    , write_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -66,7 +68,10 @@ public:
 
     is_open_ = true;
     handle_  = manager_.Join(shared_from_this());
-    if (is_open_) ReadHeader();
+    if (is_open_)
+    {
+      ReadHeader();
+    }
   }
 
   void Send(HTTPResponse const &response) override
@@ -84,9 +89,15 @@ public:
     }
   }
 
-  std::string Address() override { return socket_.remote_endpoint().address().to_string(); }
+  std::string Address() override
+  {
+    return socket_.remote_endpoint().address().to_string();
+  }
 
-  asio::ip::tcp::tcp::socket &socket() { return socket_; }
+  asio::ip::tcp::tcp::socket &socket()
+  {
+    return socket_;
+  }
 
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
@@ -97,7 +108,9 @@ public:
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
+    {
       buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
+    }
 
     auto self = shared_from_this();
 
@@ -113,7 +126,11 @@ public:
       else
       {
         request->ParseHeader(*buffer_ptr, len);
-        if (is_open_) ReadBody(buffer_ptr, request);
+
+        if (is_open_)
+        {
+          ReadBody(buffer_ptr, request);
+        }
       }
     };
 
@@ -132,7 +149,10 @@ public:
 
       manager_.PushRequest(handle_, *request);
 
-      if (is_open_) ReadHeader(buffer_ptr);
+      if (is_open_)
+      {
+        ReadHeader(buffer_ptr);
+      }
       return;
     }
 
@@ -147,7 +167,10 @@ public:
       }
       else
       {
-        if (is_open_) ReadBody(buffer_ptr, request);
+        if (is_open_)
+        {
+          ReadBody(buffer_ptr, request);
+        }
       }
     };
 

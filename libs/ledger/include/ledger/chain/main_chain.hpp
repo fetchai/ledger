@@ -77,10 +77,13 @@ public:
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction
-  MainChain(uint32_t minerNumber = std::numeric_limits<uint32_t>::max()) : minerNumber_{minerNumber}
+  // TODO(EJF): Rename minerNumber_
+  MainChain(uint32_t miner_number = std::numeric_limits<uint32_t>::max())
+    : minerNumber_{miner_number}
   {
     BlockType genesis;
     genesis.UpdateDigest();
+	// TODO(EJF): Ensure that this is correct
     //genesis.body().previous_hash = genesis.hash();
 
     // Add genesis to block chain
@@ -186,9 +189,15 @@ public:
     return block;
   }
 
-  uint64_t weight() const { return heaviest_.first; }
+  uint64_t weight() const
+  {
+    return heaviest_.first;
+  }
 
-  std::size_t totalBlocks() const { return blockChain_.size(); }
+  std::size_t totalBlocks() const
+  {
+    return blockChain_.size();
+  }
 
   std::vector<BlockType> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
@@ -316,7 +325,10 @@ private:
   {
     fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
     return;  // TODO(remove before flight)
-    if (!saving_to_file_) return;
+    if (!saving_to_file_)
+    {
+      return;
+    }
 
     // Add confirmed blocks to file
     BlockType block  = blockChain_.at(heaviest_.second);

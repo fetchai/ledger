@@ -149,7 +149,7 @@ def test_project(build_root):
     if not os.path.isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
-    exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root)
+    exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
 
     # load the test format
     test_tag_path = os.path.join(build_root, 'Testing', 'TAG')

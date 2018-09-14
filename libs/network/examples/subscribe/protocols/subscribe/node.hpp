@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-//#include"network/service/client.hpp"
+//#include"network/service/service_client.hpp"
 #include "network/service/publication_feed.hpp"
 #include "protocol.hpp"
 
@@ -27,8 +27,10 @@ namespace subscribe {
 class Node : public fetch::service::HasPublicationFeed
 {
 public:
-  Node() {}
-  ~Node() {}
+  Node()
+  {}
+  ~Node()
+  {}
 
   void SendMessage(std::string const &mess)
   {

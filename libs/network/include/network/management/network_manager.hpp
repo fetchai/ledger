@@ -45,7 +45,8 @@ public:
     pointer_ = std::make_shared<implementation_type>(threads);
   }
 
-  NetworkManager(NetworkManager const &other) : is_copy_(true)
+  NetworkManager(NetworkManager const &other)
+    : is_copy_(true)
   {
     if (other.is_copy_)
     {
@@ -71,7 +72,10 @@ public:
 
   void Start()
   {
-    if (is_copy_) return;
+    if (is_copy_)
+    {
+      return;
+    }
     auto ptr = lock();
     if (ptr)
     {
@@ -116,9 +120,15 @@ public:
     }
   }
 
-  bool is_valid() { return (!is_copy_) || bool(weak_pointer_.lock()); }
+  bool is_valid()
+  {
+    return (!is_copy_) || bool(weak_pointer_.lock());
+  }
 
-  bool is_primary() { return (!is_copy_); }
+  bool is_primary()
+  {
+    return (!is_copy_);
+  }
 
   pointer_type lock()
   {

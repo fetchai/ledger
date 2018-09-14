@@ -25,7 +25,9 @@
 class AEAProtocol : public AEAFunctionality, public fetch::service::Protocol
 {
 public:
-  AEAProtocol(std::string const &info) : AEAFunctionality(info), fetch::service::Protocol()
+  AEAProtocol(std::string const &info)
+    : AEAFunctionality(info)
+    , fetch::service::Protocol()
   {
 
     using namespace fetch::service;

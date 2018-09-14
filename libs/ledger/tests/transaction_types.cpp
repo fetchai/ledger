@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include <iostream>
 
 #include "ledger/chain/helper_functions.hpp"
@@ -103,7 +104,13 @@ int main(int argc, char const **argv)
         std::cout << "\n===========================================" << std::endl;
         std::cout << ToHex(transaction.summary().transaction_hash) << std::endl;
         std::cout << ToHex(transaction.data()) << std::endl;
-        std::cout << ToHex(transaction.signature()) << std::endl;
+        for (auto const &sig : transaction.signatures())
+        {
+          std::cout << ToHex(sig.first.identifier()) << std::endl;
+          std::cout << ToHex(sig.first.parameters()) << std::endl;
+          std::cout << ToHex(sig.second.signature_data) << std::endl;
+          std::cout << ToHex(sig.second.type) << std::endl;
+        }
         std::cout << transaction.contract_name() << std::endl;
       }
     };

@@ -43,12 +43,11 @@ namespace chain {
 class BlockGenerator
 {
 public:
-  using transaction_type     = std::shared_ptr<miner::TransactionItem>;
-  using block_index_map_type = std::vector<std::vector<uint64_t>>;
-  using block_fees_list_type = std::vector<uint64_t>;
-  using digest_type          = TransactionSummary::digest_type;
-  using transaction_map_type =
-      std::unordered_map<digest_type, transaction_type, crypto::CallableFNV>;
+  using transaction_type        = std::shared_ptr<miner::TransactionItem>;
+  using block_index_map_type    = std::vector<std::vector<uint64_t>>;
+  using block_fees_list_type    = std::vector<uint64_t>;
+  using digest_type             = TransactionSummary::digest_type;
+  using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
   using transaction_list_type   = std::vector<transaction_type>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
   using annealer_type           = fetch::optimisers::BinaryAnnealer;
@@ -78,7 +77,10 @@ public:
     // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)
     {
-      if (all_.find(tx->summary().transaction_hash) != all_.end()) return;
+      if (all_.find(tx->summary().transaction_hash) != all_.end())
+      {
+        return;
+      }
     }
 
     all_[tx->summary().transaction_hash] = tx;
@@ -204,40 +206,70 @@ public:
   /* Returns a constant reference to the vector containing unspent
    * transactions.
    */
-  transaction_list_type const &unspent() const { return unspent_; };
+  transaction_list_type const &unspent() const
+  {
+    return unspent_;
+  };
 
-  transaction_list_type &unspent() { return unspent_; }
+  transaction_list_type &unspent()
+  {
+    return unspent_;
+  }
 
-  transaction_matrix_type const &staged() const { return staged_; }
+  transaction_matrix_type const &staged() const
+  {
+    return staged_;
+  }
 
-  transaction_matrix_type &staged() { return staged_; }
+  transaction_matrix_type &staged()
+  {
+    return staged_;
+  }
 
   /* Returns the number of unspent transactions.
    */
-  std::size_t unspent_count() const { return unspent_.size(); }
+  std::size_t unspent_count() const
+  {
+    return unspent_.size();
+  }
 
   /* Returns the lane count.
    */
-  std::size_t lane_count() { return lane_count_; }
+  std::size_t lane_count()
+  {
+    return lane_count_;
+  }
 
   /* Returns the batch size.
    */
-  std::size_t batch_size() { return batch_size_; }
+  std::size_t batch_size()
+  {
+    return batch_size_;
+  }
 
   /* Returns a constant reference to the last generated block.
    *
    * TODO(issue 30): change to system block
    */
-  block_index_map_type const &block() const { return block_; }
+  block_index_map_type const &block() const
+  {
+    return block_;
+  }
 
   /* Returns a constant reference to a vector with the fees earned from
    * each slice.
    */
-  block_fees_list_type const &block_fees() const { return block_fees_; }
+  block_fees_list_type const &block_fees() const
+  {
+    return block_fees_;
+  }
 
   /* Returns the absolute number of
    */
-  std::size_t const &block_occupancy() { return occupancy_; }
+  std::size_t const &block_occupancy()
+  {
+    return occupancy_;
+  }
 
   /*
   std::vector< int16_t > const & block() const {
@@ -328,7 +360,10 @@ private:
 
     std::vector<int> group_matrix;
     group_matrix.resize(batch_size * batch_size);
-    for (auto &b : group_matrix) b = 0;
+    for (auto &b : group_matrix)
+    {
+      b = 0;
+    }
 
     for (std::size_t i = 0; i < lane_count_; ++i)
     {

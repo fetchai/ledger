@@ -28,10 +28,16 @@ using namespace fetch::byte_array;
 
 bool equals(Tokenizer const &tokenizer, std::vector<fetch::byte_array::ConstByteArray> const &ref)
 {
-  if (ref.size() != tokenizer.size()) return false;
+  if (ref.size() != tokenizer.size())
+  {
+    return false;
+  }
   for (std::size_t i = 0; i < ref.size(); ++i)
   {
-    if (ref[i] != tokenizer[i]) return false;
+    if (ref[i] != tokenizer[i])
+    {
+      return false;
+    }
   }
 
   return true;
@@ -39,10 +45,16 @@ bool equals(Tokenizer const &tokenizer, std::vector<fetch::byte_array::ConstByte
 
 bool equals(Tokenizer const &tokenizer, std::vector<int> const &ref)
 {
-  if (ref.size() != tokenizer.size()) return false;
+  if (ref.size() != tokenizer.size())
+  {
+    return false;
+  }
   for (std::size_t i = 0; i < ref.size(); ++i)
   {
-    if (ref[i] != tokenizer[i].type()) return false;
+    if (ref[i] != tokenizer[i].type())
+    {
+      return false;
+    }
   }
 
   return true;

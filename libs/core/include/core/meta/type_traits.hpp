@@ -24,8 +24,14 @@
 namespace fetch {
 namespace meta {
 
+template <typename T>
+constexpr bool IsUnsignedInteger = std::is_unsigned<T>::value && (!std::is_same<T, bool>::value);
+
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
+
+template <typename T, typename R = T>
+using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 template <typename T, typename R = T>
 using IfIsIntegerLike = EnableIf<(!std::is_same<T, bool>::value) && std::is_integral<T>::value, R>;
@@ -45,6 +51,12 @@ using IfIsByteArrayLike = EnableIf<IsByteArrayLike<T>, R>;
 
 template <typename T, typename R = T>
 using IfIsStdStringLike = EnableIf<std::is_same<T, std::string>::value, R>;
+
+template <typename T, typename R = T>
+using IfIsUnsignedLike = EnableIf<IsUnsignedInteger<T>, R>;
+
+template <typename T, typename R = T>
+using IfIsPodLike = EnableIf<std::is_pod<T>::value, R>;
 
 }  // namespace meta
 }  // namespace fetch

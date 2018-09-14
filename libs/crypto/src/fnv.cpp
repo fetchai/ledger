@@ -16,21 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "crypto/ecdsa.hpp"
-//#include "core/byte_array/encoders.hpp"
-
-#include "gtest/gtest.h"
-//#include "gmock/gmock.h"
+#include "crypto/fnv.hpp"
 
 namespace fetch {
 namespace crypto {
-namespace openssl {
-namespace memory {
 
-namespace {
-}  // namespace
+std::size_t FNV::hashSize() const
+{
+  return base_impl_type::size_in_bytes;
+}
 
-}  // namespace memory
-}  // namespace openssl
+void FNV::Reset()
+{
+  reset();
+}
+
+bool FNV::Update(uint8_t const *data_to_hash, std::size_t const &size)
+{
+  update(data_to_hash, size);
+  return true;
+}
+
+void FNV::Final(uint8_t *hash, std::size_t const &size)
+{
+  if (size < base_impl_type::size_in_bytes)
+  {
+    throw std::runtime_error("size of input buffer is smaller than hash size.");
+  }
+
+  auto hash_ptr = reinterpret_cast<context_type *>(hash);
+  *hash_ptr     = context();
+}
+
 }  // namespace crypto
 }  // namespace fetch

@@ -1,6 +1,6 @@
 #pragma once
 #include"serializers/referenced_byte_array.hpp"
-#include"service/client.hpp"
+#include"service/service_client.hpp"
 
 #include<memory>
 

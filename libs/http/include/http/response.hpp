@@ -34,7 +34,9 @@ public:
 
   explicit HTTPResponse(byte_array::ConstByteArray const &body,
                         MimeType mime = {".html", "text/html"}, Status status = Status::SUCCESS_OK)
-    : body_(body), mime_(std::move(mime)), status_(status)
+    : body_(std::move(body))
+    , mime_(std::move(mime))
+    , status_(status)
   {
     header_.Add("content-length", int64_t(body_.size()));
     header_.Add("content-type", mime_.type);

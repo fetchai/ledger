@@ -21,8 +21,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -71,7 +71,10 @@ enum
 class Implementation
 {
 public:
-  const std::vector<transaction_type> &PullData() { return TestData; }
+  const std::vector<transaction_type> &PullData()
+  {
+    return TestData;
+  }
 
   void PushData(std::vector<transaction_type> &data)
   {
@@ -87,7 +90,8 @@ public:
 class ServiceProtocol : public Implementation, public Protocol
 {
 public:
-  ServiceProtocol() : Protocol()
+  ServiceProtocol()
+    : Protocol()
   {
     this->Expose(PULL, (Implementation *)this, &Implementation::PullData);
     this->Expose(PUSH, (Implementation *)this, &Implementation::PushData);
@@ -98,7 +102,8 @@ public:
 class BenchmarkService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  BenchmarkService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(SERVICE, &serviceProtocol_);
   }

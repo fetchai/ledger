@@ -45,8 +45,8 @@ int main()
       for (int64_t i = 0; i < N; ++i)
       {
 
-        SILENT_EXPECT((stack.size() == i));
-        all_pass &= (stack.size() == i);
+        SILENT_EXPECT((stack.size() == std::size_t(i)));
+        all_pass &= (stack.size() == std::size_t(i));
 
         uint64_t val = lfg();
         reference.push(val);

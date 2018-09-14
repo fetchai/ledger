@@ -88,7 +88,10 @@ public:
       temp["hashcurrent"]  = ToBase64(i.hash());
       temp["hashprev"]     = ToBase64(i.body().previous_hash);
       blocks[index++]      = temp;
-      if (index >= limit) break;
+      if (index >= limit)
+      {
+        break;
+      }
     }
 
     script::Variant result = script::Variant::Object();
@@ -169,7 +172,10 @@ public:
     return block.loose();
   }
 
-  BlockType const &HeaviestBlock() const { return chain_->HeaviestBlock(); }
+  BlockType const &HeaviestBlock() const
+  {
+    return chain_->HeaviestBlock();
+  }
 
   void StartMining()
   {

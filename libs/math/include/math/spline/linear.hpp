@@ -58,7 +58,10 @@ public:
     return (data_[i + 1] - data_[i]) * z + data_[i];
   }
 
-  std::size_t size() const { return data_.size(); }
+  std::size_t size() const
+  {
+    return data_.size();
+  }
 
 private:
   float_type              range_from_, range_to_, range_span_;

@@ -34,13 +34,16 @@ template <typename FirstT, typename SecondT>
 class TransactionList
 {
 
-  using hasher_type = crypto::CallableFNV;
+  using hasher_type = std::hash<byte_array::ConstByteArray>;
 
 public:
 
   static constexpr char const *LOGGING_NAME = "TransactionList";
 
-  TransactionList() { validArray_.fill(0); }
+  TransactionList()
+  {
+    validArray_.fill(0);
+  }
 
   TransactionList(TransactionList &rhs)  = delete;
   TransactionList(TransactionList &&rhs) = delete;

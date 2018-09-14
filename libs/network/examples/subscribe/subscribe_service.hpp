@@ -40,7 +40,8 @@ public:
    * Constructor for SubscribeService, will create a server to respond to rpc
    * calls
    */
-  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort) : ServiceServer(tcpPort, tm)
+  SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort)
+    : ServiceServer(tcpPort, tm)
   {
     // Macro used for debugging
     LOG_STACK_TRACE_POINT;
@@ -57,7 +58,10 @@ public:
   }
 
   // We can use this to send messages to interested nodes
-  void SendMessage(std::string const &mes) { subscribeProto_->SendMessage(mes); }
+  void SendMessage(std::string const &mes)
+  {
+    subscribeProto_->SendMessage(mes);
+  }
 
 private:
   std::unique_ptr<protocols::SubscribeProtocol> subscribeProto_;
