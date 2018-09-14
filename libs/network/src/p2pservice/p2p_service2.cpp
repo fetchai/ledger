@@ -16,6 +16,9 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management)
   // register the services with the rpc server
   rpc_server_.Add(PROTOCOL_RESOLVER, &resolver_proto_);
   trust_system = std::make_shared<P2PTrust<Identity>>();
+
+  this -> min_peers = 4;
+  this -> max_peers = 8;
 }
 
 void P2PService2::Start(P2PService2::PeerList const &initial_peer_list, P2PService2::Uri my_uri)
@@ -78,7 +81,7 @@ void P2PService2::WorkCycle()
   }
 
   // not enough, schedule some connects.
-  while((connections.size() < 1000) && (possibles_.size() > 0))
+  while((connections.size() < min_peers) && (possibles_.size() > 0))
   {
     auto next = possibles_ . front();
     possibles_.pop_front();
@@ -118,7 +121,7 @@ void P2PService2::WorkCycle()
 
   // gte more peers if we need them..
 
-  if (possibles_.size() == 0)
+  if (possibles_.size() < max_peers)
   {
     auto peerlist_updates_needed_and_not_in_flight = outstanding_peerlists_ . FilterOutInflight( connected_peers );
     if (peerlist_updates_needed_and_not_in_flight . size() == 0)
@@ -251,6 +254,12 @@ void P2PService2::PeerTrustEvent(const Identity &          identity
                                  , P2PTrustFeedbackSubject subject
                                  , P2PTrustFeedbackQuality quality)
 {
+}
+
+void P2PService2::SetPeerGoals(uint32_t min, uint32_t max)
+{
+  this -> min_peers = min;
+  this -> max_peers = max;
 }
 
 void P2PService2::SetLocalManifest(Manifest &&manifest)

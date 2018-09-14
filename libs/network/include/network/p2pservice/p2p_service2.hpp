@@ -62,6 +62,8 @@ public:
   void Start(PeerList const & initial_peer_list, Uri my_uri);
   void Stop();
 
+  void SetPeerGoals(uint32_t min, uint32_t max);
+
   Identity const &identity() const { return muddle_ . identity(); }
   MuddleEndpoint& AsEndpoint() { return muddle_ . AsEndpoint(); }
 
@@ -109,6 +111,8 @@ private:
 
   P2PRemoteManifestCache manifest_cache_;
   std::list<network::Uri> possibles_; // addresses we might use in the future.
+
+  uint32_t min_peers, max_peers;
 };
 
 } // namespace p2p
