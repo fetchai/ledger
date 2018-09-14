@@ -28,15 +28,17 @@
 namespace fetch {
 namespace serializers {
 
-class ByteArrayBuffer
+template<typename X=void>
+class ByteArrayBufferEx
 {
 public:
-  using self_type = ByteArrayBuffer;
+  using self_type = ByteArrayBufferEx;
+  using byte_array_type = byte_array::ByteArray;
 
-  ByteArrayBuffer()
+  ByteArrayBufferEx()
   {}
 
-  ByteArrayBuffer(byte_array::ByteArray s)
+  ByteArrayBufferEx(byte_array::ByteArray s)
   {
     data_ = s;
   }
@@ -80,40 +82,40 @@ public:
   }
 
   template <typename T>
-  ByteArrayBuffer &operator<<(T const *val)
+  self_type &operator<<(T const *val)
   {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  ByteArrayBuffer &operator<<(T const &val)
+  self_type &operator<<(T const &val)
   {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  ByteArrayBuffer &operator>>(T &val)
+  self_type &operator>>(T &val)
   {
     Deserialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  ByteArrayBuffer &Pack(T const *val)
+  self_type &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  ByteArrayBuffer &Pack(T const &val)
+  self_type &Pack(T const &val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  ByteArrayBuffer &Unpack(T &val)
+  self_type &Unpack(T &val)
   {
     return this->operator>>(val);
   }
@@ -141,23 +143,10 @@ public:
     return data_;
   }
 
-  //template<typename SIZE_COUNTER, typename ...ARGS>
-  //self_type & Append(ARGS const&... args)
-  //{
-  //  SIZE_COUNTER counter;
-  //  counter.Allocate(Tell());
-  //  counter.Seek(Tell());
-
-  //  AppendInternal(counter, args...);
-  //  Seek(counter.Tell());
-
-  //  return *this;
-  //}
-
   template<typename ...ARGS>
   self_type & Append(ARGS const&... args)
   {
-    serializers::SizeCounter<void> counter;
+    serializers::SizeCounter<self_type> counter;
     counter.Allocate(Tell());
     counter.Seek(Tell());
 
@@ -189,8 +178,11 @@ private:
     }
   }
 
-  byte_array::ByteArray data_;
+  byte_array_type data_;
   std::size_t pos_ = 0;
 };
+
+using ByteArrayBuffer = ByteArrayBufferEx<>;
+
 }  // namespace serializers
 }  // namespace fetch

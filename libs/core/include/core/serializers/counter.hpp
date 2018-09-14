@@ -26,8 +26,6 @@
 namespace fetch {
 namespace serializers {
 
-class TypedByteArrayBuffer;
-
 template <typename S>
 class SizeCounter
 {
@@ -104,59 +102,5 @@ private:
   std::size_t pos_ = 0;
 };
 
-template <>
-class SizeCounter<TypedByteArrayBuffer>
-{
-public:
-  void Allocate(std::size_t const &val)
-  {
-    size_ += val;
-  }
-
-  void Reserve(std::size_t const &val)
-  {}
-
-  void WriteBytes(uint8_t const *arr, std::size_t const &size)
-  {}
-  void ReadBytes(uint8_t const *arr, std::size_t const &size)
-  {}
-
-  void SkipBytes(std::size_t const &size)
-  {}
-
-  template <typename T>
-  SizeCounter &operator<<(T const &val)
-  {
-    Serialize(*this, TypeRegister<void>::value_type(TypeRegister<T>::value));
-    Serialize(*this, val);
-    return *this;
-  }
-
-  template <typename T>
-  SizeCounter &Pack(T const &val)
-  {
-    return this->operator<<(val);
-  }
-
-  void Seek(std::size_t const &p)
-  {}
-  std::size_t Tell() const
-  {
-    return 0;
-  }
-
-  int64_t bytes_left() const
-  {
-    return 0;
-  }
-
-  std::size_t size() const
-  {
-    return size_;
-  }
-
-private:
-  std::size_t size_ = 0;
-};
 }  // namespace serializers
 }  // namespace fetch
