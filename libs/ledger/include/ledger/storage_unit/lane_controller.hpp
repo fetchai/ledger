@@ -129,6 +129,7 @@ public:
 
   void UseThesePeers(std::set<Uri> uris)
   {
+    std::lock_guard<mutex_type> lock_(services_mutex_);
     auto ident = lane_identity_.lock();
     if (ident)
     {
@@ -136,8 +137,53 @@ public:
       {
         FETCH_LOG_INFO(LOGGING_NAME, ident -> GetLaneNumber(), " -- UseThesePeers: ", uri.ToString());
       }
-      // TODO(kll) Write this.
+
+
+      std::unordered_set<Uri> remove;
+      std::unordered_set<Uri> create;
+
+      for(auto &peer_conn : peer_connections_)
+      {
+        if (uris.find(peer_conn . first) == uris.end())
+        {
+          remove.insert(peer_conn . first);
+        }
+      }
+
+      for(auto &uri : uris)
+      {
+        if (peer_connections_.find(uri) == peer_connections_.end())
+        {
+          create.insert(uri);
+        }
+      }
+
+      for(auto &r : remove)
+      {
+        peer_connections_[r] -> Close();
+        peer_connections_.erase(r);
+      }
+
+      for(auto &c : create)
+      {
+        auto conn = Connect(c);
+        if (conn)
+        {
+          peer_connections_[c] = conn;
+        }
+      }
     }
+  }
+
+  shared_service_client_type Connect(const Uri &uri)
+  {
+    byte_array::ByteArray b;
+    uint16_t port;
+    if (uri.ParseTCP(b, port))
+    {
+      return Connect(b, port);
+    }
+    return shared_service_client_type();
   }
 
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
@@ -250,6 +296,8 @@ private:
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
+
+  std::map<Uri, shared_service_client_type> peer_connections_;
 };
 
 }  // namespace ledger

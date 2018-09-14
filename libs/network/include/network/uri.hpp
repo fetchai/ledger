@@ -20,6 +20,7 @@
 #include "core/logger.hpp"
 #include "network/peer.hpp"
 #include <functional>
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
 namespace network {
@@ -75,6 +76,8 @@ public:
   {
     return data_.size();
   }
+
+  bool ParseTCP(byte_array::ByteArray &b, uint16_t &port) const;
 
   Peer AsPeer() const
   {

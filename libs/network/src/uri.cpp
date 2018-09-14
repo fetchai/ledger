@@ -28,6 +28,8 @@ namespace network {
   static const std::regex URI_FORMAT("^([a-z]+)://(.*)$");
   static const std::regex PEER_FORMAT("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+$");
 
+  static const std::regex TCP_FORMAT("^tcp://([^:]+):([0-9]+)$");
+
   Uri::Uri(std::string const &uristr)
   {
     data_ = uristr;
@@ -77,6 +79,23 @@ std::string Uri::GetRemainder() const
   }
   throw std::invalid_argument(std::string("'") + data_ + "' is not a valid uri getting remainder.");
 }
+
+bool Uri::ParseTCP(byte_array::ByteArray &b, uint16_t &port) const
+{
+  std::smatch matches;
+  std::regex_match(data_, matches, TCP_FORMAT);
+  if (matches.size() == 3)
+  {
+
+    FETCH_LOG_ERROR(LOGGING_NAME, "'", data_, "' --> '", std::string(matches[1]), "' and '", std::string(matches[2]), "'");
+
+    b = std::string(matches[1]);
+    port = uint16_t(std::stoi(std::string(matches[2])));
+    return true;
+  }
+  return false;
+}
+
 
 }
 }
