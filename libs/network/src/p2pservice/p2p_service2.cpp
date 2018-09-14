@@ -128,9 +128,11 @@ void P2PService2::WorkCycle()
     {
       FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
     }
+
     for( auto& identity : peerlist_updates_needed_and_not_in_flight)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: get peers from ", ToHex(identity.identifier()));
+      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: get peers from ", ToBase64(identity.identifier()));
+
       client_ . SetAddress(identity.identifier());
       auto prom = network::PromiseOf<std::vector<network::Uri>>(
         client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS)
