@@ -24,7 +24,7 @@ public:
   using SubscriptionMap = std::unordered_map<ProtocolId, SubscriptionPtr>;
   using Mutex = mutex::Mutex;
 
-  static constexpr char const *LOGGING_NAME = "RpcServer";
+  static constexpr char const *LOGGING_NAME = "MuddleRpcServer";
 
   explicit Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)

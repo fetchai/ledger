@@ -25,7 +25,7 @@ public:
   using SharedHandler = std::shared_ptr<Handler>;
   using WeakHandler = std::weak_ptr<Handler>;
 
-  static constexpr char const *LOGGING_NAME = "RpcClient";
+  static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
   Client(MuddleEndpoint &endpoint, Address const &address, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
