@@ -150,32 +150,26 @@ public:
     counter.Allocate(Tell());
     counter.Seek(Tell());
 
-    AppendInternal(counter, args...);
-    Seek(counter.Tell());
-
-    return *this;
-  }
-
-private:
-  template<typename SIZE_COUNTER, typename T, typename ...ARGS>
-  void AppendInternal(SIZE_COUNTER &counter, T const &arg, ARGS const&... args)
-  {
-    std::size_t const start_pos = counter.Tell();
-
-    counter << arg;
-    AppendInternal(counter, args...);
-
-    Seek(start_pos);
-    *this << arg;
-  }
-
-  template<typename SIZE_COUNTER>
-  void AppendInternal(SIZE_COUNTER &counter)
-  {
+    counter.Append(args...);
     if (size() < counter.size())
     {
       Allocate(counter.size() - size());
     }
+
+    AppendInternal(args...);
+    return *this;
+  }
+
+private:
+  template<typename T, typename ...ARGS>
+  void AppendInternal(T const &arg, ARGS const&... args)
+  {
+    *this << arg;
+    AppendInternal(args...);
+  }
+
+  void AppendInternal()
+  {
   }
 
   byte_array_type data_;

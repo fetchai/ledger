@@ -30,6 +30,8 @@ template <typename S>
 class SizeCounter
 {
 public:
+  using self_type = SizeCounter;
+
   void Allocate(std::size_t const &val)
   {
     size_ += val;
@@ -52,27 +54,27 @@ public:
   }
 
   template <typename T>
-  SizeCounter &operator<<(T const *val)
+  self_type &operator<<(T const *val)
   {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  SizeCounter &operator<<(T const &val)
+  self_type &operator<<(T const &val)
   {
     Serialize(*this, val);
     return *this;
   }
 
   template <typename T>
-  SizeCounter &Pack(T const *val)
+  self_type &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  SizeCounter &Pack(T const &val)
+  self_type &Pack(T const &val)
   {
     return this->operator<<(val);
   }
@@ -97,7 +99,25 @@ public:
     return static_cast<int64_t>(size_ - pos_);
   }
 
+  template<typename ...ARGS>
+  self_type & Append(ARGS const&... args)
+  {
+    AppendInternal(args...);
+    return *this;
+  }
+
 private:
+  template<typename T, typename ...ARGS>
+  void AppendInternal(T const &arg, ARGS const&... args)
+  {
+    *this << arg;
+    AppendInternal(args...);
+  }
+
+  void AppendInternal()
+  {
+  }
+
   std::size_t size_ = 0;
   std::size_t pos_ = 0;
 };
