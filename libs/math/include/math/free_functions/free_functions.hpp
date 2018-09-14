@@ -1614,7 +1614,7 @@ void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
   }
   else
   {
-    TODO_FAIL("Non-trivial ranges not implemented");
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -1730,7 +1730,7 @@ void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
   }
   else
   {
-    TODO_FAIL("Non-trivial ranges not implemented");
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -1854,7 +1854,7 @@ void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
   }
   else
   {
-    TODO_FAIL("Non-trivial ranges not implemented");
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -1991,7 +1991,7 @@ void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
   }
   else
   {
-    TODO_FAIL("Non-trivial ranges not implemented");
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>

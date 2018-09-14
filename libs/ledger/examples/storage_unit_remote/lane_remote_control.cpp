@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   std::string                    host = "localhost";
   uint16_t                       port = params.GetParam<uint16_t>("port", 8080);
 
-  ledger::LaneRemoteControl        remote;
+  ledger::LaneRemoteControl        remote(lane_count);
   std::vector<shared_service_type> services;
 
   for (uint32_t i = 0; i < lane_count; ++i)

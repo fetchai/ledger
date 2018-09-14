@@ -20,7 +20,7 @@
 #include "core/logger.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
-#include "math/exp.hpp"
+#include "math/approx_exp.hpp"
 #include "miner/optimisation/bitvector.hpp"
 
 namespace fetch {
@@ -95,7 +95,7 @@ public:
 
         default:
           B.InlineAndAssign(s.couplings, state_);
-          p = PopCount(B);
+          p = static_cast<int>(B.PopCount());
           break;
         }
 
@@ -186,7 +186,7 @@ public:
       bit_vector_type B    = s.couplings & state_;
       cost_type       sign = cost_type(state_.bit(block, bit));
 
-      ret += sign * (2 * s.local_field + coupling_magnitude_ * PopCount(B));
+      ret += sign * (2 * s.local_field + coupling_magnitude_ * static_cast<int>(B.PopCount()));
       ++bit;
       block += (bit >= 8 * sizeof(bit_data_type));
       bit &= (8 * sizeof(bit_data_type) - 1);

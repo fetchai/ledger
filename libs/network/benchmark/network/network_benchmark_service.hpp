@@ -64,8 +64,6 @@ public:
   {
     TCPServer::Start();
     HTTPServer::Start(http_port_);
-
-    node_->Start();
   }
 
   void Stop()
