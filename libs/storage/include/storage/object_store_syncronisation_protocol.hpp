@@ -333,7 +333,7 @@ private:
         array.Resize(256 / 8);
         array[0] = root;
 
-        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, 8);
+        auto promise = ptr->Call(protocol_, PULL_SUBTREE, array, uint64_t(8));
         subtree_promises_.push_back(std::make_pair(root, std::move(promise)));
       }
     });
@@ -355,7 +355,6 @@ private:
         roots_to_sync_.push(root);
         continue;
       }
-
       promise->template As<std::vector<S>>(incoming_objects_);
 
       store_->WithLock([this]() {
