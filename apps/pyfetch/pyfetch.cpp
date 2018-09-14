@@ -74,7 +74,8 @@ public:
   SWARM_P  py_swarm;
   INTERP_P interpreter;
 
-  PythonContext() {}
+  PythonContext()
+  {}
 
   virtual ~PythonContext()
   {

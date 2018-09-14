@@ -31,7 +31,10 @@ public:
   using header_type = byte_array::ConstByteArray;
 
   ProofOfWork() = default;
-  ProofOfWork(header_type header) { header_ = header; }
+  ProofOfWork(header_type header)
+  {
+    header_ = header;
+  }
 
   bool operator()()
   {
@@ -39,13 +42,10 @@ public:
     hasher.Reset();
     hasher.Update(header_);
     hasher.Update(*this);
-    hasher.Final();
-    digest_ = hasher.digest();
+    digest_ = hasher.Final();
     hasher.Reset();
     hasher.Update(digest_);
-    hasher.Final();
-
-    digest_ = hasher.digest();
+    digest_ = hasher.Final();
 
     return digest_ < target_;
   }
@@ -62,9 +62,18 @@ public:
     assert(header_ == header);
   }
 
-  header_type const &header() const { return header_; }
-  math::BigUnsigned  digest() const { return digest_; }
-  math::BigUnsigned  target() const { return target_; }
+  header_type const &header() const
+  {
+    return header_;
+  }
+  math::BigUnsigned digest() const
+  {
+    return digest_;
+  }
+  math::BigUnsigned target() const
+  {
+    return target_;
+  }
 
 private:
   math::BigUnsigned digest_;

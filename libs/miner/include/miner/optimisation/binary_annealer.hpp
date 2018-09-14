@@ -35,7 +35,7 @@ public:
   using spin_type  = int16_t;
   using state_type = std::vector<spin_type>;
 
-  using exp_type        = math::Exp<0>;
+  using exp_type        = math::ApproxExp<0>;
   using bit_data_type   = uint64_t;
   using bit_vector_type = bitmanip::BitVector;
   using cost_type       = double;
@@ -114,7 +114,10 @@ public:
           break;
         }
 
-        if (update) state_.conditional_flip(block, bit, update);
+        if (update)
+        {
+          state_.conditional_flip(block, bit, update);
+        }
         ++bit;
         block += (bit >= 8 * sizeof(bit_data_type));
         bit &= (8 * sizeof(bit_data_type) - 1);
@@ -126,8 +129,14 @@ public:
 
   void Normalise()
   {
-    if (coupling_magnitude_ == 1.0) return;
-    if (coupling_magnitude_ == 0.0) return;
+    if (coupling_magnitude_ == 1.0)
+    {
+      return;
+    }
+    if (coupling_magnitude_ == 0.0)
+    {
+      return;
+    }
 
     for (std::size_t i = 0; i < size_; ++i)
     {
@@ -223,7 +232,10 @@ public:
     }
   }
 
-  std::size_t const &size() const { return size_; }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
 
   void SetBeta(double beta)
   {
@@ -231,12 +243,27 @@ public:
     fexp_.SetCoefficient(2 * beta_);
   }
 
-  double      beta() const { return beta_; }
-  std::size_t sweeps() const { return sweeps_; }
+  double beta() const
+  {
+    return beta_;
+  }
+  std::size_t sweeps() const
+  {
+    return sweeps_;
+  }
 
-  void SetSweeps(std::size_t sweeps) { sweeps_ = sweeps; }
-  void SetBetaStart(double const &b0) { beta0_ = b0; }
-  void SetBetaEnd(double const &b1) { beta1_ = b1; }
+  void SetSweeps(std::size_t sweeps)
+  {
+    sweeps_ = sweeps;
+  }
+  void SetBetaStart(double const &b0)
+  {
+    beta0_ = b0;
+  }
+  void SetBetaEnd(double const &b1)
+  {
+    beta1_ = b1;
+  }
 
   void Initialize()
   {
@@ -249,7 +276,10 @@ public:
     }
   }
 
-  bit_vector_type state() { return state_; }
+  bit_vector_type state()
+  {
+    return state_;
+  }
 
   void Reset()
   {

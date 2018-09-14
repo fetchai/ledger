@@ -136,7 +136,7 @@ protected:
 
 private:
   using connected_identity_type = byte_array::ConstByteArray;
-  using connected_identities_type = std::unordered_set<connected_identity_type, crypto::CallableFNV>;
+  using connected_identities_type = std::unordered_set<connected_identity_type>;
 
   network_manager_type manager_;
   client_register_type register_;
@@ -166,7 +166,7 @@ private:
   std::atomic<bool>                     tracking_peers_;
   std::chrono::system_clock::time_point track_start_;
 
-  
+
   connected_identities_type incoming_;
   connected_identities_type outgoing_;
   std::vector<connection_handle_type>                                 incoming_handles_;

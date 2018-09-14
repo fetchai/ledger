@@ -55,14 +55,21 @@ struct StaticMockContextPrimitive;
 template <>
 struct StaticMockContextPrimitive<TestType>
 {
-  static void start(TestType *ptr) { MockContextPrimitive::value->start(ptr); }
-  static void end(TestType *ptr) { MockContextPrimitive::value->end(ptr); }
+  static void start(TestType *ptr)
+  {
+    MockContextPrimitive::value->start(ptr);
+  }
+  static void end(TestType *ptr)
+  {
+    MockContextPrimitive::value->end(ptr);
+  }
 };
 
 class Deleter
 {
 public:
-  void operator()(TestType *ptr) {}
+  void operator()(TestType *ptr)
+  {}
 };
 
 class OpenSSLContextSessionTest : public testing::Test
@@ -75,9 +82,15 @@ protected:
 
   MockContextPrimitive::SharedPtr &contextMock_ = MockContextPrimitive::value;
 
-  void SetUp() { contextMock_ = std::make_shared<MockContextPrimitive::Type>(); }
+  void SetUp()
+  {
+    contextMock_ = std::make_shared<MockContextPrimitive::Type>();
+  }
 
-  void TearDown() { contextMock_ = MockContextPrimitive::SharedPtr(); }
+  void TearDown()
+  {
+    contextMock_ = MockContextPrimitive::SharedPtr();
+  }
 };
 
 TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_destructor)

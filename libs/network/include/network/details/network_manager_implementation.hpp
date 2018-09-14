@@ -37,7 +37,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
-  NetworkManagerImplementation(std::size_t threads = 1) : number_of_threads_(threads)
+  NetworkManagerImplementation(std::size_t threads = 1)
+    : number_of_threads_(threads)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME,"Creating network manager");
   }
@@ -114,7 +115,7 @@ private:
   std::thread::id                   owning_thread_;
   std::size_t                       number_of_threads_ = 1;
   std::vector<std::thread *>        threads_;
-  std::unique_ptr<asio::io_service> io_service_{new asio::io_service};
+  std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 

@@ -24,8 +24,8 @@
 
 #include "network/tcp_server.hpp"
 #include "protocols/shard.hpp"
-#include "service/client.hpp"
 #include "service/server.hpp"
+#include "service/service_client.hpp"
 
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
@@ -107,9 +107,15 @@ public:
     delete shard_;
   }
 
-  void Start() { network_manager_->Start(); }
+  void Start()
+  {
+    network_manager_->Start();
+  }
 
-  void Stop() { network_manager_->Stop(); }
+  void Stop()
+  {
+    network_manager_->Stop();
+  }
 
 private:
   fetch::network::NetworkManager *                         network_manager_;
@@ -188,11 +194,13 @@ int main(int argc, char const **argv)
 
     auto &p1 = server_block.proof();
     p1.SetTarget(lfg() % 5);
-    while (!p1()) ++p1;
+    while (!p1())
+      ++p1;
 
     auto &p2 = local_block.proof();
     p2.SetTarget(lfg() % 5);
-    while (!p2()) ++p2;
+    while (!p2())
+      ++p2;
 
     client->Call(FetchProtocols::SHARD, ShardRPC::PUSH_BLOCK, server_block);
     client->Call(FetchProtocols::SHARD, ShardRPC::PUSH_BLOCK, local_block);

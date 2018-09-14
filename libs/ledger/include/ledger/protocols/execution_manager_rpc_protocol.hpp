@@ -35,7 +35,8 @@ public:
     ABORT
   };
 
-  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager) : manager_(manager)
+  explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
+    : manager_(manager)
   {
 
     // define the RPC endpoints

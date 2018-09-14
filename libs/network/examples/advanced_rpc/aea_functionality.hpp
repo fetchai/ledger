@@ -26,7 +26,9 @@
 class AEAFunctionality
 {
 public:
-  AEAFunctionality(std::string node_info) : node_info_(node_info) {}
+  AEAFunctionality(std::string node_info)
+    : node_info_(node_info)
+  {}
 
   void Connect(std::string address, uint16_t port)
   {
@@ -37,7 +39,8 @@ public:
     }
   }
 
-  void Disconnect(uint64_t handle) {}
+  void Disconnect(uint64_t handle)
+  {}
 
   std::string get_info()
   {
@@ -45,9 +48,15 @@ public:
     return node_info_;
   }
 
-  std::vector<std::string> const &peers() const { return peers_; }
+  std::vector<std::string> const &peers() const
+  {
+    return peers_;
+  }
 
-  void set_node(NodeToNodeFunctionality *node) { node_ = node; }
+  void set_node(NodeToNodeFunctionality *node)
+  {
+    node_ = node;
+  }
 
 private:
   NodeToNodeFunctionality *node_ = nullptr;

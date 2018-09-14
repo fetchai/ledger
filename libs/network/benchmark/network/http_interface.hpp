@@ -31,7 +31,11 @@ template <typename T>
 class HttpInterface : public fetch::http::HTTPModule
 {
 public:
-  explicit HttpInterface(std::shared_ptr<T> node) : node_{node} { AttachPages(); }
+  explicit HttpInterface(std::shared_ptr<T> node)
+    : node_{node}
+  {
+    AttachPages();
+  }
 
   void AttachPages()
   {
@@ -139,7 +143,7 @@ public:
     std::size_t index = 0;
     for (auto &i : transactions)
     {
-      result[index++] = byte_array::ToHex(i.summary().transaction_hash);
+      result[index++] = byte_array::ToBase64(i.summary().transaction_hash);
     }
 
     std::ostringstream ret;
@@ -318,7 +322,10 @@ public:
     }
   }
 
-  const std::shared_ptr<T> &node() const { return node_; };
+  const std::shared_ptr<T> &node() const
+  {
+    return node_;
+  };
 
 private:
   std::shared_ptr<T> node_;

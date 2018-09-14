@@ -172,8 +172,15 @@ public:
     mainchain_protocol_->PublishBlock(blk);
   }
 
-  mainchain_type *         mainchain() { return mainchain_.get(); }
-  mainchain_protocol_type *mainchainprotocol() { return mainchain_protocol_.get(); }
+  mainchain_type *mainchain()
+  {
+    return mainchain_.get();
+  }
+  
+  mainchain_protocol_type *mainchainprotocol()
+  {
+    return mainchain_protocol_.get();
+  }
 
 private:
   client_register_type register_;

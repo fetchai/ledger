@@ -75,7 +75,8 @@ public:
     return std::make_shared<ThreadPoolImplementation>(threads);
   }
 
-  ThreadPoolImplementation(std::size_t threads) : number_of_threads_(threads)
+  ThreadPoolImplementation(std::size_t threads)
+    : number_of_threads_(threads)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME,"Creating thread manager");
   }

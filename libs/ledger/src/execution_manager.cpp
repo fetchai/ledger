@@ -241,7 +241,10 @@ void ExecutionManager::Start()
   // wait for the monitor thread to be setup
   for (std::size_t i = 0; i < 20; ++i)
   {
-    if (monitor_ready_) break;
+    if (monitor_ready_)
+    {
+      break;
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
   }
@@ -281,11 +284,20 @@ ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBloc
   return last_block_hash_;
 }
 
-bool ExecutionManager::IsActive() { return active_; }
+bool ExecutionManager::IsActive()
+{
+  return active_;
+}
 
-bool ExecutionManager::IsIdle() { return !active_; }
+bool ExecutionManager::IsIdle()
+{
+  return !active_;
+}
 
-bool ExecutionManager::Abort() { return false; }
+bool ExecutionManager::Abort()
+{
+  return false;
+}
 
 void ExecutionManager::MonitorThreadEntrypoint()
 {

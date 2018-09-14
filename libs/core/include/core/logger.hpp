@@ -64,7 +64,8 @@ class ContextDetails
 public:
   using shared_type = std::shared_ptr<ContextDetails>;
 
-  ContextDetails(void *instance = nullptr) : instance_(instance)
+  ContextDetails(void *instance = nullptr)
+    : instance_(instance)
   {
     id_ = std::this_thread::get_id();
   }
@@ -94,20 +95,41 @@ public:
 
   ~ContextDetails() = default;
 
-  shared_type parent() { return parent_; }
+  shared_type parent()
+  {
+    return parent_;
+  }
 
-  shared_type derived_from() { return derived_from_; }
+  shared_type derived_from()
+  {
+    return derived_from_;
+  }
 
   std::string context(std::size_t const &n = std::size_t(-1)) const
   {
-    if (context_.size() > n) return context_.substr(0, n);
+    if (context_.size() > n)
+    {
+      return context_.substr(0, n);
+    }
     return context_;
   }
-  std::string filename() const { return filename_; }
-  int         line() const { return line_; }
+  std::string filename() const
+  {
+    return filename_;
+  }
+  int line() const
+  {
+    return line_;
+  }
 
-  std::thread::id thread_id() const { return id_; }
-  void *          instance() const { return instance_; }
+  std::thread::id thread_id() const
+  {
+    return id_;
+  }
+  void *instance() const
+  {
+    return instance_;
+  }
 
 private:
   std::string     context_  = "(root)";
@@ -139,7 +161,10 @@ public:
 
   ~Context();
 
-  shared_type details() const { return details_; }
+  shared_type details() const
+  {
+    return details_;
+  }
 
 private:
   shared_type                                    details_;
@@ -270,17 +295,26 @@ class LogWrapper
 public:
   using shared_context_type = std::shared_ptr<ContextDetails>;
 
-  LogWrapper() { log_ = new DefaultLogger(); }
+  LogWrapper()
+  {
+    log_ = new DefaultLogger();
+  }
 
   ~LogWrapper()
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (log_ != nullptr) delete log_;
+    if (log_ != nullptr)
+    {
+      delete log_;
+    }
   }
 
   void DisableLogger()
   {
-    if (log_ != nullptr) delete log_;
+    if (log_ != nullptr)
+    {
+      delete log_;
+    }
     log_ = nullptr;
   }
 
@@ -479,7 +513,10 @@ public:
 
       auto &t = mutex_timings_[s];
       t.total += spent_time;
-      if (t.peak < spent_time) t.peak = spent_time;
+      if (t.peak < spent_time)
+      {
+        t.peak = spent_time;
+      }
 
       ++t.calls;
 
@@ -551,7 +588,10 @@ public:
 
     auto &t = timings_[s];
     t.total += spent_time;
-    if (t.peak < spent_time) t.peak = spent_time;
+    if (t.peak < spent_time)
+    {
+      t.peak = spent_time;
+    }
 
     ++t.calls;
   }
@@ -669,7 +709,10 @@ private:
   template <typename T>
   struct Unroll<T>
   {
-    static void Append(LogWrapper *cls, T const &v) { cls->log_->Append(v); }
+    static void Append(LogWrapper *cls, T const &v)
+    {
+      cls->log_->Append(v);
+    }
   };
 
   void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1))
@@ -694,7 +737,10 @@ private:
         ctx = ctx->parent();
       }
       ++i;
-      if (i >= max) break;
+      if (i >= max)
+      {
+        break;
+      }
     }
   }
 
@@ -784,7 +830,7 @@ extern log::details::LogWrapper logger;
 
 // Logging macros
 //#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
-#define FETCH_LOG_DEBUG(name, ...)
+#define FETCH_LOG_DEBUG(name, ...)      (void)name
 #define FETCH_LOG_INFO(name, ...)       fetch::logger.InfoWithName(name, __VA_ARGS__)
 #define FETCH_LOG_WARN(name, ...)       fetch::logger.WarnWithName(name, __VA_ARGS__)
 #define FETCH_LOG_ERROR(name, ...)      fetch::logger.ErrorWithName(name, __VA_ARGS__)

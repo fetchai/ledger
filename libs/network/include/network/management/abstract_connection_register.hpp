@@ -43,7 +43,10 @@ public:
 
   static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
 
-  AbstractConnectionRegister() { number_of_services_ = 0; }
+  AbstractConnectionRegister()
+  {
+    number_of_services_ = 0;
+  }
 
   AbstractConnectionRegister(AbstractConnectionRegister const &other) = delete;
   AbstractConnectionRegister(AbstractConnectionRegister &&other)      = default;
@@ -58,7 +61,10 @@ public:
   shared_service_client_type GetService(connection_handle_type const &i)
   {
     std::lock_guard<mutex::Mutex> lock(service_lock_);
-    if (services_.find(i) == services_.end()) return nullptr;
+    if (services_.find(i) == services_.end())
+    {
+      return nullptr;
+    }
     return services_[i].lock();
   }
 
@@ -120,7 +126,10 @@ public:
     }
   }
 
-  uint64_t number_of_services() const { return number_of_services_; }
+  uint64_t number_of_services() const
+  {
+    return number_of_services_;
+  }
 
 protected:
   void RemoveService(connection_handle_type const &n)
@@ -128,7 +137,10 @@ protected:
     --number_of_services_;
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     auto                          it = services_.find(n);
-    if (it != services_.end()) services_.erase(it);
+    if (it != services_.end())
+    {
+      services_.erase(it);
+    }
   }
 
   void AddService(connection_handle_type const &n, weak_service_client_type const &ptr)

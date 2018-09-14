@@ -59,7 +59,10 @@ public:
   }
 
   // We can use this to send messages from node to node
-  void sendMessage(std::string const &mes, uint16_t port) { node_->sendMessage(mes, port); }
+  void sendMessage(std::string const &mes, uint16_t port)
+  {
+    node_->sendMessage(mes, port);
+  }
 
 private:
   std::shared_ptr<Node>                                node_;

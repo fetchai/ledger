@@ -101,65 +101,65 @@ public:
     hasher_type hash;
     hash.Reset();
     hash.Update(buf.data());
-    hash.Final();
-    body_.hash = hash.digest();
+    body_.hash = hash.Final();
 
     proof_.SetHeader(body_.hash);
   }
 
-  std::string summarise() const
+
+  body_type const &body() const
   {
-    std::string ret;
-
-    if (hash().size() > 0)
-    {
-      ret += hashString();
-    }
-    else
-    {
-      ret += "?";
-    }
-
-    ret += " -> ";
-
-    if (body_.block_number == 0)
-    {
-      ret += "genesis";
-    }
-    else
-    {
-      if (body_.previous_hash.size() > 0)
-      {
-        ret += prevString();
-      }
-      else
-      {
-        ret += "???";
-      }
-    }
-
-    ret += " W=" + std::to_string(total_weight_) + ((is_loose_) ? " loose" : " attached");
-
-    return ret;
+    return body_;
+  }
+  body_type &body()
+  {
+    return body_;
+  }
+  digest_type const &hash() const
+  {
+    return body_.hash;
+  }
+  digest_type const &prev() const
+  {
+    return body_.previous_hash;
   }
 
-  body_type const &  body() const { return body_; }
-  body_type &        body() { return body_; }
-  digest_type const &hash() const { return body_.hash; }
-  digest_type const &prev() const { return body_.previous_hash; }
+  proof_type const &proof() const
+  {
+    return proof_;
+  }
+  proof_type &proof()
+  {
+    return proof_;
+  }
 
-  proof_type const &proof() const { return proof_; }
-  proof_type &      proof() { return proof_; }
-
-  uint64_t &      weight() { return weight_; }
-  uint64_t &      totalWeight() { return total_weight_; }
-  uint64_t const &totalWeight() const { return total_weight_; }
-  bool &          loose() { return is_loose_; }
+  uint64_t &weight()
+  {
+    return weight_;
+  }
+  uint64_t &totalWeight()
+  {
+    return total_weight_;
+  }
+  uint64_t const &totalWeight() const
+  {
+    return total_weight_;
+  }
+  bool &loose()
+  {
+    return is_loose_;
+  }
 
 #if 1  // TODO(issue 33): Move to py swarm?
-  std::string hashString() const { return std::string(ToBase64(body_.hash)); }
+  std::string hashString() const
+  {
+    return std::string(ToBase64(body_.hash));
+  }
 
-  std::string prevString() const { return std::string(ToBase64(body_.previous_hash)); }
+  std::string prevString() const
+  {
+    return std::string(ToBase64(body_.previous_hash));
+  }
 #endif
 
 private:

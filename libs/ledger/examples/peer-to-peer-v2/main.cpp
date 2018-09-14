@@ -64,9 +64,15 @@ public:
     network_manager_->Off(stop_event_);
   }
 
-  void Start() { network_manager_->Start(); }
+  void Start()
+  {
+    network_manager_->Start();
+  }
 
-  void Stop() { network_manager_->Stop(); }
+  void Stop()
+  {
+    network_manager_->Stop();
+  }
 
   void Bootstrap(std::string const &address, uint16_t const &port)
   {

@@ -75,7 +75,9 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-    : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
+    : subscribe_mutex_(__LINE__, __FILE__)
+    , feed_(feed)
+    , publisher_(publisher)
   {
     workers_ = network::MakeThreadPool(3);
   }
@@ -129,7 +131,12 @@ public:
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
-      if ((subscribers_[i].client == client) && (subscribers_[i].id == id)) ids.push_back(i);
+    {
+      if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
+      {
+        ids.push_back(i);
+      }
+    }
 
     std::reverse(ids.begin(), ids.end());
     for (auto &i : ids)
@@ -143,13 +150,19 @@ public:
    *
    * @return the feed type.
    */
-  feed_handler_type const &feed() const { return feed_; }
+  feed_handler_type const &feed() const
+  {
+    return feed_;
+  }
 
   /* Returns a pointer to the abstract publisher.
    *
    * @return the publisher.
    */
-  fetch::service::AbstractPublicationFeed *publisher() const { return publisher_; }
+  fetch::service::AbstractPublicationFeed *publisher() const
+  {
+    return publisher_;
+  }
 
 private:
   struct ClientSubscription

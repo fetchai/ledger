@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/quick_start/protocol.hpp"  // defines our quick start protocol
 
@@ -36,8 +36,11 @@ public:
 class Node
 {
 public:
-  Node(fetch::network::NetworkManager tm) : tm_{tm} {}
-  ~Node() {}
+  Node(fetch::network::NetworkManager tm)
+    : tm_{tm}
+  {}
+  ~Node()
+  {}
 
   void sendMessage(std::string const &msg, uint16_t port)
   {
@@ -50,7 +53,8 @@ public:
 
     for (std::size_t i = 0;; ++i)
     {
-      if (client.is_alive()) break;
+      if (client.is_alive())
+        break;
       std::cout << "Waiting for client to connect..." << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -103,7 +107,10 @@ public:
     }
   }
 
-  void ping() { std::cout << "We have been pinged!" << std::endl; }
+  void ping()
+  {
+    std::cout << "We have been pinged!" << std::endl;
+  }
 
 private:
   fetch::network::NetworkManager tm_;

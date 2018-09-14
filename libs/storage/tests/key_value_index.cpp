@@ -54,7 +54,10 @@ bool ValueConsistency()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -98,7 +101,10 @@ bool LoadSaveValueConsistency()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -161,7 +167,10 @@ bool RandomInsertHashConsistency()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -212,7 +221,10 @@ bool IntermediateFlushHashConsistency()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -276,7 +288,10 @@ bool DoubleInsertionhConsistency()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -325,7 +340,10 @@ bool LoadSaveVsBulk()
       key[j] = uint8_t(lfg() >> 9);
     }
 
-    if (reference.find(key) != reference.end()) continue;
+    if (reference.find(key) != reference.end())
+    {
+      continue;
+    }
 
     reference[key] = lfg();
     values.push_back({key, reference[key]});
@@ -434,7 +452,10 @@ int main()
 
   SCENARIO("Loading and extending")
   {
-    SECTION("Load/save consistency") { EXPECT(LoadSaveVsBulk()); };
+    SECTION("Load/save consistency")
+    {
+      EXPECT(LoadSaveVsBulk());
+    };
   };
 
   return 0;

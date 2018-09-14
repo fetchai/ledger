@@ -95,7 +95,10 @@ public:
     });
   }
 
-  ~Client() { TCPClient::Cleanup(); }
+  ~Client()
+  {
+    TCPClient::Cleanup();
+  }
 };
 
 // Client takes a while to process
@@ -122,7 +125,10 @@ public:
     });
   }
 
-  ~SlowClient() { TCPClient::Cleanup(); }
+  ~SlowClient()
+  {
+    TCPClient::Cleanup();
+  }
 };
 
 std::vector<message_type> globalMessages{};
@@ -145,7 +151,10 @@ public:
     });
   }
 
-  ~VerifyClient() { TCPClient::Cleanup(); }
+  ~VerifyClient()
+  {
+    TCPClient::Cleanup();
+  }
 };
 
 // Create random data for testing
@@ -249,9 +258,15 @@ void TestCase3(std::string host, std::string port)
   for (std::size_t index = 0; index < 1000; ++index)
   {
     NetworkManager nmanager(N);
-    if (index % 2 == 0) nmanager.Start();
+    if (index % 2 == 0)
+    {
+      nmanager.Start();
+    }
     Client client(host, std::to_string(emptyPort), nmanager);
-    if (index % 3 == 0) nmanager.Stop();
+    if (index % 3 == 0)
+    {
+      nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -270,9 +285,15 @@ void TestCase4(std::string host, std::string port)
   for (std::size_t index = 0; index < 1000; ++index)
   {
     NetworkManager nmanager(N);
-    if (index % 2 == 0) nmanager.Start();
+    if (index % 2 == 0)
+    {
+      nmanager.Start();
+    }
     Client client(host, std::to_string(emptyPort), nmanager);
-    if (index % 3 == 0) nmanager.Stop();
+    if (index % 3 == 0)
+    {
+      nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -331,9 +352,15 @@ void TestCase7(std::string host, std::string port)
   for (std::size_t index = 0; index < 1000; ++index)
   {
     NetworkManager nmanager(N);
-    if (index % 2 == 0) nmanager.Start();
+    if (index % 2 == 0)
+    {
+      nmanager.Start();
+    }
     Client client(host, port, nmanager);
-    if (index % 3 == 0) nmanager.Stop();
+    if (index % 3 == 0)
+    {
+      nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }
@@ -390,7 +417,10 @@ void TestCase9(std::string host, std::string port)
       })
           .detach();
     }
-    if (index % 2 == 0) nmanager.Stop();
+    if (index % 2 == 0)
+    {
+      nmanager.Stop();
+    }
 
     while (threadCount != iterations)
     {
@@ -426,9 +456,18 @@ void TestCase10(std::string host, std::string port)
       clients.push_back(Client(host, port, nmanager));
     }
     nmanager.Start();
-    if (index % 2) nmanager.Stop();
-    if (index % 3) nmanager.Stop();
-    if (index % 5) nmanager.Stop();
+    if (index % 2)
+    {
+      nmanager.Stop();
+    }
+    if (index % 3)
+    {
+      nmanager.Stop();
+    }
+    if (index % 5)
+    {
+      nmanager.Stop();
+    }
     std::this_thread::sleep_for(std::chrono::microseconds(1000));
   }
   std::cerr << "success" << std::endl;
@@ -782,7 +821,10 @@ void TestCase15(std::string host, std::string const &port)
         }
       }
     }
-    if (i % 2) nmanager.Stop();
+    if (i % 2)
+    {
+      nmanager.Stop();
+    }
   }
   std::cerr << "Success." << std::endl;
 }

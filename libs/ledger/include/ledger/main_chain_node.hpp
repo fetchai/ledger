@@ -85,10 +85,13 @@ public:
       script::Variant temp = script::Variant::Object();
       temp["minerNumber"]  = i.body().miner_number;
       temp["blockNumber"]  = i.body().block_number;
-      temp["hashcurrent"]  = ToHex(i.hash());
-      temp["hashprev"]     = ToHex(i.body().previous_hash);
+      temp["hashcurrent"]  = ToBase64(i.hash());
+      temp["hashprev"]     = ToBase64(i.body().previous_hash);
       blocks[index++]      = temp;
-      if (index >= limit) break;
+      if (index >= limit)
+      {
+        break;
+      }
     }
 
     script::Variant result = script::Variant::Object();
@@ -169,7 +172,10 @@ public:
     return block.loose();
   }
 
-  BlockType const &HeaviestBlock() const { return chain_->HeaviestBlock(); }
+  BlockType const &HeaviestBlock() const
+  {
+    return chain_->HeaviestBlock();
+  }
 
   void StartMining()
   {
@@ -207,7 +213,7 @@ public:
 
         // Add the block
         chain_->AddBlock(nextBlock);
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Main Chain Node: Mined: ", ToHex(block.hash()));
+        FETCH_LOG_DEBUG(LOGGING_NAME,"Main Chain Node: Mined: ", ToBase64(block.hash()));
       }
     };
 

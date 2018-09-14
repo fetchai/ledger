@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/uri.hpp"
 
 #include <cstdint>

@@ -31,9 +31,11 @@ namespace {
 class SessionPrimitiveTest : public ::testing::Test
 {
 protected:
-  virtual void SetUp() {}
+  virtual void SetUp()
+  {}
 
-  virtual void TearDown() {}
+  virtual void TearDown()
+  {}
 };
 
 TEST_F(SessionPrimitiveTest, test_BN_CTX_start)

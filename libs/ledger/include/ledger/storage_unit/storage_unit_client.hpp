@@ -24,7 +24,7 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"
@@ -57,9 +57,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
-  explicit StorageUnitClient(NetworkManager const &tm) : network_manager_(tm)
-  {
-  }
+  explicit StorageUnitClient(NetworkManager const &tm)
+    : network_manager_(tm)
+  {}
 
   StorageUnitClient(StorageUnitClient const &) = delete;
   StorageUnitClient(StorageUnitClient &&)      = delete;
@@ -115,7 +115,7 @@ public:
       return {};
     }
 
-    // Exchaning info
+    // Exchanging info
     auto p1 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
     auto p2 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
     auto p3 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
@@ -293,7 +293,10 @@ public:
         ->As<byte_array::ByteArray>();
   }
 
-  std::size_t lanes() const { return lanes_.size(); }
+  std::size_t lanes() const
+  {
+    return lanes_.size();
+  }
 
   bool IsAlive() const
   {

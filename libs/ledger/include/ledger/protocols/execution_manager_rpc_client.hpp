@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/execution_manager_interface.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 #include <memory>
@@ -49,7 +49,10 @@ public:
   bool              Abort() override;
   /// @}
 
-  bool is_alive() const { return service_->is_alive(); }
+  bool is_alive() const
+  {
+    return service_->is_alive();
+  }
 
 private:
   NetworkClientPtr connection_;

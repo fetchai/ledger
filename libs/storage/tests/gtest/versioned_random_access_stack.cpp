@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,29 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
+#include "storage/versioned_random_access_stack.hpp"
+#include "core/random/lfg.hpp"
 
-#include <cmath>
+#include <gtest/gtest.h>
+#include <stack>
 
-namespace fetch {
-namespace math {
-namespace statistics {
+using namespace fetch::storage;
 
-template <typename A>
-inline typename A::type Max(A const &a)
+class TestClass
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::type;
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
-
-  return ret;
-}
-
-}  // namespace statistics
-}  // namespace math
-}  // namespace fetch
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};

@@ -73,9 +73,9 @@ protected:
 
     if (lookup_success)
     {
-      // informat the world
-      FETCH_LOG_INFO(LOGGING_NAME, "Sending message to: ", byte_array::ToBase64(target), " on: ",
-                     service, ':', channel, ':', counter);
+      // inform the world
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sending message to: ", byte_array::ToBase64(target), " on: ",
+                      service, ':', channel, ':', counter);
 
       // send the message back to the server
       endpoint_.Send(target, service, channel, counter, message_type);
@@ -92,7 +92,7 @@ private:
 
   void OnMessage(Address const &from, uint16_t service, uint16_t channel, uint16_t counter, Packet::Payload const &payload)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from), " on: ", service, ':', channel, ':', counter);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from), " on: ", service, ':', channel, ':', counter);
 
     // insert data into the metadata
     uint64_t index = 0;

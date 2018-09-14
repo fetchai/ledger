@@ -54,8 +54,8 @@ function(setup_library_examples library)
 
     # examples
     set(examples_root ${CMAKE_CURRENT_SOURCE_DIR})
-    if(IS_DIRECTORY ${examples_root})
 
+    if(IS_DIRECTORY ${examples_root})
       file(GLOB children RELATIVE ${examples_root} ${examples_root}/*)
       set(dirlist "")
       foreach(child ${children})
@@ -79,6 +79,7 @@ function(setup_library_examples library)
             add_executable(${example_name} ${example_headers} ${example_srcs})
             target_link_libraries(${example_name} PRIVATE ${library})
             target_include_directories(${example_name} PRIVATE ${example_path})
+            target_include_directories(${example_name} PRIVATE ${examples_root})
 
             if(FETCH_VERBOSE_CMAKE)
               message(STATUS "Creating ${example_name} target linking to ${library}")

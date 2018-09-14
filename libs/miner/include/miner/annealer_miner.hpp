@@ -139,7 +139,10 @@ private:
     // DEBUG PRINT OUT SOLUTIONS
 
     uint64_t total_fee = 0;
-    for (auto const &e : generator_.block_fees()) total_fee += e;
+    for (auto const &e : generator_.block_fees())
+    {
+      total_fee += e;
+    }
 
     auto &staged = generator_.staged();
 

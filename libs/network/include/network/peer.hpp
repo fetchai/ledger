@@ -32,7 +32,10 @@ public:
   Peer() = default;
   Peer(char const *address) : Peer(std::string{address}) {}
   Peer(std::string const &address);
-  Peer(std::string address, uint16_t port) : address_{std::move(address)}, port_{port} {}
+  Peer(std::string address, uint16_t port)
+    : address_{std::move(address)}
+    , port_{port}
+  {}
   Peer(Peer const &) = default;
   Peer(Peer &&)      = default;
   ~Peer()            = default;
@@ -44,8 +47,14 @@ public:
     port_    = port;
   }
 
-  std::string const &address() const { return address_; }
-  uint16_t port() const { return port_; }
+  std::string const &address() const
+  {
+    return address_;
+  }
+  uint16_t port() const
+  {
+    return port_;
+  }
 
   std::string ToString() const;
   std::string ToUri() const;

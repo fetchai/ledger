@@ -99,6 +99,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
     std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_)
   }
 {
+  FETCH_UNUSED(num_slices_);
+
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
                      num_executors, " S ", num_lanes_, "x", num_slices);

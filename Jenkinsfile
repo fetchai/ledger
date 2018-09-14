@@ -8,6 +8,11 @@ pipeline {
 
   stages {
 
+    stage('License Checks') {
+        steps {
+            sh './scripts/check-license-header.py'
+        }
+    }
 
     stage('Clang Format Checks') {
         steps {
@@ -36,7 +41,7 @@ pipeline {
 
     stage('Unit Tests') {
       steps {
-        sh 'CTEST_OUTPUT_ON_FAILURE=1 ./scripts/ci-tool.py -T Release'
+        sh './scripts/ci-tool.py -T Release'
       }
     }
 

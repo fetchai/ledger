@@ -58,18 +58,36 @@ public:
 
   static_assert(E_SIMD_COUNT == (1ull << E_LOG_SIMD_COUNT), "type does not fit in SIMD");
 
-  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0) : pointer_(ptr), size_(n) {}
+  VectorSlice(pointer_type ptr = nullptr, std::size_t const &n = 0)
+    : pointer_(ptr)
+    , size_(n)
+  {}
 
   ConstParallelDispatcher<type> in_parallel() const
   {
     return ConstParallelDispatcher<type>(pointer_, size());
   }
-  ParallelDispatcher<type> in_parallel() { return ParallelDispatcher<type>(pointer(), size()); }
+  ParallelDispatcher<type> in_parallel()
+  {
+    return ParallelDispatcher<type>(pointer(), size());
+  }
 
-  iterator         begin() { return iterator(pointer_, pointer_ + size()); }
-  iterator         end() { return iterator(pointer_ + size(), pointer_ + size()); }
-  reverse_iterator rbegin() { return reverse_iterator(pointer_ + size() - 1, pointer_ - 1); }
-  reverse_iterator rend() { return reverse_iterator(pointer_ - 1, pointer_ - 1); }
+  iterator begin()
+  {
+    return iterator(pointer_, pointer_ + size());
+  }
+  iterator end()
+  {
+    return iterator(pointer_ + size(), pointer_ + size());
+  }
+  reverse_iterator rbegin()
+  {
+    return reverse_iterator(pointer_ + size() - 1, pointer_ - 1);
+  }
+  reverse_iterator rend()
+  {
+    return reverse_iterator(pointer_ - 1, pointer_ - 1);
+  }
 
   template <typename R = T>
   typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
@@ -95,47 +113,48 @@ public:
     std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
   }
 
-  // TODO(unknown): THis is ugly. The right way to do this would be to have a separate
-  // constant class that is return for slice(...) const
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const
   {
     assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
-    // TODO(unknown): Assert unneccessary
-    //    assert(std::size_t(length / E_SIMD_COUNT) * E_SIMD_COUNT == length);
-    assert((length + offset) <= size_);
+    assert((length + offset) <= padded_size());
     return vector_slice_type(pointer_ + offset, length);
   }
 
-  T &operator[](std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](S const &n)
+  {
+    assert(pointer_ != nullptr);
+    assert(std::size_t(n) < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](S const &n) const
+  {
+    assert(pointer_ != nullptr);
+
+    assert(std::size_t(n) < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-  T const &operator[](std::size_t const &n) const
-  {
-    assert(pointer_ != nullptr);
-
-    assert(n < padded_size());
-    return pointer_[n];
-  }
-
-  T &At(std::size_t const &n)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
-  T const &At(std::size_t const &n) const
-  {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
-    return pointer_[n];
-  }
-
-  T const &Set(std::size_t const &n, T const &v)
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(S const &n, T const &v)
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());
@@ -143,19 +162,37 @@ public:
     return v;
   }
 
-  std::size_t simd_size() const { return (size_) >> E_LOG_SIMD_COUNT; }
-  std::size_t size() const { return size_; }
+  std::size_t simd_size() const
+  {
+    return (size_) >> E_LOG_SIMD_COUNT;
+  }
+  std::size_t size() const
+  {
+    return size_;
+  }
 
   std::size_t padded_size() const
   {
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
-    if (padded < size_) padded += E_SIMD_COUNT;
+    if (padded < size_)
+    {
+      padded += E_SIMD_COUNT;
+    }
     return padded;
   }
 
-  pointer_type       pointer() { return pointer_; }
-  const_pointer_type pointer() const { return pointer_; }
-  size_type          size() { return size_; }
+  pointer_type pointer()
+  {
+    return pointer_;
+  }
+  const_pointer_type pointer() const
+  {
+    return pointer_;
+  }
+  size_type size()
+  {
+    return size_;
+  }
 
 protected:
   pointer_type pointer_;

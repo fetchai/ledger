@@ -22,7 +22,7 @@
 #include "ledger/chain/main_chain_details.hpp"
 #include "network/generics/shared_with_lock.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 namespace fetch {
 namespace chain {
@@ -46,14 +46,19 @@ public:
 
   MainChainIdentity(client_register_type reg, network_manager_type const &nm,
                     generics::SharedWithLock<MainChainDetails> my_details)
-    : register_(std::move(reg)), manager_(nm), my_details_(my_details)
+    : register_(std::move(reg))
+    , manager_(nm)
+	, my_details_(my_details)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME,"MainChainIdentity::MainChainIdentity ", bool(my_details_));
   }
 
   /// External controls
   /// @{
-  ping_type Ping() { return PING_MAGIC; }
+  ping_type Ping()
+  {
+    return PING_MAGIC;
+  }
 
   void Hello(connection_handle_type const &client)
   {

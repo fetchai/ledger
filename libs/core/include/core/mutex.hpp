@@ -38,7 +38,8 @@ namespace mutex {
 class ProductionMutex : public AbstractMutex
 {
 public:
-  ProductionMutex(int, std::string) {}
+  ProductionMutex(int, std::string)
+  {}
   ProductionMutex() = default;
 };
 
@@ -65,7 +66,8 @@ class DebugMutex : public AbstractMutex
     static constexpr std::size_t DEFAULT_TIMEOUT_MS = 500000000;
 
     MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
-      : filename_(std::move(filename)), line_(line)
+      : filename_(std::move(filename))
+      , line_(line)
     {
       LOG_STACK_TRACE_POINT;
 
@@ -78,7 +80,10 @@ class DebugMutex : public AbstractMutex
         while (running_)
         {
           // exit waiting loop when the dead line has been reached
-          if (Clock::now() >= deadline) break;
+          if (Clock::now() >= deadline)
+          {
+            break;
+          }
 
           // wait
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -114,7 +119,13 @@ class DebugMutex : public AbstractMutex
   };
 
 public:
-  DebugMutex(int line, std::string file) : AbstractMutex(), line_(line), file_(std::move(file)) {}
+  DebugMutex(int line, std::string file)
+    : AbstractMutex()
+    , line_(line)
+    , file_(std::move(file))
+  {}
+  
+  // TODO(ejf) No longer required?
   DebugMutex() = delete;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
@@ -154,9 +165,15 @@ public:
     std::mutex::unlock();
   }
 
-  int line() const { return line_; }
+  int line() const
+  {
+    return line_;
+  }
 
-  std::string filename() const { return file_; }
+  std::string filename() const
+  {
+    return file_;
+  }
 
   std::string AsString() override
   {
@@ -166,7 +183,10 @@ public:
     return ss.str();
   }
 
-  std::thread::id thread_id() const override { return thread_id_; }
+  std::thread::id thread_id() const override
+  {
+    return thread_id_;
+  }
 
 private:
   std::mutex lock_mutex_;

@@ -46,7 +46,9 @@ public:
   using assigners_type  = std::map<std::string, action_func_type>;
   using help_texts_type = std::list<help_text_type>;
 
-  Params() : paramsParser_() {}
+  Params()
+    : paramsParser_()
+  {}
 
   void Parse(int argc, char **argv)
   {
@@ -97,7 +99,8 @@ public:
     }
   }
 
-  virtual ~Params() {}
+  virtual ~Params()
+  {}
 
   template <class TYPE>
   void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)
@@ -130,7 +133,10 @@ public:
     helpTexts_.push_back(help_text_type{name, help});
   }
 
-  void description(const std::string &desc) { desc_ = desc; }
+  void description(const std::string &desc)
+  {
+    desc_ = desc;
+  }
 
   void help()
   {

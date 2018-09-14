@@ -48,25 +48,30 @@ public:
   };
 
   WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor)
-    : state_{state}, processor_{processor}
+    : state_{state}
+    , processor_{processor}
   {
 
     // register all the routes
-    Post("/api/wallet/register", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnRegister(request);
-    });
+    Post("/api/wallet/register",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnRegister(request);
+         });
 
-    Post("/api/wallet/balance", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnBalance(request);
-    });
+    Post("/api/wallet/balance",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnBalance(request);
+         });
 
-    Post("/api/wallet/transfer", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnTransfer(request);
-    });
+    Post("/api/wallet/transfer",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnTransfer(request);
+         });
 
-    Post("/api/wallet/transactions", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnTransactions(request);
-    });
+    Post("/api/wallet/transactions",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnTransactions(request);
+         });
   }
 
 private:

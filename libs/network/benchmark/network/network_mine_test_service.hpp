@@ -38,7 +38,9 @@ public:
   static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
 
   NetworkMineTestService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
-    : ServiceServer(tcpPort, tm), HTTPServer(tm), http_port_(httpPort)
+    : ServiceServer(tcpPort, tm)
+    , HTTPServer(tm)
+    , http_port_(httpPort)
   {
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME,"Constructing test node service with TCP port: ", tcpPort,

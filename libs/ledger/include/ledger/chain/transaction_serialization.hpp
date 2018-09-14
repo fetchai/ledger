@@ -30,43 +30,35 @@ inline void Serialize(T &serializer, UnverifiedTransaction const &b)
   serializer << ' ';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
 template <typename T>
 inline void Deserialize(T &serializer, UnverifiedTransaction &b)
 {
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 1");
   uint16_t version;
   serializer >> version;  // TODO(issue 34): set version
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 2");
   char c;
   serializer >> c;
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 3");
   TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
   std::string           contract_name;
+  byte_array::ByteArray data;
+  signatures_type       signatures;
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 4");
   serializer >> summary;
   b.set_summary(summary);
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 5");
   serializer >> data;
   b.set_data(data);
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 6");
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 7");
   serializer >> contract_name;
   b.set_contract_name(contract_name);
-
-  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction X");
 }
 
 template <typename T>
@@ -76,7 +68,7 @@ inline void Serialize(T &serializer, VerifiedTransaction const &b)
   serializer << 'V';
   serializer << b.summary();
   serializer << b.data();
-  serializer << b.signature();
+  serializer << b.signatures();
   serializer << b.contract_name();
 }
 
@@ -92,8 +84,9 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   assert(c == 'V');
 
   TransactionSummary    summary;
-  byte_array::ByteArray data, signature;
   std::string           contract_name;
+  byte_array::ByteArray data;
+  signatures_type       signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -101,8 +94,8 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   serializer >> data;
   b.set_data(data);
 
-  serializer >> signature;
-  b.set_signature(signature);
+  serializer >> signatures;
+  b.set_signatures(signatures);
 
   serializer >> contract_name;
   b.set_contract_name(contract_name);

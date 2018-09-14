@@ -15,35 +15,7 @@ namespace fetch {
 namespace muddle {
 
 static const auto CLEANUP_INTERVAL = std::chrono::seconds{10};
-static const auto CONNECTION_TIMEOUT = std::chrono::seconds{5};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
-
-/**
- * Convert an `AbstractConnection` type to a string
- *
- * @param type The connection type
- * @return The string value
- */
-static char const *ConnTypeToString(uint16_t type) noexcept
-{
-  char const *name = "unknown";
-  switch (type)
-  {
-    case network::AbstractConnection::TYPE_INCOMING:
-      name = "incoming";
-      break;
-    case network::AbstractConnection::TYPE_OUTGOING:
-      name = "outgoing";
-      break;
-    case network::AbstractConnection::TYPE_UNDEFINED:
-      name = "undefined";
-      break;
-    default:
-      break;
-  }
-
-  return name;
-}
 
 /**
  * Constructs the mudlle node instances

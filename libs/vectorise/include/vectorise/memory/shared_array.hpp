@@ -47,7 +47,8 @@ public:
   using self_type  = SharedArray<T, type_size>;
   using type       = T;
 
-  SharedArray(std::size_t const &n) : super_type()
+  SharedArray(std::size_t const &n)
+    : super_type()
   {
     this->size_ = n;
 
@@ -62,7 +63,8 @@ public:
 
   SharedArray() = default;
   SharedArray(SharedArray const &other)
-    : super_type(other.data_.get(), other.size()), data_(other.data_)
+    : super_type(other.data_.get(), other.size())
+    , data_(other.data_)
   {}
 
   SharedArray(SharedArray &&other)
@@ -82,7 +84,10 @@ public:
 
   self_type &operator=(SharedArray const &other)
   {
-    if (&other == this) return *this;
+    if (&other == this)
+    {
+      return *this;
+    }
 
     this->size_ = other.size_;
 
@@ -111,6 +116,17 @@ public:
     }
 
     return ret;
+  }
+
+  bool IsUnique() const noexcept
+  {
+    return data_.use_count() < 2;
+  }
+
+  uint64_t UseCount() const noexcept
+  {
+    long const use_count = data_.use_count();
+    return use_count < 0 ? 0 : static_cast<uint64_t>(use_count);
   }
 
 private:

@@ -17,29 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "vectorise/memory/range.hpp"
-
-#include <cmath>
+#include "vm/analyser.hpp"
+#include "vm/generator.hpp"
+#include "vm/parser.hpp"
 
 namespace fetch {
-namespace math {
-namespace statistics {
+namespace vm {
 
-template <typename A>
-inline typename A::type Min(A const &a)
+class Compiler
 {
-  using vector_register_type = typename A::vector_register_type;
-  using type                 = typename A::type;
+public:
+  Compiler(Module *module = nullptr)
+    : analyser_(module)
+  {}
+  ~Compiler()
+  {}
+  bool Compile(const std::string &source, const std::string &name, Script &script,
+               std::vector<std::string> &errors);
 
-  type ret = a.data().in_parallel().Reduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+private:
+  Parser    parser_;
+  Analyser  analyser_;
+  Generator generator_;
+};
 
-  return ret;
-}
-
-}  // namespace statistics
-}  // namespace math
+}  // namespace vm
 }  // namespace fetch

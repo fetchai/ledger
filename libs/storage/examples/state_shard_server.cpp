@@ -26,7 +26,8 @@ using namespace fetch::storage;
 class StateShardService : public fetch::service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  StateShardService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  StateShardService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     store_ = new RevertibleDocumentStore();
     store_->Load("a.db", "b.db", "c.db", "d.db", true);

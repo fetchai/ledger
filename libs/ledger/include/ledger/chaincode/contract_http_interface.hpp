@@ -43,7 +43,8 @@ public:
   static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
 
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
-    : storage_{storage}, processor_{processor}
+    : storage_{storage}
+    , processor_{processor}
   {
 
     // create all the contracts
