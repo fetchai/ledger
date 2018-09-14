@@ -37,16 +37,28 @@ public:
     size_ += val;
   }
 
+  //TODO(pbukva) (private issue: this is exactly what ByteArrayBuffer does even if it does not make much sense)
   void Reserve(std::size_t const &val)
-  {}
+  {
+    size_ += val;
+  }
 
-  void WriteBytes(uint8_t const *arr, std::size_t const &size)
-  {}
-  void ReadBytes(uint8_t const *arr, std::size_t const &size)
-  {}
+  void WriteBytes(uint8_t const *, std::size_t const &size)
+  {
+    pos_ += size;
+  }
 
   void SkipBytes(std::size_t const &size)
-  {}
+  {
+    pos_ += size;
+  }
+
+  template <typename T>
+  SizeCounter &operator<<(T const *val)
+  {
+    Serialize(*this, val);
+    return *this;
+  }
 
   template <typename T>
   SizeCounter &operator<<(T const &val)
@@ -56,28 +68,40 @@ public:
   }
 
   template <typename T>
+  SizeCounter &Pack(T const *val)
+  {
+    return this->operator<<(val);
+  }
+
+  template <typename T>
   SizeCounter &Pack(T const &val)
   {
     return this->operator<<(val);
   }
 
+  // FIXME: Incorrect naming
   void Seek(std::size_t const &p)
-  {}
+  {
+    pos_ = p;
+  }
   std::size_t Tell() const
   {
-    return 0;
+    return pos_;
   }
-  int64_t bytes_left() const
-  {
-    return 0;
-  }
+
   std::size_t size() const
   {
     return size_;
   }
 
+  int64_t bytes_left() const
+  {
+    return static_cast<int64_t>(size_ - pos_);
+  }
+
 private:
   std::size_t size_ = 0;
+  std::size_t pos_ = 0;
 };
 
 template <>

@@ -184,27 +184,25 @@ public:
     summary_.transaction_hash = hash.Final();
   }
 
+  template<typename SERIALISER = serializers::ByteArrayBuffer>
+  byte_array::ConstByteArray TxDataForSigning() const
+  {
+    return TxDataForSigning<SERIALISER>(std::vector<crypto::Identity>());
+  }
+
   template<typename SERIALISER = serializers::ByteArrayBuffer, typename INDENTITIES_CONTAINER>
   byte_array::ConstByteArray TxDataForSigning(INDENTITIES_CONTAINER const& identities = std::vector<crypto::Identity>()) const
   {
-    SERIALISER serialiser;
-    serialiser << contract_name() << fee() << resources() << data();
-
-    if (identities.size() == 1)
+    std::vector<crypto::Identity> ids;
+    if (identities.size() > 1)
     {
-      serialiser << *identities.begin();
-    }
-    else if (identities.size() > 1)
-    {
-      std::vector<crypto::Identity> ids;
       ids.reserve(identities.size());
       std::copy(identities.begin(), identities.end(), ids.begin());
       std::sort(ids.begin(), ids.end());
-      for(auto const& id : ids)
-      {
-        serialiser << id;
-      }
     }
+
+    SERIALISER serialiser;
+    serialiser.Append(contract_name(), fee(), resources(), data(), identities);
 
     return serialiser.data();
   }

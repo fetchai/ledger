@@ -44,8 +44,9 @@ namespace {
   TEST_F(WiredTransactionTest, basic)
   {
     MutableTransaction tx;
+
     auto wire_tx = ToWireTransaction(tx);
-    (void)tx;
+    std::cout << wire_tx;
   }
 
 }  // namespace

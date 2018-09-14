@@ -20,6 +20,8 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/counter.hpp"
+
 #include "core/logger.hpp"
 #include <type_traits>
 
@@ -29,18 +31,22 @@ namespace serializers {
 class ByteArrayBuffer
 {
 public:
+  using self_type = ByteArrayBuffer;
+
   ByteArrayBuffer()
   {}
+
   ByteArrayBuffer(byte_array::ByteArray s)
   {
     data_ = s;
   }
 
-  void Allocate(std::size_t const &val)
+  void Allocate(std::size_t const &delta)
   {
-    data_.Resize(data_.size() + val);
+    data_.Resize(data_.size() + delta);
   }
 
+  //TODO(pbukva) (private issue: either implementation is incorrect, or it feels like existence of this method doesn't make sense)
   void Reserve(std::size_t const &val)
   {
     data_.Reserve(data_.size() + val);
@@ -135,9 +141,55 @@ public:
     return data_;
   }
 
-private:
-  byte_array::ByteArray data_;
+  //template<typename SIZE_COUNTER, typename ...ARGS>
+  //self_type & Append(ARGS const&... args)
+  //{
+  //  SIZE_COUNTER counter;
+  //  counter.Allocate(Tell());
+  //  counter.Seek(Tell());
 
+  //  AppendInternal(counter, args...);
+  //  Seek(counter.Tell());
+
+  //  return *this;
+  //}
+
+  template<typename ...ARGS>
+  self_type & Append(ARGS const&... args)
+  {
+    serializers::SizeCounter<void> counter;
+    counter.Allocate(Tell());
+    counter.Seek(Tell());
+
+    AppendInternal(counter, args...);
+    Seek(counter.Tell());
+
+    return *this;
+  }
+
+private:
+  template<typename SIZE_COUNTER, typename T, typename ...ARGS>
+  void AppendInternal(SIZE_COUNTER &counter, T const &arg, ARGS const&... args)
+  {
+    std::size_t const start_pos = counter.Tell();
+
+    counter << arg;
+    AppendInternal(counter, args...);
+
+    Seek(start_pos);
+    *this << arg;
+  }
+
+  template<typename SIZE_COUNTER>
+  void AppendInternal(SIZE_COUNTER &counter)
+  {
+    if (size() < counter.size())
+    {
+      Allocate(counter.size() - size());
+    }
+  }
+
+  byte_array::ByteArray data_;
   std::size_t pos_ = 0;
 };
 }  // namespace serializers

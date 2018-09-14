@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/exception.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 #include <type_traits>
 

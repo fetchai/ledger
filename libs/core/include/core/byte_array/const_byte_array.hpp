@@ -306,12 +306,12 @@ protected:
   {
     auto const orig_size        = relative ? data_.size() - start_ : data_.size();
     auto const size_for_reserve = relative ? start_ + n : n;
-    auto const length           = relative ? n : n - start_;
+    auto const relative_length  = relative ? n : n - start_;
     if (orig_size < n)
     {
       Reserve(size_for_reserve);
     }
-    length_ = length;
+    length_ = relative_length;
   }
 
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
