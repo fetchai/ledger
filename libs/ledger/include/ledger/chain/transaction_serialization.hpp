@@ -37,27 +37,36 @@ inline void Serialize(T &serializer, UnverifiedTransaction const &b)
 template <typename T>
 inline void Deserialize(T &serializer, UnverifiedTransaction &b)
 {
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 1");
   uint16_t version;
   serializer >> version;  // TODO(issue 34): set version
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 2");
   char c;
   serializer >> c;
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 3");
   TransactionSummary    summary;
   byte_array::ByteArray data, signature;
   std::string           contract_name;
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 4");
   serializer >> summary;
   b.set_summary(summary);
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 5");
   serializer >> data;
   b.set_data(data);
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 6");
   serializer >> signature;
   b.set_signature(signature);
 
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction 7");
   serializer >> contract_name;
   b.set_contract_name(contract_name);
+
+  FETCH_LOG_INFO(LOGGING_NAME,">>UnverifiedTransaction X");
 }
 
 template <typename T>
