@@ -489,6 +489,9 @@ public:
   {
     Flush();
 
+    std::cout << ">>verify 1" << std::endl;
+    Verify(true);
+
     if(size() == 0)
     {
       return;
@@ -534,6 +537,8 @@ public:
     index_type sibling_index;
     stack_.Get(parent_index, parent);
 
+    assert(parent_index != uint64_t(-1));
+
     // Determine the sibling left/right from parent left/right
     if(kv_index == parent.left)
     {
@@ -550,10 +555,15 @@ public:
       throw StorageException("Failed to find element in parent left/right references: tree broken");
     }
 
+    std::cout << "our index: " << kv_index << std::endl;
+    std::cout << "sibling index: " << sibling_index << std::endl;
+    std::cout << "root index: " << root_ << std::endl;
+    std::cout << "size : " << stack_.size() << std::endl;
+
     // Set the sibling in the place of that parent, the split etc. should be able to stay the same
     sibling.parent = parent.parent;
 
-    // Update that sibling's parents if not root
+    // Update that sibling's parents if sibling is not root
     if(sibling.parent != uint64_t(-1))
     {
       key_value_pair new_sibling_parent;
@@ -573,13 +583,37 @@ public:
         throw StorageException("Failed to erase element in key value index: tree broken");
       }
 
-      // Update new parents of the sibling
-      UpdateParents(sibling.parent, sibling_index, sibling);
+      std::cout << "new sibling parent now has indexes " << new_sibling_parent.right << std::endl;
+      std::cout << "new sibling parent now has indexes " << new_sibling_parent.left << std::endl;
+
+      stack_.Set(sibling.parent, new_sibling_parent);
+    }
+    // If sibling is root, need to update
+    else
+    {
+      root_ = sibling_index;
     }
 
+    stack_.Set(sibling_index, sibling);
+    UpdateParents(sibling.parent, sibling_index, sibling);
+
+    std::cout << ">>verify 2" << std::endl;
+    Verify(true);
+
     // Erase our node and its parent, important to do this at the end since it might shuffle indexes
-    Erase(kv_index);
-    Erase(parent_index);
+    if(parent_index > kv_index)
+    {
+      Erase(parent_index);
+      Erase(kv_index);
+    }
+    else
+    {
+      Erase(kv_index);
+      Erase(parent_index);
+    }
+
+    std::cout << ">>verify 3" << std::endl;
+    Verify(true);
   }
 
   byte_array::ByteArray Hash()
@@ -856,6 +890,7 @@ private:
 
       stack_.Get(next, kv);
 
+
       left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
 
       switch (left_right)
@@ -996,7 +1031,7 @@ private:
   }
 
   /**
-   * Erase the element from the stack. Assume the element is in an undefined state. This is done
+   * Erase the element from the stack. Assume the element is in an undefined state. Erasure is done
    * by swapping the element with the last element of the stack and popping it off the stack.
    *
    * index must refer to a valid location on the stack.
@@ -1005,9 +1040,21 @@ private:
    */
   void Erase(index_type const &index)
   {
+    std::cout << "ERASING: " << index << std::endl;
     const std::size_t stack_end = stack_.size() - 1;
 
     assert(index <= stack_end);
+
+    std::cout << "SS " << stack_end << std::endl;
+    std::cout << "SZ " << stack_.size() << std::endl;
+    std::cout << "root " << root_ << std::endl;
+
+    if(index == stack_end)
+    {
+      std::cout << "Popping from stack end" << std::endl;
+      stack_.Pop();
+      return;
+    }
 
     // Get last element on stack
     key_value_pair last_element;
@@ -1029,16 +1076,61 @@ private:
       }
       else
       {
-        throw StorageException("Storage tree referencing broken: parent of node doesn't refer to\
-            node via left or right branches");
+        throw StorageException("Storage tree referencing broken: parent of node doesn't refer to node via left or right branches");
       }
 
       stack_.Set(last_element.parent, last_element_parent);
+    }
+    else
+    {
+      // Last element is root, update the root
+      root_ = index;
     }
 
     // Write last element into index location and pop stack
     stack_.Set(index, last_element);
     stack_.Pop();
+  }
+
+  void Verify(bool stack_size_correct)
+  {
+    if(stack_.size() == 0)
+    {
+      return;
+    }
+
+    std::cout << "==========================" << std::endl;
+    std::cout << "Root: " << root_ << std::endl;
+
+    for (std::size_t i = 0; i < stack_.size(); ++i)
+    {
+      key_value_pair kv;
+      stack_.Get(i, kv);
+
+      std::cout << "Index: " << i << std::endl;
+      std::cout << "Parent: " << kv.parent << std::endl;
+      std::cout << "Left: " << kv.left << std::endl;
+      std::cout << "Right: " << kv.right << std::endl;
+      std::cout << "" << std::endl;
+    }
+    std::cout << "==========================" << std::endl;
+
+    //VerifyHash();
+
+    if(root_ >= stack_.size())
+    {
+      throw StorageException("Root out of bounds of stack");
+    }
+
+    //index_type     depth      = 0;
+
+    key_value_pair kv;
+    stack_.Get(root_, kv);
+
+    if(kv.parent != uint64_t(-1))
+    {
+      throw StorageException("Root of tree's parent not terminated correctly");
+    }
   }
 };
 

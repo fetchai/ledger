@@ -71,67 +71,67 @@ protected:
   // custom setup - populate our object store and a vector with random elements
   void SetUp(uint64_t test_size)
   {
-    fetch::random::LaggedFibonacciGenerator<> lfg;
     test_store_.New("testFile.db", "testIndex.db");
     test_store_small_.New("testFile2.db", "testIndex2.db");
 
     // Populate vector of random numbers
     for (std::size_t i = 0; i < test_size; ++i)
     {
-      uint64_t random = lfg();
-
-      testType test;
-      test.first  = int(-random);
-      test.second = random;
-
-      test.third = std::to_string(random);
-
-      test_store_.Set(ToAddress(test), test);
-      test_store_small_.Set(ToAddress(test), test);
-      test_elements_.push_back(test);
-
+      AddRandomElement();
     }
+  }
+
+  void AddRandomElement()
+  {
+    uint64_t random = lfg_();
+
+    testType test;
+    test.first  = int(-random);
+    test.second = random;
+
+    test.third = std::to_string(random);
+
+    test_store_.Set(ToAddress(test), test);
+    test_store_small_.Set(ToAddress(test), test);
+    test_elements_.push_back(test);
   }
 
   // Verify that test_store_ == test_elements_
   bool Verify()
   {
-    if(test_store_.size() != test_elements_.size())
-    {
-      return false;
-    }
+    valid_ = true;
 
-    if(test_store_small_.size() != test_elements_.size())
+    Verify(test_store_);
+    Verify(test_store_small_);
+
+    return valid_;
+  }
+
+  template <typename STORE>
+  void Verify(STORE &store)
+  {
+    if(store.size() != test_elements_.size())
     {
-      return false;
+      std::cout << "Sizes of stores didn't match" << std::endl;
+      valid_ = false;
     }
 
     for(auto const &i : test_elements_)
     {
       testType test;
 
-      if(!test_store_.Get(ToAddress(i), test))
+      if(!store.Get(ToAddress(i), test))
       {
-        return false;
+        std::cout << "Failed to find element" << std::endl;
+        valid_ = false;
       }
 
       if(!(test == i))
       {
-        return false;
-      }
-
-      if(!test_store_small_.Get(ToAddress(i), test))
-      {
-        return false;
-      }
-
-      if(!(test == i))
-      {
-        return false;
+        std::cout << "Deserialised value not matched" << std::endl;
+        valid_ = false;
       }
     }
-
-    return true;
   }
 
   ResourceAddress ToAddress(testType const &element) const
@@ -144,9 +144,11 @@ protected:
     test_elements_.clear();
   }
 
-  ObjectStore<testType>    test_store_;
-  ObjectStore<testType, 5> test_store_small_;
-  std::vector<testType>    test_elements_;
+  bool                                      valid_ = true;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
+  ObjectStore<testType>                     test_store_;
+  ObjectStore<testType, 5>                  test_store_small_;
+  std::vector<testType>                     test_elements_;
 };
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
@@ -165,10 +167,11 @@ TEST_F(ObjectStoreTest, correct_setup)
 
 TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 {
-  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
+  std::vector<uint64_t> test_vals = {2,3,4,100,1000};
 
   for(auto const &i : test_vals)
   {
+    std::cout << "verify: " << i << std::endl;
     TearDown();
     SetUp(i);
 
@@ -185,10 +188,12 @@ TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 
 //TEST_F(ObjectStoreTest, advanced_deletion_of_elements)
 //{
-//  std::vector<uint64_t> test_vals = {0,1,2,3,4,100,1000};
+//  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
 //
 //  for(auto const &i : test_vals)
 //  {
+//    std::cout << "" << std::endl;
+//    std::cout << "Testing: " << i << std::endl;
 //    TearDown();
 //    SetUp(i);
 //
@@ -197,6 +202,13 @@ TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 //    test_elements_.pop_back();
 //
 //    test_store_.Erase(ToAddress(last_element));
+//    test_store_small_.Erase(ToAddress(last_element));
+//
+//    // Continue to use the stores
+//    for (std::size_t j = 0; j < i; ++j)
+//    {
+//      AddRandomElement();
+//    }
 //
 //    ASSERT_TRUE(Verify() == true) << "Failed to delete on iteration: " << i;
 //  }

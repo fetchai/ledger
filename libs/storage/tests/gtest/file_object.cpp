@@ -303,7 +303,6 @@ bool FileLoadHashConsistency()
 
       if (file_object.Hash() != hashes[n])
       {
-        std::cout << "Failed??? " << strings[n].size() << " " << file_object.size() << std::endl;
 
         return false;
       }
@@ -329,50 +328,67 @@ bool FileLoadHashConsistency()
   return true;
 }
 
-TEST(file_object, basic_functionality)
+//TEST(file_object, basic_functionality)
+//{
+//  //ASSERT_TRUE(FailsBadLoad());
+//}
+
+TEST(file_object, BasicFileCreation)
 {
-  ASSERT_TRUE(FailsBadLoad());
-
   ASSERT_TRUE(BasicFileCreation<2>());
+}
 
+TEST(file_object, FileSaveLoadFixedSize)
+{
   ASSERT_TRUE((FileSaveLoadFixedSize<1, 1>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<2, 1>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<4, 1>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<1, 0>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<2, 0>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<4, 0>()));
+}
 
+TEST(file_object, MultipleFileCreation)
+{
   ASSERT_TRUE(MultipleFileCreation<1>());
   ASSERT_TRUE(MultipleFileCreation<2>());
   ASSERT_TRUE(MultipleFileCreation<4>());
   ASSERT_TRUE(MultipleFileCreation<9>());
   ASSERT_TRUE(MultipleFileCreation<1023>());
+}
 
+TEST(file_object, Overwriting)
+{
   ASSERT_TRUE(Overwriting<1>());
   ASSERT_TRUE(Overwriting<2>());
   ASSERT_TRUE(Overwriting<4>());
   ASSERT_TRUE(Overwriting<7>());
   ASSERT_TRUE(Overwriting<2048>());
+}
 
+TEST(file_object, FileLoadValueConsistency)
+{
   ASSERT_TRUE(FileLoadValueConsistency<1>());
   ASSERT_TRUE(FileLoadValueConsistency<2>());
   ASSERT_TRUE(FileLoadValueConsistency<4>());
   ASSERT_TRUE(FileLoadValueConsistency<7>());
-
 }
 
 TEST(file_object, hash_consistency)
 {
-  EXPECT(HashConsistency<1>());
-  EXPECT(HashConsistency<2>());
-  EXPECT(HashConsistency<4>());
-  EXPECT(HashConsistency<9>());
-  EXPECT(HashConsistency<13>());
-  EXPECT(HashConsistency<1024>());
+  ASSERT_TRUE(HashConsistency<1>());
+  ASSERT_TRUE(HashConsistency<2>());
+  ASSERT_TRUE(HashConsistency<4>());
+  ASSERT_TRUE(HashConsistency<9>());
+  ASSERT_TRUE(HashConsistency<13>());
+  ASSERT_TRUE(HashConsistency<1024>());
+}
 
-  EXPECT(FileLoadHashConsistency<1>());
-  EXPECT(FileLoadHashConsistency<2>());
-  EXPECT(FileLoadHashConsistency<4>());
-  EXPECT(FileLoadHashConsistency<7>());
-  EXPECT(FileLoadHashConsistency<1023>());
+TEST(file_object, file_load_hash_consistency)
+{
+  ASSERT_TRUE(FileLoadHashConsistency<1>());
+  ASSERT_TRUE(FileLoadHashConsistency<2>());
+  ASSERT_TRUE(FileLoadHashConsistency<4>());
+  ASSERT_TRUE(FileLoadHashConsistency<7>());
+  ASSERT_TRUE(FileLoadHashConsistency<1023>());
 }

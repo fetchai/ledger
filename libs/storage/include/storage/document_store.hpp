@@ -233,10 +233,11 @@ public:
     SetupStore();
   }
 
+  // TODO: (HUT) : remove
   void SetupStore()
   {
     // Initialise the underlying file store directly
-    file_object_type file(file_store_, true);
+    //file_object_type file(file_store_, true);
   }
 
   Document GetOrCreate(ResourceID const &rid)
