@@ -110,6 +110,7 @@ private:
   template<typename T, typename ...ARGS>
   void AppendInternal(T const &arg, ARGS const&... args)
   {
+    std::cout << "SizeCount.AppendInternal(" << typeid(arg).name() << ")" << std::endl;
     *this << arg;
     AppendInternal(args...);
   }

@@ -49,6 +49,16 @@ struct A
   {
   }
 
+  bool operator ==(A const &left) const
+  {
+    return x == left.x && y == left.y && t == left.t;
+  }
+
+  bool operator !=(A const &left) const
+  {
+    return !(*this == left);
+  }
+
   ba_type x {ba_type{T{}.x}.Append(" x")};
   T t{"Tx", "Ty"};
   ba_type y {ba_type{T{}.y}.Append(" y")};
@@ -71,6 +81,11 @@ struct A<void>
     : x{_x}
     , y{_y}
   {
+  }
+
+  bool operator ==(A const &left) const
+  {
+    return x == left.x && y == left.y;
   }
 
   ba_type x {"X"};
@@ -101,11 +116,12 @@ void Deserialize(T &serializer, A<void> &a)
   serializer >> a.x >> a.y;
 }
 
-using B = A<A<A<void>>>;
 
 class ByteArrayBufferTest : public testing::Test
 {
 protected:
+  using B = A<A<A<void>>>;
+
   void SetUp()
   {}
 
@@ -113,26 +129,50 @@ protected:
   {}
 };
 
+TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
+{
+  B const b0{"b0", "b0"};
+  B       b0_copy{ b0 };
+
+  //* Verifying that both variables have the **same** value
+  EXPECT_EQ(b0, b0_copy);
+
+  auto const b0_copy_y_orig_value = b0_copy.t.t.y;
+  //* Modifying value of one of variables
+  b0_copy.t.t.y.Append("somethig new");
+  //* Proving that variables have **different** value
+  EXPECT_NE(b0, b0_copy);
+
+  //* Reverting variable to it's original value
+  b0_copy.t.t.y = b0_copy_y_orig_value.Copy();
+  //* Proving that variables have the **same** value after reverting
+  EXPECT_EQ(b0, b0_copy);
+}
+
 TEST_F(ByteArrayBufferTest, test_basic)
 {
   B b0{"b0", "b0"};
   B b1{"b1", "b1"};
   uint64_t x = 3;
 
+  constexpr std::size_t preallocated_ammount = 10;
+
   ByteArrayBuffer stream;
+  stream.Allocate(preallocated_ammount);
+  stream.Seek(preallocated_ammount);
+  //* Serialising
   stream.Append(b0, x, b1);
-
-  SizeCounter<void> counter_stream;
-  counter_stream << b0 << x << b1;
-
-  EXPECT_EQ(counter_stream.size(), stream.size());
 
   B b0_d;
   B b1_d;
   uint64_t x_d = 0;
+  stream.Seek(preallocated_ammount);
+  //* De-serialising
   stream >> b0_d >> x_d >> b1_d;
 
-  std::cout << stream.data() << std::endl;
+  EXPECT_EQ(b0, b0_d);
+  EXPECT_EQ(b1, b1_d);
+  EXPECT_EQ(x, x_d);
 }
 
 }  // namespace
