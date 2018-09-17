@@ -200,6 +200,14 @@ TEST(computation_graph, ndarray_tricky)
   ASSERT_TRUE(result_arr == test_result_arr);
 }
 
+
+//
+// To implement back_prop we need to:
+// 1. identify the sub-graph of interest (simplest case = whole graph)
+// 2. generate wengert list (may need to store node_ids to do this)
+// 3. with seed df(f) = 1; calculate derivitive of each item in reverse order of list
+//
+
 // TEST(computation_graph, back_prop)
 //{
 //
@@ -222,7 +230,6 @@ TEST(computation_graph, ndarray_tricky)
 //  computation_graph.Run(y_hat);
 //
 //  computation_graph.SetLoss("MSE");
-//  computation_graph.Train();
 //
 //  computation_graph.Train();
 //
