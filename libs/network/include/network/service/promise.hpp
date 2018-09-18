@@ -69,7 +69,8 @@ public:
   {
     WAITING,
     SUCCESS,
-    FAILED
+    FAILED,
+    TIMEDOUT
   };
 
   static char const *ToString(State state)
@@ -82,6 +83,8 @@ public:
         return "Success";
       case State::FAILED:
         return "Failed";
+      case State::TIMEDOUT:
+        return "Timeout";
       default:
         return "Unknown";
     }
@@ -147,6 +150,9 @@ public:
   }
   /// @}
 
+  std::string &name() { return name_; }
+  const std::string &name() const { return name_; }
+
   State GetState() { return state_; }
 
   /// @name Waits
@@ -210,6 +216,7 @@ private:
   Callback        callback_success_;
   Callback        callback_failure_;
   Callback        callback_completion_;
+  std::string     name_;
 };
 
 class PromiseBuilder

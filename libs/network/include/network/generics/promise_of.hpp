@@ -30,7 +30,7 @@ namespace network {
  * @tparam TYPE The expected return type of the promise
  */
 template <class TYPE>
-class PromiseOf: public Resolvable
+class PromiseOf: public ResolvableTo<TYPE>
 {
 public:
   using Promise = service::Promise;
@@ -43,19 +43,24 @@ public:
   PromiseOf(PromiseOf const &rhs) = default;
   ~PromiseOf() = default;
 
+  explicit PromiseOf()
+  {
+  }
+
   // Operators
   PromiseOf &operator=(PromiseOf const &rhs) = default;
   PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
   explicit operator bool() const;
 
   // Promise Accessors
-  TYPE Get() const;
+  TYPE Get() const override;
   bool Wait(uint32_t timeout_ms = std::numeric_limits<uint32_t>::max(),
             bool throw_exception = true) const;
 
   Promise const &GetInnerPromise() const { return promise_; }
   PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
+  virtual bool empty() { return !promise_; }
 
   virtual State GetState() override
   {
@@ -68,6 +73,14 @@ public:
   {
     const char *states[4] = {"Waiting", "Succeeded", "Failed", "???"};
     return states[int(s) & 0x03];
+  }
+
+  std::string &name() { return promise_ -> name(); }
+  const std::string &name() const { return promise_ -> name(); }
+
+  void Adopt(Promise &promise)
+  {
+    promise_ = promise;
   }
 private:
   Promise promise_;
@@ -106,7 +119,7 @@ inline TYPE PromiseOf<TYPE>::Get() const
 template <typename TYPE>
 inline PromiseOf<TYPE>::operator bool() const
 {
-  return promise_->IsSuccessful();
+  return promise_ && promise_->IsSuccessful();
 }
 
 /**

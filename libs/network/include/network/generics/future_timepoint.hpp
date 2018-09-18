@@ -45,6 +45,10 @@ public:
   {
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
+  void SetMilliseconds(const Timepoint &timepoint, size_t milliseconds)
+  {
+    due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
+  }
 
   bool IsDue(const Timepoint &timepoint) const
   {

@@ -49,7 +49,14 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
     // determine if timeout has expired
     if (has_timeout && (Clock::now() >= timeout_deadline))
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Promise timed out!");
+      if (name_.length()>0)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"Promise '",name_,"'timed out!");
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"Promise ", id_, " timed out!");
+      }
       return false;
     }
 
@@ -63,7 +70,7 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
   }
   else if (IsFailed())
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Promise failed!");
+    FETCH_LOG_WARN(LOGGING_NAME,"Promise ", id_, " failed!");
 
     if (throw_exception && exception_)
     {
@@ -142,6 +149,9 @@ char const *ToString(PromiseState state)
   char const *name = "Unknown";
   switch (state)
   {
+    case details::PromiseImplementation::State::TIMEDOUT:
+      name = "Timedout";
+      break;
     case details::PromiseImplementation::State::WAITING:
       name = "Waiting";
       break;

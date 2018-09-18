@@ -24,86 +24,61 @@
 namespace fetch {
 namespace network {
 
-template<class KEY, class REQUESTED, class REQUESTED_CONTAINER = std::vector<REQUESTED>>
+template<class KEY, class REQUESTED, class PROMISE = PromiseOf<REQUESTED>>
 class RequestingQueueOf
 {
 public:
   using Mutex = fetch::mutex::Mutex;
   using Lock = std::lock_guard<Mutex>;
-
-  using ManyPromised = PromiseOf<REQUESTED_CONTAINER>;
-  using Promised = PromiseOf<REQUESTED>;
+  using Promised = PROMISE;
   using State = typename Promised::State;
-
-  using ManyPendingPromised = std::map<KEY, ManyPromised>;
   using PendingPromised = std::map<KEY, Promised>;
-
   using OutputType = std::pair<KEY, REQUESTED>;
+  using FailedOutputType = std::pair<KEY, PROMISE>;
+  using Timepoint = typename Promised::Timepoint;
+
+  static constexpr char const *LOGGING_NAME = "RequestingQueueOf";
 
   RequestingQueueOf()
   {
+    count_ . store(0);
+    failcount_ . store(0);
+    pending_count_ . store(0);
   }
 
   virtual ~RequestingQueueOf()
   {
   }
 
-  void Resolve()
+  std::tuple<size_t, size_t, size_t>  Resolve(const Timepoint &tp)
   {
+    FETCH_LOG_WARN(LOGGING_NAME,"Resolve(Timepoint) start DONE=", count_.load(), "  FAIL=", failcount_.load(),  "   WAIT=", pending_count_.load());
     Lock lock(mutex_);
-
-    {
-      auto iter = many_requests_ . begin();
-      while(iter != many_requests_ . end())
-      {
-        auto key = (*iter) . first;
-        auto prom = (*iter) . second;
-        switch(prom . GetState())
-        {
-        case State::WAITING:
-          ++iter;
-          pending_count_--;
-          break;
-        case State::SUCCESS:
-          {
-            REQUESTED_CONTAINER result = prom . Get();
-            for(auto &item : result)
-            {
-              completed_ . push_back(std::make_pair(key, item));
-              count_++;
-            }
-          }
-          iter = many_requests_ . erase(iter);
-          break;
-        case State::FAILED:
-          iter = many_requests_ . erase(iter);
-          break;
-        }
-      }
-    }
-
     {
       auto iter = requests_ . begin();
       while(iter != requests_ . end())
       {
-        auto key = (*iter) . first;
-        auto prom = (*iter) . second;
-        switch(prom . GetState())
+        auto const &key = (*iter) . first;
+        auto &prom = (*iter) . second;
+        switch(prom . GetState(tp))
         {
         case State::WAITING:
           ++iter;
-          pending_count_--;
           break;
         case State::SUCCESS:
           {
             REQUESTED result = prom . Get();
             completed_ . push_back(std::make_pair(key, result));
             count_++;
+            pending_count_--;
           }
           pending_count_--;
           iter = requests_ . erase(iter);
           break;
+        case State::TIMEDOUT:
         case State::FAILED:
+          failed_ . push_back(std::make_pair(key, prom));
+          failcount_++;
           iter = requests_ . erase(iter);
           pending_count_--;
           break;
@@ -112,18 +87,56 @@ public:
     }
 
     count_.store( completed_.size());
-    pending_count_.store( many_requests_.size() + requests_.size());
+    failcount_.store( failed_.size());
+    pending_count_.store( requests_.size());
+    FETCH_LOG_WARN(LOGGING_NAME,"Resolve(Timepoint) ended DONE=", count_.load(), "  FAIL=", failcount_.load(),  "   WAIT=", pending_count_.load());
+    return std::make_tuple(  count_.load(), failcount_.load(),  pending_count_.load());
   }
 
-  template<class SOME_CONTAINER>
-  void Add(const KEY &key, const PromiseOf<SOME_CONTAINER> &new_promise)
+  std::tuple<size_t, size_t, size_t> Resolve()
   {
+    FETCH_LOG_WARN(LOGGING_NAME,"Resolve");
     Lock lock(mutex_);
-    many_requests_ . insert (std::make_pair(key, new_promise));
-    pending_count_++;
+    {
+      auto iter = requests_ . begin();
+      while(iter != requests_ . end())
+      {
+        auto const &key = (*iter) . first;
+        auto &prom = (*iter) . second;
+        switch(prom . GetState())
+        {
+        case State::WAITING:
+          ++iter;
+          break;
+        case State::SUCCESS:
+          {
+            REQUESTED result = prom . Get();
+            completed_ . push_back(std::make_pair(key, result));
+          }
+          count_++;
+          iter = requests_ . erase(iter);
+          pending_count_--;
+          break;
+        case State::TIMEDOUT:
+        case State::FAILED:
+          failed_ . push_back(std::make_pair(key, prom));
+          failcount_++;
+          iter = requests_ . erase(iter);
+          pending_count_--;
+          break;
+        }
+      }
+    }
+
+    count_.store( completed_.size());
+    failcount_.store( failed_.size());
+    pending_count_.store( requests_.size());
+    FETCH_LOG_INFO("RequestingQueueOf","Resolve leaves ", pending_count_.load());
+
+    return std::make_tuple(  count_.load(), failcount_.load(),  pending_count_.load());
   }
 
-  void Add(const KEY &key, const PromiseOf<REQUESTED> &new_promise)
+  void Add(const KEY &key, const PROMISE &new_promise)
   {
     Lock lock(mutex_);
     requests_ . insert (std::make_pair(key, new_promise));
@@ -137,11 +150,7 @@ public:
     std::vector<KEY> result;
     for(auto &key : inputs)
     {
-      if (
-          (many_requests_ . find(key) == many_requests_ . end())
-          &&
-          (requests_ . find(key) == requests_ . end())
-          )
+      if (requests_ . find(key) == requests_ . end())
       {
         result.push_back(key);
       }
@@ -149,20 +158,17 @@ public:
     return result;
   }
 
-  bool Inflight(const KEY &key)
+  bool Inflight(const KEY &key) const
   {
     Lock lock(mutex_);
-    return (
-            (many_requests_ . find(key) != many_requests_ . end())
-            ||
-            (requests_ . find(key) != requests_ . end())
-            );
+    return (requests_ . find(key) != requests_ . end());
   }
 
   size_t Get(std::vector<OutputType> &output, size_t limit)
   {
     Lock lock(mutex_);
     output.reserve(limit);
+    output.clear();
     while (!completed_.empty() && output.size() < limit)
     {
       output.push_back(completed_.front());
@@ -171,6 +177,22 @@ public:
     }
     return output.size();
   }
+
+  size_t GetFailures(std::vector<FailedOutputType> &output, size_t limit)
+  {
+    Lock lock(mutex_);
+    output.reserve(limit);
+    output.clear();
+    while (!failed_.empty() && output.size() < limit)
+    {
+      output.push_back(failed_.front());
+      failed_.pop_front();
+      failcount_--;
+    }
+    return output.size();
+  }
+
+  size_t failcount() { return failcount_ . load(); }
 
   size_t size(void) const
   {
@@ -184,18 +206,28 @@ public:
 
   bool Remaining(void)
   {
+    return failcount_.load() > 0;
+  }
+
+  bool RemainingFailures(void)
+  {
     return count_.load() > 0;
   }
+
+  void DiscardFailures()
+  {
+    failed_ . clear();
+  }
 private:
-  ManyPendingPromised many_requests_;
   PendingPromised requests_;
-  Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_{__LINE__, __FILE__};
   std::atomic<size_t> count_;
+  std::atomic<size_t> failcount_;
   std::atomic<size_t> pending_count_;
 
   std::list<OutputType> completed_;
 
-  std::list<KEY> failed_;
+  std::list<FailedOutputType> failed_;
 };
 
 }  // namespace network

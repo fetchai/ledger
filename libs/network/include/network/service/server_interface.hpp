@@ -211,7 +211,7 @@ private:
       + std::to_string(connection_handle)
       ;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
+    FETCH_LOG_INFO(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)

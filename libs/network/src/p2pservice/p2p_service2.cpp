@@ -85,7 +85,7 @@ void P2PService2::WorkCycle()
   {
     auto next = possibles_ . front();
     possibles_.pop_front();
-    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: PULLED ", next.ToString());
+    FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: PULLED ", next.ToString());
 
     if (next.GetProtocol() == "tcp")
     {
@@ -96,24 +96,37 @@ void P2PService2::WorkCycle()
       switch (muddle_.useClients().GetStateForPeer(nextp))
       {
       case muddle::PeerConnectionList::UNKNOWN:
-        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", nextp.ToString());
+        FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: AddPeer  ", nextp.ToString());
         muddle_ . AddPeer(nextp);
         break;
       case muddle::PeerConnectionList::CONNECTED:
-        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in use:  ", next.ToString());
+        FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in use:  ", next.ToString());
         break;
       case muddle::PeerConnectionList::TRYING:
-        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but being tried:  ", next.ToString());
+        FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but being tried:  ", next.ToString());
         break;
       case muddle::PeerConnectionList::BACKOFF:
       default:
-        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in backoff:  ", next.ToString());
+        FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: Considered, but in backoff:  ", next.ToString());
         break;
       }
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: No Go on ", next.ToString(), ">>", next.GetProtocol());
+      FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: No Go on ", next.ToString(), ">>", next.GetProtocol());
+    }
+  }
+
+  auto iter = possibles_ . begin();
+  while(iter != possibles_ . end())
+  {
+    if (used.find(*iter) != used.end())
+    {
+      iter = possibles_ . erase(iter);
+    }
+    else
+    {
+      ++iter;
     }
   }
 
@@ -121,17 +134,18 @@ void P2PService2::WorkCycle()
 
   // gte more peers if we need them..
 
+  FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: possibles = ", possibles_.size());
   if (possibles_.size() < max_peers)
   {
     auto peerlist_updates_needed_and_not_in_flight = outstanding_peerlists_ . FilterOutInflight( connected_peers );
     if (peerlist_updates_needed_and_not_in_flight . size() == 0)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
+      FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: outstanding left no peers");
     }
 
     for( auto& identity : peerlist_updates_needed_and_not_in_flight)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: get peers from ", ToBase64(identity.identifier()));
+      FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: get peers from ", ToBase64(identity.identifier()));
 
       client_ . SetAddress(identity.identifier());
       auto prom = network::PromiseOf<std::vector<network::Uri>>(
@@ -139,10 +153,6 @@ void P2PService2::WorkCycle()
       );
       outstanding_peerlists_ . Add( identity, prom );
     }
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,"P2PService2::WorkCycle: possibles = ", possibles_.size());
   }
 
   outstanding_peerlists_ . Resolve();
@@ -153,20 +163,22 @@ void P2PService2::WorkCycle()
     std::vector<RequestingPeerlists::OutputType> outputs;
     outstanding_peerlists_ . Get(outputs, 20);
 
-    for(auto &it : outputs)
+    for(auto &output : outputs)
     {
-      auto new_peer = it . second;
-      FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: possible new peer= ", new_peer.ToString());
-      //auto new_identity = it . first; // needed for trust scoring later...
-
-      if (my_uri_ != new_peer)
+      for(auto &peer : output.second)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: remembering possible new peer= ", new_peer.ToString());
-        possibles_ . push_back( new_peer );
+        FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: possible new peer= ", peer.ToString());
+        //auto new_identity = it . first; // needed for trust scoring later...
+
+        if (my_uri_ != peer)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: remembering possible new peer= ", peer.ToString());
+          possibles_ . push_back( peer );
+        }
       }
     }
   }
-  FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding DONE.");
+  FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: processing outstanding DONE.");
 
   // handle manifest updates.=
   auto manifest_updates_needed_from = manifest_cache_.GetUpdatesNeeded( connected_peers );
@@ -174,7 +186,7 @@ void P2PService2::WorkCycle()
 
   for( auto& identity : manifest_updates_needed_and_not_in_flight )
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToBase64(identity.identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME,"P2PService2::WorkCycle: get manifest from ", ToBase64(identity.identifier()));
     client_ . SetAddress(identity.identifier());
     auto prom = network::PromiseOf<network::Manifest>(
       client_ . Call(PROTOCOL_RESOLVER, ResolverProtocol::GET_MANIFEST)

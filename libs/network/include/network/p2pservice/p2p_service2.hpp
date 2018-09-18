@@ -47,7 +47,7 @@ public:
   using ServiceIdentifier = network::ServiceIdentifier;
 
   using RequestingManifests = network::RequestingQueueOf<Identity, Manifest>;
-  using RequestingPeerlists = network::RequestingQueueOf<Identity, Uri>;
+  using RequestingPeerlists = network::RequestingQueueOf<Identity, std::vector<Uri>>;
 
   enum
   {

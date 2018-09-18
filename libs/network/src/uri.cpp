@@ -86,9 +86,6 @@ bool Uri::ParseTCP(byte_array::ByteArray &b, uint16_t &port) const
   std::regex_match(data_, matches, TCP_FORMAT);
   if (matches.size() == 3)
   {
-
-    FETCH_LOG_ERROR(LOGGING_NAME, "'", data_, "' --> '", std::string(matches[1]), "' and '", std::string(matches[2]), "'");
-
     b = std::string(matches[1]);
     port = uint16_t(std::stoi(std::string(matches[2])));
     return true;
