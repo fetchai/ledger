@@ -130,7 +130,7 @@ protected:
   void TearDown()
   {}
 
-  void test_serialisation_with_stream(ByteArrayBuffer &stream)
+  void test_nested_append_serialisation(ByteArrayBuffer &stream)
   {
     B const b0{"b0x", "b0y"};
     B const b1{"b1x", "b1y"};
@@ -153,6 +153,48 @@ protected:
     EXPECT_EQ(x, x_d);
   }
 };
+
+TEST_F(ByteArrayBufferTest, test_seek_position_is_zero_after_stream_construction)
+{
+  ByteArrayBuffer stream;
+  EXPECT_EQ(0, stream.Tell());
+}
+
+TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
+{
+  constexpr std::size_t preallocated_ammount = 100;
+
+  ByteArrayBuffer stream;
+  stream.Allocate(preallocated_ammount);
+
+  EXPECT_EQ(preallocated_ammount, stream.size());
+  EXPECT_EQ(0, stream.Tell());
+
+  constexpr std::size_t delta_ammount = 10;
+  stream.Allocate(delta_ammount);
+
+  EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
+  EXPECT_EQ(0, stream.Tell());
+}
+
+TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
+{
+  constexpr std::size_t offset = 50;
+  constexpr std::size_t preallocated_ammount = offset + 50;
+
+  ByteArrayBuffer stream;
+  stream.Allocate(preallocated_ammount);
+  stream.Seek(offset);
+
+  EXPECT_EQ(preallocated_ammount, stream.size());
+  EXPECT_EQ(offset, stream.Tell());
+
+  constexpr std::size_t delta_ammount = 10;
+  stream.Allocate(delta_ammount);
+
+  EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
+  EXPECT_EQ(offset, stream.Tell());
+}
 
 TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
 {
@@ -177,17 +219,78 @@ TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_
 TEST_F(ByteArrayBufferTest, test_basic)
 {
   ByteArrayBuffer stream;
-  test_serialisation_with_stream(stream);
+  test_nested_append_serialisation(stream);
 }
 
-TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offeset)
+TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offset)
 {
   constexpr std::size_t preallocated_ammount = 10;
 
   ByteArrayBuffer stream;
   stream.Allocate(preallocated_ammount);
   stream.Seek(preallocated_ammount);
-  test_serialisation_with_stream(stream);
+  test_nested_append_serialisation(stream);
+}
+
+TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
+{
+  constexpr std::size_t preallocated_ammount = 100;
+  ByteArrayBuffer stream;
+
+  //* Production code under test
+  stream.Resize(preallocated_ammount, eResizeParadigm::relative);
+  stream.Seek(preallocated_ammount);
+
+  EXPECT_EQ(preallocated_ammount, stream.size());
+  EXPECT_EQ(preallocated_ammount, stream.data().capacity());
+  EXPECT_EQ(preallocated_ammount, stream.Tell());
+
+  constexpr std::size_t delta_size = 10;
+  //* Production code under test
+  stream.Resize(delta_size, eResizeParadigm::relative);
+
+  EXPECT_EQ(preallocated_ammount + delta_size, stream.size());
+  EXPECT_EQ(preallocated_ammount + delta_size, stream.data().capacity());
+  EXPECT_EQ(preallocated_ammount, stream.Tell());
+}
+
+TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
+{
+  constexpr std::size_t delta_size = 10;
+  //* Setup
+  ByteArrayBuffer stream;
+
+  std::size_t expected_size = 0;
+  for(uint64_t i = 0; i < 10; ++i)
+  {
+    //* Production code under test
+    stream.Resize(delta_size);
+
+    //* Expectations
+    expected_size += delta_size;
+    EXPECT_EQ(expected_size, stream.size());
+    EXPECT_EQ(expected_size, stream.data().capacity());
+  }
+}
+
+TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
+{
+  constexpr std::size_t small_size = 30;
+  constexpr std::size_t offset = small_size + 20;
+  constexpr std::size_t preallocated_ammount = offset + 50;
+
+  //* Setup
+  ByteArrayBuffer stream;
+  stream.Resize(preallocated_ammount);
+  stream.Seek(offset);
+
+  //* Production code under test
+  stream.Resize(small_size, eResizeParadigm::absolute);
+
+  //* Expectations
+  EXPECT_EQ(small_size, stream.size());
+  EXPECT_EQ(preallocated_ammount, stream.data().capacity());
+  EXPECT_EQ(small_size, stream.Tell());
 }
 
 }  // namespace

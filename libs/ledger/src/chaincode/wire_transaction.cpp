@@ -43,8 +43,13 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_v["dbg"] = tx_data_to_sign;
   }
 
-  byte_array::ConstByteArray const tx_data_for_signing {tx.TxDataForSigning<serializers::ByteArrayBuffer>()};
-  tx_v["data"] = byte_array::ToBase64(tx_data_for_signing);
+  for( auto const& sig: tx.signatures())
+  {
+    (void)sig;
+    byte_array::ConstByteArray const tx_data_for_signing {tx.TxDataForSigning<serializers::ByteArrayBuffer>()};
+    tx_v["data"] = byte_array::ToBase64(tx_data_for_signing);
+  }
+
   return byte_array::ByteArray();
 }
 

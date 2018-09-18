@@ -46,13 +46,39 @@ public:
 
   void Allocate(std::size_t const &delta)
   {
-    data_.Resize(data_.size() + delta);
+    Resize(delta, eResizeParadigm::relative);
   }
 
-  //TODO(pbukva) (private issue: either implementation is incorrect, or it feels like existence of this method doesn't make sense)
-  void Reserve(std::size_t const delta)
+  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
   {
-    data_.Reserve(data_.size() + delta);
+    switch(resize_paradigm)
+    {
+      case eResizeParadigm::relative:
+        data_.Resize(data_.size() + size);
+        break;
+
+      case eResizeParadigm::absolute:
+        data_.Resize(size);
+        if(pos_ > size)
+        {
+          Seek(size);
+        }
+        break;
+    };
+  }
+
+  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  {
+    switch(resize_paradigm)
+    {
+      case eResizeParadigm::relative:
+        data_.Reserve(data_.size() + size);
+        break;
+
+      case eResizeParadigm::absolute:
+        data_.Reserve(size);
+        break;
+    };
   }
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size)

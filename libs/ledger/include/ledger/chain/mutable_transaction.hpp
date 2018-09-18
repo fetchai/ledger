@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/serialisation_argument_wrapper.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
@@ -190,25 +191,49 @@ public:
     return TxDataForSigning<SERIALISER>(std::vector<crypto::Identity>());
   }
 
-  template<typename SERIALISER = serializers::ByteArrayBuffer, typename INDENTITIES_CONTAINER>
-  byte_array::ConstByteArray TxDataForSigning(INDENTITIES_CONTAINER const& identities = std::vector<crypto::Identity>()) const
+  template<typename STREAM = serializers::ByteArrayBuffer>
+  STREAM & TxDataForSigning(STREAM &stream) const
   {
-    std::vector<crypto::Identity> ids;
-    if (identities.size() > 1)
-    {
-      ids.reserve(identities.size());
-      std::copy(identities.begin(), identities.end(), ids.begin());
-      std::sort(ids.begin(), ids.end());
-    }
+    stream.Append(contract_name(), fee(), resources(), data());
+    return stream;
+  }
 
-    SERIALISER serialiser;
-    serialiser.Append(contract_name(), fee(), resources(), data(), identities);
-
-    return serialiser.data();
+  template<typename STREAM = serializers::ByteArrayBuffer>
+  STREAM & TxDataForSigningAppendIdentity(STREAM &stream_with_tx_data,
+      std::size_t const essential_data_size, crypto::Identity const &identity) const
+  {
+    stream_with_tx_data.Resize(essential_data_size, serializers::eResizeParadigm::absolute);
+    stream_with_tx_data.Seek(essential_data_size);
+    stream_with_tx_data.Append(identity);
+    return stream_with_tx_data;
   }
 
   bool Verify()
   {
+    serializers::ByteArrayBuffer tx_data_stream;
+    using lazy_argument_type = serializers::lazy_argument_type<decltype(tx_data_stream)>;
+
+    lazy_argument_type tx_data_lazy =
+        [this, &self = tx_data_lazy] (decltype(tx_data_stream)& tx_data_stream) -> void {
+      TxDataForSigning(tx_data_stream);
+
+      //* Switching itself to different lambda after its *FIRST* execution
+      self = [essential_tx_data_size = tx_data_stream.size()] (decltype(tx_data_stream)& tx_data_stream) -> void {
+        tx_data_stream.Resize(essential_tx_data_size);
+      };
+    };
+
+    for( auto const& sig: signatures_)
+    {
+      auto const& identity = sig.first;
+      //auto const& signature = sig.second;
+
+      //lazy_argument_type tx_data_lazy = [&identity] (decltype(tx_data_stream)& tx_data_stream) -> void {
+      //  tx_data_stream.Append(identity);
+      //};
+
+      tx_data_stream.Append(tx_data_lazy, identity);
+    }
     // TODO(issue 24): Needs implementing
     return true;
   }

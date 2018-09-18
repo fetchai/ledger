@@ -26,21 +26,56 @@
 namespace fetch {
 namespace serializers {
 
+enum class eResizeParadigm : uint8_t
+{
+  relative,
+  absolute
+};
+
 template <typename S>
 class SizeCounter
 {
 public:
   using self_type = SizeCounter;
 
-  void Allocate(std::size_t const &val)
+  void Allocate(std::size_t const &delta)
   {
-    size_ += val;
+    size_ += delta;
   }
 
-  //TODO(pbukva) (private issue: this is exactly what ByteArrayBuffer does even if it does not make much sense)
-  void Reserve(std::size_t const &val)
+  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
   {
-    size_ += val;
+    switch(resize_paradigm)
+    {
+      case eResizeParadigm::relative:
+        size_ + size;
+        break;
+
+      case eResizeParadigm::absolute:
+        size_ = size;
+        if(pos_ > size)
+        {
+          Seek(size);
+        }
+        break;
+    };
+  }
+
+  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  {
+    switch(resize_paradigm)
+    {
+      case eResizeParadigm::relative:
+        reserved_size_ += size;
+        break;
+
+      case eResizeParadigm::absolute:
+        if (reserved_size_ < size)
+        {
+          reserved_size_ = size;
+        }
+        break;
+    };
   }
 
   void WriteBytes(uint8_t const *, std::size_t const &size)
@@ -120,6 +155,7 @@ private:
 
   std::size_t size_ = 0;
   std::size_t pos_ = 0;
+  std::size_t reserved_size_ = 0;
 };
 
 template<typename T>
