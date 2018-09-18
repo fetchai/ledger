@@ -46,14 +46,12 @@ public:
 
   void Allocate(std::size_t const &delta)
   {
-    std::cout << "ByteArrayBuffer.Allocate(...): size()=" << size() << " + delta=" << delta << std::endl;
     data_.Resize(data_.size() + delta);
   }
 
   //TODO(pbukva) (private issue: either implementation is incorrect, or it feels like existence of this method doesn't make sense)
   void Reserve(std::size_t const delta)
   {
-    std::cout << "ByteArrayBuffer.Reserve(...): size()=" << size() << " + delta=" << delta << std::endl;
     data_.Reserve(data_.size() + delta);
   }
 
@@ -158,11 +156,8 @@ public:
       size_counter_.Append(args...);
       if (size() < size_counter_.size())
       {
-        std::cout << "ByteArrayBuffer.Append(...): size()=" << size() << ", counter.size()=" << size_counter_.size()
-                  << std::endl;
         Reserve(size_counter_.size() - size());
       }
-      std::cout << "ByteArrayBuffer.Append(...): AFTER count: size()=" << size() << ", counter.size()=" << size_counter_.size() << std::endl;
     }
 
     AppendInternal(args...);

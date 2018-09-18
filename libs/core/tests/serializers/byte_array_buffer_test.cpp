@@ -90,6 +90,8 @@ struct A<void>
 
   ba_type x {"X"};
   ba_type y {"Y"};
+
+
 };
 
 template <typename T, typename X>

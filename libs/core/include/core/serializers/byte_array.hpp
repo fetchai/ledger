@@ -42,10 +42,6 @@ inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
 
   detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  if(int64_t(size) > serializer.bytes_left())
-  {
-    std::cout << "size=" << int64_t(size) << ", bytes_left=" << serializer.bytes_left() << std::endl;
-  }
   detailed_assert(int64_t(size) <= serializer.bytes_left());
 
   serializer.ReadByteArray(s, size);
