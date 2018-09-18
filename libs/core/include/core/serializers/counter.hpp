@@ -96,7 +96,7 @@ public:
 
   int64_t bytes_left() const
   {
-    return static_cast<int64_t>(size_ - pos_);
+    return int64_t(size_) - int64_t(pos_);
   }
 
   template<typename ...ARGS>
@@ -122,6 +122,52 @@ private:
   std::size_t size_ = 0;
   std::size_t pos_ = 0;
 };
+
+template<typename T>
+auto sizeCounterGuardFactory(T &size_counter);
+
+template<typename T>
+class SizeCounterGuard
+{
+public:
+  using size_counter_type  = T;
+
+private:
+  friend auto sizeCounterGuardFactory<T>(T &size_counter);
+
+  T *size_counter_;
+
+  SizeCounterGuard(T *size_counter) : size_counter_{size_counter}
+  {
+  }
+
+  SizeCounterGuard(SizeCounterGuard const&) = delete;
+  SizeCounterGuard &operator =(SizeCounterGuard const&) = delete;
+
+public:
+  SizeCounterGuard(SizeCounterGuard &&) = default;
+  SizeCounterGuard &operator =(SizeCounterGuard &&) = delete;
+
+  ~SizeCounterGuard()
+  {
+    if (size_counter_)
+    {
+      //* Resetting size counter to zero size by reconstructing it
+      *size_counter_ = size_counter_type();
+    }
+  }
+
+  bool is_unreserved() const
+  {
+    return size_counter_ && size_counter_->size() == 0;
+  }
+};
+
+template<typename T>
+auto sizeCounterGuardFactory(T &size_counter)
+{
+  return SizeCounterGuard<T>{ size_counter.size() == 0 ? &size_counter : nullptr };
+}
 
 }  // namespace serializers
 }  // namespace fetch

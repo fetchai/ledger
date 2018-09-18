@@ -28,55 +28,6 @@
 namespace fetch {
 namespace serializers {
 
-
-template<typename T>
-auto sizeCounterGuardFactory(T &size_counter);
-
-template<typename T>
-class SizeCounterGuard
-{
-public:
-  using size_counter_type  = T;
-
-private:
-  friend auto sizeCounterGuardFactory<T>(T &size_counter);
-
-  T *size_counter_;
-
-  SizeCounterGuard(T *size_counter) : size_counter_{size_counter}
-  {
-  }
-
-  SizeCounterGuard(SizeCounterGuard const&) = delete;
-  SizeCounterGuard &operator =(SizeCounterGuard const&) = delete;
-
-public:
-
-  SizeCounterGuard(SizeCounterGuard &&) = default;
-  SizeCounterGuard &operator =(SizeCounterGuard &&) = default;
-
-  ~SizeCounterGuard()
-  {
-    if (size_counter_)
-    {
-      //* Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type();
-    }
-  }
-
-  bool is_unreserved() const
-  {
-    return size_counter_ && size_counter_->size() == 0;
-  }
-};
-
-template<typename T>
-auto sizeCounterGuardFactory(T &size_counter)
-{
-  return SizeCounterGuard<T>{ size_counter.size() == 0 ? &size_counter : nullptr };
-}
-
-
 template<typename X=void>
 class ByteArrayBufferEx
 {
@@ -195,68 +146,6 @@ public:
     return data_;
   }
 
-  //template<typename T>
-  //class RefcountGuard
-  //{
-  //  T &refcount_;
-  //public:
-  //  RefcountGuard(T &refcount) : refcount_{refcount}
-  //  {
-  //    ++refcount_;
-  //  }
-
-  //  RefcountGuard(RefcountGuard &&) = default;
-  //  RefcountGuard &operator =(RefcountGuard &&) = default;
-
-  //  RefcountGuard(RefcountGuard const&) = delete;
-  //  RefcountGuard &operator =(RefcountGuard const&) = delete;
-
-  //  ~RefcountGuard()
-  //  {
-  //    --refcount_;
-  //  }
-
-  //  T const& refcount() const
-  //  {
-  //    return refcount_;
-  //  }
-  //};
-
-  //template<typename T>
-  //RefcountGuard<T> refcountGuardFactory(T& refcount)
-  //{
-  //  return RefcountGuard<T>(refcount);
-  //}
-
-  //template<typename ...ARGS>
-  //self_type & Append(ARGS const&... args)
-  //{
-  //  auto refcount_guard{ refcountGuardFactory(append_refcount_) };
-
-  //  if (append_refcount_ == 0)
-  //  {
-  //    serializers::SizeCounter<self_type> counter;
-  //    counter.Allocate(Tell());
-  //    counter.Seek(Tell());
-
-  //    counter.Append(args...);
-  //    if (size() < counter.size())
-  //    {
-  //      std::cout << "ByteArrayBuffer.Append(...): size()=" << size() << ", counter.size()=" << counter.size()
-  //                << std::endl;
-  //      Reserve(counter.size() - size());
-  //    }
-  //    std::cout << "ByteArrayBuffer.Append(...): AFTER count: size()=" << size() << ", counter.size()=" << counter.size() << std::endl;
-  //  }
-  //
-  //  AppendInternal(args...);
-  //  return *this;
-  //}
-  //private:
-  //uint64_t append_refcount_=0;
-  //
-  //public:
-
   template<typename ...ARGS>
   self_type & Append(ARGS const&... args)
   {
@@ -292,11 +181,10 @@ private:
   {
   }
 
-
-  size_counter_type size_counter_;
   byte_array_type data_;
   std::size_t pos_ = 0;
-};
+  size_counter_type size_counter_;
+ };
 
 using ByteArrayBuffer = ByteArrayBufferEx<>;
 

@@ -127,6 +127,29 @@ protected:
 
   void TearDown()
   {}
+
+  void test_serialisation_with_stream(ByteArrayBuffer &stream)
+  {
+    B const b0{"b0x", "b0y"};
+    B const b1{"b1x", "b1y"};
+    constexpr uint64_t x = 3;
+
+    auto const orig_stream_offset = stream.Tell();
+
+    //* Serialising
+    stream.Append(b0, x, b1);
+
+    //* De-serialising
+    B b0_d;
+    B b1_d;
+    uint64_t x_d = 0;
+    stream.Seek(orig_stream_offset);
+    stream >> b0_d >> x_d >> b1_d;
+
+    EXPECT_EQ(b0, b0_d);
+    EXPECT_EQ(b1, b1_d);
+    EXPECT_EQ(x, x_d);
+  }
 };
 
 TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
@@ -137,42 +160,32 @@ TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_
   //* Verifying that both variables have the **same** value
   EXPECT_EQ(b0, b0_copy);
 
-  auto const b0_copy_y_orig_value = b0_copy.t.t.y;
+  auto const b0_copy_y_orig_value{ b0_copy.t.t.y.Copy() };
   //* Modifying value of one of variables
   b0_copy.t.t.y.Append("somethig new");
   //* Proving that variables have **different** value
   EXPECT_NE(b0, b0_copy);
 
   //* Reverting variable to it's original value
-  b0_copy.t.t.y = b0_copy_y_orig_value.Copy();
+  b0_copy.t.t.y = b0_copy_y_orig_value;
   //* Proving that variables have the **same** value after reverting
   EXPECT_EQ(b0, b0_copy);
 }
 
 TEST_F(ByteArrayBufferTest, test_basic)
 {
-  B b0{"b0", "b0"};
-  B b1{"b1", "b1"};
-  uint64_t x = 3;
+  ByteArrayBuffer stream;
+  test_serialisation_with_stream(stream);
+}
 
+TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offeset)
+{
   constexpr std::size_t preallocated_ammount = 10;
 
   ByteArrayBuffer stream;
   stream.Allocate(preallocated_ammount);
   stream.Seek(preallocated_ammount);
-  //* Serialising
-  stream.Append(b0, x, b1);
-
-  B b0_d;
-  B b1_d;
-  uint64_t x_d = 0;
-  stream.Seek(preallocated_ammount);
-  //* De-serialising
-  stream >> b0_d >> x_d >> b1_d;
-
-  EXPECT_EQ(b0, b0_d);
-  EXPECT_EQ(b1, b1_d);
-  EXPECT_EQ(x, x_d);
+  test_serialisation_with_stream(stream);
 }
 
 }  // namespace
