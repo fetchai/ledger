@@ -38,6 +38,7 @@ option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
 # Top Level Setup
 #-------------------------------------------------------------------------------
 
+set (FETCH_ROOT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set (FETCH_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set (FETCH_ROOT_CMAKE_DIR ${FETCH_ROOT_DIR}/cmake)
 set (FETCH_ROOT_VENDOR_DIR ${FETCH_ROOT_DIR}/vendor)
@@ -52,7 +53,11 @@ endif (NOT CMAKE_BUILD_TYPE)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTargets.cmake)
 
+# detect the current environment
 detect_environment()
+
+# generate the project configuration file
+generate_configuration_file()
 
 # Enable CTest support
 if (FETCH_ENABLE_TESTS)

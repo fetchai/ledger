@@ -295,6 +295,11 @@ int main(int argc, char **argv)
 
   fetch::commandline::DisplayCLIHeader("Constellation");
 
+  if (!fetch::version::VALID)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version");
+  }
+
   try
   {
 #ifdef FETCH_ENABLE_METRICS

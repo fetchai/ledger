@@ -100,6 +100,9 @@ macro(setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
 
+  # needed for configuration files etc
+  include_directories(${FETCH_ROOT_BINARY_DIR})
+
 endmacro(setup_compiler)
 
 function(configure_vendor_targets)
@@ -196,3 +199,44 @@ macro(detect_environment)
   endif(FETCH_ENABLE_CLANG_TIDY)
 
 endmacro()
+
+function (generate_configuration_file)
+
+  # execute git to determine the version
+  execute_process(
+    COMMAND git describe --dirty=-wip
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE version
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  # cmake regex processing to extract all meaningful elements
+  string (REGEX REPLACE "v([0-9]+)\\..*" "\\1" FETCH_VERSION_MAJOR ${version})
+  string (REGEX REPLACE "v[0-9]+\\.([0-9]+)\\..*" "\\1" FETCH_VERSION_MINOR ${version})
+  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" FETCH_VERSION_PATCH ${version})
+  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g([0-9a-f]+).*" "\\1" FETCH_VERSION_COMMIT ${version})
+  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[0-9a-f]+-(wip)" "\\1" FETCH_VERSION_VALID ${version})
+
+  set (FETCH_VERSION_STR ${version})
+
+  # handle the error conditions
+  if (${FETCH_VERSION_COMMIT} STREQUAL ${version})
+    set (FETCH_VERSION_COMMIT "")
+  endif ()
+
+  # correct the match
+  if (${FETCH_VERSION_VALID} STREQUAL "wip")
+    set (FETCH_VERSION_VALID "false")
+  else ()
+    set (FETCH_VERSION_VALID "true")
+  endif ()
+
+  # generate the version file
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/fetch_version.hpp
+  )
+
+  message(STATUS "Project Version: ${FETCH_VERSION_STR}")
+
+endfunction()
