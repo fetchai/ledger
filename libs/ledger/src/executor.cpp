@@ -71,7 +71,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
 
-  Metrics::Timestamp const started = Metrics::Clock::now();
+  //Metrics::Timestamp const started = Metrics::Clock::now();
 
 #if 0
   return Status::SUCCESS;
@@ -110,7 +110,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
-  Metrics::Timestamp const completed = Metrics::Clock::now();
+  //Metrics::Timestamp const completed = Metrics::Clock::now();
 
   FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
 
