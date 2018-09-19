@@ -150,6 +150,16 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
       // Matrix-matrix ions
       .def("Transpose", (Matrix<T> & (Matrix<T>::*)(Matrix<T> const &)) & Matrix<T>::Transpose)
       //      .def("Sum", &Matrix<T>::Sum)
+      .def("DotTranspose",
+           [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
+             if (b.width() != c.height())
+             {
+               throw pybind11::index_error("matrix size mismatch");
+             }
+
+             a.Resize(b.height(), c.width());
+             a.DotTranspose(b, c);
+           })
       .def("Dot", [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
         if (b.width() != c.height())
         {

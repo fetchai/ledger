@@ -26,6 +26,9 @@
 #include <limits>
 #include <vector>
 
+#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
+#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {
@@ -167,19 +170,42 @@ public:
     }
   }
 
-  /* Lazy dot routine to compute C = Dot(A, B).
+  /** Efficient vectorised and threaded dot routine to compute C = Dot(A, B).
    * @A is the first matrix.
    * @B is the second matrix.
-   *
-   * This routine takes care of the working memory.
-   */
+   **/
   Matrix &Dot(Matrix const &A, Matrix const &B)
   {
-    working_memory_2d_type tmpA;
-    working_memory_2d_type tmpB;
-    tmpA.LazyResize(A.height(), A.width());
-    tmpB.LazyResize(B.width(), B.height());
-    return Dot(A, B, tmpA, tmpB);
+    type alpha = 1;
+    type beta  = 0;
+    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+         Computes(_C = _alpha * _A * _B + _beta * _C),
+         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
+
+    gemm_nn_vector_threaded(alpha, A, B, beta, *this);
+
+    return *this;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
+   */
+  Matrix &DotTranspose(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
+  {
+    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+         Computes(_C = _alpha * _A * fetch::math::linalg::T(_B) + _beta * _C),
+         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nt_vector_threaded;
+
+    std::cout << "alpha: " << alpha << std::endl;
+    std::cout << "beta: " << beta << std::endl;
+    gemm_nt_vector_threaded(alpha, A, B, beta, *this);
+
+    return *this;
   }
 
   /* Dot routine to compute C = Dot(A, B).
