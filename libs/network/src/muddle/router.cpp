@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array.hpp"
@@ -26,9 +27,9 @@
 #include "network/muddle/dispatcher.hpp"
 
 #include <memory>
-#include <sstream>
 #include <random>
-#include <core/service_ids.hpp>
+#include <sstream>
+#include <utility>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
@@ -179,8 +180,8 @@ std::string DescribePacket(Packet const &packet)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(Router::Address const &address, MuddleRegister const &reg, Dispatcher &dispatcher)
-  : address_(address)
+Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
+  : address_(std::move(address))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
@@ -593,7 +594,9 @@ void Router::RoutePacket(PacketPtr packet, bool external)
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
+    {
       return;
+    }
   }
 
   /// Step 2. Route and dispatch the packet

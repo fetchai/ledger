@@ -39,9 +39,18 @@ struct ServiceIdentifier
 
   bool operator<(const ServiceIdentifier &other) const
   {
-    if (service_type < other.service_type) return true;
-    if (service_type > other.service_type) return false;
-    if (instance_number < other.instance_number) return true;
+    if (service_type < other.service_type)
+    {
+      return true;
+    }
+    if (service_type > other.service_type)
+    {
+      return false;
+    }
+    if (instance_number < other.instance_number)
+    {
+      return true;
+    }
     return false;
   }
 

@@ -101,7 +101,10 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
           for (std::size_t t = 0; t < key.size(); ++t)
           {
             char &cc = reinterpret_cast<char &>(key[t]);
-            if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+            if (('A' <= cc) && (cc <= 'Z'))
+            {
+              cc = char(cc + 'a' - 'A');
+            }
           }
 
           ++split_key_at;
@@ -177,7 +180,10 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     }
 
     char &cc = reinterpret_cast<char &>(line[i]);
-    if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+    if (('A' <= cc) && (cc <= 'Z'))
+    {
+      cc = char(cc + 'a' - 'A');
+    }
     ++i;
   }
 
@@ -256,7 +262,10 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
   for (std::size_t t = i; t < line.size(); ++t)
   {
     char &cc = reinterpret_cast<char &>(line[t]);
-    if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+    if (('A' <= cc) && (cc <= 'Z'))
+    {
+      cc = char(cc + 'a' - 'A');
+    }
   }
 }
 

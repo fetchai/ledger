@@ -48,6 +48,7 @@ TEST(TrustTests, TrustGoesWayDown)
   P2PTrust<std::string>    trust;
   TrustQuality qual = TrustQuality::LIED;
   for (int i = 0; i < 20; i++)
+  {
     if (i & 1)
     {
       qual = TrustQuality::DUPLICATE;
@@ -56,6 +57,7 @@ TEST(TrustTests, TrustGoesWayDown)
     {
       qual = TrustQuality::NEW_INFORMATION;
     }
+  }
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, qual);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
 

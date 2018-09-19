@@ -163,7 +163,7 @@ private:
   subscriptions_type                   subscriptions_;
   std::list<subscription_handler_type> cancelled_subscriptions_;
   subscription_mutex_type              subscription_mutex_;
-  subscription_handler_type            subscription_index_counter;
+  subscription_handler_type            subscription_index_counter_;
 
   std::map<PromiseCounter, Promise> promises_;
   fetch::mutex::Mutex               promises_mutex_;

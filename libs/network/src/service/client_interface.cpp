@@ -313,10 +313,10 @@ ServiceClientInterface::CreateSubscription(protocol_handler_type const &protocol
   LOG_STACK_TRACE_POINT;
 
   subscription_mutex_lock_type lock(subscription_mutex_);
-  subscription_index_counter++;
-  subscriptions_[subscription_index_counter] = Subscription(protocol, feed, cb);
+  subscription_index_counter_++;
+  subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
   subscription_mutex_.unlock();
-  return subscription_handler_type(subscription_index_counter);
+  return subscription_handler_type(subscription_index_counter_);
 }
 
 

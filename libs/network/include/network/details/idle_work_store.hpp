@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -113,7 +115,10 @@ public:
     int processed = 0;
     for(auto &work : store_)
     {
-      if (shutdown_.load()) break;
+      if (shutdown_.load())
+      {
+        break;
+      }
       visitor(work);
       processed++;
     }
@@ -123,7 +128,10 @@ public:
   template <typename F>
   void Post(F &&f)
   {
-    if (shutdown_.load()) return;
+    if (shutdown_.load())
+    {
+      return;
+    }
     lock_type mlock(mutex_);
     store_.push_back(f);
   }

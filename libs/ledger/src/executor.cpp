@@ -71,11 +71,9 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
 
-  //Metrics::Timestamp const started = Metrics::Clock::now();
-
-#if 0
-  return Status::SUCCESS;
-#endif
+#ifdef FETCH_ENABLE_METRICS
+  Metrics::Timestamp const started = Metrics::Clock::now();
+#endif // FETCH_ENABLE_METRICS
 
 
   // Get the transaction from the store (we should be able to take the
@@ -110,7 +108,9 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
-  //Metrics::Timestamp const completed = Metrics::Clock::now();
+#ifdef FETCH_ENABLE_METRICS
+  Metrics::Timestamp const completed = Metrics::Clock::now();
+#endif // FETCH_ENABLE_METRICS
 
   FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
 

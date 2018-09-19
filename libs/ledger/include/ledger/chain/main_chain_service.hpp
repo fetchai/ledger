@@ -113,10 +113,10 @@ public:
       deets->identity = certificate_->identity();
       deets->Sign(certificate_.get());
 
-      // TODO: ECDSA verifier broke
+      // TODO(ed): ECDSA verifier broke
       // crypto::ECDSAVerifier verifier(certificate->identity());
       // if(!my_details_->details.Verify(&verifier) ) {
-      //  TODO_FAIL("Could not verify own identity");
+      // TODO(ed): _FAIL("Could not verify own identity");
       //}
     }
 

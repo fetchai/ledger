@@ -24,6 +24,7 @@
 #include "network/details/thread_pool.hpp"
 
 #include <memory>
+#include <utility>
 
 namespace fetch {
 namespace muddle {
@@ -44,9 +45,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
-  Client(MuddleEndpoint &endpoint, Address const &address, uint16_t service, uint16_t channel)
+  Client(MuddleEndpoint &endpoint, Address address, uint16_t service, uint16_t channel)
     : endpoint_(endpoint)
-    , address_(address)
+    , address_(std::move(address))
     , service_(service)
     , channel_(channel)
   {

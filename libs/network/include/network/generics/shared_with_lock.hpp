@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+#include <mutex>
+
 namespace fetch {
 namespace generics {
 
@@ -57,7 +60,10 @@ public:
     lock_type          lock_;
     std::shared_ptr<T> ptr_;
 
-    Locked(std::shared_ptr<T> ptr, mutex_type &m) : lock_(m), ptr_(ptr) {}
+    Locked(std::shared_ptr<T> ptr, mutex_type &m)
+      : lock_(m)
+      , ptr_(std::move(ptr))
+    {}
 
   public:
     Locked(Locked &&other) : lock_(std::move(other.lock_)), ptr_(other.ptr_) {}

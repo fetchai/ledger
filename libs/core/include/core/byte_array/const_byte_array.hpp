@@ -83,10 +83,14 @@ public:
     std::string r;
     for(size_t i=0;i<length_;i++)
     {
-      if ((i)!=0)
+      if ((i) != 0)
+      {
         r += ",";
-      if ((i&0x1F)==0)
+      }
+      if ((i & 0x1F) == 0)
+      {
         r += "  ";
+      }
       auto c = data_[i+start_];
       r += "0123456789abcdef"[c>>4];
       r += "0123456789abcdef"[c&0xf];

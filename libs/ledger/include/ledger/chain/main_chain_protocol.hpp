@@ -61,14 +61,14 @@ public:
   };
 
   MainChainProtocol(protocol_number_type const &p, register_type r, thread_pool_type nm,
-                    const std::string &identifier, chain::MainChain *node)
+                    std::string identifier, chain::MainChain *node)
     : Protocol()
     , protocol_(p)
-    , register_(r)
-    , thread_pool_(nm)
+    , register_(std::move(r))
+    , thread_pool_(std::move(nm))
     , chain_(node)
     , running_(false)
-    , identifier_(identifier)
+    , identifier_(std::move(identifier))
   {
     this->Expose(GET_HEADER, this, &self_type::GetHeader);
     this->Expose(GET_HEAVIEST_CHAIN, this, &self_type::GetHeaviestChain);

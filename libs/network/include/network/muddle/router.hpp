@@ -42,7 +42,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRoute";
 
   // Construction / Destruction
-  explicit Router(Address const &address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&) = delete;
   ~Router() override = default;

@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -28,13 +30,12 @@ namespace details {
 class FutureWorkStore
 {
 public:
-  using work_item_type    = std::function<void()>;
-protected:
-  using due_date_type     = std::chrono::time_point<std::chrono::system_clock>;
-  using stored_work_item_type    = std::pair<due_date_type, work_item_type>;
-  using store_type        = std::vector<stored_work_item_type>;
-  using mutex_type          = fetch::mutex::Mutex;
-  using lock_type           = std::unique_lock<mutex_type>;
+  using work_item_type        = std::function<void()>;
+  using due_date_type         = std::chrono::time_point<std::chrono::system_clock>;
+  using stored_work_item_type = std::pair<due_date_type, work_item_type>;
+  using store_type            = std::vector<stored_work_item_type>;
+  using mutex_type            = fetch::mutex::Mutex;
+  using lock_type             = std::unique_lock<mutex_type>;
 
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
@@ -103,8 +104,14 @@ public:
     int processed = 0;
     while(IsDueActual())
     {
-      if (shutdown_.load()) break;
-      if (processed >= maxprocesses) break;
+      if (shutdown_.load())
+      {
+        break;
+      }
+      if (processed >= maxprocesses)
+      {
+        break;
+      }
       auto work = GetNextActual();
       visitor(work);
       processed++;
@@ -176,10 +183,10 @@ private:
     }
   }
 
-  StoredWorkItemSorting    sorter_;
-  store_type         store_;
-  mutable mutex_type mutex_{__LINE__, __FILE__};
-  std::atomic<bool> shutdown_{false};
+  StoredWorkItemSorting   sorter_;
+  store_type              store_;
+  mutable mutex_type      mutex_{__LINE__, __FILE__};
+  std::atomic<bool>       shutdown_{false};
 };
 
 }  // namespace details
