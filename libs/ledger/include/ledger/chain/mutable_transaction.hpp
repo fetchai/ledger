@@ -25,6 +25,7 @@
 #include "core/serializers/serialisation_argument_wrapper.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "crypto/ecdsa_signature.hpp"
 #include "ledger/identifier.hpp"
 
 #include <set>
@@ -37,7 +38,7 @@ namespace chain {
 class Signature
 {
 public:
-  byte_array::ConstByteArray signature_data;
+byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
 
   void Clone()
@@ -101,12 +102,26 @@ void Deserialize(T &serializer, TransactionSummary &b)
   serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
+class MutableTransaction;
+
+using MutableTransactionRef = std::reference_wrapper<MutableTransaction>;
+class TxDataForSigningC : public MutableTransactionRef
+{
+public:
+  using MutableTransactionRef::MutableTransactionRef;
+  using MutableTransactionRef::operator=;
+  using MutableTransactionRef::operator();
+  //using MutableTransactionRef::get;
+};
+
+
 class MutableTransaction
 {
 public:
   using hasher_type       = crypto::SHA256;
   using digest_type       = TransactionSummary::digest_type;
   using resource_set_type = TransactionSummary::resource_set_type;
+
   using signatures_type   = signatures_type;
 
   resource_set_type const &resources() const
@@ -188,7 +203,7 @@ public:
   template<typename SERIALISER = serializers::ByteArrayBuffer>
   byte_array::ConstByteArray TxDataForSigning() const
   {
-    return TxDataForSigning<SERIALISER>(std::vector<crypto::Identity>());
+    return TxDataForSigning<SERIALISER>();
   }
 
   template<typename STREAM = serializers::ByteArrayBuffer>
@@ -208,34 +223,60 @@ public:
     return stream_with_tx_data;
   }
 
+private:
+  template<typename STREAM, typename T, typename U>
+  static bool VerifyInternal(
+      STREAM &stream,
+      signatures_type::value_type const &sig,
+      TxDataForSigningC const &txds,
+      serializers::LazyEvalArgument<T> const& query_tx_data_size,
+      serializers::LazyEvalArgument<U> const& reserve_enough_space)
+  {
+    auto const& identity  = sig.first;
+    auto const& signature = sig.second;
+    stream.Append(txds, query_tx_data_size, identity, reserve_enough_space);
+
+    using signature_type = crypto::openssl::ECDSASignature<>;
+    using public_key_type = signature_type::public_key_type<crypto::openssl::eECDSAEncoding::canonical, POINT_CONVERSION_UNCOMPRESSED>;
+    signature_type sig_{signature.signature_data};
+    return sig_.Verify(public_key_type{identity.identifier()}, stream.data());
+  }
+
+public:
+
   bool Verify()
   {
     serializers::ByteArrayBuffer tx_data_stream;
-    using lazy_argument_type = serializers::lazy_argument_type<decltype(tx_data_stream)>;
+    TxDataForSigningC txds {*this};
 
-    lazy_argument_type tx_data_lazy =
-        [this, &self = tx_data_lazy] (decltype(tx_data_stream)& tx_data_stream) -> void {
-      TxDataForSigning(tx_data_stream);
+    //serializers::ByteArrayBuffer::size_counter_type bareTxDataStream;
+    //bareTxDataStream << txds;
 
-      //* Switching itself to different lambda after its *FIRST* execution
-      self = [essential_tx_data_size = tx_data_stream.size()] (decltype(tx_data_stream)& tx_data_stream) -> void {
-        tx_data_stream.Resize(essential_tx_data_size);
-      };
-    };
+    std::size_t tx_data_size = 0;
+
+    auto query_tx_data_size = serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
+      tx_data_size = stream.size();
+    });
+
+    auto reserve_enough_space = serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
+      //if (stream.size() > tx_data_size)
+      //{
+        //* Reserve enough space at the end to ensure that re-allocation won't be necessary.
+        stream.Reserve((stream.size() - tx_data_size)*10);
+        stream.Seek(tx_data_size);
+      //}
+    });
 
     for( auto const& sig: signatures_)
     {
-      auto const& identity = sig.first;
-      //auto const& signature = sig.second;
-
-      //lazy_argument_type tx_data_lazy = [&identity] (decltype(tx_data_stream)& tx_data_stream) -> void {
-      //  tx_data_stream.Append(identity);
-      //};
-
-      tx_data_stream.Append(tx_data_lazy, identity);
+      bool const ver_res = VerifyInternal(tx_data_stream, sig, txds, query_tx_data_size, reserve_enough_space);
+      if (!ver_res)
+      {
+        return false;
+      }
     }
-    // TODO(issue 24): Needs implementing
-    return true;
+
+    return signatures_.size() > 0;
   }
 
   void PushResource(byte_array::ConstByteArray const &res)
@@ -289,7 +330,28 @@ private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   signatures_type            signatures_;
+
+  friend class TxDataForSigningC;
+  template<typename T>
+  friend void Serialize(T &stream, TxDataForSigningC const &tx);
+  template<typename T>
+  friend void Deserialize(T &stream, TxDataForSigningC &tx);
 };
+
+
+template <typename T>
+void Serialize(T &stream, TxDataForSigningC const &tx)
+{
+  MutableTransaction const& tx_ = tx.get();
+  stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_);
+}
+
+template <typename T>
+void Deserialize(T &serializer, TxDataForSigningC &tx)
+{
+  MutableTransaction const& tx_ = tx.get();
+  serializer >> tx_.summary_ >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
+}
 
 template <typename T>
 void Serialize(T &serializer, MutableTransaction::signatures_type::value_type const &b)

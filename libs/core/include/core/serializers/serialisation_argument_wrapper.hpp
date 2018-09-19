@@ -22,44 +22,26 @@
 namespace fetch {
 namespace serializers {
 
-//template<typename STREAM>
-//class SerialisationArgumentWrapper
-//{
-//public:
-//  using serialise_functor_type = std::function<void(STREAM &stream)>;
-//
-//private:
-//  serialise_functor_type serialise_;
-//
-//public:
-//  SerialisationArgumentWrapper(serialise_functor_type serialise)
-//    : serialise_{ serialise }
-//  {
-//  }
-//
-//  void Serialise(STREAM &to_stream const
-//  {
-//    if (serialise_)
-//    {
-//      serialise_();
-//    }
-//    return stream;
-//  }
-//};
-//
-//template<typename STREAM>
-//void Serialise(STREAM & stream, SerialisationArgumentWrapper<STREAM> const& ser_arg_wrapper)
-//{
-//  return ser_arg_wrapper.Serialise(stream)
-//}
-
-template<typename STREAM>
-using lazy_argument_type = std::function<void(STREAM &stream)>;
-
-template<typename STREAM>
-void Serialise(STREAM & stream, lazy_argument_type<STREAM> const& serialisation_arg_wrapper)
+template<typename T>
+class LazyEvalArgument : public std::reference_wrapper<T const>
 {
-  serialisation_arg_wrapper(stream);
+public:
+  using base_type = std::reference_wrapper<T const>;
+  using base_type::base_type;
+  using base_type::operator=;
+  using base_type::operator();
+};
+
+template<typename T>
+LazyEvalArgument<T> LazyEvalArgumentFactory(T const& lamda)
+{
+  return LazyEvalArgument<T>{lamda};
+}
+
+template<typename STREAM, typename T>
+void Serialize(STREAM & stream, LazyEvalArgument<T> const& lazyEvalArgument)
+{
+  lazyEvalArgument(stream);
 }
 
 }  // namespace serializers
