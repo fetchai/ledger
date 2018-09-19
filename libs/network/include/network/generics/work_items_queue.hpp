@@ -33,7 +33,7 @@ public:
   {
     {
       lock_type lock(mutex_);
-      q.push_back(item);
+      q_.push_back(item);
       count_++;
     }
     cv_.notify_one();
@@ -46,7 +46,7 @@ public:
       lock_type lock(mutex_);
     while(iter != end)
       {
-        q.push_back(*iter);
+        q_.push_back(*iter);
         ++iter;
         count_++;
       }
@@ -67,7 +67,7 @@ public:
   bool Remaining(void)
   {
     lock_type lock(mutex_);
-    return !q.empty();
+    return !q_.empty();
   }
 
   void Quit()
@@ -91,10 +91,10 @@ public:
   {
     lock_type lock(mutex_);
     output.reserve(limit);
-    while (!q.empty() && output.size() < limit)
+    while (!q_.empty() && output.size() < limit)
     {
-      output.push_back(q.front());
-      q.pop_front();
+      output.push_back(q_.front());
+      q_.pop_front();
       count_--;
     }
     return output.size();
@@ -103,10 +103,10 @@ public:
 private:
   // members here.
 
-  mutex_type mutex_;
-  store_type q;
-  cv_type cv_;
-  std::atomic<bool> quit_{false};
+  mutex_type          mutex_;
+  store_type          q_;
+  cv_type             cv_;
+  std::atomic<bool>   quit_{false};
   std::atomic<size_t> count_{0};
 };
 

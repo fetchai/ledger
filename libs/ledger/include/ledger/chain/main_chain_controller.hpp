@@ -56,7 +56,7 @@ public:
     , register_(std::move(reg))
     , manager_(nm)
     , my_details_(my_details)
-    , mainchain_protocol_(mainchain_protocol)
+    , mainchain_protocol_(std::move(mainchain_protocol))
   {}
 
   /// External controls

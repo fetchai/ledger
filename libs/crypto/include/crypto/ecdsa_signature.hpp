@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/sha256.hpp"
@@ -45,10 +47,10 @@ public:
 
   ECDSASignature() = default;
 
-  ECDSASignature(byte_array::ConstByteArray const &binary_signature)
+  ECDSASignature(byte_array::ConstByteArray binary_signature)
     : hash_{}
     , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
-    , signature_{binary_signature}
+    , signature_{std::move(binary_signature)}
   {}
 
   template <eECDSAEncoding BIN_FORMAT>

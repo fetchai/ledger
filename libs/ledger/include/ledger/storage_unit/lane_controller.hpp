@@ -400,10 +400,9 @@ public:
   using IdentifyingPeers =network:: RequestingQueueOf<Uri, IdentifiedPeer, IdentifyingConnection>;
   using LaningPeers = network::RequestingQueueOf<Uri, LanedPeer, LaningConnection>;
 
-  PingingPeers currently_pinging_;
-  IdentifyingPeers currently_identifying_;
-  LaningPeers currently_laning_;
-
+  PingingPeers     currently_pinging;
+  IdentifyingPeers currently_identifying;
+  LaningPeers      currently_laning;
 
   void WorkCycle()
   {
@@ -429,11 +428,11 @@ public:
     {
       FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: considering...", uri.uri());
       if (
-          (currently_pinging_.IsInFlight(uri))
+          (currently_pinging.IsInFlight(uri))
           ||
-          (currently_identifying_.IsInFlight(uri))
+          (currently_identifying.IsInFlight(uri))
           ||
-          (currently_laning_.IsInFlight(uri))
+          (currently_laning.IsInFlight(uri))
           )
       {
         FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: inflight...", uri.uri());
@@ -450,7 +449,7 @@ public:
           shared_service_client_type conn =
             register_.CreateServiceClient<client_type>(manager_, peer.address(), peer.port());
           FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: adding to pinger...", uri.uri(), " --------------------- ", lane_identity_protocol_);
-          currently_pinging_ . Add(uri, PingingConnection(conn, lane_identity_protocol_) );
+          currently_pinging.Add(uri, PingingConnection(conn, lane_identity_protocol_));
           FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: added...", uri.uri());
         }
         catch(...)
@@ -465,9 +464,9 @@ public:
     }
     FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: pinging...");
     {
-      currently_pinging_.Resolve(now);
+      currently_pinging.Resolve(now);
 
-      for(auto &failure : currently_pinging_.GetFailures(ALL_AVAILABLE))
+      for (auto &failure : currently_pinging.GetFailures(ALL_AVAILABLE))
       {
         Uri const &uri = failure.key;
 
@@ -479,21 +478,22 @@ public:
         conn.reset();
       }
 
-      for(auto &success : currently_pinging_.Get(ALL_AVAILABLE))
+      for (auto &success : currently_pinging.Get(ALL_AVAILABLE))
       {
         auto const &uri = success.key;
         FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: pinging: Success: ", uri.uri());
 
         auto conn = success.promised;
-        currently_identifying_.Add(uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()) );
+        currently_identifying.Add(
+            uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()));
       }
     }
 
     FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: identifying...");
     {
-      currently_identifying_.Resolve(now);
+      currently_identifying.Resolve(now);
 
-      for(auto &failure : currently_identifying_.GetFailures(ALL_AVAILABLE))
+      for (auto &failure : currently_identifying.GetFailures(ALL_AVAILABLE))
       {
         Uri const &uri = failure.key;
 
@@ -505,7 +505,7 @@ public:
         conn.reset();
       }
 
-      for (auto &success :  currently_identifying_.Get(ALL_AVAILABLE))
+      for (auto &success : currently_identifying.Get(ALL_AVAILABLE))
       {
         auto const &uri = success.key;
         auto const &conn = success.promised.first;
@@ -516,15 +516,15 @@ public:
         details->is_peer     = true;
         details->identity    = identity;
 
-        currently_laning_.Add(uri, LaningConnection(conn, lane_identity_protocol_) );
+        currently_laning.Add(uri, LaningConnection(conn, lane_identity_protocol_));
       }
     }
     FETCH_LOG_WARN(LOGGING_NAME,"Workcycle: laning...");
 
     {
-      currently_laning_.Resolve(now);
+      currently_laning.Resolve(now);
 
-      for(auto &failure : currently_laning_.GetFailures(ALL_AVAILABLE))
+      for (auto &failure : currently_laning.GetFailures(ALL_AVAILABLE))
       {
         Uri const &uri = failure.key;
 
@@ -539,7 +539,7 @@ public:
       {
         FETCH_LOCK(services_mutex_);
 
-        for (auto &success : currently_laning_.Get(ALL_AVAILABLE))
+        for (auto &success : currently_laning.Get(ALL_AVAILABLE))
         {
           auto const &uri  = success.key;
           auto const &conn = success.promised.first;

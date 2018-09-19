@@ -106,7 +106,9 @@ public:
     LOG_STACK_TRACE_POINT;
 
     if (shutting_down_)
+    {
       return;
+    }
 
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();
@@ -150,7 +152,9 @@ private:
   void ReadHeader()
   {
     if (shutting_down_)
+    {
       return;
+    }
 
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
@@ -187,7 +191,9 @@ private:
     LOG_STACK_TRACE_POINT;
 
     if (shutting_down_)
+    {
       return;
+    }
 
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
@@ -252,7 +258,9 @@ private:
   void Write()
   {
     if (shutting_down_)
+    {
       return;
+    }
 
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();

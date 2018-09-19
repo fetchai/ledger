@@ -201,7 +201,9 @@ void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, st
   {
     // exit the search loop once the slice is full
     if (slice_state.PopCount() == num_lanes)
+    {
       break;
+    }
 
     // calculate the collisions for this
     BitVector const collisions = slice_state & it->resources;

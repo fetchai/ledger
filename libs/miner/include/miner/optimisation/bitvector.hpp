@@ -287,7 +287,10 @@ inline std::ostream &operator<<(std::ostream &s, BitVectorImplementation const &
 #if 1
   for (std::size_t i = 0; i < b.size(); ++i)
   {
-    if (i && ((i % 10) == 0)) s << ' ';
+    if (i && ((i % 10) == 0))
+    {
+      s << ' ';
+    }
     s << b.bit(i);
   }
 #else

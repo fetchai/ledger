@@ -151,13 +151,6 @@ public:
     {
       FETCH_LOCK(mutex_);
 
-#if 0
-      for (auto const &element : trust_store_)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, " #-> ", byte_array::ToBase64(element.peer_identity), " score: ", element.trust);
-      }
-#endif
-
       for (size_t pos = 0; pos < trust_store_.size(); pos++)
       {
         if (trust_store_[pos].trust < minimum_trust)
@@ -257,16 +250,18 @@ protected:
       trust_store_[pos].SetCurrentTrust(current_time);
     }
 
-    std::sort(
-      trust_store_.begin(),
-      trust_store_.end(),
-      [](const PeerTrustRating &a, const PeerTrustRating &b)
-      {
-        if (a.trust < b.trust) return true;
-        if (a.trust > b.trust) return false;
-        return a.peer_identity < b.peer_identity;
-      }
-    );
+    std::sort(trust_store_.begin(), trust_store_.end(),
+              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+                if (a.trust < b.trust)
+                {
+                  return true;
+                }
+                if (a.trust > b.trust)
+                {
+                  return false;
+                }
+                return a.peer_identity < b.peer_identity;
+              });
 
     ranking_store_.clear();
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
@@ -279,7 +274,6 @@ protected:
 
 
 private:
-
   bool          dirty_ = false;
   mutable Mutex mutex_{__LINE__, __FILE__};
   TrustStore    trust_store_;

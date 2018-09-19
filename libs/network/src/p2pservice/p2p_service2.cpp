@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/containers/set_difference.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
@@ -79,7 +97,7 @@ void P2PService2::WorkCycle()
   UpdateManifests(active_addresses);
 
   // increment the work cycle counter (used for scheduling of periodic events)
-  ++work_cycle_count;
+  ++work_cycle_count_;
 }
 
 void P2PService2::GetConnectionStatus(ConnectionMap &active_connections, AddressSet &active_addresses)
@@ -138,7 +156,7 @@ void P2PService2::PeerDiscovery(AddressSet const &active_addresses)
   static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 20;
 
-  bool const discover_new_peers = (work_cycle_count & DISCOVERY_PERIOD_MASK) == 4;
+  bool const discover_new_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 4;
 
   // determine if we should request new information from the network
   if (discover_new_peers)
@@ -190,7 +208,7 @@ void P2PService2::RenewDesiredPeers(AddressSet const &active_addresses)
 {
   static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
 
-  bool const renew_desired_peers = (work_cycle_count & DISCOVERY_PERIOD_MASK) == 8;
+  bool const renew_desired_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 8;
   if (renew_desired_peers)
   {
     desired_peers_ = trust_system_.GetBestPeers(min_peers_);

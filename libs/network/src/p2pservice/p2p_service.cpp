@@ -1,3 +1,23 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include <memory>
+
 #include "network/p2pservice/p2p_service.hpp"
 
 namespace fetch {
@@ -56,7 +76,7 @@ P2PService::P2PService(certificate_type &&certificate, uint16_t port,
   directory_protocol_ = std::make_unique<P2PPeerDirectoryProtocol>(*directory_);
   this->Add(DIRECTORY, directory_protocol_.get());
 
-  p2p_trust_.reset(new P2PTrust<byte_array::ConstByteArray>());
+  p2p_trust_ = std::make_unique<P2PTrust<byte_array::ConstByteArray>>();
   // p2p_trust_protocol_.reset(new TrustModelProtocol(*directory_)); // TODO(kll)
   // this->Add(DIRECTORY, p2p_trust_protocol_.get()); // TODO(kll)
 
@@ -80,7 +100,10 @@ void P2PService::Start()
   thread_pool_->Start();
   directory_->Start();
 
-  if (running_) return;
+  if (running_)
+  {
+    return;
+  }
   running_ = true;
 
 #if 0
@@ -100,7 +123,10 @@ void P2PService::Start()
 
 void P2PService::Stop()
 {
-  if (!running_) return;
+  if (!running_)
+  {
+    return;
+  }
   running_ = false;
 
   TCPServer::Stop();
@@ -253,7 +279,10 @@ void P2PService::NextServiceCycle()
   std::vector<EntryPoint> orchestration;
   {
     LOG_STACK_TRACE_POINT;
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     // Updating lists of incoming and outgoing
     using map_type = client_register_type::connection_map_type;
@@ -433,7 +462,10 @@ void P2PService::ManageIncomingConnections()
                                             double(
                                               std::chrono::duration_cast<std::chrono::milliseconds>(
                                                 end - track_start_).count());
-    if (ms > 5000) tracking_peers_ = false;
+    if (ms > 5000)
+    {
+      tracking_peers_ = false;
+    }
   }
 
   // Requesting new connections as needed
@@ -476,7 +508,10 @@ void P2PService::ConnectToNewPeers()
   LOG_STACK_TRACE_POINT
   std::lock_guard<mutex::Mutex> lock(maintainance_mutex_);
 
-  if (!running_) return;
+  if (!running_)
+  {
+    return;
+  }
   uint64_t create_count = 0;
 
   if (outgoing_.size() < min_connections_)
@@ -501,7 +536,10 @@ void P2PService::ConnectToNewPeers()
     for (auto &e : s.second.entry_points)
     {
       // TODO(EJF): Check performed here (see above comment)
-      if (e.identity.identifier() == my_pk) continue;
+      if (e.identity.identifier() == my_pk)
+      {
+        continue;
+      }
 
       if (e.is_discovery)
       {
@@ -528,7 +566,10 @@ void P2PService::ConnectToNewPeers()
   // Connecting to peers who need connection
   for (auto const &e : endpoints)
   {
-    if (create_count == 0) break;
+    if (create_count == 0)
+    {
+      break;
+    }
 
     //      // we must be careful not to connect to peers to whom we have already connected
     //      bool already_connected = false;
@@ -573,7 +614,10 @@ void P2PService::TryConnect(EntryPoint const &e)
 
   for (auto &h : e.host)
   {
-    if (Connect(h, e.port)) break;
+    if (Connect(h, e.port))
+    {
+      break;
+    }
   }
 }
 

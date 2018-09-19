@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <unordered_map>
+#include <utility>
 
 namespace fetch {
 namespace p2p {
@@ -45,8 +46,8 @@ public:
     Timepoint last_update = Clock::now();
     bool resolve{false};
 
-    CacheElement(Uri const &uri)
-      : uri(uri)
+    CacheElement(Uri uri)
+      : uri(std::move(uri))
     {}
   };
 

@@ -145,7 +145,7 @@ protected:
       FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Subscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO: propagate error other other size
+      throw e;  // TODO(ed): propagate error other other size
     }
     // DeliverResponse(client, result.data());
     return ret;
@@ -173,7 +173,7 @@ protected:
       FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Unsubscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO: propagate error other other size
+      throw e;  // TODO(ed): propagate error other other size
     }
     // DeliverResponse(client, result.data());
     return ret;
@@ -243,13 +243,6 @@ private:
       }
       else
       {
-#if 0
-        if ((protocol_number == 209) && (function_number == 3))
-        {
-          int i = 1 + 2;
-        }
-#endif
-
         function(result, params);
       }
     }

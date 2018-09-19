@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "http/request.hpp"
 
 namespace fetch {
@@ -83,7 +101,10 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
           for (std::size_t t = 0; t < key.size(); ++t)
           {
             char &cc = reinterpret_cast<char &>(key[t]);
-            if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+            if (('A' <= cc) && (cc <= 'Z'))
+            {
+              cc = char(cc + 'a' - 'A');
+            }
           }
 
           ++split_key_at;
@@ -159,7 +180,10 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     }
 
     char &cc = reinterpret_cast<char &>(line[i]);
-    if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+    if (('A' <= cc) && (cc <= 'Z'))
+    {
+      cc = char(cc + 'a' - 'A');
+    }
     ++i;
   }
 
@@ -238,7 +262,10 @@ void HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
   for (std::size_t t = i; t < line.size(); ++t)
   {
     char &cc = reinterpret_cast<char &>(line[t]);
-    if (('A' <= cc) && (cc <= 'Z')) cc = char(cc + 'a' - 'A');
+    if (('A' <= cc) && (cc <= 'Z'))
+    {
+      cc = char(cc + 'a' - 'A');
+    }
   }
 }
 

@@ -70,7 +70,7 @@ struct MainChainDetails
   void Sign(crypto::Prover *prov)
   {
     serializers::ByteArrayBuffer buffer;
-    // TODO: Count count first
+    // TODO(ed): Count count first
     buffer << identity << owning_discovery_service_identity;
     prov->Sign(buffer.data());
     signature = prov->signature();
@@ -85,7 +85,7 @@ struct MainChainDetails
   {
 
     serializers::ByteArrayBuffer buffer;
-    // TODO: Count count first
+    // TODO(ed): Count count first
     buffer << identity << owning_discovery_service_identity;
     return ver->Verify(buffer.data(), signature);
   }

@@ -83,8 +83,14 @@ public:
     while(true)
     {
       WorkItem work;
-      if (processed >= maxprocess) break;
-      if (!GetNext(work)) break;
+      if (processed >= maxprocess)
+      {
+        break;
+      }
+      if (!GetNext(work))
+      {
+        break;
+      }
       visitor(work);
       processed++;
     }
@@ -94,7 +100,10 @@ public:
   template <typename F>
   void Post(F &&f)
   {
-    if (shutdown_.load()) return;
+    if (shutdown_.load())
+    {
+      return;
+    }
     FETCH_LOCK(mutex_);
     store_.push_back(f);
   }
