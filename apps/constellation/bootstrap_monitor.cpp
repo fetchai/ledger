@@ -17,7 +17,7 @@ constexpr char const      *LOGGING_NAME = "bootstrap";
 
 }  // namespace
 
-bool BootstrapMonitor::Start(PeerList &peers)
+bool BootstrapMonitor::Start(UriList &peers)
 {
   FETCH_LOG_INFO(LOGGING_NAME,"Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
 
@@ -93,7 +93,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   return success;
 }
 
-bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
+bool BootstrapMonitor::RequestPeerList(UriList &peers)
 {
   // make the response
   std::ostringstream oss;
@@ -133,7 +133,8 @@ bool BootstrapMonitor::RequestPeerList(BootstrapMonitor::PeerList &peers)
       uint16_t    port = 0;
       if (script::Extract(peer_object, "host", host) && script::Extract(peer_object, "port", port))
       {
-        peers.emplace_back(std::move(host), port);
+        std::string const uri = "tcp://" + host + ':' + std::to_string(port);
+        peers.emplace_back(uri);
       }
       else
       {

@@ -34,10 +34,11 @@ using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
 namespace fetch {
 namespace ledger {
 
-MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain)
+MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain, TrustSystem &trust)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
   , chain_(chain)
+  , trust_(trust)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , main_chain_rpc_client_(endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -87,6 +88,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()), " (from peer: ", ToBase64(from), ')');
 
+  trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+
   // add the block?
   chain_.AddBlock(block);
 
@@ -103,10 +106,10 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
 void MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
 {
   FETCH_LOCK(main_chain_rpc_client_lock_);
-  main_chain_rpc_client_.SetAddress(peer);
-  auto promise = main_chain_rpc_client_.Call(RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
+  auto promise = main_chain_rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
   promise->WithHandlers()
-    .Then([self = shared_from_this(), promise]() {
+    .Then([self = shared_from_this(), promise, peer]() {
+      self->trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
       // extract the block list from the promise
       BlockList block_list;

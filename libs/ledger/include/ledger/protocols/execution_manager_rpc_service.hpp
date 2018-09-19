@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 #include "network/protocols/fetch_protocols.hpp"
@@ -40,7 +41,7 @@ public:
     : ServiceServer(port, network_manager)
     , manager_(new ExecutionManager(num_executors, storage, factory))
   {
-    this->Add(fetch::protocols::FetchProtocols::EXECUTION_MANAGER, &protocol_);
+    this->Add(RPC_EXECUTION_MANAGER, &protocol_);
   }
   ~ExecutionManagerRpcService() override = default;
 

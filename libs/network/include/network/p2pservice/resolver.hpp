@@ -17,30 +17,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
-#include "network/p2pservice/p2p_resolver.hpp"
+#include "network/muddle/packet.hpp"
+#include "network/p2pservice/state_machine.hpp"
 
 namespace fetch {
 namespace p2p {
 
-  class P2PService2;
+class IdentityCache;
 
-/**
- * Protocol for the P2P address resolution protocol
- */
-class ResolverProtocol : public service::Protocol
+class Resolver
 {
 public:
+  using Address = muddle::Packet::Address;
 
-  enum
+  enum class State
   {
-    QUERY = 1,
-    GET_MANIFEST = 2,
-    GET_RANDOM_GOOD_PEERS = 3,
-    GET_NODE_URI = 4
+    RESOLVE_ADDRESS,
+    LOOKUP_MANIFEST,
+    COMPLETE
   };
 
-  explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
+  // Construction / Destruction
+  Resolver(IdentityCache &cache);
+  Resolver(Resolver const &) = delete;
+  Resolver(Resolver &&) = delete;
+  ~Resolver() = default;
+
+  void Resolve(Address const &address);
+
+  // Operators
+  Resolver &operator=(Resolver const &) = delete;
+  Resolver &operator=(Resolver &&) = delete;
+
+private:
+
+  IdentityCache &cache_;
 };
 
 } // namespace p2p

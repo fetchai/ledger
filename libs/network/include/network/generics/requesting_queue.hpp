@@ -21,182 +21,248 @@
 #include "network/generics/promise_of.hpp"
 #include "core/serializers/stl_types.hpp"
 
+#include <algorithm>
+#include <iterator>
+#include <unordered_map>
+#include <deque>
+
 namespace fetch {
 namespace network {
 
-template<class KEY, class REQUESTED, class REQUESTED_CONTAINER = std::vector<REQUESTED>>
+template<typename K, typename P, typename C = std::vector<P>>
 class RequestingQueueOf
 {
 public:
-  using Mutex = fetch::mutex::Mutex;
-  using Lock = std::lock_guard<Mutex>;
+  using Key                  = K;
+  using Promised             = P;
+  using ContainerOfPromised  = C;
+  using Mutex                = fetch::mutex::Mutex;
+  using Lock                 = std::lock_guard<Mutex>;
+  using PromiseCollection    = PromiseOf<ContainerOfPromised>;
+  using Promise              = PromiseOf<Promised>;
+  using PromiseState         = fetch::service::PromiseState;
+  using PromiseCollectionMap = std::unordered_map<Key, PromiseCollection>;
+  using PromiseMap           = std::unordered_map<Key, Promise>;
+  using KeySet               = std::unordered_set<Key>;
+  using Counter              = std::atomic<std::size_t>;
 
-  using ManyPromised = PromiseOf<REQUESTED_CONTAINER>;
-  using Promised = PromiseOf<REQUESTED>;
-  using State = typename Promised::State;
-
-  using ManyPendingPromised = std::map<KEY, ManyPromised>;
-  using PendingPromised = std::map<KEY, Promised>;
-
-  using OutputType = std::pair<KEY, REQUESTED>;
-
-  RequestingQueueOf()
+  struct Result
   {
-  }
+    Key       key;
+    Promised  promised;
+  };
 
-  virtual ~RequestingQueueOf()
-  {
-  }
+  using Results = std::deque<Result>;
 
-  void Resolve()
-  {
-    Lock lock(mutex_);
+  // Construction / Destruction
+  RequestingQueueOf() = default;
+  RequestingQueueOf(RequestingQueueOf const &) = delete;
+  RequestingQueueOf(RequestingQueueOf &&) = delete;
+  ~RequestingQueueOf() = default;
 
-    {
-      auto iter = many_requests_ . begin();
-      while(iter != many_requests_ . end())
-      {
-        auto key = (*iter) . first;
-        auto prom = (*iter) . second;
-        switch(prom . GetState())
-        {
-        case State::WAITING:
-          ++iter;
-          pending_count_--;
-          break;
-        case State::SUCCESS:
-          {
-            REQUESTED_CONTAINER result = prom . Get();
-            for(auto &item : result)
-            {
-              completed_ . push_back(std::make_pair(key, item));
-              count_++;
-            }
-          }
-          iter = many_requests_ . erase(iter);
-          break;
-        case State::FAILED:
-          iter = many_requests_ . erase(iter);
-          break;
-        }
-      }
-    }
+  bool Add(Key const &key, PromiseCollection const &promises);
+  bool Add(Key const &key, Promise const &promise);
 
-    {
-      auto iter = requests_ . begin();
-      while(iter != requests_ . end())
-      {
-        auto key = (*iter) . first;
-        auto prom = (*iter) . second;
-        switch(prom . GetState())
-        {
-        case State::WAITING:
-          ++iter;
-          pending_count_--;
-          break;
-        case State::SUCCESS:
-          {
-            REQUESTED result = prom . Get();
-            completed_ . push_back(std::make_pair(key, result));
-            count_++;
-          }
-          pending_count_--;
-          iter = requests_ . erase(iter);
-          break;
-        case State::FAILED:
-          iter = requests_ . erase(iter);
-          pending_count_--;
-          break;
-        }
-      }
-    }
+  Results Get(std::size_t limit);
 
-    count_.store( completed_.size());
-    pending_count_.store( many_requests_.size() + requests_.size());
-  }
+  KeySet FilterOutInFlight(KeySet const &inputs);
+  bool IsInFlight(Key const &key) const;
 
-  template<class SOME_CONTAINER>
-  void Add(const KEY &key, const PromiseOf<SOME_CONTAINER> &new_promise)
-  {
-    Lock lock(mutex_);
-    many_requests_ . insert (std::make_pair(key, new_promise));
-    pending_count_++;
-  }
+  void Resolve();
 
-  void Add(const KEY &key, const PromiseOf<REQUESTED> &new_promise)
-  {
-    Lock lock(mutex_);
-    requests_ . insert (std::make_pair(key, new_promise));
-    pending_count_++;
-  }
+#if 0
+  std::size_t size() const;
+#endif
+  bool HasCompletedPromises() const;
 
-  template<class CONTAINER_OF_KEYS>
-  std::vector<KEY> FilterOutInflight(const CONTAINER_OF_KEYS &inputs)
-  {
-    Lock lock(mutex_);
-    std::vector<KEY> result;
-    for(auto &key : inputs)
-    {
-      if (
-          (many_requests_ . find(key) == many_requests_ . end())
-          &&
-          (requests_ . find(key) == requests_ . end())
-          )
-      {
-        result.push_back(key);
-      }
-    }
-    return result;
-  }
+  // Operators
+  RequestingQueueOf &operator=(RequestingQueueOf const &) = delete;
+  RequestingQueueOf &operator=(RequestingQueueOf &&) = delete;
 
-  bool Inflight(const KEY &key)
-  {
-    Lock lock(mutex_);
-    return (
-            (many_requests_ . find(key) != many_requests_ . end())
-            ||
-            (requests_ . find(key) != requests_ . end())
-            );
-  }
-
-  size_t Get(std::vector<OutputType> &output, size_t limit)
-  {
-    Lock lock(mutex_);
-    output.reserve(limit);
-    while (!completed_.empty() && output.size() < limit)
-    {
-      output.push_back(completed_.front());
-      completed_.pop_front();
-      count_--;
-    }
-    return output.size();
-  }
-
-  size_t size(void) const
-  {
-    return count_.load();
-  }
-
-  bool empty(void) const
-  {
-    return count_.load() == 0;
-  }
-
-  bool Remaining(void)
-  {
-    return count_.load() > 0;
-  }
 private:
-  ManyPendingPromised many_requests_;
-  PendingPromised requests_;
-  Mutex mutex_{__LINE__, __FILE__};
-  std::atomic<size_t> count_;
-  std::atomic<size_t> pending_count_;
 
-  std::list<OutputType> completed_;
-
-  std::list<KEY> failed_;
+  mutable Mutex        mutex_{__LINE__, __FILE__};
+  PromiseCollectionMap collection_requests_;
+  PromiseMap           single_requests_;                  ///< The map of currently monitored promises
+  Results              completed_;                 ///< The map of completed promises
+  KeySet               failed_;                    ///< The set of failed keys
 };
+
+template<typename K, typename P, typename C>
+bool RequestingQueueOf<K,P,C>::Add(Key const &key, PromiseCollection const &promises)
+{
+  bool success = false;
+
+  {
+    FETCH_LOCK(mutex_);
+    if (collection_requests_.find(key) == collection_requests_.end())
+    {
+      collection_requests_.emplace(key, promises);
+      success = true;
+    }
+  }
+
+  return success;
+}
+
+template<typename K, typename P, typename C>
+bool RequestingQueueOf<K,P,C>::Add(Key const &key, Promise const &promise)
+{
+  bool success = false;
+
+  {
+    FETCH_LOCK(mutex_);
+
+    if (single_requests_.find(key) == single_requests_.end())
+    {
+      single_requests_.emplace(key, promise);
+      success = true;
+    }
+  }
+
+  return success;
+}
+
+template<typename K, typename P, typename C>
+typename RequestingQueueOf<K,P,C>::Results RequestingQueueOf<K,P,C>::Get(std::size_t limit)
+{
+  FETCH_LOCK(mutex_);
+
+  Results results;
+
+  if (limit == 0)
+  {
+    assert(false);
+  }
+  else if (completed_.size() <= limit)
+  {
+    results = std::move(completed_);
+    completed_.clear(); // needed?
+  }
+  else // (completed_.size() > limit)
+  {
+    // copy "limit" number of entries from the completed list
+    std::copy_n(completed_.begin(), limit, std::inserter(results, results.begin()));
+
+    // erase these entries from the completed map
+    completed_.erase(completed_.begin(), completed_.begin() + static_cast<std::ptrdiff_t>(limit));
+  }
+
+  return results;
+}
+
+template<typename K, typename P, typename C>
+void RequestingQueueOf<K,P,C>::Resolve()
+{
+  FETCH_LOCK(mutex_);
+
+  {
+    auto iter = collection_requests_.begin();
+    while(iter != collection_requests_.end())
+    {
+      auto const &key = iter->first;
+      auto const &promise = iter->second;
+
+      switch (promise.GetState())
+      {
+        case PromiseState::WAITING:
+          ++iter;
+          break;
+
+        case PromiseState::SUCCESS:
+        {
+          ContainerOfPromised const results = promise.Get();
+
+          for (auto const &promised : results)
+          {
+            completed_.emplace_back(Result{key, promised});
+          }
+
+          iter = collection_requests_.erase(iter);
+          break;
+        }
+
+        case PromiseState::FAILED:
+          iter = collection_requests_.erase(iter);
+          break;
+      }
+    }
+  }
+
+  {
+    auto iter = single_requests_.begin();
+    while(iter != single_requests_.end())
+    {
+      auto const &key = iter->first;
+      auto const &promise = iter->second;
+
+      switch(promise.GetState())
+      {
+        case PromiseState::WAITING:
+          ++iter;
+          break;
+        case PromiseState::SUCCESS:
+          completed_.emplace_back(Result{key, promise.Get()});
+          iter = single_requests_.erase(iter);
+          break;
+        case PromiseState::FAILED:
+          iter = single_requests_.erase(iter);
+          break;
+      }
+    }
+  }
+}
+
+template<typename K, typename P, typename C>
+typename RequestingQueueOf<K,P,C>::KeySet RequestingQueueOf<K,P,C>::FilterOutInFlight(KeySet const &inputs)
+{
+  FETCH_LOCK(mutex_);
+
+  KeySet keys;
+
+  std::copy_if(
+    inputs.begin(),
+    inputs.end(),
+    std::inserter(keys, keys.begin()),
+    [this](Key const &key)
+    {
+      bool const is_not_collection_key = collection_requests_.find(key) == collection_requests_.end();
+      bool const is_not_single_key = single_requests_.find(key) == single_requests_.end();
+
+      return (is_not_collection_key && is_not_single_key);
+    }
+  );
+
+  return keys;
+}
+
+template<typename K, typename P, typename C>
+bool RequestingQueueOf<K,P,C>::IsInFlight(Key const &key) const
+{
+  FETCH_LOCK(mutex_);
+
+  // check if the key is present in any of the requests maps
+  bool const is_a_collection_key = collection_requests_.find(key) != collection_requests_.end();
+  bool const is_a_single_key = single_requests_.find(key) != single_requests_.end();
+
+  return (is_a_collection_key || is_a_single_key);
+}
+
+#if 0
+template<typename K, typename P, typename C>
+std::size_t RequestingQueueOf<K,P,C>::size() const
+{
+  FETCH_LOCK(mutex_);
+  return collection_requests_.size() + single_requests_.size();
+}
+#endif
+
+template<typename K, typename P, typename C>
+bool RequestingQueueOf<K,P,C>::HasCompletedPromises() const
+{
+  FETCH_LOCK(mutex_);
+  return !completed_.empty();
+}
 
 }  // namespace network
 }  // namespace fetch

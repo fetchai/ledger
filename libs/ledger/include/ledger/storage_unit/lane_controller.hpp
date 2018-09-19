@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
 
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -26,6 +25,12 @@
 #include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
 #include "network/uri.hpp"
+
+#include <unordered_set>
+#include <unordered_map>
+#include <utility>
+
+
 namespace fetch {
 namespace ledger {
 
@@ -75,11 +80,11 @@ public:
     }
   }
 
-  void RPCConnectToURIs(const std::vector<Uri> &uris)
+  void RPCConnectToURIs(std::vector<Uri> const &uris)
   {
-    for(auto &thing : uris)
+    for(auto &uri : uris)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"WILL ATTEMPT TO CONNECT TO: ", thing.ToString());
+      FETCH_LOG_INFO(LOGGING_NAME,"WILL ATTEMPT TO CONNECT TO: ", uri.uri());
     }
   }
 
@@ -142,26 +147,28 @@ public:
     return services_[n];
   }
 
-  void UseThesePeers(std::set<Uri> uris)
+  // TODO(EJF): URI
+  void UseThesePeers(std::unordered_set<Uri> const &uris)
   {
     std::lock_guard<mutex_type> lock_(services_mutex_);
     auto ident = lane_identity_.lock();
     if (ident)
     {
+#if 0
       for(auto& uri : uris)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, ident -> GetLaneNumber(), " -- UseThesePeers: ", uri.ToString());
       }
-
+#endif
 
       std::unordered_set<Uri> remove;
       std::unordered_set<Uri> create;
 
       for(auto &peer_conn : peer_connections_)
       {
-        if (uris.find(peer_conn . first) == uris.end())
+        if (uris.find(peer_conn.first) == uris.end())
         {
-          remove.insert(peer_conn . first);
+          remove.insert(peer_conn.first);
         }
       }
 
@@ -190,15 +197,18 @@ public:
     }
   }
 
-  shared_service_client_type Connect(const Uri &uri)
+  shared_service_client_type Connect(Uri const &uri)
   {
-    byte_array::ByteArray b;
-    uint16_t port;
-    if (uri.ParseTCP(b, port))
+    shared_service_client_type service;
+
+    if (uri.scheme() == Uri::Scheme::Tcp)
     {
-      return Connect(b, port);
+      auto const &tcp_peer = uri.AsPeer();
+
+      service = Connect(tcp_peer.address(), tcp_peer.port());
     }
-    return shared_service_client_type();
+
+    return service;
   }
 
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
@@ -219,18 +229,24 @@ public:
     std::size_t n = 0;
     while (n < 10)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Trying to ping lane service");
+      FETCH_LOG_INFO(LOGGING_NAME,"Trying to ping lane service...");
 
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
 
       FETCH_LOG_PROMISE();
       if (p->Wait(1000, false))
       {
+        FETCH_LOG_INFO(LOGGING_NAME,"Trying to ping lane service...Great Success");
+
         if (p->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
         {
           n = 10;
         }
         break;
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,"Trying to ping lane service...failed");
       }
       ++n;
     }
@@ -312,7 +328,7 @@ private:
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
 
-  std::map<Uri, shared_service_client_type> peer_connections_;
+  std::unordered_map<Uri, shared_service_client_type> peer_connections_;
 };
 
 }  // namespace ledger

@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <sstream>
+#include <random>
 #include <core/service_ids.hpp>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
@@ -192,9 +193,7 @@ void Router::Stop()
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-#if 1
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
-#endif
 
   // update the routing table if required
   AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
@@ -303,6 +302,8 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-', channel, '-', message_num, ")");
+
   RoutePacket(packet, false);
 }
 
@@ -324,32 +325,18 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   RoutePacket(packet, false);
 }
 
-  /**
- * Get all the IDs we're currently connected to.
+/**
+ * Get a copy of the current routing table
  *
  * @return List of IDs from the routing table.
  */
-std::list<std::pair<Packet::Address, Router::Handle>> Router::GetPeerIdentities()
+Router::RoutingTable Router::GetRoutingTable() const
 {
-  using RET_PAIR = std::pair<Packet::Address, Router::Handle>;
-
-  std::list<RET_PAIR> res;
   FETCH_LOCK(routing_table_lock_);
-  for(auto &val : routing_table_)
-  {
-    Packet::RawAddress raw = val.first;
-
-    byte_array::ByteArray cooked;
-    cooked.Resize(std::size_t{Packet::ADDRESS_SIZE});
-    std::memcpy(cooked.pointer(), raw.data(), Packet::ADDRESS_SIZE);
-
-    RET_PAIR new_res = RET_PAIR(cooked, val.second.handle);
-    res.push_back(new_res);
-  }
-  return res;
+  return routing_table_;
 }
 
-  /**
+/**
  * Send a request and expect a response back from the target address
  *
  * @param request The request to be sent
@@ -365,6 +352,8 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
 
   // register with the dispatcher that we are expecting a response
   auto promise = dispatcher_.RegisterExchange(service, channel, counter);
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-', channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
@@ -493,6 +482,33 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
   return handle;
 }
 
+Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
+{
+  Handle handle = 0;
+
+  std::random_device rd;
+  std::mt19937 rng(rd());
+
+  {
+    FETCH_LOCK(routing_table_lock_);
+
+    if (!routing_table_.empty())
+    {
+      // decide the random index to access
+      std::size_t const element = rng() % routing_table_.size();
+
+      // advance the iterator to the correct offset
+      auto it = routing_table_.cbegin();
+      std::advance(it, static_cast<std::ptrdiff_t>(element));
+
+      // update the handle
+      handle = it->second.handle;
+    }
+  }
+
+  return handle;
+}
+
 /**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
  *
@@ -583,15 +599,26 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   {
     // attempt to route to one of our direct peers
     Handle handle = LookupHandle(packet->GetTargetRaw());
+#if 1
     if (handle)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       return;
     }
+#endif
 
+#if 1
+    handle = LookupRandomHandle(packet->GetTargetRaw());
+    if (handle)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
+      SendToConnection(handle, packet);
+    }
+#else
     // TODO(EJF): Implement kad-routing
     FETCH_LOG_WARN(LOGGING_NAME, "!!! Unable to route the packet currently");
+#endif
   }
 }
 

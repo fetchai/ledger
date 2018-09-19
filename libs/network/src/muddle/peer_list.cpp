@@ -9,24 +9,35 @@ static constexpr std::size_t MAX_LOG2_BACKOFF = 11; // 2048
 namespace fetch {
 namespace muddle {
 
+/**
+ * Create the peer connection list
+ *
+ * @param router The reference to the router
+ */
 PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {
 }
 
-void PeerConnectionList::AddPersistentPeer(Peer const &peer)
+void PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
-  Lock lock(lock_);
+  FETCH_LOCK(lock_);
   persistent_peers_.emplace(peer);
 }
 
-void PeerConnectionList::RemovePersistentPeer(Peer const &peer)
+void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 {
-  Lock lock(lock_);
+  FETCH_LOCK(lock_);
   persistent_peers_.erase(peer);
 }
 
-void PeerConnectionList::AddConnection(Peer const &peer, ConnectionPtr const &conn)
+std::size_t PeerConnectionList::GetNumPeers() const
+{
+  FETCH_LOCK(lock_);
+  return persistent_peers_.size();
+}
+
+void PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
 {
   Lock lock(lock_);
   peer_connections_[peer] = conn;
@@ -37,49 +48,59 @@ void PeerConnectionList::AddConnection(Peer const &peer, ConnectionPtr const &co
   ++metadata.attempts;
 }
 
-std::list<std::pair<network::AbstractConnection::connection_handle_type, network::Peer>> PeerConnectionList::GetCurrentPeers() const
+PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
 {
-  std::list<std::pair<network::AbstractConnection::connection_handle_type, Peer>> res;
-  Lock lock(lock_);
-  for(auto& peer_connection : peer_connections_)
-  {
-    std::pair<network::AbstractConnection::connection_handle_type, Peer> p(peer_connection.second->handle(),
-                                                                           peer_connection.first);
-    res.push_back(p);
-  }
-  return res;
+  FETCH_LOCK(lock_);
+  return peer_connections_;
 }
 
-PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(const Peer &peer)
+PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
 {
-  Lock lock(lock_);
+  UriMap map;
+
+  // build the reverse map
+  {
+    FETCH_LOCK(lock_);
+    for (auto const &element : peer_connections_)
+    {
+      map[element.second->handle()] = element.first;
+    }
+  }
+
+  return map;
+}
+
+
+PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer)
+{
+  FETCH_LOCK(lock_);
   auto metadataiter = peer_metadata_.find(peer);
   if (metadataiter == peer_metadata_.end())
   {
-    return UNKNOWN;
+    return ConnectionState::UNKNOWN;
   }
   auto &metadata = metadataiter->second;
   if (metadata.connected)
   {
-    return CONNECTED;
+    return ConnectionState::CONNECTED;
   }
   if (ReadyForRetry(metadata))
   {
-    return TRYING;
+    return ConnectionState::TRYING;
   }
   else
   {
-    return ConnectionState(int(BACKOFF) + metadata.consecutive_failures);
+    return ConnectionState(int(ConnectionState::BACKOFF) + metadata.consecutive_failures);
   }
 }
 
-void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const &peer)
+void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
 {
   Handle connection_handle = 0;
 
   // update the connection metadata
   {
-    Lock lock(lock_);
+    FETCH_LOCK(lock_);
 
     auto it = peer_connections_.find(peer);
     if (it != peer_connections_.end())
@@ -100,18 +121,11 @@ void PeerConnectionList::OnConnectionEstablished(PeerConnectionList::Peer const 
   }
 }
 
-void PeerConnectionList::RemoveConnection(Peer const &peer)
+void PeerConnectionList::RemoveConnection(Uri const &peer)
 {
-  Lock lock(lock_);
+  FETCH_LOCK(lock_);
 
-#if 1
-  auto it = peer_connections_.find(peer);
-  if (it != peer_connections_.end())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Connection ref count: ", it->second.use_count());
-  }
-#endif
-
+  // remove the active connection
   peer_connections_.erase(peer);
 
   // update the metadata
@@ -119,15 +133,9 @@ void PeerConnectionList::RemoveConnection(Peer const &peer)
   ++metadata.consecutive_failures;
   ++metadata.total_failures;
   metadata.connected = false;
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Failed time before: ", metadata.last_failed_connection.time_since_epoch().count());
-
   metadata.last_failed_connection = Clock::now();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Failed time after: ", metadata.last_failed_connection.time_since_epoch().count());
-
-
-  FETCH_LOG_INFO(LOGGING_NAME, "I do dismay, it appears we have lost a connection");
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " lost");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
@@ -139,7 +147,7 @@ bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
 
 PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
 {
-  Lock lock(lock_);
+  FETCH_LOCK(lock_);
 
   PeerList peers;
 
@@ -158,22 +166,20 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
 
       if (is_first_connection)
       {
-        // first attempt should always be checked
+        // on a first attempt, a connection attempt should always be made
         peers.push_back(peer);
       }
-#if 1
       else
       {
+        // lookup the connection metadata
         auto const &metadata = it->second;
-        FETCH_LOG_INFO(LOGGING_NAME, "Determining if I need to back off ");
+
+        // determine if this connection should be connected again
         if (ReadyForRetry(metadata))
         {
           peers.push_back(peer);
-
-          FETCH_LOG_INFO(LOGGING_NAME, "Come forth dear fellow: ", peer.ToString());
         }
       }
-#endif
     }
   }
 

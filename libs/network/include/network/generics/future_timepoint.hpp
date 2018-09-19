@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <thread>
+
 namespace fetch {
 namespace network {
 
@@ -46,9 +49,9 @@ public:
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
 
-  bool IsDue(const Timepoint &timepoint) const
+  bool IsDue(Timepoint const &time_point) const
   {
-    return due_time_ <= timepoint;
+    return due_time_ <= time_point;
   }
 
   bool IsDue() const

@@ -42,15 +42,18 @@ public:
 
 public:
   P2PManagedLocalService(Uri uri, ServiceIdentifier service_identifier)
-    : uri_(uri)
+    : uri_(std::move(uri))
     , service_identifier_(service_identifier)
   {
   }
+
+  virtual ~P2PManagedLocalService() = default;
 
   virtual void AddPeer(Uri remote_uri)
   {
     peers_.insert(remote_uri);
   }
+
   virtual void RemovePeer(Uri remote_uri)
   {
     peers_.erase(remote_uri);

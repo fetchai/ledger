@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/fnv.hpp"
-#include "network/peer.hpp"
+#include "network/uri.hpp"
+#include "network/p2pservice/identity_cache.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -35,30 +35,46 @@ namespace p2p {
 class Resolver
 {
 public:
-  using Address = byte_array::ConstByteArray;
-  using Mutex = mutex::Mutex;
-  using PeerList = std::vector<network::Peer>;
-  using PeerMap = std::unordered_map<Address, PeerList>;
+  using Address   = byte_array::ConstByteArray;
+  using Mutex     = mutex::Mutex;
+  using PeerList  = std::vector<network::Peer>;
+  using PeerMap   = std::unordered_map<Address, PeerList>;
+  using Uri  = network::Uri;
 
-  PeerList Query(Address const &address)
+  explicit Resolver(IdentityCache const &cache)
+    : cache_(cache)
+  {}
+
+  void Setup(Address const &address, Uri const &uri)
   {
-    {
-      FETCH_LOCK(lock_);
+    address_ = address;
+    uri_ = uri;
+  }
 
-      auto it = map_.find(address);
-      if (it != map_.end())
-      {
-        return it->second;
-      }
+  Uri Query(Address const &address)
+  {
+    Uri uri;
+
+    FETCH_LOG_INFO("Resolver", "Lookup address: ", byte_array::ToBase64(address));
+
+    if (address == address_)
+    {
+      uri = uri_;
+    }
+    else
+    {
+      cache_.Lookup(address, uri);
     }
 
-    return {};
+    return uri;
   }
 
 private:
 
-  Mutex   lock_{__LINE__, __FILE__};
-  PeerMap map_;
+  IdentityCache const &cache_;      ///< The reference to the identity cache of the P2P service
+  Address              address_;    ///< The address of the current node
+  Uri                  uri_;        ///< The URI of the current node
+
 };
 
 } // namespace p2p

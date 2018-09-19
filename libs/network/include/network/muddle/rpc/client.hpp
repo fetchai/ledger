@@ -51,9 +51,17 @@ public:
     thread_pool_->Stop();
   }
 
-  void SetAddress(Address const &address)
+  template<typename... Args>
+  Promise CallSpecificAddress(Address const &address,
+                              ProtocolId const &protocol,
+                              FunctionId const &function,
+                              Args &&... args)
   {
+    // update the target address
     address_ = address;
+
+    // execute the call
+    return Call(protocol, function, std::forward<Args>(args)...);
   }
 
 protected:
@@ -66,6 +74,8 @@ protected:
 
       // signal to the networking that an exchange is requested
       auto promise = endpoint_.Exchange(address_, service_, channel_, data);
+
+      auto const *client = this;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_, "@prom=", promise.id(), " response size=", data.size());
 
@@ -83,9 +93,11 @@ protected:
           }
         })
         .Catch(
-          []()
+          [client, promise]()
           {
             LOG_STACK_TRACE_POINT;
+
+            FETCH_LOG_WARN(LOGGING_NAME, "Exchange promise failed to: ", byte_array::ToBase64(client->address_));
 
             // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a callback process
             FETCH_LOG_WARN(LOGGING_NAME, "Exchange promise failed");

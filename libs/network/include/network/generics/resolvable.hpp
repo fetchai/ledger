@@ -31,17 +31,10 @@ public:
   using State = service::PromiseState;
   using PromiseCounter = service::PromiseCounter;
 
-
   Resolvable() = default;
-  ~Resolvable() = default;
+  virtual ~Resolvable() = default;
 
-  Resolvable(Resolvable const &rhs) = default;
-
-  // Operators
-  Resolvable &operator=(Resolvable const &rhs) = default;
-  Resolvable &operator=(Resolvable &&rhs) noexcept = default;
-
-  virtual State GetState() = 0;
+  virtual State GetState() const = 0;
   virtual PromiseCounter id() const = 0;
 };
 

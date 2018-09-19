@@ -147,7 +147,7 @@ public:
   }
   /// @}
 
-  State GetState() { return state_; }
+  State GetState() const { return state_; }
 
   /// @name Waits
   /// @{

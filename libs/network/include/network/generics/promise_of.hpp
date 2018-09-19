@@ -57,18 +57,13 @@ public:
   PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
 
-  virtual State GetState() override
+  State GetState() const override
   {
-    return promise_ -> GetState();
+    return promise_->GetState();
   }
 
-  virtual PromiseCounter id() const override { return promise_ -> id(); }
+  PromiseCounter id() const override { return promise_->id(); }
 
-  static std::string DescribeState(State s)
-  {
-    const char *states[4] = {"Waiting", "Succeeded", "Failed", "???"};
-    return states[int(s) & 0x03];
-  }
 private:
   Promise promise_;
 };

@@ -1,31 +1,37 @@
 #ifndef P2PTRUST_INTERFACE_HPP
 #define P2PTRUST_INTERFACE_HPP
 
+#include "core/byte_array/const_byte_array.hpp"
+
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 namespace fetch {
 namespace p2p {
 
-typedef enum
+enum class TrustSubject
 {
   BLOCK       = 0,
   TRANSACTION = 1,
   PEER        = 2
-} P2PTrustFeedbackSubject;
+};
 
-typedef enum
+enum class TrustQuality
 {
   LIED            = 0,
   BAD_CONNECTION  = 1,
   DUPLICATE       = 2,
   NEW_INFORMATION = 3
-} P2PTrustFeedbackQuality;
+};
 
-template <class PEER_IDENT>
+template <typename IDENTITY>
 class P2PTrustInterface
 {
 public:
+  using IdentitySet = typename std::unordered_set<IDENTITY>;
+  using ConstByteArray = byte_array::ConstByteArray;
+
   P2PTrustInterface(const P2PTrustInterface &rhs) = delete;
   P2PTrustInterface(P2PTrustInterface &&rhs)      = delete;
   P2PTrustInterface &operator=(const P2PTrustInterface &rhs) = delete;
@@ -33,37 +39,59 @@ public:
   bool               operator==(const P2PTrustInterface &rhs) const = delete;
   bool               operator<(const P2PTrustInterface &rhs) const  = delete;
 
-  explicit P2PTrustInterface() {}
+  P2PTrustInterface() = default;
+  virtual ~P2PTrustInterface() = default;
 
-  virtual ~P2PTrustInterface() {}
+  virtual void AddFeedback(IDENTITY const &peer_ident,
+                           TrustSubject subject, TrustQuality quality) = 0;
 
-  virtual void AddFeedback(const PEER_IDENT &                peer_ident,
-                           P2PTrustFeedbackSubject subject, P2PTrustFeedbackQuality quality) = 0;
+  virtual void AddFeedback(IDENTITY const &peer_ident,
+                           ConstByteArray const &object_ident,
+                           TrustSubject subject, TrustQuality quality) = 0;
 
-  virtual void AddFeedback(const PEER_IDENT &                peer_ident,
-                           const byte_array::ConstByteArray &object_ident,
-                           P2PTrustFeedbackSubject subject, P2PTrustFeedbackQuality quality) = 0;
+  virtual IdentitySet GetBestPeers(size_t maximum) const= 0;
 
-  virtual std::vector<PEER_IDENT> GetBestPeers(size_t maximum)                       = 0;
-  virtual std::vector<PEER_IDENT> GetRandomPeers(size_t maximum_count, double minimum_trust) = 0;
+  virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const= 0;
 
-  virtual size_t                  GetRankOfPeer(const PEER_IDENT &peer_ident)        = 0;
-  virtual double                  GetTrustRatingOfPeer(const PEER_IDENT &peer_ident) = 0;
-  virtual bool                    IsPeerTrusted(const PEER_IDENT &peer_ident)        = 0;
-  virtual bool                    IsPeerKnown(const PEER_IDENT &peer_ident) const    = 0;
+  virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const        = 0;
+  virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;
+  virtual bool   IsPeerTrusted(IDENTITY const &peer_ident) const       = 0;
+  virtual bool   IsPeerKnown(IDENTITY const &peer_ident) const    = 0;
 };
+
+inline char const *ToString(TrustSubject subject)
+{
+  switch (subject)
+  {
+    case TrustSubject::BLOCK:
+      return "Block";
+    case TrustSubject::TRANSACTION:
+      return "Transaction";
+    case TrustSubject::PEER:
+      return "Peer";
+    default:
+      return "Unknown";
+  }
+}
+
+inline char const *ToString(TrustQuality quality)
+{
+  switch (quality)
+  {
+    case TrustQuality::LIED:
+      return "Lied";
+    case TrustQuality::BAD_CONNECTION:
+      return "Bad Connection";
+    case TrustQuality::DUPLICATE:
+      return "Duplicate";
+    case TrustQuality::NEW_INFORMATION:
+      return "New Information";
+    default:
+      return "Unknown";
+  }
+}
+
 }  // namespace p2p
 }  // namespace fetch
-
-inline std::ostream &operator<<(std::ostream &os, const fetch::p2p::P2PTrustFeedbackQuality q)
-{
-  const char *names[] = {
-      "LIED",
-      "BAD_CONNECTION",
-      "DUPLICATE",
-      "NEW_INFORMATION",
-  };
-  return os << names[q];
-}
 
 #endif  // P2PTRUST_INTERFACE_HPP

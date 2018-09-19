@@ -72,7 +72,7 @@ public:
 
   enum
   {
-    IDENTITY = 1,
+    IDENTITY = 1000,
     CHAIN,
     CONTROLLER
   };

@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <network/p2pservice/p2p_managed_local_service_state_machine.hpp>
-#include <network/p2pservice/p2p_managed_local_service.hpp>
-#include <network/p2pservice/p2p_managed_local_lane_service.hpp>
-#include <network/p2pservice/p2p_service_defs.hpp>
+#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_managed_local_lane_service.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/p2pservice/manifest.hpp"
 
 namespace fetch {
 namespace p2p {
@@ -74,29 +75,36 @@ public:
   {
     for(auto &service : services_)
     {
-      service . second -> Refresh();
+      service.second->Refresh();
     }
   }
 
-  void DistributeManifest(const Manifest &manifest)
+  void DistributeManifest(Manifest const &manifest)
   {
-    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
-        auto iter = this -> services_ . find(ident);
-        if (iter != this -> services_ . end())
+    manifest.ForEach(
+      [this](ServiceIdentifier const &ident, const Uri &uri)
+      {
+        auto const iter = services_.find(ident);
+        if (iter != services_.end())
         {
-          iter -> second -> AddPeer(uri);
+          iter->second->AddPeer(uri);
         }
-      });
+      }
+    );
   }
+
   void EraseManifest(const Manifest &manifest)
   {
-    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
-        auto iter = this -> services_ . find(ident);
-        if (iter != this -> services_ . end())
+    manifest.ForEach(
+      [this](ServiceIdentifier const &ident, const Uri &uri)
+      {
+        auto const iter = services_.find(ident);
+        if (iter != services_.end())
         {
-          iter -> second -> RemovePeer(uri);
+          iter->second->RemovePeer(uri);
         }
-      });
+      }
+    );
   }
 private:
   Services services_;

@@ -27,6 +27,8 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/uri.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
+#include "network/p2pservice/p2p_http_interface.hpp"
+#include "http/middleware/allow_origin.hpp"
 
 #include <memory>
 #include <random>
@@ -75,7 +77,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , muddle_{std::move(certificate), network_manager_}
-  , p2p_{muddle_, lane_control_}
+  , trust_{}
+  , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(num_lanes_)
@@ -92,11 +95,12 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
   , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_} // p2p_port_ fairly arbitrary
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{network_manager_}
   , http_modules_{
-    std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_)
+    std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
+    std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)
   }
 {
   FETCH_UNUSED(num_slices_);
@@ -114,6 +118,11 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   // configure all the lane services
   lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
 
+  // configure the middleware of the http server
+  http_.AddMiddleware(
+    http::middleware::AllowOrigin("*")
+  );
+
   // attach all the modules to the http server
   for (auto const &module : http_modules_)
   {
@@ -126,7 +135,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(PeerList const &initial_peers, bool mining)
+void Constellation::Run(UriList const &initial_peers, bool mining)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components

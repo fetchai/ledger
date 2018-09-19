@@ -21,6 +21,7 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 
@@ -42,8 +43,9 @@ public:
   using Block = chain::MainChain::BlockType;
   using Promise = service::Promise;
   using RpcClient = muddle::rpc::Client;
+  using TrustSystem = p2p::P2PTrustInterface<Address>;
 
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
 
   void BroadcastBlock(Block const &block);
 
@@ -55,6 +57,7 @@ private:
 
   MuddleEndpoint &endpoint_;
   MainChain &chain_;
+  TrustSystem &trust_;
   SubscriptionPtr block_subscription_;
 
   MainChainProtocol main_chain_protocol_;

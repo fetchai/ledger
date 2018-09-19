@@ -17,87 +17,157 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/generics/future_timepoint.hpp"
 #include "core/mutex.hpp"
+#include "network/muddle/packet.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "crypto/fnv.hpp"
+
+#include <vector>
+#include <unordered_set>
 
 namespace fetch {
 namespace p2p {
 
-/*******
- * This holds a mapping of remote-host to manifest/next-polling-time
- *
+/**
+ * This holds a mapping of remote-host to manifest. It also includes a validity time so that this
+ * information can be updated periodically.
  */
-
-class P2PRemoteManifestCache
+class ManifestCache
 {
-  using Manifest = network::Manifest;
-  using Clock = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using Identity = crypto::Identity;
-  using Stored   = std::pair<network::FutureTimepoint, Manifest>;
-  using Store    = std::map<Identity, Stored>;
-  using Mutex    = mutex::Mutex;
-  using Lock     = std::unique_lock<Mutex>;
-
 public:
-  P2PRemoteManifestCache()
-  {
-  }
 
-  std::list<Identity> GetUpdatesNeeded()
+  struct CacheEntry
   {
-    auto now = Clock::now();
-    std::list<Identity> res;
-    Lock lock(mutex_);
-    for( auto& data : data_ )
-    {
-      if (data.second.first.IsDue(now))
-      {
-        res . push_back(data.first);
-      }
-    }
-    return res;
-  }
+    network::FutureTimepoint timepoint;
+    network::Manifest manifest;
+  };
 
-  std::pair<bool, Manifest> Get(Identity identity) const
-  {
-    Lock lock(mutex_);
-    auto iter = data_.find(identity);
-    if (iter == data_.end())
-    {
-      return std::make_pair(false, Manifest());
-    }
-    return std::make_pair(true, iter -> second . second);
-  }
+  using Clock      = network::FutureTimepoint::Clock;
+  using Timepoint  = Clock::time_point;
+  using Manifest   = network::Manifest;
+  using Address    = muddle::Packet::Address;
+  using Cache      = std::unordered_map<Address, CacheEntry>;
+  using Mutex      = mutex::Mutex;
+  using Lock       = std::unique_lock<Mutex>;
+  using AddressSet = std::unordered_set<Address>;
 
-  std::list<Identity> GetUpdatesNeeded(const std::list<Identity> &inputs)
-  {
-    auto now = Clock::now();
-    std::list<Identity> res;
-    Lock lock(mutex_);
+  // Construction / Destruction
+  ManifestCache() = default;
+  ManifestCache(ManifestCache const &) = delete;
+  ManifestCache(ManifestCache &&) = delete;
+  ~ManifestCache() = default;
 
-    for( auto& input : inputs )
-    {
-      auto ref = data_.find(input);
-      if (ref == data_.end() || ref -> second.first.IsDue(now))
-      {
-        res.push_back(input);
-      }
-    }
-    return res;
-  }
+  // Queries
+  bool Get(Address const &address, Manifest &manifest) const;
+  AddressSet GetUpdatesNeeded() const;
+  AddressSet GetUpdatesNeeded(AddressSet const &addresses) const;
 
-  void ProvideUpdate(Identity &id, network::Manifest &manif, size_t valid_for_seconds)
-  {
-    data_[id].second = manif;
-    data_[id].first.SetSeconds(valid_for_seconds);
-  }
+  // Updates
+  void ProvideUpdate(Address const &address, network::Manifest const &manifest, std::size_t valid_for);
+
+  // Operators
+  ManifestCache &operator=(ManifestCache const &) = delete;
+  ManifestCache &operator=(ManifestCache &&) = delete;
 
 private:
-  Store data_;
+
+  Cache cache_;
   mutable Mutex mutex_{__LINE__, __FILE__};
 };
 
+/**
+ * Gets a manifest for specified address
+ *
+ * @param address The address to be searched for
+ * @param manifest The reference to the output manifest
+ * @return true if manifest found and returned, otherwise false
+ */
+inline bool ManifestCache::Get(Address const &address, Manifest &manifest) const
+{
+  bool success = false;
 
+  {
+    FETCH_LOCK(mutex_);
+
+    auto iter = cache_.find(address);
+    if (iter != cache_.end())
+    {
+      manifest = iter->second.manifest;
+      success = true;
+    }
+  }
+
+  return success;
 }
+
+/**
+ * Generate a set of address from which manifest updates are required
+ *
+ * @return The set of addresses
+ */
+inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded() const
+{
+  Timepoint const now = Clock::now();
+  AddressSet addresses;
+
+  {
+    FETCH_LOCK(mutex_);
+    for (auto const &entry : cache_)
+    {
+      if (entry.second.timepoint.IsDue(now))
+      {
+        addresses.insert(entry.first);
+      }
+    }
+  }
+
+  return addresses;
 }
+
+/**
+ * Determines which of the given input addresses require updating
+ *
+ * @param inputs The list of inputs to search
+ * @return The vector of addresses to be updated
+ */
+inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded(AddressSet const &addresses) const
+{
+  Timepoint const now = Clock::now();
+  AddressSet result;
+
+  {
+    FETCH_LOCK(mutex_);
+
+    for (auto const &address : addresses)
+    {
+      auto const it = cache_.find(address);
+      if ((it == cache_.end()) || (it->second.timepoint.IsDue(now)))
+      {
+        result.insert(address);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Updates or adds an entry in the manifest cache
+ *
+ * @param address The address of the peer
+ * @param manifest The manifest for that peer
+ * @param valid_for The time in seconds for the cache entry to be valid
+ */
+inline void ManifestCache::ProvideUpdate(Address const &address, network::Manifest const &manifest, std::size_t valid_for)
+{
+  FETCH_LOCK(mutex_);
+
+  CacheEntry &entry = cache_[address];
+
+  entry.manifest = manifest;
+  entry.timepoint.SetSeconds(valid_for);
+}
+
+} // namespace p2p
+} // namespace fetch

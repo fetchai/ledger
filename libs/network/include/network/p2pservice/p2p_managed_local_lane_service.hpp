@@ -43,7 +43,7 @@ class P2PManagedLocalLaneService: public P2PManagedLocalService
 
 public:
   P2PManagedLocalLaneService(Uri uri, ServiceIdentifier service_identifier, LaneManagement &lane_management)
-    : P2PManagedLocalService(uri, service_identifier)
+    : P2PManagedLocalService(std::move(uri), service_identifier)
     , lane_management_(lane_management)
   {
   }

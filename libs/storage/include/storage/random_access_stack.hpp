@@ -358,7 +358,7 @@ public:
 
     if (!header_.Write(fin))
     {
-      throw StorageException("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header from clear");
     }
 
     fin.close();
@@ -423,7 +423,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      throw StorageException("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header");
     }
   }
 };

@@ -155,13 +155,13 @@ public:
   {
     TCPServer::Start();
     thread_pool_->Start();
-    tx_sync_protocol_->Start();
+    //tx_sync_protocol_->Start();
   }
 
   void Stop() override
   {
     thread_pool_->Stop();
-    tx_sync_protocol_->Stop();
+    //tx_sync_protocol_->Stop();
     TCPServer::Stop();
   }
 

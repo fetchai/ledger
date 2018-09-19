@@ -11,8 +11,18 @@
 #include <thread>
 #include <chrono>
 
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
+
 namespace fetch {
 namespace muddle {
+
+static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
+{
+  ByteArray output(address.size());
+  std::copy(address.begin(), address.end(), output.pointer());
+  return output;
+}
 
 static const auto CLEANUP_INTERVAL = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
@@ -39,7 +49,7 @@ Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
  *
  * @param initial_peer_list
  */
-void Muddle::Start(PortList const &ports, Muddle::PeerList const &initial_peer_list)
+void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
 {
   // start the thread pool
   thread_pool_->Start();
@@ -78,63 +88,35 @@ void Muddle::Stop()
   //clients_.clear();
 }
 
-std::list<Muddle::ConnectionData> Muddle::GetConnections()
+Muddle::ConnectionMap Muddle::GetConnections()
 {
-  std::list<Muddle::ConnectionData> res;
-  auto idents2handles = router_ . GetPeerIdentities();
-  auto handles2peers = clients_ . GetCurrentPeers();
+  ConnectionMap connection_map;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Muddle::GetConnections: i2h=",idents2handles.size(), " h2p=",  handles2peers.size());
+  auto const routing_table = router_.GetRoutingTable();
+  auto const uri_map = clients_.GetUriMap();
 
-  using handles_2_peers_type = decltype(handles2peers);
-
-  std::map<
-    handles_2_peers_type::value_type::first_type,
-    handles_2_peers_type::value_type::second_type
-    > h2p;
-
-  for(auto& handle2peer : handles2peers)
+  for (auto const &entry : routing_table)
   {
-    h2p[handle2peer.first] = handle2peer.second;
-  }
+    // convert the address to a byte array
+    ConstByteArray address = ConvertAddress(entry.first);
 
-  for (auto& ident2handle : idents2handles)
-  {
-    auto ident = ident2handle.first;
-    auto handle = ident2handle.second;
-    auto peer_result = h2p.find(handle);
-
-    PeerConnectionList::ConnectionState st = PeerConnectionList::UNKNOWN;
-
-    std::string uri = "";
-
-    if (peer_result != h2p.end())
+    // based on the handle lookup the uri
+    auto it = uri_map.find(entry.second.handle);
+    if (it != uri_map.end())
     {
-      uri = peer_result -> second.ToString();
-      st = clients_ . GetStateForPeer(uri);
+      // define the identity with a tcp:// or similar URI
+      connection_map[address] = it->second;
     }
     else
     {
-      if (ident.size() > 0)
-      {
-        st = PeerConnectionList::INCOMING;
-      }
+      // in the case that we do not have one then define it with a muddle URI
+      connection_map[address] = Uri{"muddle://" + ToBase64(address)};
     }
-    res.push_back(std::make_tuple(ident, uri, st));
   }
 
-  return res;
+  return connection_map;
 }
 
-void Muddle::AddPeer(const network::Peer &peer)
-{
-  clients_.AddPersistentPeer(peer);
-}
-
-void Muddle::DropPeer(const network::Peer &peer)
-{
-  clients_.RemovePersistentPeer(peer);
-}
 
 
 /**
@@ -145,37 +127,19 @@ void Muddle::RunPeriodicMaintenance()
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
   // connect to all the required peers
-  for (auto const &peer : clients_.GetPeersToConnectTo())
+  for (Uri const &peer : clients_.GetPeersToConnectTo())
   {
-    CreateTcpClient(peer);
-  }
-
-  // debug
-#if 1
-  using ConnectionMap = MuddleRegister::ConnectionMap;
-
-  // make a copy of the map to be processed for debug reasons
-  ConnectionMap map;
-  register_->VisitConnectionMap([&map](ConnectionMap const &m) {
-    map = m;
-  });
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Current Map Size: ", map.size());
-
-#if 0
-  for (auto const &element : map)
-  {
-    auto const &handle = element.first;
-    auto const &conn = element.second;
-
-    auto strong_conn = conn.lock();
-    if (strong_conn)
+    switch (peer.scheme())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "- Handle: ", handle, " type: ", ConnTypeToString(strong_conn->Type()));
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
     }
+
   }
-#endif
-#endif
 
   // run periodic cleanup
   Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
@@ -220,7 +184,7 @@ void Muddle::CreateTcpServer(uint16_t port)
  *
  * @param peer The peer to connect to
  */
-void Muddle::CreateTcpClient(network::Peer const &peer)
+void Muddle::CreateTcpClient(Uri const &peer)
 {
   using ClientImpl = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
@@ -276,7 +240,9 @@ void Muddle::CreateTcpClient(network::Peer const &peer)
     }
   });
 
-  client.Connect(peer.address(), peer.port());
+  auto const &tcp_peer = peer.AsPeer();
+
+  client.Connect(tcp_peer.address(), tcp_peer.port());
 
 #if 0
   // wait for the connection to be established

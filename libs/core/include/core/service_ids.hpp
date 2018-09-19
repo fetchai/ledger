@@ -48,6 +48,9 @@ static constexpr uint64_t RPC_TX_STORE_SYNC = 203;
 static constexpr uint64_t RPC_SLICE_STORE = 204;
 static constexpr uint64_t RPC_SLICE_STORE_SYNC = 205;
 static constexpr uint64_t RPC_CONTROLLER = 206;
+static constexpr uint64_t RPC_EXECUTION_MANAGER = 207;
+static constexpr uint64_t RPC_EXECUTOR = 208;
+static constexpr uint64_t RPC_P2P_RESOLVER = 209;
 
 
 } // namespace fetch

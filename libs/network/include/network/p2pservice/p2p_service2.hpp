@@ -16,7 +16,10 @@
 #include "network/p2pservice/p2p_managed_local_services.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2p_remote_manifest_cache.hpp"
+#include "network/p2pservice/identity_cache.hpp"
 #include "network/muddle/rpc/client.hpp"
+
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger { class LaneRemoteControl; }
@@ -28,7 +31,7 @@ public:
   using NetworkManager = network::NetworkManager;
   using Muddle = muddle::Muddle;
   using PortList = Muddle::PortList;
-  using PeerList = Muddle::PeerList;
+  using UriList = Muddle::UriList;
   using RpcServer = muddle::rpc::Server;
   using ThreadPool = network::ThreadPool;
   using CertificatePtr = Muddle::CertificatePtr;
@@ -36,7 +39,7 @@ public:
   using Identity = crypto::Identity;
   using Uri   = network::Uri;
   using Address   = Resolver::Address;
-  using TrustInterface = P2PTrustInterface<Identity>;
+  using TrustInterface = P2PTrustInterface<Address>;
   using LaneRemoteControl = ledger::LaneRemoteControl;
   using LaneRemoteControlPtr = std::shared_ptr<LaneRemoteControl>;
   using LaneRemoteControls = std::vector<LaneRemoteControlPtr>;
@@ -45,74 +48,91 @@ public:
   using PromisedManifests = std::map<Identity, network::PromiseOf<network::Manifest>>;
   using ServiceType = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
+  using ConnectionState = muddle::PeerConnectionList::ConnectionState;
+  using UriSet = std::unordered_set<Uri>;
+  using AddressSet = std::unordered_set<Address>;
+  using ConnectionMap = muddle::Muddle::ConnectionMap;
 
-  using RequestingManifests = network::RequestingQueueOf<Identity, Manifest>;
-  using RequestingPeerlists = network::RequestingQueueOf<Identity, Uri>;
-
-  enum
-  {
-    PROTOCOL_RESOLVER = 1
-  };
-    static constexpr char const *LOGGING_NAME = "P2PService2";
+  static constexpr char const *LOGGING_NAME = "P2PService2";
 
   // Construction / Destruction
-  P2PService2(Muddle &muddle, LaneManagement &lane_management);
+  P2PService2(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
   ~P2PService2() = default;
 
-  void Start(PeerList const & initial_peer_list, Uri my_uri);
+  void Start(UriList const & initial_peer_list, Uri const &my_uri);
   void Stop();
 
   void SetPeerGoals(uint32_t min, uint32_t max);
 
-  Identity const &identity() const { return muddle_ . identity(); }
-  MuddleEndpoint& AsEndpoint() { return muddle_ . AsEndpoint(); }
-
-  void PeerIdentificationSucceeded(const Uri &peer, const Identity &identity);
-  void PeerIdentificationFailed   (const Uri &peer);
-  void PeerTrustEvent(const Identity &          identity
-                      , P2PTrustFeedbackSubject subject
-                      , P2PTrustFeedbackQuality quality);
+  Identity const &identity() const { return muddle_.identity(); }
+  MuddleEndpoint& AsEndpoint() { return muddle_.AsEndpoint(); }
 
   void SetLocalManifest(Manifest &&manifest);
   Manifest GetLocalManifest();
-  std::vector<Uri> GetRandomGoodPeers();
+  AddressSet GetRandomGoodPeers();
 
-  void WorkCycle();
+  Uri GetNodeUri() // can't be const due to RPC protocol
+  {
+    return my_uri_; // TODO(EJF): Technically a race here, however, the assumption is that this value will not change
+  }
+
+  IdentityCache const &identity_cache() const { return identity_cache_; }
 
 private:
-  void DistributeUpdatedManifest(Identity identity_of_updated_peer);
+
+  using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
+  using RequestingPeerlists = network::RequestingQueueOf<Address, AddressSet>;
+  using RequestingUris      = network::RequestingQueueOf<Address, Uri>;
+
+  /// @name Work Cycle
+  /// @{
+  void WorkCycle();
+  void GetConnectionStatus(ConnectionMap &active_connections, AddressSet &active_addresses);
+  void UpdateTrustStatus(ConnectionMap const &active_connections);
+  void PeerDiscovery(AddressSet const &active_addresses);
+  void RenewDesiredPeers(AddressSet const &active_addresses);
+  void UpdateMuddlePeers(AddressSet const &active_addresses);
+  void UpdateManifests(AddressSet const &active_addresses);
+  /// @}
+
+  void DistributeUpdatedManifest(Address const &address);
   void Refresh();
 
-  std::map<Identity, Uri> identity_to_uri_;
+  // System components
+  Muddle           &muddle_;            ///< The reference to the muddle network stack
+  MuddleEndpoint   &muddle_ep_;         ///< The bridge to the muddle endpoint
+  LaneManagement   &lane_management_;   ///< The lane management service
+  TrustInterface   &trust_system_;      ///< The trust system
 
-  Muddle  &muddle_;
-  MuddleEndpoint &muddle_ep_;
-  ThreadPool  thread_pool_ = network::MakeThreadPool(10);
-  RpcServer rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
+  ThreadPool       thread_pool_ = network::MakeThreadPool(1);
+  RpcServer        rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
 
-  LaneManagement &lane_management_;
+  // Node Information
+  Address const    address_;            ///< The address / public key of the current node
+  Uri              my_uri_;             ///< The public addresss associated with this node
+  Manifest         manifest_;           ///< The manifest associated with this address
+
+  // identity cache
+  IdentityCache    identity_cache_;     ///< The cache of identity vs. muddle a
 
   // address resolution service
-  Resolver resolver_;
-  ResolverProtocol resolver_proto_;
+  Resolver         resolver_;           ///< The resolver
+  ResolverProtocol resolver_proto_;     ///< The protocol for the resolver
 
-  std::shared_ptr<TrustInterface> trust_system;
-
-  Uri my_uri_;
-
-  Client client_;
-  Manifest manifest_;
-  std::map<Identity, Manifest> discovered_peers_;
-
+  // Work Cycle specific data
+  /// @{
+  Client                  client_;                  ///< The RPC client adapter
+  RequestingManifests     outstanding_manifests_;   ///< The queue of outstanding promises for manifests
+  RequestingPeerlists     pending_peer_lists_;      ///< The queue of outstanding peer lists
+  RequestingUris          pending_resolutions_;     ///< The queue of outstaing resolutions
+  AddressSet              desired_peers_;           ///< The desired set of addresses that we want to have connections to
+  ManifestCache           manifest_cache_;          ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
+  std::size_t             work_cycle_count = 0;     ///< Counter to manage periodic task intervals
+  ///@}
 
-  RequestingManifests outstanding_manifests_;
-  RequestingPeerlists outstanding_peerlists_;
-
-  P2PRemoteManifestCache manifest_cache_;
-  std::list<network::Uri> possibles_; // addresses we might use in the future.
-
-  uint32_t min_peers, max_peers;
+  uint32_t min_peers_ = 2;
+  uint32_t max_peers_ = 3;
 };
 
 } // namespace p2p

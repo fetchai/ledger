@@ -17,30 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
-#include "network/p2pservice/p2p_resolver.hpp"
+#include "core/mutex.hpp"
+#include "network/service/promise.hpp"
+
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
 
-  class P2PService2;
-
-/**
- * Protocol for the P2P address resolution protocol
- */
-class ResolverProtocol : public service::Protocol
+template <typename State>
+class StateMachine
 {
 public:
+  using Promise = service::Promise;
+  using PromiseList = std::vector<Promise>;
 
-  enum
+  StateMachine() = default;
+  ~StateMachine() = default;
+
+  bool AddState(State const &state)
   {
-    QUERY = 1,
-    GET_MANIFEST = 2,
-    GET_RANDOM_GOOD_PEERS = 3,
-    GET_NODE_URI = 4
-  };
+    auto const result = map_.insert(state);
+    return result.second;
+  }
 
-  explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
+private:
+
+
+  using StateMap = std::unordered_map<State, Promise>;
+  using Mutex = mutex::Mutex;
+
+  StateMap map_;
 };
 
 } // namespace p2p

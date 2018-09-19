@@ -29,8 +29,8 @@ namespace serializers {
 class ByteArrayBuffer
 {
 public:
-  ByteArrayBuffer()
-  {}
+  ByteArrayBuffer() = default;
+
   ByteArrayBuffer(byte_array::ByteArray s)
   {
     data_ = s;

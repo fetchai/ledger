@@ -31,6 +31,14 @@ public:
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
 
+  struct RoutingData
+  {
+    bool   direct = false;
+    Handle handle = 0;
+  };
+
+  using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
+
   static constexpr char const *LOGGING_NAME = "MuddleRoute";
 
   // Construction / Destruction
@@ -70,18 +78,11 @@ public:
   SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) override;
   SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override;
 
-  std::list<std::pair<Packet::Address, Handle>> GetPeerIdentities();
+  RoutingTable GetRoutingTable() const;
   /// @}
 
 private:
 
-  struct RoutingData
-  {
-    bool   direct = false;
-    Handle handle = 0;
-  };
-
-  using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
   using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex = mutex::Mutex;
   using Clock = std::chrono::steady_clock;
@@ -91,6 +92,7 @@ private:
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
+  Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);

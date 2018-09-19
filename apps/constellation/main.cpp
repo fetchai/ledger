@@ -67,9 +67,9 @@ bool EnsureLog2(uint32_t value)
 
 struct CommandLineArguments
 {
-  using string_list_type  = std::vector<std::string>;
-  using peer_list_type    = fetch::Constellation::PeerList;
-  using adapter_list_type = fetch::network::Adapter::adapter_list_type;
+  using StringList  = std::vector<std::string>;
+  using UriList    = fetch::Constellation::UriList ;
+  using AdapterList = fetch::network::Adapter::adapter_list_type;
 
   static const uint32_t DEFAULT_NUM_LANES     = 4;
   static const uint32_t DEFAULT_NUM_SLICES    = 4;
@@ -79,7 +79,7 @@ struct CommandLineArguments
 
   uint16_t       port{0};
   uint32_t       network_id;
-  peer_list_type peers;
+  UriList        peers;
   uint32_t       num_executors;
   uint32_t       num_lanes;
   uint32_t       log2_num_lanes;
@@ -152,8 +152,8 @@ struct CommandLineArguments
     if (!raw_peers.empty())
     {
       // split the peers
-      std::size_t          position = 0;
-      fetch::network::Peer peer;
+      std::size_t         position = 0;
+      fetch::network::Uri peer;
       while (std::string::npos != position)
       {
         // locate the separator
@@ -199,7 +199,7 @@ struct CommandLineArguments
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
-      s << peer << ' ';
+      s << peer.uri() << ' ';
     }
     s << '\n';
     return s;

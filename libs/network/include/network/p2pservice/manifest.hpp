@@ -39,7 +39,9 @@ public:
           try
           {
             auto r = ParseLine(s);
-            temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
+
+            // TODO(EJF): URI
+            //temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
           }
           catch (std::exception &ex)
           {
@@ -68,15 +70,16 @@ public:
 
   network::Uri GetUri(ServiceIdentifier service_id)
   {
+    network::Uri uri;
+
     auto res = data_.find(service_id);
-    if (res == data_.end())
+    if (res != data_.end())
     {
-      return network::Uri();
+      // TODO(EJF): URI
+      uri = res->second;
     }
-    else
-    {
-      return res -> second;
-    }
+
+    return uri;
   }
 
   bool ContainsService(ServiceIdentifier service_id)
@@ -124,7 +127,7 @@ public:
         + "  "
         + std::to_string(data.first.instance_number)
         + "  "
-        + data.second.ToString()
+        + static_cast<std::string>(data.second.uri())
         + "\n";
       result += line;
     }

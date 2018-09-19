@@ -26,6 +26,7 @@
 #include "ledger/transaction_processor.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
+#include "network/p2pservice/p2ptrust.hpp"
 #include "network/muddle/muddle.hpp"
 #include "http/server.hpp"
 #include "http/module.hpp"
@@ -51,10 +52,9 @@ namespace fetch {
 class Constellation
 {
 public:
-  using Peer2PeerService  = p2p::P2PService2;
-  using MuddleService  = muddle::Muddle;
-  using CertificatePtr    = Peer2PeerService::CertificatePtr;
-  using PeerList    = std::vector<network::Peer>;
+  using Peer2PeerService = p2p::P2PService2;
+  using CertificatePtr   = Peer2PeerService::CertificatePtr;
+  using UriList          = std::vector<network::Uri>;
 
   static constexpr uint16_t    MAIN_CHAIN_PORT_OFFSET = 2;
   static constexpr uint16_t    P2P_PORT_OFFSET        = 1;
@@ -71,11 +71,12 @@ public:
                          std::string const &interface_address,
                          std::string const &prefix);
 
-  void Run(PeerList const &initial_peers, bool mining);
+  void Run(UriList const &initial_peers, bool mining);
   void SignalStop();
 
 private:
 
+  using Muddle  = muddle::Muddle;
   using NetworkManager = network::NetworkManager;
   using BlockPackingAlgorithm = miner::BasicMiner;
   using Miner = chain::MainChainMiner;
@@ -96,6 +97,7 @@ private:
   using HttpModules = std::vector<HttpModulePtr>;
   using TransactionProcessor = ledger::TransactionProcessor;
   using Manifest = network::Manifest;
+  using TrustSystem = p2p::P2PTrust<Muddle::Address>;
 
   Manifest GenerateManifest() const;
 
@@ -114,7 +116,8 @@ private:
   /// @name Network Orchestration
   /// @{
   NetworkManager          network_manager_;       ///< Top level network coordinator
-  MuddleService           muddle_;                ///< The muddle networking service
+  Muddle                  muddle_;                ///< The muddle networking service
+  TrustSystem             trust_;                 ///< The trust subsystem
   Peer2PeerService        p2p_;                   ///< The main p2p networking stack
   /// @}
 

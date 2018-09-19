@@ -2,7 +2,7 @@
 #define FETCH_PEER_LIST_HPP
 
 #include "core/mutex.hpp"
-#include "network/peer.hpp"
+#include "network/uri.hpp"
 #include "network/management/abstract_connection.hpp"
 
 #include <chrono>
@@ -14,13 +14,39 @@ namespace muddle {
 
 class Router;
 
+/**
+ * The peer connection list manages (and owns) the outgoing muddle connections. In the event that
+ * a connection failure occurs, the peer connection list will be notified and it will apply an
+ * exponential backoff strategy to retrying connections.
+ */
 class PeerConnectionList
 {
 public:
-  using Peer          = network::Peer;
-  using PeerList      = std::vector<Peer>;
+  using Uri           = network::Uri;
+  using PeerList      = std::vector<Uri>;
   using ConnectionPtr = std::shared_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
+  using PeerMap       = std::unordered_map<Uri, ConnectionPtr>;
+
+  enum class ConnectionState
+  {
+    UNKNOWN = 0,
+    TRYING  = 0x20,
+
+    CONNECTED = 0x100,
+
+    REMOTE = 0x200,
+
+    INCOMING = 0x300,
+
+    BACKOFF   = 0x10,
+    BACKOFF_2 = 0x11,
+    BACKOFF_3 = 0x12,
+    BACKOFF_4 = 0x13,
+    BACKOFF_5 = 0x14,
+  };
+
+  using UriMap        = std::unordered_map<Handle, Uri>;
 
   static constexpr char const *LOGGING_NAME = "PeerConnList";
 
@@ -35,41 +61,28 @@ public:
   PeerConnectionList &operator=(PeerConnectionList &&) = delete;
 
   /// @name Persistent connections
-  /// @[
-  void AddPersistentPeer(Peer const &peer);
-  void RemovePersistentPeer(Peer const &peer);
+  /// @{
+  void AddPersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Uri const &peer);
+  std::size_t GetNumPeers() const;
   /// @}
 
   /// @name Peer based connection information
   /// @{
-  void AddConnection(Peer const &peer, ConnectionPtr const &conn);
-  void OnConnectionEstablished(Peer const &peer);
-  void RemoveConnection(Peer const &peer);
+  void AddConnection(Uri const &peer, ConnectionPtr const &conn);
+  void OnConnectionEstablished(Uri const &peer);
+  void RemoveConnection(Uri const &peer);
   /// @}
 
-  enum ConnectionState
-    {
-      UNKNOWN       = 0,
-      TRYING        = 0x20,
 
-      CONNECTED     = 0x100,
-
-      REMOTE        = 0x200,
-
-      INCOMING      = 0x300,
-
-      BACKOFF       = 0x10,
-      BACKOFF_2     = 0x11,
-      BACKOFF_3     = 0x12,
-      BACKOFF_4     = 0x13,
-      BACKOFF_5     = 0x14,
-    };
-
-  ConnectionState GetStateForPeer(const Peer &peer);
+  ConnectionState GetStateForPeer(Uri const &peer);
 
   PeerList GetPeersToConnectTo() const;
 
-  std::list<std::pair<network::AbstractConnection::connection_handle_type, Peer>> GetCurrentPeers() const;
+  PeerMap GetCurrentPeers() const;
+
+  UriMap GetUriMap() const;
+
 private:
 
   using Clock = std::chrono::steady_clock;
@@ -87,10 +100,9 @@ private:
 
   using Mutex        = mutex::Mutex;
   using Lock         = std::lock_guard<Mutex>;
-  using PeerSet      = std::unordered_set<Peer>;
-  using PeerMap      = std::unordered_map<Peer, ConnectionPtr>;
-  using MetadataMap  = std::unordered_map<Peer, PeerMetadata>;
-//  using ConnectionMap = std::unordered_map<Handle, ConnectionPtr>;
+  using PeerSet      = std::unordered_set<Uri>;
+
+  using MetadataMap  = std::unordered_map<Uri, PeerMetadata>;
 
   Router        &router_;
 
