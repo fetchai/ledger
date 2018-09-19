@@ -35,7 +35,7 @@ Uri::Uri(ConstByteArray const &uri)
 {
   if (!Parse(uri))
   {
-    throw std::runtime_error("Unable to parse URI");
+    throw std::runtime_error("Unable to parse URI: " + std::string(uri));
   }
 }
 
