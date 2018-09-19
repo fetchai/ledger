@@ -12,12 +12,13 @@ namespace network {
 
 class Promises
 {
-  typedef enum
-    {
-      NONE, DONE
-    }
-    Conclusion;
 public:
+
+  enum Conclusion
+  {
+    NONE,
+    DONE
+  };
 
   using individual_cb_type = std::function<void (fetch::service::Promise*)>;
   using final_cb_type = std::function<void (const std::set<fetch::service::Promise*> promises)>;
