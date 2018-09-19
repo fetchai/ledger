@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,45 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
+#include "core/script/variant.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
+#include <gtest/gtest.h>
 
-namespace fetch {
-namespace vm {
+using namespace fetch;
+using namespace fetch::script;
+using namespace fetch::serializers;
 
-namespace details {
-
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
+TEST(variant_test, variant_serialization)
 {
+  Variant a, b;
+  a = 982;
+  /*
+    TypedByteArrayBuffer ser;
+    ser << a;
 
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
-  }
-};
+    ser.Seek(0);
 
-template <typename T>
-struct ArgumentsToList<T>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-  }
-};
-
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> &list)
-  {}
-};
-
-}  // namespace details
-}  // namespace vm
-}  // namespace fetch
+    ser >> b;
+  */
+  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
+}

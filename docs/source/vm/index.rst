@@ -132,9 +132,9 @@ Adding class member functions
 
 Adding static functions
 -----------------------
-In the previous section we used a class called `System` to access the supplied command line arguments. As the 
+In the previous section we used a class called ``System`` to access the supplied command line arguments. As the 
 VM does not have support for global objects in its current version, we here describe how this was implemented: We 
-created a class called `System` and attached two static functions to it. This was done as follows:
+created a class called ``System`` and attached two static functions to it. This was done as follows:
 
 .. literalinclude:: ../../../libs/vm/examples/01_basic_vm/main.cpp
    :language: c++
@@ -152,9 +152,34 @@ in the first section.
 
 Building a smart contract language
 ==================================
-In this section we will integrate the VM with the other modules in Fetch to enable signature verification and 
-interact with the storage database.
+In this section we will integrate the VM with the other modules in Fetch library to enable signature verification and 
+interact with the storage database. We follow the guide on creating static contracts :ref:`static-contracts-the-fetch-token`, but this time incorporate the VM with a custom module as described above to allow access to the ledgers ``StorageUnit``. The
+header of the ``SmartContract`` implementation is as follows:
 
-(TODO: Yet to be written)
+.. literalinclude:: ../../../libs/ledger/include/ledger/chaincode/smart_contract.hpp
+   :language: c++
+   :lines: 28-40
 
+The smart contract has a single static contract function ``InvokeContract``. This function will be attached to all the
+contract functions found in the supplied ``Script``. The contract is initialized with the script and the corresponding
+``Module`` is create with the contract attached to it exposing the functionality to get access to the state database.
+The exposure of the functions themselves to the ledger is done by making a loop that runs over the 
+functions defined in the script:
 
+.. literalinclude:: ../../../libs/ledger/src/chaincode/smart_contract.cpp
+   :language: c++
+   :lines: 30-40
+
+This attaches all the contract functions to the ledger and makes that the function ``SmartContract::InvokeContract`` is 
+called whenever a transaction is dispatched to this contract. The function ``CreateVMDefinition`` creates a module with
+this specific contract instance attached to it, hence ensuring that all data access is done through ``this`` using the
+corresponding ``StorageUnit``.
+
+Finally, the code that actually invokes the smart contract is implemented in the ``InvokeContract`` function which 
+first extracts the name and then tries to execute the corresponding script function:
+
+.. literalinclude:: ../../../libs/ledger/src/chaincode/smart_contract.cpp
+   :language: c++
+   :lines: 41-52
+
+If the script returns failed, the contract invocation is marked as failed overall.

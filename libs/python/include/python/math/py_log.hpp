@@ -44,7 +44,7 @@ inline void BuildLogStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperLog<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperLog<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperLog<NDArray<float>>);
-};
+}
 
 }  // namespace math
 }  // namespace fetch

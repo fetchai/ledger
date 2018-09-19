@@ -161,7 +161,7 @@ void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   }
 
   return;
-};
+}
 
 template class Blas<
     double,

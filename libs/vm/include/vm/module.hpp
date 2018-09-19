@@ -65,8 +65,27 @@ public:
   template <typename T>
   ClassInterface<T> &ExportClass(std::string name);
 
+  template <typename F>
+  Module &ExportFunction(std::string name, F obj)
+  {
+    return ExportFunction(name, std::move(obj), &F::operator());
+  }
+
+  template <typename C, typename R, typename... Args>
+  Module &ExportFunction(std::string name, C function, R (C::*pointer)(Args...) const)
+  {
+    return ExportFunctioImplementation<R, Args...>(name, function);
+  }
+
   template <typename R, typename... Args>
   Module &ExportFunction(std::string name, R (*function)(Args...))
+  {
+    return ExportFunctioImplementation<R, Args...>(name, *function);
+  }
+
+protected:
+  template <typename R, typename... Args, typename F>
+  Module &ExportFunctioImplementation(std::string name, F function)
   {
     Opcode opcode = next_opcode();
 
@@ -82,37 +101,33 @@ public:
       }
       TypePtr ret_type = a->GetType<R>();
 
-      //  CreateOpcodeFunction("print", {int32_type_}, void_type_, Opcode::PrintInt32);
       a->CreateOpcodeFunction(name, args, ret_type, opcode);
     });
 
     // Logic for executing opcodes
-    using FunctionPointer = R (*)(Args...);
+    using function_pointer = F;
     AddOpcode(opcode, [name, function](VM *vm) {
-      FunctionPointer fnc = function;  // Copy to drop const qualifier
-      using ReturnType    = R;
+      function_pointer fnc = function;  // Copy to drop const qualifier
+      using return_type    = R;
 
-      constexpr int RESULT_POSITION        = int(sizeof...(Args)) - details::HasResult<R>::value;
-      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
+      constexpr int result_position        = int(sizeof...(Args)) - details::HasResult<R>::value;
+      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
 
       // resetter that resets all elements until (but not including) the result position
-      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
-      using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
-          FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
-                                                                           Args...>;
+      using stack_resetter   = typename details::Resetter<result_position>;
+      using function_invoker = typename details::StaticOrFreeFunctionMagic<
+          function_pointer, return_type, result_position>::template LoopOver<last_argument_position,
+                                                                             Args...>;
 
-      assert((vm->sp_ - RESULT_POSITION) >= 0);
+      function_invoker::Apply(vm, fnc);
+      stack_resetter::Reset(vm);
 
-      FunctionInvoker::Apply(vm, fnc);
-      StackResetter::Reset(vm);
-
-      vm->sp_ -= RESULT_POSITION;
+      vm->sp_ -= result_position;
     });
 
     return *this;
   }
 
-protected:
   template <typename T>
   friend class ClassInterface;
   friend class Analyser;
@@ -224,84 +239,63 @@ public:
     });
 
     // Logic for executing opcodes
-    using member_FunctionPointer = R (T::*)(Args...);
+    using member_function_pointer = R (T::*)(Args...);
     module_.AddOpcode(opcode, [name, function](VM *vm) {
-      member_FunctionPointer fnc = function;  // Copy to drop const qualifier
+      member_function_pointer fnc = function;  // Copy to drop const qualifier
 
-      using ReturnType = R;
-      using class_type = T;
+      using return_type = R;
+      using class_type  = T;
 
-      constexpr int RESULT_POSITION =
+      constexpr int result_position =
           int(sizeof...(Args)) + 1 - details::HasResult<R>::value;  // +1 is to override this
-      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
-      constexpr int THIS_POSITION          = int(sizeof...(Args));
+      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
+      constexpr int this_position          = int(sizeof...(Args));
 
       // resetter that resets all elements until (but not including) the result position
-      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
-      using FunctionInvoker = typename details::MemberFunctionMagic<
-          class_type, member_FunctionPointer, ReturnType,
-          RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION, Args...>;
+      using stack_resetter   = typename details::Resetter<result_position>;
+      using function_invoker = typename details::MemberFunctionMagic<
+          class_type, member_function_pointer, return_type,
+          result_position>::template LoopOver<last_argument_position, Args...>;
 
-      assert((vm->sp_ - RESULT_POSITION) >= 0);
-      assert((vm->sp_ - THIS_POSITION) >= 0);
+      assert((vm->sp_ - result_position) >= 0);
+      assert((vm->sp_ - this_position) >= 0);
 
-      Value &this_element  = vm->stack_[vm->sp_ - THIS_POSITION];
+      Value &this_element  = vm->stack_[vm->sp_ - this_position];
       auto   class_wrapper = static_cast<WrapperClass<class_type> *>(this_element.variant.object);
       class_type &class_from_stack = class_wrapper->object;
 
-      FunctionInvoker::Apply(vm, class_from_stack, fnc);
-      StackResetter::Reset(vm);
+      function_invoker::Apply(vm, class_from_stack, fnc);
+      stack_resetter::Reset(vm);
 
-      vm->sp_ -= RESULT_POSITION;
+      vm->sp_ -= result_position;
     });
 
     return *this;
   }
 
+  /*
+    template <typename R, typename... Args>
+    ClassInterface& ExportStaticFunction(std::string name, R (*function)(Args...) )
+    {
+      return ExportStaticFunctionImplemenetation<R, Args...>(name, *function);
+    }
+  */
+  template <typename F>
+  ClassInterface &ExportStaticFunction(std::string name, F obj)
+  {
+    return ExportStaticFunction(name, std::move(obj), &F::operator());
+  }
+
+  template <typename C, typename R, typename... Args>
+  ClassInterface &ExportStaticFunction(std::string name, C function, R (C::*pointer)(Args...) const)
+  {
+    return ExportStaticFunctionImplementation<R, Args...>(name, function);
+  }
+
   template <typename R, typename... Args>
   ClassInterface &ExportStaticFunction(std::string name, R (*function)(Args...))
   {
-    Opcode opcode = module_.next_opcode();
-
-    std::vector<std::type_index> prototype;
-    details::ArgumentsToList<Args...>::AppendTo(prototype);
-
-    // Creating logic to map opcodes
-    module_.AddSetupFunction([this, opcode, name, prototype](Analyser *a) {
-      std::vector<TypePtr> args;
-      for (auto &p : prototype)
-      {
-        args.push_back(a->GetType(p));
-      }
-      TypePtr ret_type = a->GetType<R>();
-
-      a->CreateOpcodeTypeFunction(type_pointer_, name, args, ret_type, opcode);
-    });
-
-    // Logic for executing opcodes
-    using FunctionPointer = R (*)(Args...);
-    module_.AddOpcode(opcode, [name, function](VM *vm) {
-      FunctionPointer fnc = function;  // Copy to drop const qualifier
-      using ReturnType    = R;
-
-      constexpr int RESULT_POSITION        = int(sizeof...(Args)) - details::HasResult<R>::value;
-      constexpr int LAST_ARGUMENT_POSITION = int(sizeof...(Args)) - 1;
-
-      // resetter that resets all elements until (but not including) the result position
-      using StackResetter   = typename details::Resetter<RESULT_POSITION>;
-      using FunctionInvoker = typename details::StaticOrFreeFunctionMagic<
-          FunctionPointer, ReturnType, RESULT_POSITION>::template LoopOver<LAST_ARGUMENT_POSITION,
-                                                                           Args...>;
-
-      assert((vm->sp_ - RESULT_POSITION) >= 0);
-
-      FunctionInvoker::Apply(vm, fnc);
-      StackResetter::Reset(vm);
-
-      vm->sp_ -= RESULT_POSITION;
-    });
-
-    return *this;
+    return ExportStaticFunctionImplementation<R, Args...>(name, *function);
   }
 
   template <typename... Args>
@@ -383,6 +377,52 @@ public:
   }
 
 private:
+  template <typename R, typename... Args, typename F>
+  ClassInterface &ExportStaticFunctionImplementation(std::string name, F function)
+  {
+    Opcode opcode = module_.next_opcode();
+
+    std::vector<std::type_index> prototype;
+    details::ArgumentsToList<Args...>::AppendTo(prototype);
+
+    // Creating logic to map opcodes
+    module_.AddSetupFunction([this, opcode, name, prototype](Analyser *a) {
+      std::vector<TypePtr> args;
+      for (auto &p : prototype)
+      {
+        args.push_back(a->GetType(p));
+      }
+      TypePtr ret_type = a->GetType<R>();
+
+      a->CreateOpcodeTypeFunction(type_pointer_, name, args, ret_type, opcode);
+    });
+
+    // Logic for executing opcodes
+    using function_pointer = F;
+    module_.AddOpcode(opcode, [name, function](VM *vm) {
+      function_pointer fnc = function;  // Copy to drop const qualifier
+      using return_type    = R;
+
+      constexpr int result_position        = int(sizeof...(Args)) - details::HasResult<R>::value;
+      constexpr int last_argument_position = int(sizeof...(Args)) - 1;
+
+      // resetter that resets all elements until (but not including) the result position
+      using stack_resetter   = typename details::Resetter<result_position>;
+      using function_invoker = typename details::StaticOrFreeFunctionMagic<
+          function_pointer, return_type, result_position>::template LoopOver<last_argument_position,
+                                                                             Args...>;
+
+      assert((vm->sp_ - result_position) >= 0);
+
+      function_invoker::Apply(vm, fnc);
+      stack_resetter::Reset(vm);
+
+      vm->sp_ -= result_position;
+    });
+
+    return *this;
+  }
+
   Module &module_;
   TypeId  type_;
   TypePtr type_pointer_ = nullptr;

@@ -17,33 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/exp.hpp"
-#include "math/linalg/matrix.hpp"
-#include "math/ndarray.hpp"
-#include "python/fetch_pybind.hpp"
+#include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/vm_definition.hpp"
+#include "vm/defs.hpp"
+#include "vm/module.hpp"
+#include "vm/vm.hpp"
 
 namespace fetch {
-namespace math {
+namespace ledger {
 
-template <typename A>
-inline A WrapperExp(A const &a, A &b)
+class SmartContract : public Contract
 {
-  Exp(a, b);
-  return b;
-}
+public:
+  SmartContract(vm::Script const &script);
+  ~SmartContract() = default;
 
-inline void BuildExpStatistics(std::string const &custom_name, pybind11::module &module)
-{
-  using namespace fetch::math::linalg;
-  using namespace fetch::memory;
+private:
+  Status InvokeContract(transaction_type const &tx);
 
-  namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperExp<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperExp<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperExp<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperExp<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperExp<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperExp<NDArray<float>>);
-}
-}  // namespace math
+  vm::Script                  script_;
+  std::unique_ptr<vm::Module> module_;
+  std::unique_ptr<vm::VM>     vm_;
+};
+
+}  // namespace ledger
 }  // namespace fetch

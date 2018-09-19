@@ -17,45 +17,4 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
-
-namespace fetch {
-namespace vm {
-
-namespace details {
-
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
-  }
-};
-
-template <typename T>
-struct ArgumentsToList<T>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-  }
-};
-
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> &list)
-  {}
-};
-
-}  // namespace details
-}  // namespace vm
-}  // namespace fetch
+// TODO(private issue 236): Needs to be implemented for smart contracts.
