@@ -37,7 +37,7 @@ SmartContract::SmartContract(vm::Script const &script)
   }
 
   module_ = CreateVMDefinition(this);
-  vm_ = std::make_unique<vm::VM>(module_.get());
+  vm_     = std::make_unique<vm::VM>(module_.get());
 }
 
 Contract::Status SmartContract::InvokeContract(transaction_type const &tx)
