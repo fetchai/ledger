@@ -23,7 +23,7 @@ int main()
   nm.Start();
 
   Muddle muddle{CreateKey(CLIENT_PRIVATE_KEY), nm};
-  muddle.Start({9000}, {Peer{"127.0.0.1:8000"}});
+  muddle.Start({9000}, {fetch::network::Uri{"tcp://127.0.0.1:8000"}});
 
   sleep_for(milliseconds{2000});
   FETCH_LOG_INFO("RpcClientMain", "============================");

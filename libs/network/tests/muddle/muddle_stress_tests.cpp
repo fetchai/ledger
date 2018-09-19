@@ -55,7 +55,8 @@ protected:
   using MuddleEndpoint = fetch::muddle::MuddleEndpoint;
   using CertificatePtr = Muddle::CertificatePtr;
   using Peer = fetch::network::Peer;
-  using PeerList = Muddle::PeerList;
+  using Uri = Muddle::Uri;
+  using UriList = Muddle::UriList;
   using RpcServer = fetch::muddle::rpc::Server;
   using RpcClient = fetch::muddle::rpc::Client;
   using Flag = std::atomic<bool>;
@@ -90,7 +91,7 @@ protected:
     managerB_->Start();
 
     networkA_->Start({8000});
-    networkB_->Start({9000}, {"127.0.0.1:8000"});
+    networkB_->Start({9000}, {Uri{"127.0.0.1:8000"}});
 
     sleep_for(seconds{1});
   }
