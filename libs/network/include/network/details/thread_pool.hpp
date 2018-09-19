@@ -166,12 +166,14 @@ public:
 
   void Stop()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-    shutdown_.store(true);
-    future_work_.Abort();
-    idle_work_.Abort();
-    work_.Abort();
-
+    {
+      LOG_STACK_TRACE_POINT;
+      std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+      shutdown_.store(true);
+      future_work_.Abort();
+      idle_work_.Abort();
+      work_.Abort();
+    }
     cv_.notify_all();
 
     for (auto &thread : threads_)
@@ -186,6 +188,8 @@ public:
     cv_.notify_all();
 
     {
+      LOG_STACK_TRACE_POINT;
+      std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
       FETCH_LOG_DEBUG(LOGGING_NAME,"Removing work");
       future_work_.clear();
       idle_work_.clear();
