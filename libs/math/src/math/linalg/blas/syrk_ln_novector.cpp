@@ -24,13 +24,11 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S>
-void Blas<S, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+template <typename S, typename MATRIX>
+void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
           Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-          platform::Parallelisation::NOT_PARALLEL>::operator()(type const &        alpha,
-                                                               Matrix<type> const &a,
-                                                               type const &        beta,
-                                                               Matrix<type> &      c) const
+          platform::Parallelisation::NOT_PARALLEL>::operator()(type const &alpha, MATRIX const &a,
+                                                               type const &beta, MATRIX &c) const
 {
   std::size_t i;
   std::size_t j;
@@ -99,13 +97,19 @@ void Blas<S, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
   return;
 }
 
-template class Blas<double, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<float, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::NOT_PARALLEL>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>;
 
 }  // namespace linalg
 }  // namespace math

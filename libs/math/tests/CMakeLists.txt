@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M A T H   T E S T S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-math)
 
 # CMake configuration
@@ -18,7 +18,8 @@ add_fetch_test(exp_test fetch-math math/test_exp.cpp)
 add_fetch_test(spline_test fetch-math math/test_spline.cpp)
 add_fetch_test(rectangular_load_save_test fetch-math math/rectangular_load_save_test.cpp)
 add_fetch_test(shared_rectangular_array_test fetch-math math/shared_rectangular_array_test.cpp)
-add_fetch_test(matrix_test fetch-math math/linalg/matrix.cpp)
+#add_fetch_test(matrix_test fetch-math math/linalg/matrix.cpp)
+add_fetch_gtest(matrix_test fetch-math math/linalg/matrix)
 target_link_libraries(matrix_test PRIVATE pthread)
 
 add_fetch_test(hamming_test fetch-math math/distance/hamming.cpp DISABLED)

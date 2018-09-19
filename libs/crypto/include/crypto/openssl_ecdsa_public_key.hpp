@@ -260,7 +260,8 @@ private:
   static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
     uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
-    // TODO(issue 36): setting conv. form might not be really necessary (stuff works
+    // TODO(issue 36): setting conv. form might not be really necessary (stuff
+    // works
     // without it)
     EC_KEY_set_conv_form(key.get(), conversionForm);
 

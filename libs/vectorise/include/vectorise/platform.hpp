@@ -195,7 +195,7 @@ inline uint64_t Log2Ceil(uint64_t x)
     count++;
   }
 
-  if (1 << count == x)
+  if ((1ull << count) == x)
   {
     return count;
   }

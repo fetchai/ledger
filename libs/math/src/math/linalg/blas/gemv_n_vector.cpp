@@ -24,10 +24,10 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, uint64_t V>
-void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+template <typename S, typename MATRIX, uint64_t V>
+void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
           Computes(_y = _alpha * _A * _x + _beta * _y), V>::
-     operator()(type const &alpha, Matrix<type> const &a, ShapeLessArray<type> const &x, int const &incx,
+     operator()(type const &alpha, MATRIX const &a, ShapeLessArray<type> const &x, int const &incx,
            type const &beta, ShapeLessArray<type> &y, int const &incy) const
 {
   int  iy;
@@ -71,24 +71,26 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       if (beta == 0.0)
       {
 
-        vector_register_type vec_zero(0.0);
+        typename MATRIX::vector_register_type vec_zero(0.0);
 
         auto                 ret_slice = y.data().slice(0, y.padded_size());
         memory::TrivialRange range(std::size_t(0), std::size_t(leny));
         ret_slice.in_parallel().Apply(
-            range, [vec_zero](vector_register_type &vw_v_y) { vw_v_y = vec_zero; });
+            range,
+            [vec_zero](typename MATRIX::vector_register_type &vw_v_y) { vw_v_y = vec_zero; });
       }
       else
       {
 
-        vector_register_type vec_beta(beta);
+        typename MATRIX::vector_register_type vec_beta(beta);
 
         auto                 ret_slice = y.data().slice(0, y.padded_size());
         auto                 slice_v_y = y.data().slice(0, y.padded_size());
         memory::TrivialRange range(std::size_t(0), std::size_t(leny));
         ret_slice.in_parallel().Apply(
             range,
-            [vec_beta](vector_register_type const &vr_v_y, vector_register_type &vw_v_y) {
+            [vec_beta](typename MATRIX::vector_register_type const &vr_v_y,
+                       typename MATRIX::vector_register_type &      vw_v_y) {
               vw_v_y = vec_beta * vr_v_y;
             },
             slice_v_y);
@@ -128,17 +130,19 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     {
       temp = alpha * x[jx];
 
-      vector_register_type vec_temp(temp);
+      typename MATRIX::vector_register_type vec_temp(temp);
 
       auto ret_slice = y.data().slice(0, y.padded_size());
       auto slice_v_y = y.data().slice(0, y.padded_size());
       auto slice_a_j = a.data().slice(a.padded_height() * std::size_t(j), a.padded_height());
       memory::TrivialRange range(std::size_t(0), std::size_t(int(a.height())));
-      ret_slice.in_parallel().Apply(
-          range,
-          [vec_temp](vector_register_type const &vr_v_y, vector_register_type const &vr_a_j,
-                     vector_register_type &vw_v_y) { vw_v_y = vr_v_y + vec_temp * vr_a_j; },
-          slice_v_y, slice_a_j);
+      ret_slice.in_parallel().Apply(range,
+                                    [vec_temp](typename MATRIX::vector_register_type const &vr_v_y,
+                                               typename MATRIX::vector_register_type const &vr_a_j,
+                                               typename MATRIX::vector_register_type &vw_v_y) {
+                                      vw_v_y = vr_v_y + vec_temp * vr_a_j;
+                                    },
+                                    slice_v_y, slice_a_j);
       jx = jx + incx;
     }
   }
@@ -159,20 +163,34 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   }
 
   return;
-};
+}
 
-template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y = _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE>;
-template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y = _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE>;
-template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y = _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
-template class Blas<float, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
-                    Computes(_y = _alpha * _A * _x + _beta * _y),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y = _alpha * _A * _x + _beta * _y), platform::Parallelisation::VECTORISE>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y = _alpha * _A * _x + _beta * _y), platform::Parallelisation::VECTORISE>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y = _alpha * _A * _x + _beta * _y),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+    Computes(_y = _alpha * _A * _x + _beta * _y),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math
