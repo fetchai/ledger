@@ -176,6 +176,10 @@ macro(detect_environment)
 
   if (FETCH_ENABLE_CLANG_TIDY)
 
+    if (VERSION LESSER_EQUAL 3.6)
+      message( FATAL_ERROR "You need CMake 3.6 to use Clang tidy" )
+    endif()
+
     find_program(
       CLANG_TIDY_EXE
       NAMES "clang-tidy"
