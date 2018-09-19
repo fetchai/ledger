@@ -24,7 +24,7 @@
 #include "core/logger.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-#include "ledger/chain/main_chain_service.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/p2pservice/p2p_service2.hpp"
