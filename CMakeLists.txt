@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   L E D G E R   P R O J  E C T
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project (fetch)
 
 #-------------------------------------------------------------------------------
@@ -15,6 +15,12 @@ option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"       ON)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"   ON)
 option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output" OFF)
 option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"  OFF)
+
+if(FETCH_ENABLE_CLANG_TIDY)
+  if (VERSION LESSER_EQUAL 3.6)
+    message( FATAL_ERROR "You need CMake 3.6 to use Clang tidy" )
+  endif()
+endif()
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")

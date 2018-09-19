@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M A T H   E X A M P L E S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-math)
 
 # CMake configuration

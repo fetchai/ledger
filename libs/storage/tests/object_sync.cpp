@@ -326,7 +326,7 @@ int main(int argc, char const **argv)
       // make sure they are all online
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
-        BlockUntilConnect(initial_port + i);
+        BlockUntilConnect(uint16_t(initial_port + i));
       }
 
       // Connect our services to each other
@@ -391,9 +391,10 @@ int main(int argc, char const **argv)
       std::cout << "Test new joiner case" << std::endl;
 
       // Now test new joiner case, add new joiner
-      services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
+      services.push_back(
+          std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
 
-      BlockUntilConnect(initial_port + number_of_services);
+      BlockUntilConnect(uint16_t(initial_port + number_of_services));
 
       // Connect to peers
       for (uint16_t i = 0; i < number_of_services; ++i)
@@ -435,7 +436,7 @@ int main(int argc, char const **argv)
         {
           failed_to_sync = true;
           std::cout << "Expecting: " << tx.summary().fee << std::endl;
-          EXPECT("Fees are the same " == "x");
+          EXPECT(std::string("Fees are the same ") == std::string("x"));
         }
       }
 
