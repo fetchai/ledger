@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/base.hpp"
-//#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
 
 namespace fetch {
