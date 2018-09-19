@@ -20,8 +20,6 @@
 #include <iostream>
 #include <string>
 
-#include "network/protocols/fetch_protocols.hpp"
-
 namespace fetch {
 namespace swarm {
 
@@ -30,7 +28,7 @@ class SwarmProtocol;
 class SwarmNodeInterface
 {
 public:
-  static const uint32_t protocol_number = fetch::protocols::FetchProtocols::SWARM;
+  static const uint32_t protocol_number = 0;
   using protocol_class_type             = SwarmProtocol;
 
   SwarmNodeInterface()

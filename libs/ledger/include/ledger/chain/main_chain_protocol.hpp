@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_details.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/subscriptions_container.hpp"
 #include "network/generics/work_items_queue.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 #include "network/service/function.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/publication_feed.hpp"
@@ -324,7 +324,7 @@ private:
 
               FETCH_LOG_WARN(LOGGING_NAME, "ERK hash=", ToBase64(blkhash));
 
-              auto prom = client->Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
+              auto prom = client->Call(RPC_MAIN_CHAIN, GET_HEADER, blkhash);
               // auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B,
               // ToBase64(blkhash));
               prom->WithHandlers()

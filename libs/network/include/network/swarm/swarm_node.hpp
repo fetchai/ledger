@@ -26,7 +26,6 @@
 #include "exception.hpp"
 #include "network/generics/network_node_core.hpp"
 #include "network/interfaces/swarm/swarm_node_interface.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 #include "network/protocols/swarm/commands.hpp"
 #include "network/protocols/swarm/swarm_protocol.hpp"
 #include "network/service/server.hpp"

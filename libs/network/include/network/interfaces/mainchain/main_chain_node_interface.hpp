@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/main_chain.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 
 namespace fetch {
 namespace protocols {
@@ -35,7 +34,7 @@ public:
 
   enum
   {
-    protocol_number = fetch::protocols::FetchProtocols::MAIN_CHAIN
+    protocol_number = 0
   };
   using protocol_class_type = fetch::protocols::MainChainProtocol;
 

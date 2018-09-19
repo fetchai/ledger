@@ -18,10 +18,10 @@
 
 #include <memory>
 
+#include "core/service_ids.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 
 using fetch::service::ServiceClient;
 using fetch::byte_array::ConstByteArray;
@@ -55,41 +55,31 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
 {
-  auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::EXECUTE, block);
-
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::EXECUTE, block);
   return result->As<Status>();
 }
 
 ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
-
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
   return result->As<block_digest_type>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_ACTIVE);
-
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_ACTIVE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::IsIdle()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_IDLE);
-
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_IDLE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::ABORT);
-
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::ABORT);
   return result->As<bool>();
 }
 
