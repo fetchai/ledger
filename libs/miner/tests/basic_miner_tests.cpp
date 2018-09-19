@@ -96,13 +96,10 @@ TEST_P(BasicMinerTests, Sample)
 {
   std::size_t const num_tx = GetParam();
 
-  Timepoint const pop = Clock::now();
   PopulateWithTransactions(num_tx);
 
-  Timepoint const start = Clock::now();
   BlockBody block;
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES);
-  Timepoint const stop = Clock::now();
 
   for (auto const &slice : block.slices)
   {
