@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include "core/script/variant.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
+#include <gtest/gtest.h>
 
 using namespace fetch;
 using namespace fetch::script;
@@ -28,13 +28,13 @@ TEST(variant_test, variant_serialization)
 {
   Variant a, b;
   a = 982;
-/*
-  TypedByteArrayBuffer ser;
-  ser << a;
+  /*
+    TypedByteArrayBuffer ser;
+    ser << a;
 
-  ser.Seek(0);
+    ser.Seek(0);
 
-  ser >> b;
-*/
-//  EXPECT_TRUE( a.As<int>() == b.As<int>());
+    ser >> b;
+  */
+  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
 }

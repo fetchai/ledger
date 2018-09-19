@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/vm_definition.hpp"
 #include "vm/defs.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"

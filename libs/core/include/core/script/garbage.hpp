@@ -126,14 +126,14 @@ public:
   template <typename T>
   inline void Serialize(T &serializer, Variant const &s)
   {
-    assert( bool(data_) );
-    serializer << (*data_);    
+    assert(bool(data_));
+    serializer << (*data_);
   }
 
   template <typename T>
   inline void Deserialize(T &serializer, Variant &s)
   {
-    assert( bool(data_) );
+    assert(bool(data_));
     serializer >> (*data_);
   }
 
@@ -141,10 +141,10 @@ public:
   friend inline void Serialize(T &serializer, Array const &s);
   template <typename T>
   friend inline void Deserialize(T &serializer, Array &s);
+
 private:
   shared_container_type data_;
 };
-
 
 }  // namespace script
 }  // namespace fetch

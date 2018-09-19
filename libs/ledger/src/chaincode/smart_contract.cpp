@@ -28,7 +28,8 @@ namespace fetch {
 namespace ledger {
 
 SmartContract::SmartContract(vm::Script const &script)
- : Contract(script.name), script_(script)
+  : Contract(script.name)
+  , script_(script)
 {
   for (auto &fnc : script.functions)
   {

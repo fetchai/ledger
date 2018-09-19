@@ -391,7 +391,8 @@ int main(int argc, char const **argv)
       std::cout << "Test new joiner case" << std::endl;
 
       // Now test new joiner case, add new joiner
-      services.push_back(std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
+      services.push_back(
+          std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
 
       BlockUntilConnect(uint16_t(initial_port + number_of_services));
 

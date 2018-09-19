@@ -27,19 +27,34 @@
 
 struct IntPair
 {
-  IntPair(int const &i, int const &j) : first_(i), second_(j) {}
+  IntPair(int const &i, int const &j)
+    : first_(i)
+    , second_(j)
+  {}
 
-  int first() { return first_; }
-  int second() { return second_; }
+  int first()
+  {
+    return first_;
+  }
+  int second()
+  {
+    return second_;
+  }
 
 private:
   int first_;
   int second_;
 };
 
-void Print(std::string const &s) { std::cout << s << std::endl; }
+void Print(std::string const &s)
+{
+  std::cout << s << std::endl;
+}
 
-std::string toString(int32_t const &a) { return std::to_string(a); }
+std::string toString(int32_t const &a)
+{
+  return std::to_string(a);
+}
 
 int main(int argc, char **argv)
 {

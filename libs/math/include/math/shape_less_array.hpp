@@ -90,7 +90,7 @@ public:
       default:
         if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
         {
-	  // TODO(private issue 226): failed
+          // TODO(private issue 226): failed
         }
         else
         {
