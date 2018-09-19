@@ -62,7 +62,7 @@ protected:
 
   bool CompileContract(std::string const &contract)
   {
-    return true;  // TODO(private issue XXX): Work in progress on smart contracts
+    return true;  // TODO(private issue 236): Work in progress on smart contracts
 
     // create the transaction
     std::unique_ptr<vm::Module> module   = CreateVMDefinition<SmartContract>();
