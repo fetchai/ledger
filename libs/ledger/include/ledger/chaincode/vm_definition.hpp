@@ -30,7 +30,7 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S *smart_contract_instance = null
   using SmartContract = S;
 
   std::unique_ptr<vm::Module> module;
-  module.reset(new vm::Module());
+  module = std::make_unique<vm::Module>();
 
   module->ExportClass<byte_array::ByteArray>("ByteArray").Constructor<std::string>();
 
