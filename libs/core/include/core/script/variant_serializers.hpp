@@ -17,5 +17,4 @@
 //
 //------------------------------------------------------------------------------
 
-
 // TODO(private issue 236): Needs to be implemented for smart contracts.
