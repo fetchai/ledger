@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
 #include "network/p2pservice/p2p_resolver.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace p2p {
 
-  class P2PService2;
+class P2PService2;
 
 /**
  * Protocol for the P2P address resolution protocol
@@ -31,17 +31,16 @@ namespace p2p {
 class ResolverProtocol : public service::Protocol
 {
 public:
-
   enum
   {
-    QUERY = 1,
-    GET_MANIFEST = 2,
+    QUERY                 = 1,
+    GET_MANIFEST          = 2,
     GET_RANDOM_GOOD_PEERS = 3,
-    GET_NODE_URI = 4
+    GET_NODE_URI          = 4
   };
 
   explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

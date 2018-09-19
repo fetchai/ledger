@@ -69,7 +69,7 @@ public:
 
   void Start()
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting synchronisation of ", typeid(T).name());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting synchronisation of ", typeid(T).name());
     if (running_)
     {
       return;
@@ -157,7 +157,7 @@ public:
 
   void FetchObjectsFromPeers()
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Fetching objects ", typeid(T).name(), " from peer");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Fetching objects ", typeid(T).name(), " from peer");
 
     if (!running_)
     {

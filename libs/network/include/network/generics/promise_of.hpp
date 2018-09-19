@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/promise.hpp"
 #include "network/generics/resolvable.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace network {
@@ -30,11 +30,11 @@ namespace network {
  * @tparam RESULT The expected return type of the promise
  */
 template <typename RESULT>
-class PromiseOf: public ResolvableTo<RESULT>
+class PromiseOf : public ResolvableTo<RESULT>
 {
 public:
-  using Promise = service::Promise;
-  using State = fetch::service::PromiseState;
+  using Promise        = service::Promise;
+  using State          = fetch::service::PromiseState;
   using PromiseBuilder = fetch::service::details::PromiseBuilder;
   using PromiseCounter = fetch::service::PromiseCounter;
 
@@ -42,28 +42,45 @@ public:
   PromiseOf() = default;
   explicit PromiseOf(Promise promise);
   PromiseOf(PromiseOf const &rhs) = default;
-  ~PromiseOf() = default;
-
+  ~PromiseOf()                    = default;
 
   // Promise Accessors
   RESULT Get() const override;
-  bool Wait(uint32_t timeout_ms = std::numeric_limits<uint32_t>::max(),
-            bool throw_exception = true) const;
+  bool   Wait(uint32_t timeout_ms      = std::numeric_limits<uint32_t>::max(),
+              bool     throw_exception = true) const;
 
-  Promise const &GetInnerPromise() const { return promise_; }
-  PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
+  Promise const &GetInnerPromise() const
+  {
+    return promise_;
+  }
+  PromiseBuilder WithHandlers()
+  {
+    return promise_->WithHandlers();
+  }
 
-  bool empty() { return !promise_; }
+  bool empty()
+  {
+    return !promise_;
+  }
 
   State GetState() override
   {
     return promise_->GetState();
   }
 
-  PromiseCounter id() const override { return promise_->id(); }
+  PromiseCounter id() const override
+  {
+    return promise_->id();
+  }
 
-  std::string &name() { return promise_ -> name(); }
-  const std::string &name() const { return promise_ -> name(); }
+  std::string &name()
+  {
+    return promise_->name();
+  }
+  const std::string &name() const
+  {
+    return promise_->name();
+  }
 
   // TODO(EJF): This seems a little scary, is this a copy or move?
   void Adopt(Promise &promise)
@@ -90,8 +107,7 @@ private:
 template <typename TYPE>
 inline PromiseOf<TYPE>::PromiseOf(Promise promise)
   : promise_(std::move(promise))
-{
-}
+{}
 
 /**
  * Gets the value of the promise

@@ -38,9 +38,9 @@ namespace p2p {
 class P2PHttpInterface : public http::HTTPModule
 {
 public:
-  using MainChain = chain::MainChain;
-  using Muddle = muddle::Muddle;
-  using P2PService = P2PService2;
+  using MainChain   = chain::MainChain;
+  using Muddle      = muddle::Muddle;
+  using P2PService  = P2PService2;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
 
   P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
@@ -49,28 +49,31 @@ public:
     , p2p_(p2p_service)
     , trust_(trust)
   {
-    Get("/api/status/chain", [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-      return GetChainStatus(params, request);
-    });
-    Get("/api/status/muddle", [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-      return GetMuddleStatus(params, request);
-    });
-    Get("/api/status/p2p", [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-      return GetP2PStatus(params, request);
-    });
-    Get("/api/status/trust", [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-      return GetTrustStatus(params, request);
-    });
+    Get("/api/status/chain",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetChainStatus(params, request);
+        });
+    Get("/api/status/muddle",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetMuddleStatus(params, request);
+        });
+    Get("/api/status/p2p",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetP2PStatus(params, request);
+        });
+    Get("/api/status/trust",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetTrustStatus(params, request);
+        });
   }
 
 private:
-
   using Variant = script::Variant;
 
   http::HTTPResponse GetChainStatus(http::ViewParameters const &params,
-                                    http::HTTPRequest const    &request)
+                                    http::HTTPRequest const &   request)
   {
-    Variant response = Variant::Object();
+    Variant response     = Variant::Object();
     response["identity"] = byte_array::ToBase64(muddle_.identity().identifier());
     response["chain"]    = GenerateBlockList();
 
@@ -78,7 +81,7 @@ private:
   }
 
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const &params,
-                                     http::HTTPRequest const    &request)
+                                     http::HTTPRequest const &   request)
   {
     auto const connections = muddle_.GetConnections();
 
@@ -99,16 +102,16 @@ private:
   }
 
   http::HTTPResponse GetP2PStatus(http::ViewParameters const &params,
-                                  http::HTTPRequest const    &request)
+                                  http::HTTPRequest const &   request)
   {
-    Variant response = Variant::Object();
+    Variant response           = Variant::Object();
     response["identity_cache"] = GenerateIdentityCache();
 
     return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
-                                    http::HTTPRequest const    &request)
+                                    http::HTTPRequest const &   request)
   {
     auto const best_peers = trust_.GetBestPeers(100);
 
@@ -118,10 +121,10 @@ private:
     std::size_t index = 0;
     for (auto const &peer : best_peers)
     {
-      Variant peer_data = Variant::Object();
+      Variant peer_data     = Variant::Object();
       peer_data["identity"] = byte_array::ToBase64(peer);
-      peer_data["trust"] = trust_.GetTrustRatingOfPeer(peer);
-      peer_data["rank"] = trust_.GetRankOfPeer(peer);
+      peer_data["trust"]    = trust_.GetTrustRatingOfPeer(peer);
+      peer_data["rank"]     = trust_.GetRankOfPeer(peer);
 
       response[index++] = peer_data;
     }
@@ -141,14 +144,14 @@ private:
     for (auto &b : blocks)
     {
       // format the block number
-      auto block = script::Variant::Object();
+      auto block             = script::Variant::Object();
       block["previous_hash"] = byte_array::ToBase64(b.prev());
       block["current_hash"]  = byte_array::ToBase64(b.hash());
       block["proof"]         = byte_array::ToBase64(b.proof());
       block["block_number"]  = b.body().block_number;
 
       // store the block in the array
-      block_list[i++]        = block;
+      block_list[i++] = block;
     }
 
     return block_list;
@@ -158,9 +161,8 @@ private:
   {
     // make a copy of the identity cache
     IdentityCache::Cache cache_copy;
-    p2p_.identity_cache().VisitCache([&cache_copy](IdentityCache::Cache const &cache) {
-      cache_copy = cache;
-    });
+    p2p_.identity_cache().VisitCache(
+        [&cache_copy](IdentityCache::Cache const &cache) { cache_copy = cache; });
 
     auto cache = Variant::Array(cache_copy.size());
 
@@ -168,9 +170,9 @@ private:
     for (auto const &entry : cache_copy)
     {
       // format the individual entries
-      auto cache_entry = Variant::Object();
+      auto cache_entry        = Variant::Object();
       cache_entry["identity"] = byte_array::ToBase64(entry.first);
-      cache_entry["uri"] = entry.second.uri.uri();
+      cache_entry["uri"]      = entry.second.uri.uri();
 
       // add it to the main cache representation
       cache[index++] = cache_entry;
@@ -179,9 +181,9 @@ private:
     return cache;
   }
 
-  MainChain   &chain_;
-  Muddle      &muddle_;
-  P2PService  &p2p_;
+  MainChain &  chain_;
+  Muddle &     muddle_;
+  P2PService & p2p_;
   TrustSystem &trust_;
 };
 

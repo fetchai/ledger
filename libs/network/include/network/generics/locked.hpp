@@ -17,36 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch
-{
-namespace generics
-{
+namespace fetch {
+namespace generics {
 
-template<class TYPE, class MUTEXTYPE>
+template <class TYPE, class MUTEXTYPE>
 class Locked
 {
 public:
   Locked(MUTEXTYPE &m, TYPE object)
-    : lock(m),
-      target(object)
-  {
-  }
+    : lock(m)
+    , target(object)
+  {}
 
   Locked(Locked &&other)
-    : lock(std::move(other.lock)),
-      target(std::move(other.target))
-  {
-  }
+    : lock(std::move(other.lock))
+    , target(std::move(other.target))
+  {}
 
   ~Locked()
-  {
-  }
+  {}
 
   operator TYPE()
   {
     return target;
   }
-  
+
   operator const TYPE() const
   {
     return target;
@@ -64,8 +59,8 @@ public:
 
 private:
   std::unique_lock<MUTEXTYPE> lock;
-  TYPE target;
+  TYPE                        target;
 };
 
-}
-}
+}  // namespace generics
+}  // namespace fetch

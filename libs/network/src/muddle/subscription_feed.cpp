@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "network/muddle/subscription_feed.hpp"
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -48,7 +48,8 @@ SubscriptionFeed::SubscriptionPtr SubscriptionFeed::Subscribe()
  * @param payload The payload of the message
  * @return true if one or more successful dispatches were made, otherwise false
  */
-bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload)
+bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16_t channel,
+                                uint16_t counter, Payload const &payload)
 {
   FETCH_LOCK(feed_lock_);
 
@@ -78,5 +79,5 @@ bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16
   return success;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

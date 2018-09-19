@@ -24,23 +24,25 @@ namespace fetch {
 namespace p2p {
 namespace {
 
-  template <typename T, typename H>
-  bool Contains(std::unordered_set<T,H> const &set, T const &value)
-  {
-    return (set.find(value) != set.end());
-  }
+template <typename T, typename H>
+bool Contains(std::unordered_set<T, H> const &set, T const &value)
+{
+  return (set.find(value) != set.end());
+}
 
-} // namespace
+}  // namespace
 
 P2PService::P2PService(certificate_type &&certificate, uint16_t port,
                        fetch::network::NetworkManager const &tm)
-  : super_type(port, tm), manager_(tm), certificate_(std::move(certificate))
+  : super_type(port, tm)
+  , manager_(tm)
+  , certificate_(std::move(certificate))
 {
   running_     = false;
   thread_pool_ = network::MakeThreadPool(1);
   FETCH_LOG_WARN(LOGGING_NAME, "Establishing P2P Service on rpc://0.0.0.0:", port);
-  FETCH_LOG_WARN(LOGGING_NAME, "P2P Identity: ",
-                 byte_array::ToBase64(certificate_->identity().identifier()));
+  FETCH_LOG_WARN(LOGGING_NAME,
+                 "P2P Identity: ", byte_array::ToBase64(certificate_->identity().identifier()));
 
   // Listening for new connections
   this->SetConnectionRegister(register_);
@@ -71,8 +73,7 @@ P2PService::P2PService(certificate_type &&certificate, uint16_t port,
   }
 
   // P2P Peer Directory
-  directory_ =
-    std::make_unique<P2PPeerDirectory>(DIRECTORY, register_, thread_pool_, my_details_);
+  directory_ = std::make_unique<P2PPeerDirectory>(DIRECTORY, register_, thread_pool_, my_details_);
   directory_protocol_ = std::make_unique<P2PPeerDirectoryProtocol>(*directory_);
   this->Add(DIRECTORY, directory_protocol_.get());
 
@@ -82,10 +83,10 @@ P2PService::P2PService(certificate_type &&certificate, uint16_t port,
 
   // Adding hooks for listening to feeds etc
   register_.OnClientEnter(
-    [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME, "Peer joined: ", i); });
+      [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME, "Peer joined: ", i); });
 
   register_.OnClientLeave(
-    [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME, "Peer left: ", i); });
+      [](connection_handle_type const &i) { FETCH_LOG_INFO(LOGGING_NAME, "Peer left: ", i); });
 
   // TODO(issue 7): Get from settings
   min_connections_ = 2;
@@ -145,7 +146,7 @@ bool P2PService::Connect(byte_array::ConstByteArray const &host, uint16_t const 
   FETCH_LOG_INFO(LOGGING_NAME, "START P2P CONNECT: Host: ", host, " port: ", port);
 
   shared_service_client_type client =
-                               register_.CreateServiceClient<client_type>(manager_, host, port);
+      register_.CreateServiceClient<client_type>(manager_, host, port);
 
   LOG_STACK_TRACE_POINT;
   std::size_t n = 0;
@@ -227,8 +228,7 @@ bool P2PService::Connect(byte_array::ConstByteArray const &host, uint16_t const 
 }
 
 void P2PService::AddLane(uint32_t const &lane, byte_array::ConstByteArray const &host,
-                         uint16_t const &port,
-                         crypto::Identity const &identity)
+                         uint16_t const &port, crypto::Identity const &identity)
 {
   // TODO(issue 24): connect
 
@@ -255,7 +255,7 @@ void P2PService::AddMainChain(byte_array::ConstByteArray const &host, uint16_t c
     EntryPoint                    mainchain_details;
 
     mainchain_details.host.insert(host);
-    mainchain_details.port         = port;
+    mainchain_details.port = port;
     //     lane_details.public_key = "todo";
     mainchain_details.is_mainchain = true;
     my_details_->details.entry_points.push_back(mainchain_details);
@@ -267,7 +267,6 @@ void P2PService::AddMainChain(byte_array::ConstByteArray const &host, uint16_t c
 void P2PService::NextServiceCycle()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "START SERVICE CYCLE");
-
 
   std::unordered_map<connected_identity_type, connection_handle_type> incoming_conns;
 
@@ -287,30 +286,29 @@ void P2PService::NextServiceCycle()
     // Updating lists of incoming and outgoing
     using map_type = client_register_type::connection_map_type;
 
-//      register_.WithConnections([this, &orchestration](map_type const &map) {
-//        for (auto &c : map)
+    //      register_.WithConnections([this, &orchestration](map_type const &map) {
+    //        for (auto &c : map)
 
-    register_.VisitConnections(
-      [this, &orchestration, &incoming, &outgoing, &incoming_conns, our_pk](
-        map_type::value_type const &c) {
-        auto conn = c.second.lock();
-        if (conn)
+    register_.VisitConnections([this, &orchestration, &incoming, &outgoing, &incoming_conns,
+                                our_pk](map_type::value_type const &c) {
+      auto conn = c.second.lock();
+      if (conn)
+      {
+        LOG_STACK_TRACE_POINT
+        auto details = register_.GetDetails(conn->handle());
+
+        std::lock_guard<mutex::Mutex> lock(*details);
+
+        switch (conn->Type())
         {
-          LOG_STACK_TRACE_POINT
-          auto details = register_.GetDetails(conn->handle());
-
-          std::lock_guard<mutex::Mutex> lock(*details);
-
-          switch (conn->Type())
+        case network::AbstractConnection::TYPE_OUTGOING:
+        {
+          LOG_STACK_TRACE_POINT;
+          generics::MilliTimer mt("network::AbstractConnection::TYPE_OUTGOING", 0);
+          outgoing.insert(details->identity.identifier());
+          for (auto &e : details->entry_points)
           {
-            case network::AbstractConnection::TYPE_OUTGOING:
-            {
-              LOG_STACK_TRACE_POINT;
-              generics::MilliTimer mt("network::AbstractConnection::TYPE_OUTGOING", 0);
-              outgoing.insert(details->identity.identifier());
-              for (auto &e : details->entry_points)
-              {
-                LOG_STACK_TRACE_POINT
+            LOG_STACK_TRACE_POINT
 #if 0
                 char const *t = "unknown";
                 if (e.is_lane)
@@ -333,32 +331,33 @@ void P2PService::NextServiceCycle()
                 }
 #endif
 
-                if (!e.was_promoted)
-                {
-                  orchestration.push_back(e);
-                  e.was_promoted = true;
-                }
-              }
+            if (!e.was_promoted)
+            {
+              orchestration.push_back(e);
+              e.was_promoted = true;
             }
-              break;
-            case network::AbstractConnection::TYPE_INCOMING:
-//              FETCH_LOG_INFO(LOGGING_NAME, "Welcome: ", byte_array::ToBase64(details->identity.identifier()));
-
-              // determine if this is a new identity
-
-              // TODO(EJF): Might be inefficient / need to cache the right things
-              if (details->identity.identifier() == our_pk)
-              {
-                FETCH_LOG_INFO(LOGGING_NAME, "Why am I connected to myself?");
-              }
-
-              incoming.insert(details->identity.identifier());
-              incoming_conns[details->identity.identifier()] = c.first;
-
-              break;
           }
         }
-      });
+        break;
+        case network::AbstractConnection::TYPE_INCOMING:
+          //              FETCH_LOG_INFO(LOGGING_NAME, "Welcome: ",
+          //              byte_array::ToBase64(details->identity.identifier()));
+
+          // determine if this is a new identity
+
+          // TODO(EJF): Might be inefficient / need to cache the right things
+          if (details->identity.identifier() == our_pk)
+          {
+            FETCH_LOG_INFO(LOGGING_NAME, "Why am I connected to myself?");
+          }
+
+          incoming.insert(details->identity.identifier());
+          incoming_conns[details->identity.identifier()] = c.first;
+
+          break;
+        }
+      }
+    });
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Incoming:");
@@ -374,7 +373,7 @@ void P2PService::NextServiceCycle()
   }
 
   std::vector<byte_array::ConstByteArray> new_incoming;
-//    std::vector<byte_array::ConstByteArray> new_outgoing;
+  //    std::vector<byte_array::ConstByteArray> new_outgoing;
 
   {
     LOG_STACK_TRACE_POINT
@@ -383,7 +382,8 @@ void P2PService::NextServiceCycle()
     // determine which of the incoming and outgoing connections are new
     std::set_difference(incoming.begin(), incoming.end(), incoming_.begin(), incoming_.end(),
                         std::back_inserter(new_incoming));
-//      std::set_difference(outgoing.begin(), outgoing.end(), outgoing_.begin(), outgoing_.end(), std::back_inserter(new_incoming));
+    //      std::set_difference(outgoing.begin(), outgoing.end(), outgoing_.begin(),
+    //      outgoing_.end(), std::back_inserter(new_incoming));
 
     while ((!new_incoming.empty()) && (incoming_.size() < max_connections_))
     {
@@ -443,7 +443,6 @@ void P2PService::NextServiceCycle()
 
 #endif
 
-
   FETCH_LOG_INFO(LOGGING_NAME, "END SERVICE CYCLE");
 }
 
@@ -458,10 +457,8 @@ void P2PService::ManageIncomingConnections()
   // TODO(issue 7): Pull from settings
   {
     std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-    double                                ms  =
-                                            double(
-                                              std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                end - track_start_).count());
+    double                                ms =
+        double(std::chrono::duration_cast<std::chrono::milliseconds>(end - track_start_).count());
     if (ms > 5000)
     {
       tracking_peers_ = false;
@@ -490,7 +487,7 @@ void P2PService::ManageIncomingConnections()
   // Kicking random peers if needed
   if (incoming_.size() > max_connections_)
   {
-    //std::cout << "Too many incoming connections" << std::endl;
+    // std::cout << "Too many incoming connections" << std::endl;
     FETCH_LOG_INFO(LOGGING_NAME, "Too many incoming connections. ideal: ", max_connections_.load(),
                    " actual: ", incoming_.size());
     // TODO(issue 24):
@@ -531,7 +528,7 @@ void P2PService::ConnectToNewPeers()
   // Creating list of endpoints
   P2PPeerDirectory::peer_details_map_type suggest = directory_->SuggestPeersToConnectTo();
   std::vector<EntryPoint>                 endpoints;
-  for (auto                               &s : suggest)
+  for (auto &s : suggest)
   {
     for (auto &e : s.second.entry_points)
     {
@@ -545,7 +542,7 @@ void P2PService::ConnectToNewPeers()
       {
         // skip the node if we already have an existing connection to this one
         if (Contains(incoming_, e.identity.identifier()) ||
-            Contains(outgoing_, e.identity.identifier()) )
+            Contains(outgoing_, e.identity.identifier()))
         {
           continue;
         }
@@ -585,11 +582,11 @@ void P2PService::ConnectToNewPeers()
     //        continue;
     //      }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Trying connection to peer: ",
-                   byte_array::ToBase64(e.identity.identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Trying connection to peer: ", byte_array::ToBase64(e.identity.identifier()));
 
     TryConnect(e);
-//      thread_pool_->Post([this, e]() { this->TryConnect(e); });
+    //      thread_pool_->Post([this, e]() { this->TryConnect(e); });
     --create_count;
   }
 
@@ -621,5 +618,5 @@ void P2PService::TryConnect(EntryPoint const &e)
   }
 }
 
-} // namespace network
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

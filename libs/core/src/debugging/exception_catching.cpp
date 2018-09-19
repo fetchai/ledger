@@ -26,18 +26,18 @@ static constexpr char const *LOGGING_NAME = "???";
 namespace fetch {
 namespace debugging {
 
-  void withExceptionCatching(const char *fn, unsigned int ln, std::function<void (void)> func)
+void withExceptionCatching(const char *fn, unsigned int ln, std::function<void(void)> func)
+{
+  try
   {
-    try
-    {
-      func();
-    }
-    catch(std::exception &ex)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,"While at ", fn, ":", ln, " - ", ex.what());
-      throw;
-    }
+    func();
   }
+  catch (std::exception &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "While at ", fn, ":", ln, " - ", ex.what());
+    throw;
+  }
+}
 
-} // namespace debugging
-} // namespace fetch
+}  // namespace debugging
+}  // namespace fetch

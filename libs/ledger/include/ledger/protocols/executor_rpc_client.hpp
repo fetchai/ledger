@@ -32,11 +32,11 @@ namespace ledger {
 class ExecutorRpcClient : public ExecutorInterface
 {
 public:
-  using NetworkClient      = network::TCPClient;
+  using NetworkClient    = network::TCPClient;
   using NetworkClientPtr = std::shared_ptr<NetworkClient>;
-  using ServicePtr         = std::unique_ptr<service::ServiceClient>;
-  using NetworkManager =  fetch::network::NetworkManager;
-  using ConstByteArray = byte_array::ConstByteArray;
+  using ServicePtr       = std::unique_ptr<service::ServiceClient>;
+  using NetworkManager   = fetch::network::NetworkManager;
+  using ConstByteArray   = byte_array::ConstByteArray;
 
   ExecutorRpcClient(ConstByteArray const &host, uint16_t const &port,
                     NetworkManager const &network_manager)
@@ -64,7 +64,7 @@ public:
 
 private:
   NetworkClientPtr connection_;
-  ServicePtr service_;
+  ServicePtr       service_;
 };
 
 }  // namespace ledger

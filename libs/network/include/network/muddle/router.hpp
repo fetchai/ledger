@@ -19,14 +19,14 @@
 
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
-#include "network/muddle/packet.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/muddle/muddle_endpoint.hpp"
+#include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
-#include <memory>
 #include <chrono>
+#include <memory>
 
 namespace fetch {
 namespace muddle {
@@ -40,7 +40,7 @@ class MuddleRegister;
 class Router : public MuddleEndpoint
 {
 public:
-  using Address       = Packet::Address; // == a crypto::Identity.identifier_
+  using Address       = Packet::Address;  // == a crypto::Identity.identifier_
   using PacketPtr     = std::shared_ptr<Packet>;
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
@@ -60,8 +60,8 @@ public:
   // Construction / Destruction
   Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
-  Router(Router &&) = delete;
-  ~Router() override = default;
+  Router(Router &&)      = delete;
+  ~Router() override     = default;
 
   // Start / Stop
   void Start();
@@ -78,9 +78,7 @@ public:
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
-  void Send(Address const &address,
-            uint16_t service,
-            uint16_t channel,
+  void Send(Address const &address, uint16_t service, uint16_t channel,
             Payload const &message) override;
 
   void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
@@ -98,10 +96,9 @@ public:
   /// @}
 
 private:
-
   using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex = mutex::Mutex;
-  using Clock = std::chrono::steady_clock;
+  using Mutex     = mutex::Mutex;
+  using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
   using EchoCache = std::unordered_map<uint64_t, Timepoint>;
 
@@ -118,20 +115,22 @@ private:
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
 
-  Address const        address_;
+  Address const         address_;
   MuddleRegister const &register_;
-  Dispatcher           &dispatcher_;
+  Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
-  RoutingTable  routing_table_;           ///< The map routing table from address to handle (Protected by routing_table_lock_)
-  HandleMap     routing_table_handles_;   ///< The map of handles to address (Protected by routing_table_lock_)
+  RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
+                                 ///< routing_table_lock_)
+  HandleMap
+      routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
 
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
-  EchoCache echo_cache_;
+  EchoCache     echo_cache_;
 
-  ThreadPool            dispatch_thread_pool_;
+  ThreadPool dispatch_thread_pool_;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

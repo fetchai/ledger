@@ -20,15 +20,12 @@
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
-#include "network/p2pservice/explore_http_interface.hpp"
-#include "network/p2pservice/p2p_http_interface.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include "network/uri.hpp"
-#include "ledger/chaincode/wallet_http_interface.hpp"
+#include "network/p2pservice/explore_http_interface.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
-#include "http/middleware/allow_origin.hpp"
+#include "network/uri.hpp"
 
 #include <memory>
 #include <random>
@@ -43,15 +40,15 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-  std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
-  {
-    static constexpr std::size_t THREADS_PER_LANE = 2;
-    static constexpr std::size_t OTHER_THREADS = 10;
+std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
+{
+  static constexpr std::size_t THREADS_PER_LANE = 2;
+  static constexpr std::size_t OTHER_THREADS    = 10;
 
-    return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
-  }
+  return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
+}
 
-} // namespace
+}  // namespace
 
 /**
  * Construct a constellation instance
@@ -98,22 +95,18 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   FETCH_UNUSED(num_slices_);
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME,"Constellation :: ", interface_address, " P ", port_start, " E ",
-                     num_executors, " S ", num_lanes_, "x", num_slices);
-  FETCH_LOG_INFO(LOGGING_NAME,"              :: ", ToBase64(p2p_.identity().identifier()));
-  FETCH_LOG_INFO(LOGGING_NAME,"");
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " P ", port_start, " E ",
+                 num_executors, " S ", num_lanes_, "x", num_slices);
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "");
 
-  miner_.OnBlockComplete([this](auto const &block) {
-    main_chain_service_->BroadcastBlock(block);
-  });
+  miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
   // configure all the lane services
   lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
 
   // configure the middleware of the http server
-  http_.AddMiddleware(
-    http::middleware::AllowOrigin("*")
-  );
+  http_.AddMiddleware(http::middleware::AllowOrigin("*"));
 
   // attach all the modules to the http server
   for (auto const &module : http_modules_)
@@ -161,7 +154,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // P2P configuration
   p2p_.SetLocalManifest(GenerateManifest());
-  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)) );
+  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)));
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -194,8 +187,8 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Stop();
   execution_manager_->Stop();
   lane_services_.Stop();
-  p2p_ . Stop();
-  muddle_ . Stop();
+  p2p_.Stop();
+  muddle_.Stop();
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
@@ -203,12 +196,14 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
 Constellation::Manifest Constellation::GenerateManifest() const
 {
-  std::string my_manifest = "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
+  std::string my_manifest =
+      "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += "LANE     " + std::to_string(i) + "     " + "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
+    my_manifest += "LANE     " + std::to_string(i) + "     " +
+                   "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
   }
 
   return Manifest::FromText(my_manifest);

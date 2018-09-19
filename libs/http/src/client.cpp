@@ -27,7 +27,10 @@
 namespace fetch {
 namespace http {
 
-HTTPClient::HTTPClient(std::string host, uint16_t port) : host_(std::move(host)), port_(port) {}
+HTTPClient::HTTPClient(std::string host, uint16_t port)
+  : host_(std::move(host))
+  , port_(port)
+{}
 
 bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
 {
@@ -36,7 +39,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   {
     if (!Connect())
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Failed to connect to server");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to connect to server");
       return false;
     }
   }
@@ -49,7 +52,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   socket_.write_some(buffer.data(), ec);
   if (ec)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Failed to send boostrap request: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to send boostrap request: ", ec.message());
     return false;
   }
 
@@ -57,7 +60,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
   std::size_t     header_length = asio::read_until(socket_, input_buffer, "\r\n\r\n", ec);
   if (ec)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Failed to recv response header: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to recv response header: ", ec.message());
     return false;
   }
 
@@ -80,7 +83,7 @@ bool HTTPClient::Request(HTTPRequest const &request, HTTPResponse &response)
 
     if (ec)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Failed to recv body: ", ec.message());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to recv body: ", ec.message());
       return false;
     }
   }
@@ -111,7 +114,7 @@ bool HTTPClient::Connect()
   Resolver::iterator endpoint = resolver.resolve(host_, std::to_string(port_), ec);
   if (ec)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Unable to resolve host: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to resolve host: ", ec.message());
     return false;
   }
 
@@ -120,7 +123,7 @@ bool HTTPClient::Connect()
   if (ec)
   {
 
-    FETCH_LOG_WARN(LOGGING_NAME,"Unable to establish a connection: ", ec.message());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to establish a connection: ", ec.message());
     return false;
   }
 

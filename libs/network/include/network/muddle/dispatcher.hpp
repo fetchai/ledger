@@ -21,11 +21,11 @@
 #include "network/muddle/packet.hpp"
 #include "network/service/promise.hpp"
 
-#include <unordered_map>
-#include <unordered_set>
-#include <memory>
 #include <atomic>
 #include <chrono>
+#include <memory>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace muddle {
@@ -33,19 +33,19 @@ namespace muddle {
 class Dispatcher
 {
 public:
-  using Promise = service::Promise;
+  using Promise   = service::Promise;
   using PacketPtr = std::shared_ptr<Packet>;
-  using Clock = std::chrono::steady_clock;
+  using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
-  using Handle = uint64_t;
+  using Handle    = uint64_t;
 
   static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
   // Construction / Destruction
-  Dispatcher() = default;
+  Dispatcher()                   = default;
   Dispatcher(Dispatcher const &) = delete;
-  Dispatcher(Dispatcher &&) = delete;
-  ~Dispatcher() = default;
+  Dispatcher(Dispatcher &&)      = delete;
+  ~Dispatcher()                  = default;
 
   // Operators
   Dispatcher &operator=(Dispatcher const &) = delete;
@@ -54,7 +54,7 @@ public:
   uint16_t GetNextCounter();
 
   Promise RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter);
-  bool Dispatch(PacketPtr packet);
+  bool    Dispatch(PacketPtr packet);
 
   void NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter);
   void NotifyConnectionFailure(Handle handle);
@@ -62,27 +62,26 @@ public:
   void Cleanup(Timepoint const &now = Clock::now());
 
 private:
-
   using Counter = std::atomic<uint16_t>;
-  using Mutex = mutex::Mutex;
+  using Mutex   = mutex::Mutex;
 
   struct PromiseEntry
   {
-    Promise promise = service::MakePromise();
+    Promise   promise   = service::MakePromise();
     Timepoint timestamp = Clock::now();
   };
 
   using PromiseMap = std::unordered_map<uint64_t, PromiseEntry>;
   using PromiseSet = std::unordered_set<uint64_t>;
-  using HandleMap = std::unordered_map<Handle, PromiseSet>;
+  using HandleMap  = std::unordered_map<Handle, PromiseSet>;
 
-  Mutex counter_lock_{__LINE__, __FILE__};
+  Mutex    counter_lock_{__LINE__, __FILE__};
   uint16_t counter_{1};
 
-  Mutex promises_lock_{__LINE__, __FILE__};
+  Mutex      promises_lock_{__LINE__, __FILE__};
   PromiseMap promises_;
 
-  Mutex handles_lock_{__LINE__, __FILE__};
+  Mutex     handles_lock_{__LINE__, __FILE__};
   HandleMap handles_;
 };
 
@@ -92,6 +91,5 @@ inline uint16_t Dispatcher::GetNextCounter()
   return counter_++;
 }
 
-
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

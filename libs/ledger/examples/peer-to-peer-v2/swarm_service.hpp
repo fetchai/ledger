@@ -31,7 +31,6 @@
 class FetchSwarmService : public fetch::protocols::SwarmProtocol
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "FetchSwarmService";
 
   FetchSwarmService(uint16_t port, uint16_t http_port, std::string const &pk,
@@ -137,7 +136,7 @@ public:
             auto p = s->Call(FetchProtocols::CHAIN_KEEPER, ChainKeeperRPC::GROUP_NUMBER);
             if (!p.Wait(2300))
             {
-              FETCH_LOG_ERROR(LOGGING_NAME,"ChainKeeper timed out!");
+              FETCH_LOG_ERROR(LOGGING_NAME, "ChainKeeper timed out!");
               continue;
             }
 
@@ -192,8 +191,8 @@ public:
         if (!p.Wait(2000))
         {
           FETCH_LOG_ERROR(LOGGING_NAME,
-              "Peer connectivity failed! TODO: Trim connections and inform "
-              "shards");
+                          "Peer connectivity failed! TODO: Trim connections and inform "
+                          "shards");
           TODO(
               "Peer connectivity failed! TODO: Trim connections and inform "
               "shards");
@@ -206,7 +205,7 @@ public:
 
         for (auto &e : ref.entry_points)
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"  - ", e.host, ":", e.port, ", shard ", e.group);
+          FETCH_LOG_DEBUG(LOGGING_NAME, "  - ", e.host, ":", e.port, ", shard ", e.group);
         }
 
         // TODO: Remove true
@@ -225,11 +224,11 @@ public:
           LOG_STACK_TRACE_POINT;
           for (auto const &d : node_details)
           {
-            FETCH_LOG_DEBUG(LOGGING_NAME," - Entries for ", d.second.public_key);
+            FETCH_LOG_DEBUG(LOGGING_NAME, " - Entries for ", d.second.public_key);
             for (auto &e : d.second.entry_points)
             {
 
-              FETCH_LOG_DEBUG(LOGGING_NAME,"   > ", e.host, ":", e.port, ", shard ", e.group);
+              FETCH_LOG_DEBUG(LOGGING_NAME, "   > ", e.host, ":", e.port, ", shard ", e.group);
             }
 
             all_details[d.second.public_key] = d.second;
@@ -356,7 +355,7 @@ public:
     fetch::logger.Highlight("Updating shards!");
     for (auto &s : shard_entries)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME," - ", s.host, ":", s.port, ", shard ", s.group);
+      FETCH_LOG_DEBUG(LOGGING_NAME, " - ", s.host, ":", s.port, ", shard ", s.group);
     }
 
     std::random_shuffle(shard_entries.begin(), shard_entries.end());

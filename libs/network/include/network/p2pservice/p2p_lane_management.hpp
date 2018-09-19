@@ -31,28 +31,28 @@ class LaneManagement
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using Service = service::ServiceClient;
-  using SharedService = std::shared_ptr<Service>;
-  using WeakService   = std::weak_ptr<Service>;
-  using LaneIndex = uint32_t;
-  using Uri = network::Uri;
+  using Service        = service::ServiceClient;
+  using SharedService  = std::shared_ptr<Service>;
+  using WeakService    = std::weak_ptr<Service>;
+  using LaneIndex      = uint32_t;
+  using Uri            = network::Uri;
 
   // Construction / Destruction
-  LaneManagement() = default;
+  LaneManagement()          = default;
   virtual ~LaneManagement() = default;
 
   /// @name Lane Management
   /// @{
-  virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) = 0;
-  virtual void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) = 0;
-  virtual void Shutdown(LaneIndex lane) = 0;
-  virtual uint32_t GetLaneNumber(LaneIndex lane) = 0;
-  virtual int IncomingPeers(LaneIndex lane) = 0;
-  virtual int OutgoingPeers(LaneIndex lane)= 0;
-  virtual bool IsAlive(LaneIndex lane) = 0;
-  
+  virtual void     UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) = 0;
+  virtual void     Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) = 0;
+  virtual void     Shutdown(LaneIndex lane)                                           = 0;
+  virtual uint32_t GetLaneNumber(LaneIndex lane)                                      = 0;
+  virtual int      IncomingPeers(LaneIndex lane)                                      = 0;
+  virtual int      OutgoingPeers(LaneIndex lane)                                      = 0;
+  virtual bool     IsAlive(LaneIndex lane)                                            = 0;
+
   /// @}
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

@@ -37,7 +37,7 @@ uint32_t Combine(uint16_t service, uint16_t channel)
   return index;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Register a subscription with an address, service and channel identifier
@@ -47,7 +47,9 @@ uint32_t Combine(uint16_t service, uint16_t channel)
  * @param channel The target channel
  * @return A valid subscription pointer if successful, otherwise an invalid pointer
  */
-SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(Address const &address, uint16_t service, uint16_t channel)
+SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(Address const &address,
+                                                                       uint16_t       service,
+                                                                       uint16_t       channel)
 {
   SubscriptionPtr subscription;
 
@@ -56,7 +58,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(Address c
   {
     FETCH_LOCK(lock_);
 
-    auto &feed = address_dispatch_map_[index];
+    auto &feed   = address_dispatch_map_[index];
     subscription = feed.Subscribe();
   }
 
@@ -70,7 +72,8 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(Address c
  * @param channel The target channel
  * @return A valid subscription pointer if successful, otherwise an invalid pointer
  */
-SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t service, uint16_t channel)
+SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t service,
+                                                                       uint16_t channel)
 {
   SubscriptionPtr subscription;
 
@@ -79,7 +82,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t 
   {
     FETCH_LOCK(lock_);
 
-    auto &feed = dispatch_map_[index];
+    auto &feed   = dispatch_map_[index];
     subscription = feed.Subscribe();
   }
 
@@ -96,7 +99,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
 {
   bool success = false;
 
-  Index const index = Combine(packet->GetService(), packet->GetProtocol());
+  Index const  index = Combine(packet->GetService(), packet->GetProtocol());
   AddressIndex address_index{index, packet->GetTarget()};
 
   {
@@ -105,13 +108,9 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     if (it != dispatch_map_.end())
     {
       // dispatch the packet to the subscription feed
-      success = it->second.Dispatch(
-        packet->GetSender(),
-        packet->GetService(),
-        packet->GetProtocol(),
-        packet->GetMessageNum(),
-        packet->GetPayload()
-      );
+      success =
+          it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
+                              packet->GetMessageNum(), packet->GetPayload());
 
       if (!success)
       {
@@ -126,13 +125,9 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     if (it != address_dispatch_map_.end())
     {
       // dispatch the packet to the subscription feed
-      success = it->second.Dispatch(
-        packet->GetSender(),
-        packet->GetService(),
-        packet->GetProtocol(),
-        packet->GetMessageNum(),
-        packet->GetPayload()
-      );
+      success =
+          it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
+                              packet->GetMessageNum(), packet->GetPayload());
 
       if (!success)
       {
@@ -144,5 +139,5 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
   return success;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

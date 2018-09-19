@@ -19,10 +19,10 @@
 
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/metrics/metrics.hpp"
 #include "miner/block_optimiser.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/transaction_item.hpp"
-#include "ledger/metrics/metrics.hpp"
 
 #include <iostream>
 
@@ -48,7 +48,8 @@ public:
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"EnqueueTransaction: ", byte_array::ToBase64(tx.transaction_hash), " (fee: ", tx.fee, ")");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "EnqueueTransaction: ", byte_array::ToBase64(tx.transaction_hash),
+                    " (fee: ", tx.fee, ")");
     pending_queue_.push_back(stx);
   }
 
@@ -62,7 +63,8 @@ public:
 
       for (auto &tx : pending_queue_)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Pushing Transaction: ", byte_array::ToBase64(tx->summary().transaction_hash));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Pushing Transaction: ",
+                        byte_array::ToBase64(tx->summary().transaction_hash));
         generator_.PushTransactionSummary(tx);
       }
       pending_queue_.clear();
@@ -70,7 +72,7 @@ public:
 
     std::size_t const num_transactions = generator_.unspent_count();
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Starting block packing (Backlog: ", num_transactions, ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
 
     if (num_transactions <= num_lanes)
     {
@@ -81,21 +83,22 @@ public:
       PopulateBlock(block, num_lanes, num_slices);
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Finished block packing");
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing");
 
 #if 1
     // debugging interface
     if (num_transactions > 0)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Block Structure: ");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Block Structure: ");
       std::size_t slice_index = 0;
       for (auto const &slice : block.slices)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"  - Slice ", slice_index);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "  - Slice ", slice_index);
 
         for (auto const &tx : slice.transactions)
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"    - Tx: ", byte_array::ToBase64(tx.transaction_hash), " (fee: ", tx.fee, ")");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "    - Tx: ", byte_array::ToBase64(tx.transaction_hash),
+                          " (fee: ", tx.fee, ")");
 
           FETCH_METRIC_TX_PACKED(tx.transaction_hash);
         }
@@ -129,9 +132,11 @@ private:
     generator_.ConfigureAnnealer(100, 0.1, 3.0);
 
     // TODO(issue 7):  Move to configuration variables
-    std::size_t const batch_size  = std::min<std::size_t>(std::min(generator_.unspent_count(), num_lanes * num_slices), 2000); // magic number based on single threaded performance
-    std::size_t const explore     = 1;
-    Strategy const strategy       = Strategy::FEE_OCCUPANCY;
+    std::size_t const batch_size =
+        std::min<std::size_t>(std::min(generator_.unspent_count(), num_lanes * num_slices),
+                              2000);  // magic number based on single threaded performance
+    std::size_t const explore  = 1;
+    Strategy const    strategy = Strategy::FEE_OCCUPANCY;
 
     generator_.Reset();
     generator_.GenerateBlock(num_lanes, num_slices, strategy, batch_size, explore);
@@ -163,9 +168,10 @@ private:
     staged.clear();
 
     double const occupancy_pc = (static_cast<double>(generator_.block_occupancy() * 100)) /
-                                 static_cast<double>(num_lanes * num_slices);
+                                static_cast<double>(num_lanes * num_slices);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Block summary. Fee: ", total_fee, " Occupancy: ", generator_.block_occupancy(), " (", occupancy_pc, "%)");
+    FETCH_LOG_INFO(LOGGING_NAME, "Block summary. Fee: ", total_fee,
+                   " Occupancy: ", generator_.block_occupancy(), " (", occupancy_pc, "%)");
   }
 
   mutex_type pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and

@@ -145,7 +145,7 @@ int main(int argc, char const **argv)
   auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
   if (!ping_promise.Wait(2000))
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,"Client not repsonding - hanging up!");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Client not repsonding - hanging up!");
     exit(-1);
   }
 

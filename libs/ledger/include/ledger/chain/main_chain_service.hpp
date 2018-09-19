@@ -82,7 +82,7 @@ public:
     : super_type(port, tm)
   {
 
-    FETCH_LOG_WARN(LOGGING_NAME,"Establishing mainchain Service on rpc://127.0.0.1:", port);
+    FETCH_LOG_WARN(LOGGING_NAME, "Establishing mainchain Service on rpc://127.0.0.1:", port);
 
     my_details_.Make();
 
@@ -130,7 +130,6 @@ public:
                                                     my_details_, mainchain_protocol_);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(CONTROLLER, controller_protocol_.get());
-
   }
 
   void Start()
@@ -153,7 +152,10 @@ public:
     deets->owning_discovery_service_identity = identity;
   }
 
-  std::string GetOwnerIdentityString() { return my_details_.Lock()->GetOwnerIdentityString(); }
+  std::string GetOwnerIdentityString()
+  {
+    return my_details_.Lock()->GetOwnerIdentityString();
+  }
 
   ~MainChainService()
   {
@@ -176,7 +178,7 @@ public:
   {
     return mainchain_.get();
   }
-  
+
   mainchain_protocol_type *mainchainprotocol()
   {
     return mainchain_protocol_.get();

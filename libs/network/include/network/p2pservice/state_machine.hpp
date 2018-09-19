@@ -30,10 +30,10 @@ template <typename State>
 class StateMachine
 {
 public:
-  using Promise = service::Promise;
+  using Promise     = service::Promise;
   using PromiseList = std::vector<Promise>;
 
-  StateMachine() = default;
+  StateMachine()  = default;
   ~StateMachine() = default;
 
   bool AddState(State const &state)
@@ -43,13 +43,11 @@ public:
   }
 
 private:
-
-
   using StateMap = std::unordered_map<State, Promise>;
-  using Mutex = mutex::Mutex;
+  using Mutex    = mutex::Mutex;
 
   StateMap map_;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

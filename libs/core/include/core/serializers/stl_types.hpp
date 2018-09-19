@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <array>
 #include <map>
 #include <set>
 #include <string>
@@ -25,7 +26,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <array>
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -102,10 +102,9 @@ inline void Serialize(T &serializer, char const *s)
   return Serialize<T>(serializer, std::string(s));
 }
 
-
 template <typename T, typename U, std::size_t N>
-inline typename std::enable_if<std::is_integral<U>::value>::type Serialize(T &serializer,
-                                                                           std::array<U, N> const &val)
+inline typename std::enable_if<std::is_integral<U>::value>::type Serialize(
+    T &serializer, std::array<U, N> const &val)
 {
   static constexpr std::size_t BINARY_SIZE = sizeof(U) * N;
   assert(N == val.size());

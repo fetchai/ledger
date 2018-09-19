@@ -22,7 +22,6 @@
 #include <iostream>
 #include <memory>
 
-
 using fetch::network::Uri;
 
 struct TestCase
@@ -30,65 +29,43 @@ struct TestCase
   char const *text;
   Uri::Scheme scheme;
   char const *authority;
-  bool success;
+  bool        success;
 };
 
-std::ostream& operator<<(std::ostream& s, Uri::Scheme scheme)
+std::ostream &operator<<(std::ostream &s, Uri::Scheme scheme)
 {
   switch (scheme)
   {
-    case Uri::Scheme::Tcp:
-      s << "Tcp";
-      break;
-    case Uri::Scheme::Muddle:
-      s << "Muddle";
-      break;
-    default:
-      s << "Unknown";
-      break;
+  case Uri::Scheme::Tcp:
+    s << "Tcp";
+    break;
+  case Uri::Scheme::Muddle:
+    s << "Muddle";
+    break;
+  default:
+    s << "Unknown";
+    break;
   }
 
   return s;
 }
 
-std::ostream& operator<<(std::ostream& s, TestCase const &config)
+std::ostream &operator<<(std::ostream &s, TestCase const &config)
 {
   s << config.text;
   return s;
 }
 
 static const TestCase TEST_CASES[] = {
-  {
-    "tcp://127.0.0.1:8000",
-    Uri::Scheme::Tcp,
-    "127.0.0.1:8000",
-    true
-  },
-  {
-    "tcp://hostname:8000",
-    Uri::Scheme::Tcp,
-    "hostname:8000",
-    true
-  },
-  {
-    "muddle://rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==",
-    Uri::Scheme::Muddle,
-    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==",
-    true
-  },
-  {
-    "tcp://foo:bar",
-    Uri::Scheme::Muddle,
-    "foo:bar",
-    false
-  },
-  {
-    "muddle://badIdentityName",
-    Uri::Scheme::Muddle,
-    "badIdentityName",
-    false
-  }
-};
+    {"tcp://127.0.0.1:8000", Uri::Scheme::Tcp, "127.0.0.1:8000", true},
+    {"tcp://hostname:8000", Uri::Scheme::Tcp, "hostname:8000", true},
+    {"muddle://rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/"
+     "rbdPXA==",
+     Uri::Scheme::Muddle,
+     "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==",
+     true},
+    {"tcp://foo:bar", Uri::Scheme::Muddle, "foo:bar", false},
+    {"muddle://badIdentityName", Uri::Scheme::Muddle, "badIdentityName", false}};
 
 class UriTests : public ::testing::TestWithParam<TestCase>
 {
@@ -97,7 +74,7 @@ protected:
 
 TEST_P(UriTests, CheckConstruction)
 {
-  using UriPtr = std::unique_ptr<Uri>;
+  using UriPtr           = std::unique_ptr<Uri>;
   TestCase const &config = GetParam();
 
   UriPtr uri;
@@ -130,4 +107,4 @@ TEST_P(UriTests, CheckParsing)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, UriTests, testing::ValuesIn(TEST_CASES),);
+INSTANTIATE_TEST_CASE_P(ParamBased, UriTests, testing::ValuesIn(TEST_CASES), );

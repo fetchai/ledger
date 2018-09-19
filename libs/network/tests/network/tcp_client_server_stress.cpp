@@ -47,8 +47,8 @@ fetch::mutex::Mutex       mutexToServer_;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager) {}
-    : TCPServer(port, nmanager)
+  Server(uint16_t port, NetworkManager nmanager)
+    : TCPServer(port, nmanager){} : TCPServer(port, nmanager)
   {
     Start();
   }
@@ -106,7 +106,7 @@ void TestCase0(std::string host, uint16_t port)
   for (std::size_t index = 0; index < 20; ++index)
   {
     NetworkManager nmanager(N);
-    Server server(port, nmanager);
+    Server         server(port, nmanager);
     nmanager.Start();
   }
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     s >> iterations;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Running test iterations: ", iterations);
+  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {

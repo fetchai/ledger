@@ -40,19 +40,19 @@ public:
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
-  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
-  FutureWorkStore operator=(FutureWorkStore &&rhs)             = delete;
-  bool            operator==(const FutureWorkStore &rhs) const = delete;
-  bool            operator<(const FutureWorkStore &rhs) const  = delete;
-  static constexpr char const *LOGGING_NAME = "FutureWorkStore";
+  FutureWorkStore              operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore              operator=(FutureWorkStore &&rhs)             = delete;
+  bool                         operator==(const FutureWorkStore &rhs) const = delete;
+  bool                         operator<(const FutureWorkStore &rhs) const  = delete;
+  static constexpr char const *LOGGING_NAME                                 = "FutureWorkStore";
 
   class StoredWorkItemSorting
   {
   public:
     StoredWorkItemSorting()
-	{}
+    {}
     virtual ~StoredWorkItemSorting()
-	{}
+    {}
 
     bool operator()(const stored_work_item_type &a, const stored_work_item_type &b) const
     {
@@ -68,7 +68,7 @@ public:
   virtual ~FutureWorkStore()
   {
     shutdown_.store(true);
-    clear(); // remove any pending things
+    clear();  // remove any pending things
   }
 
   virtual void Abort()
@@ -94,7 +94,7 @@ public:
     return DueInActual();
   }
 
-  virtual int Visit(std::function<void (work_item_type)> visitor, int maxprocesses=1)
+  virtual int Visit(std::function<void(work_item_type)> visitor, int maxprocesses = 1)
   {
     lock_type mlock(mutex_, std::try_to_lock);
     if (!mlock)
@@ -102,7 +102,7 @@ public:
       return -1;
     }
     int processed = 0;
-    while(IsDueActual())
+    while (IsDueActual())
     {
       if (shutdown_.load())
       {
@@ -139,7 +139,6 @@ public:
   }
 
 private:
-
   virtual work_item_type GetNextActual()
   {
     std::pop_heap(store_.begin(), store_.end(), sorter_);
@@ -183,10 +182,10 @@ private:
     }
   }
 
-  StoredWorkItemSorting   sorter_;
-  store_type              store_;
-  mutable mutex_type      mutex_{__LINE__, __FILE__};
-  std::atomic<bool>       shutdown_{false};
+  StoredWorkItemSorting sorter_;
+  store_type            store_;
+  mutable mutex_type    mutex_{__LINE__, __FILE__};
+  std::atomic<bool>     shutdown_{false};
 };
 
 }  // namespace details

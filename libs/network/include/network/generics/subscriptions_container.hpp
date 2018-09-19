@@ -19,8 +19,8 @@
 
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "network/service/types.hpp"
 #include "network/service/service_client.hpp"
+#include "network/service/types.hpp"
 
 #include <iostream>
 #include <string>
@@ -54,9 +54,11 @@ public:
   bool                   operator==(const SubscriptionsContainer &rhs) const = delete;
   bool                   operator<(const SubscriptionsContainer &rhs) const  = delete;
 
-  explicit SubscriptionsContainer() {}
+  explicit SubscriptionsContainer()
+  {}
 
-  virtual ~SubscriptionsContainer() {}
+  virtual ~SubscriptionsContainer()
+  {}
 
   template <class FUNC_CLASS>
   subs_handle_type Subscribe(client_ptr client, protocol_number_type protocol_number,
@@ -73,7 +75,7 @@ public:
       return search_result->second;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME,"### Subscribing to the protocol...");
+    FETCH_LOG_INFO(LOGGING_NAME, "### Subscribing to the protocol...");
 
     auto r                     = handle_counter_++;
     existing_subs_[identifier] = r;
@@ -85,7 +87,7 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    auto      item = existing_subs_.begin();
+    auto item = existing_subs_.begin();
     while (item != existing_subs_.end())
     {
       if (std::get<0>(item->first) == connection_handle)
@@ -117,7 +119,7 @@ public:
     }
   }
 
-  void VisitSubscriptions(std::function<void (client_ptr)> func)
+  void VisitSubscriptions(std::function<void(client_ptr)> func)
   {
     std::list<std::shared_ptr<Subscription>> subscriptions_local;
 
@@ -130,7 +132,7 @@ public:
       }
     }
 
-    for(auto subscription : subscriptions_local)
+    for (auto subscription : subscriptions_local)
     {
       func(subscription->GetClient());
     }
@@ -143,11 +145,8 @@ public:
     std::vector<std::string> r;
     for (auto &item : existing_subs_)
     {
-      if (
-          (!proto || std::get<1>(item.first) == proto)
-          &&
-          (!verb || std::get<2>(item.first) == verb)
-          )
+      if ((!proto || std::get<1>(item.first) == proto) &&
+          (!verb || std::get<2>(item.first) == verb))
       {
         r.push_back(subs_[item.second]->getName());
       }
@@ -159,7 +158,7 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    auto      location = subs_.find(handle);
+    auto location = subs_.find(handle);
     if (location != subs_.end())
     {
       subs_.erase(location);
@@ -179,10 +178,20 @@ private:
       , handle_(handle)
       , name_(std::move(name))
     {}
-    virtual ~Subscription() { client_->Unsubscribe(handle_); }
-    const std::string &getName() { return name_; }
+    virtual ~Subscription()
+    {
+      client_->Unsubscribe(handle_);
+    }
+    const std::string &getName()
+    {
+      return name_;
+    }
 
-    client_ptr GetClient() { return client_; }
+    client_ptr GetClient()
+    {
+      return client_;
+    }
+
   private:
     client_ptr                                client_;
     fetch::service::subscription_handler_type handle_;
@@ -199,7 +208,7 @@ private:
     return std::make_shared<Subscription>(client, handle, name);
   }
 
-  using subs_type                   = std::map<uint64_t, std::shared_ptr<Subscription>>;
+  using subs_type                    = std::map<uint64_t, std::shared_ptr<Subscription>>;
   subs_handle_type   handle_counter_ = 0;
   mutex_type         mutex_{__LINE__, __FILE__};
   existing_subs_type existing_subs_;

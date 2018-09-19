@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/subscription_feed.hpp"
-#include "network/muddle/packet.hpp"
 
-#include <tuple>
 #include <map>
+#include <tuple>
 
 namespace fetch {
 namespace muddle {
@@ -41,10 +41,10 @@ public:
   static constexpr char const *LOGGING_NAME = "SubscriptionRegistrar";
 
   // Construction / Destruction
-  SubscriptionRegistrar() = default;
+  SubscriptionRegistrar()                              = default;
   SubscriptionRegistrar(SubscriptionRegistrar const &) = delete;
-  SubscriptionRegistrar(SubscriptionRegistrar &&) = delete;
-  ~SubscriptionRegistrar() = default;
+  SubscriptionRegistrar(SubscriptionRegistrar &&)      = delete;
+  ~SubscriptionRegistrar()                             = default;
 
   // Operators
   SubscriptionRegistrar &operator=(SubscriptionRegistrar const &) = delete;
@@ -65,10 +65,10 @@ private:
   using DispatchMap        = std::map<Index, SubscriptionFeed>;
   using AddressDispatchMap = std::map<AddressIndex, SubscriptionFeed>;
 
-  mutable Mutex       lock_{__LINE__, __FILE__};  ///< The registrar lock
-  DispatchMap         dispatch_map_;              ///< The {service,channel} dispatch map
-  AddressDispatchMap  address_dispatch_map_;      ///< The {address,service,channel} dispatch map
+  mutable Mutex      lock_{__LINE__, __FILE__};  ///< The registrar lock
+  DispatchMap        dispatch_map_;              ///< The {service,channel} dispatch map
+  AddressDispatchMap address_dispatch_map_;      ///< The {address,service,channel} dispatch map
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -43,15 +43,15 @@ public:
   static constexpr char const *LOGGING_NAME = "MainChainMiner";
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
-                 chain::BlockCoordinator &blockCoordinator, MinerInterface &miner, uint64_t minerNumber)
+                 chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
+                 uint64_t minerNumber)
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
     , minerNumber_{minerNumber}
-  {
-  }
+  {}
 
   ~MainChainMiner()
   {
@@ -73,7 +73,10 @@ public:
     }
   }
 
-  void OnBlockComplete(std::function<void(const BlockType)> func) { onBlockComplete_ = func; }
+  void OnBlockComplete(std::function<void(const BlockType)> func)
+  {
+    onBlockComplete_ = func;
+  }
 
 private:
   using clock_type     = std::chrono::high_resolution_clock;
@@ -104,7 +107,7 @@ private:
     BlockHash previous_heaviest;
 
     BlockType next_block;
-    BodyType next_block_body;
+    BodyType  next_block_body;
 
     bool searching_for_hash = false;
 
@@ -116,7 +119,7 @@ private:
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"==> New heaviest block: ", byte_array::ToBase64(block.hash()),
+        FETCH_LOG_INFO(LOGGING_NAME, "==> New heaviest block: ", byte_array::ToBase64(block.hash()),
                        " from: ", byte_array::ToBase64(block.prev()));
 
         // new heaviest has been detected
@@ -139,11 +142,11 @@ private:
           }
 
           // stop searching for the hash and schedule the next time to generate a block
-          next_block_time = CalculateNextBlockTime(rng);
+          next_block_time    = CalculateNextBlockTime(rng);
           searching_for_hash = false;
         }
       }
-      else if (clock_type::now() >= next_block_time) // if we are ready to generate a new block
+      else if (clock_type::now() >= next_block_time)  // if we are ready to generate a new block
       {
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
@@ -171,9 +174,9 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain        &mainChain_;
+  chain::MainChain &       mainChain_;
   chain::BlockCoordinator &blockCoordinator_;
-  MinerInterface          &miner_;
+  MinerInterface &         miner_;
   std::thread              thread_;
   uint64_t                 minerNumber_{0};
 };

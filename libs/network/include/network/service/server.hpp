@@ -141,7 +141,7 @@ private:
     LOG_STACK_TRACE_POINT;
 
     std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-    FETCH_LOG_DEBUG(LOGGING_NAME,"RPC call from ", client);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
 
@@ -159,11 +159,11 @@ private:
 
     while (has_messages)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"MESSAGES!!!!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "MESSAGES!!!!");
       message_mutex_.lock();
 
       PendingMessage pm;
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Server side backlog: ", messages_.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
       has_messages = (!messages_.empty());
       if (has_messages)
       {  // To ensure we can make a worker pool in the future
@@ -176,14 +176,13 @@ private:
       if (has_messages)
       {
         network_manager_.Post([this, pm]() {
-
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Processing message call", pm.client, ":", pm.message);
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Processing message call", pm.client, ":", pm.message);
 
           if (!this->PushProtocolRequest(pm.client, pm.message))
           {
             bool processed = false;
 
-            FETCH_LOG_INFO(LOGGING_NAME,"PushProtocolRequest returned FALSE!");
+            FETCH_LOG_INFO(LOGGING_NAME, "PushProtocolRequest returned FALSE!");
 
             client_rpcs_mutex_.lock();
             if (client_rpcs_.find(pm.client) != client_rpcs_.end())
@@ -196,7 +195,7 @@ private:
             if (!processed)
             {
               // TODO(issue 20): Lookup client RPC handler
-              FETCH_LOG_ERROR(LOGGING_NAME,"Possibly a response to a client?");
+              FETCH_LOG_ERROR(LOGGING_NAME, "Possibly a response to a client?");
 
               throw serializers::SerializableException(
                   error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message"));

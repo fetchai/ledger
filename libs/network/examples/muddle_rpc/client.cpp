@@ -18,9 +18,9 @@
 
 #include "muddle_rpc.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
@@ -30,7 +30,6 @@ using fetch::network::Peer;
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
-
 
 int main()
 {
@@ -65,13 +64,14 @@ int main()
   for (auto &prom : promises)
   {
     prom->Wait();
-    //FETCH_LOG_INFO("RpcClientMain", "The result is: ", prom->As<uint64_t>());
+    // FETCH_LOG_INFO("RpcClientMain", "The result is: ", prom->As<uint64_t>());
   }
 
-  auto const end = Clock::now();
+  auto const end   = Clock::now();
   auto const delta = end - start;
 
-  std::cout << "Time to run was: " << std::chrono::duration_cast<milliseconds>(delta).count() << std::endl;
+  std::cout << "Time to run was: " << std::chrono::duration_cast<milliseconds>(delta).count()
+            << std::endl;
 
   return 0;
 }

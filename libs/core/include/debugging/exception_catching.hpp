@@ -19,16 +19,13 @@
 
 #include <functional>
 
-namespace fetch
-{
-namespace debugging
-{
+namespace fetch {
+namespace debugging {
 
-  void withExceptionCatching(const char *fn, unsigned int ln, std::function<void (void)> func);
-
+void withExceptionCatching(const char *fn, unsigned int ln, std::function<void(void)> func);
 }
-}
+}  // namespace fetch
 
-#define LOG_EX(FN,LN) debugging::withExceptionCatching(FN, LN, [=](){
-#define END_LOG_EX });
-
+#define LOG_EX(FN, LN) debugging::withExceptionCatching(FN, LN, [=](){
+#define END_LOG_EX \
+  });

@@ -27,26 +27,27 @@ namespace ledger {
 class Metrics
 {
 public:
-  using Clock = MetricHandler::Clock;
-  using Timestamp = Clock::time_point;
+  using Clock          = MetricHandler::Clock;
+  using Timestamp      = Clock::time_point;
   using ConstByteArray = byte_array::ConstByteArray;
-  using Instrument = MetricHandler::Instrument;
-  using Event = MetricHandler::Event;
+  using Instrument     = MetricHandler::Instrument;
+  using Event          = MetricHandler::Event;
 
   // Singleton instance
   static Metrics &Instance();
 
   // Construction / Destruction
   Metrics(Metrics const &) = delete;
-  Metrics(Metrics &&) = delete;
-  ~Metrics() { SetMetricHandler(nullptr); }
+  Metrics(Metrics &&)      = delete;
+  ~Metrics()
+  {
+    SetMetricHandler(nullptr);
+  }
 
   // Configuration
   void ConfigureFileHandler(std::string filename);
 
-  void RecordMetric(ConstByteArray const &identifier,
-                    Instrument instrument,
-                    Event event,
+  void RecordMetric(ConstByteArray const &identifier, Instrument instrument, Event event,
                     Timestamp const &timestamp = Clock::now())
   {
     auto handler = handler_.load();
@@ -56,8 +57,7 @@ public:
     }
   }
 
-  void RecordTransactionMetric(ConstByteArray const &hash,
-                               Event event,
+  void RecordTransactionMetric(ConstByteArray const &hash, Event event,
                                Timestamp const &timestamp = Clock::now())
   {
     RecordMetric(hash, Instrument::TRANSACTION, event, timestamp);
@@ -68,43 +68,59 @@ public:
   Metrics &operator=(Metrics &&) = delete;
 
 private:
-
   // Hidden construction
   Metrics() = default;
 
-  void SetMetricHandler(MetricHandler* handler);
+  void SetMetricHandler(MetricHandler *handler);
 
-  std::atomic<MetricHandler*> handler_{nullptr};
-
+  std::atomic<MetricHandler *> handler_{nullptr};
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch
 
 #ifdef FETCH_ENABLE_METRICS
-# define FETCH_METRIC_TX_SUBMITTED(hash) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::SUBMITTED)
-# define FETCH_METRIC_TX_QUEUED(hash) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::QUEUED)
-# define FETCH_METRIC_TX_PACKED(hash) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::PACKED)
-# define FETCH_METRIC_TX_EXEC_STARTED(hash) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED)
-# define FETCH_METRIC_TX_EXEC_COMPLETE(hash) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE)
+#define FETCH_METRIC_TX_SUBMITTED(hash)                       \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::SUBMITTED)
+#define FETCH_METRIC_TX_QUEUED(hash)                          \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::QUEUED)
+#define FETCH_METRIC_TX_PACKED(hash)                          \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::PACKED)
+#define FETCH_METRIC_TX_EXEC_STARTED(hash)                    \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED)
+#define FETCH_METRIC_TX_EXEC_COMPLETE(hash)                   \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE)
 
-# define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::SUBMITTED, timepoint)
-# define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::QUEUED, timepoint)
-# define FETCH_METRIC_TX_PACKED_EX(hash, timepoint) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::PACKED, timepoint)
-# define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED, timepoint)
-# define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint) fetch::ledger::Metrics::Instance().RecordTransactionMetric(hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE, timepoint)
+#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint)         \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::SUBMITTED, timepoint)
+#define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint)            \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::QUEUED, timepoint)
+#define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)            \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::PACKED, timepoint)
+#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)      \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED, timepoint)
+#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)     \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE, timepoint)
 #else
-# define FETCH_METRIC_TX_SUBMITTED(hash)
-# define FETCH_METRIC_TX_QUEUED(hash)
-# define FETCH_METRIC_TX_PACKED(hash)
-# define FETCH_METRIC_TX_EXEC_STARTED(hash)
-# define FETCH_METRIC_TX_EXEC_COMPLETE(hash)
+#define FETCH_METRIC_TX_SUBMITTED(hash)
+#define FETCH_METRIC_TX_QUEUED(hash)
+#define FETCH_METRIC_TX_PACKED(hash)
+#define FETCH_METRIC_TX_EXEC_STARTED(hash)
+#define FETCH_METRIC_TX_EXEC_COMPLETE(hash)
 
-# define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint)
-# define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint)
-# define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)
-# define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)
-# define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)
+#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint)
+#define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint)
+#define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)
+#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)
+#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)
 #endif
-
-

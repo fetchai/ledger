@@ -43,7 +43,7 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
   return id;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Register that a exchange is scheduled to take place and create a promise to track the response
@@ -53,7 +53,8 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
  * @param counter The message id
  * @return The created promise for this exchange
  */
-Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter)
+Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t channel,
+                                                 uint16_t counter)
 {
   FETCH_LOCK(promises_lock_);
 
@@ -62,7 +63,8 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
   auto it = promises_.find(id);
   if (it != promises_.end())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Duplicate promise: ", service, ':', channel, ':', counter, " forced to remove entry");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Duplicate promise: ", service, ':', channel, ':', counter,
+                    " forced to remove entry");
     promises_.erase(it);
   }
 
@@ -206,5 +208,5 @@ void Dispatcher::Cleanup(Timepoint const &now)
   }
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

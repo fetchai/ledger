@@ -105,7 +105,9 @@ int main(int argc, char **argv)
   {
     std::cout << "Node registered" << std::endl;
 
-    for (;;) {}
+    for (;;)
+    {
+    }
   }
 
   tm.Stop();

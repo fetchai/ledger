@@ -40,7 +40,6 @@ namespace network {
 class ClientConnection : public AbstractConnection
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "ClientConnection";
 
   using connection_type = typename AbstractConnection::shared_type;
@@ -66,12 +65,12 @@ public:
       {
         this->SetAddress(endpoint.address().to_string());
 
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Connection from ",
-                            socket_ptr->remote_endpoint().address().to_string());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Connection from ",
+                        socket_ptr->remote_endpoint().address().to_string());
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Server: Failed to get endpoint for socket!");
+        FETCH_LOG_WARN(LOGGING_NAME, "Server: Failed to get endpoint for socket!");
       }
     }
   }
@@ -128,9 +127,10 @@ public:
     return AbstractConnection::TYPE_INCOMING;
   }
 
-  void Close() override {
+  void Close() override
+  {
     shutting_down_ = true;
-    auto socket = socket_.lock();
+    auto socket    = socket_.lock();
     if (socket)
     {
       std::error_code ec;
@@ -163,7 +163,7 @@ private:
       return;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Waiting for next header.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Waiting for next header.");
     auto self(shared_from_this());
     auto cb = [this, socket_ptr, self](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
@@ -174,7 +174,7 @@ private:
 
       if (!ec)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Read header.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Read header.");
         ReadBody();
       }
       else
@@ -205,7 +205,7 @@ private:
 
     if (header_.content.magic != networkMagic_)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Magic incorrect - closing connection.");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
       if (!ptr)
       {
@@ -226,7 +226,7 @@ private:
 
       if (!ec)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Recv message");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Recv message");
 
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
@@ -294,7 +294,7 @@ private:
 
       if (!ec)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Server: Wrote message.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Wrote message.");
         Write();
       }
       else

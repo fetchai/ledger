@@ -57,7 +57,9 @@ public:
   /// @{
   ping_type Ping()
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "PPPPPPPPPPPPpppppppppppppinnnnnnnnnnnnnngggg!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "PPPPPPPPPPPPpppppppppppppinnnnnnnnnnnnnngggg!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                   "!!!!!!!!!!!!");
     return PING_MAGIC;
   }
 
@@ -67,7 +69,8 @@ public:
 
     if (!details)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"Failed to find client in client register! ", __FILE__, " ", __LINE__);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find client in client register! ", __FILE__, " ",
+                      __LINE__);
       assert(details);
     }
     else

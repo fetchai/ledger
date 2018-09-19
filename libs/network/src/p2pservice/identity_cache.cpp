@@ -28,7 +28,7 @@ void IdentityCache::Update(ConnectionMap const &connections)
   for (auto const &element : connections)
   {
     auto const &address = element.first;
-    auto const &uri = element.second;
+    auto const &uri     = element.second;
 
     UpdateInternal(address, uri);
   }
@@ -48,7 +48,7 @@ bool IdentityCache::Lookup(Address const &address, Uri &uri) const
   auto it = cache_.find(address);
   if (it != cache_.end())
   {
-    uri = it->second.uri;
+    uri     = it->second.uri;
     success = true;
   }
 
@@ -62,22 +62,19 @@ IdentityCache::AddressSet IdentityCache::FilterOutUnresolved(AddressSet const &a
   {
     FETCH_LOCK(lock_);
 
-    std::copy_if(
-      addresses.begin(),
-      addresses.end(),
-      std::inserter(resolvedAddresses, resolvedAddresses.begin()),
-      [this](Address const &address) {
-        bool resolved = false;
+    std::copy_if(addresses.begin(), addresses.end(),
+                 std::inserter(resolvedAddresses, resolvedAddresses.begin()),
+                 [this](Address const &address) {
+                   bool resolved = false;
 
-        auto it = cache_.find(address);
-        if ((it != cache_.end()) && (it->second.uri.scheme() != Uri::Scheme::Muddle))
-        {
-          resolved = true;
-        }
+                   auto it = cache_.find(address);
+                   if ((it != cache_.end()) && (it->second.uri.scheme() != Uri::Scheme::Muddle))
+                   {
+                     resolved = true;
+                   }
 
-        return resolved;
-      }
-    );
+                   return resolved;
+                 });
   }
 
   return resolvedAddresses;
@@ -93,9 +90,9 @@ void IdentityCache::UpdateInternal(Address const &address, Uri const &uri)
     // if the cache entry exists them only update it if the
     if (uri.scheme() != Uri::Scheme::Muddle)
     {
-      cache_entry.uri = uri;
+      cache_entry.uri         = uri;
       cache_entry.last_update = Clock::now();
-      cache_entry.resolve = false; // This entry is considered resolved
+      cache_entry.resolve     = false;  // This entry is considered resolved
     }
   }
   else
@@ -104,5 +101,5 @@ void IdentityCache::UpdateInternal(Address const &address, Uri const &uri)
   }
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

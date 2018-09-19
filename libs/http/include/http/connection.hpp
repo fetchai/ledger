@@ -52,7 +52,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"HTTP connection from ", socket_.remote_endpoint().address().to_string());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
+                    socket_.remote_endpoint().address().to_string());
   }
 
   ~HTTPConnection()
@@ -104,7 +105,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Ready to ready HTTP header");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
@@ -115,8 +116,8 @@ public:
     auto self = shared_from_this();
 
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Read HTTP header");
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Read HTTP header of " + std::to_string(len) + " bytes");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header of " + std::to_string(len) + " bytes");
 
       if (ec)
       {
@@ -141,7 +142,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Read HTTP body");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size())
     {
@@ -159,7 +160,7 @@ public:
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Read HTTP body cb");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body cb");
       if (ec)
       {
         this->HandleError(ec, request);
@@ -184,7 +185,7 @@ public:
 
     std::stringstream ss;
     ss << ec << ":" << ec.message();
-    FETCH_LOG_DEBUG(LOGGING_NAME,"HTTP error: ", ss.str());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP error: ", ss.str());
 
     Close();
   }

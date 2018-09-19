@@ -31,7 +31,10 @@ protected:
   using Response       = fetch::http::HTTPResponse;
   using ResponsePtr    = std::unique_ptr<Response>;
 
-  void SetUp() override { response_ = std::make_unique<Response>(); }
+  void SetUp() override
+  {
+    response_ = std::make_unique<Response>();
+  }
 
   void ConvertToBuffer(char const *text, asio::streambuf &buffer)
   {

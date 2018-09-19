@@ -33,7 +33,6 @@ namespace subscribe {
 class SubscribeService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "SubscribeService";
 
   /*
@@ -48,7 +47,7 @@ public:
 
     // Prints when compiled in debug mode. Options: logger.Debug logger.Info
     // logger.Error
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Constructing test node service with TCP port: ", tcpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort);
 
     // We construct our node, and attach it to the protocol
     subscribeProto_ = std::make_unique<protocols::SubscribeProtocol>();

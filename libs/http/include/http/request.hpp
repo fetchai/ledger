@@ -46,23 +46,50 @@ public:
   bool ParseBody(asio::streambuf &buffer);
   bool ParseHeader(asio::streambuf &buffer, std::size_t const &end);
 
-  Method const &method() const { return method_; }
+  Method const &method() const
+  {
+    return method_;
+  }
 
-  byte_array_type const &uri() const { return uri_; }
+  byte_array_type const &uri() const
+  {
+    return uri_;
+  }
 
-  byte_array_type const &protocol() const { return protocol_; }
+  byte_array_type const &protocol() const
+  {
+    return protocol_;
+  }
 
-  Header const &header() const { return header_; }
+  Header const &header() const
+  {
+    return header_;
+  }
 
-  bool is_valid() const { return is_valid_; }
+  bool is_valid() const
+  {
+    return is_valid_;
+  }
 
-  QuerySet const &query() const { return query_; }
+  QuerySet const &query() const
+  {
+    return query_;
+  }
 
-  std::size_t const &header_length() const { return header_data_.size(); }
+  std::size_t const &header_length() const
+  {
+    return header_data_.size();
+  }
 
-  std::size_t const &content_length() const { return content_length_; }
+  std::size_t const &content_length() const
+  {
+    return content_length_;
+  }
 
-  byte_array::ConstByteArray body() const { return body_data_; }
+  byte_array::ConstByteArray body() const
+  {
+    return body_data_;
+  }
 
   json::JSONDocument JSON() const
   {
@@ -71,9 +98,18 @@ public:
     return json::JSONDocument(body());
   }
 
-  void SetMethod(Method method) { method_ = method; };
-  void SetURI(byte_array_type const &uri) { uri_ = uri; }
-  void SetBody(byte_array::ByteArray const &body) { body_data_ = body; }
+  void SetMethod(Method method)
+  {
+    method_ = method;
+  };
+  void SetURI(byte_array_type const &uri)
+  {
+    uri_ = uri;
+  }
+  void SetBody(byte_array::ByteArray const &body)
+  {
+    body_data_ = body;
+  }
 
   bool ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const;
 

@@ -20,17 +20,17 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_details.hpp"
 #include "network/details/thread_pool.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 #include "network/generics/subscriptions_container.hpp"
 #include "network/generics/work_items_queue.hpp"
 #include "network/management/connection_register.hpp"
+#include "network/protocols/fetch_protocols.hpp"
 #include "network/service/function.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/publication_feed.hpp"
 
+#include <typeinfo>
 #include <utility>
 #include <vector>
-#include <typeinfo>
 namespace fetch {
 namespace chain {
 
@@ -80,7 +80,7 @@ public:
 
   void Start()
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting syncronisation of blocks");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting syncronisation of blocks");
     if (running_)
     {
       return;
@@ -132,7 +132,10 @@ public:
     blockPublishSubscriptions_.AssociateName(name, connection_handle, proto, verb);
   }
 
-  const std::string &GetIdentity() { return identifier_; }
+  const std::string &GetIdentity()
+  {
+    return identifier_;
+  }
 
 private:
   protocol_number_type            protocol_;
@@ -164,18 +167,17 @@ private:
   void FetchHeaviestFromPeers()
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Fetching blocks from peer");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Fetching blocks from peer");
 
     if (!running_)
     {
       return;
     }
 
-    using service_map_type = typename R::service_map_type;
-    using service_map_items          = typename service_map_type::value_type;
+    using service_map_type  = typename R::service_map_type;
+    using service_map_items = typename service_map_type::value_type;
 
-    register_.VisitServiceClients([this](service_map_items const &p)
-    {
+    register_.VisitServiceClients([this](service_map_items const &p) {
       LOG_STACK_TRACE_POINT;
       if (!running_)
       {
@@ -183,29 +185,30 @@ private:
       }
 
       auto service_client = p.second.lock();
-      auto details = register_.GetDetails(service_client -> handle());
-      if ((!details -> is_outgoing) || (!details -> is_peer))
+      auto details        = register_.GetDetails(service_client->handle());
+      if ((!details->is_outgoing) || (!details->is_peer))
       {
-        //std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) << std::endl;
+        // std::cout << std::string(byte_array::ToBase64(details.identity.identifier())) <<
+        // std::endl;
         // std::endl;
         return;
-        //if (!details -> IsAnyMainChain())
+        // if (!details -> IsAnyMainChain())
       }
 
       auto name = details->GetOwnerIdentityString();
 
-      auto subscription_handler_cb = [this](block_type block)
-        {
-          this -> pending_blocks_.Add(block);
-          this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-        };
+      auto subscription_handler_cb = [this](block_type block) {
+        this->pending_blocks_.Add(block);
+        this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
+      };
 
-      auto subscription_handler_function = new service::Function<void(block_type)>(subscription_handler_cb);
+      auto subscription_handler_function =
+          new service::Function<void(block_type)>(subscription_handler_cb);
 
       {
         LOG_STACK_TRACE_POINT;
         blockPublishSubscriptions_.Subscribe(service_client, protocol_, BLOCK_PUBLISH,
-                                             name, // TODO(kll) make a connection name here.
+                                             name,  // TODO(kll) make a connection name here.
                                              subscription_handler_function);
       }
 
@@ -240,7 +243,7 @@ private:
     {
       for (auto &block : work)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Fowarding block: ", block.hashString());
+        FETCH_LOG_INFO(LOGGING_NAME, "Fowarding block: ", block.hashString());
 
         Publish(BLOCK_PUBLISH, block);
       }
@@ -261,11 +264,11 @@ private:
       {
         block.UpdateDigest();
 
-        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding? the block to the chain: ", block.summarise());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG Adding? the block to the chain: ", block.summarise());
 
         if (chain_->AddBlock(block))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG Adding the block to the chain: ", block.summarise());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "OMG Adding the block to the chain: ", block.summarise());
 
           forward_blocks_.Add(block);
           this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
@@ -302,52 +305,54 @@ private:
         BlockType tmp;
         if (chain_->Get(blk.hash(), tmp))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE?:", tmp.hashString());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "OMG LOOOSE?:", tmp.hashString());
           if (tmp.loose())
           {
             actually_still_loose.push_back(blk.hash());
           }
         }
       }
-      for(auto &blkhash : actually_still_loose)
+      for (auto &blkhash : actually_still_loose)
       {
         block_type tmp;
-        chain_ -> Get(blkhash, tmp);
-        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG LOOOSE:", tmp.hashString());
+        chain_->Get(blkhash, tmp);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG LOOOSE:", tmp.hashString());
 
         blockPublishSubscriptions_.VisitSubscriptions(
-            [this,blkhash](std::shared_ptr<fetch::service::ServiceClient> client){
+            [this, blkhash](std::shared_ptr<fetch::service::ServiceClient> client) {
               LOG_STACK_TRACE_POINT;
 
-              FETCH_LOG_WARN(LOGGING_NAME,"ERK hash=", ToBase64(blkhash));
+              FETCH_LOG_WARN(LOGGING_NAME, "ERK hash=", ToBase64(blkhash));
 
-              auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
-              //auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B, ToBase64(blkhash));
+              auto prom = client->Call(protocols::FetchProtocols::MAIN_CHAIN, GET_HEADER, blkhash);
+              // auto prom = client -> Call(protocols::FetchProtocols::MAIN_CHAIN, GET_B,
+              // ToBase64(blkhash));
               prom->WithHandlers()
-                .Then([this, prom](){
-                  LOG_STACK_TRACE_POINT;
-                  std::pair<bool, block_type> result;
-                  prom->As(result);
-                  if (result.first)
-                  {
-                    this -> pending_blocks_.Add(result.second);
-                    FETCH_LOG_WARN(LOGGING_NAME,"ERK posting catchup block:", ToBase64(result.second.hash()));
-                    this -> thread_pool_ -> Post([this]() { this -> AddPendingBlocks(); });
-                  }
-                  else
-                  {
-                    FETCH_LOG_ERROR(LOGGING_NAME,"ERK dint have block!");
-                  }
-                })
-                .Catch([blkhash](){
-                  FETCH_LOG_ERROR(LOGGING_NAME,"Something went wrong: ", typeid(blkhash).name() );
-                });
+                  .Then([this, prom]() {
+                    LOG_STACK_TRACE_POINT;
+                    std::pair<bool, block_type> result;
+                    prom->As(result);
+                    if (result.first)
+                    {
+                      this->pending_blocks_.Add(result.second);
+                      FETCH_LOG_WARN(LOGGING_NAME,
+                                     "ERK posting catchup block:", ToBase64(result.second.hash()));
+                      this->thread_pool_->Post([this]() { this->AddPendingBlocks(); });
+                    }
+                    else
+                    {
+                      FETCH_LOG_ERROR(LOGGING_NAME, "ERK dint have block!");
+                    }
+                  })
+                  .Catch([blkhash]() {
+                    FETCH_LOG_ERROR(LOGGING_NAME, "Something went wrong: ", typeid(blkhash).name());
+                  });
             });
       }
     }
     if (loose_blocks_.Remaining())
     {
-      this -> thread_pool_ -> Post([this]() { this -> QueryLooseBlocks(); });
+      this->thread_pool_->Post([this]() { this->QueryLooseBlocks(); });
     }
   }
 
@@ -417,23 +422,23 @@ private:
   std::pair<bool, BlockType> GetHeader(block_hash_type const &hash)
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader starting work");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader starting work");
     BlockType block;
     if (chain_->Get(hash, block))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader done");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader done");
       return std::make_pair(true, block);
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader not found");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader not found");
       return std::make_pair(false, block);
     }
   }
 
   std::pair<bool, block_type> GetB(const std::string &s)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"ERK! GetB ", s);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "ERK! GetB ", s);
 
     std::pair<bool, block_type> r;
     r.first = false;
@@ -445,11 +450,12 @@ private:
     LOG_STACK_TRACE_POINT;
     std::vector<BlockType> results;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain starting work ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeaviestChain starting work ", maxsize);
 
     results = chain_->HeaviestChain(maxsize);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain returning ", results.size(), " of req ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeaviestChain returning ", results.size(), " of req ",
+                    maxsize);
 
     return results;
   }

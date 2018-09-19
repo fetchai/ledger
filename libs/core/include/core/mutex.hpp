@@ -105,7 +105,7 @@ class DebugMutex : public AbstractMutex
     void Eval()
     {
       LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME,"Mutex timed out: ", filename_, " ", line_);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Mutex timed out: ", filename_, " ", line_);
 
       exit(-1);
     }
@@ -124,7 +124,7 @@ public:
     , line_(line)
     , file_(std::move(file))
   {}
-  
+
   // TODO(ejf) No longer required?
   DebugMutex() = delete;
 
@@ -137,9 +137,8 @@ public:
     locked_ = Clock::now();
     lock_mutex_.unlock();
 
-
     LOG_EX(__FILE__, __LINE__)
-      std::mutex::lock();
+    std::mutex::lock();
     END_LOG_EX
 
     timeout_ = std::make_unique<MutexTimeout>(file_, line_);
@@ -204,10 +203,11 @@ using Mutex = ProductionMutex;
 using Mutex = DebugMutex;
 #endif
 
-#define FETCH_JOIN_IMPL(x, y) x ## y
+#define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
-#define FETCH_LOCK(lockable) std::lock_guard<fetch::mutex::Mutex> FETCH_JOIN(mutex_locked_on_line, __LINE__) (lockable)
+#define FETCH_LOCK(lockable) \
+  std::lock_guard<fetch::mutex::Mutex> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
 
 }  // namespace mutex
 }  // namespace fetch

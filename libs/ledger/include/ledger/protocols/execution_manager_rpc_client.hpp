@@ -29,11 +29,11 @@ namespace ledger {
 class ExecutionManagerRpcClient : public ExecutionManagerInterface
 {
 public:
-  using NetworkClient = network::TCPClient;
+  using NetworkClient    = network::TCPClient;
   using NetworkClientPtr = std::shared_ptr<NetworkClient>;
-  using ServicePtr = std::unique_ptr<fetch::service::ServiceClient>;
-  using ConstByteArray = byte_array::ConstByteArray;
-  using NetworkManager = network::NetworkManager;
+  using ServicePtr       = std::unique_ptr<fetch::service::ServiceClient>;
+  using ConstByteArray   = byte_array::ConstByteArray;
+  using NetworkManager   = network::NetworkManager;
 
   // Construction / Destruction
   ExecutionManagerRpcClient(ConstByteArray const &host, uint16_t const &port,
@@ -56,7 +56,7 @@ public:
 
 private:
   NetworkClientPtr connection_;
-  ServicePtr service_;
+  ServicePtr       service_;
 };
 
 }  // namespace ledger

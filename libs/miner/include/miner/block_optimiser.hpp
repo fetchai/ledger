@@ -27,13 +27,13 @@
 #include "ledger/chain/transaction.hpp"
 
 #include "miner/optimisation/binary_annealer.hpp"
-#include "miner/transaction_item.hpp"
 #include "miner/resource_mapper.hpp"
+#include "miner/transaction_item.hpp"
 
 #include <algorithm>
-#include <numeric>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -123,7 +123,8 @@ public:
    * The resulting block is garantueed (issue 30) to be valid.
    */
   void GenerateBlock(std::size_t const &lane_count, std::size_t const &slice_count,
-                     Strategy strategy = Strategy::NOME, std::size_t batch_size = 1, std::size_t explore = 10)
+                     Strategy strategy = Strategy::NOME, std::size_t batch_size = 1,
+                     std::size_t explore = 10)
   {
     block_.clear();
     block_fees_.clear();
@@ -147,8 +148,8 @@ public:
       std::vector<std::size_t> used;
 
       // TODO(issue 30): Correct incorrect states
-      std::size_t i = 0;
-      uint64_t fee = 0;
+      std::size_t i   = 0;
+      uint64_t    fee = 0;
       for (auto &s : best_solution_)
       {
         if (s == 1)
@@ -176,7 +177,7 @@ public:
         staged_[slice_idx].push_back(unspent_[tx_idx]);
 
         // remove the element from the vector
-//        unspent_[tx_idx] = unspent_[unspent_.size() - 1];
+        //        unspent_[tx_idx] = unspent_[unspent_.size() - 1];
         unspent_.at(tx_idx) = unspent_.at(unspent_.size() - 1);
         unspent_.pop_back();
       }
@@ -393,7 +394,7 @@ private:
 
     std::size_t k = 0;
     annealer_.Resize(batch_size);
-    //annealer_.Reset();
+    // annealer_.Reset();
 
     uint64_t max_fee = 0;
     for (std::size_t i = 0; i < batch_size; ++i)

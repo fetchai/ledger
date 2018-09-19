@@ -54,7 +54,7 @@ public:
   {
     auto h = handle_.load();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Connection destruction in progress for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ", h);
     FETCH_LOG_VARIABLE(h);
 
     {
@@ -67,7 +67,7 @@ public:
     {
       ptr->Leave(handle_);
     }
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Connection destroyed for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
   }
 
   virtual void     Send(message_type const &) = 0;
@@ -143,6 +143,7 @@ public:
   {
     self_.reset();
   }
+
 protected:
   void SetAddress(std::string const &addr)
   {
@@ -157,8 +158,9 @@ protected:
 
   void SignalLeave()
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Connection terminated for handle ", handle_.load(), ", SignalLeave called.");
-    std::function<void (void)> cb;
+    FETCH_LOG_WARN(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
+                   ", SignalLeave called.");
+    std::function<void(void)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_leave_;
@@ -173,7 +175,7 @@ protected:
 
   void SignalMessage(network::message_type const &msg)
   {
-    std::function<void (network::message_type const &)> cb;
+    std::function<void(network::message_type const &)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_message_;
@@ -186,7 +188,7 @@ protected:
 
   void SignalConnectionFailed()
   {
-    std::function<void ()> cb;
+    std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_leave_;
@@ -201,7 +203,7 @@ protected:
 
   void SignalConnectionSuccess()
   {
-    std::function<void ()> cb;
+    std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
       cb = on_connection_success_;
@@ -233,7 +235,8 @@ private:
     {
       std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
 
-      // TODO(EJF): Not really sure what the "correct" thing should be to do in this wrap around case
+      // TODO(EJF): Not really sure what the "correct" thing should be to do in this wrap around
+      // case
       while (ret == 0)
       {
         ret = global_handle_counter_++;

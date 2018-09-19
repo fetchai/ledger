@@ -19,22 +19,23 @@
 
 namespace fetch {
 namespace service {
-  class Protocol;
-  class FeedSubscriptionManager;
-}}
+class Protocol;
+class FeedSubscriptionManager;
+}  // namespace service
+}  // namespace fetch
 
 #include "core/mutex.hpp"
+#include "network/details/thread_pool.hpp"
+#include "network/generics/work_items_queue.hpp"
+#include "network/message.hpp"
 #include "network/service/abstract_publication_feed.hpp"
 #include "network/service/message_types.hpp"
-#include "network/message.hpp"
 #include "network/service/types.hpp"
-#include "network/generics/work_items_queue.hpp"
-#include "network/details/thread_pool.hpp"
 //#include "network/service/server_interface.hpp"
 
+#include <condition_variable>
 #include <iterator>
 #include <vector>
-#include <condition_variable>
 
 namespace fetch {
 namespace service {
@@ -53,12 +54,12 @@ class ServiceServerInterface;
 class FeedSubscriptionManager
 {
 public:
-
-  using mutex_type = fetch::mutex::Mutex;
-  using lock_type = std::lock_guard<fetch::mutex::Mutex>;
-  using service_type = fetch::service::ServiceServerInterface;
-  using connection_handle_type     = uint64_t;
-  using publishing_workload_type = std::tuple<service_type*, connection_handle_type, network::message_type const>;
+  using mutex_type             = fetch::mutex::Mutex;
+  using lock_type              = std::lock_guard<fetch::mutex::Mutex>;
+  using service_type           = fetch::service::ServiceServerInterface;
+  using connection_handle_type = uint64_t;
+  using publishing_workload_type =
+      std::tuple<service_type *, connection_handle_type, network::message_type const>;
 
   static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
 
@@ -96,7 +97,7 @@ public:
   {
     publishing_workload_.Add(workload.begin(), workload.end());
     workload.clear();
-    workers_ -> Post( [this](){ this-> PublishingProcessor(); } );
+    workers_->Post([this]() { this->PublishingProcessor(); });
   }
 
   void PublishingProcessor();
@@ -178,7 +179,7 @@ private:
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
 
   generics::WorkItemsQueue<publishing_workload_type> publishing_workload_;
-  network::ThreadPool workers_;
+  network::ThreadPool                                workers_;
 };
 }  // namespace service
 }  // namespace fetch

@@ -174,7 +174,7 @@ public:
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Reverting to clean state: ", bookmark);
+      FETCH_LOG_INFO(LOGGING_NAME, "Reverting to clean state: ", bookmark);
 
       state_.clear();
     }

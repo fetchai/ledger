@@ -158,7 +158,7 @@ private:
   ClientRegister register_;
   NetworkManager nm_;
 
-  mutex_type                                                             services_mutex_{__LINE__, __FILE__};
+  mutex_type services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 };
 

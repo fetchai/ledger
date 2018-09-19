@@ -22,7 +22,8 @@ namespace fetch {
 namespace service {
 
 ServiceClientInterface::ServiceClientInterface()
-  : subscription_mutex_(__LINE__, __FILE__), promises_mutex_(__LINE__, __FILE__)
+  : subscription_mutex_(__LINE__, __FILE__)
+  , promises_mutex_(__LINE__, __FILE__)
 {}
 
 Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,
@@ -44,7 +45,8 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
 
   params << SERVICE_FUNCTION_CALL << prom->id();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ",  prom->id(), " with ", protocol, ':', function, " (packed)", &promises_);
+  FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
+                 function, " (packed)", &promises_);
 
   AddPromise(prom);
 
@@ -55,15 +57,15 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
     // HMM(KLL) - I suspect we should kill all the other promises as    well here.
     FETCH_LOG_DEBUG(LOGGING_NAME, "Call failed!");
     prom->Fail(serializers::SerializableException(
-      error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
+        error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
   }
 
   return prom;
 }
 
 subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_type const &protocol,
-                                                            feed_handler_type const &feed,
-                                                            AbstractCallable *callback)
+                                                            feed_handler_type const &    feed,
+                                                            AbstractCallable *           callback)
 {
   LOG_STACK_TRACE_POINT;
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
@@ -124,7 +126,6 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   }
 }
 
-
 // TODO(EJF) This isn't connected to anything. This might be why things are exploding.
 void ServiceClientInterface::ClearPromises()
 {
@@ -139,7 +140,8 @@ void ServiceClientInterface::ClearPromises()
 #endif
 }
 
-void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg, service::serializer_type &params)
+void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
+                                              service::serializer_type &   params)
 {
   LOG_STACK_TRACE_POINT;
   PromiseCounter id;
@@ -150,7 +152,8 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg, 
   auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
   p->Fulfill(ret);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id, " due to finishing delivering the response");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id,
+                  " due to finishing delivering the response");
 }
 
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
@@ -166,17 +169,18 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   if ((type == SERVICE_RESULT) || (type == 0))
   {
     ProcessRPCResult(msg, params);
-    //PromiseCounter id;
-    //params >> id;
+    // PromiseCounter id;
+    // params >> id;
 
-    //Promise p = ExtractPromise(id);
+    // Promise p = ExtractPromise(id);
 
-    //auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
-    //p->Fulfill(ret);
+    // auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+    // p->Fulfill(ret);
 
-    //FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response");
+    // FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the
+    // response");
   }
-  else if (type == SERVICE_ERROR) 
+  else if (type == SERVICE_ERROR)
   {
     PromiseCounter id;
     params >> id;
@@ -188,7 +192,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
     Promise p = ExtractPromise(id);
     p->Fail(e);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the response (error)");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
+                    " due to finishing delivering the response (error)");
   }
   else if (type == SERVICE_FEED)
   {
@@ -274,8 +279,8 @@ Promise ServiceClientInterface::LookupPromise(PromiseCounter id)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to locate promise with ID: ", id);
 
-    throw serializers::SerializableException(
-      error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
+    throw serializers::SerializableException(error::PROMISE_NOT_FOUND,
+                                             byte_array::ConstByteArray("Could not find promise"));
   }
 
   return it->second;
@@ -290,8 +295,8 @@ Promise ServiceClientInterface::ExtractPromise(PromiseCounter id)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to locate promise with ID: ", id);
 
-    throw serializers::SerializableException(
-      error::PROMISE_NOT_FOUND, byte_array::ConstByteArray("Could not find promise"));
+    throw serializers::SerializableException(error::PROMISE_NOT_FOUND,
+                                             byte_array::ConstByteArray("Could not find promise"));
   }
 
   Promise promise = it->second;
@@ -306,9 +311,8 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
   promises_.erase(id);
 }
 
-subscription_handler_type
-ServiceClientInterface::CreateSubscription(protocol_handler_type const &protocol,
-                                           feed_handler_type const &feed, AbstractCallable *cb)
+subscription_handler_type ServiceClientInterface::CreateSubscription(
+    protocol_handler_type const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
 {
   LOG_STACK_TRACE_POINT;
 
@@ -319,6 +323,5 @@ ServiceClientInterface::CreateSubscription(protocol_handler_type const &protocol
   return subscription_handler_type(subscription_index_counter_);
 }
 
-
-} // namespace service
-} // namespace fetch
+}  // namespace service
+}  // namespace fetch

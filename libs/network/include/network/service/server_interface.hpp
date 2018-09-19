@@ -38,7 +38,8 @@ public:
 
   virtual ~ServiceServerInterface() = default;
 
-  void Add(protocol_handler_type const &name, Protocol *protocol)  // TODO(issue 19): Rename to AddProtocol
+  void Add(protocol_handler_type const &name,
+           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     LOG_STACK_TRACE_POINT;
 
@@ -64,7 +65,7 @@ protected:
   {
     LOG_STACK_TRACE_POINT;
 
-    serializer_type params(msg);
+    serializer_type             params(msg);
     service_classification_type type;
     params >> type;
 
@@ -72,7 +73,7 @@ protected:
 
     bool success = false;
 
-    switch(type)
+    switch (type)
     {
     case SERVICE_FUNCTION_CALL:
       success = HandleRPCCallRequest(client, params);
@@ -94,7 +95,7 @@ protected:
   bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
   {
     LOG_STACK_TRACE_POINT;
-    bool ret = true;
+    bool            ret = true;
     serializer_type result;
     PromiseCounter  id;
 
@@ -105,17 +106,19 @@ protected:
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
       ExecuteCall(result, client, params);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest result type=", SERVICE_RESULT, " prom=",id,"  DATA=", result.data().Printable());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest result type=", SERVICE_RESULT,
+                      " prom=", id, "  DATA=", result.data().Printable());
     }
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Function Call): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
       result = serializer_type();
       result << SERVICE_ERROR << id << e;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Server responding to call from ", client, " data size=", result.Tell());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", client,
+                    " data size=", result.Tell());
 
     {
       LOG_STACK_TRACE_POINT;
@@ -126,7 +129,7 @@ protected:
   bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
   {
     LOG_STACK_TRACE_POINT;
-    bool ret = true;
+    bool                      ret = true;
     protocol_handler_type     protocol;
     feed_handler_type         feed;
     subscription_handler_type subid;
@@ -142,7 +145,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Subscribe): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Subscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO(ed): propagate error other other size
@@ -154,7 +157,7 @@ protected:
   bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
   {
     LOG_STACK_TRACE_POINT;
-    bool ret = true;
+    bool                      ret = true;
     protocol_handler_type     protocol;
     feed_handler_type         feed;
     subscription_handler_type subid;
@@ -170,7 +173,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME,"Serialization error (Unsubscribe): ", e.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Unsubscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO(ed): propagate error other other size
@@ -179,16 +182,16 @@ protected:
     return ret;
   }
 
-
   virtual void ConnectionDropped(connection_handle_type connection_handle)
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped: ", connection_handle);
-    for(int protocol_number = 0; protocol_number < 256; protocol_number++)
+    FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped: ", connection_handle);
+    for (int protocol_number = 0; protocol_number < 256; protocol_number++)
     {
       if (members_[protocol_number])
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"ConnectionDropped removing handler for protocol " , protocol_number, " from connection handle ", connection_handle);
-        members_[protocol_number] -> ConnectionDropped(connection_handle);
+        FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped removing handler for protocol ",
+                       protocol_number, " from connection handle ", connection_handle);
+        members_[protocol_number]->ConnectionDropped(connection_handle);
         members_[protocol_number] = 0;
       }
     }
@@ -204,39 +207,32 @@ private:
     function_handler_type function_number;
     params >> protocol_number >> function_number;
 
-    auto identifier = std::to_string(protocol_number)
-      + ":"
-      + std::to_string(function_number)
-      + "@"
-      + std::to_string(connection_handle)
-      ;
+    auto identifier = std::to_string(protocol_number) + ":" + std::to_string(function_number) +
+                      "@" + std::to_string(connection_handle);
 
-    FETCH_LOG_INFO(LOGGING_NAME,"ServerInterface::ExecuteCall " + identifier);
+    FETCH_LOG_INFO(LOGGING_NAME, "ServerInterface::ExecuteCall " + identifier);
 
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
       auto err = std::string("ServerInterface::ExecuteCall: Could not find protocol ") + identifier;
       FETCH_LOG_WARN(LOGGING_NAME, err);
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,err);
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, err);
     }
 
-    protocol_pointer -> ApplyMiddleware(connection_handle, params.data());
+    protocol_pointer->ApplyMiddleware(connection_handle, params.data());
 
     auto &function = (*protocol_pointer)[function_number];
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,std::string("ServerInterface::ExecuteCall: ")
-                        + identifier
-                        + " expecting following signature "
-                        + function.signature()
-                        );
+    FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: ") + identifier +
+                                      " expecting following signature " + function.signature());
 
     // If we need to add client id to function arguments
     try
     {
       if (function.meta_data() & Callable::CLIENT_ID_ARG)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Adding connection_handle ID meta data to ", identifier);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
         CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
         function(result, extra_args, params);
@@ -248,19 +244,18 @@ private:
     }
     catch (serializers::SerializableException const &e)
     {
-      std::string new_explanation = e.explanation()
-        + std::string(" (Function signature: ")
-        + function.signature()
-        + std::string(") (Identification: ")
-        + identifier;
+      std::string new_explanation = e.explanation() + std::string(" (Function signature: ") +
+                                    function.signature() + std::string(") (Identification: ") +
+                                    identifier;
 
-      FETCH_LOG_INFO(LOGGING_NAME,"EXCEPTION:", e.error_code(), new_explanation);
+      FETCH_LOG_INFO(LOGGING_NAME, "EXCEPTION:", e.error_code(), new_explanation);
 
       throw serializers::SerializableException(e.error_code(), new_explanation);
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"ServerInterface::ExecuteCall - ", ex.what(), " - ", identifier);
+      FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what(), " - ",
+                      identifier);
     }
   }
 

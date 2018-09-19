@@ -88,19 +88,28 @@ public:
   void Start();
   void Stop();
 
-  client_register_type connection_register() { return register_; };
+  client_register_type connection_register()
+  {
+    return register_;
+  };
 
   ///
   /// @{
-  void RequestPeers() { directory_->RequestPeersForThisNode(); }
+  void RequestPeers()
+  {
+    directory_->RequestPeersForThisNode();
+  }
 
-  void EnoughPeers() { directory_->EnoughPeersForThisNode(); }
+  void EnoughPeers()
+  {
+    directory_->EnoughPeersForThisNode();
+  }
 
   P2PPeerDirectory::peer_details_map_type SuggestPeersToConnectTo();
   /// @}
 
   bool Connect(byte_array::ConstByteArray const &host, uint16_t const &port);
-    /// @}
+  /// @}
 
   /// Methods to add node components
   /// @{
@@ -109,7 +118,10 @@ public:
 
   void AddMainChain(byte_array::ConstByteArray const &host, uint16_t const &port);
 
-  void PublishProfile() { identity_->PublishProfile(); }
+  void PublishProfile()
+  {
+    identity_->PublishProfile();
+  }
   /// @}
 
   /// Methods to get profile information
@@ -121,7 +133,10 @@ public:
   }
   /// }
 
-  byte_array::ConstByteArray identity() const { return certificate_->identity().identifier(); }
+  byte_array::ConstByteArray identity() const
+  {
+    return certificate_->identity().identifier();
+  }
 
 protected:
   callback_peer_update_profile_type callback_peer_update_profile_;
@@ -135,7 +150,7 @@ protected:
   /// @}
 
 private:
-  using connected_identity_type = byte_array::ConstByteArray;
+  using connected_identity_type   = byte_array::ConstByteArray;
   using connected_identities_type = std::unordered_set<connected_identity_type>;
 
   network_manager_type manager_;
@@ -155,7 +170,7 @@ private:
 
   mutex::Mutex peers_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> peers_;
-  connected_identities_type                                                    peer_identities_;
+  connected_identities_type                                              peer_identities_;
 
   std::unique_ptr<crypto::Prover> certificate_;
   std::atomic<bool>               running_;
@@ -166,11 +181,10 @@ private:
   std::atomic<bool>                     tracking_peers_;
   std::chrono::system_clock::time_point track_start_;
 
-
-  connected_identities_type incoming_;
-  connected_identities_type outgoing_;
-  std::vector<connection_handle_type>                                 incoming_handles_;
-  std::vector<connection_handle_type>                                 outgoing_handles_;
+  connected_identities_type           incoming_;
+  connected_identities_type           outgoing_;
+  std::vector<connection_handle_type> incoming_handles_;
+  std::vector<connection_handle_type> outgoing_handles_;
 };
 
 }  // namespace p2p

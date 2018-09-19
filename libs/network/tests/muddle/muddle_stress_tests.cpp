@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include <chrono>
-#include <thread>
 #include <gtest/gtest.h>
+#include <thread>
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/ecdsa.hpp"
@@ -39,31 +39,34 @@ using fetch::byte_array::ToBase64;
 class MuddleStressTests : public ::testing::Test
 {
 protected:
-
-  static constexpr char const *NETWORK_A_PUBLIC_KEY = "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-  static constexpr char const *NETWORK_A_PRIVATE_KEY = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-  static constexpr char const *NETWORK_B_PUBLIC_KEY = "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
-  static constexpr char const *NETWORK_B_PRIVATE_KEY = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
+  static constexpr char const *NETWORK_A_PUBLIC_KEY =
+      "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
+  static constexpr char const *NETWORK_A_PRIVATE_KEY =
+      "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+  static constexpr char const *NETWORK_B_PUBLIC_KEY =
+      "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
+  static constexpr char const *NETWORK_B_PRIVATE_KEY =
+      "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
   static constexpr char const *LOGGING_NAME = "MuddleRpcStressTests";
-  static constexpr uint16_t SERVICE = 10;
-  static constexpr uint16_t CHANNEL = 12;
+  static constexpr uint16_t    SERVICE      = 10;
+  static constexpr uint16_t    CHANNEL      = 12;
 
-  using NetworkManager = fetch::network::NetworkManager;
+  using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
-  using Muddle = fetch::muddle::Muddle;
-  using MuddlePtr = std::unique_ptr<Muddle>;
-  using MuddleEndpoint = fetch::muddle::MuddleEndpoint;
-  using CertificatePtr = Muddle::CertificatePtr;
-  using Peer = fetch::network::Peer;
-  using Uri = Muddle::Uri;
-  using UriList = Muddle::UriList;
-  using RpcServer = fetch::muddle::rpc::Server;
-  using RpcClient = fetch::muddle::rpc::Client;
-  using Flag = std::atomic<bool>;
-  using Promise = fetch::service::Promise;
-  using Address = Muddle::Address;
-  using Payload = fetch::muddle::Packet::Payload;
-  using Response = MuddleEndpoint::Response;
+  using Muddle            = fetch::muddle::Muddle;
+  using MuddlePtr         = std::unique_ptr<Muddle>;
+  using MuddleEndpoint    = fetch::muddle::MuddleEndpoint;
+  using CertificatePtr    = Muddle::CertificatePtr;
+  using Peer              = fetch::network::Peer;
+  using Uri               = Muddle::Uri;
+  using UriList           = Muddle::UriList;
+  using RpcServer         = fetch::muddle::rpc::Server;
+  using RpcClient         = fetch::muddle::rpc::Client;
+  using Flag              = std::atomic<bool>;
+  using Promise           = fetch::service::Promise;
+  using Address           = Muddle::Address;
+  using Payload           = fetch::muddle::Packet::Payload;
+  using Response          = MuddleEndpoint::Response;
 
   static CertificatePtr LoadIdentity(char const *private_key)
   {
@@ -123,13 +126,15 @@ protected:
 
   static void ClientServer(MuddleEndpoint &endpoint, char const *target)
   {
-    static constexpr std::size_t NUM_MESSAGES = 1000;
+    static constexpr std::size_t NUM_MESSAGES   = 1000;
     static constexpr std::size_t PAYLOAD_LENGTH = 5;
 
     std::atomic<std::size_t> num_messages{0};
 
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
-    subscription->SetMessageHandler([&num_messages](Address const &from ,uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload) {
+    subscription->SetMessageHandler([&num_messages](Address const &from, uint16_t service,
+                                                    uint16_t channel, uint16_t counter,
+                                                    Payload const &payload) {
       EXPECT_EQ(service, uint16_t{SERVICE});
       EXPECT_EQ(channel, uint16_t{CHANNEL});
       EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
@@ -140,7 +145,7 @@ protected:
     for (std::size_t loop = 0; loop < NUM_MESSAGES; ++loop)
     {
       // generate a big load of data
-      uint8_t const fill = static_cast<uint8_t>(loop);
+      uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
       // send the data
@@ -155,36 +160,32 @@ protected:
 
   static void ClientServerExchange(MuddleEndpoint &endpoint, char const *target)
   {
-    static constexpr std::size_t NUM_MESSAGES = 200;
+    static constexpr std::size_t NUM_MESSAGES   = 200;
     static constexpr std::size_t PAYLOAD_LENGTH = 4096;
 
     std::atomic<std::size_t> num_messages{0};
 
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
     subscription->SetMessageHandler(
-      [&num_messages, &endpoint](Address const &from,
-                                 uint16_t service,
-                                 uint16_t channel,
-                                 uint16_t counter,
-                                 Payload const &payload)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Handling message from: ", ToBase64(from), " size: ", payload.size());
+        [&num_messages, &endpoint](Address const &from, uint16_t service, uint16_t channel,
+                                   uint16_t counter, Payload const &payload) {
+          FETCH_LOG_INFO(LOGGING_NAME, "Handling message from: ", ToBase64(from),
+                         " size: ", payload.size());
 
-        EXPECT_EQ(service, uint16_t{SERVICE});
-        EXPECT_EQ(channel, uint16_t{CHANNEL});
-        EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
+          EXPECT_EQ(service, uint16_t{SERVICE});
+          EXPECT_EQ(channel, uint16_t{CHANNEL});
+          EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
 
-        // send the response
-        endpoint.Send(from, service, channel, counter, payload);
+          // send the response
+          endpoint.Send(from, service, channel, counter, payload);
 
-        ++num_messages;
-      }
-    );
+          ++num_messages;
+        });
 
     for (std::size_t loop = 0; loop < NUM_MESSAGES; ++loop)
     {
       // generate a big load of data
-      uint8_t const fill = static_cast<uint8_t>(loop);
+      uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
       // send the data
@@ -204,20 +205,16 @@ protected:
   }
 
   NetworkManagerPtr managerA_;
-  MuddlePtr networkA_;
+  MuddlePtr         networkA_;
 
   NetworkManagerPtr managerB_;
-  MuddlePtr networkB_;
+  MuddlePtr         networkB_;
 };
 
 TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
 {
-  std::thread nodeA([this]() {
-    ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY);
-  });
-  std::thread nodeB([this]() {
-    ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY);
-  });
+  std::thread nodeA([this]() { ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
+  std::thread nodeB([this]() { ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();
@@ -225,12 +222,10 @@ TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
 
 TEST_F(MuddleStressTests, ContinuousBiDirectionalExchanges)
 {
-  std::thread nodeA([this]() {
-    ClientServerExchange(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY);
-  });
-  std::thread nodeB([this]() {
-    ClientServerExchange(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY);
-  });
+  std::thread nodeA(
+      [this]() { ClientServerExchange(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
+  std::thread nodeB(
+      [this]() { ClientServerExchange(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();

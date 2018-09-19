@@ -17,36 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
-#include "network/p2pservice/p2p_managed_local_service.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
-
 
 /*******
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
 
-
-class P2PManagedLocalLaneService: public P2PManagedLocalService
+class P2PManagedLocalLaneService : public P2PManagedLocalService
 {
-  using Uri = P2PManagedLocalService::Uri;
-  using ServiceType = P2PManagedLocalService::ServiceType;
+  using Uri               = P2PManagedLocalService::Uri;
+  using ServiceType       = P2PManagedLocalService::ServiceType;
   using ServiceIdentifier = P2PManagedLocalService::ServiceIdentifier;
-  using Peers = P2PManagedLocalService::Peers;
+  using Peers             = P2PManagedLocalService::Peers;
 
   static constexpr char const *LOGGING_NAME = "P2PManagedLocalLaneService";
 
 public:
-  P2PManagedLocalLaneService(Uri uri, ServiceIdentifier service_identifier, LaneManagement &lane_management)
+  P2PManagedLocalLaneService(Uri uri, ServiceIdentifier service_identifier,
+                             LaneManagement &lane_management)
     : P2PManagedLocalService(std::move(uri), service_identifier)
     , lane_management_(lane_management)
-  {
-  }
+  {}
 
   virtual void Refresh()
   {
@@ -62,9 +60,10 @@ public:
     {
       lane_management_.UseThesePeers(instance_number(), peers());
     }
-    catch(std::exception ex)
+    catch (std::exception ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.............BANG! ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", instance_number(),
+                      " -- UseThesePeers.............BANG! ", ex.what());
     }
   }
 
@@ -72,6 +71,5 @@ private:
   LaneManagement &lane_management_;
 };
 
-
-}
-}
+}  // namespace p2p
+}  // namespace fetch

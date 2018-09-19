@@ -59,7 +59,6 @@ namespace storage {
 class VariantStack
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "VariantStack";
 
   /**

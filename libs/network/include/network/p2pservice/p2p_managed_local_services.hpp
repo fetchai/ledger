@@ -17,63 +17,62 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
-#include "network/p2pservice/p2p_managed_local_service.hpp"
-#include "network/p2pservice/p2p_managed_local_lane_service.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_managed_local_lane_service.hpp"
+#include "network/p2pservice/p2p_managed_local_service.hpp"
+#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
-
 
 /*******
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
 
-
 class P2PManagedLocalServices
 {
-  using Uri = network::Uri;
-  using Manifest = network::Manifest;
-  using ServiceType = network::ServiceType;
+  using Uri               = network::Uri;
+  using Manifest          = network::Manifest;
+  using ServiceType       = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
-  using Services = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>;
-  using ServiceIter = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>::iterator;
+  using Services          = std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>;
+  using ServiceIter =
+      std::map<ServiceIdentifier, std::shared_ptr<P2PManagedLocalService>>::iterator;
   static constexpr char const *LOGGING_NAME = "P2PManagedLocalServices";
 
 public:
   P2PManagedLocalServices(LaneManagement &lane_management)
     : lane_management_(lane_management)
-  {
-  }
+  {}
 
   void MakeFromManifest(const Manifest &manifest)
   {
-    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri){
-        switch(ident . service_type)
-        {
-        case network::LANE:
-          {
-            std::shared_ptr<P2PManagedLocalService> foo(new P2PManagedLocalLaneService(uri, ident, lane_management_));
-            this -> services_[ ident ] = foo;
-            break;
-          }
-        case network::MAINCHAIN:
-        case network::P2P:
-        case network::HTTP:
-          this -> services_[ ident ] = std::make_shared<P2PManagedLocalService>(uri, ident);
-          break;
-        }
-      });
+    manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri) {
+      switch (ident.service_type)
+      {
+      case network::LANE:
+      {
+        std::shared_ptr<P2PManagedLocalService> foo(
+            new P2PManagedLocalLaneService(uri, ident, lane_management_));
+        this->services_[ident] = foo;
+        break;
+      }
+      case network::MAINCHAIN:
+      case network::P2P:
+      case network::HTTP:
+        this->services_[ident] = std::make_shared<P2PManagedLocalService>(uri, ident);
+        break;
+      }
+    });
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Create services count:", this -> services_ . size());
+    FETCH_LOG_INFO(LOGGING_NAME, "Create services count:", this->services_.size());
   }
 
   void Refresh()
   {
-    for(auto &service : services_)
+    for (auto &service : services_)
     {
       service.second->Refresh();
     }
@@ -81,36 +80,30 @@ public:
 
   void DistributeManifest(Manifest const &manifest)
   {
-    manifest.ForEach(
-      [this](ServiceIdentifier const &ident, const Uri &uri)
+    manifest.ForEach([this](ServiceIdentifier const &ident, const Uri &uri) {
+      auto const iter = services_.find(ident);
+      if (iter != services_.end())
       {
-        auto const iter = services_.find(ident);
-        if (iter != services_.end())
-        {
-          iter->second->AddPeer(uri);
-        }
+        iter->second->AddPeer(uri);
       }
-    );
+    });
   }
 
   void EraseManifest(const Manifest &manifest)
   {
-    manifest.ForEach(
-      [this](ServiceIdentifier const &ident, const Uri &uri)
+    manifest.ForEach([this](ServiceIdentifier const &ident, const Uri &uri) {
+      auto const iter = services_.find(ident);
+      if (iter != services_.end())
       {
-        auto const iter = services_.find(ident);
-        if (iter != services_.end())
-        {
-          iter->second->RemovePeer(uri);
-        }
+        iter->second->RemovePeer(uri);
       }
-    );
+    });
   }
+
 private:
-  Services services_;
+  Services        services_;
   LaneManagement &lane_management_;
 };
 
-
-}
-}
+}  // namespace p2p
+}  // namespace fetch

@@ -51,7 +51,10 @@ struct MainChainDetails
   }
 
   MainChainDetails(const MainChainDetails &other)
-    : is_controller(false), is_peer(false), is_miner(false), is_outgoing(false)
+    : is_controller(false)
+    , is_peer(false)
+    , is_miner(false)
+    , is_outgoing(false)
   {
     identity                          = other.identity;
     owning_discovery_service_identity = other.owning_discovery_service_identity;

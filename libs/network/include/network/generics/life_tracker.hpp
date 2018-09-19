@@ -34,7 +34,9 @@ class LifeTracker
   using lock_type     = std::lock_guard<mutex_type>;
 
 public:
-  LifeTracker(fetch::network::NetworkManager worker) : worker_(worker) {}
+  LifeTracker(fetch::network::NetworkManager worker)
+    : worker_(worker)
+  {}
 
   void reset(void)
   {

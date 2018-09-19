@@ -43,7 +43,6 @@
 class FetchChainKeeperService : public fetch::protocols::ChainKeeperProtocol
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "FetchChainKeeperService";
 
   FetchChainKeeperService(uint16_t const &port, uint16_t const &http_port,

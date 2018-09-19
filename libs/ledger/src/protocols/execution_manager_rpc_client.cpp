@@ -32,9 +32,10 @@ namespace ledger {
 namespace {
 
 using NetworkClientPtr = ExecutionManagerRpcClient::NetworkClientPtr;
-using NetworkClient = ExecutionManagerRpcClient::NetworkClient;
+using NetworkClient    = ExecutionManagerRpcClient::NetworkClient;
 
-NetworkClientPtr CreateConnection (ConstByteArray const &host, uint16_t port, NetworkManager const &network_manager)
+NetworkClientPtr CreateConnection(ConstByteArray const &host, uint16_t port,
+                                  NetworkManager const &network_manager)
 {
   // create and connect service client
   NetworkClientPtr connection = std::make_shared<NetworkClient>(network_manager);
@@ -43,15 +44,14 @@ NetworkClientPtr CreateConnection (ConstByteArray const &host, uint16_t port, Ne
   return connection;
 }
 
-} // namespace
+}  // namespace
 
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
-                                                     uint16_t const &                  port,
+                                                     uint16_t const &      port,
                                                      NetworkManager const &network_manager)
   : connection_(CreateConnection(host, port, network_manager))
   , service_(std::make_unique<ServiceClient>(*connection_, network_manager))
-{
-}
+{}
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
 {

@@ -25,7 +25,9 @@
 namespace fetch {
 namespace http {
 
-JsonHttpClient::JsonHttpClient(std::string host, uint16_t port) : client_(std::move(host), port) {}
+JsonHttpClient::JsonHttpClient(std::string host, uint16_t port)
+  : client_(std::move(host), port)
+{}
 
 bool JsonHttpClient::Get(ConstByteArray const &endpoint, Variant const &request, Variant &response)
 {

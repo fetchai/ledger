@@ -34,9 +34,8 @@ inline uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
 
   std::string const prefix = identifier.name_space() + ".state.";
 
-  return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(
-    log2_num_lanes);
+  return storage::ResourceAddress{prefix + static_cast<std::string>(resource)}.lane(log2_num_lanes);
 }
 
-} // namespace miner
-} // namespace fetch
+}  // namespace miner
+}  // namespace fetch

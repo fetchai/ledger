@@ -86,7 +86,7 @@ int main(int argc, char const **argv)
       dummy_body.block_number = 1;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
-      //dummy.body().previous_hash = dummy.hash();
+      // dummy.body().previous_hash = dummy.hash();
 
       mainChain.AddBlock(dummy);
 
@@ -97,7 +97,7 @@ int main(int argc, char const **argv)
       // Add another 3 blocks in order
       for (std::size_t i = 0; i < 3; ++i)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Test: Adding blocks in order");
+        FETCH_LOG_INFO(LOGGING_NAME, "Test: Adding blocks in order");
 
         // Create another block sequential to previous
         block_type nextBlock;

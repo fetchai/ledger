@@ -18,9 +18,9 @@
 
 #include "muddle_rpc.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
@@ -38,7 +38,7 @@ int main()
   Muddle muddle{CreateKey(SERVER_PRIVATE_KEY), nm};
   muddle.Start({8000});
 
-  Sample sample;
+  Sample         sample;
   SampleProtocol sample_protocol(sample);
 
   Server server{muddle.AsEndpoint(), 1, 1};

@@ -46,17 +46,32 @@ public:
   bool ParseBody(asio::streambuf &buffer, std::size_t length);
   bool ToStream(asio::streambuf &buffer) const;
 
-  byte_array::ConstByteArray const &body() const { return body_; }
-  Status                            status() const { return status_; }
-  MimeType const &                  mime_type() const { return mime_; }
-  Header const &                    header() const { return header_; }
+  byte_array::ConstByteArray const &body() const
+  {
+    return body_;
+  }
+  Status status() const
+  {
+    return status_;
+  }
+  MimeType const &mime_type() const
+  {
+    return mime_;
+  }
+  Header const &header() const
+  {
+    return header_;
+  }
 
   void AddHeader(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value)
   {
     header_.Add(key, value);
   }
 
-  void SetBody(byte_array::ConstByteArray const &body) { body_ = body; }
+  void SetBody(byte_array::ConstByteArray const &body)
+  {
+    body_ = body;
+  }
 
 private:
   bool ParseFirstLine(char const *begin, char const *end);

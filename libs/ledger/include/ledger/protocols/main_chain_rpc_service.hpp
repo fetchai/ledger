@@ -18,53 +18,54 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/protocols/main_chain_rpc_protocol.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/protocols/main_chain_rpc_protocol.hpp"
 
 #include <memory>
 
 namespace fetch {
-namespace chain { class MainChain; }
+namespace chain {
+class MainChain;
+}
 namespace ledger {
 
-class MainChainRpcService : public muddle::rpc::Server
-                          , public std::enable_shared_from_this<MainChainRpcService>
+class MainChainRpcService : public muddle::rpc::Server,
+                            public std::enable_shared_from_this<MainChainRpcService>
 {
 public:
-  using MuddleEndpoint = muddle::MuddleEndpoint;
-  using MainChain = chain::MainChain;
-  using Subscription = muddle::Subscription;
+  using MuddleEndpoint  = muddle::MuddleEndpoint;
+  using MainChain       = chain::MainChain;
+  using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using Address = muddle::Packet::Address;
-  using Block = chain::MainChain::BlockType;
-  using Promise = service::Promise;
-  using RpcClient = muddle::rpc::Client;
-  using TrustSystem = p2p::P2PTrustInterface<Address>;
+  using Address         = muddle::Packet::Address;
+  using Block           = chain::MainChain::BlockType;
+  using Promise         = service::Promise;
+  using RpcClient       = muddle::rpc::Client;
+  using TrustSystem     = p2p::P2PTrustInterface<Address>;
 
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
 
   void BroadcastBlock(Block const &block);
 
 private:
-
   void OnNewBlock(Address const &from, Block &block);
 
   void RequestHeaviestChainFromPeer(Address const &from);
 
   MuddleEndpoint &endpoint_;
-  MainChain &chain_;
-  TrustSystem &trust_;
+  MainChain &     chain_;
+  TrustSystem &   trust_;
   SubscriptionPtr block_subscription_;
 
   MainChainProtocol main_chain_protocol_;
 
-  Mutex main_chain_rpc_client_lock_{__LINE__, __FILE__};
+  Mutex     main_chain_rpc_client_lock_{__LINE__, __FILE__};
   RpcClient main_chain_rpc_client_;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

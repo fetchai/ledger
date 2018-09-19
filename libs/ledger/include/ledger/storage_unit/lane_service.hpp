@@ -80,8 +80,8 @@ public:
     certificate->GenerateKeys();
     certificate_.reset(certificate);
 
-    FETCH_LOG_INFO(LOGGING_NAME,"Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
-                       " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
+                   " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
 
     // format and generate the prefix
     std::string prefix;
@@ -124,7 +124,7 @@ public:
     this->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
-    controller_          = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
+    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(RPC_CONTROLLER, controller_protocol_.get());
   }
@@ -155,13 +155,13 @@ public:
   {
     TCPServer::Start();
     thread_pool_->Start();
-    //tx_sync_protocol_->Start();
+    // tx_sync_protocol_->Start();
   }
 
   void Stop() override
   {
     thread_pool_->Stop();
-    //tx_sync_protocol_->Stop();
+    // tx_sync_protocol_->Stop();
     TCPServer::Stop();
   }
 

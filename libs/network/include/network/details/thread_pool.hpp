@@ -47,9 +47,9 @@ protected:
   using mutex_type          = fetch::mutex::Mutex;
   using lock_type           = std::unique_lock<mutex_type>;
 
-  using work_queue_type     = WorkStore;
-  using future_work_type    = FutureWorkStore;
-  using idle_work_type      = IdleWorkStore;
+  using work_queue_type  = WorkStore;
+  using future_work_type = FutureWorkStore;
+  using idle_work_type   = IdleWorkStore;
 
   enum thread_state_type
   {
@@ -61,9 +61,9 @@ protected:
   enum thread_activity
   {
     Starting = 0,
-    Running = 1,
+    Running  = 1,
     Sleeping = 2,
-    Working = 3,
+    Working  = 3,
     Joinable = 4,
   };
 
@@ -78,7 +78,7 @@ public:
   ThreadPoolImplementation(std::size_t threads)
     : number_of_threads_(threads)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating thread manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Creating thread manager");
   }
 
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
@@ -88,12 +88,11 @@ public:
   virtual ~ThreadPoolImplementation()
   {
     Stop();
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Destroying thread manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying thread manager");
   }
 
   virtual void SetIdleInterval()
-  {
-  }
+  {}
 
   template <typename F>
   void Post(F &&f, uint32_t milliseconds)
@@ -141,9 +140,7 @@ public:
       std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
       if (threads_.size() < number_of_threads_)
       {
-        auto x = new std::thread([this](){
-            this -> ProcessLoop();
-          });
+        auto x = new std::thread([this]() { this->ProcessLoop(); });
         threads_.push_back(x);
         tc_++;
       }
@@ -180,7 +177,7 @@ public:
     {
       if (std::this_thread::get_id() == thread->get_id())
       {
-        FETCH_LOG_ERROR(LOGGING_NAME,"Thread pools must not be killed by a thread they own.");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
         return;
       }
     }
@@ -190,39 +187,38 @@ public:
     {
       LOG_STACK_TRACE_POINT;
       std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Removing work");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Removing work");
       future_work_.clear();
       idle_work_.clear();
       work_.clear();
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Removed work");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Removed work");
     cv_.notify_all();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // TODO(EJF): Is this needed since the next operation if to wait for the threads to complete?
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(100));  // TODO(EJF): Is this needed since the next operation if
+                                          // to wait for the threads to complete?
     // KLL -- I think so. I'm trying to get any remaining unstarted
     // threads to start, so they can read their terminate flag and
     // exit. If they're not started they're not joinable and will
     // error.
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Kill threads");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Kill threads");
     for (auto &thread : threads_)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,
-                     "Kill threads: Collect ",
-                     thread->get_id()
-                     );
-      thread -> join();
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Kill threads: Collect ", thread->get_id());
+      thread->join();
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Delete threads");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Delete threads");
     for (auto &thread : threads_)
     {
-      delete thread; // TODO(EJF): Should use smart pointers here
+      delete thread;  // TODO(EJF): Should use smart pointers here
     }
 
     threads_.clear();
   }
-private:
 
+private:
   virtual void ProcessLoop()
   {
     try
@@ -246,18 +242,23 @@ private:
 
           std::unique_lock<std::mutex> lock(mutex_);
 
-          auto future_work_wait_duration = future_work_ . DueIn();
-          auto idle_work_wait_duration = idle_work_ . DueIn();
+          auto future_work_wait_duration = future_work_.DueIn();
+          auto idle_work_wait_duration   = idle_work_.DueIn();
 
           auto minimum_wait_duration = std::chrono::milliseconds(0);
 
-          //FETCH_LOG_WARN(LOGGING_NAME,"future_work_ due in milliseconds:", std::chrono::milliseconds(future_work_wait_duration).count());
-          //FETCH_LOG_WARN(LOGGING_NAME,"idle_work_ due in milliseconds:", std::chrono::milliseconds(idle_work_wait_duration).count());
-          //FETCH_LOG_WARN(LOGGING_NAME,"minimum_ due in milliseconds:", std::chrono::milliseconds(minimum_wait_duration).count());
+          // FETCH_LOG_WARN(LOGGING_NAME,"future_work_ due in milliseconds:",
+          // std::chrono::milliseconds(future_work_wait_duration).count());
+          // FETCH_LOG_WARN(LOGGING_NAME,"idle_work_ due in milliseconds:",
+          // std::chrono::milliseconds(idle_work_wait_duration).count());
+          // FETCH_LOG_WARN(LOGGING_NAME,"minimum_ due in milliseconds:",
+          // std::chrono::milliseconds(minimum_wait_duration).count());
 
-          auto wait_duration = std::max(std::min(future_work_wait_duration, idle_work_wait_duration), minimum_wait_duration);
+          auto wait_duration = std::max(
+              std::min(future_work_wait_duration, idle_work_wait_duration), minimum_wait_duration);
 
-          //FETCH_LOG_WARN(LOGGING_NAME,"Sleeping for milliseconds:", std::chrono::milliseconds(wait_duration).count());
+          // FETCH_LOG_WARN(LOGGING_NAME,"Sleeping for milliseconds:",
+          // std::chrono::milliseconds(wait_duration).count());
           cv_.wait_for(lock, wait_duration);
           // go round again.
         }
@@ -265,7 +266,7 @@ private:
     }
     catch (...)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"OMG, bad lock in thread_pool");
+      FETCH_LOG_ERROR(LOGGING_NAME, "OMG, bad lock in thread_pool");
       throw;
     }
   }
@@ -282,7 +283,8 @@ private:
 
     thread_state_type r = THREAD_IDLE;
     {
-      auto workdone = work_.Visit([this](WorkStore::WorkItem work){ this->ExecuteWorkload(work); }, 1);
+      auto workdone =
+          work_.Visit([this](WorkStore::WorkItem work) { this->ExecuteWorkload(work); }, 1);
       if (workdone > 0)
       {
         r = std::max(r, THREAD_WORKED);
@@ -330,7 +332,8 @@ private:
 
     if (idle_work_.IsDue())
     {
-      if (idle_work_.Visit([this](IdleWorkStore::work_item_type work){ this->ExecuteWorkload(work); }) > 0)
+      if (idle_work_.Visit(
+              [this](IdleWorkStore::work_item_type work) { this->ExecuteWorkload(work); }) > 0)
       {
         r = THREAD_WORKED;
       }
@@ -342,8 +345,8 @@ private:
 
   virtual thread_state_type TryFutureWork()
   {
-    thread_state_type            r = THREAD_IDLE;
-    auto cb = [this](FutureWorkStore::work_item_type work){ this->Post(work); };
+    thread_state_type r  = THREAD_IDLE;
+    auto              cb = [this](FutureWorkStore::work_item_type work) { this->Post(work); };
 
     std::unique_lock<mutex_type> lock(future_work_mutex_, std::try_to_lock);
     if (!lock)
@@ -355,7 +358,7 @@ private:
     {
       if (future_work_.Visit(cb, 1) > 0)
       {
-        r = THREAD_WORKED;                      // We did something.
+        r = THREAD_WORKED;  // We did something.
       }
     }
 
@@ -380,11 +383,12 @@ private:
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"Caught exception in ThreadPool::ExecuteWorkload - ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Caught exception in ThreadPool::ExecuteWorkload - ",
+                      ex.what());
     }
     catch (...)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME,"Caught exception in ThreadPool::ExecuteWorkload");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Caught exception in ThreadPool::ExecuteWorkload");
     }
 
     if (shutdown_.load())
@@ -402,17 +406,15 @@ private:
   work_queue_type  work_;
   idle_work_type   idle_work_;
 
-  mutable mutex_type  idle_work_mutex_{__LINE__, __FILE__};
-  mutable mutex_type  future_work_mutex_{__LINE__, __FILE__};
+  mutable mutex_type idle_work_mutex_{__LINE__, __FILE__};
+  mutable mutex_type future_work_mutex_{__LINE__, __FILE__};
 
-  mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
+  mutable fetch::mutex::Mutex thread_mutex_{__LINE__, __FILE__};
 
   mutable std::condition_variable cv_;
   mutable mutex_type              mutex_{__LINE__, __FILE__};
   std::atomic<bool>               shutdown_{false};
-  std::atomic<unsigned long>                tc_{0};
-
-  
+  std::atomic<unsigned long>      tc_{0};
 };
 
 }  // namespace details

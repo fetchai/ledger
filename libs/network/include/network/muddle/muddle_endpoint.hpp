@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "network/generics/promise_of.hpp"
-#include "network/muddle/subscription.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/muddle/subscription.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -31,13 +31,13 @@ namespace muddle {
 class MuddleEndpoint
 {
 public:
-  using Address = Packet::Address;
-  using Payload = Packet::Payload;
-  using Response = network::PromiseOf<Payload>;
+  using Address         = Packet::Address;
+  using Payload         = Packet::Payload;
+  using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
 
   // Construction / Destruction
-  MuddleEndpoint() = default;
+  MuddleEndpoint()          = default;
   virtual ~MuddleEndpoint() = default;
 
   /**
@@ -48,11 +48,8 @@ public:
    * @param channel The channel identifier
    * @param message The message payload to be sent
    */
-  virtual void Send(
-    Address const &address,
-    uint16_t service,
-    uint16_t channel,
-    Payload const &message) = 0;
+  virtual void Send(Address const &address, uint16_t service, uint16_t channel,
+                    Payload const &message) = 0;
 
   /**
    * Send a message to a target address
@@ -63,13 +60,8 @@ public:
    * @param message_num The message number of the request
    * @param payload The message payload to be sent
    */
-  virtual void Send(
-    Address const &address,
-    uint16_t service,
-    uint16_t channel,
-    uint16_t message_num,
-    Payload const &payload
-  ) = 0;
+  virtual void Send(Address const &address, uint16_t service, uint16_t channel,
+                    uint16_t message_num, Payload const &payload) = 0;
 
   /**
    * Broadcast a message to all peers in the network
@@ -88,11 +80,8 @@ public:
    * @param channel The channel identifier
    * @return The promise of a response back from the target address
    */
-  virtual Response Exchange(
-    Address const &address,
-    uint16_t service,
-    uint16_t channel,
-    Payload const &request) = 0;
+  virtual Response Exchange(Address const &address, uint16_t service, uint16_t channel,
+                            Payload const &request) = 0;
 
   /**
    * Subscribes to messages from network with a given service and channel
@@ -114,5 +103,5 @@ public:
   virtual SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) = 0;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

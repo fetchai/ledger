@@ -28,8 +28,8 @@
 #include <limits>
 #include <memory>
 #include <mutex>
-#include <thread>
 #include <stdexcept>
+#include <thread>
 
 namespace fetch {
 namespace service {
@@ -43,27 +43,25 @@ class PromiseImplementation
   friend PromiseBuilder;
 
 public:
-
   PromiseImplementation(uint64_t pro, uint64_t func)
   {
-    this -> protocol_ = pro;
-    this -> function_ = func;
+    this->protocol_ = pro;
+    this->function_ = func;
   }
 
   PromiseImplementation()
-  {
-  }
+  {}
 
   using Counter               = uint64_t;
   using ConstByteArray        = byte_array::ConstByteArray;
   using SerializableException = serializers::SerializableException;
   using ExceptionPtr          = std::unique_ptr<SerializableException>;
-  using Callback = std::function<void()>;
-  using Clock = std::chrono::high_resolution_clock;
-  using Timepoint = Clock::time_point;
+  using Callback              = std::function<void()>;
+  using Clock                 = std::chrono::high_resolution_clock;
+  using Timepoint             = Clock::time_point;
 
   static constexpr char const *LOGGING_NAME = "Promise";
-  static constexpr uint32_t FOREVER = std::numeric_limits<uint32_t>::max();
+  static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
 
   enum class State
   {
@@ -77,44 +75,80 @@ public:
   {
     switch (state)
     {
-      case State::WAITING:
-        return "Waiting";
-      case State::SUCCESS:
-        return "Success";
-      case State::FAILED:
-        return "Failed";
-      case State::TIMEDOUT:
-        return "Timeout";
-      default:
-        return "Unknown";
+    case State::WAITING:
+      return "Waiting";
+    case State::SUCCESS:
+      return "Success";
+    case State::FAILED:
+      return "Failed";
+    case State::TIMEDOUT:
+      return "Timeout";
+    default:
+      return "Unknown";
     }
   }
 
-  ConstByteArray const &value() const { return value_; }
-  Counter id() const { return id_; }
-  uint64_t protocol() const { return protocol_; }
-  uint64_t function() const { return function_; }  
-  State state() const { return state_; }
-  SerializableException const &exception() const { return (*exception_); }
+  ConstByteArray const &value() const
+  {
+    return value_;
+  }
+  Counter id() const
+  {
+    return id_;
+  }
+  uint64_t protocol() const
+  {
+    return protocol_;
+  }
+  uint64_t function() const
+  {
+    return function_;
+  }
+  State state() const
+  {
+    return state_;
+  }
+  SerializableException const &exception() const
+  {
+    return (*exception_);
+  }
 
   /// @name State Access
   /// @{
-  bool IsWaiting() const { return (State::WAITING == state_); }
-  bool IsSuccessful() const { return (State::SUCCESS == state_); }
-  bool IsFailed() const { return (State::FAILED == state_); }
+  bool IsWaiting() const
+  {
+    return (State::WAITING == state_);
+  }
+  bool IsSuccessful() const
+  {
+    return (State::SUCCESS == state_);
+  }
+  bool IsFailed() const
+  {
+    return (State::FAILED == state_);
+  }
   /// @}
 private:
   /// @name Callback Handlers
   /// @{
-  void SetSuccessCallback(Callback const &cb) { callback_success_ = cb; }
-  void SetFailureCallback(Callback const &cb) { callback_failure_ = cb; }
-  void SetCompletionCallback(Callback const &cb) { callback_completion_ = cb; }
+  void SetSuccessCallback(Callback const &cb)
+  {
+    callback_success_ = cb;
+  }
+  void SetFailureCallback(Callback const &cb)
+  {
+    callback_failure_ = cb;
+  }
+  void SetCompletionCallback(Callback const &cb)
+  {
+    callback_completion_ = cb;
+  }
   /// @}
 
-  uint64_t protocol_=uint64_t(-1);
-  uint64_t function_=uint64_t(-1);
+  uint64_t protocol_ = uint64_t(-1);
+  uint64_t function_ = uint64_t(-1);
+
 public:
-  
   PromiseBuilder WithHandlers();
 
   /// @name Promise Results
@@ -125,7 +159,8 @@ public:
 
     value_ = value;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"P2PService2::WorkCycle: Promise ", id_," fulfilled with ",  Schmoo());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService2::WorkCycle: Promise ", id_, " fulfilled with ",
+                    Schmoo());
 
     UpdateState(State::SUCCESS);
   }
@@ -150,10 +185,19 @@ public:
   }
   /// @}
 
-  std::string &name() { return name_; }
-  const std::string &name() const { return name_; }
+  std::string &name()
+  {
+    return name_;
+  }
+  const std::string &name() const
+  {
+    return name_;
+  }
 
-  State GetState() const { return state_; }
+  State GetState() const
+  {
+    return state_;
+  }
 
   /// @name Waits
   /// @{
@@ -198,31 +242,29 @@ public:
   /// @}
 
 private:
-
-  using Mutex = mutex::Mutex;
+  using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
 
   void UpdateState(State state);
   void DispatchCallbacks();
 
   static Counter counter_;
-  static Mutex counter_lock_;
+  static Mutex   counter_lock_;
   static Counter GetNextId();
 
-  Counter const   id_{GetNextId()};
-  AtomicState     state_{State::WAITING};
-  ConstByteArray  value_;
-  ExceptionPtr    exception_;
-  Callback        callback_success_;
-  Callback        callback_failure_;
-  Callback        callback_completion_;
-  std::string     name_;
+  Counter const  id_{GetNextId()};
+  AtomicState    state_{State::WAITING};
+  ConstByteArray value_;
+  ExceptionPtr   exception_;
+  Callback       callback_success_;
+  Callback       callback_failure_;
+  Callback       callback_completion_;
+  std::string    name_;
 };
 
 class PromiseBuilder
 {
 public:
-
   using Callback = PromiseImplementation::Callback;
 
   explicit PromiseBuilder(PromiseImplementation &promise)
@@ -262,7 +304,6 @@ public:
   }
 
 private:
-
   PromiseImplementation &promise_;
 
   Callback callback_success_;
@@ -270,12 +311,11 @@ private:
   Callback callback_complete_;
 };
 
-} // namespace details
+}  // namespace details
 
-using PromiseCounter
-= details::PromiseImplementation::Counter;
-using PromiseState = details::PromiseImplementation::State;
-using Promise = std::shared_ptr<details::PromiseImplementation>;
+using PromiseCounter = details::PromiseImplementation::Counter;
+using PromiseState   = details::PromiseImplementation::State;
+using Promise        = std::shared_ptr<details::PromiseImplementation>;
 
 inline Promise MakePromise()
 {
@@ -288,7 +328,6 @@ inline Promise MakePromise(uint64_t pro, uint64_t func)
 }
 
 char const *ToString(PromiseState state);
-
 
 }  // namespace service
 }  // namespace fetch

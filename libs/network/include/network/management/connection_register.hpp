@@ -47,7 +47,10 @@ public:
 
   struct LockableDetails final : public details_type, public mutex_type
   {
-    LockableDetails() : details_type(), mutex_type(__LINE__, __FILE__) {}
+    LockableDetails()
+      : details_type()
+      , mutex_type(__LINE__, __FILE__)
+    {}
   };
   using details_map_type =
       std::unordered_map<connection_handle_type, std::shared_ptr<LockableDetails>>;
@@ -163,9 +166,9 @@ public:
   }
 
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
-  //void GetDetails(connection_handle_type const &i)
+  // void GetDetails(connection_handle_type const &i)
   {
-    //FETCH_LOG_INFO(LOGGING_NAME,"GetDetails for =======================================> ", i);
+    // FETCH_LOG_INFO(LOGGING_NAME,"GetDetails for =======================================> ", i);
     LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(details_lock_);
     if (details_.find(i) == details_.end())
@@ -205,15 +208,15 @@ public:
     std::list<connection_map_type::value_type> keys;
     {
       std::lock_guard<mutex::Mutex> lock(connections_lock_);
-      for(auto &item : connections_)
+      for (auto &item : connections_)
       {
         keys.push_back(item);
       }
     }
 
-    for(auto &item : keys)
+    for (auto &item : keys)
     {
-      auto k = item.first;
+      auto                          k = item.first;
       std::lock_guard<mutex::Mutex> lock(connections_lock_);
       if (connections_.find(k) != connections_.end())
       {
@@ -222,28 +225,29 @@ public:
     }
   }
 
-  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  void VisitConnections(
+      std::function<void(connection_handle_type const &, shared_connection_type)> f) const
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"About to visit ", connections_.size(), " connections");
+    FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", connections_.size(), " connections");
     std::list<connection_map_type::value_type> keys;
     {
       std::lock_guard<mutex::Mutex> lock(connections_lock_);
-      for(auto &item : connections_)
+      for (auto &item : connections_)
       {
         keys.push_back(item);
       }
     }
 
-    for(auto &item : keys)
+    for (auto &item : keys)
     {
       auto v = item.second.lock();
       if (v)
       {
-        auto k = item.first;
+        auto                          k = item.first;
         std::lock_guard<mutex::Mutex> lock(connections_lock_);
         if (connections_.find(k) != connections_.end())
         {
-          f(k,v);
+          f(k, v);
         }
       }
     }
@@ -343,7 +347,8 @@ public:
     ptr_->WithServices(f);
   }
 
-  void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  void VisitServiceClients(
+      std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
   {
     ptr_->VisitServiceClients(f);
   }
@@ -353,7 +358,8 @@ public:
     ptr_->VisitServiceClients(f);
   }
 
-  void VisitConnections(std::function<void(connection_handle_type const &, shared_connection_type)> f) const
+  void VisitConnections(
+      std::function<void(connection_handle_type const &, shared_connection_type)> f) const
   {
     ptr_->VisitConnections(f);
   }

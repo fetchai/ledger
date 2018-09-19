@@ -31,41 +31,41 @@ using http::JsonHttpClient;
 const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
 const uint16_t             BOOTSTRAP_PORT = 80;
 const std::chrono::seconds UPDATE_INTERVAL{30};
-constexpr char const      *LOGGING_NAME = "bootstrap";
+constexpr char const *     LOGGING_NAME = "bootstrap";
 
 }  // namespace
 
 bool BootstrapMonitor::Start(UriList &peers)
 {
-  FETCH_LOG_INFO(LOGGING_NAME,"Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
+  FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node ", BOOTSTRAP_HOST, ':', BOOTSTRAP_PORT);
 
   // query our external address
   if (!UpdateExternalAddress())
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Failed to determine external address");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to determine external address");
     return false;
   }
 
   // register the node with the bootstrapper
   if (!RegisterNode())
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Failed to register the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to register the bootstrap node");
     return false;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Registered node with bootstrap network");
+  FETCH_LOG_INFO(LOGGING_NAME, "Registered node with bootstrap network");
 
   // request the peers list
   if (!RequestPeerList(peers))
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Failed to request the peers from the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request the peers from the bootstrap node");
     return false;
   }
 
   running_        = true;
   monitor_thread_ = std::make_unique<std::thread>(&BootstrapMonitor::ThreadEntryPoint, this);
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Bootstrapping network node...complete");
+  FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node...complete");
 
   return true;
 }
@@ -94,18 +94,18 @@ bool BootstrapMonitor::UpdateExternalAddress()
     if (ip_address.is_string())
     {
       external_address_ = ip_address.As<std::string>();
-      FETCH_LOG_INFO(LOGGING_NAME,"Detected external address as: ", external_address_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Detected external address as: ", external_address_);
 
       success = true;
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Invalid format of response");
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid format of response");
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Unable to query the IPIFY");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to query the IPIFY");
   }
 
   return success;
@@ -131,7 +131,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
     // check the formatting
     if (!response.is_array())
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Incorrect peer-list formatting (array)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Incorrect peer-list formatting (array)");
       return false;
     }
 
@@ -142,7 +142,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
 
       if (!peer_object.is_object())
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Incorrect peer-list formatting (object)");
+        FETCH_LOG_WARN(LOGGING_NAME, "Incorrect peer-list formatting (object)");
         return false;
       }
 
@@ -156,7 +156,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Failed to extract data from object");
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to extract data from object");
         return false;
       }
     }
@@ -186,7 +186,7 @@ bool BootstrapMonitor::RegisterNode()
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"Unable to make register call to bootstrap network");
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make register call to bootstrap network");
   }
 
   return success;
@@ -208,7 +208,7 @@ bool BootstrapMonitor::NotifyNode()
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"Unable to make notify call to bootstrap network");
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make notify call to bootstrap network");
   }
 
   return success;

@@ -65,7 +65,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
                                    lane_set_type const &lanes)
 {
 
-  FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
@@ -73,8 +73,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
 #ifdef FETCH_ENABLE_METRICS
   Metrics::Timestamp const started = Metrics::Clock::now();
-#endif // FETCH_ENABLE_METRICS
-
+#endif  // FETCH_ENABLE_METRICS
 
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the
@@ -110,9 +109,9 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
 
 #ifdef FETCH_ENABLE_METRICS
   Metrics::Timestamp const completed = Metrics::Clock::now();
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
-  FETCH_LOG_DEBUG(LOGGING_NAME,"Executing tx ", byte_array::ToBase64(hash), " (success)");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
 
   FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
   FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);

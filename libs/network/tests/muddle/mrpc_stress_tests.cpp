@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include <chrono>
-#include <thread>
 #include <gtest/gtest.h>
+#include <thread>
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/ecdsa.hpp"
@@ -39,7 +39,6 @@ using fetch::byte_array::ToBase64;
 class TestProtocol : public fetch::service::Protocol
 {
 public:
-
   enum
   {
     EXCHANGE = 0xEF
@@ -51,7 +50,6 @@ public:
   }
 
 private:
-
   ConstByteArray Exchange(ConstByteArray const &value)
   {
     return value;
@@ -61,28 +59,31 @@ private:
 class MuddleRpcStressTests : public ::testing::Test
 {
 protected:
-
-  static constexpr char const *NETWORK_A_PUBLIC_KEY = "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-  static constexpr char const *NETWORK_A_PRIVATE_KEY = "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
-  static constexpr char const *NETWORK_B_PUBLIC_KEY = "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
-  static constexpr char const *NETWORK_B_PRIVATE_KEY = "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
+  static constexpr char const *NETWORK_A_PUBLIC_KEY =
+      "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
+  static constexpr char const *NETWORK_A_PRIVATE_KEY =
+      "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+  static constexpr char const *NETWORK_B_PUBLIC_KEY =
+      "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
+  static constexpr char const *NETWORK_B_PRIVATE_KEY =
+      "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
   static constexpr char const *LOGGING_NAME = "MuddleRpcStressTests";
-  static constexpr uint16_t SERVICE = 10;
-  static constexpr uint16_t CHANNEL = 12;
+  static constexpr uint16_t    SERVICE      = 10;
+  static constexpr uint16_t    CHANNEL      = 12;
 
-  using NetworkManager = fetch::network::NetworkManager;
+  using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
-  using Muddle = fetch::muddle::Muddle;
-  using MuddlePtr = std::unique_ptr<Muddle>;
-  using MuddleEndpoint = fetch::muddle::MuddleEndpoint;
-  using CertificatePtr = Muddle::CertificatePtr;
-  using Peer = fetch::network::Peer;
-  using Uri = Muddle::Uri;
-  using UriList = Muddle::UriList;
-  using RpcServer = fetch::muddle::rpc::Server;
-  using RpcClient = fetch::muddle::rpc::Client;
-  using Flag = std::atomic<bool>;
-  using Promise = fetch::service::Promise;
+  using Muddle            = fetch::muddle::Muddle;
+  using MuddlePtr         = std::unique_ptr<Muddle>;
+  using MuddleEndpoint    = fetch::muddle::MuddleEndpoint;
+  using CertificatePtr    = Muddle::CertificatePtr;
+  using Peer              = fetch::network::Peer;
+  using Uri               = Muddle::Uri;
+  using UriList           = Muddle::UriList;
+  using RpcServer         = fetch::muddle::rpc::Server;
+  using RpcClient         = fetch::muddle::rpc::Client;
+  using Flag              = std::atomic<bool>;
+  using Promise           = fetch::service::Promise;
 
   static CertificatePtr LoadIdentity(char const *private_key)
   {
@@ -142,13 +143,13 @@ protected:
 
   static void ClientServer(MuddleEndpoint &endpoint, char const *target)
   {
-    static constexpr std::size_t NUM_MESSAGES = 200;
+    static constexpr std::size_t NUM_MESSAGES   = 200;
     static constexpr std::size_t PAYLOAD_LENGTH = 5;
-    static constexpr uint64_t PROTOCOL = 0xEF;
+    static constexpr uint64_t    PROTOCOL       = 0xEF;
 
     // create the server
     TestProtocol protocol;
-    RpcServer server(endpoint, SERVICE, CHANNEL);
+    RpcServer    server(endpoint, SERVICE, CHANNEL);
     server.Add(PROTOCOL, &protocol);
 
     // create the client
@@ -159,28 +160,25 @@ protected:
       sleep_for(seconds{2});
     }
 
-
     std::vector<Promise> pending;
     for (std::size_t loop = 0; loop < NUM_MESSAGES; ++loop)
     {
       // generate a big load of data
-      uint8_t const fill = static_cast<uint8_t>(loop);
+      uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
       auto promise = client.Call(PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
-        .Then([promise, fill]() {
-          auto const result = promise->As<ConstByteArray>();
-          EXPECT_EQ(PAYLOAD_LENGTH, result.size());
+          .Then([promise, fill]() {
+            auto const result = promise->As<ConstByteArray>();
+            EXPECT_EQ(PAYLOAD_LENGTH, result.size());
 
-          for (std::size_t i = 0; i < result.size(); ++i)
-          {
-            EXPECT_EQ(result[i], fill);
-          }
-        })
-        .Catch([]() {
-          FAIL();
-        });
+            for (std::size_t i = 0; i < result.size(); ++i)
+            {
+              EXPECT_EQ(result[i], fill);
+            }
+          })
+          .Catch([]() { FAIL(); });
 
       pending.push_back(promise);
     }
@@ -189,7 +187,7 @@ protected:
     {
       if (!pending.back()->IsWaiting())
       {
-        //FETCH_LOG_WARN(LOGGING_NAME, "Discarding promise: ", pending.back()->id());
+        // FETCH_LOG_WARN(LOGGING_NAME, "Discarding promise: ", pending.back()->id());
         pending.pop_back();
         continue;
       }
@@ -201,20 +199,16 @@ protected:
   }
 
   NetworkManagerPtr managerA_;
-  MuddlePtr networkA_;
+  MuddlePtr         networkA_;
 
   NetworkManagerPtr managerB_;
-  MuddlePtr networkB_;
+  MuddlePtr         networkB_;
 };
 
 TEST_F(MuddleRpcStressTests, ContinuousBiDirectionalTraffic)
 {
-  std::thread nodeA([this]() {
-    ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY);
-  });
-  std::thread nodeB([this]() {
-    ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY);
-  });
+  std::thread nodeA([this]() { ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
+  std::thread nodeB([this]() { ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();

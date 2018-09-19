@@ -312,7 +312,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    auto                                      ret = ((*class_).*function_)();
+    auto ret = ((*class_).*function_)();
 
     serializers::SizeCounter<serializer_type> counter;
     counter << ret;

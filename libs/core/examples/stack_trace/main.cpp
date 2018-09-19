@@ -37,7 +37,7 @@ void Baz()
 
   if (n >= 2)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,"XX");
+    FETCH_LOG_ERROR(LOGGING_NAME, "XX");
 
     exit(-1);
   }

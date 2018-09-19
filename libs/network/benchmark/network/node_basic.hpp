@@ -47,7 +47,6 @@ using time_point = std::chrono::high_resolution_clock::time_point;
 class NodeBasic
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "NodeBasic";
 
   explicit NodeBasic(network::NetworkManager tm)
@@ -80,7 +79,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
-    FETCH_LOG_INFO(LOGGING_NAME,"Adding endpoint");
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding endpoint");
     nodeDirectory_.AddEndpoint(endpoint);
   }
 
@@ -89,15 +88,15 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
     transactionsPerCall_ = tpc;
-    FETCH_LOG_INFO(LOGGING_NAME,"set transactions per call to ", tpc);
+    FETCH_LOG_INFO(LOGGING_NAME, "set transactions per call to ", tpc);
   }
 
   void TransactionsToSync(uint64_t transactionsToSync)
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
-    FETCH_LOG_INFO(LOGGING_NAME,"set transactions to sync to ", transactionsToSync);
-    FETCH_LOG_INFO(LOGGING_NAME,"Building...");
+    FETCH_LOG_INFO(LOGGING_NAME, "set transactions to sync to ", transactionsToSync);
+    FETCH_LOG_INFO(LOGGING_NAME, "Building...");
     PrecreateTrans(transactionsToSync);
     AddTransToList();
   }
@@ -116,7 +115,7 @@ public:
   void StartTime(uint64_t startTime)
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_INFO(LOGGING_NAME,"setting start time to ", startTime);
+    FETCH_LOG_INFO(LOGGING_NAME, "setting start time to ", startTime);
     startTime_ = startTime;
 
     if (thread_.joinable())
@@ -168,8 +167,8 @@ public:
     int32_t     pad        = (int32_t(transactionSize) - int32_t(baseTxSize));
     if (pad < 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Failed to set tx size to: ", transactionSize,
-                         ". Less than base size: ", baseTxSize);
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to set tx size to: ", transactionSize,
+                     ". Less than base size: ", baseTxSize);
       exit(1);
     }
     txPad_ = uint32_t(pad);
@@ -181,7 +180,7 @@ public:
   // Nodes will invite this node to be pushed their transactions
   bool InvitePush(block_hash const &hash)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"Responding to invite: ", !transactionList_.Contains(hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Responding to invite: ", !transactionList_.Contains(hash));
     return !transactionList_.Contains(hash);
   }
 

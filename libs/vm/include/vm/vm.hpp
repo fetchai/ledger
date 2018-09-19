@@ -128,7 +128,6 @@ struct Resetter;
 class VM
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "VM";
 
   VM(Module *module = nullptr)

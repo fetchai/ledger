@@ -23,12 +23,14 @@ namespace fetch {
 
 // TODO(EJF): Make to enums probably (global register of services IDs)
 
-static constexpr uint16_t SERVICE_MUDDLE = 0;  // reserved
-static constexpr uint16_t SERVICE_P2P = 1;
+static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
+static constexpr uint16_t SERVICE_P2P        = 1;
 static constexpr uint16_t SERVICE_MAIN_CHAIN = 2;
 
 // Common Service Channels
-static constexpr uint16_t CHANNEL_RPC = 1; // for convience we essentially reserve channel 1 of any service to be allocated to any potential RPC interface
+static constexpr uint16_t CHANNEL_RPC =
+    1;  // for convience we essentially reserve channel 1 of any service to be allocated to any
+        // potential RPC interface
 
 // Muddle Service Channels
 static constexpr uint16_t CHANNEL_ROUTING = 1;
@@ -41,16 +43,15 @@ static constexpr uint16_t CHANNEL_BLOCKS = 2;
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_MAIN_CHAIN = 128;
 
-static constexpr uint64_t RPC_IDENTITY = 200;
-static constexpr uint64_t RPC_STATE = 201;
-static constexpr uint64_t RPC_TX_STORE = 202;
-static constexpr uint64_t RPC_TX_STORE_SYNC = 203;
-static constexpr uint64_t RPC_SLICE_STORE = 204;
-static constexpr uint64_t RPC_SLICE_STORE_SYNC = 205;
-static constexpr uint64_t RPC_CONTROLLER = 206;
+static constexpr uint64_t RPC_IDENTITY          = 200;
+static constexpr uint64_t RPC_STATE             = 201;
+static constexpr uint64_t RPC_TX_STORE          = 202;
+static constexpr uint64_t RPC_TX_STORE_SYNC     = 203;
+static constexpr uint64_t RPC_SLICE_STORE       = 204;
+static constexpr uint64_t RPC_SLICE_STORE_SYNC  = 205;
+static constexpr uint64_t RPC_CONTROLLER        = 206;
 static constexpr uint64_t RPC_EXECUTION_MANAGER = 207;
-static constexpr uint64_t RPC_EXECUTOR = 208;
-static constexpr uint64_t RPC_P2P_RESOLVER = 209;
+static constexpr uint64_t RPC_EXECUTOR          = 208;
+static constexpr uint64_t RPC_P2P_RESOLVER      = 209;
 
-
-} // namespace fetch
+}  // namespace fetch

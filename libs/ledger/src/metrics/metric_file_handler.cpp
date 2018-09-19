@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
 #include "ledger/metrics/metric_file_handler.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include <fstream>
 
@@ -27,37 +27,37 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-  char const *ToString(MetricHandler::Instrument instrument)
+char const *ToString(MetricHandler::Instrument instrument)
+{
+  switch (instrument)
   {
-    switch (instrument)
-    {
-      case MetricHandler::Instrument::TRANSACTION:
-        return "transaction";
-      default:
-        return "unknown";
-    }
+  case MetricHandler::Instrument::TRANSACTION:
+    return "transaction";
+  default:
+    return "unknown";
   }
+}
 
-  char const *ToString(MetricHandler::Event event)
+char const *ToString(MetricHandler::Event event)
+{
+  switch (event)
   {
-    switch (event)
-    {
-      case MetricHandler::Event::SUBMITTED:
-        return "submitted";
-      case MetricHandler::Event::QUEUED:
-        return "queued";
-      case MetricHandler::Event::PACKED:
-        return "packed";
-      case MetricHandler::Event::EXECUTION_STARTED:
-        return "exec-started";
-      case MetricHandler::Event::EXECUTION_COMPLETE:
-        return "exec-complete";
-      default:
-        return "unknown";
-    }
+  case MetricHandler::Event::SUBMITTED:
+    return "submitted";
+  case MetricHandler::Event::QUEUED:
+    return "queued";
+  case MetricHandler::Event::PACKED:
+    return "packed";
+  case MetricHandler::Event::EXECUTION_STARTED:
+    return "exec-started";
+  case MetricHandler::Event::EXECUTION_COMPLETE:
+    return "exec-complete";
+  default:
+    return "unknown";
   }
+}
 
-} // namespace
+}  // namespace
 
 MetricFileHandler::MetricFileHandler(std::string filename)
   : filename_(std::move(filename))
@@ -75,10 +75,8 @@ MetricFileHandler::~MetricFileHandler()
   worker_ = std::thread{};
 }
 
-void MetricFileHandler::RecordMetric(ConstByteArray const &identifier,
-                                     Instrument instrument,
-                                     Event event,
-                                     Timestamp const &timestamp)
+void MetricFileHandler::RecordMetric(ConstByteArray const &identifier, Instrument instrument,
+                                     Event event, Timestamp const &timestamp)
 {
   // add the entry to the stack
   {
@@ -100,7 +98,7 @@ void MetricFileHandler::ThreadEntryPoint()
 
   // main processing loop
   std::mutex mutex;
-  Entry current;
+  Entry      current;
   while (active_)
   {
     // extract an entry from the stack or wait for one to be available
@@ -121,13 +119,11 @@ void MetricFileHandler::ThreadEntryPoint()
       }
     }
     // generate the CSV entry
-    output_file << current.timestamp.time_since_epoch().count()
-                << ',' << ToString(current.instrument)
-                << ',' << ToString(current.event)
-                << ',' << ToBase64(current.identifier)
-                << std::endl;
+    output_file << current.timestamp.time_since_epoch().count() << ','
+                << ToString(current.instrument) << ',' << ToString(current.event) << ','
+                << ToBase64(current.identifier) << std::endl;
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

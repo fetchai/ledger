@@ -172,7 +172,7 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   // generate a block with the desired lane and slice configuration
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Num transactions: ", block.num_transactions);
+  FETCH_LOG_INFO(LOGGING_NAME, "Num transactions: ", block.num_transactions);
   EXPECT_GT(block.num_transactions, 0);
 
   // start the execution manager

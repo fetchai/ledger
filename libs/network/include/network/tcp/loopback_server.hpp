@@ -83,7 +83,7 @@ class LoopbackServer
 {
 public:
   static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
-  static constexpr char const *LOGGING_NAME = "LoopbackServer";
+  static constexpr char const *LOGGING_NAME        = "LoopbackServer";
 
   explicit LoopbackServer(uint16_t port, std::size_t num_threads = DEFAULT_NUM_THREADS)
     : port_{port}
@@ -140,7 +140,7 @@ private:
           }
           else
           {
-            FETCH_LOG_INFO(LOGGING_NAME,"Error in loopback server: ", ec.message());
+            FETCH_LOG_INFO(LOGGING_NAME, "Error in loopback server: ", ec.message());
           }
 
           Accept();

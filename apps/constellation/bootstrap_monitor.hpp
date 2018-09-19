@@ -36,17 +36,22 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using UriList = Constellation::UriList;
+  using UriList  = Constellation::UriList;
   using Identity = crypto::Identity;
 
   BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id)
-    : network_id_(network_id), port_(port), identity_(identity)
+    : network_id_(network_id)
+    , port_(port)
+    , identity_(identity)
   {}
 
   bool Start(UriList &peers);
   void Stop();
 
-  std::string const &external_address() const { return external_address_; }
+  std::string const &external_address() const
+  {
+    return external_address_;
+  }
 
 private:
   using IoService      = asio::io_service;

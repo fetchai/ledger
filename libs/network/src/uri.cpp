@@ -21,7 +21,6 @@
 #include <regex>
 #include <stdexcept>
 
-
 namespace fetch {
 namespace network {
 
@@ -49,7 +48,7 @@ bool Uri::Parse(ConstByteArray const &uri)
   std::regex_match(data, matches, URI_FORMAT);
   if (matches.size() == 3)
   {
-    std::string const &scheme = matches[1];
+    std::string const &scheme    = matches[1];
     std::string const &authority = matches[2];
 
     if (scheme == "tcp")
@@ -75,5 +74,5 @@ bool Uri::Parse(ConstByteArray const &uri)
   return success;
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch

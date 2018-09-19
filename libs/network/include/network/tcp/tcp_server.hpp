@@ -69,7 +69,7 @@ public:
   bool has_requests();
 
   Request Top();
-  void Pop();
+  void    Pop();
 
   std::string GetAddress(connection_handle_type const &client);
 
@@ -86,7 +86,6 @@ public:
   }
 
 private:
-
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor);
 
   network_manager_type                      network_manager_;

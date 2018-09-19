@@ -22,19 +22,16 @@
 namespace fetch {
 namespace p2p {
 
-
 /*******
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
 
-
-class P2PManagedLocalServiceStateMachine
-  : public network::AtomicStateMachine
+class P2PManagedLocalServiceStateMachine : public network::AtomicStateMachine
 {
 public:
-
-  enum {
+  enum
+  {
     INITIAL = 0,
     KNOWN_ALIVE,
     RESET,
@@ -53,9 +50,7 @@ public:
   }
 
 private:
-  
 };
 
-
-}
-}
+}  // namespace p2p
+}  // namespace fetch

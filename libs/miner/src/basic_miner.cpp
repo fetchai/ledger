@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include "miner/basic_miner.hpp"
+#include "core/logger.hpp"
 #include "miner/resource_mapper.hpp"
 
 #include <algorithm>
@@ -41,7 +41,7 @@ T Clip3(T value, T min_value, T max_value)
   return std::min(std::max(value, min_value), max_value);
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Construct a transaction entry for the queue
@@ -49,7 +49,8 @@ T Clip3(T value, T min_value, T max_value)
  * @param summary The reference to the transaction
  * @param log2_num_lanes The log2 of the number of lanes
  */
-BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &summary, uint32_t log2_num_lanes)
+BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &summary,
+                                               uint32_t                         log2_num_lanes)
   : resources{1u << log2_num_lanes}
   , transaction{summary}
 
@@ -75,8 +76,7 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_}
-{
-}
+{}
 
 /**
  * Add the specified transaction (summary) to the internal queue
@@ -96,7 +96,8 @@ void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
  * @param num_lanes The number of lanes for the block
  * @param num_slices The number of slices for the block
  */
-void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
+void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
+                               std::size_t num_slices)
 {
   assert(num_lanes == (1u << log2_num_lanes_));
 
@@ -110,10 +111,11 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
 
   std::size_t const num_transactions = main_queue_.size();
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Starting block packing (Backlog: ", num_transactions, ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
 
   // determine how many of the threads should be used in this block generation
-  std::size_t const num_threads = Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
+  std::size_t const num_threads =
+      Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
   block.slices.resize(num_slices);
@@ -158,19 +160,22 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, s
 
   std::size_t const packed_transactions = num_transactions - main_queue_.size();
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Finished block packing (packed: ", packed_transactions, " remaining: ", main_queue_.size(), ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
+                 " remaining: ", main_queue_.size(), ")");
 }
 
 /**
  * Internal: Generate a selection of slices
  *
- * @param tx The reference to the transaction list to be used when generating the selection of slices
-  * @param block The reference to the block to populate
+ * @param tx The reference to the transaction list to be used when generating the selection of
+ * slices
+ * @param block The reference to the block to populate
  * @param offset The slice index offset to start from
  * @param interval The slice index interval to be used when selecting the next slice to populate
  * @param num_lanes The number of lanes of the block
  */
-void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset, std::size_t interval, std::size_t num_lanes)
+void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset,
+                                std::size_t interval, std::size_t num_lanes)
 {
   // sort the transaction list by fees
   tx.sort(SortByFee);
@@ -192,7 +197,8 @@ void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, st
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice, std::size_t slice_index, std::size_t num_lanes)
+void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice,
+                               std::size_t slice_index, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};
 
@@ -240,5 +246,5 @@ bool BasicMiner::SortByFee(TransactionEntry const &a, TransactionEntry const &b)
   return a.transaction.fee > b.transaction.fee;
 }
 
-} // namespace miner
-} // namespace fetch
+}  // namespace miner
+}  // namespace fetch

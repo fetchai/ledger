@@ -65,6 +65,6 @@ void Server::PushRequest(ConnectionHandle client, network::message_type const &m
 }
 #endif
 
-} // namespace rpc
-} // namespace muddle
-} // namespace fetch
+}  // namespace rpc
+}  // namespace muddle
+}  // namespace fetch

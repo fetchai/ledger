@@ -23,20 +23,18 @@
 namespace fetch {
 namespace p2p {
 
-
 /*******
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
 
-
 class P2PManagedLocalService
 {
 public:
-  using Uri = network::Uri;
-  using ServiceType = network::ServiceType;
+  using Uri               = network::Uri;
+  using ServiceType       = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
-  using Peers = std::unordered_set<Uri>;
+  using Peers             = std::unordered_set<Uri>;
 
   static constexpr char const *LOGGING_NAME = "P2PManagedLocalService";
 
@@ -44,8 +42,7 @@ public:
   P2PManagedLocalService(Uri uri, ServiceIdentifier service_identifier)
     : uri_(std::move(uri))
     , service_identifier_(service_identifier)
-  {
-  }
+  {}
 
   virtual ~P2PManagedLocalService() = default;
 
@@ -60,8 +57,7 @@ public:
   }
 
   virtual void Refresh()
-  {
-  }
+  {}
 
   const std::unordered_set<Uri> &peers() const
   {
@@ -70,16 +66,15 @@ public:
 
   uint32_t instance_number() const
   {
-    return service_identifier_ . instance_number;
+    return service_identifier_.instance_number;
   }
 
 private:
   P2PManagedLocalServiceStateMachine state_;
-  Uri uri_;
-  ServiceIdentifier service_identifier_;
-  Peers peers_;
+  Uri                                uri_;
+  ServiceIdentifier                  service_identifier_;
+  Peers                              peers_;
 };
 
-
-}
-}
+}  // namespace p2p
+}  // namespace fetch

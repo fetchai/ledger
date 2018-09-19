@@ -34,18 +34,17 @@ class Subscription
 public:
   using Address = Packet::Address;
   using Payload = Packet::Payload;
-  using Handle = uint64_t;
-  using MessageCallback = std::function<
-    void(Address const &,uint16_t, uint16_t, uint16_t, Packet::Payload const &)
-  >;
+  using Handle  = uint64_t;
+  using MessageCallback =
+      std::function<void(Address const &, uint16_t, uint16_t, uint16_t, Packet::Payload const &)>;
   using Mutex = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
 
   // Construction / Destruction
-  Subscription() = default;
+  Subscription()                     = default;
   Subscription(Subscription const &) = delete;
-  Subscription(Subscription &&) = delete;
+  Subscription(Subscription &&)      = delete;
   ~Subscription();
 
   // Operators
@@ -53,15 +52,11 @@ public:
   Subscription &operator=(Subscription &&) = delete;
 
   void SetMessageHandler(MessageCallback const &cb);
-  void Dispatch(Address const &from,
-                uint16_t service,
-                uint16_t channel,
-                uint16_t counter,
+  void Dispatch(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
                 Payload const &payload) const;
 
 private:
-
-  mutable Mutex callback_lock_{__LINE__, __FILE__};
+  mutable Mutex   callback_lock_{__LINE__, __FILE__};
   MessageCallback callback_;
 };
 
@@ -94,7 +89,8 @@ inline void Subscription::SetMessageHandler(MessageCallback const &cb)
  * @param channel The channel identifier
  * @param payload The payload of the message
  */
-inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload) const
+inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel,
+                                   uint16_t counter, Payload const &payload) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
 
@@ -109,5 +105,5 @@ inline void Subscription::Dispatch(Address const &address, uint16_t service, uin
   }
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -46,14 +46,14 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  using ServiceClient       = service::ServiceClient;
-  using SharedServiceClient = std::shared_ptr<ServiceClient>;
-  using WeakServiceClient   = std::weak_ptr<ServiceClient>;
+  using ServiceClient        = service::ServiceClient;
+  using SharedServiceClient  = std::shared_ptr<ServiceClient>;
+  using WeakServiceClient    = std::weak_ptr<ServiceClient>;
   using SharedServiceClients = std::vector<SharedServiceClient>;
-  using ClientRegister      = fetch::network::ConnectionRegister<ClientDetails>;
-  using Handle              = ClientRegister::connection_handle_type;
-  using NetworkManager      = fetch::network::NetworkManager;
-  using LaneIndex           = LaneIdentity::lane_type;
+  using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
+  using Handle               = ClientRegister::connection_handle_type;
+  using NetworkManager       = fetch::network::NetworkManager;
+  using LaneIndex            = LaneIdentity::lane_type;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -109,7 +109,8 @@ public:
 
     if (connection_timeout)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
       client->Close();
       client.reset();
       return {};
@@ -123,7 +124,7 @@ public:
     FETCH_LOG_PROMISE();
     if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Client timeout when trying to get identity details.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Client timeout when trying to get identity details.");
       client->Close();
       client.reset();
       return {};
@@ -200,9 +201,8 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise =
-        lanes_[lane]->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET,
-                           key.as_resource_id());
+    auto promise = lanes_[lane]->Call(
+        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET, key.as_resource_id());
 
     return promise->As<storage::Document>();
   }
@@ -211,9 +211,8 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(RPC_STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::LOCK,
-                                      key.as_resource_id());
+    auto promise = lanes_[lane]->Call(
+        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, key.as_resource_id());
 
     return promise->As<bool>();
   }
@@ -222,9 +221,8 @@ public:
   {
     std::size_t lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(RPC_STATE,
-                                      fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK,
-                                      key.as_resource_id());
+    auto promise = lanes_[lane]->Call(
+        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, key.as_resource_id());
 
     return promise->As<bool>();
   }
@@ -313,16 +311,15 @@ public:
   }
 
 private:
-
   void SetLaneLog2(LaneIndex count)
   {
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  NetworkManager        network_manager_;
-  uint32_t              log2_lanes_ = 0;
-  ClientRegister        register_;
-  SharedServiceClients  lanes_;
+  NetworkManager       network_manager_;
+  uint32_t             log2_lanes_ = 0;
+  ClientRegister       register_;
+  SharedServiceClients lanes_;
 };
 
 }  // namespace ledger

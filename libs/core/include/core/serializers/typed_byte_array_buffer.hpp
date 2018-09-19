@@ -24,7 +24,6 @@
 #include "core/serializers/exception.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
-#include "core/serializers/exception.hpp"
 #include <type_traits>
 
 namespace fetch {
@@ -36,7 +35,7 @@ public:
   using byte_array_type = byte_array::ByteArray;
 
   static constexpr char const *LOGGING_NAME = "TypedByteArrayBuffer";
-  
+
   TypedByteArrayBuffer()
   {
     detailed_assert(size() == 0);
@@ -121,9 +120,9 @@ public:
     if (TypeRegister<T>::value != type)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Serializer at position ", pos_, " out of ", data_.size());
-      FETCH_LOG_ERROR(LOGGING_NAME,byte_array_type("Expected type '") + TypeRegister<T>::name() +
-                          byte_array_type("' differs from deserialized type '") +
-                          ErrorCodeToMessage(type) + byte_array_type("'"));
+      FETCH_LOG_ERROR(LOGGING_NAME, byte_array_type("Expected type '") + TypeRegister<T>::name() +
+                                        byte_array_type("' differs from deserialized type '") +
+                                        ErrorCodeToMessage(type) + byte_array_type("'"));
 
       throw SerializableException(error::TYPE_ERROR,
                                   byte_array_type("Expected type '") + TypeRegister<T>::name() +

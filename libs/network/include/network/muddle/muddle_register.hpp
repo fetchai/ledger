@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 
-#include <thread>
 #include <functional>
+#include <thread>
 #include <unordered_map>
 
 namespace fetch {
@@ -37,20 +37,20 @@ class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
   // TODO(EJF): Apply globally
-  using ConnectionHandle = connection_handle_type;
-  using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
-  using ConnectionMap = std::unordered_map<ConnectionHandle, ConnectionPtr>;
+  using ConnectionHandle      = connection_handle_type;
+  using ConnectionPtr         = std::weak_ptr<network::AbstractConnection>;
+  using ConnectionMap         = std::unordered_map<ConnectionHandle, ConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
-  using ConstByteArray = byte_array::ConstByteArray;
-  using Mutex = mutex::Mutex;
+  using ConstByteArray        = byte_array::ConstByteArray;
+  using Mutex                 = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
   MuddleRegister(Dispatcher &dispatcher);
   MuddleRegister(MuddleRegister const &) = delete;
-  MuddleRegister(MuddleRegister &&) = delete;
-  ~MuddleRegister() = default;
+  MuddleRegister(MuddleRegister &&)      = delete;
+  ~MuddleRegister()                      = default;
 
   // Operators
   MuddleRegister &operator=(MuddleRegister const &) = delete;
@@ -61,11 +61,10 @@ public:
   void VisitConnectionMap(ConnectionMapCallback const &cb);
   /// @}
 
-  void Broadcast(ConstByteArray const &data) const;
+  void          Broadcast(ConstByteArray const &data) const;
   ConnectionPtr LookupConnection(ConnectionHandle handle) const;
 
 protected:
-
   /// @name Connection Event Handlers
   /// @{
   void Enter(ConnectionPtr const &ptr) override;
@@ -73,11 +72,10 @@ protected:
   /// @}
 
 private:
-
   mutable Mutex connection_map_lock_{__LINE__, __FILE__};
   ConnectionMap connection_map_;
-  Dispatcher   &dispatcher_;
+  Dispatcher &  dispatcher_;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

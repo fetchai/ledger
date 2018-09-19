@@ -22,14 +22,6 @@ namespace fetch {
 
 namespace network {
 
-  const char *Manifest::service_type_names[] =
-  {
-    "MAINCHAIN",
-    "LANE",
-    "P2P",
-    "HTTP",
-    0
-  };
-
+const char *Manifest::service_type_names[] = {"MAINCHAIN", "LANE", "P2P", "HTTP", 0};
 }
-}
+}  // namespace fetch

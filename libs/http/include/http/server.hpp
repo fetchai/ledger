@@ -98,28 +98,26 @@ public:
     network_manager_type &        threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      FETCH_LOG_INFO(LOGGING_NAME,"Starting HTTPServer on http://127.0.0.1:", port);
+      FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
 
       // TODO(issue 28) : fix this hack
       network_manager_type tm  = threadMan;
       auto                 soc = threadMan.CreateIO<socket_type>();
 
       auto accep =
-             threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
 
       // allow initiating class to post closes to these
       socRef   = soc;
       accepRef = accep;
 
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer Accept");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer Accept");
       HTTPServer::Accept(soc, accep, manager);
     });
   }
 
   void Stop()
-  {
-
-  }
+  {}
 
   void PushRequest(handle_type client, HTTPRequest req) override
   {
@@ -185,7 +183,7 @@ public:
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"HTTP server terminated with ec: ", ec.message());
+        FETCH_LOG_INFO(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
         return;
       }
 
@@ -196,7 +194,7 @@ public:
       HTTPServer::Accept(s, a, m);
     };
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Starting HTTPServer async accept");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting HTTPServer async accept");
     accep->async_accept(*soc, cb);
   }
 

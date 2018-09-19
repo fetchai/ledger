@@ -91,17 +91,16 @@ public:
   {
     return signature_.hash();
   }
-  
+
   byte_array_type signature() final override
   {
     return signature_.signature();
-  
   }
   byte_array_type public_key() const
   {
     return private_key_.publicKey().keyAsBin();
   }
-  
+
   byte_array_type private_key()
   {
     return private_key_.KeyAsBin();

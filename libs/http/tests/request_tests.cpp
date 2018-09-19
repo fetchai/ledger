@@ -26,4 +26,5 @@ class RequestTests : public ::testing::Test
 protected:
 };
 
-TEST_F(RequestTests, Sample) {}
+TEST_F(RequestTests, Sample)
+{}

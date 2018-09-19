@@ -32,7 +32,7 @@ class AbstractHTTPConnection
 public:
   using shared_type = std::shared_ptr<AbstractHTTPConnection>;
 
-  AbstractHTTPConnection() = default;
+  AbstractHTTPConnection()          = default;
   virtual ~AbstractHTTPConnection() = default;
 
   virtual void        Send(HTTPResponse const &) = 0;

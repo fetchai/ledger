@@ -159,7 +159,7 @@ Contract::Status TokenContract::Balance(query_type const &query, query_type &res
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Incorrect parameters to balance query");
+    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect parameters to balance query");
   }
 
   return status;

@@ -81,15 +81,15 @@ public:
 
     {
       std::lock_guard<mutex::Mutex> lock(service_lock_);
-      for(auto &item : services_)
+      for (auto &item : services_)
       {
         keys.push_back(item);
       }
     }
 
-    for(auto &item : keys)
+    for (auto &item : keys)
     {
-      auto k = item.first;
+      auto                          k = item.first;
       std::lock_guard<mutex::Mutex> lock(service_lock_);
       if (services_.find(k) != services_.end())
       {
@@ -98,29 +98,30 @@ public:
     }
   }
 
-  void VisitServiceClients(std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  void VisitServiceClients(
+      std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"About to visit ", services_.size(), " service clients");
+    FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
     std::list<service_map_type::value_type> keys;
 
     {
       std::lock_guard<mutex::Mutex> lock(service_lock_);
-      for(auto &item : services_)
+      for (auto &item : services_)
       {
         keys.push_back(item);
       }
     }
 
-    for(auto &item : keys)
+    for (auto &item : keys)
     {
       auto v = item.second.lock();
       if (v)
       {
-        auto k = item.first;
+        auto                          k = item.first;
         std::lock_guard<mutex::Mutex> lock(service_lock_);
         if (services_.find(k) != services_.end())
         {
-          f(k,v);
+          f(k, v);
         }
       }
     }

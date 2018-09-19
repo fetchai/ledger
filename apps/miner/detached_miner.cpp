@@ -403,7 +403,9 @@ int main(int argc, char **argv)
   for (std::size_t i = 0; i < reps; ++i)
   {
     generator.Reset();
-    generator.GenerateBlock(lane_count, slice_count, static_cast<chain::BlockGenerator::Strategy>(strategy), batch_size, explore);
+    generator.GenerateBlock(lane_count, slice_count,
+                            static_cast<chain::BlockGenerator::Strategy>(strategy), batch_size,
+                            explore);
 
     if (print_solution)
     {

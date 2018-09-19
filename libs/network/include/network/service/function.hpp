@@ -163,7 +163,6 @@ private:
   using function_type = std::function<R()>;
 
 public:
-
   static constexpr char const *LOGGING_NAME = "Function<R()>";
 
   Function(function_type value)
@@ -199,7 +198,6 @@ private:
   using function_type = std::function<void()>;
 
 public:
-
   static constexpr char const *LOGGING_NAME = "Function<void()>";
 
   Function(function_type value)

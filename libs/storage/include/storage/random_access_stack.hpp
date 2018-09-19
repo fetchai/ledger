@@ -55,7 +55,6 @@ template <typename T, typename D = uint64_t>
 class RandomAccessStack
 {
 private:
-
   static constexpr char const *LOGGING_NAME = "RandomAccessStack";
 
   /**

@@ -40,12 +40,11 @@ class ServiceClientInterface
 {
   class Subscription;
 
-  using subscription_mutex_type = fetch::mutex::Mutex;
+  using subscription_mutex_type      = fetch::mutex::Mutex;
   using subscription_mutex_lock_type = std::lock_guard<subscription_mutex_type>;
-  using subscriptions_type = std::unordered_map<subscription_handler_type, Subscription>;
+  using subscriptions_type           = std::unordered_map<subscription_handler_type, Subscription>;
 
 public:
-
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
 
   // Construction / Destruction
@@ -57,9 +56,9 @@ public:
                arguments &&... args)
   {
     LOG_STACK_TRACE_POINT;
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Service Client Calling ", protocol, ":", function);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
-    Promise         prom = MakePromise(protocol, function);
+    Promise prom = MakePromise(protocol, function);
 
     serializer_type params;
 
@@ -72,7 +71,8 @@ public:
 
     params << SERVICE_FUNCTION_CALL << prom->id();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':', function, " (call)", &promises_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
+                   function, " (call)", &promises_);
 
     AddPromise(prom);
 
@@ -80,11 +80,13 @@ public:
 
     if (!DeliverRequest(params.data()))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(), " failed!");
+      FETCH_LOG_INFO(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(),
+                     " failed!");
       prom->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Binning promise ", prom->id(), " due to inability to deliver request");
+      FETCH_LOG_INFO(LOGGING_NAME, "Binning promise ", prom->id(),
+                     " due to inability to deliver request");
 
       RemovePromise(prom->id());
     }
@@ -104,11 +106,10 @@ public:
   /// @{
   subscription_handler_type Subscribe(protocol_handler_type const &protocol,
                                       feed_handler_type const &feed, AbstractCallable *callback);
-  void Unsubscribe(subscription_handler_type id);
+  void                      Unsubscribe(subscription_handler_type id);
   /// @}
 
 protected:
-
   virtual bool DeliverRequest(network::message_type const &request) = 0;
 
   void ClearPromises();
@@ -116,7 +117,6 @@ protected:
   void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);
 
 private:
-
   subscription_handler_type CreateSubscription(protocol_handler_type const &protocol,
                                                feed_handler_type const &feed, AbstractCallable *cb);
 
@@ -155,10 +155,10 @@ private:
     AbstractCallable *    callback = nullptr;
   };
 
-  void AddPromise(Promise const &promise);
+  void    AddPromise(Promise const &promise);
   Promise LookupPromise(PromiseCounter id);
   Promise ExtractPromise(PromiseCounter id);
-  void RemovePromise(PromiseCounter id);
+  void    RemovePromise(PromiseCounter id);
 
   subscriptions_type                   subscriptions_;
   std::list<subscription_handler_type> cancelled_subscriptions_;

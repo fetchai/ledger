@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_register.hpp"
+#include "network/management/abstract_connection.hpp"
 #include "network/muddle/dispatcher.hpp"
 
 namespace fetch {
@@ -30,8 +30,7 @@ namespace muddle {
  */
 MuddleRegister::MuddleRegister(Dispatcher &dispatcher)
   : dispatcher_(dispatcher)
-{
-}
+{}
 
 /**
  * Execute a specified callback over all elements of the connection map
@@ -107,9 +106,10 @@ void MuddleRegister::Enter(ConnectionPtr const &ptr)
     FETCH_LOG_INFO(LOGGING_NAME, "Trying to update an existing connection ID");
     return;
   }
-#endif // !NDEBUG
+#endif  // !NDEBUG
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", strong_conn->handle(), " started type: ", strong_conn->Type());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", strong_conn->handle(),
+                  " started type: ", strong_conn->Type());
 
   // update
   connection_map_[strong_conn->handle()] = ptr;
@@ -134,9 +134,10 @@ void MuddleRegister::Leave(connection_handle_type id)
     }
   }
 
-  // inform the dispatcher that the connection has failed (this can clear up all of the pending promises)
+  // inform the dispatcher that the connection has failed (this can clear up all of the pending
+  // promises)
   dispatcher_.NotifyConnectionFailure(id);
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

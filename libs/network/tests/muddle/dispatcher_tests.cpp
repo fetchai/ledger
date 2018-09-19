@@ -24,12 +24,11 @@
 class DispatcherTests : public ::testing::Test
 {
 protected:
-
-  using Packet = fetch::muddle::Packet;
-  using PacketPtr = std::shared_ptr<Packet>;
-  using Payload = Packet::Payload;
-  using Dispatcher = fetch::muddle::Dispatcher;
-  using Promise = Dispatcher::Promise;
+  using Packet        = fetch::muddle::Packet;
+  using PacketPtr     = std::shared_ptr<Packet>;
+  using Payload       = Packet::Payload;
+  using Dispatcher    = fetch::muddle::Dispatcher;
+  using Promise       = Dispatcher::Promise;
   using DispatcherPtr = std::unique_ptr<Dispatcher>;
 
   void SetUp() override
@@ -37,7 +36,8 @@ protected:
     dispatcher_ = std::make_unique<Dispatcher>();
   }
 
-  PacketPtr CreatePacket(uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload)
+  PacketPtr CreatePacket(uint16_t service, uint16_t channel, uint16_t counter,
+                         Payload const &payload)
   {
     PacketPtr packet = std::make_shared<Packet>();
     packet->SetService(service);
@@ -55,8 +55,8 @@ TEST_F(DispatcherTests, CheckExchange)
   // register the exchange
   Promise prom = dispatcher_->RegisterExchange(1, 2, 3);
 
-  Payload response("hello");
-  PacketPtr packet = CreatePacket(1,2,3, response);
+  Payload   response("hello");
+  PacketPtr packet = CreatePacket(1, 2, 3, response);
 
   dispatcher_->Dispatch(packet);
 

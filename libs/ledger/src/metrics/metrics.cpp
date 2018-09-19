@@ -33,14 +33,14 @@ void Metrics::ConfigureFileHandler(std::string filename)
   SetMetricHandler(new MetricFileHandler(std::move(filename)));
 }
 
-void Metrics::SetMetricHandler(MetricHandler* handler)
+void Metrics::SetMetricHandler(MetricHandler *handler)
 {
-  MetricHandler* old_handler = handler_.exchange(handler);
+  MetricHandler *old_handler = handler_.exchange(handler);
   if (old_handler)
   {
     delete old_handler;
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

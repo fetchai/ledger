@@ -106,7 +106,6 @@ public:
     proof_.SetHeader(body_.hash);
   }
 
-
   body_type const &body() const
   {
     return body_;

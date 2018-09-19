@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "network/uri.hpp"
-#include "network/muddle/muddle.hpp"
 #include "crypto/fnv.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -32,19 +32,19 @@ namespace p2p {
 class IdentityCache
 {
 public:
-  using Address = muddle::Muddle::Address;
+  using Address       = muddle::Muddle::Address;
   using ConnectionMap = muddle::Muddle::ConnectionMap;
-  using Uri = network::Uri;
-  using Clock = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using Mutex = mutex::Mutex;
-  using AddressSet = std::unordered_set<Address>;
+  using Uri           = network::Uri;
+  using Clock         = std::chrono::steady_clock;
+  using Timepoint     = Clock::time_point;
+  using Mutex         = mutex::Mutex;
+  using AddressSet    = std::unordered_set<Address>;
 
   struct CacheElement
   {
-    Uri uri;
+    Uri       uri;
     Timepoint last_update = Clock::now();
-    bool resolve{false};
+    bool      resolve{false};
 
     CacheElement(Uri uri)
       : uri(std::move(uri))
@@ -54,15 +54,15 @@ public:
   using Cache = std::unordered_map<Address, CacheElement>;
 
   // Construction / Destruction
-  IdentityCache() = default;
+  IdentityCache()                      = default;
   IdentityCache(IdentityCache const &) = delete;
-  IdentityCache(IdentityCache &&) = delete;
-  ~IdentityCache() = default;
+  IdentityCache(IdentityCache &&)      = delete;
+  ~IdentityCache()                     = default;
 
   // Queries and Updates
-  void Update(ConnectionMap const &connections);
-  void Update(Address const &address, Uri const &uri);
-  bool Lookup(Address const &address, Uri &uri) const;
+  void       Update(ConnectionMap const &connections);
+  void       Update(Address const &address, Uri const &uri);
+  bool       Lookup(Address const &address, Uri &uri) const;
   AddressSet FilterOutUnresolved(AddressSet const &addresses);
 
   void VisitCache(std::function<void(Cache const &)> cb) const
@@ -79,12 +79,11 @@ public:
   IdentityCache &operator=(IdentityCache &&) = delete;
 
 private:
-
   void UpdateInternal(Address const &address, Uri const &uri);
 
   mutable Mutex lock_{__LINE__, __FILE__};
-  Cache cache_;
+  Cache         cache_;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

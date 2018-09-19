@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include <cstdint>
 #include <iostream>
 #include <string>
-#include "core/logger.hpp"
 
 namespace fetch {
 namespace network {
@@ -30,7 +30,9 @@ class Peer
 public:
   // Construction / Destruction
   Peer() = default;
-  Peer(char const *address) : Peer(std::string{address}) {}
+  Peer(char const *address)
+    : Peer(std::string{address})
+  {}
   Peer(std::string const &address);
   Peer(std::string address, uint16_t port)
     : address_{std::move(address)}
@@ -126,13 +128,13 @@ inline std::ostream &operator<<(std::ostream &s, Peer const &peer)
 
 namespace std {
 
-template<>
+template <>
 struct hash<fetch::network::Peer>
 {
-  std::size_t operator()(fetch::network::Peer const& peer) const noexcept
+  std::size_t operator()(fetch::network::Peer const &peer) const noexcept
   {
     return std::hash<std::string>{}(peer.ToString());
   }
 };
 
-} // namespace std
+}  // namespace std

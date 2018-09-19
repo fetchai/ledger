@@ -22,17 +22,17 @@
 
 namespace fetch {
 namespace service {
-  
+
 void FeedSubscriptionManager::PublishingProcessor()
 {
   std::vector<publishing_workload_type> my_work;
   publishing_workload_.Get(my_work, 16);
-  std::list<std::tuple<service_type*, connection_handle_type>> dead_connections;
-  for(auto &w : my_work)
+  std::list<std::tuple<service_type *, connection_handle_type>> dead_connections;
+  for (auto &w : my_work)
   {
-    service_type *service = std::get<0>(w);
+    service_type *         service       = std::get<0>(w);
     connection_handle_type client_number = std::get<1>(w);
-    network::message_type msg = std::get<2>(w);
+    network::message_type  msg           = std::get<2>(w);
     if (!service->DeliverResponse(client_number, msg.Copy()))
     {
       dead_connections.push_back(std::make_tuple(service, client_number));
@@ -40,67 +40,67 @@ void FeedSubscriptionManager::PublishingProcessor()
   }
   if (!dead_connections.empty())
   {
-    for(auto &w : dead_connections)
+    for (auto &w : dead_connections)
     {
-      service_type *service = std::get<0>(w);
+      service_type *         service       = std::get<0>(w);
       connection_handle_type client_number = std::get<1>(w);
-      service -> ConnectionDropped(client_number);
+      service->ConnectionDropped(client_number);
     }
   }
 
   if (publishing_workload_.Remaining())
   {
-    workers_ -> Post( [this](){ this-> PublishingProcessor(); } );
+    workers_->Post([this]() { this->PublishingProcessor(); });
   }
 }
 
-  void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
-  {
-    LOG_STACK_TRACE_POINT;
+void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
+{
+  LOG_STACK_TRACE_POINT;
 
-    auto feed = feed_;
-    FETCH_LOG_DEBUG(LOGGING_NAME,"OMG AttachToService", feed);
-    publisher_->create_publisher(feed_, [service,feed,this](fetch::byte_array::ConstByteArray const &msg) {
+  auto feed = feed_;
+  FETCH_LOG_DEBUG(LOGGING_NAME, "OMG AttachToService", feed);
+  publisher_->create_publisher(
+      feed_, [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
+        serializer_type params;
+        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG SERVICE_FEED", feed);
+        params << SERVICE_FEED << feed;
 
-      serializer_type params;
-      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG SERVICE_FEED", feed);
-      params << SERVICE_FEED << feed;
+        uint64_t p = params.Tell();
+        params << subscription_handler_type(0);  // placeholder
 
-      uint64_t p = params.Tell();
-      params << subscription_handler_type(0);  // placeholder
+        params.Allocate(msg.size());
+        params.WriteBytes(msg.pointer(), msg.size());
+        LOG_STACK_TRACE_POINT;
+        lock_type lock(subscribe_mutex_);
 
-      params.Allocate(msg.size());
-      params.WriteBytes(msg.pointer(), msg.size());
-      LOG_STACK_TRACE_POINT;
-      lock_type lock(subscribe_mutex_);
+        std::vector<publishing_workload_type> notifications_to_send;
+        notifications_to_send.reserve(16);
+        std::size_t i = 0;
 
-      std::vector<publishing_workload_type> notifications_to_send;
-      notifications_to_send.reserve(16);
-      std::size_t i=0;
+        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG sending to subscribers numbering:", subscribers_.size());
 
-      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG sending to subscribers numbering:", subscribers_.size());
-
-      while(i<subscribers_.size())
-      {
-        auto &s = subscribers_[i];
-        params.Seek(p);
-        params << s.id;
-
-        publishing_workload_type new_notification = std::make_tuple<>(service, s.client, params.data());
-        notifications_to_send.push_back(new_notification);
-
-        i++;
-        FETCH_LOG_DEBUG(LOGGING_NAME,"OMG PublishToAll AttachToService send ", s.id);
-        if ((i&0xF) == 0)
+        while (i < subscribers_.size())
         {
-          PublishAll(notifications_to_send);
+          auto &s = subscribers_[i];
+          params.Seek(p);
+          params << s.id;
+
+          publishing_workload_type new_notification =
+              std::make_tuple<>(service, s.client, params.data());
+          notifications_to_send.push_back(new_notification);
+
+          i++;
+          FETCH_LOG_DEBUG(LOGGING_NAME, "OMG PublishToAll AttachToService send ", s.id);
+          if ((i & 0xF) == 0)
+          {
+            PublishAll(notifications_to_send);
+          }
         }
-      }
-      PublishAll(notifications_to_send);
-      FETCH_LOG_DEBUG(LOGGING_NAME,"OMG publish backlog = ", publishing_workload_.size());
-    });
-
-  }
-
+        PublishAll(notifications_to_send);
+        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG publish backlog = ", publishing_workload_.size());
+      });
 }
-}
+
+}  // namespace service
+}  // namespace fetch

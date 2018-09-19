@@ -20,11 +20,11 @@
 #include "core/mutex.hpp"
 #include "ledger/metrics/metric_handler.hpp"
 
-#include <string>
-#include <vector>
 #include <atomic>
-#include <thread>
 #include <condition_variable>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -32,11 +32,10 @@ namespace ledger {
 class MetricFileHandler : public MetricHandler
 {
 public:
-
   // Construction / Destruction
   MetricFileHandler(std::string filename);
   MetricFileHandler(MetricHandler const &) = delete;
-  MetricFileHandler(MetricHandler &&) = delete;
+  MetricFileHandler(MetricHandler &&)      = delete;
   ~MetricFileHandler() override;
 
   /// @name Metric Handler Interface
@@ -50,29 +49,28 @@ public:
   MetricFileHandler &operator=(MetricFileHandler &&) = delete;
 
 private:
-
   static constexpr std::size_t BUFFER_SIZE = 2048;
 
   struct Entry
   {
     ConstByteArray identifier;
-    Instrument instrument;
-    Event event;
-    Timestamp timestamp;
+    Instrument     instrument;
+    Event          event;
+    Timestamp      timestamp;
   };
 
-  using Mutex = mutex::Mutex;
+  using Mutex      = mutex::Mutex;
   using EntryStack = std::vector<Entry>;
 
   void ThreadEntryPoint();
 
-  std::string const       filename_;                              ///< The filename for the output file
+  std::string const       filename_;  ///< The filename for the output file
   Mutex                   entry_stack_lock_{__LINE__, __FILE__};
-  std::condition_variable entry_stack_notify_;                    ///< The notification variable for
-  EntryStack              entry_stack_;                           ///< The stack of events that need to be generated
-  std::atomic<bool>       active_;                                ///< Active monitor thread
-  std::thread             worker_;                                ///< The worker thread
+  std::condition_variable entry_stack_notify_;  ///< The notification variable for
+  EntryStack              entry_stack_;         ///< The stack of events that need to be generated
+  std::atomic<bool>       active_;              ///< Active monitor thread
+  std::thread             worker_;              ///< The worker thread
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -22,9 +22,9 @@
 #include "network/muddle/router.hpp"
 #include "network/tcp/abstract_server.hpp"
 
+#include <memory>
 #include <type_traits>
 #include <utility>
-#include <memory>
 
 namespace fetch {
 namespace muddle {
@@ -41,13 +41,12 @@ class MuddleServer final : public NETWORK_SERVER
 {
 public:
   using connection_handle_type = network::AbstractNetworkServer::connection_handle_type;
-  using message_type = network::message_type;
-  using ByteArrayBuffer = serializers::ByteArrayBuffer;
+  using message_type           = network::message_type;
+  using ByteArrayBuffer        = serializers::ByteArrayBuffer;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
   static_assert(std::is_base_of<network::AbstractNetworkServer, NETWORK_SERVER>::value,
-    "The network server type must be of network::AbstractNetworkServer"
-  );
+                "The network server type must be of network::AbstractNetworkServer");
 
   static constexpr char const *LOGGING_NAME = "MuddleSrv";
 
@@ -60,21 +59,19 @@ public:
    * @param args The arguments for the underlying network server
    */
   template <typename... Args>
-  MuddleServer(Router &router, Args...args)
+  MuddleServer(Router &router, Args... args)
     : NETWORK_SERVER(args...)
     , router_(router)
-  {
-  }
+  {}
   MuddleServer(MuddleServer const &) = delete;
-  MuddleServer(MuddleServer &&) = delete;
-  ~MuddleServer() = default;
+  MuddleServer(MuddleServer &&)      = delete;
+  ~MuddleServer()                    = default;
 
   // Operators
   MuddleServer &operator=(MuddleServer const &) = delete;
   MuddleServer &operator=(MuddleServer &&) = delete;
 
 private:
-
   /**
    * Handles incoming request from the underlying network server.
    *
@@ -103,8 +100,8 @@ private:
     }
   }
 
-  Router &router_;    ///< The reference to the router to be used to dispatch the incoming requests
+  Router &router_;  ///< The reference to the router to be used to dispatch the incoming requests
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

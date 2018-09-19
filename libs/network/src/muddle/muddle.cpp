@@ -16,18 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/muddle/muddle.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "network/tcp/tcp_server.hpp"
-#include "network/tcp/tcp_client.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
-#include "network/muddle/muddle.hpp"
+#include "network/tcp/tcp_client.hpp"
+#include "network/tcp/tcp_server.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
@@ -42,7 +42,7 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
   return output;
 }
 
-static const auto CLEANUP_INTERVAL = std::chrono::seconds{10};
+static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 
 /**
@@ -59,8 +59,7 @@ Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   , router_(identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(network::MakeThreadPool(1))
   , clients_(router_)
-{
-}
+{}
 
 /**
  * Starts the muddle node and attaches it to the network
@@ -103,7 +102,7 @@ void Muddle::Stop()
 
   // tear down all the clients
   // TODO(EJF): Need to have a nice shutdown method
-  //clients_.clear();
+  // clients_.clear();
 }
 
 Muddle::ConnectionMap Muddle::GetConnections()
@@ -111,7 +110,7 @@ Muddle::ConnectionMap Muddle::GetConnections()
   ConnectionMap connection_map;
 
   auto const routing_table = router_.GetRoutingTable();
-  auto const uri_map = clients_.GetUriMap();
+  auto const uri_map       = clients_.GetUriMap();
 
   for (auto const &entry : routing_table)
   {
@@ -135,8 +134,6 @@ Muddle::ConnectionMap Muddle::GetConnections()
   return connection_map;
 }
 
-
-
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
@@ -149,14 +146,13 @@ void Muddle::RunPeriodicMaintenance()
   {
     switch (peer.scheme())
     {
-      case Uri::Scheme::Tcp:
-        CreateTcpClient(peer);
-        break;
-      default:
-        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-        break;
+    case Uri::Scheme::Tcp:
+      CreateTcpClient(peer);
+      break;
+    default:
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+      break;
     }
-
   }
 
   // run periodic cleanup
@@ -164,7 +160,8 @@ void Muddle::RunPeriodicMaintenance()
   if (time_since_last_cleanup >= CLEANUP_INTERVAL)
   {
     dispatcher_.Cleanup();
-    last_cleanup_ = Clock::now();;
+    last_cleanup_ = Clock::now();
+    ;
   }
 
   // schedule the main
@@ -186,8 +183,7 @@ void Muddle::CreateTcpServer(uint16_t port)
 
   // mark the server as managed by the register
   server->SetConnectionRegister(
-    std::static_pointer_cast<network::AbstractConnectionRegister>(register_)
-  );
+      std::static_pointer_cast<network::AbstractConnectionRegister>(register_));
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Start about to start server on port: ", port);
 
@@ -204,7 +200,7 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
-  using ClientImpl = network::TCPClient;
+  using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
   ClientImpl client(network_manager_);
@@ -226,9 +222,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() {
-    clients_.OnConnectionEstablished(peer);
-  });
+  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
@@ -254,7 +248,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
     }
     catch (std::exception &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle, " error: ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle,
+                      " error: ", ex.what());
     }
   });
 
@@ -291,5 +286,5 @@ void Muddle::CreateTcpClient(Uri const &peer)
 #endif
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

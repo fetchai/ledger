@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
+#include "network/muddle/router.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "network/muddle/packet.hpp"
-#include "network/muddle/router.hpp"
-#include "network/muddle/muddle_register.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "network/muddle/dispatcher.hpp"
+#include "network/muddle/muddle_register.hpp"
+#include "network/muddle/packet.hpp"
 
 #include <memory>
 #include <random>
@@ -139,12 +139,8 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, uint16_t service, ui
  * @param payload The reference to the payload to be send
  * @return A new packet with common field populated
  */
-Router::PacketPtr FormatPacket(Packet::Address const &from,
-                               uint16_t service,
-                               uint16_t channel,
-                               uint16_t counter,
-                               uint8_t ttl,
-                               Packet::Payload const &payload)
+Router::PacketPtr FormatPacket(Packet::Address const &from, uint16_t service, uint16_t channel,
+                               uint16_t counter, uint8_t ttl, Packet::Payload const &payload)
 {
   auto packet = std::make_shared<Packet>(from);
   packet->SetService(service);
@@ -160,19 +156,16 @@ std::string DescribePacket(Packet const &packet)
 {
   std::ostringstream oss;
 
-  oss << "To: " << ToBase64(packet.GetTarget())
-      << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':' << packet.GetMessageNum()
-      << " Type: "
-      << (packet.IsDirect() ? 'D' : 'R')
-      << (packet.IsBroadcast() ? 'B' : 'T')
-      << (packet.IsExchange() ? 'X' : 'F')
+  oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
+      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
+      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
+      << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
   return oss.str();
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Constructs a muddle router instance
@@ -185,8 +178,7 @@ Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &d
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
-{
-}
+{}
 
 /**
  * Starts the routers internal dispatch thread pool
@@ -248,7 +240,7 @@ void Router::AddConnection(Handle handle)
 {
   // create and format the packet
   auto packet = FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING);
-  packet->SetExchange(true); // signal that this is the request half of a direct message
+  packet->SetExchange(true);  // signal that this is the request half of a direct message
 
   // send the
   SendToConnection(handle, packet);
@@ -256,7 +248,8 @@ void Router::AddConnection(Handle handle)
 
 void Router::RemoveConnection(Handle handle)
 {
-  // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement alternative routing
+  // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
+  // alternative routing
 }
 
 #if 0
@@ -314,14 +307,15 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
  * @param message_num The message number of the request
  * @param payload The message payload to be sent
  */
-void Router::Send(Address const &address, uint16_t service, uint16_t channel,
-                  uint16_t message_num, Payload const &payload)
+void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+                  Payload const &payload)
 {
   // format the packet
   auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-', channel, '-', message_num, ")");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
+                  channel, '-', message_num, ")");
 
   RoutePacket(packet, false);
 }
@@ -372,7 +366,8 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   // register with the dispatcher that we are expecting a response
   auto promise = dispatcher_.RegisterExchange(service, channel, counter);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-', channel, '-', counter, ") prom: ", promise->id());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
+                  channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
@@ -404,7 +399,8 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(uint16_t service, uint16_t cha
  * @param channel The identifier for the channel
  * @return A valid pointer if the successful, otherwise an invalid pointer
  */
-MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16_t service, uint16_t channel)
+MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16_t service,
+                                                  uint16_t channel)
 {
   return registrar_.Register(address, service, channel);
 }
@@ -420,12 +416,13 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
  * @param direct Signal that this connection is a direct connection
  * @return true if an update was performed, otherwise false
  */
-bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct)
+bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
+                                        bool direct)
 {
   bool update_complete = false;
 
-  // TODO(EJF): At the moment these updates (and by extension the routing logic) works on a first come
-  // first served basis. This is not reliable longer term and will need tweaking
+  // TODO(EJF): At the moment these updates (and by extension the routing logic) works on a first
+  // come first served basis. This is not reliable longer term and will need tweaking
 
   // sanity check
   assert(handle);
@@ -440,7 +437,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
     // an update is only valid when the connection is direct.
     bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
-    bool const is_update = (routing_data.handle && direct && is_different);
+    bool const is_update    = (routing_data.handle && direct && is_different);
 
     // update the routing table if required
     if (is_empty || is_update)
@@ -470,7 +467,8 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     char const *route_type = (direct) ? "direct" : "normal";
 
-    FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type, " route for: ", ToBase64(ToConstByteArray(address)));
+    FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type,
+                   " route for: ", ToBase64(ToConstByteArray(address)));
   }
 
   return update_complete;
@@ -506,7 +504,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   Handle handle = 0;
 
   std::random_device rd;
-  std::mt19937 rng(rd());
+  std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -549,8 +547,8 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
       // notify the dispatcher about the message so that it can associate the connection handle
       // with any pending promises. This is required to ensure clean handling of promises which
       // fail due to connection loss.
-      dispatcher_.NotifyMessage(handle, packet->GetService(),
-                                packet->GetProtocol(), packet->GetMessageNum());
+      dispatcher_.NotifyMessage(handle, packet->GetService(), packet->GetProtocol(),
+                                packet->GetMessageNum());
     }
 
     // serialize the packet to the buffer
@@ -679,7 +677,6 @@ void Router::DispatchPacket(PacketPtr packet)
   FETCH_LOG_DEBUG(LOGGING_NAME, "==> Message routed to this node");
 
   dispatch_thread_pool_->Post([this, packet]() {
-
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
     // determine if this was an exchange based node
@@ -738,5 +735,5 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
   return is_echo;
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

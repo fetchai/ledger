@@ -224,7 +224,7 @@ private:
         // TODO(issue 22): Post
         if (!ProcessServerMessage(msg))
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME,"Looking for RPC functionality");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Looking for RPC functionality");
 
           if (!PushProtocolRequest(connection_handle_type(-1), msg))
           {

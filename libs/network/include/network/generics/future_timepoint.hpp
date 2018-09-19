@@ -30,8 +30,8 @@ namespace network {
 class FutureTimepoint
 {
 public:
-  using Clock = std::chrono::steady_clock;
-  using Duration = Clock::duration;
+  using Clock     = std::chrono::steady_clock;
+  using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
 
   FutureTimepoint()
@@ -76,7 +76,6 @@ public:
 private:
   Timepoint due_time_;
 };
-
 
 }  // namespace network
 }  // namespace fetch

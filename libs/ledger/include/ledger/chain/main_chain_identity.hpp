@@ -48,9 +48,9 @@ public:
                     generics::SharedWithLock<MainChainDetails> my_details)
     : register_(std::move(reg))
     , manager_(nm)
-	, my_details_(my_details)
+    , my_details_(my_details)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"MainChainIdentity::MainChainIdentity ", bool(my_details_));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "MainChainIdentity::MainChainIdentity ", bool(my_details_));
   }
 
   /// External controls
@@ -86,7 +86,7 @@ public:
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"MainChainIdentity::ExchangeDetails: NO LOCAL DETAILS HELD!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "MainChainIdentity::ExchangeDetails: NO LOCAL DETAILS HELD!");
     }
 
     MainChainDetails my_details_copy;

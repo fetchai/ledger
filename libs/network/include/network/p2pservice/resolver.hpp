@@ -40,8 +40,8 @@ public:
   // Construction / Destruction
   Resolver(IdentityCache &cache);
   Resolver(Resolver const &) = delete;
-  Resolver(Resolver &&) = delete;
-  ~Resolver() = default;
+  Resolver(Resolver &&)      = delete;
+  ~Resolver()                = default;
 
   void Resolve(Address const &address);
 
@@ -50,9 +50,8 @@ public:
   Resolver &operator=(Resolver &&) = delete;
 
 private:
-
   IdentityCache &cache_;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

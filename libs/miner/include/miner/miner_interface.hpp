@@ -31,7 +31,6 @@ namespace miner {
 class MinerInterface
 {
 public:
-
   // Construction / Destruction
   MinerInterface()          = default;
   virtual ~MinerInterface() = default;
@@ -54,7 +53,7 @@ public:
    * @param num_slices The number of slices for the block
    */
   virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                             std::size_t num_slices)                   = 0;
+                             std::size_t num_slices) = 0;
   /// @}
 };
 

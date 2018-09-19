@@ -31,5 +31,5 @@ ResolverProtocol::ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service)
   Expose(GET_NODE_URI, &p2p_service, &P2PService2::GetNodeUri);
 }
 
-}
-}
+}  // namespace p2p
+}  // namespace fetch

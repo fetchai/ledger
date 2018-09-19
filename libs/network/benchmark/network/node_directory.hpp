@@ -90,7 +90,7 @@ public:
       if (!client->is_alive())
       {
         std::cerr << "Client has died (pushing)!\n\n" << std::endl;
-        FETCH_LOG_ERROR(LOGGING_NAME,"Client has died in node direc");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Client has died in node direc");
       }
 
       client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
@@ -110,12 +110,13 @@ public:
       if (!client->is_alive())
       {
         std::cerr << "Client has died (pulling)!\n\n" << std::endl;
-        FETCH_LOG_ERROR(LOGGING_NAME,"Client has died in node direc");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Client has died in node direc");
       }
 
-      std::pair<bool, T> result = client->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
-                                               protocols::NetworkMineTest::PROVIDE_HEADER, hash)
-                                                 ->template As<std::pair<bool, T>>();
+      std::pair<bool, T> result = client
+                                      ->Call(protocols::FetchProtocols::NETWORK_MINE_TEST,
+                                             protocols::NetworkMineTest::PROVIDE_HEADER, hash)
+                                      ->template As<std::pair<bool, T>>();
 
       if (result.first)
       {
@@ -142,12 +143,14 @@ public:
         std::cerr << "Client has died (forw)!\n\n" << std::endl;
       }
 
-      bool clientWants = client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
-                                      protocols::NetworkBenchmark::INVITE_PUSH, blockHash)->As<bool>();
+      bool clientWants = client
+                             ->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
+                                    protocols::NetworkBenchmark::INVITE_PUSH, blockHash)
+                             ->As<bool>();
 
       if (clientWants)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"Client wants forwarded push");
+        FETCH_LOG_INFO(LOGGING_NAME, "Client wants forwarded push");
         client->Call(protocols::FetchProtocols::NETWORK_BENCHMARK,
                      protocols::NetworkBenchmark::PUSH, blockHash, block);
       }

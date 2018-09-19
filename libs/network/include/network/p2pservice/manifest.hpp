@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace fetch {
@@ -32,9 +32,8 @@ namespace network {
 class Manifest
 {
 public:
-
-  using Uri = network::Uri;
-  using ServiceType = network::ServiceType;
+  using Uri               = network::Uri;
+  using ServiceType       = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
 
   static constexpr char const *LOGGING_NAME = "Manifest";
@@ -44,10 +43,11 @@ public:
     std::map<ServiceIdentifier, Uri> temp;
 
     std::vector<std::string> strings;
-    std::istringstream f(inputlines);
-    std::string s;
-    int linenum = 0;
-    while (getline(f, s, '\n')) {
+    std::istringstream       f(inputlines);
+    std::string              s;
+    int                      linenum = 0;
+    while (getline(f, s, '\n'))
+    {
       linenum++;
       if (s.length() > 0)
       {
@@ -58,11 +58,12 @@ public:
             auto r = ParseLine(s);
 
             // TODO(EJF): URI
-            //temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
+            // temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
           }
           catch (std::exception &ex)
           {
-            throw std::invalid_argument(std::string(ex.what()) + " at line " + std::to_string(linenum));
+            throw std::invalid_argument(std::string(ex.what()) + " at line " +
+                                        std::to_string(linenum));
           }
         }
       }
@@ -70,10 +71,10 @@ public:
     return FromMap(temp);
   }
 
-  static Manifest FromMap( std::map<ServiceIdentifier, Uri> manifestData )
+  static Manifest FromMap(std::map<ServiceIdentifier, Uri> manifestData)
   {
     Manifest m;
-    for(auto &item : manifestData)
+    for (auto &item : manifestData)
     {
       m.data_[item.first] = item.second;
     }
@@ -105,13 +106,13 @@ public:
     return (res != data_.end());
   }
 
-  Manifest() = default;
+  Manifest()                      = default;
   Manifest(Manifest const &other) = default;
-  Manifest(Manifest &&other) = default;
-  ~Manifest() = default;
+  Manifest(Manifest &&other)      = default;
+  ~Manifest()                     = default;
 
-  Manifest& operator=(Manifest&& other) = default;
-  Manifest& operator=(Manifest const &other) = default;
+  Manifest &operator=(Manifest &&other) = default;
+  Manifest &operator=(Manifest const &other) = default;
 
   size_t size() const
   {
@@ -127,25 +128,22 @@ public:
     return data_.end();
   }
 
-  void ForEach(std::function<void (const ServiceIdentifier &, const Uri &)> cb) const
+  void ForEach(std::function<void(const ServiceIdentifier &, const Uri &)> cb) const
   {
-    for(auto &i : data_)
+    for (auto &i : data_)
     {
-      cb(i . first, i . second);
+      cb(i.first, i.second);
     }
   }
 
   std::string ToString() const
   {
     std::string result;
-    for(auto &data : data_)
+    for (auto &data : data_)
     {
-      std::string line = std::string(service_type_names[data.first.service_type])
-        + "  "
-        + std::to_string(data.first.instance_number)
-        + "  "
-        + static_cast<std::string>(data.second.uri())
-        + "\n";
+      std::string line = std::string(service_type_names[data.first.service_type]) + "  " +
+                         std::to_string(data.first.instance_number) + "  " +
+                         static_cast<std::string>(data.second.uri()) + "\n";
       result += line;
     }
     return result;
@@ -163,13 +161,14 @@ private:
     store.push_back("");
     store.push_back("");
 
-    int part = -1;
+    int  part   = -1;
     bool inword = false;
-    for(std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+    {
 
-      if (part<2)
+      if (part < 2)
       {
-        if (*it == ' ' ||*it == '\t')
+        if (*it == ' ' || *it == '\t')
         {
           inword = false;
           continue;
@@ -184,29 +183,29 @@ private:
       store[uint32_t(part)] += *it;
     }
 
-    auto uri = store[2];
+    auto        uri = store[2];
     ServiceType service_type;
-    uint32_t instance;
+    uint32_t    instance;
 
     if (store[0] == "MAINCHAIN")
     {
       service_type = ServiceType::MAINCHAIN;
-      instance = 0;
+      instance     = 0;
     }
     else if (store[0] == "P2P")
     {
       service_type = ServiceType::P2P;
-      instance = 0;
+      instance     = 0;
     }
     else if (store[0] == "HTTP")
     {
       service_type = ServiceType::HTTP;
-      instance = 0;
+      instance     = 0;
     }
     else if (store[0] == "LANE")
     {
       service_type = ServiceType::LANE;
-      instance = uint32_t(std::stoi(store[1].c_str()));
+      instance     = uint32_t(std::stoi(store[1].c_str()));
     }
     else
     {
@@ -229,5 +228,5 @@ private:
   }
 };
 
-}
-}
+}  // namespace network
+}  // namespace fetch

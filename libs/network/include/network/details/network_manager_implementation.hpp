@@ -34,18 +34,17 @@ class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
   NetworkManagerImplementation(std::size_t threads = 1)
     : number_of_threads_(threads)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Creating network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
 
   ~NetworkManagerImplementation()
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Destroying network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying network manager");
     Stop();
   }
 
@@ -68,21 +67,24 @@ public:
     }
   }
 
-  void Work() { io_service_->run(); }
+  void Work()
+  {
+    io_service_->run();
+  }
 
   void Stop()
   {
     std::lock_guard<std::mutex> lock(thread_mutex_);
     if (std::this_thread::get_id() != owning_thread_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Same thread must start and stop NetworkManager.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Same thread must start and stop NetworkManager.");
       return;
     }
 
     if (threads_.size() != 0)
     {
       shared_work_.reset();
-      FETCH_LOG_INFO(LOGGING_NAME,"Stopping network manager");
+      FETCH_LOG_INFO(LOGGING_NAME, "Stopping network manager");
 
       io_service_->stop();
 

@@ -26,19 +26,18 @@
 class PeerConnectionListTests : public ::testing::Test
 {
 protected:
-
-  using Router = fetch::muddle::Router;
-  using RouterPtr = std::unique_ptr<Router>;
-  using PeerConnectionList = fetch::muddle::PeerConnectionList;
+  using Router                = fetch::muddle::Router;
+  using RouterPtr             = std::unique_ptr<Router>;
+  using PeerConnectionList    = fetch::muddle::PeerConnectionList;
   using PeerConnectionListPtr = std::unique_ptr<PeerConnectionList>;
 
   void SetUp() override
   {
-//    router_ = std::make_unique<Router>();
-//    peer_list_ = std::make_unique<PeerConnectionList>();
+    //    router_ = std::make_unique<Router>();
+    //    peer_list_ = std::make_unique<PeerConnectionList>();
   }
 
-  RouterPtr router_;
+  RouterPtr             router_;
   PeerConnectionListPtr peer_list_;
 };
 
@@ -46,14 +45,14 @@ TEST(PromiseTests, CheckNormalPromiseCycle)
 {
   auto prom = fetch::service::MakePromise();
 
-  bool success = false;
-  bool failure = false;
+  bool success  = false;
+  bool failure  = false;
   bool complete = false;
 
   prom->WithHandlers()
-    .Then([&success]() { success = true; })
-    .Catch([&failure]() { failure = true; })
-    .Finally([&complete]() { complete = true; });
+      .Then([&success]() { success = true; })
+      .Catch([&failure]() { failure = true; })
+      .Finally([&complete]() { complete = true; });
 
   EXPECT_FALSE(success);
   EXPECT_FALSE(failure);
@@ -70,14 +69,14 @@ TEST(PromiseTests, CheckNormalFailureCycle)
 {
   auto prom = fetch::service::MakePromise();
 
-  bool success = false;
-  bool failure = false;
+  bool success  = false;
+  bool failure  = false;
   bool complete = false;
 
   prom->WithHandlers()
-    .Then([&success]() { success = true; })
-    .Catch([&failure]() { failure = true; })
-    .Finally([&complete]() { complete = true; });
+      .Then([&success]() { success = true; })
+      .Catch([&failure]() { failure = true; })
+      .Finally([&complete]() { complete = true; });
 
   EXPECT_FALSE(success);
   EXPECT_FALSE(failure);
@@ -94,8 +93,8 @@ TEST(PromiseTests, CheckImmediateSuccess)
 {
   auto prom = fetch::service::MakePromise();
 
-  bool success = false;
-  bool failure = false;
+  bool success  = false;
+  bool failure  = false;
   bool complete = false;
 
   prom->Fulfill(fetch::byte_array::ConstByteArray{});
@@ -105,9 +104,9 @@ TEST(PromiseTests, CheckImmediateSuccess)
   EXPECT_FALSE(complete);
 
   prom->WithHandlers()
-    .Then([&success]() { success = true; })
-    .Catch([&failure]() { failure = true; })
-    .Finally([&complete]() { complete = true; });
+      .Then([&success]() { success = true; })
+      .Catch([&failure]() { failure = true; })
+      .Finally([&complete]() { complete = true; });
 
   EXPECT_TRUE(success);
   EXPECT_FALSE(failure);
@@ -118,8 +117,8 @@ TEST(PromiseTests, CheckImmediateFailure)
 {
   auto prom = fetch::service::MakePromise();
 
-  bool success = false;
-  bool failure = false;
+  bool success  = false;
+  bool failure  = false;
   bool complete = false;
 
   prom->Fail();
@@ -129,9 +128,9 @@ TEST(PromiseTests, CheckImmediateFailure)
   EXPECT_FALSE(complete);
 
   prom->WithHandlers()
-    .Then([&success]() { success = true; })
-    .Catch([&failure]() { failure = true; })
-    .Finally([&complete]() { complete = true; });
+      .Then([&success]() { success = true; })
+      .Catch([&failure]() { failure = true; })
+      .Finally([&complete]() { complete = true; });
 
   EXPECT_FALSE(success);
   EXPECT_TRUE(failure);

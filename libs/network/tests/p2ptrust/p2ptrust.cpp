@@ -26,7 +26,6 @@
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;
 
-
 TEST(TrustTests, TrustGoesUp)
 {
   P2PTrust<std::string> trust;
@@ -38,15 +37,14 @@ TEST(TrustTests, TrustGoesUp)
 TEST(TrustTests, TrustGoesDown)
 {
   P2PTrust<std::string> trust;
-  trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
-                    TrustQuality::LIED);
+  trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, TrustQuality::LIED);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);
 }
 
 TEST(TrustTests, TrustGoesWayDown)
 {
-  P2PTrust<std::string>    trust;
-  TrustQuality qual = TrustQuality::LIED;
+  P2PTrust<std::string> trust;
+  TrustQuality          qual = TrustQuality::LIED;
   for (int i = 0; i < 20; i++)
   {
     if (i & 1)
@@ -63,8 +61,7 @@ TEST(TrustTests, TrustGoesWayDown)
 
   for (int i = 0; i < 5; i++)
   {
-    trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::PEER,
-                      TrustQuality::LIED);
+    trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::PEER, TrustQuality::LIED);
   }
 
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);  // You **WOULDN'T LET IT LIE**... </vic_reeves>

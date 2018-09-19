@@ -20,9 +20,9 @@
 #include "core/mutex.hpp"
 
 #include <algorithm>
+#include <deque>
 #include <iostream>
 #include <string>
-#include <deque>
 
 namespace fetch {
 namespace network {
@@ -33,7 +33,7 @@ class WorkStore
 public:
   using WorkItem = std::function<void()>;
 
-  WorkStore() = default;
+  WorkStore()                     = default;
   WorkStore(const WorkStore &rhs) = delete;
   WorkStore(WorkStore &&rhs)      = delete;
   ~WorkStore()
@@ -43,7 +43,7 @@ public:
   }
 
   WorkStore operator=(const WorkStore &rhs) = delete;
-  WorkStore operator=(WorkStore &&rhs)      = delete;
+  WorkStore operator=(WorkStore &&rhs) = delete;
 
   void clear()
   {
@@ -77,10 +77,10 @@ public:
     return true;
   }
 
-  int Visit(std::function<void (WorkItem)> const &visitor, int maxprocess=1)
+  int Visit(std::function<void(WorkItem)> const &visitor, int maxprocess = 1)
   {
     int processed = 0;
-    while(true)
+    while (true)
     {
       WorkItem work;
       if (processed >= maxprocess)
@@ -109,12 +109,11 @@ public:
   }
 
 private:
+  using Queue = std::deque<WorkItem>;
+  using Mutex = mutex::Mutex;
 
-  using Queue    = std::deque<WorkItem>;
-  using Mutex    = mutex::Mutex;
-
-  Queue store_;
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  Queue             store_;
+  mutable Mutex     mutex_{__LINE__, __FILE__};
   std::atomic<bool> shutdown_{false};
 
   WorkItem GetNextActual()

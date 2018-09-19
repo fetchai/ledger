@@ -141,7 +141,7 @@ private:
     }
     catch (json::JSONParseException const &ex)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Failed to parse input balance request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input balance request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
@@ -192,7 +192,7 @@ private:
     }
     catch (json::JSONParseException const &ex)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Failed to parse input transfer request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input transfer request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/uri.hpp"
+#include "core/mutex.hpp"
 #include "network/p2pservice/identity_cache.hpp"
+#include "network/uri.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -35,11 +35,11 @@ namespace p2p {
 class Resolver
 {
 public:
-  using Address   = byte_array::ConstByteArray;
-  using Mutex     = mutex::Mutex;
-  using PeerList  = std::vector<network::Peer>;
-  using PeerMap   = std::unordered_map<Address, PeerList>;
-  using Uri  = network::Uri;
+  using Address  = byte_array::ConstByteArray;
+  using Mutex    = mutex::Mutex;
+  using PeerList = std::vector<network::Peer>;
+  using PeerMap  = std::unordered_map<Address, PeerList>;
+  using Uri      = network::Uri;
 
   explicit Resolver(IdentityCache const &cache)
     : cache_(cache)
@@ -48,7 +48,7 @@ public:
   void Setup(Address const &address, Uri const &uri)
   {
     address_ = address;
-    uri_ = uri;
+    uri_     = uri;
   }
 
   Uri Query(Address const &address)
@@ -70,12 +70,10 @@ public:
   }
 
 private:
-
-  IdentityCache const &cache_;      ///< The reference to the identity cache of the P2P service
-  Address              address_;    ///< The address of the current node
-  Uri                  uri_;        ///< The URI of the current node
-
+  IdentityCache const &cache_;    ///< The reference to the identity cache of the P2P service
+  Address              address_;  ///< The address of the current node
+  Uri                  uri_;      ///< The URI of the current node
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

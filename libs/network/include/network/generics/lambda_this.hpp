@@ -27,9 +27,13 @@ class LambdaThis
   using lock_type  = std::unique_lock<std::mutex>;
 
 public:
-  LambdaThis(TARGET *target) : original_(true), master_(new MasterRecord(target)) {}
+  LambdaThis(TARGET *target)
+    : original_(true)
+    , master_(new MasterRecord(target))
+  {}
 
-  LambdaThis(const LambdaThis &other) : original_(false)
+  LambdaThis(const LambdaThis &other)
+    : original_(false)
   {
     master_ = other.master_;
     master_->count.fetch++;
@@ -50,17 +54,24 @@ public:
     }
   }
 
-  Locked lock() { return Locked(master); }
+  Locked lock()
+  {
+    return Locked(master);
+  }
 
   class Locked
   {
     friend class LambdaThis;
 
   protected:
-    Locked(MasterRecord *master) : target_(master->target), lock_(master->mutex) {}
+    Locked(MasterRecord *master)
+      : target_(master->target)
+      , lock_(master->mutex)
+    {}
 
   public:
-    ~Locked() {}
+    ~Locked()
+    {}
 
     Locked(Locked &&other)
       : target_(other.target_)
@@ -86,8 +97,12 @@ private:
   class MasterRecord
   {
   public:
-    MasterRecord(TARGET *target) : target_(target), count(0) {}
-    ~MasterRecord() {}
+    MasterRecord(TARGET *target)
+      : target_(target)
+      , count(0)
+    {}
+    ~MasterRecord()
+    {}
 
   protected:
     TARGET *                  target_;

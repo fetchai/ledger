@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "network/service/protocol.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -28,7 +28,7 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Block = chain::MainChain::BlockType;
+  using Block     = chain::MainChain::BlockType;
   using BlockList = std::vector<Block>;
 
   enum
@@ -36,14 +36,13 @@ public:
     HEAVIEST_CHAIN = 1,
   };
 
-  explicit MainChainProtocol(chain::MainChain& chain)
+  explicit MainChainProtocol(chain::MainChain &chain)
     : chain_(chain)
   {
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
   }
 
 private:
-
   // TODO(EJF): Not really sure why I can't just call this function directly (default argument?)
   std::vector<Block> GetHeaviestChain(uint32_t const &maxsize)
   {
@@ -54,6 +53,5 @@ private:
   chain::MainChain &chain_;
 };
 
-
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

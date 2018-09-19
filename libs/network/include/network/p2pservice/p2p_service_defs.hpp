@@ -25,17 +25,18 @@ namespace fetch {
 
 namespace network {
 
-enum ServiceType : uint16_t {
+enum ServiceType : uint16_t
+{
   MAINCHAIN = 0,
-  LANE = 1,
-  P2P = 2,
-  HTTP = 3,
+  LANE      = 1,
+  P2P       = 2,
+  HTTP      = 3,
 };
 
 struct ServiceIdentifier
 {
   ServiceType service_type;
-  uint32_t instance_number;
+  uint32_t    instance_number;
 
   bool operator<(const ServiceIdentifier &other) const
   {
@@ -57,10 +58,10 @@ struct ServiceIdentifier
   std::string ToString() const
   {
     const char *names[] = {
-      "MAINCHAIN",
-      "LANE",
-      "P2P",
-      "HTTP",
+        "MAINCHAIN",
+        "LANE",
+        "P2P",
+        "HTTP",
     };
     const char *p = names[service_type];
     return std::string(p) + "/" + std::to_string(instance_number);
@@ -78,9 +79,9 @@ void Deserialize(T &serializer, ServiceIdentifier &x)
 {
   uint16_t foo;
   serializer >> foo >> x.instance_number;
-  x.service_type  = static_cast<ServiceType>(foo);
+  x.service_type = static_cast<ServiceType>(foo);
   // TODO(EJF): This still needs validation
 }
 
-}
-}
+}  // namespace network
+}  // namespace fetch

@@ -35,14 +35,13 @@
 //
 //---
 
-#include "core/logger.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "network/peer.hpp"
+#include "core/logger.hpp"
 #include "crypto/fnv.hpp"
+#include "network/peer.hpp"
 
 #include <functional>
-
 
 namespace fetch {
 namespace network {
@@ -50,7 +49,6 @@ namespace network {
 class Uri
 {
 public:
-
   enum class Scheme
   {
     Unknown = 0,
@@ -65,22 +63,22 @@ public:
   // Construction / Destruction
   Uri() = default;
   Uri(ConstByteArray const &uri);
-  Uri(Uri const &) = default; //
+  Uri(Uri const &) = default;  //
   Uri(Uri &&)      = default;
-  ~Uri()            = default;
+  ~Uri()           = default;
 
   bool Parse(ConstByteArray const &uri);
 
   /// @name Basic Accessors
   /// @{
   ConstByteArray const &uri() const;
-  Scheme scheme() const;
+  Scheme                scheme() const;
   ConstByteArray const &authority() const;
   /// @}
 
   /// @name Type based Accessors
   /// @{
-  Peer const &AsPeer() const;
+  Peer const &          AsPeer() const;
   ConstByteArray const &AsIdentity() const;
   /// @}
 
@@ -99,11 +97,10 @@ public:
   static Uri FromIdentity(ConstByteArray const &identity);
 
 private:
-
-  ConstByteArray  uri_;
-  Scheme          scheme_{Scheme::Unknown};
-  ConstByteArray  authority_;
-  Peer            tcp_;
+  ConstByteArray uri_;
+  Scheme         scheme_{Scheme::Unknown};
+  ConstByteArray authority_;
+  Peer           tcp_;
 };
 
 inline Uri::ConstByteArray const &Uri::uri() const
@@ -166,10 +163,10 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
   return Uri{"muddle://" + byte_array::ToBase64(identity)};
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch
 
-template<>
+template <>
 struct std::hash<fetch::network::Uri> : private std::hash<fetch::byte_array::ConstByteArray>
 {
   std::size_t operator()(fetch::network::Uri const &x) const

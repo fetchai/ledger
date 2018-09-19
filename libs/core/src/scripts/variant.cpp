@@ -186,7 +186,7 @@ void VariantArray::Reserve(std::size_t const &n)
   }
 
   std::swap(data_, new_data);
-//  data_    = new_data;
+  //  data_    = new_data;
   offset_  = 0;
   pointer_ = data_->data();
 }

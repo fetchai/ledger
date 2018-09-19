@@ -34,9 +34,8 @@
 namespace fetch {
 namespace service {
 
-  class FeedSubscriptionManager;
+class FeedSubscriptionManager;
 
-  
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
@@ -152,8 +151,7 @@ public:
   }
 
   virtual void ConnectionDropped(connection_handle_type connection_handle)
-  {
-  }
+  {}
 
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
@@ -180,7 +178,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Making subscription for ", client, " ", feed, " ", id);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
     feeds_mutex_.lock();
     std::size_t i = 0;

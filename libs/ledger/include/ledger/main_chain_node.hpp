@@ -124,16 +124,16 @@ public:
 
   virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader starting work");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader starting work");
     BlockType block;
     if (chain_->Get(hash, block))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader done");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader done");
       return std::make_pair(true, block);
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeader not found");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeader not found");
       return std::make_pair(false, block);
     }
   }
@@ -142,7 +142,7 @@ public:
   {
     std::vector<BlockType> results;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain starting work ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeaviestChain starting work ", maxsize);
     auto currentHash = chain_->HeaviestBlock().hash();
 
     while (results.size() < maxsize)
@@ -159,7 +159,8 @@ public:
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME,"GetHeaviestChain returning ", results.size(), " of req ", maxsize);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetHeaviestChain returning ", results.size(), " of req ",
+                    maxsize);
 
     return results;
   }
@@ -213,7 +214,7 @@ public:
 
         // Add the block
         chain_->AddBlock(nextBlock);
-        FETCH_LOG_DEBUG(LOGGING_NAME,"Main Chain Node: Mined: ", ToBase64(block.hash()));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Main Chain Node: Mined: ", ToBase64(block.hash()));
       }
     };
 

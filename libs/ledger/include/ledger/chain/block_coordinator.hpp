@@ -64,7 +64,8 @@ public:
 
     if (block.hash() == heaviestHash)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"New block: ", ToBase64(block.hash()), " from: ", ToBase64(block.prev()));
+      FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.hash()),
+                     " from: ", ToBase64(block.prev()));
 
       {
         std::lock_guard<mutex_type> lock(mutex_);
@@ -92,7 +93,7 @@ public:
         // debug
         if (!executing_block && block)
         {
-          FETCH_LOG_INFO(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+          FETCH_LOG_INFO(LOGGING_NAME, "Block Completed: ", ToBase64(block->hash));
           block.reset();
         }
 
@@ -122,18 +123,18 @@ public:
 
         if (schedule_block && block)
         {
-          FETCH_LOG_INFO(LOGGING_NAME,"Attempting exec on block: ", ToBase64(block->hash));
+          FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
           status_type const status = execution_manager_.Execute(*block);
 
           if (status == status_type::COMPLETE)
           {
-            FETCH_LOG_INFO(LOGGING_NAME,"Block Completed: ", ToBase64(block->hash));
+            FETCH_LOG_INFO(LOGGING_NAME, "Block Completed: ", ToBase64(block->hash));
           }
           else if (status == status_type::SCHEDULED)
           {
-            FETCH_LOG_INFO(LOGGING_NAME,"Block Scheduled: ", ToBase64(block->hash));
+            FETCH_LOG_INFO(LOGGING_NAME, "Block Scheduled: ", ToBase64(block->hash));
           }
           else if (status == status_type::NO_PARENT_BLOCK)
           {
@@ -149,12 +150,12 @@ public:
               block = std::make_shared<BlockBody>(full_block.body());
               pending_stack.push_back(block);
 
-              FETCH_LOG_DEBUG(LOGGING_NAME,"Retrieved parent block: ", ToBase64(block->hash));
+              FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(block->hash));
             }
             else
             {
-              FETCH_LOG_WARN(LOGGING_NAME,"Unable to retreive parent block: ",
-                                 ToBase64(block->previous_hash));
+              FETCH_LOG_WARN(LOGGING_NAME,
+                             "Unable to retreive parent block: ", ToBase64(block->previous_hash));
             }
 
             // reset the block
@@ -187,8 +188,8 @@ public:
               break;
             }
 
-            FETCH_LOG_WARN(LOGGING_NAME,"Unable to execute block: ", ToBase64(block->hash),
-                               " Reason: ", reason);
+            FETCH_LOG_WARN(LOGGING_NAME, "Unable to execute block: ", ToBase64(block->hash),
+                           " Reason: ", reason);
             block.reset();  // mostly for debug
           }
 

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <string>
-#include <list>
 #include <condition_variable>
+#include <iostream>
+#include <list>
+#include <string>
 
 namespace fetch {
 namespace generics {
@@ -29,7 +29,7 @@ template <class TYPE>
 class WorkItemsQueue
 {
   using mutex_type = std::mutex;
-  using cv_type = std::condition_variable;
+  using cv_type    = std::condition_variable;
   using lock_type  = std::unique_lock<mutex_type>;
   using store_type = std::list<TYPE>;
 
@@ -41,9 +41,11 @@ public:
   bool            operator==(const WorkItemsQueue &rhs) const = delete;
   bool            operator<(const WorkItemsQueue &rhs) const  = delete;
 
-  explicit WorkItemsQueue() {}
+  explicit WorkItemsQueue()
+  {}
 
-  virtual ~WorkItemsQueue() {}
+  virtual ~WorkItemsQueue()
+  {}
 
   void Add(const TYPE &item)
   {
@@ -60,7 +62,7 @@ public:
   {
     {
       lock_type lock(mutex_);
-    while(iter != end)
+      while (iter != end)
       {
         q_.push_back(*iter);
         ++iter;

@@ -45,7 +45,7 @@ void say(pybind11::args args)
   {
     converted.push_back(pybind11::str(args[i]));
   }
-  FETCH_LOG_DEBUG(LOGGING_NAME,converted);
+  FETCH_LOG_DEBUG(LOGGING_NAME, converted);
 }
 
 PYBIND11_EMBEDDED_MODULE(fetchnetwork, module)

@@ -45,7 +45,7 @@ public:
 
   // Construction / Destruction
   explicit Executor(resources_type resources)
-  : resources_{std::move(resources)}
+    : resources_{std::move(resources)}
   {}
   ~Executor() override = default;
 

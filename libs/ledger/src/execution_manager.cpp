@@ -169,8 +169,8 @@ bool ExecutionManager::PlanExecution(block_type const &block)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Unable to plan execution of tx: ",
-                           byte_array::ToBase64(tx.transaction_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
+                       byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
     }
@@ -411,7 +411,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Unable to request state hash");
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to request state hash");
       }
 
       // only need to commit the new bookmark if there is actually a change in
@@ -426,7 +426,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
         catch (std::exception &ex)
         {
-          FETCH_LOG_WARN(LOGGING_NAME,"Unable to commit state. Error: ", ex.what());
+          FETCH_LOG_WARN(LOGGING_NAME, "Unable to commit state. Error: ", ex.what());
         }
 
         // update the state archives
@@ -434,7 +434,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           std::lock_guard<mutex_type> lock(state_archive_lock_);
           if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
           {
-            FETCH_LOG_WARN(LOGGING_NAME,"Unable to confirm bookmark: ", bookmark);
+            FETCH_LOG_WARN(LOGGING_NAME, "Unable to confirm bookmark: ", bookmark);
           }
 
           // update the block state cache

@@ -25,8 +25,8 @@ namespace ledger {
 class MetricHandler
 {
 public:
-  using Clock = std::chrono::high_resolution_clock;
-  using Timestamp = Clock::time_point;
+  using Clock          = std::chrono::high_resolution_clock;
+  using Timestamp      = Clock::time_point;
   using ConstByteArray = byte_array::ConstByteArray;
 
   enum class Instrument
@@ -44,14 +44,12 @@ public:
   };
 
   // Construction / Destruction
-  MetricHandler() = default;
+  MetricHandler()          = default;
   virtual ~MetricHandler() = default;
 
-  virtual void RecordMetric(ConstByteArray const &identifier,
-                            Instrument instrument,
-                            Event event,
+  virtual void RecordMetric(ConstByteArray const &identifier, Instrument instrument, Event event,
                             Timestamp const &timestamp) = 0;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

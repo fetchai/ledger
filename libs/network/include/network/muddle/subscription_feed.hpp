@@ -31,32 +31,32 @@ namespace muddle {
 class SubscriptionFeed
 {
 public:
-  using Address = Packet::Address;
-  using Payload = Packet::Payload;
+  using Address         = Packet::Address;
+  using Payload         = Packet::Payload;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
 
   // Construction / Destruction
-  SubscriptionFeed() = default;
+  SubscriptionFeed()                         = default;
   SubscriptionFeed(SubscriptionFeed const &) = delete;
-  SubscriptionFeed(SubscriptionFeed &&) = delete;
-  ~SubscriptionFeed() = default;
+  SubscriptionFeed(SubscriptionFeed &&)      = delete;
+  ~SubscriptionFeed()                        = default;
 
   // Operators
   SubscriptionFeed &operator=(SubscriptionFeed const &) = delete;
   SubscriptionFeed &operator=(SubscriptionFeed &&) = delete;
 
   SubscriptionPtr Subscribe();
-  bool Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload);
+  bool Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter,
+                Payload const &payload);
 
 private:
-
-  using Mutex = mutex::Mutex;
+  using Mutex               = mutex::Mutex;
   using SubscriptionWeakPtr = std::weak_ptr<Subscription>;
-  using SubscriptionList = std::vector<SubscriptionWeakPtr>;
+  using SubscriptionList    = std::vector<SubscriptionWeakPtr>;
 
   mutable Mutex    feed_lock_{__LINE__, __FILE__};
   SubscriptionList feed_;
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

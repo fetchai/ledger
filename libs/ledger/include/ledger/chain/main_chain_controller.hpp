@@ -63,7 +63,7 @@ public:
   /// @{
   void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,"(RPCConnect) Mainchain trying to connect to ", host, ":", port);
+    FETCH_LOG_INFO(LOGGING_NAME, "(RPCConnect) Mainchain trying to connect to ", host, ":", port);
 
     Connect(host, port);
   }
@@ -72,7 +72,7 @@ public:
   {
     for (auto &h : ep.host)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Mainchain trying to connect to ", h, ":", ep.port);
+      FETCH_LOG_INFO(LOGGING_NAME, "Mainchain trying to connect to ", h, ":", ep.port);
 
       // only connect one?
       if (Connect(h, ep.port))
@@ -146,7 +146,7 @@ public:
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
-    FETCH_LOG_WARN(LOGGING_NAME,"CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
+    FETCH_LOG_WARN(LOGGING_NAME, "CONNECT (MAIN CHAIN) ", std::string(host), ":", port);
 
     // Waiting for connection to be open
     std::size_t n = 0;
@@ -168,7 +168,8 @@ public:
 
     if (n >= 10)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,"Connection timed out - closing in MainChainController::Connect");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Connection timed out - closing in MainChainController::Connect");
       client->Close();
       client.reset();
       return nullptr;
@@ -193,7 +194,7 @@ public:
     case service::PromiseState::SUCCESS:
       break;
     default:
-      FETCH_LOG_WARN(LOGGING_NAME,"While exchanging IDENTITY DETAILS:", service::ToString(status));
+      FETCH_LOG_WARN(LOGGING_NAME, "While exchanging IDENTITY DETAILS:", service::ToString(status));
       client->Close();
       client.reset();
       return nullptr;

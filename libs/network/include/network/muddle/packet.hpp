@@ -21,9 +21,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <array>
-#include <type_traits>
 #include <cstdint>
-#include <cstring> // memset
+#include <cstring>  // memset
+#include <type_traits>
 
 namespace fetch {
 namespace muddle {
@@ -32,58 +32,61 @@ class Packet
 {
 public:
   static constexpr std::size_t ADDRESS_SIZE = 64;
-  static constexpr std::size_t HEADER_SIZE = 8 + (2 * ADDRESS_SIZE);
+  static constexpr std::size_t HEADER_SIZE  = 8 + (2 * ADDRESS_SIZE);
 
-  using RawAddress = std::array<uint8_t, ADDRESS_SIZE>;
-  using Address = byte_array::ConstByteArray;
-  using Payload = byte_array::ConstByteArray;
+  using RawAddress   = std::array<uint8_t, ADDRESS_SIZE>;
+  using Address      = byte_array::ConstByteArray;
+  using Payload      = byte_array::ConstByteArray;
   using BinaryHeader = std::array<uint8_t, HEADER_SIZE>;
 
   struct RoutingHeader
   {
-    uint64_t    version   : 4;     ///< Flag to signal the current version of the muddle protocol
-    uint64_t    direct    : 1;     ///< Flag to signal that a direct message is being sent (no routing)
-    uint64_t    broadcast : 1;     ///< Flag to signal that the packet is a broadcast packet
-    uint64_t    exchange  : 1;     ///< Flag to signal that this is an exchange packet i.e. we are expecting a response
-    uint64_t    reserved  : 1;
-    uint64_t    ttl       : 8;     ///< The time to live counter which ensures messages do not propagate further than desired
-    uint64_t    service   : 16;    ///< The service number (helpful for RPC compatibility)
-    uint64_t    proto     : 16;    ///< The protocol number (helpful for RPC compatibility)
-    uint64_t    msg_num   : 16;    ///< Incremented message counter for detecting duplicate packets
+    uint64_t version : 4;    ///< Flag to signal the current version of the muddle protocol
+    uint64_t direct : 1;     ///< Flag to signal that a direct message is being sent (no routing)
+    uint64_t broadcast : 1;  ///< Flag to signal that the packet is a broadcast packet
+    uint64_t exchange : 1;   ///< Flag to signal that this is an exchange packet i.e. we are
+                             ///< expecting a response
+    uint64_t reserved : 1;
+    uint64_t ttl : 8;  ///< The time to live counter which ensures messages do not propagate further
+                       ///< than desired
+    uint64_t service : 16;  ///< The service number (helpful for RPC compatibility)
+    uint64_t proto : 16;    ///< The protocol number (helpful for RPC compatibility)
+    uint64_t msg_num : 16;  ///< Incremented message counter for detecting duplicate packets
 
-    RawAddress  target;            ///< The address of the packet target
-    RawAddress  sender;            ///< The address of the packet sender
+    RawAddress target;  ///< The address of the packet target
+    RawAddress sender;  ///< The address of the packet sender
   };
 
   static_assert(std::is_pod<RoutingHeader>::value, "Routing header must be POD");
   static_assert(sizeof(RoutingHeader) == 8 + (2 * ADDRESS_SIZE), "The header must be packed");
-  static_assert(sizeof(RoutingHeader) == sizeof(BinaryHeader), "The header and binary header must be equivalent");
+  static_assert(sizeof(RoutingHeader) == sizeof(BinaryHeader),
+                "The header and binary header must be equivalent");
 
   // Construction / Destruction
   Packet() = default;
   explicit Packet(Address const &source_address);
   Packet(Packet const &) = delete;
-  Packet(Packet &&) = delete;
-  ~Packet() = default;
+  Packet(Packet &&)      = delete;
+  ~Packet()              = default;
 
   // Operators
   Packet &operator=(Packet const &) = delete;
   Packet &operator=(Packet &&) = delete;
 
   // Getters
-  uint8_t GetVersion() const;
-  bool IsDirect() const;
-  bool IsBroadcast() const;
-  bool IsExchange() const;
-  uint8_t GetTTL() const;
-  uint16_t  GetService() const;
-  uint16_t GetProtocol() const;
-  uint16_t GetMessageNum() const;
+  uint8_t           GetVersion() const;
+  bool              IsDirect() const;
+  bool              IsBroadcast() const;
+  bool              IsExchange() const;
+  uint8_t           GetTTL() const;
+  uint16_t          GetService() const;
+  uint16_t          GetProtocol() const;
+  uint16_t          GetMessageNum() const;
   RawAddress const &GetTargetRaw() const;
   RawAddress const &GetSenderRaw() const;
-  Address const &GetTarget() const;
-  Address const &GetSender() const;
-  Payload const &GetPayload() const;
+  Address const &   GetTarget() const;
+  Address const &   GetSender() const;
+  Payload const &   GetPayload() const;
 
   // Setters
   void SetDirect(bool set = true);
@@ -98,16 +101,15 @@ public:
   void SetPayload(Payload const &payload);
 
 private:
-
 #if 1
 #endif
 
-  RoutingHeader header_;  ///< The header containing primarily routing information
-  Payload       payload_; ///< The payload of the message
+  RoutingHeader header_;   ///< The header containing primarily routing information
+  Payload       payload_;  ///< The payload of the message
 
   ///< Cached versions of the addresses
-  mutable Address       target_;
-  mutable Address       sender_;
+  mutable Address target_;
+  mutable Address sender_;
 
   template <typename T>
   friend void Serialize(T &serializer, Packet const &b);
@@ -155,7 +157,7 @@ inline uint8_t Packet::GetTTL() const
   return static_cast<uint8_t>(header_.ttl);
 }
 
-inline uint16_t  Packet::GetService() const
+inline uint16_t Packet::GetService() const
 {
   return static_cast<uint16_t>(header_.service);
 }
@@ -267,26 +269,24 @@ inline void Packet::SetPayload(Payload const &payload)
 template <typename T>
 void Serialize(T &serializer, Packet const &packet)
 {
-  serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_)
-             << packet.payload_;
+  serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
 }
 
 template <typename T>
 void Deserialize(T &serializer, Packet &packet)
 {
-  serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_)
-             >> packet.payload_;
+  serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch
 
 namespace std {
 
-template<>
+template <>
 struct hash<fetch::muddle::Packet::RawAddress>
 {
-  std::size_t operator()(fetch::muddle::Packet::RawAddress const& address) const noexcept
+  std::size_t operator()(fetch::muddle::Packet::RawAddress const &address) const noexcept
   {
     uint32_t hash = 2166136261;
     for (std::size_t i = 0; i < address.size(); ++i)
@@ -297,4 +297,4 @@ struct hash<fetch::muddle::Packet::RawAddress>
   }
 };
 
-} // namespace std
+}  // namespace std

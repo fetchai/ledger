@@ -843,7 +843,7 @@ int main(int argc, char *argv[])
     s >> iterations;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME,"Running test iterations: ", iterations);
+  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {

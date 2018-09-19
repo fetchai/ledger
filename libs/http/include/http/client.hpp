@@ -34,7 +34,6 @@ namespace http {
 class HTTPClient
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "HTTPClient";
 
   // Construction / Destruction

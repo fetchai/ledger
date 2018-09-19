@@ -18,13 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "crypto/fnv.hpp"
+#include "network/generics/future_timepoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/p2pservice/manifest.hpp"
-#include "network/generics/future_timepoint.hpp"
-#include "crypto/fnv.hpp"
 
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
@@ -36,11 +36,10 @@ namespace p2p {
 class ManifestCache
 {
 public:
-
   struct CacheEntry
   {
     network::FutureTimepoint timepoint;
-    network::Manifest manifest;
+    network::Manifest        manifest;
   };
 
   using Clock      = network::FutureTimepoint::Clock;
@@ -53,26 +52,26 @@ public:
   using AddressSet = std::unordered_set<Address>;
 
   // Construction / Destruction
-  ManifestCache() = default;
+  ManifestCache()                      = default;
   ManifestCache(ManifestCache const &) = delete;
-  ManifestCache(ManifestCache &&) = delete;
-  ~ManifestCache() = default;
+  ManifestCache(ManifestCache &&)      = delete;
+  ~ManifestCache()                     = default;
 
   // Queries
-  bool Get(Address const &address, Manifest &manifest) const;
+  bool       Get(Address const &address, Manifest &manifest) const;
   AddressSet GetUpdatesNeeded() const;
   AddressSet GetUpdatesNeeded(AddressSet const &addresses) const;
 
   // Updates
-  void ProvideUpdate(Address const &address, network::Manifest const &manifest, std::size_t valid_for);
+  void ProvideUpdate(Address const &address, network::Manifest const &manifest,
+                     std::size_t valid_for);
 
   // Operators
   ManifestCache &operator=(ManifestCache const &) = delete;
   ManifestCache &operator=(ManifestCache &&) = delete;
 
 private:
-
-  Cache cache_;
+  Cache         cache_;
   mutable Mutex mutex_{__LINE__, __FILE__};
 };
 
@@ -94,7 +93,7 @@ inline bool ManifestCache::Get(Address const &address, Manifest &manifest) const
     if (iter != cache_.end())
     {
       manifest = iter->second.manifest;
-      success = true;
+      success  = true;
     }
   }
 
@@ -109,7 +108,7 @@ inline bool ManifestCache::Get(Address const &address, Manifest &manifest) const
 inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded() const
 {
   Timepoint const now = Clock::now();
-  AddressSet addresses;
+  AddressSet      addresses;
 
   {
     FETCH_LOCK(mutex_);
@@ -134,7 +133,7 @@ inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded() const
 inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded(AddressSet const &addresses) const
 {
   Timepoint const now = Clock::now();
-  AddressSet result;
+  AddressSet      result;
 
   {
     FETCH_LOCK(mutex_);
@@ -159,7 +158,8 @@ inline ManifestCache::AddressSet ManifestCache::GetUpdatesNeeded(AddressSet cons
  * @param manifest The manifest for that peer
  * @param valid_for The time in seconds for the cache entry to be valid
  */
-inline void ManifestCache::ProvideUpdate(Address const &address, network::Manifest const &manifest, std::size_t valid_for)
+inline void ManifestCache::ProvideUpdate(Address const &address, network::Manifest const &manifest,
+                                         std::size_t valid_for)
 {
   FETCH_LOCK(mutex_);
 
@@ -171,5 +171,5 @@ inline void ManifestCache::ProvideUpdate(Address const &address, network::Manife
   entry.timepoint.SetSeconds(valid_for);
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace p2p
+}  // namespace fetch

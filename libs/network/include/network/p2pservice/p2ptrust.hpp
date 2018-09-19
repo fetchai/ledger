@@ -22,15 +22,15 @@
 #include "core/mutex.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <ctime>
 #include <iostream>
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <random>
 
 namespace fetch {
 namespace p2p {
@@ -45,7 +45,10 @@ struct TrustModifier
 class TrustModifier2
 {
 public:
-  TrustModifier2() { this->delta = 19.73; }
+  TrustModifier2()
+  {
+    this->delta = 19.73;
+  }
   TrustModifier2(double delta, double min, double max)
   {
     this->delta = delta;
@@ -54,7 +57,8 @@ public:
   }
   double delta, min, max;
 
-  ~TrustModifier2() {}
+  ~TrustModifier2()
+  {}
 };
 
 using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;
@@ -62,7 +66,8 @@ extern const trust_modifiers_type trust_modifiers_;
 
 inline TrustModifier const &LookupTrustModifier(TrustSubject subject, TrustQuality quality)
 {
-  return trust_modifiers_.at(static_cast<std::size_t>(subject)).at(static_cast<std::size_t>(quality));
+  return trust_modifiers_.at(static_cast<std::size_t>(subject))
+      .at(static_cast<std::size_t>(quality));
 }
 
 template <typename IDENTITY>
@@ -71,9 +76,9 @@ class P2PTrust : public P2PTrustInterface<IDENTITY>
 protected:
   struct PeerTrustRating
   {
-    IDENTITY  peer_identity;
-    double    trust;
-    time_t    last_modified;
+    IDENTITY peer_identity;
+    double   trust;
+    time_t   last_modified;
 
     double ComputeCurrentTrust(time_t current_time) const
     {
@@ -93,29 +98,24 @@ protected:
   using Mutex        = mutex::Mutex;
 
 public:
-
   using ConstByteArray = byte_array::ConstByteArray;
-  using IdentitySet = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
 
   static constexpr char const *LOGGING_NAME = "Trust";
 
   // Construction / Destruction
-  P2PTrust() = default;
+  P2PTrust()                    = default;
   P2PTrust(const P2PTrust &rhs) = delete;
   P2PTrust(P2PTrust &&rhs)      = delete;
-  ~P2PTrust() override = default;
+  ~P2PTrust() override          = default;
 
-  void AddFeedback(IDENTITY const &peer_ident,
-                   TrustSubject subject,
-                   TrustQuality quality) override
+  void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
   }
 
-  void AddFeedback(IDENTITY const &peer_ident,
-                   ConstByteArray const &object_ident,
-                   TrustSubject subject,
-                   TrustQuality quality) override
+  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
+                   TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOCK(mutex_);
 
@@ -135,7 +135,7 @@ public:
     }
 
     TrustModifier const &update = LookupTrustModifier(subject, quality);
-    auto trust  = trust_store_[pos].ComputeCurrentTrust(current_time);
+    auto                 trust  = trust_store_[pos].ComputeCurrentTrust(current_time);
 
     if ((std::isnan(update.max) || (trust < update.max)) &&
         (std::isnan(update.min) || (trust > update.min)))
@@ -162,7 +162,7 @@ public:
     result.reserve(maximum_count);
 
     std::random_device rd;
-    std::mt19937 g(rd());
+    std::mt19937       g(rd());
 
     {
       FETCH_LOCK(mutex_);
@@ -178,9 +178,10 @@ public:
       }
     }
 
-    // TODO(EJF): Shuffle sort of implemented by way that elements will be ordered via hash of identity
-    //std::shuffle(result.begin(), result.end(), g);
-    //result.resize(std::min(maximum_count, result.size()));
+    // TODO(EJF): Shuffle sort of implemented by way that elements will be ordered via hash of
+    // identity
+    // std::shuffle(result.begin(), result.end(), g);
+    // result.resize(std::min(maximum_count, result.size()));
 
     return result;
   }
@@ -247,10 +248,9 @@ public:
 
   // Operators
   P2PTrust operator=(const P2PTrust &rhs) = delete;
-  P2PTrust operator=(P2PTrust &&rhs)      = delete;
+  P2PTrust operator=(P2PTrust &&rhs) = delete;
 
 protected:
-
   void SortIfNeeded()
   {
     auto const current_time = GetCurrentTime();
@@ -286,8 +286,10 @@ protected:
     }
   }
 
-  static time_t GetCurrentTime() { return std::time(nullptr); }
-
+  static time_t GetCurrentTime()
+  {
+    return std::time(nullptr);
+  }
 
 private:
   bool          dirty_ = false;

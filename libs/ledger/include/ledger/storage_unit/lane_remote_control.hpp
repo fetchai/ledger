@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "network/p2pservice/p2p_lane_management.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/service/service_client.hpp"
 
 #include <unordered_map>
@@ -32,7 +32,7 @@ class LaneRemoteControl : public p2p::LaneManagement
 public:
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  using Mutex = mutex::Mutex;
+  using Mutex   = mutex::Mutex;
   using Promise = service::Promise;
 
   explicit LaneRemoteControl(std::size_t num_lanes)
@@ -43,7 +43,7 @@ public:
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
-  ~LaneRemoteControl() override = default;
+  ~LaneRemoteControl() override                           = default;
 
   void AddClient(LaneIndex lane, WeakService const &client)
   {
@@ -56,7 +56,7 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"Remote lane call to: ", host, ":", port);
+      FETCH_LOG_INFO(LOGGING_NAME, "Remote lane call to: ", host, ":", port);
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::CONNECT, host, port);
 
       FETCH_LOG_PROMISE();
@@ -137,10 +137,10 @@ public:
 
     if (ptr)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,"P2P -- USE PEER ----------------------");
-      for(auto &uri : uris)
+      FETCH_LOG_INFO(LOGGING_NAME, "P2P -- USE PEER ----------------------");
+      for (auto &uri : uris)
       {
-        FETCH_LOG_INFO(LOGGING_NAME,"P2P -- USE PEER ", uri.uri());
+        FETCH_LOG_INFO(LOGGING_NAME, "P2P -- USE PEER ", uri.uri());
       }
       ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
       return;
@@ -154,11 +154,10 @@ public:
   }
 
 private:
-
   SharedService LookupLane(LaneIndex lane) const
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"LookupLane ", lane, " in ", clients_.size());
-    
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LookupLane ", lane, " in ", clients_.size());
+
     FETCH_LOCK(mutex_);
 
 #ifdef NDEBUG
@@ -168,7 +167,7 @@ private:
 #endif
   }
 
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex            mutex_{__LINE__, __FILE__};
   std::vector<WeakService> clients_;
 };
 

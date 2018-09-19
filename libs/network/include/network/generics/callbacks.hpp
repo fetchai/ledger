@@ -40,7 +40,10 @@ public:
     return *this;
   }
 
-  operator bool() const { return !callbacks_.empty(); }
+  operator bool() const
+  {
+    return !callbacks_.empty();
+  }
 
   template <class... U>
   void operator()(U &&... u)
@@ -51,11 +54,16 @@ public:
     }
   }
 
-  void clear(void) { callbacks_.clear(); }
+  void clear(void)
+  {
+    callbacks_.clear();
+  }
 
-  explicit Callbacks() {}
+  explicit Callbacks()
+  {}
 
-  virtual ~Callbacks() {}
+  virtual ~Callbacks()
+  {}
 
 private:
   std::vector<FUNC> callbacks_;

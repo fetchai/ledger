@@ -23,7 +23,7 @@ namespace service {
 namespace details {
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
@@ -34,14 +34,15 @@ PromiseBuilder PromiseImplementation::WithHandlers()
  * Wait for the promise to conclude.
  *
  * @param timeout_ms The timeout (in milliseconds) to wait for the promise to be available
- * @param throw_exception Signal if the promise has failed, if it should throw the associated exception
+ * @param throw_exception Signal if the promise has failed, if it should throw the associated
+ * exception
  * @return true if the promise was fulfilled, otherwise false
  */
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
   LOG_STACK_TRACE_POINT;
 
-  bool const has_timeout = (timeout_ms > 0) && (timeout_ms < FOREVER);
+  bool const      has_timeout      = (timeout_ms > 0) && (timeout_ms < FOREVER);
   Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
 
   while (timeout_ms && IsWaiting())
@@ -49,13 +50,13 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
     // determine if timeout has expired
     if (has_timeout && (Clock::now() >= timeout_deadline))
     {
-      if (name_.length()>0)
+      if (name_.length() > 0)
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Promise '",name_,"'timed out!");
+        FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME,"Promise ", id_, " timed out!");
+        FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
       }
       return false;
     }
@@ -70,7 +71,7 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
   }
   else if (IsFailed())
   {
-    FETCH_LOG_WARN(LOGGING_NAME,"Promise ", id_, " failed!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " failed!");
 
     if (throw_exception && exception_)
     {
@@ -89,7 +90,7 @@ void PromiseImplementation::UpdateState(State state)
 
   if (state_.exchange(state) == State::WAITING)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,"Promise ", id_, " set from Waiting to ", ToString(state));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Promise ", id_, " set from Waiting to ", ToString(state));
 
     DispatchCallbacks();
   }
@@ -101,14 +102,14 @@ void PromiseImplementation::DispatchCallbacks()
 
   switch (state_.load())
   {
-    case State::SUCCESS:
-      handler = &callback_success_;
-      break;
-    case State::FAILED:
-      handler = &callback_failure_;
-      break;
-    default:
-      break;
+  case State::SUCCESS:
+    handler = &callback_success_;
+    break;
+  case State::FAILED:
+    handler = &callback_failure_;
+    break;
+  default:
+    break;
   }
 
   // dispatch the event
@@ -125,8 +126,8 @@ void PromiseImplementation::DispatchCallbacks()
   }
 
   // invalidate the callbacks
-  callback_success_ = Callback{};
-  callback_failure_ = Callback{};
+  callback_success_    = Callback{};
+  callback_failure_    = Callback{};
   callback_completion_ = Callback{};
 }
 
@@ -149,18 +150,18 @@ char const *ToString(PromiseState state)
   char const *name = "Unknown";
   switch (state)
   {
-    case details::PromiseImplementation::State::TIMEDOUT:
-      name = "Timedout";
-      break;
-    case details::PromiseImplementation::State::WAITING:
-      name = "Waiting";
-      break;
-    case details::PromiseImplementation::State::SUCCESS:
-      name = "Success";
-      break;
-    case details::PromiseImplementation::State::FAILED:
-      name = "Failed";
-      break;
+  case details::PromiseImplementation::State::TIMEDOUT:
+    name = "Timedout";
+    break;
+  case details::PromiseImplementation::State::WAITING:
+    name = "Waiting";
+    break;
+  case details::PromiseImplementation::State::SUCCESS:
+    name = "Success";
+    break;
+  case details::PromiseImplementation::State::FAILED:
+    name = "Failed";
+    break;
   }
 
   return name;

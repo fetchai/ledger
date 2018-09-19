@@ -39,7 +39,7 @@ class ExecutorIntegrationTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::NetworkManager ;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
 
@@ -86,7 +86,6 @@ protected:
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
-
 
     for (;;)
     {

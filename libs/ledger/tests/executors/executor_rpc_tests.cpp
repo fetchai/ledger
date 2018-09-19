@@ -37,7 +37,7 @@ class ExecutorRpcTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::NetworkManager ;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using client_type                     = std::unique_ptr<underlying_client_type>;
   using service_type                    = std::unique_ptr<underlying_service_type>;
   using network_manager_type            = std::unique_ptr<underlying_network_manager_type>;

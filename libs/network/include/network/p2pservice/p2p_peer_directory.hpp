@@ -240,7 +240,7 @@ private:
   /// @{
   bool AddPeerToSuggested(connectivity_details_type const &details, bool const &propagate = true)
   {
-          LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
     std::lock_guard<mutex::Mutex> lock(suggest_mutex_);
     auto                          it  = suggested_peers_.find(details.identity.identifier());
     bool                          ret = false;
@@ -257,7 +257,7 @@ private:
     }
     else
     {
-        LOG_STACK_TRACE_POINT;
+      LOG_STACK_TRACE_POINT;
 
       // We do not allow conseq updates unless separated by substatial tume
       if (it->second.MillisecondsSinceUpdate() > 5000)
@@ -283,14 +283,14 @@ private:
     auto                          it  = suggested_peers_.find(public_key);
     bool                          ret = false;
 
-          LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
     if (it != suggested_peers_.end())
     {
-          LOG_STACK_TRACE_POINT;
+      LOG_STACK_TRACE_POINT;
       suggested_peers_.erase(it);
       if (propagate)
       {
-          LOG_STACK_TRACE_POINT;
+        LOG_STACK_TRACE_POINT;
         this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
       }
       ret = true;

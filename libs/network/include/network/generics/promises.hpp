@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include  <functional>
-#include "network/service/promise.hpp"
 #include "network/generics/threadsafe_set.hpp"
+#include "network/service/promise.hpp"
+#include <functional>
 
 namespace fetch {
 
@@ -30,19 +30,17 @@ namespace network {
 class Promises
 {
 public:
-
   enum Conclusion
   {
     NONE,
     DONE
   };
 
-  using individual_cb_type = std::function<void (fetch::service::Promise*)>;
-  using final_cb_type = std::function<void (const std::set<fetch::service::Promise*> promises)>;
+  using individual_cb_type = std::function<void(fetch::service::Promise *)>;
+  using final_cb_type = std::function<void(const std::set<fetch::service::Promise *> promises)>;
 
   Promises()
-  {
-  }
+  {}
 
   Promises(Promises &&other)
     : all_promises_(std::move(other.all_promises_))
@@ -50,9 +48,7 @@ public:
     , conclusion_(other.conclusion_.load())
     , on_each_(other.on_each_)
     , on_complete_(other.on_complete_)
-  {
-    
-  }
+  {}
 
   Promises &Every(individual_cb_type cb)
   {
@@ -70,15 +66,14 @@ public:
   {
     if (all_promises_.Add(p))
     {
-      p->Then([this,p](){ this->SignalDone(p); })
-        .Else([this,p](){ this->SignalDone(p); });
+      p->Then([this, p]() { this->SignalDone(p); }).Else([this, p]() { this->SignalDone(p); });
     }
     return *this;
   }
 
   virtual ~Promises()
   {
-    all_promises_.VisitRemove([](fetch::service::Promise *p){ delete p; });
+    all_promises_.VisitRemove([](fetch::service::Promise *p) { delete p; });
   }
 
 private:
@@ -111,9 +106,9 @@ private:
 
   generics::ThreadsafeSet<fetch::service::Promise *> all_promises_;
   generics::ThreadsafeSet<fetch::service::Promise *> finished_promises_;
-  std::atomic<Conclusion> conclusion_{NONE};
-  individual_cb_type on_each_;
-  final_cb_type on_complete_;
+  std::atomic<Conclusion>                            conclusion_{NONE};
+  individual_cb_type                                 on_each_;
+  final_cb_type                                      on_complete_;
 };
 
 }  // namespace network

@@ -191,9 +191,9 @@ public:
 
   virtual void StartEntry(Level level, char const *name, shared_context_type ctx)
   {
-    using Clock = std::chrono::system_clock;
+    using Clock     = std::chrono::system_clock;
     using Timepoint = Clock::time_point;
-    using Duration = Clock::duration;
+    using Duration  = Clock::duration;
 
 #ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
@@ -203,25 +203,25 @@ public:
     switch (level)
     {
     case Level::INFO:
-      color = 3;
+      color      = 3;
       level_name = "INFO  ";
       break;
     case Level::WARNING:
-      color = 6;
+      color      = 6;
       level_name = "WARN  ";
       break;
     case Level::ERROR:
-      color = 1;
+      color      = 1;
       level_name = "ERROR ";
       break;
     case Level::DEBUG:
       level_name = "DEBUG ";
-      color = 7;
+      color      = 7;
       break;
     case Level::HIGHLIGHT:
       level_name = "HLIGHT";
-      bg_color = 4;
-      color    = 7;
+      bg_color   = 4;
+      color      = 7;
       break;
     }
 
@@ -233,8 +233,7 @@ public:
 
     // format and generate the time
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << GetColor(color, bg_color)
-              << std::put_time(std::localtime(&now_c), "%F %T")
+    std::cout << "[ " << GetColor(color, bg_color) << std::put_time(std::localtime(&now_c), "%F %T")
               << "." << std::setw(3) << millis << DefaultAttributes();
 
     // thread information
@@ -421,7 +420,6 @@ public:
 
     //    exit(-1);
   }
-
 
   template <typename... Args>
   void Debug(Args... args)
@@ -815,7 +813,7 @@ extern log::details::LogWrapper logger;
     }                                                           \
     free(frameStrings);                                         \
                                                                 \
-    FETCH_LOG_INFO(LOGGING_NAME,"Trace: \n", trace.str());               \
+    FETCH_LOG_INFO(LOGGING_NAME, "Trace: \n", trace.str());     \
   }
 
 //#define LOG_STACK_TRACE_POINT
@@ -824,15 +822,14 @@ extern log::details::LogWrapper logger;
 #if 1
 #define FETCH_LOG_PROMISE()
 #else
-#define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME,"Promise wait: ", __FILE__, ":", __LINE__)
+#define FETCH_LOG_PROMISE() FETCH_LOG_WARN(LOGGING_NAME, "Promise wait: ", __FILE__, ":", __LINE__)
 #endif
-
 
 // Logging macros
 //#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
-#define FETCH_LOG_DEBUG(name, ...)      (void)name
-#define FETCH_LOG_INFO(name, ...)       fetch::logger.InfoWithName(name, __VA_ARGS__)
-#define FETCH_LOG_WARN(name, ...)       fetch::logger.WarnWithName(name, __VA_ARGS__)
-#define FETCH_LOG_ERROR(name, ...)      fetch::logger.ErrorWithName(name, __VA_ARGS__)
+#define FETCH_LOG_DEBUG(name, ...) (void)name
+#define FETCH_LOG_INFO(name, ...) fetch::logger.InfoWithName(name, __VA_ARGS__)
+#define FETCH_LOG_WARN(name, ...) fetch::logger.WarnWithName(name, __VA_ARGS__)
+#define FETCH_LOG_ERROR(name, ...) fetch::logger.ErrorWithName(name, __VA_ARGS__)
 
-#define FETCH_LOG_VARIABLE(x)           (void)x
+#define FETCH_LOG_VARIABLE(x) (void)x

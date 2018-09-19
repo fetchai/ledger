@@ -22,7 +22,9 @@ namespace fetch {
 namespace network {
 
 TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_manager)
-  : network_manager_{network_manager}, port_{port}, request_mutex_{}
+  : network_manager_{network_manager}
+  , port_{port}
+  , request_mutex_{}
 {
   LOG_STACK_TRACE_POINT;
 
@@ -46,8 +48,7 @@ TCPServer::~TCPServer()
     if (acceptorStrong)
     {
       std::error_code dummy;
-      acceptorStrong->
-        close(dummy);
+      acceptorStrong->close(dummy);
       FETCH_LOG_INFO(LOGGING_NAME, "closed TCP server server acceptor: ");
     }
     else
@@ -86,7 +87,7 @@ void TCPServer::Start()
       {  // KLL this also appears to generate a data race.
         // This might throw if the port is not free
         acceptor = network_manager_.CreateIO<acceptor_type>(
-          asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
+            asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
         acceptor_ = acceptor;
 
@@ -111,8 +112,7 @@ void TCPServer::Start()
 }
 
 void TCPServer::Stop()
-{
-}
+{}
 
 void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
 {
@@ -167,8 +167,8 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 {
   LOG_STACK_TRACE_POINT;
 
-  auto                         strongSocket = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
-  std::weak_ptr<ClientManager> man          = manager_;
+  auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
+  std::weak_ptr<ClientManager> man = manager_;
 
   auto cb = [this, man, acceptor, strongSocket](std::error_code ec) {
     auto lock_ptr = man.lock();
@@ -200,5 +200,5 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
   acceptor->async_accept(*strongSocket, cb);
 }
 
-} // namespace network
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch

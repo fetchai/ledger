@@ -29,7 +29,6 @@ namespace optimisers {
 class BinaryAnnealer
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "BinaryAnnealer";
 
   using spin_type  = int16_t;
@@ -64,7 +63,6 @@ public:
       {
         //        assert( i ==( block * 8*sizeof(bit_data_type) + bit ));
         assert(i < sites_.size());
-
 
         Site const &s         = sites_[i];
         uint64_t    state_bit = state_.bit(block, bit);

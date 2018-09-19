@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "network/uri.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace muddle {
@@ -62,15 +62,15 @@ public:
     BACKOFF_5 = 0x14,
   };
 
-  using UriMap        = std::unordered_map<Handle, Uri>;
+  using UriMap = std::unordered_map<Handle, Uri>;
 
   static constexpr char const *LOGGING_NAME = "PeerConnList";
 
   // Construction / Destruction
   explicit PeerConnectionList(Router &router);
   PeerConnectionList(PeerConnectionList const &) = delete;
-  PeerConnectionList(PeerConnectionList &&) = delete;
-  ~PeerConnectionList() = default;
+  PeerConnectionList(PeerConnectionList &&)      = delete;
+  ~PeerConnectionList()                          = default;
 
   // Operators
   PeerConnectionList &operator=(PeerConnectionList const &) = delete;
@@ -78,8 +78,8 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void AddPersistentPeer(Uri const &peer);
-  void RemovePersistentPeer(Uri const &peer);
+  void        AddPersistentPeer(Uri const &peer);
+  void        RemovePersistentPeer(Uri const &peer);
   std::size_t GetNumPeers() const;
   /// @}
 
@@ -90,7 +90,6 @@ public:
   void RemoveConnection(Uri const &peer);
   /// @}
 
-
   ConnectionState GetStateForPeer(Uri const &peer);
 
   PeerList GetPeersToConnectTo() const;
@@ -100,27 +99,26 @@ public:
   UriMap GetUriMap() const;
 
 private:
-
-  using Clock = std::chrono::steady_clock;
+  using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
 
   struct PeerMetadata
   {
-    Timepoint   last_failed_connection;   ///< The last time a connection to a node failed
-    std::size_t attempts = 0;
-    std::size_t successes = 0;            ///< The total number of successful connections
+    Timepoint   last_failed_connection;  ///< The last time a connection to a node failed
+    std::size_t attempts             = 0;
+    std::size_t successes            = 0;  ///< The total number of successful connections
     std::size_t consecutive_failures = 0;
-    std::size_t total_failures = 0;       ///< The total number of connection failures
-    bool        connected = false;        ///< Whether the last/current attempt has succeeded.
+    std::size_t total_failures       = 0;      ///< The total number of connection failures
+    bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 
-  using Mutex        = mutex::Mutex;
-  using Lock         = std::lock_guard<Mutex>;
-  using PeerSet      = std::unordered_set<Uri>;
+  using Mutex   = mutex::Mutex;
+  using Lock    = std::lock_guard<Mutex>;
+  using PeerSet = std::unordered_set<Uri>;
 
-  using MetadataMap  = std::unordered_map<Uri, PeerMetadata>;
+  using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
-  Router        &router_;
+  Router &router_;
 
   mutable Mutex lock_{__LINE__, __FILE__};
   PeerSet       persistent_peers_;
@@ -130,5 +128,5 @@ private:
   bool ReadyForRetry(const PeerMetadata &metadata) const;
 };
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

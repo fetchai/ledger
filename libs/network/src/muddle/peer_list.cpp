@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/peer_list.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/service_ids.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/router.hpp"
 
-static constexpr std::size_t MAX_LOG2_BACKOFF = 11; // 2048
+static constexpr std::size_t MAX_LOG2_BACKOFF = 11;  // 2048
 
 namespace fetch {
 namespace muddle {
@@ -34,8 +34,7 @@ namespace muddle {
  */
 PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
-{
-}
+{}
 
 void PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
@@ -61,7 +60,7 @@ void PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &con
   peer_connections_[peer] = conn;
 
   // update the metadata
-  auto &metadata = peer_metadata_[peer];
+  auto &metadata     = peer_metadata_[peer];
   metadata.connected = false;
   ++metadata.attempts;
 }
@@ -87,7 +86,6 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
 
   return map;
 }
-
 
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer)
 {
@@ -128,7 +126,7 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
 
     auto &metadata = peer_metadata_[peer];
     ++metadata.successes;
-    metadata.connected = true;
+    metadata.connected            = true;
     metadata.consecutive_failures = 0;
   }
 
@@ -150,7 +148,7 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   auto &metadata = peer_metadata_[peer];
   ++metadata.consecutive_failures;
   ++metadata.total_failures;
-  metadata.connected = false;
+  metadata.connected              = false;
   metadata.last_failed_connection = Clock::now();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " lost");
@@ -159,7 +157,8 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
 {
   std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
-  Timepoint const backoff_deadline = metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
+  Timepoint const   backoff_deadline =
+      metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
   return (Clock::now() >= backoff_deadline);
 }
 
@@ -204,5 +203,5 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
   return peers;
 }
 
-} // namespace p2p
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -23,10 +23,10 @@
 #include "miner/resource_mapper.hpp"
 
 #include <chrono>
-#include <random>
-#include <memory>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <memory>
+#include <random>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
@@ -35,24 +35,23 @@ using fetch::byte_array::ToBase64;
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-
-  static constexpr uint32_t NUM_LANES  = 64;
-  static constexpr std::size_t NUM_SLICES = 1024;
-  static constexpr uint32_t NUM_LANES_MASK = NUM_LANES - 1;
-  static constexpr uint32_t LOG2_NUM_LANES = Log2<NUM_LANES>::value;
-  static constexpr std::size_t RANDOM_SEED = 42;
+  static constexpr uint32_t    NUM_LANES      = 64;
+  static constexpr std::size_t NUM_SLICES     = 1024;
+  static constexpr uint32_t    NUM_LANES_MASK = NUM_LANES - 1;
+  static constexpr uint32_t    LOG2_NUM_LANES = Log2<NUM_LANES>::value;
+  static constexpr std::size_t RANDOM_SEED    = 42;
 
   static_assert(IsLog2<NUM_LANES>::value, "Number of lanes must be a valid 2 power");
 
-  using Rng = std::mt19937_64;
-  using BasicMiner = fetch::miner::BasicMiner;
-  using BasicMinerPtr = std::unique_ptr<BasicMiner>;
-  using MutableTransaction = fetch::chain::MutableTransaction;
+  using Rng                 = std::mt19937_64;
+  using BasicMiner          = fetch::miner::BasicMiner;
+  using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
+  using MutableTransaction  = fetch::chain::MutableTransaction;
   using VerifiedTransaction = fetch::chain::VerifiedTransaction;
-  using BlockBody = fetch::chain::BlockBody;
-  using Clock = std::chrono::high_resolution_clock;
-  using Timepoint = Clock::time_point;
-  using BitVector = fetch::bitmanip::BitVector;
+  using BlockBody           = fetch::chain::BlockBody;
+  using Clock               = std::chrono::high_resolution_clock;
+  using Timepoint           = Clock::time_point;
+  using BitVector           = fetch::bitmanip::BitVector;
 
   void SetUp() override
   {
@@ -88,7 +87,7 @@ protected:
     }
   }
 
-  Rng rng_;
+  Rng           rng_;
   BasicMinerPtr miner_;
 };
 
@@ -113,7 +112,8 @@ TEST_P(BasicMinerTests, Sample)
       for (auto const &resource : tx.resources)
       {
         // map the resource to a lane
-        uint32_t const lane = fetch::miner::MapResourceToLane(resource, tx.contract_name, LOG2_NUM_LANES);
+        uint32_t const lane =
+            fetch::miner::MapResourceToLane(resource, tx.contract_name, LOG2_NUM_LANES);
 
         // check the lane mapping
         resources.set(lane, 1);
@@ -128,6 +128,4 @@ TEST_P(BasicMinerTests, Sample)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased,
-                        BasicMinerTests,
-                        ::testing::Values(10000, 20000, 30000),);
+INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10000, 20000, 30000), );

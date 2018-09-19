@@ -35,9 +35,9 @@ public:
   enum
   {
     ELEMENT_BIT_SIZE = sizeof(data_type) << 3,
-    LOG_BITS  = meta::Log2<8 * sizeof(data_type)>::value,
-    BIT_MASK  = (1ull << LOG_BITS) - 1,
-    SIMD_SIZE = container_type::E_SIMD_COUNT
+    LOG_BITS         = meta::Log2<8 * sizeof(data_type)>::value,
+    BIT_MASK         = (1ull << LOG_BITS) - 1,
+    SIMD_SIZE        = container_type::E_SIMD_COUNT
   };
 
   BitVectorImplementation()
