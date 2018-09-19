@@ -111,8 +111,40 @@ public:
   using MutableTransactionRef::MutableTransactionRef;
   using MutableTransactionRef::operator=;
   using MutableTransactionRef::operator();
-  //using MutableTransactionRef::get;
+
+  template<typename STREAM, typename T, typename U>
+  bool VerifyInternal(
+      STREAM &stream,
+      signatures_type::value_type const &sig,
+      serializers::LazyEvalArgument<T> const& query_tx_data_size,
+      serializers::LazyEvalArgument<U> const& reserve_enough_space)
+  {
+    auto const& identity  = sig.first;
+    auto const& signature = sig.second;
+    stream.Append(get(), query_tx_data_size, identity, reserve_enough_space);
+
+    using signature_type = crypto::openssl::ECDSASignature<>;
+    using public_key_type = signature_type::public_key_type<crypto::openssl::eECDSAEncoding::canonical, POINT_CONVERSION_UNCOMPRESSED>;
+    signature_type sig_{signature.signature_data};
+    return sig_.Verify(public_key_type{identity.identifier()}, stream.data());
+  }
+
+  //template<typename STREAM, typename T, typename U>
+  //bool Verify(
+  //    signatures_type::value_type const &sig,
+  //    serializers::LazyEvalArgument<T> const& query_tx_data_size,
+  //    serializers::LazyEvalArgument<U> const& reserve_enough_space)
+  //{
+  //  STREAM &stream 
+  //}
+  
 };
+
+template <typename T>
+void Serialize(T &stream, TxDataForSigningC const &tx);
+
+template <typename T>
+void Deserialize(T &serializer, TxDataForSigningC &tx);
 
 
 class MutableTransaction
