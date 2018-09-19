@@ -168,14 +168,23 @@ constexpr bool has_sse42()
 #endif
 
 #if defined(FETCH_PLATFORM_BIG_ENDIAN)
-inline uint64_t ConvertToBigEndian(uint64_t x) { return x; }
+inline uint64_t ConvertToBigEndian(uint64_t x)
+{
+  return x;
+}
 #endif
 
 #if defined(FETCH_PLATFORM_LITTLE_ENDIAN)
-inline uint64_t ConvertToBigEndian(uint64_t x) { return __builtin_bswap64(x); }
+inline uint64_t ConvertToBigEndian(uint64_t x)
+{
+  return __builtin_bswap64(x);
+}
 #endif
 
-inline int CountLeadingZeroes64(uint64_t x) { return __builtin_clzl(x); }
+inline int CountLeadingZeroes64(uint64_t x)
+{
+  return __builtin_clzl(x);
+}
 
 // Return the minimum number of bits required to represent x
 inline uint64_t Log2Ceil(uint64_t x)

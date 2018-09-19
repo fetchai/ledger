@@ -38,6 +38,13 @@ namespace storage {
 /**
  * The CachedRandomAccessStack owns a stack of type T (RandomAccessStack), and provides caching.
  *
+ * It does this by maintaining a quick access structure (data_ map) that can be used without disk
+ * access.
+ *
+ * The user is responsible for flushing this to disk at regular intervals to keep the map size
+ * small and guard against loss of data in the event of system failure. Sets and gets will fill
+ * this map.
+ *
  */
 template <typename T, typename D = uint64_t>
 class CachedRandomAccessStack
@@ -57,7 +64,10 @@ public:
     stack_.OnBeforeFlush([this]() { SignalBeforeFlush(); });
   }
 
-  ~CachedRandomAccessStack() { stack_.ClearEventHandlers(); }
+  ~CachedRandomAccessStack()
+  {
+    stack_.ClearEventHandlers();
+  }
 
   void ClearEventHandlers()
   {
@@ -65,21 +75,29 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f) { on_file_loaded_ = f; }
+  void OnFileLoaded(event_handler_type const &f)
+  {
+    on_file_loaded_ = f;
+  }
 
-  void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
+  void OnBeforeFlush(event_handler_type const &f)
+  {
+    on_before_flush_ = f;
+  }
 
   /**
    * Indicate whether the stack is writing directly to disk or caching writes.
    *
    * @return: Whether the stack is written straight to disk.
    */
-  static constexpr bool DirectWrite() { return false; }
+  static constexpr bool DirectWrite()
+  {
+    return false;
+  }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
     stack_.Load(filename, create_if_not_exists);
-    total_access_ = 0;
     this->SignalFileLoaded();
   }
 
@@ -87,16 +105,16 @@ public:
   {
     stack_.New(filename);
     Clear();
-    total_access_ = 0;
     this->SignalFileLoaded();
   }
 
   void Get(uint64_t const &i, type &object) const
   {
     assert(i < objects_);
-    ++total_access_;
 
     auto iter = data_.find(i);
+
+    // Found the item via local map
     if (iter != data_.end())
     {
       ++iter->second.reads;
@@ -104,6 +122,7 @@ public:
     }
     else
     {
+      // Case where item isn't found, get it from the stack and insert it into the map
       stack_.Get(i, object);
       CachedDataItem itm;
       itm.data = object;
@@ -111,23 +130,30 @@ public:
     }
   }
 
+  /**
+   * Set index i to object. Undefined behaviour if i >= stack size.
+   *
+   * @param: i The index
+   * @param: object The object to write
+   */
   void Set(uint64_t const &i, type const &object)
   {
-    ++total_access_;
+    assert(i < objects_);
 
     auto iter = data_.find(i);
     if (iter != data_.end())
     {
-      ++iter->second.writes;
-      iter->second.updated = true;
-      iter->second.data    = object;
+      auto &cached_element = iter->second;
+      cached_element.writes++;
+      cached_element.updated = true;
+      cached_element.data    = object;
     }
     else
     {
-      assert(false);
-      assert(i < objects_);
       CachedDataItem itm;
-      itm.data = object;
+      itm.data    = object;
+      itm.updated = true;
+      itm.writes  = 1;
       data_.insert(std::pair<uint64_t, CachedDataItem>(i, itm));
     }
   }
@@ -139,13 +165,18 @@ public:
     stack_.Close(true);
   }
 
-  void SetExtraHeader(header_extra_type const &he) { stack_.SetExtraHeader(he); }
+  void SetExtraHeader(header_extra_type const &he)
+  {
+    stack_.SetExtraHeader(he);
+  }
 
-  header_extra_type const &header_extra() const { return stack_.header_extra(); }
+  header_extra_type const &header_extra() const
+  {
+    return stack_.header_extra();
+  }
 
   uint64_t Push(type const &object)
   {
-    ++total_access_;
     uint64_t       ret = objects_;
     CachedDataItem itm;
     itm.data    = object;
@@ -162,19 +193,34 @@ public:
     data_.erase(objects_);
   }
 
-  type Top() const { return data_[objects_ - 1]; }
+  type Top() const
+  {
+    type ret;
+    Get(objects_ - 1, ret);
+    return ret;
+  }
 
   void Swap(uint64_t const &i, uint64_t const &j)
   {
-    if (i == j) return;
-    total_access_ += 2;
+
+    if (i == j)
+    {
+      return;
+    }
+
     data_.find(i)->second.updated = true;
     data_.find(j)->second.updated = true;
     std::swap(data_[i], data_[j]);
   }
 
-  std::size_t size() const { return objects_; }
-  std::size_t empty() const { return objects_ == 0; }
+  std::size_t size() const
+  {
+    return objects_;
+  }
+  std::size_t empty() const
+  {
+    return objects_ == 0;
+  }
 
   void Clear()
   {
@@ -183,23 +229,31 @@ public:
     data_.clear();
   }
 
+  /**
+   * Flush all of the cached elements to file if they have been updated
+   */
   void Flush()
   {
     this->SignalBeforeFlush();
 
     for (auto &item : data_)
     {
-      if (item.second.updated)
+      auto const &index          = item.first;
+      auto const &cached_element = item.second;
+
+      if (cached_element.updated)
       {
-        if (item.first >= stack_.size())
+        // In the case the stack size is less than the index we're trying to write this means we
+        // need to push onto the stack. This is unsafe if we have non-continuous iteration of index
+        if (index >= stack_.size())
         {
-          assert(item.first == stack_.size());
-          stack_.LazyPush(item.second.data);
+          assert(index == stack_.size());
+          stack_.LazyPush(cached_element.data);
         }
         else
         {
-          assert(item.first < stack_.size());
-          stack_.Set(item.first, item.second.data);
+          assert(index < stack_.size());
+          stack_.Set(index, cached_element.data);
         }
       }
     }
@@ -212,18 +266,24 @@ public:
       item.second.writes  = 0;
       item.second.updated = false;
     }
-    total_access_ = 0;
-    // TODO(issue 10): Clear those not needed
+
+    // TODO(issue 10): Manage cache size
   }
 
-  bool is_open() const { return stack_.is_open(); }
+  bool is_open() const
+  {
+    return stack_.is_open();
+  }
 
 private:
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  static constexpr std::size_t MAX_SIZE_BYTES = 10000;
+  event_handler_type           on_file_loaded_;
+  event_handler_type           on_before_flush_;
 
-  stack_type       stack_;
-  mutable uint64_t total_access_;
+  // Underlying stack
+  stack_type stack_;
+
+  // Cached items
   struct CachedDataItem
   {
     uint64_t reads   = 0;
@@ -238,7 +298,10 @@ private:
   // TODO(issue 13): Move private or protected
   void SignalFileLoaded()
   {
-    if (on_file_loaded_) on_file_loaded_();
+    if (on_file_loaded_)
+    {
+      on_file_loaded_();
+    }
   }
 
   /**
@@ -246,7 +309,10 @@ private:
    */
   void SignalBeforeFlush()
   {
-    if (on_before_flush_) on_before_flush_();
+    if (on_before_flush_)
+    {
+      on_before_flush_();
+    }
   }
 };
 }  // namespace storage

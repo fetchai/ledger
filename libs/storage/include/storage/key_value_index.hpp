@@ -108,18 +108,27 @@ struct KeyValuePair
   };
   uint64_t right;
 
-  bool operator==(KeyValuePair const &kv) { return Hash() == kv.Hash(); }
+  bool operator==(KeyValuePair const &kv)
+  {
+    return Hash() == kv.Hash();
+  }
 
-  bool operator!=(KeyValuePair const &kv) { return Hash() != kv.Hash(); }
+  bool operator!=(KeyValuePair const &kv)
+  {
+    return Hash() != kv.Hash();
+  }
 
-  bool is_leaf() const { return split == S; }
+  bool is_leaf() const
+  {
+    return split == S;
+  }
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
   {
     crypto::SHA256 hasher;
     hasher.Reset();
     hasher.Update(data);
-    hasher.Final(hash);
+    hasher.Final(hash, N);
     value = val;
 
     return true;
@@ -132,7 +141,7 @@ struct KeyValuePair
 
     hasher.Update(left.hash, N);
     hasher.Update(right.hash, N);
-    hasher.Final(hash);
+    hasher.Final(hash, N);
 
     return true;
   }
@@ -172,7 +181,10 @@ class KeyValueIndex
     {
       return (priority == other.priority) && (other.element == element);
     }
-    bool operator<(UpdateTask const &other) const { return priority < other.priority; }
+    bool operator<(UpdateTask const &other) const
+    {
+      return priority < other.priority;
+    }
   };
 
 public:
@@ -208,7 +220,10 @@ public:
 
   void BeforeFlushHandler()
   {
-    if (!this->is_open()) return;
+    if (!this->is_open())
+    {
+      return;
+    }
 
     stack_.SetExtraHeader(root_);
 
@@ -248,7 +263,10 @@ public:
       last = k.first;
       while (parents.find(last) != parents.end())
       {
-        if (depths.find(last) != depths.end()) break;
+        if (depths.find(last) != depths.end())
+        {
+          break;
+        }
         depths[last] = depth;
         q.push({depth, last});
         --depth;
@@ -278,7 +296,10 @@ public:
     schedule_update_.clear();
   }
 
-  void Delete(byte_array::ConstByteArray const &key) { throw StorageException("Not implemented"); }
+  void Delete(byte_array::ConstByteArray const &key)
+  {
+    throw StorageException("Not implemented");
+  }
 
   void GetElement(uint64_t const &i, index_type &v)
   {
@@ -466,20 +487,41 @@ public:
     return kv.Hash();
   }
 
-  std::size_t size() const { return stack_.size(); }
+  std::size_t size() const
+  {
+    return stack_.size();
+  }
 
-  void Flush() { stack_.Flush(); }
+  void Flush()
+  {
+    stack_.Flush();
+  }
 
-  bool is_open() const { return stack_.is_open(); }
+  bool is_open() const
+  {
+    return stack_.is_open();
+  }
 
-  bool empty() const { return stack_.empty(); }
+  bool empty() const
+  {
+    return stack_.empty();
+  }
 
-  void Close() { stack_.Close(); }
+  void Close()
+  {
+    stack_.Close();
+  }
 
   using bookmark_type = uint64_t;
-  bookmark_type Commit() { return stack_.Commit(); }
+  bookmark_type Commit()
+  {
+    return stack_.Commit();
+  }
 
-  bookmark_type Commit(bookmark_type const &b) { return stack_.Commit(b); }
+  bookmark_type Commit(bookmark_type const &b)
+  {
+    return stack_.Commit(b);
+  }
 
   void Revert(bookmark_type const &b)
   {
@@ -488,13 +530,19 @@ public:
     root_ = stack_.header_extra();
   }
 
-  uint64_t const &root_element() const { return root_; }
+  uint64_t const &root_element() const
+  {
+    return root_;
+  }
 
   class Iterator
   {
   public:
     Iterator(self_type *self, key_value_pair kv, bool node_iterator = false)
-      : kv_{kv}, kv_node_{kv}, node_iterator_{node_iterator}, self_{self}
+      : kv_{kv}
+      , kv_node_{kv}
+      , node_iterator_{node_iterator}
+      , self_{self}
     {
       if (node_iterator)
       {
@@ -508,9 +556,15 @@ public:
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    bool operator==(Iterator const &rhs) { return kv_ == rhs.kv_; }
+    bool operator==(Iterator const &rhs)
+    {
+      return kv_ == rhs.kv_;
+    }
 
-    bool operator!=(Iterator const &rhs) { return !(kv_ == rhs.kv_); }
+    bool operator!=(Iterator const &rhs)
+    {
+      return !(kv_ == rhs.kv_);
+    }
 
     void operator++()
     {
@@ -538,7 +592,10 @@ public:
 
   self_type::Iterator begin()
   {
-    if (this->empty()) return end();
+    if (this->empty())
+    {
+      return end();
+    }
 
     key_value_pair kv;
     stack_.Get(root_, kv);
@@ -550,7 +607,10 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator end() { return Iterator(this, key_value_pair()); }
+  self_type::Iterator end()
+  {
+    return Iterator(this, key_value_pair());
+  }
 
   self_type::Iterator Find(byte_array::ConstByteArray const &key_str)
   {
@@ -573,7 +633,10 @@ public:
 
   self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
   {
-    if (this->empty()) return end();
+    if (this->empty())
+    {
+      return end();
+    }
 
     key_type       key(key_str);
     bool           split      = true;
@@ -654,7 +717,10 @@ private:
                          uint64_t max_bits = std::numeric_limits<uint64_t>::max())
   {
     depth = 0;
-    if (this->empty()) return index_type(-1);
+    if (this->empty())
+    {
+      return index_type(-1);
+    }
 
     std::size_t next = root_;
     std::size_t index;

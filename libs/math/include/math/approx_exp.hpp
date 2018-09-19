@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <uint8_t N, uint64_t C = 60801, bool O = false>
-class ApproxExpImplementation
+class ApproxExp
 {
   // Only using the upper part of a double.
   enum
@@ -46,15 +46,21 @@ class ApproxExpImplementation
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
 
 public:
-  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
-  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
+  ApproxExp(ApproxExp const &other) = delete;
+  ApproxExp operator=(ApproxExp const &other) = delete;
 
-  ApproxExpImplementation() { CreateCorrectionTable(); }
+  ApproxExp()
+  {
+    CreateCorrectionTable();
+  }
 
   template <typename T>
   double operator()(T const &x) const
   {
-    if (N > E_MANTISSA) return exp(x);
+    if (N > E_MANTISSA)
+    {
+      return exp(x);
+    }
     double in = x * a_ + b_;
 
     if (O)
@@ -79,7 +85,10 @@ public:
     return conv.d * corrections_[c];
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 
 private:
   double a_ = multiplier_pow2_ / M_LN2;
@@ -90,15 +99,24 @@ private:
 
   void CreateCorrectionTable()
   {
-    if (initialized_) return;
+    if (initialized_)
+    {
+      return;
+    }
 
-    ApproxExpImplementation<0, C>     fexp;
+    ApproxExp<0, C>     fexp;
     std::vector<double> accumulated, frequency;
     accumulated.resize(E_ENTRIES);
     frequency.resize(E_ENTRIES);
 
-    for (auto &a : accumulated) a = 0;
-    for (auto &a : frequency) a = 0;
+    for (auto &a : accumulated)
+    {
+      a = 0;
+    }
+    for (auto &a : frequency)
+    {
+      a = 0;
+    }
     for (double l = 0.; l < 5; l += 0.0000001)
     {  // FIXME: set limit
       double r1 = exp(l);
@@ -116,14 +134,17 @@ private:
       }
     }
 
-    for (std::size_t i = 0; i < E_ENTRIES; ++i) corrections_[i] = accumulated[i] / frequency[i];
+    for (std::size_t i = 0; i < E_ENTRIES; ++i)
+    {
+      corrections_[i] = accumulated[i] / frequency[i];
+    }
 
     initialized_ = true;
   }
 };
 
 template <uint64_t C, bool OF>
-class ApproxExpImplementation<0, C, OF>
+class ApproxExp<0, C, OF>
 {
   enum
   {
@@ -140,9 +161,10 @@ class ApproxExpImplementation<0, C, OF>
   double                  b_               = exponent_offset_ * multiplier_pow2_ - C;
 
 public:
-  ApproxExpImplementation() {}
-  ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
-  ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
+  ApproxExp()
+  {}
+  ApproxExp(ApproxExp const &other) = delete;
+  ApproxExp operator=(ApproxExp const &other) = delete;
 
   template <typename T>
   double operator()(T const &x) const
@@ -158,13 +180,16 @@ public:
     return conv.d;
   }
 
-  void SetCoefficient(double const &c) { a_ = c * multiplier_pow2_ / M_LN2; }
+  void SetCoefficient(double const &c)
+  {
+    a_ = c * multiplier_pow2_ / M_LN2;
+  }
 };
 
 template <uint8_t N, uint64_t C, bool OF>
-bool ApproxExpImplementation<N, C, OF>::initialized_ = false;
+bool ApproxExp<N, C, OF>::initialized_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
-double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
+double ApproxExp<N, C, OF>::corrections_[E_ENTRIES] = {0};
 }  // namespace math
 }  // namespace fetch

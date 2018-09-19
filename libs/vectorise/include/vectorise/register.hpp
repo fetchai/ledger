@@ -51,12 +51,22 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister() {}
-  VectorRegister(type const *d) : data_(*d) {}
-  VectorRegister(type const &d) : data_(d) {}
-  VectorRegister(type &&d) : data_(d) {}
+  VectorRegister()
+  {}
+  VectorRegister(type const *d)
+    : data_(*d)
+  {}
+  VectorRegister(type const &d)
+    : data_(d)
+  {}
+  VectorRegister(type &&d)
+    : data_(d)
+  {}
 
-  explicit operator T() { return data_; }
+  explicit operator T()
+  {
+    return data_;
+  }
 
   template <typename G>
   static G dsp_sum(G const *a, std::size_t const &n)
@@ -88,7 +98,10 @@ public:
   APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);
 #undef FETCH_ADD_OPERATOR
 
-  void Store(type *ptr) const { *ptr = data_; }
+  void Store(type *ptr) const
+  {
+    *ptr = data_;
+  }
 
 private:
   type data_;

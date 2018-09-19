@@ -19,6 +19,7 @@
 
 //#include "math/ndarray.hpp"
 #include <algorithm>
+#include <cassert>
 #include <vector>
 //
 
@@ -59,7 +60,8 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  NDArrayIterator(ndarray_type &array) : array_(array)
+  NDArrayIterator(ndarray_type &array)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())
@@ -80,7 +82,8 @@ public:
     Setup(step, array_.shape());
   }
 
-  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape) : array_(array)
+  NDArrayIterator(ndarray_type &array, std::vector<std::size_t> const &shape)
+    : array_(array)
   {
     std::vector<std::vector<std::size_t>> step{};
     for (auto i : array.shape())
@@ -95,7 +98,10 @@ public:
    * identifies whether the iterator is still valid or has finished iterating
    * @return boolean indicating validity
    */
-  operator bool() { return counter_ < size_; }
+  operator bool()
+  {
+    return counter_ < size_;
+  }
 
   /**
    * incrementer, i.e. increment through the memory by 1 position making n-dim adjustments as
@@ -163,6 +169,21 @@ public:
     return *this;
   }
 
+  /**
+   * transpose axes according to the new order specified in perm
+   * @param perm
+   */
+  void Transpose(std::vector<std::size_t> const &perm)
+  {
+    std::vector<NDIteratorRange> new_ranges;
+    new_ranges.reserve(ranges_.size());
+    for (std::size_t i = 0; i < ranges_.size(); ++i)
+    {
+      new_ranges.push_back(ranges_[perm[i]]);
+    }
+    std::swap(new_ranges, ranges_);
+  }
+
   void PermuteAxes(std::size_t const &a, std::size_t const &b)
   {
     std::swap(ranges_[a], ranges_[b]);
@@ -183,7 +204,10 @@ public:
     std::swap(new_ranges, ranges_);
   }
 
-  void ReverseAxes() { std::reverse(ranges_.begin(), ranges_.end()); }
+  void ReverseAxes()
+  {
+    std::reverse(ranges_.begin(), ranges_.end());
+  }
 
   /**
    * dereference, i.e. give the value at the current position of the iterator
@@ -196,9 +220,15 @@ public:
     return array_[position_];
   }
 
-  type const &operator*() const { return array_[position_]; }
+  type const &operator*() const
+  {
+    return array_[position_];
+  }
 
-  std::size_t size() const { return size_; }
+  std::size_t size() const
+  {
+    return size_;
+  }
 
   template <typename A, typename B>
   friend bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &,
@@ -219,7 +249,10 @@ public:
     return cur_index;
   }
 
-  NDIteratorRange const &range(std::size_t const &i) { return ranges_[i]; }
+  NDIteratorRange const &range(std::size_t const &i)
+  {
+    return ranges_[i];
+  }
 
 protected:
   std::vector<NDIteratorRange> ranges_;
@@ -249,7 +282,10 @@ private:
       s.volume         = volume;
       std::size_t diff = (s.to - s.from);
       s.total_steps    = diff / s.step;
-      if (s.total_steps * s.step < diff) ++s.total_steps;
+      if (s.total_steps * s.step < diff)
+      {
+        ++s.total_steps;
+      }
 
       s.total_steps *= s.step;
       s.step_volume  = s.step * volume;

@@ -120,8 +120,7 @@ public:
     LOG_STACK_TRACE_POINT_WITH_INSTANCE;
     using namespace fetch::protocols;
 
-    std::unordered_map<tx_digest_type, transaction_type, fetch::crypto::CallableFNV>
-        incoming_transactions;
+    std::unordered_map<tx_digest_type, transaction_type> incoming_transactions;
     // Get missing transactions
 
     // Get applied transactions (after N)
@@ -285,7 +284,10 @@ std::chrono::system_clock::now();
     }
   }
 
-  uint16_t port() const { return details_.port; }
+  uint16_t port() const
+  {
+    return details_.port;
+  }
 
 private:
   int                         difficulty_ = 1;

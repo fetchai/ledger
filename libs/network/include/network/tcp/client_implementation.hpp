@@ -59,7 +59,10 @@ public:
   TCPClientImplementation &operator=(TCPClientImplementation const &rhs) = delete;
   TCPClientImplementation &operator=(TCPClientImplementation &&rhs) = delete;
 
-  ~TCPClientImplementation() { destructing_ = true; }
+  ~TCPClientImplementation()
+  {
+    destructing_ = true;
+  }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
@@ -74,12 +77,18 @@ public:
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       // We get IO objects from the network manager, they will only be strong
       // while in the post
       auto strand = networkManager_.CreateIO<strand_type>();
-      if (!strand) return;
+      if (!strand)
+      {
+        return;
+      }
       {
         std::lock_guard<mutex_type> lock(io_creation_mutex_);
         strand_ = strand;
@@ -87,7 +96,10 @@ public:
 
       strand->post([this, self, host, port, strand] {
         shared_self_type selfLock = self.lock();
-        if (!selfLock) return;
+        if (!selfLock)
+        {
+          return;
+        }
 
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
@@ -104,7 +116,10 @@ public:
         auto cb = [this, self, res, socket, strand, port](std::error_code ec,
                                                           resolver_type::iterator) {
           shared_self_type selfLock = self.lock();
-          if (!selfLock) return;
+          if (!selfLock)
+          {
+            return;
+          }
 
           LOG_STACK_TRACE_POINT;
           fetch::logger.Info("Finished connecting.");
@@ -177,13 +192,19 @@ public:
     networkManager_.Post([this, self, strand] {
       shared_self_type selfLock   = self.lock();
       auto             strandLock = strand_.lock();
-      if (!selfLock || !strandLock) return;
+      if (!selfLock || !strandLock)
+      {
+        return;
+      }
 
       strandLock->post([this, selfLock] { WriteNext(selfLock); });
     });
   }
 
-  uint16_t Type() const override { return AbstractConnection::TYPE_OUTGOING; }
+  uint16_t Type() const override
+  {
+    return AbstractConnection::TYPE_OUTGOING;
+  }
 
   void Close() override
   {
@@ -207,7 +228,10 @@ public:
     });
   }
 
-  bool Closed() override { return socket_.expired(); }
+  bool Closed() override
+  {
+    return socket_.expired();
+  }
 
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
@@ -247,7 +271,10 @@ private:
 
     auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {
@@ -301,7 +328,10 @@ private:
     auto      socket = socket_.lock();
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       shared_self_type selfLock = self.lock();
-      if (!selfLock) return;
+      if (!selfLock)
+      {
+        return;
+      }
 
       if (!ec)
       {

@@ -40,7 +40,10 @@ public:
   using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ConstParallelDispatcher(type *ptr, std::size_t const &size) : pointer_(ptr), size_(size) {}
+  ConstParallelDispatcher(type *ptr, std::size_t const &size)
+    : pointer_(ptr)
+    , size_(size)
+  {}
 
   type Reduce(vector_register_type (*vector_reduction)(vector_register_type const &,
                                                        vector_register_type const &)) const
@@ -524,12 +527,24 @@ public:
     return ret;
   }
 
-  type const *       pointer() const { return pointer_; }
-  std::size_t const &size() const { return size_; }
-  std::size_t &      size() { return size_; }
+  type const *pointer() const
+  {
+    return pointer_;
+  }
+  std::size_t const &size() const
+  {
+    return size_;
+  }
+  std::size_t &size()
+  {
+    return size_;
+  }
 
 protected:
-  type *      pointer() { return pointer_; }
+  type *pointer()
+  {
+    return pointer_;
+  }
   type *      pointer_;
   std::size_t size_;
 
@@ -594,7 +609,9 @@ public:
   using vector_register_type          = typename vectorize::VectorRegister<type, vector_size>;
   using vector_register_iterator_type = vectorize::VectorRegisterIterator<type, vector_size>;
 
-  ParallelDispatcher(type *ptr, std::size_t const &size) : super_type(ptr, size) {}
+  ParallelDispatcher(type *ptr, std::size_t const &size)
+    : super_type(ptr, size)
+  {}
 
   template <typename F>
   void Apply(F &&apply)
@@ -896,7 +913,10 @@ public:
     }
   }
 
-  type *pointer() { return super_type::pointer(); }
+  type *pointer()
+  {
+    return super_type::pointer();
+  }
 
 private:
 };

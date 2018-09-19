@@ -90,11 +90,20 @@ public:
     return *this;
   }
 
-  const byte_array::ConstByteArray &hash() const { return hash_; }
+  const byte_array::ConstByteArray &hash() const
+  {
+    return hash_;
+  }
 
-  shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const { return signature_ECDSA_SIG_; }
+  shrd_ptr_type<const ECDSA_SIG> signature_ECDSA_SIG() const
+  {
+    return signature_ECDSA_SIG_;
+  }
 
-  const byte_array::ConstByteArray &signature() const { return signature_; }
+  const byte_array::ConstByteArray &signature() const
+  {
+    return signature_;
+  }
 
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
   static ECDSASignature Sign(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
@@ -313,13 +322,16 @@ private:
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
   static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
   {
-    if (pr != nullptr) *pr = sig->r;
-    if (ps != nullptr) *ps = sig->s;
+    if (pr != nullptr)
+      *pr = sig->r;
+    if (ps != nullptr)
+      *ps = sig->s;
   }
 
   static int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
   {
-    if (r == nullptr || s == nullptr) return 0;
+    if (r == nullptr || s == nullptr)
+      return 0;
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     sig->r = r;

@@ -55,7 +55,10 @@ struct ConstructorMagic
   template <int R>
   struct LoopOver<R>
   {
-    static ClassType Build(VM *vm, ClassType &cls) { return ClassType(); }
+    static ClassType Build(VM *vm, ClassType &cls)
+    {
+      return ClassType();
+    }
   };
 };
 

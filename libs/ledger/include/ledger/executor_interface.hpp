@@ -44,7 +44,8 @@ public:
                          lane_set_type const &lanes) = 0;
   /// @}
 
-  virtual ~ExecutorInterface() {}
+  virtual ~ExecutorInterface()
+  {}
 };
 
 template <typename T>

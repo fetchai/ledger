@@ -28,9 +28,11 @@ namespace {
 class ECDSACurveTest : public testing::Test
 {
 protected:
-  virtual void SetUp() {}
+  virtual void SetUp()
+  {}
 
-  virtual void TearDown() {}
+  virtual void TearDown()
+  {}
 
   template <int P_ECDSA_Curve_NID>
   void test_ECDSACurve(const char *const expected_sn, const std::size_t expected_privateKeySize,

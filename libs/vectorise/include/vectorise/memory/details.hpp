@@ -143,7 +143,8 @@ template <typename A, typename B>
 struct UnrollNext<0, A, B>
 {
 
-  static void Apply(A *regs, B *iters) {}
+  static void Apply(A *regs, B *iters)
+  {}
 };
 }  // namespace details
 

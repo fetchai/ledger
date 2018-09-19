@@ -20,7 +20,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "vectorise/platform.hpp"
-#include "vectorise/platform_config.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -49,7 +48,10 @@ struct Key
     BYTES  = S / 8
   };
 
-  Key() { memset(key_, 0, BYTES); }
+  Key()
+  {
+    memset(key_, 0, BYTES);
+  }
 
   Key(byte_array::ConstByteArray const &key)
   {
@@ -78,21 +80,19 @@ struct Key
    */
   int Compare(Key const &other, int &pos, int last_block, int last_bit) const
   {
-    assert(BLOCKS > 0);
-    assert(last_block < BLOCKS);
     int i = 0;
 
-    while (i < last_block)
+    while ((i < last_block) && (other.key_[i] == key_[i]))
     {
-      assert( 0 <= i);
-      assert( i < BLOCKS );
-      if (other.key_[std::size_t(i)] != key_[std::size_t(i)]) break;
       ++i;
     }
 
     uint64_t diff = other.key_[i] ^ key_[i];
     int      bit  = platform::CountLeadingZeroes64(diff);
-    if (diff == 0) bit = 8 * sizeof(uint64_t);
+    if (diff == 0)
+    {
+      bit = 8 * sizeof(uint64_t);
+    }
 
     if (i == last_block)
     {
@@ -134,7 +134,10 @@ struct Key
   }
 
   // BLOCKS
-  std::size_t size() const { return BYTES << 3; }
+  std::size_t size() const
+  {
+    return BYTES << 3;
+  }
 
 private:
   uint64_t key_[BLOCKS];

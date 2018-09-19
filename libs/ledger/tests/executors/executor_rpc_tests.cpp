@@ -47,7 +47,10 @@ protected:
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
-  ExecutorRpcTests() { rng_.seed(42); }
+  ExecutorRpcTests()
+  {
+    rng_.seed(42);
+  }
 
   void SetUp() override
   {

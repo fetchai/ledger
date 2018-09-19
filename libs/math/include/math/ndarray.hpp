@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/meta/type_traits.hpp"
+#include "math/free_functions/free_functions.hpp"
+#include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
 #include "math/shape_less_array.hpp"
 #include "vectorise/memory/array.hpp"
@@ -38,13 +41,20 @@ public:
   using super_type           = ShapeLessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
+  enum MAJOR_ORDER
+  {
+    COLUMN,
+    ROW
+  };
+
   NDArray() = default;
 
   /**
    * Constructor builds an NDArray with n elements initialized to 0
    * @param n   number of elements in array (no shape specified, assume 1-D)
    */
-  NDArray(std::size_t const &n) : super_type(n)
+  NDArray(std::size_t const &n)
+    : super_type(n)
   {
     assert(this->size() == n);
     this->LazyReshape({n});
@@ -69,16 +79,26 @@ public:
    * Constructor builds an NDArray pre-initialising from a shapeless array
    * @param arr shapelessarray data set by defualt
    */
-  NDArray(super_type const &arr) : super_type(arr) { this->LazyReshape({arr.size()}); }
+  NDArray(super_type const &arr)
+    : super_type(arr)
+  {
+    this->LazyReshape({arr.size()});
+  }
 
-  NDArray(self_type const &arr) : super_type(arr) { this->LazyReshape(arr.shape()); }
+  NDArray(self_type const &arr)
+    : super_type(arr)
+  {
+    this->LazyReshape(arr.shape());
+  }
 
   NDArray &operator=(NDArray const &other) = default;
   //  NDArray &operator=(NDArray &&other) = default;
 
   static std::size_t SizeFromShape(std::vector<std::size_t> const &shape)
   {
-    return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1), std::multiplies<>());
+    return Product(shape);
+    //    return std::accumulate(std::begin(shape), std::end(shape), std::size_t(1),
+    //    std::multiplies<>());
   }
 
   /**
@@ -130,10 +150,16 @@ public:
    */
   bool operator==(NDArray const &other) const
   {
-    if (shape() != other.shape()) return false;
+    if (shape() != other.shape())
+    {
+      return false;
+    }
     return this->super_type::operator==(static_cast<super_type>(other));
   }
-  bool operator!=(NDArray const &other) const { return !(this->operator==(other)); }
+  bool operator!=(NDArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
 
   /**
    * Provides an NDArray that is a copy of the current NDArray
@@ -201,21 +227,30 @@ public:
    * @param indices     index position in array
    * @param val         value to write
    */
-  void Set(std::vector<std::size_t> const &indices, type const &val)
+  // TODO(private issue 123)
+  template <typename S>
+  meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
+  template <typename S>
+  meta::IfIsUnsignedLike<S, void> Set(S const &index, type const &val)
+  {
+    assert(index < this->size());       // dimensionality check not in parent
+    this->super_type::Set(index, val);  // call parent
+  }
+
   /**
    * Gets a value from the array by N-dim index
    * @param indices index to access
    */
-  type Get(std::vector<std::size_t> const &indices) const
+  template <typename S>
+  meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
   }
-
   /**
    * extract data from NDArray based on the NDArrayView
    * @param array_view
@@ -287,7 +322,10 @@ public:
    * @param[in]     shape specifies the new shape.
    *
    **/
-  void LazyReshape(std::vector<std::size_t> const &shape) { shape_ = shape; }
+  void LazyReshape(std::vector<std::size_t> const &shape)
+  {
+    shape_ = shape;
+  }
 
   /**
    * Tests if it is possible to reshape the array to a newly proposed shape
@@ -339,8 +377,14 @@ public:
    * @return        shape_ is theshape of the array as a vector of size_t.
    *
    **/
-  std::vector<std::size_t> const &shape() const { return shape_; }
-  std::size_t const &             shape(std::size_t const &n) const { return shape_[n]; }
+  std::vector<std::size_t> const &shape() const
+  {
+    return shape_;
+  }
+  std::size_t const &shape(std::size_t const &n) const
+  {
+    return shape_[n];
+  }
 
   /**
    * adds two ndarrays together and supports broadcasting
@@ -426,6 +470,101 @@ public:
     return *this;
   }
 
+  void MajorOrderFlip()
+  {
+    // it's rather strange to invoke ColumnToRow for a 1D array, but it's technically legal (all we
+    // do is changed the label)
+    if (this->shape().size() > 1)
+    {
+      if (MajorOrder() == MAJOR_ORDER::COLUMN)
+      {
+        FlipMajorOrder(MAJOR_ORDER::ROW);
+        major_order_ = MAJOR_ORDER::ROW;
+      }
+      else
+      {
+        FlipMajorOrder(MAJOR_ORDER::COLUMN);
+        major_order_ = MAJOR_ORDER::COLUMN;
+      }
+    }
+    //    if (MajorOrder() == MAJOR_ORDER::COLUMN) {major_order_ = row;}
+    //    else {{major_order_ = COLUMN;}}
+  }
+
+  /**
+   * Copies data from a row major numpy array into the current column major array
+   * @param new_array
+   */
+  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
+                     std::vector<std::size_t> &index)
+  {
+    std::size_t total_size = NDArray<T>::SizeFromShape(shape);
+
+    // get pointer to the data
+    this->Resize(total_size);
+    assert(this->CanReshape(shape));
+    this->Reshape(shape);
+
+    // re-allocate all the data
+    NDArrayIterator<T, C> it(*this);
+
+    // copy all the data initially
+    for (std::size_t i = 0; i < total_size; ++i)
+    {
+      *it = ptr[i];
+      ++it;
+    }
+
+    // numpy arrays are row major - we should be column major by default
+    FlipMajorOrder(MAJOR_ORDER::COLUMN);
+  }
+
+  void CopyToNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
+                   std::vector<std::size_t> &index)
+  {
+
+    // copy the data
+    NDArrayIterator<T, C> it(*this);
+
+    for (std::size_t j = 0; j < this->size(); ++j)
+    {
+      // Computing numpy index
+      std::size_t i   = 0;
+      std::size_t pos = 0;
+      for (i = 0; i < shape.size(); ++i)
+      {
+        pos += stride[i] * index[i];
+      }
+
+      // Updating
+      ptr[pos] = *it;
+      ++it;
+
+      // Increamenting Numpy
+      i = 0;
+      ++index[i];
+      while (index[i] >= shape[i])
+      {
+        index[i] = 0;
+        ++i;
+        if (i >= shape.size())
+        {
+          break;
+        }
+        ++index[i];
+      }
+    }
+  }
+
+  /**
+   * returns the current major order of the array
+   * @return
+   */
+  MAJOR_ORDER MajorOrder()
+  {
+    return major_order_;
+  }
+
 private:
   // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
@@ -460,6 +599,91 @@ private:
 
   std::size_t              size_ = 0;
   std::vector<std::size_t> shape_;
+
+  MAJOR_ORDER major_order_ = COLUMN;
+
+  /**
+   * rearranges data storage in the array. Slow because it copies data instead of pointers
+   * @param major_order
+   */
+  void FlipMajorOrder(MAJOR_ORDER major_order)
+  {
+    self_type new_array{this->shape()};
+
+    std::vector<std::size_t> stride;
+    std::vector<std::size_t> index;
+
+    std::size_t cur_stride = Product(this->shape());
+
+    for (std::size_t i = 0; i < new_array.shape().size(); ++i)
+    {
+      cur_stride /= this->shape()[i];
+      stride.push_back(cur_stride);
+      index.push_back(0);
+    }
+
+    std::size_t total_size = NDArray<T>::SizeFromShape(new_array.shape());
+    NDArrayIterator<T, typename NDArray<T>::container_type> it_this(*this);
+
+    std::size_t cur_dim;
+    std::size_t pos;
+
+    if (major_order == MAJOR_ORDER::COLUMN)
+    {
+      new_array.Copy(*this);
+    }
+
+    for (std::size_t j = 0; j < total_size; ++j)
+    {
+      // Compute current row major index
+      pos = 0;
+      for (cur_dim = 0; cur_dim < this->shape().size(); ++cur_dim)
+      {
+        pos += stride[cur_dim] * index[cur_dim];
+      }
+      assert(pos < total_size);
+
+      // copy the data
+      if (major_order == MAJOR_ORDER::ROW)
+      {
+        new_array[pos] = *it_this;
+      }
+      else
+      {
+        *it_this = new_array[pos];
+      }
+      ++it_this;
+
+      // Incrementing current dimensions and index as necessary
+      cur_dim = 0;
+      ++index[cur_dim];
+
+      while (index[cur_dim] >= this->shape()[cur_dim])
+      {
+        index[cur_dim] = 0;
+        ++cur_dim;
+        if (cur_dim >= this->shape().size())
+        {
+          break;
+        }
+        ++index[cur_dim];
+      }
+    }
+
+    if (major_order == MAJOR_ORDER::ROW)
+    {
+      this->Copy(new_array);
+    }
+
+    if (major_order == MAJOR_ORDER::COLUMN)
+    {
+      major_order_ = MAJOR_ORDER::COLUMN;
+    }
+    else
+    {
+      major_order_ = MAJOR_ORDER::ROW;
+    }
+  }
 };
 
 }  // namespace math

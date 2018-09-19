@@ -51,7 +51,6 @@ class Variant
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using ByteArray = byte_array::ByteArray;
 
   // Construction / Destruction
   Variant();
@@ -63,7 +62,10 @@ public:
   Variant(uint16_t const &i);
   Variant(float const &f);
   Variant(double const &f);
-  explicit Variant(ConstByteArray const &o) { *this = o; }
+  explicit Variant(ConstByteArray const &o)
+  {
+    *this = o;
+  }
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
@@ -122,25 +124,51 @@ public:
   template <typename T>
   meta::IfIsStdStringLike<T, T> As() const;
 
-  bool is_int() const { return type_ == INTEGER; }
-  bool is_float() const { return type_ == FLOATING_POINT; }
-  bool is_bool() const { return type_ == BOOLEAN; }
-  bool is_array() const { return type_ == ARRAY; }
-  bool is_object() const { return type_ == OBJECT; }
-  bool is_string() const { return type_ == STRING; }
-  bool is_byte_array() const { return type_ == STRING; }
-  bool is_undefined() const { return type_ == UNDEFINED; }
+  bool is_int() const
+  {
+    return type_ == INTEGER;
+  }
+  bool is_float() const
+  {
+    return type_ == FLOATING_POINT;
+  }
+  bool is_bool() const
+  {
+    return type_ == BOOLEAN;
+  }
+  bool is_array() const
+  {
+    return type_ == ARRAY;
+  }
+  bool is_object() const
+  {
+    return type_ == OBJECT;
+  }
+  bool is_string() const
+  {
+    return type_ == STRING;
+  }
+  bool is_byte_array() const
+  {
+    return type_ == STRING;
+  }
+  bool is_undefined() const
+  {
+    return type_ == UNDEFINED;
+  }
 
-  ConstByteArray const &as_byte_array() const { return string_; }
+  ConstByteArray const &as_byte_array() const
+  {
+    return string_;
+  }
 
-  VariantType type() const { return type_; }
+  VariantType type() const
+  {
+    return type_;
+  }
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
-  template <typename T>
-  friend inline void Serialize(T &serializer, Variant const &s);
-  template <typename T>
-  friend inline void Deserialize(T &serializer, Variant &s);
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
@@ -167,12 +195,17 @@ class VariantProxy : public Variant
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  VariantProxy(ConstByteArray const &key, Variant *parent)
-    : key_(key), parent_(parent), child_(nullptr)
+  VariantProxy(ConstByteArray key, Variant *parent)
+    : key_(std::move(key))
+    , parent_(parent)
+    , child_(nullptr)
   {}
 
-  VariantProxy(ConstByteArray const &key, Variant *parent, Variant *child)
-    : Variant(*child), key_(key), parent_(parent), child_(child)
+  VariantProxy(ConstByteArray key, Variant *parent, Variant *child)
+    : Variant(*child)
+    , key_(std::move(key))
+    , parent_(parent)
+    , child_(child)
   {}
 
   ~VariantProxy()
@@ -221,7 +254,10 @@ public:
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
   void           Reserve(std::size_t const &n);
-  std::size_t    size() const { return size_; }
+  std::size_t    size() const
+  {
+    return size_;
+  }
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
 
@@ -235,45 +271,50 @@ private:
   Variant *    pointer_ = nullptr;
 };
 
-
-template <typename T>
-inline void Serialize(T &serializer, VariantArray const &s)
+inline Variant::Variant()
+  : type_(UNDEFINED)
+{}
+inline Variant::Variant(int64_t const &i)
 {
-  /*
-  assert( bool(s.data_) );
-  serializer << s.size_; 
-  std::size_t N = s.size_ + s.offset_;
-  for(std::size_t i=offset_; i < N; ++i)
-  {
-    serializer << s.data_[i];
-  }
-  // TODO(tfr): FIX THIS
-  */
+  *this = i;
+}
+inline Variant::Variant(int32_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(int16_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint64_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint32_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(uint16_t const &i)
+{
+  *this = i;
+}
+inline Variant::Variant(float const &f)
+{
+  *this = f;
+}
+inline Variant::Variant(double const &f)
+{
+  *this = f;
 }
 
-template <typename T>
-inline void Deserialize(T &serializer, VariantArray &s)
+inline void Variant::MakeNull()
 {
-  /*
-  assert( bool(s.data_) );
-  serializer >> *s.data_;
-  */
+  type_ = NULL_VALUE;
 }
-
-
-
-inline Variant::Variant() : type_(UNDEFINED) {}
-inline Variant::Variant(int64_t const &i) { *this = i; }
-inline Variant::Variant(int32_t const &i) { *this = i; }
-inline Variant::Variant(int16_t const &i) { *this = i; }
-inline Variant::Variant(uint64_t const &i) { *this = i; }
-inline Variant::Variant(uint32_t const &i) { *this = i; }
-inline Variant::Variant(uint16_t const &i) { *this = i; }
-inline Variant::Variant(float const &f) { *this = f; }
-inline Variant::Variant(double const &f) { *this = f; }
-
-inline void Variant::MakeNull() { type_ = NULL_VALUE; }
-inline void Variant::MakeUndefined() { type_ = UNDEFINED; }
+inline void Variant::MakeUndefined()
+{
+  type_ = UNDEFINED;
+}
 
 inline void Variant::MakeArray(std::size_t n)
 {
@@ -451,24 +492,6 @@ inline std::ostream &operator<<(std::ostream &os, VariantArray const &v)
 
   return os;
 }
-
-
-template <typename T>
-inline void Serialize(T &serializer, Variant const &s)
-{
-  assert( bool(s.array_) );
-  serializer << int32_t(s.type()) << s.data_.integer << s.string_ << *s.array_;    
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, Variant &s)
-{
-  assert( bool(s.array_) );
-  int32_t n;
-  serializer >> n >> s.data_.integer >> s.string_ >> *s.array_; 
-  s.type_ = VariantType(n);
-}
-
 
 template <typename T>
 inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T &value)

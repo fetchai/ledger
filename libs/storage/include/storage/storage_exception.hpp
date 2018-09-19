@@ -38,7 +38,9 @@ error_type const TYPE_ERROR = 0;
 class StorageException : public std::exception
 {
 public:
-  StorageException() : error_code_(error::TYPE_ERROR), explanation_("unknown")
+  StorageException()
+    : error_code_(error::TYPE_ERROR)
+    , explanation_("unknown")
   {
     LOG_STACK_TRACE_POINT;
 
@@ -46,7 +48,8 @@ public:
   }
 
   StorageException(const char *explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation))
+    : error_code_(error::TYPE_ERROR)
+    , explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -54,7 +57,8 @@ public:
   }
 
   StorageException(std::string explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(std::move(explanation))
+    : error_code_(error::TYPE_ERROR)
+    , explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -62,7 +66,8 @@ public:
   }
 
   StorageException(byte_array::ConstByteArray const &explanation)
-    : error_code_(error::TYPE_ERROR), explanation_(std::string(explanation))
+    : error_code_(error::TYPE_ERROR)
+    , explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -70,7 +75,8 @@ public:
   }
 
   StorageException(error::error_type error_code, std::string explanation)
-    : error_code_(error_code), explanation_(std::move(explanation))
+    : error_code_(error_code)
+    , explanation_(std::move(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
@@ -78,20 +84,36 @@ public:
   }
 
   StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
-    : error_code_(error_code), explanation_(std::string(explanation))
+    : error_code_(error_code)
+    , explanation_(std::string(explanation))
   {
     LOG_STACK_TRACE_POINT;
 
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  virtual ~StorageException() { LOG_STACK_TRACE_POINT; }
+  virtual ~StorageException()
+  {
+    LOG_STACK_TRACE_POINT;
+  }
 
-  char const *what() const noexcept override { return explanation_.c_str(); }
-  uint64_t    error_code() const { return error_code_; }
-  std::string explanation() const { return explanation_; }
+  char const *what() const noexcept override
+  {
+    return explanation_.c_str();
+  }
+  uint64_t error_code() const
+  {
+    return error_code_;
+  }
+  std::string explanation() const
+  {
+    return explanation_;
+  }
 
-  void StackTrace() const { LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception") }
+  void StackTrace() const
+  {
+    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
+  }
 
 private:
   uint64_t    error_code_;

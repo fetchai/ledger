@@ -53,7 +53,8 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using lane_type                  = LaneIdentity::lane_type;
 
-  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type const &tm)
+    : network_manager_(tm)
   {
     id_ = "my-fetch-id";
   }
@@ -271,11 +272,20 @@ public:
         .As<byte_array::ByteArray>();
   }
 
-  void SetID(byte_array::ByteArray const &id) { id_ = id; }
+  void SetID(byte_array::ByteArray const &id)
+  {
+    id_ = id;
+  }
 
-  byte_array::ByteArray const &id() { return id_; }
+  byte_array::ByteArray const &id()
+  {
+    return id_;
+  }
 
-  std::size_t lanes() const { return lanes_.size(); }
+  std::size_t lanes() const
+  {
+    return lanes_.size();
+  }
 
   bool is_alive() const
   {

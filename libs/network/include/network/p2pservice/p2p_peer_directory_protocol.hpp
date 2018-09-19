@@ -32,7 +32,8 @@ public:
     ENOUGH_CONNECTIONS = P2PPeerDirectory::ENOUGH_CONNECTIONS
   };
 
-  P2PPeerDirectoryProtocol(P2PPeerDirectory &directory) : directory_(&directory)
+  P2PPeerDirectoryProtocol(P2PPeerDirectory &directory)
+    : directory_(&directory)
   {
 
     // RPC

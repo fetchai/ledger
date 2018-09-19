@@ -44,7 +44,10 @@ struct TestSerDeser
    *
    * @return: less than
    */
-  bool operator<(TestSerDeser const &rhs) const { return third < rhs.third; }
+  bool operator<(TestSerDeser const &rhs) const
+  {
+    return third < rhs.third;
+  }
 
   /**
    * Equality operator

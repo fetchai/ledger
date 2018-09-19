@@ -36,11 +36,20 @@ public:
   using iterator              = typename container_type::iterator;
   using const_iterator        = typename container_type::const_iterator;
 
-  Array() { data_ = std::make_shared<container_type>(); }
+  Array()
+  {
+    data_ = std::make_shared<container_type>();
+  }
 
-  Array(Array const &dict) { data_ = dict.data_; }
+  Array(Array const &dict)
+  {
+    data_ = dict.data_;
+  }
 
-  Array(Array &&dict) { std::swap(data_, dict.data_); }
+  Array(Array &&dict)
+  {
+    std::swap(data_, dict.data_);
+  }
 
   Array const &operator=(Array const &dict)
   {
@@ -54,9 +63,15 @@ public:
     return *this;
   }
 
-  void Reserve(std::size_t const &n) { data_->reserve(n); }
+  void Reserve(std::size_t const &n)
+  {
+    data_->reserve(n);
+  }
 
-  void Resize(std::size_t const &n) { data_->resize(n); }
+  void Resize(std::size_t const &n)
+  {
+    data_->resize(n);
+  }
 
   Array<T> Copy() const
   {
@@ -73,19 +88,40 @@ public:
     return ret;
   }
 
-  type &operator[](std::size_t const &key) { return (*data_)[key]; }
+  type &operator[](std::size_t const &key)
+  {
+    return (*data_)[key];
+  }
 
-  type const &operator[](std::size_t const &key) const { return (*data_)[key]; }
+  type const &operator[](std::size_t const &key) const
+  {
+    return (*data_)[key];
+  }
 
-  iterator begin() { return data_->begin(); }
+  iterator begin()
+  {
+    return data_->begin();
+  }
 
-  iterator end() { return data_->end(); }
+  iterator end()
+  {
+    return data_->end();
+  }
 
-  const_iterator begin() const { return data_->begin(); }
+  const_iterator begin() const
+  {
+    return data_->begin();
+  }
 
-  const_iterator end() const { return data_->end(); }
+  const_iterator end() const
+  {
+    return data_->end();
+  }
 
-  std::size_t size() const { return data_->size(); }
+  std::size_t size() const
+  {
+    return data_->size();
+  }
 
   template <typename T>
   inline void Serialize(T &serializer, Variant const &s)

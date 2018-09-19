@@ -34,9 +34,14 @@ class InputLayer : public BaseLayer<DATA_TYPE>
   using base_type      = BaseLayer<DATA_TYPE>;
 
 public:
-  InputLayer(std::size_t layer_size) : base_type::BaseLayer(layer_size) {}
+  InputLayer(std::size_t layer_size)
+    : base_type::BaseLayer(layer_size)
+  {}
 
-  void AssignData(std::vector<DATA_TYPE> input_data) { input_data_ = input_data; }
+  void AssignData(std::vector<DATA_TYPE> input_data)
+  {
+    input_data_ = input_data;
+  }
 
 private:
   std::vector<DATA_TYPE> input_data_;
@@ -63,7 +68,8 @@ public:
    * @param input_layer
    */
   Layer &operator=(Layer const &other) = default;
-  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size) : base_type(layer_size)
+  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size)
+    : base_type(layer_size)
   {
     AssignLayerConnection(input_layer, layer_size);
   }
@@ -76,13 +82,19 @@ public:
    * helper function - returns the size of the inputs to this layer
    * @return
    */
-  std::size_t InputLayerSize() { return input_layer_size_; }
+  std::size_t InputLayerSize()
+  {
+    return input_layer_size_;
+  }
 
   /**
    * helper function - returns the shape of the weights matrix
    * @return
    */
-  std::vector<std::size_t> WeightsMatrixShape() { return weights_matrix_shape_; }
+  std::vector<std::size_t> WeightsMatrixShape()
+  {
+    return weights_matrix_shape_;
+  }
 
 private:
   /**

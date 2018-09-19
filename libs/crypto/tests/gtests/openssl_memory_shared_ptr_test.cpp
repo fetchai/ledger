@@ -51,7 +51,10 @@ MockDeleterPrimitive::SharedPtr MockDeleterPrimitive::value;
 class Deleter
 {
 public:
-  void operator()(TestType *ptr) { MockDeleterPrimitive::value->free_TestType(ptr); }
+  void operator()(TestType *ptr)
+  {
+    MockDeleterPrimitive::value->free_TestType(ptr);
+  }
 };
 
 class OpenSSLSharedPtrTest : public testing::Test
@@ -62,9 +65,15 @@ protected:
 
   MockDeleterPrimitive::SharedPtr &mock_ = MockDeleterPrimitive::value;
 
-  void SetUp() override { mock_ = std::make_shared<MockDeleterPrimitive::Type>(); }
+  void SetUp() override
+  {
+    mock_ = std::make_shared<MockDeleterPrimitive::Type>();
+  }
 
-  void TearDown() override { mock_ = MockDeleterPrimitive::SharedPtr(); }
+  void TearDown() override
+  {
+    mock_ = MockDeleterPrimitive::SharedPtr();
+  }
 
   // static void SetUpTestCase() {
   //}

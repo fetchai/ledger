@@ -29,49 +29,35 @@ public:
   using super_type::VERSION;
   using super_type::hasher_type;
   using super_type::digest_type;
+  using super_type::resource_set_type;
+  using super_type::signatures_type;
   using super_type::resources;
   using super_type::summary;
   using super_type::data;
-  using super_type::signature;
+  using super_type::signatures;
   using super_type::contract_name;
   using super_type::digest;
 
-  UnverifiedTransaction()                              = default;
-  UnverifiedTransaction(UnverifiedTransaction &&other) = default;
-  UnverifiedTransaction &operator=(UnverifiedTransaction &&other) = default;
+  using super_type::operator=;
 
-  UnverifiedTransaction(UnverifiedTransaction const &other) : MutableTransaction()
+  bool operator<(UnverifiedTransaction const &other) const
   {
-    this->Copy(other);
+    return digest() < other.digest();
   }
 
-  UnverifiedTransaction &operator=(UnverifiedTransaction const &other)
+  MutableTransaction GetMutable() const
   {
-    this->Copy(other);
-    return *this;
-  }
-
-  bool operator<(UnverifiedTransaction const &other) const { return digest() < other.digest(); }
-
-  MutableTransaction GetMutable()
-  {
-    MutableTransaction ret;
-    ret.Copy(*this);
-    return ret;
+    return MutableTransaction{*this};
   }
 
 protected:
   using super_type::set_summary;
   using super_type::set_data;
-  using super_type::set_signature;
+  using super_type::set_signatures;
   using super_type::set_contract_name;
 
   using super_type::UpdateDigest;
   using super_type::Verify;
-
-  using super_type::Copy;
-
-  void Copy(UnverifiedTransaction const &tx) { super_type::Copy(tx); }
 
   template <typename T>
   friend void Serialize(T &serializer, UnverifiedTransaction const &b);
@@ -84,75 +70,53 @@ class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
   using super_type = UnverifiedTransaction;
-  using super_type::GetMutable;
-
-  VerifiedTransaction()                            = default;
-  VerifiedTransaction(VerifiedTransaction &&other) = default;
-  VerifiedTransaction &operator=(VerifiedTransaction &&other) = default;
-
-  VerifiedTransaction(VerifiedTransaction const &other) : UnverifiedTransaction(other)
-  {
-    this->Copy(other);
-  }
-
-  VerifiedTransaction &operator=(VerifiedTransaction const &other)
-  {
-    this->Copy(other);
-    return *this;
-  }
+  using super_type::hasher_type;
+  using super_type::digest_type;
+  using super_type::resource_set_type;
+  using super_type::signatures_type;
 
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {
-    fetch::chain::MutableTransaction x;
-    std::swap(x, trans);
-    return VerifiedTransaction::Create(x);
+    return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction &trans)
+  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans)
   {
     VerifiedTransaction ret;
+    // TODO(private issue #189)
     ret.Finalise(trans);
     return ret;
   }
 
   static VerifiedTransaction Create(UnverifiedTransaction &&trans)
   {
-    UnverifiedTransaction x;
-    std::swap(x, trans);
-    return VerifiedTransaction::Create(x);
+    return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(UnverifiedTransaction &trans)
+  static VerifiedTransaction Create(UnverifiedTransaction const &trans)
   {
     VerifiedTransaction ret;
+    // TODO(private issue #189)
     ret.Finalise(trans);
     return ret;
   }
 
 protected:
-  void Copy(VerifiedTransaction const &tx) { super_type::Copy(tx); }
+  using super_type::operator=;
 
-  bool Finalise(fetch::chain::MutableTransaction &base)
+  bool Finalise(fetch::chain::MutableTransaction const &base)
   {
-    this->Copy(base);
+    *this = base;
     UpdateDigest();
     return Verify();
   }
 
-  bool Finalise(fetch::chain::UnverifiedTransaction &base)
+  bool Finalise(UnverifiedTransaction const &base)
   {
-    this->Copy(base);
+    *this = base;
     UpdateDigest();
     return Verify();
   }
-
-  using super_type::set_summary;
-  using super_type::set_data;
-  using super_type::set_signature;
-  using super_type::set_contract_name;
-  using super_type::Copy;
-  using super_type::UpdateDigest;
-  using super_type::Verify;
 
   template <typename T>
   friend void Serialize(T &serializer, VerifiedTransaction const &b);

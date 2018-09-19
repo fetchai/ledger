@@ -62,7 +62,8 @@ struct BookmarkHeader
  * state-changing operations made to the stack (in the history).
  * The user can place bookmarks which allow reverting the stack to it's state at that point in time.
  *
- * The history is a variant stack so as to allow different operations to be saved.
+ * The history is a variant stack so as to allow different operations to be saved. However note that
+ * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
 template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
@@ -80,7 +81,10 @@ private:
    */
   struct HistoryBookmark
   {
-    HistoryBookmark() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryBookmark()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
     HistoryBookmark(B const &val)
     {
       memset(this, 0, sizeof(decltype(*this)));
@@ -101,7 +105,10 @@ private:
    */
   struct HistorySwap
   {
-    HistorySwap() { memset(this, 0, sizeof(decltype(*this))); }
+    HistorySwap()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistorySwap(uint64_t const &i_, uint64_t const &j_)
     {
@@ -125,7 +132,10 @@ private:
    */
   struct HistoryPop
   {
-    HistoryPop() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryPop()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistoryPop(T const &d)
     {
@@ -148,7 +158,10 @@ private:
    */
   struct HistoryPush
   {
-    HistoryPush() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryPush()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     enum
     {
@@ -167,7 +180,10 @@ private:
    */
   struct HistorySet
   {
-    HistorySet() { memset(this, 0, sizeof(decltype(*this))); }
+    HistorySet()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistorySet(uint64_t const &i_, T const &d)
     {
@@ -190,7 +206,10 @@ private:
    */
   struct HistoryHeader
   {
-    HistoryHeader() { memset(this, 0, sizeof(decltype(*this))); }
+    HistoryHeader()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
 
     HistoryHeader(B const &d)
     {
@@ -216,7 +235,10 @@ public:
     stack_.OnBeforeFlush([this]() { SignalBeforeFlush(); });
   }
 
-  ~VersionedRandomAccessStack() { stack_.ClearEventHandlers(); }
+  ~VersionedRandomAccessStack()
+  {
+    stack_.ClearEventHandlers();
+  }
 
   void ClearEventHandlers()
   {
@@ -224,18 +246,30 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f) { on_file_loaded_ = f; }
+  void OnFileLoaded(event_handler_type const &f)
+  {
+    on_file_loaded_ = f;
+  }
 
-  void OnBeforeFlush(event_handler_type const &f) { on_before_flush_ = f; }
+  void OnBeforeFlush(event_handler_type const &f)
+  {
+    on_before_flush_ = f;
+  }
 
   void SignalFileLoaded()
   {
-    if (on_file_loaded_) on_file_loaded_();
+    if (on_file_loaded_)
+    {
+      on_file_loaded_();
+    }
   }
 
   void SignalBeforeFlush()
   {
-    if (on_before_flush_) on_before_flush_();
+    if (on_before_flush_)
+    {
+      on_before_flush_();
+    }
   }
 
   /**
@@ -243,7 +277,10 @@ public:
    *
    * @return: Whether the stack is written straight to disk.
    */
-  static constexpr bool DirectWrite() { return stack_type::DirectWrite(); }
+  static constexpr bool DirectWrite()
+  {
+    return stack_type::DirectWrite();
+  }
 
   void Load(std::string const &filename, std::string const &history,
             bool const &create_if_not_exist = true)
@@ -275,7 +312,10 @@ public:
     return object;
   }
 
-  void Get(std::size_t const &i, type &object) const { stack_.Get(i, object); }
+  void Get(std::size_t const &i, type &object) const
+  {
+    stack_.Get(i, object);
+  }
 
   void Set(std::size_t const &i, type const &object)
   {
@@ -298,7 +338,10 @@ public:
     stack_.Pop();
   }
 
-  type Top() const { return stack_.Top(); }
+  type Top() const
+  {
+    return stack_.Top();
+  }
 
   void Swap(std::size_t const &i, std::size_t const &j)
   {
@@ -377,7 +420,10 @@ public:
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const { return stack_.header_extra().header; }
+  header_extra_type const &header_extra() const
+  {
+    return stack_.header_extra().header;
+  }
 
   bookmark_type Commit()
   {
@@ -397,19 +443,40 @@ public:
     return b;
   }
 
-  void Flush() { stack_.Flush(); }
+  void Flush()
+  {
+    stack_.Flush();
+  }
 
-  void ResetBookmark() { bookmark_ = 0; }
+  void ResetBookmark()
+  {
+    bookmark_ = 0;
+  }
 
-  void NextBookmark() { ++bookmark_; }
+  void NextBookmark()
+  {
+    ++bookmark_;
+  }
 
-  void PreviousBookmark() { ++bookmark_; }
+  void PreviousBookmark()
+  {
+    ++bookmark_;
+  }
 
-  std::size_t size() const { return stack_.size(); }
+  std::size_t size() const
+  {
+    return stack_.size();
+  }
 
-  std::size_t empty() const { return stack_.empty(); }
+  std::size_t empty() const
+  {
+    return stack_.empty();
+  }
 
-  bool is_open() const { return stack_.is_open(); }
+  bool is_open() const
+  {
+    return stack_.is_open();
+  }
 
 private:
   VariantStack  history_;

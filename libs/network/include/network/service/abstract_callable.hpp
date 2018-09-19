@@ -41,13 +41,19 @@ struct ArgsToString
 template <typename R, typename F>
 struct ArgsToString<R, F>
 {
-  static std::string Value() { return serializers::TypeRegister<base_type<F>>::name(); }
+  static std::string Value()
+  {
+    return serializers::TypeRegister<base_type<F>>::name();
+  }
 };
 
 template <typename R>
 struct ArgsToString<R, void>
 {
-  static std::string Value() { return ""; }
+  static std::string Value()
+  {
+    return "";
+  }
 };
 
 template <typename C, typename R, typename... Args>
@@ -243,7 +249,9 @@ public:
 class AbstractCallable
 {
 public:
-  AbstractCallable(uint64_t meta_data = 0) : meta_data_(meta_data) {}
+  AbstractCallable(uint64_t meta_data = 0)
+    : meta_data_(meta_data)
+  {}
 
   virtual ~AbstractCallable(){};
 
@@ -255,11 +263,20 @@ public:
   virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
                           serializer_type &params)                          = 0;
 
-  uint64_t const &   meta_data() const { return meta_data_; }
-  std::string const &signature() const { return signature_; }
+  uint64_t const &meta_data() const
+  {
+    return meta_data_;
+  }
+  std::string const &signature() const
+  {
+    return signature_;
+  }
 
 protected:
-  void SetSignature(std::string const &signature) { signature_ = signature; }
+  void SetSignature(std::string const &signature)
+  {
+    signature_ = signature;
+  }
 
 private:
   uint64_t    meta_data_ = 0;

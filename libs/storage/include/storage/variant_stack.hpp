@@ -44,8 +44,6 @@ namespace fetch {
 namespace storage {
 
 // TODO(issue 5): Make variant stack as a circular buffer!
-// TODO(issue 39) : add exceptions (HUT)
-// TODO(issue 40) : use serializer for objects (HUT)
 
 /**
  * Variant stack manages a stack of arbitrary objects (variant). The basic structure can be seen
@@ -69,7 +67,10 @@ public:
     uint64_t type;
     uint64_t object_size;
     int64_t  previous;
-    Separator() { memset(this, 0, sizeof(decltype(*this))); }
+    Separator()
+    {
+      memset(this, 0, sizeof(decltype(*this)));
+    }
     Separator(uint64_t const &t, uint64_t const &o, int64_t const &p)
     {
       memset(this, 0, sizeof(decltype(*this)));
@@ -101,19 +102,22 @@ public:
     }
   };
 
-  ~VariantStack() { Close(); }
+  ~VariantStack()
+  {
+    Close();
+  }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    filename_ = filename;
-    file_     = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
-    if (!file_)
+    filename_    = filename;
+    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    if (!file_handle_)
     {
       if (create_if_not_exists)
       {
 
         Clear();
-        file_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+        file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -128,16 +132,16 @@ public:
   {
     filename_ = filename;
     Clear();
-    file_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
-    assert(bool(file_));
+    file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    assert(bool(file_handle_));
   }
 
   void Close()
   {
     WriteHeader();
-    if (file_.is_open())
+    if (file_handle_.is_open())
     {
-      file_.close();
+      file_handle_.close();
     }
   }
 
@@ -162,12 +166,12 @@ public:
   template <typename T>
   void Push(T const &object, uint64_t const &type = uint64_t(-1))
   {
-    assert(bool(file_));
-    file_.seekg(header_.end, file_.beg);
+    assert(bool(file_handle_));
+    file_handle_.seekg(header_.end, file_handle_.beg);
     Separator separator = {type, sizeof(T), header_.end};
 
-    file_.write(reinterpret_cast<char const *>(&object), sizeof(T));
-    file_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(T));
+    file_handle_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
     header_.end += sizeof(T) + sizeof(Separator);
     ++header_.object_count;
     //    WriteHeader();
@@ -179,10 +183,10 @@ public:
   void Pop()
   {
     assert(header_.object_count != 0);
-    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
     Separator separator;
 
-    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
 
     header_.end = separator.previous;
     --header_.object_count;
@@ -199,23 +203,26 @@ public:
   template <typename T>
   uint64_t Top(T &object)
   {
-    assert(bool(file_));
+    assert(bool(file_handle_));
 
-    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
     Separator separator;
 
-    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
     int64_t offset = int64_t(sizeof(Separator) + separator.object_size);
 
     if (separator.object_size != sizeof(T))
     {
-      std::cout << offset << " " << separator.object_size << " " << sizeof(T) << std::endl;
+      std::ostringstream ret;
+      ret << "Size mismatch in variantstack when accessing Top. ";
+      ret << "Expected: " << separator.object_size << ". ";
+      ret << "Got: " << sizeof(T) << ". ";
 
-      throw StorageException("TODO: Throw error, size mismatch in variantstack");
+      throw StorageException(ret.str());
     }
 
-    file_.seekg(header_.end - offset, file_.beg);
-    file_.read(reinterpret_cast<char *>(&object), sizeof(T));
+    file_handle_.seekg(header_.end - offset, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(T));
     return separator.type;
   }
 
@@ -226,10 +233,10 @@ public:
    */
   uint64_t Type()
   {
-    file_.seekg(header_.end - int64_t(sizeof(Separator)), file_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
     Separator separator;
 
-    file_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
 
     return separator.type;
   }
@@ -254,24 +261,30 @@ public:
     fin.close();
   }
 
-  bool    empty() const { return header_.object_count == 0; }
-  int64_t size() const { return int64_t(header_.object_count); }
+  bool empty() const
+  {
+    return header_.object_count == 0;
+  }
+  std::size_t size() const
+  {
+    return std::size_t(header_.object_count);
+  }
 
 protected:
   void ReadHeader()
   {
-    file_.seekg(0, file_.beg);
-    file_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
+    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
   }
 
   void WriteHeader()
   {
-    file_.seekg(0, file_.beg);
-    file_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
+    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
   }
 
 private:
-  std::fstream file_;
+  std::fstream file_handle_;
   std::string  filename_ = "";
   Header       header_;
 };

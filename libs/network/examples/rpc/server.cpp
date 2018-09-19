@@ -32,16 +32,23 @@ public:
     return a + b;
   }
 
-  int Add(int a, int b) { return a + b; }
+  int Add(int a, int b)
+  {
+    return a + b;
+  }
 
-  std::string Greet(std::string name) { return "Hello, " + name; }
+  std::string Greet(std::string name)
+  {
+    return "Hello, " + name;
+  }
 };
 
 // Next we make a protocol for the implementation
 class ServiceProtocol : public Protocol
 {
 public:
-  ServiceProtocol() : Protocol()
+  ServiceProtocol()
+    : Protocol()
   {
 
     this->Expose(SLOWFUNCTION, &impl_, &Implementation::SlowFunction);
@@ -57,7 +64,8 @@ private:
 class MyCoolService : public ServiceServer<fetch::network::TCPServer>
 {
 public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager tm) : ServiceServer(port, tm)
+  MyCoolService(uint16_t port, fetch::network::NetworkManager tm)
+    : ServiceServer(port, tm)
   {
     this->Add(MYPROTO, new ServiceProtocol());
   }

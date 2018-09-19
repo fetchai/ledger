@@ -334,20 +334,31 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              return ret;
            })
       .def("dynamic_stitch",
-           [](ShapeLessArray<T> &a, std::vector<std::vector<std::size_t>> const &indices,
-              std::vector<ShapeLessArray<T>> const &data) {
+           [](ShapeLessArray<T> &a, ShapeLessArray<T> const &indices,
+              ShapeLessArray<T> const &data) {
              fetch::math::DynamicStitch(a, indices, data);
              return a;
+           })
+      .def("concat",
+           [](ShapeLessArray<T> &input_array, std::vector<ShapeLessArray<T>> concat_arrays) {
+             fetch::math::Concat(input_array, concat_arrays);
+             return input_array;
            })
       .def("__len__", [](const ShapeLessArray<T> &a) { return a.size(); })
       .def("__getitem__",
            [](const ShapeLessArray<T> &s, std::size_t i) {
-             if (i >= s.size()) throw py::index_error();
+             if (i >= s.size())
+             {
+               throw py::index_error();
+             }
              return s[i];
            })
       .def("__setitem__",
            [](ShapeLessArray<T> &s, std::size_t i, T const &v) {
-             if (i >= s.size()) throw py::index_error();
+             if (i >= s.size())
+             {
+               throw py::index_error();
+             }
              s[i] = v;
            })
       .def("__eq__",
@@ -356,19 +367,27 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              {
                for (std::size_t i = 0; i < other.size(); ++i)
                {
-                 if (other[i] != s[i]) return false;
+                 if (other[i] != s[i])
+                 {
+                   return false;
+                 }
                }
                return true;
              }
              else
+             {
                return false;
+             }
            })
 
       .def("FromNumpy",
            [](ShapeLessArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();
              using size_type = typename ShapeLessArray<T>::size_type;
-             if (buf.ndim != 1) throw std::runtime_error("Dimension must be exactly one.");
+             if (buf.ndim != 1)
+             {
+               throw std::runtime_error("Dimension must be exactly one.");
+             }
 
              T *         ptr = (T *)buf.ptr;
              std::size_t idx = 0;

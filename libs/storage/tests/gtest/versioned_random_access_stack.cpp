@@ -16,21 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "crypto/ecdsa.hpp"
-//#include "core/byte_array/encoders.hpp"
+#include "storage/versioned_random_access_stack.hpp"
+#include "core/random/lfg.hpp"
 
-#include "gtest/gtest.h"
-//#include "gmock/gmock.h"
+#include <gtest/gtest.h>
+#include <stack>
 
-namespace fetch {
-namespace crypto {
-namespace openssl {
-namespace memory {
+using namespace fetch::storage;
 
-namespace {
-}  // namespace
+class TestClass
+{
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
 
-}  // namespace memory
-}  // namespace openssl
-}  // namespace crypto
-}  // namespace fetch
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};

@@ -33,7 +33,9 @@ namespace threading {
 class Pool
 {
 public:
-  Pool() : Pool(2 * std::thread::hardware_concurrency()) {}
+  Pool()
+    : Pool(2 * std::thread::hardware_concurrency())
+  {}
 
   Pool(std::size_t const &n)
   {
@@ -50,7 +52,10 @@ public:
   {
     running_ = false;
     condition_.notify_all();
-    for (auto &w : workers_) w.join();
+    for (auto &w : workers_)
+    {
+      w.join();
+    }
   }
 
   template <typename F, typename... Args>
@@ -107,7 +112,10 @@ private:
   {
     std::unique_lock<std::mutex> lock(mutex_);
     condition_.wait(lock, [this] { return (!bool(running_)) || (!tasks_.empty()); });
-    if (!bool(running_)) return std::function<void()>();
+    if (!bool(running_))
+    {
+      return std::function<void()>();
+    }
 
     std::function<void()> task = tasks_.front();
     ++tasks_in_progress_;
