@@ -18,23 +18,25 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/base.hpp"
-#include "math/linalg/matrix.hpp"
+//#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
 
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S>
-class Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
+template <typename S, typename MATRIX>
+class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
            Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
 {
 public:
   using type                 = S;
-  using vector_register_type = typename Matrix<type>::vector_register_type;
+//  using shared_array_type    = fetch::memory::SharedArray<type>;
+//  using rectangular_array_type = fetch::math::RectangularArray<type, shared_array_type, true, false>;
+//  using MATRIX_TYPE = Matrix<type, shared_array_type, rectangular_array_type>;
 
-  void operator()(type const &alpha, Matrix<type> const &a, Matrix<type> const &b, type const &beta,
-                  Matrix<type> &c) const;
+  void operator()(S const &alpha, MATRIX const &a, MATRIX const &b, S const &beta,
+                  MATRIX &c) const;
 };
 
 }  // namespace linalg

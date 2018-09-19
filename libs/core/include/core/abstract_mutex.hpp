@@ -16,7 +16,6 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
 #include <mutex>
 #include <string>
 #include <thread>

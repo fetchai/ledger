@@ -26,9 +26,16 @@
 #include <limits>
 #include <vector>
 
+//#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
+//#include "math/linalg/blas/base.hpp"
+
+
 namespace fetch {
 namespace math {
 namespace linalg {
+
+//template <typename U, typename X, typename Y, typename Z>
+//class Blas;
 
 template <typename T, typename C = fetch::memory::SharedArray<T>,
           typename S = fetch::math::RectangularArray<T, C>>
@@ -175,11 +182,22 @@ public:
    */
   Matrix &Dot(Matrix const &A, Matrix const &B)
   {
-    working_memory_2d_type tmpA;
-    working_memory_2d_type tmpB;
-    tmpA.LazyResize(A.height(), A.width());
-    tmpB.LazyResize(B.width(), B.height());
-    return Dot(A, B, tmpA, tmpB);
+//    Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+//        Computes(_C = _alpha * _A * T(_B) + _beta * _C),
+//        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+//    BLAS_OBJECT gemm_nt_vector_threaded;
+
+    type alpha = type(1);
+    type beta  = type(0);
+
+    gemm_nt_vector_threaded(alpha, A, B, beta, *this);
+
+//    working_memory_2d_type tmpA;
+//    working_memory_2d_type tmpB;
+//    tmpA.LazyResize(A.height(), A.width());
+//    tmpB.LazyResize(B.width(), B.height());
+//    return Dot(A, B, tmpA, tmpB);
+    return *this;
   }
 
   /* Dot routine to compute C = Dot(A, B).

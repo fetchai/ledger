@@ -18,16 +18,28 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/platform.hpp"
+#include "vectorise/memory/shared_array.hpp"
 
 namespace fetch {
 namespace math {
+
+template <typename SHARED_TYPE, std::size_t type_size>
+class SharedArray;
+
+template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT, bool PAD_WIDTH>
+class RectangularArray;
+
+template <typename T, typename C, typename SUPER_TYPE>
+class Matrix;
+
 namespace linalg {
 
-template <typename T, uint64_t S, uint64_t I,
+template <typename T, typename MATRIX, uint64_t S, uint64_t I,
           uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
 class Blas
 {
 public:
+
   template <typename... Args>
   void operator()(Args... args) = delete;
 };
