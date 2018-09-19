@@ -29,8 +29,9 @@ class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
   using event_set_object_type = std::function<void(T const &)>;
-
   using self_type = ObjectStoreProtocol<T>;
+
+  static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
   enum
   {
@@ -56,7 +57,7 @@ public:
 private:
   void Set(ResourceID const &rid, T const &object)
   {
-    fetch::logger.Info("Setting object in object store protocol");
+    FETCH_LOG_INFO(LOGGING_NAME, "Setting object in object store protocol");
 
     if (on_set_)
     {

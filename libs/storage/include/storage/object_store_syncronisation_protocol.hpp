@@ -35,6 +35,7 @@ template <typename R, typename T, typename S = T>
 class ObjectStoreSyncronisationProtocol : public fetch::service::Protocol
 {
 public:
+
   enum
   {
     OBJECT_COUNT  = 1,
@@ -136,7 +137,7 @@ public:
       }
     });
 
-    fetch::logger.Info("Expected tx size: ", obj_size);
+    FETCH_LOG_INFO(LOGGING_NAME, "Expected tx size: ", obj_size);
 
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
