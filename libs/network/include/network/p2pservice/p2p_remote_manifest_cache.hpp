@@ -163,6 +163,8 @@ inline void ManifestCache::ProvideUpdate(Address const &address, network::Manife
 {
   FETCH_LOCK(mutex_);
 
+  FETCH_LOG_INFO("ManifestCache", "Providing manifest update: ", manifest.ToString());
+
   CacheEntry &entry = cache_[address];
 
   entry.manifest = manifest;
