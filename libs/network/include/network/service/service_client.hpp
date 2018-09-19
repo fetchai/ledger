@@ -33,8 +33,6 @@
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
-#include "network/generics/life_tracker.hpp"
-
 #include <map>
 #include <utility>
 
@@ -54,7 +52,6 @@ public:
     : connection_(connection)
     , network_manager_(network_manager)
     , message_mutex_(__LINE__, __FILE__)
-    , lifeTracker_(network_manager)
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -69,10 +66,7 @@ public:
           messages_.push_back(msg);
         }
 
-        // TODO(EJF): This was changed to simply ProcessMessages() in develop
-        // Since this class isn't shared_from_this, try to ensure safety when
-        // destructing
-        lifeTracker_.Post([this]() { this->ProcessMessages(); });
+        ProcessMessages();
       });
     }
   }
@@ -87,7 +81,6 @@ public:
     using std::chrono::milliseconds;
 
     tearing_down_ = true;
-    lifeTracker_.reset();
 
     LOG_STACK_TRACE_POINT;
 
@@ -263,7 +256,6 @@ private:
   network_manager_type                        network_manager_;
   std::deque<network::message_type>           messages_;
   mutable fetch::mutex::Mutex                 message_mutex_;
-  generics::LifeTracker<network_manager_type> lifeTracker_;
 
   std::atomic<bool>                           tearing_down_{false};
   std::atomic<std::size_t>                    active_count_{0};
