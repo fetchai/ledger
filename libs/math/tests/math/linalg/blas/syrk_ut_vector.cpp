@@ -30,7 +30,11 @@ using namespace fetch::math::linalg;
 TEST(blas_A_withA_vectorised, blas_syrk_ut_vector1)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_ut_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -72,7 +76,11 @@ TEST(blas_A_withA_vectorised, blas_syrk_ut_vector1)
 TEST(blas_A_withA_vectorised, blas_syrk_ut_vector2)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_ut_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -114,7 +122,11 @@ TEST(blas_A_withA_vectorised, blas_syrk_ut_vector2)
 TEST(blas_A_withA_vectorised, blas_syrk_ut_vector3)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_ut_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C

@@ -29,10 +29,9 @@ class Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
            Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
 {
 public:
-  using type                 = S;
+  using type = S;
 
-  void operator()(type const &alpha, MATRIX const &a, type const &beta,
-                  MATRIX &c) const;
+  void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c) const;
 };
 
 }  // namespace linalg

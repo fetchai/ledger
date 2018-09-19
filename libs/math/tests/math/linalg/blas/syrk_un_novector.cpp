@@ -30,7 +30,11 @@ using namespace fetch::math::linalg;
 TEST(blas_A_withA, blas_syrk_un_novector1)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_un_novector;
   // Compuing _C = _alpha * _A * T(_A) + _beta * _C
@@ -73,7 +77,11 @@ TEST(blas_A_withA, blas_syrk_un_novector1)
 TEST(blas_A_withA, blas_syrk_un_novector2)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_un_novector;
   // Compuing _C = _alpha * _A * T(_A) + _beta * _C
@@ -116,7 +124,11 @@ TEST(blas_A_withA, blas_syrk_un_novector2)
 TEST(blas_A_withA, blas_syrk_un_novector3)
 {
 
-  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_un_novector;
   // Compuing _C = _alpha * _A * T(_A) + _beta * _C

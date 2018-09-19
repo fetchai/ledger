@@ -48,7 +48,8 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
         auto                 ret_slice = c.data().slice(c.padded_height() * j, j + 1);
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
-            range, [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
+            range,
+            [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
       }
     }
     else
@@ -63,7 +64,8 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
             range,
-            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type &vw_c_j) {
+            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
+                       typename MATRIX::vector_register_type &      vw_c_j) {
               vw_c_j = vec_beta * vr_c_j;
             },
             slice_c_j);
@@ -85,7 +87,8 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
         auto                 ret_slice = c.data().slice(c.padded_height() * j, j + 1);
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
-            range, [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
+            range,
+            [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
       }
       else if (beta != 1.0)
       {
@@ -97,7 +100,8 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
             range,
-            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type &vw_c_j) {
+            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
+                       typename MATRIX::vector_register_type &      vw_c_j) {
               vw_c_j = vec_beta * vr_c_j;
             },
             slice_c_j);
@@ -118,8 +122,11 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
           memory::TrivialRange range(0, j + 1);
           ret_slice.in_parallel().Apply(
               range,
-              [vec_temp](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type const &vr_a_l,
-                         typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vr_c_j + vec_temp * vr_a_l; },
+              [vec_temp](typename MATRIX::vector_register_type const &vr_c_j,
+                         typename MATRIX::vector_register_type const &vr_a_l,
+                         typename MATRIX::vector_register_type &      vw_c_j) {
+                vw_c_j = vr_c_j + vec_temp * vr_a_l;
+              },
               slice_c_j, slice_a_l);
         }
       }
@@ -130,17 +137,21 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
   return;
 }
 
-template class Blas<double,
-                    Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
 
-template class Blas<float,
-                    Matrix<float, fetch::memory::SharedArray<float>, fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math

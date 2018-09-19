@@ -47,7 +47,8 @@ void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
         auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::TrivialRange range(j + 1 - 1, c.height());
         ret_slice.in_parallel().Apply(
-            range, [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
+            range,
+            [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
       }
     }
     else
@@ -62,7 +63,8 @@ void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
         memory::TrivialRange range(j + 1 - 1, c.height());
         ret_slice.in_parallel().Apply(
             range,
-            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type &vw_c_j) {
+            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
+                       typename MATRIX::vector_register_type &      vw_c_j) {
               vw_c_j = vec_beta * vr_c_j;
             },
             slice_c_j);
@@ -95,9 +97,8 @@ void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
       memory::TrivialRange range(j + 1 - 1, c.height());
       ret_slice.in_parallel().Apply(
           range,
-          [vec_beta](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type &vw_c_j) {
-            vw_c_j = vec_beta * vr_c_j;
-          },
+          [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
+                     typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_beta * vr_c_j; },
           slice_c_j);
     }
 
@@ -116,8 +117,11 @@ void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
         memory::TrivialRange range(j + 1 - 1, c.height());
         ret_slice.in_parallel().Apply(
             range,
-            [vec_temp](typename MATRIX::vector_register_type const &vr_c_j, typename MATRIX::vector_register_type const &vr_a_l,
-                       typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vr_c_j + vec_temp * vr_a_l; },
+            [vec_temp](typename MATRIX::vector_register_type const &vr_c_j,
+                       typename MATRIX::vector_register_type const &vr_a_l,
+                       typename MATRIX::vector_register_type &      vw_c_j) {
+              vw_c_j = vr_c_j + vec_temp * vr_a_l;
+            },
             slice_c_j, slice_a_l);
       }
     }
@@ -125,17 +129,19 @@ void Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
   return;
 }
 
-template class Blas<double,
-                    Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-                    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::VECTORISE>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::VECTORISE>;
 
-template class Blas<float,
-                    Matrix<float, fetch::memory::SharedArray<float>, fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-                    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::VECTORISE>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::VECTORISE>;
 
 }  // namespace linalg
 }  // namespace math

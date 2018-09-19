@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/platform.hpp"
 #include "vectorise/memory/shared_array.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace math {
@@ -29,7 +29,8 @@ class SharedArray;
 template <typename SHAPELESS_TYPE, typename SHAPELESS_CONTAINER>
 class ShapeLessArray;
 
-template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT, bool PAD_WIDTH>
+template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT,
+          bool PAD_WIDTH>
 class RectangularArray;
 
 namespace linalg {
@@ -42,7 +43,6 @@ template <typename T, typename MATRIX, uint64_t S, uint64_t I,
 class Blas
 {
 public:
-
   template <typename... Args>
   void operator()(Args... args) = delete;
 };

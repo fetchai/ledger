@@ -59,9 +59,10 @@ template <typename S, typename MATRIX, uint64_t V>
 class Blas<S, MATRIX, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y = _y, _x), V>
 {
 public:
-  using type                 = S;
+  using type = S;
 
-  void operator()(int const &n, ShapeLessArray<type, memory::SharedArray<type>> &dx, int const &incx, ShapeLessArray<type, memory::SharedArray<type>> &dy,
+  void operator()(int const &n, ShapeLessArray<type, memory::SharedArray<type>> &dx,
+                  int const &incx, ShapeLessArray<type, memory::SharedArray<type>> &dy,
                   int const &incy) const;
 };
 

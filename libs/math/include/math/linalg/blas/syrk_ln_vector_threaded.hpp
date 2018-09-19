@@ -31,7 +31,7 @@ class Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
            platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
 {
 public:
-  using type                 = S;
+  using type = S;
 
   void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c);
 

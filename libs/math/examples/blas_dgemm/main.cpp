@@ -28,9 +28,10 @@ int main(int argc, char **argv)
 {
 
   Blas<double,
-       Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-       Signature(_C <= _alpha, _A, _B, _beta, _C),
-       Computes(_C = _alpha * _A * _B + _beta * _C),
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_C <= _alpha, _A, _B, _beta, _C), Computes(_C = _alpha * _A * _B + _beta * _C),
        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
       gemm_nn_vector_threaded;
   // Compuing _C = _alpha * _A * _B + _beta * _C

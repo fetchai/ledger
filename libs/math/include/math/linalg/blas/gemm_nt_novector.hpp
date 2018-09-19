@@ -29,7 +29,7 @@ class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
            Computes(_C = _alpha * _A * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
 {
 public:
-  using type                 = S;
+  using type = S;
 
   void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta,
                   MATRIX &c) const;

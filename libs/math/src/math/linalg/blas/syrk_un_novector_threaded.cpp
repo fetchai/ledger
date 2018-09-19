@@ -101,17 +101,19 @@ void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
   return;
 }
 
-template class Blas<double,
-                    Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::THREADING>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::THREADING>;
 
-template class Blas<float,
-                    Matrix<float, fetch::memory::SharedArray<float>, fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * _A * T(_A) + _beta * _C),
-                    platform::Parallelisation::THREADING>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * _A * T(_A) + _beta * _C), platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math

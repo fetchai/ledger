@@ -27,8 +27,7 @@ namespace linalg {
 template <typename S, typename MATRIX>
 void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
           Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-          platform::Parallelisation::THREADING>::operator()(type const &        alpha,
-                                                            MATRIX const &a,
+          platform::Parallelisation::THREADING>::operator()(type const &alpha, MATRIX const &a,
                                                             MATRIX const &b, type const &beta,
                                                             MATRIX &c)
 {
@@ -96,17 +95,19 @@ void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
   return;
 }
 
-template class Blas<double,
-                    Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
-                    Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-                    platform::Parallelisation::THREADING>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(_C <= _alpha, _A, _B, _beta, _C), Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
+    platform::Parallelisation::THREADING>;
 
-template class Blas<float,
-                    Matrix<float, fetch::memory::SharedArray<float>, fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
-                    Signature(_C <= _alpha, _A, _B, _beta, _C),
-                    Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
-                    platform::Parallelisation::THREADING>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(_C <= _alpha, _A, _B, _beta, _C), Computes(_C = _alpha * T(_A) * T(_B) + _beta * _C),
+    platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/base.hpp"
-#include "vectorise/threading/pool.hpp"
 #include "math/linalg/prototype.hpp"
+#include "vectorise/threading/pool.hpp"
 
 namespace fetch {
 namespace math {
@@ -30,10 +30,9 @@ class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
            Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::THREADING>
 {
 public:
-  using type                 = S;
+  using type = S;
 
-  void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta,
-                  MATRIX &c);
+  void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta, MATRIX &c);
 
 private:
   threading::Pool pool_;
