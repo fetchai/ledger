@@ -46,23 +46,21 @@
  */
 
 #include "math/linalg/blas/base.hpp"
-//#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
 
 namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S, uint64_t V>
-class Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+template <typename S, typename MATRIX, uint64_t V>
+class Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
            Computes(_y = _alpha * _A * _x + _beta * _y), V>
 {
 public:
   using type                 = S;
-  using vector_register_type = typename Matrix<type>::vector_register_type;
 
-  void operator()(type const &alpha, Matrix<type> const &a, ShapeLessArray<type> const &x,
-                  int const &incx, type const &beta, ShapeLessArray<type> &y,
+  void operator()(type const &alpha, MATRIX const &a, ShapeLessArray<type, memory::SharedArray<type>> const &x,
+                  int const &incx, type const &beta, ShapeLessArray<type, memory::SharedArray<type>> &y,
                   int const &incy) const;
 };
 

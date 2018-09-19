@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/linalg/blas/base.hpp"
-//#include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
 
 namespace fetch {
@@ -31,9 +30,6 @@ class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
 {
 public:
   using type                 = S;
-//  using shared_array_type    = fetch::memory::SharedArray<type>;
-//  using rectangular_array_type = fetch::math::RectangularArray<type, shared_array_type, true, false>;
-//  using MATRIX_TYPE = Matrix<type, shared_array_type, rectangular_array_type>;
 
   void operator()(S const &alpha, MATRIX const &a, MATRIX const &b, S const &beta,
                   MATRIX &c) const;

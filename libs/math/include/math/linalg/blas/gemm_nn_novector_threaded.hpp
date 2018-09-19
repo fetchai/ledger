@@ -31,7 +31,6 @@ class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
 {
 public:
   using type                 = S;
-//  using vector_register_type = typename Matrix<type>::vector_register_type;
 
   void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta,
                   MATRIX &c);
