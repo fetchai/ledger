@@ -38,10 +38,11 @@ namespace service {
 
 class ServiceClientInterface
 {
-  typedef fetch::mutex::Mutex                      subscription_mutex_type;
-  typedef std::lock_guard<subscription_mutex_type> subscription_mutex_lock_type;
   class Subscription;
-  typedef std::unordered_map<subscription_handler_type, Subscription> subscriptions_type;
+
+  using subscription_mutex_type = fetch::mutex::Mutex;
+  using subscription_mutex_lock_type = std::lock_guard<subscription_mutex_type>;
+  using subscriptions_type = std::unordered_map<subscription_handler_type, Subscription>;
 
 public:
 
