@@ -41,7 +41,7 @@ namespace math {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = true,
+template <typename T, typename C = fetch::memory::SharedArray<T>, bool PAD_HEIGHT = true,
           bool PAD_WIDTH = false>
 class RectangularArray : public math::ShapeLessArray<T, C>
 {

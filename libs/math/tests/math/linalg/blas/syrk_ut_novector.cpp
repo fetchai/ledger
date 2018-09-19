@@ -30,7 +30,11 @@ using namespace fetch::math::linalg;
 TEST(blas_A_withA, blas_syrk_ut_novector1)
 {
 
-  Blas<double, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_ut_novector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -72,7 +76,11 @@ TEST(blas_A_withA, blas_syrk_ut_novector1)
 TEST(blas_A_withA, blas_syrk_ut_novector2)
 {
 
-  Blas<double, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_ut_novector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -114,7 +122,11 @@ TEST(blas_A_withA, blas_syrk_ut_novector2)
 TEST(blas_A_withA, blas_syrk_ut_novector3)
 {
 
-  Blas<double, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       syrk_ut_novector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
