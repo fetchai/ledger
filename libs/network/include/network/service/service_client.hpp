@@ -83,6 +83,10 @@ public:
 
   ~ServiceClient()
   {
+    using std::this_thread::sleep_for;
+    using std::chrono::milliseconds;
+
+    tearing_down_ = true;
     lifeTracker_.reset();
 
     LOG_STACK_TRACE_POINT;
@@ -93,6 +97,17 @@ public:
     {
       ptr->ClearClosures();
       ptr->Close();
+    }
+
+    // final check ensure that all inflight message processing has been completed
+    for (std::size_t i = 0; (i < 20) && active_count_; ++i)
+    {
+      sleep_for(milliseconds{100});
+    }
+
+    if (active_count_)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Timedout waiting for processing messages to close");
     }
   }
 
@@ -200,26 +215,33 @@ private:
 
   void ProcessMessages()
   {
+    ++active_count_;
+
     LOG_STACK_TRACE_POINT;
 
-    message_mutex_.lock();
-    bool has_messages = (!messages_.empty());
-    message_mutex_.unlock();
-
-    while (has_messages)
+    while (!tearing_down_)
     {
-      message_mutex_.lock();
-
       network::message_type msg;
-      has_messages = (!messages_.empty());
-      if (has_messages)
-      {
-        msg = messages_.front();
-        messages_.pop_front();
-      };
-      message_mutex_.unlock();
+      bool message_found = false;
 
-      if (has_messages)
+      // extract the next message
+      {
+        FETCH_LOCK(message_mutex_);
+        if (!messages_.empty())
+        {
+          msg = messages_.front();
+          messages_.pop_front();
+          message_found = true;
+        }
+      }
+
+      // exit the processing loop if a message has not been found
+      if (!message_found)
+      {
+        break;
+      }
+
+      if (message_found)
       {
         // TODO(issue 22): Post
         if (!ProcessServerMessage(msg))
@@ -234,12 +256,17 @@ private:
         }
       }
     }
+
+    --active_count_;
   }
 
   network_manager_type                        network_manager_;
   std::deque<network::message_type>           messages_;
   mutable fetch::mutex::Mutex                 message_mutex_;
   generics::LifeTracker<network_manager_type> lifeTracker_;
+
+  std::atomic<bool>                           tearing_down_{false};
+  std::atomic<std::size_t>                    active_count_{0};
 };
 }  // namespace service
 }  // namespace fetch
