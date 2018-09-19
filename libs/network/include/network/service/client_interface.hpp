@@ -59,6 +59,7 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME,"Service Client Calling ", protocol, ":", function);
 
     Promise         prom = MakePromise(protocol, function);
+
     serializer_type params;
 
     serializers::SizeCounter<serializer_type> counter;
@@ -70,7 +71,7 @@ public:
 
     params << SERVICE_FUNCTION_CALL << prom->id();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':', function, " (call)", &promises_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':', function, " (call)", &promises_);
 
     AddPromise(prom);
 
@@ -78,7 +79,7 @@ public:
 
     if (!DeliverRequest(params.data()))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME,"Call failed!");
+      FETCH_LOG_INFO(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(), " failed!");
       prom->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
 
@@ -86,8 +87,10 @@ public:
 
       RemovePromise(prom->id());
     }
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
+    }
 
     return prom;
   }

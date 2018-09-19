@@ -167,7 +167,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // P2P configuration
   p2p_.SetLocalManifest(GenerateManifest());
-  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)) );
+  p2p_.Start(initial_peers, network::Uri("rpc://127.0.0.1:" + std::to_string(p2p_port_)) );
 
   // Finally start the HTTP server
   http_.Start(http_port_);

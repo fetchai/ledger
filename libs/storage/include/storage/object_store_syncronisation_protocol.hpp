@@ -466,7 +466,6 @@ private:
         roots_to_sync_.push(root);
         continue;
       }
-
       promise->template As<std::vector<S>>(incoming_objects_);
 
       store_->WithLock([this]() {

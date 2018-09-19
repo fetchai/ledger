@@ -23,7 +23,7 @@ namespace fetch {
 namespace network {
 
 /**
- * An interface which allows access to the underlying functionality of PromiseOf
+ * An interface which allows access to the underlying functionality of Promise
  */
 class Resolvable
 {
@@ -34,9 +34,35 @@ public:
   Resolvable() = default;
   virtual ~Resolvable() = default;
 
-  virtual State GetState() const = 0;
+  virtual State GetState() = 0;
   virtual PromiseCounter id() const = 0;
 };
+
+template<class RESULT>
+class ResolvableTo : public Resolvable
+{
+public:
+  using State = service::PromiseState;
+  using PromiseCounter = service::PromiseCounter;
+  using Clock = std::chrono::steady_clock;
+  using Timepoint = Clock::time_point;
+
+  ResolvableTo() = default;
+  ~ResolvableTo() = default;
+
+  ResolvableTo(ResolvableTo const &rhs) = default;
+
+  // Operators
+  ResolvableTo &operator=(ResolvableTo const &rhs) = default;
+  ResolvableTo &operator=(ResolvableTo &&rhs) noexcept = default;
+
+  virtual State GetState(Timepoint const &tp) { return GetState(); }
+  virtual State GetState() = 0;
+  virtual PromiseCounter id() const = 0;
+
+  virtual RESULT Get() const = 0;
+};
+
 
 }  // namespace network
 }  // namespace fetch

@@ -13,9 +13,9 @@ namespace p2p {
 P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
-  , address_(muddle.identity().identifier())
   , lane_management_{lane_management}
   , trust_system_{trust}
+  , address_(muddle.identity().identifier())
   , identity_cache_{}
   , resolver_{identity_cache_}
   , resolver_proto_{resolver_, *this}

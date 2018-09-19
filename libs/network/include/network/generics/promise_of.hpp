@@ -27,10 +27,10 @@ namespace network {
  * Simple wrapper around the service promise which mandates the return time from the underlying
  * promise.
  *
- * @tparam TYPE The expected return type of the promise
+ * @tparam RESULT The expected return type of the promise
  */
-template <class TYPE>
-class PromiseOf: public Resolvable
+template <typename RESULT>
+class PromiseOf: public ResolvableTo<RESULT>
 {
 public:
   using Promise = service::Promise;
@@ -39,30 +39,43 @@ public:
   using PromiseCounter = fetch::service::PromiseCounter;
 
   // Construction / Destruction
+  PromiseOf() = default;
   explicit PromiseOf(Promise promise);
   PromiseOf(PromiseOf const &rhs) = default;
   ~PromiseOf() = default;
 
-  // Operators
-  PromiseOf &operator=(PromiseOf const &rhs) = default;
-  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
-  explicit operator bool() const;
 
   // Promise Accessors
-  TYPE Get() const;
+  RESULT Get() const override;
   bool Wait(uint32_t timeout_ms = std::numeric_limits<uint32_t>::max(),
             bool throw_exception = true) const;
 
   Promise const &GetInnerPromise() const { return promise_; }
   PromiseBuilder WithHandlers() { return promise_->WithHandlers(); }
 
+  bool empty() { return !promise_; }
 
-  State GetState() const override
+  State GetState() override
   {
     return promise_->GetState();
   }
 
   PromiseCounter id() const override { return promise_->id(); }
+
+  std::string &name() { return promise_ -> name(); }
+  const std::string &name() const { return promise_ -> name(); }
+
+  // TODO(EJF): This seems a little scary, is this a copy or move?
+  void Adopt(Promise &promise)
+  {
+    promise_ = promise;
+  }
+
+  // Operators
+  explicit operator bool() const;
+
+  PromiseOf &operator=(PromiseOf const &rhs) = default;
+  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
 
 private:
   Promise promise_;
@@ -101,7 +114,7 @@ inline TYPE PromiseOf<TYPE>::Get() const
 template <typename TYPE>
 inline PromiseOf<TYPE>::operator bool() const
 {
-  return promise_->IsSuccessful();
+  return promise_ && promise_->IsSuccessful();
 }
 
 /**

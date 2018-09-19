@@ -100,6 +100,7 @@ public:
   {
     if (!shutdown_.load())
     {
+      std::unique_lock<mutex_type> lock(future_work_mutex_);
       StartOneThread();
       future_work_.Post(f, milliseconds);
       cv_.notify_one();
@@ -118,6 +119,7 @@ public:
 
   virtual void SetInterval(int milliseconds)
   {
+    std::unique_lock<mutex_type> lock(idle_work_mutex_);
     idle_work_.SetInterval(milliseconds);
   }
 
@@ -126,6 +128,7 @@ public:
     if (!shutdown_.load())
     {
       StartOneThread();
+      std::unique_lock<mutex_type> lock(idle_work_mutex_);
       idle_work_.Post(idle_work);
       cv_.notify_one();
     }
@@ -315,6 +318,12 @@ private:
     thread_state_type r = THREAD_IDLE;
     LOG_STACK_TRACE_POINT;
 
+    std::unique_lock<mutex_type> lock(idle_work_mutex_, std::try_to_lock);
+    if (!lock)
+    {
+      return r;
+    }
+
     if (idle_work_.IsDue())
     {
       if (idle_work_.Visit([this](IdleWorkStore::work_item_type work){ this->ExecuteWorkload(work); }) > 0)
@@ -332,14 +341,20 @@ private:
     thread_state_type            r = THREAD_IDLE;
     auto cb = [this](FutureWorkStore::work_item_type work){ this->Post(work); };
 
-    if (idle_work_.IsDue())
+    std::unique_lock<mutex_type> lock(future_work_mutex_, std::try_to_lock);
+    if (!lock)
+    {
+      return r;
+    }
+
+    if (future_work_.IsDue())
     {
       if (future_work_.Visit(cb, 1) > 0)
       {
         r = THREAD_WORKED;                      // We did something.
       }
     }
-    
+
     // if we didn't get the lock, one thread is already
     // doing future work -- leave it be.
     return r;
@@ -382,6 +397,9 @@ private:
   future_work_type future_work_;
   work_queue_type  work_;
   idle_work_type   idle_work_;
+
+  mutable mutex_type  idle_work_mutex_{__LINE__, __FILE__};
+  mutable mutex_type  future_work_mutex_{__LINE__, __FILE__};
 
   mutable fetch::mutex::Mutex     thread_mutex_{__LINE__, __FILE__};
 
