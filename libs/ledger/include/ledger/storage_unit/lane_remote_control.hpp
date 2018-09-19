@@ -70,6 +70,7 @@ public:
     }
   }
 
+#if 0
   void TryConnect(LaneIndex lane, p2p::EntryPoint const &ep)
   {
     auto ptr = LookupLane(lane);
@@ -81,6 +82,7 @@ public:
       p->Wait();
     }
   }
+#endif
 
   void Shutdown(LaneIndex lane) override
   {

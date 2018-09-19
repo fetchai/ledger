@@ -154,6 +154,7 @@ public:
     return client;
   }
 
+#if 0
   void TryConnect(p2p::EntryPoint const &ep)
   {
     if (ep.lane_id < lanes_.size())
@@ -161,6 +162,7 @@ public:
       lanes_[ep.lane_id]->Call(RPC_CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
     }
   }
+#endif
 
   void AddTransaction(chain::VerifiedTransaction const &tx) override
   {

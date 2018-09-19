@@ -23,7 +23,6 @@
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
 #include "network/uri.hpp"
 
@@ -74,6 +73,7 @@ public:
     Connect(host, port);
   }
 
+#if 0
   void TryConnect(p2p::EntryPoint const &ep)
   {
     for (auto &h : ep.host)
@@ -86,6 +86,7 @@ public:
       }
     }
   }
+#endif
 
   void RPCConnectToURIs(const std::vector<Uri> &uris)
   {

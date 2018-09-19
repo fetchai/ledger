@@ -19,17 +19,15 @@
 
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/p2pservice/p2p_managed_local_service.hpp"
-#include "network/p2pservice/p2p_managed_local_service_state_machine.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
 
-/*******
+/**
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
-
 class P2PManagedLocalLaneService : public P2PManagedLocalService
 {
   using Uri               = P2PManagedLocalService::Uri;
@@ -48,14 +46,6 @@ public:
 
   virtual void Refresh()
   {
-#if 0
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers.......................................");
-    for(auto& peer : peers())
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Refresh ", instance_number(), " -- UseThesePeers: ", peer.ToString());
-    }
-#endif
-
     try
     {
       lane_management_.UseThesePeers(instance_number(), peers());

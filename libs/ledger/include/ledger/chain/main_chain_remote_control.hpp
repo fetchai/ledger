@@ -19,7 +19,7 @@
 
 #include "ledger/chain/main_chain_controller_protocol.hpp"
 #include "ledger/chain/main_chain_service.hpp"
-#include "network/p2pservice/p2p_peer_details.hpp"
+//#include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
 
 #include <unordered_map>
@@ -69,6 +69,7 @@ public:
     p->Wait();
   }
 
+#if 0
   void TryConnect(p2p::EntryPoint const &ep)
   {
     if (!client_)
@@ -81,6 +82,7 @@ public:
     FETCH_LOG_PROMISE();
     p->Wait();
   }
+#endif
 
   void Shutdown()
   {

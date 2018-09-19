@@ -24,7 +24,6 @@
 #include "ledger/chain/main_chain_identity_protocol.hpp"
 #include "ledger/chain/main_chain_protocol.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
 
 namespace fetch {
@@ -68,6 +67,7 @@ public:
     Connect(host, port);
   }
 
+#if 0
   void TryConnect(p2p::EntryPoint const &ep)
   {
     for (auto &h : ep.host)
@@ -81,6 +81,7 @@ public:
       }
     }
   }
+#endif
 
   void Shutdown()
   {

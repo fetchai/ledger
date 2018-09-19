@@ -17,17 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <network/p2pservice/p2p_managed_local_service_state_machine.hpp>
-#include <network/p2pservice/p2p_service_defs.hpp>
+#include "network/p2pservice/p2p_service_defs.hpp"
 
 namespace fetch {
 namespace p2p {
 
-/*******
+/**
  * This is representation of a LOCAL service which a P2P2 instance is
  * controlling. Eg; a LANE_SERVICE to whom it is handing out LANE_N peers.
  */
-
 class P2PManagedLocalService
 {
 public:
@@ -70,7 +68,7 @@ public:
   }
 
 private:
-  P2PManagedLocalServiceStateMachine state_;
+
   Uri                                uri_;
   ServiceIdentifier                  service_identifier_;
   Peers                              peers_;
