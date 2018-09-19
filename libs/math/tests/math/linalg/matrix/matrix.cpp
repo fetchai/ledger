@@ -31,19 +31,6 @@ using container_type       = fetch::memory::SharedArray<data_type>;
 using matrix_type          = Matrix<data_type, container_type>;
 using vector_register_type = typename matrix_type::vector_register_type;
 
-// Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)
-//{
-//  static fetch::random::LinearCongruentialGenerator gen;
-//  Matrix<data_type, container_type>                 m1(n, m);
-//  for (std::size_t i = 0; i < n; ++i)
-//  {
-//    for (std::size_t j = 0; j < m; ++j)
-//    {
-//      m1(i, j) = data_type(gen.AsDouble());
-//    }
-//  }
-//  return m1;
-//}
 
 template <typename D>
 using _S = fetch::memory::SharedArray<D>;

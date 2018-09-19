@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,45 +16,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
+#include "core/script/variant.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
+#include <gtest/gtest.h>
 
-namespace fetch {
-namespace vm {
+using namespace fetch;
+using namespace fetch::script;
+using namespace fetch::serializers;
 
-namespace details {
-
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
+TEST(variant_test, variant_basic_functionality)
 {
-
-  static void AppendTo(std::vector<std::type_index> &list)
+  VariantArray arr = VariantArray(100);
+  for (std::size_t i = 0; i < arr.size(); ++i)
   {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
+    arr[i] = i;
   }
-};
 
-template <typename T>
-struct ArgumentsToList<T>
-{
+  VariantArray other(arr, 50, 10);
+  EXPECT_TRUE(other.size() == 10);
 
-  static void AppendTo(std::vector<std::type_index> &list)
+  for (std::size_t i = 0; i < other.size(); ++i)
   {
-    list.push_back(std::type_index(typeid(T)));
+    EXPECT_TRUE(other[i].As<std::size_t>() == (50 + i));
   }
-};
-
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> &list)
-  {}
-};
-
-}  // namespace details
-}  // namespace vm
-}  // namespace fetch
+}

@@ -117,7 +117,7 @@ private:
       return std::function<void()>();
     }
 
-    std::function<void()> task = std::move(tasks_.front());
+    std::function<void()> task = tasks_.front();
     ++tasks_in_progress_;
 
     tasks_.pop();

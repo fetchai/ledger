@@ -92,7 +92,7 @@ void Blas<S, MATRIX, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y = 
   }
 
   return;
-};
+}
 
 template class Blas<
     double,
