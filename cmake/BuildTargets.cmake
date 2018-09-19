@@ -103,6 +103,27 @@ macro(setup_compiler)
   # needed for configuration files etc
   include_directories(${FETCH_ROOT_BINARY_DIR})
 
+  # handle default logging level
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "")
+    set (FETCH_COMPILE_LOGGING_LEVEL "info")
+  endif()
+
+  # based on the configued logging level
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
+    add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=0)
+  else()
+    message(SEND_ERROR "Invalid settings for FETCH_COMPILE_LOGGING_LEVEL. Please choose one of: debug,info,warn,error,none")
+  endif()
+
 endmacro(setup_compiler)
 
 function(configure_vendor_targets)

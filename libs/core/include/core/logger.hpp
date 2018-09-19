@@ -191,11 +191,11 @@ public:
 
   virtual void StartEntry(Level level, char const *name, shared_context_type ctx)
   {
+#ifndef FETCH_DISABLE_COUT_LOGGING
     using Clock     = std::chrono::system_clock;
     using Timepoint = Clock::time_point;
     using Duration  = Clock::duration;
 
-#ifndef FETCH_DISABLE_COUT_LOGGING
     using namespace fetch::commandline::VT100;
     int color = 9, bg_color = 9;
 
@@ -424,7 +424,6 @@ public:
   template <typename... Args>
   void Debug(Args... args)
   {
-#ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
@@ -432,13 +431,11 @@ public:
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
-#endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   template <typename... Args>
   void DebugWithName(char const *name, Args... args)
   {
-#ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
@@ -446,12 +443,10 @@ public:
       Unroll<Args...>::Append(this, args...);
       this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
-#endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void Debug(const std::vector<std::string> &items)
   {
-#ifndef FETCH_DISABLE_DEBUG_LOGGING
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
@@ -462,7 +457,6 @@ public:
       }
       this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
-#endif  // !FETCH_DISABLE_DEBUG_LOGGING
   }
 
   void SetContext(shared_context_type ctx)
@@ -826,10 +820,33 @@ extern log::details::LogWrapper logger;
 #endif
 
 // Logging macros
-//#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
-#define FETCH_LOG_DEBUG(name, ...) (void)name
-#define FETCH_LOG_INFO(name, ...) fetch::logger.InfoWithName(name, __VA_ARGS__)
-#define FETCH_LOG_WARN(name, ...) fetch::logger.WarnWithName(name, __VA_ARGS__)
-#define FETCH_LOG_ERROR(name, ...) fetch::logger.ErrorWithName(name, __VA_ARGS__)
+
+// Debug
+#if FETCH_COMPILE_LOGGING_LEVEL >= 4
+#define FETCH_LOG_DEBUG(name, ...)      fetch::logger.DebugWithName(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_DEBUG(name, ...)      (void)name
+#endif
+
+// Info
+#if FETCH_COMPILE_LOGGING_LEVEL >= 3
+#define FETCH_LOG_INFO(name, ...)      fetch::logger.InfoWithName(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_INFO(name, ...)      (void)name
+#endif
+
+// Warn
+#if FETCH_COMPILE_LOGGING_LEVEL >= 2
+#define FETCH_LOG_WARN(name, ...)      fetch::logger.WarnWithName(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_WARN(name, ...)      (void)name
+#endif
+
+// Error
+#if FETCH_COMPILE_LOGGING_LEVEL >= 1
+#define FETCH_LOG_ERROR(name, ...)      fetch::logger.ErrorWithName(name, __VA_ARGS__)
+#else
+#define FETCH_LOG_ERROR(name, ...)      (void)name
+#endif
 
 #define FETCH_LOG_VARIABLE(x) (void)x

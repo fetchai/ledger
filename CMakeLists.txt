@@ -19,6 +19,7 @@ option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
+set(FETCH_COMPILE_LOGGING_LEVEL "info" CACHE STRING "The precompiled logging level for the project")
 
 # target architecture (to be replaced with automatic detection)
 ## sysctl -a | grep machdep.cpu.features
