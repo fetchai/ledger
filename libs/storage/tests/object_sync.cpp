@@ -203,10 +203,13 @@ public:
 
     thread_pool_->Start();
     tx_sync_protocol_->Start();
+
+    this->Start();
   }
 
   ~TestService()
   {
+    this->Stop();
     thread_pool_->Stop();
   }
 
