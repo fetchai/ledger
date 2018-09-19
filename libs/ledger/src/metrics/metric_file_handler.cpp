@@ -71,6 +71,7 @@ MetricFileHandler::MetricFileHandler(std::string filename)
 MetricFileHandler::~MetricFileHandler()
 {
   active_ = false;
+  entry_stack_notify_.notify_all();
   worker_.join();
   worker_ = std::thread{};
 }

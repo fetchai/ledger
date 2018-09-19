@@ -177,6 +177,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
 
   http_.Stop();
+  p2p_.Stop();
 
   // tear down all the services
   if (mining)
@@ -186,8 +187,11 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   block_coordinator_.Stop();
   execution_manager_->Stop();
+
+  lane_control_.ClearClients();
+  storage_.reset();
+
   lane_services_.Stop();
-  p2p_.Stop();
   muddle_.Stop();
   network_manager_.Stop();
 

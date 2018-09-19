@@ -51,6 +51,12 @@ public:
     clients_[lane] = client.lock();
   }
 
+  void ClearClients()
+  {
+    FETCH_LOCK(mutex_);
+    clients_.clear();
+  }
+
   void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) override
   {
     auto ptr = LookupLane(lane);
