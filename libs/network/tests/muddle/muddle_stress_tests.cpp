@@ -91,7 +91,7 @@ protected:
     managerB_->Start();
 
     networkA_->Start({8000});
-    networkB_->Start({9000}, {Uri{"127.0.0.1:8000"}});
+    networkB_->Start({9000}, {Uri{"tcp://127.0.0.1:8000"}});
 
     sleep_for(seconds{1});
   }
