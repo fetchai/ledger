@@ -57,9 +57,6 @@ public:
   /// @{
   ping_type Ping()
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "PPPPPPPPPPPPpppppppppppppinnnnnnnnnnnnnngggg!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                   "!!!!!!!!!!!!");
     return PING_MAGIC;
   }
 

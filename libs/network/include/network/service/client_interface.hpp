@@ -71,7 +71,7 @@ public:
 
     params << SERVICE_FUNCTION_CALL << prom->id();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
                    function, " (call)", &promises_);
 
     AddPromise(prom);
@@ -80,19 +80,13 @@ public:
 
     if (!DeliverRequest(params.data()))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(),
                      " failed!");
+
       prom->Fail(serializers::SerializableException(
           error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Binning promise ", prom->id(),
-                     " due to inability to deliver request");
-
       RemovePromise(prom->id());
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Return promise ", prom->id(), " as CALL");
     }
 
     return prom;

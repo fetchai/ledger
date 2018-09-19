@@ -45,7 +45,7 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
 
   params << SERVICE_FUNCTION_CALL << prom->id();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
                  function, " (packed)", &promises_);
 
   AddPromise(prom);

@@ -430,12 +430,6 @@ public:
     auto now = Clock::now();
     GeneratePeerDeltas(create, remove);
 
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Lane Workcycle "
-                   "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane Workcycle remove ", remove.size());
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane Workcycle create ", create.size());
-
     auto ptr = lane_identity_.lock();
     if (!ptr)
     {
@@ -444,11 +438,9 @@ public:
 
     for (auto &uri : create)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: considering...", uri.uri());
       if ((currently_pinging.IsInFlight(uri)) || (currently_identifying.IsInFlight(uri)) ||
           (currently_laning.IsInFlight(uri)))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: inflight...", uri.uri());
         continue;
       }
 
@@ -456,19 +448,16 @@ public:
       {
         auto const &peer = uri.AsPeer();
 
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: adding...", uri.uri());
         try
         {
           shared_service_client_type conn =
               register_.CreateServiceClient<client_type>(manager_, peer.address(), peer.port());
-          FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: adding to pinger...", uri.uri(),
-                         " --------------------- ", lane_identity_protocol_);
+
           currently_pinging.Add(uri, PingingConnection(conn, lane_identity_protocol_));
-          FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: added...", uri.uri());
         }
-        catch (...)
+        catch (std::exception &ex)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: adding... ERK!");
+          FETCH_LOG_ERROR(LOGGING_NAME, "Error generated creating service client: ", ex.what());
         }
       }
       else
@@ -476,7 +465,7 @@ public:
         FETCH_LOG_ERROR(LOGGING_NAME, "Incorrect URI format");
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: pinging...");
+
     {
       currently_pinging.Resolve(now);
 
@@ -484,7 +473,7 @@ public:
       {
         Uri const &uri = failure.key;
 
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: pinging: Failed: ", uri.uri());
+        FETCH_LOG_WARN(LOGGING_NAME, "Ping failure on ", uri.uri());
 
         // get the underlying connection and close it
         auto conn = failure.promise.GetConn();
@@ -495,7 +484,6 @@ public:
       for (auto &success : currently_pinging.Get(ALL_AVAILABLE))
       {
         auto const &uri = success.key;
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: pinging: Success: ", uri.uri());
 
         auto conn = success.promised;
         currently_identifying.Add(
@@ -503,7 +491,6 @@ public:
       }
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: identifying...");
     {
       currently_identifying.Resolve(now);
 
@@ -511,7 +498,7 @@ public:
       {
         Uri const &uri = failure.key;
 
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: pinging: Failed: ", uri.uri());
+        FETCH_LOG_WARN(LOGGING_NAME, "Identification failure on ", uri.uri());
 
         // get the underlying connection and close it
         auto conn = failure.promise.GetConn();
@@ -533,7 +520,6 @@ public:
         currently_laning.Add(uri, LaningConnection(conn, lane_identity_protocol_));
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: laning...");
 
     {
       currently_laning.Resolve(now);
@@ -542,7 +528,7 @@ public:
       {
         Uri const &uri = failure.key;
 
-        FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: laning: Failed: ", uri.uri());
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane connection failure on ", uri.uri());
 
         // get the underlying connection and close it
         auto conn = failure.promise.GetConn();
@@ -558,16 +544,10 @@ public:
           auto const &uri  = success.key;
           auto const &conn = success.promised.first;
 
-          FETCH_LOG_WARN(LOGGING_NAME, "Workcycle: ESTABLISHED: ", uri.uri());
-
           peer_connections_[uri] = conn;
         }
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Lane Workcycle COMPLETED "
-                   "----------------------------------------------------------------");
-    return;
   }
 
   void UseThesePeers(UriSet uris)
@@ -738,26 +718,22 @@ public:
       // TODO(issue 11): Throw exception
       return nullptr;
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection LaneController::Connect:2 LANE NUMBER GOOD");
 
     {
       std::lock_guard<mutex_type> lock_(services_mutex_);
       services_[client->handle()] = client;
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection LaneController::Connect:2 LANE NUMBER .. details?");
 
     // Setting up details such that the rest of the lane what kind of
     // connection we are dealing with.
     auto details = register_.GetDetails(client->handle());
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection LaneController::Connect:2 doing details");
     details->is_outgoing = true;
     details->is_peer     = true;
     details->identity    = peer_identity;
 
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
-    FETCH_LOG_WARN(LOGGING_NAME, "Connection SUCCESS == ", identifier);
     return client;
   }
 
