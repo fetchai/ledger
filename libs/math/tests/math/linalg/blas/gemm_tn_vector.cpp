@@ -30,7 +30,7 @@ using namespace fetch::math::linalg;
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector1)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -69,7 +69,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector1)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector2)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -108,7 +108,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector2)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector3)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -147,7 +147,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector3)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector4)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -186,7 +186,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector4)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector5)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -225,7 +225,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector5)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector6)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C
@@ -264,7 +264,7 @@ TEST(blas_gemm_vectorised, blas_gemm_tn_vector6)
 TEST(blas_gemm_vectorised, blas_gemm_tn_vector7)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * T(_A) * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
   // Compuing _C =  _alpha * T(_A) * _B + _beta * _C

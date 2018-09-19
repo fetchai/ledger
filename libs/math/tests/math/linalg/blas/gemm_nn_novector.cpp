@@ -30,7 +30,9 @@ using namespace fetch::math::linalg;
 TEST(blas_DGEMM, blas_gemm_nn_novector1)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double,
+       Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -70,7 +72,7 @@ TEST(blas_DGEMM, blas_gemm_nn_novector1)
 TEST(blas_DGEMM, blas_gemm_nn_novector2)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -110,7 +112,7 @@ TEST(blas_DGEMM, blas_gemm_nn_novector2)
 TEST(blas_DGEMM, blas_gemm_nn_novector3)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -150,7 +152,7 @@ TEST(blas_DGEMM, blas_gemm_nn_novector3)
 TEST(blas_DGEMM, blas_gemm_nn_novector4)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -190,7 +192,7 @@ TEST(blas_DGEMM, blas_gemm_nn_novector4)
 TEST(blas_DGEMM, blas_gemm_nn_novector5)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -232,7 +234,7 @@ TEST(blas_DGEMM, blas_gemm_nn_novector5)
 TEST(blas_DGEMM, blas_gemm_nn_novector6)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
@@ -278,8 +280,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector6)
 TEST(blas_DGEMM, blas_gemm_nn_novector7)
 {
 
-  Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
-       Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
+  Blas<double,
+  Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+  Signature(_C <= _alpha, _A, _B, _beta, _C),
+  Computes(_C = _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
   // Compuing _C = _alpha * _A * _B + _beta * _C
   using type = double;

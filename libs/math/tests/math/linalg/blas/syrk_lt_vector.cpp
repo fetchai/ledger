@@ -30,7 +30,7 @@ using namespace fetch::math::linalg;
 TEST(blas_A_withA_vectorised, blas_syrk_lt_vector1)
 {
 
-  Blas<double, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_lt_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -72,7 +72,7 @@ TEST(blas_A_withA_vectorised, blas_syrk_lt_vector1)
 TEST(blas_A_withA_vectorised, blas_syrk_lt_vector2)
 {
 
-  Blas<double, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_lt_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C
@@ -114,7 +114,7 @@ TEST(blas_A_withA_vectorised, blas_syrk_lt_vector2)
 TEST(blas_A_withA_vectorised, blas_syrk_lt_vector3)
 {
 
-  Blas<double, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
+  Blas<double, Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
        Computes(_C = _alpha * T(_A) * _A + _beta * _C), platform::Parallelisation::VECTORISE>
       syrk_lt_vector;
   // Compuing _C = _alpha * T(_A) * _A + _beta * _C

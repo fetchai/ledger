@@ -24,13 +24,13 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S>
-void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+template <typename S, typename MATRIX>
+void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
           Computes(_C = _alpha * T(_A) * _A + _beta * _C),
           platform::Parallelisation::NOT_PARALLEL>::operator()(type const &        alpha,
-                                                               Matrix<type> const &a,
+                                                               MATRIX const &a,
                                                                type const &        beta,
-                                                               Matrix<type> &      c) const
+                                                               MATRIX &      c) const
 {
   std::size_t i;
   std::size_t j;
@@ -90,11 +90,15 @@ void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
   return;
 }
 
-template class Blas<double, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+template class Blas<double,
+                    Matrix<double, fetch::memory::SharedArray<double>, fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
                     Computes(_C = _alpha * T(_A) * _A + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<float, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+template class Blas<float,
+                    Matrix<float, fetch::memory::SharedArray<float>, fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+                    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
                     Computes(_C = _alpha * T(_A) * _A + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 

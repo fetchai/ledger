@@ -32,10 +32,10 @@ class ShapeLessArray;
 template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT, bool PAD_WIDTH>
 class RectangularArray;
 
+namespace linalg {
+
 template <typename T, typename C, typename SUPER_TYPE>
 class Matrix;
-
-namespace linalg {
 
 template <typename T, typename MATRIX, uint64_t S, uint64_t I,
           uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
