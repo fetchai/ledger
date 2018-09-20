@@ -65,6 +65,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
   std::size_t           line = 0;
   byte_array::ByteArray key, value, start_line;
 
+  // loop through the header contents character by character
   for (std::size_t i = 0; i < end; ++i)
   {
     char c = *cit;
@@ -72,6 +73,8 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
 
     header_data_[i] = uint8_t(c);
 
+    // find either the header seperator ':' (in the case of KEY: VALUE header) to the new line
+    // which indicated the value is complete
     switch (c)
     {
     case ':':
@@ -79,6 +82,8 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
       {
         split_val_at = split_key_at = i;
         ++split_val_at;
+
+        // consume trailing whitespace
         while ((i + 1 < end) && (*cit) == ' ')
         {
           ++split_val_at;
@@ -96,8 +101,10 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
       {
         if (line > 0)
         {
+          // extract the key
           key = header_data_.SubArray(last_pos, split_key_at - last_pos);
 
+          // convert to lowercase
           for (std::size_t t = 0; t < key.size(); ++t)
           {
             char &cc = reinterpret_cast<char &>(key[t]);
@@ -108,13 +115,17 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
           }
 
           ++split_key_at;
+
+          // extract the value
           value = header_data_.SubArray(split_val_at, i - split_val_at);
 
+          // special case: content-length extract and cache the value
           if (key == "content-length")
           {
             content_length_ = uint64_t(value.AsInt());
           }
 
+          // update header map
           header_.Add(key, value);
         }
         else
@@ -129,6 +140,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
     }
   }
 
+  // since the start line if different this must be parse differently
   ParseStartLine(start_line);
 
   return true;

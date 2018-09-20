@@ -42,16 +42,6 @@ int main(int argc, char **argv)
   // create the client
   fetch::http::JsonHttpClient client(host, port);
 
-  // construct the request
-  //  fetch::script::Variant request;
-  //  request.MakeObject();
-  //  request["public_key"] = "foobar";
-  //  request["host"] = "127.0.0.1";
-  //  request["port"] = 8080;
-  //  request["network"] = 16;
-  //  request["client_name"] = "json-client-example";
-  //  request["client_version"] = "v0.0.1";
-
   fetch::script::Variant response;
   if (client.Get("/?format=json", response))
   {

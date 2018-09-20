@@ -25,6 +25,11 @@
 namespace fetch {
 namespace http {
 
+/**
+ * The JsonHttpClient is an adapter around the normal HttpClient. It is used when interacting
+ * with Json based APIs. Requests and response objects are converted from and to json before/after
+ * the underlying HTTP calls
+ */
 class JsonHttpClient
 {
 public:

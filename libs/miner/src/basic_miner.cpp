@@ -103,7 +103,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 
   FETCH_LOCK(main_queue_lock_);
 
-  // add the entire contents of the
+  // add the entire contents of the pending queue into the main queue
   {
     FETCH_LOCK(pending_lock_);
     main_queue_.splice(main_queue_.end(), pending_);

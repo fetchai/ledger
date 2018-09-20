@@ -78,44 +78,6 @@ public:
     std::memcpy(data_.pointer(), data, size);
   }
 
-  std::string Printable() const
-  {
-    std::string r;
-    for (size_t i = 0; i < length_; i++)
-    {
-      if ((i) != 0)
-      {
-        r += ",";
-      }
-      if ((i & 0x1F) == 0)
-      {
-        r += "  ";
-      }
-      auto c = data_[i + start_];
-      r += "0123456789abcdef"[c >> 4];
-      r += "0123456789abcdef"[c & 0xf];
-    }
-
-    r += "  \"";
-
-    for (size_t i = 0; i < length_; i++)
-    {
-      auto c = data_[i + start_];
-      if (::isprint(c))
-      {
-        r += std::string(1, char(c));
-      }
-      else
-      {
-        r += ".";
-      }
-    }
-
-    r += "\"";
-
-    return r;
-  }
-
   ConstByteArray(std::initializer_list<container_type> l)
   {
     Resize(l.size());

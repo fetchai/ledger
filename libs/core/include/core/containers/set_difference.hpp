@@ -35,23 +35,4 @@ std::unordered_set<K> operator-(std::unordered_set<K> const &lhs, std::unordered
   return result;
 }
 
-// template <typename K, typename V>
-// std::unordered_map<K, V> operator-(std::unordered_map<K, V> const &lhs, std::unordered_set<K>
-// const &rhs)
-//{
-//  std::unordered_map<K, V> result;
-//
-//  std::copy_if(
-//    lhs.begin(),
-//    lhs.end(),
-//    std::inserter(result),
-//    [&rhs] (auto const &item)
-//    {
-//      return rhs.find(item.first) == rhs.end();
-//    }
-//  );
-//
-//  return result;
-//}
-
 }  // namespace fetch

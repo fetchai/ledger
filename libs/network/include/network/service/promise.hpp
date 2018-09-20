@@ -165,11 +165,6 @@ public:
     UpdateState(State::SUCCESS);
   }
 
-  std::string Schmoo() const
-  {
-    return value_.Printable();
-  }
-
   void Fail(SerializableException const &exception)
   {
     LOG_STACK_TRACE_POINT;

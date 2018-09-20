@@ -58,7 +58,7 @@ public:
     // add the block to the chain data structure
     chain_.AddBlock(block);
 
-    // TODO(EJF): This logic is somewhat flawed, this means that the execution manager does not fire
+    // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager does not fire
     // all of the time.
     auto heaviestHash = chain_.HeaviestBlock().hash();
 

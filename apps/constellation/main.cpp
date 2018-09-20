@@ -53,6 +53,7 @@ using ProverPtr    = std::unique_ptr<Prover>;
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
 
+// REVIEW: Move to platform
 uint32_t Log2(uint32_t value)
 {
   static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;

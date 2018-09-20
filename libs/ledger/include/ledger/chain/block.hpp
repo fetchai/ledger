@@ -110,14 +110,17 @@ public:
   {
     return body_;
   }
+
   body_type &body()
   {
     return body_;
   }
+
   digest_type const &hash() const
   {
     return body_.hash;
   }
+
   digest_type const &prev() const
   {
     return body_.previous_hash;
@@ -127,6 +130,7 @@ public:
   {
     return proof_;
   }
+
   proof_type &proof()
   {
     return proof_;
@@ -136,30 +140,21 @@ public:
   {
     return weight_;
   }
+
   uint64_t &totalWeight()
   {
     return total_weight_;
   }
+
   uint64_t const &totalWeight() const
   {
     return total_weight_;
   }
+
   bool &loose()
   {
     return is_loose_;
   }
-
-#if 1  // TODO(issue 33): Move to py swarm?
-  std::string hashString() const
-  {
-    return std::string(ToBase64(body_.hash));
-  }
-
-  std::string prevString() const
-  {
-    return std::string(ToBase64(body_.previous_hash));
-  }
-#endif
 
 private:
   body_type  body_;

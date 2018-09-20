@@ -178,7 +178,7 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
     return true;
   }
 
-  // pointers which point to be begining and end characters of the
+  // pointers which point to be beginning and end characters of key and value elements in the line
   char const *key_start   = begin;
   char const *key_end     = nullptr;
   char const *value_start = nullptr;
