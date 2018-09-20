@@ -177,6 +177,8 @@ public:
    **/
   Matrix &Dot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
+    this->Resize(A.height(), B.width());
+
     Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
          Computes(_C = _alpha * _A * _B + _beta * _C),
          platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
@@ -195,6 +197,8 @@ public:
    */
   Matrix &DotTranspose(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
+    this->Resize(A.height(), B.height());
+
     Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
          Computes(_C = _alpha * _A * fetch::math::linalg::T(_B) + _beta * _C),
          platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
@@ -213,6 +217,8 @@ public:
    */
   Matrix &TransposeDot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
+    this->Resize(A.width(), B.width());
+
     Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
          Computes(_C = _alpha * fetch::math::linalg::T(_A) * _B + _beta * _C),
          platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>

@@ -197,7 +197,6 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              {
                throw pybind11::index_error("matrix size mismatch");
              }
-             a.Resize(b.height(), c.height());
              return a.DotTranspose(b, c);
            })
       .def("TransposeDot",
@@ -206,8 +205,6 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              {
                throw pybind11::index_error("matrix size mismatch");
              }
-
-             a.Resize(b.width(), c.width());
 
              return a.TransposeDot(b, c);
            })
