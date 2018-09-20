@@ -30,7 +30,11 @@ using namespace fetch::math::linalg;
 TEST(blas_gemv, blas_gemv_t_vector1)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y
@@ -65,7 +69,11 @@ TEST(blas_gemv, blas_gemv_t_vector1)
 TEST(blas_gemv, blas_gemv_t_vector2)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y
@@ -100,7 +108,11 @@ TEST(blas_gemv, blas_gemv_t_vector2)
 TEST(blas_gemv, blas_gemv_t_vector3)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y
@@ -137,7 +149,11 @@ TEST(blas_gemv, blas_gemv_t_vector3)
 TEST(blas_gemv, blas_gemv_t_vector4)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y
@@ -174,7 +190,11 @@ TEST(blas_gemv, blas_gemv_t_vector4)
 TEST(blas_gemv, blas_gemv_t_vector5)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y
@@ -211,7 +231,11 @@ TEST(blas_gemv, blas_gemv_t_vector5)
 TEST(blas_gemv, blas_gemv_t_vector6)
 {
 
-  Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+  Blas<double,
+       Matrix<
+           double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+       Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y = _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::VECTORISE>
       gemv_t_vector;
   // Compuing _y = _alpha * T(_A) * _x + _beta * _y

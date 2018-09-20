@@ -17,13 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace math {
+
+template <typename SHARED_TYPE, std::size_t type_size>
+class SharedArray;
+
+template <typename SHAPELESS_TYPE, typename SHAPELESS_CONTAINER>
+class ShapeLessArray;
+
+template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT,
+          bool PAD_WIDTH>
+class RectangularArray;
+
 namespace linalg {
 
-template <typename T, uint64_t S, uint64_t I,
+template <typename T, typename C, typename SUPER_TYPE>
+class Matrix;
+
+template <typename T, typename MATRIX, uint64_t S, uint64_t I,
           uint64_t V = platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
 class Blas
 {

@@ -34,7 +34,7 @@ struct ArgumentsToList<T, Args...>
 
   static void AppendTo(std::vector<std::type_index> &list)
   {
-    list.push_back(std::type_index(typeid(std::declval<T>())));
+    list.push_back(std::type_index(typeid(T)));
     ArgumentsToList<Args...>::AppendTo(list);
   }
 };
@@ -45,7 +45,7 @@ struct ArgumentsToList<T>
 
   static void AppendTo(std::vector<std::type_index> &list)
   {
-    list.push_back(std::type_index(typeid(std::declval<T>())));
+    list.push_back(std::type_index(typeid(T)));
   }
 };
 
