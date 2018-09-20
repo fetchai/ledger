@@ -23,7 +23,7 @@
 namespace fetch {
 namespace p2p {
 
-class P2PService2;
+class P2PService;
 
 /**
  * Protocol for the P2P address resolution protocol
@@ -39,7 +39,7 @@ public:
     GET_NODE_URI          = 4
   };
 
-  explicit ResolverProtocol(Resolver &resolver, P2PService2 &p2p_service);
+  explicit ResolverProtocol(Resolver &resolver, P2PService &p2p_service);
 };
 
 }  // namespace p2p

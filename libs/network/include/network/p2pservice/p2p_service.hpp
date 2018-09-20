@@ -43,7 +43,7 @@ class LaneRemoteControl;
 }
 namespace p2p {
 
-class P2PService2
+class P2PService
 {
 public:
   using NetworkManager       = network::NetworkManager;
@@ -71,11 +71,11 @@ public:
   using AddressSet           = std::unordered_set<Address>;
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
 
-  static constexpr char const *LOGGING_NAME = "P2PService2";
+  static constexpr char const *LOGGING_NAME = "P2PService";
 
   // Construction / Destruction
-  P2PService2(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
-  ~P2PService2() = default;
+  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
+  ~P2PService() = default;
 
   void Start(UriList const &initial_peer_list, Uri const &my_uri);
   void Stop();

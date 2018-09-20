@@ -28,7 +28,7 @@
 #include "ledger/transaction_processor.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
-#include "network/p2pservice/p2p_service2.hpp"
+#include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
 
 #include <algorithm>
@@ -52,7 +52,7 @@ namespace fetch {
 class Constellation
 {
 public:
-  using Peer2PeerService = p2p::P2PService2;
+  using Peer2PeerService = p2p::P2PService;
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
 

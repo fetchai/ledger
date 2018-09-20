@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_service2.hpp"
+#include "network/p2pservice/p2p_service.hpp"
 #include "core/containers/set_difference.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
@@ -28,7 +28,7 @@
 namespace fetch {
 namespace p2p {
 
-P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust)
+P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -44,7 +44,7 @@ P2PService2::P2PService2(Muddle &muddle, LaneManagement &lane_management, TrustI
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
 }
 
-void P2PService2::Start(UriList const &initial_peer_list, P2PService2::Uri const &my_uri)
+void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &my_uri)
 {
   resolver_.Setup(address_, my_uri);
 
@@ -65,13 +65,13 @@ void P2PService2::Start(UriList const &initial_peer_list, P2PService2::Uri const
   my_uri_ = my_uri;
 }
 
-void P2PService2::Stop()
+void P2PService::Stop()
 {
   thread_pool_->clear();
   thread_pool_->Stop();
 }
 
-void P2PService2::WorkCycle()
+void P2PService::WorkCycle()
 {
   // get the summary of all the current connections
   ConnectionMap active_connections;
@@ -100,7 +100,7 @@ void P2PService2::WorkCycle()
   ++work_cycle_count_;
 }
 
-void P2PService2::GetConnectionStatus(ConnectionMap &active_connections,
+void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                       AddressSet &   active_addresses)
 {
   // get a summary of addresses and associated URIs
@@ -113,7 +113,7 @@ void P2PService2::GetConnectionStatus(ConnectionMap &active_connections,
                  [](auto const &e) { return e.first; });
 }
 
-void P2PService2::UpdateTrustStatus(ConnectionMap const &active_connections)
+void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 {
   for (auto const &element : active_connections)
   {
@@ -149,7 +149,7 @@ void P2PService2::UpdateTrustStatus(ConnectionMap const &active_connections)
   }
 }
 
-void P2PService2::PeerDiscovery(AddressSet const &active_addresses)
+void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 {
   static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
   static constexpr std::size_t MAX_PEERS_PER_CYCLE   = 20;
@@ -198,7 +198,7 @@ void P2PService2::PeerDiscovery(AddressSet const &active_addresses)
   }
 }
 
-void P2PService2::RenewDesiredPeers(AddressSet const &active_addresses)
+void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
   static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
 
@@ -209,7 +209,7 @@ void P2PService2::RenewDesiredPeers(AddressSet const &active_addresses)
   }
 }
 
-void P2PService2::UpdateMuddlePeers(AddressSet const &active_addresses)
+void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
 {
   static constexpr std::size_t MAX_RESOLUTIONS_PER_CYCLE = 20;
 
@@ -269,7 +269,7 @@ void P2PService2::UpdateMuddlePeers(AddressSet const &active_addresses)
   }
 }
 
-void P2PService2::UpdateManifests(AddressSet const &active_addresses)
+void P2PService::UpdateManifests(AddressSet const &active_addresses)
 {
   // determine which of the nodes that we are talking too, require an update. This might be
   // because we haven't seen this address before or the information is stale. In either case we need
@@ -321,7 +321,7 @@ void P2PService2::UpdateManifests(AddressSet const &active_addresses)
   }
 }
 
-void P2PService2::DistributeUpdatedManifest(Address const &address)
+void P2PService::DistributeUpdatedManifest(Address const &address)
 {
   Manifest manifest;
 
@@ -333,35 +333,35 @@ void P2PService2::DistributeUpdatedManifest(Address const &address)
   }
 }
 
-void P2PService2::Refresh()
+void P2PService::Refresh()
 {
   local_services_.Refresh();
 }
 
-network::Manifest P2PService2::GetLocalManifest()
+network::Manifest P2PService::GetLocalManifest()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService2::GetLocalManifest", manifest_.ToString());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetLocalManifest", manifest_.ToString());
   return manifest_;
 }
 
-P2PService2::AddressSet P2PService2::GetRandomGoodPeers()
+P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService2::GetRandomGoodPeers...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...");
 
   AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService2::GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }
 
-void P2PService2::SetPeerGoals(uint32_t min, uint32_t max)
+void P2PService::SetPeerGoals(uint32_t min, uint32_t max)
 {
   min_peers_ = min;
   max_peers_ = max;
 }
 
-void P2PService2::SetLocalManifest(Manifest &&manifest)
+void P2PService::SetLocalManifest(Manifest &&manifest)
 {
   manifest_ = std::move(manifest);
   local_services_.MakeFromManifest(manifest_);
