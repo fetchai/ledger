@@ -79,7 +79,7 @@ def get_coverage_reports(targets : map):
         print(val)
 
         # Execute the binary target, this will generate a default.profraw
-        output = subprocess.call(val, cwd=build_directory, stdout=subprocess.PIPE)
+        subprocess.check_call(val, cwd=build_directory, stdout=subprocess.PIPE)
 
         raw_file_name        = key +".profraw"
         indexed_file_name    = key +".profdata"
@@ -99,13 +99,12 @@ def get_coverage_reports(targets : map):
             sys.exit(1)
 
         # Generate an indexed file target.profdata
-        output = subprocess.call(["llvm-profdata", "merge", "-sparse", raw_file_name, "-o", indexed_file_name],
+        subprocess.check_call(["llvm-profdata", "merge", "-sparse", raw_file_name, "-o", indexed_file_name],
             cwd=build_directory, stdout=subprocess.PIPE)
 
         # Generate the coverage in coverate/target_coverate
-        output = subprocess.call(["llvm-cov", "show", "-Xdemangler", "c++filt",
+        subprocess.check_call(["llvm-cov", "show", "-Xdemangler", "c++filt",
             val, "-instr-profile="+indexed_file_name, "-format=html", "-o", directory_name], cwd=build_directory, stdout=subprocess.PIPE)
-
 
 # Once coverage reports for other binaries have been created, this function just creates a report
 # for all binaries
