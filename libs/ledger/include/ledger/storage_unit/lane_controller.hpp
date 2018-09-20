@@ -73,21 +73,6 @@ public:
     Connect(host, port);
   }
 
-#if 0
-  void TryConnect(p2p::EntryPoint const &ep)
-  {
-    for (auto &h : ep.host)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane trying to connect to ", h, ":", ep.port);
-
-      if (Connect(h, ep.port))
-      {
-        break;
-      }
-    }
-  }
-#endif
-
   void RPCConnectToURIs(const std::vector<Uri> &uris)
   {
     for (auto const &uri : uris)

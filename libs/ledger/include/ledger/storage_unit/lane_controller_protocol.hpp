@@ -27,7 +27,6 @@ public:
   enum
   {
     CONNECT = 1,
-    //TRY_CONNECT,
     SHUTDOWN,
     START_SYNC,
     STOP_SYNC,
@@ -40,12 +39,9 @@ public:
   {
 
     this->Expose(CONNECT, ctrl, &LaneController::RPCConnect);
-//    this->Expose(TRY_CONNECT, ctrl, &LaneController::TryConnect);
-
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
     this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
     this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);
-
     this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);
   }
 };

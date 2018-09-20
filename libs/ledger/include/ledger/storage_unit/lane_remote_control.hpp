@@ -70,20 +70,6 @@ public:
     }
   }
 
-#if 0
-  void TryConnect(LaneIndex lane, p2p::EntryPoint const &ep)
-  {
-    auto ptr = LookupLane(lane);
-    if (ptr)
-    {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::TRY_CONNECT, ep);
-
-      FETCH_LOG_PROMISE();
-      p->Wait();
-    }
-  }
-#endif
-
   void Shutdown(LaneIndex lane) override
   {
     auto ptr = LookupLane(lane);
