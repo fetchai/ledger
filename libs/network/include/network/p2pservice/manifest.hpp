@@ -57,8 +57,8 @@ public:
           {
             auto r = ParseLine(s);
 
-            // TODO(EJF): URI
-            // temp[{std::get<0>(r), std::get<1>(r)}] = std::get<2>(r);
+            ServiceIdentifier id{std::get<0>(r), std::get<1>(r)};
+            temp[id] = Uri{std::get<2>(r)};
           }
           catch (std::exception &ex)
           {
@@ -93,7 +93,6 @@ public:
     auto res = data_.find(service_id);
     if (res != data_.end())
     {
-      // TODO(EJF): URI
       uri = res->second;
     }
 
