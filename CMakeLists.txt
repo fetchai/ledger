@@ -15,6 +15,7 @@ option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"         ON)
 option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output"       OFF)
 option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
+option(FETCH_ENABLE_COVERAGE        "Enable coverage generation"  OFF)
 option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
 
 # custom string options
