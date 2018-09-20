@@ -95,7 +95,7 @@ protected:
       ident        = promise.id();
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_,
-                     "@prom=", promise.id(), " response size=", data.size());
+                      "@prom=", promise.id(), " response size=", data.size());
 
       // establish the correct course of action when
       WeakHandler handler = handler_;
@@ -104,7 +104,7 @@ protected:
             LOG_STACK_TRACE_POINT;
 
             FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
-                           "@prom=", promise.id());
+                            "@prom=", promise.id());
             auto callback = handler.lock();
             if (callback)
             {
@@ -130,7 +130,7 @@ protected:
     catch (std::exception &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
-                     e.what());
+                      e.what());
       throw e;
     }
   }
