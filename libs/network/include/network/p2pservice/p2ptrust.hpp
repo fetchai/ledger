@@ -178,11 +178,6 @@ public:
       }
     }
 
-    // TODO(EJF): Shuffle sort of implemented by way that elements will be ordered via hash of
-    // identity
-    // std::shuffle(result.begin(), result.end(), g);
-    // result.resize(std::min(maximum_count, result.size()));
-
     return result;
   }
 

@@ -148,6 +148,9 @@ public:
   class PingingConnection : public network::ResolvableTo<PingedPeer>
   {
   public:
+
+    static constexpr char const *LOGGING_NAME = "PingingConnection";
+
     using Timepoint = network::ResolvableTo<PingedPeer>::Timepoint;
 
     PingingConnection(shared_service_client_type conn, protocol_handler_type lane_identity_protocol)
@@ -181,20 +184,20 @@ public:
     State StartConnectionAttempt(const Timepoint &now)
     {
       attempts_++;
-      FETCH_LOG_WARN("PingingConnection", "Workcycle:StartConnectionAttempt ", attempts_);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:StartConnectionAttempt ", attempts_);
       auto p = conn_->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
       prom_.Adopt(p);
       timeout_.SetMilliseconds(now, 100);
-      FETCH_LOG_WARN("PingingConnection", "Workcycle:CreatedPromise.. ", prom_.id());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:CreatedPromise.. ", prom_.id());
       return State::WAITING;
     }
 
     virtual State GetState(Timepoint const &now) override
     {
-      FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState ");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState ");
       if (prom_.empty())
       {
-        FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState EMPTY");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState EMPTY");
         return StartConnectionAttempt(now);
       }
 
@@ -202,34 +205,34 @@ public:
       {
       case State::TIMEDOUT:  // should never see this.
       case State::WAITING:
-        FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState == WAIT/TIME");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState == WAIT/TIME");
         if (timeout_.IsDue(now))
         {
           if (attempts_ >= 10)
           {
-            FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState SET FAIL TIMEOUT");
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SET FAIL TIMEOUT");
             return State::TIMEDOUT;
           }
-          FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState TRYAGAIN");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState TRYAGAIN");
           return StartConnectionAttempt(now);
         }
-        FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState WAITMORE");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState WAITMORE");
         return State::WAITING;
 
       case State::FAILED:
-        FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState FAILED");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState FAILED");
         return State::FAILED;
 
       case State::SUCCESS:
-        FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState SUCCESS");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SUCCESS");
         if (prom_.Get() == LaneIdentity::PING_MAGIC)
         {
-          FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState MAGIC");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState MAGIC");
           return State::SUCCESS;
         }
         else
         {
-          FETCH_LOG_WARN("PingingConnection", "Workcycle:GetState NOMAGIC");
+          FETCH_LOG_WARN(LOGGING_NAME, "Ping failed with wrong magic identifier");
           return State::FAILED;
         }
       }
@@ -546,14 +549,11 @@ public:
   {
     {
       std::lock_guard<mutex_type> lock_(services_mutex_);
-      auto                        ident = lane_identity_.lock();
+
+      auto ident = lane_identity_.lock();
       if (!ident)
       {
         return;
-      }
-      for (auto &uri : desired_connections_)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, ident->GetLaneNumber(), " -- UseThesePeers: ", uri.uri());
       }
 
       for (auto &peer_conn : peer_connections_)

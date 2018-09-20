@@ -43,7 +43,7 @@ public:
   }
 
 private:
-  // TODO(EJF): Not really sure why I can't just call this function directly (default argument?)
+
   std::vector<Block> GetHeaviestChain(uint32_t const &maxsize)
   {
     LOG_STACK_TRACE_POINT;

@@ -63,25 +63,10 @@ public:
 
   ~TCPClientImplementation()
   {
-    // TODO(EJF): In develop destructing_ = true; was being set here
-#if 1
     if (!Closed() && !posted_close_)
     {
       Close();
     }
-#else
-    auto socket = socket_.lock();
-    if (socket)
-    {
-      std::error_code ec;
-      socket->close(ec);
-
-      if (ec)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Error closing socket: ", ec.message());
-      }
-    }
-#endif
   }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
@@ -317,7 +302,6 @@ private:
 
       bool const previously_connected = connected_.exchange(true);
 
-      // TODO(EJF): Sort of a weird place for this but you know...
       if (!previously_connected)
       {
         SignalConnectionSuccess();

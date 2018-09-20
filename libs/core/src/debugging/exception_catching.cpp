@@ -20,9 +20,6 @@
 
 #include "core/logger.hpp"
 
-// TODO(EJF): ???
-static constexpr char const *LOGGING_NAME = "???";
-
 namespace fetch {
 namespace debugging {
 
@@ -34,7 +31,7 @@ void withExceptionCatching(const char *fn, unsigned int ln, std::function<void(v
   }
   catch (std::exception &ex)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "While at ", fn, ":", ln, " - ", ex.what());
+    FETCH_LOG_ERROR("ExceptionCatch", "While at ", fn, ":", ln, " - ", ex.what());
     throw;
   }
 }

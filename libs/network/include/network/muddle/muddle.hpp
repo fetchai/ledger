@@ -46,7 +46,6 @@ namespace muddle {
 class MuddleRegister;
 class MuddleEndpoint;
 
-// TODO(EJF): Entanglement
 class Muddle
 {
 public:

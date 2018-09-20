@@ -324,7 +324,6 @@ private:
   thread_pool_type      thread_pool_;
   const uint64_t        PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
 
-  // TODO(EJF): Bring some sanity to this file
   mutex::Mutex    mutex_{__LINE__, __FILE__};
   ObjectStore<T> *store_;
 

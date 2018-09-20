@@ -235,8 +235,6 @@ private:
     {
       std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
 
-      // TODO(EJF): Not really sure what the "correct" thing should be to do in this wrap around
-      // case
       while (ret == 0)
       {
         ret = global_handle_counter_++;

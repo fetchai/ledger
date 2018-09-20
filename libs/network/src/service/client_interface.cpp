@@ -126,20 +126,6 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   }
 }
 
-// TODO(EJF) This isn't connected to anything. This might be why things are exploding.
-void ServiceClientInterface::ClearPromises()
-{
-#if 0
-  promises_mutex_.lock();
-  for (auto &p : promises_)
-  {
-    p.second->ConnectionFailed();
-  }
-  promises_.clear();
-  promises_mutex_.unlock();
-#endif
-}
-
 void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                                               service::serializer_type &   params)
 {

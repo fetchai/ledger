@@ -421,7 +421,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 {
   bool update_complete = false;
 
-  // TODO(EJF): At the moment these updates (and by extension the routing logic) works on a first
+  // At the moment these updates (and by extension the routing logic) works on a first
   // come first served basis. This is not reliable longer term and will need tweaking
 
   // sanity check
@@ -618,26 +618,21 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   {
     // attempt to route to one of our direct peers
     Handle handle = LookupHandle(packet->GetTargetRaw());
-#if 1
     if (handle)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       return;
     }
-#endif
 
-#if 1
+    // if direct routing fails then randomly select a handle. In future a better routing scheme
+    // should be implemented.
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
       SendToConnection(handle, packet);
     }
-#else
-    // TODO(EJF): Implement kad-routing
-    FETCH_LOG_WARN(LOGGING_NAME, "!!! Unable to route the packet currently");
-#endif
   }
 }
 
@@ -674,16 +669,12 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "==> Message routed to this node");
-
   dispatch_thread_pool_->Post([this, packet]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
     // determine if this was an exchange based node
     if (isPossibleExchangeResponse && dispatcher_.Dispatch(packet))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "==> Succesfully dispatched message to pending promise");
-
       // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
       return;
     }
@@ -692,12 +683,10 @@ void Router::DispatchPacket(PacketPtr packet)
     // of message subscriptions.
     if (registrar_.Dispatch(packet))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "==> Succesfully dispatched message to subscription");
       return;
     }
 
-    // TODO(EJF): Implement simple dispatch routines
-    FETCH_LOG_WARN(LOGGING_NAME, "Routed packet has no home, how sad");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message");
   });
 }
 

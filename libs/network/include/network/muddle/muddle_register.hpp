@@ -36,7 +36,6 @@ class Dispatcher;
 class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
-  // TODO(EJF): Apply globally
   using ConnectionHandle      = connection_handle_type;
   using ConnectionPtr         = std::weak_ptr<network::AbstractConnection>;
   using ConnectionMap         = std::unordered_map<ConnectionHandle, ConnectionPtr>;

@@ -73,7 +73,6 @@ public:
 
   std::string GetAddress(connection_handle_type const &client);
 
-  // TODO(EJF): delete me please
   template <typename X>
   void SetConnectionRegister(X &reg)
   {

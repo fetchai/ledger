@@ -195,13 +195,11 @@ public:
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Removed work");
     cv_.notify_all();
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(100));  // TODO(EJF): Is this needed since the next operation if
-                                          // to wait for the threads to complete?
-    // KLL -- I think so. I'm trying to get any remaining unstarted
-    // threads to start, so they can read their terminate flag and
-    // exit. If they're not started they're not joinable and will
-    // error.
+
+
+    // Allow a period of time for any pending thread to finish starting
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "Kill threads");
     for (auto &thread : threads_)
     {

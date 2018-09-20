@@ -106,7 +106,6 @@ public:
 protected:
   virtual bool DeliverRequest(network::message_type const &request) = 0;
 
-  void ClearPromises();
   bool ProcessServerMessage(network::message_type const &msg);
   void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);
 
