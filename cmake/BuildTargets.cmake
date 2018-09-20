@@ -229,32 +229,45 @@ function (generate_configuration_file)
 
   # execute git to determine the version
   execute_process(
-    COMMAND git describe --dirty=-wip
+    COMMAND git describe --dirty=-wip --always
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE version
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-  # cmake regex processing to extract all meaningful elements
-  string (REGEX REPLACE "v([0-9]+)\\..*" "\\1" FETCH_VERSION_MAJOR ${version})
-  string (REGEX REPLACE "v[0-9]+\\.([0-9]+)\\..*" "\\1" FETCH_VERSION_MINOR ${version})
-  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" FETCH_VERSION_PATCH ${version})
-  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g([0-9a-f]+).*" "\\1" FETCH_VERSION_COMMIT ${version})
-  string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[0-9a-f]+-(wip)" "\\1" FETCH_VERSION_VALID ${version})
+  # determine the format of the output from the above command
+  string(REGEX MATCHALL "^v.*" is_normal_version "${version}")
+  if (is_normal_version)
 
-  set (FETCH_VERSION_STR ${version})
+    # cmake regex processing to extract all meaningful elements
+    string (REGEX REPLACE "v([0-9]+)\\..*" "\\1" FETCH_VERSION_MAJOR "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.([0-9]+)\\..*" "\\1" FETCH_VERSION_MINOR "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" FETCH_VERSION_PATCH "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g([0-9a-f]+).*" "\\1" FETCH_VERSION_COMMIT "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[0-9a-f]+-(wip)" "\\1" FETCH_VERSION_VALID "${version}")
 
-  # handle the error conditions
-  if (${FETCH_VERSION_COMMIT} STREQUAL ${version})
-    set (FETCH_VERSION_COMMIT "")
-  endif ()
+    set (FETCH_VERSION_STR "${version}")
 
-  # correct the match
-  if (${FETCH_VERSION_VALID} STREQUAL "wip")
+    # handle the error conditions
+    if (${FETCH_VERSION_COMMIT} STREQUAL ${version})
+      set (FETCH_VERSION_COMMIT "")
+    endif ()
+
+    # correct the match
+    if (${FETCH_VERSION_VALID} STREQUAL "wip")
+      set (FETCH_VERSION_VALID "false")
+    else ()
+      set (FETCH_VERSION_VALID "true")
+    endif ()
+
+  else()
+    set (FETCH_VERSION_MAJOR 0)
+    set (FETCH_VERSION_MINOR 0)
+    set (FETCH_VERSION_PATCH 0)
+    set (FETCH_VERSION_COMMIT "${version}")
     set (FETCH_VERSION_VALID "false")
-  else ()
-    set (FETCH_VERSION_VALID "true")
-  endif ()
+    set (FETCH_VERSION_STR "Unknown version with hash: ${version}")
+  endif()
 
   # generate the version file
   configure_file(
