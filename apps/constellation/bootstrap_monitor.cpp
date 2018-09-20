@@ -18,6 +18,7 @@
 
 #include "bootstrap_monitor.hpp"
 #include "core/script/variant.hpp"
+#include "fetch_version.hpp"
 
 #include <chrono>
 #include <sstream>
@@ -176,7 +177,7 @@ bool BootstrapMonitor::RegisterNode()
   request["host"]           = external_address_;
   request["port"]           = port_ + fetch::Constellation::P2P_PORT_OFFSET;
   request["client_name"]    = "constellation";
-  request["client_version"] = "v0.0.1";
+  request["client_version"] = fetch::version::FULL;
 
   Variant        response;
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
