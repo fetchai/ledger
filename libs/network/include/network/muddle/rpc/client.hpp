@@ -90,13 +90,11 @@ protected:
 
     try
     {
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Sending this packet to the server  ", service_, ",", channel_);
       // signal to the networking that an exchange is requested
       auto promise = endpoint_.Exchange(address_, service_, channel_, data);
       ident        = promise.id();
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_,
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_,
                      "@prom=", promise.id(), " response size=", data.size());
 
       // establish the correct course of action when
@@ -105,7 +103,7 @@ protected:
           .Then([handler, promise]() {
             LOG_STACK_TRACE_POINT;
 
-            FETCH_LOG_INFO(LOGGING_NAME, "Got the response to our question...",
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
                            "@prom=", promise.id());
             auto callback = handler.lock();
             if (callback)
@@ -131,7 +129,7 @@ protected:
     }
     catch (std::exception &e)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
+      FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
                      e.what());
       throw e;
     }
