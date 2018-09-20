@@ -29,7 +29,7 @@ class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
   using event_set_object_type = std::function<void(T const &)>;
-  using self_type = ObjectStoreProtocol<T>;
+  using self_type             = ObjectStoreProtocol<T>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 

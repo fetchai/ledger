@@ -35,7 +35,6 @@ template <typename R, typename T, typename S = T>
 class ObjectStoreSyncronisationProtocol : public fetch::service::Protocol
 {
 public:
-
   enum
   {
     OBJECT_COUNT  = 1,

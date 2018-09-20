@@ -101,7 +101,7 @@ void P2PService::WorkCycle()
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
-                                      AddressSet &   active_addresses)
+                                     AddressSet &   active_addresses)
 {
   // get a summary of addresses and associated URIs
   active_connections = muddle_.GetConnections();
