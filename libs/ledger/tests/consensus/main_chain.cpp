@@ -298,10 +298,10 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray prevHash       = block.hash();
+      fetch::byte_array::ByteArray prevHash = block.hash();
 
-      std::vector<block_type>      blocks(NUM_BLOCKS, block);
-      uint64_t                     blockNumber = block.body().block_number++;
+      std::vector<block_type> blocks(NUM_BLOCKS, block);
+      uint64_t                blockNumber = block.body().block_number++;
 
       {
         auto t1 = TimePoint();
@@ -335,8 +335,7 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1)
-                << std::endl;
+      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };
@@ -348,7 +347,7 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray              prevHash       = block.hash();
+      fetch::byte_array::ByteArray              prevHash = block.hash();
       std::vector<block_type>                   blocks(NUM_BLOCKS, block);
       std::map<std::size_t, std::size_t>        randomIndexes;
       uint64_t                                  blockNumber = block.body().block_number++;
@@ -387,8 +386,7 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1)
-                << std::endl;
+      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
       // Last block in vector still heaviest block for main chain
       EXPECT(mainChain.HeaviestBlock().totalWeight() == NUM_BLOCKS + 1);
@@ -402,7 +400,7 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray prevHash       = block.hash();
+      fetch::byte_array::ByteArray prevHash = block.hash();
       std::vector<block_type>      blocks(NUM_BLOCKS, block);
       uint64_t                     blockNumber = block.body().block_number++;
 
@@ -438,8 +436,7 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1)
-                << std::endl;
+      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
       EXPECT(mainChain.HeaviestBlock().hash() == prevHash);
     };
@@ -451,7 +448,7 @@ int main(int argc, char const **argv)
 
       auto block = mainChain.HeaviestBlock();
 
-      fetch::byte_array::ByteArray              prevHash       = block.hash();
+      fetch::byte_array::ByteArray              prevHash = block.hash();
       std::vector<block_type>                   blocks(NUM_BLOCKS, block);
       std::map<std::size_t, std::size_t>        randomIndexes;
       uint64_t                                  blockNumber = block.body().block_number++;
@@ -491,8 +488,7 @@ int main(int argc, char const **argv)
       }
 
       auto t2 = TimePoint();
-      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1)
-                << std::endl;
+      std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
       // Last block in vector still heaviest block for main chain
       EXPECT(mainChain.HeaviestBlock().totalWeight() == NUM_BLOCKS + 1);

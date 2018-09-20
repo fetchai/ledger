@@ -131,7 +131,8 @@ public:
       if (it_prev == block_chain_.end())
       {
         // Note: think about rolling back into FS
-        FETCH_LOG_INFO(LOGGING_NAME, "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
 
         // We can't find the prev, this is probably a loose block.
         lock.unlock();
