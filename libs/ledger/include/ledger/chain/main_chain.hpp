@@ -131,7 +131,8 @@ public:
       if (it_prev == block_chain_.end())
       {
         // Note: think about rolling back into FS
-        FETCH_LOG_INFO(LOGGING_NAME, "Block prev not found");
+        FETCH_LOG_INFO(LOGGING_NAME, "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
+
         // We can't find the prev, this is probably a loose block.
         lock.unlock();
         return CheckDiskForBlock(block);
@@ -149,7 +150,10 @@ public:
     }
     else
     {
-      prev_block = block_chain_[block.body().previous_hash];
+      auto it = block_chain_.find(block.body().previous_hash);
+      assert(it != block_chain_.end());
+
+      prev_block = it->second;
     }
 
     // At this point we have a new block with a prev that's known and not loose. Update tips
