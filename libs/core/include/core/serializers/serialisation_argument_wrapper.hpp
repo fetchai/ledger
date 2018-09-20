@@ -17,25 +17,66 @@
 //
 //------------------------------------------------------------------------------
 
-#include <functional>
+#include <utility>
 
 namespace fetch {
 namespace serializers {
 
-template<typename T>
-class LazyEvalArgument : public std::reference_wrapper<T const>
+
+class ILazyEvalArgument
 {
+  template<typename ...ARGS>
+  void operator ()(ARGS ...args) const;
+};
+
+
+template<typename T>
+class LazyEvalArgument {
+  T val_;
+
 public:
-  using base_type = std::reference_wrapper<T const>;
-  using base_type::base_type;
-  using base_type::operator=;
-  using base_type::operator();
+  LazyEvalArgument(T val) : val_{std::move(val)} {};
+
+  LazyEvalArgument(LazyEvalArgument const&) = default;
+  LazyEvalArgument(LazyEvalArgument &&) = default;
+
+  LazyEvalArgument &operator=(LazyEvalArgument const &) = default;
+  LazyEvalArgument &operator=(LazyEvalArgument &&) = default;
+
+  template<typename ...ARGS>
+  auto operator ()(ARGS ...args) const
+  {
+    auto const& val = val_;
+    return val(args...);
+  }
+
+  template<typename ...ARGS>
+  auto operator ()(ARGS ...args)
+  {
+    return val_(args...);
+  }
+
+  operator T const& () const
+  {
+    return val_;
+  }
+
+  operator T& ()
+  {
+    return val_;
+  }
 };
 
 template<typename T>
-LazyEvalArgument<T> LazyEvalArgumentFactory(T const& lamda)
+auto LazyEvalArgumentFactory(T const& lamda)
 {
   return LazyEvalArgument<T>{lamda};
+}
+
+template<typename T>
+auto LazyEvalArgumentFactory(T&& lamda)
+{
+  return LazyEvalArgument<T>{std::move(lamda)};
 }
 
 template<typename STREAM, typename T>

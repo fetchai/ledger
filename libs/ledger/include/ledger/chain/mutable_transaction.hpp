@@ -25,7 +25,8 @@
 #include "core/serializers/serialisation_argument_wrapper.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "crypto/ecdsa_signature.hpp"
+//#include "crypto/ecdsa_signature.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/identifier.hpp"
 
 #include <set>
@@ -105,12 +106,28 @@ void Deserialize(T &serializer, TransactionSummary &b)
 class MutableTransaction;
 
 using MutableTransactionRef = std::reference_wrapper<MutableTransaction>;
+
 class TxDataForSigningC : public MutableTransactionRef
 {
 public:
   using MutableTransactionRef::MutableTransactionRef;
   using MutableTransactionRef::operator=;
   using MutableTransactionRef::operator();
+
+  static auto CreateLazyArgToQueryTxDataSize(std::size_t &tx_data_size)
+  {
+    return serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
+      tx_data_size = stream.size();
+    });
+  }
+
+  static auto CreateLazyArgToReserveEnoghSpace(std::size_t &tx_data_size)
+  {
+    return serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
+      stream.Reserve((stream.size() - tx_data_size)*10);
+      stream.Seek(tx_data_size);
+    });
+  }
 
   template<typename STREAM, typename T, typename U>
   bool VerifyInternal(
@@ -123,10 +140,13 @@ public:
     auto const& signature = sig.second;
     stream.Append(get(), query_tx_data_size, identity, reserve_enough_space);
 
-    using signature_type = crypto::openssl::ECDSASignature<>;
-    using public_key_type = signature_type::public_key_type<crypto::openssl::eECDSAEncoding::canonical, POINT_CONVERSION_UNCOMPRESSED>;
-    signature_type sig_{signature.signature_data};
-    return sig_.Verify(public_key_type{identity.identifier()}, stream.data());
+    //using signature_type = crypto::openssl::ECDSASignature<>;
+    //using public_key_type = signature_type::public_key_type<crypto::openssl::eECDSAEncoding::canonical, POINT_CONVERSION_UNCOMPRESSED>;
+    //signature_type sig_{signature.signature_data};
+    //return sig_.Verify(public_key_type{identity.identifier()}, stream.data());
+
+    crypto::ECDSAVerifier verifier{identity};
+    return verifier.Verify(stream.data(), signature.signature_data);
   }
 
   //template<typename STREAM, typename T, typename U>
@@ -137,7 +157,40 @@ public:
   //{
   //  STREAM &stream 
   //}
-  
+
+  template<typename STREAM>
+  void ReserveEnoughSpace(STREAM& stream) {
+    stream.Reserve((stream.size() - tx_data_size_for_signing)*10);
+    stream.Seek(tx_data_size_for_signing);
+  };
+
+
+  class qtds
+  {
+    TxDataForSigningC &tx;
+
+    template<typename STREAM>
+    void operator ()(STREAM& stream)
+    {
+      tx.tx_data_size_for_signing_ = stream.size();
+    }
+  };
+
+  class res
+  {
+    TxDataForSigningC &tx;
+  public:
+    template<typename STREAM>
+    void operator ()(STREAM& stream)
+    {
+      stream.Reserve((stream.size() - tx.tx_data_size_for_signing_)*10);
+      stream.Seek(tx.tx_data_size_for_signing_);
+    }
+  };
+
+private:
+  std::size_t tx_data_size_for_signing_;
+  serializers::LazyEvalArgumentFactory<qtds> qtds_{};
 };
 
 template <typename T>
@@ -281,9 +334,6 @@ public:
     serializers::ByteArrayBuffer tx_data_stream;
     TxDataForSigningC txds {*this};
 
-    //serializers::ByteArrayBuffer::size_counter_type bareTxDataStream;
-    //bareTxDataStream << txds;
-
     std::size_t tx_data_size = 0;
 
     auto query_tx_data_size = serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
@@ -291,12 +341,8 @@ public:
     });
 
     auto reserve_enough_space = serializers::LazyEvalArgumentFactory([&tx_data_size] (auto& stream) {
-      //if (stream.size() > tx_data_size)
-      //{
-        //* Reserve enough space at the end to ensure that re-allocation won't be necessary.
-        stream.Reserve((stream.size() - tx_data_size)*10);
-        stream.Seek(tx_data_size);
-      //}
+      stream.Reserve((stream.size() - tx_data_size)*10);
+      stream.Seek(tx_data_size);
     });
 
     for( auto const& sig: signatures_)
