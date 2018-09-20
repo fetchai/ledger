@@ -52,7 +52,8 @@ public:
     }
     catch (std::exception ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing serveice", instance_number(), " reason: ", ex.what());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing serveice", instance_number(),
+                      " reason: ", ex.what());
     }
   }
 

@@ -43,7 +43,6 @@ public:
   }
 
 private:
-
   std::vector<Block> GetHeaviestChain(uint32_t const &maxsize)
   {
     LOG_STACK_TRACE_POINT;

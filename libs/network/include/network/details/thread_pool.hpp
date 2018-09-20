@@ -196,7 +196,6 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME, "Removed work");
     cv_.notify_all();
 
-
     // Allow a period of time for any pending thread to finish starting
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

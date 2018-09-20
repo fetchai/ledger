@@ -148,7 +148,6 @@ public:
   class PingingConnection : public network::ResolvableTo<PingedPeer>
   {
   public:
-
     static constexpr char const *LOGGING_NAME = "PingingConnection";
 
     using Timepoint = network::ResolvableTo<PingedPeer>::Timepoint;
@@ -216,7 +215,7 @@ public:
           FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState TRYAGAIN");
           return StartConnectionAttempt(now);
         }
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState WAITMORE");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState WAITMORE");
         return State::WAITING;
 
       case State::FAILED:
