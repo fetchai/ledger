@@ -72,7 +72,7 @@ public:
     params << SERVICE_FUNCTION_CALL << prom->id();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
-                   function, " (call)", &promises_);
+                    function, " (call)", &promises_);
 
     AddPromise(prom);
 

@@ -19,8 +19,8 @@
 
 #include <memory>
 
-#include "core/service_ids.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
 #include "network/service/service_client.hpp"
@@ -52,8 +52,7 @@ public:
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
   {
-    auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
-                                 hash, slice, lanes);
+    auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
     return result->As<Status>();
   }
 

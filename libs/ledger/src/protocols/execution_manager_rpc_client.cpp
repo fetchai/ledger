@@ -18,8 +18,8 @@
 
 #include <memory>
 
-#include "core/service_ids.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 
@@ -61,7 +61,8 @@ ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type 
 
 ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  auto result =
+      service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
   return result->As<block_digest_type>();
 }
 

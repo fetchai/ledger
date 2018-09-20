@@ -68,10 +68,9 @@ public:
   }
 
 private:
-
-  Uri                                uri_;
-  ServiceIdentifier                  service_identifier_;
-  Peers                              peers_;
+  Uri               uri_;
+  ServiceIdentifier service_identifier_;
+  Peers             peers_;
 };
 
 }  // namespace p2p
