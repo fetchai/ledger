@@ -27,8 +27,6 @@
 #include <thread>
 #include <utility>
 
-#include "debugging/exception_catching.hpp"
-
 namespace fetch {
 namespace mutex {
 
@@ -137,9 +135,7 @@ public:
     locked_ = Clock::now();
     lock_mutex_.unlock();
 
-    LOG_EX(__FILE__, __LINE__)
     std::mutex::lock();
-    END_LOG_EX
 
     timeout_ = std::make_unique<MutexTimeout>(file_, line_);
     fetch::logger.RegisterLock(this);
