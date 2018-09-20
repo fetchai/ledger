@@ -21,6 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -77,18 +78,11 @@ public:
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction
-  // TODO(EJF): Rename minerNumber_
   MainChain(uint32_t miner_number = std::numeric_limits<uint32_t>::max())
-    : minerNumber_{miner_number}
+    : miner_number_{miner_number}
   {
-    BlockType genesis;
-    genesis.UpdateDigest();
-    // TODO(EJF): Ensure that this is correct
-    // genesis.body().previous_hash = genesis.hash();
-
-    // Add genesis to block chain
-    genesis.loose()             = false;
-    blockChain_[genesis.hash()] = genesis;
+    BlockType genesis = CreateGenesisBlock();
+    block_chain_[genesis.hash()] = genesis;
 
     // Create tip for genesis
     auto tip              = std::make_shared<Tip>();
@@ -96,7 +90,7 @@ public:
     tips_[genesis.hash()] = tip;
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
 
-    if (minerNumber_ != std::numeric_limits<uint32_t>::max())
+    if (miner_number_ != std::numeric_limits<uint32_t>::max())
     {
       RecoverFromFile();
       saving_to_file_ = true;
@@ -110,6 +104,8 @@ public:
 
   bool AddBlock(BlockType &block, bool recursive_iteration = false)
   {
+    assert(block.body().previous_hash.size() > 0);
+
     fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
     std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
 
@@ -123,16 +119,16 @@ public:
     if (!recursive_iteration)
     {
       // First check if block already exists (not checking in object store)
-      if (blockChain_.find(block.hash()) != blockChain_.end())
+      if (block_chain_.find(block.hash()) != block_chain_.end())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Attempting to add already seen block");
         return false;
       }
 
       // Look for the prev block to this one
-      auto it_prev = blockChain_.find(block.body().previous_hash);
+      auto it_prev = block_chain_.find(block.body().previous_hash);
 
-      if (it_prev == blockChain_.end())
+      if (it_prev == block_chain_.end())
       {
         // Note: think about rolling back into FS
         FETCH_LOG_INFO(LOGGING_NAME, "Block prev not found");
@@ -153,7 +149,7 @@ public:
     }
     else
     {
-      prev_block = blockChain_[block.body().previous_hash];
+      prev_block = block_chain_[block.body().previous_hash];
     }
 
     // At this point we have a new block with a prev that's known and not loose. Update tips
@@ -162,7 +158,7 @@ public:
 
     // Add block
     FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block.hash()));
-    blockChain_[block.hash()] = block;
+    block_chain_[block.hash()] = block;
 
     if (heaviestAdvanced)
     {
@@ -184,7 +180,7 @@ public:
   {
     std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
 
-    auto const &block = blockChain_.at(heaviest_.second);
+    auto const &block = block_chain_.at(heaviest_.second);
 
     return block;
   }
@@ -196,7 +192,7 @@ public:
 
   std::size_t totalBlocks() const
   {
-    return blockChain_.size();
+    return block_chain_.size();
   }
 
   std::vector<BlockType> HeaviestChain(
@@ -207,7 +203,7 @@ public:
 
     std::vector<BlockType> result;
 
-    auto topBlock = blockChain_.at(heaviest_.second);
+    auto topBlock = block_chain_.at(heaviest_.second);
 
     while ((topBlock.body().block_number != 0) && (result.size() < limit))
     {
@@ -215,8 +211,8 @@ public:
       auto hash = topBlock.body().previous_hash;
 
       // Walk down
-      auto it = blockChain_.find(hash);
-      if (it == blockChain_.end())
+      auto it = block_chain_.find(hash);
+      if (it == block_chain_.end())
       {
         FETCH_LOG_INFO(LOGGING_NAME,
                        "Mainchain: Failed while walking down\
@@ -236,29 +232,23 @@ public:
     std::lock_guard<fetch::mutex::Mutex> lock_main(main_mutex_);
     std::lock_guard<fetch::mutex::Mutex> lock_loose(loose_mutex_);
 
-    blockChain_.clear();
+    block_chain_.clear();
     tips_.clear();
-    looseBlocks_.clear();
+    loose_blocks_.clear();
 
     {
       std::ostringstream fileMain;
       std::ostringstream fileIndex;
 
-      fileMain << "chain_" << minerNumber_ << ".db";
-      fileIndex << "chainIndex_" << minerNumber_ << ".db";
+      fileMain << "chain_" << miner_number_ << ".db";
+      fileIndex << "chainIndex_" << miner_number_ << ".db";
 
-      blockStore_.New(fileMain.str(), fileIndex.str());
+      block_store_.New(fileMain.str(), fileIndex.str());
     }
 
     // recreate genesis
-    BlockType genesis;
-    genesis.UpdateDigest();
-    // genesis.body().hash = byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
-    // genesis.body().previous_ha
-
-    // Add genesis to block chain
-    genesis.loose()             = false;
-    blockChain_[genesis.hash()] = genesis;
+    BlockType genesis = CreateGenesisBlock();
+    block_chain_[genesis.hash()] = genesis;
 
     // Create tip
     auto tip              = std::make_shared<Tip>();
@@ -271,9 +261,9 @@ public:
   {
     std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
 
-    auto it = blockChain_.find(hash);
+    auto it = block_chain_.find(hash);
 
-    if (it != blockChain_.end())
+    if (it != block_chain_.end())
     {
       block = (*it).second;
       return true;
@@ -283,37 +273,24 @@ public:
   }
 
 private:
-  // Long term storage and backup
-  fetch::storage::ObjectStore<BlockType> blockStore_;
-  const uint32_t                         blockConfirmation_ = 10;
-  const uint32_t                         minerNumber_;
-  bool                                   saving_to_file_ = false;
-
-  mutable fetch::mutex::Mutex                         main_mutex_{__LINE__, __FILE__};
-  std::unordered_map<BlockHash, BlockType>            blockChain_;  // all recent blocks are here
-  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;        // Keep track of the tips
-  std::pair<uint64_t, BlockHash>                      heaviest_;    // Heaviest block/tip
-
-  mutable fetch::mutex::Mutex                          loose_mutex_{__LINE__, __FILE__};
-  std::unordered_map<PrevHash, std::vector<BlockHash>> looseBlocks_;  // Waiting (loose) blocks
 
   void RecoverFromFile()
   {
     std::ostringstream fileMain;
     std::ostringstream fileIndex;
 
-    fileMain << "chain_" << minerNumber_ << ".db";
-    fileIndex << "chainIndex_" << minerNumber_ << ".db";
+    fileMain << "chain_" << miner_number_ << ".db";
+    fileIndex << "chainIndex_" << miner_number_ << ".db";
 
-    blockStore_.Load(fileMain.str(), fileIndex.str());
+    block_store_.Load(fileMain.str(), fileIndex.str());
 
     BlockType block;
-    if (blockStore_.Get(storage::ResourceAddress("head"), block))
+    if (block_store_.Get(storage::ResourceAddress("head"), block))
     {
       block.UpdateDigest();
       AddBlock(block);
 
-      while (blockStore_.Get(storage::ResourceID(block.body().previous_hash), block))
+      while (block_store_.Get(storage::ResourceID(block.body().previous_hash), block))
       {
         block.UpdateDigest();
         AddBlock(block);
@@ -331,11 +308,11 @@ private:
     }
 
     // Add confirmed blocks to file
-    BlockType block  = blockChain_.at(heaviest_.second);
+    BlockType block  = block_chain_.at(heaviest_.second);
     bool      failed = false;
 
     // Find the block N back from our heaviest
-    for (std::size_t i = 0; i < blockConfirmation_; ++i)
+    for (std::size_t i = 0; i < block_confirmation_; ++i)
     {
       if (!GetPrev(block))
       {
@@ -347,14 +324,14 @@ private:
     // This block is now the head in our file
     if (!failed)
     {
-      blockStore_.Set(storage::ResourceAddress("head"), block);
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
+      block_store_.Set(storage::ResourceAddress("head"), block);
+      block_store_.Set(storage::ResourceID(block.hash()), block);
     }
 
     // Walk down the file to check we have an unbroken chain
-    while (GetPrev(block) && !blockStore_.Has(storage::ResourceID(block.hash())))
+    while (GetPrev(block) && !block_store_.Has(storage::ResourceID(block.hash())))
     {
-      blockStore_.Set(storage::ResourceID(block.hash()), block);
+      block_store_.Set(storage::ResourceID(block.hash()), block);
     }
 
     // Clear the block from ram
@@ -364,11 +341,11 @@ private:
   void FlushBlock(BlockType const &block)
   {
     {
-      auto it = blockChain_.find(block.hash());
+      auto it = block_chain_.find(block.hash());
 
-      if (it != blockChain_.end())
+      if (it != block_chain_.end())
       {
-        blockChain_.erase(it);
+        block_chain_.erase(it);
       }
     }
 
@@ -388,9 +365,9 @@ private:
       return false;
     }
 
-    auto it = blockChain_.find(block.body().previous_hash);
+    auto it = block_chain_.find(block.body().previous_hash);
 
-    if (it == blockChain_.end())
+    if (it == block_chain_.end())
     {
       return false;
     }
@@ -407,7 +384,7 @@ private:
       return false;
     }
 
-    return blockStore_.Get(storage::ResourceID(block.body().previous_hash), block);
+    return block_store_.Get(storage::ResourceID(block.body().previous_hash), block);
   }
 
   // We have added a non-loose block. It is then safe to lock the loose blocks map and
@@ -416,14 +393,14 @@ private:
   {
     std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
 
-    auto it = looseBlocks_.find(block.hash());
-    if (it == looseBlocks_.end())
+    auto it = loose_blocks_.find(block.hash());
+    if (it == loose_blocks_.end())
     {
       return;
     }
 
     std::vector<BlockHash> blocks_to_add = (*it).second;
-    looseBlocks_.erase(it);
+    loose_blocks_.erase(it);
 
     FETCH_LOG_DEBUG(LOGGING_NAME,
                     "Found loose blocks completed by addition of block: ", blocks_to_add.size());
@@ -437,14 +414,14 @@ private:
       for (auto const &hash : blocks_to_add)
       {
         // This should be guaranteed safe
-        BlockType addBlock = blockChain_.at(hash);
+        BlockType addBlock = block_chain_.at(hash);
 
         // This won't re-call this function due to the flag
         AddBlock(addBlock, true);
 
         // The added block was not loose. Continue to clear
-        auto it = looseBlocks_.find(addBlock.hash());
-        if (it != looseBlocks_.end())
+        auto it = loose_blocks_.find(addBlock.hash());
+        if (it != loose_blocks_.end())
         {
           std::vector<BlockHash> const &next_blocks = (*it).second;
 
@@ -452,7 +429,7 @@ private:
           {
             next_blocks_to_add.push_back(block_hash);
           }
-          looseBlocks_.erase(it);
+          loose_blocks_.erase(it);
         }
       }
 
@@ -464,10 +441,10 @@ private:
   {
     std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
     // Get vector of waiting blocks and push ours on
-    auto &waitingBlocks = looseBlocks_[block.body().previous_hash];
+    auto &waitingBlocks = loose_blocks_[block.body().previous_hash];
     waitingBlocks.push_back(block.hash());
     block.loose()             = true;
-    blockChain_[block.hash()] = block;
+    block_chain_[block.hash()] = block;
   }
 
   // Case where the block prev isn't found, need to check back in history, and add the prev to
@@ -479,7 +456,7 @@ private:
     BlockType walk_block;
     BlockType prev_block;
 
-    if (!blockStore_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
+    if (!block_store_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
       FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
@@ -504,7 +481,7 @@ private:
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
       prev_block.totalWeight()       = total_weight;
       prev_block.loose()             = false;
-      blockChain_[prev_block.hash()] = prev_block;
+      block_chain_[prev_block.hash()] = prev_block;
     }
 
     return AddBlock(block);
@@ -568,6 +545,30 @@ private:
 
     return heaviestAdvanced;
   }
+
+  static BlockType CreateGenesisBlock()
+  {
+    BlockType genesis;
+    genesis.body().previous_hash = GENESIS_DIGEST;
+    genesis.loose()              = false;
+    genesis.UpdateDigest();
+
+    return genesis;
+  }
+
+  // Long term storage and backup
+  fetch::storage::ObjectStore<BlockType> block_store_;
+  const uint32_t                         block_confirmation_ = 10;
+  const uint32_t                         miner_number_;
+  bool                                   saving_to_file_ = false;
+
+  mutable fetch::mutex::Mutex                         main_mutex_{__LINE__, __FILE__};
+  std::unordered_map<BlockHash, BlockType>            block_chain_;   ///< all recent blocks are here
+  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;          ///< Keep track of the tips
+  std::pair<uint64_t, BlockHash>                      heaviest_;      ///< Heaviest block/tip
+
+  mutable fetch::mutex::Mutex                          loose_mutex_{__LINE__, __FILE__};
+  std::unordered_map<PrevHash, std::vector<BlockHash>> loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 }  // namespace chain
