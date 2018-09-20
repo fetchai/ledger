@@ -23,7 +23,7 @@ namespace fetch {
 namespace chain {
 
 extern const byte_array::ConstByteArray GENESIS_DIGEST =
-  byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
+    byte_array::FromBase64("+++++++++++++++++Genesis+++++++++++++++++++=");
 
-} // namespace chain
-} // namespace fetch
+}  // namespace chain
+}  // namespace fetch

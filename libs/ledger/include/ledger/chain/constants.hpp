@@ -24,5 +24,5 @@ namespace chain {
 
 extern const byte_array::ConstByteArray GENESIS_DIGEST;
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace chain
+}  // namespace fetch

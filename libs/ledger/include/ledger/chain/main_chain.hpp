@@ -21,9 +21,9 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/constants.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
@@ -81,7 +81,7 @@ public:
   MainChain(uint32_t miner_number = std::numeric_limits<uint32_t>::max())
     : miner_number_{miner_number}
   {
-    BlockType genesis = CreateGenesisBlock();
+    BlockType genesis            = CreateGenesisBlock();
     block_chain_[genesis.hash()] = genesis;
 
     // Create tip for genesis
@@ -247,7 +247,7 @@ public:
     }
 
     // recreate genesis
-    BlockType genesis = CreateGenesisBlock();
+    BlockType genesis            = CreateGenesisBlock();
     block_chain_[genesis.hash()] = genesis;
 
     // Create tip
@@ -273,7 +273,6 @@ public:
   }
 
 private:
-
   void RecoverFromFile()
   {
     std::ostringstream fileMain;
@@ -443,7 +442,7 @@ private:
     // Get vector of waiting blocks and push ours on
     auto &waitingBlocks = loose_blocks_[block.body().previous_hash];
     waitingBlocks.push_back(block.hash());
-    block.loose()             = true;
+    block.loose()              = true;
     block_chain_[block.hash()] = block;
   }
 
@@ -479,8 +478,8 @@ private:
     FETCH_LOG_DEBUG(LOGGING_NAME, "Reviving block from file");
     {
       std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
-      prev_block.totalWeight()       = total_weight;
-      prev_block.loose()             = false;
+      prev_block.totalWeight()        = total_weight;
+      prev_block.loose()              = false;
       block_chain_[prev_block.hash()] = prev_block;
     }
 
@@ -563,9 +562,9 @@ private:
   bool                                   saving_to_file_ = false;
 
   mutable fetch::mutex::Mutex                         main_mutex_{__LINE__, __FILE__};
-  std::unordered_map<BlockHash, BlockType>            block_chain_;   ///< all recent blocks are here
-  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;          ///< Keep track of the tips
-  std::pair<uint64_t, BlockHash>                      heaviest_;      ///< Heaviest block/tip
+  std::unordered_map<BlockHash, BlockType>            block_chain_;  ///< all recent blocks are here
+  std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;         ///< Keep track of the tips
+  std::pair<uint64_t, BlockHash>                      heaviest_;     ///< Heaviest block/tip
 
   mutable fetch::mutex::Mutex                          loose_mutex_{__LINE__, __FILE__};
   std::unordered_map<PrevHash, std::vector<BlockHash>> loose_blocks_;  ///< Waiting (loose) blocks
