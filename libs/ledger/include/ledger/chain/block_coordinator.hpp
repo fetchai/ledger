@@ -58,8 +58,8 @@ public:
     // add the block to the chain data structure
     chain_.AddBlock(block);
 
-    // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager does not fire
-    // all of the time.
+    // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
+    // does not fire all of the time.
     auto heaviestHash = chain_.HeaviestBlock().hash();
 
     if (block.hash() == heaviestHash)
