@@ -86,7 +86,7 @@ int main(int argc, char const **argv)
       dummy_body.block_number = 1;
       dummy.SetBody(dummy_body);
       dummy.UpdateDigest();
-      // dummy.body().previous_hash = dummy.hash();
+      dummy.body().previous_hash = dummy.hash();
 
       mainChain.AddBlock(dummy);
 
