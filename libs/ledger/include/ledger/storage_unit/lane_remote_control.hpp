@@ -134,6 +134,7 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "P2P -- USE PEER ----------------------");
       for (auto &uri : uris)
       {
+        FETCH_LOG_VARIABLE(uri);
         FETCH_LOG_INFO(LOGGING_NAME, "P2P -- USE PEER ", uri.uri());
       }
       ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);

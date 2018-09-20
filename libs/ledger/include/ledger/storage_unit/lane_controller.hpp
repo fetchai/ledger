@@ -77,6 +77,7 @@ public:
   {
     for (auto const &uri : uris)
     {
+      FETCH_LOG_VARIABLE(uri);
       FETCH_LOG_INFO(LOGGING_NAME, "WILL ATTEMPT TO CONNECT TO: ", uri.uri());
     }
   }
