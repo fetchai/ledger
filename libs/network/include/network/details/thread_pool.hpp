@@ -390,7 +390,7 @@ private:
     return r;
   }
 
-  std::size_t                number_of_threads_ = 1;
+  std::size_t                               number_of_threads_ = 1;
   std::vector<std::shared_ptr<std::thread>> threads_;
 
   future_work_type future_work_;
