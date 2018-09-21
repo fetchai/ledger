@@ -19,6 +19,7 @@
 #include "ledger/chain/wire_transaction.hpp"
 #include "core/json/document.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/script/variant.hpp"
 
 #include <sstream>
@@ -46,7 +47,8 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_v["dbg"] = tx_data_to_sign;
   }
 
-  TxDataForSigningC txdfs{tx};
+  //TxDataForSigningC<typename std::remove_reference<decltype(tx)>::type> txdfs{tx};
+  auto txdfs{TxDataForSigningCFactory(tx)};
   tx_v["data"] = byte_array::ToBase64(txdfs.DataForSigning());
 
   script::VariantArray signatures;
@@ -67,7 +69,15 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
 MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)
 {
-  return MutableTransaction();
+  MutableTransaction tx;
+
+  json::JSONDocument tx_json{ transaction };
+  auto &tx_v = tx_json.root();
+  
+  serializers::ByteArrayBuffer stream{ byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>()) };
+  auto txdata {TxDataForSigningCFactory(tx)};
+  stream >> txdata;
+  return tx;
 }
 
 }  // namespace chain

@@ -104,14 +104,17 @@ void Deserialize(T &serializer, TransactionSummary &b)
 
 class MutableTransaction;
 
-using MutableTransactionRef = std::reference_wrapper<MutableTransaction const>;
+//template<typename T>
+//using TxDataForSigningCBase = std::reference_wrapper<typename std::enable_if<std::is_same<MutableTransaction, std::remove_const<T>>::value>::type>;
 
-class TxDataForSigningC : public MutableTransactionRef
+template<typename MUTABLE_TRANSACTION = MutableTransaction>
+class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION> //public TxDataForSigningCBase<MUTABLE_TRANSACTION>
 {
 public:
-  using MutableTransactionRef::MutableTransactionRef;
-  using MutableTransactionRef::operator=;
-  using MutableTransactionRef::operator();
+  using base_type = std::reference_wrapper<MUTABLE_TRANSACTION>;
+  using base_type::base_type;
+  using base_type::operator=;
+  using base_type::operator();
 
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
   using verifier_type = crypto::ECDSAVerifier;
@@ -151,7 +154,8 @@ public:
   {
     using base_type = std::reference_wrapper<TxDataForSigningC>;
     using base_type::base_type;
-    //using base_type::operator=;
+    using base_type::operator=;
+    using base_type::get;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
@@ -164,13 +168,13 @@ public:
   {
     using base_type = std::reference_wrapper<TxDataForSigningC>;
     using base_type::base_type;
-    //using base_type::operator=;
+    using base_type::operator=;
+    using base_type::get;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
       stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10);
-      //stream.Seek(tx.tx_data_size_for_signing_);
     }
   };
 
@@ -190,20 +194,23 @@ private:
     return stream_.data();
   }
 
-
-
   serializers::ByteArrayBuffer stream_;
   std::size_t tx_data_size_for_signing_;
   serializers::LazyEvalArgument<qtds> qtds_{qtds{*this}};
   serializers::LazyEvalArgument<res> res_{res{*this}};
 };
 
-template <typename T>
-void Serialize(T &stream, TxDataForSigningC const &tx);
+template <typename T, typename U>
+void Serialize(T &stream, TxDataForSigningC<U> const &tx);
 
-template <typename T>
-void Deserialize(T &serializer, TxDataForSigningC &tx);
+template <typename T, typename U>
+void Deserialize(T &serializer, TxDataForSigningC<U> &tx);
 
+template<typename MUTABLE_TRANSACTION>
+TxDataForSigningC<MUTABLE_TRANSACTION> TxDataForSigningCFactory(MUTABLE_TRANSACTION &tx)
+{
+  return TxDataForSigningC<MUTABLE_TRANSACTION>(tx);
+}
 
 class MutableTransaction
 {
@@ -212,6 +219,7 @@ public:
   using digest_type       = TransactionSummary::digest_type;
   using resource_set_type = TransactionSummary::resource_set_type;
   using signatures_type   = signatures_type;
+  using tx_data_for_signing_type = TxDataForSigningC<MutableTransaction>;
 
   resource_set_type const &resources() const
   {
@@ -308,7 +316,7 @@ public:
   void Sign(byte_array::ConstByteArray const &private_key)
   {
     auto signer = tx_for_signing_.Sign(private_key);
-    signatures_[signer.identity()] = Signature{signer.signature(), TxDataForSigningC::signer_type::Signature::ecdsa_curve_type::sn};
+    signatures_[signer.identity()] = Signature{signer.signature(), tx_data_for_signing_type::signer_type::Signature::ecdsa_curve_type::sn};
   }
 
   void PushResource(byte_array::ConstByteArray const &res)
@@ -362,27 +370,28 @@ private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   signatures_type            signatures_;
-  TxDataForSigningC          tx_for_signing_{*this};
+  tx_data_for_signing_type   tx_for_signing_{*this};
 
+  template<typename T>
   friend class TxDataForSigningC;
-  template<typename T>
-  friend void Serialize(T &stream, TxDataForSigningC const &tx);
-  template<typename T>
-  friend void Deserialize(T &stream, TxDataForSigningC &tx);
+  template<typename T, typename U>
+  friend void Serialize(T &stream, TxDataForSigningC<U> const &tx);
+  template<typename T, typename U>
+  friend void Deserialize(T &stream, TxDataForSigningC<U> &tx);
 };
 
 
-template <typename T>
-void Serialize(T &stream, TxDataForSigningC const &tx)
+template <typename T, typename U>
+void Serialize(T &stream, TxDataForSigningC<U> const &tx)
 {
-  MutableTransaction const& tx_ = tx.get();
+  MutableTransaction const &tx_ = tx.get();
   stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_);
 }
 
-template <typename T>
-void Deserialize(T &serializer, TxDataForSigningC &tx)
+template <typename T, typename U>
+void Deserialize(T &serializer, TxDataForSigningC<U> &tx)
 {
-  MutableTransaction const& tx_ = tx.get();
+  MutableTransaction &tx_ = tx.get();
   serializer >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
 }
 
