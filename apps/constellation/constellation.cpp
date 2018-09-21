@@ -220,11 +220,9 @@ Constellation::Manifest Constellation::GenerateManifest() const
     my_uri_base = std::string("tcp://") + my_uri_base + ":";
   }
 
-  std::string my_manifest =
-    std::string("MAINCHAIN   0     ") + my_uri_base + std::to_string(main_chain_port_)
-    + "\n"
-    + std::string("P2P   0     ") + my_uri_base + std::to_string(p2p_port_)
-    + "\n";
+  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
+                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
+                            my_uri_base + std::to_string(p2p_port_) + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
