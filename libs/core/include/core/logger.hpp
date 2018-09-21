@@ -296,7 +296,7 @@ public:
 
   LogWrapper()
   {
-    log_ = new DefaultLogger();
+    log_ = std::make_unique<DefaultLogger>();
   }
 
   ~LogWrapper()
@@ -736,7 +736,7 @@ private:
     }
   }
 
-  DefaultLogger *                                          log_;
+  std::unique_ptr<DefaultLogger>                           log_;
   mutable std::mutex                                       mutex_;
   std::unordered_map<std::thread::id, shared_context_type> context_;
 };
