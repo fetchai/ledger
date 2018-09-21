@@ -29,8 +29,8 @@ namespace {
 using script::Variant;
 using http::JsonHttpClient;
 
-const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
-const uint16_t             BOOTSTRAP_PORT = 80;
+const char *               BOOTSTRAP_HOST = "127.0.0.1";
+const uint16_t             BOOTSTRAP_PORT = 8000;
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
@@ -50,7 +50,7 @@ bool BootstrapMonitor::Start(UriList &peers)
   // register the node with the bootstrapper
   if (!RegisterNode())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to register the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to register with the bootstrap server");
     return false;
   }
 
@@ -59,7 +59,7 @@ bool BootstrapMonitor::Start(UriList &peers)
   // request the peers list
   if (!RequestPeerList(peers))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request the peers from the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request the peers from the bootstrap server");
     return false;
   }
 
@@ -218,7 +218,7 @@ bool BootstrapMonitor::NotifyNode()
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make notify call to bootstrap network");
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make notify call to bootstrap server");
   }
 
   return success;
