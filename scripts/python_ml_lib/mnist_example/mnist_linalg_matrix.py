@@ -25,13 +25,13 @@ class MnistLearner():
         self.validation_size = 10000
 
         self.n_epochs = 30
-        self.batch_size = 10
+        self.batch_size = 50
         self.alpha = 0.2
 
         self.mnist_input_size = 784         # pixels in 28 * 28 mnist images
         self.mnist_output_size = 10         # 10 possible characters to recognise
 
-        self.activation_fn = 'sigmoid'
+        self.activation_fn = 'relu'
         self.layers = [20]
 
         self.initialise_network()
@@ -175,35 +175,19 @@ class MnistLearner():
 
         # calculate grads
         self.grads[-1] = self.grads[-1].TransposeDot(a[-2], last_delta)
-
-        if self.activation_fn == 'sigmoid':
-            for i in range(len(a) - 2, 0, -1):
-
-                # TODO: This dotTranspose gives a different answer from numpy; probably because of Array Major Order
-                new_delta = MatrixDouble(last_delta.height(), self.weights[i].height())
-                new_delta.DotTranspose(last_delta, self.weights[i])
+        for i in range(len(a) - 2, 0, -1):
+            # TODO: This dotTranspose gives a different answer from numpy; probably because of Array Major Order
+            new_delta = MatrixDouble(last_delta.height(), self.weights[i].height())
+            new_delta.DotTranspose(last_delta, self.weights[i])
+            if self.activation_fn == 'sigmoid':
                 new_delta *= d_sigmoid(a[i])
-                self.grads[i - 1] = self.grads[i - 1].TransposeDot(a[i - 1], new_delta)
+            elif self.activation_fn == 'relu':
+                new_delta *= (a[i] >= self.const_zeros[i - 1])
+            else:
+                raise ValueError()
+            self.grads[i - 1] = self.grads[i - 1].TransposeDot(a[i - 1], new_delta)
 
-                last_delta = new_delta
-        elif self.activation_fn == 'relu':
-            for i in range(len(a) - 2, 0, -1):
-
-                new_delta = MatrixDouble(last_delta.height(), self.weights[i].height())
-                new_delta.DotTranspose(last_delta, self.weights[i])
-
-                for j in range(new_delta.size()):
-                    if new_delta[j] <= 0:
-                        new_delta[j] = 0
-                # new_delta[j] *= (a[i] > 0)
-
-                self.grads[i - 1] = self.grads[i - 1].TransposeDot(a[i - 1], new_delta)
-
-                # delta = (a[i] > 0) * delta.dot(weights[i].T)
-                # grads[i-1] = a[i-1].T.dot(delta)
-                last_delta = new_delta
-        else:
-            raise ValueError()
+            last_delta = new_delta
 
 
 

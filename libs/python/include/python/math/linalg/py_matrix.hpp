@@ -19,6 +19,7 @@
 
 #include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
+#include "math/free_functions/free_functions.hpp"
 
 namespace fetch {
 namespace math {
@@ -125,9 +126,10 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__imul__",
-           [](Matrix<T> &a, Matrix<T> const &c) {
-             a.InlineMultiply(c);
-             return a;
+           [](Matrix<T> &a, Matrix<T> const &b) {
+             Matrix<T> c{a.height(), a.width()};
+             fetch::math::Multiply(a, b, c);
+             return c;
            })
       .def("__isub__",
            [](Matrix<T> &a, Matrix<T> const &c) {
@@ -156,9 +158,10 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__imul__",
-           [](Matrix<T> &a, T const &c) {
-             a.InlineMultiply(c);
-             return a;
+           [](Matrix<T> &a, T const &b) {
+             Matrix<T> c{a.height(), a.width()};
+             fetch::math::Multiply(a, b, c);
+             return c;
            })
       .def("__isub__",
            [](Matrix<T> &a, T const &c) {
@@ -167,6 +170,15 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
            })
 
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
+
+      .def("__ge__",
+           [](Matrix<T> const &b, Matrix<T> const &c) {
+             Matrix<T> a{b.height(), b.width()};
+             Isgreaterequal(b, c, a);
+             return a;
+           })
+
+
       .def("Maximum",
            [](Matrix<T> &a, Matrix<T> const &b) {
              if ((a.height() != b.height()) or (a.width() != b.width()))

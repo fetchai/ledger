@@ -1096,10 +1096,10 @@ void Isgreater(ARRAY_TYPE &x)
  * @param x
  */
 template <typename ARRAY_TYPE>
-void Isgreaterequal(ARRAY_TYPE &x)
+void Isgreaterequal(ARRAY_TYPE const &x, ARRAY_TYPE const &y, ARRAY_TYPE &z)
 {
   kernels::stdlib::Isgreaterequal<typename ARRAY_TYPE::type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
+  z.data().in_parallel().Apply(kernel, x.data(), y.data());
 }
 
 /**
@@ -1890,7 +1890,7 @@ void Multiply(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Multiply(array, scalar, ret);
   return ret;
 }
@@ -1902,7 +1902,7 @@ void Multiply(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(T const &scalar, ShapeLessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Multiply(scalar, array, ret);
   return ret;
 }
@@ -1946,7 +1946,7 @@ template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
                               memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
   Multiply(obj1, obj2, range, ret);
   return ret;
 }
@@ -1968,7 +1968,7 @@ void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
@@ -1988,7 +1988,7 @@ void Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
 {
-  NDArray<T, C> ret;
+  NDArray<T, C> ret{obj1.size()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
