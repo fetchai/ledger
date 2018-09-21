@@ -62,7 +62,7 @@ public:
 
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
-        threads_.push_back(new std::thread([this]() { this->Work(); }));
+        threads_.push_back(std::make_shared<std::thread>([this]() { this->Work(); }));
       }
     }
   }
@@ -91,7 +91,6 @@ public:
       for (auto &thread : threads_)
       {
         thread->join();
-        delete thread;
       }
 
       threads_.clear();
@@ -116,7 +115,7 @@ public:
 private:
   std::thread::id                   owning_thread_;
   std::size_t                       number_of_threads_ = 1;
-  std::vector<std::thread *>        threads_;
+  std::vector<std::shared_ptr<std::thread>>        threads_;
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;

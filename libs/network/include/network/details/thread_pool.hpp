@@ -140,9 +140,7 @@ public:
       std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
       if (threads_.size() < number_of_threads_)
       {
-        auto work = [this]() { this->ProcessLoop(); };
-        auto x = std::make_shared<std::thread>(work);
-        threads_.push_back(x);
+        threads_.push_back(std::make_shared<std::thread>([this]() { this->ProcessLoop(); }));
         tc_++;
       }
       return true;
