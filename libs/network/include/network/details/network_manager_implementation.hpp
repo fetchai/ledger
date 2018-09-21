@@ -113,9 +113,10 @@ public:
   }
 
 private:
-  std::thread::id                   owning_thread_;
-  std::size_t                       number_of_threads_ = 1;
+  std::thread::id                                  owning_thread_;
+  std::size_t                                      number_of_threads_ = 1;
   std::vector<std::shared_ptr<std::thread>>        threads_;
+
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;
