@@ -48,7 +48,7 @@ public:
       auto &rpc = service_->ServiceInterfaceOf(id);
 
       std::string s =
-          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val).As<std::string>();
+          rpc.Call(FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val)->As<std::string>();
       if (s != "")
       {
         ret.push_back(s);
@@ -68,7 +68,7 @@ public:
 private:
   ServiceServer<fetch::network::TCPServer> *service_ = nullptr;
   std::set<uint64_t>                        registered_aeas_;
-  fetch::mutex::Mutex                       mutex_;
+  fetch::mutex::Mutex                       mutex_{__LINE__, __FILE__};
 };
 
 // Next we make a protocol for the implementation

@@ -28,7 +28,7 @@ class Prover
 public:
   using byte_array_type = byte_array::ByteArray;
 
-  virtual Identity identity() = 0;
+  virtual Identity identity() const = 0;
   virtual ~Prover()
   {}
 

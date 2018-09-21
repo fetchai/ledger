@@ -33,6 +33,9 @@ class TypedByteArrayBuffer
 {
 public:
   using byte_array_type = byte_array::ByteArray;
+
+  static constexpr char const *LOGGING_NAME = "TypedByteArrayBuffer";
+
   TypedByteArrayBuffer()
   {
     detailed_assert(size() == 0);
@@ -116,10 +119,10 @@ public:
     Deserialize(*this, type);
     if (TypeRegister<T>::value != type)
     {
-      fetch::logger.Debug("Serializer at position ", pos_, " out of ", data_.size());
-      fetch::logger.Error(byte_array_type("Expected type '") + TypeRegister<T>::name() +
-                          byte_array_type("' differs from deserialized type '") +
-                          ErrorCodeToMessage(type) + byte_array_type("'"));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Serializer at position ", pos_, " out of ", data_.size());
+      FETCH_LOG_ERROR(LOGGING_NAME, byte_array_type("Expected type '") + TypeRegister<T>::name() +
+                                        byte_array_type("' differs from deserialized type '") +
+                                        ErrorCodeToMessage(type) + byte_array_type("'"));
 
       throw SerializableException(error::TYPE_ERROR,
                                   byte_array_type("Expected type '") + TypeRegister<T>::name() +

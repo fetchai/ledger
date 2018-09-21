@@ -57,7 +57,7 @@ public:
 private:
   std::vector<std::string> strings_;
 
-  fetch::mutex::Mutex mutex_;
+  fetch::mutex::Mutex mutex_{__LINE__, __FILE__};
 };
 
 class AEAProtocol : public AEA, public Protocol
@@ -75,7 +75,7 @@ public:
 private:
 };
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   ParamsParser params;
   params.Parse(argc, argv);
@@ -100,11 +100,12 @@ int main(int argc, char const **argv)
 
   auto p = client.Call(FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
 
-  if (p.Wait())
+  FETCH_LOG_PROMISE();
+  if (p->Wait())
   {
     std::cout << "Node registered" << std::endl;
 
-    while (true)
+    for (;;)
     {
     }
   }

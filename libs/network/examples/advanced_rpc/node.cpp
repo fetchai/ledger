@@ -29,7 +29,7 @@ using namespace fetch::commandline;
 /**
  * Please see aea.cpp for documentation.
  **/
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
 
   ParamsParser params;

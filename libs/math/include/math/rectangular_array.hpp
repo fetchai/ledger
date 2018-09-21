@@ -55,6 +55,8 @@ public:
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
 
+  static constexpr char const *LOGGING_NAME = "RectangularArray";
+
   /* Contructs an empty rectangular array. */
   RectangularArray()
     : super_type()
