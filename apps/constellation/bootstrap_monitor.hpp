@@ -55,7 +55,7 @@ public:
   {}
 
   BootstrapMonitor(BootstrapMonitor const &) = delete;
-  BootstrapMonitor(BootstrapMonitor &&) = delete;
+  BootstrapMonitor(BootstrapMonitor &&)      = delete;
 
   ~BootstrapMonitor()
   {
@@ -73,7 +73,6 @@ public:
   // Operators
   BootstrapMonitor &operator=(BootstrapMonitor const &) = delete;
   BootstrapMonitor &operator=(BootstrapMonitor &&) = delete;
-
 
 private:
   using IoService      = asio::io_service;

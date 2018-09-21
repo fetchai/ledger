@@ -22,8 +22,8 @@
 #include "http/client.hpp"
 #include "http/method.hpp"
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 namespace fetch {
 namespace http {
@@ -48,7 +48,8 @@ public:
   bool Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant const &request, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant &response);
-  bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request, Variant &response);
+  bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request,
+            Variant &response);
   bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
 
 private:
@@ -66,7 +67,7 @@ private:
  * @return true if successful, otherwise false
  */
 inline bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
-                         JsonHttpClient::Variant &             response)
+                                JsonHttpClient::Variant &             response)
 {
   return Request(Method::GET, endpoint, nullptr, nullptr, response);
 }
@@ -79,7 +80,8 @@ inline bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonHttpClient::Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+inline bool JsonHttpClient::Get(ConstByteArray const &endpoint, Headers const &headers,
+                                Variant &response)
 {
   return Request(Method::GET, endpoint, &headers, nullptr, response);
 }
@@ -92,7 +94,8 @@ inline bool JsonHttpClient::Get(ConstByteArray const &endpoint, Headers const &h
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request,
+                                 Variant &response)
 {
   return Request(Method::POST, endpoint, nullptr, &request, response);
 }
@@ -105,7 +108,7 @@ inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &
  * @return true if successful, otherwise false
  */
 inline bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
-                          JsonHttpClient::Variant &             response)
+                                 JsonHttpClient::Variant &             response)
 {
   return Request(Method::POST, endpoint, nullptr, nullptr, response);
 }
@@ -119,7 +122,8 @@ inline bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request, Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                                 Variant const &request, Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, &request, response);
 }
@@ -132,11 +136,11 @@ inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &
  * @param response The output response
  * @return true if successful, otherwise false
  */
-inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                                 Variant &response)
 {
   return Request(Method::POST, endpoint, &headers, nullptr, response);
 }
-
 
 }  // namespace http
 }  // namespace fetch

@@ -48,11 +48,8 @@ JsonHttpClient::JsonHttpClient(std::string host, uint16_t port)
  * @param response The output response from the server
  * @return true if successful, otherwise false
  */
-bool JsonHttpClient::Request(Method method,
-                             ConstByteArray const &endpoint,
-                             Headers const *headers,
-                             Variant const *request,
-                             Variant &response)
+bool JsonHttpClient::Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
+                             Variant const *request, Variant &response)
 {
   bool success = false;
 

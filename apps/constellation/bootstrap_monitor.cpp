@@ -182,8 +182,8 @@ bool BootstrapMonitor::RegisterNode()
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
 
-  Variant        response;
-  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
   JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
 
@@ -207,8 +207,8 @@ bool BootstrapMonitor::NotifyNode()
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
-  Variant        response;
-  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
   JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
 

@@ -116,7 +116,8 @@ struct CommandLineArguments
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
-    parameters.add(args.token, "token", "The authentication token to be used with bootstrapping the client");
+    parameters.add(args.token, "token",
+                   "The authentication token to be used with bootstrapping the client");
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
     // parse the args
@@ -139,8 +140,8 @@ struct CommandLineArguments
     if (args.bootstrap && args.token.size())
     {
       // create the boostrap node
-      bootstrap =
-          std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port, args.network_id, args.token);
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port,
+                                                            args.network_id, args.token);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
