@@ -41,7 +41,7 @@ public:
   Metrics(Metrics &&)      = delete;
   ~Metrics()
   {
-    SetMetricHandler(nullptr);
+    RemoveMetricHandler();
   }
 
   // Configuration
@@ -70,10 +70,10 @@ public:
 private:
   // Hidden construction
   Metrics() = default;
+  void RemoveMetricHandler();
 
-  void SetMetricHandler(MetricHandler *handler);
-
-  std::atomic<MetricHandler *> handler_{nullptr};
+  std::unique_ptr<MetricHandler> handler_object_;
+  std::atomic<MetricHandler *>   handler_{nullptr};
 };
 
 }  // namespace ledger
