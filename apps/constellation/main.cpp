@@ -87,6 +87,7 @@ struct CommandLineArguments
   uint32_t    log2_num_lanes;
   uint32_t    num_slices;
   std::string interface;
+  std::string token;
   bool        bootstrap{false};
   bool        mine{false};
   std::string dbdir;
@@ -117,6 +118,8 @@ struct CommandLineArguments
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
+    parameters.add(args.token, "token",
+                   "The authentication token to be used with bootstrapping the client");
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
     parameters.add(external_address, "external", "This node's global IP addr.", std::string{});
@@ -139,11 +142,11 @@ struct CommandLineArguments
     args.log2_num_lanes = Log2(args.num_lanes);
 
     args.bootstrap = (!external_address.empty());
-    if (args.bootstrap)
+    if (args.bootstrap && args.token.size())
     {
       // create the boostrap node
-      bootstrap =
-          std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port, args.network_id);
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port,
+                                                            args.network_id, args.token);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))

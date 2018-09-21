@@ -428,6 +428,36 @@ public:
     return !(this->operator==(other));
   }
 
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(ShapeLessArray const &other)
+  {
+    this->InLineAdd(other);
+    return *this;
+  }
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(type const &scalar)
+  {
+    this->InLineAdd(scalar);
+    return *this;
+  }
+
+  ShapeLessArray operator+(ShapeLessArray const &other)
+  {
+    return this->InLineAdd(other);
+  }
+  ShapeLessArray operator+(type const &scalar)
+  {
+    return this->InLineAdd(scalar);
+  }
+
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
    *
