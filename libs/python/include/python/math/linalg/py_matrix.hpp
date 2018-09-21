@@ -98,10 +98,24 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              Subtract(b, c, a);
              return a;
            })
+      .def("__rsub__",
+           [](Matrix<T> &b, T const &c) {
+             Matrix<T> a;
+             a.LazyResize(b.height(), b.width());
+             Subtract(c, b, a);
+             return a;
+           })
       .def("__div__",
            [](Matrix<T> const &b, T const &c) {
              Matrix<T> a;
              a.LazyResize(b.height(), b.width());
+             Divide(b, c, a);
+             return a;
+           })
+      .def("__div__",
+           [](T const &b, Matrix<T> const &c) {
+             Matrix<T> a;
+             a.LazyResize(c.height(), c.width());
              Divide(b, c, a);
              return a;
            })
@@ -120,10 +134,21 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__idiv__",
+      .def("__itruediv__",
            [](Matrix<T> &a, Matrix<T> const &c) {
              a.InlineDivide(c);
              return a;
+           })
+      .def("__itruediv__",
+           [](Matrix<T> &a, T const &c) {
+             a.InlineDivide(c);
+             return a;
+           })
+      .def("__rtruediv__",
+           [](Matrix<T> &c, T const &a) {
+             Matrix<T> ret(c.height(), c.width());
+             Divide(a, c, ret);
+             return ret;
            })
       .def("__iadd__",
            [](Matrix<T> &a, T const &c) {
@@ -140,24 +165,58 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              a.InlineSubtract(c);
              return a;
            })
-      .def("__idiv__",
-           [](Matrix<T> &a, T const &c) {
-             a.InlineDivide(c);
-             return a;
-           })
+
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
+      .def("ArgMax",
+           [](Matrix<T> &a, std::size_t const axis) {
+             if (axis >= 2)
+             {
+               throw py::index_error();
+             }
+
+             std::size_t ret_len;
+             if (axis == 0)
+             {
+               ret_len = a.width();
+             }
+             else
+             {
+               ret_len = a.height();
+             }
+             ShapeLessArray<T> ret{ret_len};
+             ArgMax(a, axis, ret);
+             return ret;
+           })
       //    .def("Invert", &Matrix< T >::Invert)
       // Matrix-matrix ions
       .def("Transpose", (Matrix<T> & (Matrix<T>::*)(Matrix<T> const &)) & Matrix<T>::Transpose)
       //      .def("Sum", &Matrix<T>::Sum)
+      .def("DotTranspose",
+           [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
+             if (b.width() != c.width())
+             {
+               throw pybind11::index_error("matrix size mismatch");
+             }
+             return a.DotTranspose(b, c);
+           })
+      .def("TransposeDot",
+           [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
+             if (b.height() != c.height())
+             {
+               throw pybind11::index_error("matrix size mismatch");
+             }
+
+             return a.TransposeDot(b, c);
+           })
       .def("Dot", [](Matrix<T> &a, Matrix<T> const &b, Matrix<T> const &c) {
         if (b.width() != c.height())
         {
           throw pybind11::index_error("matrix size mismatch");
         }
 
-        a.Resize(b.height(), c.width());
-        a.Dot(b, c);
+        //        a.Resize(b.height(), c.width());
+
+        return a.Dot(b, c);
       });
 }
 

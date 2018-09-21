@@ -44,6 +44,11 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
+namespace linalg {
+template <typename T, typename C, typename S>
+class Matrix;
+}
+
 template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array);
 
@@ -1321,6 +1326,86 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
     *return_iterator = cur_max;
     ++return_iterator;
   }
+}
+
+/**
+ * Finds the argument of the maximum value in an array
+ * @tparam T data type
+ * @tparam C container type
+ * @param array array to search for maximum value
+ * @return
+ */
+template <typename T, typename C>
+void ArgMax(ShapeLessArray<T, C> const &array, T &ret)
+{
+  ret          = 0;
+  T cur_maxval = std::numeric_limits<T>::lowest();
+
+  // just using ret as a free variable to store the current maxval for the loop here
+  for (std::size_t i = 0; i < array.size(); ++i)
+  {
+    if (cur_maxval < array[i])
+    {
+      ret = i;
+    }
+  }
+}
+template <typename T, typename C>
+T ArgMax(ShapeLessArray<T, C> const &array)
+{
+  T ret;
+  return ArgMax(array, ret);
+}
+
+template <typename T, typename C, typename S>
+void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArray<T, C> &ret)
+{
+  assert(axis < 2);
+
+  if (axis == 0)
+  {
+    assert(ret.size() == array.width());
+    T cur_maxval;
+
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (std::size_t i = 0; i < array.width(); ++i)
+    {
+      cur_maxval = std::numeric_limits<T>::lowest();
+      for (std::size_t j = 0; j < array.height(); ++j)
+      {
+        if (cur_maxval < array.At(j, i))
+        {
+          ret[i]     = j;
+          cur_maxval = array.At(j, i);
+        }
+      }
+    }
+  }
+  else
+  {
+    assert(ret.size() == array.height());
+    T cur_maxval;
+
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (std::size_t i = 0; i < array.height(); ++i)
+    {
+      cur_maxval = std::numeric_limits<T>::lowest();
+      for (std::size_t j = 0; j < array.width(); ++j)
+      {
+        if (cur_maxval < array.At(i, j))
+        {
+          ret[i]     = j;
+          cur_maxval = array.At(i, j);
+        }
+      }
+    }
+  }
+}
+template <typename T, typename C, typename S>
+T ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
+{
+  T ret;
+  return ArgMax(array, axis, ret);
 }
 
 /**
