@@ -38,7 +38,7 @@ using namespace fetch;
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   using service_type = ServiceClient;
   using client_type  = fetch::network::TCPClient;
@@ -59,7 +59,7 @@ int main(int argc, char const **argv)
   std::string                    host = "localhost";
   uint16_t                       port = params.GetParam<uint16_t>("port", 8080);
 
-  ledger::LaneRemoteControl        remote;
+  ledger::LaneRemoteControl        remote(lane_count);
   std::vector<shared_service_type> services;
 
   for (uint32_t i = 0; i < lane_count; ++i)

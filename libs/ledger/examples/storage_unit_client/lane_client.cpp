@@ -48,7 +48,7 @@ enum
 
 using ResourceAddress = fetch::storage::ResourceAddress;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   // Parameters
   fetch::logger.DisableLogger();

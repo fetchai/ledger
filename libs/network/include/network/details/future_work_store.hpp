@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -27,31 +29,32 @@ namespace details {
 
 class FutureWorkStore
 {
-protected:
-  using work_func_type    = std::function<void()>;
-  using due_date_type     = std::chrono::time_point<std::chrono::system_clock>;
-  using work_item_type    = std::pair<due_date_type, work_func_type>;
-  using heap_storage_type = std::vector<work_item_type>;
-  using mutex_type        = std::recursive_mutex;
-  using lock_type         = std::lock_guard<mutex_type>;
+public:
+  using work_item_type        = std::function<void()>;
+  using due_date_type         = std::chrono::time_point<std::chrono::system_clock>;
+  using stored_work_item_type = std::pair<due_date_type, work_item_type>;
+  using store_type            = std::vector<stored_work_item_type>;
+  using mutex_type            = fetch::mutex::Mutex;
+  using lock_type             = std::unique_lock<mutex_type>;
 
 public:
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
-  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
-  FutureWorkStore operator=(FutureWorkStore &&rhs)             = delete;
-  bool            operator==(const FutureWorkStore &rhs) const = delete;
-  bool            operator<(const FutureWorkStore &rhs) const  = delete;
+  FutureWorkStore              operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore              operator=(FutureWorkStore &&rhs)             = delete;
+  bool                         operator==(const FutureWorkStore &rhs) const = delete;
+  bool                         operator<(const FutureWorkStore &rhs) const  = delete;
+  static constexpr char const *LOGGING_NAME                                 = "FutureWorkStore";
 
-  class WorkItemSorting
+  class StoredWorkItemSorting
   {
   public:
-    WorkItemSorting()
+    StoredWorkItemSorting()
     {}
-    virtual ~WorkItemSorting()
+    virtual ~StoredWorkItemSorting()
     {}
 
-    bool operator()(const work_item_type &a, const work_item_type &b) const
+    bool operator()(const stored_work_item_type &a, const stored_work_item_type &b) const
     {
       return a.first > b.first;
     }
@@ -59,26 +62,117 @@ public:
 
   FutureWorkStore()
   {
-    std::make_heap(workStore_.begin(), workStore_.end(), sorter_);
+    std::make_heap(store_.begin(), store_.end(), sorter_);
   }
 
   virtual ~FutureWorkStore()
-  {}
+  {
+    shutdown_.store(true);
+    clear();  // remove any pending things
+  }
 
-  virtual bool IsDue()
+  virtual void Abort()
+  {
+    shutdown_.store(true);
+  }
+
+  void clear()
   {
     lock_type mlock(mutex_);
-    if (workStore_.empty())
+    store_.clear();
+  }
+
+  bool IsDue()
+  {
+    lock_type mlock(mutex_);
+    return IsDueActual();
+  }
+
+  std::chrono::milliseconds DueIn()
+  {
+    lock_type mlock(mutex_);
+    return DueInActual();
+  }
+
+  virtual int Visit(std::function<void(work_item_type)> visitor, int maxprocesses = 1)
+  {
+    lock_type mlock(mutex_, std::try_to_lock);
+    if (!mlock)
     {
-      return false;
+      return -1;
     }
-    auto nextDue = workStore_.back();
+    int processed = 0;
+    while (IsDueActual())
+    {
+      if (shutdown_.load())
+      {
+        break;
+      }
+      if (processed >= maxprocesses)
+      {
+        break;
+      }
+      auto work = GetNextActual();
+      visitor(work);
+      processed++;
+    }
+    return processed;
+  }
+
+  virtual work_item_type GetNext()
+  {
+    lock_type mlock(mutex_);
+    return GetNextActual();
+  }
+
+  template <typename F>
+  void Post(F &&f, uint32_t milliseconds)
+  {
+    if (shutdown_.load())
+    {
+      return;
+    }
+    lock_type mlock(mutex_);
+    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
+    store_.push_back(stored_work_item_type(dueTime, f));
+    std::push_heap(store_.begin(), store_.end(), sorter_);
+  }
+
+private:
+  virtual work_item_type GetNextActual()
+  {
+    std::pop_heap(store_.begin(), store_.end(), sorter_);
+    auto nextDue = store_.back();
+    store_.pop_back();
+    return nextDue.second;
+  }
+
+  std::chrono::milliseconds DueInActual()
+  {
+    if (store_.empty())
+    {
+      return std::chrono::milliseconds(1000);
+    }
+    auto nextDue = store_.back();
 
     auto tp     = std::chrono::system_clock::now();
     auto due    = nextDue.first;
-    auto wayoff = (due - tp).count();
+    auto wayoff = (due - tp);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(wayoff);
+  }
 
-    if (wayoff < 0)
+  bool IsDueActual()
+  {
+    if (shutdown_.load())
+    {
+      return false;
+    }
+    if (store_.empty())
+    {
+      return false;
+    }
+
+    if (DueInActual().count() <= 0)
     {
       return true;
     }
@@ -88,28 +182,10 @@ public:
     }
   }
 
-  virtual work_func_type GetNext()
-  {
-    lock_type mlock(mutex_);
-    std::pop_heap(workStore_.begin(), workStore_.end(), sorter_);
-    auto nextDue = workStore_.back();
-    workStore_.pop_back();
-    return nextDue.second;
-  }
-
-  template <typename F>
-  void Post(F &&f, uint32_t milliseconds)
-  {
-    lock_type mlock(mutex_);
-    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
-    workStore_.push_back(work_item_type(dueTime, f));
-    std::push_heap(workStore_.begin(), workStore_.end(), sorter_);
-  }
-
-private:
-  WorkItemSorting    sorter_;
-  heap_storage_type  workStore_;
-  mutable mutex_type mutex_;
+  StoredWorkItemSorting sorter_;
+  store_type            store_;
+  mutable mutex_type    mutex_{__LINE__, __FILE__};
+  std::atomic<bool>     shutdown_{false};
 };
 
 }  // namespace details

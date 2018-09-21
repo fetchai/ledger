@@ -93,7 +93,10 @@ public:
   typename std::enable_if<std::is_pod<R>::value>::type SetAllZero()
   {
     assert(pointer_ != nullptr);
-    std::memset(pointer_, 0, padded_size() * sizeof(type));
+    if (pointer_)
+    {
+      std::memset(pointer_, 0, padded_size() * sizeof(type));
+    }
   }
 
   template <typename R = T>

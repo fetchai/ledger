@@ -46,6 +46,8 @@ class ApproxExpImplementation
   static constexpr double exponent_offset_ = ((1ull << (E_EXPONENT - 1)) - 1);
 
 public:
+  static constexpr char const *LOGGING_NAME = "ApproxExp";
+
   ApproxExpImplementation(ApproxExpImplementation const &other) = delete;
   ApproxExpImplementation operator=(ApproxExpImplementation const &other) = delete;
 

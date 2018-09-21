@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
 #include "network/service/server.hpp"
 #include "network/tcp/tcp_server.hpp"
 
@@ -37,7 +37,7 @@ public:
     : ServiceServer(port, network_manager)
     , executor_(std::move(resources))
   {
-    this->Add(protocols::FetchProtocols::EXECUTOR, &protocol_);
+    this->Add(RPC_EXECUTOR, &protocol_);
   }
   ~ExecutorRpcService() override = default;
 

@@ -33,6 +33,8 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
+static constexpr char const *LOGGING_NAME = "TcpClientServerStressTests";
+
 std::atomic<std::size_t> clientReceivedCount_{0};
 std::atomic<std::size_t> serverReceivedCount{0};
 
@@ -46,11 +48,11 @@ class Server : public TCPServer
 {
 public:
   Server(uint16_t port, NetworkManager nmanager)
-    : TCPServer(port, nmanager)
-  {}
-
-  ~Server()
-  {}
+    : TCPServer(port, nmanager){} : TCPServer(port, nmanager)
+  {
+    Start();
+  }
+  ~Server() = default;
 
   void PushRequest(connection_handle_type client, message_type const &msg) override
   {
@@ -142,7 +144,6 @@ void TestCase2(std::string host, uint16_t port)
     NetworkManager nmanager(N);
     nmanager.Start();
     Server server(port, nmanager);
-
     waitUntilConnected(host, port);
 
     Client client(host, port, nmanager);
@@ -256,7 +257,7 @@ int main(int argc, char *argv[])
     s >> iterations;
   }
 
-  fetch::logger.Info("Running test iterations: ", iterations);
+  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {

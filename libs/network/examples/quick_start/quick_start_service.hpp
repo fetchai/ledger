@@ -33,6 +33,8 @@ namespace quick_start {
 class QuickStartService : public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
+  static constexpr char const *LOGGING_NAME = "QuickStartService";
+
   /*
    * Constructor for QuickStartService, will create a server to respond to rpc
    * calls
@@ -45,7 +47,7 @@ public:
 
     // Prints when compiled in debug mode. Options: logger.Debug logger.Info
     // logger.Error
-    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort);
 
     // We construct our node, and attach it to the protocol
     node_               = std::make_shared<Node>(tm);

@@ -43,6 +43,8 @@ public:
   using shared_request_type = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
+  static constexpr char const *LOGGING_NAME = "HTTPConnection";
+
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
@@ -50,7 +52,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("HTTP connection from ", socket_.remote_endpoint().address().to_string());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
+                    socket_.remote_endpoint().address().to_string());
   }
 
   ~HTTPConnection()
@@ -102,7 +105,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Ready to ready HTTP header");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
     shared_request_type request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
@@ -113,8 +116,8 @@ public:
     auto self = shared_from_this();
 
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      fetch::logger.Debug("Read HTTP header");
-      fetch::logger.Debug("Read HTTP header of " + std::to_string(len) + " bytes");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP header of " + std::to_string(len) + " bytes");
 
       if (ec)
       {
@@ -123,7 +126,8 @@ public:
       }
       else
       {
-        HTTPRequest::SetHeader(*request, *buffer_ptr, len);
+        request->ParseHeader(*buffer_ptr, len);
+
         if (is_open_)
         {
           ReadBody(buffer_ptr, request);
@@ -138,11 +142,11 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Read HTTP body");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size())
     {
-      HTTPRequest::SetBody(*request, *buffer_ptr);
+      request->ParseBody(*buffer_ptr);
 
       manager_.PushRequest(handle_, *request);
 
@@ -156,7 +160,7 @@ public:
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
-      fetch::logger.Debug("Read HTTP body cb");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body cb");
       if (ec)
       {
         this->HandleError(ec, request);
@@ -181,7 +185,7 @@ public:
 
     std::stringstream ss;
     ss << ec << ":" << ec.message();
-    fetch::logger.Debug("HTTP error: ", ss.str());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP error: ", ss.str());
 
     Close();
   }
@@ -197,7 +201,7 @@ public:
     write_queue_.pop_front();
     write_mutex_.unlock();
 
-    HTTPResponse::WriteToBuffer(res, *buffer_ptr);
+    res.ToStream(*buffer_ptr);
     auto self = shared_from_this();
     auto cb   = [this, self, buffer_ptr](std::error_code ec, std::size_t) {
       if (!ec)

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -29,6 +30,9 @@ class Peer
 public:
   // Construction / Destruction
   Peer() = default;
+  Peer(char const *address)
+    : Peer(std::string{address})
+  {}
   Peer(std::string const &address);
   Peer(std::string address, uint16_t port)
     : address_{std::move(address)}
@@ -49,19 +53,30 @@ public:
   {
     return address_;
   }
-
   uint16_t port() const
   {
     return port_;
   }
 
+  std::string ToString() const;
+  std::string ToUri() const;
+
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;
 
-  friend std::ostream &operator<<(std::ostream &s, Peer const &peer)
+  bool operator==(Peer const &other) const;
+  bool operator<(Peer const &other) const;
+
+  template <typename T>
+  friend void Serialize(T &serializer, Peer const &peer)
   {
-    s << peer.address_ << ':' << peer.port_;
-    return s;
+    serializer << peer.address_ << peer.port_;
+  }
+
+  template <typename T>
+  friend void Deserialize(T &serializer, Peer &peer)
+  {
+    serializer >> peer.address_ >> peer.port_;
   }
 
 private:
@@ -69,5 +84,57 @@ private:
   uint16_t    port_{0};
 };
 
+inline std::string Peer::ToString() const
+{
+  return address_ + ':' + std::to_string(port_);
+}
+
+inline std::string Peer::ToUri() const
+{
+  return "tcp://" + address_ + ':' + std::to_string(port_);
+}
+
+inline bool Peer::operator==(Peer const &other) const
+{
+  return ((address_ == other.address_) && (port_ == other.port_));
+}
+
+inline bool Peer::operator<(Peer const &other) const
+{
+  bool r = false;
+  if (address_ < other.address_)
+  {
+    r = true;
+  }
+  else if (address_ > other.address_)
+  {
+    r = false;
+  }
+  else if (port_ < other.port_)
+  {
+    r = true;
+  }
+  return r;
+}
+
+inline std::ostream &operator<<(std::ostream &s, Peer const &peer)
+{
+  s << peer.ToString();
+  return s;
+}
+
 }  // namespace network
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::network::Peer>
+{
+  std::size_t operator()(fetch::network::Peer const &peer) const noexcept
+  {
+    return std::hash<std::string>{}(peer.ToString());
+  }
+};
+
+}  // namespace std

@@ -34,13 +34,16 @@ class NetworkMineTestService : public service::ServiceServer<fetch::network::TCP
                                public http::HTTPServer
 {
 public:
+  static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
+
   NetworkMineTestService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
     : ServiceServer(tcpPort, tm)
-    , HTTPServer(httpPort, tm)
+    , HTTPServer(tm)
+    , http_port_(httpPort)
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort,
-                        " and HTTP port: ", httpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
+                    " and HTTP port: ", httpPort);
     node_ = std::make_shared<T>(tm, tcpPort);
 
     httpInterface_           = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
@@ -55,7 +58,20 @@ public:
     this->AddModule(*httpInterface_);
   }
 
+  void Start()
+  {
+    TCPServer::Start();
+    HTTPServer::Start(http_port_);
+  }
+
+  void Stop()
+  {
+    TCPServer::Stop();
+    HTTPServer::Stop();
+  }
+
 private:
+  uint16_t                                               http_port_;
   std::shared_ptr<T>                                     node_;
   std::shared_ptr<network_mine_test::HttpInterface<T>>   httpInterface_;
   std::unique_ptr<protocols::NetworkMineTestProtocol<T>> networkMineTestProtocol_;
