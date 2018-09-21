@@ -59,6 +59,10 @@ public:
   {
     return external_address_;
   }
+  std::string const &interface_address() const
+  {
+    return external_address_;
+  }
 
 private:
   using IoService      = asio::io_service;

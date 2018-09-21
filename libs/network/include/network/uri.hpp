@@ -95,7 +95,7 @@ public:
   friend void Deserialize(T &serializer, Uri &x);
 
   static Uri FromIdentity(ConstByteArray const &identity);
-
+  static bool IsUri(const std::string &possible_uri);
 private:
   ConstByteArray uri_;
   Scheme         scheme_{Scheme::Unknown};
@@ -162,6 +162,7 @@ inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 {
   return Uri{"muddle://" + byte_array::ToBase64(identity)};
 }
+
 
 }  // namespace network
 }  // namespace fetch

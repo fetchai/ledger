@@ -74,5 +74,13 @@ bool Uri::Parse(ConstByteArray const &uri)
   return success;
 }
 
+bool Uri::IsUri(const std::string &possible_uri)
+{
+  std::smatch matches;
+  std::regex_match(possible_uri, matches, URI_FORMAT);
+  return (matches.size() == 3);
+}
+
+
 }  // namespace network
 }  // namespace fetch

@@ -73,6 +73,7 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "WorkCycle");
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
@@ -288,7 +289,7 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
   // from the remaining set of addresses schedule a manifest request
   for (auto const &address : new_manifest_update_addresses)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Requsting manifest from: ", ToBase64(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "Requsting manifest from: ", ToBase64(address));
 
     // make the RPC call
     auto prom = network::PromiseOf<network::Manifest>(
@@ -361,9 +362,9 @@ void P2PService::SetPeerGoals(uint32_t min, uint32_t max)
   max_peers_ = max;
 }
 
-void P2PService::SetLocalManifest(Manifest &&manifest)
+void P2PService::SetLocalManifest(const Manifest &manifest)
 {
-  manifest_ = std::move(manifest);
+  manifest_ = manifest;
   local_services_.MakeFromManifest(manifest_);
 
   thread_pool_->Post([this]() { this->Refresh(); });

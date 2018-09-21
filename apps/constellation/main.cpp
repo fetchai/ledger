@@ -90,6 +90,7 @@ struct CommandLineArguments
   bool        bootstrap{false};
   bool        mine{false};
   std::string dbdir;
+  std::string external_address;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -100,6 +101,7 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
+    std::string                bootstrap_address;
     std::string                external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
@@ -116,6 +118,9 @@ struct CommandLineArguments
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
+
+    parameters.add(external_address, "external", "This node's global IP addr.", std::string{});
+    parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -143,8 +148,18 @@ struct CommandLineArguments
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
       {
-        args.interface = bootstrap->external_address();
+        args.interface = bootstrap->interface_address();
+
+        if (args.external_address == "")
+        {
+          args.external_address = bootstrap->external_address();
+        }
       }
+    }
+
+    if (args.external_address == "")
+    {
+      args.external_address = "127.0.0.1";
     }
 
     return args;
@@ -197,6 +212,7 @@ struct CommandLineArguments
     s << "num lanes......: " << args.num_lanes << std::endl;
     s << "num slices.....: " << args.num_slices << std::endl;
     s << "bootstrap......: " << args.bootstrap << std::endl;
+    s << "external addr..: " << args.external_address << std::endl;
     s << "db-prefix......: " << args.dbdir << std::endl;
     s << "interface......: " << args.interface << std::endl;
     s << "mining.........: " << args.mine << std::endl;
@@ -318,7 +334,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir);
+        args.interface, args.dbdir
+        , args.external_address);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
