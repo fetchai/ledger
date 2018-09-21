@@ -46,7 +46,8 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   for( auto const& sig: tx.signatures())
   {
     (void)sig;
-    byte_array::ConstByteArray const tx_data_for_signing {tx.TxDataForSigning<serializers::ByteArrayBuffer>()};
+    TxDataForSigningC txdfs{tx};
+    byte_array::ConstByteArray const tx_data_for_signing {txdfs.DataForSigning(sig.first)};
     tx_v["data"] = byte_array::ToBase64(tx_data_for_signing);
   }
 
