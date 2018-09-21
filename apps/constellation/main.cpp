@@ -119,7 +119,8 @@ struct CommandLineArguments
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
-                   "The authentication token to be used with bootstrapping the client");
+                   "The authentication token to be used with bootstrapping the client",
+                   std::string{});
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
     parameters.add(external_address, "external", "This node's global IP addr.", std::string{});

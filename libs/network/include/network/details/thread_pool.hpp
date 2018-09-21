@@ -205,12 +205,6 @@ public:
       thread->join();
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Delete threads");
-    for (auto &thread : threads_)
-    {
-      delete thread;  // TODO(EJF): Should use smart pointers here
-    }
-
     threads_.clear();
   }
 
