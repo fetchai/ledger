@@ -65,7 +65,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
-  Protocol() = default;
+  Protocol()          = default;
   virtual ~Protocol() = default;
 
   /* Operator to access the different functions in the protocol.
