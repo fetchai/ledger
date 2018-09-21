@@ -160,7 +160,9 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   auto manifest_copy = my_manifest_;
   p2p_.SetLocalManifest(manifest_copy);
 
-  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)));
+  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
+
+  p2p_.Start(initial_peers, my_p2p_uri);
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -219,7 +221,10 @@ Constellation::Manifest Constellation::GenerateManifest() const
   }
 
   std::string my_manifest =
-      std::string("MAINCHAIN   0     ") + my_uri_base + std::to_string(main_chain_port_) + "\n";
+    std::string("MAINCHAIN   0     ") + my_uri_base + std::to_string(main_chain_port_)
+    + "\n"
+    + std::string("P2P   0     ") + my_uri_base + std::to_string(p2p_port_)
+    + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
