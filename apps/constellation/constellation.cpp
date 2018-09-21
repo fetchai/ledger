@@ -62,8 +62,8 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
  */
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix
-                             , std::string my_network_address)
+                             std::string interface_address, std::string const &db_prefix,
+                             std::string my_network_address)
   : active_{true}
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
@@ -115,7 +115,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
     http_.AddModule(*module);
   }
 
-  this -> my_manifest_ = GenerateManifest();
+  this->my_manifest_ = GenerateManifest();
 }
 
 /**
@@ -123,7 +123,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-  void Constellation::Run(UriList const &initial_peers, bool mining)
+void Constellation::Run(UriList const &initial_peers, bool mining)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -219,15 +219,13 @@ Constellation::Manifest Constellation::GenerateManifest() const
   }
 
   std::string my_manifest =
-    std::string("MAINCHAIN   0     ") + my_uri_base + std::to_string(main_chain_port_)
-    + "\n";
+      std::string("MAINCHAIN   0     ") + my_uri_base + std::to_string(main_chain_port_) + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest +=
-      std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base + std::to_string(lane_port)
-      + "\n";
+    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
+                   std::to_string(lane_port) + "\n";
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);

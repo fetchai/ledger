@@ -81,6 +81,5 @@ bool Uri::IsUri(const std::string &possible_uri)
   return (matches.size() == 3);
 }
 
-
 }  // namespace network
 }  // namespace fetch
