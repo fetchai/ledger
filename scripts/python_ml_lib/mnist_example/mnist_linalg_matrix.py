@@ -25,14 +25,14 @@ class MnistLearner():
         self.validation_size = 10000
 
         self.n_epochs = 30
-        self.batch_size = 20
-        self.alpha = 0.1
+        self.batch_size = 10
+        self.alpha = 0.2
 
         self.mnist_input_size = 784         # pixels in 28 * 28 mnist images
         self.mnist_output_size = 10         # 10 possible characters to recognise
 
-        self.activation_fn = 'relu'
-        self.layers = [100]
+        self.activation_fn = 'sigmoid'
+        self.layers = [20]
 
         self.initialise_network()
 
@@ -201,6 +201,7 @@ class MnistLearner():
 
                 # delta = (a[i] > 0) * delta.dot(weights[i].T)
                 # grads[i-1] = a[i-1].T.dot(delta)
+                last_delta = new_delta
         else:
             raise ValueError()
 

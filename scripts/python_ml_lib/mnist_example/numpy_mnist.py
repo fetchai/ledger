@@ -1,8 +1,8 @@
 import numpy as np
 import mnist
 
-ACTIVATION_FN = 'relu'
-# ACTIVATION_FN = 'sigmoid'
+# ACTIVATION_FN = 'relu'
+ACTIVATION_FN = 'sigmoid'
 
 
 def feed_forward(X, weights):
@@ -62,13 +62,18 @@ def sigmoid(z):
 # sigmoid = lambda x: 1 / (1 + np.exp(-x))
 d_sigmoid = lambda y: y * (1 - y)
 
-trX, trY, teX, teY = mnist.load_data(one_hot=True, training_size=50000, validation_size=10000)
+trX, trY, teX, teY = mnist.load_data(one_hot=True, training_size=2000, validation_size=10000)
 
-h_lay_size = 100
+h_lay_size = 10
 
+# weights = [
+#     np.random.randn(28*28, h_lay_size) / np.sqrt(28*28),
+#     np.random.randn(h_lay_size, 10) / np.sqrt(h_lay_size)]
 weights = [
     np.random.randn(28*28, h_lay_size) / np.sqrt(28*28),
-    np.random.randn(h_lay_size, 10) / np.sqrt(h_lay_size)]
+    np.random.randn(10, 11) / np.sqrt(10),
+    np.random.randn(11, 10) / np.sqrt(11)]
+
 # weights = [
 #     np.random.rand(28*28, h_lay_size) / np.sqrt(28*28),
 #     np.random.rand(h_lay_size, 10) / np.sqrt(h_lay_size)]
@@ -76,7 +81,7 @@ weights = [
 #     np.ones([28*28, h_lay_size]) / np.sqrt(28*28),
 #     np.ones([h_lay_size, 10]) / np.sqrt(h_lay_size)]
 
-num_epochs, batch_size, learn_rate = 30, 100, 0.2
+num_epochs, batch_size, learn_rate = 30, 10, 0.2
 
 for i in range(num_epochs):
     for j in range(0, len(trX), batch_size):
