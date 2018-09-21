@@ -63,7 +63,7 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             const std::string &my_network_address)
+                             std::string my_network_address)
   : active_{true}
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
@@ -91,7 +91,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , http_{network_manager_}
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
-  , my_network_address_(my_network_address)
+  , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
 
