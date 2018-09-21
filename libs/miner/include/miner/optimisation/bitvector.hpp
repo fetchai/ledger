@@ -26,7 +26,6 @@ namespace fetch {
 namespace bitmanip {
 namespace details {
 
-template <std::size_t IMPL>
 class BitVectorImplementation
 {
 public:
@@ -35,9 +34,10 @@ public:
 
   enum
   {
-    LOG_BITS  = meta::Log2<8 * sizeof(data_type)>::value,
-    BIT_MASK  = (1ull << LOG_BITS) - 1,
-    SIMD_SIZE = container_type::E_SIMD_COUNT
+    ELEMENT_BIT_SIZE = sizeof(data_type) << 3,
+    LOG_BITS         = meta::Log2<8 * sizeof(data_type)>::value,
+    BIT_MASK         = (1ull << LOG_BITS) - 1,
+    SIMD_SIZE        = container_type::E_SIMD_COUNT
   };
 
   BitVectorImplementation()
@@ -45,7 +45,7 @@ public:
     Resize(0);
   }
 
-  explicit BitVectorImplementation(std::size_t const &n)
+  explicit BitVectorImplementation(std::size_t n)
   {
     Resize(n);
   }
@@ -56,13 +56,16 @@ public:
     , blocks_(other.blocks_)
   {}
 
+#if 0
   BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)
     : BitVectorImplementation(data)
   {
     assert(size <= size_);
     size_ = size;
   }
+#endif
 
+#if 0
   BitVectorImplementation(std::initializer_list<uint64_t> const &data)
   {
     data_         = container_type(data.size());
@@ -74,22 +77,28 @@ public:
     blocks_ = data.size();
     size_   = 8 * sizeof(data_type) * blocks_;
   }
+#endif
 
-  void Resize(std::size_t const &n)
+  /**
+   * Resize the vector to n bits
+   *
+   * @param bit_size The size in bits of the vector
+   */
+  void Resize(std::size_t bit_size)
   {
     container_type old = data_;
 
-    std::size_t q = n / (sizeof(data_type) * 8);
-    if ((q * 8 * sizeof(data_type)) < n)
+    // calculate
+    std::size_t const num_elements = (bit_size + (ELEMENT_BIT_SIZE - 1)) / ELEMENT_BIT_SIZE;
+
+    data_   = container_type(num_elements);
+    blocks_ = num_elements;
+    size_   = bit_size;
+
+    if (bit_size > 0)
     {
-      ++q;
+      SetAllZero();  // TODO(issue 29): Only set those
     }
-
-    data_   = container_type(q);
-    blocks_ = q;
-    size_   = n;
-
-    SetAllZero();  // TODO(issue 29): Only set those
 
     // TODO(issue 29): Copy data;
   }
@@ -160,6 +169,8 @@ public:
   {
     for (std::size_t i = 0; i < blocks_; ++i)
     {
+      assert(i < data_.size());
+
       data_[i] = a.data_[i] & b.data_[i];
     }
   }
@@ -206,6 +217,7 @@ public:
 
   data_type bit(std::size_t const &block, std::size_t const &b) const
   {
+    assert(block < data_.size());
     return (data_[block] >> b) & 1;
   }
 
@@ -252,26 +264,36 @@ public:
     return data_;
   }
 
+  std::size_t PopCount() const
+  {
+    std::size_t ret = 0;
+
+    for (std::size_t i = 0; i < blocks_; ++i)
+    {
+      ret += static_cast<std::size_t>(__builtin_popcountl(data_[i]));
+    }
+
+    return ret;
+  }
+
 private:
   container_type data_;
   std::size_t    size_;
   std::size_t    blocks_;
 };
 
-template <std::size_t N>
-inline int PopCount(BitVectorImplementation<N> const &n)
+inline std::ostream &operator<<(std::ostream &s, BitVectorImplementation const &b)
 {
-  int ret = 0;
-  for (std::size_t i = 0; i < n.blocks(); ++i)
+#if 1
+  for (std::size_t i = 0; i < b.size(); ++i)
   {
-    ret += __builtin_popcountl(n(i));
+    if (i && ((i % 10) == 0))
+    {
+      s << ' ';
+    }
+    s << b.bit(i);
   }
-  return ret;
-}
-
-template <std::size_t N>
-std::ostream &operator<<(std::ostream &s, BitVectorImplementation<N> const &b)
-{
+#else
   for (std::size_t i = 0; i < b.blocks(); ++i)
   {
     if (i != 0)
@@ -280,13 +302,14 @@ std::ostream &operator<<(std::ostream &s, BitVectorImplementation<N> const &b)
     }
     s << std::hex << b(i);
   }
+#endif
 
   return s;
 }
 
 }  // namespace details
 
-using BitVector = details::BitVectorImplementation<0>;
+using BitVector = details::BitVectorImplementation;
 
 }  // namespace bitmanip
 }  // namespace fetch

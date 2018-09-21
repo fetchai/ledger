@@ -52,6 +52,8 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
+  static constexpr char const *LOGGING_NAME = "ShapeLessArray";
+
   /* Contructs an empty shape-less array. */
   ShapeLessArray(std::size_t const &n)
     : data_(n)
@@ -71,9 +73,9 @@ public:
     : data_()
     , size_(0)
   {
+    // TODO(private issue 226): Make this a static function and add failure mechanism
     std::vector<type> elems;
     elems.reserve(1024);
-    bool failed = false;
 
     for (uint64_t i = 0; i < c.size();)
     {
@@ -90,7 +92,7 @@ public:
       default:
         if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
         {
-          failed = true;
+          // TODO(private issue 226): failed
         }
         else
         {
@@ -424,6 +426,36 @@ public:
   bool operator!=(ShapeLessArray const &other) const
   {
     return !(this->operator==(other));
+  }
+
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(ShapeLessArray const &other)
+  {
+    this->InLineAdd(other);
+    return *this;
+  }
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(type const &scalar)
+  {
+    this->InLineAdd(scalar);
+    return *this;
+  }
+
+  ShapeLessArray operator+(ShapeLessArray const &other)
+  {
+    return this->InLineAdd(other);
+  }
+  ShapeLessArray operator+(type const &scalar)
+  {
+    return this->InLineAdd(scalar);
   }
 
   /* One-dimensional reference index operator.

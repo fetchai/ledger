@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -28,6 +29,8 @@ struct TestBlock
   using resource_id_map_type = std::vector<std::string>;
   using block_type           = fetch::ledger::ExecutionManager::block_type;
   using block_digest_type    = fetch::ledger::ExecutionManager::block_digest_type;
+
+  static constexpr char const *LOGGING_NAME = "TestBlock";
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
@@ -58,7 +61,7 @@ struct TestBlock
     resource_id_map_type resources = BuildResourceMap(log2_num_lanes);
     std::size_t const    num_lanes = 1u << log2_num_lanes;
 
-    fetch::logger.Info("Generating block: ", num_lanes, " x ", num_slices);
+    FETCH_LOG_INFO(LOGGING_NAME, "Generating block: ", num_lanes, " x ", num_slices);
 
     // generate the block hash and assign the previous hash
     fetch::byte_array::ByteArray digest;
@@ -105,7 +108,7 @@ struct TestBlock
             summary.transaction_hash = GenerateHash(rng);
             summary.contract_name    = "fetch.dummy.run";
 
-            //            fetch::logger.Info("Generating TX: ",
+            //            FETCH_LOG_INFO(LOGGING_NAME,"Generating TX: ",
             //            fetch::byte_array::ToBase64(summary.transaction_hash));
 
             // update the groups
@@ -113,7 +116,7 @@ struct TestBlock
             {
               std::size_t const index = (i + lane_offset);
 
-              //              fetch::logger.Info(" - Resource: ", index);
+              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ", index);
 
               summary.resources.insert(resources.at(index));
             }
@@ -186,7 +189,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            block_digest_type const &previous_hash = block_digest_type{})
+                            block_digest_type const &previous_hash = fetch::chain::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

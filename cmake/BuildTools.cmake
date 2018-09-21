@@ -44,10 +44,18 @@ function(setup_library_examples library)
   if(FETCH_ENABLE_EXAMPLES)
     list(REMOVE_AT ARGV 0)
 
+    # build up the library suffix i.e. with fetch-http the suffix would be http
+    string(REGEX REPLACE "fetch-(.*)" "\\1" library_suffix ${library})
+    if (library_suffix STREQUAL library)
+      set (library_suffix "")
+    else ()
+      set (library_suffix "-${library_suffix}")
+    endif ()
+
     # examples
     set(examples_root ${CMAKE_CURRENT_SOURCE_DIR})
-    if(IS_DIRECTORY ${examples_root})
 
+    if(IS_DIRECTORY ${examples_root})
       file(GLOB children RELATIVE ${examples_root} ${examples_root}/*)
       set(dirlist "")
       foreach(child ${children})
@@ -55,7 +63,10 @@ function(setup_library_examples library)
         if(IS_DIRECTORY ${example_path})
           set(disabled_path ${example_path}/.disabled)
           set(exclusion_path ${example_path}/.manual-config)
-          set(example_name "example_${child}")
+
+          # build the example name - replace "_" in favour of "-" to keep target names uniform
+          set(example_name "example${library_suffix}-${child}")
+          string(REPLACE "_" "-" example_name "${example_name}")
 
           if(EXISTS ${exclusion_path})
             # do nothing the target will be manually configured
@@ -68,6 +79,7 @@ function(setup_library_examples library)
             add_executable(${example_name} ${example_headers} ${example_srcs})
             target_link_libraries(${example_name} PRIVATE ${library})
             target_include_directories(${example_name} PRIVATE ${example_path})
+            target_include_directories(${example_name} PRIVATE ${examples_root})
 
             if(FETCH_VERBOSE_CMAKE)
               message(STATUS "Creating ${example_name} target linking to ${library}")

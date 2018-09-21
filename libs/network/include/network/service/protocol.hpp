@@ -33,6 +33,9 @@
 
 namespace fetch {
 namespace service {
+
+class FeedSubscriptionManager;
+
 /* A class that defines a generic protocol.
  *
  * This class is used for defining a general protocol with
@@ -59,6 +62,8 @@ public:
   using middleware_type =
       std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
 
+  static constexpr char const *LOGGING_NAME = "Protocol";
+
   Protocol()
   {
     for (std::size_t i = 0; i < 256; ++i)
@@ -67,7 +72,7 @@ public:
     }
   }
 
-  ~Protocol()
+  virtual ~Protocol()
   {
     for (std::size_t i = 0; i < 256; ++i)
     {
@@ -145,6 +150,9 @@ public:
     members_[n] = fnc;
   }
 
+  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  {}
+
   /* Registers a feed from an implementation.
    * @feed is the unique feed identifier.
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
@@ -170,7 +178,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    fetch::logger.Debug("Making subscription for ", client, " ", feed, " ", id);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
     feeds_mutex_.lock();
     std::size_t i = 0;
@@ -251,7 +259,7 @@ private:
 
   callable_type *                                       members_[256] = {nullptr};
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  fetch::mutex::Mutex                                   feeds_mutex_;
+  fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
 };
 }  // namespace service
 }  // namespace fetch

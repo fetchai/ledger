@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   H T T P   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-http)
 
 # CMake configuration
@@ -18,4 +18,4 @@ setup_library(fetch-http)
 target_link_libraries(fetch-http PUBLIC fetch-network)
 
 add_subdirectory(examples)
-
+add_subdirectory(tests)

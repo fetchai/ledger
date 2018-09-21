@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   M I N E R   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-miner)
 
 # CMake Configuration
@@ -15,5 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-miner)
-target_link_libraries(fetch-miner INTERFACE fetch-core fetch-miner)
+target_link_libraries(fetch-miner PUBLIC fetch-core fetch-ledger)
 
+# Unit tests
+add_subdirectory(tests)

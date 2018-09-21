@@ -39,6 +39,8 @@ namespace ledger {
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
+  static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
+
   enum class ErrorCode
   {
     NOT_IMPLEMENTED = 1000,
@@ -51,21 +53,25 @@ public:
   {
 
     // register all the routes
-    Post("/register", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnRegister(request);
-    });
+    Post("/api/wallet/register",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnRegister(request);
+         });
 
-    Post("/balance", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnBalance(request);
-    });
+    Post("/api/wallet/balance",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnBalance(request);
+         });
 
-    Post("/transfer", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnTransfer(request);
-    });
+    Post("/api/wallet/transfer",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnTransfer(request);
+         });
 
-    Post("/transactions", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      return OnTransactions(request);
-    });
+    Post("/api/wallet/transactions",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnTransactions(request);
+         });
   }
 
 private:
@@ -101,7 +107,10 @@ private:
       chain::MutableTransaction mtx;
       mtx.set_contract_name("fetch.token.wealth");
       mtx.set_data(oss.str());
+      mtx.set_fee(rng() & 0x1FF);
       mtx.PushResource(address);
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
       // dispatch the transaction
       processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
@@ -109,15 +118,13 @@ private:
 
     std::ostringstream oss;
     oss << data;
-    return http::CreateJsonResponse(oss.str(), http::status_code::SUCCESS_OK);
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
 
   http::HTTPResponse OnBalance(http::HTTPRequest const &request)
   {
-
     try
     {
-
       // parse the json request
       json::JSONDocument doc;
       doc.Parse(request.body());
@@ -130,11 +137,11 @@ private:
       std::ostringstream oss;
       oss << response;
 
-      return http::CreateJsonResponse(oss.str(), http::status_code::SUCCESS_OK);
+      return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
     }
     catch (json::JSONParseException const &ex)
     {
-      fetch::logger.Warn("Failed to parse input balance request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input balance request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
@@ -180,12 +187,12 @@ private:
         // dispatch to the wider system
         processor_.AddTransaction(tx);
 
-        return http::CreateJsonResponse(R"({"success": true})", http::status_code::SUCCESS_OK);
+        return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }
     catch (json::JSONParseException const &ex)
     {
-      fetch::logger.Warn("Failed to parse input transfer request: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input transfer request: ", ex.what());
     }
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
@@ -204,7 +211,7 @@ private:
         << R"("error_code": )" << static_cast<int>(error_code) << ',' << R"("message": )"
         << ToString(error_code) << '}';
 
-    return http::CreateJsonResponse(oss.str(), http::status_code::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse(oss.str(), http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
   static const char *ToString(ErrorCode error_code)

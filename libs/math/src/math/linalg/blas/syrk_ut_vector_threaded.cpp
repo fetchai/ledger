@@ -24,11 +24,11 @@ namespace fetch {
 namespace math {
 namespace linalg {
 
-template <typename S>
-void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+template <typename S, typename MATRIX>
+void Blas<S, MATRIX, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
           Computes(_C = _alpha * T(_A) * _A + _beta * _C),
           platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>::
-     operator()(type const &alpha, Matrix<type> const &a, type const &beta, Matrix<type> &c)
+     operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c)
 {
   std::size_t j;
   if ((c.height() == 0) || (((alpha == 0.0) || (a.height() == 0)) && (beta == 1.0)))
@@ -43,12 +43,13 @@ void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
       for (j = 0; j < c.height(); ++j)
       {
 
-        vector_register_type vec_zero(0.0);
+        typename MATRIX::vector_register_type vec_zero(0.0);
 
         auto                 ret_slice = c.data().slice(c.padded_height() * j, j + 1);
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
-            range, [vec_zero](vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
+            range,
+            [vec_zero](typename MATRIX::vector_register_type &vw_c_j) { vw_c_j = vec_zero; });
       }
     }
     else
@@ -56,14 +57,15 @@ void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
       for (j = 0; j < c.height(); ++j)
       {
 
-        vector_register_type vec_beta(beta);
+        typename MATRIX::vector_register_type vec_beta(beta);
 
         auto                 ret_slice = c.data().slice(c.padded_height() * j, j + 1);
         auto                 slice_c_j = c.data().slice(c.padded_height() * j, j + 1);
         memory::TrivialRange range(0, j + 1);
         ret_slice.in_parallel().Apply(
             range,
-            [vec_beta](vector_register_type const &vr_c_j, vector_register_type &vw_c_j) {
+            [vec_beta](typename MATRIX::vector_register_type const &vr_c_j,
+                       typename MATRIX::vector_register_type &      vw_c_j) {
               vw_c_j = vec_beta * vr_c_j;
             },
             slice_c_j);
@@ -87,9 +89,8 @@ void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
         memory::TrivialRange range(0, a.height());
         temp = slice_a_i.in_parallel().SumReduce(
             range,
-            [](vector_register_type const &vr_a_i, vector_register_type const &vr_a_j) {
-              return vr_a_i * vr_a_j;
-            },
+            [](typename MATRIX::vector_register_type const &vr_a_i,
+               typename MATRIX::vector_register_type const &vr_a_j) { return vr_a_i * vr_a_j; },
             slice_a_j);
         if (beta == 0.0)
         {
@@ -107,13 +108,21 @@ void Blas<S, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
   return;
 }
 
-template class Blas<double, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * T(_A) * _A + _beta * _C),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    double,
+    Matrix<double, fetch::memory::SharedArray<double>,
+           fetch::math::RectangularArray<double, fetch::memory::SharedArray<double>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * T(_A) * _A + _beta * _C),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
 
-template class Blas<float, Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
-                    Computes(_C = _alpha * T(_A) * _A + _beta * _C),
-                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<
+    float,
+    Matrix<float, fetch::memory::SharedArray<float>,
+           fetch::math::RectangularArray<float, fetch::memory::SharedArray<float>, true, false>>,
+    Signature(U(_C) <= _alpha, U(_A), _beta, U(_C)),
+    Computes(_C = _alpha * T(_A) * _A + _beta * _C),
+    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
 
 }  // namespace linalg
 }  // namespace math

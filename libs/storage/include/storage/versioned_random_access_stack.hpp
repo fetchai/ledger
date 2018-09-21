@@ -62,7 +62,8 @@ struct BookmarkHeader
  * state-changing operations made to the stack (in the history).
  * The user can place bookmarks which allow reverting the stack to it's state at that point in time.
  *
- * The history is a variant stack so as to allow different operations to be saved.
+ * The history is a variant stack so as to allow different operations to be saved. However note that
+ * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
 template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
@@ -72,6 +73,8 @@ private:
   using stack_type        = S;
   using header_extra_type = B;
   using header_type       = BookmarkHeader<B>;
+
+  static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
 
   /**
    * To be pushed onto the history stack as a variant.

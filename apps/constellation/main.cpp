@@ -19,39 +19,81 @@
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
+#include "core/json/document.hpp"
 #include "core/macros.hpp"
+#include "core/script/variant.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
+#include "ledger/metrics/metrics.hpp"
 #include "network/adapters.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 
+#include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
 
+#include <array>
+#include <csignal>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace {
 
+static constexpr char const *LOGGING_NAME = "main";
+
+using Prover       = fetch::crypto::Prover;
+using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
+using ProverPtr    = std::unique_ptr<Prover>;
+
+std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
+std::atomic<std::size_t>            gInterruptCount{0};
+
+// REVIEW: Move to platform
+uint32_t Log2(uint32_t value)
+{
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
+                               static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
+bool EnsureLog2(uint32_t value)
+{
+  uint32_t const log2_value = Log2(value);
+  return value == (1 << log2_value);
+}
+
 struct CommandLineArguments
 {
-  using string_list_type  = std::vector<std::string>;
-  using peer_list_type    = fetch::Constellation::peer_list_type;
-  using adapter_list_type = fetch::network::Adapter::adapter_list_type;
+  using StringList  = std::vector<std::string>;
+  using UriList     = fetch::Constellation::UriList;
+  using AdapterList = fetch::network::Adapter::adapter_list_type;
 
-  static const std::size_t DEFAULT_NUM_LANES     = 4;
-  static const std::size_t DEFAULT_NUM_SLICES    = 4;
-  static const std::size_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t    DEFAULT_PORT          = 8000;
+  static const uint32_t DEFAULT_NUM_LANES     = 4;
+  static const uint32_t DEFAULT_NUM_SLICES    = 4;
+  static const uint32_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT          = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID    = 0x10;
 
-  uint16_t       port{0};
-  peer_list_type peers;
-  std::size_t    num_executors;
-  std::size_t    num_lanes;
-  std::size_t    num_slices;
-  std::string    interface;
-  std::string    dbdir;
+  uint16_t    port{0};
+  uint32_t    network_id;
+  UriList     peers;
+  uint32_t    num_executors;
+  uint32_t    num_lanes;
+  uint32_t    log2_num_lanes;
+  uint32_t    num_slices;
+  std::string interface;
+  std::string token;
+  bool        bootstrap{false};
+  bool        mine{false};
+  std::string dbdir;
 
-  static CommandLineArguments Parse(int argc, char **argv, adapter_list_type const &adapters)
+  static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
+                                    Prover const &prover)
   {
     CommandLineArguments args;
 
@@ -59,52 +101,53 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
+    std::string                external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
     parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
-    parameters.add(args.num_lanes, "slices", "The number of slices to be used", DEFAULT_NUM_SLICES);
+    parameters.add(args.num_slices, "slices", "The number of slices to be used",
+                   DEFAULT_NUM_SLICES);
     parameters.add(raw_peers, "peers",
                    "The comma separated list of addresses to initially connect to", std::string{});
     parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
                    std::string{"node_storage"});
-
-    std::size_t const num_adapters = adapters.size();
-    if (num_adapters == 0)
-    {
-      throw std::runtime_error("Unable to detect system network interfaces");
-    }
-    else if (num_adapters == 1)
-    {
-      args.interface = adapters[0].address().to_string();
-    }
-    else
-    {
-      parameters.add(args.interface, "interface",
-                     "The network interface to used for public communication");
-    }
+    parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
+    parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
+    parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
+                   std::string{});
+    parameters.add(args.token, "token",
+                   "The authentication token to be used with bootstrapping the client");
+    parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
     // parse the args
-    parameters.Parse(argc, const_cast<char const **>(argv));
+    parameters.Parse(argc, argv);
 
     // update the peers
     args.SetPeers(raw_peers);
 
-    // validate the interface
-    bool valid_adapter = false;
-    for (auto const &adapter : adapters)
+    // ensure that the number lanes is a valid power of 2
+    if (!EnsureLog2(args.num_lanes))
     {
-      if (adapter.address().to_string() == args.interface)
-      {
-        valid_adapter = true;
-        break;
-      }
+      std::cout << "Number of lanes is not a valid log2 number" << std::endl;
+      std::exit(1);
     }
 
-    // handle invalid interface address
-    if (!valid_adapter)
+    // calculate the log2 num lanes
+    args.log2_num_lanes = Log2(args.num_lanes);
+
+    args.bootstrap = (!external_address.empty());
+    if (args.bootstrap && args.token.size())
     {
-      throw std::runtime_error("Invalid interface address");
+      // create the boostrap node
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port,
+                                                            args.network_id, args.token);
+
+      // augment the peer list with the bootstrapped version
+      if (bootstrap->Start(args.peers))
+      {
+        args.interface = bootstrap->external_address();
+      }
     }
 
     return args;
@@ -112,35 +155,37 @@ struct CommandLineArguments
 
   void SetPeers(std::string const &raw_peers)
   {
-
-    // split the peers
-    std::size_t          position = 0;
-    fetch::network::Peer peer;
-    while (std::string::npos != position)
+    if (!raw_peers.empty())
     {
+      // split the peers
+      std::size_t         position = 0;
+      fetch::network::Uri peer;
+      while (std::string::npos != position)
+      {
+        // locate the separator
+        std::size_t const separator_position = raw_peers.find(',', position);
 
-      // locate the separator
-      std::size_t const separator_position = raw_peers.find(',', position);
+        // parse the peer
+        std::string const peer_address =
+            raw_peers.substr(position, (separator_position - position));
+        if (peer.Parse(peer_address))
+        {
+          peers.push_back(peer);
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input peer address: '", peer_address, "'");
+        }
 
-      // parse the peer
-      std::string const peer_address = raw_peers.substr(position, separator_position);
-      if (peer.Parse(peer_address))
-      {
-        peers.push_back(peer);
-      }
-      else
-      {
-        fetch::logger.Warn("Failed to parse input peer address: ", peer_address);
-      }
-
-      // update the position for the next search
-      if (std::string::npos == separator_position)
-      {
-        position = std::string::npos;
-      }
-      else
-      {
-        position = separator_position + 1;  // advance past separator
+        // update the position for the next search
+        if (std::string::npos == separator_position)
+        {
+          position = std::string::npos;
+        }
+        else
+        {
+          position = separator_position + 1;  // advance past separator
+        }
       }
     }
   }
@@ -148,17 +193,103 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
-    s << "db-prefix: " << args.dbdir << std::endl;
-    s << "port.....: " << args.port << std::endl;
-    s << "peers....: ";
+    s << '\n';
+    s << "port...........: " << args.port << std::endl;
+    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
+    s << "num executors..: " << args.num_executors << std::endl;
+    s << "num lanes......: " << args.num_lanes << std::endl;
+    s << "num slices.....: " << args.num_slices << std::endl;
+    s << "bootstrap......: " << args.bootstrap << std::endl;
+    s << "db-prefix......: " << args.dbdir << std::endl;
+    s << "interface......: " << args.interface << std::endl;
+    s << "mining.........: " << args.mine << std::endl;
+    s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
-      s << peer << ' ';
+      s << peer.uri() << ' ';
     }
     s << '\n';
     return s;
   }
 };
+
+ProverPtr GenereateP2PKey()
+{
+  static constexpr char const *KEY_FILENAME = "p2p.key";
+
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::unique_ptr<Signer>;
+
+  SignerPtr certificate        = std::make_unique<Signer>();
+  bool      certificate_loaded = false;
+
+  // Step 1. Attempt to load the existing key
+  {
+    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
+
+    if (input_file.is_open())
+    {
+      fetch::byte_array::ByteArray private_key_data;
+      private_key_data.Resize(Signer::PRIVATE_KEY_SIZE);
+
+      // attempt to read in the private key
+      input_file.read(private_key_data.char_pointer(),
+                      static_cast<std::streamsize>(private_key_data.size()));
+
+      if (!(input_file.fail() || input_file.eof()))
+      {
+        certificate->Load(private_key_data);
+        certificate_loaded = true;
+      }
+    }
+  }
+
+  // Generate a key if the load failed
+  if (!certificate_loaded)
+  {
+    certificate->GenerateKeys();
+
+    std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
+
+    if (output_file.is_open())
+    {
+      auto private_key_data = certificate->private_key();
+
+      output_file.write(private_key_data.char_pointer(),
+                        static_cast<std::streamsize>(private_key_data.size()));
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to save P2P key");
+    }
+  }
+
+  return certificate;
+}
+
+void InterruptHandler(int /*signal*/)
+{
+  std::size_t const interrupt_count = ++gInterruptCount;
+
+  if (interrupt_count > 1)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service (count: ", interrupt_count, ")");
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "User requests stop of service");
+  }
+
+  if (gConstellationInstance)
+  {
+    gConstellationInstance.load()->SignalStop();
+  }
+
+  if (interrupt_count >= 3)
+  {
+    std::exit(1);
+  }
+}
 
 }  // namespace
 
@@ -168,19 +299,44 @@ int main(int argc, char **argv)
 
   fetch::commandline::DisplayCLIHeader("Constellation");
 
+  if (!fetch::version::VALID)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version");
+  }
+
   try
   {
+#ifdef FETCH_ENABLE_METRICS
+    fetch::ledger::Metrics::Instance().ConfigureFileHandler("metrics.csv");
+#endif  // FETCH_ENABLE_METRICS
 
-    auto const network_adapters = fetch::network::Adapter::GetAdapters();
+    // create and load the main certificate for the bootstrapper
+    ProverPtr p2p_key = GenereateP2PKey();
 
-    auto const args = CommandLineArguments::Parse(argc, argv, network_adapters);
+    BootstrapPtr bootstrap_monitor;
+    auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
-    fetch::logger.Info("Configuration:\n", args);
+    FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = fetch::Constellation::Create(args.port, args.num_executors, args.num_lanes,
-                                                      args.num_slices, args.dbdir);
-    constellation->Run(args.peers);
+    auto constellation = std::make_unique<fetch::Constellation>(
+        std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
+        args.interface, args.dbdir);
+
+    // update the instance pointer
+    gConstellationInstance = constellation.get();
+
+    // register the signal handler
+    std::signal(SIGINT, InterruptHandler);
+
+    // run the application
+    constellation->Run(args.peers, args.mine);
+
+    // stop the bootstrapper if we have one
+    if (bootstrap_monitor)
+    {
+      bootstrap_monitor->Stop();
+    }
 
     exit_code = EXIT_SUCCESS;
   }

@@ -41,7 +41,7 @@ namespace math {
  * according to the platform standard by using either
  * <fetch::memory::SharedArray> or <fetch::memory::Array>.
  */
-template <typename T, typename C = memory::SharedArray<T>, bool PAD_HEIGHT = true,
+template <typename T, typename C = fetch::memory::SharedArray<T>, bool PAD_HEIGHT = true,
           bool PAD_WIDTH = false>
 class RectangularArray : public math::ShapeLessArray<T, C>
 {
@@ -54,6 +54,8 @@ public:
   using self_type                     = RectangularArray<T, C>;
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
+
+  static constexpr char const *LOGGING_NAME = "RectangularArray";
 
   /* Contructs an empty rectangular array. */
   RectangularArray()

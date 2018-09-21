@@ -55,6 +55,8 @@ template <typename T, typename D = uint64_t>
 class RandomAccessStack
 {
 private:
+  static constexpr char const *LOGGING_NAME = "RandomAccessStack";
+
   /**
    * Header holding information for the structure. Magic is used to determine the endianness of the
    * platform, extra allows the user to write metadata for the structure. This is used for example
@@ -355,7 +357,7 @@ public:
 
     if (!header_.Write(fin))
     {
-      throw StorageException("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header from clear");
     }
 
     fin.close();
@@ -420,7 +422,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      throw StorageException("Error could not write header - todo throw error");
+      throw StorageException("Error could not write header");
     }
   }
 };
