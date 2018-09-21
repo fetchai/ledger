@@ -296,25 +296,24 @@ public:
 
   LogWrapper()
   {
-    log_ = new DefaultLogger();
+    log_ = std::make_unique<DefaultLogger>();
   }
 
   ~LogWrapper()
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (log_ != nullptr)
+    if (log_)
     {
-      delete log_;
+      log_.reset();
     }
   }
 
   void DisableLogger()
   {
-    if (log_ != nullptr)
+    if (log_)
     {
-      delete log_;
+      log_.reset();
     }
-    log_ = nullptr;
   }
 
   template <typename... Args>
@@ -736,7 +735,7 @@ private:
     }
   }
 
-  DefaultLogger *                                          log_;
+  std::unique_ptr<DefaultLogger>                           log_;
   mutable std::mutex                                       mutex_;
   std::unordered_map<std::thread::id, shared_context_type> context_;
 };

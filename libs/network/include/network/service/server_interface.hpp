@@ -222,30 +222,30 @@ private:
 
     protocol_pointer->ApplyMiddleware(connection_handle, params.data());
 
-    auto &function = (*protocol_pointer)[function_number];
+    auto function = (*protocol_pointer)[function_number];
 
     FETCH_LOG_DEBUG(LOGGING_NAME, std::string("ServerInterface::ExecuteCall: ") + identifier +
-                                      " expecting following signature " + function.signature());
+                                      " expecting following signature " + function->signature());
 
     // If we need to add client id to function arguments
     try
     {
-      if (function.meta_data() & Callable::CLIENT_ID_ARG)
+      if (function->meta_data() & Callable::CLIENT_ID_ARG)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
         CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
-        function(result, extra_args, params);
+        (*function)(result, extra_args, params);
       }
       else
       {
-        function(result, params);
+        (*function)(result, params);
       }
     }
     catch (serializers::SerializableException const &e)
     {
       std::string new_explanation = e.explanation() + std::string(" (Function signature: ") +
-                                    function.signature() + std::string(") (Identification: ") +
+                                    function->signature() + std::string(") (Identification: ") +
                                     identifier;
 
       FETCH_LOG_INFO(LOGGING_NAME, "EXCEPTION:", e.error_code(), new_explanation);

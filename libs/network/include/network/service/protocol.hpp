@@ -56,7 +56,8 @@ class FeedSubscriptionManager;
 class Protocol
 {
 public:
-  using callable_type          = AbstractCallable;
+  using callable_type          = AbstractCallable *;
+  using stored_type            = std::shared_ptr<AbstractCallable>;
   using byte_array_type        = byte_array::ConstByteArray;
   using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
   using middleware_type =
@@ -64,24 +65,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
-  Protocol()
-  {
-    for (std::size_t i = 0; i < 256; ++i)
-    {
-      members_[i] = nullptr;
-    }
-  }
-
-  virtual ~Protocol()
-  {
-    for (std::size_t i = 0; i < 256; ++i)
-    {
-      if (members_[i] != nullptr)
-      {
-        delete members_[i];
-      }
-    }
-  }
+  Protocol()          = default;
+  virtual ~Protocol() = default;
 
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
@@ -95,16 +80,17 @@ public:
    *
    * @return a reference to the call.
    */
-  callable_type &operator[](function_handler_type const &n)
+  callable_type operator[](function_handler_type const &n)
   {
     LOG_STACK_TRACE_POINT;
 
-    if ((n >= 256) || (members_[n] == nullptr))
+    auto iter = members_.find(n);
+    if (iter == members_.end())
     {
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
     }
-    return *members_[n];
+    return iter->second.get();
   }
 
   /* Exposes a function or class member function.
@@ -124,9 +110,10 @@ public:
   template <typename C, typename R, typename... Args>
   void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...))
   {
-    callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(instance, function);
+    stored_type fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
 
-    if (members_[n] != nullptr)
+    auto iter = members_.find(n);
+    if (iter != members_.end())
     {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
@@ -138,10 +125,11 @@ public:
   template <typename C, typename R, typename... Args>
   void ExposeWithClientArg(function_handler_type const &n, C *instance, R (C::*function)(Args...))
   {
-    callable_type *fnc = new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
-                                                                            instance, function);
+    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
+                                                                       instance, function));
 
-    if (members_[n] != nullptr)
+    auto iter = members_.find(n);
+    if (iter != members_.end())
     {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
@@ -257,7 +245,7 @@ public:
 private:
   std::vector<middleware_type> middleware_;
 
-  callable_type *                                       members_[256] = {nullptr};
+  std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
 };
