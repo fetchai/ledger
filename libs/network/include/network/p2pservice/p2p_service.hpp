@@ -91,7 +91,7 @@ public:
     return muddle_.AsEndpoint();
   }
 
-  void       SetLocalManifest(Manifest &&manifest);
+  void       SetLocalManifest(Manifest const &manifest);
   Manifest   GetLocalManifest();
   AddressSet GetRandomGoodPeers();
 

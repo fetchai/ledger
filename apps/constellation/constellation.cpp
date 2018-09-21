@@ -62,7 +62,8 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
  */
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix)
+                             std::string interface_address, std::string const &db_prefix,
+                             std::string my_network_address)
   : active_{true}
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
@@ -90,6 +91,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , http_{network_manager_}
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
+  , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
 
@@ -112,6 +114,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   {
     http_.AddModule(*module);
   }
+
+  this->my_manifest_ = GenerateManifest();
 }
 
 /**
@@ -152,8 +156,13 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   }
 
   // P2P configuration
-  p2p_.SetLocalManifest(GenerateManifest());
-  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)));
+
+  auto manifest_copy = my_manifest_;
+  p2p_.SetLocalManifest(manifest_copy);
+
+  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
+
+  p2p_.Start(initial_peers, my_p2p_uri);
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -199,15 +208,30 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
 Constellation::Manifest Constellation::GenerateManifest() const
 {
-  std::string my_manifest =
-      "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
+  std::string my_uri_base = my_network_address_;
+
+  if (my_uri_base == "")
+  {
+    my_uri_base = "tcp://127.0.0.1:";
+  }
+
+  if (!network::Uri::IsUri(my_uri_base))
+  {
+    my_uri_base = std::string("tcp://") + my_uri_base + ":";
+  }
+
+  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
+                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
+                            my_uri_base + std::to_string(p2p_port_) + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += "LANE     " + std::to_string(i) + "     " +
-                   "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
+    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
+                   std::to_string(lane_port) + "\n";
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);
 
   return Manifest::FromText(my_manifest);
 }

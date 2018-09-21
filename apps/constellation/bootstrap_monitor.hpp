@@ -69,6 +69,10 @@ public:
   {
     return external_address_;
   }
+  std::string const &interface_address() const
+  {
+    return external_address_;
+  }
 
   // Operators
   BootstrapMonitor &operator=(BootstrapMonitor const &) = delete;
