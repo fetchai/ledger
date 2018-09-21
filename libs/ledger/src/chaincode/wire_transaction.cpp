@@ -21,12 +21,15 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/script/variant.hpp"
 
+#include <sstream>
+
 namespace fetch {
 namespace chain {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addDebugInfo)
 {
   script::Variant tx_v;
+  //TODO(pbukva) (private issue: find nice way to deal with versioning of raw (C++) transaction and version of wire format)
   tx_v["ver"] = "1.0";
 
   if (addDebugInfo)
@@ -43,15 +46,23 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_v["dbg"] = tx_data_to_sign;
   }
 
+  TxDataForSigningC txdfs{tx};
+  tx_v["data"] = byte_array::ToBase64(txdfs.DataForSigning());
+
+  script::VariantArray signatures;
   for( auto const& sig: tx.signatures())
   {
-    (void)sig;
-    TxDataForSigningC txdfs{tx};
-    byte_array::ConstByteArray const tx_data_for_signing {txdfs.DataForSigning(sig.first)};
-    tx_v["data"] = byte_array::ToBase64(tx_data_for_signing);
+    script::Variant sig_v;
+    sig_v[byte_array::ToBase64(sig.first.identifier())] = byte_array::ToBase64(sig.second.signature_data);
+  }
+  if (signatures.size() > 0 )
+  {
+    tx_v["signatures"] = signatures;
   }
 
-  return byte_array::ByteArray();
+  std::stringstream stream;
+  stream << tx_v;
+  return stream.str();
 }
 
 MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)

@@ -119,16 +119,12 @@ public:
 
   byte_array::ConstByteArray const& DataForSigning(crypto::Identity const& identity)
   {
-    if(stream_.size() == 0)
-    {
-      stream_.Append(*this, qtds_, identity, res_);
-    }
-    else
-    {
-      stream_.Seek(tx_data_size_for_signing_);
-      stream_.Append(identity);
-    }
-    return stream_.data();
+    return DataForSigningInternal(identity);
+  }
+
+  byte_array::ConstByteArray const& DataForSigning()
+  {
+    return DataForSigningInternal(serializers::LazyEvalArgumentFactory([](auto&){}));
   }
 
   bool Verify(signatures_type::value_type const &sig)
@@ -151,34 +147,55 @@ public:
     return signer;
   }
 
-  struct qtds
+  struct qtds : public std::reference_wrapper<TxDataForSigningC>
   {
-    TxDataForSigningC *tx;
+    using base_type = std::reference_wrapper<TxDataForSigningC>;
+    using base_type::base_type;
+    //using base_type::operator=;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
-      tx->tx_data_size_for_signing_ = stream.size();
+      get().tx_data_size_for_signing_ = stream.size();
     }
   };
 
-  struct res
+  struct res : public std::reference_wrapper<TxDataForSigningC>
   {
-    TxDataForSigningC *tx;
+    using base_type = std::reference_wrapper<TxDataForSigningC>;
+    using base_type::base_type;
+    //using base_type::operator=;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
-      stream.Reserve((stream.size() - tx->tx_data_size_for_signing_)*10);
+      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10);
       //stream.Seek(tx.tx_data_size_for_signing_);
     }
   };
 
 private:
+  template<typename IDENTITY>
+  byte_array::ConstByteArray const& DataForSigningInternal(IDENTITY const& identity)
+  {
+    if(stream_.size() == 0)
+    {
+      stream_.Append(*this, qtds_, identity, res_);
+    }
+    else
+    {
+      stream_.Resize(tx_data_size_for_signing_);
+      stream_.Append(identity);
+    }
+    return stream_.data();
+  }
+
+
+
   serializers::ByteArrayBuffer stream_;
   std::size_t tx_data_size_for_signing_;
-  serializers::LazyEvalArgument<qtds> qtds_{qtds{this}};
-  serializers::LazyEvalArgument<res> res_{res{this}};
+  serializers::LazyEvalArgument<qtds> qtds_{qtds{*this}};
+  serializers::LazyEvalArgument<res> res_{res{*this}};
 };
 
 template <typename T>
