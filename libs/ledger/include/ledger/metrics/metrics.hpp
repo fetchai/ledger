@@ -73,7 +73,7 @@ private:
   void RemoveMetricHandler();
 
   std::unique_ptr<MetricHandler> handler_object_;
-  std::atomic<MetricHandler *> handler_{nullptr};
+  std::atomic<MetricHandler *>   handler_{nullptr};
 };
 
 }  // namespace ledger

@@ -56,7 +56,7 @@ class FeedSubscriptionManager;
 class Protocol
 {
 public:
-  using callable_type          = AbstractCallable*;
+  using callable_type          = AbstractCallable *;
   using stored_type            = std::shared_ptr<AbstractCallable>;
   using byte_array_type        = byte_array::ConstByteArray;
   using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
@@ -65,13 +65,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
-  Protocol()
-  {
-  }
-
-  virtual ~Protocol()
-  {
-  }
+  Protocol() = default;
+  virtual ~Protocol() = default;
 
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
@@ -95,7 +90,7 @@ public:
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
     }
-    return iter -> second.get();
+    return iter->second.get();
   }
 
   /* Exposes a function or class member function.
@@ -250,7 +245,7 @@ public:
 private:
   std::vector<middleware_type> middleware_;
 
-  std::map<function_handler_type, stored_type> members_;
+  std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
 };
