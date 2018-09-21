@@ -489,7 +489,6 @@ public:
   {
     Flush();
 
-    std::cout << ">>verify 1" << std::endl;
     Verify(true);
 
     if(size() == 0)
@@ -555,10 +554,6 @@ public:
       throw StorageException("Failed to find element in parent left/right references: tree broken");
     }
 
-    std::cout << "our index: " << kv_index << std::endl;
-    std::cout << "sibling index: " << sibling_index << std::endl;
-    std::cout << "root index: " << root_ << std::endl;
-    std::cout << "size : " << stack_.size() << std::endl;
 
     // Set the sibling in the place of that parent, the split etc. should be able to stay the same
     sibling.parent = parent.parent;
@@ -583,8 +578,6 @@ public:
         throw StorageException("Failed to erase element in key value index: tree broken");
       }
 
-      std::cout << "new sibling parent now has indexes " << new_sibling_parent.right << std::endl;
-      std::cout << "new sibling parent now has indexes " << new_sibling_parent.left << std::endl;
 
       stack_.Set(sibling.parent, new_sibling_parent);
     }
@@ -597,7 +590,6 @@ public:
     stack_.Set(sibling_index, sibling);
     UpdateParents(sibling.parent, sibling_index, sibling);
 
-    std::cout << ">>verify 2" << std::endl;
     Verify(true);
 
     // Erase our node and its parent, important to do this at the end since it might shuffle indexes
@@ -612,7 +604,6 @@ public:
       Erase(parent_index);
     }
 
-    std::cout << ">>verify 3" << std::endl;
     Verify(true);
   }
 
@@ -1040,18 +1031,13 @@ private:
    */
   void Erase(index_type const &index)
   {
-    std::cout << "ERASING: " << index << std::endl;
     const std::size_t stack_end = stack_.size() - 1;
 
     assert(index <= stack_end);
 
-    std::cout << "SS " << stack_end << std::endl;
-    std::cout << "SZ " << stack_.size() << std::endl;
-    std::cout << "root " << root_ << std::endl;
 
     if(index == stack_end)
     {
-      std::cout << "Popping from stack end" << std::endl;
       stack_.Pop();
       return;
     }
@@ -1099,21 +1085,13 @@ private:
       return;
     }
 
-    std::cout << "==========================" << std::endl;
-    std::cout << "Root: " << root_ << std::endl;
 
     for (std::size_t i = 0; i < stack_.size(); ++i)
     {
       key_value_pair kv;
       stack_.Get(i, kv);
 
-      std::cout << "Index: " << i << std::endl;
-      std::cout << "Parent: " << kv.parent << std::endl;
-      std::cout << "Left: " << kv.left << std::endl;
-      std::cout << "Right: " << kv.right << std::endl;
-      std::cout << "" << std::endl;
     }
-    std::cout << "==========================" << std::endl;
 
     //VerifyHash();
 
