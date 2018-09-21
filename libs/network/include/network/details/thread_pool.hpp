@@ -140,8 +140,7 @@ public:
       std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
       if (threads_.size() < number_of_threads_)
       {
-        auto work = [this]() { this->ProcessLoop(); };
-        auto x = std::make_shared<std::thread>(work);
+        auto x = new std::thread([this]() { this->ProcessLoop(); });
         threads_.push_back(x);
         tc_++;
       }
@@ -208,6 +207,11 @@ public:
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Delete threads");
+    for (auto &thread : threads_)
+    {
+      delete thread;  // TODO(EJF): Should use smart pointers here
+    }
+
     threads_.clear();
   }
 
@@ -393,7 +397,7 @@ private:
   }
 
   std::size_t                number_of_threads_ = 1;
-  std::vector<std::shared_ptr<std::thread>> threads_;
+  std::vector<std::thread *> threads_;
 
   future_work_type future_work_;
   work_queue_type  work_;
