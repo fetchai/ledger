@@ -302,19 +302,18 @@ public:
   ~LogWrapper()
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (log_ != nullptr)
+    if (log_)
     {
-      delete log_;
+      log_.reset();
     }
   }
 
   void DisableLogger()
   {
-    if (log_ != nullptr)
+    if (log_)
     {
-      delete log_;
+      log_.reset();
     }
-    log_ = nullptr;
   }
 
   template <typename... Args>
