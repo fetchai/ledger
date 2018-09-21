@@ -13,3 +13,6 @@ CMakeCache.txt
 *~
 *.swp
 .idea/
+
+scripts/python_ml_lib/mnist_example/*.gz
+scripts/python_ml_lib/mnist_example/*.so

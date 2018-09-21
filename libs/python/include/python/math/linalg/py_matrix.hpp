@@ -167,6 +167,17 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
            })
 
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
+      .def("Maximum",
+           [](Matrix<T> &a, Matrix<T> const &b) {
+             if ((a.height() != b.height()) or (a.width() != b.width()))
+             {
+               throw pybind11::index_error("matrix size mismatch");
+             }
+             Matrix<T> ret(a.height(), b.width());
+
+             Maximum(a, b, ret);
+             return ret;
+           })
       .def("ArgMax",
            [](Matrix<T> &a, std::size_t const axis) {
              if (axis >= 2)
