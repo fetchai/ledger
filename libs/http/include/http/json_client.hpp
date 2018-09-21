@@ -22,6 +22,9 @@
 #include "http/client.hpp"
 #include "http/method.hpp"
 
+#include <unordered_map>
+#include <string>
+
 namespace fetch {
 namespace http {
 
@@ -35,22 +38,105 @@ class JsonHttpClient
 public:
   using Variant        = script::Variant;
   using ConstByteArray = byte_array::ConstByteArray;
+  using Headers        = std::unordered_map<std::string, std::string>;
 
   // Construction / Destruction
   explicit JsonHttpClient(std::string host, uint16_t port = 80);
   ~JsonHttpClient() = default;
 
-  bool Get(ConstByteArray const &endpoint, Variant const &request, Variant &response);
   bool Get(ConstByteArray const &endpoint, Variant &response);
+  bool Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant const &request, Variant &response);
   bool Post(ConstByteArray const &endpoint, Variant &response);
+  bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request, Variant &response);
+  bool Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response);
 
 private:
-  bool Request(Method method, ConstByteArray const &endpoint, Variant const *request,
-               Variant &response);
+  bool Request(Method method, ConstByteArray const &endpoint, Headers const *headers,
+               Variant const *request, Variant &response);
 
   HTTPClient client_;
 };
+
+/**
+ * Makes a GET request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
+                         JsonHttpClient::Variant &             response)
+{
+  return Request(Method::GET, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a GET request to the specified endpoint, with specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::GET, endpoint, &headers, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload
+ *
+ * @param endpoint The target endpoint
+ * @param request The request payload to be sent
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, nullptr, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
+                          JsonHttpClient::Variant &             response)
+{
+  return Request(Method::POST, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload and headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to the used in the request
+ * @param request The request to payload
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+inline bool JsonHttpClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, nullptr, response);
+}
+
 
 }  // namespace http
 }  // namespace fetch

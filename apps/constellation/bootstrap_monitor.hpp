@@ -46,11 +46,21 @@ public:
   using UriList  = Constellation::UriList;
   using Identity = crypto::Identity;
 
-  BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id)
+  // Construction / Destruction
+  BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id, std::string token)
     : network_id_(network_id)
     , port_(port)
     , identity_(identity)
+    , token_(std::move(token))
   {}
+
+  BootstrapMonitor(BootstrapMonitor const &) = delete;
+  BootstrapMonitor(BootstrapMonitor &&) = delete;
+
+  ~BootstrapMonitor()
+  {
+    Stop();
+  }
 
   bool Start(UriList &peers);
   void Stop();
@@ -59,6 +69,11 @@ public:
   {
     return external_address_;
   }
+
+  // Operators
+  BootstrapMonitor &operator=(BootstrapMonitor const &) = delete;
+  BootstrapMonitor &operator=(BootstrapMonitor &&) = delete;
+
 
 private:
   using IoService      = asio::io_service;
@@ -75,6 +90,7 @@ private:
   uint16_t const port_;
   Identity const identity_;
   std::string    external_address_;
+  std::string    token_;
 
   Flag      running_{false};
   ThreadPtr monitor_thread_;

@@ -126,8 +126,11 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   request["host"]       = external_address_;
   request["port"]       = port_ + fetch::Constellation::P2P_PORT_OFFSET;
 
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
   Variant response;
-  if (client.Post(oss.str(), request, response))
+  if (client.Post(oss.str(), headers, request, response))
   {
     // check the formatting
     if (!response.is_array())
@@ -181,7 +184,10 @@ bool BootstrapMonitor::RegisterNode()
 
   Variant        response;
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-  if (client.Post("/api/register/", request, response))
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
+  if (client.Post("/api/register/", headers, request, response))
   {
     success = true;
   }
@@ -203,7 +209,10 @@ bool BootstrapMonitor::NotifyNode()
 
   Variant        response;
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-  if (client.Post("/api/notify/", request, response))
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
+  if (client.Post("/api/notify/", headers, request, response))
   {
     success = true;
   }

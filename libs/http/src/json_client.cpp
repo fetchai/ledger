@@ -22,45 +22,52 @@
 #include <sstream>
 #include <utility>
 
+using fetch::http::HTTPRequest;
+using fetch::http::HTTPResponse;
+
 namespace fetch {
 namespace http {
 
+/**
+ * Construct a JsonHttpClient to a host and a port
+ *
+ * @param host The hostname or IP address to connect to
+ * @param port The port number to connect on
+ */
 JsonHttpClient::JsonHttpClient(std::string host, uint16_t port)
   : client_(std::move(host), port)
 {}
 
-bool JsonHttpClient::Get(ConstByteArray const &endpoint, Variant const &request, Variant &response)
-{
-  return Request(Method::GET, endpoint, &request, response);
-}
-
-bool JsonHttpClient::Get(JsonHttpClient::ConstByteArray const &endpoint,
-                         JsonHttpClient::Variant &             response)
-{
-  return Request(Method::GET, endpoint, nullptr, response);
-}
-
-bool JsonHttpClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
-{
-  return Request(Method::POST, endpoint, &request, response);
-}
-
-bool JsonHttpClient::Post(JsonHttpClient::ConstByteArray const &endpoint,
-                          JsonHttpClient::Variant &             response)
-{
-  return Request(Method::POST, endpoint, nullptr, response);
-}
-
-bool JsonHttpClient::Request(Method method, JsonHttpClient::ConstByteArray const &endpoint,
-                             JsonHttpClient::Variant const *request,
-                             JsonHttpClient::Variant &      response)
+/**
+ * Internal: Make the underlying HTTP request
+ *
+ * @param method The HTTP method that should be used
+ * @param endpoint The endpoint for the request i.e. '/'
+ * @param headers The (optional) pointer to a collection of custom headers to be provided
+ * @param request The (optional) pointer to the request payload
+ * @param response The output response from the server
+ * @return true if successful, otherwise false
+ */
+bool JsonHttpClient::Request(Method method,
+                             ConstByteArray const &endpoint,
+                             Headers const *headers,
+                             Variant const *request,
+                             Variant &response)
 {
   bool success = false;
 
   // make the request
-  fetch::http::HTTPRequest http_request;
+  HTTPRequest http_request;
   http_request.SetMethod(method);
   http_request.SetURI(endpoint);
+
+  if (headers)
+  {
+    for (auto const &element : *headers)
+    {
+      http_request.AddHeader(element.first, element.second);
+    }
+  }
 
   if (request)
   {
