@@ -73,7 +73,6 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "WorkCycle");
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
