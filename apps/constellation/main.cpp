@@ -123,7 +123,7 @@ struct CommandLineArguments
                    std::string{});
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
-    parameters.add(external_address, "external", "This node's global IP addr.", std::string{});
+    parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
 
     // parse the args
@@ -142,7 +142,7 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
-    args.bootstrap = (!external_address.empty());
+    args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
       // create the boostrap node
@@ -154,14 +154,14 @@ struct CommandLineArguments
       {
         args.interface = bootstrap->interface_address();
 
-        if (args.external_address == "")
+        if (args.external_address.empty())
         {
           args.external_address = bootstrap->external_address();
         }
       }
     }
 
-    if (args.external_address == "")
+    if (args.external_address.empty())
     {
       args.external_address = "127.0.0.1";
     }
