@@ -181,6 +181,7 @@ bool BootstrapMonitor::RegisterNode()
   request["port"]           = port_ + fetch::Constellation::P2P_PORT_OFFSET;
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
+  request["host_name"]      = host_name_;
 
   Variant                 response;
   JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
