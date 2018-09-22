@@ -57,6 +57,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     script::Variant sig_v;
     sig_v[byte_array::ToBase64(sig.first.identifier())] = byte_array::ToBase64(sig.second.signature_data);
   }
+
   if (signatures.size() > 0 )
   {
     tx_v["signatures"] = signatures;
@@ -77,6 +78,9 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   serializers::ByteArrayBuffer stream{ byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>()) };
   auto txdata {TxDataForSigningCFactory(tx)};
   stream >> txdata;
+
+  tx_v["signatures"]
+
   return tx;
 }
 

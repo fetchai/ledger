@@ -104,12 +104,11 @@ void Deserialize(T &serializer, TransactionSummary &b)
 
 class MutableTransaction;
 
-//template<typename T>
-//using TxDataForSigningCBase = std::reference_wrapper<typename std::enable_if<std::is_same<MutableTransaction, std::remove_const<T>>::value>::type>;
-
 template<typename MUTABLE_TRANSACTION = MutableTransaction>
 class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION> //public TxDataForSigningCBase<MUTABLE_TRANSACTION>
 {
+  static_assert(std::is_same<MutableTransaction, typename std::remove_const<MUTABLE_TRANSACTION>::type>::value, "Type must be const or non-const `MutableTransaction` class");
+
 public:
   using base_type = std::reference_wrapper<MUTABLE_TRANSACTION>;
   using base_type::base_type;
@@ -150,12 +149,13 @@ public:
     return signer;
   }
 
-  struct qtds : public std::reference_wrapper<TxDataForSigningC>
+  using self_ref_type = std::reference_wrapper<TxDataForSigningC>;
+
+  struct qtds : public self_ref_type
   {
-    using base_type = std::reference_wrapper<TxDataForSigningC>;
-    using base_type::base_type;
-    using base_type::operator=;
-    using base_type::get;
+    using self_ref_type::self_ref_type;
+    //using self_ref_type::operator=;
+    using self_ref_type::get;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
@@ -164,17 +164,16 @@ public:
     }
   };
 
-  struct res : public std::reference_wrapper<TxDataForSigningC>
+  struct res : public self_ref_type
   {
-    using base_type = std::reference_wrapper<TxDataForSigningC>;
-    using base_type::base_type;
-    using base_type::operator=;
-    using base_type::get;
+    using self_ref_type::self_ref_type;
+    //using self_ref_type::operator=;
+    using self_ref_type::get;
 
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
-      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10);
+      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10, serializers::eResizeParadigm::relative);
     }
   };
 
