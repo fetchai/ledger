@@ -1,56 +1,84 @@
 pipeline {
 
-  agent {
-    docker {
-      image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-    }
-  }
+  agent none
 
   stages {
 
-    stage('License Checks') {
-        steps {
-            sh './scripts/check-license-header.py'
+    stage('Builds & Tests') {
+      parallel {
+
+        stage('Basic Checks') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          stages {
+            stage('License Checks') {
+              steps {
+                sh './scripts/check-license-header.py'
+              }
+            }
+            stage('Style check') {
+              steps {
+                sh './scripts/apply-style.py -w -a'
+              }
+            }
+          }
         }
-    }
 
-    stage('Clang Format Checks') {
-        steps {
-            sh './scripts/apply-style.py -w -a'
+        stage('Clang 6 Debug') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          stages {
+            stage('Debug Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Debug'
+              }
+            }
+            stage('Static Analysis') {
+              steps {
+                sh './scripts/run-static-analysis.py build-debug/'
+              }
+            }
+          }
         }
-    }
 
-    stage('Debug Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Debug'
-      }
-    }
+        stage('Clang 6 Release') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Clang Tidy Checks') {
-        steps {
-            sh './scripts/run-static-analysis.py build-debug/'
+          stages {
+            stage('Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+            stage('Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+          }
         }
-    }
 
-    stage('Release Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Release'
-      }
-    }
-
-
-    stage('Unit Tests') {
-      steps {
-        sh './scripts/ci-tool.py -T Release'
       }
     }
 
   }
 
-  post {
-    always {
-      junit 'build-release/TestResults.xml'
-    }
-  }
+//  post {
+//    always {
+//      junit 'build-release/TestResults.xml'
+//    }
+//  }
 }
 
