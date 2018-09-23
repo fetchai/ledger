@@ -78,6 +78,11 @@ void P2PService::WorkCycle()
   AddressSet    active_addresses;
   GetConnectionStatus(active_connections, active_addresses);
 
+  for (auto const &address : active_addresses)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Active: ", ToBase64(address));
+  }
+
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
 
@@ -288,7 +293,7 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
   // from the remaining set of addresses schedule a manifest request
   for (auto const &address : new_manifest_update_addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Requsting manifest from: ", ToBase64(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "Requesting manifest from: ", ToBase64(address));
 
     // make the RPC call
     auto prom = network::PromiseOf<network::Manifest>(
