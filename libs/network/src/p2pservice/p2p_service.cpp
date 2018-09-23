@@ -306,7 +306,7 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
     auto const &manifest = result.promised;
 
     // update the manifest cache with the information
-    manifest_cache_.ProvideUpdate(address, manifest, 10);
+    manifest_cache_.ProvideUpdate(address, manifest, 120);
 
     // distribute the updated manifest at a later point
     DistributeUpdatedManifest(address);
