@@ -88,7 +88,7 @@ void P2PService::WorkCycle()
   PeerDiscovery(active_addresses);
 
   // make the decisions about which peers are desired and which ones we now need to drop
-  RenewDesiredPeers(active_addresses);
+  //RenewDesiredPeers(active_addresses);
 
   // perform connections updates and drops based on previous step
   UpdateMuddlePeers(active_addresses);
