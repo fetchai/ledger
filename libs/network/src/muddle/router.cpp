@@ -206,9 +206,6 @@ void Router::Route(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
-  // update the routing table if required
-  AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
-
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
@@ -221,6 +218,9 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else
   {
+    // update the routing table if required
+    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
+
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
   }
