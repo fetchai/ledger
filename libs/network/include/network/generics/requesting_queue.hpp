@@ -87,6 +87,7 @@ public:
   bool HasCompletedPromises() const;
   bool HasFailedPromises() const;
   void DiscardFailures();
+  void DiscardCompleted();
 
   // Operators
   RequestingQueueOf &operator=(RequestingQueueOf const &) = delete;
@@ -304,6 +305,13 @@ void RequestingQueueOf<K, R, P>::DiscardFailures()
 {
   FETCH_LOCK(mutex_);
   failed_.clear();
+}
+
+template <typename K, typename R, typename P>
+void RequestingQueueOf<K, R, P>::DiscardCompleted()
+{
+  FETCH_LOCK(mutex_);
+  completed_.clear();
 }
 
 }  // namespace network

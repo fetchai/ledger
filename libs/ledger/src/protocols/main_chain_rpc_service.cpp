@@ -27,7 +27,6 @@
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
 
-using BlockList              = fetch::ledger::MainChainProtocol::BlockList;
 using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
 using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
 
@@ -103,32 +102,51 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   }
 }
 
-void MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
+bool MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
 {
-  FETCH_LOCK(main_chain_rpc_client_lock_);
-  auto promise = main_chain_rpc_client_.CallSpecificAddress(
+  bool request_made = false;
+
+  // determine if the request is already in flight
+  if (!chain_requests_.IsInFlight(peer))
+  {
+    FETCH_LOCK(main_chain_rpc_client_lock_);
+
+    // make the request for the heaviest chain
+    auto promise = main_chain_rpc_client_.CallSpecificAddress(
       peer, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
-  promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
-    self->trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    // extract the block list from the promise
-    BlockList block_list;
-    promise->As(block_list);
+    // setup that handlers
+    promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
+      self->trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Got ", block_list.size(), " blocks from peer...");
+      // extract the block list from the promise
+      BlockList block_list;
+      promise->As(block_list);
 
-    // iterate through each of the blocks backwards and add them to the chain
-    for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
-    {
-      // recompute the digest
-      it->UpdateDigest();
+      FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Got ", block_list.size(), " blocks from peer...");
 
-      // add the block
-      self->chain_.AddBlock(*it);
-    }
+      // iterate through each of the blocks backwards and add them to the chain
+      for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
+      {
+        // recompute the digest
+        it->UpdateDigest();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Complete");
-  });
+        // add the block
+        self->chain_.AddBlock(*it);
+      }
+
+      // cycle the requesting queue
+      self->chain_requests_.Resolve();
+      self->chain_requests_.DiscardCompleted();
+      self->chain_requests_.DiscardFailures();
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Complete");
+    });
+
+    request_made = true;
+  }
+
+  return request_made;
 }
 
 }  // namespace ledger
