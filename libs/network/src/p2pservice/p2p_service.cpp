@@ -78,11 +78,6 @@ void P2PService::WorkCycle()
   AddressSet    active_addresses;
   GetConnectionStatus(active_connections, active_addresses);
 
-  for (auto const &address : active_addresses)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Active: ", ToBase64(address));
-  }
-
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
 
