@@ -99,8 +99,9 @@ public:
 
   int IncomingPeers()
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
-    int                         incoming = 0;
+    FETCH_LOCK(services_mutex_);
+
+    int incoming = 0;
     for (auto &peer : services_)
     {
       auto details = register_.GetDetails(peer.first);
@@ -116,8 +117,9 @@ public:
 
   int OutgoingPeers()
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
-    int                         outgoing = 0;
+    FETCH_LOCK(services_mutex_);
+
+    int outgoing = 0;
     for (auto &peer : services_)
     {
       auto details = register_.GetDetails(peer.first);
@@ -137,7 +139,7 @@ public:
   /// @{
   shared_service_client_type GetClient(connection_handle_type const &n)
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
+    FETCH_LOCK(services_mutex_);
     return services_[n];
   }
 
@@ -541,13 +543,14 @@ public:
 
   void UseThesePeers(UriSet uris)
   {
+    FETCH_LOCK(services_mutex_); // not ideal!
     desired_connections_ = std::move(uris);
   }
 
   void GeneratePeerDeltas(UriSet &create, UriSet &remove)
   {
     {
-      std::lock_guard<mutex_type> lock_(services_mutex_);
+      FETCH_LOCK(services_mutex_);
 
       auto ident = lane_identity_.lock();
       if (!ident)
@@ -706,7 +709,7 @@ public:
     }
 
     {
-      std::lock_guard<mutex_type> lock_(services_mutex_);
+      FETCH_LOCK(services_mutex_);
       services_[client->handle()] = client;
     }
 
