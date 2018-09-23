@@ -85,13 +85,13 @@ void P2PService::WorkCycle()
   UpdateTrustStatus(active_connections);
 
   // discover new good peers on the network
-  PeerDiscovery(active_addresses);
+  //PeerDiscovery(active_addresses);
 
   // make the decisions about which peers are desired and which ones we now need to drop
   //RenewDesiredPeers(active_addresses);
 
   // perform connections updates and drops based on previous step
-  UpdateMuddlePeers(active_addresses);
+  //UpdateMuddlePeers(active_addresses);
 
   // collect up manifests from connected peers
   UpdateManifests(active_addresses);
