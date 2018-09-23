@@ -85,6 +85,29 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
 }
 
 /**
+ * Convert one address format to another
+ *
+ * @param address The input address
+ * @return The output address
+ */
+Packet::RawAddress ConvertAddress(Packet::Address const &address)
+{
+  Packet::RawAddress raw_address;
+
+  if (raw_address.size() != address.size())
+  {
+    throw std::runtime_error("Unable to convert one address to another");
+  }
+
+  for (std::size_t i = 0; i < address.size(); ++i)
+  {
+    raw_address[i] = address[i];
+  }
+
+  return raw_address;
+}
+
+/**
  * Comparison operation
  *
  * @param lhs Reference initial address to compare
@@ -175,6 +198,7 @@ std::string DescribePacket(Packet const &packet)
  */
 Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
   : address_(std::move(address))
+  , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
@@ -427,6 +451,8 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   // sanity check
   assert(handle);
 
+  // never allow the current node address to be added to the routing table
+  if (address != address_raw_)
   {
     FETCH_LOCK(routing_table_lock_);
 

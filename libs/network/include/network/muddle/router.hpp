@@ -96,11 +96,12 @@ public:
   /// @}
 
 private:
-  using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex     = mutex::Mutex;
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using EchoCache = std::unordered_map<uint64_t, Timepoint>;
+  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex      = mutex::Mutex;
+  using Clock      = std::chrono::steady_clock;
+  using Timepoint  = Clock::time_point;
+  using EchoCache  = std::unordered_map<uint64_t, Timepoint>;
+  using RawAddress = Packet::RawAddress;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -116,6 +117,7 @@ private:
   bool IsEcho(Packet const &packet, bool register_echo = true);
 
   Address const         address_;
+  RawAddress const      address_raw_;
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
