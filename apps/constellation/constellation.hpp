@@ -131,11 +131,10 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;         ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;  ///< The block packing / mining algorithm
-  BlockCoordinator
-        block_coordinator_;  ///< The block coordinator (which controls the execution manager)
-  Miner miner_;              ///< The miner and block generation component
+  MainChain             chain_;                ///< The main block chain component
+  BlockPackingAlgorithm block_packer_;         ///< The block packing / mining algorithm
+  BlockCoordinator      block_coordinator_;    ///< The block execution coordinator
+  Miner                 miner_;                ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services
