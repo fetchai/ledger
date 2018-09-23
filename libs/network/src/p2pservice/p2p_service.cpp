@@ -276,19 +276,15 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
   // to request an update.
   auto const all_manifest_update_addresses = manifest_cache_.GetUpdatesNeeded(active_addresses);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Lookedup manifest updates");
-
   // in order to prevent duplicating requests, filter the initial list to only the ones that we have
   // not already requested this information.
   auto const new_manifest_update_addresses =
       outstanding_manifests_.FilterOutInFlight(all_manifest_update_addresses);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Filtered manifest updates");
-
   // from the remaining set of addresses schedule a manifest request
   for (auto const &address : new_manifest_update_addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Requesting manifest from: ", ToBase64(address));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting manifest from: ", ToBase64(address));
 
     // make the RPC call
     auto prom = network::PromiseOf<network::Manifest>(
@@ -298,12 +294,8 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
     outstanding_manifests_.Add(address, prom);
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Requested manifest updates");
-
   // scan through the existing set of outstanding RPC promises and evaluate all the completed items
   outstanding_manifests_.Resolve();
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Resolved manifest updates");
 
   // process through the completed responses
   auto const manifest_updates = outstanding_manifests_.Get(20);
