@@ -26,7 +26,7 @@ pipeline {
               }
             }
           }
-        }
+        } // basic checks
 
         stage('Clang 6 Debug') {
           agent {
@@ -47,7 +47,7 @@ pipeline {
               }
             }
           }
-        }
+        } // clang 6 debug
 
         stage('Clang 6 Release') {
           agent {
@@ -68,17 +68,18 @@ pipeline {
               }
             }
           }
-        }
 
-      }
-    }
+          post {
+            always {
+              junit 'build-release/TestResults.xml'
+            }
+          }
+        } // clang 6 release
 
-  }
+      } // parallel
+    } // build & test
 
-//  post {
-//    always {
-//      junit 'build-release/TestResults.xml'
-//    }
-//  }
-}
+  } // stages
+
+} // pipeline
 
