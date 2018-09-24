@@ -258,12 +258,12 @@ public:
 
   self_type::Iterator begin()
   {
-    return Iterator(this->file_object_, key_index_.begin());
+    return Iterator(&this->file_object_, key_index_.begin());
   }
 
   self_type::Iterator end()
   {
-    return Iterator(this->file_object_, key_index_.end());
+    return Iterator(&this->file_object_, key_index_.end());
   }
 
 protected:

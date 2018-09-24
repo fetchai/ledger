@@ -525,12 +525,6 @@ public:
       return;
     }
 
-    // TODO: (HUT) : remove
-    if (kv.is_leaf() == false)
-    {
-      throw StorageException("asdf");
-    }
-
     // Get our sibling, and our parent
     key_value_pair parent;
     key_value_pair sibling;
@@ -713,7 +707,7 @@ public:
     {
       if (node_iterator_)
       {
-        self_->GetNext(kv_, kv_node_.parent);  // TODO: (HUT) : don't store whole kv, just index
+        self_->GetNext(kv_, kv_node_.parent);
       }
       else
       {
