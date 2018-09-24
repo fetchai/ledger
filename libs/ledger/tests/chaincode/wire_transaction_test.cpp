@@ -19,7 +19,7 @@
 #include <gmock/gmock.h>
 
 #include "ledger/chain/wire_transaction.hpp"
-
+#include "ledger/chain/helper_functions.hpp"
 #include <memory>
 
 
@@ -32,7 +32,8 @@ namespace {
   using namespace fetch;
   using namespace fetch::ledger;
 
-  class WiredTransactionTest : public ::testing::Test {
+  class WiredTransactionTest : public ::testing::Test
+  {
   protected:
     void SetUp() override {
     }
@@ -43,12 +44,17 @@ namespace {
 
   TEST_F(WiredTransactionTest, basic)
   {
-    MutableTransaction tx;
+    MutableTransaction tx {RandomTransaction()};
+    std::cout << "tx[before] = " << tx << std::endl;
 
+    tx.set_signatures(MutableTransaction::signatures_type{}); 
+    std::cout << "tx[after] = " << tx << std::endl;
+    
     auto wire_tx = ToWireTransaction(tx);
-    std::cout << wire_tx;
+    std::cout << "tx verify = " << tx.Verify() << std::endl;
   }
 
 }  // namespace
+
 }  // namespace ledger
 }  // namespace fetch

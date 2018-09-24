@@ -79,7 +79,9 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   auto txdata {TxDataForSigningCFactory(tx)};
   stream >> txdata;
 
-  tx_v["signatures"]
+  
+
+  //tx_v["signatures"]
 
   return tx;
 }

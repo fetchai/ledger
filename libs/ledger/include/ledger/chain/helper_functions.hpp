@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
@@ -51,19 +53,32 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 
   summary.fee = GetRandom();
   trans.set_summary(summary);
-
-  signatures_type signatures;
-  uint8_t const   size = static_cast<uint8_t>(GetRandom() % 4);
+  trans.set_data(GetRandomByteArray());
+  trans.set_contract_name(std::to_string(GetRandom()));
+ 
+  uint8_t const   size = static_cast<uint8_t>((GetRandom()+1) % 5);
   for (uint8_t i = 0; i < size; ++i)
   {
-    signatures[fetch::crypto::Identity{GetRandomByteArray(), GetRandomByteArray()}] =
-        fetch::chain::Signature{GetRandomByteArray(), GetRandomByteArray()};
+    crypto::ECDSASigner::PrivateKey key;
+    trans.Sign(key.KeyAsBin());
   }
-  trans.set_data(GetRandomByteArray());
-  trans.set_signatures(signatures);
-  trans.set_contract_name(std::to_string(GetRandom()));
-
+  trans.UpdateDigest();
   return trans;
+}
+
+std::ostream& operator << (std::ostream &os, MutableTransaction const& transaction)
+{
+  os << "contract name:   " << transaction.contract_name() << std::endl;
+  os << "hash:            " << byte_array::ToHex(transaction.summary().transaction_hash) << std::endl;
+  os << "data:            " << byte_array::ToHex(transaction.data()) << std::endl;
+  for (auto const &sig : transaction.signatures())
+  {
+    os << "identity:        " << byte_array::ToHex(sig.first.identifier()) << std::endl;
+    os << "identity params: " << sig.first.parameters() << std::endl;
+    os << "signature:       " << byte_array::ToHex(sig.second.signature_data) << std::endl;
+    os << "signature type:  " << sig.second.type << std::endl;
+  }
+  return os;
 }
 
 }  // namespace chain
