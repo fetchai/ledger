@@ -28,7 +28,7 @@
 namespace fetch {
 namespace chain {
 
-uint64_t GetRandom()
+inline uint64_t GetRandom()
 {
   static std::random_device                      rd;
   static std::mt19937                            gen(rd());
@@ -36,12 +36,12 @@ uint64_t GetRandom()
   return dis(gen);
 }
 
-byte_array::ConstByteArray GetRandomByteArray()
+inline byte_array::ConstByteArray GetRandomByteArray()
 {
   return {std::to_string(GetRandom())};
 }
 
-MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
+inline MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 {
   MutableTransaction trans;
   TransactionSummary summary;
@@ -66,11 +66,19 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   return trans;
 }
 
-std::ostream& operator << (std::ostream &os, MutableTransaction const& transaction)
+inline std::ostream& operator << (std::ostream &os, MutableTransaction const& transaction)
 {
   os << "contract name:   " << transaction.contract_name() << std::endl;
   os << "hash:            " << byte_array::ToHex(transaction.summary().transaction_hash) << std::endl;
   os << "data:            " << byte_array::ToHex(transaction.data()) << std::endl;
+
+  os << "=== Resources ===========================================" << std::endl;
+  for (auto const &res : transaction.resources())
+  {
+    os << "resource:        " << byte_array::ToHex(res) << std::endl;
+  }
+
+  os << "=== Signatures ==========================================" << std::endl;
   for (auto const &sig : transaction.signatures())
   {
     os << "identity:        " << byte_array::ToHex(sig.first.identifier()) << std::endl;
@@ -78,6 +86,7 @@ std::ostream& operator << (std::ostream &os, MutableTransaction const& transacti
     os << "signature:       " << byte_array::ToHex(sig.second.signature_data) << std::endl;
     os << "signature type:  " << sig.second.type << std::endl;
   }
+  //os << "=========================================================" << std::endl;
   return os;
 }
 

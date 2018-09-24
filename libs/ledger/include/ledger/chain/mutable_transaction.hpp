@@ -149,6 +149,9 @@ public:
     return signer;
   }
 
+  bool operator == (TxDataForSigningC const &left_tx) const;
+  bool operator != (TxDataForSigningC const &left_tx) const;
+
   using self_ref_type = std::reference_wrapper<TxDataForSigningC>;
 
   struct qtds : public self_ref_type
@@ -203,7 +206,7 @@ template <typename T, typename U>
 void Serialize(T &stream, TxDataForSigningC<U> const &tx);
 
 template <typename T, typename U>
-void Deserialize(T &serializer, TxDataForSigningC<U> &tx);
+void Deserialize(T &stream, TxDataForSigningC<U> &tx);
 
 template<typename MUTABLE_TRANSACTION>
 TxDataForSigningC<MUTABLE_TRANSACTION> TxDataForSigningCFactory(MUTABLE_TRANSACTION &tx)
@@ -388,10 +391,27 @@ void Serialize(T &stream, TxDataForSigningC<U> const &tx)
 }
 
 template <typename T, typename U>
-void Deserialize(T &serializer, TxDataForSigningC<U> &tx)
+void Deserialize(T &stream, TxDataForSigningC<U> &tx)
 {
   MutableTransaction &tx_ = tx.get();
-  serializer >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
+  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
+}
+
+template<typename MUTABLE_TRANSACTION>
+inline bool TxDataForSigningC<MUTABLE_TRANSACTION>::operator == (TxDataForSigningC<MUTABLE_TRANSACTION> const &left_tx) const
+{
+  MutableTransaction &tx_ = left_tx.get();
+  MutableTransaction const &left = left_tx.get();
+  return tx_.summary_.contract_name == left.summary_.contract_name
+      && tx_.summary_.fee == left.summary_.fee
+      && tx_.summary_.resources == left.summary_.resources
+      && tx_.data_ == left.data_; 
+}
+
+template<typename MUTABLE_TRANSACTION>
+inline bool TxDataForSigningC<MUTABLE_TRANSACTION>::operator != (TxDataForSigningC<MUTABLE_TRANSACTION> const &left_tx) const
+{
+  return ! (*this == left_tx);
 }
 
 template <typename T>

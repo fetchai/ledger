@@ -218,14 +218,14 @@ private:
     shrd_ptr_type<BIGNUM> x{BN_new()};
     shrd_ptr_type<BIGNUM> y{BN_new()};
 
-    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), x.get());
+    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), y.get());
 
     if (!EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
                                              session.context().get()))
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertFromCanonical(...): "
-          "`BN_bn2bin(...)` function failed.");
+          "`EC_POINT_set_affine_coordinates_GFp(...)` function failed.");
     }
 
     return public_key;

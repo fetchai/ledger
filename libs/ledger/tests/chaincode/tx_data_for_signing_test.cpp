@@ -18,7 +18,7 @@
 
 #include <gmock/gmock.h>
 
-#include "ledger/chain/wire_transaction.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/helper_functions.hpp"
 #include <memory>
 
@@ -32,7 +32,7 @@ namespace {
   using namespace fetch;
   using namespace fetch::ledger;
 
-  class WiredTransactionTest : public ::testing::Test
+  class TxDataForSigningTest : public ::testing::Test
   {
   protected:
     void SetUp() override {
@@ -42,19 +42,27 @@ namespace {
     }
   };
 
-  TEST_F(WiredTransactionTest, basic)
+  TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
   {
-    MutableTransaction tx {RandomTransaction()};
-    std::cout << "tx[before] = " << tx << std::endl;
+    for(std::size_t i=0; i<100; ++i)
+    {
+      MutableTransaction tx {RandomTransaction()};
+      //std::cout << "tx[before] = " << tx << std::endl;
 
-    //tx.set_signatures(MutableTransaction::signatures_type{}); 
-    //std::cout << "tx[after] = " << tx << std::endl;
+      auto txdfs {TxDataForSigningCFactory(tx)};
     
-    auto wire_tx = ToWireTransaction(tx);
-    std::cout << "wire tx = " << wire_tx << std::endl;
-    std::cout << "tx verify = " << tx.Verify() << std::endl;
-  }
+      serializers::ByteArrayBuffer stream;
+      stream << txdfs;
 
+      MutableTransaction tx2;
+      auto txdfs2 {TxDataForSigningCFactory(tx2)};
+      stream.Seek(0);
+      stream >> txdfs2;
+      //std::cout << "tx[after] = " << tx2 << std::endl;
+
+      EXPECT_EQ(txdfs, txdfs2);
+    }
+  }
 }  // namespace
 
 }  // namespace ledger

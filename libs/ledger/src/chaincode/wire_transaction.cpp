@@ -47,7 +47,6 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_v["dbg"] = tx_data_to_sign;
   }
 
-  //TxDataForSigningC<typename std::remove_reference<decltype(tx)>::type> txdfs{tx};
   auto txdfs{TxDataForSigningCFactory(tx)};
   tx_v["data"] = byte_array::ToBase64(txdfs.DataForSigning());
 
