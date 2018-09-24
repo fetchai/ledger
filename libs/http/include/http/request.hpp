@@ -102,13 +102,20 @@ public:
   {
     method_ = method;
   };
+
   void SetURI(byte_array_type const &uri)
   {
     uri_ = uri;
   }
+
   void SetBody(byte_array::ByteArray const &body)
   {
     body_data_ = body;
+  }
+
+  void AddHeader(byte_array::ConstByteArray const &key, byte_array::ConstByteArray const &value)
+  {
+    header_.Add(key, value);
   }
 
   bool ToStream(asio::streambuf &buffer, std::string const &host, uint16_t port) const;

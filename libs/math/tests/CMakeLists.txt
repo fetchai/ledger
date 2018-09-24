@@ -11,6 +11,8 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
+add_fetch_gtest(computation_graph fetch-math math/computation_graph)
+add_fetch_gtest(loss_functions fetch-math math/loss_functions)
 
 add_fetch_gtest(blas fetch-math math/linalg/blas/)
 

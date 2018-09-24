@@ -101,17 +101,59 @@ TEST(matrix, approx_softmax)
 //      )");
 //
 //  ASSERT_TRUE(fetch::math::Add(A, B).AllClose(C));
-////  ASSERT_TRUE((R = A, R.InlineAdd(B)).AllClose(C));
-////  ASSERT_TRUE((R = A, (R += B)).AllClose(C));
-////  ASSERT_TRUE((Add(A,B)).AllClose(C));
+//  ASSERT_TRUE((R = A, R.InlineAdd(B)).AllClose(C));
+//  ASSERT_TRUE((R = A, R += B).AllClose(C));
+//  ASSERT_TRUE((A + B).AllClose(C));
+//
 //}
 
 //
-// TEST(matrix, int_multiplication){
-//  _M<int> A, B, C, R;
+//  SCENARIO("Addition for int"){
+//      /*
+//          _M<int> A, B, C, R;
 //
-//  R.Resize(7, 7);
-//  A = _M<int>(R"(
+//          R.Resize(7, 7);
+//          A = _M<int>(R"(
+//      0 4 4 2 -9 -7 7 ;
+//      2 -2 4 5 -1 3 0 ;
+//      -3 9 8 0 -10 -2 -5 ;
+//      8 -4 4 -5 4 -2 -9 ;
+//      9 1 3 -1 3 -5 -5 ;
+//      -3 8 -10 5 8 9 0 ;
+//      -6 -4 3 -3 -5 2 2
+//      )");
+//          B = _M<int>(R"(
+//      -4 -5 5 -1 -10 -9 9 ;
+//      -10 -3 -6 7 -9 -7 -6 ;
+//      1 7 3 0 0 9 9 ;
+//      8 -6 5 -3 3 2 9 ;
+//      -2 -7 5 2 4 -7 -5 ;
+//      -4 -5 2 -2 9 -9 -9 ;
+//      2 7 4 6 -3 -4 5
+//      )");
+//          C = _M<int>(R"(
+//      -4 -1 9 1 -19 -16 16 ;
+//      -8 -5 -2 12 -10 -4 -6 ;
+//      -2 16 11 0 -10 7 4 ;
+//      16 -10 9 -8 7 0 0 ;
+//      7 -6 8 1 7 -12 -10 ;
+//      -7 3 -8 3 17 0 -9 ;
+//      -4 3 7 3 -8 -2 7
+//      )");
+//
+//          EXPECT(R.Add(A, B).AllClose(C));
+//          EXPECT((R = A, R.InlineAdd(B)).AllClose(C));
+//          EXPECT((R = A, R += B).AllClose(C));
+//          EXPECT((A + B).AllClose(C));
+//      */
+//  };
+//
+//  SCENARIO("Multiplication for int"){
+//      /*
+//          _M<int> A, B, C, R;
+//
+//          R.Resize(7, 7);
+//          A = _M<int>(R"(
 //      -9 -7 -5 -2 -5 -4 -10 ;
 //      -8 -8 9 2 -4 9 -9 ;
 //      -2 4 -2 1 -6 7 3 ;
@@ -120,7 +162,7 @@ TEST(matrix, approx_softmax)
 //      8 0 -1 -8 -2 -2 -2 ;
 //      -7 -9 -6 2 5 -3 -7
 //      )");
-//  B = _M<int>(R"(
+//          B = _M<int>(R"(
 //      5 -3 -7 -1 3 -6 -5 ;
 //      1 -10 0 -4 8 -8 9 ;
 //      -4 -8 1 -10 2 -4 -6 ;
@@ -129,7 +171,7 @@ TEST(matrix, approx_softmax)
 //      1 -7 0 -6 -10 -9 -10 ;
 //      1 3 -3 0 -1 1 -5
 //      )");
-//  C = _M<int>(R"(
+//          C = _M<int>(R"(
 //      -45 21 35 2 -15 24 50 ;
 //      -8 80 0 -8 -32 -72 -81 ;
 //      8 -32 -2 -10 -12 -28 -18 ;
@@ -139,18 +181,19 @@ TEST(matrix, approx_softmax)
 //      -7 -27 18 0 -5 -3 35
 //      )");
 //
-//  ASSERT_TRUE(fetch::math::Multiply(A, B).AllClose(C));
-//  ASSERT_TRUE((R = A, R.InlineMultiply(B)).AllClose(C));
-//  ASSERT_TRUE((R = A, R *= B).AllClose(C));
-//  ASSERT_TRUE((A * B).AllClose(C));
+//          EXPECT(R.Multiply(A, B).AllClose(C));
+//          EXPECT((R = A, R.InlineMultiply(B)).AllClose(C));
+//          EXPECT((R = A, R *= B).AllClose(C));
+//          EXPECT((A * B).AllClose(C));
+//      */
+//  };
 //
-//};
+//  SCENARIO("Subtraction for int"){
+//      /*
+//          _M<int> A, B, C, R;
 //
-// TEST(matrix, int_subtraction){
-//  _M<int> A, B, C, R;
-//
-//  R.Resize(7, 7);
-//  A = _M<int>(R"(
+//          R.Resize(7, 7);
+//          A = _M<int>(R"(
 //      -4 7 6 -6 -7 -5 0 ;
 //      -2 -10 -5 6 8 -8 4 ;
 //      8 -10 1 9 1 0 -6 ;
@@ -159,7 +202,7 @@ TEST(matrix, approx_softmax)
 //      4 8 -5 -7 -4 -4 2 ;
 //      -4 6 -8 0 1 8 5
 //      )");
-//  B = _M<int>(R"(
+//          B = _M<int>(R"(
 //      9 2 7 -7 -6 -10 9 ;
 //      3 2 -5 1 6 2 -3 ;
 //      -7 -3 2 -6 -5 2 -6 ;
@@ -168,7 +211,7 @@ TEST(matrix, approx_softmax)
 //      -9 -10 -1 -4 6 0 5 ;
 //      -5 -4 -1 0 6 2 -9
 //      )");
-//  C = _M<int>(R"(
+//          C = _M<int>(R"(
 //      -13 5 -1 1 -1 5 -9 ;
 //      -5 -12 0 5 2 -10 7 ;
 //      15 -7 -1 15 6 -2 0 ;
@@ -178,19 +221,20 @@ TEST(matrix, approx_softmax)
 //      1 10 -7 0 -5 6 14
 //      )");
 //
-//  ASSERT_TRUE(R.Subtract(A, B).AllClose(C));
-//  ASSERT_TRUE((R = A, R.InlineSubtract(B)).AllClose(C));
-//  ASSERT_TRUE((R = B, R.InlineReverseSubtract(A)).AllClose(C));
-//  ASSERT_TRUE((R = A, R -= B).AllClose(C));
-//  ASSERT_TRUE((A - B).AllClose(C));
-//};
+//          EXPECT(R.Subtract(A, B).AllClose(C));
+//          EXPECT((R = A, R.InlineSubtract(B)).AllClose(C));
+//          EXPECT((R = B, R.InlineReverseSubtract(A)).AllClose(C));
+//          EXPECT((R = A, R -= B).AllClose(C));
+//          EXPECT((A - B).AllClose(C));
+//      */
+//  };
 //
-// TEST(matrix, matrix_int_dot){
+//  SCENARIO("Dot product for int"){
+//      /*
+//          _M<int> A, B, C, R;
 //
-//  _M<int> A, B, C, R;
-//
-//  R.Resize(7, 7);
-//  A = _M<int>(R"(
+//          R.Resize(7, 7);
+//          A = _M<int>(R"(
 //      -6 -2 -3 -9 -6 8 -5 ;
 //      -7 -5 -1 -7 -9 9 6 ;
 //      0 2 7 5 6 -1 -4 ;
@@ -199,7 +243,7 @@ TEST(matrix, approx_softmax)
 //      5 9 9 8 -1 -8 0 ;
 //      8 3 0 8 -1 -3 4
 //      )");
-//  B = _M<int>(R"(
+//          B = _M<int>(R"(
 //      -4 -2 1 2 -3 -5 -4 ;
 //      8 1 5 7 9 -9 -7 ;
 //      3 -7 -1 2 -5 -4 7 ;
@@ -208,7 +252,7 @@ TEST(matrix, approx_softmax)
 //      8 8 9 7 -7 -4 6 ;
 //      -7 -4 -3 9 -5 -1 9
 //      )");
-//  C = _M<int>(R"(
+//          C = _M<int>(R"(
 //      -28 25 -4 -84 -73 93 158 ;
 //      -122 -19 -59 -9 -191 106 306 ;
 //      151 19 68 36 63 -82 -105 ;
@@ -218,10 +262,14 @@ TEST(matrix, approx_softmax)
 //      -5 8 9 70 4 -87 -107
 //      )");
 //
-//  ASSERT_TRUE(R.Dot(A, B).AllClose(C));
-//// ASSERT_TRUE( ( R = A, R.InlineDot(B) ).AllClose(C) );
+//          EXPECT(R.Dot(A, B).AllClose(C));
+//          // EXPECT( ( R = A, R.InlineDot(B) ).AllClose(C) );
+//          */
+//  };
 //
-//};
+//  SCENARIO("Addition for float")
+//  {
+//    _M<float> A, B, C, R;
 //
 TEST(matrix, float_addition)
 {

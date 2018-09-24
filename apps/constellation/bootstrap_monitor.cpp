@@ -50,7 +50,7 @@ bool BootstrapMonitor::Start(UriList &peers)
   // register the node with the bootstrapper
   if (!RegisterNode())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to register the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to register with the bootstrap server");
     return false;
   }
 
@@ -59,7 +59,7 @@ bool BootstrapMonitor::Start(UriList &peers)
   // request the peers list
   if (!RequestPeerList(peers))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request the peers from the bootstrap node");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to request the peers from the bootstrap server");
     return false;
   }
 
@@ -126,8 +126,11 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   request["host"]       = external_address_;
   request["port"]       = port_ + fetch::Constellation::P2P_PORT_OFFSET;
 
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
   Variant response;
-  if (client.Post(oss.str(), request, response))
+  if (client.Post(oss.str(), headers, request, response))
   {
     // check the formatting
     if (!response.is_array())
@@ -179,9 +182,12 @@ bool BootstrapMonitor::RegisterNode()
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
 
-  Variant        response;
-  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-  if (client.Post("/api/register/", request, response))
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
+  if (client.Post("/api/register/", headers, request, response))
   {
     success = true;
   }
@@ -201,15 +207,18 @@ bool BootstrapMonitor::NotifyNode()
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
-  Variant        response;
-  JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
-  if (client.Post("/api/notify/", request, response))
+  Variant                 response;
+  JsonHttpClient          client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
+  JsonHttpClient::Headers headers;
+  headers["Authorization"] = "Token " + token_;
+
+  if (client.Post("/api/notify/", headers, request, response))
   {
     success = true;
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make notify call to bootstrap network");
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to make notify call to bootstrap server");
   }
 
   return success;

@@ -27,6 +27,7 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
+#include "core/meta/type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
@@ -594,6 +595,27 @@ void Pow(ARRAY_TYPE &x)
 {
   kernels::stdlib::Pow<typename ARRAY_TYPE::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
+}
+
+/**
+ * square
+ * @param x
+ */
+template <typename ARRAY_TYPE>
+void Square(ARRAY_TYPE &x)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    x[i] = x[i] * x[i];
+  }
+}
+template <typename ARRAY_TYPE>
+void Square(ARRAY_TYPE &x, ARRAY_TYPE &ret)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    ret[i] = x[i] * x[i];
+  }
 }
 
 /**
@@ -1653,6 +1675,27 @@ ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
   Add(scalar, array, ret);
   return ret;
 }
+
+/**
+ * Implementation for scalar addition. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 + scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+
 /**
  * Adds two arrays together
  * @tparam T
@@ -1869,6 +1912,26 @@ NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   return ret;
 }
 /**
+ * Implementation for scalar subtraction. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 - scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Subtract(scalar1, scalar2, ret);
+  return ret;
+}
+
+/**
  * multiply a scalar by every value in the array
  * @tparam T
  * @tparam C
@@ -1993,6 +2056,26 @@ NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   return ret;
 }
 /**
+ * Implementation for scalar multiplication. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 * scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Multiply(scalar1, scalar2, ret);
+  return ret;
+}
+
+/**
  * divide array by a scalar
  * @tparam T
  * @tparam C
@@ -2083,7 +2166,7 @@ template <typename T, typename C>
 void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
             memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
   Divide(obj1, obj2, range, ret);
   return ret;
 }
@@ -2105,7 +2188,7 @@ void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
 template <typename T, typename C>
 ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
   Divide(obj1, obj2, ret);
   return ret;
 }
@@ -2127,6 +2210,25 @@ NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
 {
   NDArray<T, C> ret;
   Divide(obj1, obj2, ret);
+  return ret;
+}
+/**
+ * Implementation for scalar division. Implementing this helps keeps a uniform interface
+ * @tparam T
+ * @param scalar1
+ * @param scalar2
+ * @param ret
+ */
+template <typename S>
+meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 / scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Divide(scalar1, scalar2, ret);
   return ret;
 }
 
@@ -2193,6 +2295,28 @@ T Sum(ShapeLessArray<T, C> const &obj1)
 {
   T ret;
   Sum(obj1, ret);
+  return ret;
+}
+
+/**
+ * return the mean of all elements in the array
+ * @tparam T
+ * @tparam C
+ * @param obj1
+ * @param ret
+ */
+template <typename T, typename C>
+void Mean(ShapeLessArray<T, C> const &obj1, T &ret)
+{
+
+  Sum(obj1, ret);
+  Divide(ret, T(obj1.size()), ret);
+}
+template <typename T, typename C>
+T Mean(ShapeLessArray<T, C> const &obj1)
+{
+  T ret;
+  Mean(obj1, ret);
   return ret;
 }
 
