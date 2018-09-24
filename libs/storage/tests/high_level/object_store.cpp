@@ -112,7 +112,6 @@ protected:
   {
     if(store.size() != test_elements_.size())
     {
-      std::cout << "Sizes of stores didn't match" << std::endl;
       valid_ = false;
     }
 
@@ -167,11 +166,10 @@ TEST_F(ObjectStoreTest, correct_setup)
 
 TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 {
-  std::vector<uint64_t> test_vals = {2,3,4,100,1000};
+  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
 
   for(auto const &i : test_vals)
   {
-    std::cout << "verify: " << i << std::endl;
     TearDown();
     SetUp(i);
 
@@ -186,30 +184,28 @@ TEST_F(ObjectStoreTest, basic_deletion_of_elements)
   }
 }
 
-//TEST_F(ObjectStoreTest, advanced_deletion_of_elements)
-//{
-//  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
-//
-//  for(auto const &i : test_vals)
-//  {
-//    std::cout << "" << std::endl;
-//    std::cout << "Testing: " << i << std::endl;
-//    TearDown();
-//    SetUp(i);
-//
-//    // Easiest to remove the last element of the vector
-//    auto last_element = test_elements_.back();
-//    test_elements_.pop_back();
-//
-//    test_store_.Erase(ToAddress(last_element));
-//    test_store_small_.Erase(ToAddress(last_element));
-//
-//    // Continue to use the stores
-//    for (std::size_t j = 0; j < i; ++j)
-//    {
-//      AddRandomElement();
-//    }
-//
-//    ASSERT_TRUE(Verify() == true) << "Failed to delete on iteration: " << i;
-//  }
-//}
+TEST_F(ObjectStoreTest, advanced_deletion_of_elements)
+{
+  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
+
+  for(auto const &i : test_vals)
+  {
+    TearDown();
+    SetUp(i);
+
+    // Easiest to remove the last element of the vector
+    auto last_element = test_elements_.back();
+    test_elements_.pop_back();
+
+    test_store_.Erase(ToAddress(last_element));
+    test_store_small_.Erase(ToAddress(last_element));
+
+    // Continue to use the stores
+    for (std::size_t j = 0; j < i; ++j)
+    {
+      AddRandomElement();
+    }
+
+    ASSERT_TRUE(Verify() == true) << "Failed to delete on iteration: " << i;
+  }
+}
