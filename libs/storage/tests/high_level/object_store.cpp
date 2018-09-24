@@ -58,15 +58,15 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
   b.third = ret;
 }
 
-class ObjectStoreTest : public ::testing::Test {
+class ObjectStoreTest : public ::testing::Test
+{
 
 protected:
   using testType = TestSerDeser;
 
   // GTest setup
   void SetUp() override
-  {
-  }
+  {}
 
   // custom setup - populate our object store and a vector with random elements
   void SetUp(uint64_t test_size)
@@ -110,22 +110,22 @@ protected:
   template <typename STORE>
   void Verify(STORE &store)
   {
-    if(store.size() != test_elements_.size())
+    if (store.size() != test_elements_.size())
     {
       valid_ = false;
     }
 
-    for(auto const &i : test_elements_)
+    for (auto const &i : test_elements_)
     {
       testType test;
 
-      if(!store.Get(ToAddress(i), test))
+      if (!store.Get(ToAddress(i), test))
       {
         std::cout << "Failed to find element" << std::endl;
         valid_ = false;
       }
 
-      if(!(test == i))
+      if (!(test == i))
       {
         std::cout << "Deserialised value not matched" << std::endl;
         valid_ = false;
@@ -166,9 +166,9 @@ TEST_F(ObjectStoreTest, correct_setup)
 
 TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 {
-  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
+  std::vector<uint64_t> test_vals = {1, 2, 3, 4, 100, 1000};
 
-  for(auto const &i : test_vals)
+  for (auto const &i : test_vals)
   {
     TearDown();
     SetUp(i);
@@ -186,9 +186,9 @@ TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 
 TEST_F(ObjectStoreTest, advanced_deletion_of_elements)
 {
-  std::vector<uint64_t> test_vals = {1,2,3,4,100,1000};
+  std::vector<uint64_t> test_vals = {1, 2, 3, 4, 100, 1000};
 
-  for(auto const &i : test_vals)
+  for (auto const &i : test_vals)
   {
     TearDown();
     SetUp(i);

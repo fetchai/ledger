@@ -31,11 +31,11 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/sha256.hpp"
-#include "vectorise/platform.hpp"
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/document.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
-#include "storage/document.hpp"
+#include "vectorise/platform.hpp"
 
 #include <cstdint>
 
@@ -67,7 +67,7 @@ struct FileBlockType
     next     = UNDEFINED;
   }
 
-  uint64_t next     = UNDEFINED;
+  uint64_t next = UNDEFINED;
 
   union
   {
@@ -75,7 +75,7 @@ struct FileBlockType
     uint64_t free;
   };
 
-  uint8_t  data[BYTES];
+  uint8_t data[BYTES];
 };
 
 /**
@@ -108,17 +108,16 @@ public:
     HEADER_SIZE = 2 * sizeof(uint64_t)
   };
 
-  FileObject(FileObject const &other)           = delete;
+  FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other)     = default;
+  FileObject &operator=(FileObject &&other) = default;
 
   FileObject()
     : block_number_(0)
     , byte_index_(HEADER_SIZE)
     , length_(HEADER_SIZE)
-  {
-  }
+  {}
 
   ~FileObject()
   {
@@ -126,14 +125,14 @@ public:
   }
 
   template <typename... Args>
-  void Load(Args&&... args)
+  void Load(Args &&... args)
   {
     stack_.Load(std::forward<Args>(args)...);
     Initalise();
   }
 
   template <typename... Args>
-  void New(Args&&... args)
+  void New(Args &&... args)
   {
     stack_.New(std::forward<Args>(args)...);
     Initalise();
@@ -216,7 +215,7 @@ public:
     while (block_number_ < last_bn)
     {
       // Get the block at block_number
-      if(block_index_ != block_type::UNDEFINED)
+      if (block_index_ != block_type::UNDEFINED)
       {
         stack_.Get(block_index_, block);
       }
@@ -230,7 +229,7 @@ public:
         // Write new block
         block.previous = prev_block_index;
         assert(block.next == block_type::UNDEFINED);
-        block_index_   = GetFreeBlock(block, prev_block_index);
+        block_index_ = GetFreeBlock(block, prev_block_index);
 
         // Update prev block
         prev_block.next = block_index_;
@@ -245,7 +244,7 @@ public:
     }
 
     // Take care of extra blocks
-    if(block.next != block_type::UNDEFINED)
+    if (block.next != block_type::UNDEFINED)
     {
       FreeBlocks(block.next);
       block.next = block_type::UNDEFINED;
@@ -475,23 +474,23 @@ public:
     }
   }
 
-//  void Erase()
-//  {
-//    //assert(block_index_ != 0);
-//    //Seek(0);
-//    //ReleaseBlocks(block_index_);
-//    erased_ = true;
-//  }
-//
-//  bool Erased() const
-//  {
-//    return erased_;
-//  }
+  //  void Erase()
+  //  {
+  //    //assert(block_index_ != 0);
+  //    //Seek(0);
+  //    //ReleaseBlocks(block_index_);
+  //    erased_ = true;
+  //  }
+  //
+  //  bool Erased() const
+  //  {
+  //    return erased_;
+  //  }
 
   bool SeekFile(std::size_t const &position)
   {
     block_number_ = 0;
-    byte_index_ = HEADER_SIZE;
+    byte_index_   = HEADER_SIZE;
 
     block_type first;
     assert(position < stack_.size());
@@ -522,7 +521,7 @@ public:
 
     // TODO: (HUT) : get next free
     block_index_ = id_ = stack_.Push(block);
-    block_count_ = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
+    block_count_       = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
   }
 
   Document AsDocument()
@@ -537,28 +536,28 @@ public:
 
   void Erase()
   {
-    //assert(block_index_ != 0);
-    //Seek(0);
-    //ReleaseBlocks(block_index_);
-    //erased_ = true;
+    // assert(block_index_ != 0);
+    // Seek(0);
+    // ReleaseBlocks(block_index_);
+    // erased_ = true;
   }
 
 protected:
   stack_type stack_;
-  uint64_t   id_; // Location on stack of first block of file
+  uint64_t   id_;  // Location on stack of first block of file
 
-  uint64_t block_number_; // Nth block in file
-  uint64_t block_count_; // Number of blocks in file
+  uint64_t block_number_;  // Nth block in file
+  uint64_t block_count_;   // Number of blocks in file
 
   // Used while seeking within a file
-  uint64_t block_index_; // index of current block
-  uint64_t byte_index_; // index of current byte within block
+  uint64_t block_index_;  // index of current block
+  uint64_t byte_index_;   // index of current byte within block
 
-  uint64_t length_ = 0; // length in bytes of file. Should be at least HEADER_SIZE
-  uint64_t last_position_; // index of last block in file
+  uint64_t length_ = 0;     // length in bytes of file. Should be at least HEADER_SIZE
+  uint64_t last_position_;  // index of last block in file
 
   static constexpr uint64_t free_block_index_ = 0;
-  block_type free_block_;
+  block_type                free_block_;
 
   uint64_t FreeBlocks()
   {
@@ -566,14 +565,13 @@ protected:
   }
 
 private:
-
   /**
    * Initialise by looking for the block that's the beginning of our free blocks linked list. If
    * the stack is empty this means we set our own.
    */
   void Initalise()
   {
-    if(stack_.size() == 0)
+    if (stack_.size() == 0)
     {
       free_block_.free = 0;
       block_index_ = id_ = stack_.Push(free_block_);
@@ -595,27 +593,26 @@ private:
   uint64_t GetFreeBlock(block_type const &write_block, uint64_t min_index)
   {
     // End of the stack is the default
-    if(free_block_.free == 0)
+    if (free_block_.free == 0)
     {
       return stack_.Push(write_block);
     }
 
     // Traverse the free block linked list to find first valid block
     block_type block;
-    uint64_t block_index = free_block_.next;
-    assert(block_index != block_type::UNDEFINED); // first block should be valid if free > 0
+    uint64_t   block_index = free_block_.next;
+    assert(block_index != block_type::UNDEFINED);  // first block should be valid if free > 0
 
     do
     {
       // Reached end of free LL, default to end of stack
-      if(block_index == block_type::UNDEFINED)
+      if (block_index == block_type::UNDEFINED)
       {
         return stack_.Push(write_block);
       }
 
       stack_.Get(block_index, block);
-    }
-    while(block_index < min_index);
+    } while (block_index < min_index);
 
     // We now have the location of the point in the LL we want to remove
     // fix prev
@@ -625,7 +622,7 @@ private:
     stack_.Set(block.previous, mod_block);
 
     // fix next
-    if(block.next != block_type::UNDEFINED)
+    if (block.next != block_type::UNDEFINED)
     {
       stack_.Get(block.next, mod_block);
       mod_block.previous = block.previous;
@@ -653,17 +650,17 @@ private:
     block_type remove_block;
     block_type prev_block;
     block_type next_block;
-    uint64_t   free_index_p = free_block_index_; // Starts at 0
+    uint64_t   free_index_p = free_block_index_;  // Starts at 0
     uint64_t   free_index_n = free_block_.next;
 
     // If no free blocks, safe to point the admin block to the beginning of this LL
-    if(free_block_.free == 0)
+    if (free_block_.free == 0)
     {
       assert(remove_index != block_type::UNDEFINED);
       free_block_.next = remove_index;
 
       // Count new free blocks
-      while(remove_index != block_type::UNDEFINED)
+      while (remove_index != block_type::UNDEFINED)
       {
         stack_.Get(remove_index, remove_block);
         remove_index = remove_block.next;
@@ -676,14 +673,14 @@ private:
     // free LL that we can insert before, so we have prev and next in the free LL, we then put the
     // remove_block in-between those.
     assert(free_index_n != block_type::UNDEFINED);
-    stack_.Get(free_index_p,   prev_block);   // <- pointing to free block LL-1
-    stack_.Get(free_index_n,        next_block);   // <- pointing to free block LL
-    stack_.Get(remove_index,      remove_block); // Crawling the blocks to free
+    stack_.Get(free_index_p, prev_block);    // <- pointing to free block LL-1
+    stack_.Get(free_index_n, next_block);    // <- pointing to free block LL
+    stack_.Get(remove_index, remove_block);  // Crawling the blocks to free
 
-    while(remove_index != block_type::UNDEFINED)
+    while (remove_index != block_type::UNDEFINED)
     {
       // We want to insert when we're between prev and next or at the end
-      if(free_index_n > remove_index || free_index_n == block_type::UNDEFINED)
+      if (free_index_n > remove_index || free_index_n == block_type::UNDEFINED)
       {
         // Save the next index
         uint64_t next_remove_index = remove_block.next;
@@ -696,7 +693,7 @@ private:
 
         stack_.Set(free_index_p, prev_block);
 
-        if(free_index_n != block_type::UNDEFINED)
+        if (free_index_n != block_type::UNDEFINED)
         {
           stack_.Set(free_index_n, next_block);
         }
@@ -705,7 +702,7 @@ private:
 
         // Now we have inserted between prev and next, our removed block becomes prev. Free index
         // does not advance.
-        prev_block      = remove_block;
+        prev_block   = remove_block;
         free_index_p = remove_index;
 
         remove_index = next_remove_index;
@@ -722,7 +719,6 @@ private:
       }
     }
   }
-
 };
 }  // namespace storage
 }  // namespace fetch

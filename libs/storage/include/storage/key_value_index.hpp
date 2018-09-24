@@ -493,7 +493,7 @@ public:
 
     Verify(true);
 
-    if(size() == 0)
+    if (size() == 0)
     {
       return;
     }
@@ -517,7 +517,7 @@ public:
     assert(kv.is_leaf() == true);
 
     // Clear the tree for edge case of only node
-    if(size() == 1)
+    if (size() == 1)
     {
       stack_.Clear();
       root_ = 0;
@@ -526,7 +526,7 @@ public:
     }
 
     // TODO: (HUT) : remove
-    if(kv.is_leaf() == false)
+    if (kv.is_leaf() == false)
     {
       throw StorageException("asdf");
     }
@@ -534,19 +534,19 @@ public:
     // Get our sibling, and our parent
     key_value_pair parent;
     key_value_pair sibling;
-    index_type parent_index = kv.parent;
-    index_type sibling_index;
+    index_type     parent_index = kv.parent;
+    index_type     sibling_index;
     stack_.Get(parent_index, parent);
 
     assert(parent_index != uint64_t(-1));
 
     // Determine the sibling left/right from parent left/right
-    if(kv_index == parent.left)
+    if (kv_index == parent.left)
     {
       sibling_index = parent.right;
       stack_.Get(sibling_index, sibling);
     }
-    else if(kv_index == parent.right)
+    else if (kv_index == parent.right)
     {
       sibling_index = parent.left;
       stack_.Get(sibling_index, sibling);
@@ -556,22 +556,21 @@ public:
       throw StorageException("Failed to find element in parent left/right references: tree broken");
     }
 
-
     // Set the sibling in the place of that parent, the split etc. should be able to stay the same
     sibling.parent = parent.parent;
 
     // Update that sibling's parents if sibling is not root
-    if(sibling.parent != uint64_t(-1))
+    if (sibling.parent != uint64_t(-1))
     {
       key_value_pair new_sibling_parent;
       stack_.Get(sibling.parent, new_sibling_parent);
 
       // Update parent left/right
-      if(new_sibling_parent.left == parent_index)
+      if (new_sibling_parent.left == parent_index)
       {
         new_sibling_parent.left = sibling_index;
       }
-      else if(new_sibling_parent.right == parent_index)
+      else if (new_sibling_parent.right == parent_index)
       {
         new_sibling_parent.right = sibling_index;
       }
@@ -579,7 +578,6 @@ public:
       {
         throw StorageException("Failed to erase element in key value index: tree broken");
       }
-
 
       stack_.Set(sibling.parent, new_sibling_parent);
     }
@@ -595,7 +593,7 @@ public:
     Verify(true);
 
     // Erase our node and its parent, important to do this at the end since it might shuffle indexes
-    if(parent_index > kv_index)
+    if (parent_index > kv_index)
     {
       Erase(parent_index);
       Erase(kv_index);
@@ -715,7 +713,7 @@ public:
     {
       if (node_iterator_)
       {
-        self_->GetNext(kv_, kv_node_.parent); // TODO: (HUT) : don't store whole kv, just index
+        self_->GetNext(kv_, kv_node_.parent);  // TODO: (HUT) : don't store whole kv, just index
       }
       else
       {
@@ -883,7 +881,6 @@ private:
 
       stack_.Get(next, kv);
 
-
       left_right = key.Compare(kv.key, pos, kv.split >> 8, kv.split & 63);
 
       switch (left_right)
@@ -1037,8 +1034,7 @@ private:
 
     assert(index <= stack_end);
 
-
-    if(index == stack_end)
+    if (index == stack_end)
     {
       stack_.Pop();
       return;
@@ -1049,22 +1045,24 @@ private:
     stack_.Get(stack_end, last_element);
 
     // Get parent of last element, update its index to where the last element is going.
-    if(last_element.parent != index_type(-1))
+    if (last_element.parent != index_type(-1))
     {
       key_value_pair last_element_parent;
       stack_.Get(last_element.parent, last_element_parent);
 
-      if(last_element_parent.right == stack_end)
+      if (last_element_parent.right == stack_end)
       {
         last_element_parent.right = index;
       }
-      else if(last_element_parent.left == stack_end)
+      else if (last_element_parent.left == stack_end)
       {
         last_element_parent.left = index;
       }
       else
       {
-        throw StorageException("Storage tree referencing broken: parent of node doesn't refer to node via left or right branches");
+        throw StorageException(
+            "Storage tree referencing broken: parent of node doesn't refer to node via left or "
+            "right branches");
       }
 
       stack_.Set(last_element.parent, last_element_parent);
@@ -1082,32 +1080,30 @@ private:
 
   void Verify(bool stack_size_correct)
   {
-    if(stack_.size() == 0)
+    if (stack_.size() == 0)
     {
       return;
     }
-
 
     for (std::size_t i = 0; i < stack_.size(); ++i)
     {
       key_value_pair kv;
       stack_.Get(i, kv);
-
     }
 
-    //VerifyHash();
+    // VerifyHash();
 
-    if(root_ >= stack_.size())
+    if (root_ >= stack_.size())
     {
       throw StorageException("Root out of bounds of stack");
     }
 
-    //index_type     depth      = 0;
+    // index_type     depth      = 0;
 
     key_value_pair kv;
     stack_.Get(root_, kv);
 
-    if(kv.parent != uint64_t(-1))
+    if (kv.parent != uint64_t(-1))
     {
       throw StorageException("Root of tree's parent not terminated correctly");
     }

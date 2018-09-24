@@ -227,7 +227,7 @@ public:
 
   protected:
     typename key_value_index_type::Iterator wrapped_iterator_;
-    file_object_type                        *file_object_;
+    file_object_type *                      file_object_;
   };
 
   self_type::Iterator Find(ResourceID const &rid)
@@ -267,32 +267,32 @@ public:
   }
 
 protected:
-//  /**
-//   * Get or create a document file
-//   *
-//   * @param: rid The key
-//   * @param: create Whether to create a new file when it's missing
-//   *
-//   * @return: Document file, empty when the file doesn't exist
-//   */
-//  DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
-//  {
-//    byte_array::ConstByteArray const &address = rid.id();
-//    index_type                        index   = 0;
-//
-//    if (key_index_.GetIfExists(address, index))
-//    {
-//      return DocumentFile(this, address, file_object_, index);
-//    }
-//    else if (!create)
-//    {
-//      return DocumentFile();
-//    }
-//
-//    DocumentFile doc = DocumentFile(this, address, file_object_);
-//
-//    return doc;
-//  }
+  //  /**
+  //   * Get or create a document file
+  //   *
+  //   * @param: rid The key
+  //   * @param: create Whether to create a new file when it's missing
+  //   *
+  //   * @return: Document file, empty when the file doesn't exist
+  //   */
+  //  DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
+  //  {
+  //    byte_array::ConstByteArray const &address = rid.id();
+  //    index_type                        index   = 0;
+  //
+  //    if (key_index_.GetIfExists(address, index))
+  //    {
+  //      return DocumentFile(this, address, file_object_, index);
+  //    }
+  //    else if (!create)
+  //    {
+  //      return DocumentFile();
+  //    }
+  //
+  //    DocumentFile doc = DocumentFile(this, address, file_object_);
+  //
+  //    return doc;
+  //  }
 
 private:
   mutex::Mutex         mutex_;

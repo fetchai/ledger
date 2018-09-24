@@ -32,13 +32,14 @@ fetch::random::LaggedFibonacciGenerator<> lfg;
 bool FailsBadLoad()
 {
   {
-    VersionedRandomAccessStack<FileBlockType<64>>             stack;
+    VersionedRandomAccessStack<FileBlockType<64>> stack;
 
     try
     {
       FileObject<VersionedRandomAccessStack<FileBlockType<64>>> file_object(stack);
       return false;
-    } catch(const StorageException &e)
+    }
+    catch (const StorageException &e)
     {
       return true;
     }
@@ -328,7 +329,7 @@ bool FileLoadHashConsistency()
   return true;
 }
 
-//TEST(file_object, basic_functionality)
+// TEST(file_object, basic_functionality)
 //{
 //  //ASSERT_TRUE(FailsBadLoad());
 //}
