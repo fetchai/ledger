@@ -21,7 +21,7 @@
 
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -43,7 +43,9 @@ public:
   };
 
   LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
-    : identity_(identity), register_(std::move(reg)), manager_(nm)
+    : identity_(std::move(identity))
+    , register_(std::move(reg))
+    , manager_(nm)
   {
     lane_        = uint32_t(-1);
     total_lanes_ = 0;
@@ -51,7 +53,10 @@ public:
 
   /// External controls
   /// @{
-  ping_type Ping() { return PING_MAGIC; }
+  ping_type Ping()
+  {
+    return PING_MAGIC;
+  }
 
   crypto::Identity Hello(connection_handle_type const &client, crypto::Identity const &iden)
   {
@@ -89,22 +94,37 @@ public:
     return identity_;
   }
 
-  lane_type GetLaneNumber() { return lane_; }
+  lane_type GetLaneNumber()
+  {
+    return lane_;
+  }
 
-  lane_type GetTotalLanes() { return total_lanes_; }
+  lane_type GetTotalLanes()
+  {
+    return total_lanes_;
+  }
 
   /// @}
 
   /// Internal controls
   /// @{
-  void SetLaneNumber(lane_type const &lane) { lane_ = lane; }
+  void SetLaneNumber(lane_type const &lane)
+  {
+    lane_ = lane;
+  }
 
-  void SetTotalLanes(lane_type const &t) { total_lanes_ = t; }
+  void SetTotalLanes(lane_type const &t)
+  {
+    total_lanes_ = t;
+  }
   /// @}
   using callable_sign_message_type =
       std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
 
-  void OnSignMessage(callable_sign_message_type const &fnc) { on_sign_message_ = fnc; }
+  void OnSignMessage(callable_sign_message_type const &fnc)
+  {
+    on_sign_message_ = fnc;
+  }
 
 private:
   mutex::Mutex               identity_mutex_;

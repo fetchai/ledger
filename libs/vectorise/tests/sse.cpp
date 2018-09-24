@@ -37,7 +37,10 @@ void Test1()
   r3 = r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 4; ++i) std::cout << c[i] << " ";
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    std::cout << c[i] << " ";
+  }
 
   std::cout << std::endl;
 }
@@ -54,7 +57,10 @@ void Test2()
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 4; ++i) std::cout << c[i] << " ";
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    std::cout << c[i] << " ";
+  }
 
   std::cout << std::endl;
 }
@@ -71,7 +77,10 @@ int main()
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 2; ++i) std::cout << c[i] << " ";
+  for (std::size_t i = 0; i < 2; ++i)
+  {
+    std::cout << c[i] << " ";
+  }
 
   std::cout << std::endl;
 }

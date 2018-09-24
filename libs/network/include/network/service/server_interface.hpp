@@ -34,7 +34,8 @@ public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using byte_array_type        = byte_array::ConstByteArray;
 
-  virtual ~ServiceServerInterface() {}
+  virtual ~ServiceServerInterface()
+  {}
 
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
@@ -83,7 +84,7 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
+        fetch::logger.Error("Serialization error (Function Call): ", e.what());
         result = serializer_type();
         result << SERVICE_ERROR << id << e;
       }
@@ -107,16 +108,12 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
+        fetch::logger.Error("Serialization error (Subscribe): ", e.what());
+        // result = serializer_type();
+        // result << SERVICE_ERROR << id << e;
+        throw e;  // TODO(tfr): propagate error other other size
       }
+      // DeliverResponse(client, result.data());
     }
     else if (type == SERVICE_UNSUBSCRIBE)
     {
@@ -134,16 +131,12 @@ protected:
       }
       catch (serializers::SerializableException const &e)
       {
-        fetch::logger.Error("Serialization error: ", e.what());
-        // FIX Serialization of errors such that this also works
-
-        //          serializer_type result;
-        //          result = serializer_type();
-        //          result << SERVICE_ERROR << id << e;
-        //          Send(client, result.data());
-
-        throw e;
+        fetch::logger.Error("Serialization error (Unsubscribe): ", e.what());
+        // result = serializer_type();
+        // result << SERVICE_ERROR << id << e;
+        throw e;  // TODO(tfr): propagate error other other size
       }
+      // DeliverResponse(client, result.data());
     }
 
     return ret;
@@ -154,6 +147,7 @@ private:
                    serializer_type params)
   {
     //    LOG_STACK_TRACE_POINT;
+    LOG_STACK_TRACE_POINT;
 
     protocol_handler_type protocol;
     function_handler_type function;
@@ -172,16 +166,30 @@ private:
     mod.ApplyMiddleware(client, params.data());
 
     auto &fnc = mod[function];
+    fetch::logger.Debug("Expecting following signature: ", fnc.signature());
 
     // If we need to add client id to function arguments
-    if (fnc.meta_data() & Callable::CLIENT_ID_ARG)
+    try
     {
-      CallableArgumentList extra_args;
-      extra_args.PushArgument(&client);
-      return fnc(result, extra_args, params);
-    }
+      if (fnc.meta_data() & Callable::CLIENT_ID_ARG)
+      {
+        fetch::logger.Debug("Adding client ID meta data to ", protocol, ":", function);
+        CallableArgumentList extra_args;
+        extra_args.PushArgument(&client);
+        fnc(result, extra_args, params);
+        return;
+      }
 
-    return fnc(result, params);
+      fnc(result, params);
+      return;
+    }
+    catch (serializers::SerializableException const &e)
+    {
+      std::string new_explanation = e.explanation() + std::string(" (Function signature: ") +
+                                    fnc.signature() + std::string(")");
+      serializers::SerializableException e2(e.error_code(), new_explanation);
+      throw e2;
+    }
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe

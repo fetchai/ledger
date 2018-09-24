@@ -20,7 +20,7 @@
 #include "ledger/chain/main_chain_controller_protocol.hpp"
 #include "ledger/chain/main_chain_service.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <unordered_map>
 namespace fetch {
@@ -39,7 +39,8 @@ public:
     IDENTITY_PROTOCOL_ID   = MainChainService::IDENTITY
   };
 
-  MainChainRemoteControl() {}
+  MainChainRemoteControl()
+  {}
   MainChainRemoteControl(MainChainRemoteControl const &other) = default;
   MainChainRemoteControl(MainChainRemoteControl &&other)      = default;
   MainChainRemoteControl &operator=(MainChainRemoteControl const &other) = default;
@@ -47,7 +48,10 @@ public:
 
   ~MainChainRemoteControl() = default;
 
-  void SetClient(shared_service_type const &client) { client_ = client; }
+  void SetClient(shared_service_type const &client)
+  {
+    client_ = client;
+  }
 
   void Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
@@ -111,7 +115,10 @@ public:
     return 0;
   }
 
-  bool IsAlive(mainchain_index_type const &mainchain) { return bool(client_); }
+  bool IsAlive(mainchain_index_type const &mainchain)
+  {
+    return bool(client_);
+  }
 
 private:
   shared_service_type client_;

@@ -20,7 +20,7 @@
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/logger.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 #include <memory>
@@ -76,9 +76,15 @@ public:
     return client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH).As<ByteArray>();
   }
 
-  void SetID(ByteArray const &id) { id_ = id; }
+  void SetID(ByteArray const &id)
+  {
+    id_ = id;
+  }
 
-  ByteArray const &id() { return id_; }
+  ByteArray const &id()
+  {
+    return id_;
+  }
 
 private:
   std::unique_ptr<ServiceClient> client_;
@@ -128,7 +134,10 @@ int main()
 
     for (auto &t : tokenizer)
     {
-      if (t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+      if (t.type() != TOKEN_CATCH_ALL)
+      {
+        command.push_back(t);
+      }
     }
 
     if (command.size() > 0)

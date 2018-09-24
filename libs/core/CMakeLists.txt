@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   C O R E   L I B R A R Y
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-core)
 
 # CMake Configuration
@@ -16,6 +16,7 @@ target_link_libraries(fetch-core PUBLIC fetch-vectorise)
 add_test_target()
 
 add_subdirectory(benchmark)
+add_subdirectory(examples)
 
 #if(FETCH_CLANG_TIDY_CFG)
 #  message(STATUS "Whoop whoop")

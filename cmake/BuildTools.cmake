@@ -68,6 +68,7 @@ function(setup_library_examples library)
             add_executable(${example_name} ${example_headers} ${example_srcs})
             target_link_libraries(${example_name} PRIVATE ${library})
             target_include_directories(${example_name} PRIVATE ${example_path})
+            target_include_directories(${example_name} PRIVATE ${examples_root})
 
             if(FETCH_VERBOSE_CMAKE)
               message(STATUS "Creating ${example_name} target linking to ${library}")

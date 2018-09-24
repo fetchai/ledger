@@ -95,8 +95,10 @@ public:
     LOG_STACK_TRACE_POINT;
 
     if ((n >= 256) || (members_[n] == nullptr))
+    {
       throw serializers::SerializableException(
           error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+    }
     return *members_[n];
   }
 
@@ -120,8 +122,10 @@ public:
     callable_type *fnc = new service::CallableClassMember<C, R(Args...)>(instance, function);
 
     if (members_[n] != nullptr)
+    {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+    }
 
     members_[n] = fnc;
   }
@@ -133,8 +137,10 @@ public:
                                                                             instance, function);
 
     if (members_[n] != nullptr)
+    {
       throw serializers::SerializableException(
           error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+    }
 
     members_[n] = fnc;
   }
@@ -159,7 +165,7 @@ public:
    * This function is intended to be used by the service to subscribe
    * its clients to the feed.
    */
-  void Subscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
+  void Subscribe(uint64_t const &client,  // TODO(issue 21): Standardize client type over the code.
                  feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
@@ -170,7 +176,10 @@ public:
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
-      if (feeds_[i]->feed() == feed) break;
+      if (feeds_[i]->feed() == feed)
+      {
+        break;
+      }
     }
     if (i == feeds_.size())
     {
@@ -190,8 +199,9 @@ public:
    * This function is intended to be used by the service to unsubscribe
    * its clients to the feed.
    */
-  void Unsubscribe(uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, subscription_handler_type const &id)
+  void Unsubscribe(
+      uint64_t const &         client,  // TODO(issue 21): Standardize client type over the code.
+      feed_handler_type const &feed, subscription_handler_type const &id)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -199,7 +209,10 @@ public:
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
-      if (feeds_[i]->feed() == feed) break;
+      if (feeds_[i]->feed() == feed)
+      {
+        break;
+      }
     }
     if (i == feeds_.size())
     {
@@ -215,9 +228,15 @@ public:
    *
    * @return a reference to the feeds.
    */
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds() { return feeds_; }
+  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds()
+  {
+    return feeds_;
+  }
 
-  void AddMiddleware(middleware_type const &m) { middleware_.push_back(m); }
+  void AddMiddleware(middleware_type const &m)
+  {
+    middleware_.push_back(m);
+  }
 
   void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg)
   {

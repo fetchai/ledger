@@ -32,12 +32,30 @@ public:
   using iterator        = map_type::iterator;
   using const_iterator  = map_type::const_iterator;
 
-  iterator       begin() noexcept { return map_type::begin(); }
-  iterator       end() noexcept { return map_type::end(); }
-  const_iterator begin() const noexcept { return map_type::begin(); }
-  const_iterator end() const noexcept { return map_type::end(); }
-  const_iterator cbegin() const noexcept { return map_type::cbegin(); }
-  const_iterator cend() const noexcept { return map_type::cend(); }
+  iterator begin() noexcept
+  {
+    return map_type::begin();
+  }
+  iterator end() noexcept
+  {
+    return map_type::end();
+  }
+  const_iterator begin() const noexcept
+  {
+    return map_type::begin();
+  }
+  const_iterator end() const noexcept
+  {
+    return map_type::end();
+  }
+  const_iterator cbegin() const noexcept
+  {
+    return map_type::cbegin();
+  }
+  const_iterator cend() const noexcept
+  {
+    return map_type::cend();
+  }
 
   void Add(byte_array_type const &name, byte_array_type const &value)
   {

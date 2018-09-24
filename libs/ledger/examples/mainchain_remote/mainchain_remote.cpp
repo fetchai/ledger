@@ -23,7 +23,7 @@
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "ledger/chain/main_chain_remote_control.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
 
@@ -96,7 +96,10 @@ int main(int argc, char const **argv)
 
       for (auto &t : tokenizer)
       {
-        if (t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+        if (t.type() != TOKEN_CATCH_ALL)
+        {
+          command.push_back(t);
+        }
       }
 
       if (command.size() > 0)

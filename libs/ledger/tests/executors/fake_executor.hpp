@@ -38,7 +38,9 @@ public:
     using timepoint_type = clock_type::time_point;
 
     HistoryElement(tx_digest_type const &h, std::size_t s, lane_set_type l)
-      : hash(h), slice(s), lanes(std::move(l))
+      : hash(h)
+      , slice(s)
+      , lanes(std::move(l))
     {}
     HistoryElement(HistoryElement const &) = default;
 
@@ -64,7 +66,10 @@ public:
     return Status::SUCCESS;
   }
 
-  std::size_t GetNumExecutions() const { return history_.size(); }
+  std::size_t GetNumExecutions() const
+  {
+    return history_.size();
+  }
 
   void CollectHistory(history_cache_type &history)
   {
@@ -72,9 +77,15 @@ public:
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStorageInterface(storage_type &state) { state_ = &state; }
+  void SetStorageInterface(storage_type &state)
+  {
+    state_ = &state;
+  }
 
-  void ClearStorageInterface() { state_ = nullptr; }
+  void ClearStorageInterface()
+  {
+    state_ = nullptr;
+  }
 
 private:
   storage_type *     state_ = nullptr;

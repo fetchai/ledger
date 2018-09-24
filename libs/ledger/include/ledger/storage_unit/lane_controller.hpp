@@ -24,7 +24,8 @@
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
+
 namespace fetch {
 namespace ledger {
 
@@ -53,22 +54,37 @@ public:
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port) { Connect(host, port); }
+  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
+  {
+    Connect(host, port);
+  }
 
   void TryConnect(p2p::EntryPoint const &ep)
   {
     for (auto &h : ep.host)
     {
       fetch::logger.Debug("Lane trying to connect to ", h, ":", ep.port);
-      if (Connect(h, ep.port)) break;
+      if (Connect(h, ep.port))
+      {
+        break;
+      }
     }
   }
 
-  void Shutdown() { TODO_FAIL("Needs to be implemented"); }
+  void Shutdown()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
-  void StartSync() { TODO_FAIL("Needs to be implemented"); }
+  void StartSync()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
-  void StopSync() { TODO_FAIL("Needs to be implemented"); }
+  void StopSync()
+  {
+    TODO_FAIL("Needs to be implemented");
+  }
 
   int IncomingPeers()
   {

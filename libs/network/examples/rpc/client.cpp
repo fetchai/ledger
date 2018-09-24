@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/client.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 #include <iostream>
 using namespace fetch::service;
@@ -53,15 +53,26 @@ int main()
   // Promises
   auto p1 = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
   auto p2 = client.Call(MYPROTO, SLOWFUNCTION, 4, 3);
-
+  auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
-  if (!p1.is_fulfilled()) std::cout << "p1 is not yet fulfilled" << std::endl;
+  if (!p1.is_fulfilled())
+  {
+    std::cout << "p1 is not yet fulfilled" << std::endl;
+  }
 
   p1.Wait();
 
   // Converting to a type implicitly invokes Wait (as is the case for p2)
   std::cout << "Result is: " << int(p1) << " " << int(p2) << std::endl;
+  try
+  {
+    p3.Wait();
+  }
+  catch (fetch::serializers::SerializableException const &e)
+  {
+    std::cout << "Exception caught: " << e.what() << std::endl;
+  }
 
   try
   {

@@ -30,9 +30,8 @@ namespace ledger {
 class MainChainNodeInterface
 {
 public:
-  using proof_type = fetch::chain::MainChain::proof_type;
-  using block_type = fetch::chain::MainChain::block_type;
-  using block_hash = fetch::chain::MainChain::block_hash;
+  using BlockType = fetch::chain::MainChain::BlockType;
+  using BlockHash = fetch::chain::MainChain::BlockHash;
 
   enum
   {
@@ -43,8 +42,8 @@ public:
   MainChainNodeInterface()          = default;
   virtual ~MainChainNodeInterface() = default;
 
-  virtual std::pair<bool, block_type> GetHeader(const block_hash &hash)  = 0;
-  virtual std::vector<block_type>     GetHeaviestChain(uint32_t maxsize) = 0;
+  virtual std::pair<bool, BlockType> GetHeader(const BlockHash &hash)   = 0;
+  virtual std::vector<BlockType>     GetHeaviestChain(uint32_t maxsize) = 0;
 };
 
 }  // namespace ledger

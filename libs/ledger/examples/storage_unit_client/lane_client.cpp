@@ -27,8 +27,11 @@
 #include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
+
+#include "common.hpp"
+
 #include <iostream>
 using namespace fetch;
 
@@ -93,7 +96,10 @@ int main(int argc, char const **argv)
 
       for (auto &t : tokenizer)
       {
-        if (t.type() != TOKEN_CATCH_ALL) command.push_back(t);
+        if (t.type() != TOKEN_CATCH_ALL)
+        {
+          command.push_back(t);
+        }
       }
 
       if (command.size() > 0)
@@ -114,7 +120,7 @@ int main(int argc, char const **argv)
             std::cout << std::endl;
 
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
+            examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
           }
@@ -126,7 +132,7 @@ int main(int argc, char const **argv)
             chain::Transaction tx = chain::VerifiedTransaction::Create(chain::RandomTransaction());
             std::cout << std::endl;
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
+            examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
 

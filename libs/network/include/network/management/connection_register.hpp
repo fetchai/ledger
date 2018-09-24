@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -86,9 +86,15 @@ public:
     return connections_.size();
   }
 
-  void OnClientEnter(callback_client_enter_type const &f) { on_client_enter_ = f; }
+  void OnClientEnter(callback_client_enter_type const &f)
+  {
+    on_client_enter_ = f;
+  }
 
-  void OnClientLeave(callback_client_enter_type const &f) { on_client_leave_ = f; }
+  void OnClientLeave(callback_client_enter_type const &f)
+  {
+    on_client_leave_ = f;
+  }
 
   void Leave(connection_handle_type const &id) override
   {
@@ -177,12 +183,18 @@ private:
 
   void SignalClientLeave(connection_handle_type const &handle)
   {
-    if (on_client_leave_) on_client_leave_(handle);
+    if (on_client_leave_)
+    {
+      on_client_leave_(handle);
+    }
   }
 
   void SignalClientEnter(connection_handle_type const &handle)
   {
-    if (on_client_enter_) on_client_enter_(handle);
+    if (on_client_enter_)
+    {
+      on_client_enter_(handle);
+    }
   }
 
   callback_client_enter_type on_client_leave_;
@@ -205,7 +217,10 @@ public:
   using callback_client_enter_type         = std::function<void(connection_handle_type)>;
   using callback_client_leave_type         = std::function<void(connection_handle_type)>;
   using connection_map_type = std::unordered_map<connection_handle_type, weak_connection_type>;
-  ConnectionRegister() { ptr_ = std::make_shared<ConnectionRegisterImpl<G>>(); }
+  ConnectionRegister()
+  {
+    ptr_ = std::make_shared<ConnectionRegisterImpl<G>>();
+  }
 
   template <typename T, typename... Args>
   shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
@@ -213,11 +228,20 @@ public:
     return ptr_->template CreateServiceClient<T, Args...>(tm, std::forward<Args>(args)...);
   }
 
-  std::size_t size() const { return ptr_->size(); }
+  std::size_t size() const
+  {
+    return ptr_->size();
+  }
 
-  void OnClientEnter(callback_client_enter_type const &f) { return ptr_->OnClientEnter(f); }
+  void OnClientEnter(callback_client_enter_type const &f)
+  {
+    return ptr_->OnClientEnter(f);
+  }
 
-  void OnClientLeave(callback_client_enter_type const &f) { return ptr_->OnClientLeave(f); }
+  void OnClientLeave(callback_client_enter_type const &f)
+  {
+    return ptr_->OnClientLeave(f);
+  }
 
   std::shared_ptr<lockable_details_type> GetDetails(connection_handle_type const &i)
   {
@@ -234,7 +258,10 @@ public:
     return ptr_->GetService(i);
   }
 
-  shared_connection_type GetClient(connection_handle_type const &i) { return ptr_->GetClient(i); }
+  shared_connection_type GetClient(connection_handle_type const &i)
+  {
+    return ptr_->GetClient(i);
+  }
 
   void WithServices(std::function<void(service_map_type const &)> const &f) const
   {
@@ -256,9 +283,15 @@ public:
     ptr_->WithConnections(fnc);
   }
 
-  uint64_t number_of_services() const { return ptr_->number_of_services(); }
+  uint64_t number_of_services() const
+  {
+    return ptr_->number_of_services();
+  }
 
-  shared_implementation_pointer_type pointer() { return ptr_; }
+  shared_implementation_pointer_type pointer()
+  {
+    return ptr_;
+  }
 
 private:
   shared_implementation_pointer_type ptr_;

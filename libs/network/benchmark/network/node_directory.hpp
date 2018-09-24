@@ -23,8 +23,8 @@
 #include "core/logger.hpp"
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "network/service/client.hpp"
 #include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
 #include "network_classes.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_benchmark/commands.hpp"
@@ -43,7 +43,9 @@ class NodeDirectory
 public:
   using clientType = service::ServiceClient;
 
-  NodeDirectory(network::NetworkManager tm) : tm_{tm} {}
+  NodeDirectory(network::NetworkManager tm)
+    : tm_{tm}
+  {}
 
   NodeDirectory(NodeDirectory &rhs)  = delete;
   NodeDirectory(NodeDirectory &&rhs) = delete;

@@ -140,7 +140,10 @@ public:
   bool LocklessGet(ResourceID const &rid, type &object)
   {
     Document doc = store_.Get(rid);
-    if (doc.failed) return false;
+    if (doc.failed)
+    {
+      return false;
+    }
 
     serializer_type ser(doc.document);
     ser >> object;
@@ -176,8 +179,12 @@ public:
   {
     serializer_type ser;
     ser << object;
-
     store_.Set(rid, ser.data());
+  }
+
+  std::size_t size() const
+  {
+    return store_.size();
   }
 
   /**
@@ -189,18 +196,29 @@ public:
   class Iterator
   {
   public:
-    Iterator(typename KeyByteArrayStore<S>::Iterator it) : wrapped_iterator_{it} {}
+    Iterator(typename KeyByteArrayStore<S>::Iterator it)
+      : wrapped_iterator_{it}
+    {}
     Iterator()                    = default;
     Iterator(Iterator const &rhs) = default;
     Iterator(Iterator &&rhs)      = default;
     Iterator &operator=(Iterator const &rhs) = default;
     Iterator &operator=(Iterator &&rhs) = default;
 
-    void operator++() { ++wrapped_iterator_; }
+    void operator++()
+    {
+      ++wrapped_iterator_;
+    }
 
-    bool operator==(Iterator const &rhs) { return wrapped_iterator_ == rhs.wrapped_iterator_; }
+    bool operator==(Iterator const &rhs)
+    {
+      return wrapped_iterator_ == rhs.wrapped_iterator_;
+    }
 
-    bool operator!=(Iterator const &rhs) { return !(wrapped_iterator_ == rhs.wrapped_iterator_); }
+    bool operator!=(Iterator const &rhs)
+    {
+      return !(wrapped_iterator_ == rhs.wrapped_iterator_);
+    }
 
     /**
      * Dereference operator
@@ -246,9 +264,15 @@ public:
     return Iterator(it);
   }
 
-  self_type::Iterator begin() { return Iterator(store_.begin()); }
+  self_type::Iterator begin()
+  {
+    return Iterator(store_.begin());
+  }
 
-  self_type::Iterator end() { return Iterator(store_.end()); }
+  self_type::Iterator end()
+  {
+    return Iterator(store_.end());
+  }
 
 private:
   mutex::Mutex         mutex_;

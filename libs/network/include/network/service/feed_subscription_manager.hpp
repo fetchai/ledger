@@ -52,7 +52,9 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-    : subscribe_mutex_(__LINE__, __FILE__), feed_(feed), publisher_(publisher)
+    : subscribe_mutex_(__LINE__, __FILE__)
+    , feed_(feed)
+    , publisher_(publisher)
   {}
 
   /* Attaches a feed to a given service.
@@ -93,7 +95,10 @@ public:
       }
 
       std::reverse(remove.begin(), remove.end());
-      for (auto &i : remove) subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+      for (auto &i : remove)
+      {
+        subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+      }
       subscribe_mutex_.unlock();
     });
   }
@@ -128,10 +133,18 @@ public:
     subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
-      if ((subscribers_[i].client == client) && (subscribers_[i].id == id)) ids.push_back(i);
+    {
+      if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
+      {
+        ids.push_back(i);
+      }
+    }
 
     std::reverse(ids.begin(), ids.end());
-    for (auto &i : ids) subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    for (auto &i : ids)
+    {
+      subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
+    }
     subscribe_mutex_.unlock();
   }
 
@@ -139,18 +152,24 @@ public:
    *
    * @return the feed type.
    */
-  feed_handler_type const &feed() const { return feed_; }
+  feed_handler_type const &feed() const
+  {
+    return feed_;
+  }
 
   /* Returns a pointer to the abstract publisher.
    *
    * @return the publisher.
    */
-  fetch::service::AbstractPublicationFeed *publisher() const { return publisher_; }
+  fetch::service::AbstractPublicationFeed *publisher() const
+  {
+    return publisher_;
+  }
 
 private:
   struct ClientSubscription
   {
-    uint64_t                  client; // TODO(issue 21): change uint64_t to global client id.
+    uint64_t                  client;  // TODO(issue 21): change uint64_t to global client id.
     subscription_handler_type id;
   };
 

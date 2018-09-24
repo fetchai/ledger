@@ -23,9 +23,9 @@
 #include "crypto/fnv.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/p2pservice/p2p_peer_details.hpp"
-#include "network/service/client.hpp"
 #include "network/service/function.hpp"
 #include "network/service/publication_feed.hpp"
+#include "network/service/service_client.hpp"
 namespace fetch {
 namespace p2p {
 
@@ -43,9 +43,9 @@ public:
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
 
-  using peer_details_map_type = std::unordered_map<byte_array::ConstByteArray,
-                                                   connectivity_details_type, crypto::CallableFNV>;
-  using thread_pool_type      = network::ThreadPool;
+  using peer_details_map_type =
+      std::unordered_map<byte_array::ConstByteArray, connectivity_details_type>;
+  using thread_pool_type = network::ThreadPool;
 
   enum
   {
@@ -170,17 +170,26 @@ public:
 
   void Start()
   {
-    if (running_) return;
+    if (running_)
+    {
+      return;
+    }
 
     running_ = true;
     NextMaintainanceCycle();
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+  }
 
   void NextMaintainanceCycle()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     thread_pool_->Post([this]() { this->PruneSuggestions(); },
                        1000);  // TODO(issue 7): add to config
@@ -188,9 +197,12 @@ public:
 
   void PruneSuggestions()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
-    std::unordered_set<byte_array::ConstByteArray, crypto::CallableFNV> to_delete;
+    std::unordered_set<byte_array::ConstByteArray> to_delete;
 
     {
       std::lock_guard<mutex::Mutex> lock(suggest_mutex_);
@@ -226,7 +238,10 @@ private:
     if (it == suggested_peers_.end())
     {
       suggested_peers_[details.identity.identifier()] = details;
-      if (propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
+      if (propagate)
+      {
+        this->Publish(FEED_REQUEST_CONNECTIONS, details);
+      }
       ret = true;
     }
     else
@@ -236,7 +251,10 @@ private:
       if (it->second.MillisecondsSinceUpdate() > 5000)
       {  // TODO(issue 7): Config variable
         suggested_peers_[details.identity.identifier()] = details;
-        if (propagate) this->Publish(FEED_REQUEST_CONNECTIONS, details);
+        if (propagate)
+        {
+          this->Publish(FEED_REQUEST_CONNECTIONS, details);
+        }
         ret = true;
       }
     }
@@ -254,7 +272,10 @@ private:
     if (it != suggested_peers_.end())
     {
       suggested_peers_.erase(it);
-      if (propagate) this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
+      if (propagate)
+      {
+        this->Publish(FEED_ENOUGH_CONNECTIONS, public_key);
+      }
       ret = true;
     }
 

@@ -24,7 +24,7 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"
@@ -53,7 +53,8 @@ public:
   using network_manager_type       = fetch::network::NetworkManager;
   using lane_type                  = LaneIdentity::lane_type;
 
-  explicit StorageUnitClient(network_manager_type const &tm) : network_manager_(tm)
+  explicit StorageUnitClient(network_manager_type const &tm)
+    : network_manager_(tm)
   {
     id_ = "my-fetch-id";
   }
@@ -108,7 +109,7 @@ public:
       return crypto::InvalidIdentity();
     }
 
-    // Exchaning info
+    // Exchanging info
     auto p1 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
     auto p2 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
     auto p3 = client->Call(LaneService::IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
@@ -271,11 +272,20 @@ public:
         .As<byte_array::ByteArray>();
   }
 
-  void SetID(byte_array::ByteArray const &id) { id_ = id; }
+  void SetID(byte_array::ByteArray const &id)
+  {
+    id_ = id;
+  }
 
-  byte_array::ByteArray const &id() { return id_; }
+  byte_array::ByteArray const &id()
+  {
+    return id_;
+  }
 
-  std::size_t lanes() const { return lanes_.size(); }
+  std::size_t lanes() const
+  {
+    return lanes_.size();
+  }
 
   bool is_alive() const
   {

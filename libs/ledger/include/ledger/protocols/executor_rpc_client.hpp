@@ -23,7 +23,7 @@
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
 #include "network/protocols/fetch_protocols.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 namespace fetch {
@@ -54,7 +54,10 @@ public:
     return result.As<Status>();
   }
 
-  bool is_alive() const { return service_->is_alive(); }
+  bool is_alive() const
+  {
+    return service_->is_alive();
+  }
 
 private:
   service_type service_;

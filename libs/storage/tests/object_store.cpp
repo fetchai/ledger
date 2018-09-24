@@ -29,8 +29,7 @@ using namespace fetch::storage;
 using namespace fetch::byte_array;
 
 /**
- * Test class used to verify that the object store can ser/deser objects
- * correctly
+ * Test class used to verify that the object store can ser/deser objects correctly
  */
 struct TestSerDeser
 {
@@ -45,7 +44,10 @@ struct TestSerDeser
    *
    * @return: less than
    */
-  bool operator<(TestSerDeser const &rhs) const { return third < rhs.third; }
+  bool operator<(TestSerDeser const &rhs) const
+  {
+    return third < rhs.third;
+  }
 
   /**
    * Equality operator
@@ -92,90 +94,69 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
 
 int main(int argc, char const **argv)
 {
-
-  SCENARIO("Testing object store with classes")
+  SCENARIO("Testing object store basic functionality")
   {
-    /**
-     * Test of the iterator functionality of the object store. Iterate over the
-     * store and
-     * verify 1 to 1 mapping of the set variables of the store to the iterated
-     * variables
-     */
-    SECTION("Test iterator over basic struct")
+    SECTION("Setting and getting elements")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 11,
-                                        /*1000, 10000*/};
-      for (auto const &numberOfKeys : keyTests)
+      for (std::size_t iterations = 3; iterations < 10; ++iterations)
       {
-        std::cout << "Testing keys: " << numberOfKeys << std::endl;
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db",
-                      "testIndex.db");  // create new file to reset the test
+        ObjectStore<std::size_t> testStore;
+        testStore.New("testFile.db", "testIndex.db");
 
-        std::vector<testType>                     objects;
-        std::vector<testType>                     objectsCopy;
-        fetch::random::LaggedFibonacciGenerator<> lfg;
-
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        for (std::size_t i = 0; i < iterations; ++i)
         {
-          uint64_t random = lfg();
+          testStore.Set(ResourceAddress(std::to_string(i)), i);
 
-          testType test;
-          test.first  = int(-random);
-          test.second = random;
+          std::size_t result;
 
-          test.third = std::to_string(random);
+          testStore.Get(ResourceAddress(std::to_string(i)), result);
 
-          testStore.Set(ResourceAddress(test.third), test);
-          objects.push_back(test);
+          // Suppress most expects to avoid spamming terminal
+          if (i != result || i == 0)
+          {
+            EXPECT(i == result);
+          }
         }
 
-        std::sort(objects.begin(), objects.end());
-
-        // Test that the act of iterating itself doesn't change future iterators
-        auto it = testStore.begin();
-        while (it != testStore.end())
+        // Do a second run
+        for (std::size_t i = 0; i < iterations; ++i)
         {
-          ++it;
+          std::size_t result;
+
+          testStore.Get(ResourceAddress(std::to_string(i)), result);
+
+          // Suppress most expects to avoid spamming terminal
+          if (i != result || i == 0)
+          {
+            EXPECT(i == result);
+          }
         }
 
-        it = testStore.begin();
-        while (it != testStore.end())
+        // Check against false positives
+        for (std::size_t i = 1; i < iterations; ++i)
         {
-          objectsCopy.push_back(*it);
-          ++it;
+          std::size_t result = 0;
+
+          testStore.Get(ResourceAddress(std::to_string(i + iterations)), result);
+
+          // Suppress most expects to avoid spamming terminal
+          if (0 != result || i == 1)
+          {
+            EXPECT(0 == result);
+          }
         }
-
-        for (auto i : testStore)
-        {
-        }
-
-        for (auto i : testStore)
-        {
-        }
-
-        std::sort(objectsCopy.begin(), objectsCopy.end());
-
-        EXPECT(objectsCopy.size() == objects.size());
-        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-        EXPECT(allMatch == true);
       }
     };
+  };
 
-    /**
-     * Test of the find functionality of the object store. Check that we can
-     * find objects
-     * after putting them in the store
-     */
+  SCENARIO("Testing object store with STL functionality")
+  {
     SECTION("Test find over basic struct")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
-                                        /*1000, 10000 */};
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+
       for (auto const &numberOfKeys : keyTests)
       {
-        std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -203,6 +184,7 @@ int main(int argc, char const **argv)
 
         // Test successfully finding and testing to find elements
         bool successfullyFound = true;
+        int  index             = 0;
         for (auto const &i : objects)
         {
           auto it = testStore.Find(ResourceAddress(i.third));
@@ -211,9 +193,11 @@ int main(int argc, char const **argv)
             successfullyFound = false;
             break;
           }
+
+          index++;
         }
 
-        EXPECT(successfullyFound == true);
+        EXPECT(successfullyFound == true && index == index);
 
         successfullyFound = false;
 
@@ -232,18 +216,12 @@ int main(int argc, char const **argv)
       }
     };
 
-    /**
-     * Test of the find functionality of the object store. Check that we can't
-     * find objects
-     * we haven't put in the store
-     */
     SECTION("Test find over basic struct, expect failures")
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100,
-                                        /*1000, 10000 */};
+      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+
       for (auto const &numberOfKeys : keyTests)
       {
-        std::cout << "Testing keys: " << numberOfKeys << std::endl;
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -277,19 +255,151 @@ int main(int argc, char const **argv)
       }
     };
 
-    /**
-     * Test of the subtree iterator functionality. Check that we can specify a
-     * root and then
-     * iterate over the returned iterator to get all objects that begin with
-     * that key
-     */
+    SECTION("Test iterator over basic struct")
+    {
+      std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
+      for (auto const &numberOfKeys : keyTests)
+      {
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
+
+        std::vector<testType>                     objects;
+        std::vector<testType>                     objectsCopy;
+        fetch::random::LaggedFibonacciGenerator<> lfg;
+
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          uint64_t random = lfg();
+
+          testType test;
+          test.first  = int(-random);
+          test.second = random;
+
+          test.third = std::to_string(random);
+
+          testStore.Set(ResourceAddress(test.third), test);
+          objects.push_back(test);
+        }
+
+        std::sort(objects.begin(), objects.end());
+
+        auto mmm = testStore.begin();
+        while (mmm != testStore.end())
+        {
+          ++mmm;
+        }
+
+        auto nnn = testStore.begin();
+        while (nnn != testStore.end())
+        {
+          ++nnn;
+        }
+
+        auto it = testStore.begin();
+
+        while (it != testStore.end())
+        {
+          ++it;
+        }
+
+        it = testStore.begin();
+        while (it != testStore.end())
+        {
+          objectsCopy.push_back(*it);
+          ++it;
+        }
+
+        for (auto i : testStore)
+        {
+        }
+
+        for (auto i : testStore)
+        {
+        }
+
+        std::sort(objectsCopy.begin(), objectsCopy.end());
+
+        EXPECT(objectsCopy.size() == objects.size());
+        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+        EXPECT(allMatch == true);
+      }
+    };
+
     SECTION("Test subtree iterator over basic struct")
     {
-      std::vector<std::size_t> keyTests{0,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
+      std::vector<std::size_t> keyTests{9,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
                                         13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
       for (auto const &numberOfKeys : keyTests)
       {
-        std::cout << "Testing keys: " << numberOfKeys << std::endl;
+        using testType = TestSerDeser;
+        ObjectStore<testType> testStore;
+        testStore.New("testFile.db", "testIndex.db");
+
+        std::vector<testType>                     objects;
+        std::vector<testType>                     objectsCopy;
+        fetch::random::LaggedFibonacciGenerator<> lfg;
+        testType                                  dummy;
+
+        ByteArray array;
+        array.Resize(256 / 8);
+
+        for (std::size_t i = 0; i < array.size(); ++i)
+        {
+          array[i] = 0;
+        }
+
+        // Create vector of random numbers
+        for (std::size_t i = 0; i < numberOfKeys; ++i)
+        {
+          uint64_t random = lfg();
+
+          testType test;
+          test.first  = int(-random);
+          test.second = random;
+
+          test.third = std::to_string(random);
+
+          testStore.Set(ResourceAddress(test.third), test);
+          objects.push_back(test);
+        }
+
+        // Now, aim to split the store up and copy it across perfectly
+        for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
+        {
+          array[0] = static_cast<uint8_t>((keyBegin << 4u) & 0xFF);
+
+          auto rid = ResourceID(array);
+
+          testStore.Get(rid, dummy);
+
+          auto it = testStore.GetSubtree(rid, uint64_t(4));
+
+          while (it != testStore.end())
+          {
+            objectsCopy.push_back(*it);
+            ++it;
+          }
+        }
+
+        // expect iterator test to go well
+        EXPECT(objectsCopy.size() == objects.size());
+
+        std::sort(objects.begin(), objects.end());
+        std::sort(objectsCopy.begin(), objectsCopy.end());
+
+        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+        EXPECT(allMatch == true);
+      }
+    };
+
+    SECTION("Test subtree iterator over basic struct - split into 256 to emulate obj. sync")
+    {
+      std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,    4, 5, 6, 7,  8,  9,   10,  11,
+                                        12, 13,  14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000};
+      for (auto const &numberOfKeys : keyTests)
+      {
         using testType = TestSerDeser;
         ObjectStore<testType> testStore;
         testStore.New("testFile.db", "testIndex.db");
@@ -324,22 +434,25 @@ int main(int argc, char const **argv)
         }
 
         // Now, aim to split the store up and copy it across perfectly
-        for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
+        for (uint8_t keyBegin = 0;; ++keyBegin)
         {
           array[0] = (keyBegin);
 
-          // We want to be able to directly define our own hash so directly use
-          // ResourceID here
           auto rid = ResourceID(array);
 
           testStore.Get(rid, dummy);
 
-          auto it = testStore.GetSubtree(rid, uint64_t(4));
+          auto it = testStore.GetSubtree(rid, uint64_t(8));
 
           while (it != testStore.end())
           {
             objectsCopy.push_back(*it);
             ++it;
+          }
+
+          if (keyBegin == 0xFF)
+          {
+            break;
           }
         }
 

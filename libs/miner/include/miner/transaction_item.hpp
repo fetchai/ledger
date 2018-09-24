@@ -28,13 +28,21 @@ class TransactionItem
 {
 public:
   // Construction / Destruction
-  TransactionItem(chain::TransactionSummary tx, std::size_t id) : summary_(std::move(tx)), id_(id)
+  TransactionItem(chain::TransactionSummary tx, std::size_t id)
+    : summary_(std::move(tx))
+    , id_(id)
   {}
   ~TransactionItem() = default;
 
-  chain::TransactionSummary const &summary() const { return summary_; }
+  chain::TransactionSummary const &summary() const
+  {
+    return summary_;
+  }
 
-  std::size_t id() const { return id_; }
+  std::size_t id() const
+  {
+    return id_;
+  }
 
   // debug only
   std::unordered_set<std::size_t> lanes;

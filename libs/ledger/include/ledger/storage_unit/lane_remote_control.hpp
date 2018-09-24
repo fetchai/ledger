@@ -19,7 +19,7 @@
 
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "network/service/client.hpp"
+#include "network/service/service_client.hpp"
 
 #include <unordered_map>
 namespace fetch {
@@ -39,7 +39,8 @@ public:
     IDENTITY_PROTOCOL_ID   = LaneService::IDENTITY
   };
 
-  LaneRemoteControl() {}
+  LaneRemoteControl()
+  {}
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;

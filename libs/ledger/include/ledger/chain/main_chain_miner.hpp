@@ -34,9 +34,9 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using block_type       = chain::MainChain::block_type;
-  using block_hash       = chain::MainChain::block_hash;
-  using body_type        = chain::MainChain::block_type::body_type;
+  using BlockType        = chain::MainChain::BlockType;
+  using BlockHash        = chain::MainChain::BlockHash;
+  using body_type        = chain::MainChain::BlockType::body_type;
   using dummy_miner_type = fetch::chain::consensus::DummyMiner;
   using miner_type       = fetch::miner::MinerInterface;
 
@@ -50,7 +50,10 @@ public:
     , minerNumber_{minerNumber}
   {}
 
-  ~MainChainMiner() { Stop(); }
+  ~MainChainMiner()
+  {
+    Stop();
+  }
 
   void start()
   {
@@ -91,7 +94,7 @@ private:
     // schedule the next block time
     timestamp_type next_block_time = CalculateNextBlockTime(rng);
 
-    block_hash previous_heaviest;
+    BlockHash previous_heaviest;
 
     while (!stop_)
     {
@@ -114,8 +117,8 @@ private:
         fetch::logger.Info("==> Creating new block from: ", byte_array::ToBase64(block.hash()));
 
         // Create another block sequential to previous
-        block_type nextBlock;
-        body_type  nextBody;
+        BlockType nextBlock;
+        body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
         nextBody.miner_number  = minerNumber_;

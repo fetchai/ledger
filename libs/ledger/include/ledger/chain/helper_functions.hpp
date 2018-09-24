@@ -34,7 +34,10 @@ uint64_t GetRandom()
   return dis(gen);
 }
 
-byte_array::ConstByteArray GetRandomByteArray() { return {std::to_string(GetRandom())}; }
+byte_array::ConstByteArray GetRandomByteArray()
+{
+  return {std::to_string(GetRandom())};
+}
 
 MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
 {
@@ -49,8 +52,15 @@ MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   summary.fee = GetRandom();
   trans.set_summary(summary);
 
+  signatures_type signatures;
+  uint8_t const   size = static_cast<uint8_t>(GetRandom() % 4);
+  for (uint8_t i = 0; i < size; ++i)
+  {
+    signatures[fetch::crypto::Identity{GetRandomByteArray(), GetRandomByteArray()}] =
+        fetch::chain::Signature{GetRandomByteArray(), GetRandomByteArray()};
+  }
   trans.set_data(GetRandomByteArray());
-  trans.set_signature(GetRandomByteArray());
+  trans.set_signatures(signatures);
   trans.set_contract_name(std::to_string(GetRandom()));
 
   return trans;

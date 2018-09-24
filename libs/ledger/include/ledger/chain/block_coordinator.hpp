@@ -30,19 +30,23 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using block_type      = chain::MainChain::block_type;
-  using block_hash      = chain::MainChain::block_hash;
+  using BlockType       = chain::MainChain::BlockType;
+  using BlockHash       = chain::MainChain::BlockHash;
   using mutex_type      = fetch::mutex::Mutex;
   using block_body_type = std::shared_ptr<BlockBody>;
   using status_type     = ledger::ExecutionManagerInterface::Status;
 
   BlockCoordinator(chain::MainChain &mainChain, ledger::ExecutionManagerInterface &executionManager)
-    : mainChain_{mainChain}, executionManager_{executionManager}
+    : mainChain_{mainChain}
+    , executionManager_{executionManager}
   {}
 
-  ~BlockCoordinator() { Stop(); }
+  ~BlockCoordinator()
+  {
+    Stop();
+  }
 
-  void AddBlock(block_type &block)
+  void AddBlock(BlockType &block)
   {
     mainChain_.AddBlock(block);
 
@@ -123,7 +127,7 @@ public:
           }
           else if (status == status_type::NO_PARENT_BLOCK)
           {
-            block_type full_block;
+            BlockType full_block;
 
             if (mainChain_.Get(block->previous_hash, full_block))
             {

@@ -36,14 +36,16 @@ public:
 
   struct Element
   {
-    Element(bookmark_type b) : bookmark{b} {}
+    Element(bookmark_type b)
+      : bookmark{b}
+    {}
 
     bookmark_type  bookmark;
     bool           confirmed{false};
     timepoint_type timestamp{clock_type::now()};
   };
 
-  using archive_type = std::unordered_map<hash_type, Element, crypto::CallableFNV>;
+  using archive_type = std::unordered_map<hash_type, Element>;
 
   bool LookupBookmark(hash_type const &state_hash, bookmark_type &bookmark)
   {

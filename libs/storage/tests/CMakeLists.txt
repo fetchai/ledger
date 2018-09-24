@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   S T O R A G E   T E S T S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-storage)
 
 # CMake configuration
@@ -23,3 +23,6 @@ add_fetch_test(versioned_file_object_test fetch-storage versioned_file_object.cp
 add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
 
 add_fetch_test(object_store_test fetch-storage object_store.cpp)
+add_fetch_test(object_sync_test fetch-storage object_sync.cpp)
+
+add_fetch_gtest(storage fetch-storage gtest/)

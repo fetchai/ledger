@@ -1,5 +1,3 @@
-
-
 #pragma once
 //------------------------------------------------------------------------------
 //
@@ -34,7 +32,8 @@ class AbstractHTTPConnection
 public:
   using shared_type = std::shared_ptr<AbstractHTTPConnection>;
 
-  virtual ~AbstractHTTPConnection() {}
+  virtual ~AbstractHTTPConnection()
+  {}
   virtual void        Send(HTTPResponse const &) = 0;
   virtual std::string Address()                  = 0;
 };

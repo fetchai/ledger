@@ -28,8 +28,8 @@ template <typename R>
 class MainChainProtocol : public fetch::service::Protocol
 {
 public:
-  using block_type            = chain::MainChain::block_type;
-  using block_hash_type       = chain::MainChain::block_hash;
+  using BlockType             = chain::MainChain::BlockType;
+  using block_hash_type       = chain::MainChain::BlockHash;
   using protocol_handler_type = service::protocol_handler_type;
   using thread_pool_type      = network::ThreadPool;
   using register_type         = R;
@@ -58,12 +58,18 @@ public:
   void Start()
   {
     fetch::logger.Debug("Starting syncronisation of blocks");
-    if (running_) return;
+    if (running_)
+    {
+      return;
+    }
     running_ = true;
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
-  void Stop() { running_ = false; }
+  void Stop()
+  {
+    running_ = false;
+  }
 
 private:
   protocol_handler_type protocol_;
@@ -75,7 +81,10 @@ private:
 
   void IdleUntilPeers()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     if (register_.number_of_services() == 0)
     {
@@ -92,7 +101,10 @@ private:
   {
     fetch::logger.Debug("Fetching blocks from peer");
 
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
 
     std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     uint32_t                      ms = max_size_;
@@ -100,7 +112,10 @@ private:
     register_.WithServices([this, ms](service_map_type const &map) {
       for (auto const &p : map)
       {
-        if (!running_) return;
+        if (!running_)
+        {
+          return;
+        }
 
         auto peer = p.second;
         auto ptr  = peer.lock();
@@ -116,14 +131,20 @@ private:
 
   void RealisePromises()
   {
-    if (!running_) return;
+    if (!running_)
+    {
+      return;
+    }
     std::lock_guard<mutex::Mutex> lock(block_list_mutex_);
     incoming_objects_.reserve(uint64_t(max_size_));
 
     for (auto &p : block_list_promises_)
     {
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
 
       incoming_objects_.clear();
       if (!p.Wait(100, false))
@@ -131,9 +152,12 @@ private:
         continue;
       }
 
-      p.template As<std::vector<block_type>>(incoming_objects_);
+      p.template As<std::vector<BlockType>>(incoming_objects_);
 
-      if (!running_) return;
+      if (!running_)
+      {
+        return;
+      }
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
       bool                  loose = false;
@@ -165,10 +189,10 @@ private:
 
   /// RPC
   /// @{
-  std::pair<bool, block_type> GetHeader(block_hash_type const &hash)
+  std::pair<bool, BlockType> GetHeader(block_hash_type const &hash)
   {
     fetch::logger.Debug("GetHeader starting work");
-    block_type block;
+    BlockType block;
     if (chain_->Get(hash, block))
     {
       fetch::logger.Debug("GetHeader done");
@@ -181,9 +205,9 @@ private:
     }
   }
 
-  std::vector<block_type> GetHeaviestChain(uint32_t const &maxsize)
+  std::vector<BlockType> GetHeaviestChain(uint32_t const &maxsize)
   {
-    std::vector<block_type> results;
+    std::vector<BlockType> results;
     std::cerr << "this happened\n\n" << std::endl;
 
     fetch::logger.Debug("GetHeaviestChain starting work ", maxsize);
@@ -201,7 +225,7 @@ private:
 
   mutable mutex::Mutex          block_list_mutex_;
   std::vector<service::Promise> block_list_promises_;
-  std::vector<block_type>       incoming_objects_;
+  std::vector<BlockType>        incoming_objects_;
 
   std::atomic<bool>     running_;
   std::atomic<uint32_t> max_size_;
