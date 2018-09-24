@@ -45,6 +45,8 @@ using namespace fetch::protocols;
 using namespace fetch::commandline;
 using namespace fetch::byte_array;
 
+static constexpr char const *LOGGING_NAME = "node";
+
 using tx_type = typename ShardManager::transaction_type;
 
 std::vector<std::string> words = {
@@ -143,7 +145,7 @@ int main(int argc, char const **argv)
   auto ping_promise = client->Call(FetchProtocols::SHARD, ShardRPC::PING);
   if (!ping_promise.Wait(2000))
   {
-    fetch::logger.Error("Client not repsonding - hanging up!");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Client not repsonding - hanging up!");
     exit(-1);
   }
 

@@ -101,6 +101,8 @@ public:
   using block_type  = typename stack_type::type;
   using hasher_type = crypto::SHA256;
 
+  static constexpr char const *LOGGING_NAME = "FileObject";
+
   enum
   {
     HEADER_SIZE = 2 * sizeof(uint64_t)
@@ -441,8 +443,7 @@ public:
     hasher_type hasher;
     hasher.Reset();
     UpdateHash(hasher);
-    hasher.Final();
-    return hasher.digest();
+    return hasher.Final();
   }
 
   void UpdateHash(crypto::StreamHasher &hasher)

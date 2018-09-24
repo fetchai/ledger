@@ -30,12 +30,15 @@
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include <iostream>
+
+#include "storage_unit_client/common.hpp"
+
 using namespace fetch;
 
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   using service_type = ServiceClient;
   using client_type  = fetch::network::TCPClient;
@@ -56,7 +59,7 @@ int main(int argc, char const **argv)
   std::string                    host = "localhost";
   uint16_t                       port = params.GetParam<uint16_t>("port", 8080);
 
-  ledger::LaneRemoteControl        remote;
+  ledger::LaneRemoteControl        remote(lane_count);
   std::vector<shared_service_type> services;
 
   for (uint32_t i = 0; i < lane_count; ++i)
@@ -175,7 +178,7 @@ int main(int argc, char const **argv)
             std::cout << std::endl;
 
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
+            ledger::examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
           }
@@ -187,7 +190,7 @@ int main(int argc, char const **argv)
             chain::Transaction tx = chain::VerifiedTransaction::Create(chain::RandomTransaction());
             std::cout << std::endl;
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
-            std::cout << "Signature: " << byte_array::ToBase64(tx.signature()) << std::endl;
+            ledger::examples::common::ToBase64(std::cout, tx.signatures());
             std::cout << "Fee: " << tx.summary().fee << std::endl;
             std::cout << std::endl;
 

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/cache.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
@@ -58,17 +59,16 @@ public:
   using execution_list_type = std::vector<execution_item_type>;
   using execution_plan_type = std::vector<execution_list_type>;
 
-  using thread_pool_type      = fetch::network::ThreadPool;
-  using mutex_type            = std::mutex;
-  using counter_type          = std::atomic<std::size_t>;
-  using flag_type             = std::atomic<bool>;
-  using thread_type           = std::unique_ptr<std::thread>;
-  using executor_factory_type = std::function<shared_executor_type()>;
-  using storage_unit_type     = std::shared_ptr<StorageUnitInterface>;
-  using bookmark_type         = StorageUnitInterface::bookmark_type;
-  using hash_type             = StorageUnitInterface::hash_type;
-  using block_state_cache_type =
-      std::unordered_map<block_digest_type, hash_type, crypto::CallableFNV>;
+  using thread_pool_type       = fetch::network::ThreadPool;
+  using mutex_type             = std::mutex;
+  using counter_type           = std::atomic<std::size_t>;
+  using flag_type              = std::atomic<bool>;
+  using thread_type            = std::unique_ptr<std::thread>;
+  using executor_factory_type  = std::function<shared_executor_type()>;
+  using storage_unit_type      = std::shared_ptr<StorageUnitInterface>;
+  using bookmark_type          = StorageUnitInterface::bookmark_type;
+  using hash_type              = StorageUnitInterface::hash_type;
+  using block_state_cache_type = std::unordered_map<block_digest_type, hash_type>;
 
   // Construction / Destruction
   explicit ExecutionManager(std::size_t num_executors, storage_unit_type storage,
@@ -102,7 +102,7 @@ private:
   storage_unit_type   storage_;
   execution_plan_type execution_plan_;
   mutex_type          execution_plan_lock_;
-  block_digest_type   last_block_hash_;
+  block_digest_type   last_block_hash_ = chain::GENESIS_DIGEST;
 
   std::condition_variable monitor_wake_;
   std::condition_variable monitor_notify_;

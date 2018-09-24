@@ -45,5 +45,5 @@ inline void BuildExpStatistics(std::string const &custom_name, pybind11::module 
       .def(custom_name.c_str(), &WrapperExp<NDArray<double>>)
       .def(custom_name.c_str(), &WrapperExp<NDArray<float>>);
 }
-};  // namespace math
-};  // namespace fetch
+}  // namespace math
+}  // namespace fetch

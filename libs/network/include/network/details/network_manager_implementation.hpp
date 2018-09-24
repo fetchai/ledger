@@ -34,15 +34,17 @@ class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
 public:
+  static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
+
   NetworkManagerImplementation(std::size_t threads = 1)
     : number_of_threads_(threads)
   {
-    fetch::logger.Debug("Creating network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
 
   ~NetworkManagerImplementation()
   {
-    fetch::logger.Debug("Destroying network manager");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying network manager");
     Stop();
   }
 
@@ -60,9 +62,14 @@ public:
 
       for (std::size_t i = 0; i < number_of_threads_; ++i)
       {
-        threads_.push_back(new std::thread([this]() { io_service_->run(); }));
+        threads_.push_back(std::make_shared<std::thread>([this]() { this->Work(); }));
       }
     }
+  }
+
+  void Work()
+  {
+    io_service_->run();
   }
 
   void Stop()
@@ -70,21 +77,20 @@ public:
     std::lock_guard<std::mutex> lock(thread_mutex_);
     if (std::this_thread::get_id() != owning_thread_)
     {
-      fetch::logger.Warn("Same thread must start and stop NetworkManager.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Same thread must start and stop NetworkManager.");
       return;
     }
 
     if (threads_.size() != 0)
     {
       shared_work_.reset();
-      fetch::logger.Info("Stopping network manager");
+      FETCH_LOG_INFO(LOGGING_NAME, "Stopping network manager");
 
       io_service_->stop();
 
       for (auto &thread : threads_)
       {
         thread->join();
-        delete thread;
       }
 
       threads_.clear();
@@ -107,9 +113,10 @@ public:
   }
 
 private:
-  std::thread::id                   owning_thread_;
-  std::size_t                       number_of_threads_ = 1;
-  std::vector<std::thread *>        threads_;
+  std::thread::id                           owning_thread_;
+  std::size_t                               number_of_threads_ = 1;
+  std::vector<std::shared_ptr<std::thread>> threads_;
+
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
   std::shared_ptr<asio::io_service::work> shared_work_;

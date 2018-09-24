@@ -19,6 +19,7 @@
 
 #include "math/ndarray_iterator.hpp"
 #include <assert.h>
+#include <iostream>
 
 namespace fetch {
 namespace math {

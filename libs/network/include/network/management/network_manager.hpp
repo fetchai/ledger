@@ -38,6 +38,8 @@ public:
   using pointer_type        = std::shared_ptr<implementation_type>;
   using weak_ref_type       = std::weak_ptr<implementation_type>;
 
+  static constexpr char const *LOGGING_NAME = "NetworkManager";
+
   explicit NetworkManager(std::size_t threads = 1)
   {
     pointer_ = std::make_shared<implementation_type>(threads);
@@ -104,7 +106,7 @@ public:
     }
     else
     {
-      fetch::logger.Info("Failed to post: network man dead.");
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
     }
   }
 

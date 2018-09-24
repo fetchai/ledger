@@ -12,6 +12,7 @@ Welcome to Fetch Ledger's developers guide!
 
    getting_started/index.rst
    ledger/index.rst
+   ledger/contracts.rst   
    serialization/index.rst   
    services/index.rst   
    network/index.rst

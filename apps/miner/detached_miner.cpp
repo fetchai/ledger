@@ -264,7 +264,7 @@ static void PrintSummary(std::size_t const &slice_count)
             << occupancy_pc << "%)" << std::endl;
 }
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   commandline::ParamsParser params;
   params.Parse(argc, argv);
@@ -403,7 +403,9 @@ int main(int argc, char const **argv)
   for (std::size_t i = 0; i < reps; ++i)
   {
     generator.Reset();
-    generator.GenerateBlock(lane_count, slice_count, strategy, batch_size, explore);
+    generator.GenerateBlock(lane_count, slice_count,
+                            static_cast<chain::BlockGenerator::Strategy>(strategy), batch_size,
+                            explore);
 
     if (print_solution)
     {

@@ -40,9 +40,12 @@ public:
 
   using Base::Base;
   using Base::reset;
+  OsslSharedPtr()
+    : Base(nullptr)
+  {}
 
   template <class Y>
-  explicit OsslSharedPtr(Y *ptr = nullptr)
+  explicit OsslSharedPtr(Y *ptr)
     : Base(ptr, Deleter())
   {}
 

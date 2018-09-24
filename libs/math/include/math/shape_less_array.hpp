@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+#include "core/meta/type_traits.hpp"
 #include "core/random.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
@@ -51,6 +52,8 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
+  static constexpr char const *LOGGING_NAME = "ShapeLessArray";
+
   /* Contructs an empty shape-less array. */
   ShapeLessArray(std::size_t const &n)
     : data_(n)
@@ -70,9 +73,9 @@ public:
     : data_()
     , size_(0)
   {
+    // TODO(private issue 226): Make this a static function and add failure mechanism
     std::vector<type> elems;
     elems.reserve(1024);
-    bool failed = false;
 
     for (uint64_t i = 0; i < c.size();)
     {
@@ -89,7 +92,7 @@ public:
       default:
         if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
         {
-          failed = true;
+          // TODO(private issue 226): failed
         }
         else
         {
@@ -375,6 +378,25 @@ public:
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
+  /**
+   * trivial implementation of softmax
+   * @param x
+   * @return
+   */
+  self_type Softmax(self_type const &x)
+  {
+    LazyResize(x.size());
+
+    assert(x.size() == this->size());
+
+    // by subtracting the max we improve numerical stability, and the result will be identical
+    this->Subtract(x, x.Max());
+    this->Exp(*this);
+    this->Divide(*this, this->Sum());
+
+    return *this;
+  }
+
   /* Equality operator.
    * @other is the array which this instance is compared against.
    *
@@ -404,6 +426,36 @@ public:
   bool operator!=(ShapeLessArray const &other) const
   {
     return !(this->operator==(other));
+  }
+
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(ShapeLessArray const &other)
+  {
+    this->InLineAdd(other);
+    return *this;
+  }
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(type const &scalar)
+  {
+    this->InLineAdd(scalar);
+    return *this;
+  }
+
+  ShapeLessArray operator+(ShapeLessArray const &other)
+  {
+    return this->InLineAdd(other);
+  }
+  ShapeLessArray operator+(type const &scalar)
+  {
+    return this->InLineAdd(scalar);
   }
 
   /* One-dimensional reference index operator.
@@ -724,6 +776,13 @@ public:
     data_[idx] = val;
   }
 
+  template <typename S>
+  meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
+  {
+    return data_[indices];
+  }
+  //  T Get(std::size_t const &idx) { return data_[idx]; } const
+
   container_type const &data() const
   {
     return data_;
@@ -998,7 +1057,7 @@ public:
     return *this;
   }
 
-private:
+protected:
   container_type data_;
   std::size_t    size_ = 0;
 };

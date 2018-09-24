@@ -51,7 +51,7 @@ TEST(ndarray, 2d_view_full)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (3 * 3); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -84,7 +84,7 @@ TEST(ndarray, 3d_view_full)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (5 * 5 * 5); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -115,7 +115,7 @@ TEST(ndarray, 4d_view_full)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (5 * 5 * 5 * 5); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -146,7 +146,7 @@ TEST(ndarray, 6d_view_full)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (5 * 5 * 5 * 5 * 5 * 5); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -178,7 +178,7 @@ TEST(ndarray, 2d_irregular_view)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (5 * 10); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -209,7 +209,7 @@ TEST(ndarray, 3d_irregular_view)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (5 * 10 * 10); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -240,7 +240,7 @@ TEST(ndarray, 6d_irregular_view)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (1 * 2 * 3 * 4 * 5 * 6); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -274,7 +274,7 @@ TEST(ndarray, 2d_big_step)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (4 * 4); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape
@@ -306,7 +306,7 @@ TEST(ndarray, 2d_subset_view)
   _A<double>               test_array = _A<double>(shape);
   for (std::size_t i = 0; i < (4 * 4); ++i)
   {
-    test_array[i] = i;
+    test_array[i] = double(i);
   }
 
   // set up a valid view shape

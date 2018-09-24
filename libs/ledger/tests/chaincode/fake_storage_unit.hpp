@@ -31,16 +31,15 @@ class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction,
-                         fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
   using state_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray,
-                         fetch::crypto::CallableFNV>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
-  using lock_store_type =
-      std::unordered_set<fetch::byte_array::ConstByteArray, fetch::crypto::CallableFNV>;
-  using mutex_type      = std::mutex;
-  using lock_guard_type = std::lock_guard<mutex_type>;
+  using lock_store_type    = std::unordered_set<fetch::byte_array::ConstByteArray>;
+  using mutex_type         = std::mutex;
+  using lock_guard_type    = std::lock_guard<mutex_type>;
+
+  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
@@ -155,9 +154,8 @@ public:
       hasher.Update(key);
       hasher.Update(state_[key]);
     }
-    hasher.Final();
 
-    return hasher.digest();
+    return hasher.Final();
   }
 
   void Commit(bookmark_type const &bookmark) override
@@ -176,7 +174,7 @@ public:
     }
     else
     {
-      fetch::logger.Info("Reverting to clean state: ", bookmark);
+      FETCH_LOG_INFO(LOGGING_NAME, "Reverting to clean state: ", bookmark);
 
       state_.clear();
     }

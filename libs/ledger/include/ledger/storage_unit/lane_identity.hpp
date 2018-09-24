@@ -37,13 +37,15 @@ public:
   using ping_type                 = uint32_t;
   using lane_type                 = uint32_t;
 
+  static constexpr char const *LOGGING_NAME = "LaneIdentity";
+
   enum
   {
     PING_MAGIC = 1337
   };
 
   LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
-    : identity_(identity)
+    : identity_(std::move(identity))
     , register_(std::move(reg))
     , manager_(nm)
   {
@@ -64,7 +66,8 @@ public:
 
     if (!details)
     {
-      fetch::logger.Error("Failed to find client in client register! ", __FILE__, " ", __LINE__);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find client in client register! ", __FILE__, " ",
+                      __LINE__);
       assert(details);
     }
     else
@@ -127,7 +130,7 @@ public:
   }
 
 private:
-  mutex::Mutex               identity_mutex_;
+  mutex::Mutex               identity_mutex_{__LINE__, __FILE__};
   crypto::Identity           identity_;
   callable_sign_message_type on_sign_message_;
 

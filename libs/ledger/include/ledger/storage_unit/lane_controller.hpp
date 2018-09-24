@@ -17,14 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/requesting_queue.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/p2pservice/p2p_peer_details.hpp"
 #include "network/service/service_client.hpp"
+#include "network/uri.hpp"
+
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -33,6 +37,7 @@ class LaneController
 {
 public:
   using connectivity_details_type  = LaneConnectivityDetails;
+  using Uri                        = fetch::network::Uri;
   using client_type                = fetch::network::TCPClient;
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
@@ -42,15 +47,24 @@ public:
   using mutex_type                 = fetch::mutex::Mutex;
   using connection_handle_type     = client_register_type::connection_handle_type;
   using protocol_handler_type      = service::protocol_handler_type;
+  using Clock                      = std::chrono::steady_clock;
+  using thread_pool_type           = network::ThreadPool;
+  using UriSet                     = std::unordered_set<Uri>;
 
-  LaneController(protocol_handler_type const &lane_identity_protocol,
-                 std::weak_ptr<LaneIdentity> identity, client_register_type reg,
-                 network_manager_type const &nm)
+  static constexpr char const *LOGGING_NAME = "LaneController";
+
+  LaneController(protocol_handler_type lane_identity_protocol, std::weak_ptr<LaneIdentity> identity,
+                 client_register_type reg, network_manager_type const &nm)
     : lane_identity_protocol_(lane_identity_protocol)
     , lane_identity_(std::move(identity))
     , register_(std::move(reg))
     , manager_(nm)
-  {}
+  {
+    thread_pool_ = network::MakeThreadPool(3);
+    thread_pool_->SetInterval(1000);
+    thread_pool_->Start();
+    thread_pool_->Post([this]() { thread_pool_->PostIdle([this]() { this->WorkCycle(); }); }, 1000);
+  }
 
   /// External controls
   /// @{
@@ -59,15 +73,12 @@ public:
     Connect(host, port);
   }
 
-  void TryConnect(p2p::EntryPoint const &ep)
+  void RPCConnectToURIs(const std::vector<Uri> &uris)
   {
-    for (auto &h : ep.host)
+    for (auto const &uri : uris)
     {
-      fetch::logger.Debug("Lane trying to connect to ", h, ":", ep.port);
-      if (Connect(h, ep.port))
-      {
-        break;
-      }
+      FETCH_LOG_VARIABLE(uri);
+      FETCH_LOG_INFO(LOGGING_NAME, "WILL ATTEMPT TO CONNECT TO: ", uri.uri());
     }
   }
 
@@ -130,8 +141,460 @@ public:
     return services_[n];
   }
 
+  using PingedPeer     = shared_service_client_type;
+  using IdentifiedPeer = std::pair<shared_service_client_type, crypto::Identity>;
+  using LanedPeer      = std::pair<shared_service_client_type, LaneIdentity::lane_type>;
+
+  class PingingConnection : public network::ResolvableTo<PingedPeer>
+  {
+  public:
+    static constexpr char const *LOGGING_NAME = "PingingConnection";
+
+    using Timepoint = network::ResolvableTo<PingedPeer>::Timepoint;
+
+    PingingConnection(shared_service_client_type conn, protocol_handler_type lane_identity_protocol)
+    {
+      attempts_               = 0;
+      conn_                   = conn;
+      lane_identity_protocol_ = lane_identity_protocol;
+    }
+    PingingConnection(const PingingConnection &other)
+    {
+      if (this != &other)
+      {
+        this->conn_                   = other.conn_;
+        this->attempts_               = other.attempts_;
+        this->timeout_                = other.timeout_;
+        this->lane_identity_protocol_ = other.lane_identity_protocol_;
+        this->prom_                   = other.prom_;
+      }
+    }
+
+    shared_service_client_type GetConn()
+    {
+      return conn_;
+    }
+
+    virtual State GetState() override
+    {
+      return GetState(Clock::now());
+    }
+
+    State StartConnectionAttempt(const Timepoint &now)
+    {
+      attempts_++;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:StartConnectionAttempt ", attempts_);
+      auto p = conn_->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
+      prom_.Adopt(p);
+      timeout_.SetMilliseconds(now, 100);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:CreatedPromise.. ", prom_.id());
+      return State::WAITING;
+    }
+
+    virtual State GetState(Timepoint const &now) override
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState ");
+      if (prom_.empty())
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState EMPTY");
+        return StartConnectionAttempt(now);
+      }
+
+      switch (prom_.GetState())
+      {
+      case State::TIMEDOUT:  // should never see this.
+      case State::WAITING:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState == WAIT/TIME");
+        if (timeout_.IsDue(now))
+        {
+          if (attempts_ >= 10)
+          {
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SET FAIL TIMEOUT");
+            return State::TIMEDOUT;
+          }
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState TRYAGAIN");
+          return StartConnectionAttempt(now);
+        }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState WAITMORE");
+        return State::WAITING;
+
+      case State::FAILED:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState FAILED");
+        return State::FAILED;
+
+      case State::SUCCESS:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SUCCESS");
+        if (prom_.Get() == LaneIdentity::PING_MAGIC)
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState MAGIC");
+          return State::SUCCESS;
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Ping failed with wrong magic identifier");
+          return State::FAILED;
+        }
+      }
+    }
+    virtual PromiseCounter id() const override
+    {
+      return prom_.id();
+    }
+    virtual PingedPeer Get() const override
+    {
+      return conn_;
+    }
+
+  private:
+    network::PromiseOf<LaneIdentity::ping_type> prom_;
+    shared_service_client_type                  conn_;
+    network::FutureTimepoint                    timeout_;
+    protocol_handler_type                       lane_identity_protocol_;
+    int                                         attempts_;
+  };
+
+  class IdentifyingConnection : public network::ResolvableTo<IdentifiedPeer>
+  {
+  public:
+    IdentifyingConnection(shared_service_client_type conn,
+                          protocol_handler_type      lane_identity_protocol,
+                          crypto::Identity           my_identity)
+    {
+      conn_                   = conn;
+      lane_identity_protocol_ = lane_identity_protocol;
+      my_identity_            = my_identity;
+    }
+    IdentifyingConnection(const IdentifyingConnection &other)
+    {
+      if (this != &other)
+      {
+        this->prom_                   = other.prom_;
+        this->conn_                   = other.conn_;
+        this->timeout_                = other.timeout_;
+        this->my_identity_            = other.my_identity_;
+        this->lane_identity_protocol_ = other.lane_identity_protocol_;
+      }
+    }
+
+    shared_service_client_type GetConn()
+    {
+      return conn_;
+    }
+
+    virtual State GetState() override
+    {
+      return GetState(Clock::now());
+    }
+
+    virtual State GetState(const Timepoint &now) override
+    {
+      if (prom_.empty())
+      {
+        auto p = conn_->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, my_identity_);
+        prom_.Adopt(p);
+        timeout_.SetMilliseconds(now, 100);
+        return State::WAITING;
+      }
+      switch (prom_.GetState())
+      {
+      case State::WAITING:
+        if (timeout_.IsDue(now))
+        {
+          return State::TIMEDOUT;
+        }
+        else
+        {
+          return State::WAITING;
+        }
+
+      case State::TIMEDOUT:
+      case State::FAILED:
+        return State::FAILED;
+
+      case State::SUCCESS:
+        return State::SUCCESS;
+      }
+    }
+    virtual PromiseCounter id() const override
+    {
+      return prom_.id();
+    }
+    virtual IdentifiedPeer Get() const override
+    {
+      return IdentifiedPeer(conn_, prom_.Get());
+    }
+
+  private:
+    network::PromiseOf<crypto::Identity> prom_;
+    shared_service_client_type           conn_;
+    network::FutureTimepoint             timeout_;
+    protocol_handler_type                lane_identity_protocol_;
+    crypto::Identity                     my_identity_;
+  };
+
+  class LaningConnection : public network::ResolvableTo<LanedPeer>
+  {
+  public:
+    LaningConnection(shared_service_client_type conn, protocol_handler_type lane_identity_protocol)
+    {
+      conn_                   = conn;
+      lane_identity_protocol_ = lane_identity_protocol;
+    }
+    LaningConnection(const LaningConnection &other)
+    {
+      if (this != &other)
+      {
+        this->prom_                   = other.prom_;
+        this->conn_                   = other.conn_;
+        this->lane_identity_protocol_ = other.lane_identity_protocol_;
+        this->timeout_                = other.timeout_;
+      }
+    }
+
+    shared_service_client_type GetConn()
+    {
+      return conn_;
+    }
+
+    virtual State GetState() override
+    {
+      return GetState(Clock::now());
+    }
+
+    virtual State GetState(const Timepoint &now) override
+    {
+      if (prom_.empty())
+      {
+        auto p = conn_->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
+        prom_.Adopt(p);
+        timeout_.SetMilliseconds(now, 100);
+        return State::WAITING;
+      }
+
+      switch (prom_.GetState())
+      {
+      case State::WAITING:
+        return State::WAITING;
+
+      case State::FAILED:
+        return State::FAILED;
+
+      case State::TIMEDOUT:
+      case State::SUCCESS:
+        return State::SUCCESS;
+      }
+    }
+
+    virtual PromiseCounter id() const override
+    {
+      return prom_.id();
+    }
+    virtual LanedPeer Get() const override
+    {
+      return LanedPeer(conn_, prom_.Get());
+    }
+
+  private:
+    network::PromiseOf<LaneIdentity::lane_type> prom_;
+    shared_service_client_type                  conn_;
+    protocol_handler_type                       lane_identity_protocol_;
+    network::FutureTimepoint                    timeout_;
+  };
+
+  using PingingPeers     = network::RequestingQueueOf<Uri, PingedPeer, PingingConnection>;
+  using IdentifyingPeers = network::RequestingQueueOf<Uri, IdentifiedPeer, IdentifyingConnection>;
+  using LaningPeers      = network::RequestingQueueOf<Uri, LanedPeer, LaningConnection>;
+
+  PingingPeers     currently_pinging;
+  IdentifyingPeers currently_identifying;
+  LaningPeers      currently_laning;
+
+  void WorkCycle()
+  {
+    static constexpr std::size_t ALL_AVAILABLE = std::numeric_limits<std::size_t>::max();
+
+    UriSet remove;
+    UriSet create;
+
+    auto now = Clock::now();
+    GeneratePeerDeltas(create, remove);
+
+    auto ptr = lane_identity_.lock();
+    if (!ptr)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Lane identity not valid!");
+    }
+
+    for (auto &uri : create)
+    {
+      if ((currently_pinging.IsInFlight(uri)) || (currently_identifying.IsInFlight(uri)) ||
+          (currently_laning.IsInFlight(uri)))
+      {
+        continue;
+      }
+
+      if (uri.scheme() == Uri::Scheme::Tcp)
+      {
+        auto const &peer = uri.AsPeer();
+
+        try
+        {
+          shared_service_client_type conn =
+              register_.CreateServiceClient<client_type>(manager_, peer.address(), peer.port());
+
+          currently_pinging.Add(uri, PingingConnection(conn, lane_identity_protocol_));
+        }
+        catch (std::exception &ex)
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Error generated creating service client: ", ex.what());
+        }
+      }
+      else
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Incorrect URI format");
+      }
+    }
+
+    {
+      currently_pinging.Resolve(now);
+
+      for (auto &failure : currently_pinging.GetFailures(ALL_AVAILABLE))
+      {
+        Uri const &uri = failure.key;
+
+        FETCH_LOG_WARN(LOGGING_NAME, "Ping failure on ", uri.uri());
+
+        // get the underlying connection and close it
+        auto conn = failure.promise.GetConn();
+        conn->Close();
+        conn.reset();
+      }
+
+      for (auto &success : currently_pinging.Get(ALL_AVAILABLE))
+      {
+        auto const &uri = success.key;
+
+        auto conn = success.promised;
+        currently_identifying.Add(
+            uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()));
+      }
+    }
+
+    {
+      currently_identifying.Resolve(now);
+
+      for (auto &failure : currently_identifying.GetFailures(ALL_AVAILABLE))
+      {
+        Uri const &uri = failure.key;
+
+        FETCH_LOG_WARN(LOGGING_NAME, "Identification failure on ", uri.uri());
+
+        // get the underlying connection and close it
+        auto conn = failure.promise.GetConn();
+        conn->Close();
+        conn.reset();
+      }
+
+      for (auto &success : currently_identifying.Get(ALL_AVAILABLE))
+      {
+        auto const &uri      = success.key;
+        auto const &conn     = success.promised.first;
+        auto const &identity = success.promised.second;
+
+        auto details         = register_.GetDetails(conn->handle());
+        details->is_outgoing = true;
+        details->is_peer     = true;
+        details->identity    = identity;
+
+        currently_laning.Add(uri, LaningConnection(conn, lane_identity_protocol_));
+      }
+    }
+
+    {
+      currently_laning.Resolve(now);
+
+      for (auto &failure : currently_laning.GetFailures(ALL_AVAILABLE))
+      {
+        Uri const &uri = failure.key;
+
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane connection failure on ", uri.uri());
+
+        // get the underlying connection and close it
+        auto conn = failure.promise.GetConn();
+        conn->Close();
+        conn.reset();
+      }
+
+      {
+        FETCH_LOCK(services_mutex_);
+
+        for (auto &success : currently_laning.Get(ALL_AVAILABLE))
+        {
+          auto const &uri  = success.key;
+          auto const &conn = success.promised.first;
+
+          peer_connections_[uri] = conn;
+        }
+      }
+    }
+  }
+
+  void UseThesePeers(UriSet uris)
+  {
+    desired_connections_ = std::move(uris);
+  }
+
+  void GeneratePeerDeltas(UriSet &create, UriSet &remove)
+  {
+    {
+      std::lock_guard<mutex_type> lock_(services_mutex_);
+
+      auto ident = lane_identity_.lock();
+      if (!ident)
+      {
+        return;
+      }
+
+      for (auto &peer_conn : peer_connections_)
+      {
+        if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
+        {
+          remove.insert(peer_conn.first);
+        }
+      }
+
+      for (auto &uri : desired_connections_)
+      {
+        if (peer_connections_.find(uri) == peer_connections_.end())
+        {
+          create.insert(uri);
+        }
+      }
+    }
+  }
+
+  shared_service_client_type Connect(const Uri &uri)
+  {
+    if (uri.scheme() == Uri::Scheme::Tcp)
+    {
+      auto const &peer = uri.AsPeer();
+
+      return Connect(peer.address(), peer.port());
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Incorrect URI format");
+    }
+    return shared_service_client_type();
+  }
+
   shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
   {
+    std::string identifier = std::string(host);
+    identifier += ":";
+    identifier += std::to_string(port);
+    FETCH_LOG_INFO(LOGGING_NAME, "Connecting to lane ", identifier);
+
     shared_service_client_type client =
         register_.CreateServiceClient<client_type>(manager_, host, port);
 
@@ -143,27 +606,62 @@ public:
     }
 
     // Waiting for connection to be open
-    std::size_t n = 0;
-    while (n < 10)
+
+    using State = enum { WAITING, TIMEOUT, FAILED, OK };
+
+    State r;
+
+    for (int n = 0; n < 5; n++)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trying to ping lane service @ ", ident, "    ", identifier,
+                     " attempt ", n);
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
-      if (p.Wait(100, false))
+      FETCH_LOG_PROMISE();
+      r = WAITING;
+      if (!p->Wait(100, false))
       {
-        if (p.As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+        FETCH_LOG_WARN(LOGGING_NAME, "Response was failed promise");
+        r = TIMEOUT;
+      }
+      else
+      {
+        if (p->As<LaneIdentity::ping_type>() == LaneIdentity::PING_MAGIC)
         {
-          n = 10;
+          FETCH_LOG_WARN(LOGGING_NAME, "Response was PING_MAGIC");
+          r = OK;
         }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Response was not a PING_MAGIC");
+          r = FAILED;
+        }
+      }
+      if (r == OK || r == FAILED)
+      {
         break;
       }
-      ++n;
     }
 
-    if (n >= 10)
+    switch (r)
     {
-      logger.Warn("Connection timed out - closing");
+    case FAILED:
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Connection failed - closing in LaneController::Connect:1: == ", identifier);
       client->Close();
       client.reset();
       return nullptr;
+
+    case WAITING:
+    case TIMEOUT:
+      FETCH_LOG_WARN(
+          LOGGING_NAME,
+          "Connection timed out - closing in LaneController::Connect:1: == ", identifier);
+      client->Close();
+      client.reset();
+      return nullptr;
+
+    case OK:
+      break;
     }
 
     crypto::Identity peer_identity;
@@ -171,31 +669,36 @@ public:
       auto ptr = lane_identity_.lock();
       if (!ptr)
       {
-        logger.Warn("Lane identity not valid!");
+        FETCH_LOG_WARN(LOGGING_NAME, "Lane identity not valid!");
         client->Close();
         client.reset();
         return nullptr;
       }
 
       auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
-      if (!p.Wait(1000))  // TODO(issue 7): Make timeout configurable
+
+      FETCH_LOG_PROMISE();
+      if (!p->Wait(1000, true))  // TODO(issue 7): Make timeout configurable
       {
-        logger.Warn("Connection timed out - closing");
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Connection timed out - closing in LaneController::Connect:2:");
         client->Close();
         client.reset();
         return nullptr;
       }
-
-      p.As(peer_identity);
+      p->As(peer_identity);
+      FETCH_LOG_WARN(LOGGING_NAME, "Connection LaneController::Connect:2 IDENT EXCHANGED");
     }
 
     // Exchaning info
     auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
-    p.Wait(1000);  // TODO(issue 7): Make timeout configurable
-    if (p.As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
+
+    FETCH_LOG_PROMISE();
+    p->Wait(1000, true);  // TODO(issue 7): Make timeout configurable
+    if (p->As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
     {
-      logger.Error("Could not connect to lane with different lane number: ",
-                   p.As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
+      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect to lane with different lane number: ",
+                      p->As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
       client->Close();
       client.reset();
       // TODO(issue 11): Throw exception
@@ -215,6 +718,8 @@ public:
     details->is_peer     = true;
     details->identity    = peer_identity;
 
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
     return client;
   }
 
@@ -225,9 +730,14 @@ private:
   client_register_type        register_;
   network_manager_type        manager_;
 
-  mutex::Mutex                                                           services_mutex_;
+  mutex::Mutex services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
+
+  std::unordered_map<Uri, shared_service_client_type> peer_connections_;
+  UriSet                                              desired_connections_;
+
+  thread_pool_type thread_pool_;
 };
 
 }  // namespace ledger

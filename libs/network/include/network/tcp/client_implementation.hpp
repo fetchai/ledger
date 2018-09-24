@@ -49,6 +49,8 @@ public:
   using resolver_type        = asio::ip::tcp::resolver;
   using mutex_type           = std::mutex;
 
+  static constexpr char const *LOGGING_NAME = "TCPClientImpl";
+
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
@@ -61,7 +63,10 @@ public:
 
   ~TCPClientImplementation()
   {
-    destructing_ = true;
+    if (!Closed() && !posted_close_)
+    {
+      Close();
+    }
   }
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
@@ -73,7 +78,7 @@ public:
   {
     self_type self = shared_from_this();
 
-    fetch::logger.Debug("Client posting connect");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
 
     networkManager_.Post([this, self, host, port] {
       shared_self_type selfLock = self.lock();
@@ -122,10 +127,11 @@ public:
           }
 
           LOG_STACK_TRACE_POINT;
-          fetch::logger.Info("Finished connecting.");
+
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Finished connecting.");
           if (!ec)
           {
-            fetch::logger.Debug("Connection established!");
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Connection established!");
 
             // Prevent this from throwing
             std::error_code         ec2;
@@ -139,12 +145,13 @@ public:
             }
             else
             {
-              fetch::logger.Warn("Failed to get endpoint of socket after connection");
+              FETCH_LOG_INFO(LOGGING_NAME, "Failed to get endpoint of socket after connection");
             }
           }
           else
           {
-            fetch::logger.Debug("Client failed to connect");
+            FETCH_LOG_INFO(LOGGING_NAME, "Client failed to connect on port ", port, ": ",
+                           ec.message());
             SignalLeave();
           }
         };
@@ -158,8 +165,8 @@ public:
         }
         else
         {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Failed to create valid socket");
           SignalLeave();
-          fetch::logger.Error("Failed to create valid socket");
         }
       });  // end strand post
     });    // end NM post
@@ -175,7 +182,7 @@ public:
   {
     if (!connected_)
     {
-      fetch::logger.Warn("Attempting to write to socket too early. Returning.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket too early. Returning.");
       return;
     }
     //    std::cout << "SENDING: " << this->Address() << ":" << this->port() <<
@@ -235,7 +242,6 @@ public:
 
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
-  bool                  destructing_  = false;
 
   network_manager_type networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
@@ -278,12 +284,13 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Read message header.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Read message header.");
         ReadBody(header);
       }
       else
       {
         // We expect to get an ec here when the socked is closed via a post
+        FETCH_LOG_INFO(LOGGING_NAME, "Socket closed inside ReadHeader: ", ec.message());
         SignalLeave();
       }
     };
@@ -292,10 +299,17 @@ private:
     {
       assert(strand->running_in_this_thread());
       asio::async_read(*socket, asio::buffer(header.pointer(), header.size()), strand->wrap(cb));
-      connected_ = true;
+
+      bool const previously_connected = connected_.exchange(true);
+
+      if (!previously_connected)
+      {
+        SignalConnectionSuccess();
+      }
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Socket no longer valid in ReadHeader");
       connected_ = false;
       SignalLeave();
     }
@@ -316,8 +330,9 @@ private:
       SetHeader(dummy, 0);
       dummy.Resize(16);
 
-      fetch::logger.Error("Magic incorrect during network read:\ngot:      ", ToHex(header),
-                          "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Magic incorrect during network read:\ngot:      ", ToHex(header),
+                      "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
       return;
     }
 
@@ -340,7 +355,7 @@ private:
       }
       else
       {
-        fetch::logger.Error("Reading body failed, dying: ", ec);
+        FETCH_LOG_ERROR(LOGGING_NAME, "Reading body failed, dying: ", ec);
         SignalLeave();
       }
     };
@@ -352,6 +367,7 @@ private:
     }
     else
     {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Invalid socket when attempting to read body");
       SignalLeave();
     }
   }
@@ -417,7 +433,7 @@ private:
 
       if (ec)
       {
-        fetch::logger.Error("Error writing to socket, closing.");
+        FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
         SignalLeave();
       }
       else
@@ -440,7 +456,7 @@ private:
     }
     else
     {
-      fetch::logger.Error("Failed to lock socket in WriteNext!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
       SignalLeave();
     }
   }

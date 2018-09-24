@@ -131,7 +131,7 @@ struct KeyValuePair
     crypto::SHA256 hasher;
     hasher.Reset();
     hasher.Update(data);
-    hasher.Final(hash);
+    hasher.Final(hash, N);
     value = val;
 
     return true;
@@ -144,7 +144,7 @@ struct KeyValuePair
 
     hasher.Update(left.hash, N);
     hasher.Update(right.hash, N);
-    hasher.Final(hash);
+    hasher.Final(hash, N);
 
     return true;
   }
@@ -196,6 +196,8 @@ public:
   using stack_type     = D;
   using key_value_pair = KeyValuePair<>;
   using key_type       = typename key_value_pair::key_type;
+
+  static constexpr char const *LOGGING_NAME = "KeyValueIndex";
 
   KeyValueIndex()
   {

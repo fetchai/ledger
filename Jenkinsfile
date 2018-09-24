@@ -1,56 +1,85 @@
 pipeline {
 
-  agent {
-    docker {
-      image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
-    }
-  }
+  agent none
 
   stages {
 
-    stage('License Checks') {
-        steps {
-            sh './scripts/check-license-header.py'
-        }
-    }
+    stage('Builds & Tests') {
+      parallel {
 
-    stage('Clang Format Checks') {
-        steps {
-            sh './scripts/apply-style.py -w -a'
-        }
-    }
+        stage('Basic Checks') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Debug Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Debug'
-      }
-    }
+          stages {
+            stage('License Checks') {
+              steps {
+                sh './scripts/check-license-header.py'
+              }
+            }
+            stage('Style check') {
+              steps {
+                sh './scripts/apply-style.py -w -a'
+              }
+            }
+          }
+        } // basic checks
 
-    stage('Clang Tidy Checks') {
-        steps {
-            sh './scripts/run-static-analysis.py build-debug/'
-        }
-    }
+        stage('Clang 6 Debug') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Release Build') {
-      steps {
-        sh './scripts/ci-tool.py -B Release'
-      }
-    }
+          stages {
+            stage('Debug Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Debug'
+              }
+            }
+            stage('Static Analysis') {
+              steps {
+                sh './scripts/run-static-analysis.py build-debug/'
+              }
+            }
+          }
+        } // clang 6 debug
 
+        stage('Clang 6 Release') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
 
-    stage('Unit Tests') {
-      steps {
-        sh './scripts/ci-tool.py -T Release'
-      }
-    }
+          stages {
+            stage('Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+            stage('Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+          }
 
-  }
+          post {
+            always {
+              junit 'build-release/TestResults.xml'
+            }
+          }
+        } // clang 6 release
 
-  post {
-    always {
-      junit 'build-release/TestResults.xml'
-    }
-  }
-}
+      } // parallel
+    } // build & test
+
+  } // stages
+
+} // pipeline
 

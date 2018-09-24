@@ -55,6 +55,132 @@ int main()
       EXPECT(str == "hello kitty");
     };
 
+    SECTION("testing sub-array of sub-array")
+    {
+      ByteArray bc{base};
+      ByteArray sub_array_1 = bc.SubArray(bc.size() - 5, 5);
+      sub_array_1[0]        = 'k';
+      sub_array_1[1]        = 'i';
+      sub_array_1[2]        = 't';
+      sub_array_1[3]        = 't';
+      sub_array_1[4]        = 'y';
+
+      EXPECT(sub_array_1 == "kitty");
+      EXPECT(bc == "hello kitty");
+
+      ByteArray sub_array_2 = sub_array_1.SubArray(2, 2);
+      EXPECT(sub_array_2 == "tt");
+    };
+
+    SECTION(
+        "testing that ConstByteArray r-value.is moved if it is *unique* (when there are *no* other "
+        "ConstByteArray instances sharing the same underlying data.")
+    {
+      ConstByteArray expected_to_be_moved{base};
+      EXPECT(expected_to_be_moved.UseCount() == 1);
+
+      ByteArray copy{std::move(expected_to_be_moved)};
+      EXPECT(expected_to_be_moved.UseCount() == 0);  // NOLINT(bugprone-use-after-move)
+
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+      EXPECT(copy == "kitty world");
+    };
+
+    SECTION(
+        "testing that ConstByteArray r-value.is *not* moved if it is *not* unique (when it shares "
+        "underlying data with other(s) ConstByteArray instances.")
+    {
+      ConstByteArray expected_to_remain_unchanged{base};
+      ConstByteArray expected_to_remain_unchanged_2{expected_to_remain_unchanged};
+      EXPECT(expected_to_remain_unchanged.UseCount() == 2);
+      EXPECT(expected_to_remain_unchanged_2.UseCount() == expected_to_remain_unchanged.UseCount());
+
+      ByteArray copy{std::move(expected_to_remain_unchanged_2)};
+      EXPECT(expected_to_remain_unchanged_2.UseCount() == 2);  // NOLINT(bugprone-use-after-move)
+
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+
+      EXPECT(copy == "kitty world");
+      EXPECT(expected_to_remain_unchanged == base);
+      EXPECT(expected_to_remain_unchanged_2 == base);  // NOLINT(bugprone-use-after-move)
+    };
+
+    SECTION(
+        "testing that instantiation from ByteArray (copy-construct) is done by referencee and "
+        "*NOT* by value(deep copy).")
+    {
+      ByteArray cba{base};
+      ByteArray copy{cba};  //* This shall make copy by reference
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+
+      char const *const expected = "kitty world";
+      EXPECT(copy == expected);
+      EXPECT(cba == expected);
+    };
+
+    SECTION(
+        "testing that assignment from ByteArray is done by referencee and *NOT* by value(deep "
+        "copy).")
+    {
+      ByteArray cba{base};
+      ByteArray copy;
+      copy    = cba;  //* This shall make copy by reference
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+
+      char const *const expected = "kitty world";
+      EXPECT(copy == expected);
+      EXPECT(cba == expected);
+    };
+
+    SECTION(
+        "testing that instantiation from ConstByteArray is done by value(deep copy) and *not* by "
+        "reference.")
+    {
+      ConstByteArray cba{base};
+      ByteArray      copy{cba};  //* This shall make deep copy
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+
+      EXPECT(cba == base);
+      EXPECT(copy == "kitty world");
+    };
+
+    SECTION(
+        "testing that assignemnt from ConstByteArray is done by value(deep copy) and *not* by "
+        "reference.")
+    {
+      ConstByteArray cba{base};
+      ByteArray      copy;
+      copy    = cba;  //* This shall make deep copy
+      copy[0] = 'k';
+      copy[1] = 'i';
+      copy[2] = 't';
+      copy[3] = 't';
+      copy[4] = 'y';
+
+      EXPECT(cba == base);
+      EXPECT(copy == "kitty world");
+    };
+
     // Even though the previous section copied that byte_array object, the
     // underlying
     // data is still referenced.

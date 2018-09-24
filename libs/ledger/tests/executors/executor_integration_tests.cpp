@@ -39,7 +39,7 @@ class ExecutorIntegrationTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
 
@@ -67,7 +67,8 @@ protected:
     network_manager_->Start();
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, false);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
+    storage_service_->Start();
 
     storage_.reset(new underlying_storage_type{*network_manager_});
     for (std::size_t i = 0; i < NUM_LANES; ++i)
@@ -80,6 +81,8 @@ protected:
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
+    service_->Start();
+
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
@@ -88,7 +91,7 @@ protected:
     {
 
       // wait for the all the clients to connect to everything
-      if (executor_->is_alive() && storage_->is_alive())
+      if (executor_->is_alive() && storage_->IsAlive())
       {
         break;
       }
@@ -99,6 +102,8 @@ protected:
 
   void TearDown() override
   {
+    service_->Stop();
+    storage_service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();
@@ -177,12 +182,8 @@ TEST_F(ExecutorIntegrationTests, CheckTokenContract)
   // create the dummy contract
   auto tx = CreateWalletTransaction();
 
-  fetch::logger.Info("#### Adding transaction...");
-
   // store the transaction inside the store
   storage_->AddTransaction(tx);
-
-  fetch::logger.Info("#### Executing transaction...");
 
   auto const status = executor_->Execute(tx.digest(), 0, {0});
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);

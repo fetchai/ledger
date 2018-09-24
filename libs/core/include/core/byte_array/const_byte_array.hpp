@@ -60,7 +60,7 @@ public:
   {
     assert(str != nullptr);
 
-    std::size_t n = strlen(str);
+    std::size_t const n = strlen(str);
     Reserve(n);
     Resize(n);
     uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
@@ -68,6 +68,14 @@ public:
     {
       data_[i] = up[i];
     }
+  }
+
+  ConstByteArray(container_type const *const data, std::size_t const &size)
+  {
+    assert(data != nullptr);
+    Reserve(size);
+    Resize(size);
+    std::memcpy(data_.pointer(), data, size);
   }
 
   ConstByteArray(std::initializer_list<container_type> l)
@@ -84,14 +92,20 @@ public:
     : ConstByteArray(s.c_str())
   {}
   ConstByteArray(self_type const &other) = default;
+  ConstByteArray(self_type &&other)      = default;
+  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
     : data_(other.data_)
     , start_(start)
     , length_(length)
+    , arr_pointer_(data_.pointer() + start_)
   {
     assert(start_ + length_ <= data_.size());
-    arr_pointer_ = data_.pointer() + start_;
   }
+
+  ConstByteArray &operator=(ConstByteArray const &) = default;
+  ConstByteArray &operator=(ConstByteArray &&other) = default;
 
   ConstByteArray Copy() const
   {
@@ -161,6 +175,7 @@ public:
 
   std::size_t capacity() const
   {
+    // TODO(private issue #228: why `data_.size() - 1`?)
     return data_.size() == 0 ? 0 : data_.size() - 1;
   }
 
@@ -184,11 +199,10 @@ public:
     return !(*this == str);
   }
 
+public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
-    length = std::min(length, length_ - start);
-    assert(start + length <= start_ + length_);
-    return self_type(*this, start + start_, length);
+    return SubArray<self_type>(start, length);
   }
 
   bool Match(self_type const &str, std::size_t pos = 0) const
@@ -275,13 +289,33 @@ public:
     arr_pointer_ = data_.pointer() + start_;
   }
 
+  bool IsUnique() const noexcept
+  {
+    return data_.IsUnique();
+  }
+
+  uint64_t UseCount() const noexcept
+  {
+    return data_.UseCount();
+  }
+
 protected:
+  template <typename RETURN_TYPE = self_type>
+  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  {
+    length = std::min(length, length_ - start);
+    assert(start + length <= start_ + length_);
+    return RETURN_TYPE(*this, start + start_, length);
+  }
+
   container_type &operator[](std::size_t const &n)
   {
     assert(n < length_);
     return arr_pointer_[n];
   }
 
+  // TODO(pbukva): (private issue #229: opening door for buffer overrun for sub arrays - when
+  // `start_ > 0` + confusion what method does - absolute vs relative[against `start_`] size)
   void Resize(std::size_t const &n)
   {
     if (data_.size() < n)
@@ -291,6 +325,8 @@ protected:
     length_ = n;
   }
 
+  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // details - absolute vs relative[against `start_`] size)
   void Reserve(std::size_t const &n)
   {
     if (n <= data_.size())
@@ -325,8 +361,8 @@ protected:
 
 private:
   shared_array_type data_;
-  container_type *  arr_pointer_ = nullptr;
   std::size_t       start_ = 0, length_ = 0;
+  container_type *  arr_pointer_ = nullptr;
 };
 
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)

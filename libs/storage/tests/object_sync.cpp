@@ -58,7 +58,7 @@ fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_
 
   fetch::service::Promise prom = s_client.Call(std::forward<Args>(args)...);
 
-  if (!prom.Wait(2000))
+  if (!prom->Wait(2000, true))
   {
     std::cout << "Failed to make call to client" << std::endl;
     exit(1);
@@ -158,7 +158,7 @@ private:
   ClientRegister register_;
   NetworkManager nm_;
 
-  mutex_type                                                             services_mutex_;
+  mutex_type services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 };
 
@@ -203,10 +203,13 @@ public:
 
     thread_pool_->Start();
     tx_sync_protocol_->Start();
+
+    this->Start();
   }
 
   ~TestService()
   {
+    this->Stop();
     thread_pool_->Stop();
   }
 
@@ -255,7 +258,7 @@ int main(int argc, char const **argv)
             CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
                      ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
+        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
         if (fee != tx.summary().fee || tx.summary().fee == 0)
         {
@@ -296,7 +299,7 @@ int main(int argc, char const **argv)
             CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
                      ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
+        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
         if (fee != tx.summary().fee || tx.summary().fee == 0)
         {
@@ -326,7 +329,7 @@ int main(int argc, char const **argv)
       // make sure they are all online
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
-        BlockUntilConnect(initial_port + i);
+        BlockUntilConnect(uint16_t(initial_port + i));
       }
 
       // Connect our services to each other
@@ -375,7 +378,7 @@ int main(int argc, char const **argv)
               CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
                        ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-          VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
+          VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
 
           if (tx_rec.summary().fee != tx.summary().fee)
           {
@@ -391,9 +394,10 @@ int main(int argc, char const **argv)
       std::cout << "Test new joiner case" << std::endl;
 
       // Now test new joiner case, add new joiner
-      services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
+      services.push_back(
+          std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
 
-      BlockUntilConnect(initial_port + number_of_services);
+      BlockUntilConnect(uint16_t(initial_port + number_of_services));
 
       // Connect to peers
       for (uint16_t i = 0; i < number_of_services; ++i)
@@ -412,7 +416,7 @@ int main(int argc, char const **argv)
             CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
                      TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
 
-        if (promise.As<bool>())
+        if (promise->As<bool>())
         {
           break;
         }
@@ -431,11 +435,11 @@ int main(int argc, char const **argv)
             nm, "localhost", uint16_t(initial_port + number_of_services), TestService::TX_STORE,
             ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+        if (promise->As<VerifiedTransaction>().summary().fee != tx.summary().fee)
         {
           failed_to_sync = true;
           std::cout << "Expecting: " << tx.summary().fee << std::endl;
-          EXPECT("Fees are the same " == "x");
+          EXPECT(std::string("Fees are the same ") == std::string("x"));
         }
       }
 

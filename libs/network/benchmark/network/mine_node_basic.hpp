@@ -51,6 +51,8 @@ class MineNodeBasic
   using miner     = fetch::chain::consensus::DummyMiner;
 
 public:
+  static constexpr char const *LOGGING_NAME = "MineNodeBasic";
+
   explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
     : nodeDirectory_{tm}
     , minerNumber_{minerNumber}
@@ -75,7 +77,7 @@ public:
 
     if (!block.proof()())
     {
-      fetch::logger.Warn("Received not verified");
+      FETCH_LOG_WARN(LOGGING_NAME, "Received not verified");
     }
     else
     {
@@ -128,13 +130,13 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
-    fetch::logger.Info("Adding endpoint");
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding endpoint");
     nodeDirectory_.AddEndpoint(endpoint);
   }
 
   void reset()
   {
-    fetch::logger.Info("Resetting miner");
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting miner");
     mainChain.reset();
     stopped_ = true;
   }
@@ -182,7 +184,7 @@ public:
 
   void stopMining()
   {
-    fetch::logger.Info("Stopping mining");
+    FETCH_LOG_INFO(LOGGING_NAME, "Stopping mining");
     stopped_ = true;
   }
 
@@ -200,7 +202,7 @@ public:
 
 private:
   network_benchmark::NodeDirectory nodeDirectory_;  // Manage connections to other nodes
-  fetch::mutex::Mutex              mutex_;
+  fetch::mutex::Mutex              mutex_{__LINE__, __FILE__};
   bool                             stopped_{false};
   std::size_t                      target_ = 16;  // 16 = roughly one block every 0.18s
   uint64_t                         minerNumber_{1};

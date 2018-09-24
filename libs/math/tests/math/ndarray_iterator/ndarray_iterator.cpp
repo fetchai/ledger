@@ -23,6 +23,7 @@
 #include <gtest/gtest.h>
 
 //#include "math/linalg/matrix.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
@@ -103,7 +104,8 @@ TEST(ndarray, iterator_4dim_copy_test)
       {
         for (std::size_t l = 0; l < 6; ++l)
         {
-          ASSERT_TRUE(int(ret.Get({i, j, k, l})) == int(array.Get({i, j, k, l})));
+          std::vector<std::size_t> idxs = {i, j, k, l};
+          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs)));
         }
       }
     }
@@ -143,9 +145,67 @@ TEST(ndarray, iterator_4dim_permute_test)
       {
         for (std::size_t l = 0; l < 6; ++l)
         {
-          ASSERT_TRUE(int(ret.Get({i, j, k, l})) == int(array.Get({i, l, k, j})));
+          std::vector<std::size_t> idxs  = {i, j, k, l};
+          std::vector<std::size_t> idxs2 = {i, l, k, j};
+          ASSERT_TRUE(int(ret.Get(idxs)) == int(array.Get(idxs2)));
         }
       }
     }
+  }
+}
+
+TEST(ndarray, simple_iterator_transpose_test)
+{
+  std::vector<std::size_t> perm{2, 1, 0};
+  std::vector<std::size_t> unperm{0, 1, 2};
+  std::vector<std::size_t> original_shape{2, 3, 4};
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    new_shape.push_back(original_shape[perm[i]]);
+  }
+  std::size_t arr_size = fetch::math::Product(original_shape);
+
+  // set up an initial array
+  NDArray<double> array = NDArray<double>::Arange(0, arr_size, 1);
+  array.Reshape(original_shape);
+
+  NDArray<double> ret = NDArray<double>::Arange(0, arr_size, 1);
+  ret.Reshape(original_shape);
+
+  NDArray<double> test_array{original_shape};
+  test_array.FillArange(0, arr_size);
+
+  ASSERT_TRUE(ret.size() == array.size());
+  ASSERT_TRUE(ret.shape() == array.shape());
+  NDArrayIterator<double, NDArray<double>::container_type> it_arr(array);
+  NDArrayIterator<double, NDArray<double>::container_type> it_ret(ret);
+
+  it_ret.Transpose(perm);
+  while (it_ret)
+  {
+    ASSERT_TRUE(bool(it_arr));
+    ASSERT_TRUE(bool(it_ret));
+
+    *it_arr = *it_ret;
+    ++it_arr;
+    ++it_ret;
+  }
+
+  NDArrayIterator<double, NDArray<double>::container_type> it_arr2(array);
+  NDArrayIterator<double, NDArray<double>::container_type> it_ret2(ret);
+  it_ret2.Transpose(unperm);
+  while (it_ret2)
+  {
+    ASSERT_TRUE(bool(it_arr2));
+    ASSERT_TRUE(bool(it_ret2));
+
+    *it_arr2 = *it_ret2;
+    ++it_arr2;
+    ++it_ret2;
+  }
+  for (std::size_t j = 0; j < array.size(); ++j)
+  {
+    ASSERT_TRUE(array[j] == test_array[j]);
   }
 }
