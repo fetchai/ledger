@@ -22,6 +22,8 @@
 
 #include "math/computation_graph/computation_graph.hpp"
 #include "math/ndarray.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ops/ops.hpp"
 
 using namespace fetch::math::computation_graph;
 
@@ -200,7 +202,68 @@ TEST(computation_graph, ndarray_tricky)
   ASSERT_TRUE(result_arr == test_result_arr);
 }
 
+TEST(computation_graph, build_neural_network)
+{
 
+  std::cout << "begin";
+  // set up neural net - weights
+  fetch::math::linalg::Matrix<double> weights{100};
+  weights.Reshape({10, 10});
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    weights[i] = 1.0;
+  }
+
+  // set up input data example
+  fetch::math::linalg::Matrix<double> X{10};
+  X.Reshape({1, 10});
+
+  // set up result array
+  fetch::math::linalg::Matrix<double> R{10};
+  R.Reshape({1, 10});
+
+  fetch::math::linalg::Matrix<double> Y_hat{10};
+  Y_hat.Reshape({1, 10});
+
+  fetch::math::linalg::Matrix<double> Y{10};
+  Y.Reshape({1, 10});
+
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    X[i] = 1.0;
+    Y[i] = 1.0;
+  }
+
+  // define the network
+
+  // Network net;
+  // net.register(R.Dot(X, weights));
+  // net.register(fetch::math::ops::Sigmoid(R, Y_hat));
+  R.Dot(X, weights);
+  fetch::math::ops::Sigmoid(R, Y_hat);
+
+  // define the network
+  // net.run(X, Y_hat);
+
+  std::cout << "Y_hat: " << std::endl;
+  for (std::size_t j = 0; j < 10; ++j)
+  {
+    std::cout << Y_hat[j] << " ";
+  }
+
+  std::cout << "Y: " << std::endl;
+  for (std::size_t k = 0; k < 10; ++k)
+  {
+    std::cout << Y[k] << " ";
+  }
+
+
+  // begin backprop
+
+
+
+
+}
 //
 // To implement back_prop we need to:
 // 1. identify the sub-graph of interest (simplest case = whole graph)

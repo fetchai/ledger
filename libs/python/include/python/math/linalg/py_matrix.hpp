@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
-#include "math/free_functions/free_functions.hpp"
 
 namespace fetch {
 namespace math {
@@ -177,7 +177,6 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              Isgreaterequal(b, c, a);
              return a;
            })
-
 
       .def("Maximum",
            [](Matrix<T> &a, Matrix<T> const &b) {

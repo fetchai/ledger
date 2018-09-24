@@ -24,7 +24,7 @@
 #include <gtest/gtest.h>
 
 #include "math/ndarray.hpp"
-#include "math/ops/loss_functions/loss_functions.hpp"
+#include "math/ops/ops.hpp"
 #include "math/shape_less_array.hpp"
 
 //#include "math/free_functions/free_functions.hpp"
@@ -51,7 +51,7 @@ TEST(loss_functions, MSE_Test)
   Mean(test_result_arr, test_result);
 
   // the function we're testing
-  ops::loss_functions::MeanSquareError(y_arr, y_hat_arr, result);
+  ops::MeanSquareError(y_arr, y_hat_arr, result);
 
   ASSERT_TRUE(result == test_result);
 }

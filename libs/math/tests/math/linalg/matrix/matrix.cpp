@@ -773,7 +773,6 @@ TEST(matrix, double_division)
   ASSERT_TRUE((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
 };
 
-
 TEST(matrix, matrix_double_isgreaterequal_Test)
 {
   _M<double> A, B, C, R;
@@ -785,7 +784,7 @@ TEST(matrix, matrix_double_isgreaterequal_Test)
 
   for (std::size_t j = 0; j < 11; ++j)
   {
-    A[j] = j-5;
+    A[j] = j - 5;
     B[j] = 0;
     C[j] = -1;
 
@@ -799,21 +798,21 @@ TEST(matrix, matrix_double_isgreaterequal_Test)
     }
   }
 
-//  A = _M<double>(R"(
-// -2.0 -1.0 0.0 1.0 2.0
-//)");
-//
-//  B = _M<double>(R"(
-// 0.0 0.0 0.0 0.0 0.0
-//)");
-//
-//  C = _M<double>(R"(
-// -2.0 -1.0 0.0 1.0 2.0
-//)");
-//
-//  R = _M<double>(R"(
-// 0.0 0.0 1.0 1.0 1.0
-//)");
+  //  A = _M<double>(R"(
+  // -2.0 -1.0 0.0 1.0 2.0
+  //)");
+  //
+  //  B = _M<double>(R"(
+  // 0.0 0.0 0.0 0.0 0.0
+  //)");
+  //
+  //  C = _M<double>(R"(
+  // -2.0 -1.0 0.0 1.0 2.0
+  //)");
+  //
+  //  R = _M<double>(R"(
+  // 0.0 0.0 1.0 1.0 1.0
+  //)");
 
   fetch::math::Isgreaterequal(A, B, C);
 

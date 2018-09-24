@@ -40,7 +40,6 @@
 namespace fetch {
 namespace math {
 namespace ops {
-namespace loss_functions {
 
 template <typename T, typename C>
 class ShapeLessArray;
@@ -58,7 +57,49 @@ void MeanSquareError(ARRAY_TYPE y, ARRAY_TYPE y_hat, T &ret)
   fetch::math::Mean(temp, ret);
 }
 
-};  // namespace loss_functions
+/**
+ * The sigmoid function
+ * @tparam ARRAY_TYPE
+ * @tparam T
+ * @param y
+ * @param y_hat
+ * @param ret
+ */
+template <typename ARRAY_TYPE>
+void Sigmoid(ARRAY_TYPE const &y, ARRAY_TYPE &ret)
+{
+  Multiply(y, 1.0, ret);
+  Exp(ret);
+  Add(ret, 1.0, ret);
+
+  Divide(1.0, ret, ret);
+
+  //  ARRAY_TYPE temp(y.size());
+  //  fetch::math::Subtract(y, y_hat, temp);
+  //  fetch::math::Square(temp);
+  //  fetch::math::Mean(temp, ret);
+  //
+  //  z = x * -1.0
+  //  z.Exp()
+  //  y = 1.0 / (z + 1.0)
+  //
+  //
+}
+
+/**
+ * The rectified linear unit returns the elementwise maximum of 0 and y
+ * @tparam ARRAY_TYPE
+ * @tparam T
+ * @param y
+ * @param ret
+ */
+template <typename ARRAY_TYPE, typename T>
+void Relu(ARRAY_TYPE const &y, ARRAY_TYPE &ret)
+{
+  ARRAY_TYPE zeros = ARRAY_TYPE::Zeros(y.height(), y.width());
+  ret.Maximum(y, zeros, ret);
+}
+
 };  // namespace ops
 };  // namespace math
 };  // namespace fetch

@@ -589,7 +589,6 @@ public:
 
     ret = cur_node_ptr->array;
   }
-
 };
 
 }  // namespace computation_graph

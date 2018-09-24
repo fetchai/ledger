@@ -55,6 +55,31 @@ void MeanSquareError(ARRAY_TYPE error, ARRAY_TYPE &grads)
   grads = error;
 }
 
+template <typename ARRAY_TYPE>
+void sigmoid(ARRAY_TYPE error, ARRAY_TYPE &grads)
+{
+  for (std::size_t i = 0; i < ; ++i)
+  {
+    grads[i] = error[i] * (1 - error[i]);
+  }
+}
+
+template <typename ARRAY_TYPE>
+void relu(ARRAY_TYPE error, ARRAY_TYPE &grads)
+{
+  for (std::size_t i = 0; i < error; ++i)
+  {
+    if (error[i] > 0)
+    {
+      grads[i] = error[i];
+    }
+    else
+    {
+      grads[i] = 0;
+    }
+  }
+}
+
 };  // namespace derivitives
 };  // namespace ops
 };  // namespace math
