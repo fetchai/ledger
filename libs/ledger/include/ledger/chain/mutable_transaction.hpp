@@ -305,20 +305,25 @@ public:
   {
     for( auto const& sig: signatures_)
     {
-      bool const ver_res = tx_for_signing_.Verify(sig);
+      tx_data_for_signing_type txdfs{ *this };
+      bool const ver_res = txdfs.Verify(sig);
+      //bool const ver_res = tx_for_signing_.Verify(sig);
+
       if (!ver_res)
       {
+        std::cout << "signature does not match" <<std::endl;
         return false;
       }
     }
 
+    std::cout << "signatures size is zero" <<std::endl;
     return signatures_.size() > 0;
   }
 
-  void Sign(byte_array::ConstByteArray const &private_key)
+  Signature const& Sign(byte_array::ConstByteArray const &private_key)
   {
     auto signer = tx_for_signing_.Sign(private_key);
-    signatures_[signer.identity()] = Signature{signer.signature(), tx_data_for_signing_type::signer_type::Signature::ecdsa_curve_type::sn};
+    return signatures_[signer.identity()] = Signature{signer.signature(), tx_data_for_signing_type::signer_type::Signature::ecdsa_curve_type::sn};
   }
 
   void PushResource(byte_array::ConstByteArray const &res)

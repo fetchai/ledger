@@ -167,50 +167,15 @@ TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)
 {
   for(std::size_t i =0; i<100; ++i)
   {
-    //* Production code:
+    //* Generating priv & pub key pair
     ECDSAPrivateKey<> const priv_key;
 
+    //* Production code:
     auto const serialized_pub_key = priv_key.publicKey().keyAsBin();
-    EXPECT_EQ(ECDSAPrivateKey<>::ecdsa_curve_type::publicKeySize, serialized_pub_key.size());
-    std::cout << "pub key [orig] = " << byte_array::ToHex(serialized_pub_key) << std::endl;
-
-    context::Session<BN_CTX> session;
-    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(ECDSAPrivateKey<>::ecdsa_curve_type::nid)};
-    EC_GROUP_set_point_conversion_form(group.get(), ECDSAPrivateKey<>::conversionForm);
-
-    shrd_ptr_type<BIGNUM> x{BN_new()};
-    shrd_ptr_type<BIGNUM> y{BN_new()};
-    ASSERT_EQ(1, EC_POINT_get_affine_coordinates_GFp(group.get(), priv_key.publicKey().keyAsEC_POINT().get(), x.get(), y.get(),
-                                        session.context().get()));
-
-    byte_array::ByteArray x_bin;
-    const std::size_t xBytes = static_cast<std::size_t>(BN_num_bytes(x.get()));
-    x_bin.Resize(xBytes);
-
-    byte_array::ByteArray y_bin;
-    const std::size_t yBytes = static_cast<std::size_t>(BN_num_bytes(y.get()));
-    y_bin.Resize(yBytes);
-
-    ASSERT_EQ(xBytes, BN_bn2bin(x.get(), static_cast<unsigned char *>(x_bin.pointer())));
-    ASSERT_EQ(yBytes, BN_bn2bin(y.get(), static_cast<unsigned char *>(y_bin.pointer())));
-    std::cout << "pub key [x] = " << byte_array::ToHex(x_bin) << std::endl;
-    std::cout << "pub key [y] = " << byte_array::ToHex(y_bin) << std::endl;
-
-    ASSERT_EQ(1, EC_POINT_get_affine_coordinates_GFp(group.get(), priv_key.publicKey().keyAsEC_POINT().get(), x.get(), y.get(),
-                                        session.context().get()));
-
-    context::Session<BN_CTX> session2;
-    uniq_ptr_type<EC_GROUP> group2{EC_GROUP_new_by_curve_name(ECDSAPrivateKey<>::ecdsa_curve_type::nid)};
-    EC_GROUP_set_point_conversion_form(group2.get(), ECDSAPrivateKey<>::conversionForm);
-
-    uniq_ptr_type<EC_POINT>  public_key{EC_POINT_new(group2.get())};
-    ASSERT_EQ(1, EC_POINT_set_affine_coordinates_GFp(group2.get(), public_key.get(), x.get(), y.get(),
-                                             session2.context().get()));
-
-
     decltype(priv_key)::public_key_type pub_key {serialized_pub_key};
 
     //* Expectations:
+    EXPECT_EQ(ECDSAPrivateKey<>::ecdsa_curve_type::publicKeySize, serialized_pub_key.size());
     EXPECT_EQ(priv_key.publicKey().keyAsBin(), pub_key.keyAsBin());
   }
 }

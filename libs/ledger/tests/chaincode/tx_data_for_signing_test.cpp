@@ -60,8 +60,14 @@ namespace {
       stream >> txdfs2;
       //std::cout << "tx[after] = " << tx2 << std::endl;
 
+      crypto::openssl::ECDSAPrivateKey<> key;
+
+      tx2.Sign(key.KeyAsBin());
+      MutableTransaction::signatures_type::value_type const& sig = *tx2.signatures().begin();
       EXPECT_EQ(txdfs, txdfs2);
-    }
+      EXPECT_TRUE(txdfs2.Verify(sig));
+      EXPECT_TRUE(tx2.Verify());
+     }
   }
 }  // namespace
 
