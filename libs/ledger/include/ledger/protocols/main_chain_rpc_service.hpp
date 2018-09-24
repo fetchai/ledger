@@ -20,11 +20,11 @@
 #include "core/mutex.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "network/generics/requesting_queue.hpp"
 
 #include <memory>
 
@@ -53,7 +53,6 @@ public:
   void BroadcastBlock(Block const &block);
 
 private:
-
   using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 

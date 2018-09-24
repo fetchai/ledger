@@ -543,7 +543,7 @@ public:
 
   void UseThesePeers(UriSet uris)
   {
-    FETCH_LOCK(services_mutex_); // not ideal!
+    FETCH_LOCK(services_mutex_);  // not ideal!
     desired_connections_ = std::move(uris);
   }
 

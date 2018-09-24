@@ -80,7 +80,6 @@ public:
   }
 
 private:
-
   static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
   static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
 

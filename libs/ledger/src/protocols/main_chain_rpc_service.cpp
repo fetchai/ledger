@@ -113,7 +113,7 @@ bool MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
 
     // make the request for the heaviest chain
     auto promise = main_chain_rpc_client_.CallSpecificAddress(
-      peer, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
+        peer, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
 
     // setup that handlers
     promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
