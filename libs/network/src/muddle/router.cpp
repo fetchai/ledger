@@ -276,31 +276,6 @@ void Router::RemoveConnection(Handle handle)
   // alternative routing
 }
 
-#if 0
-/**
- * Sends a payload directly to the connection specified from the handle.
- *
- * This function is intended to be used by internal objects of the muddle stack and not to be
- * exposed publically.
- *
- * @param handle The network handle identifying the target connection
- * @param service_num The service number for the payload
- * @param proto_num The protocol number for the payload
- * @param payload The payload contents
- */
-void Router::SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload)
-{
-  // format the packet
-  auto pkt = std::make_shared<Packet>(address_);
-  pkt->SetDirect(true);
-  pkt->SetService(service_num);
-  pkt->SetProtocol(proto_num);
-  pkt->SetPayload(payload);
-
-  SendToConnection(handle, pkt);
-}
-#endif
-
 /**
  * Send an message to a target address
  *

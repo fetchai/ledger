@@ -34,24 +34,24 @@ static constexpr char const *LOGGING_NAME = "Executor";
 namespace fetch {
 namespace ledger {
 
-#if 0
-std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
-{
-  std::vector<uint16_t> elements(lane_set.size());
-  std::copy(lane_set.begin(), lane_set.end(), elements.begin());
-  std::sort(elements.begin(), elements.end());
-
-  bool not_first_loop = false;
-  for (auto element : elements)
-  {
-    if (not_first_loop)
-      stream << ',';
-    stream << element;
-    not_first_loop = true;
-  }
-  return stream;
-}
-#endif
+// Useful to include when debugging:
+//
+//std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
+//{
+//  std::vector<uint16_t> elements(lane_set.size());
+//  std::copy(lane_set.begin(), lane_set.end(), elements.begin());
+//  std::sort(elements.begin(), elements.end());
+//
+//  bool not_first_loop = false;
+//  for (auto element : elements)
+//  {
+//    if (not_first_loop)
+//      stream << ',';
+//    stream << element;
+//    not_first_loop = true;
+//  }
+//  return stream;
+//}
 
 /**
  * Executes a given transaction across a series of lanes
