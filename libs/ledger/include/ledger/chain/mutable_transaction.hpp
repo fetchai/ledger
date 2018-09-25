@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/serializers/serialisation_argument_wrapper.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
@@ -110,14 +111,48 @@ class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION> //p
   static_assert(std::is_same<MutableTransaction, typename std::remove_const<MUTABLE_TRANSACTION>::type>::value, "Type must be const or non-const `MutableTransaction` class");
 
 public:
+  using self_type = TxDataForSigningC;
   using base_type = std::reference_wrapper<MUTABLE_TRANSACTION>;
-  using base_type::base_type;
-  using base_type::operator=;
-  using base_type::operator();
 
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
   using verifier_type = crypto::ECDSAVerifier;
   using signer_type = crypto::ECDSASigner;
+
+  using base_type::base_type;
+  //using base_type::operator=;
+  using base_type::operator();
+
+  TxDataForSigningC() = default;
+
+  TxDataForSigningC(self_type const &from)
+    : base_type{from}
+    , stream_{ from.stream_ }
+    , tx_data_size_for_signing_{ from.tx_data_size_for_signing_ }
+  {
+  }
+
+  TxDataForSigningC(self_type &&from)
+    : base_type{ std::move(from) }
+    , stream_{ std::move(from.stream_) }
+    , tx_data_size_for_signing_{ from.tx_data_size_for_signing_ }
+  {
+  }
+
+  self_type& operator = (self_type const &from)
+  {
+    static_cast<base_type &>(*this) = from;
+    stream_ = from.stream_;
+    tx_data_size_for_signing_ = from.tx_data_size_for_signing_;
+    return *this;
+  }
+
+  self_type& operator = (self_type &&from)
+  {
+    static_cast<base_type &>(*this) = std::move(from);
+    stream_ = std::move(from.stream_);
+    tx_data_size_for_signing_ = from.tx_data_size_for_signing_;
+    return *this;
+  }
 
   byte_array::ConstByteArray const& DataForSigning(crypto::Identity const& identity)
   {
@@ -126,7 +161,7 @@ public:
 
   byte_array::ConstByteArray const& DataForSigning()
   {
-    return DataForSigningInternal(serializers::LazyEvalArgumentFactory([](auto&){}));
+    return DataForSigningInternal(serializers::LazyEvalArgumentFactory([this](auto&){std::cout << "DataForSigning(): tx_data_size_for_signing_ = " << tx_data_size_for_signing_ << std::endl;}));
   }
 
   bool Verify(signatures_type::value_type const &sig)
@@ -135,23 +170,38 @@ public:
     auto const& signature = sig.second;
    
     verifier_type verifier{identity};
-    return verifier.Verify(DataForSigning(identity), signature.signature_data);
+    auto data_to_verify = DataForSigning(identity);
+    std::cout << "Verify(sig) : identity       = " << byte_array::ToHex(identity.identifier()) << std::endl;
+    std::cout << "Verify(sig) : exp. sig       = " << byte_array::ToHex(signature.signature_data) << std::endl;
+    std::cout << "Verify(sig) : data to verify = " << byte_array::ToHex(data_to_verify) << std::endl;
+    return verifier.Verify(data_to_verify, signature.signature_data);
   }
 
   signer_type Sign(byte_array::ConstByteArray const &private_key)
   {
     signer_type signer;
     signer.Load(private_key);
-    if (!signer.Sign(DataForSigning(signer.identity())))
+    auto data_to_verify = DataForSigning(signer.identity());
+    if (!signer.Sign(data_to_verify))
     {
       throw std::runtime_error("Signing failed");
     }
+    std::cout << "Sign(key) : identity       = " << byte_array::ToHex(signer.identity().identifier()) << std::endl;
+    std::cout << "Sign(key) : signature      = " << byte_array::ToHex(signer.signature()) << std::endl;
+    std::cout << "Sign(key) : data to verify = " << byte_array::ToHex(data_to_verify) << std::endl;
     return signer;
+  }
+
+  void Reset()
+  {
+    stream_.Resize(0);
+    tx_data_size_for_signing_ = 0;
   }
 
   bool operator == (TxDataForSigningC const &left_tx) const;
   bool operator != (TxDataForSigningC const &left_tx) const;
 
+public:
   using self_ref_type = std::reference_wrapper<TxDataForSigningC>;
 
   struct qtds : public self_ref_type
@@ -163,7 +213,9 @@ public:
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
+      std::cout << "qtds(...)[BEFORE]: tx_data_size_for_signing_ = " << get().tx_data_size_for_signing_ << std::endl;
       get().tx_data_size_for_signing_ = stream.size();
+      std::cout << "qtds(...) [AFTER]: tx_data_size_for_signing_ = " << get().tx_data_size_for_signing_ << std::endl;
     }
   };
 
@@ -176,14 +228,23 @@ public:
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
+      std::cout << "res(...)[BEFORE]: tx_data_size_for_signing_ = " << get().tx_data_size_for_signing_ << std::endl;
+      std::cout << "res(...)[BEFORE]: get().stream_.capacity() = " << get().stream_.capacity() << std::endl;
+      std::cout << "res(...)[BEFORE]: get().stream_.size() = " << get().stream_.size() << std::endl;
+      std::cout << "res(...)[BEFORE]: stream.capacity() = " << stream.capacity() << std::endl;
+      std::cout << "res(...)[BEFORE]: stream.size() = " << stream.size() << std::endl;
       stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10, serializers::eResizeParadigm::relative);
+      std::cout << "res(...)[ AFTER]: get().stream_.capacity() = " << get().stream_.capacity() << std::endl;
+      std::cout << "res(...)[ AFTER]: get().stream_.size() = " << get().stream_.size() << std::endl;
+      std::cout << "res(...)[ AFTER]: stream.capacity() = " << stream.capacity() << std::endl;
+      std::cout << "res(...)[ AFTER]: stream.size() = " << stream.size() << std::endl;
     }
   };
 
-private:
   template<typename IDENTITY>
   byte_array::ConstByteArray const& DataForSigningInternal(IDENTITY const& identity)
   {
+    std::cout << "DataForSigningInternal(...) [BEFORE]: tx_data_size_for_signing_ = " << tx_data_size_for_signing_ << std::endl;
     if(stream_.size() == 0)
     {
       stream_.Append(*this, qtds_, identity, res_);
@@ -191,8 +252,10 @@ private:
     else
     {
       stream_.Resize(tx_data_size_for_signing_);
+      stream_.Seek(tx_data_size_for_signing_);
       stream_.Append(identity);
     }
+    std::cout << "DataForSigningInternal(...) [ AFTER]: tx_data_size_for_signing_ = " << tx_data_size_for_signing_ << std::endl;
     return stream_.data();
   }
 
@@ -303,11 +366,12 @@ public:
 
   bool Verify()
   {
+    tx_data_for_signing_type txdfs{ *this };
+    tx_for_signing_.Reset();
     for( auto const& sig: signatures_)
     {
-      tx_data_for_signing_type txdfs{ *this };
-      bool const ver_res = txdfs.Verify(sig);
-      //bool const ver_res = tx_for_signing_.Verify(sig);
+      //bool const ver_res = txdfs.Verify(sig);
+      bool const ver_res = tx_for_signing_.Verify(sig);
 
       if (!ver_res)
       {
@@ -330,16 +394,19 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     summary_.resources.insert(res);
+    tx_for_signing_.Reset();
   }
 
   void set_summary(TransactionSummary const &summary)
   {
     summary_ = summary;
+    tx_for_signing_.Reset();
   }
 
   void set_data(byte_array::ConstByteArray const &data)
   {
     data_ = data;
+    tx_for_signing_.Reset();
   }
 
   void set_signatures(signatures_type const &sig)
@@ -350,11 +417,13 @@ public:
   void set_contract_name(TransactionSummary::contract_id_type const &name)
   {
     summary_.contract_name = name;
+    tx_for_signing_.Reset();
   }
 
   void set_fee(uint64_t fee)
   {
     summary_.fee = fee;
+    tx_for_signing_.Reset();
   }
 
 protected:
@@ -371,6 +440,7 @@ protected:
       sigs_clone[identity] = std::move(sig.second);
     }
     signatures_ = std::move(sigs_clone);
+    tx_for_signing_ = tx_for_signing_;
   }
 
 private:
@@ -400,6 +470,7 @@ void Deserialize(T &stream, TxDataForSigningC<U> &tx)
 {
   MutableTransaction &tx_ = tx.get();
   stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
+  tx.Reset();
 }
 
 template<typename MUTABLE_TRANSACTION>

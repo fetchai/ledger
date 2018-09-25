@@ -40,22 +40,23 @@ public:
 
   void Allocate(std::size_t const &delta)
   {
-    size_ += delta;
+    Resize(delta, eResizeParadigm::relative);
   }
 
   void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
   {
+    Reserve(size, resize_paradigm);
     switch(resize_paradigm)
     {
       case eResizeParadigm::relative:
-        size_ + size;
+        size_ += size;
         break;
 
       case eResizeParadigm::absolute:
         size_ = size;
         if(pos_ > size)
         {
-          Seek(size);
+          Seek(size_);
         }
         break;
     };
@@ -127,6 +128,11 @@ public:
   std::size_t size() const
   {
     return size_;
+  }
+
+  std::size_t capacity() const
+  {
+    return reserved_size_;
   }
 
   int64_t bytes_left() const

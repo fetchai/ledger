@@ -50,8 +50,9 @@ namespace {
     //tx.set_signatures(MutableTransaction::signatures_type{}); 
     //std::cout << "tx[after] = " << tx << std::endl;
     
-    auto wire_tx = ToWireTransaction(tx);
-    std::cout << "wire tx = " << wire_tx << std::endl;
+    //auto wire_tx = ToWireTransaction(tx);
+    //std::cout << "wire tx = " << wire_tx << std::endl;
+    
     std::cout << "tx verify = " << tx.Verify() << std::endl;
   }
 
