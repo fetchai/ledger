@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "storage/revertible_document_store.hpp"
 #include "storage/document.hpp"
+#include "storage/revertible_document_store.hpp"
 #include <iostream>
 using namespace fetch;
 
@@ -54,7 +54,8 @@ void Print()
 {
   std::cout << std::endl;
   auto doc = store.Get(ResourceAddress("Hello world"));
-  std::cout << "BOOK: " << book << " " << "xxx" << std::endl;
+  std::cout << "BOOK: " << book << " "
+            << "xxx" << std::endl;
   std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
   std::cout << "VALUE: " << doc.document << std::endl;
 }

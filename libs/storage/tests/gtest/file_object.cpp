@@ -37,7 +37,7 @@ bool BasicFileCreation()
   FileObject<stack_type> file_object;
 
   ByteArray str;
-  uint64_t id;
+  uint64_t  id;
   {
     file_object.Load("document_data_c887.db", "doc_diff_c887.db", true);
 
@@ -220,7 +220,7 @@ bool FileSaveLoadFixedSize()
   using stack_type = RandomAccessStack<FileBlockType<BS>>;
   std::vector<ByteArray> strings;
   std::vector<uint64_t>  file_ids;
-  std::size_t string_size;
+  std::size_t            string_size;
 
   {
     FileObject<stack_type> file_object;

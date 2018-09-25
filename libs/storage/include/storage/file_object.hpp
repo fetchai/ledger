@@ -108,7 +108,6 @@ public:
     HEADER_SIZE = 2 * sizeof(uint64_t)
   };
 
-  FileObject() {};
   FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
   FileObject(FileObject &&other)                = default;
@@ -155,7 +154,7 @@ public:
   void Seek(uint64_t n)
   {
     n += HEADER_SIZE;
-    uint64_t   next_bn = n/ block_type::BYTES;
+    uint64_t   next_bn = n / block_type::BYTES;
     block_type block;
 
     while (block_number_ < next_bn)
@@ -202,7 +201,7 @@ public:
     Seek(0);
 
     length_            = HEADER_SIZE + size;
-    uint64_t   last_bn = length_/ block_type::BYTES;
+    uint64_t   last_bn = length_ / block_type::BYTES;
     block_type block;
     block_type prev_block;
     uint64_t   prev_block_index;
@@ -368,7 +367,6 @@ public:
 
     uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
     --last_block;
-
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
     if (first_bytes > m)
@@ -536,7 +534,7 @@ public:
     return ret;
   }
 
-  // TODO: (HUT) : write this
+  // TODO(unknown): (HUT) : write this
   void Erase()
   {
     // assert(block_index_ != 0);

@@ -52,11 +52,11 @@ public:
   using serializer_type = serializers::TypedByteArrayBuffer;
   class Iterator;
 
-  ObjectStore() {};
-  ObjectStore(ObjectStore const &rhs)            = delete;
-  ObjectStore(ObjectStore &&rhs)                 = delete;
+  ObjectStore(){};
+  ObjectStore(ObjectStore const &rhs) = delete;
+  ObjectStore(ObjectStore &&rhs)      = delete;
   ObjectStore &operator=(ObjectStore const &rhs) = delete;
-  ObjectStore &operator=(ObjectStore&& rhs)      = delete;
+  ObjectStore &operator=(ObjectStore &&rhs) = delete;
 
   /**
    * Create a new file for the object store with the filename parameters for the

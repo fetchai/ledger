@@ -16,7 +16,6 @@ add_fetch_test(versioned_random_access_stack_test fetch-storage versioned_random
 add_fetch_test(key_value_index_test fetch-storage key_value_index.cpp)
 add_fetch_test(document_store_test fetch-storage document_store.cpp)
 add_fetch_test(variant_stack_test fetch-storage variant_stack.cpp)
-add_fetch_test(versioned_file_object_test fetch-storage versioned_file_object.cpp)
 add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
 
 add_fetch_test(object_store_test fetch-storage object_store.cpp)

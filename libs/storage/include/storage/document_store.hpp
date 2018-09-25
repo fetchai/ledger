@@ -60,11 +60,11 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
-  DocumentStore() {};
-  DocumentStore(DocumentStore const &rhs)            = delete;
-  DocumentStore(DocumentStore &&rhs)                 = delete;
+  DocumentStore(){};
+  DocumentStore(DocumentStore const &rhs) = delete;
+  DocumentStore(DocumentStore &&rhs)      = delete;
   DocumentStore &operator=(DocumentStore const &rhs) = delete;
-  DocumentStore &operator=(DocumentStore&& rhs)      = delete;
+  DocumentStore &operator=(DocumentStore &&rhs) = delete;
 
   void Load(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
             std::string const &index_diff, bool const &create = true)
@@ -233,7 +233,7 @@ public:
 
   protected:
     typename key_value_index_type::Iterator wrapped_iterator_;
-    self_type                               *self_;
+    self_type *                             self_;
   };
 
   self_type::Iterator Find(ResourceID const &rid)

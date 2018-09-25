@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "storage/document_store.hpp"
 #include "storage/document.hpp"
+#include "storage/document_store.hpp"
 
 namespace fetch {
 namespace storage {
