@@ -36,17 +36,17 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
   if (addDebugInfo)
   {
-    script::Variant tx_data_to_sign;
-    tx_data_to_sign.MakeObject();
-    tx_data_to_sign["data"] = byte_array::ToBase64(tx.data());
-    tx_data_to_sign["fee"]  = tx.summary().fee;
-    tx_data_to_sign["contract_name"] = tx.contract_name();
+    script::Variant tx_debug_data;
+    tx_debug_data.MakeObject();
+    tx_debug_data["data"] = byte_array::ToBase64(tx.data());
+    tx_debug_data["fee"]  = tx.summary().fee;
+    tx_debug_data["contract_name"] = tx.contract_name();
 
     script::VariantArray resources;
     resources.CopyFrom(tx.resources().begin(), tx.resources().end());
 
-    tx_data_to_sign["resources"] = resources;
-    tx_v["dbg"] = tx_data_to_sign;
+    tx_debug_data["resources"] = resources;
+    tx_v["dbg"] = tx_debug_data;
   }
 
   auto txdfs{TxDataForSigningCFactory(tx)};
@@ -64,7 +64,6 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   {
     auto &sig_v = signatures[i++];
     sig_v.MakeObject();
-    ////TODO(pbukva) (private issue #xxx: Temporarily ignoring type fields of Identity and signature assuming )
     stream.Resize(0, serializers::eResizeParadigm::absolute);
     stream.Append(sig.first, eval_identity_size, sig.second);
     sig_v[byte_array::ToBase64(stream.data().SubArray(0, identity_serialised_size))] = byte_array::ToBase64(stream.data().SubArray(identity_serialised_size, stream.data().size()-identity_serialised_size));
@@ -96,12 +95,7 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   MutableTransaction::signatures_type mtx_signatures;
 
   signatures.ForEach([&mtx_signatures](script::Variant const &sig_pair_v) -> bool{
-    //std::cout << "sig_pair [foreach]: " << sig_pair_v << std::endl;
-    //(void)mtx_signatures;
     sig_pair_v.ForEach([&mtx_signatures](script::Variant const &identity_v, script::Variant const &signature_v) -> bool{
-      //std::cout << "identity  [foreach]: " << identity_v << std::endl;
-      //std::cout << "signature [foreach]: " << signature_v << std::endl;
-      //(void)mtx_signatures;
       auto identity_bin = byte_array::FromBase64(identity_v.As<byte_array::ByteArray>());
       auto signature_bin = byte_array::FromBase64(signature_v.As<byte_array::ByteArray>());
       serializers::ByteArrayBuffer i_stream{ identity_bin };
@@ -117,18 +111,7 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
     return true;
   });
 
-  //for(std::size_t i = 0; i < signatures.size(); ++i)
-  //{
-  //  auto const& sig = signatures[i];
-  //  (void)sig;
-  //  //auto const& identity_v = sig
-  //  //mtx_signatures[]
-  //}
-
-  //tx_v["signatures"]
-
   tx.set_signatures(mtx_signatures);
-  tx.UpdateDigest();
 
   return tx;
 }

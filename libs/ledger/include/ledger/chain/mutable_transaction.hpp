@@ -169,9 +169,10 @@ public:
     return *this;
   }
 
-  byte_array::ConstByteArray const& DataForSigning(crypto::Identity const& identity)
+  template<typename APPENDIX = crypto::Identity>
+  byte_array::ConstByteArray const& DataForSigning(APPENDIX const& appendix)
   {
-    return DataForSigningInternal(identity);
+    return DataForSigningInternal(appendix);
   }
 
   byte_array::ConstByteArray const& DataForSigning()
@@ -238,18 +239,18 @@ public:
     }
   };
 
-  template<typename IDENTITY>
-  byte_array::ConstByteArray const& DataForSigningInternal(IDENTITY const& identity)
+  template<typename APPENDIX>
+  byte_array::ConstByteArray const& DataForSigningInternal(APPENDIX const& appendix)
   {
     if(stream_.size() == 0)
     {
-      stream_.Append(*this, qtds_, identity, res_);
+      stream_.Append(*this, qtds_, appendix, res_);
     }
     else
     {
       stream_.Resize(tx_data_size_for_signing_, serializers::eResizeParadigm::absolute);
       stream_.Seek(tx_data_size_for_signing_);
-      stream_.Append(identity);
+      stream_.Append(appendix);
     }
     return stream_.data();
   }

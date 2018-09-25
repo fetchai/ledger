@@ -319,30 +319,6 @@ private:
   ContainerPtr data_;
   Variant *    pointer_ = nullptr;
 
-//public:
-//  using iterator_type = Container::iterator;
-//  using const_iterator_type = Container::const_iterator;
-//
-//  iterator_type begin()
-//  {
-//    return data_->begin();
-//  }
-//
-//  iterator_type end()
-//  {
-//    return data_->end();
-//  }
-//
-//  const_iterator_type begin() const
-//  {
-//    return data_->begin();
-//  }
-//
-//  const_iterator_type end() const
-//  {
-//    return data_->end();
-//  }
-
 };
 
 inline Variant::Variant()

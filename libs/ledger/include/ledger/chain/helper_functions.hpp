@@ -41,12 +41,12 @@ inline byte_array::ConstByteArray GetRandomByteArray()
   return {std::to_string(GetRandom())};
 }
 
-inline MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
+inline MutableTransaction RandomTransaction(std::size_t num_of_resources=3, int64_t const num_of_signatures = -4, bool const update_digest = false)
 {
   MutableTransaction trans;
   TransactionSummary summary;
 
-  for (std::size_t i = 0; i < 3; ++i)
+  for (std::size_t i = 0; i < num_of_resources; ++i)
   {
     summary.resources.insert(GetRandomByteArray());
   }
@@ -56,13 +56,18 @@ inline MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   trans.set_data(GetRandomByteArray());
   trans.set_contract_name(std::to_string(GetRandom()));
  
-  uint8_t const   size = static_cast<uint8_t>(GetRandom() % 3 + 1);
-  for (uint8_t i = 0; i < size; ++i)
+  uint64_t const size = num_of_signatures < 0 ? (static_cast<uint8_t>(GetRandom() % static_cast<uint64_t>(0-num_of_signatures) + 1)) : static_cast<uint64_t>(num_of_signatures);
+  for (uint64_t i = 0; i < size; ++i)
   {
     crypto::ECDSASigner::PrivateKey key;
     trans.Sign(key.KeyAsBin());
   }
-  trans.UpdateDigest();
+  
+  if (update_digest)
+  {
+    trans.UpdateDigest();
+  }
+
   return trans;
 }
 

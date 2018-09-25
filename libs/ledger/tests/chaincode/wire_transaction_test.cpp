@@ -44,22 +44,33 @@ namespace {
 
   TEST_F(WiredTransactionTest, basic)
   {
-    MutableTransaction tx {RandomTransaction()};
+    for(std::size_t i=0; i<100; ++i)
+    {
+      MutableTransaction tx {RandomTransaction()};
+      ASSERT_TRUE(tx.Verify());
 
-    std::cout << "tx[before] = " << std::endl << tx << std::endl;
+      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
-    //tx.set_signatures(MutableTransaction::signatures_type{}); 
-    //std::cout << "tx[after] = " << tx << std::endl;
+      //tx.set_signatures(MutableTransaction::signatures_type{}); 
+      //std::cout << "tx[after] = " << tx << std::endl;
     
-    auto wire_tx = ToWireTransaction(tx, true);
-    std::cout << "wire tx = " << std::endl  << wire_tx << std::endl;
+      auto wire_tx = ToWireTransaction(tx, true);
+      //std::cout << "wire tx = " << std::endl  << wire_tx << std::endl;
 
-    auto tx_deserialised{ FromWireTransaction(wire_tx) };
-    std::cout << "tx[deserialised] = " << std::endl << tx_deserialised << std::endl;
+      auto tx_deserialised{ FromWireTransaction(wire_tx) };
+      //std::cout << "tx[deserialised] = " << std::endl << tx_deserialised << std::endl;
     
-    //std::cout << "tx verify = " << tx.Verify() << std::endl;
+      EXPECT_TRUE(tx_deserialised.Verify());
+
+      auto const txdfs{ TxDataForSigningCFactory(tx) };
+      auto const txdfs_deserialised{ TxDataForSigningCFactory(tx_deserialised) };
+      EXPECT_EQ(txdfs, txdfs_deserialised);
+
+      tx.UpdateDigest();
+      tx_deserialised.UpdateDigest();
+      EXPECT_EQ(tx.digest(), tx_deserialised.digest());
+    }
   }
-
 }  // namespace
 
 }  // namespace ledger
