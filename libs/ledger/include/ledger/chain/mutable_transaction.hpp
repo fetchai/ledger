@@ -113,7 +113,8 @@ class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION> //p
 public:
   using self_type = TxDataForSigningC;
   using base_type = std::reference_wrapper<MUTABLE_TRANSACTION>;
-
+  using transaction_type = MUTABLE_TRANSACTION;
+  
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
   using verifier_type = crypto::ECDSAVerifier;
   using signer_type = crypto::ECDSASigner;
@@ -134,7 +135,21 @@ public:
   TxDataForSigningC(self_type &&from)
     : base_type{ std::move(from) }
     , stream_{ std::move(from.stream_) }
+    , tx_data_size_for_signing_{ std::move(from.tx_data_size_for_signing_) }
+  {
+  }
+
+  TxDataForSigningC(transaction_type &tx, self_type const &from)
+    : base_type{ tx }
+    , stream_{ from.stream_ }
     , tx_data_size_for_signing_{ from.tx_data_size_for_signing_ }
+  {
+  }
+
+  TxDataForSigningC(transaction_type &tx, self_type &&from)
+    : base_type{ tx }
+    , stream_{ std::move(from.stream_) }
+    , tx_data_size_for_signing_{ std::move(from.tx_data_size_for_signing_) }
   {
   }
 
@@ -150,7 +165,7 @@ public:
   {
     static_cast<base_type &>(*this) = std::move(from);
     stream_ = std::move(from.stream_);
-    tx_data_size_for_signing_ = from.tx_data_size_for_signing_;
+    tx_data_size_for_signing_ = std::move(from.tx_data_size_for_signing_);
     return *this;
   }
 
@@ -189,7 +204,6 @@ public:
   void Reset()
   {
     stream_.Resize(0);
-    //tx_data_size_for_signing_ = 0;
   }
 
   bool operator == (TxDataForSigningC const &left_tx) const;
@@ -273,7 +287,7 @@ public:
     : summary_{ from.summary_ }
     , data_{ from.data_ }
     , signatures_{ from.signatures_ }
-    , tx_for_signing_{ *this }
+    , tx_for_signing_{ *this, from.tx_for_signing_ }
   {
   } 
   
@@ -281,7 +295,7 @@ public:
     : summary_{ std::move(from.summary_) }
     , data_{ std::move(from.data_) }
     , signatures_{ std::move(from.signatures_) }
-    , tx_for_signing_{ *this }
+    , tx_for_signing_{ *this, std::move(from.tx_for_signing_) }
   {
   } 
   
@@ -291,7 +305,7 @@ public:
     summary_ = from.summary_;
     data_ = from.data_;
     signatures_ = from.signatures_;
-    tx_for_signing_ = tx_data_for_signing_type{ *this };
+    tx_for_signing_ = tx_data_for_signing_type{ *this, from.tx_for_signing_ };
     return *this;
   }
 
@@ -300,7 +314,7 @@ public:
     summary_ = std::move(from.summary_);
     data_ = std::move(from.data_);
     signatures_ = std::move(from.signatures_);
-    tx_for_signing_ = tx_data_for_signing_type{ *this };
+    tx_for_signing_ = tx_data_for_signing_type{ *this, std::move(from.tx_for_signing_) };
     return *this;
   } 
 

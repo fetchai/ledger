@@ -56,7 +56,7 @@ inline MutableTransaction RandomTransaction(std::size_t bytesToAdd = 0)
   trans.set_data(GetRandomByteArray());
   trans.set_contract_name(std::to_string(GetRandom()));
  
-  uint8_t const   size = static_cast<uint8_t>((GetRandom()+1) % 5);
+  uint8_t const   size = static_cast<uint8_t>(GetRandom() % 3 + 1);
   for (uint8_t i = 0; i < size; ++i)
   {
     crypto::ECDSASigner::PrivateKey key;

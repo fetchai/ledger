@@ -47,29 +47,15 @@ namespace {
     for(std::size_t i=0; i<100; ++i)
     {
       MutableTransaction tx {RandomTransaction()};
-      //std::cout << "tx[before] = " << tx << std::endl;
+      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       auto txdfs {TxDataForSigningCFactory(tx)};
-    
-      serializers::ByteArrayBuffer stream;
-      stream << txdfs;
-
-      MutableTransaction tx2;
-      auto txdfs2 {TxDataForSigningCFactory(tx2)};
-      stream.Seek(0);
-      stream >> txdfs2;
-      //std::cout << "tx[after] = " << tx2 << std::endl;
-      EXPECT_EQ(txdfs, txdfs2);
-
       crypto::openssl::ECDSAPrivateKey<> key;
 
-      tx2.Sign(key.KeyAsBin());
-      MutableTransaction::signatures_type::value_type const& sig = *tx2.signatures().begin();
-      EXPECT_TRUE(txdfs2.Verify(sig));
-      EXPECT_TRUE(tx2.Verify());
-      EXPECT_TRUE(tx2.Verify());
-      EXPECT_TRUE(tx2.Verify());
-      EXPECT_TRUE(tx2.Verify());
+      tx.Sign(key.KeyAsBin());
+      MutableTransaction::signatures_type::value_type const& sig = *tx.signatures().begin();
+      EXPECT_TRUE(txdfs.Verify(sig));
+      EXPECT_TRUE(tx.Verify());
      }
   }
 }  // namespace

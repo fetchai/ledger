@@ -169,6 +169,11 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
+  inline void ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor);
+  inline void ForEach(std::function<bool(Variant const& key, Variant const &value)> const &object_functor) const;
+  inline void ForEach(std::function<bool(Variant &value)> const &object_functor);
+  inline void ForEach(std::function<bool(Variant const &value)> const &object_functor) const;
+
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
@@ -283,6 +288,45 @@ public:
     return *this;
   }
 
+  void ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor)
+  {
+    assert(0 == (data_->size() & 1));
+    
+    if (!object_functor || data_->size() == 0)
+    {
+      return;
+    }
+
+    auto key_it = data_->cbegin();
+    std::size_t val_index = 1;
+    auto value_it = data_->begin() + 1;
+    for(; val_index < size() && value_it != data_->cend(); key_it += 2, value_it += 2, val_index += 2)
+    {
+      if (!object_functor(*key_it, *value_it))
+      {
+        break;
+      }
+    }
+  }
+
+  void ForEach(std::function<bool(Variant &value)> const &object_functor)
+  {
+    if (!object_functor)
+    {
+      return;
+    }
+
+    auto const end = data_->cend();
+    std::size_t val_index = 0;
+    for(auto value_it = data_->begin(); val_index < size() && value_it != end; ++value_it, ++val_index)
+    {
+      if (!object_functor(*value_it))
+      {
+        break;
+      }
+    }
+  }
+
 private:
   using Container    = std::vector<Variant>;
   using ContainerPtr = std::shared_ptr<Container>;
@@ -291,6 +335,31 @@ private:
   std::size_t  offset_ = 0;
   ContainerPtr data_;
   Variant *    pointer_ = nullptr;
+
+//public:
+//  using iterator_type = Container::iterator;
+//  using const_iterator_type = Container::const_iterator;
+//
+//  iterator_type begin()
+//  {
+//    return data_->begin();
+//  }
+//
+//  iterator_type end()
+//  {
+//    return data_->end();
+//  }
+//
+//  const_iterator_type begin() const
+//  {
+//    return data_->begin();
+//  }
+//
+//  const_iterator_type end() const
+//  {
+//    return data_->end();
+//  }
+
 };
 
 inline Variant::Variant()
@@ -526,6 +595,30 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
 
   value = element.As<T>();
   return true;
+}
+
+inline void Variant::ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor)
+{
+  assert(type_ == OBJECT);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(std::function<bool(Variant const& key, Variant const &value)> const &object_functor) const
+{
+  assert(type_ == OBJECT);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
+{
+  assert(type_ == ARRAY);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
+{
+  assert(type_ == ARRAY);
+  array_->ForEach(object_functor);
 }
 
 }  // namespace script

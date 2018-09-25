@@ -45,15 +45,19 @@ namespace {
   TEST_F(WiredTransactionTest, basic)
   {
     MutableTransaction tx {RandomTransaction()};
-    std::cout << "tx[before] = " << tx << std::endl;
+
+    std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
     //tx.set_signatures(MutableTransaction::signatures_type{}); 
     //std::cout << "tx[after] = " << tx << std::endl;
     
-    //auto wire_tx = ToWireTransaction(tx);
-    //std::cout << "wire tx = " << wire_tx << std::endl;
+    auto wire_tx = ToWireTransaction(tx, true);
+    std::cout << "wire tx = " << std::endl  << wire_tx << std::endl;
+
+    auto tx_deserialised{ FromWireTransaction(wire_tx) };
+    std::cout << "tx[deserialised] = " << std::endl << tx_deserialised << std::endl;
     
-    std::cout << "tx verify = " << tx.Verify() << std::endl;
+    //std::cout << "tx verify = " << tx.Verify() << std::endl;
   }
 
 }  // namespace
