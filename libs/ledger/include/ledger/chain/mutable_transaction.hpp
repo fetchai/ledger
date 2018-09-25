@@ -195,7 +195,7 @@ public:
   void Reset()
   {
     stream_.Resize(0);
-    tx_data_size_for_signing_ = 0;
+    //tx_data_size_for_signing_ = 0;
   }
 
   bool operator == (TxDataForSigningC const &left_tx) const;
@@ -251,7 +251,7 @@ public:
     }
     else
     {
-      stream_.Resize(tx_data_size_for_signing_);
+      stream_.Resize(tx_data_size_for_signing_, serializers::eResizeParadigm::absolute);
       stream_.Seek(tx_data_size_for_signing_);
       stream_.Append(identity);
     }
