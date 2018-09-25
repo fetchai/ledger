@@ -137,16 +137,29 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
+
+  std::vector<std::pair<byte_array::ByteArray, uint16_t>> lane_data;
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    //FETCH_LOG_WARN(LOGGING_NAME, "Constellation Trying to add lane connection at ", "127.0.0.1:", lane_port);
+    //// establish the connection to the lane
+    //auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+    //// allow the remote control to use connection
+    //lane_control_.AddClient(i, client);
 
-    // establish the connection to the lane
-    auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
-
-    // allow the remote control to use connection
-    lane_control_.AddClient(i, client);
+    lane_data.push_back(std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port));
   }
+
+  auto clients = storage_->AddLaneConnections<TCPClient>(lane_data);
+  for (uint32_t i = 0; i < num_lanes_; ++i)
+  {
+    lane_control_.AddClient(i, clients[i]);
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "I appear to have some lanes...");
+
+
   execution_manager_->Start();
   block_coordinator_.Start();
 

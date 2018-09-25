@@ -51,6 +51,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
+  uint16_t port_{0};
+
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
@@ -63,6 +65,8 @@ public:
 
   ~TCPClientImplementation()
   {
+    FETCH_LOG_ERROR("WTF closed! ------------------- ", port_);
+
     if (!Closed() && !posted_close_)
     {
       Close();
@@ -72,6 +76,7 @@ public:
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
+    port_ = port;
   }
 
   void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
@@ -215,6 +220,7 @@ public:
 
   void Close() override
   {
+    FETCH_LOG_ERROR("WTF closed by CLOSE! ------------------- ", port_);
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
@@ -304,6 +310,7 @@ private:
 
       if (!previously_connected)
       {
+        FETCH_LOG_INFO("SignalConnectionSuccess ------------------- ", port_);
         SignalConnectionSuccess();
       }
     }

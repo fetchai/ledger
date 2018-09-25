@@ -126,20 +126,23 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
 
     // update our desired
-    bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
+    //bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
 
-    if (new_peer && trusted_peer)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
-      desired_peers_.insert(address);
-    }
-    else if ((!new_peer) && (!trusted_peer))
+    //if (new_peer && trusted_peer)
+    //{
+    //  FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
+   //   desired_peers_.insert(address);
+   // }
+
+    if (!trusted_peer)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "No longer trust: ", ToBase64(address));
       desired_peers_.erase(address);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "UpdateTrustStatus peercount = ", desired_peers_.size());
 
   // for the moment we should provide the trust system with some "fake" information to ensure peers
   // are trusted
@@ -338,11 +341,11 @@ network::Manifest P2PService::GetLocalManifest()
 
 P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...");
+  FETCH_LOG_INFO(LOGGING_NAME, "P2PService::GetRandomGoodPeers...");
 
   AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "P2PService::GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }

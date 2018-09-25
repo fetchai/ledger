@@ -171,6 +171,7 @@ protected:
       cb();
     }
     DeactivateSelfManage();
+    FETCH_LOG_WARN(LOGGING_NAME, "SignalLeave is done");
   }
 
   void SignalMessage(network::message_type const &msg)

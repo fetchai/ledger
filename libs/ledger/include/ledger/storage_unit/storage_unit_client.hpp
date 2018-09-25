@@ -25,6 +25,9 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/service_client.hpp"
+#include "network/generics/atomic_state_machine.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/backgrounded_work.hpp"
 
 #include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"
@@ -54,6 +57,10 @@ public:
   using Handle               = ClientRegister::connection_handle_type;
   using NetworkManager       = fetch::network::NetworkManager;
   using LaneIndex            = LaneIdentity::lane_type;
+  using PromiseState         = fetch::service::PromiseState;
+  using AtomicStateMachine   = network::AtomicStateMachine;
+  using Promise              = service::Promise;
+  using FutureTimepoint      = network::FutureTimepoint;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -72,6 +79,315 @@ public:
     lanes_.resize(count);
     SetLaneLog2(count);
     assert(count == (1u << log2_lanes_));
+  }
+
+
+  class LaneConnectorWorker : public AtomicStateMachine
+  {
+  public:
+    enum
+      {
+        INITIALISING = 1,
+        CONNECTING,
+        QUERYING,
+        PINGING,
+        SNOOZING,
+        DONE,
+        TIMEDOUT,
+        FAILED,
+      };
+
+    SharedServiceClient client_;
+    FutureTimepoint next_attempt_;
+    size_t attempts_;
+    Promise ping_;
+
+    Promise lane_prom_;
+    Promise count_prom_;
+    Promise id_prom_;
+    byte_array::ByteArray host_;
+    size_t lane_;
+    uint16_t port_;
+    std::string name_;
+
+    LaneConnectorWorker(size_t lane, SharedServiceClient client, const std::string &name)
+    {
+      lane_ = lane;
+
+      this->Allow(LaneConnectorWorker::INITIALISING, 0)
+        .Allow(CONNECTING, INITIALISING)
+        .Allow(CONNECTING, SNOOZING)
+        .Allow(PINGING, CONNECTING)
+        .Allow(QUERYING, PINGING)
+        .Allow(DONE, QUERYING)
+
+        .Allow(INITIALISING, CONNECTING)
+        .Allow(INITIALISING, PINGING)
+        .Allow(INITIALISING, QUERYING)
+
+        .Allow(SNOOZING, CONNECTING)
+        .Allow(SNOOZING, PINGING)
+        .Allow(SNOOZING, QUERYING)
+
+        .Allow(TIMEDOUT, CONNECTING)
+        .Allow(TIMEDOUT, PINGING)
+        .Allow(TIMEDOUT, QUERYING)
+
+        .Allow(FAILED, CONNECTING)
+        ;
+      client_ = client;
+      attempts_ = 0;
+      name_ = name;
+    }
+    static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
+
+    virtual ~LaneConnectorWorker()
+    {
+      if (client_)
+      {
+        client_->Close();
+      }
+    }
+
+    PromiseState Work()
+    {
+      this->AtomicStateMachine::Work();
+      auto r = this->AtomicStateMachine::Get();
+
+      switch(r)
+      {
+      case TIMEDOUT:
+        return PromiseState::TIMEDOUT;
+      case DONE:
+        return PromiseState::SUCCESS;
+      case FAILED:
+        return PromiseState::FAILED;
+      default:
+        return PromiseState::WAITING;
+      }
+    }
+
+    std::string name(int state)
+    {
+      const char *states[] = {
+        "(START)",
+        "INITIALISING",
+        "CONNECTING",
+        "QUERYING",
+        "PINGING",
+        "SNOOZING",
+        "DONE",
+        "TIMEDOUT",
+        "FAILED",
+      };
+      return std::string(states[state]);
+    }
+
+    virtual int PossibleNewState(int currentstate)
+    {
+      auto x = PossibleNewStateImpl(currentstate);
+      if (x && x != currentstate)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME," Statechange ", lane_, " from ", name(currentstate), " -> ", name(x));
+      }
+      return x;
+    }
+
+    virtual int PossibleNewStateImpl(int currentstate)
+    {
+      switch(currentstate)
+      {
+      case 0:
+        {
+          return INITIALISING;
+        }
+      case INITIALISING:
+        {
+          attempts_++;
+          if (attempts_>10)
+          {
+            return TIMEDOUT;
+          }
+          return CONNECTING;
+        }
+      case SNOOZING:
+        {
+          if (next_attempt_.IsDue())
+          {
+            return CONNECTING;
+          }
+          else
+          {
+            return 0;
+          }
+        }
+      case CONNECTING:
+        {
+          if (!client_->is_alive())
+          {
+            FETCH_LOG_WARN(LOGGING_NAME," Lane ", lane_, " (", name_, ") not yet alive.");
+            attempts_++;
+            if (attempts_>10)
+            {
+              return TIMEDOUT;
+            }
+            next_attempt_.SetMilliseconds(1000);
+            return SNOOZING;
+          }
+          ping_ = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
+          return PINGING;
+        } // end CONNECTING
+      case PINGING:
+        {
+          auto r = ping_->GetState();
+
+          switch(r)
+          {
+          case PromiseState::TIMEDOUT:
+          case PromiseState::FAILED:
+            {
+              return INITIALISING;
+            }
+          case PromiseState::SUCCESS:
+            {
+              if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+              {
+                return INITIALISING;
+              }
+              else
+              {
+                lane_prom_  = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+                count_prom_ = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+                id_prom_    = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+                next_attempt_.SetMilliseconds(2000);
+                return QUERYING;
+              }
+            }
+          case PromiseState::WAITING:
+            return 0;
+          }
+        } // end PINGING
+      case QUERYING:
+        {
+          auto lp_st = lane_prom_->GetState();
+          auto ct_st = count_prom_->GetState();
+          auto id_st = id_prom_->GetState();
+
+          if (lp_st == PromiseState::FAILED
+              || id_st == PromiseState::FAILED
+              || ct_st == PromiseState::FAILED
+              || lp_st == PromiseState::TIMEDOUT
+              || id_st == PromiseState::TIMEDOUT
+              || ct_st == PromiseState::TIMEDOUT
+              )
+          {
+            return INITIALISING;
+          }
+
+          if (lp_st == PromiseState::SUCCESS
+              || id_st == PromiseState::SUCCESS
+              || ct_st == PromiseState::SUCCESS)
+          {
+            return DONE;
+          }
+
+          if (next_attempt_.IsDue())
+          {
+            return TIMEDOUT;
+          }
+          return 0;
+
+        } // end QUERYING
+      case TIMEDOUT:
+        return 0;
+      case DONE:
+        return 0;
+      case FAILED:
+        return 0;
+      }
+      return 0;
+    }
+  };
+
+
+  template <typename T>
+  std::vector<WeakServiceClient> AddLaneConnections(const std::vector<std::pair<byte_array::ByteArray, uint16_t>> &lanes)
+  {
+    using BackgroundedWork = network::BackgroundedWork<LaneConnectorWorker>;
+    using Worker           = LaneConnectorWorker;
+    using WorkerP          = std::shared_ptr<Worker>;
+
+    BackgroundedWork workers;
+    std::map<size_t, WorkerP> by_number;
+
+    for(size_t i=0;i<lanes.size();i++)
+    {
+      SharedServiceClient client = register_.template CreateServiceClient<T>(network_manager_, lanes[i].first, lanes[i].second);
+      std::string name;
+      name += std::string(lanes[i].first);
+      name += ":";
+      name += std::to_string(lanes[i].second);
+      by_number[i] = std::make_shared<LaneConnectorWorker>(i,client, name);
+      workers.Add(by_number[i]);
+    }
+
+
+    while(workers.CountPending() > 0)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME," TICK!");
+      workers.WorkCycle();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    FETCH_LOG_WARN(LOGGING_NAME," PEND=", workers.CountPending());
+    FETCH_LOG_WARN(LOGGING_NAME," SUCC=", workers.CountSuccesses());
+    FETCH_LOG_WARN(LOGGING_NAME," FAIL=", workers.CountFailures());
+    FETCH_LOG_WARN(LOGGING_NAME," TOUT=", workers.CountTimeouts());
+
+    if (workers.CountSuccesses() != lanes.size())
+    {
+      TODO_FAIL("Could not connect all lanes ", workers.CountSuccesses(), "!=", lanes.size());
+    }
+
+    std::vector<WeakServiceClient> results;
+    for(size_t i=0;i<lanes.size();i++)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME," PROCESSING ", i);
+      WorkerP connector = by_number[i];
+      WeakServiceClient wp(connector -> client_);
+      results.push_back(wp);
+
+      LaneIndex lane;
+      LaneIndex total_lanes;
+
+      FETCH_LOG_WARN(LOGGING_NAME," GETTING STUFFS FROM ", i);
+      connector->lane_prom_->As(lane);
+      connector->count_prom_->As(total_lanes);
+
+      if (total_lanes > lanes_.size())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME," OMG RESIZE ", i);
+        lanes_.resize(total_lanes);
+        SetLaneLog2(uint32_t(lanes_.size()));
+        assert(lanes_.size() == (1u << log2_lanes_));
+      }
+
+      FETCH_LOG_WARN(LOGGING_NAME,"WoooOOOOoooo Crypt for ", i);
+      crypto::Identity lane_identity;
+      connector->id_prom_->As(lane_identity);
+      // TODO(issue 24): Verify expected identity
+
+      assert(lane < lanes_.size());
+      lanes_[lane] = connector->client_;
+      FETCH_LOG_WARN(LOGGING_NAME,"Lane stored for ", i);
+
+      {
+        auto details      = register_.GetDetails(connector->client_->handle());
+        details->identity = lane_identity;
+      }
+    }
+    FETCH_LOG_WARN(LOGGING_NAME,"DONE!", lanes_.size());
+    return results;
   }
 
   template <typename T>
@@ -121,14 +437,22 @@ public:
     auto p2 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
     auto p3 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
 
-    FETCH_LOG_PROMISE();
-    if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Client timeout when trying to get identity details.");
-      client->Close();
-      client.reset();
-      return {};
+    try {
+
+      FETCH_LOG_PROMISE();
+      if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Client timeout when trying to get identity details.");
+        client->Close();
+        client.reset();
+        return {};
+      }
+
     }
+    catch (...) {
+      FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING StorageUnitClient get details from ", host, ":", port);
+        throw;
+      }
 
     LaneIndex lane        = p1->As<LaneIndex>();
     LaneIndex total_lanes = p2->As<LaneIndex>();

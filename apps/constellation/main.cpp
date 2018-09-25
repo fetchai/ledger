@@ -368,6 +368,7 @@ int main(int argc, char **argv)
   }
   catch (std::exception &ex)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
 

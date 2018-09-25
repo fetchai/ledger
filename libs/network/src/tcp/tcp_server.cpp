@@ -96,6 +96,7 @@ void TCPServer::Start()
 
         if (acceptor)
         {
+          FETCH_LOG_WARN(LOGGING_NAME, "LISTENING to ", port_);
           running_ = true;
           Accept(acceptor);
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");

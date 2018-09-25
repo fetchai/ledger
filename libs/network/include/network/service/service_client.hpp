@@ -77,6 +77,7 @@ public:
 
   ~ServiceClient()
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "BUH-BYE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     using std::this_thread::sleep_for;
     using std::chrono::milliseconds;
 

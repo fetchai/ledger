@@ -66,7 +66,13 @@ public:
       auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::CONNECT, host, port);
 
       FETCH_LOG_PROMISE();
-      p->Wait();
+      try {
+        p->Wait();
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane connect call to: ", host, ":", port);
+        throw;
+      }
     }
   }
 
@@ -75,10 +81,15 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
-
-      FETCH_LOG_PROMISE();
-      p->Wait();
+      try {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
+        FETCH_LOG_PROMISE();
+        p->Wait();
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane shutdown call failed.");
+        throw;
+      }
     }
   }
 
@@ -87,10 +98,16 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-      return p->As<uint32_t>();
+      try {
+        auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+        return p->As<uint32_t>();
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane GetLaneNumber call");
+        throw;
+      }
     }
-
+    FETCH_LOG_WARN(LOGGING_NAME, "Eck! A");
     TODO_FAIL("client connection has died, @GetLaneNumber");
 
     return 0;
@@ -101,10 +118,17 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
-      return p->As<int>();
+      try {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
+        return p->As<int>();
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane INCOMING_PEERS call");
+        throw;
+      }
     }
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Eck! B");
     TODO_FAIL("client connection has died, @IncomingPeers");
 
     return 0;
@@ -116,9 +140,16 @@ public:
 
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
-      return p->As<int>();
+      try {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
+        return p->As<int>();
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane OUTGOING_PEERS call");
+        throw;
+      }
     }
+    FETCH_LOG_WARN(LOGGING_NAME, "Eck! C");
 
     TODO_FAIL("client connection has died, @OutgoingPeers");
 
@@ -131,9 +162,16 @@ public:
 
     if (ptr)
     {
-      ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
-      return;
+      try {
+        ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+        return;
+      }
+      catch (...) {
+        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane USE_THESE_PEERS call");
+        throw;
+      }
     }
+    FETCH_LOG_WARN(LOGGING_NAME, "Eck! D");
     TODO_FAIL("client connection has died, @UseThesePeers");
   }
 

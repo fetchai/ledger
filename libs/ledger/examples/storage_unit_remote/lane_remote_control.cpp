@@ -81,6 +81,7 @@ int main(int argc, char **argv)
 
   for (std::size_t i = 0; i < lane_count; ++i)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Trying to add lane connection at ", "localhost", uint16_t(port + i))
     client.AddLaneConnection<fetch::network::TCPClient>("localhost", uint16_t(port + i));
   }
 
