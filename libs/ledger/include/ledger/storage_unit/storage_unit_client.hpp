@@ -378,11 +378,11 @@ public:
       // TODO(issue 24): Verify expected identity
 
       assert(lane < lanes_.size());
-      lanes_[lane] = connector->client_;
+      lanes_[lane] = std::move(connector->client_);
       FETCH_LOG_WARN(LOGGING_NAME,"Lane stored for ", i);
 
       {
-        auto details      = register_.GetDetails(connector->client_->handle());
+        auto details      = register_.GetDetails(lanes_[lane]->handle());
         details->identity = lane_identity;
       }
     }
