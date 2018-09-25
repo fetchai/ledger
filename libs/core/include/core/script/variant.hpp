@@ -290,23 +290,14 @@ public:
 
   void ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor)
   {
-    assert(0 == (data_->size() & 1));
+    assert(0 == (size() & 1)); //* even
     
-    if (!object_functor || data_->size() == 0)
+    if (!object_functor || size() == 0)
     {
       return;
     }
 
-    auto key_it = data_->cbegin();
-    std::size_t val_index = 1;
-    auto value_it = data_->begin() + 1;
-    for(; val_index < size() && value_it != data_->cend(); key_it += 2, value_it += 2, val_index += 2)
-    {
-      if (!object_functor(*key_it, *value_it))
-      {
-        break;
-      }
-    }
+    for(std::size_t key_idx = 0, val_idx = key_idx + 1; key_idx < size() && object_functor((*this)[key_idx], (*this)[val_idx]); key_idx += 2, val_idx += 2);
   }
 
   void ForEach(std::function<bool(Variant &value)> const &object_functor)
@@ -316,15 +307,7 @@ public:
       return;
     }
 
-    auto const end = data_->cend();
-    std::size_t val_index = 0;
-    for(auto value_it = data_->begin(); val_index < size() && value_it != end; ++value_it, ++val_index)
-    {
-      if (!object_functor(*value_it))
-      {
-        break;
-      }
-    }
+    for(std::size_t val_idx = 0; val_idx < size() && object_functor((*this)[val_idx]); ++val_idx);
   }
 
 private:

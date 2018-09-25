@@ -96,24 +96,24 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   MutableTransaction::signatures_type mtx_signatures;
 
   signatures.ForEach([&mtx_signatures](script::Variant const &sig_pair_v) -> bool{
-    std::cout << "sig_pair [foreach]: " << sig_pair_v << std::endl;
-    (void)mtx_signatures;
-    //sig_pair_v.ForEach([&mtx_signatures](script::Variant const &identity_v, script::Variant const &signature_v) -> bool{
-    //  std::cout << "identity  [foreach]: " << identity_v << std::endl;
-    //  std::cout << "signature [foreach]: " << signature_v << std::endl;
-    //  (void)mtx_signatures;
-    //  //auto identity_bin = byte_array::FromBase64(identity_v.As<byte_array::ByteArray>());
-    //  //auto signature_bin = byte_array::FromBase64(signature_v.As<byte_array::ByteArray>());
-    //  //serializers::ByteArrayBuffer i_stream{ identity_bin };
-    //  //crypto::Identity identity;
-    //  //i_stream >> identity;
+    //std::cout << "sig_pair [foreach]: " << sig_pair_v << std::endl;
+    //(void)mtx_signatures;
+    sig_pair_v.ForEach([&mtx_signatures](script::Variant const &identity_v, script::Variant const &signature_v) -> bool{
+      //std::cout << "identity  [foreach]: " << identity_v << std::endl;
+      //std::cout << "signature [foreach]: " << signature_v << std::endl;
+      //(void)mtx_signatures;
+      auto identity_bin = byte_array::FromBase64(identity_v.As<byte_array::ByteArray>());
+      auto signature_bin = byte_array::FromBase64(signature_v.As<byte_array::ByteArray>());
+      serializers::ByteArrayBuffer i_stream{ identity_bin };
+      crypto::Identity identity;
+      i_stream >> identity;
 
-    //  //serializers::ByteArrayBuffer s_stream{ signature_bin };
-    //  //Signature signature;
-    //  //s_stream >> signature;
-    //  //mtx_signatures[identity] = signature;
-    //  return false;
-    //});
+      serializers::ByteArrayBuffer s_stream{ signature_bin };
+      Signature signature;
+      s_stream >> signature;
+      mtx_signatures[identity] = signature;
+      return true;
+    });
     return true;
   });
 
@@ -126,6 +126,9 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   //}
 
   //tx_v["signatures"]
+
+  tx.set_signatures(mtx_signatures);
+  tx.UpdateDigest();
 
   return tx;
 }
