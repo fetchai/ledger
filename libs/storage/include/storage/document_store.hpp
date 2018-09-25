@@ -60,6 +60,12 @@ public:
 
   using index_type = typename key_value_index_type::index_type;
 
+  DocumentStore() {};
+  DocumentStore(DocumentStore const &rhs)            = delete;
+  DocumentStore(DocumentStore &&rhs)                 = delete;
+  DocumentStore &operator=(DocumentStore const &rhs) = delete;
+  DocumentStore &operator=(DocumentStore&& rhs)      = delete;
+
   void Load(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
             std::string const &index_diff, bool const &create = true)
   {
@@ -189,9 +195,9 @@ public:
   class Iterator
   {
   public:
-    Iterator(file_object_type *file_object, typename key_value_index_type::Iterator it)
+    Iterator(self_type *self, typename key_value_index_type::Iterator it)
       : wrapped_iterator_{it}
-      , file_object_{file_object}
+      , self_{self}
     {}
 
     Iterator()                    = default;
@@ -220,14 +226,14 @@ public:
       auto kv = *wrapped_iterator_;
 
       // The key value (index of file) must be valid at this point
-      file_object_->SeekFile(kv.second);
+      self_->file_object_.SeekFile(kv.second);
 
-      return file_object_->AsDocument();
+      return self_->file_object_.AsDocument();
     }
 
   protected:
     typename key_value_index_type::Iterator wrapped_iterator_;
-    file_object_type *                      file_object_;
+    self_type                               *self_;
   };
 
   self_type::Iterator Find(ResourceID const &rid)
@@ -258,44 +264,16 @@ public:
 
   self_type::Iterator begin()
   {
-    return Iterator(&this->file_object_, key_index_.begin());
+    return Iterator(this, key_index_.begin());
   }
 
   self_type::Iterator end()
   {
-    return Iterator(&this->file_object_, key_index_.end());
+    return Iterator(this, key_index_.end());
   }
 
 protected:
-  //  /**
-  //   * Get or create a document file
-  //   *
-  //   * @param: rid The key
-  //   * @param: create Whether to create a new file when it's missing
-  //   *
-  //   * @return: Document file, empty when the file doesn't exist
-  //   */
-  //  DocumentFile GetDocumentFile(ResourceID const &rid, bool const &create = true)
-  //  {
-  //    byte_array::ConstByteArray const &address = rid.id();
-  //    index_type                        index   = 0;
-  //
-  //    if (key_index_.GetIfExists(address, index))
-  //    {
-  //      return DocumentFile(this, address, file_object_, index);
-  //    }
-  //    else if (!create)
-  //    {
-  //      return DocumentFile();
-  //    }
-  //
-  //    DocumentFile doc = DocumentFile(this, address, file_object_);
-  //
-  //    return doc;
-  //  }
-
-private:
-  mutex::Mutex         mutex_;
+  mutex::Mutex         mutex_{__LINE__, __FILE__};
   key_value_index_type key_index_;
   file_object_type     file_object_;
 };
