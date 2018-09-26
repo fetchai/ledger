@@ -24,25 +24,26 @@
 #include <gtest/gtest.h>
 
 #include "math/ndarray.hpp"
-#include "math/ops/ops.hpp"
 #include "math/shape_less_array.hpp"
+#include "ml/ops/ops.hpp"
 
 //#include "math/free_functions/free_functions.hpp"
 
-using namespace fetch::math;
+using namespace fetch::ml;
 using T = double;
 #define ARRAY_SIZE 100
 
 TEST(loss_functions, MSE_Test)
 {
 
-  ShapeLessArray<T> y_arr     = ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
-  ShapeLessArray<T> y_hat_arr = ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
+  fetch::math::ShapeLessArray<T> y_arr = fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
+  fetch::math::ShapeLessArray<T> y_hat_arr =
+      fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
 
   T result      = -999;
   T test_result = -999;
 
-  ShapeLessArray<T> test_result_arr = ShapeLessArray<T>(y_arr.size());
+  fetch::math::ShapeLessArray<T> test_result_arr = fetch::math::ShapeLessArray<T>(y_arr.size());
   // error
   Subtract(y_arr, y_hat_arr, test_result_arr);
   // square
@@ -51,7 +52,7 @@ TEST(loss_functions, MSE_Test)
   Mean(test_result_arr, test_result);
 
   // the function we're testing
-  ops::MeanSquareError(y_arr, y_hat_arr, result);
+  fetch::ml::ops::MeanSquareError(y_arr, y_hat_arr, result);
 
   ASSERT_TRUE(result == test_result);
 }

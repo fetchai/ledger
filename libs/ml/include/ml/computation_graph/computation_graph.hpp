@@ -19,6 +19,7 @@
 
 #include <deque>     // std::deque
 #include <iostream>  // std::cout
+#include <set>       // std::set
 #include <stack>     // std::stack
 #include <string>    // std::string
 #include <vector>    // std::vector
@@ -32,12 +33,15 @@
 #include "math/free_functions/free_functions.hpp"
 #include "math/ndarray.hpp"
 
+#include "ml/variable.hpp"
+#include <unordered_set>
+
 namespace fetch {
-namespace math {
+namespace ml {
 namespace computation_graph {
 
 namespace helper_funcs {
-static bool IsOperator(char &c)
+static inline bool IsOperator(char &c)
 {
   switch (c)
   {
@@ -69,7 +73,7 @@ enum OPERATOR_PRECEDENCE
   DEFAULT  = -1
 };
 
-static OPERATOR_PRECEDENCE GetPrecedence(char &c)
+static inline OPERATOR_PRECEDENCE GetPrecedence(char &c)
 {
   switch (c)
   {
@@ -219,8 +223,7 @@ private:
   }
 
 public:
-  using EXPRESSION_NODE_TYPE =
-      typename fetch::math::computation_graph::ExpressionNode<T, ARRAY_TYPE>;
+  using EXPRESSION_NODE_TYPE = typename fetch::ml::computation_graph::ExpressionNode<T, ARRAY_TYPE>;
   using EXPRESSION_NODE_GRAPH = std::deque<std::shared_ptr<EXPRESSION_NODE_TYPE>>;
   using OPERATOR_STACK        = std::stack<char, std::deque<char>>;
   //  using EXPRESSION_STACK = std::stack<std::shared_ptr<expression_node_type>,
@@ -544,7 +547,7 @@ public:
    * Specialization for NDArrays
    * @param ret
    */
-  void Run(NDArray<T> &ret)
+  void Run(math::NDArray<T> &ret)
   {
     bool unfinished = true;
 
@@ -591,6 +594,59 @@ public:
   }
 };
 
+namespace details {
+/**
+ * nagivate backwards through computational graph
+ * @param vr
+ * @param v_set
+ */
+template <typename T>
+void TopSortHelper(Variable<T> &v, std::unordered_set<Variable<T>> &vars_seen,
+                   std::vector<Variable<T>> &top_sort)
+{
+  bool is_in = (vars_seen.find(v) != vars_seen.end());
+
+  if ((!is_in) && (!v.is_leaf))
+  {
+    vars_seen.insert(v);
+    for (std::size_t i = 0; i < v.prev.size(); ++i)
+    {
+      details::TopSortHelper(v.prev[i], vars_seen, top_sort);
+    }
+    top_sort.push_back(v);
+  }
+}
+}  // namespace details
+
+template <typename T>
+std::vector<Variable<T>> TopSort(Variable<T> &v)
+{
+  std::unordered_set<Variable<T>> vars_seen{};
+  //  std::set<Variable<T>>    vars_seen{};
+  std::vector<Variable<T>> top_sort{};
+
+  details::TopSortHelper(v, vars_seen, top_sort);
+
+  return top_sort;
+}
+
+/**
+ * builds a computation graph backwards
+ * @param var
+ * @return
+ */
+template <typename T>
+void BackwardGraph(Variable<T> &var)
+{
+  std::vector<Variable<T>> tsorted = TopSort(var);
+  //  var.grad                         = T(var.data.shape());
+
+  for (std::size_t i = tsorted.size(); i > 0; --i)
+  {
+    tsorted[i - 1].Backward();
+  }
+}
+
 }  // namespace computation_graph
-}  // namespace math
+}  // namespace ml
 }  // namespace fetch

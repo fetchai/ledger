@@ -565,6 +565,36 @@ public:
     return major_order_;
   }
 
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &DotTranspose(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::DotTranspose(A, B, *this, alpha, beta);
+
+    return *this;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = T(A).B
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &TransposeDot(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::TransposeDot(A, B, *this, alpha, beta);
+
+    return *this;
+  }
+
 private:
   // TODO(tfr): replace with strides
   std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const

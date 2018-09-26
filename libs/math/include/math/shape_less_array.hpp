@@ -29,6 +29,7 @@
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/statistics/mean.hpp"
 
 #include <algorithm>
@@ -435,27 +436,21 @@ public:
    */
   void operator+=(ShapeLessArray const &other)
   {
-    this->InLineAdd(other);
-    return *this;
+    fetch::math::Add(*this, other, *this);
   }
-  /**
-   * += operator
-   * @param other
-   * @return
-   */
   void operator+=(type const &scalar)
   {
-    this->InLineAdd(scalar);
-    return *this;
+    fetch::math::Add(*this, scalar, *this);
   }
-
   ShapeLessArray operator+(ShapeLessArray const &other)
   {
-    return this->InLineAdd(other);
+    fetch::math::Add(*this, other, *this);
+    return *this;
   }
   ShapeLessArray operator+(type const &scalar)
   {
-    return this->InLineAdd(scalar);
+    fetch::math::Add(*this, scalar, *this);
+    return *this;
   }
 
   /* One-dimensional reference index operator.

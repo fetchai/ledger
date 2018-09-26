@@ -10,10 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-
-add_fetch_gtest(computation_graph fetch-math math/computation_graph)
-add_fetch_gtest(ops fetch-math math/ops)
-
 add_fetch_gtest(blas fetch-math math/linalg/blas/)
 
 add_fetch_test(exp_test fetch-math math/test_exp.cpp)

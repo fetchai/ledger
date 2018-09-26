@@ -20,12 +20,12 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/computation_graph/computation_graph.hpp"
-#include "math/ndarray.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/ops/ops.hpp"
+#include "math/ndarray.hpp"
+#include "ml/computation_graph/computation_graph.hpp"
+#include "ml/ops/ops.hpp"
 
-using namespace fetch::math::computation_graph;
+using namespace fetch::ml::computation_graph;
 
 using T          = double;
 using ARRAY_TYPE = fetch::math::NDArray<T>;
@@ -240,7 +240,7 @@ TEST(computation_graph, build_neural_network)
   // net.register(R.Dot(X, weights));
   // net.register(fetch::math::ops::Sigmoid(R, Y_hat));
   R.Dot(X, weights);
-  fetch::math::ops::Sigmoid(R, Y_hat);
+  fetch::ml::ops::Sigmoid(R, Y_hat);
 
   // define the network
   // net.run(X, Y_hat);
@@ -257,44 +257,20 @@ TEST(computation_graph, build_neural_network)
     std::cout << Y[k] << " ";
   }
 
-
   // begin backprop
-
-
-
-
 }
-//
-// To implement back_prop we need to:
-// 1. identify the sub-graph of interest (simplest case = whole graph)
-// 2. generate wengert list (may need to store node_ids to do this)
-// 3. with seed df(f) = 1; calculate derivitive of each item in reverse order of list
-//
 
-// TEST(computation_graph, back_prop)
+// TEST(computation_graph, autograd_test)
 //{
-//
-//  fetch::math::NDArray<T> arr1 = fetch::math::NDArray<T>::UniformRandom(100);
-//  fetch::math::NDArray<T> arr2 = fetch::math::NDArray<T>::UniformRandom(100);
-//  fetch::math::NDArray<T> y = fetch::math::NDArray<T>::UniformRandom(100);
-//  fetch::math::NDArray<T> y_hat{100};
-//
-//
-//  T result = -999;
-//  T test_result = -999;
-//
-//  // run on computation_graph
-//  ComputationGraph<T, ARRAY_TYPE> computation_graph;
-//
-//  computation_graph.RegisterArray(arr1, "x");
-//  computation_graph.RegisterArray(arr2, "y");
-//
-//  computation_graph.ParseExpression("(x * y)");
-//  computation_graph.Run(y_hat);
-//
-//  computation_graph.SetLoss("MSE");
-//
-//  computation_graph.Train();
-//
-//  ASSERT_TRUE(result_arr == test_result_arr);
+//  //  Variabletemp = variable({10, 10});
+//  //  l1 = variable(np.arange(-4,4).reshape(2,4))
+//  //  l2 = variable(np.arange(-2,2).reshape(4,1))
+//  //  n1 = dot(l1,l2)
+//  //  n2 = relu(n1)
+//  //  n3 = sumel(n2)
+//  //  backward_graph(n2)
+//  //  print(l1.grad)
+//  //# [[-2. -1.  0.  1.]
+//  //#  [-2. -1.  0.  1.]]
+//  //  print(l2.grad)
 //}

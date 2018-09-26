@@ -27,6 +27,7 @@
 //#include "math/kernels/standard_functions.hpp"
 
 #include "math/free_functions/free_functions.hpp"
+#include "ml/variable.hpp"
 //
 //#include "core/assert.hpp"
 //#include "core/meta/type_traits.hpp"
@@ -38,9 +39,9 @@
 //#include <vector>
 
 namespace fetch {
-namespace math {
+namespace ml {
 namespace ops {
-namespace derivitives {
+namespace derivatives {
 
 template <typename T, typename C>
 class ShapeLessArray;
@@ -58,29 +59,54 @@ void MeanSquareError(ARRAY_TYPE error, ARRAY_TYPE &grads)
 template <typename ARRAY_TYPE>
 void sigmoid(ARRAY_TYPE error, ARRAY_TYPE &grads)
 {
-  for (std::size_t i = 0; i < ; ++i)
+  for (std::size_t i = 0; i < error.size(); ++i)
   {
     grads[i] = error[i] * (1 - error[i]);
   }
 }
 
-template <typename ARRAY_TYPE>
-void relu(ARRAY_TYPE error, ARRAY_TYPE &grads)
+template <typename T>
+void Relu(Variable<T> &cur_node)
 {
-  for (std::size_t i = 0; i < error; ++i)
+  assert(cur_node.prev.size() == 1);
+
+  auto &left = cur_node.prev[0];
+  auto &dy   = cur_node.grad;
+
+  for (std::size_t i = 0; i < left.data.size(); ++i)
   {
-    if (error[i] > 0)
+    if (left.data[i] > 0)
     {
-      grads[i] = error[i];
+      left.grad[i] += dy[i];
     }
     else
     {
-      grads[i] = 0;
+      left.grad[i] = 0;
     }
   }
-}
+};
 
-};  // namespace derivitives
+template <typename T>
+void Sum(Variable<T> &cur_node)
+{
+  assert(cur_node.prev.size() == 1);
+  cur_node.prev[0].grad += cur_node.grad;
+};
+
+template <typename T>
+void Dot(Variable<T> &cur_node)
+{
+  assert(cur_node.prev.size() == 2);
+
+  auto &left  = cur_node.prev[0];
+  auto &right = cur_node.prev[1];
+  auto &dy    = cur_node.grad;
+
+  left.grad += fetch::math::DotTranspose(dy, right.data);
+  right.grad += fetch::math::TransposeDot(left.data, dy);
+};
+
+};  // namespace derivatives
 };  // namespace ops
-};  // namespace math
+};  // namespace ml
 };  // namespace fetch
