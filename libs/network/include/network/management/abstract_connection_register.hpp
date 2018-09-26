@@ -21,6 +21,7 @@
 
 #include <atomic>
 #include <functional>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -40,6 +41,8 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using service_map_type = std::unordered_map<connection_handle_type, weak_service_client_type>;
 
+  static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
+
   AbstractConnectionRegister()
   {
     number_of_services_ = 0;
@@ -52,7 +55,7 @@ public:
 
   virtual ~AbstractConnectionRegister() = default;
 
-  virtual void Leave(connection_handle_type const &id)          = 0;
+  virtual void Leave(connection_handle_type id)                 = 0;
   virtual void Enter(std::weak_ptr<AbstractConnection> const &) = 0;
 
   shared_service_client_type GetService(connection_handle_type const &i)
@@ -65,10 +68,63 @@ public:
     return services_[i].lock();
   }
 
+  // TODO(kll) Rename this to match ServiceClients below.
   void WithServices(std::function<void(service_map_type const &)> f) const
   {
     std::lock_guard<mutex::Mutex> lock(service_lock_);
     f(services_);
+  }
+
+  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
+  {
+    std::list<service_map_type::value_type> keys;
+
+    {
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      for (auto &item : services_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for (auto &item : keys)
+    {
+      auto                          k = item.first;
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      if (services_.find(k) != services_.end())
+      {
+        f(item);
+      }
+    }
+  }
+
+  void VisitServiceClients(
+      std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
+    std::list<service_map_type::value_type> keys;
+
+    {
+      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      for (auto &item : services_)
+      {
+        keys.push_back(item);
+      }
+    }
+
+    for (auto &item : keys)
+    {
+      auto v = item.second.lock();
+      if (v)
+      {
+        auto                          k = item.first;
+        std::lock_guard<mutex::Mutex> lock(service_lock_);
+        if (services_.find(k) != services_.end())
+        {
+          f(k, v);
+        }
+      }
+    }
   }
 
   uint64_t number_of_services() const
@@ -109,7 +165,7 @@ protected:
   }
 
 private:
-  mutable mutex::Mutex  service_lock_;
+  mutable mutex::Mutex  service_lock_{__LINE__, __FILE__};
   service_map_type      services_;
   std::atomic<uint64_t> number_of_services_;
 };

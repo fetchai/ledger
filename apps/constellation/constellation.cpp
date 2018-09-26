@@ -16,140 +16,224 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
-#include "network/p2pservice/explore_http_interface.hpp"
+#include "ledger/execution_manager.hpp"
+#include "ledger/storage_unit/lane_remote_control.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/p2pservice/p2p_http_interface.hpp"
+#include "network/uri.hpp"
+
+#include <memory>
+#include <random>
+#include <utility>
+
+using fetch::byte_array::ToBase64;
+using fetch::ledger::Executor;
+using fetch::network::TCPClient;
+
+using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
+namespace {
 
-Constellation::Constellation(uint16_t port_start, std::size_t num_executors, std::size_t num_lanes,
-                             std::size_t num_slices, std::string const &interface_address,
-                             std::string const &db_prefix)
-  : interface_address_{interface_address}
-  , num_lanes_{static_cast<uint32_t>(num_lanes)}
+std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
+{
+  static constexpr std::size_t THREADS_PER_LANE = 2;
+  static constexpr std::size_t OTHER_THREADS    = 10;
+
+  return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
+}
+
+}  // namespace
+
+/**
+ * Construct a constellation instance
+ *
+ * @param certificate The reference to the node public key
+ * @param port_start The start port for all the services
+ * @param num_executors The number of executors
+ * @param num_lanes The configured number of lanes
+ * @param num_slices The configured number of slices
+ * @param interface_address The current interface address TODO(EJF): This should be more integrated
+ * @param db_prefix The database file(s) prefix
+ */
+Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
+                             uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
+                             std::string interface_address, std::string const &db_prefix,
+                             std::string my_network_address)
+  : active_{true}
+  , interface_address_{std::move(interface_address)}
+  , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
   , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
   , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
+  , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
+  , muddle_{std::move(certificate), network_manager_}
+  , trust_{}
+  , p2p_{muddle_, lane_control_, trust_}
+  , lane_services_()
+  , storage_(std::make_shared<StorageUnitClient>(network_manager_))
+  , lane_control_(num_lanes_)
+  , execution_manager_{std::make_shared<ExecutionManager>(
+        num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+  , chain_{}
+  , block_packer_{log2_num_lanes, num_slices}
+  , block_coordinator_{chain_, *execution_manager_}
+  , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_}
+  // p2p_port_ fairly arbitrary
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
+  , tx_processor_{*storage_, block_packer_}
+  , http_{network_manager_}
+  , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
+                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
+  , my_network_address_(std::move(my_network_address))
 {
-  // determine how many threads the network manager will require
-  std::size_t const num_network_threads =
-      num_lanes * 2 + 10;  // 2 := Lane/Storage Server, Lane/Storage Client 10
-                           // := provision for http and p2p
+  FETCH_UNUSED(num_slices_);
 
-  // create the network manager
-  network_manager_ = std::make_unique<fetch::network::NetworkManager>(num_network_threads);
-  network_manager_->Start();  // needs to be started
+  // print the start up log banner
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " P ", port_start, " E ",
+                 num_executors, " S ", num_lanes_, "x", num_slices);
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
+  FETCH_LOG_INFO(LOGGING_NAME, "");
 
-  // Creating P2P instance
-  p2p_ = std::make_unique<p2p::P2PService>(p2p_port_, *network_manager_);
+  miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
-  // Adding handle for the orchestration
-  p2p_->OnPeerUpdateProfile([this](p2p::EntryPoint const &ep) {
-    std::cout << "MAKING CALL ::: " << std::endl;
-    if (ep.is_mainchain)
-    {
-      main_chain_remote_->TryConnect(ep);
-    }
-    if (ep.is_lane)
-    {
-      storage_->TryConnect(ep);
-    }
-  });
+  // configure all the lane services
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
 
-  // setup the storage service
-  storage_service_.Setup(db_prefix, num_lanes, lane_port_start_, *network_manager_, false);
+  // configure the middleware of the http server
+  http_.AddMiddleware(http::middleware::AllowOrigin("*"));
 
-  // create the aggregate storage client
-  storage_ = std::make_shared<ledger::StorageUnitClient>(*network_manager_);
-  for (std::size_t i = 0; i < num_lanes; ++i)
-  {
-    // We connect to the lanes
-    crypto::Identity ident = storage_->AddLaneConnection<connection_type>(
-        interface_address, static_cast<uint16_t>(lane_port_start_ + i));
-
-    // ... and make the lane details available for the P2P module
-    // to promote
-    p2p_->AddLane(static_cast<uint32_t>(i), interface_address,
-                  static_cast<uint16_t>(lane_port_start_ + i), ident);
-  }
-
-  // create the execution manager (and its executors)
-  execution_manager_ =
-      std::make_shared<ledger::ExecutionManager>(num_executors, storage_, [this]() {
-        auto executor = CreateExecutor();
-        executors_.push_back(executor);
-        return executor;
-      });
-
-  execution_manager_->Start();
-
-  // Main chain
-  main_chain_service_ = std::make_unique<chain::MainChainService>(db_prefix, main_chain_port_,
-                                                                  *network_manager_.get());
-
-  // Mainchain remote
-  main_chain_remote_ = std::make_unique<chain::MainChainRemoteControl>();
-  client_type client(*network_manager_.get());
-  client.Connect(interface_address, main_chain_port_);
-  shared_service_type service = std::make_shared<service_type>(client, *network_manager_.get());
-  main_chain_remote_->SetClient(service);
-
-  // Mining and block coordination
-  block_coordinator_  = std::make_unique<chain::BlockCoordinator>(*main_chain_service_->mainchain(),
-                                                                 *execution_manager_);
-  transaction_packer_ = std::make_unique<miner::AnnealerMiner>();
-  main_chain_miner_   = std::make_unique<chain::MainChainMiner>(
-      num_lanes_, num_slices_, *main_chain_service_->mainchain(), *block_coordinator_,
-      *transaction_packer_, main_chain_port_);
-
-  tx_processor_ = std::make_unique<ledger::TransactionProcessor>(*storage_, *transaction_packer_);
-
-  // Now that the execution manager is created, can start components that need
-  // it to exist
-  block_coordinator_->start();
-  main_chain_miner_->start();
-
-  // define the list of HTTP modules to be used
-  http_modules_ = {
-      std::make_shared<ledger::ContractHttpInterface>(*storage_, *tx_processor_),
-      std::make_shared<ledger::WalletHttpInterface>(*storage_, *tx_processor_),
-      std::make_shared<p2p::ExploreHttpInterface>(p2p_.get(), main_chain_service_->mainchain())};
-
-  // create and register the HTTP modules
-  http_ = std::make_unique<http::HTTPServer>(http_port_, *network_manager_);
-  http_->AddMiddleware(http::middleware::AllowOrigin("*"));
+  // attach all the modules to the http server
   for (auto const &module : http_modules_)
   {
-    http_->AddModule(*module);
+    http_.AddModule(*module);
   }
+
+  this->my_manifest_ = GenerateManifest();
 }
 
-void Constellation::Run(peer_list_type const &initial_peers)
+/**
+ * Runs the constellation service with the specified initial peers
+ *
+ * @param initial_peers The peers that should be initially connected to
+ */
+void Constellation::Run(UriList const &initial_peers, bool mining)
 {
-  p2p_->AddMainChain(interface_address_, static_cast<uint16_t>(main_chain_port_));
-  p2p_->Start();
+  //---------------------------------------------------------------
+  // Step 1. Start all the components
+  //---------------------------------------------------------------
 
-  // Make the initial p2p connections
-  // Note that we first connect after setting up the lanes to prevent that nodes
-  // will be too fast in trying to set up lane connections.
-  for (auto const &peer : initial_peers)
+  // start all the services
+  network_manager_.Start();
+  muddle_.Start({p2p_port_});
+
+  lane_services_.Start();
+
+  // add the lane connections
+  storage_->SetNumberOfLanes(num_lanes_);
+  for (uint32_t i = 0; i < num_lanes_; ++i)
   {
-    fetch::logger.Warn("Connecting to ", peer.address(), ":", peer.port());
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
 
-    p2p_->Connect(peer.address(), peer.port());
+    // establish the connection to the lane
+    auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+
+    // allow the remote control to use connection
+    lane_control_.AddClient(i, client);
   }
+  execution_manager_->Start();
+  block_coordinator_.Start();
+
+  if (mining)
+  {
+    miner_.Start();
+  }
+
+  // P2P configuration
+
+  auto manifest_copy = my_manifest_;
+  p2p_.SetLocalManifest(manifest_copy);
+
+  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
+
+  p2p_.Start(initial_peers, my_p2p_uri);
+
+  // Finally start the HTTP server
+  http_.Start(http_port_);
+
+  //---------------------------------------------------------------
+  // Step 2. Main monitor loop
+  //---------------------------------------------------------------
 
   // monitor loop
   while (active_)
   {
-    logger.Debug("Still alive...");
-    std::this_thread::sleep_for(std::chrono::seconds{5});
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Still alive...");
+    std::this_thread::sleep_for(std::chrono::milliseconds{500});
   }
+
+  //---------------------------------------------------------------
+  // Step 3. Tear down
+  //---------------------------------------------------------------
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
+
+  http_.Stop();
+  p2p_.Stop();
+
+  // tear down all the services
+  if (mining)
+  {
+    miner_.Stop();
+  }
+
+  block_coordinator_.Stop();
+  execution_manager_->Stop();
+
+  lane_control_.ClearClients();
+  storage_.reset();
+
+  lane_services_.Stop();
+  muddle_.Stop();
+  network_manager_.Stop();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
+}
+
+Constellation::Manifest Constellation::GenerateManifest() const
+{
+  std::string my_uri_base = my_network_address_;
+
+  if (my_uri_base == "")
+  {
+    my_uri_base = "tcp://127.0.0.1:";
+  }
+
+  if (!network::Uri::IsUri(my_uri_base))
+  {
+    my_uri_base = std::string("tcp://") + my_uri_base + ":";
+  }
+
+  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
+                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
+                            my_uri_base + std::to_string(p2p_port_) + "\n";
+
+  for (uint32_t i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
+                   std::to_string(lane_port) + "\n";
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);
+
+  return Manifest::FromText(my_manifest);
 }
 
 }  // namespace fetch

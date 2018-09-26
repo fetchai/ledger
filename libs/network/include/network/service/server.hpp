@@ -51,6 +51,8 @@ public:
   using network_manager_type = typename super_type::network_manager_type;
   using handle_type          = typename T::connection_handle_type;
 
+  static constexpr char const *LOGGING_NAME = "ServiceServer";
+
   // TODO(issue 20): Rename and move
   class ClientRPCInterface : public ServiceClientInterface
   {
@@ -139,7 +141,7 @@ private:
     LOG_STACK_TRACE_POINT;
 
     std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
-    fetch::logger.Debug("RPC call from ", client);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
 
@@ -157,10 +159,11 @@ private:
 
     while (has_messages)
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "MESSAGES!!!!");
       message_mutex_.lock();
 
       PendingMessage pm;
-      fetch::logger.Debug("Server side backlog: ", messages_.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
       has_messages = (!messages_.empty());
       if (has_messages)
       {  // To ensure we can make a worker pool in the future
@@ -173,10 +176,13 @@ private:
       if (has_messages)
       {
         network_manager_.Post([this, pm]() {
-          fetch::logger.Debug("Processing message call");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Processing message call", pm.client, ":", pm.message);
+
           if (!this->PushProtocolRequest(pm.client, pm.message))
           {
             bool processed = false;
+
+            FETCH_LOG_INFO(LOGGING_NAME, "PushProtocolRequest returned FALSE!");
 
             client_rpcs_mutex_.lock();
             if (client_rpcs_.find(pm.client) != client_rpcs_.end())
@@ -189,7 +195,7 @@ private:
             if (!processed)
             {
               // TODO(issue 20): Lookup client RPC handler
-              fetch::logger.Error("Possibly a response to a client?");
+              FETCH_LOG_ERROR(LOGGING_NAME, "Possibly a response to a client?");
 
               throw serializers::SerializableException(
                   error::UNKNOWN_MESSAGE, byte_array::ConstByteArray("Unknown message"));
@@ -204,9 +210,9 @@ private:
   network_manager_type network_manager_;
 
   std::deque<PendingMessage>  messages_;
-  mutable fetch::mutex::Mutex message_mutex_;
+  mutable fetch::mutex::Mutex message_mutex_{__LINE__, __FILE__};
 
-  mutable fetch::mutex::Mutex                 client_rpcs_mutex_;
+  mutable fetch::mutex::Mutex                 client_rpcs_mutex_{__LINE__, __FILE__};
   std::map<handle_type, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service

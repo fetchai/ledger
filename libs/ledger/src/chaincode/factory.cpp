@@ -17,11 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/factory.hpp"
-
+#include "core/logger.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 
 #include <stdexcept>
+
+static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
 
 namespace fetch {
 namespace ledger {
@@ -63,6 +65,7 @@ ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type cons
   auto it = global_registry.find(name);
   if (it == global_registry.end())
   {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to lookup requested chain code: ", name);
     throw std::runtime_error("Invalid chain code name");
   }
 
@@ -70,6 +73,7 @@ ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type cons
   chain_code_type chain_code = it->second();
   if (!chain_code)
   {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", name);
     throw std::runtime_error("Unable to create required chain code");
   }
 

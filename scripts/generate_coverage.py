@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 #
-# Generate coverage html for unit tests.
+# Generate coverage html for unit tests. Default usage will build all tests and a global coverage
+# file in build/coverage. Typical usage:
+# Build in debug mode with coverage flag enabled.
+# ./scripts/generate_coverage.py ./build
 #
-# Best done in the docker containter.
-#
-# Before running this file, create a build folder and build the tests you want coverage of, in debug
-# mode
+# Best done in the docker container.
 #
 # On successful completion, you should be able to view ./build/coverage/coverage_XXX/index.html in
 # a browser
@@ -14,157 +14,164 @@
 import os
 import sys
 import subprocess
-import pdb
 import re
 import pprint
+import argparse
+import shutil
 
 pp = pprint.PrettyPrinter(indent=4)
+project_root = 'unknown'
+build_directory = 'unknown'
 
-def create_empty_dir(dirname):
-    try:
-        os.rmdir(dirname)
-    except:
-        pass
+def create_dir(dirname, remove):
+    dirname = os.path.join(build_directory, dirname)
 
-    try:
-        os.mkdir(dirname)
-    except:
-        pass
+    if os.path.exists(dirname):
+        shutil.rmtree(dirname)
 
-def get_whitelist(targets : map):
+    os.makedirs(dirname)
 
-    whitelist = ['tokenizer_test',
-                 'encode_decode_test',
-                 'referenced_byte_array_test',
-                 'lfg_test',
-                 'json_document_test',
-                 'variant_test',
-                 'sha256_test',
-                 'fetch-crypto-gtests',
-                 'proof_of_work_test',
-                 'ledger_identifier_test',
-                 'chaincode_test',
-                 #'executors_test',
-                 #'main_chain_test',
-                 'transaction_types_test',
-                 'blas',
-                 'exp_test',
-                 'spline_test',
-                 'rectangular_load_save_test',
-                 'shared_rectangular_array_test',
-                 'matrix_test',
-                 'manhattan_test',
-                 'correlation_test',
-                 'ndarray_test',
-                 'ndarray_view_test',
-                 'ndarray_iterator_test',
-                 'ndarray_broadcast_test',
-                 'ndarray_squeeze_test',
-                 'relu_test',
-                 'sign_test',
-                 'l2loss_test',
-                 #'tcp_client_stress_test',
-                 #'thread_manager_stress_test',
-                 'dummy_test',
-                 #'thread_pool_stress_test',
-                 'callable_test',
-                 'peer_test',
-                 'file_object_test',
-                 'random_access_stack_test',
-                 'versioned_random_access_stack_test',
-                 'key_value_index_test',
-                 #'document_store_test',
-                 'variant_stack_test',
-                 'versioned_file_object_test',
-                 'versioned_kvi_test',
-                 #'object_store_test',
-                 #'object_sync_test',
-                 'storage',
-                 'vec_exp',
-                 'parallel_dispatcher_test',
-                 'log2_test',
-                 'native_test',
-                 'sse_test']
+# Certain test targets may take a long time or segfault
+def remove_blacklisted(targets : map) -> map:
 
-    remove = [i for i in targets if i not in whitelist]
-    for i in remove: del targets[i]
+    ret = targets
 
+    blacklist = {'executors_test',
+                 'main_chain_test',
+                 'tcp_client_stress_test',
+                 'thread_manager_stress_test',
+                 'thread_pool_stress_test',
+                 'document_store_test',
+                 'object_store_test',
+                 'object_sync_test'}
+
+    unwanted = set(targets.keys()) & blacklist
+    for unwanted_key in unwanted: del targets[unwanted_key]
+
+    return targets
+
+# Given we want coverage for tests, and we know their targets from cmake, return
+def get_targets_only_tests(tests: list, targets: map) -> map:
+
+    ret = targets
+    if not set(tests).issubset(ret.keys()):
+        print("Failed to find one or more tests in cmake target list.")
+        print("Tests:")
+        pp.pprint(tests)
+        print("Targets:")
+        pp.pprint(targets)
+        sys.exit(1)
+
+    unwanted = set(ret.keys()) - set(tests)
+
+    for unwanted_key in unwanted: del ret[unwanted_key]
+    return ret
+
+# Get coverage reports by iterating through the targets and running them, if they were compiled with
+# coverage flags in clang, a profraw file will be created.
+# this is used in calling llvm according to  https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
 def get_coverage_reports(targets : map):
     for key, val in targets.items():
-        os.system("rm -f default.profraw")
+        try: os.remove(os.path.join(build_directory, "default.profraw"))
+        except: pass
+
         print("Executing: " + key)
         print(val)
 
-        popen = subprocess.Popen(val, stdout=subprocess.PIPE, cwd=os.getcwd())
+        # Execute the binary target, this will generate a default.profraw
+        subprocess.check_call(val, cwd=build_directory, stdout=subprocess.PIPE)
 
-        output = popen.communicate()[0]
-        output = output.decode("utf-8")
+        raw_file_name        = key +".profraw"
+        indexed_file_name    = key +".profdata"
+        directory_name       = os.path.join("coverage", key+"_coverage")
+        raw_file_name_dst    = ''
+        raw_indexed_file_dst = os.path.join(build_directory, indexed_file_name)
 
-        if popen.returncode != 0:
-            print("Failed to run")
+        # Rename default.profraw to target.profraw
+        try:
+            src = os.path.join(build_directory, "default.profraw")
+            dst = os.path.join(build_directory, raw_file_name)
+            os.rename(src, dst)
+        except:
+            print("Failed to find output file default.profraw")
+            print("Check you haven't set LLVM_PROFILE_FILE")
+            print("Did you build in debug mode?")
             sys.exit(1)
 
-        raw_file_name     = key +".profraw"
-        indexed_file_name = key +".profdata"
-        directory_name    = R"coverage/"+key +"_coverage"
+        # Generate an indexed file target.profdata
+        subprocess.check_call(["llvm-profdata", "merge", "-sparse", raw_file_name, "-o", indexed_file_name],
+            cwd=build_directory, stdout=subprocess.PIPE)
 
-        if not (os.system("mv default.profraw " + raw_file_name) == 0):
-            print("Failed to find output file default.profraw - what's your LLVM_PROFILE_FILE?")
-            print("Did you build in debug mode?")
+        # Generate the coverage in coverate/target_coverate
+        subprocess.check_call(["llvm-cov", "show", "-Xdemangler", "c++filt",
+            val, "-instr-profile="+indexed_file_name, "-format=html", "-o", directory_name], cwd=build_directory, stdout=subprocess.PIPE)
 
-        os.system("llvm-profdata merge -sparse  "+raw_file_name+" -o " + indexed_file_name)
-        os.system("llvm-cov show -Xdemangler c++filt "+val+" -instr-profile="+indexed_file_name + " -format=html -o " +directory_name)
-
+# Once coverage reports for other binaries have been created, this function just creates a report
+# for all binaries
 def get_all_coverage_reports(targets : map):
-    all_profs = ""
-    all_binaries = ""
+    all_profs = []
+    all_binaries = []
     for key, val in targets.items():
         raw_file_name     = key +".profraw"
         indexed_file_name = key +".profdata"
-        all_profs += indexed_file_name + " "
-        all_binaries += "-object " + val + " "
+        all_profs += [indexed_file_name]
+        all_binaries += ["-object", val]
 
-    command_to_execute = "llvm-profdata merge -sparse  "+all_profs+" -o final.profdata"
-    os.system(command_to_execute)
+    args = ["llvm-profdata", "merge", "-sparse"]
+    args.extend(all_profs)
+    args.extend(["-o", "final.profdata"])
 
-    command_to_execute = "llvm-cov show -Xdemangler c++filt "+all_binaries+" -instr-profile=final.profdata -format=html -o coverage/all_coverage"
-    os.system(command_to_execute)
+    subprocess.check_output(args, cwd=build_directory)
 
-def main():
+    args = ["llvm-cov", "show", "-Xdemangler", "c++filt"]
+    args.extend(all_binaries)
+    args.extend(["-instr-profile=final.profdata", "-format=html", "-o", "coverage/all_coverage"])
+    subprocess.check_output(args, cwd=build_directory)
 
-    if(len(sys.argv) < 2):
-        print("Usage: ")
-        print(sys.argv[0] + " ", end='')
-        print("./build [test_name]")
-        sys.exit(1)
+def parse_commandline():
+    parser = argparse.ArgumentParser(
+            description='Generate coverage for fetch-ledger,\
+            usually in build/coverage/coverage_TEST. Each run will clear build/coverage.')
 
-    build_directory   = sys.argv[1]
-    test_name         = sys.argv[2] if len(sys.argv) > 2 else None
-    current_directory = os.getcwd()
+    # Required argument
+    parser.add_argument('build_directory', type=str,
+                        help='Location of the build directory relative to current path')
 
-    os.chdir(build_directory)
+    parser.add_argument('--tests', type=str, nargs='+',
+                        help='Name of unit tests to generate coverage for. Defaults to all')
 
-    # Run
-    print("Checking ctest for targets at: "+os.getcwd())
-    popen = subprocess.Popen(["ctest", "-N", "--debug"],  stdout=subprocess.PIPE, cwd=os.getcwd())
+    parser.add_argument('--binaries', type=str, nargs='+',
+                        help='Location of a binary file to generate coverage for. Ensure the binary terminates.')
 
-    # Note a wait here will deadlock a docker container. arg 0 = stdout
-    output = popen.communicate()[0]
-    output = output.decode("utf-8")
+    parser.add_argument('--no_clear_coverage', action='store_true',
+                        help='Switch to not clear the coverage directory')
 
-    error_code = popen.returncode
+    return parser.parse_args()
 
-    if not (error_code == 0):
-        print("Failed to run cmake.")
-        sys.exit(1)
-    else:
-        print("Successfully ran cmake")
+def get_targets_binaries(binaries : list) -> map:
+    targets = {}
+    for binary in binaries:
+        binary_path = os.path.join(project_root, binary)
 
-    # Determine the targets and their directories
+        if not os.path.isfile(binary_path):
+            print(binary_path + " file not found.")
+            sys.exit(1)
+
+        #pdb.set_trace()
+        targets[os.path.split(binary_path)[1]] = binary_path
+
+    return targets
+
+def get_targets_cmake() -> map:
     targets = {}
 
+    print("Checking ctest for targets at: "+build_directory)
+    output = subprocess.check_output(["ctest", "-N", "--debug"], cwd=build_directory)
+
+    output = output.decode("utf-8")
+
     for line in output.split('\n'):
-        search = re.search("Test command: ", line)
+        search = re.search("Test command: .", line)
 
         if not search == None:
             command = line.split("Test command: ")[1]
@@ -172,31 +179,52 @@ def main():
             targets[target] = command
 
     if len(targets) == 0:
-        print("failed to find targets in output of cmake command")
+        print("failed to find targets in output of cmake command - check targets have been built")
         sys.exit(1)
 
-    # If we have specified a target, only generate a profile for that one
-    if test_name != None and test_name not in targets:
-        print(test_name + " not found in targets: ")
-        pp.pprint(targets)
+    return targets
+
+def main():
+    args = parse_commandline()
+
+    global project_root
+    global build_directory
+
+    project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    build_directory = os.path.join(project_root, args.build_directory)
+
+    if not os.path.isdir(build_directory):
+        print("Supplied build path " + build_directory + " not found.")
         sys.exit(1)
 
-    if test_name != None:
-        temp = targets[test_name]
-        targets.clear()
-        targets[test_name] = temp
-        pp.pprint(targets)
+    # based on command line args build up targets as a dict of target_name, binary_location
+    targets = {}
 
-    print("Targets: ")
-    pp.pprint(list(targets.keys()))
+    if args.binaries:
+        targets = get_targets_binaries(args.binaries)
 
-    # create empty coverage dir
-    create_empty_dir("coverage")
+    # Call cmake to get all test names and their exe locations
+    cmake_targets = get_targets_cmake()
+    cmake_targets = remove_blacklisted(cmake_targets)
 
-    get_whitelist(targets)
+    # if we specified test target(s), only get those from the cmake targets
+    if args.tests:
+        cmake_targets = get_targets_only_tests(args.tests, cmake_targets)
+        targets = {**targets, **cmake_targets}
+
+    # If no tests or binaries specified, go with all test targets
+    if not args.tests and not args.binaries:
+        targets = cmake_targets
+
+    print("Creating coverage for target(s):")
+    pp.pprint(targets)
+
+    create_dir("coverage", not args.no_clear_coverage)
 
     get_coverage_reports(targets)
     get_all_coverage_reports(targets)
+
+    print("Finished.")
 
 if __name__ == '__main__':
     main()

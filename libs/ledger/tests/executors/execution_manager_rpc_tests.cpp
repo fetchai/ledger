@@ -49,6 +49,8 @@ protected:
   using execution_manager_service_type = std::unique_ptr<underlying_service_type>;
   using storage_type                   = std::shared_ptr<FakeStorageUnit>;
 
+  static constexpr char const *LOGGING_NAME = "ExecutionManagerRpcTests";
+
   void SetUp() override
   {
     static const uint16_t    PORT                = 9009;
@@ -67,20 +69,23 @@ protected:
     service_ = std::make_unique<underlying_service_type>(
         PORT, *network_manager_, config.executors, storage_, [this]() { return CreateExecutor(); });
 
+    service_->Start();
+
     // client
     manager_ = std::make_unique<underlying_client_type>("127.0.0.1", PORT, *network_manager_);
 
     // wait for the client to connect before proceeding
-    fetch::logger.Info("Connecting client to service...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connecting client to service...");
     while (!manager_->is_alive())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds{300});
     }
-    fetch::logger.Info("Connecting client to service...complete");
+    FETCH_LOG_INFO(LOGGING_NAME, "Connecting client to service...complete");
   }
 
   void TearDown() override
   {
+    service_->Stop();
     network_manager_->Stop();
 
     manager_.reset();

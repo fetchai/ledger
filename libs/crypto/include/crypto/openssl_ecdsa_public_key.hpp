@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
 
@@ -52,10 +54,10 @@ public:
     , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
-  ECDSAPublicKey(const byte_array::ConstByteArray &key_data)
+  ECDSAPublicKey(byte_array::ConstByteArray key_data)
     : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
     , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
-    , key_binary_{key_data}
+    , key_binary_{std::move(key_data)}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>

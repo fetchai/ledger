@@ -59,7 +59,7 @@
 using namespace fetch::service;
 using namespace fetch::commandline;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   ParamsParser params;
   params.Parse(argc, argv);
@@ -115,7 +115,9 @@ int main(int argc, char const **argv)
     std::cout << "Sending 'connect' command with parameters " << h << " " << p << std::endl;
 
     auto prom = client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::CONNECT, h, p);
-    prom.Wait();
+
+    FETCH_LOG_PROMISE();
+    prom->Wait();
   }
 
   // Using the getinfo protocol
@@ -126,7 +128,7 @@ int main(int argc, char const **argv)
 
     auto prom = client.Call(FetchProtocols::AEA_PROTOCOL, AEACommands::GET_INFO);
     std::cout << "Info about the node: " << std::endl;
-    std::cout << prom.As<std::string>() << std::endl << std::endl;
+    std::cout << prom->As<std::string>() << std::endl << std::endl;
   }
 
   if (command == "listen")
@@ -160,7 +162,8 @@ int main(int argc, char const **argv)
 
     auto prom = client.Call(FetchProtocols::PEER_TO_PEER, PeerToPeerCommands::SEND_MESSAGE, msg);
 
-    prom.Wait();
+    FETCH_LOG_PROMISE();
+    prom->Wait();
   }
 
   // Testing the send message
@@ -169,7 +172,7 @@ int main(int argc, char const **argv)
     std::cout << "Peer-to-peer command 'messages' command with no parameters " << std::endl;
     auto prom = client.Call(FetchProtocols::PEER_TO_PEER, PeerToPeerCommands::GET_MESSAGES);
 
-    std::vector<std::string> msgs = prom.As<std::vector<std::string>>();
+    std::vector<std::string> msgs = prom->As<std::vector<std::string>>();
     for (auto &msg : msgs)
     {
       std::cout << "  - " << msg << std::endl;

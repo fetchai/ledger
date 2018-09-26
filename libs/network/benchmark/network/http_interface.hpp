@@ -143,7 +143,7 @@ public:
     std::size_t index = 0;
     for (auto &i : transactions)
     {
-      result[index++] = byte_array::ToHex(i.summary().transaction_hash);
+      result[index++] = byte_array::ToBase64(i.summary().transaction_hash);
     }
 
     std::ostringstream ret;

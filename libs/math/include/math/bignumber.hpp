@@ -39,6 +39,8 @@ class BigUnsigned : public byte_array::ConstByteArray
 public:
   using super_type = byte_array::ConstByteArray;
 
+  static constexpr char const *LOGGING_NAME = "BigUnsigned";
+
   BigUnsigned()
   {
     Resize(std::max(std::size_t(256 >> 3), sizeof(uint64_t)));

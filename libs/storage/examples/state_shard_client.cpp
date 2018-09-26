@@ -47,33 +47,37 @@ public:
     // TODO(issue 15): do not allow calls to enum 0!!!
     auto promise = client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::GET,
                                  fetch::storage::ResourceID(key));
-    return promise.As<ByteArray>();
+    return promise->As<ByteArray>();
   }
 
   void Set(ByteArray const &key, ByteArray const &value)
   {
     auto promise = client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::SET,
                                  fetch::storage::ResourceID(key), value);
-    promise.Wait(2000);
+    promise->Wait(2000, true);
   }
 
   void Commit(uint64_t const &bookmark)
   {
     auto promise =
         client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
-    promise.Wait(2000);
+
+    FETCH_LOG_PROMISE();
+    promise->Wait(2000, true);
   }
 
   void Revert(uint64_t const &bookmark)
   {
     auto promise =
         client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
-    promise.Wait(2000);
+
+    FETCH_LOG_PROMISE();
+    promise->Wait(2000, true);
   }
 
   ByteArray Hash()
   {
-    return client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH).As<ByteArray>();
+    return client_->Call(0, fetch::storage::RevertibleDocumentStoreProtocol::HASH)->As<ByteArray>();
   }
 
   void SetID(ByteArray const &id)
