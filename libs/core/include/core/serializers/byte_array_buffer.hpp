@@ -31,6 +31,8 @@ namespace serializers {
 template<typename X=void>
 class ByteArrayBufferEx
 {
+  static char const * const LOGGING_NAME;
+
 public:
   using self_type = ByteArrayBufferEx;
   using byte_array_type = byte_array::ByteArray;
@@ -243,6 +245,9 @@ private:
   std::size_t pos_ = 0;
   size_counter_type size_counter_;
  };
+
+template<typename T>
+char const * const ByteArrayBufferEx<T>::LOGGING_NAME = "ByteArrayBuffer<...>";
 
 using ByteArrayBuffer = ByteArrayBufferEx<>;
 

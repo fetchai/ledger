@@ -32,10 +32,6 @@ namespace serializers {
 using typed_array_buffer_id_type = TypeRegister<void>;
 using TypedByteArrayBuffer = ByteArrayBufferEx<typed_array_buffer_id_type>;
 
-//TODO: this is from merge, it is necessary to create general declaration in the `ByteArrayBufferEx` templated class + create specialisation defition here
-//static constexpr char const *LOGGING_NAME = "TypedByteArrayBuffer";
-
-
 template<>
 template<typename T>
 TypedByteArrayBuffer &TypedByteArrayBuffer::operator<<(T const *val)
