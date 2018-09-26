@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/common.hpp"
 #include "core/logger.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
@@ -300,35 +301,64 @@ protected:
     return arr_pointer_[n];
   }
 
-  // TODO(pbukva): (private issue #229: opening door for buffer overrun for sub arrays - when
-  // `start_ > 0` + confusion what method does - absolute vs relative[against `start_`] size)
-  void Resize(std::size_t const &n, bool const relative = true)
+  //* CEREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always *RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the `Reserve(...)` bellow)
+  //*   Meaning that if pradigm value is set to:
+  //*    * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n), which is internally still relative to `start_` offset,
+  //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size* (new_size = old_size + n),
+  //*   , where `new_size` is internally still relative to `start_` offset in *both* cases above.
+  void Resize(std::size_t const &n, eResizeParadigm const resize_paradigm = eResizeParadigm::absolute, bool const zero_reserved_space=true)
   {
-    auto const orig_size        = relative ? data_.size() - start_ : data_.size();
-    auto const size_for_reserve = relative ? start_ + n : n;
-    auto const relative_length  = relative ? n : n - start_;
-    if (orig_size < n)
+    std::size_t new_length;
+
+    switch(resize_paradigm)
     {
-      Reserve(size_for_reserve);
+      case eResizeParadigm::relative:
+        new_length  = length_ + n;
+        break;
+
+      case eResizeParadigm::absolute:
+        new_length  = n;
+        break;
     }
-    length_ = relative_length;
+
+    auto const new_capacity_for_reserve = start_ + new_length;
+
+    Reserve(new_capacity_for_reserve, eResizeParadigm::absolute, zero_reserved_space);
+    length_ = new_length;
   }
 
-  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
-  // details - absolute vs relative[against `start_`] size)
-  void Reserve(std::size_t const &n)
+  //* CEREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is *WHOLE* allocated size of underlying data buffer.
+  //*   Meaning that if pradigm value is set to:
+  //*    * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set (new_capacity = n)
+  //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity* (new_capacity = old_capacity + n)
+  void Reserve(std::size_t const &n, eResizeParadigm const resize_paradigm = eResizeParadigm::absolute, bool const zero_reserved_space=true)
   {
-    if (n <= data_.size())
+    std::size_t new_capacity_for_reserve;
+
+    switch(resize_paradigm)
+    {
+      case eResizeParadigm::relative:
+        new_capacity_for_reserve = data_.size() + n;
+        break;
+
+      case eResizeParadigm::absolute:
+        new_capacity_for_reserve = n;
+        break;
+    }
+
+    if (new_capacity_for_reserve <= data_.size())
     {
       return;
     }
 
-    assert(n != 0);
+    assert(new_capacity_for_reserve != 0);
 
-    shared_array_type newdata(n);
+    shared_array_type newdata(new_capacity_for_reserve);
     std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
-    // TODO(pbukva) (private issue: is this really necessary? It feels like waste of time)
-    newdata.SetZeroAfter(data_.size());
+    if (zero_reserved_space)
+    {
+      newdata.SetZeroAfter(data_.size());
+    }
 
     data_        = newdata;
     arr_pointer_ = data_.pointer() + start_;

@@ -25,7 +25,5 @@ namespace chain {
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addDebugInfo=false);
 MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction);
 
-byte_array::ByteArray TransactionDataForSignning(MutableTransaction const &transaction);
-
 }  // namespace chain
 }  // namespace fetch

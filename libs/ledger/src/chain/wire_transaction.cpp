@@ -61,7 +61,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
       {
         auto &sig_v = signatures[i++];
         sig_v.MakeObject();
-        stream.Resize(0, serializers::eResizeParadigm::absolute);
+        stream.Resize(0, eResizeParadigm::absolute);
         stream.Append(sig.first, eval_identity_size, sig.second);
         sig_v[byte_array::ToBase64(stream.data().SubArray(0, identity_serialised_size))] = byte_array::ToBase64(stream.data().SubArray(identity_serialised_size, stream.data().size()-identity_serialised_size));
       }

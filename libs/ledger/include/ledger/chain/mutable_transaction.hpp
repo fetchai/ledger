@@ -235,7 +235,7 @@ public:
     template<typename STREAM>
     void operator ()(STREAM& stream) const
     {
-      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10, serializers::eResizeParadigm::relative);
+      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10, eResizeParadigm::relative);
     }
   };
 
@@ -248,7 +248,7 @@ public:
     }
     else
     {
-      stream_.Resize(tx_data_size_for_signing_, serializers::eResizeParadigm::absolute);
+      stream_.Resize(tx_data_size_for_signing_, eResizeParadigm::absolute);
       stream_.Seek(tx_data_size_for_signing_);
       stream_.Append(appendix);
     }

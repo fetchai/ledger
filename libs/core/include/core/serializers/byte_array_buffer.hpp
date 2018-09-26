@@ -82,16 +82,16 @@ public:
     Resize(delta, eResizeParadigm::relative);
   }
 
-  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
   {
+    data_.Resize(size, resize_paradigm, zero_reserved_space);
+
     switch(resize_paradigm)
     {
       case eResizeParadigm::relative:
-        data_.Resize(data_.size() + size);
         break;
 
       case eResizeParadigm::absolute:
-        data_.Resize(size);
         if(pos_ > size)
         {
           Seek(size);
@@ -100,18 +100,9 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
   {
-    switch(resize_paradigm)
-    {
-      case eResizeParadigm::relative:
-        data_.Reserve(data_.size() + size);
-        break;
-
-      case eResizeParadigm::absolute:
-        data_.Reserve(size);
-        break;
-    };
+    data_.Reserve(size, resize_paradigm, zero_reserved_space);
   }
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size)

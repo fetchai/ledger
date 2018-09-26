@@ -17,20 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/common.hpp"
 #include "core/serializers/stl_types.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/type_register.hpp"
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
-
-enum class eResizeParadigm : uint8_t
-{
-  relative,
-  absolute
-};
 
 template <typename S>
 class SizeCounter
@@ -43,9 +37,12 @@ public:
     Resize(delta, eResizeParadigm::relative);
   }
 
-  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
   {
+    (void)zero_reserved_space;
+
     Reserve(size, resize_paradigm);
+
     switch(resize_paradigm)
     {
       case eResizeParadigm::relative:
@@ -62,8 +59,10 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative)
+  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
   {
+    (void)zero_reserved_space;
+
     switch(resize_paradigm)
     {
       case eResizeParadigm::relative:
