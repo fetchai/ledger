@@ -116,8 +116,8 @@ public:
   using transaction_type = MUTABLE_TRANSACTION;
 
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
-  using verifier_type = crypto::ECDSAVerifier;
-  using signer_type = crypto::ECDSASigner;
+  using Signature = crypto::ECDSASigner::Signature;
+  using Hasher = crypto::ECDSASigner::Signature::hasher_type;
 
   using base_type::base_type;
   using base_type::operator();
@@ -132,14 +132,17 @@ public:
   TxDataForSigningC(transaction_type &tx, self_type const &from)
     : base_type{ tx }
     , stream_{ from.stream_ }
-    , tx_data_size_for_signing_{ from.tx_data_size_for_signing_ }
+    , hasher_{ from.hasher_ }
+    , signature_{ from.signature_ }
   {
   }
 
   TxDataForSigningC(transaction_type &tx, self_type &&from)
     : base_type{ tx }
     , stream_{ std::move(from.stream_) }
-    , tx_data_size_for_signing_{ std::move(from.tx_data_size_for_signing_) }
+    , hasher_{ from.hasher_ }
+    , signature_{ from.signature_ }
+
   {
   }
 
@@ -211,7 +214,8 @@ public:
   }
 
   serializers::ByteArrayBuffer stream_;
-  std::size_t tx_data_size_for_signing_ = 0;
+  Hasher hasher_;
+  Signature signature_;
 };
 
 template <typename T, typename U>
