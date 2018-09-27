@@ -22,14 +22,6 @@
 namespace fetch {
 namespace serializers {
 
-
-class ILazyEvalArgument
-{
-  template<typename ...ARGS>
-  void operator ()(ARGS ...args) const;
-};
-
-
 template<typename T>
 class LazyEvalArgument {
   T val_;

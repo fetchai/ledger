@@ -114,30 +114,20 @@ public:
   using self_type = TxDataForSigningC;
   using base_type = std::reference_wrapper<MUTABLE_TRANSACTION>;
   using transaction_type = MUTABLE_TRANSACTION;
-  
+
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
   using verifier_type = crypto::ECDSAVerifier;
   using signer_type = crypto::ECDSASigner;
 
   using base_type::base_type;
-  //using base_type::operator=;
   using base_type::operator();
 
   TxDataForSigningC() = delete;
 
-  TxDataForSigningC(self_type const &from)
-    : base_type{ from }
-    , stream_{ from.stream_ }
-    , tx_data_size_for_signing_{ from.tx_data_size_for_signing_ }
-  {
-  }
-
-  TxDataForSigningC(self_type &&from)
-    : base_type{ std::move(from) }
-    , stream_{ std::move(from.stream_) }
-    , tx_data_size_for_signing_{ std::move(from.tx_data_size_for_signing_) }
-  {
-  }
+  TxDataForSigningC(self_type const &from) = default;
+  TxDataForSigningC(self_type &&from) = default;
+  self_type& operator = (self_type const &from) = default;
+  self_type& operator = (self_type &&from) = default;
 
   TxDataForSigningC(transaction_type &tx, self_type const &from)
     : base_type{ tx }
@@ -151,22 +141,6 @@ public:
     , stream_{ std::move(from.stream_) }
     , tx_data_size_for_signing_{ std::move(from.tx_data_size_for_signing_) }
   {
-  }
-
-  self_type& operator = (self_type const &from)
-  {
-    static_cast<base_type &>(*this) = from;
-    stream_ = from.stream_;
-    tx_data_size_for_signing_ = from.tx_data_size_for_signing_;
-    return *this;
-  }
-
-  self_type& operator = (self_type &&from)
-  {
-    static_cast<base_type &>(*this) = std::move(from);
-    stream_ = std::move(from.stream_);
-    tx_data_size_for_signing_ = std::move(from.tx_data_size_for_signing_);
-    return *this;
   }
 
   template<typename APPENDIX = crypto::Identity>
@@ -184,7 +158,7 @@ public:
   {
     auto const& identity  = sig.first;
     auto const& signature = sig.second;
-   
+
     verifier_type verifier{identity};
     auto data_to_verify = DataForSigning(identity);
     return verifier.Verify(data_to_verify, signature.signature_data);
@@ -211,40 +185,17 @@ public:
   bool operator != (TxDataForSigningC const &left_tx) const;
 
 public:
-  using self_ref_type = std::reference_wrapper<TxDataForSigningC>;
-
-  struct qtds : public self_ref_type
-  {
-    using self_ref_type::self_ref_type;
-    //using self_ref_type::operator=;
-    using self_ref_type::get;
-
-    template<typename STREAM>
-    void operator ()(STREAM& stream) const
-    {
-      get().tx_data_size_for_signing_ = stream.size();
-    }
-  };
-
-  struct res : public self_ref_type
-  {
-    using self_ref_type::self_ref_type;
-    //using self_ref_type::operator=;
-    using self_ref_type::get;
-
-    template<typename STREAM>
-    void operator ()(STREAM& stream) const
-    {
-      stream.Reserve((stream.size() - get().tx_data_size_for_signing_)*10, eResizeParadigm::relative);
-    }
-  };
 
   template<typename APPENDIX>
   byte_array::ConstByteArray const& DataForSigningInternal(APPENDIX const& appendix)
   {
     if(stream_.size() == 0)
     {
-      stream_.Append(*this, qtds_, appendix, res_);
+      auto query_tx_size_arg = serializers::LazyEvalArgumentFactory([this](auto &stream){
+        tx_data_size_for_signing_ = stream.size();
+      });
+
+      stream_.Append(*this, query_tx_size_arg, appendix);
     }
     else
     {
@@ -256,9 +207,7 @@ public:
   }
 
   serializers::ByteArrayBuffer stream_;
-  std::size_t tx_data_size_for_signing_;
-  serializers::LazyEvalArgument<qtds> qtds_{qtds{*this}};
-  serializers::LazyEvalArgument<res> res_{res{*this}};
+  std::size_t tx_data_size_for_signing_ = 0;
 };
 
 template <typename T, typename U>
@@ -283,23 +232,23 @@ public:
   using tx_data_for_signing_type = TxDataForSigningC<MutableTransaction>;
 
   MutableTransaction() = default;
-  
+
   MutableTransaction(MutableTransaction const &from)
     : summary_{ from.summary_ }
     , data_{ from.data_ }
     , signatures_{ from.signatures_ }
     , tx_for_signing_{ *this, from.tx_for_signing_ }
   {
-  } 
-  
+  }
+
   MutableTransaction(MutableTransaction &&from)
     : summary_{ std::move(from.summary_) }
     , data_{ std::move(from.data_) }
     , signatures_{ std::move(from.signatures_) }
     , tx_for_signing_{ *this, std::move(from.tx_for_signing_) }
   {
-  } 
-  
+  }
+
   MutableTransaction & operator = (MutableTransaction const &from)
   {
     //*this = MutableTransaction{ from };
@@ -317,7 +266,7 @@ public:
     signatures_ = std::move(from.signatures_);
     tx_for_signing_ = tx_data_for_signing_type{ *this, std::move(from.tx_for_signing_) };
     return *this;
-  } 
+  }
 
   resource_set_type const &resources() const
   {
@@ -509,7 +458,7 @@ inline bool TxDataForSigningC<MUTABLE_TRANSACTION>::operator == (TxDataForSignin
   return tx_.summary_.contract_name == left.summary_.contract_name
       && tx_.summary_.fee == left.summary_.fee
       && tx_.summary_.resources == left.summary_.resources
-      && tx_.data_ == left.data_; 
+      && tx_.data_ == left.data_;
 }
 
 template<typename MUTABLE_TRANSACTION>
