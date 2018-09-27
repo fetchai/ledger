@@ -52,31 +52,26 @@ public:
   };
 
   ConstByteArray() = default;
+
   explicit ConstByteArray(std::size_t const &n)
   {
     Resize(n);
   }
 
   ConstByteArray(char const *str)
+    : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str ? std::strlen(str) : 0}
   {
-    assert(str != nullptr);
-
-    std::size_t const n = strlen(str);
-    Reserve(n);
-    Resize(n);
-    uint8_t const *up = reinterpret_cast<uint8_t const *>(str);
-    for (std::size_t i = 0; i < n; ++i)
-    {
-      data_[i] = up[i];
-    }
   }
 
   ConstByteArray(container_type const *const data, std::size_t const &size)
   {
-    assert(data != nullptr);
-    Reserve(size);
-    Resize(size);
-    std::memcpy(data_.pointer(), data, size);
+    if(size > 0)
+    {
+      assert(data != nullptr);
+      Reserve(size);
+      Resize(size);
+      WriteBytes(data, size);
+    }
   }
 
   ConstByteArray(std::initializer_list<container_type> l)
@@ -110,9 +105,19 @@ public:
 
   ConstByteArray Copy() const
   {
-    ConstByteArray ret(size());
-    std::memcpy(ret.pointer(), pointer(), size());
-    return ret;
+    return ConstByteArray{pointer(), size()};
+  }
+
+  void WriteBytes(container_type const *const src, std::size_t const &src_size, std::size_t const &dest_offset=0)
+  {
+    assert(dest_offset + src_size <= size());
+    std::memcpy(pointer() + dest_offset, src, src_size);
+  }
+
+  void ReadBytes(container_type *const dest, std::size_t const &dest_size, std::size_t const &src_offset=0) const
+  {
+    assert(src_offset + dest_size <= size());
+    std::memcpy(dest, pointer() + src_offset, dest_size);
   }
 
   ~ConstByteArray() = default;

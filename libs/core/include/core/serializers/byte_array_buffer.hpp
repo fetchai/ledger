@@ -107,18 +107,14 @@ public:
 
   void WriteBytes(uint8_t const *arr, std::size_t const &size)
   {
-    for (std::size_t i = 0; i < size; ++i)
-    {
-      data_[pos_++] = arr[i];
-    }
+    data_.WriteBytes(arr, size, pos_);
+    pos_ += size;
   }
 
   void ReadBytes(uint8_t *arr, std::size_t const &size)
   {
-    for (std::size_t i = 0; i < size; ++i)
-    {
-      arr[i] = data_[pos_++];
-    }
+    data_.ReadBytes(arr, size, pos_);
+    pos_ += size;
   }
 
   void ReadByteArray(byte_array::ConstByteArray &b, std::size_t const &size)
