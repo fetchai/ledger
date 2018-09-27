@@ -156,8 +156,8 @@ public:
 
   storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
-    byte_array::ByteArray index(contract_identifier_.name_space());
-    index.Append(".state.", suffix);
+    byte_array::ByteArray index;
+    index.Append(contract_identifier_.name_space(), ".state.", suffix);
     return storage::ResourceAddress{index};
   }
 

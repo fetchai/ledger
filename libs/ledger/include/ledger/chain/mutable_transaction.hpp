@@ -106,7 +106,7 @@ void Deserialize(T &serializer, TransactionSummary &b)
 class MutableTransaction;
 
 template<typename MUTABLE_TRANSACTION = MutableTransaction>
-class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION> //public TxDataForSigningCBase<MUTABLE_TRANSACTION>
+class TxDataForSigningC : public std::reference_wrapper<MUTABLE_TRANSACTION>
 {
   static_assert(std::is_same<MutableTransaction, typename std::remove_const<MUTABLE_TRANSACTION>::type>::value, "Type must be const or non-const `MutableTransaction` class");
 
@@ -191,11 +191,15 @@ public:
   {
     if(stream_.size() == 0)
     {
-      auto query_tx_size_arg = serializers::LazyEvalArgumentFactory([this](auto &stream){
+      auto query_tx_size = serializers::LazyEvalArgumentFactory([this](auto &stream){
         tx_data_size_for_signing_ = stream.size();
       });
 
-      stream_.Append(*this, query_tx_size_arg, appendix);
+      auto reserve_enough_capacity = serializers::LazyEvalArgumentFactory([this](auto &stream){
+        stream.Reserve(stream.size()-tx_data_size_for_signing_, eResizeParadigm::relative, false);
+      });
+
+      stream_.Append(*this, query_tx_size, appendix, reserve_enough_capacity);
     }
     else
     {
