@@ -28,7 +28,7 @@ namespace network {
  *
  * @tparam RESULT The expected return type of the promise
  */
-template<class WORKER>
+template <class WORKER>
 class BackgroundedWork
 {
 public:
@@ -57,22 +57,22 @@ public:
 
   void WorkCycle()
   {
-    Lock lock(mutex_);
+    Lock  lock(mutex_);
     auto &worklist_for_state = workload_[PromiseState::WAITING];
-    auto workitem_iter = worklist_for_state.begin();
-    while(workitem_iter != worklist_for_state.end())
+    auto  workitem_iter      = worklist_for_state.begin();
+    while (workitem_iter != worklist_for_state.end())
     {
       auto workitem = *workitem_iter;
       if (!workitem)
       {
-        workitem_iter = worklist_for_state.erase( workitem_iter );
+        workitem_iter = worklist_for_state.erase(workitem_iter);
       }
       else
       {
         try
         {
-          auto r = workitem -> Work();
-          switch(r)
+          auto r = workitem->Work();
+          switch (r)
           {
           case PromiseState::WAITING:
             ++workitem_iter;
@@ -81,11 +81,11 @@ public:
           case PromiseState::FAILED:
           case PromiseState::TIMEDOUT:
             workload_[r].push_back(workitem);
-            workitem_iter = worklist_for_state.erase( workitem_iter );
+            workitem_iter = worklist_for_state.erase(workitem_iter);
             break;
           }
         }
-        catch(std::exception ex)
+        catch (std::exception ex)
         {
           // report exception here?
         }
@@ -111,7 +111,7 @@ public:
 
   Results Get(PromiseState state, std::size_t limit)
   {
-    Lock lock(mutex_);
+    Lock    lock(mutex_);
     Results results;
 
     auto &worklist_for_state = workload_[state];
@@ -125,7 +125,7 @@ public:
     {
       std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
       // TODO
-      //worklist_for_state.erase(worklist_for_state.begin(),
+      // worklist_for_state.erase(worklist_for_state.begin(),
       //                         worklist_for_state.begin() + static_cast<std::ptrdiff_t>(limit));
     }
     return results;
@@ -140,13 +140,8 @@ public:
   size_t CountCompleted()
   {
     Lock lock(mutex_);
-    return
-      workload_[PromiseState::SUCCESS].size()
-      +
-      workload_[PromiseState::TIMEDOUT].size()
-      +
-      workload_[PromiseState::FAILED].size()
-      ;
+    return workload_[PromiseState::SUCCESS].size() + workload_[PromiseState::TIMEDOUT].size() +
+           workload_[PromiseState::FAILED].size();
   }
 
   size_t CountSuccesses()
@@ -190,7 +185,7 @@ public:
   {
     Lock lock(mutex_);
     // TODO(kll) use bulk insert operators here..
-    for(auto new_work : new_works)
+    for (auto new_work : new_works)
     {
       workload_[PromiseState::WAITING].push_back(new_works);
     }
@@ -201,7 +196,7 @@ public:
   {
     Lock lock(mutex_);
     // TODO(kll) use bulk insert operators here..
-    for(auto new_work : new_works)
+    for (auto new_work : new_works)
     {
       std::weak_ptr<WORKER> wp(new_work);
       workload_[PromiseState::WAITING].push_back(wp);
@@ -209,26 +204,25 @@ public:
     Wake();
   }
 
-  template<class KEY>
+  template <class KEY>
   bool InFlight(const KEY &key) const
   {
     Lock lock(mutex_);
 
-    PromiseState promiseStates[] = {
-      PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT
-    };
+    PromiseState promiseStates[] = {PromiseState::WAITING, PromiseState::SUCCESS,
+                                    PromiseState::FAILED, PromiseState::TIMEDOUT};
 
-    for(int i=0;i<4;i++)
+    for (int i = 0; i < 4; i++)
     {
-      auto current_state = promiseStates[i];
+      auto  current_state      = promiseStates[i];
       auto &worklist_for_state = workload_[current_state];
-      auto workitem_iter = worklist_for_state.begin();
-      while(workitem_iter != worklist_for_state.end())
+      auto  workitem_iter      = worklist_for_state.begin();
+      while (workitem_iter != worklist_for_state.end())
       {
         auto workitem = *workitem_iter;
         if (!workitem)
         {
-          workitem_iter = worklist_for_state.erase( workitem_iter );
+          workitem_iter = worklist_for_state.erase(workitem_iter);
           continue;
         }
         if (workitem.Equals(key))
@@ -241,33 +235,32 @@ public:
     return false;
   }
 
-  template<class KEY>
+  template <class KEY>
   bool Cancel(const KEY &key)
   {
     bool r = false;
 
-    PromiseState promiseStates[] = {
-      PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT
-    };
+    PromiseState promiseStates[] = {PromiseState::WAITING, PromiseState::SUCCESS,
+                                    PromiseState::FAILED, PromiseState::TIMEDOUT};
 
-    for(int i=0;i<4;i++)
+    for (int i = 0; i < 4; i++)
     {
-      Lock lock(mutex_);
-      auto current_state = promiseStates[i];
+      Lock  lock(mutex_);
+      auto  current_state      = promiseStates[i];
       auto &worklist_for_state = workload_[current_state];
-      auto workitem_iter = worklist_for_state.begin();
-      while(workitem_iter != worklist_for_state.end())
+      auto  workitem_iter      = worklist_for_state.begin();
+      while (workitem_iter != worklist_for_state.end())
       {
         auto workitem = *workitem_iter;
         if (!workitem)
         {
-          workitem_iter = worklist_for_state.erase( workitem_iter );
+          workitem_iter = worklist_for_state.erase(workitem_iter);
           continue;
         }
         if (workitem.Equals(key))
         {
-          workitem_iter = worklist_for_state.erase( workitem_iter );
-          r = true;
+          workitem_iter = worklist_for_state.erase(workitem_iter);
+          r             = true;
           continue;
         }
         ++workitem_iter;
@@ -277,9 +270,9 @@ public:
   }
 
 private:
-  WorkLoad                     workload_;
-  Mutex                        mutex_; //{__LINE__, __FILE__};
-  CondVar                      cv_;
+  WorkLoad workload_;
+  Mutex    mutex_;  //{__LINE__, __FILE__};
+  CondVar  cv_;
 };
 
 }  // namespace network

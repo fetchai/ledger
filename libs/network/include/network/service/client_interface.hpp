@@ -84,7 +84,8 @@ public:
                      " failed!");
 
       prom->Fail(serializers::SerializableException(
-          error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request in " __FILE__ )));
+          error::COULD_NOT_DELIVER,
+          byte_array::ConstByteArray("Could not deliver request in " __FILE__)));
 
       RemovePromise(prom->id());
     }

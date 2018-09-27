@@ -57,7 +57,8 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
     // HMM(KLL) - I suspect we should kill all the other promises as    well here.
     FETCH_LOG_DEBUG(LOGGING_NAME, "Call failed!");
     prom->Fail(serializers::SerializableException(
-        error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request in " __FILE__ )));
+        error::COULD_NOT_DELIVER,
+        byte_array::ConstByteArray("Could not deliver request in " __FILE__)));
   }
 
   return prom;

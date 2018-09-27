@@ -126,14 +126,14 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
 
     // update our desired
-    //bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
+    // bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
 
-    //if (new_peer && trusted_peer)
+    // if (new_peer && trusted_peer)
     //{
     //  FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
-   //   desired_peers_.insert(address);
-   // }
+    //   desired_peers_.insert(address);
+    // }
 
     if (!trusted_peer)
     {

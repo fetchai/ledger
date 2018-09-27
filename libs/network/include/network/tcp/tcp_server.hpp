@@ -22,6 +22,7 @@
 #include "network/management/connection_register.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/tcp/client_connection.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 
 #include "network/fetch_asio.hpp"
 
@@ -98,6 +99,8 @@ private:
   std::mutex                                startMutex_;
   bool                                      stopping_ = false;
   bool                                      running_  = false;
+
+  AtomicInflightCounter<TCPServer>          inflight_counter_;
 };
 }  // namespace network
 }  // namespace fetch

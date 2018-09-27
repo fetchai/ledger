@@ -25,6 +25,7 @@ TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_m
   : network_manager_{network_manager}
   , port_{port}
   , request_mutex_{}
+  , inflight_counter_{}
 {
   LOG_STACK_TRACE_POINT;
 
@@ -99,6 +100,7 @@ void TCPServer::Start()
           FETCH_LOG_WARN(LOGGING_NAME, "LISTENING to ", port_);
           running_ = true;
           Accept(acceptor);
+          inflight_counter_.Completed(1);
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
       }

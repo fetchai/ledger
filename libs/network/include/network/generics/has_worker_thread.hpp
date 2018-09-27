@@ -37,14 +37,15 @@ private:
   using Thread       = std::thread;
   using ThreadP      = std::shared_ptr<Thread>;
   using Target       = TARGET;
-  using WorkFunc     = std::function<void (void)>;
+  using WorkFunc     = std::function<void(void)>;
+
 public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
 
-  HasWorkerThread(Target *target, std::function<void (void)> workcycle)
+  HasWorkerThread(Target *target, std::function<void(void)> workcycle)
   {
     workcycle_ = workcycle;
-    target_ = target;
+    target_    = target;
     if (!target_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured in construction.");
@@ -75,21 +76,24 @@ protected:
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured, stopping thread.");
       return;
     }
-    while(1)
+    while (1)
     {
-      if (shutdown_.load()) return;
+      if (shutdown_.load())
+        return;
       {
         target_->Wait(100);
       }
-      if (shutdown_.load()) return;
+      if (shutdown_.load())
+        return;
       workcycle_();
-      if (shutdown_.load()) return;
+      if (shutdown_.load())
+        return;
     }
   }
-  Target *target_;
-  ThreadP thread_;
+  Target *     target_;
+  ThreadP      thread_;
   ShutdownFlag shutdown_;
-  WorkFunc workcycle_;
+  WorkFunc     workcycle_;
 };
 
 }  // namespace network

@@ -33,8 +33,8 @@ class LaneRemoteControl : public p2p::LaneManagement
 public:
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  using Mutex   = mutex::Mutex;
-  using Promise = service::Promise;
+  using Mutex                = mutex::Mutex;
+  using Promise              = service::Promise;
   using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
   explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
@@ -48,19 +48,19 @@ public:
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
   ~LaneRemoteControl() override                           = default;
 
-  
-
   void Shutdown(LaneIndex lane) override
   {
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      try {
+      try
+      {
         auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
         FETCH_LOG_PROMISE();
         p->Wait();
       }
-      catch (...) {
+      catch (...)
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane shutdown call failed.");
         throw;
       }
@@ -72,11 +72,13 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      try {
+      try
+      {
         auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
         return p->As<uint32_t>();
       }
-      catch (...) {
+      catch (...)
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane GetLaneNumber call");
         throw;
       }
@@ -92,11 +94,13 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      try {
+      try
+      {
         auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
         return p->As<int>();
       }
-      catch (...) {
+      catch (...)
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane INCOMING_PEERS call");
         throw;
       }
@@ -114,11 +118,13 @@ public:
 
     if (ptr)
     {
-      try {
+      try
+      {
         auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
         return p->As<int>();
       }
-      catch (...) {
+      catch (...)
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane OUTGOING_PEERS call");
         throw;
       }
@@ -136,11 +142,13 @@ public:
 
     if (ptr)
     {
-      try {
+      try
+      {
         ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
         return;
       }
-      catch (...) {
+      catch (...)
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane USE_THESE_PEERS call");
         throw;
       }
@@ -161,7 +169,7 @@ private:
 
     FETCH_LOCK(mutex_);
 
-    return storage_unit_ -> GetClientForLane(lane);
+    return storage_unit_->GetClientForLane(lane);
   }
 
   StorageUnitClientPtr storage_unit_;

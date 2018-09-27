@@ -142,22 +142,63 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    //FETCH_LOG_WARN(LOGGING_NAME, "Constellation Trying to add lane connection at ", "127.0.0.1:", lane_port);
+    // FETCH_LOG_WARN(LOGGING_NAME, "Constellation Trying to add lane connection at ", "127.0.0.1:",
+    // lane_port);
     //// establish the connection to the lane
-    //auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
+    // auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
     //// allow the remote control to use connection
-    //lane_control_.AddClient(i, client);
+    // lane_control_.AddClient(i, client);
 
     lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
   }
 
-  auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(20000));
-  if (count != 4)
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
+  network::FutureTimepoint wait_until(std::chrono::seconds(30));
+  if (network::AtomicInflightCounter<network::TCPServer>::Wait(wait_until))
   {
-    TODO_FAIL("Could not connect all lanes.");
+    FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
+  }
+  else
+  {
+    TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
+  auto count =
+      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+  if (count == num_lanes_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
+  }
+
+
+
+  // OK, it's been a while, let's try those missing lane services again...
+
+  lane_data.clear();
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    if (!storage_->ClientForLaneConnected(i))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
+      lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+    }
+  }
+  if (!lane_data.empty())
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // just a hail-mary to see if the sockets start.
+    auto count =
+      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+    if (count == num_lanes_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
+    }
+    else
+    {
+      FETCH_LOG_ERROR("Could not connect all lanes.");
+      return;
+    }
+  }
 
   execution_manager_->Start();
   block_coordinator_.Start();

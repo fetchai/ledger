@@ -27,15 +27,13 @@ namespace network {
 class AtomicStateMachine
 {
 public:
-
   using mutex_type = fetch::mutex::Mutex;
-  using lock_type = std::lock_guard<mutex_type>;
+  using lock_type  = std::lock_guard<mutex_type>;
 
   AtomicStateMachine()
-  {
-  }
+  {}
 
-  AtomicStateMachine(std::initializer_list<std::pair<int,int>> transitions)
+  AtomicStateMachine(std::initializer_list<std::pair<int, int>> transitions)
   {
     allowed_.insert(transitions.begin(), transitions.end());
   }
@@ -57,7 +55,8 @@ public:
     auto txn = std::make_pair(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
-      throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state) + " not allowed.");
+      throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state) +
+                             " not allowed.");
     }
     return true;
   }
@@ -99,9 +98,10 @@ public:
   {
     return 0;
   }
+
 private:
-  mutex_type mutex_{__LINE__, __FILE__};
-  std::atomic<int> state_{0};
+  mutex_type                    mutex_{__LINE__, __FILE__};
+  std::atomic<int>              state_{0};
   std::set<std::pair<int, int>> allowed_;
 };
 
