@@ -65,8 +65,6 @@ public:
 
   ~TCPClientImplementation()
   {
-    FETCH_LOG_ERROR("WTF closed! ------------------- ", port_);
-
     if (!Closed() && !posted_close_)
     {
       Close();
@@ -220,7 +218,6 @@ public:
 
   void Close() override
   {
-    FETCH_LOG_ERROR("WTF closed by CLOSE! ------------------- ", port_);
     std::lock_guard<mutex_type> lock(io_creation_mutex_);
     posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
@@ -310,7 +307,6 @@ private:
 
       if (!previously_connected)
       {
-        FETCH_LOG_INFO("SignalConnectionSuccess ------------------- ", port_);
         SignalConnectionSuccess();
       }
     }

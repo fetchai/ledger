@@ -78,7 +78,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
-  , lane_control_(num_lanes_)
+  , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
@@ -138,8 +138,8 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
 
-  std::vector<std::pair<byte_array::ByteArray, uint16_t>> lane_data;
-  for (uint32_t i = 0; i < num_lanes_; ++i)
+  std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> lane_data;
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
     //FETCH_LOG_WARN(LOGGING_NAME, "Constellation Trying to add lane connection at ", "127.0.0.1:", lane_port);
@@ -148,17 +148,16 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     //// allow the remote control to use connection
     //lane_control_.AddClient(i, client);
 
-    lane_data.push_back(std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port));
+    lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
   }
 
-  auto clients = storage_->AddLaneConnections<TCPClient>(lane_data);
-  for (uint32_t i = 0; i < num_lanes_; ++i)
+  auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(20000));
+  if (count != 4)
   {
-    lane_control_.AddClient(i, clients[i]);
+    TODO_FAIL("Could not connect all lanes.");
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "I appear to have some lanes...");
-
+  FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
 
   execution_manager_->Start();
   block_coordinator_.Start();
@@ -209,7 +208,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Stop();
   execution_manager_->Stop();
 
-  lane_control_.ClearClients();
   storage_.reset();
 
   lane_services_.Stop();

@@ -28,6 +28,7 @@
 #include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/backgrounded_work.hpp"
+#include "network/generics/has_worker_thread.hpp"
 
 #include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"
@@ -42,6 +43,8 @@ namespace ledger {
 
 class StorageUnitClient : public StorageUnitInterface
 {
+private:
+  class LaneConnectorWorker;
 public:
   struct ClientDetails
   {
@@ -49,24 +52,31 @@ public:
     std::atomic<uint32_t> lane;
   };
 
-  using ServiceClient        = service::ServiceClient;
-  using SharedServiceClient  = std::shared_ptr<ServiceClient>;
-  using WeakServiceClient    = std::weak_ptr<ServiceClient>;
-  using SharedServiceClients = std::vector<SharedServiceClient>;
-  using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
-  using Handle               = ClientRegister::connection_handle_type;
-  using NetworkManager       = fetch::network::NetworkManager;
-  using LaneIndex            = LaneIdentity::lane_type;
-  using PromiseState         = fetch::service::PromiseState;
-  using AtomicStateMachine   = network::AtomicStateMachine;
-  using Promise              = service::Promise;
-  using FutureTimepoint      = network::FutureTimepoint;
+  using LaneIndex               = LaneIdentity::lane_type;
+  using ServiceClient           = service::ServiceClient;
+  using SharedServiceClient     = std::shared_ptr<ServiceClient>;
+  using WeakServiceClient       = std::weak_ptr<ServiceClient>;
+  using SharedServiceClients    = std::map<LaneIndex, SharedServiceClient>;
+  using ClientRegister          = fetch::network::ConnectionRegister<ClientDetails>;
+  using Handle                  = ClientRegister::connection_handle_type;
+  using NetworkManager          = fetch::network::NetworkManager;
+  using PromiseState            = fetch::service::PromiseState;
+  using AtomicStateMachine      = network::AtomicStateMachine;
+  using Promise                 = service::Promise;
+  using FutureTimepoint         = network::FutureTimepoint;
+  using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
+  using Worker                  = LaneConnectorWorker;
+  using WorkerP                 = std::shared_ptr<Worker>;
+  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
-  {}
+  {
+    
+  }
 
   StorageUnitClient(StorageUnitClient const &) = delete;
   StorageUnitClient(StorageUnitClient &&)      = delete;
@@ -76,12 +86,11 @@ public:
 
   void SetNumberOfLanes(LaneIndex count)
   {
-    lanes_.resize(count);
     SetLaneLog2(count);
     assert(count == (1u << log2_lanes_));
   }
 
-
+private:
   class LaneConnectorWorker : public AtomicStateMachine
   {
   public:
@@ -109,8 +118,11 @@ public:
     size_t lane_;
     uint16_t port_;
     std::string name_;
+    std::chrono::milliseconds timeout_;
+    size_t max_attempts_{10};
 
-    LaneConnectorWorker(size_t lane, SharedServiceClient client, const std::string &name)
+    LaneConnectorWorker(size_t lane, SharedServiceClient client, const std::string &name,
+                        const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
     {
       lane_ = lane;
 
@@ -138,15 +150,13 @@ public:
       client_ = client;
       attempts_ = 0;
       name_ = name;
+      timeout_ = timeout;
     }
+
     static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
 
     virtual ~LaneConnectorWorker()
     {
-      if (client_)
-      {
-        client_->Close();
-      }
     }
 
     PromiseState Work()
@@ -188,7 +198,7 @@ public:
       auto x = PossibleNewStateImpl(currentstate);
       if (x && x != currentstate)
       {
-        FETCH_LOG_WARN(LOGGING_NAME," Statechange ", lane_, " from ", name(currentstate), " -> ", name(x));
+        FETCH_LOG_DEBUG(LOGGING_NAME," Statechange ", lane_, " from ", name(currentstate), " -> ", name(x));
       }
       return x;
     }
@@ -204,7 +214,7 @@ public:
       case INITIALISING:
         {
           attempts_++;
-          if (attempts_>10)
+          if (attempts_ > max_attempts_)
           {
             return TIMEDOUT;
           }
@@ -225,13 +235,13 @@ public:
         {
           if (!client_->is_alive())
           {
-            FETCH_LOG_WARN(LOGGING_NAME," Lane ", lane_, " (", name_, ") not yet alive.");
+            FETCH_LOG_DEBUG(LOGGING_NAME," Lane ", lane_, " (", name_, ") not yet alive.");
             attempts_++;
-            if (attempts_>10)
+            if (attempts_ > max_attempts_)
             {
               return TIMEDOUT;
             }
-            next_attempt_.SetMilliseconds(1000);
+            next_attempt_.Set(timeout_ / max_attempts_);
             return SNOOZING;
           }
           ping_ = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
@@ -259,7 +269,7 @@ public:
                 lane_prom_  = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
                 count_prom_ = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
                 id_prom_    = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-                next_attempt_.SetMilliseconds(2000);
+                next_attempt_.Set(timeout_ * 2);
                 return QUERYING;
               }
             }
@@ -309,173 +319,121 @@ public:
     }
   };
 
-
-  template <typename T>
-  std::vector<WeakServiceClient> AddLaneConnections(const std::vector<std::pair<byte_array::ByteArray, uint16_t>> &lanes)
+  void WorkCycle(void)
   {
-    using BackgroundedWork = network::BackgroundedWork<LaneConnectorWorker>;
-    using Worker           = LaneConnectorWorker;
-    using WorkerP          = std::shared_ptr<Worker>;
+    auto p = bg_work_.CountPending();
 
-    BackgroundedWork workers;
-    std::map<size_t, WorkerP> by_number;
+    bg_work_.WorkCycle();
 
-    for(size_t i=0;i<lanes.size();i++)
+    if (p != bg_work_.CountPending() || bg_work_.CountSuccesses()>0)
     {
-      SharedServiceClient client = register_.template CreateServiceClient<T>(network_manager_, lanes[i].first, lanes[i].second);
-      std::string name;
-      name += std::string(lanes[i].first);
-      name += ":";
-      name += std::to_string(lanes[i].second);
-      by_number[i] = std::make_shared<LaneConnectorWorker>(i,client, name);
-      workers.Add(by_number[i]);
+
+      LaneIndex total_lanecount = 0;
+
+      FETCH_LOG_DEBUG(LOGGING_NAME," PEND=", bg_work_.CountPending());
+      FETCH_LOG_DEBUG(LOGGING_NAME," SUCC=", bg_work_.CountSuccesses());
+      FETCH_LOG_DEBUG(LOGGING_NAME," FAIL=", bg_work_.CountFailures());
+      FETCH_LOG_DEBUG(LOGGING_NAME," TOUT=", bg_work_.CountTimeouts());
+
+      for(auto &successful_worker : bg_work_.Get(PromiseState::SUCCESS, 1000))
+      {
+        auto connector = successful_worker;
+        if (connector)
+        {
+          auto lanenum = connector->lane_;
+          FETCH_LOG_VARIABLE(lanenum);
+          FETCH_LOG_DEBUG(LOGGING_NAME," PROCESSING lane ", lanenum);
+
+          WeakServiceClient wp(connector -> client_);
+          LaneIndex lane;
+          LaneIndex total_lanes;
+
+          connector->lane_prom_->As(lane);
+          connector->count_prom_->As(total_lanes);
+
+          lanes_[lane] = std::move(connector->client_);
+
+          if (!total_lanecount)
+          {
+            total_lanecount = total_lanes;
+          }
+          else
+          {
+            assert(total_lanes == total_lanecount);
+          }
+
+          SetLaneLog2(uint32_t(lanes_.size()));
+
+          crypto::Identity lane_identity;
+          connector->id_prom_->As(lane_identity);
+          // TODO(issue 24): Verify expected identity
+
+          {
+            auto details      = register_.GetDetails(lanes_[lane]->handle());
+            details->identity = lane_identity;
+          }
+        }
+      }
+      FETCH_LOG_DEBUG(LOGGING_NAME,"Lanes Connected   :", lanes_.size());
+      FETCH_LOG_DEBUG(LOGGING_NAME,"log2_lanes_       :", log2_lanes_);
+      FETCH_LOG_DEBUG(LOGGING_NAME,"total_lanecount   :", total_lanecount);
     }
-
-
-    while(workers.CountPending() > 0)
+  }
+public:
+  template <typename T>
+  size_t AddLaneConnectionsWaiting(
+    const std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> &lanes,
+    const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
+  {
+    AddLaneConnections<T>(lanes, timeout);
+    while(bg_work_.CountPending() > 0)
     {
-      FETCH_LOG_WARN(LOGGING_NAME," TICK!");
-      workers.WorkCycle();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME," PEND=", workers.CountPending());
-    FETCH_LOG_WARN(LOGGING_NAME," SUCC=", workers.CountSuccesses());
-    FETCH_LOG_WARN(LOGGING_NAME," FAIL=", workers.CountFailures());
-    FETCH_LOG_WARN(LOGGING_NAME," TOUT=", workers.CountTimeouts());
+    bg_work_.DiscardFailures();
+    bg_work_.DiscardTimeouts();
 
-    if (workers.CountSuccesses() != lanes.size())
-    {
-      TODO_FAIL("Could not connect all lanes ", workers.CountSuccesses(), "!=", lanes.size());
-    }
-
-    std::vector<WeakServiceClient> results;
-    for(size_t i=0;i<lanes.size();i++)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME," PROCESSING ", i);
-      WorkerP connector = by_number[i];
-      WeakServiceClient wp(connector -> client_);
-      results.push_back(wp);
-
-      LaneIndex lane;
-      LaneIndex total_lanes;
-
-      FETCH_LOG_WARN(LOGGING_NAME," GETTING STUFFS FROM ", i);
-      connector->lane_prom_->As(lane);
-      connector->count_prom_->As(total_lanes);
-
-      if (total_lanes > lanes_.size())
-      {
-        FETCH_LOG_WARN(LOGGING_NAME," OMG RESIZE ", i);
-        lanes_.resize(total_lanes);
-        SetLaneLog2(uint32_t(lanes_.size()));
-        assert(lanes_.size() == (1u << log2_lanes_));
-      }
-
-      FETCH_LOG_WARN(LOGGING_NAME,"WoooOOOOoooo Crypt for ", i);
-      crypto::Identity lane_identity;
-      connector->id_prom_->As(lane_identity);
-      // TODO(issue 24): Verify expected identity
-
-      assert(lane < lanes_.size());
-      lanes_[lane] = std::move(connector->client_);
-      FETCH_LOG_WARN(LOGGING_NAME,"Lane stored for ", i);
-
-      {
-        auto details      = register_.GetDetails(lanes_[lane]->handle());
-        details->identity = lane_identity;
-      }
-    }
-    FETCH_LOG_WARN(LOGGING_NAME,"DONE!", lanes_.size());
-    return results;
+    return lanes_.size();
   }
 
   template <typename T>
-  WeakServiceClient AddLaneConnection(byte_array::ByteArray const &host, uint16_t const &port)
+  void AddLaneConnections(
+    const std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> &lanes,
+    const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
-    SharedServiceClient client =
+    if (!workthread_)
+    {
+      workthread_= std::make_shared<BackgroundedWorkThread>(
+        &bg_work_,
+        [this](){ this -> WorkCycle(); } );
+    }
+
+    for(auto const &lane : lanes)
+    {
+      auto lanenum = lane.first;
+      auto host = lane.second.first;
+      auto port = lane.second.second;
+      SharedServiceClient client =
         register_.template CreateServiceClient<T>(network_manager_, host, port);
+      std::string name = std::string(host) + ":" + std::to_string(port);
+      auto worker = std::make_shared<LaneConnectorWorker>(
+          lanenum,
+          client,
+          name,
+          std::chrono::milliseconds(timeout));
+      bg_work_.Add(worker);
+    }
+  }
 
-    // Waiting for connection to be open
-    bool connection_timeout = false;
-    for (std::size_t n = 0; n < 10; ++n)
+  SharedServiceClient GetClientForLane(LaneIndex lane)
+  {
+    auto iter = lanes_.find(lane);
+    if (iter != lanes_.end())
     {
-
-      // ensure the connection is live
-      if (client->is_alive())
-      {
-        // make the client call
-        auto p = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-
-        FETCH_LOG_PROMISE();
-        if (p->Wait(1000, false))
-        {
-          if (p->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
-          {
-            connection_timeout = true;
-          }
-          break;
-        }
-      }
-      else
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds{200});
-      }
+      return iter -> second;
     }
-
-    if (connection_timeout)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Connection timed out - closing in StorageUnitClient::AddLaneConnection:1:");
-      client->Close();
-      client.reset();
-      return {};
-    }
-
-    // Exchanging info
-    auto p1 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-    auto p2 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-    auto p3 = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-
-    try {
-
-      FETCH_LOG_PROMISE();
-      if ((!p1->Wait(1000, true)) || (!p2->Wait(1000, true)) || (!p3->Wait(1000, true)))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Client timeout when trying to get identity details.");
-        client->Close();
-        client.reset();
-        return {};
-      }
-
-    }
-    catch (...) {
-      FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING StorageUnitClient get details from ", host, ":", port);
-        throw;
-      }
-
-    LaneIndex lane        = p1->As<LaneIndex>();
-    LaneIndex total_lanes = p2->As<LaneIndex>();
-    if (total_lanes > lanes_.size())
-    {
-      lanes_.resize(total_lanes);
-      SetLaneLog2(uint32_t(lanes_.size()));
-      assert(lanes_.size() == (1u << log2_lanes_));
-    }
-
-    crypto::Identity lane_identity;
-    p3->As(lane_identity);
-    // TODO(issue 24): Verify expected identity
-
-    assert(lane < lanes_.size());
-    lanes_[lane] = client;
-
-    {
-      auto details      = register_.GetDetails(client->handle());
-      details->identity = lane_identity;
-    }
-
-    return client;
+    return SharedServiceClient();
   }
 
   void AddTransaction(chain::VerifiedTransaction const &tx) override
@@ -483,7 +441,7 @@ public:
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
     auto        res     = fetch::storage::ResourceID(tx.digest());
-    std::size_t lane    = res.lane(log2_lanes_);
+    LaneIndex lane    = res.lane(log2_lanes_);
     auto        promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::SET, res, tx);
 
     FETCH_LOG_PROMISE();
@@ -495,7 +453,7 @@ public:
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
     auto        res     = fetch::storage::ResourceID(digest);
-    std::size_t lane    = res.lane(log2_lanes_);
+    LaneIndex lane    = res.lane(log2_lanes_);
     auto        promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::GET, res);
     tx                  = promise->As<chain::VerifiedTransaction>();
 
@@ -504,7 +462,7 @@ public:
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
-    std::size_t lane = key.lane(log2_lanes_);
+    LaneIndex lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
         RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
@@ -515,7 +473,7 @@ public:
 
   Document Get(ResourceAddress const &key) override
   {
-    std::size_t lane = key.lane(log2_lanes_);
+    LaneIndex lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
         RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET, key.as_resource_id());
@@ -525,7 +483,7 @@ public:
 
   bool Lock(ResourceAddress const &key) override
   {
-    std::size_t lane = key.lane(log2_lanes_);
+    LaneIndex lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
         RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, key.as_resource_id());
@@ -535,7 +493,7 @@ public:
 
   bool Unlock(ResourceAddress const &key) override
   {
-    std::size_t lane = key.lane(log2_lanes_);
+    LaneIndex lane = key.lane(log2_lanes_);
 
     auto promise = lanes_[lane]->Call(
         RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, key.as_resource_id());
@@ -545,7 +503,7 @@ public:
 
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
-    std::size_t lane = key.lane(log2_lanes_);
+    LaneIndex lane = key.lane(log2_lanes_);
 
     auto promise =
         lanes_[lane]->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
@@ -558,9 +516,10 @@ public:
   void Commit(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (std::size_t i = 0; i < lanes_.size(); ++i)
+    for (auto lanedata : lanes_)
     {
-      auto promise = lanes_[i]->Call(
+      auto client = lanedata.second;
+      auto promise = client->Call(
           RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
@@ -575,9 +534,10 @@ public:
   void Revert(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (std::size_t i = 0; i < lanes_.size(); ++i)
+    for (auto lanedata : lanes_)
     {
-      auto promise = lanes_[i]->Call(
+      auto client = lanedata.second;
+      auto promise = client->Call(
           RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
@@ -615,9 +575,10 @@ public:
   bool IsAlive() const
   {
     bool alive = true;
-    for (auto &lane : lanes_)
+    for (auto &lanedata : lanes_)
     {
-      if (!lane->is_alive())
+      auto client = lanedata.second;
+      if (!client->is_alive())
       {
         alive = false;
         break;
@@ -632,10 +593,12 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  NetworkManager       network_manager_;
-  uint32_t             log2_lanes_ = 0;
-  ClientRegister       register_;
-  SharedServiceClients lanes_;
+  NetworkManager          network_manager_;
+  uint32_t                log2_lanes_ = 0;
+  ClientRegister          register_;
+  SharedServiceClients    lanes_;
+  BackgroundedWork        bg_work_;
+  BackgroundedWorkThreadP workthread_;
 };
 
 }  // namespace ledger

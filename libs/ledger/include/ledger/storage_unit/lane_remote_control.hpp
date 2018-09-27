@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/service/service_client.hpp"
 
@@ -34,10 +35,12 @@ public:
 
   using Mutex   = mutex::Mutex;
   using Promise = service::Promise;
+  using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
-  explicit LaneRemoteControl(std::size_t num_lanes)
-    : clients_(num_lanes)
-  {}
+  explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
+  {
+    storage_unit_ = storage_unit;
+  }
 
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
@@ -45,36 +48,7 @@ public:
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
   ~LaneRemoteControl() override                           = default;
 
-  void AddClient(LaneIndex lane, WeakService const &client)
-  {
-    FETCH_LOCK(mutex_);
-    clients_[lane] = client.lock();
-  }
-
-  void ClearClients()
-  {
-    FETCH_LOCK(mutex_);
-    clients_.clear();
-  }
-
-  void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) override
-  {
-    auto ptr = LookupLane(lane);
-    if (ptr)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Remote lane call to: ", host, ":", port);
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::CONNECT, host, port);
-
-      FETCH_LOG_PROMISE();
-      try {
-        p->Wait();
-      }
-      catch (...) {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane connect call to: ", host, ":", port);
-        throw;
-      }
-    }
-  }
+  
 
   void Shutdown(LaneIndex lane) override
   {
@@ -187,15 +161,11 @@ private:
 
     FETCH_LOCK(mutex_);
 
-#ifdef NDEBUG
-    return clients_[lane].lock();
-#else
-    return clients_.at(lane).lock();
-#endif
+    return storage_unit_ -> GetClientForLane(lane);
   }
 
-  mutable Mutex            mutex_{__LINE__, __FILE__};
-  std::vector<WeakService> clients_;
+  StorageUnitClientPtr storage_unit_;
+  mutable Mutex        mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger
