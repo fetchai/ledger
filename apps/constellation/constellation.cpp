@@ -195,7 +195,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     }
     else
     {
-      FETCH_LOG_ERROR("Could not connect all lanes.");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
       return;
     }
   }
