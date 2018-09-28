@@ -23,7 +23,7 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/serialisation_argument_wrapper.hpp"
+#include "core/serializers/serialisation_verbatim_wrapper.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "crypto/ecdsa.hpp"
@@ -147,7 +147,7 @@ public:
 
   byte_array::ConstByteArray const& DataForSigning() const
   {
-    //Update();
+    Update();
     return stream_->data();
   }
 
@@ -496,22 +496,39 @@ void TxDataForSigningC<U>::Update() const
     //stream.Append(*this);
     
     //tx_data_hash_.Reset();
+
+    std::cout << "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww" << std::endl;
+    std::cout << "Update():       tx_data = " << byte_array::ToHex(stream_->data()) << std::endl;
     tx_data_hash_->Update(stream.data());
   }
+}
+
+inline void printStream(serializers::ByteArrayBuffer::size_counter_type const& stream, byte_array::ConstByteArray const& label = "")
+{
+}
+
+inline void printStream(serializers::ByteArrayBuffer const& stream, byte_array::ConstByteArray const& label = "")
+{
+  std::cout << "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww" << std::endl;
+  std::cout << label << ": tx_data = " << byte_array::ToHex(stream.data()) << std::endl;
 }
 
 template <typename T, typename U>
 void Serialize(T &stream, TxDataForSigningC<U> const &tx)
 {
   MutableTransaction const &tx_ = tx.get();
-  stream.Append(tx.DataForSigning(), tx_.signatures());
+  //stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_, tx_.signatures_);
+  stream.Append(serializers::Verbatim{ tx.DataForSigning() }, tx_.signatures_);
+  printStream(stream, "Serialise()...)");
 }
 
 template <typename T, typename U>
 void Deserialize(T &stream, TxDataForSigningC<U> &tx)
 {
+  printStream(stream, "Deserialise()...)");
   MutableTransaction &tx_ = tx.get();
   stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
+  std::cout << "Deserialise[LEAVING]" << std::endl;
   tx.Reset();
 }
 

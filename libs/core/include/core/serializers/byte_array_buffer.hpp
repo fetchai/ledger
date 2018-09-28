@@ -28,6 +28,7 @@
 namespace fetch {
 namespace serializers {
 
+
 template<typename X=void>
 class ByteArrayBufferEx
 {
@@ -237,6 +238,7 @@ template<typename T>
 char const * const ByteArrayBufferEx<T>::LOGGING_NAME = "ByteArrayBuffer<...>";
 
 using ByteArrayBuffer = ByteArrayBufferEx<>;
+
 
 }  // namespace serializers
 }  // namespace fetch

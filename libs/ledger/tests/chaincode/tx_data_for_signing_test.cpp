@@ -42,12 +42,12 @@ namespace {
     }
   };
 
-  TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
+  TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
   {
-    for(std::size_t i=0; i<1; ++i)
+    for(std::size_t i=0; i<100; ++i)
     {
-      MutableTransaction tx {RandomTransaction(3, 1)};
-      std::cout << "tx[before] = " << std::endl << tx << std::endl;
+      MutableTransaction tx {RandomTransaction(3, 0)};
+      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       auto txdfs {TxDataForSigningCFactory(tx)};
       crypto::openssl::ECDSAPrivateKey<> key;
@@ -56,6 +56,42 @@ namespace {
       MutableTransaction::signatures_type::value_type const& sig = *tx.signatures().begin();
       EXPECT_TRUE(txdfs.Verify(sig));
       EXPECT_TRUE(tx.Verify());
+     }
+  }
+
+  TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
+  {
+    for(std::size_t i=0; i<100; ++i)
+    {
+      MutableTransaction tx {RandomTransaction(3, 3)};
+      tx.UpdateDigest();
+      ASSERT_TRUE(tx.Verify());
+      std::cout << "tx[before] = " << std::endl << tx << std::endl;
+
+      //crypto::openssl::ECDSAPrivateKey<> key;
+      //tx.Sign(key.KeyAsBin());
+
+      //crypto::openssl::ECDSAPrivateKey<> key1;
+      //tx.Sign(key1.KeyAsBin());
+
+      //crypto::openssl::ECDSAPrivateKey<> key2;
+      //tx.Sign(key2.KeyAsBin());
+
+
+      auto txdfs{ TxDataForSigningCFactory(tx) };
+      
+      serializers::ByteArrayBuffer stream;
+      stream << txdfs;
+
+      MutableTransaction tx_deser;
+      auto txdfs_deser{ TxDataForSigningCFactory(tx_deser) };
+      stream.Seek(0);
+      stream >> txdfs_deser;
+
+      tx_deser.UpdateDigest();
+
+      EXPECT_TRUE(tx_deser.Verify());
+      EXPECT_EQ(tx.digest(), tx_deser.digest());
      }
   }
 }  // namespace

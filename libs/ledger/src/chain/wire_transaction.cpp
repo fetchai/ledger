@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/script/variant.hpp"
+#include "core/serializers/serialisation_argument_wrapper.hpp"
 
 #include <sstream>
 
@@ -73,7 +74,9 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
   auto txdfs{TxDataForSigningCFactory(tx)};
   serializers::ByteArrayBuffer stream;
-  tx_v["data"] = byte_array::ToBase64(stream.Append(txdfs).data());
+  stream.Append(txdfs);
+  stream.Seek(0);
+  tx_v["data"] = byte_array::ToBase64(stream.data());
 
   std::stringstream str_stream;
   str_stream << tx_v;
