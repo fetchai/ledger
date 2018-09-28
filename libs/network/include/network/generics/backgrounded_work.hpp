@@ -93,6 +93,8 @@ public:
     }
   }
 
+  // A comment to provoke a retesting.
+
   void Wait(int milliseconds)
   {
     Lock lock(mutex_);
