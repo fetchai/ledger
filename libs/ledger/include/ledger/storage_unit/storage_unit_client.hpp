@@ -122,8 +122,9 @@ private:
     FutureTimepoint       timeout;
     size_t                max_attempts;
 
-    LaneConnectorWorker(size_t thelane, SharedServiceClient theclient, const std::string &thename,
-                        const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
+    LaneConnectorWorker(
+      size_t thelane, SharedServiceClient theclient, const std::string &thename,
+      const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
     {
       lane = thelane;
 
@@ -189,11 +190,6 @@ private:
     virtual int PossibleNewState(int currentstate)
     {
       auto x = PossibleNewStateImpl(currentstate);
-      if (x && x != currentstate)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, " Statechange ", lane, " from ", GetStateName(currentstate), " -> ",
-                        GetStateName(x));
-      }
       return x;
     }
 
