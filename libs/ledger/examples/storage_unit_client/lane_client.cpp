@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "common.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
@@ -28,9 +29,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/service/service_client.hpp"
-#include "storage/document_store_protocol.hpp"
 #include "network/tcp/tcp_client.hpp"
-#include "common.hpp"
+#include "storage/document_store_protocol.hpp"
 
 #include <iostream>
 using namespace fetch;
@@ -38,7 +38,7 @@ using namespace fetch;
 using namespace fetch::ledger;
 using namespace fetch::byte_array;
 
-using LaneIndex              = fetch::ledger::StorageUnitClient::LaneIndex;
+using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
 enum
 {
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   fetch::logger.DisableLogger();
   commandline::ParamsParser params;
   params.Parse(argc, argv);
-  uint32_t num_lanes = params.GetParam<uint32_t>("lane-count", 1);
+  uint32_t num_lanes       = params.GetParam<uint32_t>("lane-count", 1);
   uint16_t lane_port_start = 8080;
 
   std::cout << std::endl;
@@ -76,11 +76,11 @@ int main(int argc, char **argv)
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-    lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+    lane_data[i]             = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
   }
 
   auto count =
-    client.AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+      client.AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
   if (count != num_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");

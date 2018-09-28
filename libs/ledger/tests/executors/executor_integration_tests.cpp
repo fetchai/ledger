@@ -32,7 +32,7 @@
 #include <random>
 #include <thread>
 
-using LaneIndex              = fetch::ledger::StorageUnitClient::LaneIndex;
+using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
 using ::testing::_;
 
@@ -88,8 +88,8 @@ protected:
       lane_data[i] = std::make_pair(fetch::byte_array::ByteArray("127.0.0.1"), lane_port);
     }
 
-    auto count = storage_ -> AddLaneConnectionsWaiting<TCPClient>(
-      lane_data, std::chrono::milliseconds(30000));
+    auto count =
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
     if (count != num_lanes)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");
