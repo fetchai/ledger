@@ -79,15 +79,21 @@ protected:
     while (1)
     {
       if (shutdown_.load())
+      {
         return;
+      }
       {
         target_->Wait(100);
       }
       if (shutdown_.load())
+      {
         return;
+      }
       workcycle_();
       if (shutdown_.load())
+      {
         return;
+      }
     }
   }
   Target *     target_;
