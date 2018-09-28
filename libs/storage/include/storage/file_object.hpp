@@ -536,7 +536,7 @@ public:
 
   void Erase()
   {
-    if(deletion_enabled_)
+    if (deletion_enabled_)
     {
       FreeBlocks(block_index_);
     }
