@@ -65,8 +65,8 @@ void sigmoid(ARRAY_TYPE error, ARRAY_TYPE &grads)
   }
 }
 
-template <typename T>
-void Relu(Variable<T> &cur_node)
+template <typename LayerType>
+void Relu(LayerType &cur_node)
 {
   assert(cur_node.prev.size() == 1);
 
@@ -86,15 +86,15 @@ void Relu(Variable<T> &cur_node)
   }
 };
 
-template <typename T>
-void Sum(Variable<T> &cur_node)
+template <typename LayerType>
+void Sum(LayerType &cur_node)
 {
   assert(cur_node.prev.size() == 1);
   cur_node.prev[0].grad += cur_node.grad;
 };
 
-template <typename T>
-void Dot(Variable<T> &cur_node)
+template <typename LayerType>
+void Dot(LayerType &cur_node)
 {
   assert(cur_node.prev.size() == 2);
 

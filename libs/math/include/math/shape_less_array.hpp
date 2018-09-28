@@ -48,6 +48,7 @@ public:
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
+  using self_type                     = ShapeLessArray<T, C>;
 
   /* Iterators for accessing and modifying the array */
   using iterator         = typename container_type::iterator;
@@ -149,8 +150,6 @@ public:
   {
     data().SetPaddedZero();
   }
-
-  using self_type = ShapeLessArray<T, C>;
 
   void Sort()
   {

@@ -37,11 +37,13 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
       .def(py::init<const std::size_t &, const std::size_t &>())
       .def(py::init<const fetch::byte_array::ByteArray>())
       .def(py::init<const std::string>())
-      .def_static("Zeros",
-                  (Matrix<T>(*)(std::size_t const &, std::size_t const &)) & Matrix<T>::Zeros)
-      .def_static("Zeros", (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::Zeros)
-      //      .def_static("Zeros", &Matrix<T>::Zeros(std::size_t height, std::size_t width))
-      .def_static("UniformRandom", &Matrix<T>::UniformRandom)
+      .def_static("Zeroes",
+                  (Matrix<T>(*)(std::size_t const &, std::size_t const &)) & Matrix<T>::Zeroes)
+      .def_static("Zeroes", (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::Zeroes)
+      .def_static("UniformRandom", (Matrix<T>(*)(std::size_t const &, std::size_t const &)) &
+                                       Matrix<T>::UniformRandom)
+      .def_static("UniformRandom",
+                  (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::UniformRandom)
       .def("Copy",
            [](Matrix<T> const &other) {
              Matrix<T> ret;

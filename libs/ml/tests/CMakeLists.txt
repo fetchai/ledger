@@ -18,3 +18,5 @@ add_fetch_gtest(computation_graph fetch-ml ml/computation_graph)
 
 
 add_fetch_gtest(variable fetch-ml ml/variable)
+
+add_fetch_gtest(layers fetch-ml ml/layers)

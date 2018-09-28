@@ -43,7 +43,7 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
       .def("padded_height", &RectangularArray<T>::padded_height)
       .def("padded_width", &RectangularArray<T>::padded_width)
 
-      .def_static("Zeros", &RectangularArray<T>::Zeros)
+      .def_static("Zeroes", &RectangularArray<T>::Zeroes)
       .def_static("UniformRandom", &RectangularArray<T>::UniformRandom)
 
       .def("Copy",

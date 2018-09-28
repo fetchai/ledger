@@ -139,16 +139,16 @@ public:
     this->data() = other.data().Copy();
   }
 
-  static Matrix Zeros(std::size_t const &n, std::size_t const &m)
+  static Matrix Zeroes(std::size_t const &n, std::size_t const &m)
   {
     Matrix ret;
     ret.LazyResize(n, m);
     ret.data().SetAllZero();
     return ret;
   }
-  static Matrix Zeros(std::vector<std::size_t> const &shape)
+  static Matrix Zeroes(std::vector<std::size_t> const &shape)
   {
-    return Zeros(shape[0], shape[1]);
+    return Zeroes(shape[0], shape[1]);
   }
 
   static Matrix UniformRandom(std::size_t const &n, std::size_t const &m)
@@ -162,7 +162,10 @@ public:
 
     return ret;
   }
-
+  static Matrix UniformRandom(std::vector<std::size_t> const &shape)
+  {
+    return UniformRandom(shape[0], shape[1]);
+  }
   template <typename F>
   void SetAll(F &val)
   {

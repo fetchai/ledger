@@ -40,6 +40,9 @@ namespace fetch {
 namespace ml {
 namespace computation_graph {
 
+template <typename T>
+class SessionManager;
+
 namespace helper_funcs {
 static inline bool IsOperator(char &c)
 {
@@ -593,59 +596,6 @@ public:
     ret = cur_node_ptr->array;
   }
 };
-
-namespace details {
-/**
- * nagivate backwards through computational graph
- * @param vr
- * @param v_set
- */
-template <typename T>
-void TopSortHelper(Variable<T> &v, std::unordered_set<Variable<T>> &vars_seen,
-                   std::vector<Variable<T>> &top_sort)
-{
-  bool is_in = (vars_seen.find(v) != vars_seen.end());
-
-  if ((!is_in) && (!v.is_leaf))
-  {
-    vars_seen.insert(v);
-    for (std::size_t i = 0; i < v.prev.size(); ++i)
-    {
-      details::TopSortHelper(v.prev[i], vars_seen, top_sort);
-    }
-    top_sort.push_back(v);
-  }
-}
-}  // namespace details
-
-template <typename T>
-std::vector<Variable<T>> TopSort(Variable<T> &v)
-{
-  std::unordered_set<Variable<T>> vars_seen{};
-  //  std::set<Variable<T>>    vars_seen{};
-  std::vector<Variable<T>> top_sort{};
-
-  details::TopSortHelper(v, vars_seen, top_sort);
-
-  return top_sort;
-}
-
-/**
- * builds a computation graph backwards
- * @param var
- * @return
- */
-template <typename T>
-void BackwardGraph(Variable<T> &var)
-{
-  std::vector<Variable<T>> tsorted = TopSort(var);
-  //  var.grad                         = T(var.data.shape());
-
-  for (std::size_t i = tsorted.size(); i > 0; --i)
-  {
-    tsorted[i - 1].Backward();
-  }
-}
 
 }  // namespace computation_graph
 }  // namespace ml

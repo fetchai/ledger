@@ -106,7 +106,7 @@ public:
     }
   }
 
-  static RectangularArray Zeros(std::size_t const &n, std::size_t const &m)
+  static RectangularArray Zeroes(std::size_t const &n, std::size_t const &m)
   {
     RectangularArray ret;
     ret.LazyResize(n, m);

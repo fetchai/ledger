@@ -1413,6 +1413,56 @@ void Sign(ARRAY_TYPE &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
+template <typename T, typename C, typename S>
+void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Matrix<T, C, S> &ret)
+{
+  assert((axis == 0) || (axis == 1));
+  std::vector<std::size_t> access_idx{0, 0};
+  if (axis == 0)
+  {
+    assert(ret.size() == obj1.width());
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = 0;
+      for (std::size_t j = 0; j < obj1.shape()[0]; ++j)
+      {
+        ret[i] += obj1(j, i);
+      }
+    }
+  }
+  else
+  {
+    assert(ret.size() == obj1.height());
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = 0;
+      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
+      {
+        ret[i] = obj1(i, j);
+      }
+    }
+  }
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis)
+{
+  assert((axis == 0) || (axis == 1));
+  if (axis == 0)
+  {
+    std::vector<std::size_t> new_shape{obj1.width(), 1};
+    linalg::Matrix<T, C, S>  ret{new_shape};
+    ReduceSum(obj1, axis, ret);
+    return ret;
+  }
+  else
+  {
+    std::vector<std::size_t> new_shape{obj1.height(), 1};
+    linalg::Matrix<T, C, S>  ret{new_shape};
+    ReduceSum(obj1, axis, ret);
+    return ret;
+  }
+}
+
 /**
  * Max function for two values
  * @tparam T

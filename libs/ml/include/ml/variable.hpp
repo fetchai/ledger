@@ -18,41 +18,80 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
+#include "ml/Backprop.hpp"
+#include "ml/session.hpp"
 
 namespace fetch {
 namespace ml {
-
-std::size_t variable_counter = 0;
 
 template <typename ArrayType>
 class Variable
 {
 public:
-  using function_signature = std::function<void(Variable<ArrayType> &)>;
-  //  using function_signature = std::function<void(ArrayType&, std::vector<Variable<ArrayType>>)
-  //  &>;
+  using type               = ArrayType;
+  using SelfType           = Variable<ArrayType>;
+  using SessionType        = SessionManager<ArrayType, SelfType>;
+  using function_signature = std::function<void(SelfType &)>;
 
-  //  using DataType = typename ArrayType::type;
+  std::size_t           id;
+  bool                  is_leaf = true;
+  std::vector<SelfType> prev;
+  function_signature    back_fn = nullptr;
+  ArrayType             data;
+  ArrayType             grad;
 
-  std::size_t                      id;
-  bool                             is_leaf;
-  std::vector<Variable<ArrayType>> prev;
-  function_signature               back_fn;
-  ArrayType                        data;
-  ArrayType                        grad;
+  std::vector<std::size_t> shape;
+  bool                     initialised = false;
 
-  Variable(std::vector<std::size_t> in_shape, function_signature in_b_fn = nullptr,
-           bool in_is_leaf = true)
+  Variable()
+  {}
+  Variable(SessionType &sess)
   {
-    data = ArrayType(in_shape);
-    data.Reshape(in_shape);
-    Setup(in_b_fn, in_is_leaf);
+    // set a distinct id for each element in the graph
+    sess.RegisterVariable(*this);
+  }
+  Variable(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
+  {
+    shape = {in_size, out_size};
+    sess.RegisterVariable(*this);
+  }
+  Variable(std::vector<std::size_t> const &in_shape, SessionType &sess)
+  {
+    shape = in_shape;
+    sess.RegisterVariable(*this);
   }
 
-  Variable(ArrayType in_data, function_signature in_b_fn = nullptr, bool in_is_leaf = true)
+  void AssignShape(std::vector<std::size_t> in_shape)
+  {
+    shape = in_shape;
+  }
+  void AssignBackFun(function_signature b_fn)
+  {
+    back_fn = b_fn;
+    is_leaf = false;
+  }
+  void Initialise(ArrayType in_data, function_signature b_fn = nullptr, bool in_is_leaf = true)
   {
     data = ArrayType(in_data);
-    Setup(in_b_fn, in_is_leaf);
+    Setup(b_fn, in_is_leaf);
+  }
+  void Initialise(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  {
+    data = ArrayType::UniformRandom(shape);
+    Setup(b_fn, in_is_leaf);
+  }
+
+  static Variable Zeroes(std::vector<std::size_t> const &new_shape, SessionType &sess)
+  {
+    Variable ret{sess};
+    ret.Initialise(ArrayType::Zeroes(new_shape));
+    return ret;
+  }
+  static Variable Zeroes(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
+  {
+    Variable ret{in_size, out_size};
+    ret.Initialise(ArrayType::Zeroes(in_size, out_size));
+    return ret;
   }
 
   bool operator==(Variable const &other) const
@@ -62,36 +101,78 @@ public:
 
   void Backward()
   {
+    assert(initialised);
     assert(back_fn);
-
-    for (std::size_t i = 0; i < grad.size(); ++i)
-    {
-      grad[i] = 1.0;
-    }
-
-    back_fn(*this);
+    Backprop(grad, back_fn, *this);
   }
 
-private:
-  void Setup(function_signature in_b_fn, bool in_is_leaf)
+  /**
+   * interface for the data contained in the variable
+   * @return
+   */
+  std::size_t size() const
   {
-    // must either be a leaf node or have a back prop function
-    assert(in_b_fn || in_is_leaf);
+    return data.size();
+  }
 
-    // set a distinct id for each element in the graph
-    this->id = variable_counter;
-    variable_counter += 1;
+  /**
+   * += operator
+   * @param other
+   * @return
+   */
+  void operator+=(ArrayType const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+  }
+  void operator+=(typename ArrayType::type const &scalar)
+  {
+    fetch::math::Add(*this, scalar, *this);
+  }
+  SelfType operator+(ArrayType const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+  SelfType operator+(typename ArrayType::type const &scalar)
+  {
+    fetch::math::Add(*this, scalar, *this);
+    return *this;
+  }
 
-    is_leaf = in_is_leaf;
-    back_fn = in_b_fn;
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type &operator[](
+      S const &i)
+  {
+    return this->data[i];
+  }
+
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type const &
+  operator[](S const &i) const
+  {
+    return this->data[i];
+  }
+
+  void Setup(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  {
+    assert(b_fn || in_is_leaf);
+    if (b_fn)
+    {
+      back_fn = b_fn;
+    }
+    is_leaf     = in_is_leaf;
+    initialised = true;
 
     grad = ArrayType(data.shape());
     grad.data().SetAllZero();
   }
 };
+
 }  // namespace ml
 }  // namespace fetch
 
+// Doing this template specialization lets us find instances of Variable<T> in an unordered_set of
+// them
 namespace std {
 template <typename ArrayType>
 struct hash<fetch::ml::Variable<ArrayType>>

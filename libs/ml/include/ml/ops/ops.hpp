@@ -19,7 +19,6 @@
 
 #include "math/free_functions/free_functions.hpp"
 #include "ml/ops/derivatives/derivatives.hpp"
-#include "ml/variable.hpp"
 
 namespace fetch {
 namespace ml {
@@ -39,17 +38,17 @@ class NDArrayIterator;
  * @param b
  * @return
  */
-template <typename T>
-Variable<T> Dot(Variable<T> &left, Variable<T> &right)
+template <typename LayerType, typename SessionType>
+LayerType Dot(LayerType &left, LayerType &right, SessionType &sess)
 {
   // define the derivative
-  std::function<void(Variable<T> &)> b_fn = [](Variable<T> &cur_node) {
+  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
     fetch::ml::ops::derivatives::Dot(cur_node);
   };
 
   // define the return variable with the Dot computation
-  Variable<T> ret = Variable<T>(fetch::math::Dot(left.data, right.data), b_fn, false);
-
+  LayerType ret{sess};
+  ret.Initialise(fetch::math::Dot(left.data, right.data), b_fn, false);
   ret.prev.push_back(left);
   ret.prev.push_back(right);
 
@@ -63,16 +62,21 @@ Variable<T> Dot(Variable<T> &left, Variable<T> &right)
  * @param y
  * @param ret
  */
-template <typename T>
-Variable<T> Relu(Variable<T> &left)
+template <typename LayerType, typename SessionType>
+LayerType Relu(LayerType &left, SessionType &sess)
 {
   // define the derivative
-  std::function<void(Variable<T> &)> b_fn = [](Variable<T> &cur_node) {
+  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
     fetch::ml::ops::derivatives::Relu(cur_node);
   };
 
   // set up the new return node and calculate Relu
-  Variable<T> ret{fetch::math::Maximum(left.data, T::Zeros(left.data.shape())), b_fn, false};
+  LayerType ret{sess};
+  ret.Initialise(fetch::math::Maximum(left.data, LayerType::Zeroes(left.data.shape(), sess).data),
+                 b_fn, false);
+  //  ret.Initialise(fetch::math::Maximum(left.data, LayerType::type::Zeroes(left.data.shape(),
+  //  sess)), b_fn, false);
+
   ret.prev.push_back(left);
 
   return ret;
@@ -82,18 +86,17 @@ Variable<T> Relu(Variable<T> &left)
  *
  * @return
  */
-template <typename T>
-Variable<T> Sum(Variable<T> &left)
+template <typename LayerType, typename SessionType>
+LayerType Sum(LayerType &left, std::size_t const axis, SessionType &sess)
 {
   // define the derivative
-  std::function<void(Variable<T> &)> b_fn = [](Variable<T> &cur_node) {
+  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
     fetch::ml::ops::derivatives::Sum(cur_node);
   };
 
-  // set up the return node and calculate sum
-  T sum_ret{1};
-  sum_ret[0] = fetch::math::Sum(left.data);
-  Variable<T> ret{sum_ret, b_fn, false};
+  LayerType ret{sess};
+  ret.Initialise(fetch::math::ReduceSum(left.data, axis), b_fn, false);
+
   ret.prev.push_back(left);
   return ret;
 }

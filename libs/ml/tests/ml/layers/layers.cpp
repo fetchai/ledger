@@ -16,66 +16,88 @@
 //
 //------------------------------------------------------------------------------
 
-//#include <cmath>
-//#include <iomanip>
-//#include <iostream>
-
-//#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
+#include "math/linalg/matrix.hpp"
+#include "ml/computation_graph/computation_graph.hpp"
+#include "ml/ops/ops.hpp"
+#include "ml/session.hpp"
+//#include "ml/variable.hpp"
 #include "ml/layers/layers.hpp"
 
-using namespace fetch::ml::layers;
+using namespace fetch::ml;
 
-using data_type      = double;
-using container_type = fetch::memory::SharedArray<data_type>;
-// using vector_register_type = typename container_type::vector_register_type;
-//#define N 200
-//
-// NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
-//{
-//  static fetch::random::LinearCongruentialGenerator gen;
-//  NDArray<data_type, container_type>                a1(n);
-//  for (std::size_t i = 0; i < n; ++i)
-//  {
-//    a1(i) = data_type(gen.AsDouble());
-//  }
-//  return a1;
-//}
-//
-// template <typename D>
-// using _S = fetch::memory::SharedArray<D>;
-//
-// template <typename D>
-// using _A = NDArray<D, _S<D>>;
-
-TEST(ndarray, layer_shapes_test)
+TEST(layers, simple_arithmetic)
 {
-  // set up a randomly initialised feed forward neural net
-  InputLayer<data_type> layer1(5);
-  ASSERT_TRUE(layer1.LayerSize() == 5);
+  using ArrayType = fetch::math::linalg::Matrix<double>;
+  using LayerType = fetch::ml::layers::Layer<ArrayType>;
+  //  using LayerType = fetch::ml::Variable<ArrayType>;
 
-  Layer<data_type> layer2(layer1, 100);
-  ASSERT_TRUE(layer2.InputLayerSize() == 5);
-  ASSERT_TRUE(layer2.LayerSize() == 100);
-  std::vector<std::size_t> test_shape{5, 100};
-  ASSERT_TRUE(layer2.WeightsMatrixShape() == test_shape);
+  SessionManager<ArrayType, LayerType> sess{};
 
-  Layer<data_type> layer3(layer2, 10);
-  ASSERT_TRUE(layer3.InputLayerSize() == 100);
-  ASSERT_TRUE(layer3.LayerSize() == 10);
-  test_shape = {100, 10};
-  ASSERT_TRUE(layer3.WeightsMatrixShape() == test_shape);
+  std::vector<std::size_t> l1_shape{2, 4};
+  std::vector<std::size_t> l2_shape{4, 1};
 
-  Layer<data_type> layer4(layer3, 1);
-  ASSERT_TRUE(layer4.InputLayerSize() == 10);
-  ASSERT_TRUE(layer4.LayerSize() == 1);
-  test_shape = {10, 1};
-  ASSERT_TRUE(layer4.WeightsMatrixShape() == test_shape);
+  LayerType l1{l1_shape, sess};
+  LayerType l2{l2_shape, sess};
+  l1.Initialise();
+  l2.Initialise();
+
+  int counter = -4;
+  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    {
+      l1.data.Set(i, j, counter);
+      counter += 1;
+    }
+  }
+
+  counter = -2;
+  for (std::size_t i = 0; i < l2_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l2_shape[1]; ++j)
+    {
+      l2.data.Set(i, j, counter);
+      counter += 1;
+    }
+  }
+
+  LayerType n1 = fetch::ml::ops::Dot(l1, l2, sess);
+  LayerType n2 = fetch::ml::ops::Relu(n1, sess);
+  LayerType n3 = fetch::ml::ops::Sum(n2, 0, sess);
+
+  sess.BackwardGraph(n1);
+
+  counter = -2;
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    ASSERT_TRUE(l1.grad[i] == counter);
+    ++counter;
+  }
+  counter = -2;
+  for (std::size_t i = 4; i < 8; ++i)
+  {
+    ASSERT_TRUE(l1.grad[i] == counter);
+    ++counter;
+  }
+  counter = -4;
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    ASSERT_TRUE(l2.grad[i] == counter);
+    ++counter;
+    ++counter;
+  }
+  counter = 1;
+  for (std::size_t i = 0; i < 2; ++i)
+  {
+    ASSERT_TRUE(n1.grad[i] == counter);
+  }
+  counter = 1;
+  for (std::size_t i = 0; i < 2; ++i)
+  {
+    ASSERT_TRUE(n1.grad[i] == counter);
+  }
 }
-
-// TEST(ndarray, faulty_reshape)
-//{
-//
-//
-//}

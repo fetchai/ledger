@@ -13,120 +13,135 @@
 //   distributed under the License is distributed on an "AS IS" BASIS,
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
-//   limitations under the License.
+//   limitations under the License.SessionManager
 //
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "ml/layers/base_layer.hpp"
+#include "ml/Backprop.hpp"
+#include "ml/session.hpp"
+#include "ml/variable.hpp"
 
 namespace fetch {
 namespace ml {
 namespace layers {
 
-/**
- * Special layer type that feeds data into the network; it has no weights matrix
- */
-template <typename DATA_TYPE>
-class InputLayer : public BaseLayer<DATA_TYPE>
+template <typename T>
+class Layer : public Variable<T>
 {
-  using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type      = BaseLayer<DATA_TYPE>;
-
 public:
-  InputLayer(std::size_t layer_size)
-    : base_type::BaseLayer(layer_size)
-  {}
+  using ArrayType          = T;
+  using SelfType           = Layer<ArrayType>;
+  using SessionType        = SessionManager<ArrayType, SelfType>;
+  using function_signature = std::function<void(SelfType &)>;
 
-  void AssignData(std::vector<DATA_TYPE> input_data)
+  std::size_t           id;
+  std::vector<SelfType> prev;
+  function_signature    back_fn;
+
+  std::vector<std::size_t> shape;
+
+  Layer() = default;
+  Layer(SessionType &sess)
   {
-    input_data_ = input_data;
+    // set a distinct id for each element in the graph
+    sess.RegisterVariable(*this);
+  }
+  Layer(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
+  {
+    shape = {in_size, out_size};
+    sess.RegisterVariable(*this);
+  }
+  Layer(std::vector<std::size_t> const &in_shape, SessionType &sess)
+  {
+    shape = in_shape;
+    sess.RegisterVariable(*this);
   }
 
-private:
-  std::vector<DATA_TYPE> input_data_;
-};
-
-/**
- * The base layer class.
- *
- * In general a layer has a size indicating the number of neurons
- *
- *
- */
-// template<typename DATA_TYPE, typename CONTAINER_TYPE = memory::SharedArray<DATA_TYPE>>
-template <typename DATA_TYPE>
-class Layer : public BaseLayer<DATA_TYPE>
-{
-  using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type      = BaseLayer<DATA_TYPE>;
-  using array_type     = math::NDArray<DATA_TYPE, container_type>;
-
-public:
-  /**
-   * Constructor that accepts the previous layer as the input to this layer, and the layer size
-   * @param input_layer
-   */
-  Layer &operator=(Layer const &other) = default;
-  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size)
-    : base_type(layer_size)
+  void AssignShape(std::vector<std::size_t> in_shape)
   {
-    AssignLayerConnection(input_layer, layer_size);
+    shape = in_shape;
   }
-  Layer(Layer &input_layer, std::size_t layer_size)
+  void AssignBackFun(function_signature b_fn)
   {
-    AssignLayerConnection(input_layer, layer_size);
+    back_fn       = b_fn;
+    this->is_leaf = false;
+  }
+  void Initialise(ArrayType in_data, function_signature b_fn = nullptr, bool in_is_leaf = true)
+  {
+    this->data = ArrayType(in_data);
+    Setup(b_fn, in_is_leaf);
+  }
+  void Initialise(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  {
+    this->data = ArrayType::UniformRandom(shape);
+    Setup(b_fn, in_is_leaf);
   }
 
-  /**
-   * helper function - returns the size of the inputs to this layer
-   * @return
-   */
-  std::size_t InputLayerSize()
+  static Layer Zeroes(std::vector<std::size_t> const &new_shape, SessionType &sess)
   {
-    return input_layer_size_;
+    Layer ret{sess};
+    ret.Initialise(ArrayType::Zeroes(new_shape));
+    return ret;
+  }
+  static Layer Zeroes(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
+  {
+    Layer ret{in_size, out_size};
+    ret.Initialise(ArrayType::Zeroes(in_size, out_size));
+    return ret;
   }
 
-  /**
-   * helper function - returns the shape of the weights matrix
-   * @return
-   */
-  std::vector<std::size_t> WeightsMatrixShape()
+  bool operator==(Layer const &other) const
   {
-    return weights_matrix_shape_;
+    return this->id == other.id;
   }
 
-private:
-  /**
-   * initialises the weights matrix with random number from -0.01 to 0.01
-   */
-  std::size_t              input_layer_size_;
-  std::vector<std::size_t> weights_matrix_shape_;
-
-  template <typename LAYER_TYPE>
-  void AssignLayerConnection(LAYER_TYPE input_layer, std::size_t new_layer_size)
+  std::size_t InputSize()
   {
-    // assign known sizes
-    this->SetLayerSize(new_layer_size);
-    input_layer_size_     = input_layer.LayerSize();
-    weights_matrix_shape_ = {InputLayerSize(), this->LayerSize()};
-
-    // instantiate the weights matrix
-    this->weights_matrix_ = ndarray_type(WeightsMatrixShape());
-    this->SetWeightsMatrix(this->weights_matrix_);
+    return this->data.shape()[0];
   }
 
-  void InitialiseWeightsMatrix()
+  std::size_t OutputSize()
   {
-    array_type arr{this->Size()};
+    return this->data.shape()[1];
+  }
 
-    for (std::size_t i = 0; i < this->Size(); ++i)
+  void Setup(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  {
+    assert(b_fn || in_is_leaf);
+    if (b_fn)
     {
-      arr[i] = 0;
+      back_fn = b_fn;
     }
+    this->is_leaf     = in_is_leaf;
+    this->initialised = true;
+
+    this->grad = ArrayType(this->data.shape());
+    this->grad.data().SetAllZero();
+  }
+
+  void Backward()
+  {
+    assert(this->initialised);
+    assert(back_fn);
+    Backprop(this->grad, back_fn, *this);
   }
 };
 
 }  // namespace layers
 }  // namespace ml
 }  // namespace fetch
+
+// Doing this template specialization lets us find instances of Variable<T> in an unordered_set of
+// them
+namespace std {
+template <typename ArrayType>
+struct hash<fetch::ml::layers::Layer<ArrayType>>
+{
+  std::size_t operator()(fetch::ml::layers::Layer<ArrayType> const &v) const
+  {
+    //    return &v.prev;
+    return v.id;
+  }
+};
+}  // namespace std
