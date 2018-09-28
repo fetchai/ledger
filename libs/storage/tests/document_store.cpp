@@ -31,35 +31,6 @@ TestStore store;
 
 uint64_t book = 1;
 
-void Add()
-{
-  std::cout << "=============  ADD  ==================" << std::endl;
-  ;
-  {
-    store.Set(ResourceAddress("Hello world"), "hello world");
-  }
-  ++book;
-  store.Commit(book);
-}
-
-void Remove()
-{
-  std::cout << "=============  REMOVE  ==================" << std::endl;
-  ;
-  --book;
-  store.Revert(book);
-}
-
-void Print()
-{
-  std::cout << std::endl;
-  auto doc = store.Get(ResourceAddress("Hello world"));
-  std::cout << "BOOK: " << book << " "
-            << "xxx" << std::endl;
-  std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
-  std::cout << "VALUE: " << doc.document << std::endl;
-}
-
 void Set(std::string const &key, std::string const &val)
 {
   std::cout << "Setting: " << key << " -> " << val << std::endl;
@@ -74,6 +45,10 @@ void PrintKey(std::string const &key)
   std::cout << doc.document << std::endl;
 }
 
+/**
+ * Demonstration of how the store (a dictionary), can commit and revert state
+ *
+ */
 int main()
 {
 

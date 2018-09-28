@@ -34,11 +34,10 @@ bool BasicFileCreation()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
 
-  FileObject<stack_type> file_object;
-
   ByteArray str;
   uint64_t  id;
   {
+    FileObject<stack_type> file_object;
     file_object.Load("document_data_c887.db", "doc_diff_c887.db", true);
 
     str.Resize(1 + (lfg() % 20000));
@@ -70,6 +69,9 @@ bool BasicFileCreation()
   {
     return false;
   }
+
+  file_object2.Flush();
+
   return true;
 }
 
@@ -77,9 +79,10 @@ template <std::size_t BS>
 bool MultipleFileCreation()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
+
   {
-    stack_type stack;
-    stack.New("document_data.db", "doc_diff.db");
+    FileObject<stack_type> file_object;
+    file_object.New("document_data.db", "doc_diff.db");
   }
 
   for (std::size_t i = 0; i < 10; ++i)
@@ -96,10 +99,12 @@ template <std::size_t BS>
 bool Overwriting()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type stack;
-  stack.New("document_data.db", "doc_diff.db");
 
-  FileObject<stack_type> file_object(stack);
+  FileObject<stack_type> file_object;
+  file_object.New("document_data.db", "doc_diff.db");
+
+  file_object.CreateNewFile();
+
   ByteArray              str("Hello world! This is a great world."), f("Fetch"), ret;
   file_object.Seek(0);
   file_object.Write(str.pointer(), str.size());
@@ -124,10 +129,12 @@ template <std::size_t BS>
 bool HashConsistency()
 {
   using stack_type = VersionedRandomAccessStack<FileBlockType<BS>>;
-  stack_type stack;
-  stack.New("document_data.db", "doc_diff.db");
 
-  FileObject<stack_type> file_object(stack);
+  FileObject<stack_type> file_object;
+  file_object.New("document_data.db", "doc_diff.db");
+
+  file_object.CreateNewFile();
+
   ByteArray              str;
 
   str.Resize(1 + (lfg() % 20000));
@@ -154,13 +161,17 @@ bool FileLoadValueConsistency()
   std::vector<uint64_t>  file_ids;
 
   {
-    stack_type stack;
-    stack.New("document_data.db", "doc_diffXX.db");
+    // Create new file to avoid tainting
+    {
+      FileObject<stack_type> file_object;
+      file_object.New("document_data.db", "doc_diffXX.db");
+    }
 
     for (std::size_t n = 0; n < 100; ++n)
     {
+      FileObject<stack_type> file_object;
+      file_object.Load("document_data.db", "doc_diffXX.db");
 
-      FileObject<stack_type> file_object(stack);
       ByteArray              str;
 
       str.Resize(1 + (lfg() % 2000));
@@ -169,6 +180,7 @@ bool FileLoadValueConsistency()
         str[j] = uint8_t(lfg() >> 9);
       }
 
+      file_object.CreateNewFile();
       file_object.Write(str.pointer(), str.size());
       file_ids.push_back(file_object.id());
       values.push_back(str);
@@ -176,7 +188,10 @@ bool FileLoadValueConsistency()
 
     for (std::size_t n = 0; n < 100; ++n)
     {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
+      FileObject<stack_type> file_object;
+      file_object.Load("document_data.db", "doc_diffXX.db");
+
+      file_object.SeekFile(file_ids[n]);
       file_object.Seek(0);
 
       ByteArray test;
@@ -192,12 +207,13 @@ bool FileLoadValueConsistency()
   }
 
   {
-    stack_type stack;
-    stack.Load("document_data.db", "doc_diffXX.db");
-
     for (std::size_t n = 0; n < 100; ++n)
     {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
+      FileObject<stack_type> file_object;
+      file_object.Load("document_data.db", "doc_diffXX.db");
+
+      file_object.SeekFile(file_ids[n]);
+
       file_object.Seek(0);
       ByteArray test;
 
@@ -274,13 +290,17 @@ bool FileLoadHashConsistency()
   std::vector<uint64_t>  file_ids;
 
   {
-    stack_type stack;
-    stack.New("document_data.db");  //,"doc_diffXX.db");
+    {
+      FileObject<stack_type> file_object;
+      file_object.New("document_data.db");
+    }
 
     for (std::size_t n = 0; n < 100; ++n)
     {
 
-      FileObject<stack_type> file_object(stack);
+      FileObject<stack_type> file_object;
+      file_object.Load("document_data.db");
+
       ByteArray              str;
 
       str.Resize(1 + (lfg() % 2000));
@@ -291,6 +311,7 @@ bool FileLoadHashConsistency()
 
       strings.push_back(str);
 
+      file_object.CreateNewFile();
       file_object.Write(str.pointer(), str.size());
       file_ids.push_back(file_object.id());
       hashes.push_back(crypto::Hash<crypto::SHA256>(str));
@@ -299,19 +320,20 @@ bool FileLoadHashConsistency()
 
       if (file_object.Hash() != hashes[n])
       {
-
         return false;
       }
     }
   }
 
   {
-    stack_type stack;
-    stack.Load("document_data.db");  //,"doc_diffXX.db");
-
     for (std::size_t n = 0; n < 100; ++n)
     {
-      FileObject<stack_type> file_object(stack, file_ids[n]);
+      FileObject<stack_type> file_object;
+
+      file_object.Load("document_data.db");
+
+      file_object.SeekFile(file_ids[n]);
+
       file_object.Seek(0);
 
       if (file_object.Hash() != hashes[n])
@@ -326,8 +348,20 @@ bool FileLoadHashConsistency()
 
 TEST(file_object, BasicFileCreation)
 {
+  ASSERT_TRUE(BasicFileCreation<1>());
   ASSERT_TRUE(BasicFileCreation<2>());
+  ASSERT_TRUE(BasicFileCreation<3>());
+  ASSERT_TRUE(BasicFileCreation<1024>());
 }
+
+//TEST(file_object, MultipleFileCreation)
+//{
+//  ASSERT_TRUE(MultipleFileCreation<1023>());
+//  ASSERT_TRUE(MultipleFileCreation<9>());
+//  ASSERT_TRUE(MultipleFileCreation<4>());
+//  ASSERT_TRUE(MultipleFileCreation<2>());
+//  ASSERT_TRUE(MultipleFileCreation<1>());
+//}
 
 TEST(file_object, FileSaveLoadFixedSize)
 {
@@ -337,16 +371,6 @@ TEST(file_object, FileSaveLoadFixedSize)
   ASSERT_TRUE((FileSaveLoadFixedSize<1, 0>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<2, 0>()));
   ASSERT_TRUE((FileSaveLoadFixedSize<4, 0>()));
-}
-
-/*
-TEST(file_object, MultipleFileCreation)
-{
-  ASSERT_TRUE(MultipleFileCreation<1>());
-  ASSERT_TRUE(MultipleFileCreation<2>());
-  ASSERT_TRUE(MultipleFileCreation<4>());
-  ASSERT_TRUE(MultipleFileCreation<9>());
-  ASSERT_TRUE(MultipleFileCreation<1023>());
 }
 
 TEST(file_object, Overwriting)
@@ -384,4 +408,3 @@ TEST(file_object, file_load_hash_consistency)
   ASSERT_TRUE(FileLoadHashConsistency<7>());
   ASSERT_TRUE(FileLoadHashConsistency<1023>());
 }
-*/
