@@ -123,8 +123,8 @@ private:
     size_t                max_attempts;
 
     LaneConnectorWorker(
-      size_t thelane, SharedServiceClient theclient, const std::string &thename,
-      const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
+        size_t thelane, SharedServiceClient theclient, const std::string &thename,
+        const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
     {
       lane = thelane;
 
