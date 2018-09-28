@@ -536,14 +536,14 @@ public:
 
   void Erase()
   {
-    if (deletion_enabled_)
+    if (deletion_enabled)
     {
       FreeBlocks(block_index_);
     }
     Flush();
   }
 
-  bool deletion_enabled_ = false;
+  bool deletion_enabled = false;
 
 protected:
   stack_type stack_;
