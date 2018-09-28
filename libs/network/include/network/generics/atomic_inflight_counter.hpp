@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <condition_variable>
+
 #include "network/generics/future_timepoint.hpp"
 
 namespace fetch {
