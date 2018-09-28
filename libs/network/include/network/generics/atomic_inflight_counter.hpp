@@ -33,14 +33,15 @@ class AtomicInflightCounter
 {
   using Counter = std::atomic<unsigned int>;
   using CondVar = std::condition_variable;
-  using Mutex        = std::mutex;
-  using Lock         = std::unique_lock<Mutex>;
+  using Mutex   = std::mutex;
+  using Lock    = std::unique_lock<Mutex>;
+
 private:
   typedef struct
   {
     Counter count;
     CondVar cv;
-    Mutex mutex;
+    Mutex   mutex;
   } TheCounter;
 
   static TheCounter &GetCounter()
@@ -50,12 +51,13 @@ private:
   }
 
   unsigned int my_count_;
+
 public:
   static constexpr char const *LOGGING_NAME = "AtomicInflightCounter<>";
 
   AtomicInflightCounter(unsigned int my_count = 1)
   {
-    my_count_ = my_count;
+    my_count_     = my_count;
     auto previous = GetCounter().count.fetch_add(my_count_);
     FETCH_LOG_INFO(LOGGING_NAME, "Inflight:", previous + my_count_);
   }
@@ -81,7 +83,7 @@ public:
   static bool Wait(const FutureTimepoint &until)
   {
     auto &the_counter = GetCounter();
-    while(1)
+    while (1)
     {
       if (until.IsDue())
       {

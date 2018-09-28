@@ -19,10 +19,10 @@
 
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/tcp/client_connection.hpp"
-#include "network/generics/atomic_inflight_counter.hpp"
 
 #include "network/fetch_asio.hpp"
 
@@ -100,7 +100,7 @@ private:
   bool                                      stopping_ = false;
   bool                                      running_  = false;
 
-  AtomicInflightCounter<TCPServer>          inflight_counter_;
+  AtomicInflightCounter<TCPServer> inflight_counter_;
 };
 }  // namespace network
 }  // namespace fetch

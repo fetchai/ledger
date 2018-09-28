@@ -170,8 +170,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
   }
 
-
-
   // OK, it's been a while, let's try those missing lane services again...
 
   lane_data.clear();
@@ -186,9 +184,10 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   }
   if (!lane_data.empty())
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // just a hail-mary to see if the sockets start.
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(5000));  // just a hail-mary to see if the sockets start.
     auto count =
-      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
     if (count == num_lanes_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");

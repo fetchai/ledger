@@ -394,7 +394,7 @@ public:
   bool ClientForLaneConnected(LaneIndex lane)
   {
     LockT lock(mutex_);
-    auto iter = lanes_.find(lane);
+    auto  iter = lanes_.find(lane);
     return (iter != lanes_.end());
   }
 
@@ -426,7 +426,7 @@ public:
   SharedServiceClient GetClientForLane(LaneIndex lane)
   {
     LockT lock(mutex_);
-    auto iter = lanes_.find(lane);
+    auto  iter = lanes_.find(lane);
     if (iter != lanes_.end())
     {
       return iter->second;
