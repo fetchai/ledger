@@ -39,12 +39,12 @@ class AtomicInflightCounter
   using Lock    = std::unique_lock<Mutex>;
 
 private:
-  typedef struct
+  using TheCounter = struct
   {
     Counter count;
     CondVar cv;
     Mutex   mutex;
-  } TheCounter;
+  };
 
   static TheCounter &GetCounter()
   {

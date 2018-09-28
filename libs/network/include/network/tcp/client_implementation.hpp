@@ -51,7 +51,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
-  uint16_t port_{0};
+  uint16_t port_;
 
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
