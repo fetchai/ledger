@@ -105,7 +105,7 @@ bool Overwriting()
 
   file_object.CreateNewFile();
 
-  ByteArray              str("Hello world! This is a great world."), f("Fetch"), ret;
+  ByteArray str("Hello world! This is a great world."), f("Fetch"), ret;
   file_object.Seek(0);
   file_object.Write(str.pointer(), str.size());
   file_object.Seek(6);
@@ -135,7 +135,7 @@ bool HashConsistency()
 
   file_object.CreateNewFile();
 
-  ByteArray              str;
+  ByteArray str;
 
   str.Resize(1 + (lfg() % 20000));
   for (std::size_t j = 0; j < str.size(); ++j)
@@ -172,7 +172,7 @@ bool FileLoadValueConsistency()
       FileObject<stack_type> file_object;
       file_object.Load("document_data.db", "doc_diffXX.db");
 
-      ByteArray              str;
+      ByteArray str;
 
       str.Resize(1 + (lfg() % 2000));
       for (std::size_t j = 0; j < str.size(); ++j)
@@ -301,7 +301,7 @@ bool FileLoadHashConsistency()
       FileObject<stack_type> file_object;
       file_object.Load("document_data.db");
 
-      ByteArray              str;
+      ByteArray str;
 
       str.Resize(1 + (lfg() % 2000));
       for (std::size_t j = 0; j < str.size(); ++j)
@@ -346,15 +346,15 @@ bool FileLoadHashConsistency()
   return true;
 }
 
-TEST(file_object, BasicFileCreation)
-{
-  ASSERT_TRUE(BasicFileCreation<1>());
-  ASSERT_TRUE(BasicFileCreation<2>());
-  ASSERT_TRUE(BasicFileCreation<3>());
-  ASSERT_TRUE(BasicFileCreation<1024>());
-}
+// TEST(file_object, BasicFileCreation)
+//{
+//  ASSERT_TRUE(BasicFileCreation<1>());
+//  ASSERT_TRUE(BasicFileCreation<2>());
+//  ASSERT_TRUE(BasicFileCreation<3>());
+//  ASSERT_TRUE(BasicFileCreation<1024>());
+//}
 
-//TEST(file_object, MultipleFileCreation)
+// TEST(file_object, MultipleFileCreation)
 //{
 //  ASSERT_TRUE(MultipleFileCreation<1023>());
 //  ASSERT_TRUE(MultipleFileCreation<9>());
