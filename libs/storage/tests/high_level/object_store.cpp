@@ -170,6 +170,7 @@ TEST_F(ObjectStoreTest, basic_deletion_of_elements)
 
   for (auto const &i : test_vals)
   {
+    std::cout << "(basic) Test case " << i << std::endl;
     TearDown();
     SetUp(i);
 
@@ -190,6 +191,7 @@ TEST_F(ObjectStoreTest, advanced_deletion_of_elements)
 
   for (auto const &i : test_vals)
   {
+    std::cout << "(advanced) Test case " << i << std::endl;
     TearDown();
     SetUp(i);
 

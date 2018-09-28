@@ -19,7 +19,7 @@ add_fetch_test(variant_stack_test fetch-storage variant_stack.cpp)
 add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
 
 add_fetch_test(object_store_test fetch-storage object_store.cpp)
-add_fetch_test(object_sync_test fetch-storage object_sync.cpp)
+add_fetch_test(object_sync_test fetch-storage object_sync.cpp DISABLED)
 
 add_fetch_gtest(storage fetch-storage gtest/)
 add_fetch_gtest(high_level_storage fetch-storage high_level/)

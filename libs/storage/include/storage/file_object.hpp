@@ -148,6 +148,7 @@ public:
     stack_.Set(id_, first);
 
     stack_.Set(free_block_index_, free_block_);
+
     stack_.Flush();
   }
 
@@ -262,18 +263,26 @@ public:
     Write(arr.pointer(), arr.size());
   }
 
-  void Write(uint8_t const *bytes, uint64_t const &m)
+  /**
+   * Write bytes to file object, ensuring that the size of the file object is extended if
+   * neccessary.
+   *
+   * @param: bytes The bytes to write
+   * @param: num The number of bytes to write
+   *
+   */
+  void Write(uint8_t const *bytes, uint64_t const &num)
   {
-    uint64_t n = m + byte_index_ + block_number_ * block_type::BYTES;
+    uint64_t n = num + byte_index_ + block_number_ * block_type::BYTES;
 
     uint64_t last_block = platform::DivideCeil<uint64_t>(n, block_type::BYTES);
 
     --last_block;
 
     uint64_t first_bytes = block_type::BYTES - byte_index_;
-    if (first_bytes > m)
+    if (first_bytes > num)
     {
-      first_bytes = m;
+      first_bytes = num;
     }
 
     uint64_t last_bytes = n - (block_type::BYTES * last_block);
@@ -287,7 +296,7 @@ public:
     {
       block_type empty;
       empty.previous = block_index_;
-      block.next     = stack_.Push(empty);
+      block.next     = GetFreeBlock(empty, block_index_);
     }
 
     memcpy(block.data + byte_index_, bytes, first_bytes);
@@ -320,7 +329,7 @@ public:
         {
           block_type empty;
           empty.previous = block_index_;
-          block.next     = stack_.Push(empty);
+          block.next     = GetFreeBlock(empty, block_index_);
         }
 
         memcpy(block.data, bytes + offset, block_type::BYTES);
@@ -474,19 +483,6 @@ public:
     }
   }
 
-  //  void Erase()
-  //  {
-  //    //assert(block_index_ != 0);
-  //    //Seek(0);
-  //    //ReleaseBlocks(block_index_);
-  //    erased_ = true;
-  //  }
-  //
-  //  bool Erased() const
-  //  {
-  //    return erased_;
-  //  }
-
   bool SeekFile(std::size_t const &position)
   {
     block_number_ = 0;
@@ -519,8 +515,7 @@ public:
     memcpy(block.data + sizeof(uint64_t), reinterpret_cast<uint8_t const *>(&length_),
            sizeof(uint64_t));
 
-    // TODO(unknown): (HUT) : get next free
-    block_index_ = id_ = stack_.Push(block);
+    block_index_ = id_ = GetFreeBlock(block, 1);
     block_count_       = platform::DivideCeil<uint64_t>(length_, block_type::BYTES);
   }
 
@@ -534,19 +529,21 @@ public:
     return ret;
   }
 
-  // TODO(unknown): (HUT) : write this
-  void Erase()
-  {
-    // assert(block_index_ != 0);
-    // Seek(0);
-    // ReleaseBlocks(block_index_);
-    // erased_ = true;
-  }
-
   stack_type *stack()
   {
     return &stack_;
   }
+
+  void Erase()
+  {
+    if(deletion_enabled_)
+    {
+      FreeBlocks(block_index_);
+    }
+    Flush();
+  }
+
+  bool deletion_enabled_ = false;
 
 protected:
   stack_type stack_;
