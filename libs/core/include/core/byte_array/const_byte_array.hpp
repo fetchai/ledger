@@ -396,6 +396,5 @@ inline std::string ConstByteArray::ToBase64() const
   return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
-
 }  // namespace byte_array
 }  // namespace fetch
