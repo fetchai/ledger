@@ -72,7 +72,8 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   }
 
   auto txdfs{TxDataForSigningCFactory(tx)};
-  tx_v["data"] = byte_array::ToBase64(txdfs.DataForSigning(tx.signatures()));
+  serializers::ByteArrayBuffer stream;
+  tx_v["data"] = byte_array::ToBase64(stream.Append(txdfs).data());
 
   std::stringstream str_stream;
   str_stream << tx_v;
@@ -88,10 +89,7 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   
   serializers::ByteArrayBuffer stream{ byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>()) };
   auto txdata {TxDataForSigningCFactory(tx)};
-  MutableTransaction::signatures_type mtx_signatures;
-  stream >> txdata >> mtx_signatures;
-
-  tx.set_signatures(mtx_signatures);
+  stream >> txdata;
 
   return tx;
 }

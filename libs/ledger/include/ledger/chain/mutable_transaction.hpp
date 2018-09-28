@@ -116,8 +116,10 @@ public:
   using transaction_type = MUTABLE_TRANSACTION;
 
   //TODO(pbukva) (private issue: Support for switching between different types of signatures)
-  using Signature = crypto::ECDSASigner::Signature;
-  using Hasher = crypto::ECDSASigner::Signature::hasher_type;
+  using signature_type = typename crypto::ECDSASigner::Signature;
+  using private_key_type = crypto::openssl::ECDSAPrivateKey<>;
+  using public_key_type = private_key_type::public_key_type;
+  using hasher_type = crypto::ECDSASigner::Signature::hasher_type;
 
   using base_type::base_type;
   using base_type::operator();
@@ -132,90 +134,81 @@ public:
   TxDataForSigningC(transaction_type &tx, self_type const &from)
     : base_type{ tx }
     , stream_{ from.stream_ }
-    , hasher_{ from.hasher_ }
-    , signature_{ from.signature_ }
+    , tx_data_hash_{ from.tx_data_hash_ }
   {
   }
 
   TxDataForSigningC(transaction_type &tx, self_type &&from)
     : base_type{ tx }
     , stream_{ std::move(from.stream_) }
-    , hasher_{ from.hasher_ }
-    , signature_{ from.signature_ }
-
+    , tx_data_hash_{ from.tx_data_hash_ }
   {
   }
 
-  template<typename APPENDIX = crypto::Identity>
-  byte_array::ConstByteArray const& DataForSigning(APPENDIX const& appendix)
+  byte_array::ConstByteArray const& DataForSigning() const
   {
-    return DataForSigningInternal(appendix);
+    //Update();
+    return stream_->data();
   }
 
-  byte_array::ConstByteArray const& DataForSigning()
-  {
-    return DataForSigningInternal(serializers::LazyEvalArgumentFactory([](auto&){}));
-  }
-
-  bool Verify(signatures_type::value_type const &sig)
+  bool Verify(signatures_type::value_type const &sig) const
   {
     auto const& identity  = sig.first;
     auto const& signature = sig.second;
-
-    verifier_type verifier{identity};
-    auto data_to_verify = DataForSigning(identity);
-    return verifier.Verify(data_to_verify, signature.signature_data);
+    public_key_type pub_key{ identity.identifier() };
+    auto hash = HashOfTxDataForSigning(identity);
+    return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
   }
 
-  signer_type Sign(byte_array::ConstByteArray const &private_key)
+  signatures_type::value_type Sign(byte_array::ConstByteArray const &private_key) const
   {
-    signer_type signer;
-    signer.Load(private_key);
-    auto data_to_verify = DataForSigning(signer.identity());
-    if (!signer.Sign(data_to_verify))
-    {
-      throw std::runtime_error("Signing failed");
-    }
-    return signer;
+    return Sign(private_key_type{ private_key });
+  }
+
+  signatures_type::value_type Sign(private_key_type const &private_key) const
+  {
+    crypto::Identity identity {signature_type::ecdsa_curve_type::sn, private_key.publicKey().keyAsBin()};
+    auto hash = HashOfTxDataForSigning(identity);
+    auto sig = signature_type::SignHash(private_key, hash);
+    return signatures_type::value_type{ std::move(identity), Signature{ sig.signature(), signature_type::ecdsa_curve_type::sn } };
   }
 
   void Reset()
   {
-    stream_.Resize(0);
+    stream_->Resize(0);
+    tx_data_hash_->Reset();
   }
+
+  void Update() const;
+
+  byte_array::ConstByteArray HashOfTxDataForSigning(crypto::Identity const &identity) const
+  {
+    Update();
+
+    //Copy hash context by *value*
+    hasher_type tx_data_hash_copy = *tx_data_hash_;
+
+    serializers::ByteArrayBuffer identity_stream;
+    identity_stream.Append(identity);
+
+    //Adding serialized identity to the hash for signing
+    if (!tx_data_hash_copy.Update(identity_stream.data()))
+    {
+      throw std::runtime_error("Failure while updating hash for signing");
+    }
+
+    return tx_data_hash_copy.Final();
+  }
+
+
 
   bool operator == (TxDataForSigningC const &left_tx) const;
   bool operator != (TxDataForSigningC const &left_tx) const;
 
-public:
+private:
 
-  template<typename APPENDIX>
-  byte_array::ConstByteArray const& DataForSigningInternal(APPENDIX const& appendix)
-  {
-    if(stream_.size() == 0)
-    {
-      auto query_tx_size = serializers::LazyEvalArgumentFactory([this](auto &stream){
-        tx_data_size_for_signing_ = stream.size();
-      });
-
-      auto reserve_enough_capacity = serializers::LazyEvalArgumentFactory([this](auto &stream){
-        stream.Reserve(stream.size()-tx_data_size_for_signing_, eResizeParadigm::relative, false);
-      });
-
-      stream_.Append(*this, query_tx_size, appendix, reserve_enough_capacity);
-    }
-    else
-    {
-      stream_.Resize(tx_data_size_for_signing_, eResizeParadigm::absolute);
-      stream_.Seek(tx_data_size_for_signing_);
-      stream_.Append(appendix);
-    }
-    return stream_.data();
-  }
-
-  serializers::ByteArrayBuffer stream_;
-  Hasher hasher_;
-  Signature signature_;
+  std::shared_ptr<serializers::ByteArrayBuffer> stream_{ std::make_shared<serializers::ByteArrayBuffer>() };
+  std::shared_ptr<hasher_type> tx_data_hash_{ std::make_shared<hasher_type>() };
 };
 
 template <typename T, typename U>
@@ -371,8 +364,12 @@ public:
 
   Signature const& Sign(byte_array::ConstByteArray const &private_key)
   {
-    auto signer = tx_for_signing_.Sign(private_key);
-    return signatures_[signer.identity()] = Signature{signer.signature(), tx_data_for_signing_type::signer_type::Signature::ecdsa_curve_type::sn};
+    return SignInternal(private_key);
+  }
+
+  Signature const& Sign(tx_data_for_signing_type::private_key_type const &private_key)
+  {
+    return SignInternal(private_key);
   }
 
   void PushResource(byte_array::ConstByteArray const &res)
@@ -434,6 +431,17 @@ private:
   signatures_type            signatures_;
   tx_data_for_signing_type   tx_for_signing_{*this};
 
+  template<typename PRIVATE_KEY_TYPE>
+  Signature const& SignInternal(PRIVATE_KEY_TYPE const &private_key)
+  {
+    auto const result = signatures_.emplace(tx_for_signing_.Sign(private_key));
+    if (!result.second)
+    {
+      throw std::runtime_error("Signature for given private key alrteady already exists.");
+    }
+    return result.first->second;
+  }
+
   template<typename T>
   friend class TxDataForSigningC;
   template<typename T, typename U>
@@ -442,19 +450,33 @@ private:
   friend void Deserialize(T &stream, TxDataForSigningC<U> &tx);
 };
 
+template<typename U>
+void TxDataForSigningC<U>::Update() const
+{
+  if(stream_->size() == 0)
+  {
+    transaction_type const& tx_ = *this;
+    serializers::ByteArrayBuffer &stream = *stream_.get();
+    stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_);
+    //stream.Append(*this);
+    
+    //tx_data_hash_.Reset();
+    tx_data_hash_->Update(stream.data());
+  }
+}
 
 template <typename T, typename U>
 void Serialize(T &stream, TxDataForSigningC<U> const &tx)
 {
   MutableTransaction const &tx_ = tx.get();
-  stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_);
+  stream.Append(tx.DataForSigning(), tx_.signatures());
 }
 
 template <typename T, typename U>
 void Deserialize(T &stream, TxDataForSigningC<U> &tx)
 {
   MutableTransaction &tx_ = tx.get();
-  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_;
+  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
   tx.Reset();
 }
 

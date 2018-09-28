@@ -111,7 +111,6 @@ public:
   static ECDSASignature Sign(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
                              byte_array::ConstByteArray const &                data_to_sign)
   {
-
     return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
   }
 

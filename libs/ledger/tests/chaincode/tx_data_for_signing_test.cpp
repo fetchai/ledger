@@ -47,7 +47,7 @@ namespace {
     for(std::size_t i=0; i<100; ++i)
     {
       MutableTransaction tx {RandomTransaction()};
-      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
+      std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       auto txdfs {TxDataForSigningCFactory(tx)};
       crypto::openssl::ECDSAPrivateKey<> key;
