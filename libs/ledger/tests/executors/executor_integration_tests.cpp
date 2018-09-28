@@ -32,6 +32,8 @@
 #include <random>
 #include <thread>
 
+using LaneIndex              = fetch::ledger::StorageUnitClient::LaneIndex;
+
 using ::testing::_;
 
 class ExecutorIntegrationTests : public ::testing::Test
@@ -42,6 +44,7 @@ protected:
   using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
+  using TCPClient                       = fetch::network::TCPClient;
 
   using client_type          = std::unique_ptr<underlying_client_type>;
   using service_type         = std::unique_ptr<underlying_service_type>;
@@ -51,6 +54,8 @@ protected:
   using rng_type             = std::mt19937;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
+
+  static constexpr char const *LOGGING_NAME = "ExecutorIntegrationTests";
 
   ExecutorIntegrationTests()
   {
@@ -70,11 +75,25 @@ protected:
     storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
     storage_service_->Start();
 
+    LaneIndex num_lanes = NUM_LANES;
+
+    uint16_t lane_port_start = LANE_RPC_PORT_START;
+
     storage_.reset(new underlying_storage_type{*network_manager_});
-    for (std::size_t i = 0; i < NUM_LANES; ++i)
+
+    std::map<LaneIndex, std::pair<fetch::byte_array::ByteArray, uint16_t>> lane_data;
+    for (LaneIndex i = 0; i < num_lanes; ++i)
     {
-      storage_->AddLaneConnection<fetch::network::TCPClient>("localhost",
-                                                             uint16_t(LANE_RPC_PORT_START + i));
+      uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
+      lane_data[i] = std::make_pair(fetch::byte_array::ByteArray("127.0.0.1"), lane_port);
+    }
+
+    auto count = storage_ -> AddLaneConnectionsWaiting<TCPClient>(
+      lane_data, std::chrono::milliseconds(30000));
+    if (count != num_lanes)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");
+      exit(1);
     }
 
     // create the executor service
