@@ -124,9 +124,9 @@ public:
     else
     {
       std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
-      // TODO
-      // worklist_for_state.erase(worklist_for_state.begin(),
-      //                         worklist_for_state.begin() + static_cast<std::ptrdiff_t>(limit));
+      auto copy_end = worklist_for_state.begin();
+      advance(copy_end, static_cast<long>(limit));
+      worklist_for_state.erase(worklist_for_state.begin(), copy_end);
     }
     return results;
   }

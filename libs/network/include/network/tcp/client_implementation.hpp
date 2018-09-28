@@ -51,8 +51,6 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
-  uint16_t port_;
-
   TCPClientImplementation(network_manager_type const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
@@ -74,7 +72,6 @@ public:
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
-    port_ = port;
   }
 
   void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
