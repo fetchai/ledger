@@ -122,10 +122,10 @@ private:
     FutureTimepoint       timeout;
     size_t                max_attempts;
 
-    LaneConnectorWorker(size_t lane, SharedServiceClient client, const std::string &name,
-                        const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
+    LaneConnectorWorker(size_t thelane, SharedServiceClient theclient, const std::string &thename,
+                        const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
     {
-      lane = lane;
+      lane = thelane;
 
       this->Allow(LaneConnectorWorker::INITIALISING, 0)
           .Allow(CONNECTING, INITIALISING)
@@ -147,10 +147,10 @@ private:
           .Allow(TIMEDOUT, QUERYING)
 
           .Allow(FAILED, CONNECTING);
-      client       = client;
+      client       = theclient;
       attempts     = 0;
-      name         = name;
-      timeout      = timeout;
+      name         = thename;
+      timeout      = thetimeout;
       max_attempts = 10;
     }
 
@@ -177,7 +177,7 @@ private:
       }
     }
 
-    std::string name(int state)
+    std::string GetStateName(int state)
     {
       const char *states[] = {
           "(START)",  "INITIALISING", "CONNECTING", "QUERYING", "PINGING",
@@ -191,15 +191,15 @@ private:
       auto x = PossibleNewStateImpl(currentstate);
       if (x && x != currentstate)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, " Statechange ", lane_, " from ", name(currentstate), " -> ",
-                        name(x));
+        FETCH_LOG_DEBUG(LOGGING_NAME, " Statechange ", lane, " from ", GetStateName(currentstate), " -> ",
+                        GetStateName(x));
       }
       return x;
     }
 
     virtual int PossibleNewStateImpl(int currentstate)
     {
-      if (timeout_.IsDue())
+      if (timeout.IsDue())
       {
         return TIMEDOUT;
       }
@@ -216,7 +216,7 @@ private:
       }
       case SNOOZING:
       {
-        if (next_attempt_.IsDue())
+        if (next_attempt.IsDue())
         {
           return CONNECTING;
         }
@@ -229,9 +229,9 @@ private:
       {
         if (!client->is_alive())
         {
-          FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane_, " (", name_, ") not yet alive.");
+          FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane, " (", name_, ") not yet alive.");
           attempts++;
-          if (attempts_ > max_attempts)
+          if (attempts > max_attempts)
           {
             return TIMEDOUT;
           }
@@ -254,7 +254,7 @@ private:
         }
         case PromiseState::SUCCESS:
         {
-          if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+          if (ping->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
             return INITIALISING;
           }
