@@ -44,9 +44,9 @@ namespace {
 
   TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
   {
-    for(std::size_t i=0; i<100; ++i)
+    for(std::size_t i=0; i<1; ++i)
     {
-      MutableTransaction tx {RandomTransaction()};
+      MutableTransaction tx {RandomTransaction(3, 1)};
       std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       auto txdfs {TxDataForSigningCFactory(tx)};

@@ -22,6 +22,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/sha256.hpp"
+#include "core/byte_array/encoders.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -183,7 +184,7 @@ private:
                  byte_array::ConstByteArray const &                data_to_sign,
                  const eBinaryDataType data_type = eBinaryDataType::data)
     : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign)
-                                               : byte_array::ByteArray()}
+                                               : data_to_sign}
     , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
     , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
   {}
