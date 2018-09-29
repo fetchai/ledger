@@ -153,19 +153,11 @@ public:
 
   bool Verify(signatures_type::value_type const &sig) const
   {
-    std::cout << "=======================================================" << std::endl;
-    std::cout << "Verify(...) tx[" << (void*)this << "]:" << std::endl;
     auto const& identity  = sig.first;
     auto const& signature = sig.second;
     public_key_type pub_key{ identity.identifier() };
-  
     auto hash = HashOfTxDataForSigning(identity);
-    std::cout << "identity after  = " << byte_array::ToHex(pub_key.keyAsBin()) << std::endl;
-    std::cout << "hash            = " << byte_array::ToHex(hash) << std::endl;
-    //return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
-    signature_type sig_native {signature.signature_data};
-    std::cout << "signature       = " << byte_array::ToHex(sig_native.signature()) << std::endl;
-    return sig_native.VerifyHash(pub_key, hash);
+    return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
   }
 
   signatures_type::value_type Sign(byte_array::ConstByteArray const &private_key) const
@@ -175,20 +167,9 @@ public:
 
   signatures_type::value_type Sign(private_key_type const &private_key) const
   {
-    std::cout << "=======================================================" << std::endl;
-    std::cout << "Sign(...)   tx[" << (void*)this << "]:" << std::endl;
-
     crypto::Identity identity {signature_type::ecdsa_curve_type::sn, private_key.publicKey().keyAsBin()};
     auto hash = HashOfTxDataForSigning(identity);
     auto sig = signature_type::SignHash(private_key, hash);
-    std::cout << "identity after  = " << byte_array::ToHex(private_key.publicKey().keyAsBin()) << std::endl;
-    std::cout << "hash            = " << byte_array::ToHex(hash) << std::endl;
-    std::cout << "signature       = " << byte_array::ToHex(sig.signature()) << std::endl;
-
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "Sign(...):verif tx=[" << (void*)this << "]:" << std::endl;
-    std::cout << "verify result = " << sig.VerifyHash(private_key.publicKey(), hash) << std::endl;
-
     return signatures_type::value_type{ std::move(identity), Signature{ sig.signature(), signature_type::ecdsa_curve_type::sn } };
   }
 
@@ -208,20 +189,7 @@ public:
     hasher_type tx_data_hash_copy = *tx_data_hash_;
 
     serializers::ByteArrayBuffer identity_stream;
-    identity_stream.Append(identity);
-    
-    std::cout << "=======================================================" << std::endl;
-    std::cout << "HashOfTxDataForSigning(...) tx[" << (void*)this << "]:" << std::endl;
-
-    std::cout << "identity              = " << byte_array::ToHex(identity.identifier()) << std::endl;
-    std::cout << "identity (serialized) = " << byte_array::ToHex(identity_stream.data()) << std::endl;
-    std::cout << "tx data serialised    = " << byte_array::ToHex(stream_->data()) << std::endl;
-
-    hasher_type tx_data_hash_copy1 = *tx_data_hash_;
-    std::cout << "hash of tx data copy 1 = " << byte_array::ToHex(tx_data_hash_copy1.Final()) << std::endl;
-
-    hasher_type tx_data_hash_copy2 = *tx_data_hash_;
-    std::cout << "hash of tx data copy 2 = " << byte_array::ToHex(tx_data_hash_copy2.Final()) << std::endl;
+    identity_stream << identity;
 
     //Adding serialized identity to the hash for signing
     if (!tx_data_hash_copy.Update(identity_stream.data()))
@@ -229,19 +197,13 @@ public:
       throw std::runtime_error("Failure while updating hash for signing");
     }
 
-    auto resulting_hash = tx_data_hash_copy.Final();
-    std::cout << "hash after adding identity = " << byte_array::ToHex(resulting_hash) << std::endl;
-    return resulting_hash;
-    //return tx_data_hash_copy.Final();
+    return tx_data_hash_copy.Final();
   }
-
-
 
   bool operator == (TxDataForSigningC const &left_tx) const;
   bool operator != (TxDataForSigningC const &left_tx) const;
 
 private:
-
   std::shared_ptr<serializers::ByteArrayBuffer> stream_{ std::make_shared<serializers::ByteArrayBuffer>() };
   std::shared_ptr<hasher_type> tx_data_hash_{ std::make_shared<hasher_type>() };
 };
@@ -493,42 +455,23 @@ void TxDataForSigningC<U>::Update() const
     transaction_type const& tx_ = *this;
     serializers::ByteArrayBuffer &stream = *stream_.get();
     stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_);
-    //stream.Append(*this);
-    
     //tx_data_hash_.Reset();
-
-    std::cout << "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww" << std::endl;
-    std::cout << "Update():       tx_data = " << byte_array::ToHex(stream_->data()) << std::endl;
     tx_data_hash_->Update(stream.data());
   }
-}
-
-inline void printStream(serializers::ByteArrayBuffer::size_counter_type const& stream, byte_array::ConstByteArray const& label = "")
-{
-}
-
-inline void printStream(serializers::ByteArrayBuffer const& stream, byte_array::ConstByteArray const& label = "")
-{
-  std::cout << "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww" << std::endl;
-  std::cout << label << ": tx_data = " << byte_array::ToHex(stream.data()) << std::endl;
 }
 
 template <typename T, typename U>
 void Serialize(T &stream, TxDataForSigningC<U> const &tx)
 {
   MutableTransaction const &tx_ = tx.get();
-  //stream.Append(tx_.summary_.contract_name, tx_.summary_.fee, tx_.summary_.resources, tx_.data_, tx_.signatures_);
   stream.Append(serializers::Verbatim{ tx.DataForSigning() }, tx_.signatures_);
-  printStream(stream, "Serialise()...)");
 }
 
 template <typename T, typename U>
 void Deserialize(T &stream, TxDataForSigningC<U> &tx)
 {
-  printStream(stream, "Deserialise()...)");
   MutableTransaction &tx_ = tx.get();
   stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
-  std::cout << "Deserialise[LEAVING]" << std::endl;
   tx.Reset();
 }
 

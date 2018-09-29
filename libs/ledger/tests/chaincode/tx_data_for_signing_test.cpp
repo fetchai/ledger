@@ -66,7 +66,7 @@ namespace {
       MutableTransaction tx {RandomTransaction(3, 3)};
       tx.UpdateDigest();
       ASSERT_TRUE(tx.Verify());
-      std::cout << "tx[before] = " << std::endl << tx << std::endl;
+      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       //crypto::openssl::ECDSAPrivateKey<> key;
       //tx.Sign(key.KeyAsBin());

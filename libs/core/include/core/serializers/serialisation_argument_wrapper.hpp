@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include <utility>
 
 namespace fetch {
