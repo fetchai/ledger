@@ -42,6 +42,7 @@ public:
   using super_type::char_pointer;
   using super_type::SubArray;
   using super_type::Append;
+  using super_type::Replace;
 
   ByteArray() = default;
 

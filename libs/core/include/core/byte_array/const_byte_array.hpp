@@ -386,8 +386,23 @@ protected:
     return *this;
   }
 
-  template <typename T>
-  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
+  std::size_t Replace(char const &what, char const &with)
+  {
+    std::size_t num_of_replacements = 0;
+    std::size_t pos = 0;
+    while (pos < length_)
+    {
+      pos = Find(what, pos);
+      if (pos == NPOS)
+      {
+        break;
+      }
+
+      (*this)[pos] = static_cast<container_type>(with);
+      ++num_of_replacements;
+    }
+    return num_of_replacements;
+  }
 
 private:
   void AppendInternal(std::size_t const acc_size)
@@ -402,6 +417,9 @@ private:
     AppendInternal(acc_size + other.size(), others...);
     std::memcpy(pointer() + acc_size, other.pointer(), other.size());
   }
+
+  template <typename T>
+  friend void fetch::serializers::Deserialize(T &serializer, ConstByteArray &s);
 
   shared_array_type data_;
   std::size_t       start_ = 0, length_ = 0;

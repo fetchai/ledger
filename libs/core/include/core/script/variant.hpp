@@ -297,7 +297,13 @@ public:
       return;
     }
 
-    for(std::size_t key_idx = 0, val_idx = key_idx + 1; key_idx < size() && object_functor((*this)[key_idx], (*this)[val_idx]); key_idx += 2, val_idx += 2);
+    for(std::size_t key_idx = 0, val_idx = key_idx + 1; key_idx < size(); key_idx += 2, val_idx += 2)
+    {
+      if (! object_functor((*this)[key_idx], (*this)[val_idx]))
+      {
+        break;
+      }
+    }
   }
 
   void ForEach(std::function<bool(Variant &value)> const &object_functor)
@@ -307,7 +313,13 @@ public:
       return;
     }
 
-    for(std::size_t val_idx = 0; val_idx < size() && object_functor((*this)[val_idx]); ++val_idx);
+    for(std::size_t val_idx = 0; val_idx < size(); ++val_idx)
+    {
+      if (! object_functor((*this)[val_idx]))
+      {
+        break;
+      }
+    }
   }
 
 private:

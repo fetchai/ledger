@@ -17,7 +17,7 @@ add_fetch_test(referenced_byte_array_test fetch-core referenced_byte_array.cpp)
 add_fetch_test(lfg_test fetch-core test_lfg.cpp)
 add_fetch_test(json_document_test fetch-core json/document.cpp)
 add_fetch_test(variant_test fetch-core script/variant.cpp)
-add_fetch_gtest(fetch-serializers_gtests fetch-core serializers)
-add_fetch_gtest(variant_test2 fetch-core script/variant/)
-
+add_fetch_gtest(fetch-serializers-gtests fetch-core serializers)
+add_fetch_gtest(variant-test-gtests fetch-core script/variant/)
+add_fetch_gtest(fetch-byte-array-gtests fetch-core byte_array)
  

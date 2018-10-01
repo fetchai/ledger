@@ -41,6 +41,9 @@ class ContractHttpInterface : public http::HTTPModule
 {
 public:
   static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
+  static byte_array::ConstByteArray const api_path_contract_prefix;
+  static byte_array::ConstByteArray const contract_name_separator;
+  static byte_array::ConstByteArray const path_separator;
 
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
     : storage_{storage}
@@ -55,17 +58,20 @@ public:
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
 
-      byte_array::ByteArray api_path{contract_name};
-      std::replace(api_path.pointer(), api_path.pointer() + api_path.size(), '.', '/');
-      // define the api prefix
-      // std::string const api_prefix_ =
-      //    "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
+      byte_array::ByteArray contract_path{contract_name};
+      contract_path.Replace(static_cast<char const &>(contract_name_separator[0]), static_cast<char const &>(path_separator[0]));
+
+      byte_array::ByteArray api_path;
+      //* ByteArry from `contract_name` performs deep copy due to const -> non-const
+      api_path.Append(api_path_contract_prefix, contract_path, path_separator);
+      std::size_t const api_path_base_size = api_path.size();
 
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
       for (auto const &handler : query_handlers)
       {
         byte_array::ConstByteArray const &query_name = handler.first;
+        api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
         api_path.Append(query_name);
 
         FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);

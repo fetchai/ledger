@@ -210,6 +210,7 @@ public:
 
 private:
   transaction_type *tx_ = nullptr;
+  //Data members as shared pointers to avoid issue with const-ness issues when modifying content.
   std::shared_ptr<serializers::ByteArrayBuffer> stream_{ std::make_shared<serializers::ByteArrayBuffer>() };
   std::shared_ptr<hasher_type> tx_data_hash_{ std::make_shared<hasher_type>() };
   std::shared_ptr<serializers::ByteArrayBuffer> identity_stream_{std::make_shared<serializers::ByteArrayBuffer>()};
@@ -316,8 +317,6 @@ public:
     hash.Update(data_);
     summary_.transaction_hash = hash.Final();
   }
-
-public:
 
   bool Verify() const
   {
