@@ -21,12 +21,10 @@
 
 namespace fetch {
 
-enum class eDimensionParadigm
+enum class ResizeParadigm
 {
-  relative,
-  absolute
+  RELATIVE,
+  ABSOLUTE
 };
-
-using eResizeParadigm = eDimensionParadigm;
 
 }  // namespace fetch

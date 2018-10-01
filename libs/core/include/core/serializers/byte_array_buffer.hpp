@@ -80,19 +80,19 @@ public:
 
   void Allocate(std::size_t const &delta)
   {
-    Resize(delta, eResizeParadigm::relative);
+    Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
+  void Resize(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
   {
     data_.Resize(size, resize_paradigm, zero_reserved_space);
 
     switch(resize_paradigm)
     {
-      case eResizeParadigm::relative:
+      case ResizeParadigm::RELATIVE:
         break;
 
-      case eResizeParadigm::absolute:
+      case ResizeParadigm::ABSOLUTE:
         if(pos_ > size)
         {
           Seek(size);
@@ -101,7 +101,7 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
+  void Reserve(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
   {
     data_.Reserve(size, resize_paradigm, zero_reserved_space);
   }

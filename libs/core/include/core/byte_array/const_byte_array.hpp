@@ -311,24 +311,24 @@ protected:
   //*    * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n), which is internally still relative to `start_` offset,
   //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size* (new_size = old_size + n),
   //*   , where `new_size` is internally still relative to `start_` offset in *both* cases above.
-  void Resize(std::size_t const &n, eResizeParadigm const resize_paradigm = eResizeParadigm::absolute, bool const zero_reserved_space=true)
+  void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE, bool const zero_reserved_space=true)
   {
     std::size_t new_length;
 
     switch(resize_paradigm)
     {
-      case eResizeParadigm::relative:
+      case ResizeParadigm::RELATIVE:
         new_length  = length_ + n;
         break;
 
-      case eResizeParadigm::absolute:
+      case ResizeParadigm::ABSOLUTE:
         new_length  = n;
         break;
     }
 
     auto const new_capacity_for_reserve = start_ + new_length;
 
-    Reserve(new_capacity_for_reserve, eResizeParadigm::absolute, zero_reserved_space);
+    Reserve(new_capacity_for_reserve, ResizeParadigm::ABSOLUTE, zero_reserved_space);
     length_ = new_length;
   }
 
@@ -336,17 +336,17 @@ protected:
   //*   Meaning that if pradigm value is set to:
   //*    * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set (new_capacity = n)
   //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity* (new_capacity = old_capacity + n)
-  void Reserve(std::size_t const &n, eResizeParadigm const resize_paradigm = eResizeParadigm::absolute, bool const zero_reserved_space=true)
+  void Reserve(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE, bool const zero_reserved_space=true)
   {
     std::size_t new_capacity_for_reserve;
 
     switch(resize_paradigm)
     {
-      case eResizeParadigm::relative:
+      case ResizeParadigm::RELATIVE:
         new_capacity_for_reserve = data_.size() + n;
         break;
 
-      case eResizeParadigm::absolute:
+      case ResizeParadigm::ABSOLUTE:
         new_capacity_for_reserve = n;
         break;
     }

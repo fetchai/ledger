@@ -34,10 +34,10 @@ public:
 
   void Allocate(std::size_t const &delta)
   {
-    Resize(delta, eResizeParadigm::relative);
+    Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
+  void Resize(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
   {
     (void)zero_reserved_space;
 
@@ -45,11 +45,11 @@ public:
 
     switch(resize_paradigm)
     {
-      case eResizeParadigm::relative:
+      case ResizeParadigm::RELATIVE:
         size_ += size;
         break;
 
-      case eResizeParadigm::absolute:
+      case ResizeParadigm::ABSOLUTE:
         size_ = size;
         if(pos_ > size)
         {
@@ -59,17 +59,17 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &size, eResizeParadigm const& resize_paradigm = eResizeParadigm::relative, bool const zero_reserved_space=true)
+  void Reserve(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
   {
     (void)zero_reserved_space;
 
     switch(resize_paradigm)
     {
-      case eResizeParadigm::relative:
+      case ResizeParadigm::RELATIVE:
         reserved_size_ += size;
         break;
 
-      case eResizeParadigm::absolute:
+      case ResizeParadigm::ABSOLUTE:
         if (reserved_size_ < size)
         {
           reserved_size_ = size;
