@@ -98,6 +98,7 @@ protected:
       lane_data[i] = std::make_pair(fetch::byte_array::ByteArray("127.0.0.1"), lane_port);
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Setting up 1.");
     auto count =
         storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
     if (count != num_lanes)
@@ -106,12 +107,14 @@ protected:
       exit(1);
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Setting up 2.");
     // create the executor service
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
     service_->Start();
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Setting up 3.");
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
