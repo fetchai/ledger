@@ -60,7 +60,7 @@ public:
   AtomicInflightCounter(unsigned int my_count = 1)
   {
     my_count_     = my_count;
-    auto previous = GetCounter().count.fetch_add(my_count_);
+    GetCounter().count.fetch_add(my_count_);
   }
 
   void Completed(unsigned int completed_count)
