@@ -73,7 +73,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
-  , http_network_manager_{CalcNetworkManagerThreads(1)}
+  , http_network_manager_{4}
   , muddle_{std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
