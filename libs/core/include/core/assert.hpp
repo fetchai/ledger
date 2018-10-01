@@ -54,7 +54,7 @@ struct Printer
 
 #define TODO_FAIL(...)                                                        \
   fetch::assert::details::Printer::Print(__VA_ARGS__);                        \
-  FETCH_LOG_ERROR(LOGGING_NAME, "About to fail.");                            \
+  FETCH_LOG_ERROR("TODO_FAIL", "About to fail.");                             \
   std::cerr << std::endl << __FILE__ << " at line " << __LINE__ << std::endl; \
   throw std::runtime_error("Dependence on non-existing functionality!");
 
