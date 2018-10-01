@@ -230,7 +230,7 @@ struct CommandLineArguments
   }
 };
 
-ProverPtr GenereateP2PKey()
+ProverPtr GenerateP2PKey()
 {
   static constexpr char const *KEY_FILENAME = "p2p.key";
 
@@ -328,7 +328,7 @@ int main(int argc, char **argv)
 #endif  // FETCH_ENABLE_METRICS
 
     // create and load the main certificate for the bootstrapper
-    ProverPtr p2p_key = GenereateP2PKey();
+    ProverPtr p2p_key = GenerateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
     auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
