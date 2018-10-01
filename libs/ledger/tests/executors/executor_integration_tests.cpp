@@ -103,7 +103,7 @@ protected:
         storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
     if (count != num_lanes)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.", count, " of ", num_lanes);
       exit(1);
     }
 
