@@ -119,7 +119,7 @@ protected:
     FETCH_LOG_INFO(LOGGING_NAME, "Waiting for executor connections.");
     for (;;)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "executor_->is_alive()", executor_->is_alive()):
+      FETCH_LOG_INFO(LOGGING_NAME, "executor_->is_alive()", executor_->is_alive());
       FETCH_LOG_INFO(LOGGING_NAME, "storage_->IsAlive()", storage_->IsAlive());
 
       // wait for the all the clients to connect to everything
