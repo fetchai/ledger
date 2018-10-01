@@ -450,7 +450,7 @@ void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 }
 
 template <typename MUTABLE_TX>
-inline bool TxSigningAdapter<MUTABLE_TX>::operator == (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
+bool TxSigningAdapter<MUTABLE_TX>::operator == (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 {
   MutableTransaction const &left = left_tx;
   return tx_->summary_.contract_name == left.summary_.contract_name
@@ -460,7 +460,7 @@ inline bool TxSigningAdapter<MUTABLE_TX>::operator == (TxSigningAdapter<MUTABLE_
 }
 
 template <typename MUTABLE_TX>
-inline bool TxSigningAdapter<MUTABLE_TX>::operator != (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
+bool TxSigningAdapter<MUTABLE_TX>::operator != (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 
 {
   return ! (*this == left_tx);

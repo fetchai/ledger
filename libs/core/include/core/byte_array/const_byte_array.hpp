@@ -306,7 +306,7 @@ protected:
     return arr_pointer_[n];
   }
 
-  //* CEREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always *RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the `Reserve(...)` bellow)
+  //* CAREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always *RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the `Reserve(...)` bellow)
   //*   Meaning that if pradigm value is set to:
   //*    * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n), which is internally still relative to `start_` offset,
   //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size* (new_size = old_size + n),
@@ -332,7 +332,7 @@ protected:
     length_ = new_length;
   }
 
-  //* CEREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is *WHOLE* allocated size of underlying data buffer.
+  //* CAREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is *WHOLE* allocated size of underlying data buffer.
   //*   Meaning that if pradigm value is set to:
   //*    * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set (new_capacity = n)
   //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity* (new_capacity = old_capacity + n)
@@ -395,6 +395,7 @@ private:
     Resize(acc_size);
   }
 
+  //TODO(pbukva) (private issue #257)
   template <typename... Arg>
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {

@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include <cstdint>
-
 namespace fetch {
 
 enum class ResizeParadigm

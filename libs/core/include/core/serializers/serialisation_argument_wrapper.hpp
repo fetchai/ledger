@@ -60,15 +60,9 @@ public:
 };
 
 template<typename T>
-auto LazyEvalArgumentFactory(T const& lamda)
+auto LazyEvalArgumentFactory(T&& functor)
 {
-  return LazyEvalArgument<T>{lamda};
-}
-
-template<typename T>
-auto LazyEvalArgumentFactory(T&& lamda)
-{
-  return LazyEvalArgument<T>{std::move(lamda)};
+  return LazyEvalArgument<T>{std::forward<T>(functor)};
 }
 
 template<typename STREAM, typename T>
