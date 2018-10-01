@@ -55,12 +55,14 @@ inline MutableTransaction RandomTransaction(std::size_t num_of_resources=3, int6
   trans.set_summary(summary);
   trans.set_data(GetRandomByteArray());
   trans.set_contract_name(std::to_string(GetRandom()));
- 
+
+  auto tx_adapter = TxSigningAdapterFactory(trans);
+
   uint64_t const size = num_of_signatures < 0 ? (static_cast<uint8_t>(GetRandom() % static_cast<uint64_t>(0-num_of_signatures) + 1)) : static_cast<uint64_t>(num_of_signatures);
   for (uint64_t i = 0; i < size; ++i)
   {
     crypto::ECDSASigner::PrivateKey key;
-    trans.Sign(key.KeyAsBin());
+    trans.Sign(key.KeyAsBin(), tx_adapter);
   }
   
   if (update_digest)

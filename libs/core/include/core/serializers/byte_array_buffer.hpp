@@ -69,6 +69,13 @@ public:
   {
   }
 
+  ByteArrayBufferEx(std::size_t const &capacity)
+    : data_(capacity)
+    , pos_{0}
+    , size_counter_{capacity}
+  {
+  }
+
   ByteArrayBufferEx & operator = (ByteArrayBufferEx const &from)
   {
     *this = ByteArrayBufferEx{ from };

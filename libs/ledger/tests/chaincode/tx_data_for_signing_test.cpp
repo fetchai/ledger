@@ -34,6 +34,7 @@ namespace {
 
   class TxDataForSigningTest : public ::testing::Test
   {
+
   protected:
     void SetUp() override {
     }
@@ -44,7 +45,7 @@ namespace {
 
   TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
   {
-    for(std::size_t i=0; i<100; ++i)
+    for(std::size_t i=0; i<1; ++i)
     {
       MutableTransaction tx {RandomTransaction(3, 0)};
       //std::cout << "tx[before] = " << std::endl << tx << std::endl;
@@ -52,7 +53,7 @@ namespace {
       auto txdfs {TxSigningAdapterFactory(tx)};
       crypto::openssl::ECDSAPrivateKey<> key;
 
-      tx.Sign(key.KeyAsBin());
+      tx.Sign(key.KeyAsBin(), txdfs);
       MutableTransaction::signatures_type::value_type const& sig = *tx.signatures().begin();
       EXPECT_TRUE(txdfs.Verify(sig));
       EXPECT_TRUE(tx.Verify());
@@ -61,7 +62,7 @@ namespace {
 
   TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
   {
-    for(std::size_t i=0; i<100; ++i)
+    for(std::size_t i=0; i<0; ++i)
     {
       MutableTransaction tx {RandomTransaction(3, 3)};
       tx.UpdateDigest();
