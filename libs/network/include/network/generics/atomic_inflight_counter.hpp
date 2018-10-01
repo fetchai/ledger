@@ -59,7 +59,7 @@ public:
 
   AtomicInflightCounter(unsigned int my_count = 1)
   {
-    my_count_     = my_count;
+    my_count_ = my_count;
     GetCounter().count.fetch_add(my_count_);
   }
 
