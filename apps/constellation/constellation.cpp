@@ -73,6 +73,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
+  , http_network_manager_{CalcNetworkManagerThreads(1)}
   , muddle_{std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
@@ -88,7 +89,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
-  , http_{network_manager_}
+  , http_{http_network_manager_}
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
   , my_network_address_(std::move(my_network_address))
@@ -131,6 +132,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // start all the services
   network_manager_.Start();
+  http_network_manager_.Start();
   muddle_.Start({p2p_port_});
 
   lane_services_.Start();
@@ -201,6 +203,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   lane_services_.Stop();
   muddle_.Stop();
+  http_network_manager_.Stop();
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
