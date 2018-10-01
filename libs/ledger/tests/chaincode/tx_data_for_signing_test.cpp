@@ -45,10 +45,9 @@ namespace {
 
   TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
   {
-    for(std::size_t i=0; i<1; ++i)
+    for(std::size_t i=0; i<100; ++i)
     {
       MutableTransaction tx {RandomTransaction(3, 0)};
-      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
       auto txdfs {TxSigningAdapterFactory(tx)};
       crypto::openssl::ECDSAPrivateKey<> key;
@@ -62,7 +61,7 @@ namespace {
 
   TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
   {
-    for(std::size_t i=0; i<0; ++i)
+    for(std::size_t i=0; i<100; ++i)
     {
       MutableTransaction tx {RandomTransaction(3, 3)};
       tx.UpdateDigest();

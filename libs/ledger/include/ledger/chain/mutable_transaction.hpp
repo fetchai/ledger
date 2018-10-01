@@ -140,21 +140,6 @@ public:
     return *this;
   }
 
-  //TxSigningAdapter(transaction_type &tx, self_type const &from)
-  //  : tx_{ &tx }
-  //  , stream_{ from.stream_ }
-  //  , tx_data_hash_{ from.tx_data_hash_ }
-  //  , identity_stream_{ from.identity_stream_ }
-  //{
-  //}
-
-  //TxSigningAdapter(transaction_type &tx, self_type &&from)
-  //  : tx_{ &tx }
-  //  , stream_{ std::move(from.stream_) }
-  //  , tx_data_hash_{ from.tx_data_hash_ }
-  //{
-  //}
-
   byte_array::ConstByteArray const & DataForSigning() const
   {
     Update();
@@ -167,11 +152,6 @@ public:
     auto const& signature = sig.second;
     public_key_type pub_key{ identity.identifier() };
     auto hash = HashOfTxDataForSigning(identity);
-
-    std::cout << "Verify[tx=" << (void*)tx_ << "] ===================================" << std::endl;
-    std::cout << "identity  = " << byte_array::ToHex(pub_key.keyAsBin()) << std::endl;
-    std::cout << "signature = " << byte_array::ToHex(signature.signature_data) << std::endl;
-    std::cout << "hash      = " << byte_array::ToHex(hash) << std::endl;
     return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
   }
 
@@ -185,12 +165,6 @@ public:
     crypto::Identity identity {signature_type::ecdsa_curve_type::sn, private_key.publicKey().keyAsBin()};
     auto hash = HashOfTxDataForSigning(identity);
     auto sig = signature_type::SignHash(private_key, hash);
-
-    std::cout << "Sign[tx=" << (void*)tx_ << "] ===================================" << std::endl;
-    std::cout << "identity  = " << byte_array::ToHex(identity.identifier()) << std::endl;
-    std::cout << "signature = " << byte_array::ToHex(sig.signature()) << std::endl;
-    std::cout << "hash      = " << byte_array::ToHex(hash) << std::endl;
-
     return signatures_type::value_type{ std::move(identity), Signature{ sig.signature(), signature_type::ecdsa_curve_type::sn } };
   }
 
@@ -210,11 +184,6 @@ public:
     hasher_type tx_data_hash_copy = *tx_data_hash_;
     identity_stream_->Resize(0, ResizeParadigm::ABSOLUTE);
     *identity_stream_ << identity;
-
-    std::cout << "HashOfTxDataForSigning[tx=" << (void*)tx_ << "] ===================================" << std::endl;
-
-    std::cout << "serialised identity  = " << byte_array::ToHex(identity_stream_->data()) << std::endl;
-    std::cout << "serialised tx data   = " << byte_array::ToHex(stream_->data()) << std::endl;
 
     //Adding serialized identity to the hash for signing
     if (!tx_data_hash_copy.Update(identity_stream_->data()))
@@ -260,12 +229,6 @@ public:
   using resource_set_type = TransactionSummary::resource_set_type;
   using signatures_type   = signatures_type;
   using tx_signing_adapter_type = TxSigningAdapter<MutableTransaction>;
-
-  //MutableTransaction() = default;
-  //MutableTransaction(MutableTransaction const &from) = default;
-  //MutableTransaction(MutableTransaction &&from) = default;
-  //MutableTransaction & operator = (MutableTransaction const &from) = default;
-  //MutableTransaction & operator = (MutableTransaction &&from) = default;
 
   resource_set_type const &resources() const
   {
