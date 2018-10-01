@@ -33,8 +33,8 @@ template <typename TARGET>
 class HasWorkerThread
 {
 private:
-  using Target       = TARGET;
-  using WorkFunc     = std::function<void(void)>;
+  using Target   = TARGET;
+  using WorkFunc = std::function<void(void)>;
 
 public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
@@ -73,7 +73,7 @@ protected:
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured, stopping thread.");
       return;
     }
-    while(!shutdown_)
+    while (!shutdown_)
     {
       target_->Wait(100);
       if (shutdown_)
@@ -90,7 +90,7 @@ protected:
 
   Target *     target_{nullptr};
   ThreadP      thread_;
-  ShutdownFlag shutdown_{false{;
+  ShutdownFlag shutdown_{false};
   WorkFunc     workcycle_;
 };
 
