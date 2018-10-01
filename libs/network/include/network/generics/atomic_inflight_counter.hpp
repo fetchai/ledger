@@ -61,7 +61,6 @@ public:
   {
     my_count_     = my_count;
     auto previous = GetCounter().count.fetch_add(my_count_);
-    FETCH_LOG_INFO(LOGGING_NAME, "Inflight:", previous + my_count_);
   }
 
   void Completed(unsigned int completed_count)
@@ -69,10 +68,8 @@ public:
     unsigned int clipped = std::min(completed_count, my_count_);
     my_count_ -= clipped;
     auto previous = GetCounter().count.fetch_sub(clipped);
-    FETCH_LOG_INFO(LOGGING_NAME, "Inflight: -", clipped, " => ", GetCounter().count.load());
     if (previous == 1)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Inflight: WAKEUP!!!!");
       GetCounter().cv.notify_all();
     }
   }

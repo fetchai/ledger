@@ -33,9 +33,6 @@ template <typename TARGET>
 class HasWorkerThread
 {
 private:
-  using ShutdownFlag = std::atomic<bool>;
-  using Thread       = std::thread;
-  using ThreadP      = std::shared_ptr<Thread>;
   using Target       = TARGET;
   using WorkFunc     = std::function<void(void)>;
 
@@ -76,29 +73,24 @@ protected:
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured, stopping thread.");
       return;
     }
-    while (1)
+    while(!shutdown_)
     {
-      if (shutdown_.load())
-      {
-        return;
-      }
-      {
-        target_->Wait(100);
-      }
-      if (shutdown_.load())
+      target_->Wait(100);
+      if (shutdown_)
       {
         return;
       }
       workcycle_();
-      if (shutdown_.load())
-      {
-        return;
-      }
     }
   }
-  Target *     target_;
+
+  using ShutdownFlag = std::atomic<bool>;
+  using Thread       = std::thread;
+  using ThreadP      = std::shared_ptr<Thread>;
+
+  Target *     target_{nullptr};
   ThreadP      thread_;
-  ShutdownFlag shutdown_;
+  ShutdownFlag shutdown_{false{;
   WorkFunc     workcycle_;
 };
 
