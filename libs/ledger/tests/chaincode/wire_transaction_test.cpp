@@ -62,8 +62,8 @@ namespace {
     
       EXPECT_TRUE(tx_deserialised.Verify());
 
-      auto const txdfs{ TxDataForSigningCFactory(tx) };
-      auto const txdfs_deserialised{ TxDataForSigningCFactory(tx_deserialised) };
+      auto const txdfs{ TxSigningAdapterFactory(tx) };
+      auto const txdfs_deserialised{ TxSigningAdapterFactory(tx_deserialised) };
       EXPECT_EQ(txdfs, txdfs_deserialised);
 
       tx.UpdateDigest();

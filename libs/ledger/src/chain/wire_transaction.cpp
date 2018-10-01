@@ -72,7 +72,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_v["dbg"] = tx_debug_data;
   }
 
-  auto txdfs{TxDataForSigningCFactory(tx)};
+  auto txdfs{TxSigningAdapterFactory(tx)};
   serializers::ByteArrayBuffer stream;
   stream.Append(txdfs);
   stream.Seek(0);
@@ -91,7 +91,7 @@ MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transac
   auto &tx_v = tx_json.root();
   
   serializers::ByteArrayBuffer stream{ byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>()) };
-  auto txdata {TxDataForSigningCFactory(tx)};
+  auto txdata {TxSigningAdapterFactory(tx)};
   stream >> txdata;
 
   return tx;

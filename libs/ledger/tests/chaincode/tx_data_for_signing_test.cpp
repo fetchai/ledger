@@ -49,7 +49,7 @@ namespace {
       MutableTransaction tx {RandomTransaction(3, 0)};
       //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
-      auto txdfs {TxDataForSigningCFactory(tx)};
+      auto txdfs {TxSigningAdapterFactory(tx)};
       crypto::openssl::ECDSAPrivateKey<> key;
 
       tx.Sign(key.KeyAsBin());
@@ -66,25 +66,14 @@ namespace {
       MutableTransaction tx {RandomTransaction(3, 3)};
       tx.UpdateDigest();
       ASSERT_TRUE(tx.Verify());
-      //std::cout << "tx[before] = " << std::endl << tx << std::endl;
 
-      //crypto::openssl::ECDSAPrivateKey<> key;
-      //tx.Sign(key.KeyAsBin());
-
-      //crypto::openssl::ECDSAPrivateKey<> key1;
-      //tx.Sign(key1.KeyAsBin());
-
-      //crypto::openssl::ECDSAPrivateKey<> key2;
-      //tx.Sign(key2.KeyAsBin());
-
-
-      auto txdfs{ TxDataForSigningCFactory(tx) };
+      auto txdfs{ TxSigningAdapterFactory(tx) };
       
       serializers::ByteArrayBuffer stream;
       stream << txdfs;
 
       MutableTransaction tx_deser;
-      auto txdfs_deser{ TxDataForSigningCFactory(tx_deser) };
+      auto txdfs_deser{ TxSigningAdapterFactory(tx_deser) };
       stream.Seek(0);
       stream >> txdfs_deser;
 
