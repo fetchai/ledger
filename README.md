@@ -70,3 +70,20 @@ ctest
 
 Notes
 =====
+
+If the changes in the PR do not adhere to Fetch's coding style, the CI will automatically reject it.
+
+To automatically apply trivial stylistic fixes, run (best done in docker due to requiring modern clang tools, clang-format):
+
+./scripts/apply-style.py
+
+To automatically run static analysis to check for and fix coding style violations, run (best done in docker due to requiring modern clang tools, clang-tidy):
+
+./scripts/run-static-analysis.py ./build --fix
+
+Note: this takes a long time, and running with the fix flag may cause clang to break the code (changing
+variable names without propagating their updates). Therefore it is recommended you have a clean HEAD so as
+to identify the changes that have been made. Build the project again before pushing it as it's likely
+to be broken
+
+
