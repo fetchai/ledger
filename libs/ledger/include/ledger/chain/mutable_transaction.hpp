@@ -140,6 +140,17 @@ public:
     return *this;
   }
 
+  operator transaction_type & () const
+  {
+    if (!tx_)
+    {
+      throw std::runtime_error("Pointer to wrapped underlying transaction is nullptr.");
+    }
+    
+    return *tx_;
+  }
+
+
   byte_array::ConstByteArray const & DataForSigning() const
   {
     Update();
@@ -427,20 +438,21 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
 template <typename T, typename MUTABLE_TX>
 void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
 {
-  stream.Append(serializers::Verbatim{ tx.DataForSigning() }, tx.tx_->signatures_);
+  stream.Append(serializers::Verbatim{ tx.DataForSigning() }, static_cast<MUTABLE_TX &>(tx).signatures_);
 }
 
 template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
-  stream >> tx.tx_->summary_.contract_name >> tx.tx_->summary_.fee >> tx.tx_->summary_.resources >> tx.tx_->data_ >> tx.tx_->signatures_;
+  MutableTransaction &tx_ = tx;
+  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
   tx.Reset();
 }
 
 template <typename MUTABLE_TX>
 inline bool TxSigningAdapter<MUTABLE_TX>::operator == (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 {
-  MutableTransaction const &left = *left_tx.tx_;
+  MutableTransaction const &left = left_tx;
   return tx_->summary_.contract_name == left.summary_.contract_name
       && tx_->summary_.fee == left.summary_.fee
       && tx_->summary_.resources == left.summary_.resources
