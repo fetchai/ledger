@@ -81,6 +81,17 @@ protected:
 
     storage_.reset(new underlying_storage_type{*network_manager_});
 
+
+    network::FutureTimepoint wait_until(std::chrono::seconds(10));
+    if (network::AtomicInflightCounter<network::TCPServer>::Wait(wait_until))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
+    }
+    else
+    {
+      TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
+    }
+
     std::map<LaneIndex, std::pair<fetch::byte_array::ByteArray, uint16_t>> lane_data;
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
@@ -89,7 +100,7 @@ protected:
     }
 
     auto count =
-        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
     if (count != num_lanes)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");
