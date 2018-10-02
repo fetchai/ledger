@@ -23,6 +23,17 @@
 namespace fetch {
 namespace serializers {
 
+/**
+ * @brief Wrapper for (Const)ByteArray instance to serialise its value "AS IS"
+ * 
+ * This class is dedicated to serve as wrapper for (Const)ByteArray instance
+ * to serialise its value AS IS (not running it through serialisation process
+ * againn), what ultimatelly assumes that its ALREADY IS VALID SERIALISED
+ * content.
+ * For example, this is useful if there is already pre-serialised content in
+ * the (Const)ByteArray instance and it is just necessary to extend or insert
+ * it in another serialisation process.
+ */
 struct Verbatim : public std::reference_wrapper<byte_array::ConstByteArray const>
 {
   using Base = std::reference_wrapper<byte_array::ConstByteArray const>;
