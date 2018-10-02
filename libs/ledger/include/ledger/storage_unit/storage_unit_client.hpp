@@ -98,7 +98,7 @@ private:
   public:
     enum
     {
-      NO_CHANGE = AtomicStateMachine::NO_CHANGE,
+      NO_CHANGE    = AtomicStateMachine::NO_CHANGE,
       INITIALISING = 1,
       CONNECTING,
       QUERYING,
@@ -392,12 +392,13 @@ public:
   bool ClientForLaneConnected(LaneIndex lane)
   {
     FETCH_LOCK(mutex_);
-    auto  iter = lanes_.find(lane);
+    auto iter = lanes_.find(lane);
     return (iter != lanes_.end());
   }
 
   template <typename T>
-  void AddLaneConnections(const std::map<LaneIndex, Peer> &lanes,
+  void AddLaneConnections(
+      const std::map<LaneIndex, Peer> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
     if (!workthread_)
@@ -409,9 +410,9 @@ public:
     for (auto const &lane : lanes)
     {
       auto                lanenum = lane.first;
-      auto                target = lane.second;
-      SharedServiceClient client =
-        register_.template CreateServiceClient<T>(network_manager_, target.address(), target.port());
+      auto                target  = lane.second;
+      SharedServiceClient client  = register_.template CreateServiceClient<T>(
+          network_manager_, target.address(), target.port());
       std::string name   = target.ToString();
       auto        worker = std::make_shared<LaneConnectorWorker>(lanenum, client, name,
                                                           std::chrono::milliseconds(timeout));

@@ -96,7 +96,7 @@ protected:
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
       uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
+      lane_data[i]             = fetch::network::Peer("127.0.0.1", lane_port);
     }
 
     auto count =

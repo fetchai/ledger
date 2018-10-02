@@ -38,9 +38,8 @@ public:
   using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
   explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
-    :storage_unit_(storage_unit)
-  {
-  }
+    : storage_unit_(storage_unit)
+  {}
 
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;

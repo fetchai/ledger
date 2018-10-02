@@ -59,41 +59,41 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
   LOG_STACK_TRACE_POINT;
 
   auto feed = feed_;
-  publisher_->create_publisher(
-      feed_, [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
-        serializer_type params;
-        params << SERVICE_FEED << feed;
+  publisher_->create_publisher(feed_,
+                               [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
+                                 serializer_type params;
+                                 params << SERVICE_FEED << feed;
 
-        uint64_t p = params.Tell();
-        params << subscription_handler_type(0);  // placeholder
+                                 uint64_t p = params.Tell();
+                                 params << subscription_handler_type(0);  // placeholder
 
-        params.Allocate(msg.size());
-        params.WriteBytes(msg.pointer(), msg.size());
-        LOG_STACK_TRACE_POINT;
-        lock_type lock(subscribe_mutex_);
+                                 params.Allocate(msg.size());
+                                 params.WriteBytes(msg.pointer(), msg.size());
+                                 LOG_STACK_TRACE_POINT;
+                                 lock_type lock(subscribe_mutex_);
 
-        std::vector<publishing_workload_type> notifications_to_send;
-        notifications_to_send.reserve(16);
-        std::size_t i = 0;
+                                 std::vector<publishing_workload_type> notifications_to_send;
+                                 notifications_to_send.reserve(16);
+                                 std::size_t i = 0;
 
-        while (i < subscribers_.size())
-        {
-          auto &s = subscribers_[i];
-          params.Seek(p);
-          params << s.id;
+                                 while (i < subscribers_.size())
+                                 {
+                                   auto &s = subscribers_[i];
+                                   params.Seek(p);
+                                   params << s.id;
 
-          publishing_workload_type new_notification =
-              std::make_tuple<>(service, s.client, params.data());
-          notifications_to_send.push_back(new_notification);
+                                   publishing_workload_type new_notification =
+                                     std::make_tuple<>(service, s.client, params.data());
+                                   notifications_to_send.push_back(new_notification);
 
-          i++;
-          if ((i & 0xF) == 0)
-          {
-            PublishAll(notifications_to_send);
-          }
-        }
-        PublishAll(notifications_to_send);
-      });
+                                   i++;
+                                   if ((i & 0xF) == 0)
+                                   {
+                                     PublishAll(notifications_to_send);
+                                   }
+                                 }
+                                 PublishAll(notifications_to_send);
+                               });
 }
 
 }  // namespace service
