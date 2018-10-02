@@ -543,7 +543,7 @@ public:
 
   void UseThesePeers(UriSet uris)
   {
-    FETCH_LOCK(services_mutex_);  // not ideal!
+    FETCH_LOCK(desireds_mutex_);
     desired_connections_ = std::move(uris);
   }
 
@@ -551,6 +551,7 @@ public:
   {
     {
       FETCH_LOCK(services_mutex_);
+      FETCH_LOCK(desireds_mutex_);
 
       auto ident = lane_identity_.lock();
       if (!ident)
@@ -734,6 +735,8 @@ private:
   network_manager_type        manager_;
 
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
+  mutex::Mutex desireds_mutex_{__LINE__, __FILE__};
+
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
 

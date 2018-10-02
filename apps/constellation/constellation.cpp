@@ -185,7 +185,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   if (!lane_data.empty())
   {
     std::this_thread::sleep_for(
-        std::chrono::milliseconds(5000));  // just a hail-mary to see if the sockets start.
+        std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
     auto count =
         storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
     if (count == num_lanes_)

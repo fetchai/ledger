@@ -60,6 +60,8 @@ public:
   AtomicInflightCounter(unsigned int my_count = 1)
   {
     my_count_ = my_count;
+    auto &the_counter = GetCounter();
+    Lock lock(the_counter.mutex);
     GetCounter().count.fetch_add(my_count_);
   }
 
@@ -67,6 +69,8 @@ public:
   {
     unsigned int clipped = std::min(completed_count, my_count_);
     my_count_ -= clipped;
+    auto &the_counter = GetCounter();
+    Lock lock(the_counter.mutex);
     auto previous = GetCounter().count.fetch_sub(clipped);
     if (previous == 1)
     {
@@ -82,21 +86,16 @@ public:
   static bool Wait(const FutureTimepoint &until)
   {
     auto &the_counter = GetCounter();
-    while (1)
+    while(!until.IsDue())
     {
-      if (until.IsDue())
-      {
-        return false;
-      }
+      Lock lock(the_counter.mutex);
       if (the_counter.count.load() == 0)
       {
         return true;
       }
-      {
-        Lock lock(the_counter.mutex);
-        the_counter.cv.wait_for(lock, until.DueIn());
-      }
+      the_counter.cv.wait_for(lock, until.DueIn());
     }
+    return false;
   }
 };
 
