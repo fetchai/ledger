@@ -178,8 +178,6 @@ public:
 
   std::size_t capacity() const
   {
-    // TODO(private issue #228: why `data_.size() - 1`?)
-    // return data_.size() == 0 ? 0 : data_.size() - 1;
     return data_.size();
   }
 

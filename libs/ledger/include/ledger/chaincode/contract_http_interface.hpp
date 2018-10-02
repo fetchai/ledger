@@ -41,9 +41,9 @@ class ContractHttpInterface : public http::HTTPModule
 {
 public:
   static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
-  static byte_array::ConstByteArray const api_path_contract_prefix;
-  static byte_array::ConstByteArray const contract_name_separator;
-  static byte_array::ConstByteArray const path_separator;
+  static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
+  static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
+  static byte_array::ConstByteArray const PATH_SEPARATOR;
 
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
     : storage_{storage}
@@ -59,12 +59,12 @@ public:
       auto contract = contract_cache_.factory().Create(contract_name);
 
       byte_array::ByteArray contract_path{contract_name};
-      contract_path.Replace(static_cast<char const &>(contract_name_separator[0]),
-                            static_cast<char const &>(path_separator[0]));
+      contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
+                            static_cast<char const &>(PATH_SEPARATOR[0]));
 
       byte_array::ByteArray api_path;
       //* ByteArry from `contract_name` performs deep copy due to const -> non-const
-      api_path.Append(api_path_contract_prefix, contract_path, path_separator);
+      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR);
       std::size_t const api_path_base_size = api_path.size();
 
       // enumerate all of the contract query handlers

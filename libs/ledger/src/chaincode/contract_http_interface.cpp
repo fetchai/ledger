@@ -22,9 +22,9 @@ namespace fetch {
 namespace ledger {
 
 constexpr char const *           ContractHttpInterface::LOGGING_NAME;
-byte_array::ConstByteArray const ContractHttpInterface::api_path_contract_prefix("/api/contract/");
-byte_array::ConstByteArray const ContractHttpInterface::contract_name_separator(".");
-byte_array::ConstByteArray const ContractHttpInterface::path_separator("/");
+byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX("/api/contract/");
+byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
+byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
 
 }  // namespace ledger
 }  // namespace fetch

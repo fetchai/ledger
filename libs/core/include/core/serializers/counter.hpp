@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/common.hpp"
+#include "core/macros.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
 #include <type_traits>
@@ -41,7 +42,7 @@ public:
               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
               bool const            zero_reserved_space = true)
   {
-    (void)zero_reserved_space;
+    FETCH_UNUSED(zero_reserved_space);
 
     Reserve(size, resize_paradigm);
 
