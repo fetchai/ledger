@@ -43,14 +43,15 @@ int main()
   // Add atomic to slightly slow down parallel http calls
   std::atomic<int> pages_count{0};
 
-  server.AddView(Method::GET, "/pages", [&pages_count](ViewParameters const &params, HTTPRequest const &req) {
-    std::ostringstream ret;
-    ret << "pages index. You have called " << pages_count++ << " times.";
+  server.AddView(Method::GET, "/pages",
+                 [&pages_count](ViewParameters const &params, HTTPRequest const &req) {
+                   std::ostringstream ret;
+                   ret << "pages index. You have called " << pages_count++ << " times.";
 
-    HTTPResponse res(ret.str());
+                   HTTPResponse res(ret.str());
 
-    return res;
-  });
+                   return res;
+                 });
 
   server.AddView(Method::GET, "/pages/sub",
                  [](ViewParameters const &params, HTTPRequest const &req) {
