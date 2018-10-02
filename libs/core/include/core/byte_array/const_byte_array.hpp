@@ -60,12 +60,11 @@ public:
 
   ConstByteArray(char const *str)
     : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str ? std::strlen(str) : 0}
-  {
-  }
+  {}
 
   ConstByteArray(container_type const *const data, std::size_t const &size)
   {
-    if(size > 0)
+    if (size > 0)
     {
       assert(data != nullptr);
       Reserve(size);
@@ -108,13 +107,15 @@ public:
     return ConstByteArray{pointer(), size()};
   }
 
-  void WriteBytes(container_type const *const src, std::size_t const &src_size, std::size_t const &dest_offset=0)
+  void WriteBytes(container_type const *const src, std::size_t const &src_size,
+                  std::size_t const &dest_offset = 0)
   {
     assert(dest_offset + src_size <= size());
     std::memcpy(pointer() + dest_offset, src, src_size);
   }
 
-  void ReadBytes(container_type *const dest, std::size_t const &dest_size, std::size_t const &src_offset=0) const
+  void ReadBytes(container_type *const dest, std::size_t const &dest_size,
+                 std::size_t const &src_offset = 0) const
   {
     assert(src_offset + dest_size <= size());
     std::memcpy(dest, pointer() + src_offset, dest_size);
@@ -306,24 +307,28 @@ protected:
     return arr_pointer_[n];
   }
 
-  //* CAREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always *RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the `Reserve(...)` bellow)
-  //*   Meaning that if pradigm value is set to:
-  //*    * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n), which is internally still relative to `start_` offset,
-  //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size* (new_size = old_size + n),
-  //*   , where `new_size` is internally still relative to `start_` offset in *both* cases above.
-  void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE, bool const zero_reserved_space=true)
+  //CAREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always
+  //         RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the 
+  //         `Reserve(...)` bellow)
+  //  Meaning that if pradigm value is set to:
+  //   * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n)
+  //   * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size*
+  //                 (new_size = old_size + n),
+  //   , where `new_size` is internally still relative to `start_` offset in *BOTH* cases above.
+  void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
+              bool const zero_reserved_space = true)
   {
     std::size_t new_length;
 
-    switch(resize_paradigm)
+    switch (resize_paradigm)
     {
-      case ResizeParadigm::RELATIVE:
-        new_length  = length_ + n;
-        break;
+    case ResizeParadigm::RELATIVE:
+      new_length = length_ + n;
+      break;
 
-      case ResizeParadigm::ABSOLUTE:
-        new_length  = n;
-        break;
+    case ResizeParadigm::ABSOLUTE:
+      new_length = n;
+      break;
     }
 
     auto const new_capacity_for_reserve = start_ + new_length;
@@ -332,23 +337,28 @@ protected:
     length_ = new_length;
   }
 
-  //* CAREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is *WHOLE* allocated size of underlying data buffer.
-  //*   Meaning that if pradigm value is set to:
-  //*    * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set (new_capacity = n)
-  //*    * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity* (new_capacity = old_capacity + n)
-  void Reserve(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE, bool const zero_reserved_space=true)
+  //CAREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is
+  //         WHOLE* allocated size of underlying data buffer.
+  //  Meaning that if pradigm value is set to:
+  //   * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set
+  //                 (new_capacity = n)
+  //   * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity*
+  //                 (new_capacity = old_capacity + n)
+  void Reserve(std::size_t const &  n,
+               ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
+               bool const           zero_reserved_space = true)
   {
     std::size_t new_capacity_for_reserve;
 
-    switch(resize_paradigm)
+    switch (resize_paradigm)
     {
-      case ResizeParadigm::RELATIVE:
-        new_capacity_for_reserve = data_.size() + n;
-        break;
+    case ResizeParadigm::RELATIVE:
+      new_capacity_for_reserve = data_.size() + n;
+      break;
 
-      case ResizeParadigm::ABSOLUTE:
-        new_capacity_for_reserve = n;
-        break;
+    case ResizeParadigm::ABSOLUTE:
+      new_capacity_for_reserve = n;
+      break;
     }
 
     if (new_capacity_for_reserve <= data_.size())
@@ -389,7 +399,7 @@ protected:
   std::size_t Replace(char const &what, char const &with)
   {
     std::size_t num_of_replacements = 0;
-    std::size_t pos = 0;
+    std::size_t pos                 = 0;
     while (pos < length_)
     {
       pos = Find(what, pos);
@@ -410,7 +420,7 @@ private:
     Resize(acc_size);
   }
 
-  //TODO(pbukva) (private issue #257)
+  // TODO(pbukva) (private issue #257)
   template <typename... Arg>
   void AppendInternal(std::size_t const acc_size, self_type const &other, Arg const &... others)
   {

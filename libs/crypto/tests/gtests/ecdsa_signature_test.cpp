@@ -56,8 +56,8 @@ protected:
     openssl::ECDSAPrivateKey<KEY_ENCODING> priv_key{
         openssl::ECDSAPrivateKey<eECDSAEncoding::bin>(priv_key_data_)};
 
-    using ecdsa_signature_type = ECDSASignature<SIG_ENCODING>;
-    auto const& test_hash_data = test_data_;
+    using ecdsa_signature_type          = ECDSASignature<SIG_ENCODING>;
+    auto const &         test_hash_data = test_data_;
     ecdsa_signature_type signature{ecdsa_signature_type::SignHash(priv_key, test_hash_data)};
 
     const auto verification_result = signature.VerifyHash(priv_key.publicKey(), test_hash_data);

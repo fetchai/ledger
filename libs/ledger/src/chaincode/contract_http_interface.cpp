@@ -21,7 +21,7 @@
 namespace fetch {
 namespace ledger {
 
-constexpr char const * ContractHttpInterface::LOGGING_NAME;
+constexpr char const *           ContractHttpInterface::LOGGING_NAME;
 byte_array::ConstByteArray const ContractHttpInterface::api_path_contract_prefix("/api/contract/");
 byte_array::ConstByteArray const ContractHttpInterface::contract_name_separator(".");
 byte_array::ConstByteArray const ContractHttpInterface::path_separator("/");

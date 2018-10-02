@@ -18,72 +18,71 @@
 
 #include <gmock/gmock.h>
 
-#include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/helper_functions.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
 #include <memory>
-
 
 namespace fetch {
 namespace chain {
 
 namespace {
 
-  using ::testing::_;
-  using namespace fetch;
-  using namespace fetch::ledger;
+using ::testing::_;
+using namespace fetch;
+using namespace fetch::ledger;
 
-  class TxDataForSigningTest : public ::testing::Test
+class TxDataForSigningTest : public ::testing::Test
+{
+
+protected:
+  void SetUp() override
+  {}
+
+  void TearDown() override
+  {}
+};
+
+TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
+{
+  for (std::size_t i = 0; i < 100; ++i)
   {
+    MutableTransaction tx{RandomTransaction(3, 0)};
 
-  protected:
-    void SetUp() override {
-    }
+    auto                               txdfs{TxSigningAdapterFactory(tx)};
+    crypto::openssl::ECDSAPrivateKey<> key;
 
-    void TearDown() override {
-    }
-  };
-
-  TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
-  {
-    for(std::size_t i=0; i<100; ++i)
-    {
-      MutableTransaction tx {RandomTransaction(3, 0)};
-
-      auto txdfs {TxSigningAdapterFactory(tx)};
-      crypto::openssl::ECDSAPrivateKey<> key;
-
-      tx.Sign(key.KeyAsBin(), txdfs);
-      MutableTransaction::signatures_type::value_type const& sig = *tx.signatures().begin();
-      EXPECT_TRUE(txdfs.Verify(sig));
-      EXPECT_TRUE(tx.Verify());
-     }
+    tx.Sign(key.KeyAsBin(), txdfs);
+    MutableTransaction::signatures_type::value_type const &sig = *tx.signatures().begin();
+    EXPECT_TRUE(txdfs.Verify(sig));
+    EXPECT_TRUE(tx.Verify());
   }
+}
 
-  TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
+TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserialize_cycle)
+{
+  for (std::size_t i = 0; i < 100; ++i)
   {
-    for(std::size_t i=0; i<100; ++i)
-    {
-      MutableTransaction tx {RandomTransaction(3, 3)};
-      tx.UpdateDigest();
-      ASSERT_TRUE(tx.Verify());
+    MutableTransaction tx{RandomTransaction(3, 3)};
+    tx.UpdateDigest();
+    ASSERT_TRUE(tx.Verify());
 
-      auto txdfs{ TxSigningAdapterFactory(tx) };
-      
-      serializers::ByteArrayBuffer stream;
-      stream << txdfs;
+    auto txdfs{TxSigningAdapterFactory(tx)};
 
-      MutableTransaction tx_deser;
-      auto txdfs_deser{ TxSigningAdapterFactory(tx_deser) };
-      stream.Seek(0);
-      stream >> txdfs_deser;
+    serializers::ByteArrayBuffer stream;
+    stream << txdfs;
 
-      tx_deser.UpdateDigest();
+    MutableTransaction tx_deser;
+    auto               txdfs_deser{TxSigningAdapterFactory(tx_deser)};
+    stream.Seek(0);
+    stream >> txdfs_deser;
 
-      EXPECT_TRUE(tx_deser.Verify());
-      EXPECT_EQ(tx.digest(), tx_deser.digest());
-     }
+    tx_deser.UpdateDigest();
+
+    EXPECT_TRUE(tx_deser.Verify());
+    EXPECT_EQ(tx.digest(), tx_deser.digest());
   }
+}
 }  // namespace
 
-}  // namespace ledger
+}  // namespace chain
 }  // namespace fetch

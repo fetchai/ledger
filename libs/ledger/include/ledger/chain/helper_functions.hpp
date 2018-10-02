@@ -41,7 +41,9 @@ inline byte_array::ConstByteArray GetRandomByteArray()
   return {std::to_string(GetRandom())};
 }
 
-inline MutableTransaction RandomTransaction(std::size_t num_of_resources=3, int64_t const num_of_signatures = -4, bool const update_digest = false)
+inline MutableTransaction RandomTransaction(std::size_t   num_of_resources  = 3,
+                                            int64_t const num_of_signatures = -4,
+                                            bool const    update_digest     = false)
 {
   MutableTransaction trans;
   TransactionSummary summary;
@@ -58,13 +60,16 @@ inline MutableTransaction RandomTransaction(std::size_t num_of_resources=3, int6
 
   auto tx_adapter = TxSigningAdapterFactory(trans);
 
-  uint64_t const size = num_of_signatures < 0 ? (static_cast<uint8_t>(GetRandom() % static_cast<uint64_t>(0-num_of_signatures) + 1)) : static_cast<uint64_t>(num_of_signatures);
+  uint64_t const size =
+      num_of_signatures < 0
+          ? (static_cast<uint8_t>(GetRandom() % static_cast<uint64_t>(0 - num_of_signatures) + 1))
+          : static_cast<uint64_t>(num_of_signatures);
   for (uint64_t i = 0; i < size; ++i)
   {
     crypto::ECDSASigner::PrivateKey key;
     trans.Sign(key.KeyAsBin(), tx_adapter);
   }
-  
+
   if (update_digest)
   {
     trans.UpdateDigest();
@@ -73,10 +78,11 @@ inline MutableTransaction RandomTransaction(std::size_t num_of_resources=3, int6
   return trans;
 }
 
-inline std::ostream& operator << (std::ostream &os, MutableTransaction const& transaction)
+inline std::ostream &operator<<(std::ostream &os, MutableTransaction const &transaction)
 {
   os << "contract name:   " << transaction.contract_name() << std::endl;
-  os << "hash:            " << byte_array::ToHex(transaction.summary().transaction_hash) << std::endl;
+  os << "hash:            " << byte_array::ToHex(transaction.summary().transaction_hash)
+     << std::endl;
   os << "data:            " << byte_array::ToHex(transaction.data()) << std::endl;
 
   os << "=== Resources ===========================================" << std::endl;
@@ -93,7 +99,7 @@ inline std::ostream& operator << (std::ostream &os, MutableTransaction const& tr
     os << "signature:       " << byte_array::ToHex(sig.second.signature_data) << std::endl;
     os << "signature type:  " << sig.second.type << std::endl;
   }
-  //os << "=========================================================" << std::endl;
+  // os << "=========================================================" << std::endl;
   return os;
 }
 

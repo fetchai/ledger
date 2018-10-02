@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/typed_byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/typed_byte_array_buffer.hpp"
 
 #include "gtest/gtest.h"
 //#include "gmock/gmock.h"
@@ -29,69 +29,65 @@ namespace serializers {
 
 namespace {
 
-template<typename T>
+template <typename T>
 struct A
 {
   using ba_type  = byte_array::ByteArray;
   using cba_type = byte_array::ConstByteArray;
 
-  A() = default;
-  A(A const&) = default;
-  A(A &&) = default;
+  A()          = default;
+  A(A const &) = default;
+  A(A &&)      = default;
 
-  A& operator =(A const&) = default;
-  A& operator =(A &&) = default;
+  A &operator=(A const &) = default;
+  A &operator=(A &&) = default;
 
-  A(cba_type const& _x, cba_type const& _y)
+  A(cba_type const &_x, cba_type const &_y)
     : x{_x + " x"}
     , t{_x + " t", _y + " t"}
     , y{_y + " y"}
-  {
-  }
+  {}
 
-  bool operator ==(A const &left) const
+  bool operator==(A const &left) const
   {
     return x == left.x && y == left.y && t == left.t;
   }
 
-  bool operator !=(A const &left) const
+  bool operator!=(A const &left) const
   {
     return !(*this == left);
   }
 
-  ba_type x {ba_type{T{}.x}.Append(" x")};
-  T t{"Tx", "Ty"};
-  ba_type y {ba_type{T{}.y}.Append(" y")};
+  ba_type x{ba_type{T{}.x}.Append(" x")};
+  T       t{"Tx", "Ty"};
+  ba_type y{ba_type{T{}.y}.Append(" y")};
 };
 
-template<>
+template <>
 struct A<void>
 {
   using ba_type  = byte_array::ByteArray;
   using cba_type = byte_array::ConstByteArray;
 
-  A() = default;
-  A(A const&) = default;
-  A(A &&) = default;
+  A()          = default;
+  A(A const &) = default;
+  A(A &&)      = default;
 
-  A& operator =(A const&) = default;
-  A& operator =(A &&) = default;
+  A &operator=(A const &) = default;
+  A &operator=(A &&) = default;
 
-  A(cba_type const& _x, cba_type const& _y)
+  A(cba_type const &_x, cba_type const &_y)
     : x{_x}
     , y{_y}
-  {
-  }
+  {}
 
-  bool operator ==(A const &left) const
+  bool operator==(A const &left) const
   {
     return x == left.x && y == left.y;
   }
 
-  ba_type x {"X"};
-  ba_type y {"Y"};
-
-
+  ba_type x{"X"};
+  ba_type y{"Y"};
 };
 
 template <typename T, typename X>
@@ -118,7 +114,6 @@ void Deserialize(T &serializer, A<void> &a)
   serializer >> a.x >> a.y;
 }
 
-
 class ByteArrayBufferTest : public testing::Test
 {
 protected:
@@ -132,8 +127,8 @@ protected:
 
   void test_nested_append_serialisation(ByteArrayBuffer &stream)
   {
-    B const b0{"b0x", "b0y"};
-    B const b1{"b1x", "b1y"};
+    B const            b0{"b0x", "b0y"};
+    B const            b1{"b1x", "b1y"};
     constexpr uint64_t x = 3;
 
     auto const orig_stream_offset = stream.Tell();
@@ -142,8 +137,8 @@ protected:
     stream.Append(b0, x, b1);
 
     //* De-serialising
-    B b0_d;
-    B b1_d;
+    B        b0_d;
+    B        b1_d;
     uint64_t x_d = 0;
     stream.Seek(orig_stream_offset);
     stream >> b0_d >> x_d >> b1_d;
@@ -179,7 +174,7 @@ TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
 
 TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
 {
-  constexpr std::size_t offset = 50;
+  constexpr std::size_t offset               = 50;
   constexpr std::size_t preallocated_ammount = offset + 50;
 
   ByteArrayBuffer stream;
@@ -199,12 +194,12 @@ TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
 TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
 {
   B const b0{"b0", "b0"};
-  B       b0_copy{ b0 };
+  B       b0_copy{b0};
 
   //* Verifying that both variables have the **same** value
   EXPECT_EQ(b0, b0_copy);
 
-  auto const b0_copy_y_orig_value{ b0_copy.t.t.y.Copy() };
+  auto const b0_copy_y_orig_value{b0_copy.t.t.y.Copy()};
   //* Modifying value of one of variables
   b0_copy.t.t.y.Append("somethig new");
   //* Proving that variables have **different** value
@@ -235,7 +230,7 @@ TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offset)
 TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 {
   constexpr std::size_t preallocated_ammount = 100;
-  ByteArrayBuffer stream;
+  ByteArrayBuffer       stream;
 
   //* Production code under test
   stream.Resize(preallocated_ammount, ResizeParadigm::RELATIVE);
@@ -261,7 +256,7 @@ TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
   ByteArrayBuffer stream;
 
   std::size_t expected_size = 0;
-  for(uint64_t i = 0; i < 10; ++i)
+  for (uint64_t i = 0; i < 10; ++i)
   {
     //* Production code under test
     stream.Resize(delta_size);
@@ -275,8 +270,8 @@ TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
 
 TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
 {
-  constexpr std::size_t small_size = 30;
-  constexpr std::size_t offset = small_size + 20;
+  constexpr std::size_t small_size           = 30;
+  constexpr std::size_t offset               = small_size + 20;
   constexpr std::size_t preallocated_ammount = offset + 50;
 
   //* Setup

@@ -31,7 +31,6 @@ namespace {
 class ByteArrayTest : public testing::Test
 {
 protected:
-
   void SetUp()
   {}
 
@@ -45,8 +44,8 @@ TEST_F(ByteArrayTest, test_replace)
 
   //* PRODUCTION CODE UNDER TEST
   std::size_t const num_of_replacements = arr.Replace(' ', '-');
-  
-  //* EXPECTARTIONS 
+
+  //* EXPECTARTIONS
   ConstByteArray const expected_result("hello-kitty,-how-are-you?");
   EXPECT_EQ(expected_result, arr);
   EXPECT_EQ(4, num_of_replacements);

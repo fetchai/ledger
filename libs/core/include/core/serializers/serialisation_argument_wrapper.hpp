@@ -22,51 +22,53 @@
 namespace fetch {
 namespace serializers {
 
-template<typename T>
-class LazyEvalArgument {
+template <typename T>
+class LazyEvalArgument
+{
   T val_;
 
 public:
-  LazyEvalArgument(T val) : val_{std::move(val)} {};
+  LazyEvalArgument(T val)
+    : val_{std::move(val)} {};
 
-  LazyEvalArgument(LazyEvalArgument const&) = default;
-  LazyEvalArgument(LazyEvalArgument &&) = default;
+  LazyEvalArgument(LazyEvalArgument const &) = default;
+  LazyEvalArgument(LazyEvalArgument &&)      = default;
 
   LazyEvalArgument &operator=(LazyEvalArgument const &) = default;
   LazyEvalArgument &operator=(LazyEvalArgument &&) = default;
 
-  template<typename ...ARGS>
-  auto operator ()(ARGS ...args) const
+  template <typename... ARGS>
+  auto operator()(ARGS... args) const
   {
-    auto const& val = val_;
+    auto const &val = val_;
     return val(args...);
   }
 
-  template<typename ...ARGS>
-  auto operator ()(ARGS ...args)
+  template <typename... ARGS>
+  auto operator()(ARGS... args)
   {
     return val_(args...);
   }
 
-  operator T const& () const
+  operator T const &() const
   {
     return val_;
   }
 
-  operator T& ()
+  operator T &()
   {
     return val_;
   }
 };
 
-template<typename T>
-auto LazyEvalArgumentFactory(T&& functor)
+template <typename T>
+auto LazyEvalArgumentFactory(T &&functor)
 {
   return LazyEvalArgument<T>{std::forward<T>(functor)};
 }
 
-template<typename STREAM, typename T>
-void Serialize(STREAM & stream, LazyEvalArgument<T> const& lazyEvalArgument)
+template <typename STREAM, typename T>
+void Serialize(STREAM &stream, LazyEvalArgument<T> const &lazyEvalArgument)
 {
   lazyEvalArgument(stream);
 }

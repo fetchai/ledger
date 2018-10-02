@@ -40,7 +40,7 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
-  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
+  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
   static byte_array::ConstByteArray const api_path_contract_prefix;
   static byte_array::ConstByteArray const contract_name_separator;
   static byte_array::ConstByteArray const path_separator;
@@ -59,7 +59,8 @@ public:
       auto contract = contract_cache_.factory().Create(contract_name);
 
       byte_array::ByteArray contract_path{contract_name};
-      contract_path.Replace(static_cast<char const &>(contract_name_separator[0]), static_cast<char const &>(path_separator[0]));
+      contract_path.Replace(static_cast<char const &>(contract_name_separator[0]),
+                            static_cast<char const &>(path_separator[0]));
 
       byte_array::ByteArray api_path;
       //* ByteArry from `contract_name` performs deep copy due to const -> non-const

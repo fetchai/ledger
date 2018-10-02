@@ -101,9 +101,11 @@ int main(int argc, char const **argv)
 
         const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
 
-        std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i << "] ==========================================" << std::endl;
+        std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i
+                  << "] ==========================================" << std::endl;
         std::cout << "contract name:   " << transaction.contract_name() << std::endl;
-        std::cout << "hash:            " << ToHex(transaction.summary().transaction_hash) << std::endl;
+        std::cout << "hash:            " << ToHex(transaction.summary().transaction_hash)
+                  << std::endl;
         std::cout << "data:            " << ToHex(transaction.data()) << std::endl;
         for (auto const &sig : transaction.signatures())
         {
@@ -113,7 +115,7 @@ int main(int argc, char const **argv)
           std::cout << "signature type:  " << sig.second.type << std::endl;
         }
         EXPECT(mutableTx.Verify());
-     }
+      }
     };
   };
 

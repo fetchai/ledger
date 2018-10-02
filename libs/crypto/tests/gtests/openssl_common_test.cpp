@@ -62,13 +62,17 @@ protected:
   virtual void TearDown()
   {}
 
-  void test_convert_canonical_with_padding(shrd_ptr_type<BIGNUM const> const x, shrd_ptr_type<BIGNUM const> const y)
+  void test_convert_canonical_with_padding(shrd_ptr_type<BIGNUM const> const x,
+                                           shrd_ptr_type<BIGNUM const> const y)
   {
-    ASSERT_GT(ECDSAAffineCoordinatesConversion<>::x_size, static_cast<std::size_t>(BN_num_bytes(x.get())));
-    ASSERT_GT(ECDSAAffineCoordinatesConversion<>::y_size, static_cast<std::size_t>(BN_num_bytes(y.get())));
+    ASSERT_GT(ECDSAAffineCoordinatesConversion<>::x_size,
+              static_cast<std::size_t>(BN_num_bytes(x.get())));
+    ASSERT_GT(ECDSAAffineCoordinatesConversion<>::y_size,
+              static_cast<std::size_t>(BN_num_bytes(y.get())));
 
     auto serialized_to_ba = ECDSAAffineCoordinatesConversion<>::Convert2Canonical(x.get(), y.get());
-    EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::ecdsa_curve_type::publicKeySize, serialized_to_ba.size());
+    EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::ecdsa_curve_type::publicKeySize,
+              serialized_to_ba.size());
 
     shrd_ptr_type<BIGNUM> x2{BN_new()};
     shrd_ptr_type<BIGNUM> y2{BN_new()};
@@ -85,8 +89,8 @@ TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding
   shrd_ptr_type<BIGNUM> x{BN_new()};
   shrd_ptr_type<BIGNUM> y{BN_new()};
 
-  byte_array::ConstByteArray const x_ba({1,2,3,4,5});
-  byte_array::ConstByteArray const y_ba({6,7,8,9,10});
+  byte_array::ConstByteArray const x_ba({1, 2, 3, 4, 5});
+  byte_array::ConstByteArray const y_ba({6, 7, 8, 9, 10});
 
   ASSERT_NE(x_ba, y_ba);
 
@@ -100,21 +104,21 @@ TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding
 
 TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding_random)
 {
-  for(std::size_t j = 0; j<100; ++j)
+  for (std::size_t j = 0; j < 100; ++j)
   {
     shrd_ptr_type<BIGNUM> x{BN_new()};
     shrd_ptr_type<BIGNUM> y{BN_new()};
 
-    constexpr int bn_size_in_bites = 8*5;
+    constexpr int bn_size_in_bites = 8 * 5;
 
     ASSERT_EQ(1, BN_rand(x.get(), bn_size_in_bites, -1, 0));
     std::size_t i = 0;
-    //* Ensuring that number are different (probability that this loop cycles more than once is (almost) zero)
+    //* Ensuring that number are different (probability that this loop cycles more than once is
+    //(almost) zero)
     do
     {
       ASSERT_EQ(1, BN_rand(y.get(), bn_size_in_bites, -1, 0));
-    }
-    while(0 == BN_cmp(x.get(), y.get()) &&  i++ < 100);
+    } while (0 == BN_cmp(x.get(), y.get()) && i++ < 100);
     ASSERT_NE(0, BN_cmp(x.get(), y.get()));
 
     test_convert_canonical_with_padding(x, y);

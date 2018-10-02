@@ -28,20 +28,19 @@
 namespace fetch {
 namespace serializers {
 
-
-template<typename X=void>
+template <typename X = void>
 class ByteArrayBufferEx
 {
-  static char const * const LOGGING_NAME;
+  static char const *const LOGGING_NAME;
 
 public:
-  using self_type = ByteArrayBufferEx;
-  using byte_array_type = byte_array::ByteArray;
+  using self_type         = ByteArrayBufferEx;
+  using byte_array_type   = byte_array::ByteArray;
   using size_counter_type = serializers::SizeCounter<self_type>;
 
-  ByteArrayBufferEx() = default;
+  ByteArrayBufferEx()                         = default;
   ByteArrayBufferEx(ByteArrayBufferEx &&from) = default;
-  ByteArrayBufferEx& operator = (ByteArrayBufferEx &&from) = default;
+  ByteArrayBufferEx &operator=(ByteArrayBufferEx &&from) = default;
 
   //* The only safe way is to make a deep copy here to avoid later
   //* missunderstanding what hapens with reserved memory of original
@@ -59,29 +58,26 @@ public:
   //* has been requested from this ByteArrayBuffer instance.
   ByteArrayBufferEx(byte_array::ByteArray s)
     : data_{s.Copy()}
-  {
-  }
+  {}
 
   ByteArrayBufferEx(ByteArrayBufferEx const &from)
     : data_{from.data_.Copy()}
     , pos_{from.pos_}
     , size_counter_{from.size_counter_}
-  {
-  }
+  {}
 
   ByteArrayBufferEx(std::size_t const &capacity)
     : data_(capacity)
     , pos_{0}
     , size_counter_{capacity}
-  {
-  }
+  {}
 
-  ByteArrayBufferEx & operator = (ByteArrayBufferEx const &from)
+  ByteArrayBufferEx &operator=(ByteArrayBufferEx const &from)
   {
-    *this = ByteArrayBufferEx{ from };
-    //data_ = from.data_.Copy();
-    //pos_ = from.pos_;
-    //size_counter_ = std::move(from.size_counter_);
+    *this = ByteArrayBufferEx{from};
+    // data_ = from.data_.Copy();
+    // pos_ = from.pos_;
+    // size_counter_ = std::move(from.size_counter_);
     return *this;
   }
 
@@ -90,25 +86,29 @@ public:
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
+  void Resize(std::size_t const &   size,
+              ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
+              bool const            zero_reserved_space = true)
   {
     data_.Resize(size, resize_paradigm, zero_reserved_space);
 
-    switch(resize_paradigm)
+    switch (resize_paradigm)
     {
-      case ResizeParadigm::RELATIVE:
-        break;
+    case ResizeParadigm::RELATIVE:
+      break;
 
-      case ResizeParadigm::ABSOLUTE:
-        if(pos_ > size)
-        {
-          Seek(size);
-        }
-        break;
+    case ResizeParadigm::ABSOLUTE:
+      if (pos_ > size)
+      {
+        Seek(size);
+      }
+      break;
     };
   }
 
-  void Reserve(std::size_t const &size, ResizeParadigm const& resize_paradigm = ResizeParadigm::RELATIVE, bool const zero_reserved_space=true)
+  void Reserve(std::size_t const &   size,
+               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
+               bool const            zero_reserved_space = true)
   {
     data_.Reserve(size, resize_paradigm, zero_reserved_space);
   }
@@ -204,8 +204,8 @@ public:
     return data_;
   }
 
-  template<typename ...ARGS>
-  self_type & Append(ARGS const&... args)
+  template <typename... ARGS>
+  self_type &Append(ARGS const &... args)
   {
     auto size_count_guard = sizeCounterGuardFactory(size_counter_);
     if (size_count_guard.is_unreserved())
@@ -225,27 +225,25 @@ public:
   }
 
 private:
-  template<typename T, typename ...ARGS>
-  void AppendInternal(T const &arg, ARGS const&... args)
+  template <typename T, typename... ARGS>
+  void AppendInternal(T const &arg, ARGS const &... args)
   {
     *this << arg;
     AppendInternal(args...);
   }
 
   void AppendInternal()
-  {
-  }
+  {}
 
-  byte_array_type data_;
-  std::size_t pos_ = 0;
+  byte_array_type   data_;
+  std::size_t       pos_ = 0;
   size_counter_type size_counter_;
- };
+};
 
-template<typename T>
-char const * const ByteArrayBufferEx<T>::LOGGING_NAME = "ByteArrayBuffer<...>";
+template <typename T>
+char const *const ByteArrayBufferEx<T>::LOGGING_NAME = "ByteArrayBuffer<...>";
 
 using ByteArrayBuffer = ByteArrayBufferEx<>;
-
 
 }  // namespace serializers
 }  // namespace fetch

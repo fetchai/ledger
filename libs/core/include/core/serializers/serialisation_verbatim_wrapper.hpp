@@ -29,10 +29,10 @@ struct Verbatim : public std::reference_wrapper<byte_array::ConstByteArray const
   using Base::Base;
 };
 
-template<typename STREAM>
-void Serialize(STREAM & stream, Verbatim const& verbatim)
+template <typename STREAM>
+void Serialize(STREAM &stream, Verbatim const &verbatim)
 {
-  Verbatim::Base::type & array = verbatim;
+  Verbatim::Base::type &array = verbatim;
   stream.Allocate(array.size());
   stream.WriteBytes(array.pointer(), array.size());
 }
