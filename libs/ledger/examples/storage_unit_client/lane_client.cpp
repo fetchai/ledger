@@ -50,6 +50,7 @@ enum
 
 using ResourceAddress = fetch::storage::ResourceAddress;
 using TCPClient       = fetch::network::TCPClient;
+using Peer            = fetch::network::Peer;
 
 static constexpr char const *LOGGING_NAME = "lane_client.cpp";
 
@@ -72,11 +73,11 @@ int main(int argc, char **argv)
 
   tm.Start();
 
-  std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> lane_data;
+  std::map<LaneIndex, Peer> lane_data;
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-    lane_data[i]             = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+    lane_data[i]             = Peer("127.0.0.1", lane_port);
   }
 
   auto count =

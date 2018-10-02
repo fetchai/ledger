@@ -72,6 +72,7 @@ public:
   using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
   using Mutex                   = fetch::mutex::Mutex;
   using LockT                   = std::lock_guard<Mutex>;
+  using Peer                    = fetch::network::Peer;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -365,7 +366,7 @@ private:
 public:
   template <typename T>
   size_t AddLaneConnectionsWaiting(
-      const std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> &lanes,
+      const std::map<LaneIndex, Peer> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
     AddLaneConnections<T>(lanes, timeout);
@@ -396,8 +397,7 @@ public:
   }
 
   template <typename T>
-  void AddLaneConnections(
-      const std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> &lanes,
+  void AddLaneConnections(const std::map<LaneIndex, Peer> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
     if (!workthread_)
@@ -409,11 +409,10 @@ public:
     for (auto const &lane : lanes)
     {
       auto                lanenum = lane.first;
-      auto                host    = lane.second.first;
-      auto                port    = lane.second.second;
+      auto                target = lane.second;
       SharedServiceClient client =
-          register_.template CreateServiceClient<T>(network_manager_, host, port);
-      std::string name   = std::string(host) + ":" + std::to_string(port);
+        register_.template CreateServiceClient<T>(network_manager_, target.address(), target.port());
+      std::string name   = target.ToString();
       auto        worker = std::make_shared<LaneConnectorWorker>(lanenum, client, name,
                                                           std::chrono::milliseconds(timeout));
       bg_work_.Add(worker);

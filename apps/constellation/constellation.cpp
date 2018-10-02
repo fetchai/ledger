@@ -33,6 +33,7 @@
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
 using fetch::network::TCPClient;
+using fetch::network::Peer;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -138,11 +139,11 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
 
-  std::map<LaneIndex, std::pair<byte_array::ByteArray, uint16_t>> lane_data;
+  std::map<LaneIndex, Peer> lane_data;
   for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    lane_data[i]             = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+    lane_data[i]             = Peer("127.0.0.1", lane_port);
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
@@ -172,7 +173,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     if (!storage_->ClientForLaneConnected(i))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
-      lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
     }
   }
   if (!lane_data.empty())

@@ -45,6 +45,7 @@ protected:
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
   using TCPClient                       = fetch::network::TCPClient;
+  using Peer                            = fetch::network::Peer;
 
   using client_type          = std::unique_ptr<underlying_client_type>;
   using service_type         = std::unique_ptr<underlying_service_type>;
@@ -91,11 +92,11 @@ protected:
       TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
     }
 
-    std::map<LaneIndex, std::pair<fetch::byte_array::ByteArray, uint16_t>> lane_data;
+    std::map<LaneIndex, Peer> lane_data;
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
       uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-      lane_data[i] = std::make_pair(fetch::byte_array::ByteArray("127.0.0.1"), lane_port);
+      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
     }
 
     auto count =
