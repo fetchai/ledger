@@ -86,7 +86,7 @@ int main(int argc, char const **argv)
         VerifiedTransaction                 txTemp = VerifiedTransaction::Create(trans);
         fetch::serializers::ByteArrayBuffer arr;
         arr << txTemp;
-        arr.Seek(0);
+        arr.seek(0);
         arr >> tx;
       }
 

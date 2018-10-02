@@ -46,7 +46,7 @@ PYBIND11_MODULE(libfetchcore, m) {
     .def("Pack", &serializers::TypedByte_ArrayBuffer::Pack<int64_t>)
     .def("Unpack", &serializers::TypedByte_ArrayBuffer::Unpack<int64_t>)
     
-    .def("Seek", &serializers::TypedByte_ArrayBuffer::Seek)
+    .def("seek", &serializers::TypedByte_ArrayBuffer::seek)
     .def("Tell", &serializers::TypedByte_ArrayBuffer::Tell)
     .def("data", &serializers::TypedByte_ArrayBuffer::data);
 }

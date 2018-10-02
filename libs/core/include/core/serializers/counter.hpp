@@ -56,7 +56,7 @@ public:
       size_ = size;
       if (pos_ > size)
       {
-        Seek(size_);
+        seek(size_);
       }
       break;
     };
@@ -119,11 +119,11 @@ public:
     return this->operator<<(val);
   }
 
-  // FIXME: Incorrect naming
-  void Seek(std::size_t const &p)
+  void seek(std::size_t const &p)
   {
     pos_ = p;
   }
+
   std::size_t Tell() const
   {
     return pos_;

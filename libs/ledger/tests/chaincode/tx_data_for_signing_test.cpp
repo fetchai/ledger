@@ -73,7 +73,7 @@ TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserial
 
     MutableTransaction tx_deser;
     auto               txdfs_deser{TxSigningAdapterFactory(tx_deser)};
-    stream.Seek(0);
+    stream.seek(0);
     stream >> txdfs_deser;
 
     tx_deser.UpdateDigest();

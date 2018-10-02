@@ -140,7 +140,7 @@ protected:
     B        b0_d;
     B        b1_d;
     uint64_t x_d = 0;
-    stream.Seek(orig_stream_offset);
+    stream.seek(orig_stream_offset);
     stream >> b0_d >> x_d >> b1_d;
 
     EXPECT_EQ(b0, b0_d);
@@ -179,7 +179,7 @@ TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
 
   ByteArrayBuffer stream;
   stream.Allocate(preallocated_ammount);
-  stream.Seek(offset);
+  stream.seek(offset);
 
   EXPECT_EQ(preallocated_ammount, stream.size());
   EXPECT_EQ(offset, stream.Tell());
@@ -223,7 +223,7 @@ TEST_F(ByteArrayBufferTest, test_stream_with_preexisting_offset)
 
   ByteArrayBuffer stream;
   stream.Allocate(preallocated_ammount);
-  stream.Seek(preallocated_ammount);
+  stream.seek(preallocated_ammount);
   test_nested_append_serialisation(stream);
 }
 
@@ -234,7 +234,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 
   //* Production code under test
   stream.Resize(preallocated_ammount, ResizeParadigm::RELATIVE);
-  stream.Seek(preallocated_ammount);
+  stream.seek(preallocated_ammount);
 
   EXPECT_EQ(preallocated_ammount, stream.size());
   EXPECT_EQ(preallocated_ammount, stream.data().capacity());
@@ -277,7 +277,7 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
   //* Setup
   ByteArrayBuffer stream;
   stream.Resize(preallocated_ammount);
-  stream.Seek(offset);
+  stream.seek(offset);
 
   //* Production code under test
   stream.Resize(small_size, ResizeParadigm::ABSOLUTE);

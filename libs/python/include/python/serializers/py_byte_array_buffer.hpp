@@ -38,7 +38,7 @@ void BuildByteArrayBuffer(pybind11::module &module)
       .def("ReadBytes", &ByteArrayBuffer::ReadBytes)
       .def("Allocate", &ByteArrayBuffer::Allocate)
       .def("size", &ByteArrayBuffer::size)
-      .def("Seek", &ByteArrayBuffer::Seek)
+      .def("seek", &ByteArrayBuffer::seek)
       .def("Tell", &ByteArrayBuffer::Tell)
       .def("Reserve", &ByteArrayBuffer::Reserve);
 }

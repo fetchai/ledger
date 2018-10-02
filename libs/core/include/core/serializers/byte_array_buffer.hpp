@@ -95,7 +95,7 @@ public:
     case ResizeParadigm::ABSOLUTE:
       if (pos_ > size)
       {
-        Seek(size);
+        seek(size);
       }
       break;
     };
@@ -171,7 +171,7 @@ public:
   }
 
   // FIXME: Incorrect naming
-  void Seek(std::size_t const &p)
+  void seek(std::size_t const &p)
   {
     pos_ = p;
   }
@@ -206,7 +206,7 @@ public:
     if (size_count_guard.is_unreserved())
     {
       size_counter_.Allocate(size());
-      size_counter_.Seek(Tell());
+      size_counter_.seek(Tell());
 
       size_counter_.Append(args...);
       if (size() < size_counter_.size())
