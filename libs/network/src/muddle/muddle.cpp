@@ -166,7 +166,6 @@ void Muddle::RunPeriodicMaintenance()
     router_.Cleanup();
 
     last_cleanup_ = Clock::now();
-
   }
 
   // schedule the main

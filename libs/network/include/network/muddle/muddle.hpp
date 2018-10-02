@@ -124,9 +124,9 @@ private:
   Identity const       identity_;         ///< Cached version of the identity (public key)
   NetworkManager       network_manager_;  ///< The network manager
   Dispatcher           dispatcher_;       ///< Waiting promise store
-  Register             register_;     ///< The register for all the connection
-  Router               router_;       ///< The packet router for the node
-  ThreadPool           thread_pool_;  ///< The thread pool / task queue
+  Register             register_;         ///< The register for all the connection
+  Router               router_;           ///< The packet router for the node
+  ThreadPool           thread_pool_;      ///< The thread pool / task queue
   Mutex                servers_lock_{__LINE__, __FILE__};
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections

@@ -22,10 +22,10 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
+#include "crypto/fnv.hpp"
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
-#include "crypto/fnv.hpp"
 
 #include <memory>
 #include <random>

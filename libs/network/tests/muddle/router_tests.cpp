@@ -16,29 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/management/network_manager.hpp"
-#include "network/muddle/router.hpp"
-#include "network/muddle/muddle.hpp"
-#include "crypto/prover.hpp"
 #include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
+#include "network/management/network_manager.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/router.hpp"
 
+#include <atomic>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
-#include <chrono>
 #include <thread>
-#include <atomic>
 
 namespace {
 
-using NetworkManager = fetch::network::NetworkManager;
+using NetworkManager    = fetch::network::NetworkManager;
 using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
-using Uri = fetch::network::Uri;
-using Muddle = fetch::muddle::Muddle;
-using Payload = fetch::muddle::Packet::Payload;
-using Address = Muddle::Address;
-using MuddlePtr = std::unique_ptr<Muddle>;
-using Certificate = fetch::crypto::Prover;
-using CertificatePtr = std::unique_ptr<Certificate>;
+using Uri               = fetch::network::Uri;
+using Muddle            = fetch::muddle::Muddle;
+using Payload           = fetch::muddle::Packet::Payload;
+using Address           = Muddle::Address;
+using MuddlePtr         = std::unique_ptr<Muddle>;
+using Certificate       = fetch::crypto::Prover;
+using CertificatePtr    = std::unique_ptr<Certificate>;
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
@@ -54,8 +54,8 @@ struct Message
 
 struct MessageQueue
 {
-  using Queue = std::vector<Message>;
-  using Clock = std::chrono::high_resolution_clock;
+  using Queue     = std::vector<Message>;
+  using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
 
   mutable std::mutex lock;
@@ -79,7 +79,7 @@ struct MessageQueue
   {
     bool success = false;
 
-    Timepoint const deadline  = Clock::now() + duration;
+    Timepoint const deadline = Clock::now() + duration;
 
     while (Clock::now() < deadline)
     {
@@ -103,7 +103,6 @@ struct MessageQueue
 class RouterTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     network_manager_ = std::make_unique<NetworkManager>(6);
@@ -133,11 +132,11 @@ TEST_F(RouterTests, CheckExchange)
   static constexpr uint16_t SERVICE = 1;
   static constexpr uint16_t CHANNEL = 2;
 
-  auto nodeA = CreateMuddle();
+  auto  nodeA     = CreateMuddle();
   auto &endpointA = nodeA->AsEndpoint();
   nodeA->Start({8000});
 
-  auto nodeB = CreateMuddle();
+  auto  nodeB     = CreateMuddle();
   auto &endpointB = nodeB->AsEndpoint();
   nodeB->Start({8001}, {Uri{"tcp://127.0.0.1:8000"}});
 
@@ -147,21 +146,17 @@ TEST_F(RouterTests, CheckExchange)
 
   // register the recv. for node A
   auto subA = endpointA.Subscribe(SERVICE, CHANNEL);
-  subA->SetMessageHandler(
-    [&messagesA](Address const &from, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload)
-    {
-      messagesA.Add(Message{from, service, channel, counter, payload});
-    }
-  );
+  subA->SetMessageHandler([&messagesA](Address const &from, uint16_t service, uint16_t channel,
+                                       uint16_t counter, Payload const &payload) {
+    messagesA.Add(Message{from, service, channel, counter, payload});
+  });
 
   // register the recv. for node B
   auto subB = endpointB.Subscribe(SERVICE, CHANNEL);
-  subB->SetMessageHandler(
-    [&messagesB](Address const &from, uint16_t service, uint16_t channel, uint16_t counter, Payload const &payload)
-    {
-      messagesB.Add(Message{from, service, channel, counter, payload});
-    }
-  );
+  subB->SetMessageHandler([&messagesB](Address const &from, uint16_t service, uint16_t channel,
+                                       uint16_t counter, Payload const &payload) {
+    messagesB.Add(Message{from, service, channel, counter, payload});
+  });
 
   // wait for the two nodes to connect
   sleep_for(milliseconds{750});
@@ -213,6 +208,4 @@ TEST_F(RouterTests, CheckExchange)
   nodeA->Stop();
 }
 
-} // namespace
-
-
+}  // namespace
