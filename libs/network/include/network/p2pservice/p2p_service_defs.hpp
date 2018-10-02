@@ -22,21 +22,40 @@
 #include "network/uri.hpp"
 
 namespace fetch {
-
 namespace network {
 
-enum ServiceType : uint16_t
+enum class ServiceType : uint16_t
 {
-  MAINCHAIN = 0,
+  INVALID   = 0,
   LANE      = 1,
   P2P       = 2,
   HTTP      = 3,
 };
 
+inline char const *ToString(ServiceType s)
+{
+  switch (s)
+  {
+    case ServiceType::LANE:     return "Lane";
+    case ServiceType::P2P:      return "P2P";
+    case ServiceType::HTTP:     return "HTTP";
+    case ServiceType::INVALID:
+    default:                    return "Invalid";
+  }
+}
+
 struct ServiceIdentifier
 {
-  ServiceType service_type;
-  uint32_t    instance_number;
+  ServiceType service_type    = ServiceType::INVALID;
+  uint16_t    instance_number = 0;
+
+  ServiceIdentifier() = default;
+
+  explicit ServiceIdentifier(ServiceType type, uint16_t instance = 0)
+    : service_type(type)
+    , instance_number(instance)
+  {
+  }
 
   bool operator<(const ServiceIdentifier &other) const
   {
@@ -57,14 +76,12 @@ struct ServiceIdentifier
 
   std::string ToString() const
   {
-    const char *names[] = {
-        "MAINCHAIN",
-        "LANE",
-        "P2P",
-        "HTTP",
-    };
-    const char *p = names[service_type];
-    return std::string(p) + "/" + std::to_string(instance_number);
+    return std::string{network::ToString(service_type)} + "/" + std::to_string(instance_number);
+  }
+
+  bool operator==(ServiceIdentifier const &other) const
+  {
+    return (service_type == other.service_type) && (instance_number == other.instance_number);
   }
 };
 
@@ -85,3 +102,19 @@ void Deserialize(T &serializer, ServiceIdentifier &x)
 
 }  // namespace network
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::network::ServiceIdentifier>
+{
+  std::size_t operator()(fetch::network::ServiceIdentifier const &id) const
+  {
+    std::size_t const combined = (static_cast<std::size_t>(id.service_type) << 16) |
+                                  static_cast<std::size_t>(id.instance_number);
+
+    return hash<std::size_t>()(combined);
+  }
+};
+
+} // namespace std

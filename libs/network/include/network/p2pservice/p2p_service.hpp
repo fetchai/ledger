@@ -78,7 +78,7 @@ public:
   P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
   ~P2PService() = default;
 
-  void Start(UriList const &initial_peer_list, Uri const &my_uri);
+  void Start(UriList const &initial_peer_list);
   void Stop();
 
   void SetPeerGoals(uint32_t min, uint32_t max);

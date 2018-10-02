@@ -21,6 +21,7 @@
 #include "http/server.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
+#include "ledger/execution_manager.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
@@ -30,6 +31,7 @@
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
+#include "network/p2pservice/manifest.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -42,8 +44,6 @@
 #include <tuple>
 #include <unordered_set>
 
-#include "ledger/execution_manager.hpp"
-
 namespace fetch {
 
 /**
@@ -55,18 +55,13 @@ public:
   using Peer2PeerService = p2p::P2PService;
   using CertificatePtr   = Peer2PeerService::CertificatePtr;
   using UriList          = std::vector<network::Uri>;
-
-  static constexpr uint16_t MAIN_CHAIN_PORT_OFFSET = 2;
-  static constexpr uint16_t P2P_PORT_OFFSET        = 1;
-  static constexpr uint16_t HTTP_PORT_OFFSET       = 0;
-  static constexpr uint16_t STORAGE_PORT_OFFSET    = 10;
+  using Manifest         = network::Manifest;
 
   static constexpr char const *LOGGING_NAME = "constellation";
 
-  explicit Constellation(CertificatePtr &&certificate, uint16_t port_start, uint32_t num_executors,
-                         uint32_t log2_num_lanes, uint32_t num_slices,
-                         std::string interface_address, std::string const &prefix,
-                         std::string my_network_address);
+  explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest,
+                         uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
+                         std::string interface_address, std::string const &prefix);
 
   void Run(UriList const &initial_peers, bool mining);
   void SignalStop();
@@ -93,21 +88,18 @@ private:
   using HttpModulePtr          = std::shared_ptr<HttpModule>;
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
-  using Manifest               = network::Manifest;
   using TrustSystem            = p2p::P2PTrust<Muddle::Address>;
-
-  Manifest GenerateManifest() const;
 
   /// @name Configuration
   /// @{
   Flag        active_;             ///< Flag to control running of main thread
+  Manifest    manifest_;           ///< The service manifest
   std::string interface_address_;  ///< The publicly facing interface IP address
   uint32_t    num_lanes_;          ///< The configured number of lanes
   uint32_t    num_slices_;         ///< The configured number of slices per block
   uint16_t    p2p_port_;           ///< The port that the P2P interface is running from
   uint16_t    http_port_;          ///< The port of the HTTP server
   uint16_t    lane_port_start_;    ///< The starting port of all the lane services
-  uint16_t    main_chain_port_;    ///< The main chain port
   /// @}
 
   /// @name Network Orchestration
@@ -150,12 +142,6 @@ private:
   HttpServer  http_;          ///< The HTTP server
   HttpModules http_modules_;  ///< The set of modules currently configured
   /// @}
-
-  /// @name Local service management.
-  /// @{
-  std::string my_network_address_;  ///< The IP by which I can be reached by peers.
-  Manifest    my_manifest_;         ///< My local service configuration.
-  /// }
 };
 
 /**

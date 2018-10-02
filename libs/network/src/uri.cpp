@@ -30,6 +30,15 @@ static const std::regex IDENTITY_FORMAT("^[a-zA-Z0-9/+]{86}==$");
 static const std::regex PEER_FORMAT("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+$");
 static const std::regex TCP_FORMAT("^tcp://([^:]+):([0-9]+)$");
 
+Uri::Uri(Peer const &peer)
+  : uri_(peer.ToUri())
+  , scheme_(Scheme::Tcp)
+  , authority_(peer.ToString())
+  , tcp_(peer)
+{
+}
+
+
 Uri::Uri(ConstByteArray const &uri)
 {
   if (!Parse(uri))

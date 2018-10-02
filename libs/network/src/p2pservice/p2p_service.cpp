@@ -44,11 +44,13 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
 }
 
-void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &my_uri)
+void P2PService::Start(UriList const &initial_peer_list)
 {
-  resolver_.Setup(address_, my_uri);
+  Uri const p2p_uri = manifest_.GetUri(ServiceIdentifier{ServiceType::P2P});
 
-  FETCH_LOG_INFO(LOGGING_NAME, "My URI: ", my_uri.uri());
+  resolver_.Setup(address_, p2p_uri);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "P2P URI: ", p2p_uri.uri());
   FETCH_LOG_INFO(LOGGING_NAME, "Num Initial Peers: ", initial_peer_list.size());
   for (auto const &uri : initial_peer_list)
   {
@@ -61,8 +63,6 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
   thread_pool_->SetIdleInterval(2000);
   thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
-
-  my_uri_ = my_uri;
 }
 
 void P2PService::Stop()
@@ -356,7 +356,7 @@ void P2PService::SetPeerGoals(uint32_t min, uint32_t max)
   max_peers_ = max;
 }
 
-void P2PService::SetLocalManifest(const Manifest &manifest)
+void P2PService::SetLocalManifest(Manifest const &manifest)
 {
   manifest_ = manifest;
   local_services_.MakeFromManifest(manifest_);

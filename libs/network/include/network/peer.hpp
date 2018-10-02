@@ -43,6 +43,7 @@ public:
   ~Peer()            = default;
 
   bool Parse(std::string const &address);
+
   void Update(std::string address, uint16_t port)
   {
     address_ = std::move(address);
@@ -53,6 +54,7 @@ public:
   {
     return address_;
   }
+
   uint16_t port() const
   {
     return port_;

@@ -34,7 +34,10 @@
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
 using fetch::network::TCPClient;
-using fetch::network::Peer;
+using fetch::network::Manifest;
+using fetch::network::ServiceType;
+using fetch::network::ServiceIdentifier;
+
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -49,12 +52,25 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
   return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
 }
 
+uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service)
+{
+  ServiceIdentifier identifier{service};
+
+  if (!manifest.HasService(identifier))
+  {
+    throw std::runtime_error("Unable to lookup requested service from the manifest");
+  }
+
+  return manifest.GetLocalPort(identifier);
+}
+
 }  // namespace
 
 /**
  * Construct a constellation instance
  *
  * @param certificate The reference to the node public key
+ * @param manifest The service manifest for this instance
  * @param port_start The start port for all the services
  * @param num_executors The number of executors
  * @param num_lanes The configured number of lanes
@@ -62,18 +78,17 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
+Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix,
-                             std::string my_network_address)
+                             std::string interface_address, std::string const &db_prefix)
   : active_{true}
+  , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
-  , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
-  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
-  , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
+  , p2p_port_(LookupLocalPort(manifest_, ServiceType::P2P))
+  , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
+  , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
   , muddle_{std::move(certificate), network_manager_}
@@ -95,12 +110,11 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
                   std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
-  , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " P ", port_start, " E ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " E ",
                  num_executors, " S ", num_lanes_, "x", num_slices);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
@@ -118,8 +132,6 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   {
     http_.AddModule(*module);
   }
-
-  this->my_manifest_ = GenerateManifest();
 }
 
 /**
@@ -206,13 +218,8 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   }
 
   // P2P configuration
-
-  auto manifest_copy = my_manifest_;
-  p2p_.SetLocalManifest(manifest_copy);
-
-  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
-
-  p2p_.Start(initial_peers, my_p2p_uri);
+  p2p_.SetLocalManifest(manifest_); // TODO(EJF): This is an issue since it kicks of async work
+  p2p_.Start(initial_peers);
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -254,36 +261,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
-}
-
-Constellation::Manifest Constellation::GenerateManifest() const
-{
-  std::string my_uri_base = my_network_address_;
-
-  if (my_uri_base == "")
-  {
-    my_uri_base = "tcp://127.0.0.1:";
-  }
-
-  if (!network::Uri::IsUri(my_uri_base))
-  {
-    my_uri_base = std::string("tcp://") + my_uri_base + ":";
-  }
-
-  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
-                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
-                            my_uri_base + std::to_string(p2p_port_) + "\n";
-
-  for (uint32_t i = 0; i < num_lanes_; ++i)
-  {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
-                   std::to_string(lane_port) + "\n";
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);
-
-  return Manifest::FromText(my_manifest);
 }
 
 }  // namespace fetch
