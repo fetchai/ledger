@@ -105,7 +105,6 @@ public:
       }
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Eck! B");
     TODO_FAIL("client connection has died, @IncomingPeers");
 
     return 0;
@@ -128,7 +127,6 @@ public:
         throw;
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Eck! C");
 
     TODO_FAIL("client connection has died, @OutgoingPeers");
 
@@ -152,7 +150,6 @@ public:
         throw;
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Eck! D");
     TODO_FAIL("client connection has died, @UseThesePeers");
   }
 
