@@ -225,7 +225,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   pending_resolutions_.Resolve();
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resole: ", ToBase64(result.key), ": ", result.promised.uri());
+    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key), ": ", result.promised.uri());
 
     identity_cache_.Update(result.key, result.promised);
     muddle_.AddPeer(result.promised);
@@ -341,11 +341,11 @@ network::Manifest P2PService::GetLocalManifest()
 
 P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "P2PService::GetRandomGoodPeers...");
+  FETCH_LOG_DBEUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
   AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "P2PService::GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }

@@ -38,8 +38,8 @@ public:
   using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
   explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
+    :storage_unit_(storage_unit)
   {
-    storage_unit_ = storage_unit;
   }
 
   LaneRemoteControl(LaneRemoteControl const &other) = default;
@@ -61,7 +61,7 @@ public:
       }
       catch (...)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane shutdown call failed.");
+        FETCH_LOG_WARN(LOGGING_NAME, "Remote lane shutdown call failed.");
         throw;
       }
     }
@@ -79,11 +79,10 @@ public:
       }
       catch (...)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane GetLaneNumber call");
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote GET_LANE_NUMBER");
         throw;
       }
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Eck! A");
     TODO_FAIL("client connection has died, @GetLaneNumber");
 
     return 0;
@@ -101,7 +100,7 @@ public:
       }
       catch (...)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane INCOMING_PEERS call");
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote INCOMING_PEERS");
         throw;
       }
     }
@@ -125,7 +124,7 @@ public:
       }
       catch (...)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane OUTGOING_PEERS call");
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote OUTGOING_PEERS");
         throw;
       }
     }
@@ -149,7 +148,7 @@ public:
       }
       catch (...)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "OMG FAILED TRYING Remote lane USE_THESE_PEERS call");
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote USE_THESE_PEERS");
         throw;
       }
     }

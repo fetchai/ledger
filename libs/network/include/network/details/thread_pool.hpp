@@ -256,7 +256,7 @@ private:
     }
     catch (...)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "OMG, bad lock in thread_pool");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting.");
       throw;
     }
   }

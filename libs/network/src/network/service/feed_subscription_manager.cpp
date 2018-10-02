@@ -59,11 +59,9 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
   LOG_STACK_TRACE_POINT;
 
   auto feed = feed_;
-  FETCH_LOG_DEBUG(LOGGING_NAME, "OMG AttachToService", feed);
   publisher_->create_publisher(
       feed_, [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
         serializer_type params;
-        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG SERVICE_FEED", feed);
         params << SERVICE_FEED << feed;
 
         uint64_t p = params.Tell();
@@ -78,8 +76,6 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
         notifications_to_send.reserve(16);
         std::size_t i = 0;
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG sending to subscribers numbering:", subscribers_.size());
-
         while (i < subscribers_.size())
         {
           auto &s = subscribers_[i];
@@ -91,14 +87,12 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
           notifications_to_send.push_back(new_notification);
 
           i++;
-          FETCH_LOG_DEBUG(LOGGING_NAME, "OMG PublishToAll AttachToService send ", s.id);
           if ((i & 0xF) == 0)
           {
             PublishAll(notifications_to_send);
           }
         }
         PublishAll(notifications_to_send);
-        FETCH_LOG_DEBUG(LOGGING_NAME, "OMG publish backlog = ", publishing_workload_.size());
       });
 }
 
