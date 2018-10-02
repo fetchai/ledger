@@ -124,7 +124,7 @@ public:
     pos_ = p;
   }
 
-  std::size_t Tell() const
+  std::size_t tell() const
   {
     return pos_;
   }

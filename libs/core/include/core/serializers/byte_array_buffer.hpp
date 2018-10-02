@@ -175,7 +175,7 @@ public:
   {
     pos_ = p;
   }
-  std::size_t Tell() const
+  std::size_t tell() const
   {
     return pos_;
   }
@@ -206,7 +206,7 @@ public:
     if (size_count_guard.is_unreserved())
     {
       size_counter_.Allocate(size());
-      size_counter_.seek(Tell());
+      size_counter_.seek(tell());
 
       size_counter_.Append(args...);
       if (size() < size_counter_.size())

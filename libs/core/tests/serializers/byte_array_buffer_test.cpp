@@ -131,7 +131,7 @@ protected:
     B const            b1{"b1x", "b1y"};
     constexpr uint64_t x = 3;
 
-    auto const orig_stream_offset = stream.Tell();
+    auto const orig_stream_offset = stream.tell();
 
     //* Serialising
     stream.Append(b0, x, b1);
@@ -152,7 +152,7 @@ protected:
 TEST_F(ByteArrayBufferTest, test_seek_position_is_zero_after_stream_construction)
 {
   ByteArrayBuffer stream;
-  EXPECT_EQ(0, stream.Tell());
+  EXPECT_EQ(0, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
@@ -163,13 +163,13 @@ TEST_F(ByteArrayBufferTest, test_basic_allocate_size)
   stream.Allocate(preallocated_ammount);
 
   EXPECT_EQ(preallocated_ammount, stream.size());
-  EXPECT_EQ(0, stream.Tell());
+  EXPECT_EQ(0, stream.tell());
 
   constexpr std::size_t delta_ammount = 10;
   stream.Allocate(delta_ammount);
 
   EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
-  EXPECT_EQ(0, stream.Tell());
+  EXPECT_EQ(0, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
@@ -182,13 +182,13 @@ TEST_F(ByteArrayBufferTest, test_allocate_with_offset)
   stream.seek(offset);
 
   EXPECT_EQ(preallocated_ammount, stream.size());
-  EXPECT_EQ(offset, stream.Tell());
+  EXPECT_EQ(offset, stream.tell());
 
   constexpr std::size_t delta_ammount = 10;
   stream.Allocate(delta_ammount);
 
   EXPECT_EQ(preallocated_ammount + delta_ammount, stream.size());
-  EXPECT_EQ(offset, stream.Tell());
+  EXPECT_EQ(offset, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, verify_correctness_of_copy_and_comparison_behaviour_of_B_type)
@@ -238,7 +238,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 
   EXPECT_EQ(preallocated_ammount, stream.size());
   EXPECT_EQ(preallocated_ammount, stream.data().capacity());
-  EXPECT_EQ(preallocated_ammount, stream.Tell());
+  EXPECT_EQ(preallocated_ammount, stream.tell());
 
   constexpr std::size_t delta_size = 10;
   //* Production code under test
@@ -246,7 +246,7 @@ TEST_F(ByteArrayBufferTest, test_stream_relative_resize_with_preexisting_offset)
 
   EXPECT_EQ(preallocated_ammount + delta_size, stream.size());
   EXPECT_EQ(preallocated_ammount + delta_size, stream.data().capacity());
-  EXPECT_EQ(preallocated_ammount, stream.Tell());
+  EXPECT_EQ(preallocated_ammount, stream.tell());
 }
 
 TEST_F(ByteArrayBufferTest, test_that_default_resize_paradigm_is_relative)
@@ -285,7 +285,7 @@ TEST_F(ByteArrayBufferTest, test_stream_absolute_resize_with_preexisting_offset)
   //* Expectations
   EXPECT_EQ(small_size, stream.size());
   EXPECT_EQ(preallocated_ammount, stream.data().capacity());
-  EXPECT_EQ(small_size, stream.Tell());
+  EXPECT_EQ(small_size, stream.tell());
 }
 
 }  // namespace

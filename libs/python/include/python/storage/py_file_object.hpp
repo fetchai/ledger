@@ -32,8 +32,8 @@ void BuildFileObjectImplementation(std::string const &custom_name, pybind11::mod
   py::class_<FileObjectImplementation< S >>(module, custom_name )
     .def(py::init< const uint64_t &,
   fetch::storage::FileObjectImplementation::stack_type & >()) .def("Read",
-  &FileObjectImplementation< S >::Read) .def("Tell", &FileObjectImplementation<
-  S >::Tell) .def("Write", &FileObjectImplementation< S >::Write)
+  &FileObjectImplementation< S >::Read) .def("tell", &FileObjectImplementation<
+  S >::tell) .def("Write", &FileObjectImplementation< S >::Write)
     .def("file_position", &FileObjectImplementation< S >::file_position)
     .def("seek", &FileObjectImplementation< S >::seek)
     .def("Shrink", &FileObjectImplementation< S >::Shrink)

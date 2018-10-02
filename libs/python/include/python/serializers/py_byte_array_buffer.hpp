@@ -39,7 +39,7 @@ void BuildByteArrayBuffer(pybind11::module &module)
       .def("Allocate", &ByteArrayBuffer::Allocate)
       .def("size", &ByteArrayBuffer::size)
       .def("seek", &ByteArrayBuffer::seek)
-      .def("Tell", &ByteArrayBuffer::Tell)
+      .def("tell", &ByteArrayBuffer::tell)
       .def("Reserve", &ByteArrayBuffer::Reserve);
 }
 };  // namespace serializers
