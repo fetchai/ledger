@@ -142,7 +142,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    lane_data[i] = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
+    lane_data[i]             = std::make_pair(byte_array::ByteArray("127.0.0.1"), lane_port);
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");

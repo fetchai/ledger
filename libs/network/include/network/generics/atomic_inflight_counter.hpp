@@ -71,7 +71,7 @@ public:
     my_count_ -= clipped;
     auto &the_counter = GetCounter();
     Lock  lock(the_counter.mutex);
-    auto previous = GetCounter().count.fetch_sub(clipped);
+    auto  previous = GetCounter().count.fetch_sub(clipped);
     if (previous == 1)
     {
       GetCounter().cv.notify_all();
