@@ -65,6 +65,7 @@
 #include "python/random/py_lfg.hpp"
 
 #include "python/ml/layers/py_layer.hpp"
+#include "python/ml/ops/py_ops.hpp"
 #include "python/ml/py_session.hpp"
 #include "python/ml/py_variable.hpp"
 
@@ -253,9 +254,10 @@ PYBIND11_MODULE(fetch, module)
   // Machine Learning
 
   using ArrayType = fetch::math::linalg::Matrix<double>;
-  using LayerType = fetch::ml::layers::Layer<fetch::math::linalg::Matrix<double>>;
-
-  fetch::ml::BuildSession<ArrayType, LayerType>("Session", ns_fetch_ml);
   fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
+  using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
+  fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
   fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
+
+  fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 }

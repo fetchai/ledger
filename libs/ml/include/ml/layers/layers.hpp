@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "ml/Backprop.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 #include "ml/variable.hpp"
 
@@ -27,56 +27,61 @@ namespace ml {
 namespace layers {
 
 template <typename T>
-class Layer : public Variable<T>
+class Layer
 {
 public:
   using ArrayType          = T;
   using SelfType           = Layer<ArrayType>;
-  using SessionType        = SessionManager<ArrayType, SelfType>;
+  using VariableType       = Variable<ArrayType>;
+  using SessionType        = SessionManager<ArrayType, VariableType>;
   using function_signature = std::function<void(SelfType &)>;
 
-  std::size_t           id;
-  std::vector<SelfType> prev;
-  function_signature    back_fn;
+  std::size_t id;
 
-  std::vector<std::size_t> shape;
+  Layer(SessionType &in_sess, std::size_t const &in_size, std::size_t const &out_size)
+  {
+    _sess  = in_sess;
+    _shape = {in_size, out_size};
+    Setup();
+  }
+  Layer(SessionType &in_sess, std::vector<std::size_t> const &in_shape)
+  {
+    _sess  = in_sess;
+    _shape = in_shape;
+    Setup();
+  }
+  void Setup()
+  {
+    _weights = VariableType(_sess, ArrayType::UniformRandom(_shape));
+    _biases  = VariableType(_sess, ArrayType::UniformRandom(1, _shape[1]));
 
-  Layer() = default;
-  Layer(SessionType &sess)
-  {
-    // set a distinct id for each element in the graph
-    sess.RegisterVariable(*this);
-  }
-  Layer(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
-  {
-    shape = {in_size, out_size};
-    sess.RegisterVariable(*this);
-  }
-  Layer(std::vector<std::size_t> const &in_shape, SessionType &sess)
-  {
-    shape = in_shape;
-    sess.RegisterVariable(*this);
+    // TODO - implement correct weight initialisation as below
+    //    std = 1.0/features_inp
+    //    self.b = Variable(np.random.uniform(-std,std,features_out))
+    //    self.w = Variable(np.random.uniform(-std,std,(features_inp,features_out)))
   }
 
-  void AssignShape(std::vector<std::size_t> in_shape)
-  {
-    shape = in_shape;
-  }
-  void AssignBackFun(function_signature b_fn)
-  {
-    back_fn       = b_fn;
-    this->is_leaf = false;
-  }
-  void Initialise(ArrayType in_data, function_signature b_fn = nullptr, bool in_is_leaf = true)
-  {
-    this->data = ArrayType(in_data);
-    Setup(b_fn, in_is_leaf);
-  }
-  void Initialise(function_signature b_fn = nullptr, bool in_is_leaf = true)
-  {
-    this->data = ArrayType::UniformRandom(shape);
-    Setup(b_fn, in_is_leaf);
-  }
+  //  void AssignShape(std::vector<std::size_t> in_shape)
+  //  {
+  //    shape = in_shape;
+  //  }
+  //  void AssignBackFun(function_signature b_fn)
+  //  {
+  //    back_fn       = b_fn;
+  //    this->is_leaf = false;
+  //  }
+  //
+  //
+  //  void Initialise(ArrayType in_data, function_signature b_fn = nullptr, bool in_is_leaf = true)
+  //  {
+  //    _weights = ArrayType(in_data);
+  //    Setup(b_fn, in_is_leaf);
+  //  }
+  //  void Initialise(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  //  {
+  //    _weights = ArrayType::UniformRandom(_shape);
+  //    Setup(b_fn, in_is_leaf);
+  //  }
 
   static Layer Zeroes(std::vector<std::size_t> const &new_shape, SessionType &sess)
   {
@@ -91,57 +96,106 @@ public:
     return ret;
   }
 
-  bool operator==(Layer const &other) const
-  {
-    return this->id == other.id;
-  }
-
   std::size_t InputSize()
   {
-    return this->data.shape()[0];
+    return _weights.shape()[0];
   }
 
   std::size_t OutputSize()
   {
-    return this->data.shape()[1];
+    return _weights.shape()[1];
   }
 
-  void Setup(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  //  void Backward()
+  //  {
+  //    assert(_weights->initialised);
+  //    assert(_biases->initialised);
+  //    assert(back_fn);
+  //    Backprop(this->grad, back_fn, *this);
+  //  }
+
+  VariableType Forward(VariableType input, bool activate = true)
   {
-    assert(b_fn || in_is_leaf);
-    if (b_fn)
+    std::cout << "input shape[0]: " << input.shape()[0] << std::endl;
+    std::cout << "input shape[1]: " << input.shape()[1] << std::endl;
+
+    std::cout << "_weights shape[0]: " << _weights.shape()[0] << std::endl;
+    std::cout << "_weights shape[1]: " << _weights.shape()[1] << std::endl;
+
+    VariableType a_1 = fetch::ml::ops::Dot(input, _weights, _sess);
+    //    fetch::ml::ops::Add(activations, _biases, activations);
+
+    std::cout << "a_1 shape[0]: " << a_1.shape()[0] << std::endl;
+    std::cout << "a_1 shape[1]: " << a_1.shape()[1] << std::endl;
+
+    if (activate)
     {
-      back_fn = b_fn;
+      VariableType a_2 = fetch::ml::ops::Relu(a_1, _sess);
+      std::cout << "a_2 shape[0]: " << a_2.shape()[0] << std::endl;
+      std::cout << "a_2 shape[1]: " << a_2.shape()[1] << std::endl;
+      VariableType a_3 = fetch::ml::ops::Sum(a_2, 1, _sess);
+
+      std::cout << "a_3 shape[0]: " << a_3.shape()[0] << std::endl;
+      std::cout << "a_3 shape[1]: " << a_3.shape()[1] << std::endl;
+
+      return a_3;
     }
-    this->is_leaf     = in_is_leaf;
-    this->initialised = true;
-
-    this->grad = ArrayType(this->data.shape());
-    this->grad.data().SetAllZero();
+    else
+    {
+      return a_1;
+    }
   }
 
-  void Backward()
+  void ZeroGrads()
   {
-    assert(this->initialised);
-    assert(back_fn);
-    Backprop(this->grad, back_fn, *this);
+    _weights.zero_grad();
+    _biases.zero_grad();
   }
+
+  void Step(typename ArrayType::type lr)
+  {
+    _weights.GradientStep(lr);
+    _biases.GradientStep(lr);
+  }
+
+  VariableType weights()
+  {
+    return _weights;
+  }
+  VariableType biases()
+  {
+    return _biases;
+  }
+  std::vector<std::size_t> shape()
+  {
+    return _shape;
+  }
+  SessionType sess()
+  {
+    return _sess;
+  }
+
+private:
+  std::vector<std::size_t> _shape;
+  SessionType              _sess;
+  VariableType             _weights;
+  VariableType             _biases;
 };
 
 }  // namespace layers
 }  // namespace ml
 }  // namespace fetch
 
-// Doing this template specialization lets us find instances of Variable<T> in an unordered_set of
-// them
-namespace std {
-template <typename ArrayType>
-struct hash<fetch::ml::layers::Layer<ArrayType>>
-{
-  std::size_t operator()(fetch::ml::layers::Layer<ArrayType> const &v) const
-  {
-    //    return &v.prev;
-    return v.id;
-  }
-};
-}  // namespace std
+//// Doing this template specialization lets us find instances of Variable<T> in an unordered_set of
+//// them
+// namespace std {
+// template <typename ArrayType>
+// struct hash<fetch::ml::layers::Layer<ArrayType>>
+//{
+//  std::size_t operator()(fetch::ml::layers::Layer<ArrayType> const &v) const
+//  {
+//    //    return &v.prev;
+//    return v.id;
+//  }
+//};
+//}  // namespace std

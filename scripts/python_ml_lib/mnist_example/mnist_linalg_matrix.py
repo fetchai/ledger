@@ -7,8 +7,9 @@ from tqdm import tqdm                               # visualising progress
 import numpy as np                                  # loading data from buffer
 
 # from fetch.math.linalg import MatrixDouble          # our matrices
-# from fetch.math.linalg import MatrixDouble
-from fetch.ml import Layer, Session
+from fetch.math.linalg import MatrixDouble
+from fetch.ml import Layer, Variable, Session
+from fetch.ml import CrossEntropyLoss
 # from fetch.ml.layers import Layer          # our matrices
 
 class MnistLearner():
@@ -37,7 +38,8 @@ class MnistLearner():
         self.layers = [20]
 
         self.net = []
-        self.weights = []
+        # self.weights = []
+        self.layers = []
         self.sess = None
         self.initialise_network()
 
@@ -50,15 +52,11 @@ class MnistLearner():
             self.net.append(self.layers[i])
         self.net.append(self.mnist_output_size)
 
-        # instantiate the network weights once
-        self.weights.append(Layer(self.mnist_input_size, self.net[0], self.sess))
+        self.layers.append(Layer(self.sess, self.mnist_input_size, self.net[0]))
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
-                self.weights.append(Layer(self.net[i], self.net[i + 1], self.sess))
-        self.weights.append(Layer(self.net[-2], self.net[-1], self.sess))
-
-        for i in range(len(self.weights)):
-            self.weights[i].Initialise()
+                self.layers.append(Layer(self.sess, self.net[i], self.net[i + 1]))
+        self.layers.append(Layer(self.sess, self.net[-1], self.mnist_output_size))
 
         return
 
@@ -69,23 +67,22 @@ class MnistLearner():
         y_te = self.load_labels(self.y_te_filename, self.validation_size)
 
         if one_hot:
-            y_tr_onehot = Layer.zeroes([y_tr.InputSize(), self.mnist_output_size], self.sess)
-            y_te_onehot = Layer.zeroes([y_te.InputSize(), self.mnist_output_size], self.sess)
+            y_tr_onehot = Variable.zeroes(self.sess, [y_tr.size(), self.mnist_output_size])
+            y_te_onehot = Variable.zeroes(self.sess, [y_te.size(), self.mnist_output_size])
 
-            for i in range(len(y_tr.data())):
-                y_tr_onehot.data()[i, int(y_tr[i])] = 1
-            for i in range(len(y_te.data())):
-                y_te_onehot.data()[i, int(y_te[i])] = 1
+            for i in range(y_tr.size()):
+                y_tr_onehot[i, int(y_tr[i])] = 1
 
-        if reshape:
-            x_tr, x_te = [x.reshape(*reshape) for x in (x_tr, x_te)]
-
-        if one_hot:
+            for i in range(y_te.size()):
+                y_te_onehot[i, int(y_te[i])] = 1
             self.y_tr = y_tr_onehot
             self.y_te = y_te_onehot
         else:
             self.y_tr = y_tr
             self.y_te = y_te
+
+        if reshape:
+            x_tr, x_te = [x.reshape(*reshape) for x in (x_tr, x_te)]
         self.x_tr = x_tr
         self.x_te = x_te
 
@@ -94,9 +91,10 @@ class MnistLearner():
         with gzip.open(filename, 'rb') as f:
             data = np.frombuffer(f.read(), np.uint8, offset=16)
             data = data.reshape(-1, 28 * 28) / 256
-            nd_data = Layer(data_size, 28 * 28, self.sess)
-            nd_data.Initialise()
-            nd_data.data().FromNumpy(data[:data_size, :])
+            # nd_data = Variable(self.sess, data_size, 28 * 28)
+            nd_data = Variable(self.sess)
+            nd_data.FromNumpy(data[:data_size, :])
+
         return nd_data
 
     def load_labels(self, filename, data_size):
@@ -104,9 +102,12 @@ class MnistLearner():
         with gzip.open(filename, 'rb') as f:
             data = np.frombuffer(f.read(), np.uint8, offset=8)
             data.reshape(np.shape(data)[0], -1)
-            nd_data = Layer(data_size, 1, self.sess)
-            nd_data.Initialise()
-            nd_data.data().FromNumpy(data[:data_size].reshape(data_size, -1))
+
+            nd_data = Variable(self.sess)
+            nd_data.FromNumpy(data[:data_size].reshape(data_size, -1))
+            # nd_data = Layer(data_size, 1, self.sess)
+            # nd_data.data().FromNumpy(data[:data_size].reshape(data_size, -1))
+        # return nd_data
         return nd_data
 
     def download(self, filename):
@@ -123,35 +124,37 @@ class MnistLearner():
     def feed_forward(self, X):
 
         a = [X]
-        for idx in range(len(self.weights)):
-            temp = Layer(a[-1].InputSize(), self.weights[idx].OutputSize(), self.sess)
-            temp.Initialise()
-            temp = a[-1].Dot(self.weights[idx], self.sess)
-            if self.activation_fn == 'relu':
-                temp.Relu(self.sess)
-
-            elif self.activation_fn == 'sigmoid':
-                temp.Sigmoid(self.sess)
-
-            else:
-                print("unspecified activation functions!!")
-                raise ValueError()
-            a.append(temp)
+        activate = True
+        for idx in range(len(self.layers)):
+            if (idx == (len(self.layers) -1)):
+                activate = False
+            a.append(self.layers[idx].Forward(a[-1], activate))
         return a
+
+    def calculate_loss(self, X, Y):
+        return CrossEntropyLoss(X, Y, self.sess)
+
+    def backprop(self, a):
+        self.sess.BackwardGraph(a)
+        for i in range(len(self.layers)):
+            self.layers[i].Step(self.alpha)
+        return
 
     def train(self):
 
-        X = Layer(self.batch_size, self.mnist_input_size, self.sess)
-        X.Initialise()
-        Y = Layer(self.batch_size, self.mnist_output_size, self.sess)
-        Y.Initialise()
+        # X = Variable(self.sess, self.batch_size, self.mnist_input_size)
+        # Y = Variable(self.sess, self.batch_size, self.mnist_output_size)
+        X = Variable(self.sess)
+        Y = Variable(self.sess)
+        X.Reshape(self.batch_size, self.mnist_input_size)
+        Y.Reshape(self.batch_size, self.mnist_output_size)
 
         # epochs
         for i in range(self.n_epochs):
             print("epoch ", i, ": ")
 
             # training batches
-            for j in tqdm(range(0, self.x_tr.InputSize() - self.batch_size, self.batch_size)):
+            for j in tqdm(range(0, self.x_tr.shape()[0] - self.batch_size, self.batch_size)):
 
                 # assign X batch
                 for k in range(self.batch_size):
@@ -165,17 +168,24 @@ class MnistLearner():
 
                 # update weights
                 #
-                # temp = Layer(a[-1].InputSize(), self.weights[idx].OutputSize(), self.sess)
-                # temp.Initialise()
-                # temp = a[-1].Dot(self.weights[idx], self.sess)
+                # temp = Layer(self.sess, a[-1].InputSize(), self.weights[idx].OutputSize())
+                # temp = a[-1].Dot(self.sess, self.weights[idx])
 
-                # temp = X.Dot(self.weights[0], self.sess)
+                # temp = X.Dot(self.sess, self.weights[0])
                 # self.sess.BackwardGraph(temp)
-                a = self.feed_forward(X)
-                self.sess.BackwardGraph(a[-1])
 
-            temp = self.weights[0].data().Copy()
-            temp.Abs()
+                a = self.feed_forward(X)
+
+                delta = self.calculate_loss(a[-1], Y)
+
+                self.backprop(delta)
+
+
+
+
+
+            # temp = self.weights[0].data().Copy()
+            # temp.Abs()
 
             print("Getting accuracy: ")
             print("\t getting feed forward predictions..")
@@ -185,9 +195,29 @@ class MnistLearner():
             max_pred = cur_pred.data().ArgMax(1)
             gt = self.y_te.data().ArgMax(1)
 
+            print("DEBUG- DEBUG - DEBUG")
+            print("DEBUG- DEBUG - DEBUG")
+
+            for i in range(3):
+
+                print("Cur Pred: ")
+                for j in range(10):
+                    print(cur_pred.data()[i, j])
+
+                print("GT: ")
+                for j in range(10):
+                    print(self.y_te.data()[i, j])
+
+                print("Cur Pred Argmax: " + str(max_pred[i]))
+                print("GT Argmax: " + str(gt[i]))
+
+
+            print("DEBUG- DEBUG - DEBUG")
+            print("DEBUG- DEBUG - DEBUG")
+
             print("\t comparing Y & Y^")
             sum_acc = 0
-            for i in range(self.y_te.InputSize()):
+            for i in range(self.y_te.shape()[0]):
                 sum_acc += (gt[i] == max_pred[i])
             sum_acc /= self.y_te.data().size()
 

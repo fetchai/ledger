@@ -31,90 +31,67 @@ namespace layers {
 template <typename ArrayType>
 void BuildLayers(std::string const &custom_name, pybind11::module &module)
 {
-  using SessionType  = fetch::ml::SessionManager<ArrayType, fetch::ml::layers::Layer<ArrayType>>;
-  using VariableType = fetch::ml::Variable<ArrayType>;
+  using SessionType  = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
   using SelfType     = fetch::ml::layers::Layer<ArrayType>;
+  using VariableType = fetch::ml::Variable<ArrayType>;
 
   namespace py = pybind11;
-  py::class_<SelfType, VariableType>(module, custom_name.c_str())
-      .def(py::init<std::size_t const &, std::size_t const &, SessionType &>())
-      .def("size", [](SelfType &a) { return a.size(); })
-      .def_static("zeroes", [](std::vector<std::size_t> const &new_shape,
-                               SessionType &sess) { return SelfType::Zeroes(new_shape, sess); })
-      .def("Dot", [](SelfType &a, SelfType &b,
-                     SessionType &sess) { return fetch::ml::ops::Dot(a, b, sess); })
-      .def("Relu", [](SelfType &a, SessionType &sess) { return fetch::ml::ops::Relu(a, sess); })
-      .def("ReduceSum", [](SelfType &a, std::size_t axis,
-                           SessionType &sess) { return fetch::ml::ops::Sum(a, axis, sess); })
-      .def("Initialise", [](SelfType &a) { return a.Initialise(); })
-      .def("__getitem__",
-           [](const SelfType &s, std::size_t i) {
-             if (i >= s.size())
-             {
-               throw py::index_error();
-             }
-             return s[i];
-           })
-      .def("__getitem__",
-           [](SelfType &s, py::tuple index) {
-             if (py::len(index) != 2)
-             {
-               throw py::index_error();
-             }
-             int a = index[0].cast<int>();
-             int b = index[1].cast<int>();
-             if (a < 0)
-             {
-               a += int(s.InputSize());
-             }
-             if (b < 0)
-             {
-               b += int(s.OutputSize());
-             }
-             std::size_t i = std::size_t(a);
-             std::size_t j = std::size_t(b);
+  py::class_<SelfType>(module, custom_name.c_str())
+      .def(py::init<SessionType &, std::size_t const &, std::size_t const &>())
+      .def(py::init<SessionType &, std::vector<std::size_t> const &>())
+      //      .def("size", [](SelfType &a) { return a.size(); })
+      //      .def_static("zeroes", [](std::vector<std::size_t> const &new_shape,
+      //                               SessionType &sess) { return SelfType::Zeroes(new_shape,
+      //                               sess); })
+      //      .def("Dot", [](SelfType &a, SelfType &b,
+      //                     SessionType &sess) { return fetch::ml::ops::Dot(a, b, sess); })
+      //      .def("Relu", [](SelfType &a, SessionType &sess) { return fetch::ml::ops::Relu(a,
+      //      sess); }) .def("ReduceSum", [](SelfType &a, std::size_t axis,
+      //                           SessionType &sess) { return fetch::ml::ops::Sum(a, axis, sess);
+      //                           })
+      //      .def("__getitem__",
+      //           [](const SelfType &s, std::size_t i) {
+      //             if (i >= s.size())
+      //             {
+      //               throw py::index_error();
+      //             }
+      //             return s[i];
+      //           })
+      //      .def("__getitem__",
+      //           [](SelfType &s, py::tuple index) {
+      //             if (py::len(index) != 2)
+      //             {
+      //               throw py::index_error();
+      //             }
+      //             int a = index[0].cast<int>();
+      //             int b = index[1].cast<int>();
+      //             if (a < 0)
+      //             {
+      //               a += int(s.InputSize());
+      //             }
+      //             if (b < 0)
+      //             {
+      //               b += int(s.OutputSize());
+      //             }
+      //             std::size_t i = std::size_t(a);
+      //             std::size_t j = std::size_t(b);
+      //
+      //             if (i >= s.InputSize())
+      //             {
+      //               throw py::index_error();
+      //             }
+      //             if (j >= s.OutputSize())
+      //             {
+      //               throw py::index_error();
+      //             }
+      //
+      //             return s.data(i, j);
+      //           })
 
-             if (i >= s.InputSize())
-             {
-               throw py::index_error();
-             }
-             if (j >= s.OutputSize())
-             {
-               throw py::index_error();
-             }
-
-             return s.data(i, j);
-           })
-      .def("__setitem__",
-           [](SelfType &s, py::tuple index, typename ArrayType::type const &v) {
-             if (py::len(index) != 2)
-             {
-               throw py::index_error();
-             }
-             int a = index[0].cast<int>();
-             int b = index[1].cast<int>();
-             if (a < 0)
-             {
-               a += int(s.InputSize());
-             }
-             if (b < 0)
-             {
-               b += int(s.OutputSize());
-             }
-             std::size_t i = std::size_t(a);
-             std::size_t j = std::size_t(b);
-
-             if (std::size_t(i) >= s.InputSize())
-             {
-               throw py::index_error();
-             }
-             if (std::size_t(j) >= s.OutputSize())
-             {
-               throw py::index_error();
-             }
-
-             s.data(i, j) = v;
-           })
+      .def("Forward", [](SelfType &a, VariableType &activations,
+                         bool activate = true) { return a.Forward(activations, activate); })
+      .def("Step", [](SelfType &a, typename ArrayType::type &lr) { return a.Step(lr); })
+      .def("Weights", [](SelfType &a) { return a.weights(); })
       .def("InputSize", [](SelfType &a) { return a.InputSize(); })
       .def("OutputSize", [](SelfType &a) { return a.OutputSize(); });
 

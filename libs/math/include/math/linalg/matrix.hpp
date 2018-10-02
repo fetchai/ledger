@@ -43,6 +43,7 @@ public:
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
   using working_memory_2d_type        = RectangularArray<T, C, true, true>;
+  using size_type                     = typename super_type::size_type;
 
   using self_type = Matrix<T, C, S>;
 

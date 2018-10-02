@@ -58,11 +58,11 @@ template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array);
 
 namespace details {
-template <typename ARRAY_TYPE>
-void ScatterImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE &updates, ARRAY_TYPE &indices)
+template <typename ArrayType>
+void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
 {
   // sort indices and updates into ascending order
-  std::vector<std::pair<std::size_t, typename ARRAY_TYPE::type>> AB;
+  std::vector<std::pair<std::size_t, typename ArrayType::type>> AB;
 
   // copy into pairs
   // Note that A values are put in "first" this is very important
@@ -443,8 +443,8 @@ void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
  * method for concatenating arrays
  */
 namespace details {
-template <typename ARRAY_TYPE>
-void ConcatImplementation(std::vector<ARRAY_TYPE> const &input_arrays, ARRAY_TYPE &ret)
+template <typename ArrayType>
+void ConcatImplementation(std::vector<ArrayType> const &input_arrays, ArrayType &ret)
 {
   assert(input_arrays.size() > 0);
 
@@ -556,9 +556,9 @@ NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const 
  * @param x
  */
 namespace details {
-template <typename ARRAY_TYPE>
-void DynamicStitchImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &indices,
-                                 ARRAY_TYPE const &data)
+template <typename ArrayType>
+void DynamicStitchImplementation(ArrayType &input_array, ArrayType const &indices,
+                                 ArrayType const &data)
 {
   input_array.LazyResize(indices.size());
 
@@ -592,8 +592,8 @@ void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T
  * @param x
  */
 namespace details {
-template <typename ARRAY_TYPE>
-void BooleanMaskImplementation(ARRAY_TYPE &input_array, ARRAY_TYPE const &mask, ARRAY_TYPE &ret)
+template <typename ArrayType>
+void BooleanMaskImplementation(ArrayType &input_array, ArrayType const &mask, ArrayType &ret)
 {
   assert(input_array.size() == mask.size());
 
@@ -670,10 +670,10 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
  * assigns the absolute of x to this array
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Abs(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Abs(ArrayType &x)
 {
-  kernels::stdlib::Abs<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Abs<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -681,10 +681,10 @@ void Abs(ARRAY_TYPE &x)
  * e^x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Exp(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Exp(ArrayType &x)
 {
-  kernels::stdlib::Exp<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Exp<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -692,10 +692,10 @@ void Exp(ARRAY_TYPE &x)
  * raise 2 to power input values of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Exp2(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Exp2(ArrayType &x)
 {
-  kernels::stdlib::Exp2<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Exp2<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -703,10 +703,10 @@ void Exp2(ARRAY_TYPE &x)
  * exp(x) - 1
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Expm1(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Expm1(ArrayType &x)
 {
-  kernels::stdlib::Expm1<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Expm1<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -714,21 +714,29 @@ void Expm1(ARRAY_TYPE &x)
  * natural logarithm of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Log(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Log(ArrayType &x)
 {
-  kernels::stdlib::Log<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Log<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
+}
+template <typename ArrayType>
+ArrayType Log(ArrayType const &x)
+{
+  ArrayType ret{x.shape()};
+  ret.Copy(x);
+  Log(ret);
+  return ret;
 }
 
 /**
  * natural logarithm of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Log10(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Log10(ArrayType &x)
 {
-  kernels::stdlib::Log10<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Log10<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -736,10 +744,10 @@ void Log10(ARRAY_TYPE &x)
  * log base 2
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Log2(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Log2(ArrayType &x)
 {
-  kernels::stdlib::Log2<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Log2<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -747,10 +755,10 @@ void Log2(ARRAY_TYPE &x)
  * natural log 1 + x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Log1p(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Log1p(ArrayType &x)
 {
-  kernels::stdlib::Log1p<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Log1p<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -758,10 +766,10 @@ void Log1p(ARRAY_TYPE &x)
  * square root
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Sqrt(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Sqrt(ArrayType &x)
 {
-  kernels::stdlib::Sqrt<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Sqrt<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -769,10 +777,10 @@ void Sqrt(ARRAY_TYPE &x)
  * cubic root x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Cbrt(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Cbrt(ArrayType &x)
 {
-  kernels::stdlib::Cbrt<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Cbrt<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -780,10 +788,10 @@ void Cbrt(ARRAY_TYPE &x)
  * raise to power
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Pow(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Pow(ArrayType &x)
 {
-  kernels::stdlib::Pow<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Pow<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -791,16 +799,16 @@ void Pow(ARRAY_TYPE &x)
  * square
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Square(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Square(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {
     x[i] = x[i] * x[i];
   }
 }
-template <typename ARRAY_TYPE>
-void Square(ARRAY_TYPE &x, ARRAY_TYPE &ret)
+template <typename ArrayType>
+void Square(ArrayType &x, ArrayType &ret)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {
@@ -812,10 +820,10 @@ void Square(ARRAY_TYPE &x, ARRAY_TYPE &ret)
  * sine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Sin(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Sin(ArrayType &x)
 {
-  kernels::stdlib::Sin<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Sin<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -823,10 +831,10 @@ void Sin(ARRAY_TYPE &x)
  * cosine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Cos(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Cos(ArrayType &x)
 {
-  kernels::stdlib::Cos<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Cos<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -834,10 +842,10 @@ void Cos(ARRAY_TYPE &x)
  * tangent of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Tan(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Tan(ArrayType &x)
 {
-  kernels::stdlib::Tan<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Tan<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -845,10 +853,10 @@ void Tan(ARRAY_TYPE &x)
  * arc sine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Asin(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Asin(ArrayType &x)
 {
-  kernels::stdlib::Asin<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Asin<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -856,10 +864,10 @@ void Asin(ARRAY_TYPE &x)
  * arc cosine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Acos(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Acos(ArrayType &x)
 {
-  kernels::stdlib::Acos<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Acos<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -867,10 +875,10 @@ void Acos(ARRAY_TYPE &x)
  * arc tangent of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Atan(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Atan(ArrayType &x)
 {
-  kernels::stdlib::Atan<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Atan<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -878,10 +886,10 @@ void Atan(ARRAY_TYPE &x)
  * arc tangent of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Atan2(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Atan2(ArrayType &x)
 {
-  kernels::stdlib::Atan2<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Atan2<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -889,10 +897,10 @@ void Atan2(ARRAY_TYPE &x)
  * hyperbolic sine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Sinh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Sinh(ArrayType &x)
 {
-  kernels::stdlib::Sinh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Sinh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -900,10 +908,10 @@ void Sinh(ARRAY_TYPE &x)
  * hyperbolic cosine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Cosh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Cosh(ArrayType &x)
 {
-  kernels::stdlib::Cosh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Cosh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -911,10 +919,10 @@ void Cosh(ARRAY_TYPE &x)
  * hyperbolic tangent of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Tanh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Tanh(ArrayType &x)
 {
-  kernels::stdlib::Tanh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Tanh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -922,10 +930,10 @@ void Tanh(ARRAY_TYPE &x)
  * hyperbolic arc sine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Asinh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Asinh(ArrayType &x)
 {
-  kernels::stdlib::Asinh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Asinh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -933,10 +941,10 @@ void Asinh(ARRAY_TYPE &x)
  * hyperbolic arc cosine of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Acosh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Acosh(ArrayType &x)
 {
-  kernels::stdlib::Acosh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Acosh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -944,10 +952,10 @@ void Acosh(ARRAY_TYPE &x)
  * hyperbolic arc tangent of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Atanh(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Atanh(ArrayType &x)
 {
-  kernels::stdlib::Atanh<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Atanh<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -955,10 +963,10 @@ void Atanh(ARRAY_TYPE &x)
  * error function of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Erf(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Erf(ArrayType &x)
 {
-  kernels::stdlib::Erf<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Erf<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -966,10 +974,10 @@ void Erf(ARRAY_TYPE &x)
  * complementary error function of x
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Erfc(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Erfc(ArrayType &x)
 {
-  kernels::stdlib::Erfc<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Erfc<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -977,10 +985,10 @@ void Erfc(ARRAY_TYPE &x)
  * factorial of x-1
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Tgamma(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Tgamma(ArrayType &x)
 {
-  kernels::stdlib::Tgamma<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Tgamma<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -988,10 +996,10 @@ void Tgamma(ARRAY_TYPE &x)
  * log of factorial of x-1
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Lgamma(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Lgamma(ArrayType &x)
 {
-  kernels::stdlib::Lgamma<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Lgamma<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -999,10 +1007,10 @@ void Lgamma(ARRAY_TYPE &x)
  * ceiling round
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Ceil(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Ceil(ArrayType &x)
 {
-  kernels::stdlib::Ceil<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Ceil<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1010,10 +1018,10 @@ void Ceil(ARRAY_TYPE &x)
  * floor rounding
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Floor(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Floor(ArrayType &x)
 {
-  kernels::stdlib::Floor<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Floor<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1021,10 +1029,10 @@ void Floor(ARRAY_TYPE &x)
  * round towards 0
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Trunc(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Trunc(ArrayType &x)
 {
-  kernels::stdlib::Trunc<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Trunc<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1032,10 +1040,10 @@ void Trunc(ARRAY_TYPE &x)
  * round to nearest int in int format
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Round(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Round(ArrayType &x)
 {
-  kernels::stdlib::Round<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Round<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1043,10 +1051,10 @@ void Round(ARRAY_TYPE &x)
  * round to nearest int in float format
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Lround(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Lround(ArrayType &x)
 {
-  kernels::stdlib::Lround<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Lround<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1054,10 +1062,10 @@ void Lround(ARRAY_TYPE &x)
  * round to nearest int in float format with long long return
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Llround(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Llround(ArrayType &x)
 {
-  kernels::stdlib::Llround<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Llround<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1065,10 +1073,10 @@ void Llround(ARRAY_TYPE &x)
  * round to nearest int in float format
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Nearbyint(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Nearbyint(ArrayType &x)
 {
-  kernels::stdlib::Nearbyint<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Nearbyint<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1076,10 +1084,10 @@ void Nearbyint(ARRAY_TYPE &x)
  * round to nearest int
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Rint(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Rint(ArrayType &x)
 {
-  kernels::stdlib::Rint<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Rint<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1087,10 +1095,10 @@ void Rint(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Lrint(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Lrint(ArrayType &x)
 {
-  kernels::stdlib::Lrint<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Lrint<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1098,10 +1106,10 @@ void Lrint(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Llrint(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Llrint(ArrayType &x)
 {
-  kernels::stdlib::Llrint<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Llrint<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1109,10 +1117,10 @@ void Llrint(ARRAY_TYPE &x)
  * finite check
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isfinite(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isfinite(ArrayType &x)
 {
-  kernels::stdlib::Isfinite<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isfinite<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1120,10 +1128,10 @@ void Isfinite(ARRAY_TYPE &x)
  * checks for inf values
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isinf(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isinf(ArrayType &x)
 {
-  kernels::stdlib::Isinf<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isinf<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1131,10 +1139,10 @@ void Isinf(ARRAY_TYPE &x)
  * checks for nans
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isnan(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isnan(ArrayType &x)
 {
-  kernels::stdlib::Isnan<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isnan<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1142,10 +1150,10 @@ void Isnan(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Hypot(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Hypot(ArrayType &x)
 {
-  kernels::stdlib::Hypot<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Hypot<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1153,10 +1161,10 @@ void Hypot(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Frexp(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Frexp(ArrayType &x)
 {
-  kernels::stdlib::Frexp<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Frexp<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1164,10 +1172,10 @@ void Frexp(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Ldexp(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Ldexp(ArrayType &x)
 {
-  kernels::stdlib::Ldexp<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Ldexp<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1175,10 +1183,10 @@ void Ldexp(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Modf(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Modf(ArrayType &x)
 {
-  kernels::stdlib::Modf<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Modf<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1186,10 +1194,10 @@ void Modf(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Scalbn(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Scalbn(ArrayType &x)
 {
-  kernels::stdlib::Scalbn<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Scalbn<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1197,10 +1205,10 @@ void Scalbn(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Scalbln(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Scalbln(ArrayType &x)
 {
-  kernels::stdlib::Scalbln<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Scalbln<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1208,10 +1216,10 @@ void Scalbln(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Ilogb(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Ilogb(ArrayType &x)
 {
-  kernels::stdlib::Ilogb<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Ilogb<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1219,10 +1227,10 @@ void Ilogb(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Logb(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Logb(ArrayType &x)
 {
-  kernels::stdlib::Logb<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Logb<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1230,10 +1238,10 @@ void Logb(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Nextafter(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Nextafter(ArrayType &x)
 {
-  kernels::stdlib::Nextafter<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Nextafter<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1241,10 +1249,10 @@ void Nextafter(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Nexttoward(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Nexttoward(ArrayType &x)
 {
-  kernels::stdlib::Nexttoward<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Nexttoward<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1252,10 +1260,10 @@ void Nexttoward(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Copysign(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Copysign(ArrayType &x)
 {
-  kernels::stdlib::Copysign<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Copysign<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1263,10 +1271,10 @@ void Copysign(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Fpclassify(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Fpclassify(ArrayType &x)
 {
-  kernels::stdlib::Fpclassify<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Fpclassify<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1274,10 +1282,10 @@ void Fpclassify(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isnormal(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isnormal(ArrayType &x)
 {
-  kernels::stdlib::Isnormal<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isnormal<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1285,10 +1293,10 @@ void Isnormal(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Signbit(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Signbit(ArrayType &x)
 {
-  kernels::stdlib::Signbit<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Signbit<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1296,10 +1304,10 @@ void Signbit(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isgreater(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isgreater(ArrayType &x)
 {
-  kernels::stdlib::Isgreater<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isgreater<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1307,10 +1315,10 @@ void Isgreater(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isgreaterequal(ARRAY_TYPE const &x, ARRAY_TYPE const &y, ARRAY_TYPE &z)
+template <typename ArrayType>
+void Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
 {
-  kernels::stdlib::Isgreaterequal<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isgreaterequal<typename ArrayType::type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());
 }
 
@@ -1318,10 +1326,10 @@ void Isgreaterequal(ARRAY_TYPE const &x, ARRAY_TYPE const &y, ARRAY_TYPE &z)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isless(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isless(ArrayType &x)
 {
-  kernels::stdlib::Isless<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isless<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1329,10 +1337,10 @@ void Isless(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Islessequal(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Islessequal(ArrayType &x)
 {
-  kernels::stdlib::Islessequal<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Islessequal<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1340,10 +1348,10 @@ void Islessequal(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Islessgreater(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Islessgreater(ArrayType &x)
 {
-  kernels::stdlib::Islessgreater<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Islessgreater<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1351,10 +1359,10 @@ void Islessgreater(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Isunordered(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Isunordered(ArrayType &x)
 {
-  kernels::stdlib::Isunordered<typename ARRAY_TYPE::type> kernel;
+  kernels::stdlib::Isunordered<typename ArrayType::type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1362,10 +1370,10 @@ void Isunordered(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void ApproxExp(ARRAY_TYPE &x)
+template <typename ArrayType>
+void ApproxExp(ArrayType &x)
 {
-  kernels::ApproxExp<typename ARRAY_TYPE::vector_register_type> kernel;
+  kernels::ApproxExp<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1373,10 +1381,10 @@ void ApproxExp(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void ApproxLog(ARRAY_TYPE &x)
+template <typename ArrayType>
+void ApproxLog(ArrayType &x)
 {
-  kernels::ApproxLog<typename ARRAY_TYPE::vector_register_type> kernel;
+  kernels::ApproxLog<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1384,10 +1392,10 @@ void ApproxLog(ARRAY_TYPE &x)
  *
  * @param x
  */
-template <typename ARRAY_TYPE>
-void ApproxLogistic(ARRAY_TYPE &x)
+template <typename ArrayType>
+void ApproxLogistic(ArrayType &x)
 {
-  kernels::ApproxLogistic<typename ARRAY_TYPE::vector_register_type> kernel;
+  kernels::ApproxLogistic<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1395,10 +1403,10 @@ void ApproxLogistic(ARRAY_TYPE &x)
  * rectified linear activation function
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Relu(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Relu(ArrayType &x)
 {
-  kernels::Relu<typename ARRAY_TYPE::vector_register_type> kernel;
+  kernels::Relu<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1406,10 +1414,10 @@ void Relu(ARRAY_TYPE &x)
  * replaces data with the sign (1 or -1)
  * @param x
  */
-template <typename ARRAY_TYPE>
-void Sign(ARRAY_TYPE &x)
+template <typename ArrayType>
+void Sign(ArrayType &x)
 {
-  kernels::Sign<typename ARRAY_TYPE::vector_register_type> kernel;
+  kernels::Sign<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1461,6 +1469,88 @@ linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size
     ReduceSum(obj1, axis, ret);
     return ret;
   }
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1)
+{
+  std::size_t             axis = obj1.shape().size() - 1;
+  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
+
+  while (ret.shape().size() > 1)
+  {
+    axis = ret.shape().size() - 1;
+    ret = ReduceSum(ret, axis);
+  }
+
+  return ret;
+}
+
+template <typename ArrayType>
+ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
+{
+  assert(A.shape() == B.shape());
+  ArrayType ret(A.shape());
+
+  Subtract(A, B, ret);
+  Square(ret);
+  Mean(ret);
+
+  return ret;
+}
+
+/**
+ * Cross entropy loss with x as the prediction, and y as the ground truth
+ * @tparam ArrayType
+ * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
+ * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
+ * 0
+ * @return
+ */
+template <typename ArrayType>
+ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  assert(x.shape() == y.shape());
+  std::cout << " hi: " << std::endl;
+  x.shape();
+  std::cout << " hi: " << x.shape()[0] << std::endl;
+  std::cout << " hi: " << x.shape()[1] << std::endl;
+
+  ArrayType logx{x.shape()};
+  std::cout << " hi: " << std::endl;
+  logx.shape();
+  std::cout << " hi: " << logx.shape()[0] << std::endl;
+  std::cout << " hi: " << logx.shape()[1] << std::endl;
+
+  std::cout << " hi: " << std::endl;
+  x.shape();
+  std::cout << " hi: " << std::endl;
+
+  std::cout << "logx.shape()[0]: " << logx.shape()[0] << std::endl;
+  Log(logx);
+  std::cout << "ReduceSum(ReduceSum(Multiply(y, logx), 1), 0).shape()[0]: " << ReduceSum(ReduceSum(Multiply(y, logx), 1), 0).shape()[0] << std::endl;
+  return ReduceSum(ReduceSum(Multiply(y, logx), 1), 0);
+}
+
+/**
+ * The sigmoid function
+ * @tparam ArrayType
+ * @tparam T
+ * @param y
+ * @param y_hat
+ * @param ret
+ */
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
+{
+  linalg::Matrix<T, C, S> ret{A.shape()};
+  ret.Copy(A);
+//  ret.data() = A.data().copy();
+
+  Exp(ret);
+  Add(ret, 1.0, ret);
+  Divide(1.0, ret, ret);
+
+  return ret;
 }
 
 /**
@@ -1685,7 +1775,7 @@ inline void Min(T const &datum1, T const &datum2, T &ret)
 
 /**
  * Min function for returning the smallest value in an array
- * @tparam ARRAY_TYPE
+ * @tparam ArrayType
  * @param array
  * @return
  */
@@ -1787,13 +1877,13 @@ void Min(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
  * @param ret new data with softmax applied
  */
 namespace details {
-template <typename ARRAY_TYPE>
-void SoftmaxImplementation(ARRAY_TYPE const &array, ARRAY_TYPE &ret)
+template <typename ArrayType>
+void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
   ret.LazyResize(array.size());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
-  typename ARRAY_TYPE::type array_max, array_sum;
+  typename ArrayType::type array_max, array_sum;
   Max(array, array_max);
   Subtract(array, array_max, ret);
   Exp(ret);
@@ -1836,9 +1926,9 @@ NDArray<T, C> Softmax(NDArray<T, C> const &array)
  * @return the combined array
  */
 namespace details {
-template <typename ARRAY_TYPE>
-ARRAY_TYPE &MaximumImplementation(ARRAY_TYPE const &array1, ARRAY_TYPE const &array2,
-                                  ARRAY_TYPE &ret)
+template <typename ArrayType>
+ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array2,
+                                  ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(ret.size() == array2.size());
@@ -2086,6 +2176,56 @@ ShapeLessArray<T, C> Subtract(T const &scalar, ShapeLessArray<T, C> const &array
   Subtract(scalar, array, ret);
   return ret;
 }
+
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array)
+{
+  linalg::Matrix<T, C, S> ret;
+  Subtract(scalar, array, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = scalar - array[i];
+  }
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar)
+{
+  linalg::Matrix<T, C, S> ret;
+  Subtract(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = array[i] - scalar;
+  }
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
+{
+  linalg::Matrix<T, C, S> ret;
+  Subtract(array1, array2, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2, linalg::Matrix<T, C, S> &ret)
+{
+  assert(array1.size() == ret.size());
+  assert(array1.size() == array2.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = array1[i] - array2[i];
+  }
+}
 /**
  * subtract array from another array within a range
  * @tparam T
@@ -2295,6 +2435,53 @@ ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T
   Multiply(obj1, obj2, ret);
   return ret;
 }
+
+
+template <typename T, typename C, typename S>
+void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2, linalg::Matrix<T, C, S> &ret)
+{
+  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
+  Multiply(array1, array2, range, ret);
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
+{
+  linalg::Matrix<T, C, S> ret{array1.size()};
+  Multiply(array1, array2, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
+{
+  assert(array.size() == ret.size());
+  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * val; },
+      array.data());
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar)
+{
+  linalg::Matrix<T, C, S> ret{array.size()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
+{
+  Multiply(array, scalar, ret);
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array)
+{
+  linalg::Matrix<T, C, S> ret{array.size()};
+  Multiply(scalar, array, ret);
+  return ret;
+}
+
+
 /**
  * Multiply array by another array with broadcasting
  * @tparam T
@@ -2449,6 +2636,79 @@ template <typename T, typename C>
 ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
   ShapeLessArray<T, C> ret{obj1.size()};
+  Divide(obj1, obj2, ret);
+  return ret;
+}
+
+template <typename T, typename C, typename S>
+void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
+            memory::Range const &range, linalg::Matrix<T, C, S> &ret)
+{
+  std::cout << "divide3" << std::endl;
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
+
+  std::cout << "divide3a" << std::endl;
+  if (range.is_undefined())
+  {
+    Divide(obj1, obj2, ret);
+    std::cout << "divide3b_a" << std::endl;
+  }
+  else if (range.is_trivial())
+  {
+    std::cout << "divide3b_b" << std::endl;
+
+    auto r = range.ToTrivialRange(ret.data().size());
+    std::cout << "divide3b_c" << std::endl;
+    std::cout << "obj1 size()" << obj1.size() << std::endl;
+    std::cout << "obj1 shape()[0]" << obj1.shape()[0] << std::endl;
+    std::cout << "obj1 shape()[1]" << obj1.shape()[1] << std::endl;
+    std::cout << "obj2 shape()[0]" << obj2.shape()[0] << std::endl;
+    std::cout << "obj2 shape()[1]" << obj2.shape()[1] << std::endl;
+    std::cout << "ret shape()[0]" << ret.shape()[0] << std::endl;
+    std::cout << "ret shape()[1]" << ret.shape()[1] << std::endl;
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
+           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
+        obj1.data(), obj2.data());
+
+    std::cout << "obj1 shape()[0]" << obj1.shape()[0] << std::endl;
+    std::cout << "obj1 shape()[1]" << obj1.shape()[1] << std::endl;
+    std::cout << "obj2 shape()[0]" << obj2.shape()[0] << std::endl;
+    std::cout << "obj2 shape()[1]" << obj2.shape()[1] << std::endl;
+    std::cout << "ret shape()[0]" << ret.shape()[0] << std::endl;
+    std::cout << "ret shape()[1]" << ret.shape()[1] << std::endl;
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
+}
+template <typename T, typename C, typename S>
+void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2, linalg::Matrix<T, C, S> &ret)
+{
+  std::cout << "divide2" << std::endl;
+  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
+  Divide(obj1, obj2, range, ret);
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2)
+{
+  std::cout << "divide1" << std::endl;
+  std::cout << "obj1.shape()[0]" << obj1.shape()[0] << std::endl;
+  std::cout << "obj1.shape()[1]" << obj1.shape()[1] << std::endl;
+  std::cout << "obj2.shape()[0]" << obj2.shape()[0] << std::endl;
+  std::cout << "obj2.shape()[1]" << obj2.shape()[1] << std::endl;
+
+  linalg::Matrix<T, C, S> ret{obj1.shape()[0], obj1.shape()[1]};
+
+  std::cout << "obj2.shape()[0]" << obj2.shape()[0] << std::endl;
+  std::cout << "obj2.shape()[1]" << obj2.shape()[1] << std::endl;
+
+
   Divide(obj1, obj2, ret);
   return ret;
 }

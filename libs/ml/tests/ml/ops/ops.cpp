@@ -19,40 +19,132 @@
 // #include <algorithm>
 #include <iomanip>
 #include <iostream>
-
-//#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-#include "math/ndarray.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/linalg/matrix.hpp"
 #include "ml/ops/ops.hpp"
 
+//#include "math/ndarray.hpp"
 //#include "math/free_functions/free_functions.hpp"
 
 using namespace fetch::ml;
-using T = double;
 #define ARRAY_SIZE 100
 
-TEST(loss_functions, MSE_Test)
+using Type = double;
+using ArrayType = fetch::math::linalg::Matrix<Type>;
+
+
+TEST(loss_functions, Dot_test)
 {
 
-  fetch::math::ShapeLessArray<T> y_arr = fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
-  fetch::math::ShapeLessArray<T> y_hat_arr =
-      fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
 
-  T result      = -999;
-  T test_result = -999;
+  SessionManager<ArrayType, LayerType> sess{};
 
-  fetch::math::ShapeLessArray<T> test_result_arr = fetch::math::ShapeLessArray<T>(y_arr.size());
-  // error
-  Subtract(y_arr, y_hat_arr, test_result_arr);
-  // square
-  Square(test_result_arr, test_result_arr);
-  // mean
-  Mean(test_result_arr, test_result);
+  std::vector<std::size_t> l1_shape{2, 3};
+  std::vector<std::size_t> l2_shape{3, 4};
 
-  // the function we're testing
-  fetch::ml::ops::MeanSquareError(y_arr, y_hat_arr, result);
+  Variable<ArrayType> l1{sess, l1_shape};
+  Variable<ArrayType> l2{sess, l2_shape};
 
-  ASSERT_TRUE(result == test_result);
+  std::size_t counter = 0;
+
+
+  Type setval = 0.;
+  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    {
+      l1.Set(i, j, setval);
+      setval += 1.0;
+    }
+  }
+
+  setval = 0.;
+  for (std::size_t i = 0; i < l2_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l2_shape[1]; ++j)
+    {
+      l2.Set(i, j, setval);
+      setval += 1.0;
+    }
+  }
+
+  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1, l2, sess);
+  ASSERT_TRUE(ret.shape()[0] == l1_shape[0]);
+  ASSERT_TRUE(ret.shape()[1] == l2_shape[1]);
+
+  std::vector<Type> gt{20, 23, 26, 29, 56, 68, 80, 92};
+  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < ret.shape()[1]; ++j)
+    {
+      ASSERT_TRUE(ret.At(i, j) == gt[counter]);
+      ++counter;
+    }
+  }
 }
+
+TEST(loss_functions, Relu_test)
+{
+
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
+  SessionManager<ArrayType, LayerType> sess{};
+  std::size_t counter = 0;
+
+  std::vector<std::size_t> l1_shape{2, 3};
+
+  Variable<ArrayType> l1{sess, l1_shape};
+
+  Type setval = -3.;
+  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    {
+      l1.Set(i, j, setval);
+      setval += 1.0;
+    }
+  }
+
+  Variable<ArrayType> ret = fetch::ml::ops::Relu(l1, sess);
+
+  ASSERT_TRUE(ret.shape() == l1.shape());
+
+  std::vector<Type> gt{0, 0, 0, 0, 1, 2};
+  counter = 0;
+  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < ret.shape()[1]; ++j)
+    {
+      ASSERT_TRUE(ret.At(i, j) == gt[counter]);
+      ++counter;
+    }
+  }
+}
+
+
+//TEST(loss_functions, MSE_Test)
+//{
+//
+//  fetch::math::ShapeLessArray<T> y_arr = fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
+//  fetch::math::ShapeLessArray<T> y_hat_arr =
+//      fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
+//
+//  T result      = -999;
+//  T test_result = -999;
+//
+//  fetch::math::ShapeLessArray<T> test_result_arr = fetch::math::ShapeLessArray<T>(y_arr.size());
+//  // error
+//  Subtract(y_arr, y_hat_arr, test_result_arr);
+//  // square
+//  Square(test_result_arr, test_result_arr);
+//  // mean
+//  Mean(test_result_arr, test_result);
+//
+//  // the function we're testing
+//  fetch::ml::ops::MeanSquareError(y_arr, y_hat_arr, result);
+//
+//  ASSERT_TRUE(result == test_result);
+//}

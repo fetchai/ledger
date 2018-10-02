@@ -38,17 +38,16 @@ class NDArrayIterator;
  * @param b
  * @return
  */
-template <typename LayerType, typename SessionType>
-LayerType Dot(LayerType &left, LayerType &right, SessionType &sess)
+template <typename VariableType, typename SessionType>
+VariableType Dot(VariableType &left, VariableType &right, SessionType &sess)
 {
   // define the derivative
-  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
     fetch::ml::ops::derivatives::Dot(cur_node);
   };
 
   // define the return variable with the Dot computation
-  LayerType ret{sess};
-  ret.Initialise(fetch::math::Dot(left.data, right.data), b_fn, false);
+  VariableType ret{sess, fetch::math::Dot(left.data(), right.data()), "Dot", b_fn, false};
   ret.prev.push_back(left);
   ret.prev.push_back(right);
 
@@ -62,20 +61,21 @@ LayerType Dot(LayerType &left, LayerType &right, SessionType &sess)
  * @param y
  * @param ret
  */
-template <typename LayerType, typename SessionType>
-LayerType Relu(LayerType &left, SessionType &sess)
+template <typename VariableType, typename SessionType>
+VariableType Relu(VariableType const &left, SessionType &sess)
 {
   // define the derivative
-  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
     fetch::ml::ops::derivatives::Relu(cur_node);
   };
 
   // set up the new return node and calculate Relu
-  LayerType ret{sess};
-  ret.Initialise(fetch::math::Maximum(left.data, LayerType::Zeroes(left.data.shape(), sess).data),
-                 b_fn, false);
-  //  ret.Initialise(fetch::math::Maximum(left.data, LayerType::type::Zeroes(left.data.shape(),
-  //  sess)), b_fn, false);
+  VariableType ret{
+      sess,
+      fetch::math::Maximum(left.data(), VariableType::Zeroes(left.data().shape(), sess).data()),
+      "Relu",
+      b_fn,
+      false};
 
   ret.prev.push_back(left);
 
@@ -86,46 +86,66 @@ LayerType Relu(LayerType &left, SessionType &sess)
  *
  * @return
  */
-template <typename LayerType, typename SessionType>
-LayerType Sum(LayerType &left, std::size_t const axis, SessionType &sess)
+template <typename VariableType, typename SessionType>
+VariableType Sum(VariableType &left, std::size_t const axis, SessionType &sess)
 {
   // define the derivative
-  std::function<void(LayerType &)> b_fn = [](LayerType &cur_node) {
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
     fetch::ml::ops::derivatives::Sum(cur_node);
   };
 
-  LayerType ret{sess};
-  ret.Initialise(fetch::math::ReduceSum(left.data, axis), b_fn, false);
+  VariableType ret{sess, fetch::math::ReduceSum(left.data(), axis), "Sum", b_fn, false};
 
   ret.prev.push_back(left);
   return ret;
 }
 
-template <typename ARRAY_TYPE, typename T>
-void MeanSquareError(ARRAY_TYPE y, ARRAY_TYPE y_hat, T &ret)
+template <typename VariableType, typename SessionType>
+VariableType MeanSquareError(VariableType &left, VariableType &right, SessionType &sess)
 {
-  ARRAY_TYPE temp(y.size());
-  fetch::math::Subtract(y, y_hat, temp);
-  fetch::math::Square(temp);
-  fetch::math::Mean(temp, ret);
+  // define the derivative
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
+    fetch::ml::ops::derivatives::MeanSquareError(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  VariableType ret{sess, fetch::math::MeanSquareError(left.data(), right.data()), "MSE", b_fn, false};
+
+  ret.prev.push_back(left);
+
+  return ret;
 }
 
-/**
- * The sigmoid function
- * @tparam ARRAY_TYPE
- * @tparam T
- * @param y
- * @param y_hat
- * @param ret
- */
-template <typename ARRAY_TYPE>
-void Sigmoid(ARRAY_TYPE &y, ARRAY_TYPE &ret)
+template <typename VariableType, typename SessionType>
+VariableType Sigmoid(VariableType &left, SessionType &sess)
 {
-  Multiply(y, 1.0, ret);
-  Exp(ret);
-  Add(ret, 1.0, ret);
+  // define the derivative
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
+    fetch::ml::ops::derivatives::Sigmoid(cur_node);
+  };
 
-  Divide(1.0, ret, ret);
+  // define the return variable with the Dot computation
+  VariableType ret{sess, fetch::math::Sigmoid(left.data()), "Sigmoid", b_fn, false};
+
+  ret.prev.push_back(left);
+
+  return ret;
+}
+
+template <typename VariableType, typename SessionType>
+VariableType CrossEntropyLoss(VariableType &left, VariableType &right, SessionType &sess)
+{
+  // define the derivative
+  std::function<void(VariableType &)> b_fn = [](VariableType &cur_node) {
+    fetch::ml::ops::derivatives::CrossEntropyLoss(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  VariableType ret{sess, fetch::math::CrossEntropyLoss(left.data(), right.data()), "CEL", b_fn, false};
+
+  ret.prev.push_back(left);
+
+  return ret;
 }
 
 };  // namespace ops

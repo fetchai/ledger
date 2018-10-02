@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/layers.hpp"
+//#include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 #include "python/fetch_pybind.hpp"
@@ -26,16 +26,18 @@
 namespace fetch {
 namespace ml {
 
-template <typename ArrayType, typename LayerType>
+template <typename ArrayType, typename VariableType>
 void BuildSession(std::string const &custom_name, pybind11::module &module)
 {
   namespace py = pybind11;
-  py::class_<SessionManager<ArrayType, LayerType>>(module, custom_name.c_str())
+  py::class_<SessionManager<ArrayType, VariableType>>(module, custom_name.c_str())
       .def(py::init<>())
-      .def("RegisterVariable", [](SessionManager<ArrayType, LayerType> &sess,
-                                  layers::Layer<ArrayType> &a) { return sess.RegisterVariable(a); })
-      .def("BackwardGraph", [](SessionManager<ArrayType, LayerType> &sess,
-                               layers::Layer<ArrayType> &a) { return sess.BackwardGraph(a); });
+      //      .def("RegisterVariable", [](SessionManager<ArrayType, VariableType> &sess,
+      //                                  layers::Layer<ArrayType> &a) { return
+      //                                  sess.RegisterVariable(a); })
+      .def("BackwardGraph", [](SessionManager<ArrayType, VariableType> &sess, VariableType &a) {
+        return sess.BackwardGraph(a);
+      });
 }
 
 }  // namespace ml
