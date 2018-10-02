@@ -25,6 +25,7 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
+#include "crypto/fnv.hpp"
 
 #include <memory>
 #include <random>
@@ -43,22 +44,26 @@ namespace muddle {
 namespace {
 
 /**
- * Combine service, channel and counter into a single incde
+ * Generate an id for echo cancellation id
  *
- * @param service The service id
- * @param channel The channel id
- * @param counter The message counter id
- * @return The aggregated counter
+ * @param packet The input packet to generate the echo id
+ * @return
  */
-uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
+std::size_t GenerateEchoId(Packet const &packet)
 {
-  uint64_t id = 0;
+  crypto::FNV hash;
+  hash.Reset();
 
-  id |= static_cast<uint64_t>(service) << 32u;
-  id |= static_cast<uint64_t>(channel) << 16u;
-  id |= static_cast<uint64_t>(counter);
+  auto const service = packet.GetService();
+  auto const channel = packet.GetProtocol();
+  auto const counter = packet.GetMessageNum();
 
-  return id;
+  hash.Update(packet.GetSenderRaw().data(), packet.GetSenderRaw().size());
+  hash.Update(reinterpret_cast<uint8_t const *>(&service), sizeof(service));
+  hash.Update(reinterpret_cast<uint8_t const *>(&channel), sizeof(channel));
+  hash.Update(reinterpret_cast<uint8_t const *>(&counter), sizeof(counter));
+
+  return hash.Final<std::size_t>();
 }
 
 /**
@@ -347,6 +352,15 @@ Router::RoutingTable Router::GetRoutingTable() const
 {
   FETCH_LOCK(routing_table_lock_);
   return routing_table_;
+}
+
+/**
+ * Periodic call initiated from the main muddle instance used for periodic maintenance of the
+ * router
+ */
+void Router::Cleanup()
+{
+  CleanEchoCache();
 }
 
 /**
@@ -702,7 +716,7 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
   bool is_echo = true;
 
   // combine the 3 fields together into a single index
-  uint64_t const index = Combine(packet.GetService(), packet.GetProtocol(), packet.GetMessageNum());
+  std::size_t const index = GenerateEchoId(packet);
 
   {
     FETCH_LOCK(echo_cache_lock_);
@@ -722,6 +736,34 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
   }
 
   return is_echo;
+}
+
+/**
+ * Periodic function used to trim the echo cache
+ */
+void Router::CleanEchoCache()
+{
+  FETCH_LOCK(echo_cache_lock_);
+
+  auto const now = Clock::now();
+
+  auto it = echo_cache_.begin();
+  while (it != echo_cache_.end())
+  {
+    // calculate the time delta
+    auto const delta = now - it->second;
+
+    if (delta > std::chrono::seconds{30})
+    {
+      // remove the element
+      it = echo_cache_.erase(it);
+    }
+    else
+    {
+      // move on to the next element in the cache
+      ++it;
+    }
+  }
 }
 
 }  // namespace muddle

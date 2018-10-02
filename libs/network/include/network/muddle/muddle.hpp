@@ -123,15 +123,14 @@ private:
   CertificatePtr const certificate_;      ///< The private and public keys for the node identity
   Identity const       identity_;         ///< Cached version of the identity (public key)
   NetworkManager       network_manager_;  ///< The network manager
-  Dispatcher
-                     dispatcher_;  ///< Object that maintains the list of waiting promises and message consumers
-  Register           register_;     ///< The register for all the connection
-  Router             router_;       ///< The packet router for the node
-  ThreadPool         thread_pool_;  ///< The thread pool / task queue
-  Mutex              servers_lock_{__LINE__, __FILE__};
-  ServerList         servers_;  ///< The list of listening servers
-  PeerConnectionList clients_;  ///< The list of active and possible inactive connections
-  Timepoint          last_cleanup_ = Clock::now();
+  Dispatcher           dispatcher_;       ///< Waiting promise store
+  Register             register_;     ///< The register for all the connection
+  Router               router_;       ///< The packet router for the node
+  ThreadPool           thread_pool_;  ///< The thread pool / task queue
+  Mutex                servers_lock_{__LINE__, __FILE__};
+  ServerList           servers_;  ///< The list of listening servers
+  PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
+  Timepoint            last_cleanup_ = Clock::now();
 };
 
 inline Muddle::Identity const &Muddle::identity() const

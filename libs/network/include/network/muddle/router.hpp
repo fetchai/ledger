@@ -95,12 +95,14 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  void Cleanup();
+
 private:
   using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex     = mutex::Mutex;
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
-  using EchoCache = std::unordered_map<uint64_t, Timepoint>;
+  using EchoCache = std::unordered_map<std::size_t, Timepoint>;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -114,6 +116,7 @@ private:
   void DispatchPacket(PacketPtr packet);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
+  void CleanEchoCache();
 
   Address const         address_;
   MuddleRegister const &register_;
