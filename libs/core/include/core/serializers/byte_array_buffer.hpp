@@ -42,21 +42,19 @@ public:
   ByteArrayBufferEx(ByteArrayBufferEx &&from) = default;
   ByteArrayBufferEx &operator=(ByteArrayBufferEx &&from) = default;
 
-  //* The only safe way is to make a deep copy here to avoid later
-  //* missunderstanding what hapens with reserved memory of original
-  //* ByteArray input instance passed in by caller of this constructor.
-  //*
-  //* *IF* stream does *NOT* need to re-allocate while using this
-  //* ByteArrayBuffer instance, then original memory
-  //* allocated by input ByteArray instance parameter will be used,
-  //* what means that caller who passed ByteArray will see *ALL* the
-  //* changes made in this ByteArryBuffer.
-  //*
-  //* *HOWEVER, IF* this ByteArryBuffer instance will need to
-  //* re-allocate, then caller who passed in original input ByteArray
-  //* instance will see only partial changes mad until re-allocate
-  //* has been requested from this ByteArrayBuffer instance.
-  ByteArrayBufferEx(byte_array::ByteArray s)
+  /** 
+   * @brief Contructting from MUTABLE ByteArray.
+   * 
+   * DEEP copy is made here due to safety reasons to avoid later
+   * misshaps & missunderstrandings related to what hapens with reserved
+   * memory of mutable @ref s instance passed in by caller of this
+   * constructor once this class starts to modify content of underlaying
+   * internal @ref data_ ByteArray and then resize/reserve it.
+   * 
+   * @param s Input mutable instance of ByteArray to copy content from (by 
+   *          value as explained above)
+   */
+  ByteArrayBufferEx(byte_array::ByteArray const &s)
     : data_{s.Copy()}
   {}
 
@@ -75,9 +73,6 @@ public:
   ByteArrayBufferEx &operator=(ByteArrayBufferEx const &from)
   {
     *this = ByteArrayBufferEx{from};
-    // data_ = from.data_.Copy();
-    // pos_ = from.pos_;
-    // size_counter_ = std::move(from.size_counter_);
     return *this;
   }
 

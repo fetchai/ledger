@@ -170,6 +170,22 @@ private:
 template <typename T>
 auto sizeCounterGuardFactory(T &size_counter);
 
+
+/**
+ * @brief Guard for size count algorithm used in the recursive Append(...args) methods
+ * of STREAM/BUFFER like classes.
+ * 
+ * This class is used inside of recursive variadic-based algorithm of Append(...args)
+ * methods to make sure that stream/buffer size counting is started only ONCE in the
+ * whole recursivecall process AND is properly finished at the end of it (when recursive
+ * size counting is reset back zero).
+ * This guard is implemented as class to ensure correct functionality in exception based
+ * environment.
+ * 
+ * @tparam T Represents type with STREAM/BUFFER like API (e.g. SizeCounter, ByteArrayBuffer,
+ * TypedByteArrayBuffer, etc. ...), with clear preference to use here size count
+ * implementation (SizeCounter class) due to performance reasons.
+ */
 template <typename T>
 class SizeCounterGuard
 {
@@ -187,20 +203,38 @@ private:
 
   SizeCounterGuard(SizeCounterGuard const &) = delete;
   SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
 public:
   SizeCounterGuard(SizeCounterGuard &&) = default;
-  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
+  /**
+   * @brief Destructor ensures that size counting instance is reset to zero at the end
+   * of recursive Append(..args) process.
+   * 
+   * The reseting to zero makes sure that next call to Append(...arg) recursive
+   * method will start from zero size count.
+   */
   ~SizeCounterGuard()
   {
     if (size_counter_)
     {
-      //* Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type();
+      //Resetting size counter to zero size by reconstructing it
+      *size_counter_ = size_counter_type{};
     }
   }
 
+  /**
+   * @brief Indicates whether we are already in size counting process
+   * 
+   * This method is inteded to be used in recursive call enviromnet of Append(...args)
+   * variadic methods to detect whether size counted process is in progress, and so
+   * then ultimatelly it is supposed to be used to protect recursive code against starting
+   * the counting process again. 
+   * 
+   * @return true if size counting process did not start yet
+   * @return false if size counting process is in progress
+   */
   bool is_unreserved() const
   {
     return size_counter_ && size_counter_->size() == 0;
