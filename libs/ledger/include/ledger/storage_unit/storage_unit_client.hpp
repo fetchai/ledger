@@ -570,7 +570,7 @@ public:
   bool IsAlive() const
   {
     bool alive = true;
-    for (auto &lanedata : lanes_)
+    for (auto const &lanedata : lanes_)
     {
       auto client = lanedata.second;
       if (!client->is_alive())
