@@ -1446,7 +1446,7 @@ void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Ma
       ret[i] = 0;
       for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
       {
-        ret[i] = obj1(i, j);
+        ret[i] += obj1(i, j);
       }
     }
   }

@@ -124,6 +124,42 @@ TEST(loss_functions, Relu_test)
   }
 }
 
+TEST(loss_functions, Sum_test)
+{
+
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
+  SessionManager<ArrayType, LayerType> sess{};
+  std::size_t counter = 0;
+
+  std::vector<std::size_t> l1_shape{2, 3};
+
+  Variable<ArrayType> l1{sess, l1_shape};
+
+  Type setval = 0.;
+  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    {
+      l1.Set(i, j, setval);
+      ++setval;
+    }
+  }
+
+  Variable<ArrayType> ret = fetch::ml::ops::Sum(l1, 1, sess);
+
+  ASSERT_TRUE(ret.shape()[0] == l1.shape()[0]);
+  ASSERT_TRUE(ret.shape()[1] == 1);
+
+  std::vector<Type> gt{3, 12};
+  counter = 0;
+  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
+  {
+    ASSERT_TRUE(ret.At(i, 0) == gt[counter]);
+    ++counter;
+  }
+}
+
 
 //TEST(loss_functions, MSE_Test)
 //{
