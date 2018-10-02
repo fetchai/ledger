@@ -83,7 +83,7 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
                                    params << s.id;
 
                                    publishing_workload_type new_notification =
-                                     std::make_tuple<>(service, s.client, params.data());
+                                       std::make_tuple<>(service, s.client, params.data());
                                    notifications_to_send.push_back(new_notification);
 
                                    i++;
