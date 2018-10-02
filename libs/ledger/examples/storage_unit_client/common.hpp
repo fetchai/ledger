@@ -27,10 +27,10 @@ namespace common {
 template <typename T>
 void ToBase64(T &stream, chain::Transaction::signatures_type::value_type const &signature)
 {
-  stream << "signature: " << (signature.second.signature_data.ToBase64())
-         << ", sig.type: " << (signature.second.type.ToBase64())
-         << ", identity: " << (signature.first.identifier().ToBase64())
-         << ", ident.params: " << (signature.first.parameters().ToBase64()) << std::endl;
+  stream << "signature: " << byte_array::ToBase64(signature.second.signature_data)
+         << ", sig.type: " << byte_array::ToBase64(signature.second.type)
+         << ", identity: " << byte_array::ToBase64(signature.first.identifier())
+         << ", ident.params: " << byte_array::ToBase64(signature.first.parameters()) << std::endl;
 }
 
 template <typename T>
