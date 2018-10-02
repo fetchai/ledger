@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,25 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include <gtest/gtest.h>
+#include "ledger/chain/mutable_transaction.hpp"
 
-using namespace fetch;
-using namespace fetch::script;
-using namespace fetch::serializers;
+namespace fetch {
+namespace chain {
 
-TEST(variant_test, variant_serialization)
-{
-  Variant a, b;
-  a = 982;
-  /*
-    TypedByteArrayBuffer ser;
-    ser << a;
+byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
+                                        bool const                addDebugInfo = false);
+MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
 
-    ser.seek(0);
-
-    ser >> b;
-  */
-  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
-}
+}  // namespace chain
+}  // namespace fetch

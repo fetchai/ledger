@@ -46,7 +46,7 @@ int main()
   serializer_type args, ret;
 
   args << int(2) << int(4) << int(3);
-  args.Seek(0);
+  args.seek(0);
   f(ret, args);
 
   int q = 9;
@@ -54,7 +54,7 @@ int main()
   CallableArgumentList extra;
   extra.PushArgument(&q);
 
-  args.Seek(0);
+  args.seek(0);
   f(ret, extra, args);
 
   (*t2)(ret, extra, args);

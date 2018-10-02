@@ -17,34 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-
-#include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace serializers {
 
-template <typename T>
-inline void Serialize(T &serializer, byte_array::ConstByteArray const &s)
+/**
+ * @brief Wrapper for (Const)ByteArray instance to serialise its value "AS IS"
+ *
+ * This class is dedicated to serve as wrapper for (Const)ByteArray instance
+ * to serialise its value AS IS (not running it through serialisation process
+ * againn), what ultimatelly assumes that its ALREADY IS VALID SERIALISED
+ * content.
+ * For example, this is useful if there is already pre-serialised content in
+ * the (Const)ByteArray instance and it is just necessary to extend or insert
+ * it in another serialisation process.
+ */
+struct Verbatim : public std::reference_wrapper<byte_array::ConstByteArray const>
 {
-  serializer.Allocate(sizeof(uint64_t) + s.size());
-  uint64_t size = s.size();
+  using Base = std::reference_wrapper<byte_array::ConstByteArray const>;
+  using Base::Base;
+};
 
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(s.pointer()), s.size());
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, byte_array::ConstByteArray &s)
+template <typename STREAM>
+void Serialize(STREAM &stream, Verbatim const &verbatim)
 {
-  uint64_t size = 0;
-
-  detailed_assert(int64_t(sizeof(uint64_t)) <= serializer.bytes_left());
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-  detailed_assert(int64_t(size) <= serializer.bytes_left());
-
-  serializer.ReadByteArray(s, size);
+  Verbatim::Base::type &array = verbatim;
+  stream.Allocate(array.size());
+  stream.WriteBytes(array.pointer(), array.size());
 }
 
 }  // namespace serializers

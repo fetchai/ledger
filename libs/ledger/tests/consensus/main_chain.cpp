@@ -271,7 +271,7 @@ int main(int argc, char const **argv)
       {
         fetch::serializers::ByteArrayBuffer arr;
         arr << i;
-        arr.Seek(0);
+        arr.seek(0);
         block_type block;
         arr >> block;
 

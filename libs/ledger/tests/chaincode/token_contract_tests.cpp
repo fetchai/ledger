@@ -83,7 +83,7 @@ protected:
     tx.PushResource(address);
 
     Identifier identifier;
-    identifier.Parse(static_cast<std::string>(tx.contract_name()));
+    identifier.Parse(tx.contract_name());
 
     // dispatch the transaction
     auto status =
@@ -121,7 +121,7 @@ protected:
 
     // dispatch the transaction
     Identifier identifier;
-    identifier.Parse(static_cast<std::string>(tx.contract_name()));
+    identifier.Parse(tx.contract_name());
 
     auto status =
         contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));

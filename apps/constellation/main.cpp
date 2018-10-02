@@ -247,7 +247,7 @@ ProverPtr GenerateP2PKey()
     if (input_file.is_open())
     {
       fetch::byte_array::ByteArray private_key_data;
-      private_key_data.Resize(Signer::PRIVATE_KEY_SIZE);
+      private_key_data.Resize(Signer::PrivateKey::ecdsa_curve_type::privateKeySize);
 
       // attempt to read in the private key
       input_file.read(private_key_data.char_pointer(),
@@ -270,7 +270,7 @@ ProverPtr GenerateP2PKey()
 
     if (output_file.is_open())
     {
-      auto private_key_data = certificate->private_key();
+      auto const private_key_data = certificate->private_key();
 
       output_file.write(private_key_data.char_pointer(),
                         static_cast<std::streamsize>(private_key_data.size()));

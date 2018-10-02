@@ -16,25 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include <gtest/gtest.h>
+#include "ledger/chaincode/contract_http_interface.hpp"
 
-using namespace fetch;
-using namespace fetch::script;
-using namespace fetch::serializers;
+namespace fetch {
+namespace ledger {
 
-TEST(variant_test, variant_serialization)
-{
-  Variant a, b;
-  a = 982;
-  /*
-    TypedByteArrayBuffer ser;
-    ser << a;
+constexpr char const *           ContractHttpInterface::LOGGING_NAME;
+byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX("/api/contract/");
+byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
+byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
 
-    ser.seek(0);
-
-    ser >> b;
-  */
-  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
-}
+}  // namespace ledger
+}  // namespace fetch
