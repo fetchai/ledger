@@ -116,7 +116,7 @@ public:
   using self_type        = TxSigningAdapter;
   using transaction_type = MUTABLE_TRANSACTION;
 
-  // TODO(pbukva) (private issue: Support for switching between different types of signatures)
+  // TODO(issue #260): Runtime switching between different types cryptographic schemes
   using signature_type   = typename crypto::ECDSASigner::Signature;
   using private_key_type = crypto::openssl::ECDSAPrivateKey<>;
   using public_key_type  = private_key_type::public_key_type;
