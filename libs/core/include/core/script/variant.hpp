@@ -568,25 +568,25 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
   return true;
 }
 
-inline void Variant::ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor)
+void Variant::ForEach(std::function<bool(Variant const& key, Variant &value)> const &object_functor)
 {
   assert(type_ == OBJECT);
   array_->ForEach(object_functor);
 }
 
-inline void Variant::ForEach(std::function<bool(Variant const& key, Variant const &value)> const &object_functor) const
+void Variant::ForEach(std::function<bool(Variant const& key, Variant const &value)> const &object_functor) const
 {
   assert(type_ == OBJECT);
   array_->ForEach(object_functor);
 }
 
-inline void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
+void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
 {
   assert(type_ == ARRAY);
   array_->ForEach(object_functor);
 }
 
-inline void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
+void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
 {
   assert(type_ == ARRAY);
   array_->ForEach(object_functor);
