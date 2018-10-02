@@ -25,7 +25,7 @@ namespace serializers {
 
 /**
  * @brief Wrapper for (Const)ByteArray instance to serialise its value "AS IS"
- * 
+ *
  * This class is dedicated to serve as wrapper for (Const)ByteArray instance
  * to serialise its value AS IS (not running it through serialisation process
  * againn), what ultimatelly assumes that its ALREADY IS VALID SERIALISED

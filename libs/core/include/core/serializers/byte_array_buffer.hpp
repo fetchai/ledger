@@ -42,16 +42,16 @@ public:
   ByteArrayBufferEx(ByteArrayBufferEx &&from) = default;
   ByteArrayBufferEx &operator=(ByteArrayBufferEx &&from) = default;
 
-  /** 
+  /**
    * @brief Contructting from MUTABLE ByteArray.
-   * 
+   *
    * DEEP copy is made here due to safety reasons to avoid later
    * misshaps & missunderstrandings related to what hapens with reserved
    * memory of mutable @ref s instance passed in by caller of this
    * constructor once this class starts to modify content of underlaying
    * internal @ref data_ ByteArray and then resize/reserve it.
-   * 
-   * @param s Input mutable instance of ByteArray to copy content from (by 
+   *
+   * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
   ByteArrayBufferEx(byte_array::ByteArray const &s)
