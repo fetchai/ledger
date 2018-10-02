@@ -169,12 +169,11 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
-  inline void ForEach(
-      std::function<bool(Variant const &key, Variant &value)> const &object_functor);
-  inline void ForEach(
+  void ForEach(std::function<bool(Variant const &key, Variant &value)> const &object_functor);
+  void ForEach(
       std::function<bool(Variant const &key, Variant const &value)> const &object_functor) const;
-  inline void ForEach(std::function<bool(Variant &value)> const &object_functor);
-  inline void ForEach(std::function<bool(Variant const &value)> const &object_functor) const;
+  void ForEach(std::function<bool(Variant &value)> const &object_functor);
+  void ForEach(std::function<bool(Variant const &value)> const &object_functor) const;
 
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
@@ -571,26 +570,27 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
   return true;
 }
 
-void Variant::ForEach(std::function<bool(Variant const &key, Variant &value)> const &object_functor)
+inline void Variant::ForEach(
+    std::function<bool(Variant const &key, Variant &value)> const &object_functor)
 {
   assert(type_ == OBJECT);
   array_->ForEach(object_functor);
 }
 
-void Variant::ForEach(
+inline void Variant::ForEach(
     std::function<bool(Variant const &key, Variant const &value)> const &object_functor) const
 {
   assert(type_ == OBJECT);
   array_->ForEach(object_functor);
 }
 
-void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
+inline void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
 {
   assert(type_ == ARRAY);
   array_->ForEach(object_functor);
 }
 
-void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
+inline void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
 {
   assert(type_ == ARRAY);
   array_->ForEach(object_functor);
