@@ -305,14 +305,26 @@ protected:
     return arr_pointer_[n];
   }
 
-  //CAREFUL: The `resize_paradigm` operates in *SIZE* space for this method, which is always
-  //         RELATIVE* against the `start_` offset (as contrary to CAPACITY space - see the 
-  //         `Reserve(...)` bellow)
-  //  Meaning that if pradigm value is set to:
-  //   * `absolute`: then the `n` value represents ABSOLUTE *size* going to be set (new_size = n)
-  //   * `relative`: then the `n` value represents (positive) RELATIVE increment of the *size*
-  //                 (new_size = old_size + n),
-  //   , where `new_size` is internally still relative to `start_` offset in *BOTH* cases above.
+  /**
+   * Resizes the array and allocates ammount of memory necessary to contain the requested size.
+   * Memory allocation is handled by the @ref Reserve() method.
+   *
+   * Please be NOTE, that this method operates in SIZE space, which is always RELATIVE
+   * against the @ref start_ offset (as contrary to CAPACITY space - see the @ref Reserve() method)
+   * Also, this method can operate in two modes - absolute(default) and relative, please see
+   * description for @ref resize_paradigm parameter for more details
+   *
+   * @param n Requested size, is relative or absolute depending on the @ref resize_paradigm
+   * parameter
+   *
+   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, array size
+   * is going to be se to @ref n value. When set to RELATIVE value, array SIZE is going to be se to
+   * original_size + n. Where new resulting SIZE is internally still relative to the internal start_
+   * offset in BOTH cases (relative and absolute).
+   *
+   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * of already allocated will be zeroed byte by byte.
+   */
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
@@ -335,13 +347,25 @@ protected:
     length_ = new_length;
   }
 
-  //CAREFUL: The `resize_paradigm` operates is in *CAPACITY* space for this method, which is
-  //         WHOLE* allocated size of underlying data buffer.
-  //  Meaning that if pradigm value is set to:
-  //   * `absolute`: then the `n` value represents ABSOLUTE *capacity* going to be set
-  //                 (new_capacity = n)
-  //   * `relative`: then the `n` value represents (positive) RELATIVE increment of the *capacity*
-  //                 (new_capacity = old_capacity + n)
+  /**
+   * Reserves (allocates) requested ammount of memory IF it is more than already allocated.
+   *
+   * Please be NOTE, that this method operates in CAPACITY space, which is defined by WHOLE
+   * allocated size of underlying data buffer.
+   *
+   * @param n Requested capacity, is relative or absolute depending on the @ref resize_paradigm
+   * parameter
+   *
+   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, then
+   * CAPACITY of WHOLE underlying array (allocated memory) is going to be set to @ref n value IF
+   * requested @ref n value is bigger than current CAPACITY of the the array. When set to RELATIVE
+   * value, then capacity of of WHOLE underlying array (allocated memory) is going to be set to
+   * current_capacity + n, what ALWAYS resuts to re-allocation since the requested CAPACITY is
+   * always bigger then the current one.
+   *
+   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * of already allocated will be zeroed byte by byte.
+   */
   void Reserve(std::size_t const &  n,
                ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
                bool const           zero_reserved_space = true)
