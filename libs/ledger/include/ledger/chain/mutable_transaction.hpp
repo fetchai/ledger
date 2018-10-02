@@ -246,27 +246,61 @@ public:
   {
     return summary_.resources;
   }
+  resource_set_type &resources()
+  {
+    return summary_.resources;
+  }
+
   TransactionSummary const &summary() const
   {
     return summary_;
   }
+  TransactionSummary &summary()
+  {
+    return summary_;
+  }
+
   byte_array::ConstByteArray const &data() const
   {
     return data_;
   }
+  byte_array::ConstByteArray &data()
+  {
+    return data_;
+  }
+
   signatures_type const &signatures() const
   {
     return signatures_;
   }
+  signatures_type &signatures()
+  {
+    return signatures_;
+  }
+
   TransactionSummary::contract_id_type const &contract_name() const
   {
     return summary_.contract_name;
   }
+  TransactionSummary::contract_id_type &contract_name()
+  {
+    return summary_.contract_name;
+  }
+
   digest_type const &digest() const
   {
     return summary_.transaction_hash;
   }
+  digest_type &digest()
+  {
+    return summary_.transaction_hash;
+  }
+
   TransactionSummary::fee_type const &fee() const
+  {
+    return summary_.fee;
+  }
+  TransactionSummary::fee_type &fee()
   {
     return summary_.fee;
   }
@@ -414,6 +448,41 @@ private:
     return result.first->second;
   }
 
+  resource_set_type &resources_inten()
+  {
+    return summary_.resources;
+  }
+
+  TransactionSummary &summary_intern()
+  {
+    return summary_;
+  }
+
+  byte_array::ConstByteArray &data_intern()
+  {
+    return data_;
+  }
+
+  signatures_type &signatures_intern()
+  {
+    return signatures_;
+  }
+
+  TransactionSummary::contract_id_type &contract_name_intern()
+  {
+    return summary_.contract_name;
+  }
+
+  digest_type &digest_intern()
+  {
+    return summary_.transaction_hash;
+  }
+
+  TransactionSummary::fee_type &fee_intern()
+  {
+    return summary_.fee;
+  }
+
   template<typename MUTABLE_TX>
   friend class TxSigningAdapter;
   template<typename T, typename MUTABLE_TX>
@@ -428,7 +497,7 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if(stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->summary_.contract_name, tx_->summary_.fee, tx_->summary_.resources, tx_->data_);
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data());
     //tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
   }
@@ -437,14 +506,14 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
 template <typename T, typename MUTABLE_TX>
 void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
 {
-  stream.Append(serializers::Verbatim{ tx.DataForSigning() }, static_cast<MUTABLE_TX &>(tx).signatures_);
+  stream.Append(serializers::Verbatim{ tx.DataForSigning() }, static_cast<MUTABLE_TX &>(tx).signatures());
 }
 
 template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
+  stream >> tx_.contract_name_intern() >> tx_.fee_intern() >> tx_.resources_inten() >> tx_.data_intern() >> tx_.signatures_intern();
   tx.Reset();
 }
 
@@ -452,10 +521,10 @@ template <typename MUTABLE_TX>
 bool TxSigningAdapter<MUTABLE_TX>::operator == (TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 {
   MutableTransaction const &left = left_tx;
-  return tx_->summary_.contract_name == left.summary_.contract_name
-      && tx_->summary_.fee == left.summary_.fee
-      && tx_->summary_.resources == left.summary_.resources
-      && tx_->data_ == left.data_;
+  return tx_->contract_name() == left.contract_name()
+      && tx_->fee() == left.fee()
+      && tx_->resources() == left.resources()
+      && tx_->data() == left.data();
 }
 
 template <typename MUTABLE_TX>
