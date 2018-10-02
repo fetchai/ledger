@@ -341,7 +341,7 @@ network::Manifest P2PService::GetLocalManifest()
 
 P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
-  FETCH_LOG_DBEUG(LOGGING_NAME, "GetRandomGoodPeers...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
   AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
 

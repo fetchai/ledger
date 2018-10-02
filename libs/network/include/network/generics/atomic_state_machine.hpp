@@ -30,6 +30,9 @@ public:
   using mutex_type = fetch::mutex::Mutex;
   using lock_type  = std::lock_guard<mutex_type>;
 
+  static constexpr int NO_CHANGE     = 0;
+  static constexpr int INITIAL_STATE = 0;
+
   AtomicStateMachine()
   {}
 
@@ -96,7 +99,7 @@ public:
    */
   virtual int PossibleNewState(int currentstate)
   {
-    return 0;
+    return NO_CHANGE;
   }
 
 private:

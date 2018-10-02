@@ -78,7 +78,7 @@ public:
     }
   }
 
-  ~AtomicInflightCounter()
+  virtual ~AtomicInflightCounter()
   {
     Completed(my_count_);
   }

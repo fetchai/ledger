@@ -97,6 +97,7 @@ private:
   public:
     enum
     {
+      NO_CHANGE = AtomicStateMachine::NO_CHANGE,
       INITIALISING = 1,
       CONNECTING,
       QUERYING,
@@ -123,7 +124,7 @@ private:
     size_t                max_attempts;
 
     LaneConnectorWorker(
-        size_t thelane, SharedServiceClient theclient, const std::string &thename,
+        size_t thelane, SharedServiceClient theclient, std::string const &thename,
         const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
     {
       lane = thelane;
@@ -187,13 +188,13 @@ private:
       return std::string(states[state]);
     }
 
-    virtual int PossibleNewState(int currentstate)
+    virtual int PossibleNewState(int currentstate) override
     {
       auto x = PossibleNewStateImpl(currentstate);
       return x;
     }
 
-    virtual int PossibleNewStateImpl(int currentstate)
+    int PossibleNewStateImpl(int currentstate)
     {
       if (timeout.IsDue())
       {
@@ -201,7 +202,7 @@ private:
       }
       switch (currentstate)
       {
-      case 0:
+      case AtomicStateMachine::INITIAL_STATE:
       {
         return INITIALISING;
       }
@@ -218,7 +219,7 @@ private:
         }
         else
         {
-          return 0;
+          return NO_CHANGE;
         }
       }
       case CONNECTING:
@@ -263,7 +264,7 @@ private:
           }
         }
         case PromiseState::WAITING:
-          return 0;
+          return NO_CHANGE;
         }
       }  // end PINGING
       case QUERYING:
@@ -284,17 +285,17 @@ private:
         {
           return DONE;
         }
-        return 0;
+        return NO_CHANGE;
 
       }  // end QUERYING
       case TIMEDOUT:
-        return 0;
+        return NO_CHANGE;
       case DONE:
-        return 0;
+        return NO_CHANGE;
       case FAILED:
-        return 0;
+        return NO_CHANGE;
       }
-      return 0;
+      return NO_CHANGE;
     }
   };
 
@@ -316,23 +317,22 @@ private:
 
       for (auto &successful_worker : bg_work_.Get(PromiseState::SUCCESS, 1000))
       {
-        auto connector = successful_worker;
-        if (connector)
+        if (successful_worker)
         {
-          auto lanenum = connector->lane;
+          auto lanenum = successful_worker->lane;
           FETCH_LOG_VARIABLE(lanenum);
           FETCH_LOG_DEBUG(LOGGING_NAME, " PROCESSING lane ", lanenum);
 
-          WeakServiceClient wp(connector->client);
+          WeakServiceClient wp(successful_worker->client);
           LaneIndex         lane;
           LaneIndex         total_lanes;
 
-          connector->lane_prom->As(lane);
-          connector->count_prom->As(total_lanes);
+          successful_worker->lane_prom->As(lane);
+          successful_worker->count_prom->As(total_lanes);
 
           {
-            LockT lock(mutex_);
-            lanes_[lane] = std::move(connector->client);
+            FETCH_LOCK(mutex_);
+            lanes_[lane] = std::move(successful_worker->client);
 
             if (!total_lanecount)
             {
@@ -347,7 +347,7 @@ private:
           SetLaneLog2(uint32_t(lanes_.size()));
 
           crypto::Identity lane_identity;
-          connector->id_prom->As(lane_identity);
+          successful_worker->id_prom->As(lane_identity);
           // TODO(issue 24): Verify expected identity
 
           {
@@ -369,10 +369,10 @@ public:
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
     AddLaneConnections<T>(lanes, timeout);
-    while (true)
+    for (;;)
     {
       {
-        LockT lock(mutex_);
+        FETCH_LOCK(mutex_);
         if (bg_work_.CountPending() < 1)
         {
           break;
@@ -384,13 +384,13 @@ public:
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();
 
-    LockT lock(mutex_);
+    FETCH_LOCK(mutex_);
     return lanes_.size();
   }
 
   bool ClientForLaneConnected(LaneIndex lane)
   {
-    LockT lock(mutex_);
+    FETCH_LOCK(mutex_);
     auto  iter = lanes_.find(lane);
     return (iter != lanes_.end());
   }
@@ -513,8 +513,8 @@ public:
     std::vector<service::Promise> promises;
     for (auto lanedata : lanes_)
     {
-      auto client  = lanedata.second;
-      auto promise = client->Call(
+      auto const &client  = lanedata.second;
+      auto        promise = client->Call(
           RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
