@@ -40,10 +40,10 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  static constexpr std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
-        PromiseState::FAILED, PromiseState::TIMEDOUT} };
+  static const std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
+      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
 
-  static constexpr char const *LOGGING_NAME = "AtomicInflightCounter";
+  static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
   // Construction / Destruction
   BackgroundedWork()
@@ -93,7 +93,7 @@ public:
         }
         catch (std::exception ex)
         {
-          FETCH_LOG_WARN(// report exception here?
+          FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle threw:", ex.what());
         }
       }
     }
