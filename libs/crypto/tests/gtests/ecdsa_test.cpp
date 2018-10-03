@@ -56,7 +56,7 @@ TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_with_predfined_private_ke
 
   ASSERT_TRUE(signer.Sign(test_data_));
 
-  ECDSAVerifier verifier{ signer.identity() };
+  ECDSAVerifier verifier{signer.identity()};
 
   EXPECT_TRUE(verifier.Verify(test_data_, signer.signature()));
 }
@@ -68,7 +68,7 @@ TEST_F(ECDSASignerVerifierTest, test_ign_verify_cycle_generated_key)
 
   ASSERT_TRUE(signer.Sign(test_data_));
 
-  ECDSAVerifier verifier{ signer.identity() };
+  ECDSAVerifier verifier{signer.identity()};
 
   EXPECT_TRUE(verifier.Verify(test_data_, signer.signature()));
 }
