@@ -80,10 +80,10 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
-  , key_store_{std::make_shared<KeyStore>()}
   , lane_control_(num_lanes_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+  , key_store_{std::make_shared<KeyStore>()}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}

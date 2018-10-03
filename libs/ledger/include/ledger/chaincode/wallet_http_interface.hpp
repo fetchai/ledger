@@ -240,6 +240,17 @@ private:
         mtx.PushResource(byte_array::FromBase64(from));
         mtx.PushResource(byte_array::FromBase64(to));
 
+        // query private key for signing
+        byte_array::ConstByteArray priv_key;
+        if ( !key_store_.Get(storage::ResourceAddress{from}, priv_key))
+        {
+          return http::CreateJsonResponse(R"({"success": false, "error": "provided address/pub.key does not exist in key store"})", http::Status::CLIENT_ERROR_BAD_REQUEST);
+        }
+
+        // sign the transaction
+        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
+        mtx.Sign(priv_key, tx_sign_adapter);
+
         // create the final / sealed transaction
         chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
 
