@@ -71,15 +71,15 @@ public:
     the_counter.count.fetch_add(my_count_);
   }
 
-  void Completed(unsigned int completed_count)
+  void Completed(unsigned int completed_count=1)
   {
     unsigned int clipped = std::min(completed_count, my_count_);
     my_count_ -= clipped;
     auto &the_counter = GetCounter();
-
+    unsigned int previous;
     {
       Lock  lock(the_counter.mutex);
-      auto  previous = the_counter.count.fetch_sub(clipped);
+      previous = the_counter.count.fetch_sub(clipped);
       if (previous < 1)
       {
         GetCounter().cv.notify_all();
@@ -91,7 +91,7 @@ public:
       Lock  lock(the_counter.mutex);
       if (the_counter.count<0) // check it wasn't modified while we were locking.
       {
-        the_counter.count.load(0); // set it to zero.
+        the_counter.count.store(0); // set it to zero.
       }
     }
   }
@@ -107,7 +107,7 @@ public:
     while (!until.IsDue())
     {
       Lock lock(the_counter.mutex);
-      if (the_counter.count.load() == 0)
+      if (the_counter.count == 0)
       {
         return true;
       }

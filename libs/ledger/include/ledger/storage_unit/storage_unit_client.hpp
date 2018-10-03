@@ -527,8 +527,8 @@ public:
     std::vector<service::Promise> promises;
     for (auto lanedata : lanes_)
     {
-      auto client  = lanedata.second;
-      auto promise = client->Call(
+      auto const &client  = lanedata.second;
+      auto        promise = client->Call(
           RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
@@ -568,7 +568,7 @@ public:
     bool alive = true;
     for (auto const &lanedata : lanes_)
     {
-      auto client = lanedata.second;
+      auto const &client = lanedata.second;
       if (!client->is_alive())
       {
         alive = false;

@@ -34,11 +34,14 @@ class BackgroundedWork
 public:
   using Worker       = std::shared_ptr<WORKER>;
   using PromiseState = fetch::service::PromiseState;
-  using WorkLoad     = std::map<PromiseState, std::list<Worker>>;
+  using WorkLoad     = std::map<PromiseState, std::vector<Worker>>;
   using Mutex        = std::mutex;
   using Lock         = std::unique_lock<Mutex>;
-  using Results      = std::list<Worker>;
+  using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
+
+  static const std::array<PromiseState> PromiseStates{PromiseState::WAITING, PromiseState::SUCCESS,
+      PromiseState::FAILED, PromiseState::TIMEDOUT};
 
   // Construction / Destruction
   BackgroundedWork()
@@ -133,26 +136,26 @@ public:
     return results;
   }
 
-  size_t CountPending()
+  std::size_t CountPending()
   {
     Lock lock(mutex_);
     return workload_[PromiseState::WAITING].size();
   }
 
-  size_t CountCompleted()
+  std::size_t CountCompleted()
   {
     Lock lock(mutex_);
     return workload_[PromiseState::SUCCESS].size() + workload_[PromiseState::TIMEDOUT].size() +
            workload_[PromiseState::FAILED].size();
   }
 
-  size_t CountSuccesses()
+  std::size_t CountSuccesses()
   {
     Lock lock(mutex_);
     return workload_[PromiseState::SUCCESS].size();
   }
 
-  size_t CountFailures()
+  std::size_t CountFailures()
   {
     Lock lock(mutex_);
     return workload_[PromiseState::FAILED].size();
@@ -170,7 +173,7 @@ public:
     workload_[PromiseState::TIMEDOUT].clear();
   }
 
-  size_t CountTimeouts()
+  std::size_t CountTimeouts()
   {
     Lock lock(mutex_);
     return workload_[PromiseState::TIMEDOUT].size();
@@ -194,27 +197,12 @@ public:
     Wake();
   }
 
-  void Add(std::list<std::shared_ptr<WORKER>> new_works)
-  {
-    Lock lock(mutex_);
-    // TODO(kll) use bulk insert operators here..
-    for (auto new_work : new_works)
-    {
-      std::weak_ptr<WORKER> wp(new_work);
-      workload_[PromiseState::WAITING].push_back(wp);
-    }
-    Wake();
-  }
-
   template <class KEY>
   bool InFlight(const KEY &key) const
   {
     Lock lock(mutex_);
 
-    PromiseState promiseStates[] = {PromiseState::WAITING, PromiseState::SUCCESS,
-                                    PromiseState::FAILED, PromiseState::TIMEDOUT};
-
-    for (int i = 0; i < 4; i++)
+    for (current_state : PromiseStates)
     {
       auto  current_state      = promiseStates[i];
       auto &worklist_for_state = workload_[current_state];
@@ -242,10 +230,7 @@ public:
   {
     bool r = false;
 
-    PromiseState promiseStates[] = {PromiseState::WAITING, PromiseState::SUCCESS,
-                                    PromiseState::FAILED, PromiseState::TIMEDOUT};
-
-    for (int i = 0; i < 4; i++)
+    for (current_state : PromiseStates)
     {
       Lock  lock(mutex_);
       auto  current_state      = promiseStates[i];
