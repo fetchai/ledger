@@ -45,19 +45,14 @@ public:
   Variable(SessionType &sess, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
   {
     // set a distinct _id for each element in the graph
-    _variable_name = variable_name;
-    sess.RegisterVariable(_id, _variable_name);
-
-    Setup(b_fn, in_is_leaf);
+    sess.RegisterVariable(_id);
+    Setup(b_fn, in_is_leaf, variable_name);
   }
   Variable(SessionType &sess, ArrayType const &in_data, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
   {
-    _variable_name = variable_name;
-    sess.RegisterVariable(_id, _variable_name);
-    //    shape = in_data.shape();
+    sess.RegisterVariable(_id);
     _data = ArrayType(in_data);
-
-    Setup(b_fn, in_is_leaf);
+    Setup(b_fn, in_is_leaf, variable_name);
   }
 
   void SetData(ArrayType const &in_data)
@@ -86,9 +81,23 @@ public:
 
   void Backward()
   {
-    std::cout << "initialised: " << initialised << std::endl;
     assert(initialised);
     assert(back_fn);
+
+    std::cout << "prev.size()" << prev.size() << std::endl;
+    std::cout << "prev[0].size()" << prev[0].size() << std::endl;
+    std::cout << "prev[0].variable_name()" << prev[0].variable_name() << std::endl;
+
+    if (prev.size() > 1)
+    {
+      std::cout << "prev[1].size()" << prev[1].size() << std::endl;
+      std::cout << "prev[1].variable_name()" << prev[1].variable_name() << std::endl;
+    }
+
+    std::cout << "grad.shape()[0]" << grad().shape()[0] << std::endl;
+    std::cout << "grad.shape()[1]" << grad().shape()[1] << std::endl;
+
+
     back_fn(*this);
   }
 
@@ -263,7 +272,7 @@ private:
   ArrayType _grad;
   std::size_t           _id;
 
-  void Setup(function_signature b_fn = nullptr, bool in_is_leaf = true)
+  void Setup(function_signature b_fn, bool in_is_leaf, std::string variable_name)
   {
     assert(b_fn || in_is_leaf);
     if (b_fn)
@@ -272,6 +281,9 @@ private:
     }
     is_leaf     = in_is_leaf;
     initialised = true;
+
+    if (variable_name == "") {_variable_name = "autoname_" + std::to_string(_id);}
+    else {_variable_name = variable_name;}
 
     _grad = ArrayType(_data.shape());
     _grad.data().SetAllZero();

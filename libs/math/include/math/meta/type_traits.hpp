@@ -19,39 +19,61 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include <type_traits>
+//#include "math/shape_less_array.hpp"
+//#include "math/rectangular_array.hpp"
+//#include "math/linalg/matrix.hpp"
 
 namespace fetch {
 namespace math {
+namespace meta {
 
-template< typename A, typename R >
-struct IsMathArrayLikeImpl {};
 
-template< typename R, typename T, typename C>
-struct IsMathArrayLikeImpl< fetch::math::ShapeLessArray<T, C>, R>
-    {
+template <typename T, typename C>
+class ShapeLessArray;
+
+template <typename T, typename C>
+class RectangularArray;
+
+//template <typename T, typename C>
+//class NDArrayIterator;
+
+namespace linalg {
+template<typename T, typename C, typename S>
+class Matrix;
+}
+
+template<typename A, typename R>
+struct IsBlasArrayLikeImpl {};
+
+template<typename R>
+struct IsBlasArrayLikeImpl<double, R> {
   using Type = R;
 };
 
-template< typename R, typename T, typename C>
-struct IsMathArrayLikeImpl< fetch::math::RectangularArray<T, C>, R>
-{
+
+//template<typename R, typename T, typename C, typename S>
+//struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R> {
+//  using Type = R;
+//};
+//
+//template<typename R, typename T, typename C>
+//struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
+//  using Type = R;
+//};
+
+template<typename R, typename T, typename C>
+struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R> {
   using Type = R;
 };
 
-template< typename R, typename T, typename C, typename S>
-struct IsMathArrayLikeImpl< fetch::math::linalg::Matrix<T, C, S>, R>
-{
-  using Type = R;
-};
+//template< typename R, typename T, typename C>
+//struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
+//{
+//  using Type = R;
+//};
 
-template< typename R, typename T, typename C>
-struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
-{
-  using Type = R;
-};
-
-template< typename A, typename R >
-using IsMathArrayLike = typename IsMathArrayLikeImpl< A, R>::Type;
+template<typename A, typename R>
+using IsBlasArrayLike = typename IsBlasArrayLikeImpl<A, R>::Type;
 //
 //template< typename T >
 //IsMathArrayLike<T, bool> IsGreat(T const& x)
@@ -59,6 +81,8 @@ using IsMathArrayLike = typename IsMathArrayLikeImpl< A, R>::Type;
 //  return true;
 //}
 
+
+} // meta
 } // math
 } // fetch
 

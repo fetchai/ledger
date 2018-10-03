@@ -112,34 +112,53 @@ void MeanSquareError(LayerType &cur_node)
 template <typename LayerType>
 void CrossEntropyLoss(LayerType &cur_node)
 {
+  assert(cur_node.prev.size() == 2);
   std::cout << "CEL deriv prev size: " << cur_node.prev.size() << std::endl;
   std::cout << "CEL deriv prev size assign prevs" << std::endl;
   auto &left  = cur_node.prev[0];
   auto &right = cur_node.prev[1];
 
-  std::cout << "CEL deriv Divide" << std::endl;
-  std::cout << "right.data().shape[0]: " << right.data().shape()[0] << std::endl;
-  std::cout << "right.data().shape[1]: " << right.data().shape()[1] << std::endl;
-  std::cout << "left.data().shape[0]: " << left.data().shape()[0] << std::endl;
-  std::cout << "left.data().shape[1]: " << left.data().shape()[1] << std::endl;
-  typename LayerType::ArrayType temp = fetch::math::Divide(right.data(), left.data());
+//  std::cout << "CEL deriv Divide" << std::endl;
+//  std::cout << "right.data().shape[0]: " << right.shape()[0] << std::endl;
+  std::cout << "hi!" << std::endl;
 
-  std::cout << "temp size()[0]: " << temp.shape()[0] << std::endl;
-  std::cout << "temp size()[1]: " << temp.shape()[1] << std::endl;
+//  std::cout << "right.data().shape[1]: " << right.shape()[1] << std::endl;
+//  std::cout << "left.data().shape[0]: " << left.data().shape()[0] << std::endl;
+//  std::cout << "left.data().shape[1]: " << left.data().shape()[1] << std::endl;
+//  typename LayerType::ArrayType temp = fetch::math::Divide(right.data(), left.data());
+//
+//  std::cout << "temp size()[0]: " << temp.shape()[0] << std::endl;
+//  std::cout << "temp size()[1]: " << temp.shape()[1] << std::endl;
+//
+//  std::cout << "CEL deriv Multiply" << fetch::math::Multiply(-1.0, temp).size() << std::endl;
+//
+//  std::cout << "CEL GradientAdd" << std::endl;
+//  left.GradientAdd(fetch::math::Multiply(-1.0, fetch::math::Divide(right.data(), left.data())));
 
-  std::cout << "CEL deriv Multiply" << fetch::math::Multiply(-1.0, temp).size() << std::endl;
+  std::cout << "assign temp!" << std::endl;
+  typename LayerType::ArrayType temp{right.data().shape()};
+  left.GradientAdd(temp);
 
-  std::cout << "CEL GradientAdd" << std::endl;
-  left.GradientAdd(fetch::math::Multiply(-1.0, fetch::math::Divide(right.data(), left.data())));
 }
 
 template <typename LayerType>
 void Sigmoid(LayerType &cur_node)
 {
+  assert(cur_node.prev.size() == 1);
+
 
   auto &left = cur_node.prev[0];
+  std::cout << "left.grad()[0]" << left.grad()[0] << std::endl;
+  std::cout << "left.data()[0]" << left.data()[0] << std::endl;
 
-  left.GradientAdd(fetch::math::Multiply(left.data(), fetch::math::Subtract(1.0, left.data())));
+  auto temp1 = fetch::math::Subtract(1.0, left.data());
+  std::cout << "temp1.data()[0]" << temp1.data()[0] << std::endl;
+
+  auto temp2 = fetch::math::Multiply(left.data(), temp1);
+  std::cout << "temp2.data()[0]" << temp2.data()[0] << std::endl;
+
+  left.GradientAdd(temp2);
+  std::cout << "left.grad()[0]" << left.grad()[0] << std::endl;
 }
 
 };  // namespace derivatives

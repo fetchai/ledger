@@ -38,7 +38,7 @@ public:
 
   SessionManager() = default;
 
-  void RegisterVariable(std::size_t &id, std::string var_name)
+  void RegisterVariable(std::size_t &id)
   {
     id = variable_counter;
     ++variable_counter;
@@ -55,11 +55,9 @@ public:
 
     TopSort(var);
 
-    std::cout << "TopSort finished" << std::endl;
     for (std::size_t i = top_sort.size(); i > 0; --i)
     {
-      std::cout << "i: " << i << std::endl;
-      std::cout << "begin backward on: " << top_sort[i - 1].variable_name() << std::endl;
+      std::cout << "top_sort[i-1].variable_name()" << top_sort[i-1].variable_name() << std::endl;
       top_sort[i - 1].Backward();
     }
   }
@@ -72,14 +70,10 @@ public:
   void TopSort(VariableType &v)
   {
     bool is_in = (vars_seen.find(v) != vars_seen.end());
-    std::cout << "is_in: " << is_in << std::endl;
-    std::cout << "if: " << ((!is_in) && (!v.is_leaf)) << std::endl;
 
     if ((!is_in) && (!v.is_leaf))
     {
       vars_seen.insert(v);
-      std::cout << "inserted: " << v._variable_name << std::endl;
-      std::cout << "v.prev.size(): " << v.prev.size() << std::endl;
       for (std::size_t i = 0; i < v.prev.size(); ++i)
       {
         TopSort(v.prev[i]);

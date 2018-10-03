@@ -771,7 +771,7 @@ public:
   }
 
   template <typename S>
-  meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
+  fetch::meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
   {
     return data_[indices];
   }

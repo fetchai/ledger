@@ -32,130 +32,112 @@ using namespace fetch::ml;
 
 using Type = double;
 using ArrayType = fetch::math::linalg::Matrix<Type>;
+using VariableType = fetch::ml::Variable<ArrayType>;
 
-
-TEST(loss_functions, Dot_test)
+void AssignVariableIncrement(VariableType &var, Type val = 0.0)
 {
-
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-
-  SessionManager<ArrayType, LayerType> sess{};
-
-  std::vector<std::size_t> l1_shape{2, 3};
-  std::vector<std::size_t> l2_shape{3, 4};
-
-  Variable<ArrayType> l1{sess, l1_shape};
-  Variable<ArrayType> l2{sess, l2_shape};
-
+  for (std::size_t i = 0; i < var.shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < var.shape()[1]; ++j)
+    {
+      var.Set(i, j, val);
+      ++val;
+    }
+  }
+}
+void AssignArray(ArrayType &var, Type val = 1.0)
+{
+  for (std::size_t i = 0; i < var.shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < var.shape()[1]; ++j)
+    {
+      var.Set(i, j, val);
+    }
+  }
+}
+void AssignArray(ArrayType &var, std::vector<Type> vec_val)
+{
   std::size_t counter = 0;
-
-
-  Type setval = 0.;
-  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  for (std::size_t i = 0; i < var.shape()[0]; ++i)
   {
-    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    for (std::size_t j = 0; j < var.shape()[1]; ++j)
     {
-      l1.Set(i, j, setval);
-      setval += 1.0;
-    }
-  }
-
-  setval = 0.;
-  for (std::size_t i = 0; i < l2_shape[0]; ++i)
-  {
-    for (std::size_t j = 0; j < l2_shape[1]; ++j)
-    {
-      l2.Set(i, j, setval);
-      setval += 1.0;
-    }
-  }
-
-  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1, l2, sess);
-  ASSERT_TRUE(ret.shape()[0] == l1_shape[0]);
-  ASSERT_TRUE(ret.shape()[1] == l2_shape[1]);
-
-  std::vector<Type> gt{20, 23, 26, 29, 56, 68, 80, 92};
-  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < ret.shape()[1]; ++j)
-    {
-      ASSERT_TRUE(ret.At(i, j) == gt[counter]);
+      var.Set(i, j, vec_val[counter]);
       ++counter;
     }
   }
+}
+
+TEST(loss_functions, Dot_test)
+{
+  // set up session
+  SessionManager<ArrayType, VariableType> sess{};
+
+  // set up some variables
+  std::vector<std::size_t> l1_shape{2, 3};
+  std::vector<std::size_t> l2_shape{3, 4};
+  Variable<ArrayType> l1{sess, l1_shape};
+  Variable<ArrayType> l2{sess, l2_shape};
+  AssignVariableIncrement(l1, 1.0);
+  AssignVariableIncrement(l2, 1.0);
+
+  // Dot product
+  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1, l2, sess);
+
+  // test shape
+  ASSERT_TRUE(ret.shape()[0] == l1_shape[0]);
+  ASSERT_TRUE(ret.shape()[1] == l2_shape[1]);
+
+  // assign ground truth
+  std::vector<Type> gt_vec{38, 44, 50, 56, 83, 98, 113, 128};
+  ArrayType gt{ret.shape()};
+  AssignArray(gt, gt_vec);
+
+  // test correct values
+  ASSERT_TRUE(ret.data().AllClose(gt));
 }
 
 TEST(loss_functions, Relu_test)
 {
 
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-  SessionManager<ArrayType, LayerType> sess{};
-  std::size_t counter = 0;
+  SessionManager<ArrayType, VariableType> sess{};
 
   std::vector<std::size_t> l1_shape{2, 3};
 
   Variable<ArrayType> l1{sess, l1_shape};
-
-  Type setval = -3.;
-  for (std::size_t i = 0; i < l1_shape[0]; ++i)
-  {
-    for (std::size_t j = 0; j < l1_shape[1]; ++j)
-    {
-      l1.Set(i, j, setval);
-      setval += 1.0;
-    }
-  }
+  AssignVariableIncrement(l1, -3.);
 
   Variable<ArrayType> ret = fetch::ml::ops::Relu(l1, sess);
 
   ASSERT_TRUE(ret.shape() == l1.shape());
 
-  std::vector<Type> gt{0, 0, 0, 0, 1, 2};
-  counter = 0;
-  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < ret.shape()[1]; ++j)
-    {
-      ASSERT_TRUE(ret.At(i, j) == gt[counter]);
-      ++counter;
-    }
-  }
+  std::vector<Type> gt_vec{0, 0, 0, 0, 1, 2};
+  ArrayType gt{ret.shape()};
+  AssignArray(gt, gt_vec);
+
+  // test correct values
+  ASSERT_TRUE(ret.data().AllClose(gt));
+
 }
 
 TEST(loss_functions, Sigmoid_test)
 {
 
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-  SessionManager<ArrayType, LayerType> sess{};
+  SessionManager<ArrayType, VariableType> sess{};
   std::vector<std::size_t> l1_shape{2, 3};
 
   Variable<ArrayType> l1{sess, l1_shape};
-
-  Type setval = -3.;
-  for (std::size_t i = 0; i < l1_shape[0]; ++i)
-  {
-    for (std::size_t j = 0; j < l1_shape[1]; ++j)
-    {
-      l1.Set(i, j, setval);
-      setval += 1.0;
-    }
-  }
+  AssignVariableIncrement(l1, -3.);
 
   Variable<ArrayType> ret = fetch::ml::ops::Sigmoid(l1, sess);
 
   ASSERT_TRUE(ret.shape() == l1.shape());
 
-  ArrayType gt{l1.shape()};
-  gt.Set(0, 0.95257412682243336);
-  gt.Set(1, 0.5);
-  gt.Set(2, 0.88079707797788231);
-  gt.Set(3, 0.2689414213699951);
-  gt.Set(4, 0.7310585786300049);
-  gt.Set(5, 0.11920292202211755);
+  std::vector<Type> gt_vec{0.95257412682243336, 0.88079707797788231, 0.7310585786300049, 0.5, 0.2689414213699951, 0.11920292202211755};
+  ArrayType gt{ret.shape()};
+  AssignArray(gt, gt_vec);
 
+  // test correct values
   ASSERT_TRUE(ret.data().AllClose(gt));
 
 }
@@ -163,79 +145,54 @@ TEST(loss_functions, Sigmoid_test)
 TEST(loss_functions, Sum_test)
 {
 
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-  SessionManager<ArrayType, LayerType> sess{};
-  std::size_t counter = 0;
+  SessionManager<ArrayType, VariableType> sess{};
 
   std::vector<std::size_t> l1_shape{2, 3};
 
   Variable<ArrayType> l1{sess, l1_shape};
-
-  Type setval = 0.;
-  for (std::size_t i = 0; i < l1_shape[0]; ++i)
-  {
-    for (std::size_t j = 0; j < l1_shape[1]; ++j)
-    {
-      l1.Set(i, j, setval);
-      ++setval;
-    }
-  }
+  AssignVariableIncrement(l1, 0.);
 
   Variable<ArrayType> ret = fetch::ml::ops::Sum(l1, 1, sess);
 
   ASSERT_TRUE(ret.shape()[0] == l1.shape()[0]);
   ASSERT_TRUE(ret.shape()[1] == 1);
 
-  std::vector<Type> gt{3, 12};
-  counter = 0;
-  for (std::size_t i = 0; i < ret.shape()[0]; ++i)
-  {
-    ASSERT_TRUE(ret.At(i, 0) == gt[counter]);
-    ++counter;
-  }
-}
+  std::vector<Type> gt_vec{3, 12};
+  ArrayType gt{ret.shape()};
+  AssignArray(gt, gt_vec);
 
+  // test correct values
+  ASSERT_TRUE(ret.data().AllClose(gt));
+
+}
 
 TEST(loss_functions, MSE_test)
 {
 
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-  SessionManager<ArrayType, LayerType> sess{};
+  SessionManager<ArrayType, VariableType> sess{};
 
   std::vector<std::size_t> shape{2, 3};
 
   Variable<ArrayType> l1{sess, shape};
   Variable<ArrayType> l2{sess, shape};
 
-  Type setval = 0.;
-  for (std::size_t i = 0; i < shape[0]; ++i)
-  {
-    for (std::size_t j = 0; j < shape[1]; ++j)
-    {
-      l1.Set(i, j, setval);
-      ++setval;
-      l2.Set(i, j, setval);
-    }
-  }
+  AssignVariableIncrement(l1, 0.);
+  AssignVariableIncrement(l2, 1.);
 
   Variable<ArrayType> ret = fetch::ml::ops::MeanSquareError(l1, l2, sess);
 
   ASSERT_TRUE(ret.shape()[0] == 1);
   ASSERT_TRUE(ret.shape()[1] == 1);
 
-  std::vector<Type> gt{6};
-  ASSERT_TRUE(ret.At(0, 0) == gt[0]);
+  std::vector<Type> gt_vec{6};
+  ArrayType gt{ret.shape()};
+  AssignArray(gt, gt_vec);
 }
-
 
 TEST(loss_functions, CEL_test)
 {
 
-  using ArrayType = fetch::math::linalg::Matrix<Type>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
-  SessionManager<ArrayType, LayerType> sess{};
+  SessionManager<ArrayType, VariableType> sess{};
 
   std::vector<std::size_t> shape{3, 3};
 
@@ -257,27 +214,3 @@ TEST(loss_functions, CEL_test)
 
   ASSERT_TRUE(ret.At(0, 0) == 2.7488721956224649);
 }
-
-//TEST(loss_functions, MSE_Test)
-//{
-//
-//  fetch::math::ShapeLessArray<T> y_arr = fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
-//  fetch::math::ShapeLessArray<T> y_hat_arr =
-//      fetch::math::ShapeLessArray<T>::UniformRandom(ARRAY_SIZE);
-//
-//  T result      = -999;
-//  T test_result = -999;
-//
-//  fetch::math::ShapeLessArray<T> test_result_arr = fetch::math::ShapeLessArray<T>(y_arr.size());
-//  // error
-//  Subtract(y_arr, y_hat_arr, test_result_arr);
-//  // square
-//  Square(test_result_arr, test_result_arr);
-//  // mean
-//  Mean(test_result_arr, test_result);
-//
-//  // the function we're testing
-//  fetch::ml::ops::MeanSquareError(y_arr, y_hat_arr, result);
-//
-//  ASSERT_TRUE(result == test_result);
-//}

@@ -27,11 +27,12 @@
 #include "ml/variable.hpp"
 
 using namespace fetch::ml;
+using Type = double;
+using ArrayType = fetch::math::linalg::Matrix<Type>;
+using LayerType = fetch::ml::Variable<ArrayType>;
 
 TEST(variable, simple_arithmetic)
 {
-  using ArrayType = fetch::math::linalg::Matrix<double>;
-  using LayerType = fetch::ml::Variable<ArrayType>;
 
   SessionManager<ArrayType, LayerType> sess{};
 
@@ -97,6 +98,49 @@ TEST(variable, simple_arithmetic)
     ASSERT_TRUE(n1.grad()[i] == counter);
   }
 }
+
+
+TEST(variable, trivial_backprop)
+{
+
+  SessionManager<ArrayType, LayerType> sess{};
+
+  std::vector<std::size_t> shape1{2, 10};
+  std::vector<std::size_t> shape2{10, 2};
+  Variable<ArrayType> l1{sess, shape1};
+  Variable<ArrayType> l2{sess, shape2};
+  l1.data().FillArange(0, 20);
+  l2.data().FillArange(0, 20);
+
+  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1, l2, sess);
+
+  ASSERT_TRUE(ret.shape()[0] == 2);
+  ASSERT_TRUE(ret.shape()[1] == 2);
+//  std::cout << "ret-grad.shape()[0]: " << ret.grad().shape()[0] << std::endl;
+//  std::cout << "ret-grad.shape()[1]: " << ret.grad().shape()[1] << std::endl;
+//  for (std::size_t i = 0; i < ret.grad().shape()[0]; ++i)
+//  {
+//    for (std::size_t j = 0; j < ret.grad().shape()[1]; ++j)
+//    {
+//      std::cout << "ret-grad(ij): " << ret.grad().At(i, j) << std::endl;
+//    }
+//  }
+
+  sess.BackwardGraph(ret);
+
+
+  ArrayType gt{ret.shape()};
+  for (std::size_t i = 0; i < ret.grad().shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < ret.grad().shape()[1]; ++j)
+    {
+      gt.Set(i, j, 1.0);
+    }
+  }
+  ASSERT_TRUE(ret.grad().AllClose(gt));
+}
+
+
 
 // TEST(variable, trivial_neural_net)
 //{

@@ -112,6 +112,7 @@ VariableType MeanSquareError(VariableType &left, VariableType &right, SessionTyp
   VariableType ret{sess, fetch::math::MeanSquareError(left.data(), right.data()), "MSE", b_fn, false};
 
   ret.prev.push_back(left);
+  ret.prev.push_back(right);
 
   return ret;
 }
@@ -144,6 +145,7 @@ VariableType CrossEntropyLoss(VariableType &left, VariableType &right, SessionTy
   VariableType ret{sess, fetch::math::CrossEntropyLoss(left.data(), right.data()), "CEL", b_fn, false};
 
   ret.prev.push_back(left);
+  ret.prev.push_back(right);
 
   return ret;
 }

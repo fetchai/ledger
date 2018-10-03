@@ -708,7 +708,7 @@ public:
   }
 
   /* Returns height, width of array */
-  std::vector<size_type> const &shape() const
+  std::vector<size_type> shape() const
   {
     return shape_;
   }

@@ -9,8 +9,9 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
 # Compiler Configuration
 setup_compiler()
-add_fetch_gtest(ops fetch-ml ml/ops)
-add_fetch_gtest(computation_graph fetch-ml ml/computation_graph)
+add_fetch_gtest(ops_test fetch-ml ml/ops)
+add_fetch_gtest(session_test fetch-ml ml/session)
+add_fetch_gtest(computation_graph_test fetch-ml ml/computation_graph)
 
 
 

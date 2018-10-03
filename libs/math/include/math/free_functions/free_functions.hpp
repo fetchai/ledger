@@ -39,6 +39,8 @@
 #include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
+#include "math/meta/type_traits.hpp"
+
 namespace fetch {
 namespace math {
 
@@ -1919,7 +1921,7 @@ void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
 template <typename T, typename C>
 ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Softmax(array, ret);
   return ret;
 }
@@ -1934,7 +1936,7 @@ void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Softmax(NDArray<T, C> const &array)
 {
-  NDArray<T, C> ret;
+  NDArray<T, C> ret{array.shape()};
   Softmax(array, ret);
   return ret;
 }
@@ -2026,7 +2028,7 @@ void Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C
 template <typename T, typename C>
 ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
@@ -2038,7 +2040,7 @@ void Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C
 template <typename T, typename C>
 ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Add(scalar, array, ret);
   return ret;
 }
@@ -2051,12 +2053,12 @@ ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
  * @param ret
  */
 template <typename S>
-meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+fetch::meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 + scalar2;
 }
 template <typename S>
-meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
 {
   S ret;
   Add(scalar1, scalar2, ret);
@@ -2071,9 +2073,12 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
  * @param array2
  * @param ret
  */
-template <typename T, typename C>
-void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-         ShapeLessArray<T, C> &ret)
+
+//template <typename ArrayType>
+//fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+//         ArrayType &ret)
+template <typename ArrayType>
+void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(array1.size() == ret.size());
@@ -2081,10 +2086,22 @@ void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
   memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
   Add(array1, array2, range, ret);
 }
+
+//
+//template <typename T, typename C>
+//void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
+//         ShapeLessArray<T, C> &ret)
+//{
+//  assert(array1.size() == array2.size());
+//  assert(array1.size() == ret.size());
+//
+//  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
+//  Add(array1, array2, range, ret);
+//}
 template <typename T, typename C>
 ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array1.size()};
   Add(array1, array2, ret);
   return ret;
 }
@@ -2119,7 +2136,7 @@ template <typename T, typename C>
 ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
                          memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array1.shape()};
   Add(array1, array2, range, ret);
   return ret;
 }
@@ -2140,7 +2157,7 @@ void Add(NDArray<T, C> &array1, NDArray<T, C> &array2, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
 {
-  NDArray<T, C> ret;
+  NDArray<T, C> ret{array1.shape()};
   Add(array1, array2, ret);
   return ret;
 }
@@ -2168,7 +2185,7 @@ void Subtract(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Subtract(array, scalar, ret);
   return ret;
 }
@@ -2192,7 +2209,7 @@ void Subtract(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(T const &scalar, ShapeLessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Subtract(scalar, array, ret);
   return ret;
 }
@@ -2200,7 +2217,7 @@ ShapeLessArray<T, C> Subtract(T const &scalar, ShapeLessArray<T, C> const &array
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array)
 {
-  linalg::Matrix<T, C, S> ret;
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Subtract(scalar, array, ret);
   return ret;
 }
@@ -2208,6 +2225,7 @@ template <typename T, typename C, typename S>
 void Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 {
   assert(array.size() == ret.size());
+  assert(array.shape() == ret.shape());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
     ret[i] = scalar - array[i];
@@ -2216,7 +2234,7 @@ void Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Mat
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-  linalg::Matrix<T, C, S> ret;
+  linalg::Matrix<T, C, S> ret{array.size()};
   Subtract(array, scalar, ret);
   return ret;
 }
@@ -2232,7 +2250,7 @@ void Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Mat
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
 {
-  linalg::Matrix<T, C, S> ret;
+  linalg::Matrix<T, C, S> ret{array1.size()};
   Subtract(array1, array2, ret);
   return ret;
 }
@@ -2285,7 +2303,7 @@ template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
                               memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{obj1.shape()};
   Subtract(obj1, obj2, range, ret);
   return ret;
 }
@@ -2307,7 +2325,8 @@ void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-  ShapeLessArray<T, C> ret;
+  assert(obj1.size() == obj2.size());
+  ShapeLessArray<T, C> ret{obj1.size()};
   Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -2327,7 +2346,8 @@ void Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
 {
-  NDArray<T, C> ret;
+  assert(obj1.shape() == obj2.shape());
+  NDArray<T, C> ret{obj1.shape()};
   Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -2339,12 +2359,12 @@ NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
  * @param ret
  */
 template <typename S>
-meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
+fetch::meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 - scalar2;
 }
 template <typename S>
-meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
+fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
 {
   S ret;
   Subtract(scalar1, scalar2, ret);
@@ -2492,7 +2512,7 @@ void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> con
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
 {
-  linalg::Matrix<T, C, S> ret{array1.size()};
+  linalg::Matrix<T, C, S> ret{array1.shape()};
   Multiply(array1, array2, ret);
   return ret;
 }
@@ -2510,7 +2530,7 @@ void Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Mat
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-  linalg::Matrix<T, C, S> ret{array.size()};
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Multiply(array, scalar, ret);
   return ret;
 }
@@ -2522,7 +2542,7 @@ void Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Mat
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array)
 {
-  linalg::Matrix<T, C, S> ret{array.size()};
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Multiply(scalar, array, ret);
   return ret;
 }
@@ -2544,7 +2564,7 @@ void Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
 {
-  NDArray<T, C> ret{obj1.size()};
+  NDArray<T, C> ret{obj1.shape()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
@@ -2556,12 +2576,12 @@ NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
  * @param ret
  */
 template <typename S>
-meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
+fetch::meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 * scalar2;
 }
 template <typename S>
-meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+fetch::meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 {
   S ret;
   Multiply(scalar1, scalar2, ret);
@@ -2590,7 +2610,7 @@ void Divide(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T
 template <typename T, typename C>
 ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Divide(array, scalar, ret);
   return ret;
 }
@@ -2616,7 +2636,7 @@ void Divide(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T
 template <typename T, typename C>
 ShapeLessArray<T, C> Divide(T const &scalar, ShapeLessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret;
+  ShapeLessArray<T, C> ret{array.size()};
   Divide(scalar, array, ret);
   return ret;
 }
@@ -2743,17 +2763,7 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2)
 {
-  std::cout << "divide1" << std::endl;
-  std::cout << "obj1.shape()[0]" << obj1.shape()[0] << std::endl;
-  std::cout << "obj1.shape()[1]" << obj1.shape()[1] << std::endl;
-  std::cout << "obj2.shape()[0]" << obj2.shape()[0] << std::endl;
-  std::cout << "obj2.shape()[1]" << obj2.shape()[1] << std::endl;
-
-  linalg::Matrix<T, C, S> ret{obj1.shape()[0], obj1.shape()[1]};
-
-  std::cout << "obj2.shape()[0]" << obj2.shape()[0] << std::endl;
-  std::cout << "obj2.shape()[1]" << obj2.shape()[1] << std::endl;
-
+  linalg::Matrix<T, C, S> ret{obj1.shape()};
 
   Divide(obj1, obj2, ret);
   return ret;
@@ -2772,7 +2782,7 @@ void Divide(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matri
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-  linalg::Matrix<T, C, S> ret{array.size()};
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Divide(array, scalar, ret);
   return ret;
 }
@@ -2792,7 +2802,8 @@ void Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
 template <typename T, typename C>
 NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
 {
-  NDArray<T, C> ret;
+  assert(obj1.shape() == obj2.shape());
+  NDArray<T, C> ret{obj1.shape()};
   Divide(obj1, obj2, ret);
   return ret;
 }
@@ -2804,12 +2815,12 @@ NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
  * @param ret
  */
 template <typename S>
-meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
+fetch::meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 / scalar2;
 }
 template <typename S>
-meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
+fetch::meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
 {
   S ret;
   Divide(scalar1, scalar2, ret);
