@@ -36,13 +36,10 @@ public:
   using Address = Packet::Address;
   using Payload = Packet::Payload;
   using Handle  = uint64_t;
-  using MessageCallback = std::function<void(
-    Address const & /*from*/,
-    uint16_t /*service*/,
-    uint16_t /*channel*/,
-    uint16_t /*counter*/,
-    Packet::Payload const &/*payload*/
-    )>;
+  using MessageCallback =
+      std::function<void(Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/,
+                         uint16_t /*counter*/, Packet::Payload const & /*payload*/
+                         )>;
   using Mutex = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
