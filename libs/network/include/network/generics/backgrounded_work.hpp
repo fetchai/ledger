@@ -23,10 +23,10 @@ namespace fetch {
 namespace network {
 
 /**
- * Simple wrapper around the service promise which mandates the return time from the underlying
- * promise.
- *
- * @tparam RESULT The expected return type of the promise
+ * Thsi represents a number of promise-like tasks which can be polled
+ * to see if they have finished and if so, f they succeeded, timedout
+ * or failed. This could be done in a bg thread or by a foreground
+ * poller.
  */
 template <class WORKER>
 class BackgroundedWork
