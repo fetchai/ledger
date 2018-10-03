@@ -103,6 +103,7 @@ struct CommandLineArguments
   using UriList     = fetch::Constellation::UriList;
   using AdapterList = fetch::network::Adapter::adapter_list_type;
   using Manifest    = fetch::network::Manifest;
+  using ManifestPtr = std::unique_ptr<Manifest>;
   using Uri         = fetch::network::Uri;
   using Peer        = fetch::network::Peer;
 
@@ -133,7 +134,7 @@ struct CommandLineArguments
   std::string dbdir;
   std::string external_address;
   std::string host_name;
-  Manifest    manifest;
+  ManifestPtr manifest;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -189,12 +190,35 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
+    // if the user has explicitly passed a configuration then we must parse it here
+    if (!config_path.empty())
+    {
+      // read the contents of the manifest from the path specified
+      args.manifest = LoadManifestFromFile(config_path.c_str());
+    }
+
     args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
+      // determine what the P2P port is. This is either specified with the port parameter or explictly
+      // given via the manifest
+      uint16_t p2p_port = args.port;
+
+      // if we have a valid manifest then we should respect the port configuration specified here
+      // otherwise we default to the port specified
+      if (args.manifest)
+      {
+        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::P2P});
+
+        if (uri.scheme() == Uri::Scheme::Tcp)
+        {
+          p2p_port = uri.AsPeer().port();
+        }
+      }
+
       // create the boostrap node
       bootstrap = std::make_unique<fetch::BootstrapMonitor>(
-          prover.identity(), args.port, args.network_id, args.token, args.host_name);
+          prover.identity(), p2p_port, args.network_id, args.token, args.host_name);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
@@ -213,13 +237,10 @@ struct CommandLineArguments
       args.external_address = "127.0.0.1";
     }
 
-    if (!config_path.empty())
+    // if we do not have a correct
+    if (!args.manifest)
     {
-      args.manifest = LoadManifestFromFile(config_path.c_str());
-    }
-    else
-    {
-      args.manifest = args.GenerateManifest();
+      args.manifest = GenerateManifest(args.external_address, args.port, args.num_lanes);
     }
 
     return args;
@@ -262,25 +283,25 @@ struct CommandLineArguments
     }
   }
 
-  Manifest GenerateManifest()
+  static ManifestPtr GenerateManifest(std::string const &external_address, uint16_t port, uint32_t num_lanes)
   {
-    Manifest manifest;
+    ManifestPtr manifest = std::make_unique<Manifest>();
     Peer peer;
 
     // register the HTTP service
     peer.Update(external_address, port + HTTP_PORT_OFFSET);
-    manifest.AddService(ServiceIdentifier{ServiceType::HTTP}, Manifest::Entry{Uri{peer}});
+    manifest->AddService(ServiceIdentifier{ServiceType::HTTP}, Manifest::Entry{Uri{peer}});
 
     // register the P2P service
     peer.Update(external_address, port + P2P_PORT_OFFSET);
-    manifest.AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
+    manifest->AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
 
     // register all of the lanes (storage shards)
     for (uint32_t i = 0; i < num_lanes; ++i)
     {
       peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + i));
 
-      manifest.AddService(
+      manifest->AddService(
         ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
         Manifest::Entry{Uri{peer}}
       );
@@ -289,7 +310,7 @@ struct CommandLineArguments
     return manifest;
   }
 
-  static Manifest LoadManifestFromFile(char const *filename)
+  static ManifestPtr LoadManifestFromFile(char const *filename)
   {
     ConstByteArray buffer = ReadContentsOfFile(filename);
 
@@ -299,8 +320,8 @@ struct CommandLineArguments
       throw std::runtime_error("Unable to read the contents of the requested file");
     }
 
-    Manifest manifest;
-    if (!manifest.Parse(buffer))
+    ManifestPtr manifest = std::make_unique<Manifest>();
+    if (!manifest->Parse(buffer))
     {
       throw std::runtime_error("Unable to parse the contents of the manifest file");
     }
@@ -331,7 +352,10 @@ struct CommandLineArguments
       s << peer.uri() << ' ';
     }
 
-    s << '\n' << "manifest.......: " << args.manifest.ToString() << '\n';
+    if (args.manifest)
+    {
+      s << '\n' << "manifest.......: " << args.manifest->ToString() << '\n';
+    }
 
     // terminate and flush
     s << std::endl;
@@ -447,7 +471,7 @@ int main(int argc, char **argv)
 
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), std::move(args.manifest), args.num_executors, args.log2_num_lanes, args.num_slices,
+        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes, args.num_slices,
         args.interface, args.dbdir);
 
     // update the instance pointer

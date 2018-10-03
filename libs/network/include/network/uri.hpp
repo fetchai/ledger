@@ -64,7 +64,7 @@ public:
   Uri() = default;
   explicit Uri(Peer const &peer);
   Uri(ConstByteArray const &uri);
-  Uri(Uri const &) = default;  //
+  Uri(Uri const &) = default;
   Uri(Uri &&)      = default;
   ~Uri()           = default;
 

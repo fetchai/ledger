@@ -125,7 +125,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"]       = external_address_;
-  request["port"]       = port_ + 1; //fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]       = port_;
 
   JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
@@ -179,7 +179,7 @@ bool BootstrapMonitor::RegisterNode()
   request["public_key"]     = byte_array::ToBase64(identity_.identifier());
   request["network"]        = network_id_;
   request["host"]           = external_address_;
-  request["port"]           = port_ + 1; // fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]           = port_;
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
   request["host_name"]      = host_name_;
