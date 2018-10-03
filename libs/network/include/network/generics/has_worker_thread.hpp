@@ -34,25 +34,21 @@ class HasWorkerThread
 {
 private:
   using Target   = TARGET;
-  using WorkFunc = std::function<void(void)>;
+  using WorkFunc = std::function<void()>;
 
 public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
 
-  HasWorkerThread(Target *target, std::function<void(void)> workcycle)
+  HasWorkerThread(Target *target, std::function<void()> workcycle)
   {
     workcycle_ = workcycle;
     target_    = target;
-    if (!target_)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "No target configured in construction.");
-    }
     thread_ = std::make_shared<std::thread>([this]() { this->Run(); });
   }
 
   virtual ~HasWorkerThread()
   {
-    shutdown_.store(true);
+    shutdown_ =true;
 
     target_->WakeAll();
     target_->WakeAll();
@@ -66,7 +62,7 @@ public:
   }
 
 protected:
-  void Run(void)
+  void Run()
   {
     if (!target_)
     {

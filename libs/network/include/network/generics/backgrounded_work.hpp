@@ -40,8 +40,10 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  static const std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
+  static constexpr std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
         PromiseState::FAILED, PromiseState::TIMEDOUT} };
+
+  static constexpr char const *LOGGING_NAME = "AtomicInflightCounter";
 
   // Construction / Destruction
   BackgroundedWork()
@@ -83,6 +85,7 @@ public:
           case PromiseState::SUCCESS:
           case PromiseState::FAILED:
           case PromiseState::TIMEDOUT:
+            assert(r < workload_.size());
             workload_[r].push_back(workitem);
             workitem_iter = worklist_for_state.erase(workitem_iter);
             break;
@@ -90,7 +93,7 @@ public:
         }
         catch (std::exception ex)
         {
-          // report exception here?
+          FETCH_LOG_WARN(// report exception here?
         }
       }
     }
@@ -202,9 +205,8 @@ public:
   {
     Lock lock(mutex_);
 
-    for (current_state : PromiseStates)
+    for (auto const &current_state : PromiseStates)
     {
-      auto  current_state      = promiseStates[i];
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
       while (workitem_iter != worklist_for_state.end())
@@ -230,10 +232,9 @@ public:
   {
     bool r = false;
 
-    for (current_state : PromiseStates)
+    for (auto const &current_state : PromiseStates)
     {
       Lock  lock(mutex_);
-      auto  current_state      = promiseStates[i];
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
       while (workitem_iter != worklist_for_state.end())

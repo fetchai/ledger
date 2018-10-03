@@ -34,7 +34,7 @@ public:
   using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
 
-  FutureTimepoint(const Duration &dur)
+  FutureTimepoint(Duration const &dur)
   {
     due_time_ = Clock::now() + dur;
   }
@@ -56,12 +56,12 @@ public:
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
 
-  void Set(const Duration &dur)
+  void Set(Duration const &dur)
   {
     due_time_ = Clock::now() + dur;
   }
 
-  void SetMilliseconds(const Timepoint &timepoint, size_t milliseconds)
+  void SetMilliseconds(Timepointconst  &timepoint, size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
   }
