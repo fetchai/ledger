@@ -107,7 +107,7 @@ private:
 
     std::vector<byte_array::ByteArray> addresses;
 
-    for(size_t i = 0; i < locations_to_create;i++)
+    for (size_t i = 0; i < locations_to_create; i++)
     {
       // Create random address
       byte_array::ByteArray address;
@@ -143,11 +143,11 @@ private:
       }
     }
 
-    script::Variant data;
+    script::Variant    data;
     std::ostringstream oss;
 
     // Return old data format as a fall back (when size is 1)
-    if(addresses.size() == 1)
+    if (addresses.size() == 1)
     {
       data.MakeObject();
 
@@ -163,11 +163,11 @@ private:
       results_array.MakeArray(addresses.size());
 
       std::size_t index = 0;
-      for(const auto &i : addresses)
+      for (const auto &i : addresses)
       {
         script::Variant element;
         element.MakeObject();
-        element["address"] = byte_array::ToBase64(i);
+        element["address"]   = byte_array::ToBase64(i);
         results_array[index] = element;
         index++;
       }
