@@ -62,7 +62,6 @@ public:
   using Handle                  = ClientRegister::connection_handle_type;
   using NetworkManager          = fetch::network::NetworkManager;
   using PromiseState            = fetch::service::PromiseState;
-  using AtomicStateMachine      = network::AtomicStateMachine;
   using Promise                 = service::Promise;
   using FutureTimepoint         = network::FutureTimepoint;
   using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
@@ -93,13 +92,9 @@ public:
   }
 
 private:
-  class LaneConnectorWorker : public AtomicStateMachine
-  {
-  public:
-    enum
+  enum class State
     {
-      NO_CHANGE    = AtomicStateMachine::NO_CHANGE,
-      INITIALISING = 1,
+      INITIAL = 0,
       CONNECTING,
       QUERYING,
       PINGING,
@@ -109,6 +104,10 @@ private:
       FAILED,
     };
 
+  class LaneConnectorWorker
+    : public network::AtomicStateMachine<State>
+  {
+  public:
     SharedServiceClient client;
     FutureTimepoint     next_attempt;
     size_t              attempts;
@@ -130,26 +129,25 @@ private:
     {
       lane = thelane;
 
-      this->Allow(LaneConnectorWorker::INITIALISING, 0)
-          .Allow(CONNECTING, INITIALISING)
-          .Allow(CONNECTING, SNOOZING)
-          .Allow(PINGING, CONNECTING)
-          .Allow(QUERYING, PINGING)
-          .Allow(DONE, QUERYING)
+      this->Allow(State::CONNECTING, State::INITIAL)
+          .Allow(State::CONNECTING, State::SNOOZING)
+          .Allow(State::PINGING, State::CONNECTING)
+          .Allow(State::QUERYING, State::PINGING)
+          .Allow(State::DONE, State::QUERYING)
 
-          .Allow(INITIALISING, CONNECTING)
-          .Allow(INITIALISING, PINGING)
-          .Allow(INITIALISING, QUERYING)
+          .Allow(State::INITIAL, State::CONNECTING)
+          .Allow(State::INITIAL, State::PINGING)
+          .Allow(State::INITIAL, State::QUERYING)
 
-          .Allow(SNOOZING, CONNECTING)
-          .Allow(SNOOZING, PINGING)
-          .Allow(SNOOZING, QUERYING)
+          .Allow(State::SNOOZING, State::CONNECTING)
+          .Allow(State::SNOOZING, State::PINGING)
+          .Allow(State::SNOOZING, State::QUERYING)
 
-          .Allow(TIMEDOUT, CONNECTING)
-          .Allow(TIMEDOUT, PINGING)
-          .Allow(TIMEDOUT, QUERYING)
+          .Allow(State::TIMEDOUT, State::CONNECTING)
+          .Allow(State::TIMEDOUT, State::PINGING)
+          .Allow(State::TIMEDOUT, State::QUERYING)
 
-          .Allow(FAILED, CONNECTING);
+          .Allow(State::FAILED, State::CONNECTING);
       client       = theclient;
       attempts     = 0;
       name         = thename;
@@ -169,11 +167,11 @@ private:
 
       switch (r)
       {
-      case TIMEDOUT:
+      case State::TIMEDOUT:
         return PromiseState::TIMEDOUT;
-      case DONE:
+      case State::DONE:
         return PromiseState::SUCCESS;
-      case FAILED:
+      case State::FAILED:
         return PromiseState::FAILED;
       default:
         return PromiseState::WAITING;
@@ -183,47 +181,40 @@ private:
     std::string GetStateName(int state)
     {
       const char *states[] = {
-          "(START)",  "INITIALISING", "CONNECTING", "QUERYING", "PINGING",
-          "SNOOZING", "DONE",         "TIMEDOUT",   "FAILED",
+          "INITIAL", "CONNECTING", "QUERYING", "PINGING",
+          "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
       };
       return std::string(states[state]);
     }
 
-    virtual int PossibleNewState(int currentstate) override
-    {
-      auto x = PossibleNewStateImpl(currentstate);
-      return x;
-    }
-
-    int PossibleNewStateImpl(int currentstate)
+    virtual bool PossibleNewState(State &currentstate) override
     {
       if (timeout.IsDue())
       {
-        return TIMEDOUT;
+        currentstate = State::TIMEDOUT;
+        return true;
       }
       switch (currentstate)
       {
-      case AtomicStateMachine::INITIAL_STATE:
-      {
-        return INITIALISING;
-      }
-      case INITIALISING:
+      case State::INITIAL:
       {
         // we no longer use a fixed number of attempts.
-        return CONNECTING;
+        currentstate = State::CONNECTING;
+        return true;
       }
-      case SNOOZING:
+      case State::SNOOZING:
       {
         if (next_attempt.IsDue())
         {
-          return CONNECTING;
+          currentstate = State::CONNECTING;
+          return true;
         }
         else
         {
-          return NO_CHANGE;
+          return false;
         }
       }
-      case CONNECTING:
+      case State::CONNECTING:
       {
         if (!client->is_alive())
         {
@@ -231,15 +222,17 @@ private:
           attempts++;
           if (attempts > max_attempts)
           {
-            return TIMEDOUT;
+            currentstate = State::TIMEDOUT;
           }
           next_attempt.SetMilliseconds(300);
-          return SNOOZING;
+          currentstate = State::SNOOZING;
+          return true;
         }
         ping = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-        return PINGING;
+        currentstate = State::PINGING;
+        return true;
       }  // end CONNECTING
-      case PINGING:
+      case State::PINGING:
       {
         auto r = ping->GetState();
 
@@ -248,27 +241,30 @@ private:
         case PromiseState::TIMEDOUT:
         case PromiseState::FAILED:
         {
-          return INITIALISING;
+          currentstate = State::INITIAL;
+          return true;
         }
         case PromiseState::SUCCESS:
         {
           if (ping->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
-            return INITIALISING;
+            currentstate = State::INITIAL;
+            return true;
           }
           else
           {
             lane_prom  = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
             count_prom = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
             id_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-            return QUERYING;
+            currentstate = State::QUERYING;
+            return true;
           }
         }
         case PromiseState::WAITING:
-          return NO_CHANGE;
+          return false;
         }
       }  // end PINGING
-      case QUERYING:
+      case State::QUERYING:
       {
         auto lp_st = lane_prom->GetState();
         auto ct_st = count_prom->GetState();
@@ -278,25 +274,27 @@ private:
             ct_st == PromiseState::FAILED || lp_st == PromiseState::TIMEDOUT ||
             id_st == PromiseState::TIMEDOUT || ct_st == PromiseState::TIMEDOUT)
         {
-          return INITIALISING;
+          currentstate = State::INITIAL;
+          return true;
         }
 
         if (lp_st == PromiseState::SUCCESS || id_st == PromiseState::SUCCESS ||
             ct_st == PromiseState::SUCCESS)
         {
-          return DONE;
+          currentstate = State::DONE;
+          return true;
         }
-        return NO_CHANGE;
+        return false;
 
       }  // end QUERYING
-      case TIMEDOUT:
-        return NO_CHANGE;
-      case DONE:
-        return NO_CHANGE;
-      case FAILED:
-        return NO_CHANGE;
+      case State::TIMEDOUT:
+        return false;
+      case State::DONE:
+        return false;
+      case State::FAILED:
+        return false;
       }
-      return NO_CHANGE;
+      return false;
     }
   };
 

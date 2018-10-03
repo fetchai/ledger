@@ -24,88 +24,91 @@ namespace fetch {
 
 namespace network {
 
+template<typename STATE>
 class AtomicStateMachine
 {
 public:
-  using mutex_type = fetch::mutex::Mutex;
-  using lock_type  = std::lock_guard<mutex_type>;
+  struct Transition
+  {
+    STATE to;
+    STATE from;
 
-  static constexpr int NO_CHANGE     = 0;
-  static constexpr int INITIAL_STATE = 0;
+    Transition(STATE t,STATE f):to(t),from(f) {}
 
-  AtomicStateMachine()
-  {}
+    bool operator<(Transition const &other) const
+    {
+      if (to < other.to) return true;
+      if (to > other.to) return false;
+      if (from < other.from) return true;
+      if (from > other.from) return false;
+      return false;
+    }
+  };
 
-  AtomicStateMachine(std::initializer_list<std::pair<int, int>> transitions)
+  AtomicStateMachine() = default;
+  virtual ~AtomicStateMachine() = default;
+
+  AtomicStateMachine(std::initializer_list<Transition> transitions)
   {
     allowed_.insert(transitions.begin(), transitions.end());
   }
 
-  AtomicStateMachine &Allow(int new_state, int old_state)
+  AtomicStateMachine &Allow(STATE new_state, STATE old_state)
   {
-    lock_type lock(mutex_);
-    allowed_.insert(std::make_pair(new_state, old_state));
+    allowed_.insert(Transition(new_state, old_state));
     return *this;
   }
 
-  bool Set(int new_state)
+  bool Set(STATE new_state)
   {
     auto old_state = state_.exchange(new_state);
     if (old_state == new_state)
     {
       return false;
     }
-    auto txn = std::make_pair(new_state, old_state);
+    auto txn = Transition(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
-      throw std::range_error(std::to_string(old_state) + " -> " + std::to_string(new_state) +
-                             " not allowed.");
+      throw std::range_error("transition not allowed.");
     }
     return true;
   }
 
-  bool Set(int new_state, int expected)
+  bool Set(STATE new_state, STATE expected)
   {
-    int local_expected = expected;
-    return state_.compare_exchange_strong(local_expected, new_state);
+    return state_.compare_exchange_strong(expected, new_state);
   }
 
-  bool Force(int new_state)
+  bool Force(STATE new_state)
   {
     auto current = state_.exchange(new_state);
     return current != new_state;
   }
 
-  int Get() const
+  STATE Get() const
   {
     return state_.load();
   }
 
-  int Work()
+  void Work()
   {
-    int curstate = Get();
-    int newstate = PossibleNewState(curstate);
-    if (newstate)
+    STATE curstate = Get();
+    if (PossibleNewState(curstate))
     {
-      if (Set(newstate))
-      {
-        return newstate;
-      }
+      Set(curstate);
     }
-    return curstate;
   }
 
   /* Return a new state or 0 for no change.
    */
-  virtual int PossibleNewState(int currentstate)
+  virtual bool PossibleNewState(STATE &currentstate)
   {
-    return NO_CHANGE;
+    return false;
   }
 
 private:
-  mutex_type                    mutex_{__LINE__, __FILE__};
-  std::atomic<int>              state_{0};
-  std::set<std::pair<int, int>> allowed_;
+  std::atomic<STATE>   state_{STATE::INITIAL};
+  std::set<Transition> allowed_;
 };
 
 }  // namespace network
