@@ -42,8 +42,8 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  static const std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
-      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
+  static constexpr std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
+        PromiseState::FAILED, PromiseState::TIMEDOUT} };
 
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
