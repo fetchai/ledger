@@ -24,10 +24,15 @@ namespace fetch {
 namespace network {
 
 /**
- * Simple wrapper around the service promise which mandates the return time from the underlying
- * promise.
+ * This is a simple class to give someone a background worker
+ * thread. Create it, give it a work function in a
+ * suitable concept.
  *
- * @tparam RESULT The expected return type of the promise
+ * The concept also needs to implement a Wait(int milliseconds) method
+ * that will only return if there is work to be done or the timeout
+ * has elapsed. (eg; uses a condition variable) and a WakeAll() method
+ * which will trigger return from the Wait() method by all sleeping
+ * threads (eg a cv's notify_all).
  */
 template <typename TARGET>
 class HasWorkerThread
