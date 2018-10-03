@@ -312,7 +312,6 @@ int main(int argc, char const **argv)
 
     SECTION("Test transaction store sync protocol (caching, then new joiner, threads 50) ")
     {
-      // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
       NetworkManager nm{50};
       nm.Start();
 
@@ -451,7 +450,6 @@ int main(int argc, char const **argv)
     /*
     SECTION("Test transaction store sync protocol (caching, then new joiner, threads 1) ")
     {
-      // TODO: (HUT) : make this work with 1 - find the post blocking the NM.
       NetworkManager nm{1};
       nm.Start();
 

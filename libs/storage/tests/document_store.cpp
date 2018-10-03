@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+#include "storage/document.hpp"
 #include "storage/revertible_document_store.hpp"
 #include <iostream>
 using namespace fetch;
@@ -24,90 +25,111 @@ using namespace fetch;
 using namespace fetch::storage;
 class TestStore : public RevertibleDocumentStore
 {
-public:
-  typename RevertibleDocumentStore::DocumentFile GetDocumentFile(ResourceID const &rid,
-                                                                 bool const &      create = true)
-  {
-    return RevertibleDocumentStore::GetDocumentFile(rid, create);
-  }
 };
 
 TestStore store;
 
 uint64_t book = 1;
 
-void Add()
+void Set(std::string const &key, std::string const &val)
 {
-  std::cout << "=============  ADD  ==================" << std::endl;
-  ;
-  {
-    auto doc = store.GetDocumentFile(ResourceID("Hello world"));
-    doc.Seek(doc.size());
-    doc.Write("Hello world");
-  }
-  ++book;
-  store.Commit(book);
+  std::cout << "Setting: " << key << " -> " << val << std::endl;
+  store.Set(ResourceAddress(key), val);
 }
 
-void Remove()
+void PrintKey(std::string const &key)
 {
-  std::cout << "=============  REMOVE  ==================" << std::endl;
-  ;
-  --book;
-  store.Revert(book);
+  std::cout << key << ": ";
+
+  auto doc = store.Get(ResourceAddress(key));
+  std::cout << doc.document << std::endl;
 }
 
-void Print()
-{
-
-  std::cout << std::endl;
-  auto doc = store.GetDocumentFile(ResourceID("Hello world"));
-  std::cout << "BOOK: " << book << " " << doc.id() << std::endl;
-  std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
-  byte_array::ByteArray x;
-  x.Resize(doc.size());
-  doc.Read(x);
-  std::cout << "VALUE: " << x << std::endl;
-}
-
+/**
+ * Demonstration of how the store (a dictionary), can commit and revert state
+ *
+ */
 int main()
 {
 
   store.New("a.db", "b.db", "c.db", "d.db");
-  std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
-  char c;
-  Print();
-  Add();
-  Print();
-  Add();
-  Print();
-  Remove();
-  Print();
-  Add();
-  Print();
-  Remove();
-  Print();
-  return 0;
 
-  do
   {
-    Print();
+    std::cout << "=============  BOOK " << book << "  ==================" << std::endl;
+    std::cout << "Initial hash:" << std::endl;
+    std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
 
-    std::cin >> c;
-    switch (c)
-    {
-    case 'a':
-    {
-      Add();
-    }
-    break;
-    case 'r':
-      Remove();
+    std::cout << "Keys" << std::endl;
+    PrintKey("one");
+    PrintKey("two");
+    PrintKey("three");
 
-      break;
-    }
+    Set("one", "removed");
+    Set("two", "new");
+    Set("three", "blasted");
+  }
 
-  } while ((c != 'q') && (std::cin) && (!std::cin.eof()));
+  {
+    Set("one", "val");
+    Set("two", "thing");
+    Set("three", "");
+
+    std::cout << "=============  BOOK " << book << "  ==================" << std::endl;
+    std::cout << "Hash:" << std::endl;
+    std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
+
+    std::cout << "Keys" << std::endl;
+    PrintKey("one");
+    PrintKey("two");
+    PrintKey("three");
+    std::cout << "Commiting " << book << std::endl;
+    store.Commit(book);
+    book++;
+  }
+
+  {
+    std::cout << "=============  BOOK " << book << "  ==================" << std::endl;
+    std::cout << "Hash:" << std::endl;
+    std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
+
+    std::cout << "Keys" << std::endl;
+    PrintKey("one");
+    PrintKey("two");
+    PrintKey("three");
+  }
+
+  {
+    Set("one", "removed");
+    Set("two", "new");
+    Set("three", "blasted");
+
+    std::cout << "=============  BOOK " << book << "  ==================" << std::endl;
+    std::cout << "Hash:" << std::endl;
+    std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
+
+    std::cout << "Keys" << std::endl;
+    PrintKey("one");
+    PrintKey("two");
+    PrintKey("three");
+    std::cout << "Commiting " << book << std::endl;
+    store.Commit(book);
+    book++;
+  }
+
+  {
+    std::cout << "=============  BOOK " << book << "  ==================" << std::endl;
+    std::cout << "Hash:" << std::endl;
+    std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
+
+    std::cout << "Reverting to book 1" << std::endl;
+    book = 1;
+    store.Revert(book);
+
+    std::cout << "Keys" << std::endl;
+    PrintKey("one");
+    PrintKey("two");
+    PrintKey("three");
+  }
 
   return 0;
 }

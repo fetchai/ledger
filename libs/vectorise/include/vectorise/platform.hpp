@@ -203,5 +203,18 @@ inline uint64_t Log2Ceil(uint64_t x)
   return count + 1;
 }
 
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+inline T DivideCeil(T x, T y)
+{
+  T ret = x / y;
+
+  if (y * ret < x)
+  {
+    ++ret;
+  }
+
+  return ret;
+}
+
 }  // namespace platform
 }  // namespace fetch
