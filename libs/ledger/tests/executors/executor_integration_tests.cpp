@@ -117,19 +117,13 @@ protected:
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for executor connections.");
     for (;;)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "executor_->is_alive()", executor_->is_alive());
-      FETCH_LOG_INFO(LOGGING_NAME, "storage_->IsAlive()", storage_->IsAlive());
-
       // wait for the all the clients to connect to everything
       if (executor_->is_alive() && storage_->IsAlive())
       {
         break;
       }
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for executor connections: snooze");
       std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
   }
