@@ -40,8 +40,8 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  static const std::array<PromiseState, 4> PromiseStates{ {PromiseState::WAITING, PromiseState::SUCCESS,
-        PromiseState::FAILED, PromiseState::TIMEDOUT} };
+  static const std::array<PromiseState, 4> PromiseStates{
+      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
 
   // Construction / Destruction
   BackgroundedWork()
