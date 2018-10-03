@@ -124,6 +124,42 @@ TEST(loss_functions, Relu_test)
   }
 }
 
+TEST(loss_functions, Sigmoid_test)
+{
+
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
+  SessionManager<ArrayType, LayerType> sess{};
+  std::vector<std::size_t> l1_shape{2, 3};
+
+  Variable<ArrayType> l1{sess, l1_shape};
+
+  Type setval = -3.;
+  for (std::size_t i = 0; i < l1_shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < l1_shape[1]; ++j)
+    {
+      l1.Set(i, j, setval);
+      setval += 1.0;
+    }
+  }
+
+  Variable<ArrayType> ret = fetch::ml::ops::Sigmoid(l1, sess);
+
+  ASSERT_TRUE(ret.shape() == l1.shape());
+
+  ArrayType gt{l1.shape()};
+  gt.Set(0, 0.95257412682243336);
+  gt.Set(1, 0.5);
+  gt.Set(2, 0.88079707797788231);
+  gt.Set(3, 0.2689414213699951);
+  gt.Set(4, 0.7310585786300049);
+  gt.Set(5, 0.11920292202211755);
+
+  ASSERT_TRUE(ret.data().AllClose(gt));
+
+}
+
 TEST(loss_functions, Sum_test)
 {
 
@@ -160,6 +196,67 @@ TEST(loss_functions, Sum_test)
   }
 }
 
+
+TEST(loss_functions, MSE_test)
+{
+
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
+  SessionManager<ArrayType, LayerType> sess{};
+
+  std::vector<std::size_t> shape{2, 3};
+
+  Variable<ArrayType> l1{sess, shape};
+  Variable<ArrayType> l2{sess, shape};
+
+  Type setval = 0.;
+  for (std::size_t i = 0; i < shape[0]; ++i)
+  {
+    for (std::size_t j = 0; j < shape[1]; ++j)
+    {
+      l1.Set(i, j, setval);
+      ++setval;
+      l2.Set(i, j, setval);
+    }
+  }
+
+  Variable<ArrayType> ret = fetch::ml::ops::MeanSquareError(l1, l2, sess);
+
+  ASSERT_TRUE(ret.shape()[0] == 1);
+  ASSERT_TRUE(ret.shape()[1] == 1);
+
+  std::vector<Type> gt{6};
+  ASSERT_TRUE(ret.At(0, 0) == gt[0]);
+}
+
+
+TEST(loss_functions, CEL_test)
+{
+
+  using ArrayType = fetch::math::linalg::Matrix<Type>;
+  using LayerType = fetch::ml::Variable<ArrayType>;
+  SessionManager<ArrayType, LayerType> sess{};
+
+  std::vector<std::size_t> shape{3, 3};
+
+  Variable<ArrayType> l1{sess, shape};
+  Variable<ArrayType> l2{sess, shape};
+
+  l1.Set(0, 0, 0.1);   l1.Set(0, 1, 0.8);   l1.Set(0, 2, 0.1);
+  l1.Set(1, 0, 0.8);   l1.Set(1, 1, 0.1);   l1.Set(1, 2, 0.1);
+  l1.Set(2, 0, 0.1);   l1.Set(2, 1, 0.1);   l1.Set(2, 2, 0.8);
+  
+  l2.Set(0, 0, 1);   l2.Set(0, 1, 0);   l2.Set(0, 2, 0);
+  l2.Set(1, 0, 1);   l2.Set(1, 1, 0);   l2.Set(1, 2, 0);
+  l2.Set(2, 0, 0);   l2.Set(2, 1, 0);   l2.Set(2, 2, 1);
+
+  Variable<ArrayType> ret = fetch::ml::ops::CrossEntropyLoss(l1, l2, sess);
+
+  ASSERT_TRUE(ret.shape()[0] == 1);
+  ASSERT_TRUE(ret.shape()[1] == 1);
+
+  ASSERT_TRUE(ret.At(0, 0) == 2.7488721956224649);
+}
 
 //TEST(loss_functions, MSE_Test)
 //{

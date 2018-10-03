@@ -1470,19 +1470,27 @@ linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size
     return ret;
   }
 }
+
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> ReduceSumImpl(linalg::Matrix<T, C, S> const &obj1, std::size_t const &axis)
+{
+  if (obj1.shape()[0] == 1)
+  {
+    return obj1;
+  }
+  else
+  {
+    return ReduceSumImpl(ReduceSum(obj1, axis), axis-1);
+  }
+}
+
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1)
 {
   std::size_t             axis = obj1.shape().size() - 1;
-  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
+//  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
 
-  while (ret.shape().size() > 1)
-  {
-    axis = ret.shape().size() - 1;
-    ret = ReduceSum(ret, axis);
-  }
-
-  return ret;
+  return ReduceSumImpl(obj1, axis);
 }
 
 template <typename ArrayType>
@@ -1493,7 +1501,8 @@ ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
 
   Subtract(A, B, ret);
   Square(ret);
-  Mean(ret);
+  ret = ReduceSum(ReduceSum(ret, 1), 0);
+  ret = Divide(ret, typename ArrayType::type(ret.size()));
 
   return ret;
 }
@@ -1510,25 +1519,36 @@ template <typename ArrayType>
 ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   assert(x.shape() == y.shape());
-  std::cout << " hi: " << std::endl;
-  x.shape();
-  std::cout << " hi: " << x.shape()[0] << std::endl;
-  std::cout << " hi: " << x.shape()[1] << std::endl;
-
   ArrayType logx{x.shape()};
-  std::cout << " hi: " << std::endl;
-  logx.shape();
-  std::cout << " hi: " << logx.shape()[0] << std::endl;
-  std::cout << " hi: " << logx.shape()[1] << std::endl;
-
-  std::cout << " hi: " << std::endl;
-  x.shape();
-  std::cout << " hi: " << std::endl;
-
-  std::cout << "logx.shape()[0]: " << logx.shape()[0] << std::endl;
+  logx.Copy(x);
   Log(logx);
-  std::cout << "ReduceSum(ReduceSum(Multiply(y, logx), 1), 0).shape()[0]: " << ReduceSum(ReduceSum(Multiply(y, logx), 1), 0).shape()[0] << std::endl;
-  return ReduceSum(ReduceSum(Multiply(y, logx), 1), 0);
+
+  ArrayType ret1{logx.shape()};
+  for (std::size_t i = 0; i < logx.shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < logx.shape()[1]; ++j)
+    {
+      if (y.At(i, j) == 0)
+      {
+        ret1.Set(i, j, 0);
+      }
+      else if (logx.At(i, j) == 0)
+      {
+        ret1.Set(i, j, 0);
+      }
+      else
+      {
+        ret1.Set(i, j, logx.At(i, j) * y.At(i, j));
+      }
+    }
+  }
+//  auto ret1 = Multiply(y, logx);
+
+//  auto ret2 = ReduceSum(ret1, 1);
+//  auto ret3 = ReduceSum(ret2, 0);
+  auto ret3 = ReduceSum(ret1);
+
+  return Multiply(ret3, -1.0);
 }
 
 /**
@@ -2436,7 +2456,33 @@ ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T
   return ret;
 }
 
+template <typename T, typename C, typename S>
+void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
+              memory::Range const &range, linalg::Matrix<T, C, S> &ret)
+{
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
 
+  if (range.is_undefined())
+  {
+    Multiply(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
+           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
+}
 template <typename T, typename C, typename S>
 void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2, linalg::Matrix<T, C, S> &ret)
 {
@@ -2710,6 +2756,24 @@ linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matr
 
 
   Divide(obj1, obj2, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Divide(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
+{
+  assert(array.size() == ret.size());
+  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / val; },
+      array.data());
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &array, T const &scalar)
+{
+  linalg::Matrix<T, C, S> ret{array.size()};
+  Divide(array, scalar, ret);
   return ret;
 }
 /**
