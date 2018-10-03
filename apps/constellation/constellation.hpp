@@ -26,6 +26,7 @@
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "storage/object_store.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/p2p_service.hpp"
@@ -83,6 +84,8 @@ private:
   using LaneServices           = ledger::StorageUnitBundledService;
   using StorageUnitClient      = ledger::StorageUnitClient;
   using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
+  using KeyStore               = storage::ObjectStore<byte_array::ConstByteArray>;
+  using KeyStorePtr            = std::shared_ptr<KeyStore>;
   using Flag                   = std::atomic<bool>;
   using ExecutionManager       = ledger::ExecutionManager;
   using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
@@ -128,6 +131,11 @@ private:
   /// @name Block Processing
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
+  /// @}
+
+  /// @name Key Store
+  /// @{
+  KeyStorePtr key_store_;  ///< The random access & permanent key store
   /// @}
 
   /// @name Blockchain and Mining
