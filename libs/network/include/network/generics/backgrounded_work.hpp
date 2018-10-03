@@ -91,7 +91,7 @@ public:
             break;
           }
         }
-        catch (std::exception ex)
+        catch (std::exception &ex)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle threw:", ex.what());
         }
