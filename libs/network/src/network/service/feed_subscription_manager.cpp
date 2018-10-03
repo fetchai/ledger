@@ -66,7 +66,7 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
         FETCH_LOG_DEBUG(LOGGING_NAME, "OMG SERVICE_FEED", feed);
         params << SERVICE_FEED << feed;
 
-        uint64_t p = params.Tell();
+        uint64_t p = params.tell();
         params << subscription_handler_type(0);  // placeholder
 
         params.Allocate(msg.size());
@@ -83,7 +83,7 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
         while (i < subscribers_.size())
         {
           auto &s = subscribers_[i];
-          params.Seek(p);
+          params.seek(p);
           params << s.id;
 
           publishing_workload_type new_notification =

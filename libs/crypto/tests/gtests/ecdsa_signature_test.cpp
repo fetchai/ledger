@@ -50,6 +50,23 @@ protected:
   {}
 
   template <eECDSAEncoding SIG_ENCODING, eECDSAEncoding KEY_ENCODING>
+  void test_sign_verify_hash_cycle()
+  {
+    //* Production code:
+    openssl::ECDSAPrivateKey<KEY_ENCODING> priv_key{
+        openssl::ECDSAPrivateKey<eECDSAEncoding::bin>(priv_key_data_)};
+
+    using ecdsa_signature_type          = ECDSASignature<SIG_ENCODING>;
+    auto const &         test_hash_data = test_data_;
+    ecdsa_signature_type signature{ecdsa_signature_type::SignHash(priv_key, test_hash_data)};
+
+    const auto verification_result = signature.VerifyHash(priv_key.publicKey(), test_hash_data);
+
+    //* Expectations:
+    EXPECT_TRUE(verification_result);
+  }
+
+  template <eECDSAEncoding SIG_ENCODING, eECDSAEncoding KEY_ENCODING>
   void test_sign_verify_cycle()
   {
     //* Production code:
@@ -169,6 +186,21 @@ protected:
     EXPECT_FALSE(verification_result);
   }
 };
+
+TEST_F(ECDCSASignatureTest, test_sign_verify_hash_cycle)
+{
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::canonical, eECDSAEncoding::DER>();
+
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::bin, eECDSAEncoding::DER>();
+
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::canonical>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::bin>();
+  test_sign_verify_hash_cycle<eECDSAEncoding::DER, eECDSAEncoding::DER>();
+}
 
 TEST_F(ECDCSASignatureTest, test_sign_verify_cycle)
 {

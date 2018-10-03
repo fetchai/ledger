@@ -116,7 +116,7 @@ protected:
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", client,
-                    " data size=", result.Tell());
+                    " data size=", result.tell());
 
     {
       LOG_STACK_TRACE_POINT;

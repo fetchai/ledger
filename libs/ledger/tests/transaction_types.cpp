@@ -86,7 +86,7 @@ int main(int argc, char const **argv)
         VerifiedTransaction                 txTemp = VerifiedTransaction::Create(trans);
         fetch::serializers::ByteArrayBuffer arr;
         arr << txTemp;
-        arr.Seek(0);
+        arr.seek(0);
         arr >> tx;
       }
 
@@ -95,23 +95,26 @@ int main(int argc, char const **argv)
 
     SECTION("Random transaction generation")
     {
-      for (std::size_t i = 0; i < 10; ++i)
+      for (std::size_t i = 0; i < 1000; ++i)
       {
         MutableTransaction mutableTx = fetch::chain::RandomTransaction();
 
         const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
 
-        std::cout << "\n===========================================" << std::endl;
-        std::cout << ToHex(transaction.summary().transaction_hash) << std::endl;
-        std::cout << ToHex(transaction.data()) << std::endl;
+        std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i
+                  << "] ==========================================" << std::endl;
+        std::cout << "contract name:   " << transaction.contract_name() << std::endl;
+        std::cout << "hash:            " << ToHex(transaction.summary().transaction_hash)
+                  << std::endl;
+        std::cout << "data:            " << ToHex(transaction.data()) << std::endl;
         for (auto const &sig : transaction.signatures())
         {
-          std::cout << ToHex(sig.first.identifier()) << std::endl;
-          std::cout << ToHex(sig.first.parameters()) << std::endl;
-          std::cout << ToHex(sig.second.signature_data) << std::endl;
-          std::cout << ToHex(sig.second.type) << std::endl;
+          std::cout << "identity:        " << ToHex(sig.first.identifier()) << std::endl;
+          std::cout << "identity params: " << sig.first.parameters() << std::endl;
+          std::cout << "signature:       " << ToHex(sig.second.signature_data) << std::endl;
+          std::cout << "signature type:  " << sig.second.type << std::endl;
         }
-        std::cout << transaction.contract_name() << std::endl;
+        EXPECT(mutableTx.Verify());
       }
     };
   };

@@ -31,12 +31,13 @@ namespace ledger {
 class ChainCodeFactory
 {
 public:
+  using contract_id_type      = byte_array::ConstByteArray;
   using chain_code_type       = std::shared_ptr<Contract>;
   using factory_callable_type = std::function<chain_code_type()>;
-  using factory_registry_type = std::unordered_map<std::string, factory_callable_type>;
-  using contract_set_type     = std::unordered_set<std::string>;
+  using factory_registry_type = std::unordered_map<contract_id_type, factory_callable_type>;
+  using contract_set_type     = std::unordered_set<contract_id_type>;
 
-  chain_code_type          Create(std::string const &name) const;
+  chain_code_type          Create(contract_id_type const &name) const;
   contract_set_type const &GetContracts() const;
 };
 
