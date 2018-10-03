@@ -25,10 +25,10 @@ namespace fetch {
 namespace network {
 
 /**
- * Simple wrapper around the service promise which mandates the return time from the underlying
- * promise.
- *
- * @tparam RESULT The expected return type of the promise
+ * This is a count of the number of instances of a type which have
+ * been created but have not yet signalled that they are completely
+ * set up. It includes a wait operation so code can make sure all its
+ * dependendies are ready before proceeding.
  */
 template <typename DIFFERENTIATOR>
 class AtomicInflightCounter
