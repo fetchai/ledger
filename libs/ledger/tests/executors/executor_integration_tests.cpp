@@ -83,7 +83,7 @@ protected:
     storage_.reset(new underlying_storage_type{*network_manager_});
 
     fetch::network::FutureTimepoint deadline(std::chrono::seconds(10));
-    if (fetch::network::AtomicInflightCounter<fetch::network::TCPServer>::Wait(deadline))
+    if (fetch::network::AtomicInflightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
     }
