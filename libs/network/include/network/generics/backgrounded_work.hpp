@@ -76,8 +76,8 @@ public:
       {
         try
         {
-          auto r = workitem->Work();
-          switch (r)
+          auto result = workitem->Work();
+          switch (result)
           {
           case PromiseState::WAITING:
             ++workitem_iter;
@@ -85,8 +85,8 @@ public:
           case PromiseState::SUCCESS:
           case PromiseState::FAILED:
           case PromiseState::TIMEDOUT:
-            assert(r < workload_.size());
-            workload_[r].push_back(workitem);
+            assert(result < workload_.size());
+            workload_[result].push_back(workitem);
             workitem_iter = worklist_for_state.erase(workitem_iter);
             break;
           }
@@ -184,18 +184,23 @@ public:
 
   void Add(std::shared_ptr<WORKER> new_work)
   {
-    Lock lock(mutex_);
-    workload_[PromiseState::WAITING].push_back(new_work);
+    {
+      Lock lock(mutex_);
+      // TODO(kll) use a no-copy insert operator here..
+      workload_[PromiseState::WAITING].push_back(new_work);
+    }
     Wake();
   }
 
   void Add(std::vector<std::shared_ptr<WORKER>> new_works)
   {
-    Lock lock(mutex_);
-    // TODO(kll) use bulk insert operators here..
-    for (auto new_work : new_works)
     {
-      workload_[PromiseState::WAITING].push_back(new_works);
+      Lock lock(mutex_);
+      // TODO(kll) use bulk insert operators here..
+      for (auto new_work : new_works)
+      {
+        workload_[PromiseState::WAITING].push_back(new_works);
+      }
     }
     Wake();
   }

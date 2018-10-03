@@ -34,7 +34,7 @@ public:
   using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
 
-  FutureTimepoint(Duration const &dur)
+  explicit FutureTimepoint(Duration const &dur)
   {
     due_time_ = Clock::now() + dur;
   }
