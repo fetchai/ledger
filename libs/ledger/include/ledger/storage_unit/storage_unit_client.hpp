@@ -125,6 +125,11 @@ private:
     LaneConnectorWorker(
         size_t thelane, SharedServiceClient theclient, std::string const &thename,
         const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
+      : client(theclient)
+      , attempts(0)
+      , name(thename)
+      , timeout(thetimeout)
+      , max_attempts(10)
     {
       lane = thelane;
 
@@ -147,11 +152,7 @@ private:
           .Allow(State::TIMEDOUT, State::QUERYING)
 
           .Allow(State::FAILED, State::CONNECTING);
-      client       = theclient;
-      attempts     = 0;
-      name         = thename;
-      timeout      = thetimeout;
-      max_attempts = 10;
+
     }
 
     static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
