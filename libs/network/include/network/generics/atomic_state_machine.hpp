@@ -24,7 +24,7 @@ namespace fetch {
 
 namespace network {
 
-template<typename STATE>
+template <typename STATE>
 class AtomicStateMachine
 {
 public:
@@ -33,19 +33,33 @@ public:
     STATE to;
     STATE from;
 
-    Transition(STATE t,STATE f):to(t),from(f) {}
+    Transition(STATE t,STATE f)
+      : to(t)
+      , from(f) = default;
 
     bool operator<(Transition const &other) const
     {
-      if (to < other.to) return true;
-      if (to > other.to) return false;
-      if (from < other.from) return true;
-      if (from > other.from) return false;
+      if (to < other.to)
+      {
+        return true;
+      }
+      if (to > other.to)
+      {
+        return false;
+      }
+      if (from < other.from)
+      {
+        return true;
+      }
+      if (from > other.from)
+      {
+        return false;
+      }
       return false;
     }
   };
 
-  AtomicStateMachine() = default;
+  AtomicStateMachine()          = default;
   virtual ~AtomicStateMachine() = default;
 
   AtomicStateMachine(std::initializer_list<Transition> transitions)

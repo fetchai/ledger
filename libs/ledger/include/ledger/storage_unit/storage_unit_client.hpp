@@ -93,19 +93,18 @@ public:
 
 private:
   enum class State
-    {
-      INITIAL = 0,
-      CONNECTING,
-      QUERYING,
-      PINGING,
-      SNOOZING,
-      DONE,
-      TIMEDOUT,
-      FAILED,
-    };
+  {
+    INITIAL = 0,
+    CONNECTING,
+    QUERYING,
+    PINGING,
+    SNOOZING,
+    DONE,
+    TIMEDOUT,
+    FAILED,
+  };
 
-  class LaneConnectorWorker
-    : public network::AtomicStateMachine<State>
+  class LaneConnectorWorker : public network::AtomicStateMachine<State>
   {
   public:
     SharedServiceClient client;
@@ -181,8 +180,7 @@ private:
     std::string GetStateName(int state)
     {
       const char *states[] = {
-          "INITIAL", "CONNECTING", "QUERYING", "PINGING",
-          "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
+          "INITIAL", "CONNECTING", "QUERYING", "PINGING", "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
       };
       return std::string(states[state]);
     }
@@ -228,7 +226,7 @@ private:
           currentstate = State::SNOOZING;
           return true;
         }
-        ping = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
+        ping         = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
         currentstate = State::PINGING;
         return true;
       }  // end CONNECTING
@@ -253,9 +251,9 @@ private:
           }
           else
           {
-            lane_prom  = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-            count_prom = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-            id_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+            lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+            count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+            id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
             currentstate = State::QUERYING;
             return true;
           }
