@@ -86,7 +86,7 @@ public:
           case PromiseState::SUCCESS:
           case PromiseState::FAILED:
           case PromiseState::TIMEDOUT:
-            assert(result < workload_.size());
+            assert(std::size_t(result) < workload_.size());
             workload_[result].push_back(workitem);
             workitem_iter = worklist_for_state.erase(workitem_iter);
             break;

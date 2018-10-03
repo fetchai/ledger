@@ -107,6 +107,12 @@ private:
   class LaneConnectorWorker : public network::AtomicStateMachine<State>
   {
   public:
+    size_t lane;
+    Promise               lane_prom;
+    SharedServiceClient client;
+    Promise               count_prom;
+    Promise               id_prom;
+
     LaneConnectorWorker(
         size_t thelane, SharedServiceClient theclient, std::string const &thename,
         const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
@@ -281,16 +287,11 @@ private:
       return false;
     }
   private:
-    SharedServiceClient client;
     FutureTimepoint     next_attempt;
     size_t              attempts;
     Promise             ping;
 
-    Promise               lane_prom;
-    Promise               count_prom;
-    Promise               id_prom;
     byte_array::ByteArray host;
-    size_t                lane;
     std::string           name;
     FutureTimepoint       timeout;
     size_t                max_attempts;
