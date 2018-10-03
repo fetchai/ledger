@@ -36,6 +36,8 @@ using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
 using ::testing::_;
 
+// This test seems annoyingly flakey.
+
 class ExecutorIntegrationTests : public ::testing::Test
 {
 protected:
