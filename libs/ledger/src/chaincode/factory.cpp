@@ -58,7 +58,7 @@ contract_set_type const     global_contract_set = CreateContractSet(global_regis
 
 }  // namespace
 
-ChainCodeFactory::chain_code_type ChainCodeFactory::Create(std::string const &name) const
+ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type const &name) const
 {
 
   // lookup the chain code instance

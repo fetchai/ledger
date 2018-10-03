@@ -18,13 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/serialisation_verbatim_wrapper.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
 
+#include <functional>
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -32,16 +37,10 @@
 namespace fetch {
 namespace chain {
 
-class Signature
+struct Signature
 {
-public:
   byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
-
-  bool operator==(Signature const &right) const
-  {
-    return signature_data == right.signature_data && type == right.type;
-  }
 
   void Clone()
   {
@@ -68,12 +67,13 @@ struct TransactionSummary
 {
   using resource_type     = byte_array::ConstByteArray;
   using digest_type       = byte_array::ConstByteArray;
-  using contract_id_type  = std::string;
+  using contract_id_type  = byte_array::ConstByteArray;
   using resource_set_type = std::set<resource_type>;
+  using fee_type          = uint64_t;
 
   resource_set_type resources;
   digest_type       transaction_hash;
-  uint64_t          fee{0};
+  fee_type          fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   contract_id_type contract_name;
@@ -103,37 +103,210 @@ void Deserialize(T &serializer, TransactionSummary &b)
   serializer >> b.resources >> b.fee >> b.transaction_hash >> b.contract_name;
 }
 
+class MutableTransaction;
+
+template <typename MUTABLE_TRANSACTION = MutableTransaction>
+class TxSigningAdapter
+{
+  static_assert(std::is_same<MutableTransaction,
+                             typename std::remove_const<MUTABLE_TRANSACTION>::type>::value,
+                "Type must be const or non-const `MutableTransaction` class");
+
+public:
+  using self_type        = TxSigningAdapter;
+  using transaction_type = MUTABLE_TRANSACTION;
+
+  // TODO(issue #260): Runtime switching between different types cryptographic schemes
+  using signature_type   = typename crypto::ECDSASigner::Signature;
+  using private_key_type = crypto::openssl::ECDSAPrivateKey<>;
+  using public_key_type  = private_key_type::public_key_type;
+  using hasher_type      = crypto::ECDSASigner::Signature::hasher_type;
+
+  TxSigningAdapter() = delete;
+
+  TxSigningAdapter(self_type const &from) = default;
+  TxSigningAdapter(self_type &&from)      = default;
+  self_type &operator=(self_type const &from) = default;
+  self_type &operator=(self_type &&from) = default;
+
+  TxSigningAdapter(transaction_type &tx)
+    : tx_{&tx}
+  {}
+
+  TxSigningAdapter &operator=(transaction_type &tx)
+  {
+    tx_ = &tx;
+    Reset();
+    Update();
+    return *this;
+  }
+
+  operator transaction_type &() const
+  {
+    if (!tx_)
+    {
+      throw std::runtime_error("Pointer to wrapped underlying transaction is nullptr.");
+    }
+
+    return *tx_;
+  }
+
+  byte_array::ConstByteArray const &DataForSigning() const
+  {
+    Update();
+    return stream_->data();
+  }
+
+  bool Verify(signatures_type::value_type const &sig) const
+  {
+    auto const &    identity  = sig.first;
+    auto const &    signature = sig.second;
+    public_key_type pub_key{identity.identifier()};
+    auto            hash = HashOfTxDataForSigning(identity);
+    return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
+  }
+
+  signatures_type::value_type Sign(byte_array::ConstByteArray const &private_key) const
+  {
+    return Sign(private_key_type{private_key});
+  }
+
+  signatures_type::value_type Sign(private_key_type const &private_key) const
+  {
+    crypto::Identity identity{signature_type::ecdsa_curve_type::sn,
+                              private_key.publicKey().keyAsBin()};
+    auto             hash = HashOfTxDataForSigning(identity);
+    auto             sig  = signature_type::SignHash(private_key, hash);
+    return signatures_type::value_type{
+        std::move(identity), Signature{sig.signature(), signature_type::ecdsa_curve_type::sn}};
+  }
+
+  void Reset()
+  {
+    stream_->Resize(0);
+    tx_data_hash_->Reset();
+  }
+
+  void Update() const;
+
+  byte_array::ConstByteArray HashOfTxDataForSigning(crypto::Identity const &identity) const
+  {
+    Update();
+
+    // Copy hash context by *value*
+    hasher_type tx_data_hash_copy = *tx_data_hash_;
+    identity_stream_->Resize(0, ResizeParadigm::ABSOLUTE);
+    *identity_stream_ << identity;
+
+    // Adding serialized identity to the hash for signing
+    if (!tx_data_hash_copy.Update(identity_stream_->data()))
+    {
+      throw std::runtime_error("Failure while updating hash for signing");
+    }
+
+    return tx_data_hash_copy.Final();
+  }
+
+  bool operator==(TxSigningAdapter const &left_tx) const;
+  bool operator!=(TxSigningAdapter const &left_tx) const;
+
+private:
+  transaction_type *tx_ = nullptr;
+  // Data members as shared pointers to avoid issue with const-ness issues when modifying content.
+  std::shared_ptr<serializers::ByteArrayBuffer> stream_{
+      std::make_shared<serializers::ByteArrayBuffer>()};
+  std::shared_ptr<hasher_type>                  tx_data_hash_{std::make_shared<hasher_type>()};
+  std::shared_ptr<serializers::ByteArrayBuffer> identity_stream_{
+      std::make_shared<serializers::ByteArrayBuffer>()};
+
+  template <typename T, typename U>
+  friend void Serialize(T &stream, TxSigningAdapter<U> const &tx);
+  template <typename T, typename U>
+  friend void Deserialize(T &stream, TxSigningAdapter<U> &tx);
+};
+
+template <typename T, typename U>
+void Serialize(T &stream, TxSigningAdapter<U> const &tx);
+
+template <typename T, typename U>
+void Deserialize(T &stream, TxSigningAdapter<U> &tx);
+
+template <typename MUTABLE_TX>
+TxSigningAdapter<MUTABLE_TX> TxSigningAdapterFactory(MUTABLE_TX &tx)
+{
+  return TxSigningAdapter<MUTABLE_TX>{tx};
+}
+
 class MutableTransaction
 {
 public:
-  using hasher_type       = crypto::SHA256;
-  using digest_type       = TransactionSummary::digest_type;
-  using resource_set_type = TransactionSummary::resource_set_type;
-  using signatures_type   = signatures_type;
+  using hasher_type             = crypto::SHA256;
+  using digest_type             = TransactionSummary::digest_type;
+  using resource_set_type       = TransactionSummary::resource_set_type;
+  using signatures_type         = signatures_type;
+  using tx_signing_adapter_type = TxSigningAdapter<MutableTransaction>;
 
   resource_set_type const &resources() const
   {
     return summary_.resources;
   }
+  resource_set_type &resources()
+  {
+    return summary_.resources;
+  }
+
   TransactionSummary const &summary() const
   {
     return summary_;
   }
+  TransactionSummary &summary()
+  {
+    return summary_;
+  }
+
   byte_array::ConstByteArray const &data() const
   {
     return data_;
   }
+  byte_array::ConstByteArray &data()
+  {
+    return data_;
+  }
+
   signatures_type const &signatures() const
   {
     return signatures_;
   }
+  signatures_type &signatures()
+  {
+    return signatures_;
+  }
+
   TransactionSummary::contract_id_type const &contract_name() const
   {
     return summary_.contract_name;
   }
+  TransactionSummary::contract_id_type &contract_name()
+  {
+    return summary_.contract_name;
+  }
+
   digest_type const &digest() const
   {
     return summary_.transaction_hash;
+  }
+  digest_type &digest()
+  {
+    return summary_.transaction_hash;
+  }
+
+  TransactionSummary::fee_type const &fee() const
+  {
+    return summary_.fee;
+  }
+  TransactionSummary::fee_type &fee()
+  {
+    return summary_.fee;
   }
 
   enum
@@ -183,10 +356,38 @@ public:
     summary_.transaction_hash = hash.Final();
   }
 
-  bool Verify()
+  bool Verify() const
   {
-    // TODO(issue 24): Needs implementing
-    return true;
+    auto tx_sign_adapter = TxSigningAdapterFactory(*this);
+    return Verify(tx_sign_adapter);
+  }
+
+  template <typename MUTABLE_TX>
+  bool Verify(TxSigningAdapter<MUTABLE_TX> &tx_sign_adapter) const
+  {
+    for (auto const &sig : signatures_)
+    {
+      bool const ver_res = tx_sign_adapter.Verify(sig);
+
+      if (!ver_res)
+      {
+        return false;
+      }
+    }
+
+    return signatures_.size() > 0;
+  }
+
+  Signature const &Sign(byte_array::ConstByteArray const &private_key,
+                        tx_signing_adapter_type &         tx_sign_adapter)
+  {
+    return SignInternal(private_key, tx_sign_adapter);
+  }
+
+  Signature const &Sign(tx_signing_adapter_type::private_key_type const &private_key,
+                        tx_signing_adapter_type &                        tx_sign_adapter)
+  {
+    return SignInternal(private_key, tx_sign_adapter);
   }
 
   void PushResource(byte_array::ConstByteArray const &res)
@@ -240,16 +441,113 @@ private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
   signatures_type            signatures_;
+
+  template <typename PRIVATE_KEY_TYPE>
+  Signature const &SignInternal(PRIVATE_KEY_TYPE const & private_key,
+                                tx_signing_adapter_type &tx_sign_adapter)
+  {
+    auto const result = signatures_.emplace(tx_sign_adapter.Sign(private_key));
+    if (!result.second)
+    {
+      throw std::runtime_error("Signature for given private key alrteady already exists.");
+    }
+    return result.first->second;
+  }
+
+  resource_set_type &resources_inten()
+  {
+    return summary_.resources;
+  }
+
+  TransactionSummary &summary_intern()
+  {
+    return summary_;
+  }
+
+  byte_array::ConstByteArray &data_intern()
+  {
+    return data_;
+  }
+
+  signatures_type &signatures_intern()
+  {
+    return signatures_;
+  }
+
+  TransactionSummary::contract_id_type &contract_name_intern()
+  {
+    return summary_.contract_name;
+  }
+
+  digest_type &digest_intern()
+  {
+    return summary_.transaction_hash;
+  }
+
+  TransactionSummary::fee_type &fee_intern()
+  {
+    return summary_.fee;
+  }
+
+  template <typename MUTABLE_TX>
+  friend class TxSigningAdapter;
+  template <typename T, typename MUTABLE_TX>
+  friend void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx);
+  template <typename T, typename MUTABLE_TX>
+  friend void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx);
 };
 
+template <typename MUTABLE_TX>
+void TxSigningAdapter<MUTABLE_TX>::Update() const
+{
+  if (stream_->size() == 0)
+  {
+    serializers::ByteArrayBuffer &stream = *stream_.get();
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data());
+    // tx_data_hash_.Reset();
+    tx_data_hash_->Update(stream.data());
+  }
+}
+
+template <typename T, typename MUTABLE_TX>
+void Serialize(T &stream, TxSigningAdapter<MUTABLE_TX> const &tx)
+{
+  stream.Append(serializers::Verbatim{tx.DataForSigning()},
+                static_cast<MUTABLE_TX &>(tx).signatures());
+}
+
+template <typename T, typename MUTABLE_TX>
+void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
+{
+  MutableTransaction &tx_ = tx;
+  stream >> tx_.contract_name_intern() >> tx_.fee_intern() >> tx_.resources_inten() >>
+      tx_.data_intern() >> tx_.signatures_intern();
+  tx.Reset();
+}
+
+template <typename MUTABLE_TX>
+bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const &left_tx) const
+{
+  MutableTransaction const &left = left_tx;
+  return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
+         tx_->resources() == left.resources() && tx_->data() == left.data();
+}
+
+template <typename MUTABLE_TX>
+bool TxSigningAdapter<MUTABLE_TX>::operator!=(TxSigningAdapter<MUTABLE_TX> const &left_tx) const
+
+{
+  return !(*this == left_tx);
+}
+
 template <typename T>
-void Serialize(T &serializer, MutableTransaction::signatures_type::value_type const &b)
+void Serialize(T &serializer, signatures_type::value_type const &b)
 {
   serializer << b.first << b.second;
 }
 
 template <typename T>
-void Deserialize(T &serializer, MutableTransaction::signatures_type::value_type &b)
+void Deserialize(T &serializer, signatures_type::value_type &b)
 {
   serializer >> b.first >> b.second;
 }

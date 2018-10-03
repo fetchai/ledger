@@ -85,7 +85,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   }
 
   Identifier identifier;
-  identifier.Parse(static_cast<std::string>(tx.contract_name()));
+  identifier.Parse(tx.contract_name());
 
   // Lookup the chain code associated with the transaction
   auto chain_code = chain_code_cache_.Lookup(identifier.name_space());

@@ -19,6 +19,7 @@
 
 #include <utility>
 
+#include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
 #include "crypto/sha256.hpp"
@@ -111,7 +112,6 @@ public:
   static ECDSASignature Sign(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
                              byte_array::ConstByteArray const &                data_to_sign)
   {
-
     return ECDSASignature(private_key, data_to_sign, eBinaryDataType::data);
   }
 
@@ -183,8 +183,7 @@ private:
   ECDSASignature(private_key_type<BIN_ENC, POINT_CONV_FORM> const &private_key,
                  byte_array::ConstByteArray const &                data_to_sign,
                  const eBinaryDataType data_type = eBinaryDataType::data)
-    : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign)
-                                               : byte_array::ByteArray()}
+    : hash_{data_type == eBinaryDataType::data ? Hash<hasher_type>(data_to_sign) : data_to_sign}
     , signature_ECDSA_SIG_{CreateSignature(private_key, hash_)}
     , signature_{Convert(signature_ECDSA_SIG_, signatureBinaryDataFormat)}
   {}

@@ -136,7 +136,7 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
 
   Promise p = ExtractPromise(id);
 
-  auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+  auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
   p->Fulfill(ret);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id,
@@ -161,7 +161,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     // Promise p = ExtractPromise(id);
 
-    // auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+    // auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
     // p->Fulfill(ret);
 
     // FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the

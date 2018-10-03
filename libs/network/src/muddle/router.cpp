@@ -251,7 +251,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 }
 
 /**
- * Tells the router that it should add a connection. In practise this means that it should
+ * tells the router that it should add a connection. In practise this means that it should
  * begin identity exchange with the node and update the routing table accordingly.
  *
  * Before calling this function, the handle must be registered with the connection register. If

@@ -19,7 +19,7 @@ int main() {
   std::string nstr, nstr2;
   ByteArrayBuffer buffer;
   buffer << str << str2;
-  buffer.Seek(0);
+  buffer.seek(0);
   buffer >> nstr >> nstr2;
 
   std::cout << nstr << std::endl << nstr2 << std::endl;
@@ -30,7 +30,7 @@ int main() {
     std::cout << "groups are: " << trans.summary().groups.size() << std::endl;
     ByteArrayBuffer testBuffer;
     testBuffer << trans;
-    testBuffer.Seek(0);
+    testBuffer.seek(0);
 
     fetch::chain::Transaction result;
     testBuffer >> result;

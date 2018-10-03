@@ -23,12 +23,17 @@
 namespace fetch {
 namespace ledger {
 
+constexpr char                   Identifier::SEPARATOR;
+byte_array::ConstByteArray const Identifier::separator_{
+    reinterpret_cast<byte_array::ConstByteArray::container_type const *>(&Identifier::SEPARATOR),
+    1};
+
 /**
  * Construct an identifier from a fully qualified name
  *
  * @param identifier The fully qualified name to parse
  */
-Identifier::Identifier(std::string identifier)
+Identifier::Identifier(string_type identifier)
   : full_{std::move(identifier)}
 {
   Tokenise();
@@ -44,16 +49,27 @@ void Identifier::Tokenise()
   std::size_t offset = 0;
   for (;;)
   {
-    std::size_t index = full_.find(SEPERATOR, offset);
+    std::size_t index = full_.Find(SEPARATOR, offset);
 
-    if (index == std::string::npos)
+    if (index == string_type::NPOS)
     {
-      tokens_.push_back(full_.substr(offset));
+      std::size_t const size = full_.size() - offset;
+      if (size == 0)
+      {
+        throw std::runtime_error("identifier contains empty tokens");
+      }
+
+      tokens_.push_back(full_.SubArray(offset, size));
       break;
     }
     else
     {
-      tokens_.push_back(full_.substr(offset, index - offset));
+      std::size_t const size = index - offset;
+      if (size == 0)
+      {
+        throw std::runtime_error("identifier contains empty tokens");
+      }
+      tokens_.push_back(full_.SubArray(offset, size));
       offset = index + 1;
     }
   }

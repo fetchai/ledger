@@ -110,7 +110,7 @@ struct Packer<T>
   static void SerializeArguments(S &serializer, T &&last)
   {
     serializer << last;
-    serializer.Seek(0);
+    serializer.seek(0);
   }
 };
 }  // namespace details
@@ -157,7 +157,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
 
   serializer << protocol;
   serializer << function;
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 /* This function packs a function call using packed arguments.
@@ -183,7 +183,7 @@ void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &pro
 
   serializer.Allocate(args.size());
   serializer.WriteBytes(args.pointer(), args.size());
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 /* Function that packs arguments to serializer.
@@ -209,7 +209,7 @@ void PackArgs(S &serializer)
 {
   LOG_STACK_TRACE_POINT;
 
-  serializer.Seek(0);
+  serializer.seek(0);
 }
 
 enum Callable

@@ -112,7 +112,7 @@ def parse_commandline():
     parser.add_argument('-p', '--build-path-prefix', default='build-', help='The prefix to be used for the naming of the build folder')
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
-    parser.add_argument('--force-build-folder', help='Specify the folder directly that should be used for the build / test')
+    parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
     return parser.parse_args()
 
 
@@ -137,7 +137,11 @@ def build_project(project_root, build_root, options):
         sys.exit(exit_code)
 
     # make the project
-    exit_code = subprocess.call(['make', '-j'], cwd=build_root)
+    if os.path.exists(os.path.join(build_root, "build.ninja")):
+        cmd = ["ninja"]
+    else:
+        cmd = ['make', '-j']
+    exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
         sys.exit(exit_code)
