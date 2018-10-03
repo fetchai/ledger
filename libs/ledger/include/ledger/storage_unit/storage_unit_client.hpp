@@ -507,7 +507,7 @@ public:
   void Commit(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (auto lanedata : lanes_)
+    for (auto const &lanedata : lanes_)
     {
       auto const &client  = lanedata.second;
       auto        promise = client->Call(
@@ -525,7 +525,7 @@ public:
   void Revert(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (auto lanedata : lanes_)
+    for (auto const &lanedata : lanes_)
     {
       auto const &client  = lanedata.second;
       auto        promise = client->Call(
