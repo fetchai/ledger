@@ -61,7 +61,7 @@ public:
     due_time_ = Clock::now() + dur;
   }
 
-  void SetMilliseconds(Timepointconst  &timepoint, size_t milliseconds)
+  void SetMilliseconds(Timepoint const &timepoint, size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
   }
