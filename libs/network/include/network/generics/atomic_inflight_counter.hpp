@@ -35,7 +35,7 @@ enum class AtomicCounterName
  * set up. It includes a wait operation so code can make sure all its
  * dependendies are ready before proceeding.
  */
-template<AtomicCounterName>
+template <AtomicCounterName>
 class AtomicInflightCounter
 {
 public:
@@ -77,7 +77,7 @@ public:
     my_count_ -= clipped;
     auto &the_counter = GetCounter();
     Lock  lock(the_counter.mutex);
-    auto  previous =the_counter.count.fetch_sub(clipped);
+    auto  previous = the_counter.count.fetch_sub(clipped);
     if (previous == 1)
     {
       GetCounter().cv.notify_all();
