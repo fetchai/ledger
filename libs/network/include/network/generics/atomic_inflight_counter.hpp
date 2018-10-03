@@ -76,11 +76,23 @@ public:
     unsigned int clipped = std::min(completed_count, my_count_);
     my_count_ -= clipped;
     auto &the_counter = GetCounter();
-    Lock  lock(the_counter.mutex);
-    auto  previous = the_counter.count.fetch_sub(clipped);
-    if (previous == 1)
+
     {
-      GetCounter().cv.notify_all();
+      Lock  lock(the_counter.mutex);
+      auto  previous = the_counter.count.fetch_sub(clipped);
+      if (previous < 1)
+      {
+        GetCounter().cv.notify_all();
+      }
+    }
+
+    if (previous < 0)
+    {
+      Lock  lock(the_counter.mutex);
+      if (the_counter.count<0) // check it wasn't modified while we were locking.
+      {
+        the_counter.count.load(0); // set it to zero.
+      }
     }
   }
 
