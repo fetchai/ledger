@@ -85,20 +85,20 @@ private:
   http::HTTPResponse OnRegister(http::HTTPRequest const &request)
   {
     // Determine number of locations to create
-    uint64_t locations_to_create = 1;
+    uint64_t count = 1;
 
     {
       json::JSONDocument doc;
       doc = request.JSON();
 
-      locations_to_create = doc["locations_to_create"].As<uint64_t>();
+      count = doc["count"].As<uint64_t>();
     }
 
     // Avoid locations = 0 corner case
-    locations_to_create = locations_to_create == 0 ? 1 : locations_to_create;
+    count = count == 0 ? 1 : count;
 
     // Cap locations
-    locations_to_create = std::min(locations_to_create, uint64_t(10000));
+    count = std::min(count, uint64_t(10000));
 
     static constexpr std::size_t IDENTITY_SIZE = 64;
 
@@ -107,7 +107,7 @@ private:
 
     std::vector<byte_array::ByteArray> addresses;
 
-    for (size_t i = 0; i < locations_to_create; i++)
+    for (size_t i = 0; i < count; ++i)
     {
       // Create random address
       byte_array::ByteArray address;
