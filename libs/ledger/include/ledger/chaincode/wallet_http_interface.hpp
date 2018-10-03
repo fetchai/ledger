@@ -75,48 +75,106 @@ public:
   }
 
 private:
+  /**
+   * Create address(es) with some amount of wealth and submit it to the network
+   *
+   * @param: request The http request, optionally used to create more than one address
+   *
+   * @return: The address(es) of the new wealth wrapped as a HTTP response
+   */
   http::HTTPResponse OnRegister(http::HTTPRequest const &request)
   {
+    // Determine number of locations to create
+    uint64_t locations_to_create = 1;
+
+    {
+      json::JSONDocument doc;
+      doc = request.JSON();
+
+      locations_to_create = doc["locations_to_create"].As<uint64_t>();
+    }
+
+    // Avoid locations = 0 corner case
+    locations_to_create = locations_to_create == 0 ? 1 : locations_to_create;
+
+    // Cap locations
+    locations_to_create = std::min(locations_to_create, uint64_t(10000));
+
     static constexpr std::size_t IDENTITY_SIZE = 64;
 
-    std::random_device rd;
-    std::mt19937       rng(rd());
+    static std::random_device rd;
+    static std::mt19937       rng(rd());
 
-    byte_array::ByteArray address;
-    address.Resize(IDENTITY_SIZE);
-    for (std::size_t i = 0; i < IDENTITY_SIZE; ++i)
+    std::vector<byte_array::ByteArray> addresses;
+
+    for(size_t i = 0; i < locations_to_create;i++)
     {
-      address[i] = static_cast<uint8_t>(rng() & 0xFF);
+      // Create random address
+      byte_array::ByteArray address;
+      address.Resize(IDENTITY_SIZE);
+      for (std::size_t i = 0; i < IDENTITY_SIZE; ++i)
+      {
+        address[i] = static_cast<uint8_t>(rng() & 0xFF);
+      }
+
+      // Save address for response generation
+      addresses.push_back(address);
+
+      // construct the wealth generation transaction
+      {
+        script::Variant wealth_data;
+        wealth_data.MakeObject();
+        wealth_data["address"] = byte_array::ToBase64(address);
+        wealth_data["amount"]  = 1000;
+
+        std::ostringstream oss;
+        oss << wealth_data;
+
+        chain::MutableTransaction mtx;
+        mtx.set_contract_name("fetch.token.wealth");
+        mtx.set_data(oss.str());
+        mtx.set_fee(rng() & 0x1FF);
+        mtx.PushResource(address);
+
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
+
+        // dispatch the transaction
+        processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
+      }
     }
 
     script::Variant data;
-    data.MakeObject();
-    data["address"] = byte_array::ToBase64(address);
-    data["success"] = true;
+    std::ostringstream oss;
 
-    // construct the wealth generation transaction
+    // Return old data format as a fall back (when size is 1)
+    if(addresses.size() == 1)
     {
-      script::Variant wealth_data;
-      wealth_data.MakeObject();
-      wealth_data["address"] = byte_array::ToBase64(address);
-      wealth_data["amount"]  = 1000;
+      data.MakeObject();
 
-      std::ostringstream oss;
-      oss << wealth_data;
+      data["address"] = byte_array::ToBase64(addresses[0]);
+      data["success"] = true;
+    }
+    else
+    {
+      data.MakeObject();
+      data["success"] = true;
 
-      chain::MutableTransaction mtx;
-      mtx.set_contract_name("fetch.token.wealth");
-      mtx.set_data(oss.str());
-      mtx.set_fee(rng() & 0x1FF);
-      mtx.PushResource(address);
+      script::Variant results_array;
+      results_array.MakeArray(addresses.size());
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
+      std::size_t index = 0;
+      for(const auto &i : addresses)
+      {
+        script::Variant element;
+        element.MakeObject();
+        element["address"] = byte_array::ToBase64(i);
+        results_array[index] = element;
+        index++;
+      }
 
-      // dispatch the transaction
-      processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
+      data["addresses"] = results_array;
     }
 
-    std::ostringstream oss;
     oss << data;
     return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
@@ -159,7 +217,7 @@ private:
       byte_array::ByteArray to;
       uint64_t              amount = 0;
 
-      // extract all the requeset parameters
+      // extract all the request parameters
       if (script::Extract(doc.root(), "from", from) && script::Extract(doc.root(), "to", to) &&
           script::Extract(doc.root(), "amount", amount))
       {
