@@ -37,6 +37,10 @@ class Dispatcher;
 
 class MuddleRegister;
 
+/**
+ * The router if the fundamental object of the muddle system an routes external and internal packets
+ * to either a subscription or to another node on the network
+ */
 class Router : public MuddleEndpoint
 {
 public:

@@ -29,7 +29,47 @@ namespace fetch {
 namespace muddle {
 
 /**
+ * Top level map of subscriptions that is kept by the muddle router
  *
+ * The registrar contains the top level subscription feeds, which in turn hold the list of
+ * individual subscriptions. This is illustrated in the diagram below:
+ *
+ *  ┌────────────────┐
+ *  │                │
+ *  │   Registrar    │
+ *  │                │
+ *  └────────────────┘
+ *           │
+ *           │
+ *           │   Service /
+ *           └────Channel ──────┐
+ *                 Lookup       │
+ *                              │
+ *                              ▼
+ *                     ┌────────────────┐
+ *                     │                │
+ *                     │      Feed      │
+ *                     │                │
+ *                     └────────────────┘
+ *                              │
+ *                              │
+ *                              │       ┌───────────────────┐    ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+ *                              │       │                   │
+ *                              ├──────▶│   Subscription    │───▶│      Client       │
+ *                              │       │                   │
+ *                              │       └───────────────────┘    └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ *                              │
+ *                              │       ┌───────────────────┐    ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+ *                              │       │                   │
+ *                              ├──────▶│   Subscription    │───▶│      Client       │
+ *                              │       │                   │
+ *                              │       └───────────────────┘    └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ *                              │
+ *                              │       ┌───────────────────┐    ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+ *                              │       │                   │
+ *                              └──────▶│   Subscription    │───▶│      Client       │
+ *                                      │                   │
+ *                                      └───────────────────┘    └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  */
 class SubscriptionRegistrar
 {

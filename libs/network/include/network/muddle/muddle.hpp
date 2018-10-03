@@ -46,6 +46,62 @@ namespace muddle {
 class MuddleRegister;
 class MuddleEndpoint;
 
+/**
+ * The Top Level object for the muddle networking stack.
+ *
+ * Nodes connected into a Muddle are identified with a public key. With this abstraction when
+ * interacting with this component network peers are identified with this public key instead of
+ * ip address and port pairs.
+ *
+ * From a top level this stack is a combination of components that drives the P2P networking layer.
+ * Fundamentally it is a collection of network connections which are attached to a router. When a
+ * client wants to send a message it is done through the MuddleEndpoint interface. This ultimately
+ * packages messages which are dispatched through the router.
+ *
+ * The router will determine the appropriate connection for the packet to be sent across. Similarly
+ * when receiving packets. The router will either dispatch the message to one of the registered
+ * clients (in the case when the message is addressed to the current node) or will endevour to
+ * send the packet to the desired node. This is illustracted in the diagram below:
+ *
+ *                ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+ *                                     Clients
+ *                │                                               │
+ *                 ─ ─ ─ ─ ─ ─ ─ ─ ─│─ ─ ─ ─ ─ ─│─ ─ ─ ─ ─ ─ ─ ─ ─
+ *
+ *                                  │           │
+ *                ┌───────────────────────────────────────────────┐
+ *                │                 │  Muddle   │                 │
+ *                └───────────────────────────────────────────────┘
+ *                                  │           │
+ *
+ *                                  │           │
+ *                                  ▼           ▼
+ *                                ┌───────────────┐
+ *                                │               │
+ *                                │               │
+ *                                │    Router     │
+ *                                │               │
+ *                                │               │
+ *                                └───────────────┘
+ *                                   ▲    ▲    ▲
+ *                                   │ ▲  │  ▲ │
+ *                        ┌──────────┘ │  │  │ └──────────┐
+ *                        │       ┌────┘  │  └────┐       │
+ *                        │       │       │       │       │
+ *                        ▼       ▼       ▼       ▼       ▼
+ *                     ┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐
+ *                     │    │  │    │  │    │  │    │  │    │
+ *                     ├────┤  ├────┤  ├────┤  ├────┤  ├────┤
+ *                     │    │  │    │  │    │  │    │  │    │
+ *                     ├────┤  ├────┤  ├────┤  ├────┤  ├────┤
+ *                     │    │  │    │  │    │  │    │  │    │
+ *                     ├────┤  ├────┤  ├────┤  ├────┤  ├────┤
+ *                     │    │  │    │  │    │  │    │  │    │
+ *                     └────┘  └────┘  └────┘  └────┘  └────┘
+ *
+ *                         Underlying Network Connections
+ *
+ */
 class Muddle
 {
 public:
