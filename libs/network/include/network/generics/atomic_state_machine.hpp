@@ -33,9 +33,10 @@ public:
     STATE to;
     STATE from;
 
-    Transition(STATE t,STATE f)
+    Transition(STATE t, STATE f)
       : to(t)
-      , from(f) = default;
+      , from(f)
+    {}
 
     bool operator<(Transition const &other) const
     {

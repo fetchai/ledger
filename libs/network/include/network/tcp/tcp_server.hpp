@@ -100,7 +100,7 @@ private:
   bool                                      stopping_ = false;
   bool                                      running_  = false;
 
-  AtomicInflightCounter<TCPServer> inflight_counter_;
+  AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP> inflight_counter_;
 };
 }  // namespace network
 }  // namespace fetch

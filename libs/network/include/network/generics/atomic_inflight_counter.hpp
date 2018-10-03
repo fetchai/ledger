@@ -24,22 +24,28 @@
 namespace fetch {
 namespace network {
 
+enum class AtomicCounterName
+{
+  TCP_PORT_STARTUP,
+};
+
 /**
  * This is a count of the number of instances of a type which have
  * been created but have not yet signalled that they are completely
  * set up. It includes a wait operation so code can make sure all its
  * dependendies are ready before proceeding.
  */
-template <typename DIFFERENTIATOR>
+template<AtomicCounterName>
 class AtomicInflightCounter
 {
+public:
+private:
   using Counter = std::atomic<unsigned int>;
   using CondVar = std::condition_variable;
   using Mutex   = std::mutex;
   using Lock    = std::unique_lock<Mutex>;
 
-private:
-  using TheCounter = struct
+  struct TheCounter
   {
     Counter count;
     CondVar cv;
@@ -55,14 +61,14 @@ private:
   unsigned int my_count_;
 
 public:
-  static constexpr char const *LOGGING_NAME = "AtomicInflightCounter<>";
+  static constexpr char const *LOGGING_NAME = "AtomicInflightCounter";
 
   AtomicInflightCounter(unsigned int my_count = 1)
   {
     my_count_         = my_count;
     auto &the_counter = GetCounter();
     Lock  lock(the_counter.mutex);
-    GetCounter().count.fetch_add(my_count_);
+    the_counter.count.fetch_add(my_count_);
   }
 
   void Completed(unsigned int completed_count)
@@ -71,7 +77,7 @@ public:
     my_count_ -= clipped;
     auto &the_counter = GetCounter();
     Lock  lock(the_counter.mutex);
-    auto  previous = GetCounter().count.fetch_sub(clipped);
+    auto  previous =the_counter.count.fetch_sub(clipped);
     if (previous == 1)
     {
       GetCounter().cv.notify_all();
