@@ -40,9 +40,9 @@ public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
 
   HasWorkerThread(Target *target, std::function<void()> workcycle)
+    : workcycle_(workcycle)
+    , target_(target)
   {
-    workcycle_ = workcycle;
-    target_    = target;
     thread_ = std::make_shared<std::thread>([this]() { this->Run(); });
   }
 
