@@ -33,6 +33,8 @@ namespace network {
  * has elapsed. (eg; uses a condition variable) and a WakeAll() method
  * which will trigger return from the Wait() method by all sleeping
  * threads (eg a cv's notify_all).
+ *
+ * @tparam TARGET The class type which will implement Wait/WakeAll for us.
  */
 template <typename TARGET>
 class HasWorkerThread

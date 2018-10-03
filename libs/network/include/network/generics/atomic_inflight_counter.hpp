@@ -34,6 +34,9 @@ enum class AtomicCounterName
  * been created but have not yet signalled that they are completely
  * set up. It includes a wait operation so code can make sure all its
  * dependendies are ready before proceeding.
+ *
+ * @tparam AtomicCounterName The name of the counter that this
+ * instance will refer to from the above enumeration.
  */
 template <AtomicCounterName>
 class AtomicInflightCounter

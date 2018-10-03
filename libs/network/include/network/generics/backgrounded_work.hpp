@@ -23,10 +23,12 @@ namespace fetch {
 namespace network {
 
 /**
- * Thsi represents a number of promise-like tasks which can be polled
+ * This represents a number of promise-like tasks which can be polled
  * to see if they have finished and if so, f they succeeded, timedout
  * or failed. This could be done in a bg thread or by a foreground
  * poller.
+ *
+ * @tparam WORKER The class type of our promise-like tasks.
  */
 template <class WORKER>
 class BackgroundedWork
@@ -45,7 +47,6 @@ public:
 
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
-  // Construction / Destruction
   BackgroundedWork()
   {
     Lock lock(mutex_);
@@ -99,8 +100,6 @@ public:
     }
   }
 
-  // A comment to provoke a retesting.
-
   void Wait(int milliseconds)
   {
     Lock lock(mutex_);
@@ -127,7 +126,7 @@ public:
     if (worklist_for_state.size() <= limit)
     {
       results = std::move(worklist_for_state);
-      worklist_for_state.clear();  // needed?
+      worklist_for_state.clear();
     }
     else
     {
