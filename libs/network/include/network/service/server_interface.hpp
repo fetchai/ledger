@@ -106,8 +106,6 @@ protected:
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
       ExecuteCall(result, client, params);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest result type=", SERVICE_RESULT,
-                      " prom=", id, "  DATA=", result.data().Printable());
     }
     catch (serializers::SerializableException const &e)
     {

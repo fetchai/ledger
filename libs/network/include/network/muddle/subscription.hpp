@@ -27,7 +27,8 @@ namespace fetch {
 namespace muddle {
 
 /**
- * Subscription object
+ * Subscription is an object that wraps callbacks to a given client for messages. These objects are
+ * help by both client and inside the router for the purpose of message dispatching
  */
 class Subscription
 {
@@ -36,7 +37,9 @@ public:
   using Payload = Packet::Payload;
   using Handle  = uint64_t;
   using MessageCallback =
-      std::function<void(Address const &, uint16_t, uint16_t, uint16_t, Packet::Payload const &)>;
+      std::function<void(Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/,
+                         uint16_t /*counter*/, Packet::Payload const & /*payload*/
+                         )>;
   using Mutex = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";

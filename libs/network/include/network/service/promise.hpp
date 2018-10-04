@@ -159,9 +159,6 @@ public:
 
     value_ = value;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::WorkCycle: Promise ", id_, " fulfilled with ",
-                    Schmoo());
-
     UpdateState(State::SUCCESS);
   }
 
