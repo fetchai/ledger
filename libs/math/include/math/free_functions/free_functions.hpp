@@ -1503,7 +1503,8 @@ ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
 
   Subtract(A, B, ret);
   Square(ret);
-  ret = ReduceSum(ReduceSum(ret, 1), 0);
+//  ret = ReduceSum(ReduceSum(ret, 1), 0);
+  ret = ReduceSum(ret, 1);
   ret = Divide(ret, typename ArrayType::type(ret.size()));
 
   return ret;

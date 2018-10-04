@@ -94,8 +94,8 @@ void Dot(LayerType &cur_node)
   auto &right = cur_node.prev[1];
   auto &dy    = cur_node.grad();
 
-  left.GradientAdd(fetch::math::DotTranspose(dy, right.data()));
-  right.GradientAdd(fetch::math::TransposeDot(left.data(), dy));
+  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
+  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
 }
 
 template <typename LayerType>
@@ -105,8 +105,8 @@ void MeanSquareError(LayerType &cur_node)
 
   auto &left  = cur_node.prev[0];
   auto &right = cur_node.prev[1];
-
-  left.GradientAdd(fetch::math::Subtract(left.data(), right.data()));
+  auto temp3 = fetch::math::Subtract(left.data(), right.data());
+  left.GradientAdd(temp3);
 }
 
 template <typename LayerType>
@@ -146,19 +146,10 @@ void Sigmoid(LayerType &cur_node)
 {
   assert(cur_node.prev.size() == 1);
 
-
   auto &left = cur_node.prev[0];
-  std::cout << "left.grad()[0]" << left.grad()[0] << std::endl;
-  std::cout << "left.data()[0]" << left.data()[0] << std::endl;
-
   auto temp1 = fetch::math::Subtract(1.0, left.data());
-  std::cout << "temp1.data()[0]" << temp1.data()[0] << std::endl;
-
   auto temp2 = fetch::math::Multiply(left.data(), temp1);
-  std::cout << "temp2.data()[0]" << temp2.data()[0] << std::endl;
-
   left.GradientAdd(temp2);
-  std::cout << "left.grad()[0]" << left.grad()[0] << std::endl;
 }
 
 };  // namespace derivatives

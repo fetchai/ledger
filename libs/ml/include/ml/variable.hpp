@@ -20,12 +20,13 @@
 //#include "math/free_functions/free_functions.hpp"
 #include "ml/session.hpp"
 #include <functional>
+#include <memory>
 
 namespace fetch {
 namespace ml {
 
 template <typename T>
-class Variable
+class Variable : public std::enable_shared_from_this<Variable<T>>
 {
 public:
   using ArrayType          = T;
@@ -35,36 +36,38 @@ public:
 
   std::string           _variable_name = "";
   bool                  is_leaf = true;
-  std::vector<SelfType> prev;
+  std::vector<std::shared_ptr<SelfType>> prev;
+//  std::vector<SelfType> next;
   function_signature    back_fn = nullptr;
+  function_signature    fwd_fn = nullptr;
 
   bool initialised = false;
 
   Variable() = default;
 
-  Variable(SessionType &sess, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
+  Variable(SessionType &sess, std::string const &variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
   {
-    // set a distinct _id for each element in the graph
-    sess.RegisterVariable(_id);
-    Setup(b_fn, in_is_leaf, variable_name);
+    Setup(sess, b_fn, in_is_leaf, variable_name);
   }
-  Variable(SessionType &sess, ArrayType const &in_data, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
+//  Variable(SessionType &sess, ArrayType const &in_data, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
+//  {
+//    _variable_name = variable_name;
+//    sess.RegisterVariable(*this);
+//
+//    _data = ArrayType(in_data);
+//    Setup(b_fn, in_is_leaf, variable_name);
+//  }
+  Variable(SessionType &sess, std::vector<std::size_t> in_shape, std::string const &variable_name = "", function_signature const &f_fn = nullptr, function_signature const &b_fn = nullptr, bool in_is_leaf = true)
   {
-    sess.RegisterVariable(_id);
-    _data = ArrayType(in_data);
-    Setup(b_fn, in_is_leaf, variable_name);
+    _data = ArrayType(in_shape);
+    Setup(sess, b_fn, in_is_leaf, variable_name, f_fn);
   }
+
 
   void SetData(ArrayType const &in_data)
   {
     //    shape = in_data.shape();
     _data = ArrayType(in_data);
-  }
-
-  void AssignBackFun(function_signature b_fn)
-  {
-    back_fn = b_fn;
-    is_leaf = false;
   }
 
   static Variable Zeroes(std::vector<std::size_t> const &new_shape, SessionType &sess)
@@ -79,25 +82,17 @@ public:
     return ret;
   }
 
+  void Forward()
+  {
+    assert(initialised);
+    assert(fwd_fn);
+    fwd_fn(*this);
+  }
+
   void Backward()
   {
     assert(initialised);
     assert(back_fn);
-
-    std::cout << "prev.size()" << prev.size() << std::endl;
-    std::cout << "prev[0].size()" << prev[0].size() << std::endl;
-    std::cout << "prev[0].variable_name()" << prev[0].variable_name() << std::endl;
-
-    if (prev.size() > 1)
-    {
-      std::cout << "prev[1].size()" << prev[1].size() << std::endl;
-      std::cout << "prev[1].variable_name()" << prev[1].variable_name() << std::endl;
-    }
-
-    std::cout << "grad.shape()[0]" << grad().shape()[0] << std::endl;
-    std::cout << "grad.shape()[1]" << grad().shape()[1] << std::endl;
-
-
     back_fn(*this);
   }
 
@@ -258,11 +253,19 @@ public:
   {
     return _grad;
   }
+  std::size_t &id()
+  {
+    return _id;
+  }
   std::size_t const &id() const
   {
     return _id;
   }
   std::string const &variable_name() const
+  {
+    return _variable_name;
+  }
+  std::string &variable_name()
   {
     return _variable_name;
   }
@@ -272,18 +275,20 @@ private:
   ArrayType _grad;
   std::size_t           _id;
 
-  void Setup(function_signature b_fn, bool in_is_leaf, std::string variable_name)
+  void Setup(SessionType &sess, function_signature b_fn, bool in_is_leaf, std::string variable_name, function_signature f_fn = nullptr)
   {
+    _variable_name = variable_name;
+
+    sess.RegisterVariable(this->shared_from_this());
+
     assert(b_fn || in_is_leaf);
-    if (b_fn)
+    back_fn = b_fn;
+    if (f_fn)
     {
-      back_fn = b_fn;
+      fwd_fn = f_fn;
     }
     is_leaf     = in_is_leaf;
     initialised = true;
-
-    if (variable_name == "") {_variable_name = "autoname_" + std::to_string(_id);}
-    else {_variable_name = variable_name;}
 
     _grad = ArrayType(_data.shape());
     _grad.data().SetAllZero();

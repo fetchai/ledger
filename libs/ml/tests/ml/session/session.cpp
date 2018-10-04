@@ -94,6 +94,9 @@ TEST(session_test, trivial_backprop_test)
   ArrayType gt{ret.shape()};
   AssignArray(gt, gt_vec);
 
+  // Forward Prop
+  sess.Forward(l1, ret.variable_name());
+
   // test correct values
   ASSERT_TRUE(ret.data().AllClose(gt));
 
@@ -125,52 +128,123 @@ TEST(session_test, trivial_backprop_test)
 
 
 
+
+
 TEST(session_test, dot_sigmoid_backprop_test)
 {
-
-  // set up session
-  SessionManager<ArrayType, VariableType> sess{};
-
-  std::size_t data_points = 7;
-  std::size_t input_size = 10;
-  std::size_t output_size = 2;
-
-  // set up some variables
-  std::vector<std::size_t> l1_activations_shape{data_points, input_size}; // 7 data points x 10 input size
-  std::vector<std::size_t> l1_weights_shape{10, 15};    // 10 input size x 15 neurons
-  std::vector<std::size_t> l2_weights_shape{15, output_size};    // 15 neurons x 2 output neurons
-  std::vector<std::size_t> gt_shape{data_points, output_size};    //
-
-  Variable<ArrayType> l1_activations{sess, l1_activations_shape};
-  Variable<ArrayType> l1_weights{sess, l1_weights_shape};
-  Variable<ArrayType> l2_weights{sess, l2_weights_shape};
-  Variable<ArrayType> gt{sess, gt_shape};
-
-  AssignVariableIncrement(l1_activations, 10.0, 0.1);
-  AssignVariableIncrement(l1_weights, -0.1, 0.1);
-  AssignVariableIncrement(l2_weights, -0.1, 0.1);
-  AssignVariableIncrement(gt, 10.0, 0.1);
-
-  // 1 layer
-  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1_activations, l1_weights, sess);
-  Variable<ArrayType> ret2 = fetch::ml::ops::Sigmoid(ret, sess);
-
-  // 2 layer
-  Variable<ArrayType> ret3 = fetch::ml::ops::Dot(ret2, l2_weights, sess);
-  Variable<ArrayType> ret4 = fetch::ml::ops::Sigmoid(ret3, sess);
-
-  Variable<ArrayType> ret5 = fetch::ml::ops::MeanSquareError(ret4, gt, sess);
-
-  sess.BackwardGraph(ret5);
-
-  std::cout << "ret4.grad().shape()[0]" << ret4.grad().shape()[0] << std::endl;
-  std::cout << "ret4.grad().shape()[1]" << ret4.grad().shape()[1] << std::endl;
-  for (std::size_t i = 0; i < ret4.grad().shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < ret4.grad().shape()[1]; ++j)
-    {
-      std::cout << "ret4.grad().At(i, j)" << ret4.grad().At(i, j) << std::endl;
-    }
-  }
+//
+//  // set up session
+//  SessionManager<ArrayType, VariableType> sess{};
+//
+//  std::size_t data_points = 7;
+//  std::size_t input_size = 10;
+//  std::size_t h1_size = 1;
+//  std::size_t output_size = 1;
+//
+////  Type alpha = 0.1;
+////  std::size_t n_reps = 10;
+//
+//  // set up some variables
+//  std::vector<std::size_t> l1_activations_shape{data_points, input_size}; // 7 data points x 10 input size
+//  std::vector<std::size_t> l1_weights_shape{input_size, h1_size};    // 10 input size x 15 neurons
+//  std::vector<std::size_t> l2_weights_shape{h1_size, output_size};    // 15 neurons x 2 output neurons
+//  std::vector<std::size_t> gt_shape{data_points, output_size};    //
+//
+//  Variable<ArrayType> l1_activations{sess, l1_activations_shape};
+//  Variable<ArrayType> l1_weights{sess, l1_weights_shape};
+//  Variable<ArrayType> l2_weights{sess, l2_weights_shape};
+//  Variable<ArrayType> gt{sess, gt_shape};
+//
+//  AssignVariableIncrement(l1_activations, 0.1, 0.1);
+//  AssignVariableIncrement(l1_weights, -0.1, 0.1);
+//  AssignVariableIncrement(l2_weights, -0.1, 0.1);
+//  AssignVariableIncrement(gt, 10.0, 0.1);
+//
+//  // 1 layer
+//  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1_activations, l1_weights, sess);
+////  Variable<ArrayType> ret2 = fetch::ml::ops::Sigmoid(ret, sess);
+//
+//  sess.Forward(l1_activations, ret.variable_name());
+//
+//
+////  // 2 layer
+////  Variable<ArrayType> ret3 = fetch::ml::ops::Dot(ret2, l2_weights, sess);
+////  Variable<ArrayType> ret4 = fetch::ml::ops::Sigmoid(ret3, sess);
+//
+////  Variable<ArrayType> ret5 = fetch::ml::ops::MeanSquareError(ret2, gt, sess);
+////
+////  sess.Forward(l1_activations, ret5.variable_name());
+////
+////  for (std::size_t k = 0; k < n_reps; ++k)
+////  {
+////
+////
+////    if ((k == 0) || (k == (n_reps-1)))
+////    {
+////      std::cout << "k: " << k << std::endl;
+////
+////      for (std::size_t i = 0; i < l1_weights.grad().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < l1_weights.grad().shape()[1]; ++j)
+////        {
+////          std::cout << "l1_weights.grad().At(i, j)" << l1_weights.grad().At(i, j) << std::endl;
+////        }
+////      }
+////      for (std::size_t i = 0; i < l1_weights.data().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < l1_weights.data().shape()[1]; ++j)
+////        {
+////          std::cout << "l1_weights.data().At(i, j)" << l1_weights.data().At(i, j) << std::endl;
+////        }
+////      }
+////
+////      for (std::size_t i = 0; i < ret.grad().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret.grad().shape()[1]; ++j)
+////        {
+////          std::cout << "ret.grad().At(i, j)" << ret.grad().At(i, j) << std::endl;
+////        }
+////      }
+////      for (std::size_t i = 0; i < ret.data().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret.data().shape()[1]; ++j)
+////        {
+////          std::cout << "ret.data().At(i, j)" << ret.data().At(i, j) << std::endl;
+////        }
+////      }
+////
+////      for (std::size_t i = 0; i < ret2.grad().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret2.grad().shape()[1]; ++j)
+////        {
+////          std::cout << "ret2.grad().At(i, j)" << ret2.grad().At(i, j) << std::endl;
+////        }
+////      }
+////      for (std::size_t i = 0; i < ret2.data().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret2.data().shape()[1]; ++j)
+////        {
+////          std::cout << "ret2.data().At(i, j)" << ret2.data().At(i, j) << std::endl;
+////        }
+////      }
+////
+////      for (std::size_t i = 0; i < ret5.grad().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret5.grad().shape()[1]; ++j)
+////        {
+////          std::cout << "ret5.grad().At(i, j)" << ret5.grad().At(i, j) << std::endl;
+////        }
+////      }
+////      for (std::size_t i = 0; i < ret5.data().shape()[0]; ++i)
+////      {
+////        for (std::size_t j = 0; j < ret5.data().shape()[1]; ++j)
+////        {
+////          std::cout << "ret5.data().At(i, j)" << ret5.data().At(i, j) << std::endl;
+////        }
+////      }
+////    }
+////
+////    sess.BackProp(ret5, alpha);
+////  }
 
 }
