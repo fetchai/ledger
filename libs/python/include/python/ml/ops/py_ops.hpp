@@ -37,21 +37,21 @@ inline void BuildOps(std::string const &custom_name, pybind11::module &module)
   namespace py = pybind11;
   module
       .def("Dot", [](VariableType &left, VariableType &right,
-                     SessionType &sess) { return fetch::ml::ops::Dot(left, right, sess); })
+                     SessionType &sess) { return fetch::ml::ops::Dot(&left, &right, sess); })
       .def("Relu",
-           [](VariableType &left, SessionType &sess) { return fetch::ml::ops::Relu(left, sess); })
+           [](VariableType &left, SessionType &sess) { return fetch::ml::ops::Relu(&left, sess); })
       .def("Sigmoid", [](VariableType &left, SessionType & sess)
       {
         return fetch::ml::ops::Sigmoid(left, sess);
       })
       .def("Sum", [](VariableType &left, std::size_t const axis,
-                     SessionType &sess) { return fetch::ml::ops::Sum(left, axis, sess); })
+                     SessionType &sess) { return fetch::ml::ops::Sum(&left, axis, sess); })
       .def("MeanSquareError",
            [](VariableType &left, VariableType &right, SessionType &sess) {
-             return fetch::ml::ops::MeanSquareError(left, right, sess);
+             return fetch::ml::ops::MeanSquareError(&left, &right, sess);
            })
       .def("CrossEntropyLoss", [](VariableType &left, VariableType &right, SessionType &sess) {
-        return fetch::ml::ops::CrossEntropyLoss(left, right, sess);
+        return fetch::ml::ops::CrossEntropyLoss(&left, &right, sess);
       });
 
   //  .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < double >> )

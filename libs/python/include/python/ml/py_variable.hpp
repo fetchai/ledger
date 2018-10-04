@@ -34,17 +34,17 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
 
   namespace py = pybind11;
   py::class_<SelfType>(module, custom_name.c_str())
-      //      .def(py::init<>())
+            .def(py::init<ArrayType const &>())
       //      .def(py::init<std::size_t const &>())
       //      .def(py::init<std::vector<std::size_t> const &>())
       //      .def(py::init<std::size_t const &, std::size_t const &, SessionType &>())
-      .def(py::init<SessionType &>())
-      .def(py::init<SessionType &, ArrayType const &>())
+//      .def(py::init<ArrayType const &>())
+//      .def(py::init<SessionType &, ArrayType const &>())
       .def("Dot", [](SelfType &a, SelfType &b,
-                     SessionType &sess) { return fetch::ml::ops::Dot(a, b, sess); })
-      .def("Relu", [](SelfType &a, SessionType &sess) { return fetch::ml::ops::Relu(a, sess); })
+                     SessionType &sess) { return fetch::ml::ops::Dot(&a, &b, sess); })
+      .def("Relu", [](SelfType &a, SessionType &sess) { return fetch::ml::ops::Relu(&a, sess); })
       .def("ReduceSum", [](SelfType &a, std::size_t axis,
-                           SessionType &sess) { return fetch::ml::ops::Sum(a, axis, sess); })
+                           SessionType &sess) { return fetch::ml::ops::Sum(&a, axis, sess); })
       .def("size", [](SelfType &a) { return a.size(); })
       .def("shape", [](SelfType &a) { return a.shape(); })
       .def("Reshape", [](SelfType &a, std::size_t i, std::size_t j) { a.Reshape(i, j); })

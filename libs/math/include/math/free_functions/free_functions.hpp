@@ -1454,6 +1454,14 @@ void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Ma
   }
 }
 template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &axis)
+{
+  assert(axis.shape()[0] == 1);
+  assert(axis.shape()[1] == 1);
+  return ReduceSum(obj1, std::size_t(axis[0]));
+
+}
+template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis)
 {
   assert((axis == 0) || (axis == 1));

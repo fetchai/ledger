@@ -39,15 +39,15 @@ TEST(variable, simple_arithmetic)
   std::vector<std::size_t> l1_shape{2, 4};
   std::vector<std::size_t> l2_shape{4, 1};
 
-  Variable<ArrayType> l1{sess, l1_shape};
-  Variable<ArrayType> l2{sess, l2_shape};
+  auto l1 = sess.Variable(l1_shape);
+  auto l2 = sess.Variable(l2_shape);
 
   int counter = -4;
   for (std::size_t i = 0; i < l1_shape[0]; ++i)
   {
     for (std::size_t j = 0; j < l1_shape[1]; ++j)
     {
-      l1.Set(i, j, counter);
+      l1->Set(i, j, counter);
       counter += 1;
     }
   }
@@ -57,45 +57,45 @@ TEST(variable, simple_arithmetic)
   {
     for (std::size_t j = 0; j < l2_shape[1]; ++j)
     {
-      l2.Set(i, j, counter);
+      l2->Set(i, j, counter);
       counter += 1;
     }
   }
 
-  Variable<ArrayType> n1 = fetch::ml::ops::Dot(l1, l2, sess);
-  Variable<ArrayType> n2 = fetch::ml::ops::Relu(n1, sess);
-  Variable<ArrayType> n3 = fetch::ml::ops::Sum(n2, 0, sess);
+  auto n1 = fetch::ml::ops::Dot(l1, l2, sess);
+  auto n2 = fetch::ml::ops::Relu(n1, sess);
+  auto n3 = fetch::ml::ops::Sum(n2, 0, sess);
 
   sess.BackwardGraph(n1);
 
   counter = -2;
   for (std::size_t i = 0; i < 4; ++i)
   {
-    ASSERT_TRUE(l1.grad()[i] == counter);
+    ASSERT_TRUE(l1->grad()[i] == counter);
     ++counter;
   }
   counter = -2;
   for (std::size_t i = 4; i < 8; ++i)
   {
-    ASSERT_TRUE(l1.grad()[i] == counter);
+    ASSERT_TRUE(l1->grad()[i] == counter);
     ++counter;
   }
   counter = -4;
   for (std::size_t i = 0; i < 4; ++i)
   {
-    ASSERT_TRUE(l2.grad()[i] == counter);
+    ASSERT_TRUE(l2->grad()[i] == counter);
     ++counter;
     ++counter;
   }
   counter = 1;
   for (std::size_t i = 0; i < 2; ++i)
   {
-    ASSERT_TRUE(n1.grad()[i] == counter);
+    ASSERT_TRUE(n1->grad()[i] == counter);
   }
   counter = 1;
   for (std::size_t i = 0; i < 2; ++i)
   {
-    ASSERT_TRUE(n1.grad()[i] == counter);
+    ASSERT_TRUE(n1->grad()[i] == counter);
   }
 }
 
@@ -107,37 +107,27 @@ TEST(variable, trivial_backprop)
 
   std::vector<std::size_t> shape1{2, 10};
   std::vector<std::size_t> shape2{10, 2};
-  Variable<ArrayType> l1{sess, shape1};
-  Variable<ArrayType> l2{sess, shape2};
-  l1.data().FillArange(0, 20);
-  l2.data().FillArange(0, 20);
+  auto l1 = sess.Variable(shape1);
+  auto l2 = sess.Variable(shape2);
+  l1->data().FillArange(0, 20);
+  l2->data().FillArange(0, 20);
 
-  Variable<ArrayType> ret = fetch::ml::ops::Dot(l1, l2, sess);
+  auto ret = fetch::ml::ops::Dot(l1, l2, sess);
 
-  ASSERT_TRUE(ret.shape()[0] == 2);
-  ASSERT_TRUE(ret.shape()[1] == 2);
-//  std::cout << "ret-grad.shape()[0]: " << ret.grad().shape()[0] << std::endl;
-//  std::cout << "ret-grad.shape()[1]: " << ret.grad().shape()[1] << std::endl;
-//  for (std::size_t i = 0; i < ret.grad().shape()[0]; ++i)
-//  {
-//    for (std::size_t j = 0; j < ret.grad().shape()[1]; ++j)
-//    {
-//      std::cout << "ret-grad(ij): " << ret.grad().At(i, j) << std::endl;
-//    }
-//  }
+  ASSERT_TRUE(ret->shape()[0] == 2);
+  ASSERT_TRUE(ret->shape()[1] == 2);
 
   sess.BackwardGraph(ret);
 
-
-  ArrayType gt{ret.shape()};
-  for (std::size_t i = 0; i < ret.grad().shape()[0]; ++i)
+  ArrayType gt{ret->shape()};
+  for (std::size_t i = 0; i < ret->grad().shape()[0]; ++i)
   {
-    for (std::size_t j = 0; j < ret.grad().shape()[1]; ++j)
+    for (std::size_t j = 0; j < ret->grad().shape()[1]; ++j)
     {
       gt.Set(i, j, 1.0);
     }
   }
-  ASSERT_TRUE(ret.grad().AllClose(gt));
+  ASSERT_TRUE(ret->grad().AllClose(gt));
 }
 
 

@@ -26,43 +26,41 @@ namespace fetch {
 namespace ml {
 
 template <typename T>
-class Variable : public std::enable_shared_from_this<Variable<T>>
+class Variable
 {
 public:
   using ArrayType          = T;
   using SelfType           = Variable<ArrayType>;
   using SessionType        = SessionManager<ArrayType, SelfType>;
-  using function_signature = std::function<void(SelfType &)>;
+  using SelfPtrType        = std::shared_ptr<SelfType>;
+  using FunctionSignature  = std::function<void(SelfPtrType)>;
 
   std::string           _variable_name = "";
-  bool                  is_leaf = true;
-  std::vector<std::shared_ptr<SelfType>> prev;
-//  std::vector<SelfType> next;
-  function_signature    back_fn = nullptr;
-  function_signature    fwd_fn = nullptr;
+  bool                  _is_leaf = true;
+  std::vector<SelfPtrType> prev;
+  FunctionSignature    _b_fn = nullptr;
+  FunctionSignature    _f_fn = nullptr;
 
   bool initialised = false;
 
   Variable() = default;
 
-  Variable(SessionType &sess, std::string const &variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
+  void SetVariableName(std::string const &variable_name)
   {
-    Setup(sess, b_fn, in_is_leaf, variable_name);
-  }
-//  Variable(SessionType &sess, ArrayType const &in_data, std::string variable_name = "", function_signature const &b_fn = nullptr, bool in_is_leaf = true)
-//  {
-//    _variable_name = variable_name;
-//    sess.RegisterVariable(*this);
-//
-//    _data = ArrayType(in_data);
-//    Setup(b_fn, in_is_leaf, variable_name);
-//  }
-  Variable(SessionType &sess, std::vector<std::size_t> in_shape, std::string const &variable_name = "", function_signature const &f_fn = nullptr, function_signature const &b_fn = nullptr, bool in_is_leaf = true)
-  {
-    _data = ArrayType(in_shape);
-    Setup(sess, b_fn, in_is_leaf, variable_name, f_fn);
+    _variable_name = variable_name;
   }
 
+  void SetBackwardFunction(FunctionSignature b_fn)
+  {
+    _b_fn = b_fn;
+  }
+
+  void SetForwardFunction(FunctionSignature f_fn)
+  {
+    _f_fn = f_fn;
+  }
+
+  void SetIsLeaf(bool is_leaf){_is_leaf = is_leaf;}
 
   void SetData(ArrayType const &in_data)
   {
@@ -82,18 +80,18 @@ public:
     return ret;
   }
 
-  void Forward()
+  void Forward(SelfPtrType ptr)
   {
     assert(initialised);
-    assert(fwd_fn);
-    fwd_fn(*this);
+    assert(_f_fn);
+    _f_fn(ptr);
   }
 
-  void Backward()
+  void Backward(SelfPtrType ptr)
   {
     assert(initialised);
-    assert(back_fn);
-    back_fn(*this);
+    assert(_b_fn);
+    _b_fn(ptr);
   }
 
   /**
@@ -135,6 +133,25 @@ public:
     {
       _grad[i] = 1;
     }
+  }
+
+  void GradientSetVal(typename ArrayType::type const &other_grad)
+  {
+    for (std::size_t i = 0; i < _grad.size(); ++i)
+    {
+      _grad[i] = other_grad;
+    }
+  }
+
+
+  void InitialiseGradients()
+  {
+    _grad = ArrayType(data().shape());
+    ClearGradients();
+  }
+  void ClearGradients()
+  {
+    _grad.data().SetAllZero();
   }
 
   //
@@ -269,30 +286,16 @@ public:
   {
     return _variable_name;
   }
+  bool is_leaf()
+  {
+    return _is_leaf;
+  }
+
 
 private:
   ArrayType _data;
   ArrayType _grad;
   std::size_t           _id;
-
-  void Setup(SessionType &sess, function_signature b_fn, bool in_is_leaf, std::string variable_name, function_signature f_fn = nullptr)
-  {
-    _variable_name = variable_name;
-
-    sess.RegisterVariable(this->shared_from_this());
-
-    assert(b_fn || in_is_leaf);
-    back_fn = b_fn;
-    if (f_fn)
-    {
-      fwd_fn = f_fn;
-    }
-    is_leaf     = in_is_leaf;
-    initialised = true;
-
-    _grad = ArrayType(_data.shape());
-    _grad.data().SetAllZero();
-  }
 };
 
 }  // namespace ml
