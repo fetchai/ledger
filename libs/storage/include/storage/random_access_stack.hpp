@@ -72,7 +72,6 @@ private:
     {
       if ((!stream) || (!stream.is_open()))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Tried to write to closed stream!");
         return false;
       }
       stream.seekg(0, stream.beg);
@@ -412,6 +411,10 @@ private:
 
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one
+   *
+   * @param:
+   *
+   * @return:
    */
   void StoreHeader()
   {
@@ -419,7 +422,7 @@ private:
 
     if (!header_.Write(file_handle_))
     {
-      throw StorageException("Error: could not write header in random access stack.");
+      throw StorageException("Error could not write header");
     }
   }
 };
