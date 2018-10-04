@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,25 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include <gtest/gtest.h>
+namespace fetch {
 
-using namespace fetch;
-using namespace fetch::script;
-using namespace fetch::serializers;
-
-TEST(variant_test, variant_serialization)
+enum class ResizeParadigm
 {
-  Variant a, b;
-  a = 982;
-  /*
-    TypedByteArrayBuffer ser;
-    ser << a;
+  RELATIVE,
+  ABSOLUTE
+};
 
-    ser.seek(0);
-
-    ser >> b;
-  */
-  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
-}
+}  // namespace fetch

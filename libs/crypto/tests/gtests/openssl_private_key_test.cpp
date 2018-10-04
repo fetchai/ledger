@@ -18,7 +18,6 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "crypto/openssl_ecdsa_private_key.hpp"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -161,6 +160,23 @@ TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array)
   //* Expectations:
   EXPECT_TRUE(x.key());
   EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
+}
+
+TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)
+{
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    //* Generating priv & pub key pair
+    ECDSAPrivateKey<> const priv_key;
+
+    //* Production code:
+    auto const                          serialized_pub_key = priv_key.publicKey().keyAsBin();
+    decltype(priv_key)::public_key_type pub_key{serialized_pub_key};
+
+    //* Expectations:
+    EXPECT_EQ(ECDSAPrivateKey<>::ecdsa_curve_type::publicKeySize, serialized_pub_key.size());
+    EXPECT_EQ(priv_key.publicKey().keyAsBin(), pub_key.keyAsBin());
+  }
 }
 
 // TODO(issue 36): Add more tests

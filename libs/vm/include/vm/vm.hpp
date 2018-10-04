@@ -34,14 +34,9 @@ struct String : public Object
   bool        is_literal;
   String()
   {}
-  String(VM *vm, std::string const &str__, const bool is_literal__)
+  String(VM *vm, std::string str__, const bool is_literal__)
     : Object(TypeId::String, vm)
     , str(std::move(str__))
-    , is_literal(is_literal__)
-  {}
-  String(VM *vm, std::string &&str__, const bool is_literal__)
-    : Object(TypeId::String, vm)
-    , str(str__)
     , is_literal(is_literal__)
   {}
   virtual ~String()
@@ -128,8 +123,6 @@ struct Resetter;
 class VM
 {
 public:
-  static constexpr char const *LOGGING_NAME = "VM";
-
   VM(Module *module = nullptr)
     : module_(module)
   {}
@@ -166,7 +159,7 @@ private:
   friend struct details::StorerClass;
   /// }
 
-  static const int FRAME_STACK_SIZE = 40;
+  static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
   static const int MAX_RANGE_LOOPS  = 50;
@@ -228,24 +221,28 @@ private:
         break;
       }
       Value &variable = GetVariable(info.variable_index);
-      variable.Release();
+      variable.Reset();
       --live_object_sp_;
     }
   }
 
   void InvokeUserFunction(const Index index)
   {
-    // check num frames, num variables, num objects?
-    Frame frame;
-    frame.function            = function_;
-    frame.bsp                 = bsp_;
-    frame.pc                  = pc_;
-    frame_stack_[++frame_sp_] = frame;
-    bsp_ += function_->num_variables;
-    function_ = &(script_->functions[index]);
-    pc_       = 0;
     // Note: the parameters are already on the stack
-    const int num_locals = function_->num_variables - function_->num_parameters;
+    Frame frame;
+    frame.function = function_;
+    frame.bsp      = bsp_;
+    frame.pc       = pc_;
+    if (frame_sp_ >= FRAME_STACK_SIZE - 1)
+    {
+      RuntimeError("frame stack overflow");
+      return;
+    }
+    frame_stack_[++frame_sp_] = frame;
+    function_                 = &(script_->functions[index]);
+    bsp_                      = sp_ - function_->num_parameters + 1;  // first parameter
+    pc_                       = 0;
+    const int num_locals      = function_->num_variables - function_->num_parameters;
     sp_ += num_locals;
   }
 
@@ -922,7 +919,8 @@ private:
     rhsv.variant.Get(rhs);
     Move(*ptr, rhs);
     arrayv.Reset();
-    rhsv.PrimitiveReset();
+    rhsv.type_id = TypeId::Unknown;
+    rhsv.variant.Zero();
   }
 
   //
@@ -1185,7 +1183,7 @@ private:
     Value &     rhsv    = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214): what if fails?
+    Op::Apply(this, *ptr, rhs);
     matrixv.Reset();
     rhsv.Reset();
   }
@@ -1202,7 +1200,7 @@ private:
     Value &     rhsv   = stack_[sp_--];
     ElementType rhs;
     rhsv.variant.Get(rhs);
-    Op::Apply(this, *ptr, rhs);  // TODO(private issue 214):  what if fails?
+    Op::Apply(this, *ptr, rhs);
     arrayv.Reset();
     rhsv.Reset();
   }
@@ -1220,7 +1218,7 @@ private:
     RHSVariantType xx;
     rhsv.variant.Get(xx);
     RHSElementType rhs = static_cast<RHSElementType>(xx);
-    Op::Apply(this, *ptr, rhs);  //  TODO(private issue 214): what if fails?
+    Op::Apply(this, *ptr, rhs);
     arrayv.Reset();
     rhsv.Reset();
   }

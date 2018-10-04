@@ -68,7 +68,7 @@ public:
   operator bool() const
   {
     return identity_parameters_ == edcsa_curve_type::sn &&
-           identity_parameters_.size() == edcsa_curve_type::publicKeySize;
+           identifier_.size() == edcsa_curve_type::publicKeySize;
   }
 
   static Identity CreateInvalid()

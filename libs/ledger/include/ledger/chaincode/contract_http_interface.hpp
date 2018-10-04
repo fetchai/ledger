@@ -30,9 +30,9 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 
-#include <sstream>
-
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 
 namespace fetch {
 namespace ledger {
@@ -40,7 +40,10 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
-  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
+  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
+  static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
+  static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
+  static byte_array::ConstByteArray const PATH_SEPARATOR;
 
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
     : storage_{storage}
@@ -55,16 +58,22 @@ public:
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
 
-      // define the api prefix
-      std::string const api_prefix =
-          "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
+      byte_array::ByteArray contract_path{contract_name};
+      contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
+                            static_cast<char const &>(PATH_SEPARATOR[0]));
+
+      byte_array::ByteArray api_path;
+      //* ByteArry from `contract_name` performs deep copy due to const -> non-const
+      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR);
+      std::size_t const api_path_base_size = api_path.size();
 
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
       for (auto const &handler : query_handlers)
       {
-        std::string const &query_name = handler.first;
-        std::string const  api_path   = api_prefix + query_name;
+        byte_array::ConstByteArray const &query_name = handler.first;
+        api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
+        api_path.Append(query_name);
 
         FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
 
@@ -97,8 +106,9 @@ public:
   }
 
 private:
-  http::HTTPResponse OnQuery(std::string const &contract_name, std::string const &query,
-                             http::HTTPRequest const &request)
+  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
+                             byte_array::ConstByteArray const &query,
+                             http::HTTPRequest const &         request)
   {
     try
     {

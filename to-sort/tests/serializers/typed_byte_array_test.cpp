@@ -30,7 +30,7 @@ int main() {
       {
         TypedByte_ArrayBuffer buffer;
         buffer << 55;
-        buffer.Seek(0);
+        buffer.seek(0);
         int answer;
         buffer >> answer;
 
@@ -43,7 +43,7 @@ int main() {
         buffer << uint8_t(1);
         buffer << uint8_t(0xff);
         buffer << uint8_t(0xfe);
-        buffer.Seek(0);
+        buffer.seek(0);
 
         uint8_t array[4];
 
@@ -64,7 +64,7 @@ int main() {
         buffer << uint16_t(1);
         buffer << uint16_t(0xffff);
         buffer << uint16_t(0xfffe);
-        buffer.Seek(0);
+        buffer.seek(0);
 
         uint16_t array[4];
 
@@ -85,7 +85,7 @@ int main() {
         buffer << int(0);
         buffer << int(0xffff);
         buffer << int(0xfffe);
-        buffer.Seek(0);
+        buffer.seek(0);
 
         int array[4];
 
@@ -103,7 +103,7 @@ int main() {
       {
         TypedByte_ArrayBuffer buffer;
         buffer << std::string("hello");
-        buffer.Seek(0);
+        buffer.seek(0);
         std::string answer;
         buffer >> answer;
 
@@ -115,7 +115,7 @@ int main() {
 
         NoCopyClass test(99);
         buffer << test;
-        buffer.Seek(0);
+        buffer.seek(0);
         NoCopyClass result{};
         buffer >> result;
 
@@ -125,7 +125,7 @@ int main() {
       {
         TypedByte_ArrayBuffer buffer;
         buffer << "Second hello";
-        buffer.Seek(0);
+        buffer.seek(0);
         std::string answer;
         buffer >> answer;
 
@@ -135,7 +135,7 @@ int main() {
       {
         TypedByte_ArrayBuffer buffer;
         buffer << "Second hello";
-        buffer.Seek(0);
+        buffer.seek(0);
         std::string answer;
         buffer >> answer;
 
@@ -146,7 +146,7 @@ int main() {
         TypedByte_ArrayBuffer buffer;
         bool testBool = true;
         buffer << testBool;
-        buffer.Seek(0);
+        buffer.seek(0);
         bool answer;
         buffer >> answer;
 
@@ -157,7 +157,7 @@ int main() {
         TypedByte_ArrayBuffer buffer;
         bool testBool = false;
         buffer << testBool;
-        buffer.Seek(0);
+        buffer.seek(0);
         bool answer;
         buffer >> answer;
 
@@ -169,7 +169,7 @@ int main() {
         TypedByte_ArrayBuffer buffer;
         std::vector<int> testVector{1,2,3,4};
         buffer << testVector;
-        buffer.Seek(0);
+        buffer.seek(0);
         std::vector<int> answer;
         buffer >> answer;
 

@@ -158,7 +158,7 @@ private:
   static uniq_ptr_type<BIGNUM, del_strat_type::clearing> Convert2BIGNUM(
       byte_array::ConstByteArray const &key_data)
   {
-    if (ecdsa_curve_type::privateKeySize != key_data.size())
+    if (ecdsa_curve_type::privateKeySize < key_data.size())
     {
       throw std::runtime_error(
           "ECDSAPrivateKey::Convert2BIGNUM(const "

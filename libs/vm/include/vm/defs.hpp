@@ -34,7 +34,7 @@ struct Object
   {}
   Object(TypeId const &type_id__, VM *vm__)
   {
-    count   = 10;  // TODO(private issue 213): Ref counter 1 segfaults
+    count   = 1;
     type_id = type_id__;
     vm      = vm__;
   }
@@ -219,25 +219,25 @@ struct Value
     type_id       = other.type_id;
     variant       = other.variant;
     other.type_id = TypeId::Unknown;
+    other.variant.Zero();
   }
 
   Value &operator=(Value &&other)
   {
     const bool is_object       = IsObject();
     const bool other_is_object = other.IsObject();
-
     if (is_object && other_is_object)
     {
       if (variant.object != other.variant.object)
       {
         Release();
-        variant.object = other.variant.object;
-        type_id        = other.type_id;
-        other.type_id  = TypeId::Unknown;
+        type_id       = other.type_id;
+        variant       = other.variant;
+        other.type_id = TypeId::Unknown;
+        other.variant.Zero();
       }
       return *this;
     }
-
     if (is_object)
     {
       Release();
@@ -245,6 +245,7 @@ struct Value
     type_id       = other.type_id;
     variant       = other.variant;
     other.type_id = TypeId::Unknown;
+    other.variant.Zero();
     return *this;
   }
 
@@ -265,11 +266,13 @@ struct Value
       Release();
     }
     type_id = TypeId::Unknown;
+    variant.Zero();
   }
 
   void PrimitiveReset()
   {
     type_id = TypeId::Unknown;
+    variant.Zero();
   }
 
   void AddRef()

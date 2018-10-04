@@ -36,7 +36,7 @@ void VM::RuntimeError(const std::string &message)
   std::stringstream stream;
   stream << "runtime error: " << message;
   error_      = stream.str();
-  error_line_ = std::size_t(this->instruction_->line);
+  error_line_ = std::size_t(instruction_->line);
   stop_       = true;
 }
 
@@ -499,6 +499,11 @@ bool VM::Execute(const Script &script, const std::string &name)
       else
       {
         // We've finished executing
+        if (sp_ == 0)
+        {
+          // Reset the return value, if there was one, of the executed function
+          stack_[sp_--].Reset();
+        }
         stop_ = true;
       }
       break;
