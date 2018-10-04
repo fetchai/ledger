@@ -21,21 +21,21 @@ sudo develop-image/scripts/docker-run.sh bash
 
 Initiate
 ========
-git pull
+git pull  
 git pullall
 
 Running on Ubuntu
 =========
-sudo apt-get install libssl-dev cmake
-sudo apt-get install libpng-dev
+sudo apt-get install libssl-dev cmake  
+sudo apt-get install libpng-dev  
 sudo apt-get install python-dev
 
 Build
 =====
 
-mkdir build
-cd build
-cmake ..
+mkdir build  
+cd build  
+cmake ..  
 make -j8
 
 Generate coverage quick start
@@ -43,17 +43,17 @@ Generate coverage quick start
 
 cd build
 # Configure build in cmake (adds coverage flags)
-ccmake .
-	CMAKE_BUILD_TYPE - set this to Debug
-	FETCH_ENABLE_COVERAGE - set this to ON
-	'c' to configure
-	'q' to quit
+ccmake .  
+	* CMAKE_BUILD_TYPE - set this to Debug  
+	* FETCH_ENABLE_COVERAGE - set this to ON  
+	* 'c' to configure  
+	* 'q' to quit
 
 # Have to remake the executables before generating coverage
 make -j8
 
 # Generate coverage
-cd ../
+cd ../  
 ./scripts/generate_coverage.py ./build
 
 # Coverage should now be in build/coverage/...
@@ -65,7 +65,7 @@ chromium-browser ./build/coverage
 Test
 ====
 
-cd build
+cd build  
 ctest
 
 Notes
@@ -85,5 +85,3 @@ Note: this takes a long time, and running with the fix flag may cause clang to b
 variable names without propagating their updates). Therefore it is recommended you have a clean HEAD so as
 to identify the changes that have been made. Build the project again before pushing it as it's likely
 to be broken
-
-
