@@ -33,6 +33,8 @@ namespace details {
 class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
+  using Mutex   = fetch::mutex::Mutex;
+  using Lock    = std::unique_lock<Mutex>;
 public:
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
@@ -51,52 +53,9 @@ public:
   NetworkManagerImplementation(NetworkManagerImplementation const &) = delete;
   NetworkManagerImplementation(NetworkManagerImplementation &&)      = default;
 
-  void Start()
-  {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
-
-    if (threads_.size() == 0)
-    {
-      owning_thread_ = std::this_thread::get_id();
-      shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
-
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        threads_.push_back(std::make_shared<std::thread>([this]() { this->Work(); }));
-      }
-    }
-  }
-
-  void Work()
-  {
-    io_service_->run();
-  }
-
-  void Stop()
-  {
-    std::lock_guard<std::mutex> lock(thread_mutex_);
-    if (std::this_thread::get_id() != owning_thread_)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Same thread must start and stop NetworkManager.");
-      return;
-    }
-
-    if (threads_.size() != 0)
-    {
-      shared_work_.reset();
-      FETCH_LOG_INFO(LOGGING_NAME, "Stopping network manager");
-
-      io_service_->stop();
-
-      for (auto &thread : threads_)
-      {
-        thread->join();
-      }
-
-      threads_.clear();
-      io_service_ = std::make_unique<asio::io_service>();
-    }
-  }
+  void Start();
+  void Work();
+  void Stop();
 
   // Must only be called within a post, then the io_service_ is always
   // guaranteed to be valid
@@ -121,7 +80,7 @@ private:
 
   std::shared_ptr<asio::io_service::work> shared_work_;
 
-  mutable std::mutex thread_mutex_{};
+  mutable Mutex thread_mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace details
