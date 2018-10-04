@@ -99,11 +99,11 @@ TEST(ndarray, max_axis_tests)
   Max<double, typename NDArray<double>::container_type>(a, std::size_t(axis), b);
 
   std::vector<double> temp_vector;
-  for (std::size_t i = 0; i < new_shape[0]; ++i)
+  for (std::size_t i = 0; i < orig_shape[0]; ++i)
   {
-    for (std::size_t j = 0; j < new_shape[1]; ++j)
+    for (std::size_t j = 0; j < orig_shape[1]; ++j)
     {
-      for (std::size_t k = 0; k < new_shape[3]; ++k)
+      for (std::size_t k = 0; k < orig_shape[3]; ++k)
       {
         for (std::size_t l = 0; l < orig_shape[2]; ++l)
         {
