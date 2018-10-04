@@ -124,26 +124,30 @@ private:
     {
       lane = thelane;
 
+      // Ideal path first.
       this->Allow(State::CONNECTING, State::INITIAL)
-          .Allow(State::CONNECTING, State::SNOOZING)
-          .Allow(State::PINGING, State::CONNECTING)
-          .Allow(State::QUERYING, State::PINGING)
-          .Allow(State::DONE, State::QUERYING)
+        .Allow(State::PINGING, State::CONNECTING)
+        .Allow(State::QUERYING, State::PINGING)
+        .Allow(State::DONE, State::QUERYING)
 
-          .Allow(State::INITIAL, State::CONNECTING)
-          .Allow(State::INITIAL, State::PINGING)
-          .Allow(State::INITIAL, State::QUERYING)
+        // Waiting for liveness.
+        .Allow(State::SNOOZING, State::CONNECTING)
+        .Allow(State::CONNECTING, State::SNOOZING)
 
-          .Allow(State::SNOOZING, State::CONNECTING)
-          .Allow(State::SNOOZING, State::PINGING)
-          .Allow(State::SNOOZING, State::QUERYING)
+        // Retrying from scratch.
+        .Allow(State::INITIAL, State::PINGING)
+        .Allow(State::INITIAL, State::QUERYING)
 
-          .Allow(State::TIMEDOUT, State::CONNECTING)
-          .Allow(State::TIMEDOUT, State::PINGING)
-          .Allow(State::TIMEDOUT, State::QUERYING)
+        // We can timeout from any of the non-finish states.
+        .Allow(State::TIMEDOUT, State::INITIAL)
+        .Allow(State::TIMEDOUT, State::CONNECTING)
+        .Allow(State::TIMEDOUT, State::PINGING)
+        .Allow(State::TIMEDOUT, State::QUERYING)
+        .Allow(State::TIMEDOUT, State::SNOOZING)
 
-          .Allow(State::FAILED, State::CONNECTING);
-
+        // Wrong magic causes us to bail with a failure.
+        .Allow(State::FAILED, State::PINGING)
+        ;
     }
 
     static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
@@ -179,11 +183,20 @@ private:
 
     virtual bool PossibleNewState(State &currentstate) override
     {
+
+      if (currentstate == State::TIMEDOUT
+          || currentstate == State::DONE
+          || currentstate == State::FAILED)
+      {
+        return false;
+      }
+
       if (timeout.IsDue())
       {
         currentstate = State::TIMEDOUT;
         return true;
       }
+
       switch (currentstate)
       {
       case State::INITIAL:
@@ -238,7 +251,7 @@ private:
         {
           if (ping->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
           {
-            currentstate = State::INITIAL;
+            currentstate = State::FAILED;
             return true;
           }
           else
@@ -275,16 +288,10 @@ private:
           return true;
         }
         return false;
-
       }  // end QUERYING
-      case State::TIMEDOUT:
-        return false;
-      case State::DONE:
-        return false;
-      case State::FAILED:
+      default:
         return false;
       }
-      return false;
     }
   private:
     FutureTimepoint     next_attempt;
