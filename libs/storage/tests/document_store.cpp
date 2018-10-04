@@ -36,12 +36,23 @@ TestStore store;
 
 uint64_t book = 1;
 
+std::string StringPaddedToKeySize(const std::string &s)
+{
+  std::string result = s;
+  size_t paddinglength = std::size_t(TestStore::key_type::BYTES) - s.length();
+  if (paddinglength>0)
+  {
+    result += std::string(paddinglength, '*');
+  }
+  return result;
+}
+
 void Add()
 {
   std::cout << "=============  ADD  ==================" << std::endl;
   ;
   {
-    auto doc = store.GetDocumentFile(ResourceID("Hello world"));
+    auto doc = store.GetDocumentFile(ResourceID(StringPaddedToKeySize("Hello world")));
     doc.Seek(doc.size());
     doc.Write("Hello world");
   }
@@ -61,7 +72,7 @@ void Print()
 {
 
   std::cout << std::endl;
-  auto doc = store.GetDocumentFile(ResourceID("Hello world"));
+  auto doc = store.GetDocumentFile(ResourceID(StringPaddedToKeySize("Hello world")));
   std::cout << "BOOK: " << book << " " << doc.id() << std::endl;
   std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
   byte_array::ByteArray x;

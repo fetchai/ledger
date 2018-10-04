@@ -56,6 +56,7 @@ public:
   using key_value_index_type = B;
   using file_store_type      = C;
   using file_object_type     = D;
+  using key_type             = typename key_value_index_type::key_type;
 
   using hash_type = byte_array::ConstByteArray;
 
