@@ -95,7 +95,11 @@ private:
       json::JSONDocument doc;
       doc = request.JSON();
 
-      count = doc["count"].As<uint64_t>();
+      auto const &count_v{doc["count"]};
+      if (count_v.is_int())
+      {
+        count = count_v.As<uint64_t>();
+      }
     }
 
     // Avoid locations = 0 corner case
@@ -167,10 +171,9 @@ private:
       std::size_t index = 0;
       for (auto const &signer : signers)
       {
-        script::Variant element;
-        element.MakeObject();
-        element["address"]   = byte_array::ToBase64(signer.public_key());
-        results_array[index++] = element;
+        auto &elem = results_array[index++];
+        elem.MakeObject();
+        elem = byte_array::ToBase64(signer.public_key());
       }
 
       data["addresses"] = results_array;
