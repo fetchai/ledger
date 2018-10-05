@@ -55,7 +55,7 @@ private:
     CondVar cv;
 
     uint32_t complete = 0;
-    uint32_t total = 0;
+    uint32_t total    = 0;
   };
 
   static TheCounter &GetCounter()
@@ -71,11 +71,11 @@ public:
   {
     auto &the_counter = GetCounter();
 
-    Lock  lock(the_counter.mutex);
+    Lock lock(the_counter.mutex);
     ++the_counter.total;
   }
 
-  ~AtomicInflightCounter()  = default;
+  ~AtomicInflightCounter() = default;
 
   void Completed()
   {

@@ -100,6 +100,7 @@ private:
   bool                                      stopping_ = false;
   bool                                      running_  = false;
 
+  // Use this class to keep track of whether we are ready to accept connections
   AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP> inflight_counter_;
 };
 }  // namespace network
