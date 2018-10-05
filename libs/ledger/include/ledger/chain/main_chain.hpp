@@ -32,19 +32,6 @@
 #include <memory>
 #include <set>
 
-//// Specialise hash of byte_array for unordered map/set
-// namespace std {
-//
-// template <>
-// struct hash<fetch::byte_array::ByteArray>
-//{
-//  std::size_t operator()(const fetch::byte_array::ByteArray &k) const
-//  {
-//    assert(k.size() >= 8);
-//    return *reinterpret_cast<std::size_t const *>(k.pointer());
-//  }
-//};
-//}  // namespace std
 
 namespace fetch {
 namespace chain {

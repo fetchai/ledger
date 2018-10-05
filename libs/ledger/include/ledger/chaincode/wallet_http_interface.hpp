@@ -142,8 +142,7 @@ private:
         mtx.PushResource(address);
 
         // sign the transaction
-        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
-        mtx.Sign(signer.private_key(), tx_sign_adapter);
+        mtx.Sign(signer.private_key());
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
