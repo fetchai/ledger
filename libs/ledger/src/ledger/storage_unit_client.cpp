@@ -19,17 +19,17 @@ public:
   using LaneIndex = StorageUnitClient::LaneIndex;
   using FutureTimepoint = StorageUnitClient::FutureTimepoint;
 
-  LaneIndex             lane_;
-  Promise               lane_prom_;
-  SharedServiceClient   client_;
-  Promise               count_prom_;
-  Promise               id_prom_;
+  LaneIndex             lane;
+  Promise               lane_prom;
+  SharedServiceClient   client;
+  Promise               count_prom;
+  Promise               id_prom;
 
   LaneConnectorWorker(
                       LaneIndex thelane, SharedServiceClient theclient, std::string thename,
                       std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
-    : lane_(thelane)
-    , client_(std::move(theclient))
+    : lane(thelane)
+    , client(std::move(theclient))
     , attempts_(0)
     , name_(std::move(thename))
     , timeout_(std::move(thetimeout))
@@ -130,7 +130,7 @@ public:
       }
     case State::CONNECTING:
       {
-        if (!client_->is_alive())
+        if (!client->is_alive())
         {
           FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane, " (", name_, ") not yet alive.");
           attempts_++;
@@ -142,7 +142,7 @@ public:
           currentstate = State::SNOOZING;
           return true;
         }
-        ping_         = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
+        ping_         = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
         currentstate = State::PINGING;
         return true;
       }  // end CONNECTING
@@ -167,9 +167,9 @@ public:
             }
             else
             {
-              lane_prom_    = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-              count_prom_   = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-              id_prom_      = client_->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+              lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+              count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+              id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
               currentstate = State::QUERYING;
               return true;
             }
@@ -180,9 +180,9 @@ public:
       }  // end PINGING
     case State::QUERYING:
       {
-        auto lp_st = lane_prom_->GetState();
-        auto ct_st = count_prom_->GetState();
-        auto id_st = id_prom_->GetState();
+        auto lp_st = lane_prom->GetState();
+        auto ct_st = count_prom->GetState();
+        auto id_st = id_prom->GetState();
 
         if (lp_st == PromiseState::FAILED || id_st == PromiseState::FAILED ||
             ct_st == PromiseState::FAILED || lp_st == PromiseState::TIMEDOUT ||
@@ -236,20 +236,20 @@ void StorageUnitClient::WorkCycle(void)
     {
       if (successful_worker)
       {
-        auto lanenum = successful_worker->lane_;
+        auto lanenum = successful_worker->lane;
         FETCH_LOG_VARIABLE(lanenum);
         FETCH_LOG_DEBUG(LOGGING_NAME, " PROCESSING lane ", lanenum);
 
-        WeakServiceClient wp(successful_worker->client_);
+        WeakServiceClient wp(successful_worker->client);
         LaneIndex         lane;
         LaneIndex         total_lanes;
 
-        successful_worker->lane_prom_->As(lane);
-        successful_worker->count_prom_->As(total_lanes);
+        successful_worker->lane_prom->As(lane);
+        successful_worker->count_prom->As(total_lanes);
 
         {
           FETCH_LOCK(mutex_);
-          lanes_[lane] = std::move(successful_worker->client_);
+          lanes_[lane] = std::move(successful_worker->client);
 
           if (!total_lanecount)
           {
@@ -264,7 +264,7 @@ void StorageUnitClient::WorkCycle(void)
         SetLaneLog2(uint32_t(lanes_.size()));
 
         crypto::Identity lane_identity;
-        successful_worker->id_prom_->As(lane_identity);
+        successful_worker->id_prom->As(lane_identity);
         // TODO(issue 24): Verify expected identity
 
         {
