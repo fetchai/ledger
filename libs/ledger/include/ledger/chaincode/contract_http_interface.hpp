@@ -30,7 +30,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
-                 
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -88,9 +88,8 @@ public:
     // add custom debug handlers
     Post("/api/debug/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           
            chain::MutableTransaction tx;
-            
+
            tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
            tx.set_fee(transaction_index_);
            tx.set_contract_name("fetch.dummy.run");
@@ -107,26 +106,24 @@ public:
            return http::CreateJsonResponse(oss.str());
          });
 
+    // new transaction
+    Post("/api/submittx", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      std::ostringstream oss;
+      try
+      {
+        chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
+        auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
+        processor_.AddTransaction(vtx);
+        oss << R"({ "submitted": true })";
+      }
+      catch (std::exception const &ex)
+      {
+        oss.clear();
+        oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
+      }
 
-    //new transaction
-    Post("/api/submittx",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           std::ostringstream oss;
-           try
-           {
-             chain::MutableTransaction tx{ chain::FromWireTransaction(request.body()) };
-             auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
-             processor_.AddTransaction(vtx);
-             oss << R"({ "submitted": true })";
-           }
-           catch(std::exception const& ex)
-           {
-             oss.clear();
-             oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
-           }
-
-           return http::CreateJsonResponse(oss.str());
-         });
+      return http::CreateJsonResponse(oss.str());
+    });
   }
 
 private:

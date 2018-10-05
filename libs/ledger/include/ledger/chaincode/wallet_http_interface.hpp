@@ -41,8 +41,8 @@ namespace ledger {
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
-  using KeyStore               = storage::ObjectStore<byte_array::ConstByteArray>;
-  using KeyStorePtr            = std::shared_ptr<KeyStore>;
+  using KeyStore    = storage::ObjectStore<byte_array::ConstByteArray>;
+  using KeyStorePtr = std::shared_ptr<KeyStore>;
 
   static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
 
@@ -52,7 +52,8 @@ public:
     PARSE_FAILURE
   };
 
-  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor, KeyStorePtr key_store = std::make_shared<KeyStore>())
+  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor,
+                      KeyStorePtr key_store = std::make_shared<KeyStore>())
     : state_{state}
     , processor_{processor}
     , key_store_{key_store}
@@ -113,7 +114,7 @@ private:
     count = std::min(count, uint64_t(10000));
 
     std::vector<crypto::ECDSASigner> signers(count);
-        
+
     std::random_device rd;
     std::mt19937       rng(rd());
 
@@ -122,7 +123,7 @@ private:
       signer.GenerateKeys();
 
       // Create random address
-      byte_array::ConstByteArray const &address{ signer.public_key() };
+      byte_array::ConstByteArray const &address{signer.public_key()};
 
       // construct the wealth generation transaction
       {
@@ -149,7 +150,7 @@ private:
         // dispatch the transaction
         processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
       }
-      
+
       key_store_->Set(storage::ResourceAddress{address}, signer.private_key());
     }
 
@@ -249,13 +250,16 @@ private:
 
         // query private key for signing
         byte_array::ConstByteArray priv_key;
-        if ( !key_store_->Get(storage::ResourceAddress{from}, priv_key))
+        if (!key_store_->Get(storage::ResourceAddress{from}, priv_key))
         {
-          return http::CreateJsonResponse(R"({"success": false, "error": "provided address/pub.key does not exist in key store"})", http::Status::CLIENT_ERROR_BAD_REQUEST);
+          return http::CreateJsonResponse(
+              R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
+              http::Status::CLIENT_ERROR_BAD_REQUEST);
         }
 
         // sign the transaction
-        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};  key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
+        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
+        key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
 
         mtx.Sign(priv_key, tx_sign_adapter);
 

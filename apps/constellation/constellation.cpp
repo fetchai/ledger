@@ -18,8 +18,8 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
-#include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "network/muddle/rpc/client.hpp"

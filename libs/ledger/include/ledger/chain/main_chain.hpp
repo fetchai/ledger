@@ -33,10 +33,10 @@
 #include <set>
 
 //// Specialise hash of byte_array for unordered map/set
-//namespace std {
+// namespace std {
 //
-//template <>
-//struct hash<fetch::byte_array::ByteArray>
+// template <>
+// struct hash<fetch::byte_array::ByteArray>
 //{
 //  std::size_t operator()(const fetch::byte_array::ByteArray &k) const
 //  {
