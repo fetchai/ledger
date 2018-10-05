@@ -107,7 +107,7 @@ public:
          });
 
     // new transaction
-    Post("/api/submittx", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+    Post("/api/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       std::ostringstream oss;
       try
       {
