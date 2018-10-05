@@ -247,7 +247,7 @@ private:
   size_t                max_attempts_;
 };
 
-void StorageUnitClient::WorkCycle(void)
+void StorageUnitClient::WorkCycle()
 {
   auto p = bg_work_.CountPending();
 

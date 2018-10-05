@@ -106,7 +106,7 @@ private:
     FAILED,
   };
 
-  void WorkCycle(void);
+  void WorkCycle();
 
 public:
   template <typename T>

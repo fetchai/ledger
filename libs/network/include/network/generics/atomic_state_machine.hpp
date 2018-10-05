@@ -24,6 +24,27 @@ namespace fetch {
 
 namespace network {
 
+/**
+ * This is a representation of a set of states (passed in as templ
+ * param) and the allowed transitions between them forming a directed
+ * graph of state transitions. There is a void(void) function which
+ * can be repeatedly called to drive an inheriting class's state
+ * around the graph (via a thread or a polled loop or similar). It
+ * calls "bool PossibleNewState(STATE &currentstate)" which can be
+ * overridden to evaluate a new state. (This provides a testable
+ * interface).
+ *
+ * The state is stored in an atomic var so that reading it/writing it
+ * can be lockless and therefore freerunning.
+ *
+ * We throw on invalid state changes unless a specific "Force"
+ * operation is used to set the state overriding the allowed
+ * operations restriction.
+ *
+ * @tparam STATE An enum class which represents all possible states in
+ * the graph.
+ */
+
 template <typename STATE>
 class AtomicStateMachine
 {
