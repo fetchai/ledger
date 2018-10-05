@@ -19,6 +19,7 @@
 
 #include <condition_variable>
 
+#include "core/logger.hpp"
 #include "network/generics/future_timepoint.hpp"
 
 namespace fetch {
@@ -50,9 +51,11 @@ private:
 
   struct TheCounter
   {
-    Counter count{0};
-    CondVar cv;
     Mutex   mutex;
+    CondVar cv;
+
+    uint32_t complete = 0;
+    uint32_t total = 0;
   };
 
   static TheCounter &GetCounter()
@@ -61,61 +64,50 @@ private:
     return theCounter;
   }
 
-  unsigned int my_count_;
-
 public:
   static constexpr char const *LOGGING_NAME = "AtomicInflightCounter";
 
-  AtomicInflightCounter(unsigned int my_count = 1)
+  AtomicInflightCounter()
   {
-    my_count_         = my_count;
     auto &the_counter = GetCounter();
+
     Lock  lock(the_counter.mutex);
-    the_counter.count.fetch_add(my_count_);
+    ++the_counter.total;
   }
 
-  void Completed(unsigned int completed_count = 1)
+  ~AtomicInflightCounter()  = default;
+
+  void Completed()
   {
-    unsigned int clipped = std::min(completed_count, my_count_);
-    my_count_ -= clipped;
-    auto &       the_counter = GetCounter();
-    unsigned int previous;
+    auto &the_counter = GetCounter();
+
     {
       Lock lock(the_counter.mutex);
-      previous = the_counter.count.fetch_sub(clipped);
-      if (previous < 1)
-      {
-        GetCounter().cv.notify_all();
-      }
+      ++the_counter.complete;
     }
 
-    if (previous < 0)
-    {
-      Lock lock(the_counter.mutex);
-      if (the_counter.count < 0)  // check it wasn't modified while we were locking.
-      {
-        the_counter.count.store(0);  // set it to zero.
-      }
-    }
-  }
-
-  virtual ~AtomicInflightCounter()
-  {
-    Completed(my_count_);
+    the_counter.cv.notify_all();
   }
 
   static bool Wait(const FutureTimepoint &until)
   {
     auto &the_counter = GetCounter();
+
     while (!until.IsDue())
     {
       Lock lock(the_counter.mutex);
-      if (the_counter.count == 0)
+
+      if (the_counter.complete >= the_counter.total)
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Waited: great success");
         return true;
       }
+
       the_counter.cv.wait_for(lock, until.DueIn());
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Waited: epic fail");
+
     return false;
   }
 };
