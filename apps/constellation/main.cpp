@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 
   if (!fetch::version::VALID)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version - git working tree is dirty");
   }
 
   try

@@ -159,9 +159,13 @@ void Muddle::RunPeriodicMaintenance()
   Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
   if (time_since_last_cleanup >= CLEANUP_INTERVAL)
   {
+    // clean up and pending message handlers and also trigger the timeout logic
     dispatcher_.Cleanup();
+
+    // clean up echo caches and other temporary storages
+    router_.Cleanup();
+
     last_cleanup_ = Clock::now();
-    ;
   }
 
   // schedule the main

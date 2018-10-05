@@ -31,8 +31,9 @@ Metrics &Metrics::Instance()
 void Metrics::ConfigureFileHandler(std::string filename)
 {
   std::unique_ptr<MetricHandler> new_handler(new MetricFileHandler(std::move(filename)));
-  handler_.store(handler_object_.get());
-  new_handler.swap(handler_object_);
+
+  handler_.store(new_handler.get());
+  handler_object_ = std::move(new_handler);
 }
 
 void Metrics::RemoveMetricHandler()
