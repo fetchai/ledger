@@ -114,12 +114,12 @@ private:
     Promise               id_prom;
 
     LaneConnectorWorker(
-        size_t thelane, SharedServiceClient theclient, std::string const &thename,
-        const std::chrono::milliseconds &thetimeout = std::chrono::milliseconds(1000))
-      : client(theclient)
+        size_t thelane, SharedServiceClient theclient, std::string thename,
+        std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+      : client(std::move(theclient))
       , attempts(0)
-      , name(thename)
-      , timeout(thetimeout)
+      , name(std::move(thename))
+      , timeout(std::move(thetimeout))
       , max_attempts(10)
     {
       lane = thelane;
