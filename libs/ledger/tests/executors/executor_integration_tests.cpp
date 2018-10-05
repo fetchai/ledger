@@ -102,7 +102,7 @@ protected:
 
     auto count =
         storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
-    FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
 
     // create the executor service
     service_ =

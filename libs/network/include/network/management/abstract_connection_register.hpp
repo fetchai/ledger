@@ -68,7 +68,7 @@ public:
     return services_[i].lock();
   }
 
-  // TODO(kll) Rename this to match ServiceClients below.
+  // TODO(kll): Rename this to match ServiceClients below.
   void WithServices(std::function<void(service_map_type const &)> f) const
   {
     std::lock_guard<mutex::Mutex> lock(service_lock_);

@@ -45,14 +45,11 @@ class LaneConnectorWorker;
 
 class StorageUnitClient : public StorageUnitInterface
 {
-private:
-  friend class LaneConnectorWorker;  // this will do work for us, it's easier if it has access to
-                                     // our types.
 public:
   struct ClientDetails
   {
     crypto::Identity      identity;
-    std::atomic<uint32_t> lane;
+    std::atomic<uint32_t> lane{0};
   };
 
   using LaneIndex               = LaneIdentity::lane_type;
@@ -66,11 +63,6 @@ public:
   using PromiseState            = fetch::service::PromiseState;
   using Promise                 = service::Promise;
   using FutureTimepoint         = network::FutureTimepoint;
-  using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
-  using Worker                  = LaneConnectorWorker;
-  using WorkerP                 = std::shared_ptr<Worker>;
-  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
   using Mutex                   = fetch::mutex::Mutex;
   using LockT                   = std::lock_guard<Mutex>;
   using Peer                    = fetch::network::Peer;
@@ -93,20 +85,6 @@ public:
     assert(count == (1u << log2_lanes_));
   }
 
-private:
-  enum class State
-  {
-    INITIAL = 0,
-    CONNECTING,
-    QUERYING,
-    PINGING,
-    SNOOZING,
-    DONE,
-    TIMEDOUT,
-    FAILED,
-  };
-
-  void WorkCycle();
 
 public:
   template <typename T>
@@ -139,32 +117,6 @@ public:
     FETCH_LOCK(mutex_);
     auto iter = lanes_.find(lane);
     return (iter != lanes_.end());
-  }
-
-  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane, SharedServiceClient client,
-                                                  std::string               name,
-                                                  std::chrono::milliseconds timeout);
-  template <typename T>
-  void AddLaneConnections(
-      const std::map<LaneIndex, Peer> &lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
-  {
-    if (!workthread_)
-    {
-      workthread_ =
-          std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
-    }
-
-    for (auto const &lane : lanes)
-    {
-      auto                lanenum = lane.first;
-      auto                target  = lane.second;
-      SharedServiceClient client  = register_.template CreateServiceClient<T>(
-          network_manager_, target.address(), target.port());
-      std::string name   = target.ToString();
-      auto        worker = MakeWorker(lanenum, client, name, std::chrono::milliseconds(timeout));
-      bg_work_.Add(worker);
-    }
   }
 
   SharedServiceClient GetClientForLane(LaneIndex lane)
@@ -330,6 +282,56 @@ public:
   }
 
 private:
+private:
+  friend class LaneConnectorWorker;  // this will do work for us, it's
+                                     // easier if it has access to our
+                                     // types.
+  enum class State
+  {
+    INITIAL = 0,
+    CONNECTING,
+    QUERYING,
+    PINGING,
+    SNOOZING,
+    DONE,
+    TIMEDOUT,
+    FAILED,
+  };
+
+  using Worker                  = LaneConnectorWorker;
+  using WorkerP                 = std::shared_ptr<Worker>;
+  using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
+  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
+
+  void WorkCycle();
+
+  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane, SharedServiceClient client,
+                                                  std::string               name,
+                                                  std::chrono::milliseconds timeout);
+  template <typename T>
+  void AddLaneConnections(
+      const std::map<LaneIndex, Peer> &lanes,
+      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
+  {
+    if (!workthread_)
+    {
+      workthread_ =
+          std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+    }
+
+    for (auto const &lane : lanes)
+    {
+      auto                lanenum = lane.first;
+      auto                target  = lane.second;
+      SharedServiceClient client  = register_.template CreateServiceClient<T>(
+          network_manager_, target.address(), target.port());
+      std::string name   = target.ToString();
+      auto        worker = MakeWorker(lanenum, client, name, std::chrono::milliseconds(timeout));
+      bg_work_.Add(worker);
+    }
+  }
+
   void SetLaneLog2(LaneIndex count)
   {
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));

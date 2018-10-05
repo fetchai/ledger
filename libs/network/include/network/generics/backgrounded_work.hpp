@@ -185,7 +185,7 @@ public:
   {
     {
       Lock lock(mutex_);
-      // TODO(kll) use a no-copy insert operator here..
+      // TODO(kll): use a no-copy insert operator here..
       workload_[PromiseState::WAITING].push_back(new_work);
     }
     Wake();
@@ -195,7 +195,7 @@ public:
   {
     {
       Lock lock(mutex_);
-      // TODO(kll) use bulk insert operators here..
+      // TODO(kll): use bulk insert operators here..
       for (auto new_work : new_works)
       {
         workload_[PromiseState::WAITING].push_back(new_works);
