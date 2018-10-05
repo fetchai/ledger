@@ -543,15 +543,35 @@ public:
 
   void UseThesePeers(UriSet uris)
   {
-    FETCH_LOCK(desireds_mutex_);
+    FETCH_LOCK(desired_connections_mutex_);
     desired_connections_ = std::move(uris);
+
+    {
+      FETCH_LOCK(services_mutex_);
+      for (auto &peer_conn : peer_connections_)
+      {
+        if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER: ", peer_conn.first.ToString());
+        }
+      }
+
+      for (auto &uri : desired_connections_)
+      {
+        if (peer_connections_.find(uri) == peer_connections_.end())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER: ", uri.ToString());
+        }
+      }
+    }
+
   }
 
   void GeneratePeerDeltas(UriSet &create, UriSet &remove)
   {
     {
+      FETCH_LOCK(desired_connections_mutex_);
       FETCH_LOCK(services_mutex_);
-      FETCH_LOCK(desireds_mutex_);
 
       auto ident = lane_identity_.lock();
       if (!ident)
@@ -735,7 +755,6 @@ private:
   network_manager_type        manager_;
 
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
-  mutex::Mutex desireds_mutex_{__LINE__, __FILE__};
 
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
