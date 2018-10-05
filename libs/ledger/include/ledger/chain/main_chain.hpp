@@ -32,7 +32,6 @@
 #include <memory>
 #include <set>
 
-
 namespace fetch {
 namespace chain {
 
