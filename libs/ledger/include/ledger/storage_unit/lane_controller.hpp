@@ -564,7 +564,6 @@ public:
         }
       }
     }
-
   }
 
   void GeneratePeerDeltas(UriSet &create, UriSet &remove)

@@ -81,15 +81,14 @@ bool Uri::IsUri(const std::string &possible_uri)
   return (matches.size() == 3);
 }
 
-
 std::string Uri::ToString() const
 {
-  switch(scheme_)
+  switch (scheme_)
   {
   case Scheme::Unknown:
     return "unknown:";
   case Scheme::Tcp:
-    return std::string("tcp://") + tcp_ . ToString();
+    return std::string("tcp://") + tcp_.ToString();
   case Scheme::Muddle:
     return std::string("muddle://") + std::string(authority_);
   }
