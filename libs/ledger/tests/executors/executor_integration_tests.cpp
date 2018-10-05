@@ -36,8 +36,6 @@ using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
 using ::testing::_;
 
-// This test seems annoyingly flakey.
-
 class ExecutorIntegrationTests : public ::testing::Test
 {
 protected:
@@ -109,33 +107,6 @@ protected:
     // create the executor service
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
-
-    lane_data.clear();
-    for (LaneIndex i = 0; i < num_lanes; ++i)
-    {
-      uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-      if (!storage_->ClientForLaneConnected(i))
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
-        lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
-      }
-    }
-    if (!lane_data.empty())
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(
-          5000));  // Do hard stop & then a last-chance retry for the lanes.
-      auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data,
-                                                                  std::chrono::milliseconds(30000));
-      if (count == num_lanes)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
-      }
-      else
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
-        exit(1);
-      }
-    }
 
     service_->Start();
 

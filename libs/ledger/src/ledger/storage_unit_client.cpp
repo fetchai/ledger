@@ -79,8 +79,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
 
-  virtual ~LaneConnectorWorker()
-  {}
+  virtual ~LaneConnectorWorker() = default;
 
   PromiseState Work()
   {
@@ -100,12 +99,29 @@ public:
     }
   }
 
-  std::string GetStateName(int state)
+  char const *GetStateName(State state)
   {
-    const char *states[] = {
-        "INITIAL", "CONNECTING", "QUERYING", "PINGING", "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
-    };
-    return std::string(states[state]);
+    switch(state)
+    {
+    case State::INITIAL:
+      return "INITIAL";
+    case State::CONNECTING:
+      return "CONNECTING";
+    case State::QUERYING:
+      return "QUERYING";
+    case State::PINGING:
+      return "PINGING";
+    case State::SNOOZING:
+      return "SNOOZING";
+    case State::DONE:
+      return "DONE";
+    case State::TIMEDOUT:
+      return "TIMEDOUT";
+    case State::FAILED:
+      return "FAILED";
+    default:
+      return "?";
+    }
   }
 
   virtual bool PossibleNewState(State &currentstate) override
