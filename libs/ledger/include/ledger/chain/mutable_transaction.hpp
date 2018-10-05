@@ -390,6 +390,18 @@ public:
     return SignInternal(private_key, tx_sign_adapter);
   }
 
+  Signature const &Sign(byte_array::ConstByteArray const &private_key)
+  {
+    tx_signing_adapter_type tx_sign_adapter{*this};
+    return SignInternal(private_key, tx_sign_adapter);
+  }
+
+  Signature const &Sign(tx_signing_adapter_type::private_key_type const &private_key)
+  {
+    tx_signing_adapter_type tx_sign_adapter{*this};
+    return SignInternal(private_key, tx_sign_adapter);
+  }
+
   void PushResource(byte_array::ConstByteArray const &res)
   {
     LOG_STACK_TRACE_POINT;
