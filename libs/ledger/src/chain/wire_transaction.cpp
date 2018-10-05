@@ -28,7 +28,7 @@
 namespace fetch {
 namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addMetadata)
+byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const add_metadata)
 {
   script::Variant tx_v;
   tx_v.MakeObject();
@@ -36,7 +36,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   // version of wire format)
   tx_v["ver"] = "1.0";
 
-  if (addMetadata)
+  if (add_metadata)
   {
     script::Variant tx_debug_data;
     tx_debug_data.MakeObject();

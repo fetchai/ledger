@@ -107,23 +107,24 @@ public:
          });
 
     // new transaction
-    Post("/api/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-      std::ostringstream oss;
-      try
-      {
-        chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
-        auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
-        processor_.AddTransaction(vtx);
-        oss << R"({ "submitted": true })";
-      }
-      catch (std::exception const &ex)
-      {
-        oss.clear();
-        oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
-      }
+    Post("/api/contract/submit",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           std::ostringstream oss;
+           try
+           {
+             chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
+             auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
+             processor_.AddTransaction(vtx);
+             oss << R"({ "submitted": true })";
+           }
+           catch (std::exception const &ex)
+           {
+             oss.clear();
+             oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
+           }
 
-      return http::CreateJsonResponse(oss.str());
-    });
+           return http::CreateJsonResponse(oss.str());
+         });
   }
 
 private:
