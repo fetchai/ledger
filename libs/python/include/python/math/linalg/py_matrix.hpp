@@ -44,10 +44,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
                                        Matrix<T>::UniformRandom)
       .def_static("UniformRandom",
                   (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::UniformRandom)
-      .def("Shape",
-           [](Matrix<T> const &obj) {
-             return obj.shape();
-           })
+      .def("Shape", [](Matrix<T> const &obj) { return obj.shape(); })
       .def("Copy",
            [](Matrix<T> const &other) {
              Matrix<T> ret;

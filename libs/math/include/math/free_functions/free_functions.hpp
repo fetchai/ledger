@@ -1454,12 +1454,12 @@ void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Ma
   }
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &axis)
+linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1,
+                                  linalg::Matrix<T, C, S> const &axis)
 {
   assert(axis.shape()[0] == 1);
   assert(axis.shape()[1] == 1);
   return ReduceSum(obj1, std::size_t(axis[0]));
-
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis)
@@ -1490,15 +1490,15 @@ linalg::Matrix<T, C, S> ReduceSumImpl(linalg::Matrix<T, C, S> const &obj1, std::
   }
   else
   {
-    return ReduceSumImpl(ReduceSum(obj1, axis), axis-1);
+    return ReduceSumImpl(ReduceSum(obj1, axis), axis - 1);
   }
 }
 
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1)
 {
-  std::size_t             axis = obj1.shape().size() - 1;
-//  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
+  std::size_t axis = obj1.shape().size() - 1;
+  //  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
 
   return ReduceSumImpl(obj1, axis);
 }
@@ -1511,7 +1511,7 @@ ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
 
   Subtract(A, B, ret);
   Square(ret);
-//  ret = ReduceSum(ReduceSum(ret, 1), 0);
+  //  ret = ReduceSum(ReduceSum(ret, 1), 0);
   ret = ReduceSum(ret, 1);
   ret = Divide(ret, typename ArrayType::type(ret.size()));
 
@@ -1553,10 +1553,10 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
       }
     }
   }
-//  auto ret1 = Multiply(y, logx);
+  //  auto ret1 = Multiply(y, logx);
 
-//  auto ret2 = ReduceSum(ret1, 1);
-//  auto ret3 = ReduceSum(ret2, 0);
+  //  auto ret2 = ReduceSum(ret1, 1);
+  //  auto ret3 = ReduceSum(ret2, 0);
   auto ret3 = ReduceSum(ret1);
 
   return Multiply(ret3, -1.0);
@@ -1575,7 +1575,7 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
 {
   linalg::Matrix<T, C, S> ret{A.shape()};
   ret.Copy(A);
-//  ret.data() = A.data().copy();
+  //  ret.data() = A.data().copy();
 
   Exp(ret);
   Add(ret, 1.0, ret);
@@ -1958,8 +1958,7 @@ NDArray<T, C> Softmax(NDArray<T, C> const &array)
  */
 namespace details {
 template <typename ArrayType>
-ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array2,
-                                  ArrayType &ret)
+ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(ret.size() == array2.size());
@@ -2083,8 +2082,9 @@ fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
  * @param ret
  */
 
-//template <typename ArrayType>
-//fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+// template <typename ArrayType>
+// fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const
+// &array2,
 //         ArrayType &ret)
 template <typename ArrayType>
 void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
@@ -2097,8 +2097,8 @@ void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 }
 
 //
-//template <typename T, typename C>
-//void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
+// template <typename T, typename C>
+// void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
 //         ShapeLessArray<T, C> &ret)
 //{
 //  assert(array1.size() == array2.size());
@@ -2257,14 +2257,16 @@ void Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Mat
   }
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
+linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1,
+                                 linalg::Matrix<T, C, S> const &array2)
 {
   linalg::Matrix<T, C, S> ret{array1.size()};
   Subtract(array1, array2, ret);
   return ret;
 }
 template <typename T, typename C, typename S>
-void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2, linalg::Matrix<T, C, S> &ret)
+void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
+              linalg::Matrix<T, C, S> &ret)
 {
   assert(array1.size() == ret.size());
   assert(array1.size() == array2.size());
@@ -2513,13 +2515,15 @@ void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const
   }
 }
 template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2, linalg::Matrix<T, C, S> &ret)
+void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
+              linalg::Matrix<T, C, S> &ret)
 {
   memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
   Multiply(array1, array2, range, ret);
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
+linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1,
+                                 linalg::Matrix<T, C, S> const &array2)
 {
   linalg::Matrix<T, C, S> ret{array1.shape()};
   Multiply(array1, array2, ret);
@@ -2555,7 +2559,6 @@ linalg::Matrix<T, C, S> Multiply(T const &scalar, linalg::Matrix<T, C, S> const 
   Multiply(scalar, array, ret);
   return ret;
 }
-
 
 /**
  * Multiply array by another array with broadcasting
@@ -2719,29 +2722,16 @@ template <typename T, typename C, typename S>
 void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
             memory::Range const &range, linalg::Matrix<T, C, S> &ret)
 {
-  std::cout << "divide3" << std::endl;
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
-  std::cout << "divide3a" << std::endl;
   if (range.is_undefined())
   {
     Divide(obj1, obj2, ret);
-    std::cout << "divide3b_a" << std::endl;
   }
   else if (range.is_trivial())
   {
-    std::cout << "divide3b_b" << std::endl;
-
     auto r = range.ToTrivialRange(ret.data().size());
-    std::cout << "divide3b_c" << std::endl;
-    std::cout << "obj1 size()" << obj1.size() << std::endl;
-    std::cout << "obj1 shape()[0]" << obj1.shape()[0] << std::endl;
-    std::cout << "obj1 shape()[1]" << obj1.shape()[1] << std::endl;
-    std::cout << "obj2 shape()[0]" << obj2.shape()[0] << std::endl;
-    std::cout << "obj2 shape()[1]" << obj2.shape()[1] << std::endl;
-    std::cout << "ret shape()[0]" << ret.shape()[0] << std::endl;
-    std::cout << "ret shape()[1]" << ret.shape()[1] << std::endl;
 
     ret.data().in_parallel().Apply(
         r,
@@ -2749,13 +2739,6 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
            typename linalg::Matrix<T, C, S>::vector_register_type const &y,
            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
         obj1.data(), obj2.data());
-
-    std::cout << "obj1 shape()[0]" << obj1.shape()[0] << std::endl;
-    std::cout << "obj1 shape()[1]" << obj1.shape()[1] << std::endl;
-    std::cout << "obj2 shape()[0]" << obj2.shape()[0] << std::endl;
-    std::cout << "obj2 shape()[1]" << obj2.shape()[1] << std::endl;
-    std::cout << "ret shape()[0]" << ret.shape()[0] << std::endl;
-    std::cout << "ret shape()[1]" << ret.shape()[1] << std::endl;
   }
   else
   {
@@ -2763,14 +2746,15 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
   }
 }
 template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2, linalg::Matrix<T, C, S> &ret)
+void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
+            linalg::Matrix<T, C, S> &ret)
 {
-  std::cout << "divide2" << std::endl;
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2)
+linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1,
+                               linalg::Matrix<T, C, S> const &obj2)
 {
   linalg::Matrix<T, C, S> ret{obj1.shape()};
 

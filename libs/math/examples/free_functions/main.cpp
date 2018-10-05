@@ -17,30 +17,28 @@
 //------------------------------------------------------------------------------
 
 //#include "math/linalg/matrix.hpp"
-#include "math/shape_less_array.hpp"
 #include "math/meta/type_traits.hpp"
+#include "math/shape_less_array.hpp"
 
-using Type = double;
+using Type      = double;
 using ArrayType = fetch::math::ShapeLessArray<Type>;
 
-
-template< typename T >
-fetch::math::meta::IsBlasArrayLike<T, bool> IsGreat(T const& x)
+template <typename T>
+fetch::math::meta::IsBlasArrayLike<T, bool> IsGreat(T const &x)
 {
   return true;
 }
 
 //
-//template< typename T >
-//IsMathArrayLike<T, bool> IsGreat(T const& x)
+// template< typename T >
+// IsMathArrayLike<T, bool> IsGreat(T const& x)
 //{
 //  return true;
 //}
 
-
 int main(int argc, char **argv)
 {
-//  ArrayType x;
+  //  ArrayType x;
   double x;
   std::cout << IsGreat(x) << std::endl;
 }

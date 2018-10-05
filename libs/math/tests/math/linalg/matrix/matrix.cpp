@@ -775,57 +775,13 @@ TEST(matrix, double_division)
 
 TEST(matrix, matrix_double_isgreaterequal_Test)
 {
-  _M<double> A, B, C, R;
 
-  A.Resize(11);
-  B.Resize(11);
-  C.Resize(11);
-  R.Resize(11);
-
-  for (std::size_t j = 0; j < 11; ++j)
-  {
-    A[j] = j - 5;
-    B[j] = 0;
-    C[j] = -1;
-
-    if (j < 5)
-    {
-      R[j] = 0;
-    }
-    else
-    {
-      R[j] = 1;
-    }
-  }
-
-  //  A = _M<double>(R"(
-  // -2.0 -1.0 0.0 1.0 2.0
-  //)");
-  //
-  //  B = _M<double>(R"(
-  // 0.0 0.0 0.0 0.0 0.0
-  //)");
-  //
-  //  C = _M<double>(R"(
-  // -2.0 -1.0 0.0 1.0 2.0
-  //)");
-  //
-  //  R = _M<double>(R"(
-  // 0.0 0.0 1.0 1.0 1.0
-  //)");
+  _M<double> A = _M<double>(R"(-2.0 -1.0 0.0 1.0 2.0; -2.0 -1.0 0.0 1.0 2.0)");
+  _M<double> B = _M<double>(R"(0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0)");
+  _M<double> C = _M<double>(R"(0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0)");
+  _M<double> R = _M<double>(R"(0.0 0.0 1.0 1.0 1.0; 0.0 0.0 1.0 1.0 1.0)");
 
   fetch::math::Isgreaterequal(A, B, C);
-
-  std::cout << "C: " << std::endl;
-  for (std::size_t i = 0; i < C.size(); ++i)
-  {
-    std::cout << C[i] << std::endl;
-  }
-  std::cout << "R: " << std::endl;
-  for (std::size_t i = 0; i < C.size(); ++i)
-  {
-    std::cout << R[i] << std::endl;
-  }
 
   ASSERT_TRUE(R.AllClose(C));
 };

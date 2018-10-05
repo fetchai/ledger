@@ -17,48 +17,64 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/layers.hpp"
 #include <iostream>
-#include <unordered_set>
-#include <unordered_map>
-#include <vector>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace ml {
-// TODO(Singleton this class)
-template <typename ArrayType, typename VariableType>
+// TODO(private 271)
+
+template <typename A, typename V>
 class SessionManager
 {
- private:
-
+private:
+  using ArrayType         = A;
+  using VariableType      = V;
+  using VariablePtrType   = std::shared_ptr<VariableType>;
+  using LayerType         = layers::Layer<ArrayType>;
+  using LayerPtrType      = std::shared_ptr<LayerType>;
   using FunctionSignature = typename VariableType::FunctionSignature;
-  using VariablePtrType = std::shared_ptr<VariableType>;
 
-  public:
-  //  using VariableType = fetch::ml::layers::Layer<ArrayType>;
-
+public:
   // A counter of variables within the session
-  std::size_t                      variable_counter = 0;
-//  std::unordered_map<std::string, VariableType&>        all_variables{};
-//  std::vector<VariableType>               top_sort{};
-
+  std::size_t                                      variable_counter = 0;  // TODO(private 272)
+  std::size_t                                      layer_counter    = 0;
   std::unordered_map<std::string, VariablePtrType> all_variables;
   std::unordered_map<std::string, VariablePtrType> top_sort_map;
-  std::vector<VariablePtrType> top_sort_vector;
-
-
+  std::vector<VariablePtrType>                     top_sort_vector;
 
   SessionManager() = default;
 
+  /*
+   * These methods construct and track variables
+   */
 
-  VariablePtrType Variable(std::string const &variable_name = "", FunctionSignature const &b_fn = nullptr, bool is_leaf = true)
+  VariablePtrType Variable(std::string const &      variable_name = "",
+                           FunctionSignature const &b_fn = nullptr, bool is_leaf = true)
   {
     VariablePtrType var = std::make_shared<VariableType>();
     VariableSetup(var, variable_name, b_fn, is_leaf);
     return var;
   }
+  VariablePtrType Variable(std::vector<std::size_t>        in_shape,
+                           std::vector<std::size_t> const &grad_shape,
+                           std::string const &             variable_name = "",
+                           FunctionSignature const &       f_fn          = nullptr,
+                           FunctionSignature const &b_fn = nullptr, bool is_leaf = true)
+  {
+    VariablePtrType var = std::make_shared<VariableType>();
+    var->SetData(ArrayType(in_shape));
 
-  VariablePtrType Variable(std::vector<std::size_t> in_shape, FunctionSignature const &f_fn = nullptr, std::string const &variable_name = "", FunctionSignature const &b_fn = nullptr, bool is_leaf = true)
+    VariableSetup(var, variable_name, b_fn, is_leaf, f_fn, grad_shape);
+    return var;
+  }
+  VariablePtrType Variable(std::vector<std::size_t> in_shape, std::string const &variable_name = "",
+                           FunctionSignature const &f_fn = nullptr,
+                           FunctionSignature const &b_fn = nullptr, bool is_leaf = true)
   {
     VariablePtrType var = std::make_shared<VariableType>();
     var->SetData(ArrayType(in_shape));
@@ -67,15 +83,24 @@ class SessionManager
     return var;
   }
 
-  void VariableSetup(VariablePtrType var, std::string const &variable_name, FunctionSignature const &b_fn = nullptr, bool is_leaf = true, FunctionSignature const &f_fn = nullptr)
+  void VariableSetup(VariablePtrType var, std::string const &variable_name,
+                     FunctionSignature const &b_fn = nullptr, bool is_leaf = true,
+                     FunctionSignature const &f_fn       = nullptr,
+                     std::vector<std::size_t> grad_shape = {})
   {
     // variable ID (Implement pointer as ID)
     var->id() = variable_counter;
     ++variable_counter;
 
     // setup variable name
-    if (variable_name.empty()) {var->SetVariableName("autoname_" + std::to_string(var->id()));}
-    else {var->SetVariableName(variable_name + "_" + std::to_string(var->id()));}
+    if (variable_name.empty())
+    {
+      var->SetVariableName("autoname_" + std::to_string(var->id()));
+    }
+    else
+    {
+      var->SetVariableName(variable_name + "_" + std::to_string(var->id()));
+    }
 
     // Assign backward, forward functions and set leaf status
     assert(b_fn || is_leaf);
@@ -87,7 +112,7 @@ class SessionManager
     }
 
     // initialise the variables gradients to zeros
-    var->InitialiseGradients();
+    var->InitialiseGradients(grad_shape);
 
     // flag that the variable is ready for use
     var->initialised = true;
@@ -96,7 +121,47 @@ class SessionManager
     all_variables.insert({var->variable_name(), var});
   }
 
-  void Forward(VariablePtrType var, std::string &output_name)
+  /*
+   * These methods construct layers and track their internal variables
+   */
+
+  LayerPtrType Layer(std::size_t const &in_size, std::size_t const &out_size,
+                     std::string const &layer_name = "")
+  {
+    return LayerSetup({in_size, out_size}, layer_name);
+  }
+  LayerPtrType Layer(std::vector<std::size_t> const &in_shape, std::string const &layer_name = "")
+  {
+    return LayerSetup(in_shape, layer_name);
+  }
+  LayerPtrType LayerSetup(std::vector<std::size_t> const &in_shape, std::string const &layer_name)
+  {
+    //    layer_counter->id() = layer_counter;
+    if (layer_name.empty())
+    {
+      layer_name = "autoname_" + std::to_string(layer_counter);
+    }
+    else
+    {
+      layer_name = layer_name + "_" + std::to_string(layer_counter);
+    }
+    ++layer_counter;
+
+    VariablePtrType weights = std::make_shared<VariableType>();
+    VariableSetup(weights, layer_name + "_weights", nullptr, true);
+
+    VariablePtrType biases = std::make_shared<VariableType>();
+    VariableSetup(biases, layer_name + "_biases", nullptr, true);
+
+    LayerType l = Layer();
+    l.Initialise(in_shape, weights, biases);
+  }
+
+  void Forward(VariablePtrType in_var, VariablePtrType out_var)
+  {
+    Forward(in_var, out_var->variable_name());
+  }
+  void Forward(VariablePtrType in_var, std::string &output_name)
   {
     // output_name variable must exist
     assert(all_variables.find(output_name) != all_variables.end());
@@ -113,16 +178,32 @@ class SessionManager
     }
   }
 
-  void BackProp(VariablePtrType var, typename ArrayType::type const& lr)
+  void BackProp(VariablePtrType input_var, VariablePtrType output_var,
+                typename ArrayType::type const &lr, std::size_t nreps = 1)
   {
-    var->ClearGradients();
-    BackwardGraph(var);
-    GradientStep(lr);
+
+    for (std::size_t j = 0; j < nreps; ++j)
+    {
+      Forward(input_var, output_var->variable_name());
+
+      // Conduct a top sort and clear all gradients
+      top_sort_map.clear();
+      top_sort_vector.clear();
+      TopSort(output_var);
+      for (std::size_t i = top_sort_vector.size(); i > 0; --i)
+      {
+        top_sort_vector[i - 1]->ClearGradients();
+      }
+
+      //    var->ClearGradients();
+      BackwardGraph(output_var);
+      GradientStep(lr);
+    }
   }
 
-  void GradientStep(typename ArrayType::type const& lr)
+  void GradientStep(typename ArrayType::type const &lr)
   {
-    for ( auto var : top_sort_vector)
+    for (auto var : top_sort_vector)
     {
       var->GradientStep(lr);
     }
@@ -134,14 +215,14 @@ class SessionManager
     ret->data().SetAllZero();
     return ret;
   }
-  static VariablePtrType Zeroes(std::size_t const &in_size, std::size_t const &out_size, SessionManager &sess)
+  static VariablePtrType Zeroes(std::size_t const &in_size, std::size_t const &out_size,
+                                SessionManager &sess)
   {
     std::vector<std::size_t> new_shape{in_size, out_size};
-    VariablePtrType ret = sess.Variable(new_shape);
+    VariablePtrType          ret = sess.Variable(new_shape);
     ret->data().SetAllZero();
     return ret;
   }
-
 
   /**
    * builds a computation graph backwards

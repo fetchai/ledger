@@ -59,24 +59,7 @@ void Dot(VariablePtrType cur_node)
   auto &right = cur_node->prev[1];
   auto &dy    = cur_node->grad();
 
-  auto temp = fetch::math::DotTranspose(dy, right->data());
-//  std::cout << "temp.shape(): " << temp.shape()[0] << std::endl;
-//  std::cout << "temp.shape(): " << temp.shape()[1] << std::endl;
-//  std::cout << "temp[0]: " << temp[0] << std::endl;
-//
-//  for (std::size_t i = 0; i < temp.shape()[0]; ++i)
-//  {
-//    std::cout << std::endl;
-//    for (std::size_t j = 0; j < temp.shape()[1]; ++j)
-//    {
-//      std::cout << temp.At(i, j) << "\t";
-//    }
-//  }
-//  std::cout << "\n" << std::endl;
-//
-//  std::cout << "left->grad()[0]: " << left->grad()[0] << std::endl;
-  left->GradientAdd(temp);
-//  std::cout << "left->grad()[0]: " << left->grad()[0] << std::endl;
+  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
   right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
 }
 
@@ -102,9 +85,9 @@ void Relu(VariablePtrType cur_node)
 }
 
 template <typename VariablePtrType>
-void Sum(VariablePtrType cur_node)
+void ReduceSum(VariablePtrType cur_node)
 {
-  assert(cur_node->prev.size() == 1);
+  assert(cur_node->prev.size() == 2);
 
   auto &left = cur_node->prev[0];
   auto &dy   = cur_node->grad();
@@ -113,7 +96,6 @@ void Sum(VariablePtrType cur_node)
   //  cur_node.prev[0].grad() += cur_node.grad();
 }
 
-
 template <typename VariablePtrType>
 void MeanSquareError(VariablePtrType &cur_node)
 {
@@ -121,11 +103,11 @@ void MeanSquareError(VariablePtrType &cur_node)
 
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
-  auto temp3 = fetch::math::Subtract(left->data(), right->data());
-//  auto temp4 = fetch::math::ReduceSum(temp3, 0);
-//  auto temp5 = fetch::math::Mean(temp4);
-//
-//  left->GradientSetVal(temp5);
+  auto  temp3 = fetch::math::Subtract(left->data(), right->data());
+  //  auto temp4 = fetch::math::ReduceSum(temp3, 0);
+  //  auto temp5 = fetch::math::Mean(temp4);
+  //
+  //  left->GradientSetVal(temp5);
   left->GradientAdd(temp3);
 }
 
@@ -134,12 +116,11 @@ void CrossEntropyLoss(VariablePtrType cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
-//  auto &left  = cur_node->prev[0];
-//  auto &right = cur_node->prev[1];
-//
-//  typename VariablePtrType::>ArrayType temp{right->data().shape()};
-//  left->GradientAdd(temp);
-
+  //  auto &left  = cur_node->prev[0];
+  //  auto &right = cur_node->prev[1];
+  //
+  //  typename VariablePtrType::>ArrayType temp{right->data().shape()};
+  //  left->GradientAdd(temp);
 }
 
 template <typename VariablePtrType>
@@ -147,9 +128,9 @@ void Sigmoid(VariablePtrType cur_node)
 {
   assert(cur_node->prev.size() == 1);
 
-  auto &left = cur_node->prev[0];
-  auto temp1 = fetch::math::Subtract(1.0, left->data());
-  auto temp2 = fetch::math::Multiply(left->data(), temp1);
+  auto &left  = cur_node->prev[0];
+  auto  temp1 = fetch::math::Subtract(1.0, left->data());
+  auto  temp2 = fetch::math::Multiply(left->data(), temp1);
   left->GradientAdd(temp2);
 }
 

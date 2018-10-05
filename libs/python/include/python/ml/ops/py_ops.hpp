@@ -31,27 +31,28 @@ namespace ops {
 template <typename ArrayType>
 inline void BuildOps(std::string const &custom_name, pybind11::module &module)
 {
-  using SessionType  = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
-  using VariableType = fetch::ml::Variable<ArrayType>;
+  using SessionType     = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
+  using VariableType    = fetch::ml::Variable<ArrayType>;
+  using VariablePtrType = std::shared_ptr<VariableType>;
 
   namespace py = pybind11;
   module
-      .def("Dot", [](VariableType &left, VariableType &right,
-                     SessionType &sess) { return fetch::ml::ops::Dot(&left, &right, sess); })
+      .def("Dot", [](VariablePtrType left, VariablePtrType right,
+                     SessionType &sess) { return fetch::ml::ops::Dot(left, right, sess); })
       .def("Relu",
-           [](VariableType &left, SessionType &sess) { return fetch::ml::ops::Relu(&left, sess); })
-      .def("Sigmoid", [](VariableType &left, SessionType & sess)
-      {
-        return fetch::ml::ops::Sigmoid(left, sess);
-      })
-      .def("Sum", [](VariableType &left, std::size_t const axis,
-                     SessionType &sess) { return fetch::ml::ops::Sum(&left, axis, sess); })
-      .def("MeanSquareError",
-           [](VariableType &left, VariableType &right, SessionType &sess) {
-             return fetch::ml::ops::MeanSquareError(&left, &right, sess);
+           [](VariablePtrType left, SessionType &sess) { return fetch::ml::ops::Relu(left, sess); })
+      .def("Sigmoid", [](VariablePtrType left,
+                         SessionType &   sess) { return fetch::ml::ops::Sigmoid(left, sess); })
+      .def("ReduceSum",
+           [](VariablePtrType left, std::size_t const axis, SessionType &sess) {
+             return fetch::ml::ops::ReduceSum(left, axis, sess);
            })
-      .def("CrossEntropyLoss", [](VariableType &left, VariableType &right, SessionType &sess) {
-        return fetch::ml::ops::CrossEntropyLoss(&left, &right, sess);
+      .def("MeanSquareError",
+           [](VariablePtrType left, VariablePtrType right, SessionType &sess) {
+             return fetch::ml::ops::MeanSquareError(left, right, sess);
+           })
+      .def("CrossEntropyLoss", [](VariablePtrType left, VariablePtrType right, SessionType &sess) {
+        return fetch::ml::ops::CrossEntropyLoss(left, right, sess);
       });
 
   //  .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < double >> )

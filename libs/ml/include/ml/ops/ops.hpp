@@ -59,7 +59,7 @@ VariablePtrType Dot(VariablePtrType left, VariablePtrType right, SessionType &se
 
   // define the return variable with the Dot computation
   std::vector<std::size_t> out_shape = {left->shape()[0], right->shape()[1]};
-  VariablePtrType ret = sess.Variable(out_shape, f_fn, "Dot", b_fn, false);
+  VariablePtrType          ret       = sess.Variable(out_shape, "Dot", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -97,7 +97,7 @@ VariablePtrType Relu(VariablePtrType left, SessionType &sess)
   VariablePtrType zeros = SessionType::Zeroes(left->shape(), sess);
 
   // define the return variable with the Relu computation
-  VariablePtrType ret = sess.Variable(left->shape(), f_fn, "Relu", b_fn, false);
+  VariablePtrType ret = sess.Variable(left->shape(), "Relu", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(zeros);
@@ -110,37 +110,40 @@ VariablePtrType Relu(VariablePtrType left, SessionType &sess)
  * @return
  */
 template <typename VariablePtrType>
-void SumImplementation(VariablePtrType cur_node)
+void ReduceSumImplementation(VariablePtrType cur_node)
 {
   cur_node->data() = fetch::math::ReduceSum(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 template <typename VariablePtrType, typename SessionType>
-VariablePtrType Sum(VariablePtrType left, std::size_t const &axis, SessionType &sess)
+VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, SessionType &sess)
 {
   // define the derivative
   std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
-    fetch::ml::ops::derivatives::Sum(cur_node);
+    fetch::ml::ops::derivatives::ReduceSum(cur_node);
   };
 
   // define the forward function (i.e. the dot)
   std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
-    SumImplementation(cur_node);
+    ReduceSumImplementation(cur_node);
   };
 
   // define Variable of zeros to compare against
   VariablePtrType node_axis = SessionType::Zeroes({1, 1}, sess);
-  node_axis->data()[0] = axis;
+  node_axis->data()[0]      = axis;
 
   // define the return variable with the Relu computation
-  std::vector<std::size_t> new_shape = {left->shape()[0], left->shape()[1]};
+  std::vector<std::size_t> grad_shape = {left->shape()[0], left->shape()[1]};
+  std::vector<std::size_t> new_shape{grad_shape};
   if (axis == 0)
   {
     new_shape[0] = 1;
-  } else{
-    new_shape[1] =1 ;
+  }
+  else
+  {
+    new_shape[1] = 1;
   }
 
-  VariablePtrType ret = sess.Variable(new_shape, f_fn, "Sum", b_fn, false);
+  VariablePtrType ret = sess.Variable(new_shape, grad_shape, "Sum", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(node_axis);
@@ -154,7 +157,8 @@ VariablePtrType Sum(VariablePtrType left, std::size_t const &axis, SessionType &
 template <typename VariablePtrType>
 void MSEImplementation(VariablePtrType cur_node)
 {
-  cur_node->data() = fetch::math::MeanSquareError(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+  cur_node->data() =
+      fetch::math::MeanSquareError(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 template <typename VariablePtrType, typename SessionType>
 VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, SessionType &sess)
@@ -170,8 +174,8 @@ VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, Ses
   };
 
   // define the return variable with the Dot computation
-  std::vector<std::size_t> new_shape {left->shape()[0], 1};
-  VariablePtrType ret = sess.Variable(new_shape, f_fn, "MSE", b_fn, false);
+  std::vector<std::size_t> new_shape{left->shape()[0], 1};
+  VariablePtrType          ret = sess.Variable(new_shape, "MSE", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -185,7 +189,8 @@ VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, Ses
 template <typename VariablePtrType>
 void CELImplementation(VariablePtrType cur_node)
 {
-  cur_node->data() = fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+  cur_node->data() =
+      fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 template <typename VariablePtrType, typename SessionType>
 VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, SessionType &sess)
@@ -201,7 +206,7 @@ VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, Se
   };
 
   // define the return variable with the Dot computation
-  VariablePtrType ret = sess.Variable({1, 1}, f_fn, "CEL", b_fn, false);
+  VariablePtrType ret = sess.Variable({1, 1}, "CEL", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -228,18 +233,12 @@ VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
   };
 
   // define the return variable with the Dot computation
-  VariablePtrType ret = sess.Variable(left->shape(), f_fn, "Sigmoid", b_fn, false);
+  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
 
-  for (auto i : sess.all_variables)
-  {
-    std::cout << i.first << std::endl;
-  }
-
   return ret;
 }
-
 
 };  // namespace ops
 };  // namespace ml

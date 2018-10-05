@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 //#include "math/free_functions/free_functions.hpp"
-#include "ml/session.hpp"
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -29,69 +29,54 @@ template <typename T>
 class Variable
 {
 public:
-  using ArrayType          = T;
-  using SelfType           = Variable<ArrayType>;
-  using SessionType        = SessionManager<ArrayType, SelfType>;
-  using SelfPtrType        = std::shared_ptr<SelfType>;
-  using FunctionSignature  = std::function<void(SelfPtrType)>;
+  using ArrayType         = T;
+  using SelfType          = Variable<ArrayType>;
+  using SelfPtrType       = std::shared_ptr<SelfType>;
+  using FunctionSignature = std::function<void(SelfPtrType)>;
+  using ShapeType         = std::vector<std::size_t>;
 
-  std::string           _variable_name = "";
-  bool                  _is_leaf = true;
+  bool                     initialised = false;
   std::vector<SelfPtrType> prev;
-  FunctionSignature    _b_fn = nullptr;
-  FunctionSignature    _f_fn = nullptr;
-
-  bool initialised = false;
 
   Variable() = default;
 
   void SetVariableName(std::string const &variable_name)
   {
-    _variable_name = variable_name;
+    variable_name_ = variable_name;
   }
 
   void SetBackwardFunction(FunctionSignature b_fn)
   {
-    _b_fn = b_fn;
+    b_fn_ = b_fn;
   }
 
   void SetForwardFunction(FunctionSignature f_fn)
   {
-    _f_fn = f_fn;
+    f_fn_ = f_fn;
   }
 
-  void SetIsLeaf(bool is_leaf){_is_leaf = is_leaf;}
-
-  void SetData(ArrayType const &in_data)
+  void SetIsLeaf(bool is_leaf)
   {
-    //    shape = in_data.shape();
-    _data = ArrayType(in_data);
+    is_leaf_ = is_leaf;
   }
 
-  static Variable Zeroes(std::vector<std::size_t> const &new_shape, SessionType &sess)
+  void SetData(ArrayType const &indata_)
   {
-    Variable ret{sess, ArrayType::Zeroes(new_shape)};
-    return ret;
-  }
-  static Variable Zeroes(std::size_t const &in_size, std::size_t const &out_size, SessionType &sess)
-  {
-    std::vector<std::size_t> new_shape{in_size, out_size};
-    Variable                 ret{sess, ArrayType::Zeroes(new_shape)};
-    return ret;
+    data_ = ArrayType(indata_);
   }
 
   void Forward(SelfPtrType ptr)
   {
     assert(initialised);
-    assert(_f_fn);
-    _f_fn(ptr);
+    assert(f_fn_);
+    f_fn_(ptr);
   }
 
   void Backward(SelfPtrType ptr)
   {
     assert(initialised);
-    assert(_b_fn);
-    _b_fn(ptr);
+    assert(b_fn_);
+    b_fn_(ptr);
   }
 
   /**
@@ -100,58 +85,65 @@ public:
    */
   std::size_t size() const
   {
-    return _data.size();
+    return data_.size();
   }
   std::vector<std::size_t> shape()
   {
-    return _data.shape();
+    return data_.shape();
   }
 
   void Reshape(std::size_t const &i, std::size_t const &j)
   {
-    _data.Reshape(i, j);
+    data_.Reshape(i, j);
   }
 
-  void GradientAdd(ArrayType const &other_grad)
+  void GradientAdd(ArrayType const &othergrad_)
   {
-    _grad += other_grad;
+    grad_ += othergrad_;
   }
 
-  void GradientValueAdd(std::size_t idx, typename ArrayType::type const &other_grad)
+  void GradientValueAdd(std::size_t idx, typename ArrayType::type const &othergrad_)
   {
-    _grad[idx] += other_grad;
+    grad_[idx] += othergrad_;
   }
 
   void GradientSetZero(std::size_t idx)
   {
-    _grad[idx] = 0;
+    grad_[idx] = 0;
   }
 
   void GradientSetOne()
   {
-    for (std::size_t i = 0; i < _grad.size(); ++i)
+    for (std::size_t i = 0; i < grad_.size(); ++i)
     {
-      _grad[i] = 1;
+      grad_[i] = 1;
     }
   }
 
-  void GradientSetVal(typename ArrayType::type const &other_grad)
+  void GradientSetVal(typename ArrayType::type const &othergrad_)
   {
-    for (std::size_t i = 0; i < _grad.size(); ++i)
+    for (std::size_t i = 0; i < grad_.size(); ++i)
     {
-      _grad[i] = other_grad;
+      grad_[i] = othergrad_;
     }
   }
 
-
-  void InitialiseGradients()
+  void InitialiseGradients(ShapeType shape = {})
   {
-    _grad = ArrayType(data().shape());
+    if (shape.empty())
+    {
+      grad_ = ArrayType(data().shape());
+    }
+    else
+    {
+      grad_ = ArrayType(shape);
+    }
+
     ClearGradients();
   }
   void ClearGradients()
   {
-    _grad.data().SetAllZero();
+    grad_.data().SetAllZero();
   }
 
   //
@@ -162,7 +154,7 @@ public:
   //     */
   //    void operator+=(ArrayType const &other)
   //    {
-  //      fetch::math::Add(_data, other.data(), _data);
+  //      fetch::math::Add(data_, other.data(), data_);
   //    }
   //    void operator+=(typename ArrayType::type const &scalar)
   //    {
@@ -183,27 +175,27 @@ public:
   typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type &operator[](
       S const &i)
   {
-    return _data[i];
+    return data_[i];
   }
 
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type const &
   operator[](S const &i) const
   {
-    return _data[i];
+    return data_[i];
   }
 
-  bool operator<(SelfType const& other) const
+  bool operator<(SelfType const &other) const
   {
-    return _id < other.id();
+    return id_ < other.id();
   }
-  bool operator>(SelfType const& other) const
+  bool operator>(SelfType const &other) const
   {
-    return _id > other.id();
+    return id_ > other.id();
   }
-  bool operator==(SelfType const& other) const
+  bool operator==(SelfType const &other) const
   {
-    return _id == other.id();
+    return id_ == other.id();
   }
 
   /* One-dimensional constant reference access function.
@@ -214,44 +206,44 @@ public:
    */
   typename ArrayType::type const &At(typename ArrayType::size_type const &i) const
   {
-    return _data.At(i);
+    return data_.At(i);
   }
 
   typename ArrayType::type &At(typename ArrayType::size_type const &i)
   {
-    return _data.At(i);
+    return data_.At(i);
   }
   typename ArrayType::type const &At(typename ArrayType::size_type const &i,
                                      typename ArrayType::size_type const &j) const
   {
-    return _data.At(i, j);
+    return data_.At(i, j);
   }
   typename ArrayType::type &At(typename ArrayType::size_type const &i,
                                typename ArrayType::size_type const &j)
   {
-    return _data.At(i, j);
+    return data_.At(i, j);
   }
 
   typename ArrayType::type const &Set(typename ArrayType::size_type const &n,
                                       typename ArrayType::type const &     v)
   {
-    return _data.Set(n, v);
+    return data_.Set(n, v);
   }
   typename ArrayType::type const &Set(typename ArrayType::size_type const &i,
                                       typename ArrayType::size_type const &j,
                                       typename ArrayType::type const &     v)
   {
-    return _data.Set(i, j, v);
+    return data_.Set(i, j, v);
   }
 
   /**
    * Apply a gradient update to the weights
    * @param lr
    */
-  void GradientStep(typename ArrayType::type const& lr)
+  void GradientStep(typename ArrayType::type const &lr)
   {
-    auto temp = Multiply(lr, _grad);
-    Subtract(_data, temp, _data);
+    auto temp = Multiply(lr, grad_);
+    Subtract(data_, temp, data_);
   }
 
   /**
@@ -260,42 +252,46 @@ public:
    */
   ArrayType const &data() const
   {
-    return _data;
+    return data_;
   }
   ArrayType &data()
   {
-    return _data;
+    return data_;
   }
   ArrayType const &grad() const
   {
-    return _grad;
+    return grad_;
   }
   std::size_t &id()
   {
-    return _id;
+    return id_;
   }
   std::size_t const &id() const
   {
-    return _id;
+    return id_;
   }
   std::string const &variable_name() const
   {
-    return _variable_name;
+    return variable_name_;
   }
   std::string &variable_name()
   {
-    return _variable_name;
+    return variable_name_;
   }
   bool is_leaf()
   {
-    return _is_leaf;
+    return is_leaf_;
   }
 
-
 private:
-  ArrayType _data;
-  ArrayType _grad;
-  std::size_t           _id;
+  ArrayType   data_;
+  ArrayType   grad_;
+  std::size_t id_;
+
+  std::string       variable_name_ = "";
+  bool              is_leaf_       = true;
+  FunctionSignature b_fn_          = nullptr;
+  FunctionSignature f_fn_          = nullptr;
 };
 
 }  // namespace ml

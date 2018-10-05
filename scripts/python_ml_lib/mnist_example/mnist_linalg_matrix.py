@@ -240,4 +240,11 @@ def run_mnist():
 
 # import cProfile
 # cProfile.run('run_mnist()')
-run_mnist()
+
+#run_mnist()
+
+
+sess = Session()
+sess.Variable()
+Variable()
+

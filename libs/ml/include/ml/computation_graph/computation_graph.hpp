@@ -1,4 +1,22 @@
 //#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 ////------------------------------------------------------------------------------
 ////
 ////   Copyright 2018 Fetch.AI Limited
@@ -36,12 +54,12 @@
 //#include "ml/variable.hpp"
 //#include <unordered_set>
 //
-//namespace fetch {
-//namespace ml {
-//namespace computation_graph {
+// namespace fetch {
+// namespace ml {
+// namespace computation_graph {
 //
-//namespace helper_funcs {
-//static inline bool IsOperator(char &c)
+// namespace helper_funcs {
+// static inline bool IsOperator(char &c)
 //{
 //  switch (c)
 //  {
@@ -62,7 +80,7 @@
 //  }
 //}
 //
-//enum OPERATOR_PRECEDENCE
+// enum OPERATOR_PRECEDENCE
 //{
 //  MODULO   = 10,
 //  POWER    = 9,
@@ -73,7 +91,7 @@
 //  DEFAULT  = -1
 //};
 //
-//static inline OPERATOR_PRECEDENCE GetPrecedence(char &c)
+// static inline OPERATOR_PRECEDENCE GetPrecedence(char &c)
 //{
 //  switch (c)
 //  {
@@ -100,16 +118,17 @@
 // * binary tree, it will hold some value (or operation), two pointers to it's two children (if any)
 // * and one for its parent (if any).
 // */
-//template <typename T, typename ARRAY_TYPE>
-//class ExpressionNode : public std::enable_shared_from_this<ExpressionNode<T, ARRAY_TYPE>>
+// template <typename T, typename ARRAY_TYPE>
+// class ExpressionNode : public std::enable_shared_from_this<ExpressionNode<T, ARRAY_TYPE>>
 //{
-//public:
+// public:
 //  std::string name;
 //
 //  // VAL is the value of this node on the graph
 //  // During parsing val is assigned as either a leaf node (in which case VAL will be a number),
 //  // otherwise it will be an operation to apply on child nodes where it will be stored as a char
-//  // During Run the graph will be computed and VAL will be replaced by the result of the operations
+//  // During Run the graph will be computed and VAL will be replaced by the result of the
+//  operations
 //  // (as a number)
 //  union VAL
 //  {
@@ -156,10 +175,10 @@
 //  }
 //};
 //
-//template <typename T, typename ARRAY_TYPE>
-//class ComputationGraph
+// template <typename T, typename ARRAY_TYPE>
+// class ComputationGraph
 //{
-//private:
+// private:
 //  enum TOKEN_TYPE
 //  {
 //    OPEN_PAREN,
@@ -185,8 +204,10 @@
 //          ((prev_type == TOKEN_TYPE::OPERATOR) && (cur_type == TOKEN_TYPE::OPERATOR)))
 //
 //      //          ((prev_type == TOKEN_TYPE::OPERATOR) && (cur_type == TOKEN_TYPE::OPERATOR)) ||
-//      //          ((prev_type == TOKEN_TYPE::OPEN_PAREN) && (cur_type == TOKEN_TYPE::OPEN_PAREN)) ||
-//      //          ((prev_type == TOKEN_TYPE::CLOSE_PAREN) && (cur_type == TOKEN_TYPE::CLOSE_PAREN)))
+//      //          ((prev_type == TOKEN_TYPE::OPEN_PAREN) && (cur_type == TOKEN_TYPE::OPEN_PAREN))
+//      ||
+//      //          ((prev_type == TOKEN_TYPE::CLOSE_PAREN) && (cur_type ==
+//      TOKEN_TYPE::CLOSE_PAREN)))
 //      {
 //        change_type = true;
 //      }
@@ -222,9 +243,9 @@
 //    return false;
 //  }
 //
-//public:
-//  using EXPRESSION_NODE_TYPE = typename fetch::ml::computation_graph::ExpressionNode<T, ARRAY_TYPE>;
-//  using EXPRESSION_NODE_GRAPH = std::deque<std::shared_ptr<EXPRESSION_NODE_TYPE>>;
+// public:
+//  using EXPRESSION_NODE_TYPE = typename fetch::ml::computation_graph::ExpressionNode<T,
+//  ARRAY_TYPE>; using EXPRESSION_NODE_GRAPH = std::deque<std::shared_ptr<EXPRESSION_NODE_TYPE>>;
 //  using OPERATOR_STACK        = std::stack<char, std::deque<char>>;
 //  //  using EXPRESSION_STACK = std::stack<std::shared_ptr<expression_node_type>,
 //  //  expression_container_type>;
@@ -407,8 +428,9 @@
 //      {
 //        assert(helper_funcs::IsOperator(tokens[i][0]));
 //
-//        // we now have enough information to combined two numerics and one operator into a sub-tree
-//        while (!(operator_stack.empty()) && (helper_funcs::GetPrecedence(operator_stack.top()) >=
+//        // we now have enough information to combined two numerics and one operator into a
+//        sub-tree while (!(operator_stack.empty()) &&
+//        (helper_funcs::GetPrecedence(operator_stack.top()) >=
 //                                             helper_funcs::GetPrecedence(tokens[i][0])))
 //        {
 //          AssignBinaryTree();
@@ -515,7 +537,8 @@
 //      {
 //        // compute the op
 //        cur_node_ptr->val.val =
-//            compute_op(cur_node_ptr->left_node_ptr->val.val, cur_node_ptr->right_node_ptr->val.val,
+//            compute_op(cur_node_ptr->left_node_ptr->val.val,
+//            cur_node_ptr->right_node_ptr->val.val,
 //                       cur_node_ptr->val.c);
 //        cur_node_ptr->evaluated = true;
 //
@@ -566,7 +589,8 @@
 //      {
 //        // compute the op
 //        cur_node_ptr->array     = compute_op(cur_node_ptr->left_node_ptr->array,
-//                                         cur_node_ptr->right_node_ptr->array, cur_node_ptr->val.c);
+//                                         cur_node_ptr->right_node_ptr->array,
+//                                         cur_node_ptr->val.c);
 //        cur_node_ptr->evaluated = true;
 //
 //        // ascend if not root node

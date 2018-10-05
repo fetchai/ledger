@@ -27,7 +27,7 @@
 #include "ml/variable.hpp"
 
 using namespace fetch::ml;
-using Type = double;
+using Type      = double;
 using ArrayType = fetch::math::linalg::Matrix<Type>;
 using LayerType = fetch::ml::Variable<ArrayType>;
 
@@ -64,7 +64,7 @@ TEST(variable, simple_arithmetic)
 
   auto n1 = fetch::ml::ops::Dot(l1, l2, sess);
   auto n2 = fetch::ml::ops::Relu(n1, sess);
-  auto n3 = fetch::ml::ops::Sum(n2, 0, sess);
+  auto n3 = fetch::ml::ops::ReduceSum(n2, 0, sess);
 
   sess.BackwardGraph(n1);
 
@@ -99,7 +99,6 @@ TEST(variable, simple_arithmetic)
   }
 }
 
-
 TEST(variable, trivial_backprop)
 {
 
@@ -107,8 +106,8 @@ TEST(variable, trivial_backprop)
 
   std::vector<std::size_t> shape1{2, 10};
   std::vector<std::size_t> shape2{10, 2};
-  auto l1 = sess.Variable(shape1);
-  auto l2 = sess.Variable(shape2);
+  auto                     l1 = sess.Variable(shape1);
+  auto                     l2 = sess.Variable(shape2);
   l1->data().FillArange(0, 20);
   l2->data().FillArange(0, 20);
 
@@ -129,8 +128,6 @@ TEST(variable, trivial_backprop)
   }
   ASSERT_TRUE(ret->grad().AllClose(gt));
 }
-
-
 
 // TEST(variable, trivial_neural_net)
 //{
@@ -177,7 +174,7 @@ TEST(variable, trivial_backprop)
 //
 //  Variable<type> l1_out = fetch::ml::ops::Dot(x_tr, layer_1);
 //  Variable<type> l2_out = fetch::ml::ops::Relu(l1_out);
-//  Variable<type> l3_out = fetch::ml::ops::Sum(l2_out, 0);
+//  Variable<type> l3_out = fetch::ml::ops::ReduceSum(l2_out, 0);
 //
 //  std::cout << " x_tr.size(): " << x_tr.data.size() << std::endl;
 //  std::cout << " x_tr[i]: " << std::endl;

@@ -16,23 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-// #include <algorithm>
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-#include <gtest/gtest.h>
 
 #include "math/linalg/matrix.hpp"
 #include "ml/ops/ops.hpp"
-
-//#include "math/ndarray.hpp"
-//#include "math/free_functions/free_functions.hpp"
+#include "ml/session.hpp"
 
 using namespace fetch::ml;
 #define ARRAY_SIZE 100
 
-using Type = double;
-using ArrayType = fetch::math::linalg::Matrix<Type>;
-using VariableType = fetch::ml::Variable<ArrayType>;
+using Type            = double;
+using ArrayType       = fetch::math::linalg::Matrix<Type>;
+using VariableType    = fetch::ml::Variable<ArrayType>;
 using VariablePtrType = std::shared_ptr<VariableType>;
 
 void AssignVariableIncrement(VariablePtrType var, Type val = 0.0)
@@ -75,23 +72,26 @@ TEST(loss_functions, Dot_test)
   SessionManager<ArrayType, VariableType> sess{};
 
   // set up some variables
-  std::vector<std::size_t> l1_shape{2, 3};
-  std::vector<std::size_t> l2_shape{3, 4};
-  auto l1 = sess.Variable(l1_shape);
-  auto l2 = sess.Variable(l2_shape);
+  std::vector<std::size_t> l1shape_{2, 3};
+  std::vector<std::size_t> l2shape_{3, 4};
+  auto                     l1 = sess.Variable(l1shape_, "l1");
+  auto                     l2 = sess.Variable(l2shape_, "l2");
   AssignVariableIncrement(l1, 1.0);
   AssignVariableIncrement(l2, 1.0);
 
   // Dot product
   auto ret = fetch::ml::ops::Dot(l1, l2, sess);
 
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
+
   // test shape
-  ASSERT_TRUE(ret->shape()[0] == l1_shape[0]);
-  ASSERT_TRUE(ret->shape()[1] == l2_shape[1]);
+  ASSERT_TRUE(ret->shape()[0] == l1shape_[0]);
+  ASSERT_TRUE(ret->shape()[1] == l2shape_[1]);
 
   // assign ground truth
   std::vector<Type> gt_vec{38, 44, 50, 56, 83, 98, 113, 128};
-  ArrayType gt{ret->shape()};
+  ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 
   // test correct values
@@ -103,44 +103,49 @@ TEST(loss_functions, Relu_test)
 
   SessionManager<ArrayType, VariableType> sess{};
 
-  std::vector<std::size_t> l1_shape{2, 3};
+  std::vector<std::size_t> l1shape{2, 3};
 
-  auto l1 = sess.Variable(l1_shape);
+  auto l1 = sess.Variable(l1shape);
   AssignVariableIncrement(l1, -3.);
 
   auto ret = fetch::ml::ops::Relu(l1, sess);
 
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
+
   ASSERT_TRUE(ret->shape() == l1->shape());
 
   std::vector<Type> gt_vec{0, 0, 0, 0, 1, 2};
-  ArrayType gt{ret->shape()};
+  ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 
   // test correct values
   ASSERT_TRUE(ret->data().AllClose(gt));
-
 }
 
 TEST(loss_functions, Sigmoid_test)
 {
 
   SessionManager<ArrayType, VariableType> sess{};
-  std::vector<std::size_t> l1_shape{2, 3};
+  std::vector<std::size_t>                l1shape_{2, 3};
 
-  auto l1 = sess.Variable(l1_shape);
+  auto l1 = sess.Variable(l1shape_);
   AssignVariableIncrement(l1, -3.);
 
   auto ret = fetch::ml::ops::Sigmoid(l1, sess);
 
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
+
   ASSERT_TRUE(ret->shape() == l1->shape());
 
-  std::vector<Type> gt_vec{0.95257412682243336, 0.88079707797788231, 0.7310585786300049, 0.5, 0.2689414213699951, 0.11920292202211755};
-  ArrayType gt{ret->shape()};
+  std::vector<Type> gt_vec{0.95257412682243336, 0.88079707797788231, 0.7310585786300049, 0.5,
+                           0.2689414213699951,  0.11920292202211755};
+  ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 
   // test correct values
   ASSERT_TRUE(ret->data().AllClose(gt));
-
 }
 
 TEST(loss_functions, Sum_test)
@@ -148,23 +153,24 @@ TEST(loss_functions, Sum_test)
 
   SessionManager<ArrayType, VariableType> sess{};
 
-  std::vector<std::size_t> l1_shape{2, 3};
+  std::vector<std::size_t> l1shape{2, 3};
 
-  auto l1 = sess.Variable(l1_shape);
+  auto l1 = sess.Variable(l1shape);
   AssignVariableIncrement(l1, 0.);
 
-  auto ret = fetch::ml::ops::Sum(l1, 1, sess);
+  auto ret = fetch::ml::ops::ReduceSum(l1, 1, sess);
+
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
 
   ASSERT_TRUE(ret->shape()[0] == l1->shape()[0]);
   ASSERT_TRUE(ret->shape()[1] == 1);
 
   std::vector<Type> gt_vec{3, 12};
-  ArrayType gt{ret->shape()};
+  ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 
-  // test correct values
   ASSERT_TRUE(ret->data().AllClose(gt));
-
 }
 
 TEST(loss_functions, MSE_test)
@@ -182,11 +188,14 @@ TEST(loss_functions, MSE_test)
 
   auto ret = fetch::ml::ops::MeanSquareError(l1, l2, sess);
 
-  ASSERT_TRUE(ret->shape()[0] == 1);
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
+
+  ASSERT_TRUE(ret->shape()[0] == shape[0]);
   ASSERT_TRUE(ret->shape()[1] == 1);
 
   std::vector<Type> gt_vec{6};
-  ArrayType gt{ret->shape()};
+  ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 }
 
@@ -200,15 +209,30 @@ TEST(loss_functions, CEL_test)
   auto l1 = sess.Variable(shape);
   auto l2 = sess.Variable(shape);
 
-  l1->Set(0, 0, 0.1);   l1->Set(0, 1, 0.8);   l1->Set(0, 2, 0.1);
-  l1->Set(1, 0, 0.8);   l1->Set(1, 1, 0.1);   l1->Set(1, 2, 0.1);
-  l1->Set(2, 0, 0.1);   l1->Set(2, 1, 0.1);   l1->Set(2, 2, 0.8);
-  
-  l2->Set(0, 0, 1);   l2->Set(0, 1, 0);   l2->Set(0, 2, 0);
-  l2->Set(1, 0, 1);   l2->Set(1, 1, 0);   l2->Set(1, 2, 0);
-  l2->Set(2, 0, 0);   l2->Set(2, 1, 0);   l2->Set(2, 2, 1);
+  l1->Set(0, 0, 0.1);
+  l1->Set(0, 1, 0.8);
+  l1->Set(0, 2, 0.1);
+  l1->Set(1, 0, 0.8);
+  l1->Set(1, 1, 0.1);
+  l1->Set(1, 2, 0.1);
+  l1->Set(2, 0, 0.1);
+  l1->Set(2, 1, 0.1);
+  l1->Set(2, 2, 0.8);
+
+  l2->Set(0, 0, 1);
+  l2->Set(0, 1, 0);
+  l2->Set(0, 2, 0);
+  l2->Set(1, 0, 1);
+  l2->Set(1, 1, 0);
+  l2->Set(1, 2, 0);
+  l2->Set(2, 0, 0);
+  l2->Set(2, 1, 0);
+  l2->Set(2, 2, 1);
 
   auto ret = fetch::ml::ops::CrossEntropyLoss(l1, l2, sess);
+
+  // forward pass on the computational graph
+  sess.Forward(l1, ret);
 
   ASSERT_TRUE(ret->shape()[0] == 1);
   ASSERT_TRUE(ret->shape()[1] == 1);

@@ -27,62 +27,62 @@ namespace fetch {
 namespace math {
 namespace meta {
 
-
 template <typename T, typename C>
 class ShapeLessArray;
 
 template <typename T, typename C>
 class RectangularArray;
 
-//template <typename T, typename C>
-//class NDArrayIterator;
+// template <typename T, typename C>
+// class NDArrayIterator;
 
 namespace linalg {
-template<typename T, typename C, typename S>
+template <typename T, typename C, typename S>
 class Matrix;
 }
 
-template<typename A, typename R>
-struct IsBlasArrayLikeImpl {};
+template <typename A, typename R>
+struct IsBlasArrayLikeImpl
+{
+};
 
-template<typename R>
-struct IsBlasArrayLikeImpl<double, R> {
+template <typename R>
+struct IsBlasArrayLikeImpl<double, R>
+{
   using Type = R;
 };
 
-
-//template<typename R, typename T, typename C, typename S>
-//struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R> {
+// template<typename R, typename T, typename C, typename S>
+// struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R> {
 //  using Type = R;
 //};
 //
-//template<typename R, typename T, typename C>
-//struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
+// template<typename R, typename T, typename C>
+// struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
 //  using Type = R;
 //};
 
-template<typename R, typename T, typename C>
-struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R> {
+template <typename R, typename T, typename C>
+struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
+{
   using Type = R;
 };
 
-//template< typename R, typename T, typename C>
-//struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
+// template< typename R, typename T, typename C>
+// struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
 //{
 //  using Type = R;
 //};
 
-template<typename A, typename R>
+template <typename A, typename R>
 using IsBlasArrayLike = typename IsBlasArrayLikeImpl<A, R>::Type;
 //
-//template< typename T >
-//IsMathArrayLike<T, bool> IsGreat(T const& x)
+// template< typename T >
+// IsMathArrayLike<T, bool> IsGreat(T const& x)
 //{
 //  return true;
 //}
 
-
-} // meta
-} // math
-} // fetch
-
+}  // namespace meta
+}  // namespace math
+}  // namespace fetch
