@@ -55,7 +55,7 @@ public:
 
   virtual ~HasWorkerThread()
   {
-    shutdown_ =true;
+    shutdown_ = true;
 
     target_->WakeAll();
     target_->WakeAll();

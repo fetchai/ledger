@@ -106,7 +106,7 @@ private:
   using Mutex      = mutex::Mutex;
   using Clock      = std::chrono::steady_clock;
   using Timepoint  = Clock::time_point;
-  using EchoCache = std::unordered_map<std::size_t, Timepoint>;
+  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);

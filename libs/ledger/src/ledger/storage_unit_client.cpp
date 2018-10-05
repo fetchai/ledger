@@ -3,8 +3,8 @@
 namespace fetch {
 namespace ledger {
 
-std::shared_ptr<LaneConnectorWorker> StorageUnitClient::MakeWorker(LaneIndex lane,
-    SharedServiceClient client, std::string name, std::chrono::milliseconds timeout)
+std::shared_ptr<LaneConnectorWorker> StorageUnitClient::MakeWorker(
+    LaneIndex lane, SharedServiceClient client, std::string name, std::chrono::milliseconds timeout)
 {
   return std::make_shared<LaneConnectorWorker>(lane, client, name, timeout);
 }
@@ -12,21 +12,20 @@ std::shared_ptr<LaneConnectorWorker> StorageUnitClient::MakeWorker(LaneIndex lan
 class LaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
 {
 public:
-  using State = StorageUnitClient::State;
+  using State               = StorageUnitClient::State;
   using SharedServiceClient = StorageUnitClient::SharedServiceClient;
-  using Promise = StorageUnitClient::Promise;
-  using PromiseState = StorageUnitClient::PromiseState;
-  using LaneIndex = StorageUnitClient::LaneIndex;
-  using FutureTimepoint = StorageUnitClient::FutureTimepoint;
+  using Promise             = StorageUnitClient::Promise;
+  using PromiseState        = StorageUnitClient::PromiseState;
+  using LaneIndex           = StorageUnitClient::LaneIndex;
+  using FutureTimepoint     = StorageUnitClient::FutureTimepoint;
 
-  LaneIndex             lane;
-  Promise               lane_prom;
-  SharedServiceClient   client;
-  Promise               count_prom;
-  Promise               id_prom;
+  LaneIndex           lane;
+  Promise             lane_prom;
+  SharedServiceClient client;
+  Promise             count_prom;
+  Promise             id_prom;
 
-  LaneConnectorWorker(
-                      LaneIndex thelane, SharedServiceClient theclient, std::string thename,
+  LaneConnectorWorker(LaneIndex thelane, SharedServiceClient theclient, std::string thename,
                       std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
     : lane(thelane)
     , client(std::move(theclient))
@@ -37,28 +36,27 @@ public:
   {
     // Ideal path first.
     this->Allow(State::CONNECTING, State::INITIAL)
-      .Allow(State::PINGING, State::CONNECTING)
-      .Allow(State::QUERYING, State::PINGING)
-      .Allow(State::DONE, State::QUERYING)
+        .Allow(State::PINGING, State::CONNECTING)
+        .Allow(State::QUERYING, State::PINGING)
+        .Allow(State::DONE, State::QUERYING)
 
-      // Waiting for liveness.
-      .Allow(State::SNOOZING, State::CONNECTING)
-      .Allow(State::CONNECTING, State::SNOOZING)
+        // Waiting for liveness.
+        .Allow(State::SNOOZING, State::CONNECTING)
+        .Allow(State::CONNECTING, State::SNOOZING)
 
-      // Retrying from scratch.
-      .Allow(State::INITIAL, State::PINGING)
-      .Allow(State::INITIAL, State::QUERYING)
+        // Retrying from scratch.
+        .Allow(State::INITIAL, State::PINGING)
+        .Allow(State::INITIAL, State::QUERYING)
 
-      // We can timeout from any of the non-finish states.
-      .Allow(State::TIMEDOUT, State::INITIAL)
-      .Allow(State::TIMEDOUT, State::CONNECTING)
-      .Allow(State::TIMEDOUT, State::PINGING)
-      .Allow(State::TIMEDOUT, State::QUERYING)
-      .Allow(State::TIMEDOUT, State::SNOOZING)
+        // We can timeout from any of the non-finish states.
+        .Allow(State::TIMEDOUT, State::INITIAL)
+        .Allow(State::TIMEDOUT, State::CONNECTING)
+        .Allow(State::TIMEDOUT, State::PINGING)
+        .Allow(State::TIMEDOUT, State::QUERYING)
+        .Allow(State::TIMEDOUT, State::SNOOZING)
 
-      // Wrong magic causes us to bail with a failure.
-      .Allow(State::FAILED, State::PINGING)
-      ;
+        // Wrong magic causes us to bail with a failure.
+        .Allow(State::FAILED, State::PINGING);
   }
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
@@ -87,7 +85,7 @@ public:
   std::string GetStateName(int state)
   {
     const char *states[] = {
-      "INITIAL", "CONNECTING", "QUERYING", "PINGING", "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
+        "INITIAL", "CONNECTING", "QUERYING", "PINGING", "SNOOZING", "DONE", "TIMEDOUT", "FAILED",
     };
     return std::string(states[state]);
   }
@@ -95,9 +93,8 @@ public:
   virtual bool PossibleNewState(State &currentstate) override
   {
 
-    if (currentstate == State::TIMEDOUT
-        || currentstate == State::DONE
-        || currentstate == State::FAILED)
+    if (currentstate == State::TIMEDOUT || currentstate == State::DONE ||
+        currentstate == State::FAILED)
     {
       return false;
     }
@@ -111,110 +108,110 @@ public:
     switch (currentstate)
     {
     case State::INITIAL:
+    {
+      // we no longer use a fixed number of attempts.
+      currentstate = State::CONNECTING;
+      return true;
+    }
+    case State::SNOOZING:
+    {
+      if (next_attempt_.IsDue())
       {
-        // we no longer use a fixed number of attempts.
         currentstate = State::CONNECTING;
         return true;
       }
-    case State::SNOOZING:
+      else
       {
-        if (next_attempt_.IsDue())
+        return false;
+      }
+    }
+    case State::CONNECTING:
+    {
+      if (!client->is_alive())
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane, " (", name_, ") not yet alive.");
+        attempts_++;
+        if (attempts_ > max_attempts_)
         {
-          currentstate = State::CONNECTING;
+          currentstate = State::TIMEDOUT;
+        }
+        next_attempt_.SetMilliseconds(300);
+        currentstate = State::SNOOZING;
+        return true;
+      }
+      ping_        = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
+      currentstate = State::PINGING;
+      return true;
+    }  // end CONNECTING
+    case State::PINGING:
+    {
+      auto result = ping_->GetState();
+
+      switch (result)
+      {
+      case PromiseState::TIMEDOUT:
+      case PromiseState::FAILED:
+      {
+        currentstate = State::INITIAL;
+        return true;
+      }
+      case PromiseState::SUCCESS:
+      {
+        if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+        {
+          currentstate = State::FAILED;
           return true;
         }
         else
         {
-          return false;
+          lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+          count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+          id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+          currentstate = State::QUERYING;
+          return true;
         }
       }
-    case State::CONNECTING:
-      {
-        if (!client->is_alive())
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane, " (", name_, ") not yet alive.");
-          attempts_++;
-          if (attempts_ > max_attempts_)
-          {
-            currentstate = State::TIMEDOUT;
-          }
-          next_attempt_.SetMilliseconds(300);
-          currentstate = State::SNOOZING;
-          return true;
-        }
-        ping_         = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-        currentstate = State::PINGING;
-        return true;
-      }  // end CONNECTING
-    case State::PINGING:
-      {
-        auto result = ping_->GetState();
-
-        switch (result)
-        {
-        case PromiseState::TIMEDOUT:
-        case PromiseState::FAILED:
-          {
-            currentstate = State::INITIAL;
-            return true;
-          }
-        case PromiseState::SUCCESS:
-          {
-            if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
-            {
-              currentstate = State::FAILED;
-              return true;
-            }
-            else
-            {
-              lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-              count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-              id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-              currentstate = State::QUERYING;
-              return true;
-            }
-          }
-        case PromiseState::WAITING:
-          return false;
-        }
-      }  // end PINGING
-    case State::QUERYING:
-      {
-        auto lp_st = lane_prom->GetState();
-        auto ct_st = count_prom->GetState();
-        auto id_st = id_prom->GetState();
-
-        if (lp_st == PromiseState::FAILED || id_st == PromiseState::FAILED ||
-            ct_st == PromiseState::FAILED || lp_st == PromiseState::TIMEDOUT ||
-            id_st == PromiseState::TIMEDOUT || ct_st == PromiseState::TIMEDOUT)
-        {
-          currentstate = State::INITIAL;
-          return true;
-        }
-
-        if (lp_st == PromiseState::SUCCESS || id_st == PromiseState::SUCCESS ||
-            ct_st == PromiseState::SUCCESS)
-        {
-          currentstate = State::DONE;
-          return true;
-        }
+      case PromiseState::WAITING:
         return false;
-      }  // end QUERYING
+      }
+    }  // end PINGING
+    case State::QUERYING:
+    {
+      auto lp_st = lane_prom->GetState();
+      auto ct_st = count_prom->GetState();
+      auto id_st = id_prom->GetState();
+
+      if (lp_st == PromiseState::FAILED || id_st == PromiseState::FAILED ||
+          ct_st == PromiseState::FAILED || lp_st == PromiseState::TIMEDOUT ||
+          id_st == PromiseState::TIMEDOUT || ct_st == PromiseState::TIMEDOUT)
+      {
+        currentstate = State::INITIAL;
+        return true;
+      }
+
+      if (lp_st == PromiseState::SUCCESS || id_st == PromiseState::SUCCESS ||
+          ct_st == PromiseState::SUCCESS)
+      {
+        currentstate = State::DONE;
+        return true;
+      }
+      return false;
+    }  // end QUERYING
     default:
       return false;
     }
   }
+
 private:
-  FutureTimepoint     next_attempt_;
-  size_t              attempts_;
-  Promise             ping_;
+  FutureTimepoint next_attempt_;
+  size_t          attempts_;
+  Promise         ping_;
 
   byte_array::ByteArray host_;
   std::string           name_;
   FutureTimepoint       timeout_;
   size_t                max_attempts_;
 };
-
 
 void StorageUnitClient::WorkCycle(void)
 {
@@ -279,8 +276,5 @@ void StorageUnitClient::WorkCycle(void)
   }
 }
 
-
-
-
-}
-}
+}  // namespace ledger
+}  // namespace fetch

@@ -46,7 +46,8 @@ class LaneConnectorWorker;
 class StorageUnitClient : public StorageUnitInterface
 {
 private:
-  friend class LaneConnectorWorker; // this will do work for us, it's easier if it has access to our types.
+  friend class LaneConnectorWorker;  // this will do work for us, it's easier if it has access to
+                                     // our types.
 public:
   struct ClientDetails
   {
@@ -106,6 +107,7 @@ private:
   };
 
   void WorkCycle(void);
+
 public:
   template <typename T>
   size_t AddLaneConnectionsWaiting(
@@ -139,8 +141,9 @@ public:
     return (iter != lanes_.end());
   }
 
-  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane,
-                                                                     SharedServiceClient client, std::string name, std::chrono::milliseconds timeout);
+  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane, SharedServiceClient client,
+                                                  std::string               name,
+                                                  std::chrono::milliseconds timeout);
   template <typename T>
   void AddLaneConnections(
       const std::map<LaneIndex, Peer> &lanes,

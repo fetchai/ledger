@@ -22,64 +22,63 @@ namespace fetch {
 namespace network {
 namespace details {
 
-  void NetworkManagerImplementation::Start()
+void NetworkManagerImplementation::Start()
+{
+  FETCH_LOCK(thread_mutex_);
+
+  if (threads_.size() == 0)
   {
-    FETCH_LOCK(thread_mutex_);
+    owning_thread_ = std::this_thread::get_id();
+    shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
 
-    if (threads_.size() == 0)
+    for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      owning_thread_ = std::this_thread::get_id();
-      shared_work_   = std::make_shared<asio::io_service::work>(*io_service_);
-
-      for (std::size_t i = 0; i < number_of_threads_; ++i)
-      {
-        auto thread = std::make_shared<std::thread>([this]() { this->Work(); });
-        threads_.push_back(thread);
-      }
+      auto thread = std::make_shared<std::thread>([this]() { this->Work(); });
+      threads_.push_back(thread);
     }
   }
+}
 
-  void NetworkManagerImplementation::Work()
+void NetworkManagerImplementation::Work()
+{
+  io_service_->run();
+}
+
+void NetworkManagerImplementation::Stop()
+{
+  std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+
+  if (threads_.empty())
   {
-    io_service_->run();
+    return;
   }
 
-  void NetworkManagerImplementation::Stop()
+  for (auto &thread : threads_)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
-
-    if (threads_.empty())
+    if (std::this_thread::get_id() == thread->get_id())
     {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
       return;
     }
-
-    for (auto &thread : threads_)
-    {
-      if (std::this_thread::get_id() == thread->get_id())
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Thread pools must not be killed by a thread they own.");
-        return;
-      }
-    }
-
-    shared_work_.reset();
-    io_service_->stop();
-
-    // Allow a period of time for any pending thread to finish
-    // starting. It doesn't need to be long, just basically us
-    // yielding our slice is enough.
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-
-    for (auto &thread : threads_)
-    {
-      thread->join();
-    }
-
-    threads_.clear();
-    io_service_ = std::make_unique<asio::io_service>();
   }
 
+  shared_work_.reset();
+  io_service_->stop();
 
+  // Allow a period of time for any pending thread to finish
+  // starting. It doesn't need to be long, just basically us
+  // yielding our slice is enough.
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+  for (auto &thread : threads_)
+  {
+    thread->join();
+  }
+
+  threads_.clear();
+  io_service_ = std::make_unique<asio::io_service>();
 }
-}
-}
+
+}  // namespace details
+}  // namespace network
+}  // namespace fetch
