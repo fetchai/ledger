@@ -52,7 +52,7 @@ void Add()
   std::cout << "=============  ADD  ==================" << std::endl;
   ;
   {
-    auto doc = store.GetDocumentFile(ResourceID(StringPaddedToKeySize("Hello world")));
+    auto doc = store.GetDocumentFile(ResourceAddress("Hello world"));
     doc.Seek(doc.size());
     doc.Write("Hello world");
   }
@@ -72,7 +72,7 @@ void Print()
 {
 
   std::cout << std::endl;
-  auto doc = store.GetDocumentFile(ResourceID(StringPaddedToKeySize("Hello world")));
+  auto doc = store.GetDocumentFile(ResourceAddress("Hello world"));
   std::cout << "BOOK: " << book << " " << doc.id() << std::endl;
   std::cout << byte_array::ToBase64(store.Hash()) << std::endl;
   byte_array::ByteArray x;
