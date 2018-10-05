@@ -34,6 +34,7 @@
 
 #include <random>
 #include <sstream>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -56,7 +57,7 @@ public:
                       KeyStorePtr key_store = std::make_shared<KeyStore>())
     : state_{state}
     , processor_{processor}
-    , key_store_{key_store}
+    , key_store_{std::move(key_store)}
   {
     // load permanent key store (or create it if files do not exist)
     key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
