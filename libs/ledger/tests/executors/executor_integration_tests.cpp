@@ -142,6 +142,8 @@ protected:
     storage_.reset();
     storage_service_.reset();
     network_manager_.reset();
+
+    sleep(1); // just give TCP time to settle.
   }
 
   fetch::chain::Transaction CreateDummyTransaction()
