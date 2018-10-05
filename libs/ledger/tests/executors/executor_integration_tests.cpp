@@ -122,10 +122,10 @@ protected:
     }
     if (!lane_data.empty())
     {
-      std::this_thread::sleep_for(
-                                  std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
-      auto count =
-        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+      std::this_thread::sleep_for(std::chrono::milliseconds(
+          5000));  // Do hard stop & then a last-chance retry for the lanes.
+      auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data,
+                                                                  std::chrono::milliseconds(30000));
       if (count == num_lanes)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
@@ -166,7 +166,7 @@ protected:
     storage_service_.reset();
     network_manager_.reset();
 
-    sleep(1); // just give TCP time to settle.
+    sleep(1);  // just give TCP time to settle.
   }
 
   fetch::chain::Transaction CreateDummyTransaction()
