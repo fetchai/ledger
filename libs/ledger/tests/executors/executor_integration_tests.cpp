@@ -113,7 +113,7 @@ protected:
     lane_data.clear();
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
-      uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+      uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
       if (!storage_->ClientForLaneConnected(i))
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
