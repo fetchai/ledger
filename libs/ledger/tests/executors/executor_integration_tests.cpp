@@ -111,7 +111,7 @@ protected:
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
     lane_data.clear();
-    for (LaneIndex i = 0; i < num_lanes_; ++i)
+    for (LaneIndex i = 0; i < num_lanes; ++i)
     {
       uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
       if (!storage_->ClientForLaneConnected(i))
@@ -126,7 +126,7 @@ protected:
                                   std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
       auto count =
         storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
-      if (count == num_lanes_)
+      if (count == num_lanes)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
       }
