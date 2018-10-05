@@ -572,6 +572,11 @@ public:
       FETCH_LOCK(desired_connections_mutex_);
       FETCH_LOCK(services_mutex_);
 
+      // this method is the only one which needs both mutexes. It is
+      // the moving interface between the DESIRED goal and the acting
+      // to get closer to it. The mutexes are acquired in alphabetic
+      // order.
+
       auto ident = lane_identity_.lock();
       if (!ident)
       {
@@ -752,6 +757,9 @@ private:
   std::weak_ptr<LaneIdentity> lane_identity_;
   client_register_type        register_;
   network_manager_type        manager_;
+
+  // Most methods do not need both mutexes. If they do, they should
+  // acquire them in alphabetic order
 
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
   mutex::Mutex desired_connections_mutex_{__LINE__, __FILE__};
