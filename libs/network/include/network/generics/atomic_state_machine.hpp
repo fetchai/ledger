@@ -105,7 +105,9 @@ public:
     auto txn = Transition(new_state, old_state);
     if (allowed_.find(txn) == allowed_.end())
     {
-      FETCH_LOG_WARN("AtomicStateMachine<>", "transition not allowed." + std::to_string(int(old_state)) + "->" + std::to_string(int(new_state)));
+      FETCH_LOG_WARN("AtomicStateMachine<>", "transition not allowed." +
+                                                 std::to_string(int(old_state)) + "->" +
+                                                 std::to_string(int(new_state)));
       throw std::range_error("transition not allowed.");
     }
     return true;

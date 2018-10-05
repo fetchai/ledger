@@ -101,7 +101,7 @@ public:
 
   char const *GetStateName(State state)
   {
-    switch(state)
+    switch (state)
     {
     case State::INITIAL:
       return "INITIAL";

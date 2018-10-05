@@ -52,20 +52,20 @@ public:
     std::atomic<uint32_t> lane{0};
   };
 
-  using LaneIndex               = LaneIdentity::lane_type;
-  using ServiceClient           = service::ServiceClient;
-  using SharedServiceClient     = std::shared_ptr<ServiceClient>;
-  using WeakServiceClient       = std::weak_ptr<ServiceClient>;
-  using SharedServiceClients    = std::map<LaneIndex, SharedServiceClient>;
-  using ClientRegister          = fetch::network::ConnectionRegister<ClientDetails>;
-  using Handle                  = ClientRegister::connection_handle_type;
-  using NetworkManager          = fetch::network::NetworkManager;
-  using PromiseState            = fetch::service::PromiseState;
-  using Promise                 = service::Promise;
-  using FutureTimepoint         = network::FutureTimepoint;
-  using Mutex                   = fetch::mutex::Mutex;
-  using LockT                   = std::lock_guard<Mutex>;
-  using Peer                    = fetch::network::Peer;
+  using LaneIndex            = LaneIdentity::lane_type;
+  using ServiceClient        = service::ServiceClient;
+  using SharedServiceClient  = std::shared_ptr<ServiceClient>;
+  using WeakServiceClient    = std::weak_ptr<ServiceClient>;
+  using SharedServiceClients = std::map<LaneIndex, SharedServiceClient>;
+  using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
+  using Handle               = ClientRegister::connection_handle_type;
+  using NetworkManager       = fetch::network::NetworkManager;
+  using PromiseState         = fetch::service::PromiseState;
+  using Promise              = service::Promise;
+  using FutureTimepoint      = network::FutureTimepoint;
+  using Mutex                = fetch::mutex::Mutex;
+  using LockT                = std::lock_guard<Mutex>;
+  using Peer                 = fetch::network::Peer;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -84,7 +84,6 @@ public:
     SetLaneLog2(count);
     assert(count == (1u << log2_lanes_));
   }
-
 
 public:
   template <typename T>
