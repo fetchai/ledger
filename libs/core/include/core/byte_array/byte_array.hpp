@@ -33,7 +33,7 @@ class ByteArray : public ConstByteArray
 public:
   using self_type  = ByteArray;
   using super_type = ConstByteArray;
-  using super_type::ConstByteArray;
+  using super_type::super_type;
   using super_type::Resize;
   using super_type::Reserve;
   using super_type::operator+;
@@ -41,6 +41,10 @@ public:
   using super_type::pointer;
   using super_type::char_pointer;
   using super_type::SubArray;
+  using super_type::Append;
+  using super_type::Replace;
+
+  ByteArray() = default;
 
   ByteArray(super_type const &other)
     : super_type(other.Copy())

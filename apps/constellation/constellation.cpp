@@ -18,6 +18,7 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
@@ -33,6 +34,7 @@
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
 using fetch::network::TCPClient;
+using fetch::network::Peer;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -62,7 +64,8 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
  */
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix)
+                             std::string interface_address, std::string const &db_prefix,
+                             std::string my_network_address)
   : active_{true}
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
@@ -72,12 +75,13 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
   , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
+  , http_network_manager_{4}
   , muddle_{std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
-  , lane_control_(num_lanes_)
+  , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
@@ -87,9 +91,11 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
-  , http_{network_manager_}
+  , http_{http_network_manager_}
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
-                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
+                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
+  , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
 
@@ -112,6 +118,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   {
     http_.AddModule(*module);
   }
+
+  this->my_manifest_ = GenerateManifest();
 }
 
 /**
@@ -127,22 +135,68 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // start all the services
   network_manager_.Start();
+  http_network_manager_.Start();
   muddle_.Start({p2p_port_});
 
   lane_services_.Start();
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  for (uint32_t i = 0; i < num_lanes_; ++i)
+
+  std::map<LaneIndex, Peer> lane_data;
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-
-    // establish the connection to the lane
-    auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
-
-    // allow the remote control to use connection
-    lane_control_.AddClient(i, client);
+    lane_data[i]             = Peer("127.0.0.1", lane_port);
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
+  network::FutureTimepoint deadline(std::chrono::seconds(30));
+  if (network::AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
+  }
+  else
+  {
+    TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
+  }
+
+  auto count =
+      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+  if (count == num_lanes_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
+  }
+
+  // OK, it's been a while, let's try those missing lane services again...
+
+  lane_data.clear();
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    if (!storage_->ClientForLaneConnected(i))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
+      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
+    }
+  }
+  if (!lane_data.empty())
+  {
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
+    auto count =
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+    if (count == num_lanes_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
+      return;
+    }
+  }
+
   execution_manager_->Start();
   block_coordinator_.Start();
 
@@ -152,8 +206,13 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   }
 
   // P2P configuration
-  p2p_.SetLocalManifest(GenerateManifest());
-  p2p_.Start(initial_peers, network::Uri("tcp://127.0.0.1:" + std::to_string(p2p_port_)));
+
+  auto manifest_copy = my_manifest_;
+  p2p_.SetLocalManifest(manifest_copy);
+
+  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
+
+  p2p_.Start(initial_peers, my_p2p_uri);
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -187,11 +246,11 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Stop();
   execution_manager_->Stop();
 
-  lane_control_.ClearClients();
   storage_.reset();
 
   lane_services_.Stop();
   muddle_.Stop();
+  http_network_manager_.Stop();
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
@@ -199,15 +258,30 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
 Constellation::Manifest Constellation::GenerateManifest() const
 {
-  std::string my_manifest =
-      "MAINCHAIN   0     tcp://127.0.0.1:" + std::to_string(main_chain_port_) + "\n";
+  std::string my_uri_base = my_network_address_;
+
+  if (my_uri_base == "")
+  {
+    my_uri_base = "tcp://127.0.0.1:";
+  }
+
+  if (!network::Uri::IsUri(my_uri_base))
+  {
+    my_uri_base = std::string("tcp://") + my_uri_base + ":";
+  }
+
+  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
+                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
+                            my_uri_base + std::to_string(p2p_port_) + "\n";
 
   for (uint32_t i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += "LANE     " + std::to_string(i) + "     " +
-                   "tcp://127.0.0.1:" + std::to_string(lane_port) + "\n";
+    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
+                   std::to_string(lane_port) + "\n";
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);
 
   return Manifest::FromText(my_manifest);
 }

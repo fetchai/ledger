@@ -59,8 +59,6 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  static const std::size_t PRIVATE_KEY_SIZE;
-
   void Load(byte_array_type const &private_key) override
   {
     SetPrivateKey(private_key);

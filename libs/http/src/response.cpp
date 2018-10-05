@@ -121,13 +121,6 @@ bool HTTPResponse::ParseHeader(asio::streambuf &buffer, std::size_t length)
 bool HTTPResponse::ParseBody(asio::streambuf &buffer, std::size_t length)
 {
   body_ = CopyBuffer(buffer, length);
-
-#if 0
-  std::cout << "++ BODY BEGIN ++" << std::endl;
-  std::cout << body_ << std::endl;
-  std::cout << "++ BODY BEGIN ++" << std::endl;
-#endif
-
   return true;
 }
 

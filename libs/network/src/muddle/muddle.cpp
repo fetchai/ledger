@@ -159,9 +159,13 @@ void Muddle::RunPeriodicMaintenance()
   Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
   if (time_since_last_cleanup >= CLEANUP_INTERVAL)
   {
+    // clean up and pending message handlers and also trigger the timeout logic
     dispatcher_.Cleanup();
+
+    // clean up echo caches and other temporary storages
+    router_.Cleanup();
+
     last_cleanup_ = Clock::now();
-    ;
   }
 
   // schedule the main
@@ -256,34 +260,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.AsPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
-
-#if 0
-  // wait for the connection to be established
-  thread_pool_->Post([strong_conn]() {
-    using Clock = std::chrono::high_resolution_clock;
-
-    // connection loop
-    auto const start = Clock::now();
-    for (;;)
-    {
-      if (strong_conn->is_alive())
-      {
-        break;
-      }
-
-      auto const delta = Clock::now() - start;
-      if (delta > CONNECTION_TIMEOUT)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Timed out waiting for socket to connect to remote host");
-        break;
-      }
-
-      std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    }
-
-    // ensure
-  });
-#endif
 }
 
 }  // namespace muddle

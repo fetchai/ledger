@@ -28,6 +28,44 @@
 namespace fetch {
 namespace muddle {
 
+/**
+ * This is the fundamental data structure that is sent around the network
+ *
+ * It comprises of the fixed size header that is prefixed on top of the variable sized payload.
+ * The basic elements of the packet are shown in the diagram below:
+ *
+ * ┌────────────┬────────┬───────────────┬───────────────────────────────────────┐
+ * │            │        │               │                                       │
+ * │  Version   │ Flags  │      TTL      │                Service                │
+ * │            │        │               │                                       │
+ * ├────────────┴────────┴───────────────┼───────────────────────────────────────┤
+ * │                                     │                                       │
+ * │               Channel               │                Counter                │
+ * │                                     │                                       │
+ * ├─────────────────────────────────────┴───────────────────────────────────────┤
+ * │                                                                             │
+ * │                              From (Public Key)                              │
+ * │                                                                             │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
+ * │                                                                             │
+ * │                             Target (Public Key)                             │
+ * │                                                                             │
+ * ├─────────────────────────────────────────────────────────────────────────────┤
+ *
+ * │                                                                             │
+ *
+ * │                                                                             │
+ *
+ * │                                                                             │
+ *                                     Payload
+ * │                                                                             │
+ *
+ * │                                                                             │
+ *
+ * │                                                                             │
+ *
+ * └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ */
 class Packet
 {
 public:

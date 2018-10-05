@@ -65,7 +65,8 @@ public:
 
   explicit Constellation(CertificatePtr &&certificate, uint16_t port_start, uint32_t num_executors,
                          uint32_t log2_num_lanes, uint32_t num_slices,
-                         std::string interface_address, std::string const &prefix);
+                         std::string interface_address, std::string const &prefix,
+                         std::string my_network_address);
 
   void Run(UriList const &initial_peers, bool mining);
   void SignalStop();
@@ -81,6 +82,7 @@ private:
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
   using StorageUnitClient      = ledger::StorageUnitClient;
+  using LaneIndex              = StorageUnitClient::LaneIndex;
   using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
   using Flag                   = std::atomic<bool>;
   using ExecutionManager       = ledger::ExecutionManager;
@@ -110,10 +112,11 @@ private:
 
   /// @name Network Orchestration
   /// @{
-  NetworkManager   network_manager_;  ///< Top level network coordinator
-  Muddle           muddle_;           ///< The muddle networking service
-  TrustSystem      trust_;            ///< The trust subsystem
-  Peer2PeerService p2p_;              ///< The main p2p networking stack
+  NetworkManager   network_manager_;       ///< Top level network coordinator
+  NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
+  Muddle           muddle_;                ///< The muddle networking service
+  TrustSystem      trust_;                 ///< The trust subsystem
+  Peer2PeerService p2p_;                   ///< The main p2p networking stack
   /// @}
 
   /// @name Transaction and State Database shards
@@ -130,11 +133,10 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;         ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;  ///< The block packing / mining algorithm
-  BlockCoordinator
-        block_coordinator_;  ///< The block coordinator (which controls the execution manager)
-  Miner miner_;              ///< The miner and block generation component
+  MainChain             chain_;              ///< The main block chain component
+  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
+  Miner                 miner_;              ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services
@@ -148,6 +150,12 @@ private:
   HttpServer  http_;          ///< The HTTP server
   HttpModules http_modules_;  ///< The set of modules currently configured
   /// @}
+
+  /// @name Local service management.
+  /// @{
+  std::string my_network_address_;  ///< The IP by which I can be reached by peers.
+  Manifest    my_manifest_;         ///< My local service configuration.
+  /// }
 };
 
 /**

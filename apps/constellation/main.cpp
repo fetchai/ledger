@@ -91,6 +91,8 @@ struct CommandLineArguments
   bool        bootstrap{false};
   bool        mine{false};
   std::string dbdir;
+  std::string external_address;
+  std::string host_name;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -101,6 +103,7 @@ struct CommandLineArguments
     std::string raw_peers;
 
     fetch::commandline::Params parameters;
+    std::string                bootstrap_address;
     std::string                external_address;
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
@@ -117,8 +120,14 @@ struct CommandLineArguments
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
-                   "The authentication token to be used with bootstrapping the client");
+                   "The authentication token to be used with bootstrapping the client",
+                   std::string{});
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
+
+    parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
+    parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
+    parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
+                   std::string{});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -136,18 +145,28 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
-    args.bootstrap = (!external_address.empty());
+    args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
       // create the boostrap node
-      bootstrap = std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port,
-                                                            args.network_id, args.token);
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(
+          prover.identity(), args.port, args.network_id, args.token, args.host_name);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
       {
-        args.interface = bootstrap->external_address();
+        args.interface = bootstrap->interface_address();
+
+        if (args.external_address.empty())
+        {
+          args.external_address = bootstrap->external_address();
+        }
       }
+    }
+
+    if (args.external_address.empty())
+    {
+      args.external_address = "127.0.0.1";
     }
 
     return args;
@@ -194,26 +213,33 @@ struct CommandLineArguments
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << '\n';
-    s << "port...........: " << args.port << std::endl;
-    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
-    s << "num executors..: " << args.num_executors << std::endl;
-    s << "num lanes......: " << args.num_lanes << std::endl;
-    s << "num slices.....: " << args.num_slices << std::endl;
-    s << "bootstrap......: " << args.bootstrap << std::endl;
-    s << "db-prefix......: " << args.dbdir << std::endl;
-    s << "interface......: " << args.interface << std::endl;
-    s << "mining.........: " << args.mine << std::endl;
+    s << "port...........: " << args.port << '\n';
+    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << '\n';
+    s << "num executors..: " << args.num_executors << '\n';
+    s << "num lanes......: " << args.num_lanes << '\n';
+    s << "num slices.....: " << args.num_slices << '\n';
+    s << "bootstrap......: " << args.bootstrap << '\n';
+    s << "host name......: " << args.host_name << '\n';
+    s << "external addr..: " << args.external_address << '\n';
+    s << "db-prefix......: " << args.dbdir << '\n';
+    s << "interface......: " << args.interface << '\n';
+    s << "mining.........: " << args.mine << '\n';
+
+    // generate the peer listing
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
       s << peer.uri() << ' ';
     }
-    s << '\n';
+
+    // terminate and flush
+    s << std::endl;
+
     return s;
   }
 };
 
-ProverPtr GenereateP2PKey()
+ProverPtr GenerateP2PKey()
 {
   static constexpr char const *KEY_FILENAME = "p2p.key";
 
@@ -230,7 +256,7 @@ ProverPtr GenereateP2PKey()
     if (input_file.is_open())
     {
       fetch::byte_array::ByteArray private_key_data;
-      private_key_data.Resize(Signer::PRIVATE_KEY_SIZE);
+      private_key_data.Resize(Signer::PrivateKey::ecdsa_curve_type::privateKeySize);
 
       // attempt to read in the private key
       input_file.read(private_key_data.char_pointer(),
@@ -253,7 +279,7 @@ ProverPtr GenereateP2PKey()
 
     if (output_file.is_open())
     {
-      auto private_key_data = certificate->private_key();
+      auto const private_key_data = certificate->private_key();
 
       output_file.write(private_key_data.char_pointer(),
                         static_cast<std::streamsize>(private_key_data.size()));
@@ -301,7 +327,7 @@ int main(int argc, char **argv)
 
   if (!fetch::version::VALID)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version");
+    FETCH_LOG_WARN(LOGGING_NAME, "Unsupported version - git working tree is dirty");
   }
 
   try
@@ -311,7 +337,7 @@ int main(int argc, char **argv)
 #endif  // FETCH_ENABLE_METRICS
 
     // create and load the main certificate for the bootstrapper
-    ProverPtr p2p_key = GenereateP2PKey();
+    ProverPtr p2p_key = GenerateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
     auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
@@ -321,7 +347,7 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir);
+        args.interface, args.dbdir, args.external_address);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
@@ -342,6 +368,7 @@ int main(int argc, char **argv)
   }
   catch (std::exception &ex)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
 

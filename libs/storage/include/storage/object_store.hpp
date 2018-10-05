@@ -71,7 +71,7 @@ public:
    */
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
-    store_.New(doc_file, index_file);
+    store_.Load(doc_file, index_file, create);
   }
 
   /**

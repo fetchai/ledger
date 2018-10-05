@@ -48,10 +48,10 @@ public:
     timepoint_type  timestamp{clock_type::now()};
   };
 
-  using underlying_cache_type = std::unordered_map<std::string, Element>;
+  using underlying_cache_type = std::unordered_map<byte_array::ConstByteArray, Element>;
   using cache_value_type      = underlying_cache_type::value_type;
 
-  chain_code_type Lookup(std::string const &contract_name)
+  chain_code_type Lookup(byte_array::ConstByteArray const &contract_name)
   {
 
     // attempt to locate the contract in the cache
@@ -78,7 +78,7 @@ public:
   }
 
 private:
-  chain_code_type FindInCache(std::string const &name)
+  chain_code_type FindInCache(byte_array::ConstByteArray const &name)
   {
     chain_code_type contract;
 
@@ -95,7 +95,7 @@ private:
     return contract;
   }
 
-  chain_code_type CreateContract(std::string const &name)
+  chain_code_type CreateContract(byte_array::ConstByteArray const &name)
   {
     chain_code_type contract = factory_.Create(name);
 

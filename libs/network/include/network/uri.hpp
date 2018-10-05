@@ -88,13 +88,16 @@ public:
   bool operator==(Uri const &other) const;
   bool operator!=(Uri const &other) const;
 
+  std::string ToString() const;
+
   template <typename T>
   friend void Serialize(T &serializer, Uri const &x);
 
   template <typename T>
   friend void Deserialize(T &serializer, Uri &x);
 
-  static Uri FromIdentity(ConstByteArray const &identity);
+  static Uri  FromIdentity(ConstByteArray const &identity);
+  static bool IsUri(const std::string &possible_uri);
 
 private:
   ConstByteArray uri_;

@@ -30,16 +30,16 @@ Metrics &Metrics::Instance()
 
 void Metrics::ConfigureFileHandler(std::string filename)
 {
-  SetMetricHandler(new MetricFileHandler(std::move(filename)));
+  std::unique_ptr<MetricHandler> new_handler(new MetricFileHandler(std::move(filename)));
+
+  handler_.store(new_handler.get());
+  handler_object_ = std::move(new_handler);
 }
 
-void Metrics::SetMetricHandler(MetricHandler *handler)
+void Metrics::RemoveMetricHandler()
 {
-  MetricHandler *old_handler = handler_.exchange(handler);
-  if (old_handler)
-  {
-    delete old_handler;
-  }
+  handler_.store(nullptr);
+  handler_object_.reset();
 }
 
 }  // namespace ledger

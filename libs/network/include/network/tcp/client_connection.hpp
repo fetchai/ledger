@@ -140,12 +140,15 @@ public:
 
   bool Closed() override
   {
-    return static_cast<bool>(socket_.lock());
+    return !static_cast<bool>(socket_.lock());
   }
 
   bool is_alive() const override
   {
-    return !static_cast<bool>(socket_.lock());
+    return static_cast<bool>(socket_.lock());
+
+    // This does not appear to tell the whole story. Consider a full
+    // state DISCONNECTED->CONNECTED->DROPPED
   }
 
 private:

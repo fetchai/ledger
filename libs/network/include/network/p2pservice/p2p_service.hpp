@@ -70,6 +70,7 @@ public:
   using UriSet               = std::unordered_set<Uri>;
   using AddressSet           = std::unordered_set<Address>;
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
+  using FutureTimepoint      = network::FutureTimepoint;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 
@@ -91,7 +92,7 @@ public:
     return muddle_.AsEndpoint();
   }
 
-  void       SetLocalManifest(Manifest &&manifest);
+  void       SetLocalManifest(Manifest const &manifest);
   Manifest   GetLocalManifest();
   AddressSet GetRandomGoodPeers();
 

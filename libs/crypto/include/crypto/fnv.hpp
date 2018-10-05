@@ -62,4 +62,9 @@ struct hash<fetch::byte_array::ConstByteArray>
   }
 };
 
+template <>
+struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::ConstByteArray>
+{
+};
+
 }  // namespace std

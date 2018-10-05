@@ -63,8 +63,6 @@ public:
   using const_string_type = byte_array::ConstByteArray;
   using VariantArray      = script::VariantArray;
 
-  //  using variant_type = script::Variant;
-
   JSONDocument()
   {
     counters_.reserve(32);
@@ -120,7 +118,7 @@ public:
         variants_[current_object.i++] = false;
         break;
       case KEYWORD_NULL:
-        variants_[current_object.i++].MakeNull();  // = nullptr;
+        variants_[current_object.i++].MakeNull();
         break;
       case STRING:
         variants_[current_object.i++].EmplaceSetString(document, t.first, t.second - t.first);
@@ -399,8 +397,6 @@ private:
   std::size_t              objects_;
 
   std::vector<char> brace_stack_;
-
-  //  variant_type root_ = nullptr;
 };
 }  // namespace json
 }  // namespace fetch

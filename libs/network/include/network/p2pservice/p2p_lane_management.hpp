@@ -44,7 +44,6 @@ public:
   /// @name Lane Management
   /// @{
   virtual void     UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) = 0;
-  virtual void     Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) = 0;
   virtual void     Shutdown(LaneIndex lane)                                           = 0;
   virtual uint32_t GetLaneNumber(LaneIndex lane)                                      = 0;
   virtual int      IncomingPeers(LaneIndex lane)                                      = 0;

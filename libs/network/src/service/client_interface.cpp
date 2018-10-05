@@ -57,7 +57,8 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
     // HMM(KLL) - I suspect we should kill all the other promises as    well here.
     FETCH_LOG_DEBUG(LOGGING_NAME, "Call failed!");
     prom->Fail(serializers::SerializableException(
-        error::COULD_NOT_DELIVER, byte_array::ConstByteArray("Could not deliver request")));
+        error::COULD_NOT_DELIVER,
+        byte_array::ConstByteArray("Could not deliver request in " __FILE__)));
   }
 
   return prom;
@@ -135,7 +136,7 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
 
   Promise p = ExtractPromise(id);
 
-  auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+  auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
   p->Fulfill(ret);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "ProcessRPCResult: Binning promise ", id,
@@ -160,7 +161,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     // Promise p = ExtractPromise(id);
 
-    // auto ret = msg.SubArray(params.Tell(), msg.size() - params.Tell());
+    // auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
     // p->Fulfill(ret);
 
     // FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the

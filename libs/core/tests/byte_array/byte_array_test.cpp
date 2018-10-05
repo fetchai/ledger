@@ -16,13 +16,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
+#include "core/byte_array/byte_array.hpp"
+
+#include "gtest/gtest.h"
+//#include "gmock/gmock.h"
+
+#include <iostream>
 
 namespace fetch {
-namespace crypto {
+namespace byte_array {
 
-const std::size_t ECDSASigner::PRIVATE_KEY_SIZE =
-    ECDSASigner::PrivateKey::ecdsa_curve_type::privateKeySize;
+namespace {
 
-}  // namespace crypto
+class ByteArrayTest : public testing::Test
+{
+protected:
+  void SetUp()
+  {}
+
+  void TearDown()
+  {}
+};
+
+TEST_F(ByteArrayTest, test_replace)
+{
+  ByteArray arr("hello kitty, how are you?");
+
+  //* PRODUCTION CODE UNDER TEST
+  std::size_t const num_of_replacements = arr.Replace(' ', '-');
+
+  //* EXPECTARTIONS
+  ConstByteArray const expected_result("hello-kitty,-how-are-you?");
+  EXPECT_EQ(expected_result, arr);
+  EXPECT_EQ(4, num_of_replacements);
+}
+
+}  // namespace
+
+}  // namespace byte_array
 }  // namespace fetch
