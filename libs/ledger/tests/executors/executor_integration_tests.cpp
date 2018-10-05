@@ -84,7 +84,7 @@ protected:
 
     storage_.reset(new underlying_storage_type{*network_manager_});
 
-    fetch::network::FutureTimepoint deadline(std::chrono::seconds(30));
+    fetch::network::FutureTimepoint deadline(std::chrono::seconds(40));
     if (fetch::network::AtomicInflightCounter<
             fetch::network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
     {
