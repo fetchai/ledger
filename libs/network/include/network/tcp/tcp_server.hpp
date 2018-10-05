@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/tcp/client_connection.hpp"
@@ -98,6 +99,9 @@ private:
   std::mutex                                startMutex_;
   bool                                      stopping_ = false;
   bool                                      running_  = false;
+
+  // Use this class to keep track of whether we are ready to accept connections
+  AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP> inflight_counter_;
 };
 }  // namespace network
 }  // namespace fetch

@@ -90,6 +90,29 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
 }
 
 /**
+ * Convert one address format to another
+ *
+ * @param address The input address
+ * @return The output address
+ */
+Packet::RawAddress ConvertAddress(Packet::Address const &address)
+{
+  Packet::RawAddress raw_address;
+
+  if (raw_address.size() != address.size())
+  {
+    throw std::runtime_error("Unable to convert one address to another");
+  }
+
+  for (std::size_t i = 0; i < address.size(); ++i)
+  {
+    raw_address[i] = address[i];
+  }
+
+  return raw_address;
+}
+
+/**
  * Comparison operation
  *
  * @param lhs Reference initial address to compare
@@ -180,6 +203,7 @@ std::string DescribePacket(Packet const &packet)
  */
 Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
   : address_(std::move(address))
+  , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
@@ -211,9 +235,6 @@ void Router::Route(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
-  // update the routing table if required
-  AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
-
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
@@ -226,6 +247,9 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else
   {
+    // update the routing table if required
+    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
+
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
   }
@@ -256,31 +280,6 @@ void Router::RemoveConnection(Handle handle)
   // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
   // alternative routing
 }
-
-#if 0
-/**
- * Sends a payload directly to the connection specified from the handle.
- *
- * This function is intended to be used by internal objects of the muddle stack and not to be
- * exposed publically.
- *
- * @param handle The network handle identifying the target connection
- * @param service_num The service number for the payload
- * @param proto_num The protocol number for the payload
- * @param payload The payload contents
- */
-void Router::SendDirect(Handle handle, uint16_t service_num, uint16_t proto_num, Payload const &payload)
-{
-  // format the packet
-  auto pkt = std::make_shared<Packet>(address_);
-  pkt->SetDirect(true);
-  pkt->SetService(service_num);
-  pkt->SetProtocol(proto_num);
-  pkt->SetPayload(payload);
-
-  SendToConnection(handle, pkt);
-}
-#endif
 
 /**
  * Send an message to a target address
@@ -441,6 +440,8 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   // sanity check
   assert(handle);
 
+  // never allow the current node address to be added to the routing table
+  if (address != address_raw_)
   {
     FETCH_LOCK(routing_table_lock_);
 

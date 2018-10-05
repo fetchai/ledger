@@ -47,11 +47,13 @@ public:
   using Identity = crypto::Identity;
 
   // Construction / Destruction
-  BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id, std::string token)
+  BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id, std::string token,
+                   std::string host_name)
     : network_id_(network_id)
     , port_(port)
     , identity_(identity)
     , token_(std::move(token))
+    , host_name_(std::move(host_name))
   {}
 
   BootstrapMonitor(BootstrapMonitor const &) = delete;
@@ -94,6 +96,7 @@ private:
   Identity const identity_;
   std::string    external_address_;
   std::string    token_;
+  std::string    host_name_;
 
   Flag      running_{false};
   ThreadPtr monitor_thread_;

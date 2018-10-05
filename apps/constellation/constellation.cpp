@@ -33,6 +33,7 @@
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
 using fetch::network::TCPClient;
+using fetch::network::Peer;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -79,7 +80,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
-  , lane_control_(num_lanes_)
+  , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
@@ -139,16 +140,61 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  for (uint32_t i = 0; i < num_lanes_; ++i)
+
+  std::map<LaneIndex, Peer> lane_data;
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-
-    // establish the connection to the lane
-    auto client = storage_->AddLaneConnection<TCPClient>("127.0.0.1", lane_port);
-
-    // allow the remote control to use connection
-    lane_control_.AddClient(i, client);
+    lane_data[i]             = Peer("127.0.0.1", lane_port);
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
+  network::FutureTimepoint deadline(std::chrono::seconds(30));
+  if (network::AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
+  }
+  else
+  {
+    TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
+  }
+
+  auto count =
+      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+  if (count == num_lanes_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
+  }
+
+  // OK, it's been a while, let's try those missing lane services again...
+
+  lane_data.clear();
+  for (LaneIndex i = 0; i < num_lanes_; ++i)
+  {
+    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
+    if (!storage_->ClientForLaneConnected(i))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
+      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
+    }
+  }
+  if (!lane_data.empty())
+  {
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
+    auto count =
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+    if (count == num_lanes_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
+      return;
+    }
+  }
+
   execution_manager_->Start();
   block_coordinator_.Start();
 
@@ -198,7 +244,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Stop();
   execution_manager_->Stop();
 
-  lane_control_.ClearClients();
   storage_.reset();
 
   lane_services_.Stop();

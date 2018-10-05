@@ -271,6 +271,13 @@ public:
     return atof(reinterpret_cast<char const *>(arr_pointer_));
   }
 
+  std::string ToBase64() const;
+
+  static std::string ToBase64(self_type const &convert)
+  {
+    return convert.ToBase64();
+  }
+
   // Non-const functions go here
   void FromByteArray(self_type const &other, std::size_t const &start, std::size_t length)
   {
@@ -473,6 +480,13 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
   ConstByteArray s(a);
   s = s + b;
   return s;
+}
+
+ConstByteArray ToBase64(ConstByteArray const &str);
+
+inline std::string ConstByteArray::ToBase64() const
+{
+  return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
 }  // namespace byte_array

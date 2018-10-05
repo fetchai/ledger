@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
@@ -52,9 +53,12 @@ public:
   void BroadcastBlock(Block const &block);
 
 private:
+  using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
+  using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
+
   void OnNewBlock(Address const &from, Block &block);
 
-  void RequestHeaviestChainFromPeer(Address const &from);
+  bool RequestHeaviestChainFromPeer(Address const &from);
 
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
@@ -65,6 +69,8 @@ private:
 
   Mutex     main_chain_rpc_client_lock_{__LINE__, __FILE__};
   RpcClient main_chain_rpc_client_;
+
+  ChainRequests chain_requests_;
 };
 
 }  // namespace ledger

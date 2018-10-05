@@ -41,7 +41,7 @@ protected:
   {
     using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
     EXPECT_EQ(ecdsa_curve_type::nid, P_ECDSA_Curve_NID);
-    EXPECT_EQ(expected_sn, ecdsa_curve_type::sn);
+    ASSERT_STREQ(expected_sn, ecdsa_curve_type::sn);
     EXPECT_EQ(expected_privateKeySize, ecdsa_curve_type::privateKeySize);
     EXPECT_EQ(expected_publicKeySize, ecdsa_curve_type::publicKeySize);
     EXPECT_EQ(expected_signatureSize, ecdsa_curve_type::signatureSize);

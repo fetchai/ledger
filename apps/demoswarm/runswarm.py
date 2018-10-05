@@ -304,6 +304,7 @@ def main():
         fn.write("br s -M system_error\n")
         fn.write("br s -n exit\n")
         fn.write("br s -n abort\n")
+        fn.write("br s -M TCPServer::~TCPServer()\n")
         fn.write("run\n")
 
     if args.clean:

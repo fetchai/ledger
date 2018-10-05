@@ -43,6 +43,13 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
+    if (name < 1 || name > 255)
+    {
+      throw serializers::SerializableException(
+          error::PROTOCOL_RANGE,
+          byte_array_type(std::to_string(name) + " is out of protocol range."));
+    }
+
     // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
@@ -52,10 +59,12 @@ public:
 
     members_[name] = protocol;
 
+#if 0
     for (auto &feed : protocol->feeds())
     {
       feed->AttachToService(this);
     }
+#endif
   }
 
 protected:

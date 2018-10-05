@@ -71,6 +71,9 @@ bool JsonHttpClient::Request(Method method, ConstByteArray const &endpoint, Head
     std::ostringstream oss;
     oss << *request;
     http_request.SetBody(oss.str());
+
+    // override the content type
+    http_request.AddHeader("Content-Type", "application/json");
   }
 
   fetch::http::HTTPResponse http_response;

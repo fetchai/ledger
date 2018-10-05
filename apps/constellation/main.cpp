@@ -92,6 +92,7 @@ struct CommandLineArguments
   bool        mine{false};
   std::string dbdir;
   std::string external_address;
+  std::string host_name;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -123,8 +124,10 @@ struct CommandLineArguments
                    std::string{});
     parameters.add(args.mine, "mine", "Enable mining on this node", false);
 
-    parameters.add(external_address, "external", "This node's global IP addr.", std::string{});
+    parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
+    parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
+                   std::string{});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -142,26 +145,26 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
-    args.bootstrap = (!external_address.empty());
+    args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
       // create the boostrap node
-      bootstrap = std::make_unique<fetch::BootstrapMonitor>(prover.identity(), args.port,
-                                                            args.network_id, args.token);
+      bootstrap = std::make_unique<fetch::BootstrapMonitor>(
+          prover.identity(), args.port, args.network_id, args.token, args.host_name);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
       {
         args.interface = bootstrap->interface_address();
 
-        if (args.external_address == "")
+        if (args.external_address.empty())
         {
           args.external_address = bootstrap->external_address();
         }
       }
     }
 
-    if (args.external_address == "")
+    if (args.external_address.empty())
     {
       args.external_address = "127.0.0.1";
     }
@@ -210,22 +213,28 @@ struct CommandLineArguments
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << '\n';
-    s << "port...........: " << args.port << std::endl;
-    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << std::endl;
-    s << "num executors..: " << args.num_executors << std::endl;
-    s << "num lanes......: " << args.num_lanes << std::endl;
-    s << "num slices.....: " << args.num_slices << std::endl;
-    s << "bootstrap......: " << args.bootstrap << std::endl;
-    s << "external addr..: " << args.external_address << std::endl;
-    s << "db-prefix......: " << args.dbdir << std::endl;
-    s << "interface......: " << args.interface << std::endl;
-    s << "mining.........: " << args.mine << std::endl;
+    s << "port...........: " << args.port << '\n';
+    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << '\n';
+    s << "num executors..: " << args.num_executors << '\n';
+    s << "num lanes......: " << args.num_lanes << '\n';
+    s << "num slices.....: " << args.num_slices << '\n';
+    s << "bootstrap......: " << args.bootstrap << '\n';
+    s << "host name......: " << args.host_name << '\n';
+    s << "external addr..: " << args.external_address << '\n';
+    s << "db-prefix......: " << args.dbdir << '\n';
+    s << "interface......: " << args.interface << '\n';
+    s << "mining.........: " << args.mine << '\n';
+
+    // generate the peer listing
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
       s << peer.uri() << ' ';
     }
-    s << '\n';
+
+    // terminate and flush
+    s << std::endl;
+
     return s;
   }
 };
@@ -359,6 +368,7 @@ int main(int argc, char **argv)
   }
   catch (std::exception &ex)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Fatal Error: ", ex.what());
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
 

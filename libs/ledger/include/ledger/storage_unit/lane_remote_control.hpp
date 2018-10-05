@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/service/service_client.hpp"
 
@@ -32,11 +33,12 @@ class LaneRemoteControl : public p2p::LaneManagement
 public:
   static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  using Mutex   = mutex::Mutex;
-  using Promise = service::Promise;
+  using Mutex                = mutex::Mutex;
+  using Promise              = service::Promise;
+  using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
-  explicit LaneRemoteControl(std::size_t num_lanes)
-    : clients_(num_lanes)
+  explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
+    : storage_unit_(std::move(storage_unit))
   {}
 
   LaneRemoteControl(LaneRemoteControl const &other) = default;
@@ -45,40 +47,22 @@ public:
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
   ~LaneRemoteControl() override                           = default;
 
-  void AddClient(LaneIndex lane, WeakService const &client)
-  {
-    FETCH_LOCK(mutex_);
-    clients_[lane] = client.lock();
-  }
-
-  void ClearClients()
-  {
-    FETCH_LOCK(mutex_);
-    clients_.clear();
-  }
-
-  void Connect(LaneIndex lane, ConstByteArray const &host, uint16_t port) override
-  {
-    auto ptr = LookupLane(lane);
-    if (ptr)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Remote lane call to: ", host, ":", port);
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::CONNECT, host, port);
-
-      FETCH_LOG_PROMISE();
-      p->Wait();
-    }
-  }
-
   void Shutdown(LaneIndex lane) override
   {
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
-
-      FETCH_LOG_PROMISE();
-      p->Wait();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
+        FETCH_LOG_PROMISE();
+        p->Wait();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Remote lane shutdown call failed.");
+        throw;
+      }
     }
   }
 
@@ -87,10 +71,17 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-      return p->As<uint32_t>();
+      try
+      {
+        auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+        return p->As<uint32_t>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote GET_LANE_NUMBER");
+        throw;
+      }
     }
-
     TODO_FAIL("client connection has died, @GetLaneNumber");
 
     return 0;
@@ -101,8 +92,16 @@ public:
     auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
-      return p->As<int>();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
+        return p->As<int>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote INCOMING_PEERS");
+        throw;
+      }
     }
 
     TODO_FAIL("client connection has died, @IncomingPeers");
@@ -116,8 +115,16 @@ public:
 
     if (ptr)
     {
-      auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
-      return p->As<int>();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
+        return p->As<int>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote OUTGOING_PEERS");
+        throw;
+      }
     }
 
     TODO_FAIL("client connection has died, @OutgoingPeers");
@@ -131,8 +138,16 @@ public:
 
     if (ptr)
     {
-      ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
-      return;
+      try
+      {
+        ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+        return;
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote USE_THESE_PEERS");
+        throw;
+      }
     }
     TODO_FAIL("client connection has died, @UseThesePeers");
   }
@@ -149,15 +164,11 @@ private:
 
     FETCH_LOCK(mutex_);
 
-#ifdef NDEBUG
-    return clients_[lane].lock();
-#else
-    return clients_.at(lane).lock();
-#endif
+    return storage_unit_->GetClientForLane(lane);
   }
 
-  mutable Mutex            mutex_{__LINE__, __FILE__};
-  std::vector<WeakService> clients_;
+  StorageUnitClientPtr storage_unit_;
+  mutable Mutex        mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger
