@@ -22,6 +22,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "crypto/ecdsa.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -29,9 +30,11 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "storage/object_store.hpp"
 
 #include <random>
 #include <sstream>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -39,6 +42,9 @@ namespace ledger {
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
+  using KeyStore    = storage::ObjectStore<byte_array::ConstByteArray>;
+  using KeyStorePtr = std::shared_ptr<KeyStore>;
+
   static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
 
   enum class ErrorCode
@@ -47,10 +53,14 @@ public:
     PARSE_FAILURE
   };
 
-  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor)
+  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor,
+                      KeyStorePtr key_store = std::make_shared<KeyStore>())
     : state_{state}
     , processor_{processor}
+    , key_store_{std::move(key_store)}
   {
+    // load permanent key store (or create it if files do not exist)
+    key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
 
     // register all the routes
     Post("/api/wallet/register",
@@ -91,7 +101,11 @@ private:
       json::JSONDocument doc;
       doc = request.JSON();
 
-      count = doc["count"].As<uint64_t>();
+      auto const &count_v{doc["count"]};
+      if (count_v.is_int())
+      {
+        count = count_v.As<uint64_t>();
+      }
     }
 
     // Avoid locations = 0 corner case
@@ -100,25 +114,17 @@ private:
     // Cap locations
     count = std::min(count, uint64_t(10000));
 
-    static constexpr std::size_t IDENTITY_SIZE = 64;
+    std::vector<crypto::ECDSASigner> signers(count);
 
-    static std::random_device rd;
-    static std::mt19937       rng(rd());
+    std::random_device rd;
+    std::mt19937       rng(rd());
 
-    std::vector<byte_array::ByteArray> addresses;
-
-    for (size_t i = 0; i < count; ++i)
+    for (auto &signer : signers)
     {
-      // Create random address
-      byte_array::ByteArray address;
-      address.Resize(IDENTITY_SIZE);
-      for (std::size_t i = 0; i < IDENTITY_SIZE; ++i)
-      {
-        address[i] = static_cast<uint8_t>(rng() & 0xFF);
-      }
+      signer.GenerateKeys();
 
-      // Save address for response generation
-      addresses.push_back(address);
+      // Create random address
+      byte_array::ConstByteArray const &address{signer.public_key()};
 
       // construct the wealth generation transaction
       {
@@ -136,22 +142,27 @@ private:
         mtx.set_fee(rng() & 0x1FF);
         mtx.PushResource(address);
 
+        // sign the transaction
+        mtx.Sign(signer.private_key());
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
         // dispatch the transaction
         processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
       }
+
+      key_store_->Set(storage::ResourceAddress{address}, signer.private_key());
     }
 
     script::Variant    data;
     std::ostringstream oss;
 
     // Return old data format as a fall back (when size is 1)
-    if (addresses.size() == 1)
+    if (signers.size() == 1)
     {
       data.MakeObject();
 
-      data["address"] = byte_array::ToBase64(addresses[0]);
+      data["address"] = byte_array::ToBase64(signers[0].public_key());
       data["success"] = true;
     }
     else
@@ -160,16 +171,14 @@ private:
       data["success"] = true;
 
       script::Variant results_array;
-      results_array.MakeArray(addresses.size());
+      results_array.MakeArray(signers.size());
 
       std::size_t index = 0;
-      for (const auto &i : addresses)
+      for (auto const &signer : signers)
       {
-        script::Variant element;
-        element.MakeObject();
-        element["address"]   = byte_array::ToBase64(i);
-        results_array[index] = element;
-        index++;
+        auto &elem = results_array[index++];
+        elem.MakeObject();
+        elem = byte_array::ToBase64(signer.public_key());
       }
 
       data["addresses"] = results_array;
@@ -239,6 +248,21 @@ private:
         mtx.PushResource(byte_array::FromBase64(from));
         mtx.PushResource(byte_array::FromBase64(to));
 
+        // query private key for signing
+        byte_array::ConstByteArray priv_key;
+        if (!key_store_->Get(storage::ResourceAddress{from}, priv_key))
+        {
+          return http::CreateJsonResponse(
+              R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
+              http::Status::CLIENT_ERROR_BAD_REQUEST);
+        }
+
+        // sign the transaction
+        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
+        key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
+
+        mtx.Sign(priv_key, tx_sign_adapter);
+
         // create the final / sealed transaction
         chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
 
@@ -292,6 +316,7 @@ private:
   TokenContract         contract_;
   StorageInterface &    state_;
   TransactionProcessor &processor_;
+  KeyStorePtr           key_store_;
 };
 
 }  // namespace ledger

@@ -28,7 +28,7 @@
 namespace fetch {
 namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const addDebugInfo)
+byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const add_metadata)
 {
   script::Variant tx_v;
   tx_v.MakeObject();
@@ -36,7 +36,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   // version of wire format)
   tx_v["ver"] = "1.0";
 
-  if (addDebugInfo)
+  if (add_metadata)
   {
     script::Variant tx_debug_data;
     tx_debug_data.MakeObject();
@@ -71,7 +71,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
       tx_debug_data["signatures"] = signatures;
     }
-    tx_v["dbg"] = tx_debug_data;
+    tx_v["metadata"] = tx_debug_data;
   }
 
   auto                         txdfs = TxSigningAdapterFactory(tx);

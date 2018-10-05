@@ -23,7 +23,7 @@ namespace fetch {
 namespace chain {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
-                                        bool const                addDebugInfo = false);
+                                        bool const                add_metadata = false);
 MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
 
 }  // namespace chain

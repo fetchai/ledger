@@ -29,6 +29,7 @@
 
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/wire_transaction.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -88,6 +89,7 @@ public:
     Post("/api/debug/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            chain::MutableTransaction tx;
+
            tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
            tx.set_fee(transaction_index_);
            tx.set_contract_name("fetch.dummy.run");
@@ -100,6 +102,26 @@ public:
            std::ostringstream oss;
            oss << R"({ "submitted": true, "tx": ")"
                << static_cast<std::string>(byte_array::ToBase64(vtx.digest())) << "\" }";
+
+           return http::CreateJsonResponse(oss.str());
+         });
+
+    // new transaction
+    Post("/api/contract/submit",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           std::ostringstream oss;
+           try
+           {
+             chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
+             auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
+             processor_.AddTransaction(vtx);
+             oss << R"({ "submitted": true })";
+           }
+           catch (std::exception const &ex)
+           {
+             oss.clear();
+             oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
+           }
 
            return http::CreateJsonResponse(oss.str());
          });

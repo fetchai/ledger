@@ -18,6 +18,7 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
@@ -92,7 +93,8 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
   , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
-                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_)}
+                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
   , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
