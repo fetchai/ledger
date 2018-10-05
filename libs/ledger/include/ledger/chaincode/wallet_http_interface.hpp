@@ -42,6 +42,7 @@ class WalletHttpInterface : public http::HTTPModule
 {
 public:
   using KeyStore               = storage::ObjectStore<byte_array::ConstByteArray>;
+  using KeyStorePtr            = std::shared_ptr<KeyStore>;
 
   static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
 
@@ -51,11 +52,14 @@ public:
     PARSE_FAILURE
   };
 
-  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor, KeyStore &key_store)
+  WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor, KeyStorePtr key_store = std::make_shared<KeyStore>())
     : state_{state}
     , processor_{processor}
     , key_store_{key_store}
   {
+    // load permanent key store (or create it if files do not exist)
+    key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
+
     // register all the routes
     Post("/api/wallet/register",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
@@ -146,7 +150,7 @@ private:
         processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
       }
       
-      key_store_.Set(storage::ResourceAddress{address}, signer.private_key());
+      key_store_->Set(storage::ResourceAddress{address}, signer.private_key());
     }
 
     script::Variant    data;
@@ -245,13 +249,14 @@ private:
 
         // query private key for signing
         byte_array::ConstByteArray priv_key;
-        if ( !key_store_.Get(storage::ResourceAddress{from}, priv_key))
+        if ( !key_store_->Get(storage::ResourceAddress{from}, priv_key))
         {
           return http::CreateJsonResponse(R"({"success": false, "error": "provided address/pub.key does not exist in key store"})", http::Status::CLIENT_ERROR_BAD_REQUEST);
         }
 
         // sign the transaction
-        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
+        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};  key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
+
         mtx.Sign(priv_key, tx_sign_adapter);
 
         // create the final / sealed transaction
@@ -307,7 +312,7 @@ private:
   TokenContract         contract_;
   StorageInterface &    state_;
   TransactionProcessor &processor_;
-  KeyStore &            key_store_;
+  KeyStorePtr           key_store_;
 };
 
 }  // namespace ledger

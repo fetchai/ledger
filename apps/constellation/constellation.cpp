@@ -83,7 +83,6 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , lane_control_(num_lanes_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
-  , key_store_{std::make_shared<KeyStore>()}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
@@ -92,7 +91,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
-  , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, *key_store_),
+  , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
                   std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
   , my_network_address_(std::move(my_network_address))
@@ -118,9 +117,6 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   {
     http_.AddModule(*module);
   }
-
-  // load permanent key store (or create it if files do not exist)
-  key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
 
   this->my_manifest_ = GenerateManifest();
 }
