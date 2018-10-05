@@ -203,7 +203,7 @@ public:
                            key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
-    promise->Wait(2000, true);
+    promise->Wait();
   }
 
   void Commit(bookmark_type const &bookmark) override
