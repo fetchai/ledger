@@ -48,7 +48,7 @@ public:
 
   HasWorkerThread(Target *target, std::function<void()> workcycle)
     : target_(target)
-    , workcycle_(workcycle)
+    , workcycle_(std::move(workcycle))
   {
     thread_ = std::make_shared<std::thread>([this]() { this->Run(); });
   }
