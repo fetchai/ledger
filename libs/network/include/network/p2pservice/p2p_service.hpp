@@ -160,9 +160,7 @@ private:
   ///@}
 
   uint32_t min_peers_ = 2;
-  uint32_t max_peers_ = 3;
-
-  FutureTimepoint 
+  uint32_t max_peers_ = 3; 
 };
 
 }  // namespace p2p
