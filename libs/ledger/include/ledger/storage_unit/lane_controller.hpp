@@ -755,12 +755,13 @@ private:
   network_manager_type        manager_;
 
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
+  mutex::Mutex desired_connections_mutex_{__LINE__, __FILE__};
 
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
 
   std::unordered_map<Uri, shared_service_client_type> peer_connections_;
-  UriSet                                              desired_connections_mutex_;
+  UriSet                                              desired_connections_;
 
   thread_pool_type thread_pool_;
 };

@@ -50,7 +50,7 @@ private:
 
   struct TheCounter
   {
-    Counter count;
+    Counter count{0};
     CondVar cv;
     Mutex   mutex;
   };
