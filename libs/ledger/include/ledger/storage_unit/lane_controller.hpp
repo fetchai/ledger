@@ -760,7 +760,7 @@ private:
   std::vector<connection_handle_type>                                    inactive_services_;
 
   std::unordered_map<Uri, shared_service_client_type> peer_connections_;
-  UriSet                                              desired_connections_;
+  UriSet                                              desired_connections_mutex_;
 
   thread_pool_type thread_pool_;
 };
