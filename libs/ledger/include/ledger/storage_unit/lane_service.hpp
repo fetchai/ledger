@@ -77,7 +77,7 @@ public:
     // Setting lane certificate up
     // TODO(issue 24): Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
-    certificate->GenerateKey();
+    certificate->GenerateKeys();
     certificate_.reset(certificate);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,

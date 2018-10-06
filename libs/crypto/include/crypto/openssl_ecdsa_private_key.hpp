@@ -244,7 +244,7 @@ private:
 
   static ECDSAPrivateKey Generate()
   {
-    uniq_ptr_type<EC_KEY> key{GenerateKeyPair()};
+    uniq_ptr_type<EC_KEY> key{GenerateKeysPair()};
     public_key_type       public_key{ExtractPublicKey(key.get())};
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
@@ -263,7 +263,7 @@ private:
     return public_key_type{std::move(public_key), group, context::Session<BN_CTX>{}};
   }
 
-  static uniq_ptr_type<EC_KEY> GenerateKeyPair()
+  static uniq_ptr_type<EC_KEY> GenerateKeysPair()
   {
     uniq_ptr_type<EC_KEY> key_pair{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
     EC_KEY_set_conv_form(key_pair.get(), conversionForm);
@@ -271,14 +271,14 @@ private:
     if (!key_pair)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeyPair(): "
+          "ECDSAPrivateKey::GenerateKeysPair(): "
           "EC_KEY_new_by_curve_name(...) failed.");
     }
 
     if (!EC_KEY_generate_key(key_pair.get()))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeyPair(): "
+          "ECDSAPrivateKey::GenerateKeysPair(): "
           "EC_KEY_generate_key(...) failed.");
     }
 

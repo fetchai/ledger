@@ -122,7 +122,7 @@ private:
 
     for (auto &signer : signers)
     {
-      signer.GenerateKey();
+      signer.GenerateKeys();
 
       // Create random address
       byte_array::ConstByteArray const &address{signer.public_key()};

@@ -19,7 +19,6 @@
 #include "crypto/ecdsa.hpp"
 
 #include "gmock/gmock.h"
-//#include "gtest/gtest.h"
 
 namespace fetch {
 namespace crypto {
@@ -64,7 +63,7 @@ TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_with_predfined_private_ke
 TEST_F(ECDSASignerVerifierTest, test_ign_verify_cycle_generated_key)
 {
   ECDSASigner signer;
-  signer.GenerateKey();
+  signer.GenerateKeys();
 
   ASSERT_TRUE(signer.Sign(test_data_));
 
