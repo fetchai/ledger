@@ -49,7 +49,7 @@ public:
   // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to
   // canonical
   // encoding to void
-  // failures when construcing this class (ECDSAPrivateKey) with DER encoding.
+  // failures when constructing this class (ECDSAPrivateKey) with DER encoding.
   using public_key_type =
       ECDSAPublicKey<SupportedEncodingForPublicKey<P_ECDSABinaryDataFormat>::value,
                      P_ECDSA_Curve_NID, P_ConversionForm>;
@@ -63,7 +63,7 @@ public:
 private:
   // TODO(issue 36): Keep key encrypted
   shrd_ptr_type<EC_KEY> private_key_;
-  // TODO(issue 36): Do lazy initilisation of the public key to minimize impact
+  // TODO(issue 36): Do lazy initialisation of the public key to minimize impact
   // at
   // construction time of this
   // class
@@ -162,10 +162,10 @@ private:
     {
       throw std::runtime_error(
           "ECDSAPrivateKey::Convert2BIGNUM(const "
-          "byte_array::ConstByteArray&): Lenght of "
+          "byte_array::ConstByteArray&): Length of "
           "provided "
           "byte array does not correspond to expected "
-          "lenght for selected elliptic curve");
+          "length for selected elliptic curve");
     }
 
     uniq_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN(BN_new());

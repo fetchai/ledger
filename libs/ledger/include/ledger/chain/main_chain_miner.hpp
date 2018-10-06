@@ -127,6 +127,7 @@ private:
         searching_for_hash = false;
       }
 
+
       if (searching_for_hash)
       {
         if (Miner::Mine(next_block, 100))
@@ -144,6 +145,10 @@ private:
           next_block_time    = CalculateNextBlockTime(rng);
           searching_for_hash = false;
         }
+        else
+        {
+          std::cout << "Failed to mine." << std::endl;
+        }
       }
       else if (Clock::now() >= next_block_time)  // if we are ready to generate a new block
       {
@@ -151,6 +156,9 @@ private:
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
         next_block_body.miner_number  = minerNumber_;
+
+        // Reset previous state
+        next_block_body.slices.clear();
 
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 

@@ -100,8 +100,6 @@ public:
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
 
-      // TODO(issue 28) : fix this hack
-      network_manager_type tm  = threadMan;
       auto                 soc = threadMan.CreateIO<socket_type>();
 
       auto accep =

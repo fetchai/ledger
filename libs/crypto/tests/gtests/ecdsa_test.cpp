@@ -64,7 +64,7 @@ TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_with_predfined_private_ke
 TEST_F(ECDSASignerVerifierTest, test_ign_verify_cycle_generated_key)
 {
   ECDSASigner signer;
-  signer.GenerateKeys();
+  signer.GenerateKey();
 
   ASSERT_TRUE(signer.Sign(test_data_));
 

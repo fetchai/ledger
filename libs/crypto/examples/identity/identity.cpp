@@ -28,7 +28,7 @@ int main()
 {
   // generate the required private and public key pair
   ECDSASigner signer;
-  signer.GenerateKeys();
+  signer.GenerateKey();
 
   // Print out the keys
   std::cout << "Public Key...: " << ToBase64(signer.public_key()) << std::endl;

@@ -273,7 +273,7 @@ ProverPtr GenerateP2PKey()
   // Generate a key if the load failed
   if (!certificate_loaded)
   {
-    certificate->GenerateKeys();
+    certificate->GenerateKey();
 
     std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
 

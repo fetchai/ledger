@@ -63,7 +63,8 @@ public:
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(contract_name_type const &name, query_type const &query,
+  Status DispatchQuery(contract_name_type const &name,
+                       query_type const &query,
                        query_type &response)
   {
     Status status{Status::NOT_FOUND};

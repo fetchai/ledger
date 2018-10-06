@@ -69,7 +69,7 @@ public:
     private_key_ = PrivateKey(private_key);
   }
 
-  void GenerateKeys()
+  void GenerateKey()
   {
     private_key_ = PrivateKey();
   }

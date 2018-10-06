@@ -157,7 +157,6 @@ public:
 
   virtual void Start()
   {
-    // Done by magic now.
   }
 
   void Stop()
