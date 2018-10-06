@@ -64,9 +64,7 @@ private:
   // TODO(issue 36): Keep key encrypted
   shrd_ptr_type<EC_KEY> private_key_;
   // TODO(issue 36): Do lazy initialisation of the public key to minimize impact
-  // at
-  // construction time of this
-  // class
+  // at construction time of this class
   public_key_type public_key_;
 
 public:
@@ -244,7 +242,7 @@ private:
 
   static ECDSAPrivateKey Generate()
   {
-    uniq_ptr_type<EC_KEY> key{GenerateKeysPair()};
+    uniq_ptr_type<EC_KEY> key{GenerateKeyPair()};
     public_key_type       public_key{ExtractPublicKey(key.get())};
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
@@ -263,7 +261,7 @@ private:
     return public_key_type{std::move(public_key), group, context::Session<BN_CTX>{}};
   }
 
-  static uniq_ptr_type<EC_KEY> GenerateKeysPair()
+  static uniq_ptr_type<EC_KEY> GenerateKeyPair()
   {
     uniq_ptr_type<EC_KEY> key_pair{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
     EC_KEY_set_conv_form(key_pair.get(), conversionForm);
@@ -271,14 +269,14 @@ private:
     if (!key_pair)
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeysPair(): "
+          "ECDSAPrivateKey::GenerateKeyPair(): "
           "EC_KEY_new_by_curve_name(...) failed.");
     }
 
     if (!EC_KEY_generate_key(key_pair.get()))
     {
       throw std::runtime_error(
-          "ECDSAPrivateKey::GenerateKeysPair(): "
+          "ECDSAPrivateKey::GenerateKeyPair(): "
           "EC_KEY_generate_key(...) failed.");
     }
 
