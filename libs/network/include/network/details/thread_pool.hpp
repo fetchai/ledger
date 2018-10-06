@@ -156,8 +156,7 @@ public:
   }
 
   virtual void Start()
-  {
-  }
+  {}
 
   void Stop()
   {

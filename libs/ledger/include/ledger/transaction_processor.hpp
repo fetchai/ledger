@@ -45,7 +45,7 @@ public:
   }
 
 private:
-  StorageUnitInterface  &storage_;
+  StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
 };
 

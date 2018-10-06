@@ -100,7 +100,7 @@ public:
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
 
-      auto                 soc = threadMan.CreateIO<socket_type>();
+      auto soc = threadMan.CreateIO<socket_type>();
 
       auto accep =
           threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));

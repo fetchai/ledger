@@ -214,7 +214,7 @@ public:
   }
 
 private:
-  chain::MainChain                  &chain_;
+  chain::MainChain &                 chain_;
   ledger::ExecutionManagerInterface &execution_manager_;
   std::deque<block_body_type>        pending_blocks_;
   mutex_type                         mutex_{__LINE__, __FILE__};

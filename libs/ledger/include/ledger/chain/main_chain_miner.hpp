@@ -127,7 +127,6 @@ private:
         searching_for_hash = false;
       }
 
-
       if (searching_for_hash)
       {
         if (Miner::Mine(next_block, 100))

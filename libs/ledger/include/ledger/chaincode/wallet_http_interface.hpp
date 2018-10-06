@@ -25,13 +25,13 @@
 #include "crypto/ecdsa.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
-#include "ledger/chain/helper_functions.hpp"
 
 #include <random>
 #include <sstream>
