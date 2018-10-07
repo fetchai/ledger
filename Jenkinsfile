@@ -41,6 +41,11 @@ pipeline {
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
+            stage('Debug Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Debug'
+              }
+            }
             stage('Static Analysis') {
               steps {
                 sh './scripts/run-static-analysis.py build-debug/'
