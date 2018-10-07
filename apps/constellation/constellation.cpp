@@ -30,19 +30,36 @@
 #include <memory>
 #include <random>
 #include <utility>
+#include <network/uri.hpp>
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
+using fetch::network::Peer;
 using fetch::network::TCPClient;
 using fetch::network::Manifest;
 using fetch::network::ServiceType;
+using fetch::network::Uri;
 using fetch::network::ServiceIdentifier;
-
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace {
+
+using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
+
+void WaitForLaneServersToStart()
+{
+  network::FutureTimepoint deadline(std::chrono::seconds(30));
+
+  using InFlightCounter =
+  network::AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
+  if (!InFlightCounter::Wait(deadline))
+  {
+    FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Network servers did not all start in time");
+    return;
+  }
+}
 
 std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 {
@@ -52,9 +69,9 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
   return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
 }
 
-uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service)
+uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t instance = 0)
 {
-  ServiceIdentifier identifier{service};
+  ServiceIdentifier identifier{service, instance};
 
   if (!manifest.HasService(identifier))
   {
@@ -62,6 +79,35 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service)
   }
 
   return manifest.GetLocalPort(identifier);
+}
+
+std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes)
+{
+  std::map<LaneIndex, Peer> connection_map;
+
+  for (LaneIndex i = 0; i < num_lanes; ++i)
+  {
+    ServiceIdentifier identifier{ServiceType::LANE, static_cast<uint16_t>(i)};
+
+    if (!manifest.HasService(identifier))
+    {
+      throw std::runtime_error("Unable to lookup service information from the manifest");
+    }
+
+    // lookup the service information
+    auto const &service = manifest.GetService(identifier);
+
+    // ensure the service is actually TCP based
+    if (service.remote_uri.scheme() != Uri::Scheme::Tcp)
+    {
+      throw std::runtime_error("Non TCP connections not currently supported");
+    }
+
+    // update the connection map
+    connection_map[i] = service.remote_uri.AsPeer();
+  }
+
+  return connection_map;
 }
 
 }  // namespace
@@ -145,41 +191,37 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // Step 1. Start all the components
   //---------------------------------------------------------------
 
+  /// NETWORKING INFRASTRUCTURE
+
   // start all the services
   network_manager_.Start();
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
 
+  /// LANE / SHARD SERVERS
+
+  // start all the lane services and wait for them to start accepting
+  // connections
   lane_services_.Start();
+  WaitForLaneServersToStart();
+
+  /// LANE / SHARD CLIENTS
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
+  auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(
+    BuildLaneConnectionMap(manifest_, num_lanes_),
+    std::chrono::milliseconds(30000)
+  );
 
-  std::map<LaneIndex, Peer> lane_data;
-  for (LaneIndex i = 0; i < num_lanes_; ++i)
+  // check to see if the connections where successful
+  if (count != num_lanes_)
   {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    lane_data[i]             = Peer("127.0.0.1", lane_port);
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
-  network::FutureTimepoint deadline(std::chrono::seconds(30));
-
-  using InFlightCounter =
-      network::AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
-  if (!InFlightCounter::Wait(deadline))
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Network servers did not all start in time");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to establish connections to lane service");
     return;
   }
 
-  auto count =
-      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
-  if (count == num_lanes_)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
-  }
-
+#if 0
   // OK, it's been a while, let's try those missing lane services again...
 
   lane_data.clear();
@@ -208,6 +250,9 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
       return;
     }
   }
+#endif
+
+  /// BLOCK EXECUTION & MINING
 
   execution_manager_->Start();
   block_coordinator_.Start();
@@ -217,9 +262,13 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     miner_.Start();
   }
 
+  /// P2P (TRUST) HIGH LEVEL MANAGEMENT
+
   // P2P configuration
-  p2p_.SetLocalManifest(manifest_); // TODO(EJF): This is an issue since it kicks of async work
+  p2p_.SetLocalManifest(manifest_);
   p2p_.Start(initial_peers);
+
+  /// INPUT INTERFACES
 
   // Finally start the HTTP server
   http_.Start(http_port_);
