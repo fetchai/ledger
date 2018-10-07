@@ -152,6 +152,9 @@ private:
         next_block_body.previous_hash = block.hash();
         next_block_body.miner_number  = minerNumber_;
 
+        // Reset previous state
+        next_block_body.slices.clear();
+
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
         // Pack the block with transactions

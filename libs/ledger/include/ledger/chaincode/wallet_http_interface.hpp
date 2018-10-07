@@ -25,6 +25,7 @@
 #include "crypto/ecdsa.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -131,7 +132,7 @@ private:
         script::Variant wealth_data;
         wealth_data.MakeObject();
         wealth_data["address"] = byte_array::ToBase64(address);
-        wealth_data["amount"]  = 1000;
+        wealth_data["amount"]  = 1001;
 
         std::ostringstream oss;
         oss << wealth_data;
@@ -151,7 +152,8 @@ private:
         processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
       }
 
-      key_store_->Set(storage::ResourceAddress{address}, signer.private_key());
+      storage::ResourceID set_id = storage::ResourceAddress{address};
+      key_store_->Set(set_id, signer.private_key());
     }
 
     script::Variant    data;
@@ -248,9 +250,11 @@ private:
         mtx.PushResource(byte_array::FromBase64(from));
         mtx.PushResource(byte_array::FromBase64(to));
 
+        storage::ResourceAddress get_id{byte_array::FromBase64(from)};
+
         // query private key for signing
         byte_array::ConstByteArray priv_key;
-        if (!key_store_->Get(storage::ResourceAddress{from}, priv_key))
+        if (!key_store_->Get(get_id, priv_key))
         {
           return http::CreateJsonResponse(
               R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
@@ -259,7 +263,6 @@ private:
 
         // sign the transaction
         auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
-        key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
 
         mtx.Sign(priv_key, tx_sign_adapter);
 
