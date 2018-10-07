@@ -404,6 +404,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // request a bookmark
       bookmark_type bookmark     = 0;
       bool          new_bookmark = false;
+
       if (state_hash.size())
       {
         std::lock_guard<mutex_type> lock(state_archive_lock_);
@@ -418,7 +419,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // state
       if (new_bookmark)
       {
-
         // commit the changes in state
         try
         {

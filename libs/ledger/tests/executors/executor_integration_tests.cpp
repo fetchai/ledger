@@ -82,15 +82,13 @@ protected:
 
     storage_.reset(new underlying_storage_type{*network_manager_});
 
+    using InFlightCounter = fetch::network::AtomicInFlightCounter<
+      fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
+
     fetch::network::FutureTimepoint deadline(std::chrono::seconds(40));
-    if (fetch::network::AtomicInflightCounter<
-            fetch::network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
+    if (!InFlightCounter::Wait(deadline))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
-    }
-    else
-    {
-      TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
+      throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
     }
 
     std::map<LaneIndex, Peer> lane_data;

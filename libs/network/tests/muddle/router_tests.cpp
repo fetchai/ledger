@@ -144,14 +144,14 @@ TEST_F(RouterTests, CheckExchange)
   MessageQueue messagesA;
   MessageQueue messagesB;
 
-  // register the recv. for node A
+  // register the receive for node A
   auto subA = endpointA.Subscribe(SERVICE, CHANNEL);
   subA->SetMessageHandler([&messagesA](Address const &from, uint16_t service, uint16_t channel,
                                        uint16_t counter, Payload const &payload) {
     messagesA.Add(Message{from, service, channel, counter, payload});
   });
 
-  // register the recv. for node B
+  // register the receive for node B
   auto subB = endpointB.Subscribe(SERVICE, CHANNEL);
   subB->SetMessageHandler([&messagesB](Address const &from, uint16_t service, uint16_t channel,
                                        uint16_t counter, Payload const &payload) {

@@ -22,170 +22,186 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <queue>
 
 namespace fetch {
 namespace network {
 namespace details {
 
+/**
+ * The future work store is a simple priority queue of work items. These work items are
+ * stored alongside a due timestamp. The priority / order of the queue is determined by
+ * these timestamps
+ */
 class FutureWorkStore
 {
 public:
-  using work_item_type        = std::function<void()>;
-  using due_date_type         = std::chrono::time_point<std::chrono::system_clock>;
-  using stored_work_item_type = std::pair<due_date_type, work_item_type>;
-  using store_type            = std::vector<stored_work_item_type>;
-  using mutex_type            = fetch::mutex::Mutex;
-  using lock_type             = std::unique_lock<mutex_type>;
 
-public:
+  static constexpr char const *LOGGING_NAME = "FutureWorkStore";
+
+  using WorkItem = std::function<void()>;
+
+  // Construction / Destruction
+  FutureWorkStore() = default;
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
-  FutureWorkStore              operator=(const FutureWorkStore &rhs) = delete;
-  FutureWorkStore              operator=(FutureWorkStore &&rhs)             = delete;
-  bool                         operator==(const FutureWorkStore &rhs) const = delete;
-  bool                         operator<(const FutureWorkStore &rhs) const  = delete;
-  static constexpr char const *LOGGING_NAME                                 = "FutureWorkStore";
-
-  class StoredWorkItemSorting
+  ~FutureWorkStore()
   {
-  public:
-    StoredWorkItemSorting()
-    {}
-    virtual ~StoredWorkItemSorting()
-    {}
+    shutdown_ = true;
+    Clear();  // remove any pending things
+  }
 
-    bool operator()(const stored_work_item_type &a, const stored_work_item_type &b) const
+  /**
+   * Signal that the work queue should no longer accept and work items
+   */
+  void Abort()
+  {
+    shutdown_ = true;
+  }
+
+  /**
+   * Empty the queue of work items
+   */
+  void Clear()
+  {
+    FETCH_LOCK(queue_mutex_);
+    while (!queue_.empty())
     {
-      return a.first > b.first;
+      queue_.pop();
     }
-  };
-
-  FutureWorkStore()
-  {
-    std::make_heap(store_.begin(), store_.end(), sorter_);
   }
 
-  virtual ~FutureWorkStore()
+  /**
+   * Extract and dispatch a single item from the queue
+   *
+   * @tparam CALLBACK The type of the callable accepting the signature: void(WorkItem const &)
+   * @param visitor The dispatching function
+   * @return The number of items processed
+   */
+  template <typename CALLBACK>
+  std::size_t Dispatch(CALLBACK const &visitor)
   {
-    shutdown_.store(true);
-    clear();  // remove any pending things
-  }
+    std::size_t num_processed = 0;
 
-  virtual void Abort()
-  {
-    shutdown_.store(true);
-  }
+    Timestamp const now = Clock::now();
 
-  void clear()
-  {
-    lock_type mlock(mutex_);
-    store_.clear();
-  }
-
-  bool IsDue()
-  {
-    lock_type mlock(mutex_);
-    return IsDueActual();
-  }
-
-  std::chrono::milliseconds DueIn()
-  {
-    lock_type mlock(mutex_);
-    return DueInActual();
-  }
-
-  virtual int Visit(std::function<void(work_item_type)> visitor, int maxprocesses = 1)
-  {
-    lock_type mlock(mutex_, std::try_to_lock);
-    if (!mlock)
+    // allow early exit
+    if (queue_mutex_.try_lock())
     {
-      return -1;
-    }
-    int processed = 0;
-    while (IsDueActual())
-    {
-      if (shutdown_.load())
+      WorkItem item;
+
+      // empty loop condition
+      if (!queue_.empty())
       {
-        break;
+        Element const &next = queue_.top();
+        if (next.due <= now)
+        {
+          item = next.item;
+          queue_.pop();
+        }
       }
-      if (processed >= maxprocesses)
+
+      // release the queue
+      queue_mutex_.unlock();
+
+      // dispatch all the work items
+      if (item)
       {
-        break;
+        // dispatch the work item
+        visitor(item);
+
+        // increment the counter
+        ++num_processed;
       }
-      auto work = GetNextActual();
-      visitor(work);
-      processed++;
     }
-    return processed;
+
+    return num_processed;
   }
 
-  virtual work_item_type GetNext()
+  /**
+   * Add a work item with a specified delay in milliseconds
+   *
+   * @param item The work item to be added to the queue
+   * @param milliseconds The delay in milliseconds before this work item is scheduled
+   */
+  void Post(WorkItem item, uint32_t milliseconds)
   {
-    lock_type mlock(mutex_);
-    return GetNextActual();
-  }
-
-  template <typename F>
-  void Post(F &&f, uint32_t milliseconds)
-  {
-    if (shutdown_.load())
+    // reject further work if we are in the process of shutting down
+    if (shutdown_)
     {
       return;
     }
-    lock_type mlock(mutex_);
-    auto      dueTime = std::chrono::system_clock::now() + std::chrono::milliseconds(milliseconds);
-    store_.push_back(stored_work_item_type(dueTime, f));
-    std::push_heap(store_.begin(), store_.end(), sorter_);
+
+    // calculate the timestamp for this work item
+    Timestamp const due_timestamp = Clock::now() + std::chrono::milliseconds{milliseconds};
+
+    // add it to the queue
+    {
+      FETCH_LOCK(queue_mutex_);
+      queue_.emplace(Element{std::move(item), due_timestamp});
+    }
   }
+
+  /**
+   * Determine the time until the next available item in the queue
+   *
+   * @return milliseconds::max() if the work queue is empty, milliseconds::zero()
+   * if the time is already due for execution, otherwise the time in milliseconds remaining
+   */
+  std::chrono::milliseconds TimeUntilNextItem()
+  {
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+
+    Timestamp const now = Clock::now();
+
+    {
+      FETCH_LOCK(queue_mutex_);
+      if (!queue_.empty())
+      {
+        Element const &element = queue_.top();
+
+        if (element.due > now)
+        {
+          return duration_cast<milliseconds>(element.due - now);
+        }
+        else
+        {
+          return milliseconds::zero();
+        }
+      }
+    }
+
+    return milliseconds::max();
+  }
+
+  // Operators
+  FutureWorkStore operator=(const FutureWorkStore &rhs) = delete;
+  FutureWorkStore operator=(FutureWorkStore &&rhs) = delete;
 
 private:
-  virtual work_item_type GetNextActual()
+
+  using Clock     = std::chrono::system_clock;
+  using Timestamp = Clock::time_point;
+
+  struct Element
   {
-    std::pop_heap(store_.begin(), store_.end(), sorter_);
-    auto nextDue = store_.back();
-    store_.pop_back();
-    return nextDue.second;
-  }
+    WorkItem  item;
+    Timestamp due;
 
-  std::chrono::milliseconds DueInActual()
-  {
-    if (store_.empty())
+    bool operator<(Element const &other) const
     {
-      return std::chrono::milliseconds(1000);
+      return due < other.due;
     }
-    auto nextDue = store_.back();
+  };
 
-    auto tp     = std::chrono::system_clock::now();
-    auto due    = nextDue.first;
-    auto wayoff = (due - tp);
-    return std::chrono::duration_cast<std::chrono::milliseconds>(wayoff);
-  }
+  using Queue = std::priority_queue<Element>;
+  using Mutex = fetch::mutex::Mutex;
+  using Flag  = std::atomic<bool>;
 
-  bool IsDueActual()
-  {
-    if (shutdown_.load())
-    {
-      return false;
-    }
-    if (store_.empty())
-    {
-      return false;
-    }
-
-    if (DueInActual().count() <= 0)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  StoredWorkItemSorting sorter_;
-  store_type            store_;
-  mutable mutex_type    mutex_{__LINE__, __FILE__};
-  std::atomic<bool>     shutdown_{false};
+  mutable Mutex queue_mutex_{__LINE__, __FILE__}; ///< Mutex protecting `queue_`
+  Queue         queue_;                           ///< Ordered queue of work items
+  Flag          shutdown_{false};                 ///< Flag to signal to reject further work
 };
 
 }  // namespace details

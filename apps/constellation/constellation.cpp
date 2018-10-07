@@ -152,13 +152,12 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
   network::FutureTimepoint deadline(std::chrono::seconds(30));
-  if (network::AtomicInflightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>::Wait(deadline))
+
+  using InFlightCounter = network::AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
+  if (!InFlightCounter::Wait(deadline))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ASIO acceptors running.");
-  }
-  else
-  {
-    TODO_FAIL("After a long pause, ASIO still hasn't started accepting...");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Network servers did not all start in time");
+    return;
   }
 
   auto count =

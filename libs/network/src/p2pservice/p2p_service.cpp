@@ -58,8 +58,7 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
     muddle_.AddPeer(uri);
   }
 
-  thread_pool_->SetInterval(2000);
-  thread_pool_->Start();
+  thread_pool_->SetIdleInterval(2000);
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 
   my_uri_ = my_uri;
@@ -67,7 +66,7 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
 
 void P2PService::Stop()
 {
-  thread_pool_->clear();
+  thread_pool_->Clear();
   thread_pool_->Stop();
 }
 

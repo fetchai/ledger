@@ -32,6 +32,9 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
+
+  static constexpr char const *LOGGING_NAME = "FakeExecutor";
+
   struct HistoryElement
   {
     using clock_type     = std::chrono::high_resolution_clock;
@@ -62,6 +65,8 @@ public:
     {
       state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
     }
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing transaction sort of...");
 
     return Status::SUCCESS;
   }

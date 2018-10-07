@@ -27,122 +27,172 @@ namespace fetch {
 namespace network {
 namespace details {
 
+/**
+ * The idle work store is a simple array of work items. Its primary role is to coordinate
+ * periodic execution of the items that are stored within it.
+ */
 class IdleWorkStore
 {
 public:
-  using work_item_type = std::function<void()>;
-
-protected:
-  using store_type = std::vector<work_item_type>;
+  using WorkItem = std::function<void()>;
   using mutex_type = fetch::mutex::Mutex;
   using lock_type  = std::unique_lock<mutex_type>;
 
-public:
+  IdleWorkStore() = default;
   IdleWorkStore(const IdleWorkStore &rhs) = delete;
   IdleWorkStore(IdleWorkStore &&rhs)      = delete;
-  IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
-  IdleWorkStore operator=(IdleWorkStore &&rhs)             = delete;
-  bool          operator==(const IdleWorkStore &rhs) const = delete;
-  bool          operator<(const IdleWorkStore &rhs) const  = delete;
 
-  IdleWorkStore()
-    : interval_{0}
-    , lastrun_{std::chrono::system_clock::now()}
-  {}
-
-  void Start()
+  ~IdleWorkStore()
   {
-    shutdown_.store(false);
-  }
+    shutdown_ = true;
 
-  virtual ~IdleWorkStore()
-  {
-    shutdown_.store(true);
-    lock_type mlock(mutex_);  // wait in case anyone is in here.
+    FETCH_LOCK(mutex_);
     store_.clear();           // remove any pending things
   }
 
-  virtual void SetInterval(int milliseconds)
+  /**
+   * Set the interval for the idle work
+   *
+   * @param milliseconds The interval in milliseconds
+   */
+  void SetInterval(std::size_t milliseconds)
   {
+    FETCH_LOCK(mutex_);
     interval_ = std::chrono::milliseconds(milliseconds);
   }
 
-  virtual void clear()
+  /**
+   * Clear the contents of the work store
+   */
+  void Clear()
   {
-    lock_type mlock(mutex_);
+    FETCH_LOCK(mutex_);
     store_.clear();
   }
 
-  virtual void Abort()
+  /**
+   * Signal that the idle work store should start to shutdown
+   */
+  void Abort()
   {
-    shutdown_.store(true);
+    shutdown_ = true;
   }
 
+  /**
+   * Determine if the time has come for the periodic work to be executed
+   *
+   * @return true if the work should be scheduled, otherwise false
+   */
   bool IsDue() const
   {
-    lock_type mlock(mutex_, std::try_to_lock);
-    if (!mlock)
+    bool is_due = false;
+
+    if (mutex_.try_lock())
     {
-      return false;  // someone's already doing this.
+      is_due = Clock::now() >= (last_run_ + interval_);
+
+      mutex_.unlock();
     }
-    auto nextDue = lastrun_ + interval_;
-    auto tp      = std::chrono::system_clock::now();
-    auto wayoff  = (nextDue - tp);
-    return wayoff.count() <= 0;
+
+    return is_due;
   }
 
+  /**
+   * Determine the amount of time remaining until the work is required
+   *
+   * @return milliseconds::max() if the work queue is empty, milliseconds::zero()
+   * if the time is already due for execution, otherwise the time in milliseconds remaining
+   */
   std::chrono::milliseconds DueIn()
   {
-    lock_type mlock(mutex_);
+    using std::chrono::milliseconds;
+    using std::chrono::duration_cast;
+
+    FETCH_LOCK(mutex_);
+
     if (store_.empty())
     {
-      return std::chrono::milliseconds(1000);
+      return std::chrono::milliseconds::max();
     }
-    auto nextDue = lastrun_ + interval_;
-    auto tp      = std::chrono::system_clock::now();
-    auto wayoff  = (nextDue - tp);
-    return std::chrono::duration_cast<std::chrono::milliseconds>(wayoff);
+    else if (Clock::now() > last_run_)
+    {
+      return duration_cast<milliseconds>(Clock::now() - last_run_);
+    }
+    else
+    {
+      return std::chrono::milliseconds::zero();
+    }
   }
 
-  virtual int Visit(std::function<void(work_item_type)> visitor)
+  /**
+   * Visit the contents of the idle work store, executing the specified callback
+   * over each element of work
+   *
+   * @tparam CALLBACK A function like type accepting the signature: void(WorkItem const &)
+   * @param visitor The callback function
+   * @return The number of processed elements
+   */
+  template <typename CALLBACK>
+  std::size_t Visit(CALLBACK const &visitor) const
   {
-    lock_type mlock(mutex_, std::try_to_lock);
-    if (!mlock)
+    std::size_t num_processed = 0;
+
+    if (mutex_.try_lock())
     {
-      return -1;
-    }
-    lastrun_ =
-        std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
-    int processed = 0;
-    for (auto &work : store_)
-    {
-      if (shutdown_.load())
+      for (auto const &work : store_)
       {
-        break;
+        // allow early exit
+        if (shutdown_)
+        {
+          break;
+        }
+
+        visitor(work);
+        ++num_processed;
       }
-      visitor(work);
-      processed++;
+
+      // update the last run time
+      last_run_ = Clock::now();
+
+      mutex_.unlock();
     }
-    return processed;
+
+    return num_processed;
   }
 
-  template <typename F>
-  void Post(F &&f)
+  /**
+   * Add a given work item to the queue
+   *
+   * @param item The item to be stored in the queue
+   */
+  void Post(WorkItem item)
   {
-    if (shutdown_.load())
+    // stop further work processing once the abort
+    if (shutdown_)
     {
       return;
     }
-    lock_type mlock(mutex_);
-    store_.push_back(f);
+
+    FETCH_LOCK(mutex_);
+    store_.emplace_back(std::move(item));
   }
 
+  IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
+  IdleWorkStore operator=(IdleWorkStore &&rhs)      = delete;
+
 private:
-  store_type                            store_;
-  mutable mutex_type                    mutex_{__LINE__, __FILE__};
-  std::atomic<bool>                     shutdown_{false};
-  std::chrono::milliseconds             interval_;
-  std::chrono::system_clock::time_point lastrun_;
+
+  using Clock     = std::chrono::system_clock;
+  using Timestamp = Clock::time_point;
+  using Flag      = std::atomic<bool>;
+  using Mutex     = fetch::mutex::Mutex;
+  using Store     = std::vector<WorkItem>;
+
+  mutable Mutex             mutex_{__LINE__, __FILE__};
+  Store                     store_;
+  Flag                      shutdown_{false};
+  std::chrono::milliseconds interval_{0};
+  mutable Timestamp         last_run_ = Clock::now();
 };
 
 }  // namespace details
