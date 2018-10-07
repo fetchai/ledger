@@ -30,7 +30,6 @@
 #include <memory>
 #include <random>
 #include <utility>
-#include <network/uri.hpp>
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
@@ -103,8 +102,13 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
       throw std::runtime_error("Non TCP connections not currently supported");
     }
 
+#if 1
+    // use local loopback interface for testing
+    connection_map[i] = Peer{"127.0.0.1", service.local_port};
+#else
     // update the connection map
     connection_map[i] = service.remote_uri.AsPeer();
+#endif
   }
 
   return connection_map;
