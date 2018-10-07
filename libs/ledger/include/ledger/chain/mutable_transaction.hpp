@@ -105,6 +105,7 @@ void Deserialize(T &serializer, TransactionSummary &b)
 
 class MutableTransaction;
 
+// TODO(HUT):  de-template this if it's only using mutable TX
 template <typename MUTABLE_TRANSACTION = MutableTransaction>
 class TxSigningAdapter
 {

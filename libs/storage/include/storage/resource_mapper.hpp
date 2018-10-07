@@ -144,6 +144,8 @@ public:
     address_ = address;
   }
 
+  ResourceAddress() = default;
+
   /**
    * Gets the canonical resources address
    *

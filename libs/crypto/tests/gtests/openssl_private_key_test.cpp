@@ -67,7 +67,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   EXPECT_EQ(public_key_data__bin_, x.publicKey().keyAsBin());
 }
 
-// TODO(issue 36): A bit lame test, needs to be tesetd rather with & against hardcoded DER
+// TODO(issue 36): A bit lame test, needs to be tested rather with & against hardcoded DER
 // encoded data
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
 {
