@@ -43,8 +43,7 @@ ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::si
  */
 ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads)
   : max_threads_(threads)
-{
-}
+{}
 
 /**
  * Tear down the thread pool
@@ -130,7 +129,7 @@ void ThreadPoolImplementation::Clear()
  */
 void ThreadPoolImplementation::Start()
 {
-  static constexpr std::size_t MAX_START_LOOPS = 30;
+  static constexpr std::size_t MAX_START_LOOPS     = 30;
   static constexpr std::size_t START_LOOP_INTERVAL = 100;
 
   // start all the threads
@@ -145,13 +144,7 @@ void ThreadPoolImplementation::Start()
     for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
     {
       threads_.emplace_back(
-        std::make_shared<std::thread>(
-          [this, thread_idx]()
-          {
-            this->ProcessLoop(thread_idx);
-          }
-        )
-      );
+          std::make_shared<std::thread>([this, thread_idx]() { this->ProcessLoop(thread_idx); }));
     }
   }
 
@@ -252,8 +245,8 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         // calculate the maximum time to wait. If the two queues are empty then this will be zero
         auto const next_future_item = future_work_.TimeUntilNextItem();
-        auto const next_idle_cycle = idle_work_.DueIn();
-        auto const wait_time = std::min(next_future_item, next_idle_cycle);
+        auto const next_idle_cycle  = idle_work_.DueIn();
+        auto const wait_time        = std::min(next_future_item, next_idle_cycle);
 
         // update the threading counters
         ++inactive_threads_;
@@ -296,9 +289,7 @@ bool ThreadPoolImplementation::Poll()
   std::size_t count = 0;
 
   // dispatch any active tasks in the queue
-  count += work_.Dispatch([this](WorkItem const &item) {
-    ExecuteWorkload(item);
-  });
+  count += work_.Dispatch([this](WorkItem const &item) { ExecuteWorkload(item); });
 
   // allow early exit in abort / shutdowns
   if (shutdown_)
@@ -307,9 +298,7 @@ bool ThreadPoolImplementation::Poll()
   }
 
   // enqueue future work if required
-  count += future_work_.Dispatch([this](WorkItem const &item) {
-    Post(item);
-  });
+  count += future_work_.Dispatch([this](WorkItem const &item) { Post(item); });
 
   // allow early exit in abort / shutdowns
   if (shutdown_)
@@ -320,9 +309,7 @@ bool ThreadPoolImplementation::Poll()
   // trigger any required idle work (if it is time to do so)
   if (idle_work_.IsDue())
   {
-    count += idle_work_.Visit([this](WorkItem const &item) {
-      ExecuteWorkload(item);
-    });
+    count += idle_work_.Visit([this](WorkItem const &item) { ExecuteWorkload(item); });
   }
 
   // update the global counter
@@ -365,6 +352,6 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
   return success;
 }
 
-} // namespace details
-} // namespace network
-} // namespace fetch
+}  // namespace details
+}  // namespace network
+}  // namespace fetch

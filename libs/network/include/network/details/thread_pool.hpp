@@ -86,7 +86,7 @@ public:
 
   explicit ThreadPoolImplementation(std::size_t threads);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
-  ThreadPoolImplementation(ThreadPoolImplementation &&) = default;
+  ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
   ~ThreadPoolImplementation();
 
   /// @name Current / Future Work
@@ -118,7 +118,6 @@ public:
   ThreadPoolImplementation &operator=(ThreadPoolImplementation &&) = delete;
 
 private:
-
   using Mutex      = fetch::mutex::Mutex;
   using ThreadPtr  = std::shared_ptr<std::thread>;
   using ThreadPool = std::vector<ThreadPtr>;
@@ -131,20 +130,20 @@ private:
   bool Poll();
   bool ExecuteWorkload(WorkItem const &workload);
 
-  std::size_t const max_threads_ = 1;                   ///< Config: Max number of threads
+  std::size_t const max_threads_ = 1;  ///< Config: Max number of threads
 
-  mutable Mutex     threads_mutex_{__LINE__, __FILE__}; ///< Mutex protecting the thread store
-  ThreadPool        threads_;                           ///< Container of threads
+  mutable Mutex threads_mutex_{__LINE__, __FILE__};  ///< Mutex protecting the thread store
+  ThreadPool    threads_;                            ///< Container of threads
 
-  WorkStore         work_;                              ///< The main work queue
-  FutureWorkStore   future_work_;                       ///< The future work queue
-  IdleWorkStore     idle_work_;                         ///< The idle work store
+  WorkStore       work_;         ///< The main work queue
+  FutureWorkStore future_work_;  ///< The future work queue
+  IdleWorkStore   idle_work_;    ///< The idle work store
 
-  Condition         work_available_;                    ///< Work available condition
-  mutable Mutex     idle_mutex_{__LINE__, __FILE__};    ///< Associated mutex for condition
-  Flag              shutdown_{false};                   ///< Flag to signal the pool should stop
-  Counter           counter_{0};                        ///< The number of jobs executed
-  Counter           inactive_threads_{0};               ///< The number of threads waiting for work
+  Condition     work_available_;                  ///< Work available condition
+  mutable Mutex idle_mutex_{__LINE__, __FILE__};  ///< Associated mutex for condition
+  Flag          shutdown_{false};                 ///< Flag to signal the pool should stop
+  Counter       counter_{0};                      ///< The number of jobs executed
+  Counter       inactive_threads_{0};             ///< The number of threads waiting for work
 };
 
 }  // namespace details

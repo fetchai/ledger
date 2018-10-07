@@ -34,11 +34,11 @@ namespace details {
 class IdleWorkStore
 {
 public:
-  using WorkItem = std::function<void()>;
+  using WorkItem   = std::function<void()>;
   using mutex_type = fetch::mutex::Mutex;
   using lock_type  = std::unique_lock<mutex_type>;
 
-  IdleWorkStore() = default;
+  IdleWorkStore()                         = default;
   IdleWorkStore(const IdleWorkStore &rhs) = delete;
   IdleWorkStore(IdleWorkStore &&rhs)      = delete;
 
@@ -47,7 +47,7 @@ public:
     shutdown_ = true;
 
     FETCH_LOCK(mutex_);
-    store_.clear();           // remove any pending things
+    store_.clear();  // remove any pending things
   }
 
   /**
@@ -178,10 +178,9 @@ public:
   }
 
   IdleWorkStore operator=(const IdleWorkStore &rhs) = delete;
-  IdleWorkStore operator=(IdleWorkStore &&rhs)      = delete;
+  IdleWorkStore operator=(IdleWorkStore &&rhs) = delete;
 
 private:
-
   using Clock     = std::chrono::system_clock;
   using Timestamp = Clock::time_point;
   using Flag      = std::atomic<bool>;

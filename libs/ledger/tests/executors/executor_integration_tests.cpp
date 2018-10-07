@@ -82,8 +82,8 @@ protected:
 
     storage_.reset(new underlying_storage_type{*network_manager_});
 
-    using InFlightCounter = fetch::network::AtomicInFlightCounter<
-      fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
+    using InFlightCounter =
+        fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
 
     fetch::network::FutureTimepoint deadline(std::chrono::seconds(40));
     if (!InFlightCounter::Wait(deadline))

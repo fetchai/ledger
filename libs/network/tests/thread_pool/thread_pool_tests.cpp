@@ -19,11 +19,11 @@
 #include "core/logger.hpp"
 #include "network/details/thread_pool.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <atomic>
 #include <thread>
 #include <vector>
 
@@ -40,13 +40,9 @@ using ::testing::AtLeast;
 class Mock
 {
 public:
-
   Mock()
   {
-    ON_CALL(*this, Run())
-      .WillByDefault([this](){
-        ++counter_;
-      });
+    ON_CALL(*this, Run()).WillByDefault([this]() { ++counter_; });
   }
 
   MOCK_METHOD0(Run, void());
@@ -57,11 +53,10 @@ public:
 class ThreadPoolTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-
   static constexpr char const *LOGGING_NAME = "ThreadPoolTests";
 
   using ThreadPool = fetch::network::ThreadPool;
-  using MockPtr = std::unique_ptr<Mock>;
+  using MockPtr    = std::unique_ptr<Mock>;
 
   void SetUp() override
   {
@@ -78,13 +73,13 @@ protected:
 
   bool WaitForCompletion(std::size_t min_count)
   {
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock     = std::chrono::high_resolution_clock;
     using Timestamp = Clock::time_point;
 
     using std::chrono::milliseconds;
     using std::this_thread::sleep_for;
 
-    bool success = false;
+    bool            success  = false;
     Timestamp const deadline = Clock::now() + milliseconds{4000};
 
     while (Clock::now() < deadline)
@@ -93,7 +88,7 @@ protected:
 
       // exit on completion
       bool const execute_complete = (pool_->execute_count() >= min_count);
-      bool const mock_complete = (mock_->counter_ >= min_count);
+      bool const mock_complete    = (mock_->counter_ >= min_count);
 
       if (execute_complete && mock_complete)
       {
@@ -105,25 +100,22 @@ protected:
     return success;
   }
 
-  MockPtr     mock_;
-  ThreadPool  pool_;
+  MockPtr    mock_;
+  ThreadPool pool_;
 };
 
 TEST_P(ThreadPoolTests, CheckBasicOperation)
 {
   std::size_t const work_count = 500;
 
-  EXPECT_CALL(*mock_, Run())
-    .Times(work_count);
+  EXPECT_CALL(*mock_, Run()).Times(work_count);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
 
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
-    pool_->Post([this]() {
-      mock_->Run();
-    });
+    pool_->Post([this]() { mock_->Run(); });
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
@@ -135,17 +127,14 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
 {
   std::size_t const work_count = 500;
 
-  EXPECT_CALL(*mock_, Run())
-    .Times(work_count);
+  EXPECT_CALL(*mock_, Run()).Times(work_count);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
 
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
-    pool_->Post([this]() {
-      mock_->Run();
-    }, 100);
+    pool_->Post([this]() { mock_->Run(); }, 100);
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
@@ -155,19 +144,18 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
 
 TEST_P(ThreadPoolTests, CheckIdleWorkers)
 {
-  static constexpr std::size_t INTERVAL_MS = 100;
+  static constexpr std::size_t INTERVAL_MS         = 100;
   static constexpr std::size_t EXPECTED_ITERATIONS = 20;
-  static constexpr std::size_t TEST_TIME_MS = (INTERVAL_MS * EXPECTED_ITERATIONS * 5) / 3;
+  static constexpr std::size_t TEST_TIME_MS        = (INTERVAL_MS * EXPECTED_ITERATIONS * 5) / 3;
 
-  using Clock = std::chrono::high_resolution_clock;
-  using Timepoint = Clock::time_point;
+  using Clock        = std::chrono::high_resolution_clock;
+  using Timepoint    = Clock::time_point;
   using ExecutionLog = std::vector<Timepoint>;
 
   std::mutex   log_mutex;
   ExecutionLog log;
 
-  EXPECT_CALL(*mock_, Run())
-    .Times(AtLeast(EXPECTED_ITERATIONS));
+  EXPECT_CALL(*mock_, Run()).Times(AtLeast(EXPECTED_ITERATIONS));
 
   pool_->SetIdleInterval(INTERVAL_MS);
   pool_->PostIdle([this, &log_mutex, &log]() {
@@ -202,6 +190,6 @@ TEST_P(ThreadPoolTests, CheckIdleWorkers)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10),);
+INSTANTIATE_TEST_CASE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10), );
 
-} // namespace
+}  // namespace

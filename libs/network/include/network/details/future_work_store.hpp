@@ -21,8 +21,8 @@
 
 #include <algorithm>
 #include <iostream>
-#include <string>
 #include <queue>
+#include <string>
 
 namespace fetch {
 namespace network {
@@ -36,13 +36,12 @@ namespace details {
 class FutureWorkStore
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "FutureWorkStore";
 
   using WorkItem = std::function<void()>;
 
   // Construction / Destruction
-  FutureWorkStore() = default;
+  FutureWorkStore()                           = default;
   FutureWorkStore(const FutureWorkStore &rhs) = delete;
   FutureWorkStore(FutureWorkStore &&rhs)      = delete;
   ~FutureWorkStore()
@@ -180,7 +179,6 @@ public:
   FutureWorkStore operator=(FutureWorkStore &&rhs) = delete;
 
 private:
-
   using Clock     = std::chrono::system_clock;
   using Timestamp = Clock::time_point;
 
@@ -199,9 +197,9 @@ private:
   using Mutex = fetch::mutex::Mutex;
   using Flag  = std::atomic<bool>;
 
-  mutable Mutex queue_mutex_{__LINE__, __FILE__}; ///< Mutex protecting `queue_`
-  Queue         queue_;                           ///< Ordered queue of work items
-  Flag          shutdown_{false};                 ///< Flag to signal to reject further work
+  mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
+  Queue         queue_;                            ///< Ordered queue of work items
+  Flag          shutdown_{false};                  ///< Flag to signal to reject further work
 };
 
 }  // namespace details
