@@ -79,18 +79,12 @@ public:
       // exit condition
       if ((manager_->completed_executions() == num_executions) && manager_->IsIdle())
       {
-        std::cerr << "WaitUntilManagerIsIdle - great success " << num_executions << std::endl;
         success = true;
         break;
       }
 
       // wait for a period of time
       std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    }
-
-    if (!success)
-    {
-      std::cerr << "Num Executions: " << manager_->completed_executions() << " vs. " << num_executions << " idle: " << manager_->IsActive() << " - " << manager_->IsIdle() << std::endl;
     }
 
     return success;
@@ -175,8 +169,6 @@ TEST_P(ExecutionManagerStateTests, CheckStateRollBack)
 {
   BlockConfig const &config = GetParam();
   AttachState();  // so that we can see state updates
-
-  std::cerr << "Config: " << config << std::endl;
 
   // generate a series of blocks in the pattern:
   //

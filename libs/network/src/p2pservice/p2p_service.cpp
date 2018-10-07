@@ -59,6 +59,7 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
   }
 
   thread_pool_->SetIdleInterval(2000);
+  thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 
   my_uri_ = my_uri;
