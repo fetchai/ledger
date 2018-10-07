@@ -42,12 +42,12 @@ class Mock
 public:
   Mock()
   {
-    ON_CALL(*this, Run()).WillByDefault([this]() { ++counter_; });
+    ON_CALL(*this, Run()).WillByDefault([this]() { ++counter; });
   }
 
   MOCK_METHOD0(Run, void());
 
-  std::atomic<std::size_t> counter_{0};
+  std::atomic<std::size_t> counter{0};
 };
 
 class ThreadPoolTests : public ::testing::TestWithParam<std::size_t>
@@ -88,7 +88,7 @@ protected:
 
       // exit on completion
       bool const execute_complete = (pool_->execute_count() >= min_count);
-      bool const mock_complete    = (mock_->counter_ >= min_count);
+      bool const mock_complete    = (mock_->counter >= min_count);
 
       if (execute_complete && mock_complete)
       {
