@@ -80,7 +80,7 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes)
+std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes, bool force_loopback = false)
 {
   std::map<LaneIndex, Peer> connection_map;
 
@@ -102,13 +102,15 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
       throw std::runtime_error("Non TCP connections not currently supported");
     }
 
-#if 1
-    // use local loopback interface for testing
-    connection_map[i] = Peer{"127.0.0.1", service.local_port};
-#else
     // update the connection map
-    connection_map[i] = service.remote_uri.AsPeer();
-#endif
+    if (force_loopback)
+    {
+      connection_map[i] = Peer{"127.0.0.1", service.local_port};
+    }
+    else
+    {
+      connection_map[i] = service.remote_uri.AsPeer();
+    }
   }
 
   return connection_map;
@@ -214,7 +216,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
   auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(
-    BuildLaneConnectionMap(manifest_, num_lanes_),
+    BuildLaneConnectionMap(manifest_, num_lanes_, true),
     std::chrono::milliseconds(30000)
   );
 
