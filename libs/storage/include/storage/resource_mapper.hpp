@@ -43,7 +43,6 @@ public:
   // Construction
   ResourceID() = default;
   explicit ResourceID(byte_array::ConstByteArray id);
-  virtual ~ResourceID(){};
 
   // Accessors
   byte_array::ConstByteArray id() const;
@@ -145,7 +144,7 @@ public:
     address_ = address;
   }
 
-  ~ResourceAddress(){};
+  ResourceAddress() = default;
 
   /**
    * Gets the canonical resources address
