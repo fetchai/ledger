@@ -45,8 +45,7 @@ namespace ledger {
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
-  using KeyStore    = storage::ObjectStore<byte_array::ConstByteArray>;
-  using KeyStorePtr = std::shared_ptr<KeyStore>;
+  using KeyStore = storage::ObjectStore<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
 
@@ -57,13 +56,13 @@ public:
   };
 
   WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor,
-                      KeyStorePtr key_store = std::make_shared<KeyStore>())
+                      std::size_t num_lanes)
     : state_{state}
     , processor_{processor}
-    , key_store_{std::move(key_store)}
+    , num_lanes_{num_lanes}
   {
     // load permanent key store (or create it if files do not exist)
-    key_store_->Load("key_store_main.dat", "key_store_index.dat", true);
+    key_store_.Load("key_store_main.dat", "key_store_index.dat", true);
 
     // register all the routes
     Post("/api/wallet/register",
@@ -149,7 +148,10 @@ private:
         // sign the transaction
         mtx.Sign(signer.private_key());
 
-        uint32_t lane = miner::MapResourceToLane(address, mtx.contract_name(), 4);
+        uint32_t log2_lanes_ =
+            uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
+
+        uint32_t lane = miner::MapResourceToLane(address, mtx.contract_name(), log2_lanes_);
 
         std::tuple<std::string, int> tmp =
             std::make_tuple(std::string(byte_array::ToBase64(signer.public_key())), lane);
@@ -162,7 +164,7 @@ private:
       }
 
       storage::ResourceID set_id = storage::ResourceAddress{address};
-      key_store_->Set(set_id, signer.private_key());
+      key_store_.Set(set_id, signer.private_key());
     }
 
     script::Variant    data;
@@ -269,7 +271,7 @@ private:
 
         // query private key for signing
         byte_array::ConstByteArray priv_key;
-        if (!key_store_->Get(get_id, priv_key))
+        if (!key_store_.Get(get_id, priv_key))
         {
           return http::CreateJsonResponse(
               R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
@@ -334,7 +336,8 @@ private:
   TokenContract         contract_;
   StorageInterface &    state_;
   TransactionProcessor &processor_;
-  KeyStorePtr           key_store_;
+  KeyStore              key_store_;
+  std::size_t           num_lanes_{0};
 };
 
 }  // namespace ledger
