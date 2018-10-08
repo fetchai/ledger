@@ -97,7 +97,7 @@ private:
   http::HTTPResponse OnRegister(http::HTTPRequest const &request)
   {
     // Determine number of locations to create
-    uint64_t count = 2;
+    uint64_t count = 1;
 
     {
       json::JSONDocument doc;
