@@ -317,7 +317,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState state = MonitorState::IDLE;
 
-  std::size_t       next_slice = 0;
+  std::size_t next_slice = 0;
 
   block_digest_type current_block;
 

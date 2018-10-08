@@ -115,7 +115,7 @@ public:
       return std::chrono::milliseconds::max();
     }
 
-    Timestamp const now = Clock::now();
+    Timestamp const now      = Clock::now();
     Timestamp const next_run = last_run_ + interval_;
 
     if (next_run > now)

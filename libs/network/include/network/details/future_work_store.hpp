@@ -205,7 +205,7 @@ private:
 
   // Shutdown flag this is designed to only ever be set to true. User will have to recreate the
   // whole thread pool with current implementation.
-  Flag          shutdown_{false};
+  Flag shutdown_{false};
 };
 
 }  // namespace details
