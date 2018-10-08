@@ -53,7 +53,6 @@ public:
 class ThreadPoolTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-  static constexpr char const *LOGGING_NAME = "ThreadPoolTests";
 
   using ThreadPool = fetch::network::ThreadPool;
   using MockPtr    = std::unique_ptr<Mock>;
@@ -110,15 +109,11 @@ TEST_P(ThreadPoolTests, CheckBasicOperation)
 
   EXPECT_CALL(*mock_, Run()).Times(work_count);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
-
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
     pool_->Post([this]() { mock_->Run(); });
   }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
 
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
@@ -129,15 +124,11 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
 
   EXPECT_CALL(*mock_, Run()).Times(work_count);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
-
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
     pool_->Post([this]() { mock_->Run(); }, 100);
   }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
 
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
@@ -188,6 +179,63 @@ TEST_P(ThreadPoolTests, CheckIdleWorkers)
     // however, we always expect in general for this to be true in normal operation
     EXPECT_GE(delta, INTERVAL_MS);
   }
+}
+
+TEST_P(ThreadPoolTests, SaturationCheck)
+{
+  std::size_t const num_threads = GetParam();
+
+  std::atomic<bool> running{true};
+  std::atomic<std::size_t> active{0};
+
+  // spin up enough spin loops to saturate the thread pool
+  for (std::size_t i = 0; i < num_threads; ++i)
+  {
+    pool_->Post([&running, &active]() {
+      ++active;
+
+      while (running)
+      {
+        // intentional spin loop
+      }
+
+      --active;
+    });
+  }
+
+  // wait for the threads to all become active
+  bool reached_saturation = false;
+  for (std::size_t i = 0; i < 40; ++i)
+  {
+    // check if we have reached saturation
+    if (active >= num_threads)
+    {
+      reached_saturation = true;
+      break;
+    }
+
+    sleep_for(milliseconds{100});
+  }
+
+  ASSERT_TRUE(reached_saturation);
+
+  // signal the threads to stop
+  running = false;
+
+  bool workers_stopped = false;
+  for (std::size_t i = 0; i < 40; ++i)
+  {
+    // check if we have reached saturation
+    if (active == 0)
+    {
+      workers_stopped = true;
+      break;
+    }
+
+    sleep_for(milliseconds{100});
+  }
+
+  ASSERT_TRUE(workers_stopped);
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10), );

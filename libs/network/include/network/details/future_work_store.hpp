@@ -131,13 +131,10 @@ public:
       return;
     }
 
-    // calculate the timestamp for this work item
-    Timestamp const due_timestamp = Clock::now() + std::chrono::milliseconds{milliseconds};
-
     // add it to the queue
     {
       FETCH_LOCK(queue_mutex_);
-      queue_.emplace(Element{std::move(item), due_timestamp});
+      queue_.emplace(std::move(item), milliseconds);
     }
   }
 
@@ -186,6 +183,12 @@ private:
   {
     WorkItem  item;
     Timestamp due;
+
+    Element(WorkItem i, uint32_t delay_ms)
+      : item(std::move(i))
+      , due{Clock::now() + std::chrono::milliseconds(delay_ms)}
+    {
+    }
 
     bool operator<(Element const &other) const
     {
