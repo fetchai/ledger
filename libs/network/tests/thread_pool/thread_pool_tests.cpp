@@ -79,7 +79,7 @@ protected:
     using std::this_thread::sleep_for;
 
     bool            success  = false;
-    Timestamp const deadline = Clock::now() + milliseconds{4000};
+    Timestamp const deadline = Clock::now() + milliseconds{8000};
 
     while (Clock::now() < deadline)
     {
