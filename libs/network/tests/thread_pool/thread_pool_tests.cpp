@@ -53,7 +53,6 @@ public:
 class ThreadPoolTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-
   using ThreadPool = fetch::network::ThreadPool;
   using MockPtr    = std::unique_ptr<Mock>;
 
@@ -185,7 +184,7 @@ TEST_P(ThreadPoolTests, SaturationCheck)
 {
   std::size_t const num_threads = GetParam();
 
-  std::atomic<bool> running{true};
+  std::atomic<bool>        running{true};
   std::atomic<std::size_t> active{0};
 
   // spin up enough spin loops to saturate the thread pool

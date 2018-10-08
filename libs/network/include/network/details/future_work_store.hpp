@@ -187,8 +187,7 @@ private:
     Element(WorkItem i, uint32_t delay_ms)
       : item(std::move(i))
       , due{Clock::now() + std::chrono::milliseconds(delay_ms)}
-    {
-    }
+    {}
 
     bool operator<(Element const &other) const
     {
