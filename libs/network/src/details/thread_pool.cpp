@@ -175,19 +175,12 @@ void ThreadPoolImplementation::Start()
  */
 void ThreadPoolImplementation::Stop()
 {
-  {
-    LOG_STACK_TRACE_POINT;
-    FETCH_LOCK(threads_mutex_);
+  FETCH_LOCK(threads_mutex_);
 
-    shutdown_ = true;
-
-    future_work_.Abort();
-    idle_work_.Abort();
-    work_.Abort();
-  }
-
-  work_available_.notify_all();
-
+  // We have made the design decision that we will not allow pooled work to stop the thread pool.
+  // While strictly not necessary, this has been done as a guard against desired behaviour. If this
+  // assumption should prove to be invalid in the future removing this check here should result in
+  // full functioning code
   for (auto &thread : threads_)
   {
     if (std::this_thread::get_id() == thread->get_id())
@@ -197,27 +190,32 @@ void ThreadPoolImplementation::Stop()
     }
   }
 
+  // signal to all the working threads that they should immediately stop all further work
+  shutdown_ = true;
+  future_work_.Abort();
+  idle_work_.Abort();
+  work_.Abort();
+
+  // kick all the threads to start wake and
   work_available_.notify_all();
 
-  {
-    LOG_STACK_TRACE_POINT;
-    FETCH_LOCK(threads_mutex_);
-
-    future_work_.Clear();
-    idle_work_.Clear();
-    work_.Clear();
-  }
-
-  work_available_.notify_all();
-
-  // Allow a period of time for any pending thread to finish starting
-  sleep_for(milliseconds{100});
-
+  // wait for all the threads to conclude
   for (auto &thread : threads_)
   {
-    thread->join();
+    // do not join ourselves
+    if (std::this_thread::get_id() != thread->get_id())
+    {
+      thread->join();
+    }
   }
+
+  // delete all the thread instances
   threads_.clear();
+
+  // clear all the work items inside the respective queues
+  future_work_.Clear();
+  idle_work_.Clear();
+  work_.Clear();
 }
 
 /**
