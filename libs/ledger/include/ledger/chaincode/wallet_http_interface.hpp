@@ -33,6 +33,8 @@
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
 
+#include "miner/resource_mapper.hpp"
+
 #include <random>
 #include <sstream>
 #include <utility>
@@ -96,7 +98,7 @@ private:
   http::HTTPResponse OnRegister(http::HTTPRequest const &request)
   {
     // Determine number of locations to create
-    uint64_t count = 1;
+    uint64_t count = 2;
 
     {
       json::JSONDocument doc;
@@ -115,7 +117,8 @@ private:
     // Cap locations
     count = std::min(count, uint64_t(10000));
 
-    std::vector<crypto::ECDSASigner> signers(count);
+    std::vector<crypto::ECDSASigner>          signers(count);
+    std::vector<std::tuple<std::string, int>> return_info;
 
     std::random_device rd;
     std::mt19937       rng(rd());
@@ -146,6 +149,12 @@ private:
         // sign the transaction
         mtx.Sign(signer.private_key());
 
+        uint32_t lane = miner::MapResourceToLane(address, mtx.contract_name(), 4);
+
+        std::tuple<std::string, int> tmp =
+            std::make_tuple(std::string(byte_array::ToBase64(signer.public_key())), lane);
+        return_info.push_back(tmp);
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
         // dispatch the transaction
@@ -160,11 +169,11 @@ private:
     std::ostringstream oss;
 
     // Return old data format as a fall back (when size is 1)
-    if (signers.size() == 1)
+    if (return_info.size() == 1)
     {
       data.MakeObject();
 
-      data["address"] = byte_array::ToBase64(signers[0].public_key());
+      data["address"] = std::get<0>(return_info[0]);
       data["success"] = true;
     }
     else
@@ -173,14 +182,20 @@ private:
       data["success"] = true;
 
       script::Variant results_array;
-      results_array.MakeArray(signers.size());
+      results_array.MakeArray(return_info.size());
 
       std::size_t index = 0;
-      for (auto const &signer : signers)
+
+      for (auto const &info : return_info)
       {
-        auto &elem = results_array[index++];
-        elem.MakeObject();
-        elem = byte_array::ToBase64(signer.public_key());
+        script::Variant tmp_variant;
+        tmp_variant.MakeObject();
+
+        tmp_variant["address"] = std::get<0>(info);
+        tmp_variant["lane"]    = std::get<1>(info);
+
+        results_array[index] = tmp_variant;
+        index++;
       }
 
       data["addresses"] = results_array;
