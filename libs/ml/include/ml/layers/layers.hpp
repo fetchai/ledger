@@ -20,6 +20,7 @@
 #include "core/random/lcg.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/variable.hpp"
+#include <random>
 
 namespace fetch {
 namespace ml {
@@ -31,8 +32,9 @@ class Layer
 public:
   using ArrayType         = T;
   using SelfType          = Layer<ArrayType>;
+  using SelfPtrType       = std::shared_ptr<SelfType>;
   using VariableType      = fetch::ml::Variable<ArrayType>;
-  using VariablePtrType   = std::shared_ptr<SelfType>;
+  using VariablePtrType   = std::shared_ptr<VariableType>;
   using FunctionSignature = std::function<void(VariablePtrType)>;
   using SizeType          = std::size_t;
   using ShapeType         = std::vector<std::size_t>;
@@ -43,86 +45,41 @@ public:
   {
     shape_ = shape;
 
-    weights_ = weights;
-    biases_  = biases;
-
+    weights_         = weights;
     weights_->data() = ArrayType::UniformRandom(shape_);
-    biases_->data()  = ArrayType::UniformRandom(1, shape_[1]);
-
-    //    weights_->data().Copy(ArrayType::UniformRandom(shape_));
-    //    biases_->data().Copy(ArrayType::UniformRandom(1, shape_[1]));
-
-    //    weights_ = VariableType(_sess, ArrayType::UniformRandom(shape_));
-    //    biases_  = VariableType(_sess, ArrayType::UniformRandom(1, shape_[1]));
-
+    //    std::random_device         rd{};
+    //    std::mt19937               gen{rd()};
+    //    std::normal_distribution<> w{0.0, double(shape[1])};
+    //    for (std::size_t i = 0; i < weights_->data().size(); ++i)
+    //    {
+    //      weights_->data().Set(i, w(gen));
+    //    }
     // (TODO private 273)
-    //    something like the following would be the simplest first step
-    //    std = 1.0/features_inp
-    //    self.b = Variable(np.random.uniform(-std,std,features_out))
-    //    self.w = Variable(np.random.uniform(-std,std,(features_inp,features_out)))
-  }
 
-  //  void AssignShape(std::vector<std::size_t> inshape_)
-  //  {
-  //    shape = inshape_;
-  //  }
-  //  void AssignBackFun(FunctionSignature b_fn)
-  //  {
-  //    back_fn       = b_fn;
-  //    this->is_leaf = false;
-  //  }
-  //
-  //
-  //  void Initialise(ArrayType in_data, FunctionSignature b_fn = nullptr, bool in_is_leaf = true)
-  //  {
-  //    weights_ = ArrayType(in_data);
-  //    Setup(b_fn, in_is_leaf);
-  //  }
-  //  void Initialise(FunctionSignature b_fn = nullptr, bool in_is_leaf = true)
-  //  {
-  //    weights_ = ArrayType::UniformRandom(shape_);
-  //    Setup(b_fn, in_is_leaf);
-  //  }
+    biases_         = biases;
+    biases_->data() = ArrayType::UniformRandom(1, shape_[1]);
+    //    std::normal_distribution<> b{1.0, double(shape[1])};
+    //    for (std::size_t i = 0; i < biases_->data().size(); ++i)
+    //    {
+    //      weights_->data().Set(i, b(gen));
+    //    }
+  }
 
   std::size_t InputSize()
   {
-    return weights_.shape()[0];
+    return weights_->shape()[0];
   }
 
   std::size_t OutputSize()
   {
-    return weights_.shape()[1];
+    return weights_->shape()[1];
   }
-
-  //  void Backward()
-  //  {
-  //    assert(weights_->initialised);
-  //    assert(biases_->initialised);
-  //    assert(back_fn);
-  //    Backprop(this->grad, back_fn, *this);
-  //  }
 
   VariableType Forward()
   {
 
-    weights_.Forward();
-    biases_.Forward();
-
-    //    VariableType a_1 = fetch::ml::ops::Dot(input, weights_, _sess);
-    //    //    fetch::ml::ops::Add(activations, biases_, activations);
-    //
-    //
-    //    if (activate)
-    //    {
-    //      VariableType a_2 = fetch::ml::ops::Relu(a_1, _sess);
-    //      VariableType a_3 = fetch::ml::ops::Sum(a_2, 1, _sess);
-    //
-    //      return a_3;
-    //    }
-    //    else
-    //    {
-    //      return a_1;
-    //    }
+    weights_.Forward(prev_);
+    biases_.Forward(prev_);
   }
 
   void ZeroGrads()
@@ -131,29 +88,57 @@ public:
     biases_.zero_grad();
   }
 
-  void Step(typename ArrayType::type lr)
+  void Step(typename ArrayType::Type lr)
   {
     weights_.GradientStep(lr);
     biases_.GradientStep(lr);
   }
 
-  VariableType weights()
+  VariablePtrType weights()
   {
     return weights_;
   }
-  VariableType biases()
+
+  VariablePtrType biases()
   {
     return biases_;
   }
+
   std::vector<std::size_t> shape()
   {
     return shape_;
+  }
+
+  VariablePtrType dot_hidden()
+  {
+    return dot_;
+  }
+  VariablePtrType add_hidden()
+  {
+    return add_;
+  }
+  VariablePtrType output()
+  {
+    return output_;
+  }
+
+  template <typename SessionType>
+  void SetInput(VariablePtrType input, SessionType &sess)
+  {
+    prev_   = input;
+    dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+    add_    = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+    output_ = fetch::ml::ops::Relu(add_, sess);
   }
 
 private:
   std::vector<std::size_t> shape_;
   VariablePtrType          weights_;
   VariablePtrType          biases_;
+  VariablePtrType          prev_;
+  VariablePtrType          dot_;
+  VariablePtrType          add_;
+  VariablePtrType          output_;
 };
 
 }  // namespace layers

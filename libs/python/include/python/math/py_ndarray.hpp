@@ -445,7 +445,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("max",
            [](NDArray<T> &a) {
-             typename NDArray<T>::type ret = -std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = -std::numeric_limits<typename NDArray<T>::Type>::max();
              Max(a, ret);
              return a;
            })
@@ -471,7 +471,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("min",
            [](NDArray<T> const &a) {
-             typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = std::numeric_limits<typename NDArray<T>::Type>::max();
              Min(a, ret);
              return a;
            })

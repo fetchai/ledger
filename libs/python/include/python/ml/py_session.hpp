@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 //#include "ml/layers/layers.hpp"
+#include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 #include "python/fetch_pybind.hpp"
@@ -30,12 +31,29 @@ template <typename ArrayType, typename VariableType>
 void BuildSession(std::string const &custom_name, pybind11::module &module)
 {
   using SessionType = SessionManager<ArrayType, VariableType>;
-  namespace py      = pybind11;
-  py::class_<SessionType>(module, custom_name.c_str())
+
+  using LayerType       = layers::Layer<ArrayType>;
+  using LayerPtrType    = std::shared_ptr<LayerType>;
+  using VariablePtrType = std::shared_ptr<VariableType>;
+
+  namespace py = pybind11;
+  py::class_<SessionType, std::shared_ptr<SessionType>>(module, custom_name.c_str())
       .def(py::init<>())
-      .def("Variable",
-           [](SessionType &sess, std::vector<std::size_t> in_shape,
-              std::string const &variable_name = "") { sess.Variable(in_shape, variable_name); })
+      .def("Variable", [](SessionType &sess, std::vector<std::size_t> in_shape,
+                          std::string const &variable_name =
+                              "") { return sess.Variable(in_shape, variable_name); })
+      //      .def("Layer",
+      //           [](SessionType &sess, std::size_t const &in_size, std::size_t const &out_size,
+      //              std::string layer_name = "") { return sess.Layer(in_size, out_size,
+      //              layer_name); })
+      .def_static("Zeroes",
+                  [](SessionType &sess, std::vector<std::size_t> const &new_shape) {
+                    return SessionType::Zeroes(new_shape, sess);
+                  })
+      .def("SetInput", [](SessionType &sess, LayerPtrType layer,
+                          VariablePtrType input) { return sess.SetInput(layer, input); })
+      .def("Predict", [](SessionType &sess, VariablePtrType in_var,
+                         VariablePtrType out_var) { return sess.Predict(in_var, out_var); })
       .def("BackProp",
            [](SessionType &sess, std::shared_ptr<VariableType> input_var,
               std::shared_ptr<VariableType> output_var, double lr,

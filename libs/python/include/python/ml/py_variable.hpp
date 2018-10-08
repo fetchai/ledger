@@ -34,7 +34,9 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
   using SessionType = fetch::ml::SessionManager<ArrayType, SelfType>;
 
   namespace py = pybind11;
-  py::class_<SelfType>(module, custom_name.c_str())
+  py::class_<SelfType, std::shared_ptr<SelfType>>(module, custom_name.c_str())
+      .def(py::init<>())
+
       //      .def(py::init<ArrayType const &>())
       //      .def(py::init<SessionType &, ArrayType const &>())
       .def("Dot", [](SelfPtrType a, SelfPtrType b,
@@ -49,7 +51,7 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
       .def("SetData", [](SelfType &s, ArrayType const &v) { s.SetData(v); })
       .def("Grads", [](SelfType &s) { return s.grad(); })
       .def("FromNumpy",
-           [](SelfType &s, py::array_t<typename ArrayType::type> arr) {
+           [](SelfType &s, py::array_t<typename ArrayType::Type> arr) {
              auto buf        = arr.request();
              using size_type = typename ArrayType::size_type;
              if (buf.ndim != 2)
@@ -57,7 +59,7 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
                throw std::runtime_error("Dimension must be exactly two.");
              }
 
-             typename ArrayType::type *ptr = (typename ArrayType::type *)buf.ptr;
+             typename ArrayType::Type *ptr = (typename ArrayType::Type *)buf.ptr;
              std::size_t               idx = 0;
              s.Reshape(size_type(buf.shape[0]), size_type(buf.shape[1]));
              for (std::size_t i = 0; i < std::size_t(buf.shape[0]); ++i)
@@ -72,10 +74,10 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
       .def("ToNumpy",
            [](SelfType &s) {
              auto result =
-                 py::array_t<typename ArrayType::type>({s.data().shape()[0], s.data().shape()[1]});
+                 py::array_t<typename ArrayType::Type>({s.data().shape()[0], s.data().shape()[1]});
              auto buf = result.request();
 
-             typename ArrayType::type *ptr = (typename ArrayType::type *)buf.ptr;
+             typename ArrayType::Type *ptr = (typename ArrayType::Type *)buf.ptr;
              for (size_t i = 0; i < s.size(); ++i)
              {
                ptr[i] = s[i];
@@ -92,7 +94,7 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
              //             return s.data().Get(i);
            })
       .def("Set",
-           [](SelfType &s, std::size_t i, typename ArrayType::type v) {
+           [](SelfType &s, std::size_t i, typename ArrayType::Type v) {
              if (i >= s.size())
              {
                throw py::index_error();
@@ -140,14 +142,14 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
              return s.At(i, j);
            })
       .def("__setitem__",
-           [](SelfType &s, std::size_t i, typename ArrayType::type v) {
+           [](SelfType &s, std::size_t i, typename ArrayType::Type v) {
              if (i >= s.size())
              {
                throw py::index_error();
              }
              s.data().Set(i, v);
            })
-      .def("__setitem__", [](SelfType &s, py::tuple index, typename ArrayType::type const &v) {
+      .def("__setitem__", [](SelfType &s, py::tuple index, typename ArrayType::Type const &v) {
         if (py::len(index) != 2)
         {
           throw py::index_error();

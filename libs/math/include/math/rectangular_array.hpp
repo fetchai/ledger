@@ -47,7 +47,7 @@ class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
   using super_type     = math::ShapeLessArray<T, C>;
-  using type           = typename super_type::type;
+  using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
   using size_type      = typename super_type::size_type;
 
@@ -202,7 +202,7 @@ public:
    * @radians is the rotation angle in radians.
    * @fill is the data empty entries awill be filled with.
    */
-  void Rotate(double const &radians, type const fill = type())
+  void Rotate(double const &radians, Type const fill = Type())
   {
     Rotate(radians, 0.5 * static_cast<double>(height()), 0.5 * static_cast<double>(width()), fill);
   }
@@ -213,7 +213,7 @@ public:
    * @cj is the position along the width.
    * @fill is the data empty entries awill be filled with.
    */
-  void Rotate(double const &radians, double const &ci, double const &cj, type const fill = type())
+  void Rotate(double const &radians, double const &ci, double const &cj, Type const fill = Type())
   {
     assert(false);
     // TODO(tfr): FIXME, make new implementation
@@ -278,7 +278,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type &operator[](std::size_t const &i)
+  Type &operator[](std::size_t const &i)
   {
     return At(i);
   }
@@ -291,7 +291,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type const &operator[](std::size_t const &i) const
+  Type const &operator[](std::size_t const &i) const
   {
     return At(i);
   }
@@ -334,7 +334,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  type const &At(size_type const &i) const
+  Type const &At(size_type const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -345,7 +345,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  type &At(size_type const &i)
+  Type &At(size_type const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -357,7 +357,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  type const &At(size_type const &i, size_type const &j) const
+  Type const &At(size_type const &i, size_type const &j) const
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -369,7 +369,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  type &At(size_type const &i, size_type const &j)
+  Type &At(size_type const &i, size_type const &j)
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -381,7 +381,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  type const &Set(size_type const &n, type const &v)
+  Type const &Set(size_type const &n, Type const &v)
   {
     assert(n < super_type::data().size());
     super_type::data()[n] = v;
@@ -393,7 +393,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  type const &Set(size_type const &i, size_type const &j, type const &v)
+  Type const &Set(size_type const &i, size_type const &j, Type const &v)
   {
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
@@ -408,7 +408,7 @@ public:
    * This function is here to satisfy the requirement for an
    * optimisation problem container.
    */
-  type const &Insert(size_type const &i, size_type const &j, type const &v)
+  Type const &Insert(size_type const &i, size_type const &j, Type const &v)
   {
     return Set(i, j, v);
   }
@@ -552,7 +552,11 @@ public:
     Reshape(width_ * height_, 1);
   }
 
-  void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
+  void Fill(Type const &value)
+  {
+    super_type::Fill(value);
+  }
+  void Fill(Type const &value, memory::Range const &rows, memory::Range const &cols)
   {
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
@@ -560,7 +564,7 @@ public:
     // TODO(tfr): Implement
   }
 
-  void Fill(type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
+  void Fill(Type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
   {
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());
@@ -636,7 +640,7 @@ public:
       TODO_FAIL("Could not write width - todo: make custom exc");
     }
 
-    if (fwrite(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fwrite(super_type::data().pointer(), sizeof(Type), this->padded_size(), fp) !=
         this->padded_size())
     {
       TODO_FAIL("Could not write matrix body - todo: make custom exc");
@@ -686,7 +690,7 @@ public:
 
     Resize(height, width);
 
-    if (fread(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fread(super_type::data().pointer(), sizeof(Type), this->padded_size(), fp) !=
         (this->padded_size()))
     {
       TODO_FAIL("failed to read body of matrix - TODO, ,make custom exception");

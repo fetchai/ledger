@@ -68,6 +68,51 @@ VariablePtrType Dot(VariablePtrType left, VariablePtrType right, SessionType &se
 }
 
 /**
+ * The Dot method for ML variables. Applies a standard library Dot but also tracks parents and
+ * updates gradients
+ * @param a
+ * @param b
+ * @return
+ */
+template <typename VariablePtrType>
+void AddBroadcastImplementation(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+  for (std::size_t i = 0; i < cur_node->prev[0]->data().shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < cur_node->prev[0]->data().shape()[1]; ++j)
+    {
+      cur_node->data().Set(i, j,
+                           cur_node->prev[0]->data().At(i, j) + cur_node->prev[1]->data().At(j));
+    }
+  }
+  //    cur_node->data() = fetch::math::Add(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+};
+
+template <typename VariablePtrType, typename SessionType>
+VariablePtrType AddBroadcast(VariablePtrType left, VariablePtrType right, SessionType &sess)
+{
+  // define the back_function (derivative)
+  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+    fetch::ml::ops::derivatives::AddBroadcast(cur_node);
+  };
+
+  // define the forward function (i.e. the dot)
+  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+    AddBroadcastImplementation(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  std::vector<std::size_t> out_shape = left->shape();  // we always assume biases are on the RHS
+  VariablePtrType          ret       = sess.Variable(out_shape, "Add", f_fn, b_fn, false);
+
+  ret->prev.push_back(left);
+  ret->prev.push_back(right);
+
+  return ret;
+}
+
+/**
  * The rectified linear unit returns the elementwise maximum of 0 and y
  * @tparam ARRAY_TYPE
  * @tparam T
@@ -77,6 +122,7 @@ VariablePtrType Dot(VariablePtrType left, VariablePtrType right, SessionType &se
 template <typename VariablePtrType>
 void ReluImplementation(VariablePtrType cur_node)
 {
+  assert(cur_node->prev.size() == 2);
   // we assume that prev[1] hold the Variable full of zeros that was previously defined
   cur_node->data() = fetch::math::Maximum(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
@@ -131,19 +177,7 @@ VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, Session
   VariablePtrType node_axis = SessionType::Zeroes({1, 1}, sess);
   node_axis->data()[0]      = axis;
 
-  // define the return variable with the Relu computation
-  std::vector<std::size_t> grad_shape = {left->shape()[0], left->shape()[1]};
-  std::vector<std::size_t> new_shape{grad_shape};
-  if (axis == 0)
-  {
-    new_shape[0] = 1;
-  }
-  else
-  {
-    new_shape[1] = 1;
-  }
-
-  VariablePtrType ret = sess.Variable(new_shape, grad_shape, "Sum", f_fn, b_fn, false);
+  VariablePtrType ret = sess.Variable(left->shape(), "Sum", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(node_axis);
@@ -206,7 +240,8 @@ VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, Se
   };
 
   // define the return variable with the Dot computation
-  VariablePtrType ret = sess.Variable({1, 1}, "CEL", f_fn, b_fn, false);
+  std::vector<std::size_t> new_shape = left->shape();
+  VariablePtrType          ret       = sess.Variable(new_shape, "CEL", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);

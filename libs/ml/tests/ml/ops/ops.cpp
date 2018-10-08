@@ -32,15 +32,27 @@ using ArrayType       = fetch::math::linalg::Matrix<Type>;
 using VariableType    = fetch::ml::Variable<ArrayType>;
 using VariablePtrType = std::shared_ptr<VariableType>;
 
-void AssignVariableIncrement(VariablePtrType var, Type val = 0.0)
+void AssignVariableIncrement(VariablePtrType var, Type val = 0.0, Type incr = 1.0)
 {
   for (std::size_t i = 0; i < var->shape()[0]; ++i)
   {
     for (std::size_t j = 0; j < var->shape()[1]; ++j)
     {
       var->Set(i, j, val);
-      ++val;
+      val += incr;
     }
+  }
+}
+
+void AssignBiasesIncrement(VariablePtrType bias, Type val = 1.0, Type incr = 1.0)
+{
+  for (std::size_t j = 0; j < bias->shape()[1]; ++j)
+  {
+    for (std::size_t i = 0; i < bias->shape()[0]; ++i)
+    {
+      bias->Set(i, j, val);
+    }
+    val += incr;
   }
 }
 void AssignArray(ArrayType &var, Type val = 1.0)
@@ -66,7 +78,7 @@ void AssignArray(ArrayType &var, std::vector<Type> vec_val)
   }
 }
 
-TEST(loss_functions, Dot_test)
+TEST(loss_functions, forward_dot_test)
 {
   // set up session
   SessionManager<ArrayType, VariableType> sess{};
@@ -173,7 +185,10 @@ TEST(loss_functions, Sum_test)
   ASSERT_TRUE(ret->data().AllClose(gt));
 }
 
-TEST(loss_functions, MSE_test)
+/**
+ * The MSE is summed across data points (i.e. shape()[0]), but not across neurons (i.e. shape()[1])
+ */
+TEST(loss_functions, MSE_forward_test)
 {
 
   SessionManager<ArrayType, VariableType> sess{};
@@ -182,21 +197,20 @@ TEST(loss_functions, MSE_test)
 
   auto l1 = sess.Variable(shape);
   auto l2 = sess.Variable(shape);
+  auto gt = sess.Variable({1, 3});
 
-  AssignVariableIncrement(l1, 0.);
-  AssignVariableIncrement(l2, 1.);
+  AssignVariableIncrement(l1, 0.1, 2.0);
+  AssignVariableIncrement(l2, 1.2, 1.3);
+  gt->data()[0] = 0.55249999999999999;
+  gt->data()[1] = 0.76250000000000018;
+  gt->data()[2] = 1.4625000000000004;
 
-  auto ret = fetch::ml::ops::MeanSquareError(l1, l2, sess);
+  auto mse = fetch::ml::ops::MeanSquareError(l1, l2, sess);
 
   // forward pass on the computational graph
-  sess.Forward(l1, ret);
+  auto prediction = sess.Predict(l1, mse);
 
-  ASSERT_TRUE(ret->shape()[0] == shape[0]);
-  ASSERT_TRUE(ret->shape()[1] == 1);
-
-  std::vector<Type> gt_vec{6};
-  ArrayType         gt{ret->shape()};
-  AssignArray(gt, gt_vec);
+  ASSERT_TRUE(prediction.AllClose(gt->data()));
 }
 
 TEST(loss_functions, CEL_test)
@@ -235,7 +249,92 @@ TEST(loss_functions, CEL_test)
   sess.Forward(l1, ret);
 
   ASSERT_TRUE(ret->shape()[0] == 1);
-  ASSERT_TRUE(ret->shape()[1] == 1);
+  ASSERT_TRUE(ret->shape()[1] == l1->shape()[1]);
+  ASSERT_TRUE(ret->At(0, 0) == 0.84190954810275176);
+  ASSERT_TRUE(ret->At(0, 1) == 0.0);
+  ASSERT_TRUE(ret->At(0, 2) == 0.074381183771403236);
+}
 
-  ASSERT_TRUE(ret->At(0, 0) == 2.7488721956224649);
+TEST(loss_functions, dot_add_backprop_test)
+{
+  // set up session
+  SessionManager<ArrayType, VariableType> sess{};
+
+  // set up some variables
+  std::vector<std::size_t> input_shape{1, 2};
+  std::vector<std::size_t> weights_shape{2, 3};
+  std::vector<std::size_t> biases_shape{1, 3};
+  std::vector<std::size_t> gt_shape{1, 3};
+
+  auto input_data = sess.Variable(input_shape, "input_data");
+  auto weights    = sess.Variable(weights_shape, "weights", true);
+  auto biases     = sess.Variable(biases_shape, "biases", true);
+  auto gt         = sess.Variable(gt_shape, "gt");
+
+  AssignVariableIncrement(input_data, 1.0, 1.0);
+  AssignVariableIncrement(weights, 0.1, 0.1);
+  AssignVariableIncrement(biases, 0.98, 0.05);
+  AssignVariableIncrement(gt, 2.0, 2.0);
+
+  // Dot product
+  auto dot_1  = fetch::ml::ops::Dot(input_data, weights, sess);
+  auto y_pred = fetch::ml::ops::AddBroadcast(dot_1, biases, sess);
+
+  // simple loss
+  auto loss = fetch::ml::ops::MeanSquareError(y_pred, gt, sess);
+
+  // forward pass on the computational graph
+  auto prediction = sess.Predict(input_data, y_pred);
+
+  // backward pass to get gradient
+  sess.BackProp(input_data, loss, 0.01, 500);
+
+  // forward pass on the computational graph
+  prediction = sess.Predict(input_data, y_pred);
+
+  ASSERT_TRUE(prediction.AllClose(gt->data()));
+}
+
+TEST(loss_functions, dot_add_backprop_n_samples_test)
+{
+  // set up session
+  SessionManager<ArrayType, VariableType> sess{};
+
+  // set up some variables
+  std::vector<std::size_t> input_shape{2, 2};
+  std::vector<std::size_t> weights_shape{2, 3};
+  std::vector<std::size_t> biases_shape{1, 3};
+  std::vector<std::size_t> gt_shape{2, 3};
+
+  auto input_data = sess.Variable(input_shape, "input_data", false);
+  auto weights    = sess.Variable(weights_shape, "weights", true);
+  auto biases     = sess.Variable(biases_shape, "biases", true);
+  auto gt         = sess.Variable(gt_shape, "gt");
+
+  AssignVariableIncrement(input_data, 1.0, 1.0);
+  AssignVariableIncrement(weights, 0.01, 0.01);
+  AssignBiasesIncrement(biases, 0.6, 0.01);
+  AssignVariableIncrement(gt, 2.0, 2.0);
+
+  // Dot product
+  auto dot_1 = fetch::ml::ops::Dot(input_data, weights, sess);
+  auto add_1 = fetch::ml::ops::AddBroadcast(dot_1, biases, sess);
+
+  // simple loss
+  auto loss = fetch::ml::ops::MeanSquareError(add_1, gt, sess);
+
+  // forward pass on the computational graph
+  auto prediction = sess.Predict(input_data, add_1);
+
+  // backward pass to get gradient
+  sess.BackProp(input_data, loss, 0.05, 100);
+
+  // forward pass on the computational graph
+  prediction = sess.Predict(input_data, add_1);
+  for (std::size_t idx = 0; idx < prediction.size(); ++idx)
+  {
+    std::cout << "prediction[" << idx << "]: " << prediction[idx] << std::endl;
+  }
+
+  ASSERT_TRUE(prediction.AllClose(gt->data()));
 }

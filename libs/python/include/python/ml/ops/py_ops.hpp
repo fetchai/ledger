@@ -78,7 +78,7 @@ inline void BuildOps(std::string const &custom_name, pybind11::module &module)
 //  .def(py::init<SessionType &, std::vector<std::size_t> const &>())
 //
 //  .def("Forward", [](SelfType &a, VariableType &activations) { return a.Forward(activations); })
-//      .def("Step", [](SelfType &a, typename ArrayType::type &lr) { return a.Step(lr); })
+//      .def("Step", [](SelfType &a, typename ArrayType::::Type &lr) { return a.Step(lr); })
 //      .def("Weights", [](SelfType &a) { return a.weights(); })
 //      .def("InputSize", [](SelfType &a) { return a.InputSize(); })
 //      .def("OutputSize", [](SelfType &a) { return a.OutputSize(); });

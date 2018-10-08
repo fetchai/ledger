@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/free_functions/free_functions.hpp"
+#include "math/free_functions/free_functions.hpp"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -55,9 +55,21 @@ public:
     f_fn_ = f_fn;
   }
 
-  void SetIsLeaf(bool is_leaf)
+  void SetIsLeaf(bool is_leaf, bool requires_grad = false)
   {
     is_leaf_ = is_leaf;
+
+    // All non-leafs require gradients
+    if (!is_leaf)
+    {
+      requires_grad_ = true;
+    }
+
+    // leafs may or may not require gradients
+    else
+    {
+      requires_grad_ = requires_grad;
+    }
   }
 
   void SetData(ArrayType const &indata_)
@@ -102,7 +114,7 @@ public:
     grad_ += othergrad_;
   }
 
-  void GradientValueAdd(std::size_t idx, typename ArrayType::type const &othergrad_)
+  void GradientValueAdd(std::size_t idx, typename ArrayType::Type const &othergrad_)
   {
     grad_[idx] += othergrad_;
   }
@@ -120,7 +132,7 @@ public:
     }
   }
 
-  void GradientSetVal(typename ArrayType::type const &othergrad_)
+  void GradientSetVal(typename ArrayType::Type const &othergrad_)
   {
     for (std::size_t i = 0; i < grad_.size(); ++i)
     {
@@ -128,22 +140,17 @@ public:
     }
   }
 
-  void InitialiseGradients(ShapeType shape = {})
+  void InitialiseGradients(std::vector<std::size_t> &grad_shape)
   {
-    if (shape.empty())
-    {
-      grad_ = ArrayType(data().shape());
-    }
-    else
-    {
-      grad_ = ArrayType(shape);
-    }
-
+    //    std::vector<std::size_t> new_shape{1, data().shape()[1]};
+    //    std::vector<std::size_t> new_shape{data().shape()};
+    grad_ = ArrayType(grad_shape);
+    //    grad_ = ArrayType(new_shape);
     ClearGradients();
   }
   void ClearGradients()
   {
-    grad_.data().SetAllZero();
+    grad_.SetAllZero();
   }
 
   //
@@ -156,7 +163,7 @@ public:
   //    {
   //      fetch::math::Add(data_, other.data(), data_);
   //    }
-  //    void operator+=(typename ArrayType::type const &scalar)
+  //    void operator+=(typename ArrayType::Type const &scalar)
   //    {
   //      fetch::math::Add(*this, scalar, *this);
   //    }
@@ -165,21 +172,21 @@ public:
   //      fetch::math::Add(*this, other, *this);
   //      return *this;
   //    }
-  //    SelfType operator+(typename ArrayType::type const &scalar)
+  //    SelfType operator+(typename ArrayType::Type const &scalar)
   //    {
   //      fetch::math::Add(*this, scalar, *this);
   //      return *this;
   //    }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type &operator[](
+  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::Type>::type &operator[](
       S const &i)
   {
     return data_[i];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::type>::type const &
+  typename std::enable_if<std::is_integral<S>::value, typename ArrayType::Type>::type const &
   operator[](S const &i) const
   {
     return data_[i];
@@ -204,34 +211,34 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  typename ArrayType::type const &At(typename ArrayType::size_type const &i) const
+  typename ArrayType::Type const &At(typename ArrayType::size_type const &i) const
   {
     return data_.At(i);
   }
 
-  typename ArrayType::type &At(typename ArrayType::size_type const &i)
+  typename ArrayType::Type &At(typename ArrayType::size_type const &i)
   {
     return data_.At(i);
   }
-  typename ArrayType::type const &At(typename ArrayType::size_type const &i,
+  typename ArrayType::Type const &At(typename ArrayType::size_type const &i,
                                      typename ArrayType::size_type const &j) const
   {
     return data_.At(i, j);
   }
-  typename ArrayType::type &At(typename ArrayType::size_type const &i,
+  typename ArrayType::Type &At(typename ArrayType::size_type const &i,
                                typename ArrayType::size_type const &j)
   {
     return data_.At(i, j);
   }
 
-  typename ArrayType::type const &Set(typename ArrayType::size_type const &n,
-                                      typename ArrayType::type const &     v)
+  typename ArrayType::Type const &Set(typename ArrayType::size_type const &n,
+                                      typename ArrayType::Type const &     v)
   {
     return data_.Set(n, v);
   }
-  typename ArrayType::type const &Set(typename ArrayType::size_type const &i,
+  typename ArrayType::Type const &Set(typename ArrayType::size_type const &i,
                                       typename ArrayType::size_type const &j,
-                                      typename ArrayType::type const &     v)
+                                      typename ArrayType::Type const &     v)
   {
     return data_.Set(i, j, v);
   }
@@ -240,10 +247,20 @@ public:
    * Apply a gradient update to the weights
    * @param lr
    */
-  void GradientStep(typename ArrayType::type const &lr)
+  void GradientStep(typename ArrayType::Type const &lr,
+                    typename ArrayType::Type const &gradient_clip)
   {
-    auto temp = Multiply(lr, grad_);
-    Subtract(data_, temp, data_);
+    if (gradient_clip < 0)
+    {
+      Subtract(data_, Multiply(lr, grad_), data_);
+    }
+    else
+    {
+      auto l2_norm = fetch::math::L2Norm(grad_);
+      auto delta   = fetch::math::Divide(grad_, fetch::math::Max(l2_norm, gradient_clip));
+      delta        = Multiply(lr, delta);
+      Subtract(data_, delta, data_);
+    }
   }
 
   /**
@@ -278,9 +295,15 @@ public:
   {
     return variable_name_;
   }
-  bool is_leaf()
+
+  bool const &is_leaf()
   {
     return is_leaf_;
+  }
+
+  bool const &requires_grad()
+  {
+    return requires_grad_;
   }
 
 private:
@@ -290,6 +313,7 @@ private:
 
   std::string       variable_name_ = "";
   bool              is_leaf_       = true;
+  bool              requires_grad_ = false;
   FunctionSignature b_fn_          = nullptr;
   FunctionSignature f_fn_          = nullptr;
 };

@@ -72,10 +72,10 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
                                           const typename RectangularArray<T>::size_type &)) &
                RectangularArray<T>::Resize)
       .def("Rotate", (void (RectangularArray<T>::*)(const double &,
-                                                    const typename RectangularArray<T>::type)) &
+                                                    const typename RectangularArray<T>::Type)) &
                          RectangularArray<T>::Rotate)
       .def("Rotate", (void (RectangularArray<T>::*)(const double &, const double &, const double &,
-                                                    const typename RectangularArray<T>::type)) &
+                                                    const typename RectangularArray<T>::Type)) &
                          RectangularArray<T>::Rotate)
       //    .def(py::self != py::self )
       //    .def(py::self == py::self )
@@ -160,11 +160,11 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
            })
 
       .def("At",
-           (const typename RectangularArray<T>::type &(
+           (const typename RectangularArray<T>::Type &(
                RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)const) &
                RectangularArray<T>::At)
       .def("At",
-           (const typename RectangularArray<T>::type &(
+           (const typename RectangularArray<T>::Type &(
                RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
                                        const typename RectangularArray<T>::size_type &)const) &
                RectangularArray<T>::At)

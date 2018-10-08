@@ -257,7 +257,7 @@ PYBIND11_MODULE(fetch, module)
   fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
   using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
   fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
-  //  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
+  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 }

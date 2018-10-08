@@ -5,12 +5,15 @@ import gzip                                         # downloading/extracting mni
 import random                                       # normal distirbution sampling
 from tqdm import tqdm                               # visualising progress
 import numpy as np                                  # loading data from buffer
+import sys
 
 # from fetch.math.linalg import MatrixDouble          # our matrices
 from fetch.math.linalg import MatrixDouble
 from fetch.ml import Layer, Variable, Session
 from fetch.ml import CrossEntropyLoss
 # from fetch.ml.layers import Layer          # our matrices
+
+# TODO: Validation size must be same as batch size for the moment
 
 class MnistLearner():
 
@@ -24,51 +27,56 @@ class MnistLearner():
         self.y_te_filename = 't10k-labels-idx1-ubyte.gz'
 
 
-        self.training_size = 100
-        self.validation_size = 10000
+        self.training_size = 1000
+        self.validation_size = 10
 
         self.n_epochs = 30
-        self.batch_size = 50
+        self.batch_size = 10
         self.alpha = 0.2
 
         self.mnist_input_size = 784         # pixels in 28 * 28 mnist images
         self.mnist_output_size = 10         # 10 possible characters to recognise
 
         self.activation_fn = 'relu'
-        self.layers = [20]
-
-        self.net = []
-        # self.weights = []
         self.layers = []
+        self.net = [20, 10]
         self.sess = None
         self.initialise_network()
+
+        self.X_batch = self.sess.Variable([self.batch_size, 784], "X_batch")
+        self.Y_batch = self.sess.Variable([self.batch_size, 10], "Y_batch")
+
+
+
 
     def initialise_network(self):
 
         self.sess = Session()
 
         # definition of the network layers
-        for i in range(len(self.layers)):
-            self.net.append(self.layers[i])
+        # for i in range(len(self.layers)):
+        #     self.net.append(self.layers[i])
         self.net.append(self.mnist_output_size)
 
-        self.layers.append(Layer(self.sess, self.mnist_input_size, self.net[0]))
+        self.layers.append(self.sess.Layer(self.mnist_input_size, self.net[0], "input_layer"))
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
-                self.layers.append(Layer(self.sess, self.net[i], self.net[i + 1]))
-        self.layers.append(Layer(self.sess, self.net[-1], self.mnist_output_size))
+                self.layers.append(self.sess.Layer(self.net[i], self.net[i + 1], "layer_" + str(i+1)))
+        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, "output_layer"))
+
+        self.y_pred = self.layers[-1].Output()
 
         return
 
     def load_data(self, one_hot=True, reshape=None):
-        x_tr = self.load_images(self.x_tr_filename, self.training_size)
-        y_tr = self.load_labels(self.y_tr_filename, self.training_size)
-        x_te = self.load_images(self.x_te_filename, self.validation_size)
-        y_te = self.load_labels(self.y_te_filename, self.validation_size)
+        x_tr = self.load_images(self.x_tr_filename, self.training_size, "X_train")
+        y_tr = self.load_labels(self.y_tr_filename, self.training_size, "Y_train")
+        x_te = self.load_images(self.x_te_filename, self.validation_size, "X_test")
+        y_te = self.load_labels(self.y_te_filename, self.validation_size, "Y_test")
 
         if one_hot:
-            y_tr_onehot = Variable.zeroes(self.sess, [y_tr.size(), self.mnist_output_size])
-            y_te_onehot = Variable.zeroes(self.sess, [y_te.size(), self.mnist_output_size])
+            y_tr_onehot = Session.Zeroes(self.sess, [y_tr.size(), self.mnist_output_size])
+            y_te_onehot = Session.Zeroes(self.sess, [y_te.size(), self.mnist_output_size])
 
             for i in range(y_tr.size()):
                 y_tr_onehot[i, int(y_tr[i])] = 1
@@ -86,24 +94,23 @@ class MnistLearner():
         self.x_tr = x_tr
         self.x_te = x_te
 
-    def load_images(self, filename, data_size):
+    def load_images(self, filename, data_size, name):
         self.download(filename)
         with gzip.open(filename, 'rb') as f:
             data = np.frombuffer(f.read(), np.uint8, offset=16)
             data = data.reshape(-1, 28 * 28) / 256
-            # nd_data = Variable(self.sess, data_size, 28 * 28)
-            nd_data = Variable(self.sess)
+            nd_data = self.sess.Variable([data_size, 784], name)
             nd_data.FromNumpy(data[:data_size, :])
 
         return nd_data
 
-    def load_labels(self, filename, data_size):
+    def load_labels(self, filename, data_size, name):
         self.download(filename)
         with gzip.open(filename, 'rb') as f:
             data = np.frombuffer(f.read(), np.uint8, offset=8)
             data.reshape(np.shape(data)[0], -1)
 
-            nd_data = Variable(self.sess)
+            nd_data = self.sess.Variable([data_size, 1], name)
             nd_data.FromNumpy(data[:data_size].reshape(data_size, -1))
             # nd_data = Layer(data_size, 1, self.sess)
             # nd_data.data().FromNumpy(data[:data_size].reshape(data_size, -1))
@@ -131,23 +138,29 @@ class MnistLearner():
             a.append(self.layers[idx].Forward(a[-1], activate))
         return a
 
-    def calculate_loss(self, X, Y):
-        return CrossEntropyLoss(X, Y, self.sess)
+    def assign_batch(self, cur_rep):
+        # assign X batch
+        for k in range(self.batch_size):
+            for l in range(28 * 28):
+                self.X_batch[k, l] = self.x_tr[cur_rep + k, l]
 
-    def backprop(self, a):
-        self.sess.BackwardGraph(a)
-        for i in range(len(self.layers)):
-            self.layers[i].Step(self.alpha)
+        # assign Y batch
+        for k in range(self.batch_size):
+            for l in range(10):
+                self.Y_batch[k, l] = self.y_tr[cur_rep + k, l]
         return
+
+    def calculate_loss(self, X, Y):
+
+        loss = CrossEntropyLoss(X, Y, self.sess)
+        return loss
 
     def train(self):
 
-        # X = Variable(self.sess, self.batch_size, self.mnist_input_size)
-        # Y = Variable(self.sess, self.batch_size, self.mnist_output_size)
-        X = Variable(self.sess)
-        Y = Variable(self.sess)
-        X.Reshape(self.batch_size, self.mnist_input_size)
-        Y.Reshape(self.batch_size, self.mnist_output_size)
+        # TODO: Check if we need to re-call setinput for  each batch
+        self.sess.SetInput(self.layers[0], self.X_batch)
+        for i in range(len(self.layers) - 1):
+            self.sess.SetInput(self.layers[i + 1], self.layers[i].Output())
 
         # epochs
         for i in range(self.n_epochs):
@@ -156,53 +169,111 @@ class MnistLearner():
             # training batches
             for j in tqdm(range(0, self.x_tr.shape()[0] - self.batch_size, self.batch_size)):
 
-                # assign X batch
-                for k in range(self.batch_size):
-                    for l in range(28*28):
-                        X[k, l] = self.x_tr[j + k, l]
+                # assign fresh data batch
+                self.assign_batch(j)
 
-                # assign Y batch
-                for k in range(self.batch_size):
-                    for l in range(10):
-                        Y[k, l] = self.y_tr[j + k, l]
+                # loss calculation
+                loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
 
-                # update weights
-                #
-                # temp = Layer(self.sess, a[-1].InputSize(), self.weights[idx].OutputSize())
-                # temp = a[-1].Dot(self.sess, self.weights[idx])
+                # back propagate
+                self.sess.BackProp(self.X_batch, loss, self.alpha, 1)
 
-                # temp = X.Dot(self.sess, self.weights[0])
-                # self.sess.BackwardGraph(temp)
+                print("\nCEL data: ")
+                for i in range(self.validation_size):
+                    print("\n")
+                    for j in range(1):
+                        sys.stdout.write('{:0.13f}'.format(loss.data()[i, j]) + "\t")
+                print("\nCEL grad: ")
+                for i in range(self.validation_size):
+                    print("\n")
+                    for j in range(10):
+                        sys.stdout.write('{:0.13f}'.format(loss.Grads()[i, j]) + "\t")
 
-                a = self.feed_forward(X)
+                print("\ndot_output: ")
+                for i in range(self.validation_size):
+                    print("\n")
+                    for j in range(10):
+                        sys.stdout.write('{:0.13f}'.format(self.layers[0].DotOutput().data()[i, j]) + "\t")
 
-                delta = self.calculate_loss(a[-1], Y)
-
-                self.backprop(delta)
-
-
-
+                print("\npredictions: ")
+                print("\n")
+                for i in range(200):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[0].Output().data()[i]) + "\n")
 
 
-            # temp = self.weights[0].data().Copy()
-            # temp.Abs()
 
             print("Getting accuracy: ")
             print("\t getting feed forward predictions..")
-            cur_pred = self.feed_forward(self.x_te)[-1]
+            # cur_pred = self.sess.Predict(self.x_te, self.y_pred)
+            cur_pred = self.sess.Predict(self.x_te, self.layers[-1].Output())
+
+
+            print("\nweights: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().data()[i, j]) + "\t")
+
+            print("\nweight grads: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().Grads()[i, j]) + "\t")
+
+            print("\ndot_output: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].DotOutput().data()[i, j]) + "\t")
+
+            print("\ndot_output_grads: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].DotOutput().Grads()[i, j]) + "\t")
+
+            print("\noutput: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().data()[i, j]) + "\t")
+
+            print("\noutput_grads: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().Grads()[i, j]) + "\t")
 
             print("\t calculating argmaxes")
-            max_pred = cur_pred.data().ArgMax(1)
+            max_pred = cur_pred.ArgMax(1)
             gt = self.y_te.data().ArgMax(1)
 
             print("DEBUG- DEBUG - DEBUG")
             print("DEBUG- DEBUG - DEBUG")
 
+            print("\npredictions: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().data()[i, j]) + "\t")
+
+            print("\nweights: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().data()[i, j]) + "\t")
+
+            print("\nweights grads: ")
+            for i in range(self.validation_size):
+                print("\n")
+                for j in range(10):
+                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().Grads()[i, j]) + "\t")
+
             for i in range(3):
 
                 print("Cur Pred: ")
                 for j in range(10):
-                    print(cur_pred.data()[i, j])
+                    print(cur_pred[i, j])
 
                 print("GT: ")
                 for j in range(10):
@@ -241,10 +312,4 @@ def run_mnist():
 # import cProfile
 # cProfile.run('run_mnist()')
 
-#run_mnist()
-
-
-sess = Session()
-sess.Variable()
-Variable()
-
+run_mnist()

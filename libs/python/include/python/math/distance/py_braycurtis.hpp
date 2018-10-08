@@ -26,7 +26,7 @@ namespace math {
 namespace distance {
 
 template <typename A>
-inline typename A::type WrapperBraycurtis(A const &a, A const &b)
+inline typename A::Type WrapperBraycurtis(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {

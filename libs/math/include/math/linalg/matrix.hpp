@@ -39,7 +39,7 @@ class Matrix : public S
 {
 public:
   using super_type                    = S;
-  using type                          = typename super_type::type;
+  using Type                          = typename super_type::Type;
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
   using working_memory_2d_type        = RectangularArray<T, C, true, true>;
@@ -67,7 +67,7 @@ public:
   Matrix(byte_array::ConstByteArray const &c)
   {
     std::size_t       n = 1;
-    std::vector<type> elems;
+    std::vector<Type> elems;
     elems.reserve(1024);
     bool failed = false;
 
@@ -94,7 +94,7 @@ public:
         }
         else
         {
-          elems.push_back(type(atof(c.char_pointer() + last)));
+          elems.push_back(Type(atof(c.char_pointer() + last)));
         }
         break;
       }
@@ -196,7 +196,7 @@ public:
    * @A is the first matrix.
    * @B is the second matrix.
    **/
-  self_type &Dot(self_type const &A, self_type const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &Dot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.height(), B.width());
     fetch::math::Dot(A, B, *this, alpha, beta);
@@ -209,7 +209,7 @@ public:
    * @param B
    * @return
    */
-  self_type &DotTranspose(self_type const &A, self_type const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &DotTranspose(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.height(), B.height());
     fetch::math::DotTranspose(A, B, *this, alpha, beta);
@@ -222,7 +222,7 @@ public:
    * @param B
    * @return
    */
-  self_type &TransposeDot(self_type const &A, self_type const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &TransposeDot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.width(), B.width());
     fetch::math::TransposeDot(A, B, *this, alpha, beta);
