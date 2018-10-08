@@ -132,6 +132,12 @@ void ThreadPoolImplementation::Start()
   static constexpr std::size_t MAX_START_LOOPS     = 30;
   static constexpr std::size_t START_LOOP_INTERVAL = 100;
 
+  if (shutdown_)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Thread pool may not be restarted after it has been shutdown");
+    return;
+  }
+
   // start all the threads
   {
     FETCH_LOCK(threads_mutex_);
@@ -196,8 +202,11 @@ void ThreadPoolImplementation::Stop()
   idle_work_.Abort();
   work_.Abort();
 
-  // kick all the threads to start wake and
-  work_available_.notify_all();
+  {
+    // kick all the threads to start wake and
+    FETCH_LOCK(idle_mutex_);
+    work_available_.notify_all();
+  }
 
   // wait for all the threads to conclude
   for (auto &thread : threads_)

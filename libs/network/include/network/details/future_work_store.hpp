@@ -202,7 +202,10 @@ private:
 
   mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
   Queue         queue_;                            ///< Ordered queue of work items
-  Flag          shutdown_{false};                  ///< Flag to signal to reject further work
+
+  // Shutdown flag this is designed to only ever be set to true. User will have to recreate the
+  // whole thread pool with current implementation.
+  Flag          shutdown_{false};
 };
 
 }  // namespace details
