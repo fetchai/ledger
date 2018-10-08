@@ -62,9 +62,8 @@ public:
     , num_lanes_{num_lanes}
   {
 
-    uint32_t log2_lanes_ =
+    log2_lanes_ =
         uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
-
 
     // load permanent key store (or create it if files do not exist)
     key_store_.Load("key_store_main.dat", "key_store_index.dat", true);
