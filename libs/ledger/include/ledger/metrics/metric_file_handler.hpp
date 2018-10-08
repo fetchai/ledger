@@ -69,10 +69,10 @@ private:
 
   std::string const       filename_;  ///< The filename for the output file
   Mutex                   stack_lock_{__LINE__, __FILE__};
-  std::condition_variable stack_notify_;      ///< The notification variable for
-  EntryStack              stack_;             ///< The stack of events that need to be generated
-  std::atomic<bool>       active_;            ///< Active monitor thread
-  std::thread             worker_;            ///< The worker thread
+  std::condition_variable stack_notify_;  ///< The notification variable for
+  EntryStack              stack_;         ///< The stack of events that need to be generated
+  std::atomic<bool>       active_;        ///< Active monitor thread
+  std::thread             worker_;        ///< The worker thread
 };
 
 }  // namespace ledger
