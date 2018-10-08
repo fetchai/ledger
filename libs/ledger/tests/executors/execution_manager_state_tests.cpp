@@ -71,7 +71,7 @@ protected:
     return executor;
   }
 
-  bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 120)
+  bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 200)
   {
     bool success = false;
 
