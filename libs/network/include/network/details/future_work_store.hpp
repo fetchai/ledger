@@ -85,7 +85,8 @@ public:
     Timestamp const now = Clock::now();
 
     // allow early exit
-    if (queue_mutex_.try_lock())
+    std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
+    if (lock.owns_lock())
     {
       WorkItem item;
 
@@ -101,7 +102,7 @@ public:
       }
 
       // release the queue
-      queue_mutex_.unlock();
+      lock.unlock();
 
       // dispatch all the work items
       if (item)
