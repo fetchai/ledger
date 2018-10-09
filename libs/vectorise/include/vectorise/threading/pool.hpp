@@ -51,7 +51,12 @@ public:
   ~Pool()
   {
     running_ = false;
-    condition_.notify_all();
+
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      condition_.notify_all();
+    }
+
     for (auto &w : workers_)
     {
       w.join();

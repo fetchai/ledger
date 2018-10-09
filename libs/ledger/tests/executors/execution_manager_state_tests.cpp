@@ -72,7 +72,7 @@ protected:
     return executor;
   }
 
-  bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 120)
+  bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 200)
   {
     bool success = false;
 
@@ -145,19 +145,19 @@ std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::status_typ
     s << "Status::COMPLETE";
     break;
   case ExecutionManager::Status::SCHEDULED:
-    s << "Status::COMPLETE";
+    s << "Status::SCHEDULED";
     break;
   case ExecutionManager::Status::NOT_STARTED:
-    s << "Status::COMPLETE";
+    s << "Status::NOT_STARTED";
     break;
   case ExecutionManager::Status::ALREADY_RUNNING:
-    s << "Status::COMPLETE";
+    s << "Status::ALREADY_RUNNING";
     break;
   case ExecutionManager::Status::NO_PARENT_BLOCK:
-    s << "Status::COMPLETE";
+    s << "Status::NO_PARENT_BLOCK";
     break;
   case ExecutionManager::Status::UNABLE_TO_PLAN:
-    s << "Status::COMPLETE";
+    s << "Status::UNABLE_TO_PLAN";
     break;
   default:
     s << "Status::UNKNOWN";

@@ -24,9 +24,9 @@ namespace network {
 
 /**
  * This represents a number of promise-like tasks which can be polled
- * to see if they have finished and if so, f they succeeded, timedout
+ * to see if they have finished and if so, f they succeeded, timed out
  * or failed. This could be done in a bg thread or by a foreground
- * poller.
+ * polling process.
  *
  * @tparam WORKER The class type of our promise-like tasks.
  */
@@ -108,11 +108,13 @@ public:
 
   void Wake()
   {
+    Lock lock(mutex_);
     cv_.notify_one();
   }
 
   void WakeAll()
   {
+    Lock lock(mutex_);
     cv_.notify_all();
   }
 

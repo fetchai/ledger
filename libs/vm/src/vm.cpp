@@ -175,6 +175,8 @@ void VM::ForRangeIterate()
       variable.variant.ui16 = loop.current.ui16;
       loop.current.ui16     = uint16_t(loop.current.ui16 + loop.delta.ui16);
       finished              = variable.variant.ui16 > loop.target.ui16;
+
+      break;
     }
     case TypeId::Int32:
     {

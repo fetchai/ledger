@@ -114,9 +114,13 @@ public:
     {
       return std::chrono::milliseconds::max();
     }
-    else if (Clock::now() > last_run_)
+
+    Timestamp const now      = Clock::now();
+    Timestamp const next_run = last_run_ + interval_;
+
+    if (next_run > now)
     {
-      return duration_cast<milliseconds>(Clock::now() - last_run_);
+      return duration_cast<milliseconds>(next_run - now);
     }
     else
     {

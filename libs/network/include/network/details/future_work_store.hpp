@@ -85,7 +85,8 @@ public:
     Timestamp const now = Clock::now();
 
     // allow early exit
-    if (queue_mutex_.try_lock())
+    std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
+    if (lock.owns_lock())
     {
       WorkItem item;
 
@@ -101,7 +102,7 @@ public:
       }
 
       // release the queue
-      queue_mutex_.unlock();
+      lock.unlock();
 
       // dispatch all the work items
       if (item)
@@ -131,13 +132,10 @@ public:
       return;
     }
 
-    // calculate the timestamp for this work item
-    Timestamp const due_timestamp = Clock::now() + std::chrono::milliseconds{milliseconds};
-
     // add it to the queue
     {
       FETCH_LOCK(queue_mutex_);
-      queue_.emplace(Element{std::move(item), due_timestamp});
+      queue_.emplace(std::move(item), milliseconds);
     }
   }
 
@@ -187,6 +185,11 @@ private:
     WorkItem  item;
     Timestamp due;
 
+    Element(WorkItem i, uint32_t delay_ms)
+      : item(std::move(i))
+      , due{Clock::now() + std::chrono::milliseconds(delay_ms)}
+    {}
+
     bool operator<(Element const &other) const
     {
       return due < other.due;
@@ -199,7 +202,10 @@ private:
 
   mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
   Queue         queue_;                            ///< Ordered queue of work items
-  Flag          shutdown_{false};                  ///< Flag to signal to reject further work
+
+  // Shutdown flag this is designed to only ever be set to true. User will have to recreate the
+  // whole thread pool with current implementation.
+  Flag shutdown_{false};
 };
 
 }  // namespace details
