@@ -57,7 +57,7 @@ public:
 private:
   void Set(ResourceID const &rid, T const &object)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Setting object in object store protocol");
+    //FETCH_LOG_INFO(LOGGING_NAME, "Setting object in object store protocol");
 
     if (on_set_)
     {

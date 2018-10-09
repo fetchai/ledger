@@ -34,6 +34,7 @@
 #include "storage/object_store.hpp"
 
 #include "miner/resource_mapper.hpp"
+#include "network/details/thread_pool.hpp"
 
 #include <random>
 #include <sstream>
@@ -62,6 +63,8 @@ public:
     , num_lanes_{num_lanes}
   {
 
+    thread_pool_->Start();
+
     log2_lanes_ =
         uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
 
@@ -88,6 +91,11 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            return OnTransactions(request);
          });
+  }
+
+  ~WalletHttpInterface()
+  {
+    thread_pool_->Stop();
   }
 
 private:
@@ -288,7 +296,8 @@ private:
         chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
 
         // dispatch to the wider system
-        processor_.AddTransaction(tx);
+        TransactionProcessor *processor = &processor_;
+        thread_pool_->Post([tx, processor]() { processor->AddTransaction(tx); });
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
@@ -334,12 +343,13 @@ private:
     return msg;
   }
 
-  TokenContract         contract_;
-  StorageInterface &    state_;
-  TransactionProcessor &processor_;
-  KeyStore              key_store_;
-  std::size_t           num_lanes_{0};
-  uint32_t              log2_lanes_{0};
+  TokenContract               contract_;
+  StorageInterface &          state_;
+  TransactionProcessor       &processor_;
+  KeyStore                    key_store_;
+  std::size_t                 num_lanes_{0};
+  uint32_t                    log2_lanes_{0};
+  fetch::network::ThreadPool  thread_pool_{network::MakeThreadPool(20)};
 };
 
 }  // namespace ledger

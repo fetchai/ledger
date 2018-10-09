@@ -162,6 +162,13 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", main_queue_.size(), ")");
+
+  backlog_ = main_queue_.size();
+}
+
+uint64_t BasicMiner::backlog() const
+{
+  return backlog_;
 }
 
 /**

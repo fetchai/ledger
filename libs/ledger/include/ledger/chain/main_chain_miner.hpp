@@ -144,6 +144,8 @@ private:
           next_block_time    = CalculateNextBlockTime(rng);
           searching_for_hash = false;
         }
+
+        std::cout << "Failed hash, next" << std::endl;
       }
       else if (Clock::now() >= next_block_time)  // if we are ready to generate a new block
       {

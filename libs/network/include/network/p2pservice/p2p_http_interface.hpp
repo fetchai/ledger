@@ -42,12 +42,15 @@ public:
   using Muddle      = muddle::Muddle;
   using P2PService  = P2PService;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
+  using Miner       = miner::BasicMiner;
 
-  P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
+  P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust,
+      Miner &miner)
     : chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
+    , miner_(miner)
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -64,6 +67,10 @@ public:
     Get("/api/status/trust",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetTrustStatus(params, request);
+        });
+    Get("/api/status/backlog",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetBacklogStatus(params, request);
         });
   }
 
@@ -132,6 +139,21 @@ private:
     return http::CreateJsonResponse(response);
   }
 
+  http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
+                                    http::HTTPRequest const &   request)
+  {
+    script::Variant    data;
+    data.MakeObject();
+
+    data["success"] = true;
+    data["backlog"] = miner_.backlog();
+
+    std::ostringstream oss;
+
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
+  }
+
   Variant GenerateBlockList()
   {
     // lookup the blocks from the heaviest chain
@@ -181,10 +203,11 @@ private:
     return cache;
   }
 
-  MainChain &  chain_;
-  Muddle &     muddle_;
-  P2PService & p2p_;
+  MainChain   &chain_;
+  Muddle      &muddle_;
+  P2PService  &p2p_;
   TrustSystem &trust_;
+  Miner       &miner_;
 };
 
 }  // namespace p2p
