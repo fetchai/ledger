@@ -43,8 +43,8 @@ public:
     uint16_t local_port{0};  ///< The local port to bind to
 
     Entry() = default;
-    Entry(Uri const &uri);
-    Entry(Uri const &uri, uint16_t port);
+    Entry(Uri const uri);
+    Entry(Uri const uri, uint16_t port);
   };
 
   using ConstByteArray    = byte_array::ConstByteArray;

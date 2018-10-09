@@ -52,8 +52,8 @@ bool ToStream(Manifest const &manifest, std::ostream &stream, ServiceType servic
 
 }  // namespace
 
-Manifest::Entry::Entry(fetch::network::Uri const &uri)
-  : remote_uri{uri}
+Manifest::Entry::Entry(fetch::network::Uri uri)
+  : remote_uri{std::move(uri)}
 {
   if (remote_uri.scheme() != Uri::Scheme::Tcp)
   {
@@ -63,8 +63,8 @@ Manifest::Entry::Entry(fetch::network::Uri const &uri)
   local_port = remote_uri.AsPeer().port();
 }
 
-Manifest::Entry::Entry(fetch::network::Uri const &uri, uint16_t port)
-  : remote_uri{uri}
+Manifest::Entry::Entry(fetch::network::Uri uri, uint16_t port)
+  : remote_uri{std::move(uri)}
   , local_port{port}
 {}
 
