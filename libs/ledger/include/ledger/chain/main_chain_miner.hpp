@@ -41,16 +41,19 @@ public:
   using MinerInterface = fetch::miner::MinerInterface;
 
   static constexpr char const *LOGGING_NAME = "MainChainMiner";
+  static constexpr uint32_t BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 uint64_t minerNumber)
+                 uint64_t minerNumber,
+                 std::chrono::steady_clock::duration block_interval = std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
     , minerNumber_{minerNumber}
+    , block_interval_{block_interval}
   {}
 
   ~MainChainMiner()
@@ -87,11 +90,13 @@ private:
   template <typename T>
   timestamp_type CalculateNextBlockTime(T &rng)
   {
-    static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
-    static constexpr uint32_t BLOCK_PERIOD_MS     = 5000;
+    auto jitterrange = block_interval_ * 0.1;
+    auto jitterrange_us = std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count();
+    auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
 
-    timestamp_type block_time = clock_type::now() + std::chrono::milliseconds{BLOCK_PERIOD_MS};
-    block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
+    timestamp_type block_time = clock_type::now()
+      + block_interval_
+      + std::chrono::microseconds{random_us};
 
     return block_time;
   }
@@ -179,6 +184,8 @@ private:
   MinerInterface &         miner_;
   std::thread              thread_;
   uint64_t                 minerNumber_{0};
+
+  std::chrono::steady_clock::duration block_interval_;
 };
 
 }  // namespace chain

@@ -63,7 +63,8 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string my_network_address)
+                             std::string my_network_address,
+                             std::chrono::steady_clock::duration block_interval)
   : active_{true}
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
@@ -85,7 +86,7 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_}
+  , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_, block_interval}
   // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}

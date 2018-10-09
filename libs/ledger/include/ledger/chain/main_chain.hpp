@@ -232,6 +232,39 @@ public:
     return result;
   }
 
+  std::vector<BlockType> ChainPreceding(
+    const BlockHash &at,
+    uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
+  {
+    fetch::generics::MilliTimer          myTimer("MainChain::ChainPreceding");
+    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+
+    std::vector<BlockType> result;
+
+    auto topBlock = block_chain_.at(at);
+
+    while ((topBlock.body().block_number != 0) && (result.size() < limit))
+    {
+      result.push_back(topBlock);
+      auto hash = topBlock.body().previous_hash;
+
+      // Walk down
+      auto it = block_chain_.find(hash);
+      if (it == block_chain_.end())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Mainchain: Failed while walking down\
+            from ", byte_array::ToBase64(at)," to find genesis!");
+        break;
+      }
+
+      topBlock = (*it).second;
+    }
+
+    result.push_back(topBlock);  // this should be genesis
+    return result;
+  }
+
   void reset()
   {
     std::lock_guard<fetch::mutex::Mutex> lock_main(main_mutex_);

@@ -86,6 +86,7 @@ struct CommandLineArguments
   uint32_t    num_lanes;
   uint32_t    log2_num_lanes;
   uint32_t    num_slices;
+  uint32_t    block_interval;
   std::string interface;
   std::string token;
   bool        bootstrap{false};
@@ -116,6 +117,7 @@ struct CommandLineArguments
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
+    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.", uint32_t{5000});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
@@ -220,6 +222,7 @@ struct CommandLineArguments
     s << "db-prefix......: " << args.dbdir << std::endl;
     s << "interface......: " << args.interface << std::endl;
     s << "mining.........: " << args.mine << std::endl;
+    s << "block interval.: " << args.block_interval << std::endl;
     s << "peers..........: ";
     for (auto const &peer : args.peers)
     {
@@ -338,7 +341,7 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir, args.external_address);
+        args.interface, args.dbdir, args.external_address, std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
