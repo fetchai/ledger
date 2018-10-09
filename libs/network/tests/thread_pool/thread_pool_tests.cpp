@@ -53,8 +53,6 @@ public:
 class ThreadPoolTests : public ::testing::TestWithParam<std::size_t>
 {
 protected:
-  static constexpr char const *LOGGING_NAME = "ThreadPoolTests";
-
   using ThreadPool = fetch::network::ThreadPool;
   using MockPtr    = std::unique_ptr<Mock>;
 
@@ -110,15 +108,11 @@ TEST_P(ThreadPoolTests, CheckBasicOperation)
 
   EXPECT_CALL(*mock_, Run()).Times(work_count);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
-
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
     pool_->Post([this]() { mock_->Run(); });
   }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
 
   ASSERT_TRUE(WaitForCompletion(work_count));
 }
@@ -129,15 +123,11 @@ TEST_P(ThreadPoolTests, CheckFutureOperation)
 
   EXPECT_CALL(*mock_, Run()).Times(work_count);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Pre post work");
-
   // post some work to the thread pool
   for (std::size_t i = 0; i < work_count; ++i)
   {
     pool_->Post([this]() { mock_->Run(); }, 100);
   }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Post post work");
 
   ASSERT_TRUE(WaitForCompletion(work_count));
 }

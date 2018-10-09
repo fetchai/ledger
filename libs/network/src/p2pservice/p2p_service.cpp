@@ -142,8 +142,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
   }
 
-//  FETCH_LOG_INFO(LOGGING_NAME, "UpdateTrustStatus peercount = ", desired_peers_.size());
-
   // for the moment we should provide the trust system with some "fake" information to ensure peers
   // are trusted
   for (auto const &peer : desired_peers_)
