@@ -32,8 +32,8 @@
 #include "math/statistics/mean.hpp"
 
 #include <algorithm>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace fetch {
 namespace math {
@@ -55,7 +55,9 @@ public:
 
   // TODO(private issue 282): This probably needs to be removed into the meta
   template <typename Type, typename ReturnType = void>
-  using IsUnsignedLike = typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value, ReturnType>::type;
+  using IsUnsignedLike =
+      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
+                              ReturnType>::type;
 
   static constexpr char const *LOGGING_NAME = "ShapeLessArray";
 

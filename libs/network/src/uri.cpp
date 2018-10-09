@@ -91,7 +91,7 @@ std::string Uri::ToString() const
     return std::string("muddle://") + std::string(authority_);
   case Scheme::Unknown:
   default:
-      return "unknown:";
+    return "unknown:";
   }
 }
 

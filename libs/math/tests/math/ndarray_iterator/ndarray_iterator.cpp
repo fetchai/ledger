@@ -167,10 +167,12 @@ TEST(ndarray, simple_iterator_transpose_test)
   std::size_t arr_size = fetch::math::Product(original_shape);
 
   // set up an initial array
-  NDArray<double> array = NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
+  NDArray<double> array =
+      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
   array.Reshape(original_shape);
 
-  NDArray<double> ret = NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
+  NDArray<double> ret =
+      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
   ret.Reshape(original_shape);
 
   NDArray<double> test_array{original_shape};
