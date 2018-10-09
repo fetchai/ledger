@@ -32,10 +32,10 @@ struct ServiceData
 
 struct TestCase
 {
-  char const *name;
-  char const *text;
-  ServiceData http;
-  ServiceData p2p;
+  char const *             name;
+  char const *             text;
+  ServiceData              http;
+  ServiceData              p2p;
   std::vector<ServiceData> lanes;
 };
 
@@ -45,10 +45,8 @@ std::ostream &operator<<(std::ostream &s, TestCase const &config)
   return s;
 }
 
-static TestCase const TEST_CASES[] = {
-  {
-    "Fully explicit configuration",
-    R"(
+static TestCase const TEST_CASES[] = {{"Fully explicit configuration",
+                                       R"(
     {
       "http": { "uri": "tcp://127.0.0.1:8000", "port": 8000 },
       "p2p": { "uri": "tcp://127.0.0.1:8001", "port": 8001 },
@@ -60,18 +58,15 @@ static TestCase const TEST_CASES[] = {
       ]
     }
     )",
-    { "127.0.0.1", 8000, 8000 },  // HTTP
-    { "127.0.0.1", 8001, 8001 },  // P2P
-    {                             // LANES
-      {"127.0.0.1", 8010, 8010},
-      {"127.0.0.1", 8011, 8011},
-      {"127.0.0.1", 8012, 8012},
-      {"127.0.0.1", 8013, 8013}
-    }
-  },
-  {
-    "Mix of configurations",
-    R"(
+                                       {"127.0.0.1", 8000, 8000},  // HTTP
+                                       {"127.0.0.1", 8001, 8001},  // P2P
+                                       {                           // LANES
+                                        {"127.0.0.1", 8010, 8010},
+                                        {"127.0.0.1", 8011, 8011},
+                                        {"127.0.0.1", 8012, 8012},
+                                        {"127.0.0.1", 8013, 8013}}},
+                                      {"Mix of configurations",
+                                       R"(
     {
       "http": { "uri": "tcp://192.168.1.54:30000", "port": 9000 },
       "p2p": { "uri": "tcp://192.168.1.55:30001", "port": 9001 },
@@ -83,18 +78,15 @@ static TestCase const TEST_CASES[] = {
       ]
     }
     )",
-    { "192.168.1.54", 30000, 9000 },  // HTTP
-    { "192.168.1.55", 30001, 9001 },  // P2P
-    {                                 // LANES
-      {"192.168.1.60", 30100, 9010},
-      {"192.168.1.61", 30101, 9011},
-      {"192.168.1.62", 30102, 9012},
-      {"192.168.1.63", 30103, 9013}
-    }
-  },
-  {
-    "Fully implicit configuration",
-    R"(
+                                       {"192.168.1.54", 30000, 9000},  // HTTP
+                                       {"192.168.1.55", 30001, 9001},  // P2P
+                                       {                               // LANES
+                                        {"192.168.1.60", 30100, 9010},
+                                        {"192.168.1.61", 30101, 9011},
+                                        {"192.168.1.62", 30102, 9012},
+                                        {"192.168.1.63", 30103, 9013}}},
+                                      {"Fully implicit configuration",
+                                       R"(
     {
       "http": { "uri": "tcp://127.0.10.1:8000" },
       "p2p": { "uri": "tcp://127.0.0.1:8001" },
@@ -106,25 +98,21 @@ static TestCase const TEST_CASES[] = {
       ]
     }
     )",
-    { "127.0.10.1", 8000, 8000 },   // HTTP
-    { "127.0.0.1", 8001, 8001 },    // P2P
-    {                               // LANES
-      {"127.1.0.1", 8010, 8010},
-      {"127.2.0.1", 8011, 8011},
-      {"127.3.0.1", 8012, 8012},
-      {"127.4.0.1", 8013, 8013}
-    }
-  }
-};
+                                       {"127.0.10.1", 8000, 8000},  // HTTP
+                                       {"127.0.0.1", 8001, 8001},   // P2P
+                                       {                            // LANES
+                                        {"127.1.0.1", 8010, 8010},
+                                        {"127.2.0.1", 8011, 8011},
+                                        {"127.3.0.1", 8012, 8012},
+                                        {"127.4.0.1", 8013, 8013}}}};
 
 class ManifestTests : public ::testing::TestWithParam<TestCase>
 {
 protected:
-
   using ServiceIdentifier = fetch::network::ServiceIdentifier;
-  using ServiceType = fetch::network::ServiceType;
-  using Manifest = fetch::network::Manifest;
-  using ManifestPtr = std::unique_ptr<Manifest>;
+  using ServiceType       = fetch::network::ServiceType;
+  using Manifest          = fetch::network::Manifest;
+  using ManifestPtr       = std::unique_ptr<Manifest>;
 
   void SetUp() override
   {
@@ -144,7 +132,7 @@ TEST_P(ManifestTests, Check)
   ASSERT_TRUE(manifest_->HasService(ServiceIdentifier{ServiceType::P2P}));
 
   auto const &p2p_service = manifest_->GetService(ServiceIdentifier{ServiceType::P2P});
-  auto const &p2p_peer = p2p_service.remote_uri.AsPeer();
+  auto const &p2p_peer    = p2p_service.remote_uri.AsPeer();
 
   EXPECT_EQ(p2p_peer.address(), config.p2p.address);
   EXPECT_EQ(p2p_peer.port(), config.p2p.remote_port);
@@ -154,7 +142,7 @@ TEST_P(ManifestTests, Check)
   ASSERT_TRUE(manifest_->HasService(ServiceIdentifier{ServiceType::HTTP}));
 
   auto const &http_service = manifest_->GetService(ServiceIdentifier{ServiceType::HTTP});
-  auto const &http_peer = http_service.remote_uri.AsPeer();
+  auto const &http_peer    = http_service.remote_uri.AsPeer();
 
   EXPECT_EQ(http_peer.address(), config.http.address);
   EXPECT_EQ(http_peer.port(), config.http.remote_port);
@@ -171,7 +159,7 @@ TEST_P(ManifestTests, Check)
     ASSERT_TRUE(manifest_->HasService(lane_identifier));
 
     auto const &lane_service = manifest_->GetService(lane_identifier);
-    auto const &lane_peer = lane_service.remote_uri.AsPeer();
+    auto const &lane_peer    = lane_service.remote_uri.AsPeer();
 
     EXPECT_EQ(lane_peer.address(), lane_config.address);
     EXPECT_EQ(lane_peer.port(), lane_config.remote_port);
@@ -179,6 +167,6 @@ TEST_P(ManifestTests, Check)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, ManifestTests, testing::ValuesIn(TEST_CASES),);
+INSTANTIATE_TEST_CASE_P(ParamBased, ManifestTests, testing::ValuesIn(TEST_CASES), );
 
-} // namespace
+}  // namespace

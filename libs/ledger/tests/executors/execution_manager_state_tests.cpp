@@ -52,7 +52,6 @@ public:
   using status_type             = underlying_execution_manager_type::Status;
 
 protected:
-
   void SetUp() override
   {
     auto const &config = GetParam();

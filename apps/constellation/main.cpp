@@ -110,9 +110,9 @@ struct CommandLineArguments
   using ServiceIdentifier = fetch::network::ServiceIdentifier;
   using ServiceType       = fetch::network::ServiceType;
 
-  static constexpr uint16_t HTTP_PORT_OFFSET       = 0;
-  static constexpr uint16_t P2P_PORT_OFFSET        = 1;
-  static constexpr uint16_t STORAGE_PORT_OFFSET    = 10;
+  static constexpr uint16_t HTTP_PORT_OFFSET    = 0;
+  static constexpr uint16_t P2P_PORT_OFFSET     = 1;
+  static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
   static const uint32_t DEFAULT_NUM_LANES     = 4;
   static const uint32_t DEFAULT_NUM_SLICES    = 4;
@@ -200,8 +200,8 @@ struct CommandLineArguments
     args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
-      // determine what the P2P port is. This is either specified with the port parameter or explictly
-      // given via the manifest
+      // determine what the P2P port is. This is either specified with the port parameter or
+      // explictly given via the manifest
       uint16_t p2p_port = args.port + P2P_PORT_OFFSET;
 
       // if we have a valid manifest then we should respect the port configuration specified here
@@ -283,10 +283,11 @@ struct CommandLineArguments
     }
   }
 
-  static ManifestPtr GenerateManifest(std::string const &external_address, uint16_t port, uint32_t num_lanes)
+  static ManifestPtr GenerateManifest(std::string const &external_address, uint16_t port,
+                                      uint32_t num_lanes)
   {
     ManifestPtr manifest = std::make_unique<Manifest>();
-    Peer peer;
+    Peer        peer;
 
     // register the HTTP service
     peer.Update(external_address, port + HTTP_PORT_OFFSET);
@@ -301,10 +302,8 @@ struct CommandLineArguments
     {
       peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + i));
 
-      manifest->AddService(
-        ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
-        Manifest::Entry{Uri{peer}}
-      );
+      manifest->AddService(ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
+                           Manifest::Entry{Uri{peer}});
     }
 
     return manifest;
@@ -465,14 +464,14 @@ int main(int argc, char **argv)
     ProverPtr p2p_key = GenerateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
-    auto args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
+    auto         args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir);
+        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
+        args.num_slices, args.interface, args.dbdir);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

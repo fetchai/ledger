@@ -17,16 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/script/variant.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
 #include <map>
 #include <memory>
-#include <vector>
 #include <stdexcept>
+#include <vector>
 
 namespace fetch {
 
@@ -39,8 +39,8 @@ public:
 
   struct Entry
   {
-    Uri       remote_uri;       ///< The URI to connect to
-    uint16_t  local_port{0};    ///< The local port to bind to
+    Uri      remote_uri;     ///< The URI to connect to
+    uint16_t local_port{0};  ///< The local port to bind to
 
     Entry() = default;
     Entry(Uri const &uri);
@@ -63,7 +63,7 @@ public:
   ~Manifest()                     = default;
 
   // Map iteration
-  size_t size() const;
+  size_t         size() const;
   const_iterator begin() const;
   const_iterator end() const;
   const_iterator cbegin() const;
@@ -76,7 +76,7 @@ public:
     service_map_.emplace(service_id, std::move(entry));
   }
 
-  void ForEach(std::function<void(ServiceIdentifier const &, Uri const&)> cb) const
+  void ForEach(std::function<void(ServiceIdentifier const &, Uri const &)> cb) const
   {
     for (auto &i : service_map_)
     {
@@ -105,7 +105,8 @@ public:
       throw std::runtime_error("Unable to lookup requested service id");
     }
 
-    return res->second;;
+    return res->second;
+    ;
   }
 
   network::Uri const &GetUri(ServiceIdentifier service_id) const
@@ -116,7 +117,8 @@ public:
       throw std::runtime_error("Unable to lookup requested service id");
     }
 
-    return res->second.remote_uri;;
+    return res->second.remote_uri;
+    ;
   }
 
   uint16_t GetLocalPort(ServiceIdentifier service_id) const
@@ -127,7 +129,8 @@ public:
       throw std::runtime_error("Unable to lookup requested service id");
     }
 
-    return res->second.local_port;;
+    return res->second.local_port;
+    ;
   }
 
   std::string ToString() const;
@@ -142,12 +145,10 @@ public:
   Manifest &operator=(Manifest const &other) = default;
 
 private:
-
   bool ExtractSection(script::Variant const &obj, ServiceType service, std::size_t instance = 0);
 
-  ServiceMap service_map_;   ///< The underlying service map
+  ServiceMap service_map_;  ///< The underlying service map
 };
-
 
 inline size_t Manifest::size() const
 {
@@ -163,7 +164,6 @@ inline Manifest::const_iterator Manifest::end() const
 {
   return service_map_.end();
 }
-
 
 inline Manifest::const_iterator Manifest::cbegin() const
 {

@@ -26,21 +26,25 @@ namespace network {
 
 enum class ServiceType : uint16_t
 {
-  INVALID   = 0,
-  LANE      = 1,
-  P2P       = 2,
-  HTTP      = 3,
+  INVALID = 0,
+  LANE    = 1,
+  P2P     = 2,
+  HTTP    = 3,
 };
 
 inline char const *ToString(ServiceType s)
 {
   switch (s)
   {
-    case ServiceType::LANE:     return "Lane";
-    case ServiceType::P2P:      return "P2P";
-    case ServiceType::HTTP:     return "HTTP";
-    case ServiceType::INVALID:
-    default:                    return "Invalid";
+  case ServiceType::LANE:
+    return "Lane";
+  case ServiceType::P2P:
+    return "P2P";
+  case ServiceType::HTTP:
+    return "HTTP";
+  case ServiceType::INVALID:
+  default:
+    return "Invalid";
   }
 }
 
@@ -54,8 +58,7 @@ struct ServiceIdentifier
   explicit ServiceIdentifier(ServiceType type, uint16_t instance = 0)
     : service_type(type)
     , instance_number(instance)
-  {
-  }
+  {}
 
   bool operator<(const ServiceIdentifier &other) const
   {
@@ -111,10 +114,10 @@ struct hash<fetch::network::ServiceIdentifier>
   std::size_t operator()(fetch::network::ServiceIdentifier const &id) const
   {
     std::size_t const combined = (static_cast<std::size_t>(id.service_type) << 16) |
-                                  static_cast<std::size_t>(id.instance_number);
+                                 static_cast<std::size_t>(id.instance_number);
 
     return hash<std::size_t>()(combined);
   }
 };
 
-} // namespace std
+}  // namespace std

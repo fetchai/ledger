@@ -78,7 +78,8 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes, bool force_loopback = false)
+std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
+                                                 bool force_loopback = false)
 {
   std::map<LaneIndex, Peer> connection_map;
 
@@ -157,16 +158,16 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
-  , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_,
-                                                                num_lanes_),
-                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
-                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
+  , http_modules_{
+        std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
+        std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " E ",
-                 num_executors, " S ", num_lanes_, "x", num_slices);
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " E ", num_executors, " S ",
+                 num_lanes_, "x", num_slices);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
@@ -219,9 +220,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
   std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
-    BuildLaneConnectionMap(manifest_, num_lanes_, true),
-    std::chrono::milliseconds(30000)
-  );
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(30000));
 
   // check to see if the connections where successful
   if (count != num_lanes_)

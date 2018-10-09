@@ -29,9 +29,9 @@
 #include "ledger/transaction_processor.hpp"
 #include "miner/basic_miner.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust.hpp"
-#include "network/p2pservice/manifest.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -59,8 +59,8 @@ public:
 
   static constexpr char const *LOGGING_NAME = "constellation";
 
-  explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest,
-                         uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
+  explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest, uint32_t num_executors,
+                         uint32_t log2_num_lanes, uint32_t num_slices,
                          std::string interface_address, std::string const &prefix);
 
   void Run(UriList const &initial_peers, bool mining);

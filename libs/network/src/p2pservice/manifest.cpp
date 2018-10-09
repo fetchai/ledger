@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/json/document.hpp"
 #include "network/p2pservice/manifest.hpp"
+#include "core/json/document.hpp"
+#include "core/logger.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -27,7 +27,8 @@ namespace fetch {
 namespace network {
 namespace {
 
-bool ToStream(Manifest const &manifest, std::ostream &stream, ServiceType service, std::size_t idx = 0)
+bool ToStream(Manifest const &manifest, std::ostream &stream, ServiceType service,
+              std::size_t idx = 0)
 {
   bool success = false;
 
@@ -40,8 +41,8 @@ bool ToStream(Manifest const &manifest, std::ostream &stream, ServiceType servic
     auto const &entry = manifest.GetService(identifier);
 
     // update the stream
-    stream << " - " << identifier.ToString() << ": " << entry.remote_uri.uri()
-        << " (" << entry.local_port << ')' << '\n';
+    stream << " - " << identifier.ToString() << ": " << entry.remote_uri.uri() << " ("
+           << entry.local_port << ')' << '\n';
 
     success = true;
   }
@@ -49,9 +50,7 @@ bool ToStream(Manifest const &manifest, std::ostream &stream, ServiceType servic
   return success;
 }
 
-
-} // namespace
-
+}  // namespace
 
 Manifest::Entry::Entry(fetch::network::Uri const &uri)
   : remote_uri{uri}
@@ -67,8 +66,7 @@ Manifest::Entry::Entry(fetch::network::Uri const &uri)
 Manifest::Entry::Entry(fetch::network::Uri const &uri, uint16_t port)
   : remote_uri{uri}
   , local_port{port}
-{
-}
+{}
 
 /**
  * Parse the incoming manifest text (JSON)
@@ -151,10 +149,10 @@ bool Manifest::ExtractSection(script::Variant const &obj, ServiceType service, s
   // ensure things are as we expect
   if (obj.is_object())
   {
-    auto uri_element = obj["uri"];
+    auto uri_element  = obj["uri"];
     auto port_element = obj["port"];
 
-    Uri uri;
+    Uri      uri;
     uint16_t port{0};
 
     // check to see if the uri element is valid
@@ -188,10 +186,8 @@ bool Manifest::ExtractSection(script::Variant const &obj, ServiceType service, s
     }
 
     // add the entry into the map
-    service_map_.emplace(
-      ServiceIdentifier{service, static_cast<uint16_t>(instance)},
-      Entry{uri, port}
-    );
+    service_map_.emplace(ServiceIdentifier{service, static_cast<uint16_t>(instance)},
+                         Entry{uri, port});
 
     success = true;
   }
@@ -207,7 +203,7 @@ std::string Manifest::ToString() const
   ToStream(*this, oss, ServiceType::HTTP);
   ToStream(*this, oss, ServiceType::P2P);
 
-  for (std::size_t lane_index = 0; ; ++lane_index)
+  for (std::size_t lane_index = 0;; ++lane_index)
   {
     // stop on the first lane which is not found
     if (!ToStream(*this, oss, ServiceType::LANE, lane_index))
@@ -219,5 +215,5 @@ std::string Manifest::ToString() const
   return oss.str();
 }
 
-} // namespace network
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch

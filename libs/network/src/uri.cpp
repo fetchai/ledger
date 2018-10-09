@@ -35,9 +35,7 @@ Uri::Uri(Peer const &peer)
   , scheme_(Scheme::Tcp)
   , authority_(peer.ToString())
   , tcp_(peer)
-{
-}
-
+{}
 
 Uri::Uri(ConstByteArray const &uri)
 {
