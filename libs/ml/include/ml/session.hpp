@@ -253,7 +253,7 @@ public:
           loss_var, lr,
           gradient_clip_);  // TODO: DON'T UPDATE THE DATA IN THE LOSS VAR OR THE INPUT VAR!!!!!!
 
-      std::cout << "loss: " << fetch::math::Sum(loss_var->data()) << std::endl;
+      //      std::cout << "loss: " << fetch::math::Sum(loss_var->data()) << std::endl;
     }
   }
 

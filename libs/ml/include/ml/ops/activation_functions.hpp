@@ -101,7 +101,6 @@ VariablePtrType Relu(VariablePtrType left, SessionType &sess)
   return ret;
 }
 
-
 /**
  * The rectified linear unit returns the elementwise maximum of 0 and y
  * @tparam ARRAY_TYPE
@@ -126,7 +125,6 @@ void LeakyReluImplementation(VariablePtrType cur_node)
     {
       cur_node->data()[i] = fetch::math::Multiply(0.2, cur_node->prev[0]->data()[i]);
     }
-
   }
 }
 template <typename VariablePtrType, typename SessionType>

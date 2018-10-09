@@ -55,20 +55,30 @@ void Relu(VariablePtrType cur_node)
   auto &right = cur_node->prev[1];
   auto &dy    = cur_node->grad();
 
-  auto new_grads = fetch::math::Maximum(left->data(), right->data());
-  left->GradientAdd(fetch::math::Multiply(dy, new_grads));
+  //  // identical???
+  //  auto new_grads = fetch::math::Maximum(left->data(), right->data());
+  //  auto new_grads2 = cur_node->data();
+  //
+  //  for (std::size_t idx = 0; idx < new_grads.size(); ++idx) {
+  //    std::cout << "new_grads[" << idx << "]: " << new_grads[idx] << " : " << new_grads2[idx] <<
+  //    std::endl;
+  //  }
+  //
+  //
+  //  left->GradientAdd(fetch::math::Dot(dy, cur_node->data()));
+  //  //  left->GradientAdd(fetch::math::Multiply(dy, new_grads));
 
-//  for (std::size_t i = 0; i < left->data().size(); ++i)
-//  {
-//    if (left->data()[i] > right->data()[i])
-//    {
-//      left->GradientValueAdd(i, dy[i]);
-//    }
-//    else
-//    {
-//      //      left->GradientSetZero(i);
-//    }
-//  }
+  for (std::size_t i = 0; i < left->data().size(); ++i)
+  {
+    if (left->data()[i] > right->data()[i])
+    {
+      left->GradientValueAdd(i, dy[i]);
+    }
+    else
+    {
+      //      left->GradientSetZero(i);
+    }
+  }
 }
 
 template <typename VariablePtrType>
@@ -88,7 +98,7 @@ void LeakyRelu(VariablePtrType cur_node)
     }
     else
     {
-      left->GradientValueAdd(i, fetch::math::Multiply(0.2, dy[i]));
+      left->GradientValueAdd(i, fetch::math::Multiply(0.01, dy[i]));
     }
   }
 }
