@@ -39,6 +39,8 @@ using fetch::network::Manifest;
 using fetch::network::ServiceType;
 using fetch::network::Uri;
 using fetch::network::ServiceIdentifier;
+using fetch::network::AtomicInFlightCounter;
+using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -47,17 +49,13 @@ namespace {
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
-void WaitForLaneServersToStart()
+bool WaitForLaneServersToStart()
 {
-  network::FutureTimepoint deadline(std::chrono::seconds(30));
+  using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
 
-  using InFlightCounter =
-  network::AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
-  if (!InFlightCounter::Wait(deadline))
-  {
-    FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Network servers did not all start in time");
-    return;
-  }
+  network::FutureTimepoint const deadline(std::chrono::seconds(30));
+
+  return InFlightCounter::Wait(deadline);
 }
 
 std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
@@ -210,13 +208,17 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // start all the lane services and wait for them to start accepting
   // connections
   lane_services_.Start();
-  WaitForLaneServersToStart();
+  if (!WaitForLaneServersToStart())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to start lane server instances");
+    return;
+  }
 
   /// LANE / SHARD CLIENTS
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  auto count = storage_->AddLaneConnectionsWaiting<TCPClient>(
+  std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
     BuildLaneConnectionMap(manifest_, num_lanes_, true),
     std::chrono::milliseconds(30000)
   );
@@ -227,37 +229,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to establish connections to lane service");
     return;
   }
-
-#if 0
-  // OK, it's been a while, let's try those missing lane services again...
-
-  lane_data.clear();
-  for (LaneIndex i = 0; i < num_lanes_; ++i)
-  {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    if (!storage_->ClientForLaneConnected(i))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
-      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
-    }
-  }
-  if (!lane_data.empty())
-  {
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
-    auto count =
-        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
-    if (count == num_lanes_)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
-      return;
-    }
-  }
-#endif
 
   /// BLOCK EXECUTION & MINING
 
