@@ -207,7 +207,6 @@ public:
 
     for (std::size_t j = 0; j < nreps; ++j)
     {
-      //      std::cout << "Forward TopSort: " << std::endl;
       Forward(input_var, loss_var->variable_name());
 
       ClearGradients(loss_var);
@@ -225,26 +224,24 @@ public:
       //        loss_var->data()[i] += l2_norm_sum;
       //      }
 
-      // calculate new gradients
-      //      std::cout << "BackGraph TopSort: " << std::endl;
+      // calculate gradients
       BackwardGraph(loss_var);
-      //
-      //      std::cout << "BackwardGraph: " << std::endl;
-      //      for (auto &cur_var : all_variables)
-      //      {
-      //        std::cout << "variable_name(): " << cur_var.second->variable_name() << std::endl;
-      //        for (std::size_t idx = 0; idx < cur_var.second->data().size(); ++idx)
-      //        {
-      //          std::cout << "data: " << cur_var.second->data()[idx] << std::endl;
-      //        }
-      //        for (std::size_t idx = 0; idx < cur_var.second->grad().size(); ++idx)
-      //        {
-      //          std::cout << "grad: " << cur_var.second->grad()[idx] << std::endl;
-      //        }
-      //      }
+//
+//      std::cout << "BackwardGraph: " << std::endl;
+//      for (auto &cur_var : all_variables)
+//      {
+//        std::cout << "variable_name(): " << cur_var.second->variable_name() << std::endl;
+//        for (std::size_t idx = 0; idx < cur_var.second->data().size(); ++idx)
+//        {
+//          std::cout << "data: " << cur_var.second->data()[idx] << std::endl;
+//        }
+//        for (std::size_t idx = 0; idx < cur_var.second->grad().size(); ++idx)
+//        {
+//          std::cout << "grad: " << cur_var.second->grad()[idx] << std::endl;
+//        }
+//      }
 
-      //      std::cout << "Gradient step TopSort: " << std::endl;
-      // update weights
+      // apply gradients
       top_sort_map.clear();
       top_sort_vector.clear();
       TopSort(loss_var, true);
@@ -252,7 +249,7 @@ public:
           loss_var, lr,
           gradient_clip_);  // TODO: DON'T UPDATE THE DATA IN THE LOSS VAR OR THE INPUT VAR!!!!!!
 
-//      std::cout << "loss: " << fetch::math::Sum(loss_var->data()) << std::endl;
+      std::cout << "loss: " << fetch::math::Sum(loss_var->data()) << std::endl;
     }
   }
 

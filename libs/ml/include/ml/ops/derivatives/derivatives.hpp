@@ -60,6 +60,65 @@ void Dot(VariablePtrType cur_node)
 }
 
 template <typename VariablePtrType>
+void ReduceSum(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left = cur_node->prev[0];
+  auto &dy   = cur_node->grad();
+
+  left->GradientAdd(dy);
+  //  cur_node.prev[0].grad() += cur_node.grad();
+}
+
+
+// LOSS FUNCTIONS //
+
+template <typename VariablePtrType>
+void MeanSquareError(VariablePtrType &cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left  = cur_node->prev[0];
+  auto &right = cur_node->prev[1];
+  auto  temp3 = fetch::math::Subtract(left->data(), right->data());
+  left->GradientAdd(temp3);  //
+}
+
+template <typename VariablePtrType>
+void CrossEntropyLoss(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left  = cur_node->prev[0];
+  auto &right = cur_node->prev[1];
+
+  auto temp3 = fetch::math::Multiply(-1.0, right->data());
+  auto temp4 = fetch::math::Divide(right->data(), left->data());
+
+  left->GradientAdd(temp4);
+}
+
+// ACTIVATION FUNCTIONS //
+
+template <typename VariablePtrType>
+void Sigmoid(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 1);
+
+  auto &left = cur_node->prev[0];
+  auto &dy   = cur_node->grad();
+  //  auto  temp1 = fetch::math::Subtract(1.0, left->data());
+  //  auto  temp2 = fetch::math::Multiply(left->data(), temp1);
+  //  left->GradientAdd(temp2);
+
+  auto temp1 = fetch::math::Subtract(1.0, cur_node->data());
+  auto temp2 = fetch::math::Multiply(cur_node->data(), temp1);
+  auto temp3 = fetch::math::Multiply(dy, temp2);
+  left->GradientAdd(temp3);
+}
+
+template <typename VariablePtrType>
 void Relu(VariablePtrType cur_node)
 {
   assert(cur_node->prev.size() == 2);
@@ -80,72 +139,6 @@ void Relu(VariablePtrType cur_node)
       left->GradientSetZero(i);
     }
   }
-}
-
-template <typename VariablePtrType>
-void ReduceSum(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 2);
-
-  auto &left = cur_node->prev[0];
-  auto &dy   = cur_node->grad();
-
-  left->GradientAdd(dy);
-  //  cur_node.prev[0].grad() += cur_node.grad();
-}
-
-template <typename VariablePtrType>
-void MeanSquareError(VariablePtrType &cur_node)
-{
-  assert(cur_node->prev.size() == 2);
-
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
-  auto  temp3 = fetch::math::Subtract(left->data(), right->data());
-
-  // minibatch gradient descent
-  double n     = temp3.shape()[0];
-  auto   temp4 = fetch::math::ReduceMean(temp3, 0);
-
-  for (std::size_t idx = 0; idx < n; ++idx)
-  {
-    for (std::size_t i = 0; i < temp3.shape()[1]; ++i)
-    {
-      temp3.Set(idx, i, temp4.At(i));
-      //      temp3.Set(idx, i, fetch::math::Divide(temp5.At(i), n));
-    }
-  }
-
-  left->GradientAdd(temp3);  //
-}
-
-template <typename VariablePtrType>
-void CrossEntropyLoss(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 2);
-
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
-
-  auto temp3 = fetch::math::Multiply(-1.0, right->data());
-  auto temp4 = fetch::math::Divide(right->data(), left->data());
-
-  left->GradientAdd(temp4);
-}
-
-template <typename VariablePtrType>
-void Sigmoid(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 1);
-
-  auto &left = cur_node->prev[0];
-  //  auto  temp1 = fetch::math::Subtract(1.0, left->data());
-  //  auto  temp2 = fetch::math::Multiply(left->data(), temp1);
-  //  left->GradientAdd(temp2);
-
-  auto temp1 = fetch::math::Subtract(1.0, cur_node->data());
-  auto temp2 = fetch::math::Multiply(cur_node->data(), temp1);
-  left->GradientAdd(temp2);
 }
 
 };  // namespace derivatives

@@ -31,9 +31,9 @@ using namespace fetch::ml;
 using Type            = double;
 using ArrayType       = fetch::math::linalg::Matrix<Type>;
 using VariableType    = fetch::ml::Variable<ArrayType>;
-using VariablyPtrType = std::shared_ptr<VariableType>;
+using VariablePtrType = std::shared_ptr<VariableType>;
 
-void AssignVariableIncrement(VariablyPtrType var, Type val = 0.0, Type incr = 1.0)
+void AssignVariableIncrement(VariablePtrType var, Type val = 0.0, Type incr = 1.0)
 {
   for (std::size_t i = 0; i < var->shape()[0]; ++i)
   {
@@ -66,8 +66,7 @@ void AssignArray(ArrayType &var, std::vector<Type> vec_val)
     }
   }
 }
-
-void AssignRandom(VariablyPtrType var, Type mean = 0.0, Type variance = 1.0)
+void AssignRandom(VariablePtrType var, Type mean = 0.0, Type variance = 1.0)
 {
   std::random_device         rd{};
   std::mt19937               gen{rd()};
@@ -191,15 +190,14 @@ TEST(session_test, trivial_backprop_sigmoid_test)
   // set up session
   SessionManager<ArrayType, VariableType> sess{};
 
-  std::size_t data_points = 1;
-  std::size_t input_size  = 1;
-  std::size_t h1_size     = 10;
-  std::size_t output_size = 1;
-
   Type        alpha  = 0.02;
   std::size_t n_reps = 1000;
 
   // set up some variables
+  std::size_t data_points = 1;
+  std::size_t input_size  = 1;
+  std::size_t h1_size     = 10;
+  std::size_t output_size = 1;
   std::vector<std::size_t> input_shape{data_points, input_size};   // data points x input size
   std::vector<std::size_t> weights_shape{input_size, h1_size};     // input size x neurons
   std::vector<std::size_t> biases_shape{1, h1_size};               // input size x neurons

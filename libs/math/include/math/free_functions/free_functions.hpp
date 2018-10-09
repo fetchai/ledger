@@ -1603,6 +1603,7 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
   ret.Copy(A);
   //  ret.data() = A.data().copy();
 
+  Multiply(-1.0, ret, ret);
   Exp(ret);
   Add(ret, 1.0, ret);
   Divide(1.0, ret, ret);

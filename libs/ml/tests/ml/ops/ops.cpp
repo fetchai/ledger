@@ -32,6 +32,19 @@ using ArrayType       = fetch::math::linalg::Matrix<Type>;
 using VariableType    = fetch::ml::Variable<ArrayType>;
 using VariablePtrType = std::shared_ptr<VariableType>;
 
+void AssignRandom(VariablePtrType var, Type mean = 0.0, Type variance = 1.0)
+{
+  std::random_device         rd{};
+  std::mt19937               gen{rd()};
+  std::normal_distribution<> d{mean, std::sqrt(variance)};
+  for (std::size_t i = 0; i < var->shape()[0]; ++i)
+  {
+    for (std::size_t j = 0; j < var->shape()[1]; ++j)
+    {
+      var->Set(i, j, d(gen));
+    }
+  }
+}
 void AssignVariableIncrement(VariablePtrType var, Type val = 0.0, Type incr = 1.0)
 {
   for (std::size_t i = 0; i < var->shape()[0]; ++i)
@@ -300,37 +313,72 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   // set up session
   SessionManager<ArrayType, VariableType> sess{};
 
+  Type        alpha  = 0.1;
+  std::size_t n_reps = 10000;
+
   // set up some variables
-  std::vector<std::size_t> input_shape{2, 2};
-  std::vector<std::size_t> weights_shape{2, 3};
-  std::vector<std::size_t> biases_shape{1, 3};
-  std::vector<std::size_t> gt_shape{2, 3};
+  std::size_t data_points = 3;
+  std::size_t input_size  = 3;
+  std::size_t h1_size  = 10;
+  std::size_t output_size = 2;
+  std::vector<std::size_t> input_shape{data_points, input_size};
+  std::vector<std::size_t> weights_shape{input_size, h1_size};
+  std::vector<std::size_t> biases_shape{1, h1_size};
+  std::vector<std::size_t> weights_shape2{h1_size, output_size};
+  std::vector<std::size_t> biases_shape2{1, output_size};
+  std::vector<std::size_t> gt_shape{data_points, output_size};
 
   auto input_data = sess.Variable(input_shape, "input_data", false);
   auto weights    = sess.Variable(weights_shape, "weights", true);
   auto biases     = sess.Variable(biases_shape, "biases", true);
+  auto weights2    = sess.Variable(weights_shape2, "weights", true);
+  auto biases2     = sess.Variable(biases_shape2, "biases", true);
   auto gt         = sess.Variable(gt_shape, "gt");
 
-  AssignVariableIncrement(input_data, 1.0, 1.0);
-  AssignVariableIncrement(weights, 0.01, 0.01);
-  AssignBiasesIncrement(biases, 0.6, 0.01);
-  AssignVariableIncrement(gt, 2.0, 2.0);
+//  AssignVariableIncrement(input_data, 1.0, 1.0);
+//  AssignVariableIncrement(gt, 2.0, 2.0);
+  input_data->data().Set(0, 0, 1.0);
+  input_data->data().Set(0, 1, 1.0);
+  input_data->data().Set(0, 2, 1.0);
+  input_data->data().Set(1, 0, 2.0);
+  input_data->data().Set(1, 1, 2.0);
+  input_data->data().Set(1, 2, 2.0);
+  input_data->data().Set(2, 0, 3.0);
+  input_data->data().Set(2, 1, 3.0);
+  input_data->data().Set(2, 2, 3.0);
+
+  gt->data().Set(0, 0, 0.2);
+  gt->data().Set(0, 1, 0.2);
+  gt->data().Set(1, 0, 0.4);
+  gt->data().Set(1, 1, 0.4);
+  gt->data().Set(2, 0, 0.6);
+  gt->data().Set(2, 1, 0.6);
+
+  AssignRandom(weights, 0.0, 1.0 / input_size * data_points);
+  AssignRandom(biases, 1.0, 1.0 / input_size * data_points);
+  AssignRandom(weights2, 0.0, 1.0 / data_points * h1_size);
+  AssignRandom(biases2, 1.0, 1.0 / data_points * h1_size);
 
   // Dot product
   auto dot_1 = fetch::ml::ops::Dot(input_data, weights, sess);
   auto add_1 = fetch::ml::ops::AddBroadcast(dot_1, biases, sess);
+  auto sig_1 = fetch::ml::ops::Sigmoid(add_1, sess);
+
+  auto dot_2 = fetch::ml::ops::Dot(sig_1, weights2, sess);
+  auto add_2 = fetch::ml::ops::AddBroadcast(dot_2, biases2, sess);
+  auto y_pred = fetch::ml::ops::Sigmoid(add_2, sess);
 
   // simple loss
-  auto loss = fetch::ml::ops::MeanSquareError(add_1, gt, sess);
+  auto loss = fetch::ml::ops::MeanSquareError(y_pred, gt, sess);
 
   // forward pass on the computational graph
-  auto prediction = sess.Predict(input_data, add_1);
+  auto prediction = sess.Predict(input_data, y_pred);
 
   // backward pass to get gradient
-  sess.BackProp(input_data, loss, 0.05, 100);
+  sess.BackProp(input_data, loss, alpha, n_reps);
 
   // forward pass on the computational graph
-  prediction = sess.Predict(input_data, add_1);
+  prediction = sess.Predict(input_data, y_pred);
   for (std::size_t idx = 0; idx < prediction.size(); ++idx)
   {
     std::cout << "prediction[" << idx << "]: " << prediction[idx] << std::endl;
