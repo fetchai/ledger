@@ -104,6 +104,7 @@ private:
   mutex_type          execution_plan_lock_;
   block_digest_type   last_block_hash_ = chain::GENESIS_DIGEST;
 
+  std::mutex              monitor_lock_;
   std::condition_variable monitor_wake_;
   std::condition_variable monitor_notify_;
 

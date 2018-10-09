@@ -56,29 +56,6 @@ public:
     , blocks_(other.blocks_)
   {}
 
-#if 0
-  BitVectorImplementation(std::size_t const &size, std::initializer_list<uint64_t> const &data)
-    : BitVectorImplementation(data)
-  {
-    assert(size <= size_);
-    size_ = size;
-  }
-#endif
-
-#if 0
-  BitVectorImplementation(std::initializer_list<uint64_t> const &data)
-  {
-    data_         = container_type(data.size());
-    std::size_t i = 0;
-    for (auto const &a : data)
-    {
-      data_[i++] = a;
-    }
-    blocks_ = data.size();
-    size_   = 8 * sizeof(data_type) * blocks_;
-  }
-#endif
-
   /**
    * Resize the vector to n bits
    *

@@ -100,7 +100,7 @@ TEST_F(OpenSSLDeleterTest, test_that_DeleterPrimitive_function_is_called_for_CON
   TestType        testValue;
   const TestType &const_testValue = testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
@@ -113,7 +113,7 @@ TEST_F(OpenSSLDeleterTest,
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
@@ -127,7 +127,7 @@ TEST_F(OpenSSLDeleterTest,
   TestType        testValue;
   const TestType &const_testValue = testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code
@@ -140,7 +140,7 @@ TEST_F(OpenSSLDeleterTest,
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_clearing_TestType(&testValue)).WillOnce(Return());
 
   //* Production code

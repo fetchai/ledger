@@ -37,8 +37,8 @@ void BuildSizeCounter(std::string const &custom_name, pybind11::module &module)
       .def("ReadBytes", &SizeCounter<S>::ReadBytes)
       .def("Allocate", &SizeCounter<S>::Allocate)
       .def("size", &SizeCounter<S>::size)
-      .def("Seek", &SizeCounter<S>::Seek)
-      .def("Tell", &SizeCounter<S>::Tell)
+      .def("seek", &SizeCounter<S>::seek)
+      .def("tell", &SizeCounter<S>::tell)
       .def("Reserve", &SizeCounter<S>::Reserve);
 }
 

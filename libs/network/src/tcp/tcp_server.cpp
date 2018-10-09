@@ -24,11 +24,10 @@ namespace network {
 TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
-  , request_mutex_{}
 {
   LOG_STACK_TRACE_POINT;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating TCP server on tcp://0.0.0.0:", port);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Creating TCP server on tcp://0.0.0.0:", port);
 
   manager_ = std::make_shared<ClientManager>(*this);
 }
@@ -47,13 +46,17 @@ TCPServer::~TCPServer()
     auto acceptorStrong = acceptorWeak.lock();
     if (acceptorStrong)
     {
-      std::error_code dummy;
-      acceptorStrong->close(dummy);
-      FETCH_LOG_INFO(LOGGING_NAME, "closed TCP server server acceptor: ");
+      std::error_code ec;
+      acceptorStrong->close(ec);
+
+      if (ec)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Closed TCP server server acceptor: ", ec.message());
+      }
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "failed to close acceptor: ");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to close acceptor");
     }
   });
 
@@ -69,7 +72,7 @@ TCPServer::~TCPServer()
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Destructing TCP server ", this);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing TCP server ", this);
 }
 
 void TCPServer::Start()
@@ -97,7 +100,11 @@ void TCPServer::Start()
         if (acceptor)
         {
           running_ = true;
+
           Accept(acceptor);
+
+          counter_.Completed();
+
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
       }

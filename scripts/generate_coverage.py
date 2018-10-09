@@ -3,7 +3,7 @@
 #
 # Generate coverage html for unit tests. Default usage will build all tests and a global coverage
 # file in build/coverage. Typical usage:
-# Build in debug mode with coverage flag enabled.
+# Build in debug mode with coverage flag enabled (FETCH_ENABLE_COVERAGE).
 # ./scripts/generate_coverage.py ./build
 #
 # Best done in the docker container.
@@ -95,7 +95,7 @@ def get_coverage_reports(targets : map):
         except:
             print("Failed to find output file default.profraw")
             print("Check you haven't set LLVM_PROFILE_FILE")
-            print("Did you build in debug mode?")
+            print("Did you build in debug mode with FETCH_ENABLE_COVERAGE enabled?")
             sys.exit(1)
 
         # Generate an indexed file target.profdata

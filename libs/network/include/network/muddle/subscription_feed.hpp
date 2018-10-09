@@ -26,7 +26,8 @@ namespace fetch {
 namespace muddle {
 
 /**
- * The aggregation of the subscription
+ * The aggregation of set of subscriptions to the same service and channel combination. This is an
+ * internal routing structure that performs the dispatch to all the waiting clients
  */
 class SubscriptionFeed
 {

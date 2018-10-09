@@ -99,7 +99,6 @@ public:
 
         if (!executing_block)
         {
-
           // get the next block from the pending queue
           if (!pending_stack.empty())
           {
@@ -112,6 +111,7 @@ public:
           {
             // get the next block from the queue (if there is one)
             std::lock_guard<mutex_type> lock(mutex_);
+
             if (!pending_blocks_.empty())
             {
               block = pending_blocks_.back();
@@ -160,11 +160,10 @@ public:
 
             // reset the block
             block.reset();
-            continue;  // erm...
+            continue;
           }
           else
           {
-
             char const *reason = "unknown";
             switch (status)
             {
@@ -198,7 +197,6 @@ public:
         }
 
         // wait for the block to process
-        // std::this_thread::sleep_for(std::chrono::milliseconds(750));
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     };

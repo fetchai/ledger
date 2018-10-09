@@ -75,12 +75,12 @@ protected:
     manager_ = std::make_unique<underlying_client_type>("127.0.0.1", PORT, *network_manager_);
 
     // wait for the client to connect before proceeding
-    FETCH_LOG_INFO(LOGGING_NAME, "Connecting client to service...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connecting client to service...");
     while (!manager_->is_alive())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds{300});
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "Connecting client to service...complete");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connecting client to service...complete");
   }
 
   void TearDown() override
@@ -189,7 +189,7 @@ protected:
   storage_type                   storage_;
 };
 
-TEST_P(ExecutionManagerRpcTests, CheckStuff)
+TEST_P(ExecutionManagerRpcTests, BlockExecution)
 {
   BlockConfig const &config = GetParam();
 

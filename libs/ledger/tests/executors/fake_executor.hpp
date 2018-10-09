@@ -32,6 +32,8 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "FakeExecutor";
+
   struct HistoryElement
   {
     using clock_type     = std::chrono::high_resolution_clock;

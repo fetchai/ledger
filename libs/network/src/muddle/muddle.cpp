@@ -39,14 +39,15 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
 {
   ByteArray output(address.size());
   std::copy(address.begin(), address.end(), output.pointer());
-  return output;
+
+  return ConstByteArray{output};
 }
 
 static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 
 /**
- * Constructs the mudlle node instances
+ * Constructs the muddle node instances
  *
  * @param certificate The certificate/identity of this node
  */
@@ -85,7 +86,7 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
     clients_.AddPersistentPeer(peer);
   }
 
-  // start the first round of maintenance
+  // schedule the maintenance (which shall force the connection of the peers)
   RunPeriodicMaintenance();
 }
 
@@ -159,12 +160,16 @@ void Muddle::RunPeriodicMaintenance()
   Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
   if (time_since_last_cleanup >= CLEANUP_INTERVAL)
   {
+    // clean up and pending message handlers and also trigger the timeout logic
     dispatcher_.Cleanup();
+
+    // clean up echo caches and other temporary stored objects
+    router_.Cleanup();
+
     last_cleanup_ = Clock::now();
-    ;
   }
 
-  // schedule the main
+  // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
 }
 
@@ -256,34 +261,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.AsPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
-
-#if 0
-  // wait for the connection to be established
-  thread_pool_->Post([strong_conn]() {
-    using Clock = std::chrono::high_resolution_clock;
-
-    // connection loop
-    auto const start = Clock::now();
-    for (;;)
-    {
-      if (strong_conn->is_alive())
-      {
-        break;
-      }
-
-      auto const delta = Clock::now() - start;
-      if (delta > CONNECTION_TIMEOUT)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Timed out waiting for socket to connect to remote host");
-        break;
-      }
-
-      std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    }
-
-    // ensure
-  });
-#endif
 }
 
 }  // namespace muddle

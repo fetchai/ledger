@@ -22,6 +22,9 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Interface for all Metric Handlers
+ */
 class MetricHandler
 {
 public:
@@ -47,6 +50,14 @@ public:
   MetricHandler()          = default;
   virtual ~MetricHandler() = default;
 
+  /**
+   * Record a specified metric
+   *
+   * @param identifier The identifier of the metric
+   * @param instrument  The instrument being measured
+   * @param event The event being recorded
+   * @param timestamp The timestamp of the event
+   */
   virtual void RecordMetric(ConstByteArray const &identifier, Instrument instrument, Event event,
                             Timestamp const &timestamp) = 0;
 };

@@ -37,6 +37,10 @@ class Dispatcher;
 
 class MuddleRegister;
 
+/**
+ * The router if the fundamental object of the muddle system an routes external and internal packets
+ * to either a subscription or to another node on the network
+ */
 class Router : public MuddleEndpoint
 {
 public:
@@ -95,12 +99,15 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  void Cleanup();
+
 private:
-  using HandleMap = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex     = mutex::Mutex;
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using EchoCache = std::unordered_map<uint64_t, Timepoint>;
+  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex      = mutex::Mutex;
+  using Clock      = std::chrono::steady_clock;
+  using Timepoint  = Clock::time_point;
+  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress = Packet::RawAddress;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -114,8 +121,10 @@ private:
   void DispatchPacket(PacketPtr packet);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
+  void CleanEchoCache();
 
   Address const         address_;
+  RawAddress const      address_raw_;
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;

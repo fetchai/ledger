@@ -88,6 +88,8 @@ public:
   bool operator==(Uri const &other) const;
   bool operator!=(Uri const &other) const;
 
+  std::string ToString() const;
+
   template <typename T>
   friend void Serialize(T &serializer, Uri const &x);
 

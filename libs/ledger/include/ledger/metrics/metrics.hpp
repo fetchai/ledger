@@ -24,6 +24,9 @@
 namespace fetch {
 namespace ledger {
 
+/**
+ * Singleton object for convenient global access to generating metric data
+ */
 class Metrics
 {
 public:

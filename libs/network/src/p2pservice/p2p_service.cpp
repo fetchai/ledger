@@ -58,7 +58,7 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
     muddle_.AddPeer(uri);
   }
 
-  thread_pool_->SetInterval(2000);
+  thread_pool_->SetIdleInterval(2000);
   thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 
@@ -67,13 +67,12 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
 
 void P2PService::Stop()
 {
-  thread_pool_->clear();
+  thread_pool_->Clear();
   thread_pool_->Stop();
 }
 
 void P2PService::WorkCycle()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "WorkCycle");
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
@@ -127,20 +126,23 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
 
     // update our desired
-    bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
+    // bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
 
-    if (new_peer && trusted_peer)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
-      desired_peers_.insert(address);
-    }
-    else if ((!new_peer) && (!trusted_peer))
+    // if (new_peer && trusted_peer)
+    //{
+    //  FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
+    //   desired_peers_.insert(address);
+    // }
+
+    if (!trusted_peer)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "No longer trust: ", ToBase64(address));
       desired_peers_.erase(address);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "UpdateTrustStatus peercount = ", desired_peers_.size());
 
   // for the moment we should provide the trust system with some "fake" information to ensure peers
   // are trusted
@@ -223,7 +225,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   pending_resolutions_.Resolve();
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resole: ", ToBase64(result.key), ": ", result.promised.uri());
+    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key), ": ", result.promised.uri());
 
     identity_cache_.Update(result.key, result.promised);
     muddle_.AddPeer(result.promised);
@@ -277,19 +279,15 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
   // to request an update.
   auto const all_manifest_update_addresses = manifest_cache_.GetUpdatesNeeded(active_addresses);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Lookedup manifest updates");
-
   // in order to prevent duplicating requests, filter the initial list to only the ones that we have
   // not already requested this information.
   auto const new_manifest_update_addresses =
       outstanding_manifests_.FilterOutInFlight(all_manifest_update_addresses);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Filtered manifest updates");
-
   // from the remaining set of addresses schedule a manifest request
   for (auto const &address : new_manifest_update_addresses)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Requsting manifest from: ", ToBase64(address));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting manifest from: ", ToBase64(address));
 
     // make the RPC call
     auto prom = network::PromiseOf<network::Manifest>(
@@ -299,12 +297,8 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
     outstanding_manifests_.Add(address, prom);
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Requested manifest updates");
-
   // scan through the existing set of outstanding RPC promises and evaluate all the completed items
   outstanding_manifests_.Resolve();
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "!! Resolved manifest updates");
 
   // process through the completed responses
   auto const manifest_updates = outstanding_manifests_.Get(20);
@@ -315,7 +309,7 @@ void P2PService::UpdateManifests(AddressSet const &active_addresses)
     auto const &manifest = result.promised;
 
     // update the manifest cache with the information
-    manifest_cache_.ProvideUpdate(address, manifest, 10);
+    manifest_cache_.ProvideUpdate(address, manifest, 120);
 
     // distribute the updated manifest at a later point
     DistributeUpdatedManifest(address);
@@ -347,11 +341,11 @@ network::Manifest P2PService::GetLocalManifest()
 
 P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
   AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "P2PService::GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }

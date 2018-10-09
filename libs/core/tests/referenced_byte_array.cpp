@@ -205,6 +205,37 @@ int main()
       EXPECT(("Big " + str) == "Big hello kitty");
     };
 
+    SECTION("basic append operations")
+    {
+      ByteArray      v0("hello");
+      ConstByteArray v1("pretty");
+      ByteArray      v2("kitty");
+
+      ByteArray array;
+      array.Append(v0, " ", v1, " ", v2, " :)");
+
+      EXPECT(array == "hello pretty kitty :)");
+      EXPECT(v0 == "hello");
+      EXPECT(v1 == "pretty");
+      EXPECT(v2 == "kitty");
+
+      v0[0] = 'c';
+      v0[1] = 'i';
+      v0[2] = 'a';
+      v0[3] = 'o';
+      v0[4] = ' ';
+      EXPECT(v0 == "ciao ");
+
+      v2[0] = 'c';
+      v2[1] = 'a';
+      v2[2] = 't';
+      v2[3] = ' ';
+      v2[4] = ' ';
+      EXPECT(v2 == "cat  ");
+
+      EXPECT(array == "hello pretty kitty :)");
+    };
+
     SECTION("size of loaded C strings")
     {
       EXPECT(ByteArray("any carnal pleas").size() == 16);

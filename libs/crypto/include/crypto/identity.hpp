@@ -39,7 +39,7 @@ public:
   Identity(Identity &&other)                 = default;
   Identity &operator=(Identity &&other) = default;
 
-  // Fully relying on caller that it will bahve = will NOT modify value passed (Const)ByteArray(s)
+  // Fully relying on caller that it will behave = will NOT modify value passed (Const)ByteArray(s)
   Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
     : identity_parameters_{std::move(identity_parameters)}
     , identifier_{std::move(identifier)}
@@ -68,7 +68,7 @@ public:
   operator bool() const
   {
     return identity_parameters_ == edcsa_curve_type::sn &&
-           identity_parameters_.size() == edcsa_curve_type::publicKeySize;
+           identifier_.size() == edcsa_curve_type::publicKeySize;
   }
 
   static Identity CreateInvalid()

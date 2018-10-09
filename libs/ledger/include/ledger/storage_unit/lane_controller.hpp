@@ -61,7 +61,7 @@ public:
     , manager_(nm)
   {
     thread_pool_ = network::MakeThreadPool(3);
-    thread_pool_->SetInterval(1000);
+    thread_pool_->SetIdleInterval(1000);
     thread_pool_->Start();
     thread_pool_->Post([this]() { thread_pool_->PostIdle([this]() { this->WorkCycle(); }); }, 1000);
   }
@@ -99,8 +99,9 @@ public:
 
   int IncomingPeers()
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
-    int                         incoming = 0;
+    FETCH_LOCK(services_mutex_);
+
+    int incoming = 0;
     for (auto &peer : services_)
     {
       auto details = register_.GetDetails(peer.first);
@@ -116,8 +117,9 @@ public:
 
   int OutgoingPeers()
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
-    int                         outgoing = 0;
+    FETCH_LOCK(services_mutex_);
+
+    int outgoing = 0;
     for (auto &peer : services_)
     {
       auto details = register_.GetDetails(peer.first);
@@ -137,7 +139,7 @@ public:
   /// @{
   shared_service_client_type GetClient(connection_handle_type const &n)
   {
-    std::lock_guard<mutex_type> lock_(services_mutex_);
+    FETCH_LOCK(services_mutex_);
     return services_[n];
   }
 
@@ -541,13 +543,39 @@ public:
 
   void UseThesePeers(UriSet uris)
   {
+    FETCH_LOCK(desired_connections_mutex_);
     desired_connections_ = std::move(uris);
+
+    {
+      FETCH_LOCK(services_mutex_);
+      for (auto &peer_conn : peer_connections_)
+      {
+        if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER: ", peer_conn.first.ToString());
+        }
+      }
+
+      for (auto &uri : desired_connections_)
+      {
+        if (peer_connections_.find(uri) == peer_connections_.end())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER: ", uri.ToString());
+        }
+      }
+    }
   }
 
   void GeneratePeerDeltas(UriSet &create, UriSet &remove)
   {
     {
-      std::lock_guard<mutex_type> lock_(services_mutex_);
+      FETCH_LOCK(desired_connections_mutex_);
+      FETCH_LOCK(services_mutex_);
+
+      // this method is the only one which needs both mutexes. It is
+      // the moving interface between the DESIRED goal and the acting
+      // to get closer to it. The mutexes are acquired in alphabetic
+      // order.
 
       auto ident = lane_identity_.lock();
       if (!ident)
@@ -706,7 +734,7 @@ public:
     }
 
     {
-      std::lock_guard<mutex_type> lock_(services_mutex_);
+      FETCH_LOCK(services_mutex_);
       services_[client->handle()] = client;
     }
 
@@ -730,7 +758,12 @@ private:
   client_register_type        register_;
   network_manager_type        manager_;
 
+  // Most methods do not need both mutexes. If they do, they should
+  // acquire them in alphabetic order
+
   mutex::Mutex services_mutex_{__LINE__, __FILE__};
+  mutex::Mutex desired_connections_mutex_{__LINE__, __FILE__};
+
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
   std::vector<connection_handle_type>                                    inactive_services_;
 

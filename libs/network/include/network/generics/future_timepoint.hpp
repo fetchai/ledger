@@ -34,23 +34,48 @@ public:
   using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
 
+  explicit FutureTimepoint(Duration const &dur)
+  {
+    due_time_ = Clock::now() + dur;
+  }
+
   FutureTimepoint()
   {
     due_time_ = Clock::now() - std::chrono::seconds(10000);
   }
+
   ~FutureTimepoint() = default;
 
   void SetSeconds(size_t seconds)
   {
     due_time_ = Clock::now() + std::chrono::seconds(seconds);
   }
+
   void SetMilliseconds(size_t milliseconds)
   {
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
-  void SetMilliseconds(const Timepoint &timepoint, size_t milliseconds)
+
+  void Set(Duration const &dur)
+  {
+    due_time_ = Clock::now() + dur;
+  }
+
+  void SetMilliseconds(Timepoint const &timepoint, size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
+  }
+
+  FutureTimepoint &operator=(size_t milliseconds)
+  {
+    due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
+    return *this;
+  }
+
+  FutureTimepoint &operator=(Duration dur)
+  {
+    due_time_ = Clock::now() + dur;
+    return *this;
   }
 
   bool IsDue(Timepoint const &time_point) const
@@ -63,7 +88,7 @@ public:
     return IsDue(Clock::now());
   }
 
-  Duration DueIn()
+  Duration DueIn() const
   {
     return due_time_ - Clock::now();
   }

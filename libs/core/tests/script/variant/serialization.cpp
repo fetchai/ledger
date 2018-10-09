@@ -32,7 +32,7 @@ TEST(variant_test, variant_serialization)
     TypedByteArrayBuffer ser;
     ser << a;
 
-    ser.Seek(0);
+    ser.seek(0);
 
     ser >> b;
   */

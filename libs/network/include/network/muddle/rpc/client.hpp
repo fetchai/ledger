@@ -116,7 +116,7 @@ protected:
 
             // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a
             // callback process
-            FETCH_LOG_INFO(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
+            FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
           });
 
       // TODO(EJF): Chained promises would remove the requirement for this

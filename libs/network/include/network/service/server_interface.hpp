@@ -43,6 +43,13 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
+    if (name < 1 || name > 255)
+    {
+      throw serializers::SerializableException(
+          error::PROTOCOL_RANGE,
+          byte_array_type(std::to_string(name) + " is out of protocol range."));
+    }
+
     // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
@@ -52,10 +59,12 @@ public:
 
     members_[name] = protocol;
 
+#if 0
     for (auto &feed : protocol->feeds())
     {
       feed->AttachToService(this);
     }
+#endif
   }
 
 protected:
@@ -106,8 +115,6 @@ protected:
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
       ExecuteCall(result, client, params);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest result type=", SERVICE_RESULT,
-                      " prom=", id, "  DATA=", result.data().Printable());
     }
     catch (serializers::SerializableException const &e)
     {
@@ -118,7 +125,7 @@ protected:
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Server responding to call from ", client,
-                    " data size=", result.Tell());
+                    " data size=", result.tell());
 
     {
       LOG_STACK_TRACE_POINT;

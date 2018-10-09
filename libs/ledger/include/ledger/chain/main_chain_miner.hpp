@@ -34,11 +34,12 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using BlockType      = chain::MainChain::BlockType;
-  using BlockHash      = chain::MainChain::BlockHash;
-  using BodyType       = chain::MainChain::BlockType::body_type;
-  using Miner          = fetch::chain::consensus::DummyMiner;
-  using MinerInterface = fetch::miner::MinerInterface;
+  using BlockType             = chain::MainChain::BlockType;
+  using BlockHash             = chain::MainChain::BlockHash;
+  using BodyType              = chain::MainChain::BlockType::body_type;
+  using Miner                 = fetch::chain::consensus::DummyMiner;
+  using MinerInterface        = fetch::miner::MinerInterface;
+  using BlockCompleteCallback = std::function<void(BlockType const &)>;
 
   static constexpr char const *LOGGING_NAME = "MainChainMiner";
   static constexpr uint32_t BLOCK_PERIOD_MS = 5000;
@@ -76,9 +77,9 @@ public:
     }
   }
 
-  void OnBlockComplete(std::function<void(const BlockType)> func)
+  void OnBlockComplete(BlockCompleteCallback const &func)
   {
-    onBlockComplete_ = func;
+    on_block_complete_ = func;
   }
 
 private:
@@ -107,7 +108,7 @@ private:
     std::mt19937       rng(rd());
 
     // schedule the next block time
-    timestamp_type next_block_time = CalculateNextBlockTime(rng);
+    Timestamp next_block_time = CalculateNextBlockTime(rng);
 
     BlockHash previous_heaviest;
 
@@ -141,9 +142,9 @@ private:
           blockCoordinator_.AddBlock(next_block);
 
           // TODO(EJF): Feels like this needs to be reworked into the block coordinator
-          if (onBlockComplete_)
+          if (on_block_complete_)
           {
-            onBlockComplete_(next_block);
+            on_block_complete_(next_block);
           }
 
           // stop searching for the hash and schedule the next time to generate a block
@@ -151,12 +152,15 @@ private:
           searching_for_hash = false;
         }
       }
-      else if (clock_type::now() >= next_block_time)  // if we are ready to generate a new block
+      else if (Clock::now() >= next_block_time)  // if we are ready to generate a new block
       {
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
         next_block_body.miner_number  = minerNumber_;
+
+        // Reset previous state
+        next_block_body.slices.clear();
 
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
@@ -184,7 +188,7 @@ private:
   MinerInterface &         miner_;
   std::thread              thread_;
   uint64_t                 minerNumber_{0};
-
+  BlockCompleteCallback    on_block_complete_;
   std::chrono::steady_clock::duration block_interval_;
 };
 
