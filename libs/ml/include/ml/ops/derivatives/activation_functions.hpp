@@ -33,42 +33,39 @@ template <typename T, typename C>
 class NDArrayIterator;
 
 template <typename VariablePtrType>
-void AddBroadcast(VariablePtrType cur_node)
+void Sigmoid(VariablePtrType cur_node)
 {
-  assert(cur_node->prev.size() == 2);
-
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
-  auto &dy    = cur_node->grad();
-
-  left->GradientAdd(dy);
-  right->GradientAdd(fetch::math::ReduceSum(dy, 0));
-  //  right->GradientAdd(fetch::math::ReduceMean(dy, 0));
-}
-
-template <typename VariablePtrType>
-void Dot(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 2);
-
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
-  auto &dy    = cur_node->grad();
-
-  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
-  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
-}
-
-template <typename VariablePtrType>
-void ReduceSum(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 2);
+  assert(cur_node->prev.size() == 1);
 
   auto &left = cur_node->prev[0];
   auto &dy   = cur_node->grad();
 
-  left->GradientAdd(dy);
-  //  cur_node.prev[0].grad() += cur_node.grad();
+  auto temp1 = fetch::math::Subtract(1.0, cur_node->data());
+  auto temp2 = fetch::math::Multiply(cur_node->data(), temp1);
+  auto temp3 = fetch::math::Multiply(dy, temp2);
+  left->GradientAdd(temp3);
+}
+
+template <typename VariablePtrType>
+void Relu(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left  = cur_node->prev[0];
+  auto &right = cur_node->prev[1];
+  auto &dy    = cur_node->grad();
+
+  for (std::size_t i = 0; i < left->data().size(); ++i)
+  {
+    if (left->data()[i] > right->data()[i])
+    {
+      left->GradientValueAdd(i, dy[i]);
+    }
+    else
+    {
+//      left->GradientSetZero(i);
+    }
+  }
 }
 
 };  // namespace derivatives

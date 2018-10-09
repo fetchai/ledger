@@ -22,6 +22,8 @@
 
 #include "math/linalg/matrix.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/ops/activation_functions.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 
 using namespace fetch::ml;
@@ -313,13 +315,13 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   // set up session
   SessionManager<ArrayType, VariableType> sess{};
 
-  Type        alpha  = 0.1;
-  std::size_t n_reps = 10000;
+  Type        alpha  = 0.01;
+  std::size_t n_reps = 5000;
 
   // set up some variables
-  std::size_t data_points = 3;
+  std::size_t data_points = 4;
   std::size_t input_size  = 3;
-  std::size_t h1_size  = 10;
+  std::size_t h1_size  = 20;
   std::size_t output_size = 2;
   std::vector<std::size_t> input_shape{data_points, input_size};
   std::vector<std::size_t> weights_shape{input_size, h1_size};
@@ -335,8 +337,6 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   auto biases2     = sess.Variable(biases_shape2, "biases", true);
   auto gt         = sess.Variable(gt_shape, "gt");
 
-//  AssignVariableIncrement(input_data, 1.0, 1.0);
-//  AssignVariableIncrement(gt, 2.0, 2.0);
   input_data->data().Set(0, 0, 1.0);
   input_data->data().Set(0, 1, 1.0);
   input_data->data().Set(0, 2, 1.0);
@@ -346,6 +346,9 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   input_data->data().Set(2, 0, 3.0);
   input_data->data().Set(2, 1, 3.0);
   input_data->data().Set(2, 2, 3.0);
+  input_data->data().Set(3, 0, 4.0);
+  input_data->data().Set(3, 1, 4.0);
+  input_data->data().Set(3, 2, 4.0);
 
   gt->data().Set(0, 0, 0.2);
   gt->data().Set(0, 1, 0.2);
@@ -353,6 +356,8 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   gt->data().Set(1, 1, 0.4);
   gt->data().Set(2, 0, 0.6);
   gt->data().Set(2, 1, 0.6);
+  gt->data().Set(3, 0, 0.8);
+  gt->data().Set(3, 1, 0.8);
 
   AssignRandom(weights, 0.0, 1.0 / input_size * data_points);
   AssignRandom(biases, 1.0, 1.0 / input_size * data_points);
@@ -366,7 +371,9 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
 
   auto dot_2 = fetch::ml::ops::Dot(sig_1, weights2, sess);
   auto add_2 = fetch::ml::ops::AddBroadcast(dot_2, biases2, sess);
-  auto y_pred = fetch::ml::ops::Sigmoid(add_2, sess);
+  auto sig_2 = fetch::ml::ops::Sigmoid(add_2, sess);
+
+  auto y_pred = sig_2;
 
   // simple loss
   auto loss = fetch::ml::ops::MeanSquareError(y_pred, gt, sess);

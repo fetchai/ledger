@@ -33,43 +33,30 @@ template <typename T, typename C>
 class NDArrayIterator;
 
 template <typename VariablePtrType>
-void AddBroadcast(VariablePtrType cur_node)
+void MeanSquareError(VariablePtrType &cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
-  auto &dy    = cur_node->grad();
-
-  left->GradientAdd(dy);
-  right->GradientAdd(fetch::math::ReduceSum(dy, 0));
-  //  right->GradientAdd(fetch::math::ReduceMean(dy, 0));
+  auto  temp3 = fetch::math::Subtract(left->data(), right->data());
+  left->GradientAdd(temp3);  //
 }
 
 template <typename VariablePtrType>
-void Dot(VariablePtrType cur_node)
+void CrossEntropyLoss(VariablePtrType cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
-  auto &dy    = cur_node->grad();
 
-  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
-  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
+  auto temp3 = fetch::math::Multiply(-1.0, right->data());
+  auto temp4 = fetch::math::Divide(right->data(), left->data());
+
+  left->GradientAdd(temp4);
 }
 
-template <typename VariablePtrType>
-void ReduceSum(VariablePtrType cur_node)
-{
-  assert(cur_node->prev.size() == 2);
-
-  auto &left = cur_node->prev[0];
-  auto &dy   = cur_node->grad();
-
-  left->GradientAdd(dy);
-  //  cur_node.prev[0].grad() += cur_node.grad();
-}
 
 };  // namespace derivatives
 };  // namespace ops

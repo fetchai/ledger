@@ -93,7 +93,9 @@ public:
                      FunctionSignature const &b_fn = nullptr, bool is_leaf = true,
                      bool requires_grad = false, std::vector<std::size_t> grad_shape = {})
   {
-    var->SetData(ArrayType(in_shape));
+    auto initial_data = ArrayType(in_shape);
+    initial_data.SetAllZero();
+    var->SetData(initial_data);
 
     // variable ID (Implement pointer as ID)
     var->id() = variable_counter;
