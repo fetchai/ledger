@@ -61,7 +61,7 @@ public:
     , manager_(nm)
   {
     thread_pool_ = network::MakeThreadPool(3);
-    thread_pool_->SetInterval(1000);
+    thread_pool_->SetIdleInterval(1000);
     thread_pool_->Start();
     thread_pool_->Post([this]() { thread_pool_->PostIdle([this]() { this->WorkCycle(); }); }, 1000);
   }
