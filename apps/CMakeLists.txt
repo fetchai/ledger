@@ -3,3 +3,4 @@ project(fetch-apps)
 
 add_subdirectory(miner)
 add_subdirectory(constellation)
+add_subdirectory(tx)
