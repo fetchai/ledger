@@ -166,8 +166,8 @@ TEST(loss_functions, Sigmoid_test)
 
   ASSERT_TRUE(ret->shape() == l1->shape());
 
-  std::vector<Type> gt_vec{0.95257412682243336, 0.88079707797788231, 0.7310585786300049, 0.5,
-                           0.2689414213699951,  0.11920292202211755};
+  std::vector<Type> gt_vec{0.04742587317756678087885, 0.1192029220221175559403, 0.2689414213699951207488, 0.5,
+                           0.7310585786300048792512,  0.8807970779778824440597};
   ArrayType         gt{ret->shape()};
   AssignArray(gt, gt_vec);
 
@@ -315,14 +315,14 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   // set up session
   SessionManager<ArrayType, VariableType> sess{};
 
-  Type        alpha  = 0.01;
-  std::size_t n_reps = 5000;
+  Type        alpha  = 0.1;
+  std::size_t n_reps = 1000;
 
   // set up some variables
   std::size_t data_points = 4;
   std::size_t input_size  = 3;
-  std::size_t h1_size  = 20;
-  std::size_t output_size = 2;
+  std::size_t h1_size  = 1024;
+  std::size_t output_size = 1;
   std::vector<std::size_t> input_shape{data_points, input_size};
   std::vector<std::size_t> weights_shape{input_size, h1_size};
   std::vector<std::size_t> biases_shape{1, h1_size};
@@ -351,27 +351,23 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
   input_data->data().Set(3, 2, 4.0);
 
   gt->data().Set(0, 0, 0.2);
-  gt->data().Set(0, 1, 0.2);
   gt->data().Set(1, 0, 0.4);
-  gt->data().Set(1, 1, 0.4);
   gt->data().Set(2, 0, 0.6);
-  gt->data().Set(2, 1, 0.6);
   gt->data().Set(3, 0, 0.8);
-  gt->data().Set(3, 1, 0.8);
 
-  AssignRandom(weights, 0.0, 1.0 / input_size * data_points);
-  AssignRandom(biases, 1.0, 1.0 / input_size * data_points);
-  AssignRandom(weights2, 0.0, 1.0 / data_points * h1_size);
-  AssignRandom(biases2, 1.0, 1.0 / data_points * h1_size);
+  AssignRandom(weights, 0.0, 1.0 / input_size);
+  AssignRandom(biases, 1.0, 1.0 / input_size);
+  AssignRandom(weights2, 0.0, 1.0 / h1_size);
+  AssignRandom(biases2, 1.0, 1.0 / h1_size);
 
   // Dot product
   auto dot_1 = fetch::ml::ops::Dot(input_data, weights, sess);
   auto add_1 = fetch::ml::ops::AddBroadcast(dot_1, biases, sess);
-  auto sig_1 = fetch::ml::ops::Sigmoid(add_1, sess);
+  auto sig_1 = fetch::ml::ops::Relu(add_1, sess);
 
   auto dot_2 = fetch::ml::ops::Dot(sig_1, weights2, sess);
   auto add_2 = fetch::ml::ops::AddBroadcast(dot_2, biases2, sess);
-  auto sig_2 = fetch::ml::ops::Sigmoid(add_2, sess);
+  auto sig_2 = fetch::ml::ops::Relu(add_2, sess);
 
   auto y_pred = sig_2;
 
@@ -383,6 +379,7 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
 
   // backward pass to get gradient
   sess.BackProp(input_data, loss, alpha, n_reps);
+  ASSERT_TRUE(loss->data()[0] < 0.01);
 
   // forward pass on the computational graph
   prediction = sess.Predict(input_data, y_pred);
@@ -391,5 +388,5 @@ TEST(loss_functions, dot_add_backprop_n_samples_test)
     std::cout << "prediction[" << idx << "]: " << prediction[idx] << std::endl;
   }
 
-  ASSERT_TRUE(prediction.AllClose(gt->data()));
+  ASSERT_TRUE(prediction.AllClose(gt->data(), 1.0));
 }

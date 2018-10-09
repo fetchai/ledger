@@ -42,8 +42,8 @@ void AddBroadcast(VariablePtrType cur_node)
   auto &dy    = cur_node->grad();
 
   left->GradientAdd(dy);
-  right->GradientAdd(fetch::math::ReduceSum(dy, 0));
-  //  right->GradientAdd(fetch::math::ReduceMean(dy, 0));
+//  right->GradientAdd(fetch::math::ReduceSum(dy, 0));
+    right->GradientAdd(fetch::math::ReduceMean(dy, 0));
 }
 
 template <typename VariablePtrType>

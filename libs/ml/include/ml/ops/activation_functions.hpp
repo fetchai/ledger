@@ -32,6 +32,37 @@ template <typename T, typename C>
 class NDArrayIterator;
 
 /**
+ * The Sigmoid activation squashes such that y = 1 / 1 + e^(-x)
+ * @tparam VariablePtrType
+ * @param cur_node
+ */
+template <typename VariablePtrType>
+void SigmoidImplementation(VariablePtrType cur_node)
+{
+  cur_node->data() = fetch::math::Sigmoid(cur_node->prev[0]->data());
+}
+template <typename VariablePtrType, typename SessionType>
+VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
+{
+  // define the derivative
+  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+    fetch::ml::ops::derivatives::Sigmoid(cur_node);
+  };
+
+  // define the forward function (i.e. the dot)
+  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+    SigmoidImplementation(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
+
+  ret->prev.push_back(left);
+
+  return ret;
+}
+
+/**
  * The rectified linear unit returns the elementwise maximum of 0 and y
  * @tparam ARRAY_TYPE
  * @tparam T
@@ -70,33 +101,55 @@ VariablePtrType Relu(VariablePtrType left, SessionType &sess)
   return ret;
 }
 
+
 /**
- * The Sigmoid activation squashes such that y = 1 / 1 + e^(-x)
- * @tparam VariablePtrType
- * @param cur_node
+ * The rectified linear unit returns the elementwise maximum of 0 and y
+ * @tparam ARRAY_TYPE
+ * @tparam T
+ * @param y
+ * @param ret
  */
 template <typename VariablePtrType>
-void SigmoidImplementation(VariablePtrType cur_node)
+void LeakyReluImplementation(VariablePtrType cur_node)
 {
-  cur_node->data() = fetch::math::Sigmoid(cur_node->prev[0]->data());
+  assert(cur_node->prev.size() == 2);
+  // we assume that prev[1] hold the Variable full of zeros that was previously defined
+  auto temp = fetch::math::Maximum(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+
+  for (std::size_t i = 0; i < temp.size(); ++i)
+  {
+    if (cur_node->prev[0]->data()[i] > 0)
+    {
+      cur_node->data()[i] = cur_node->prev[0]->data()[i];
+    }
+    else
+    {
+      cur_node->data()[i] = fetch::math::Multiply(0.2, cur_node->prev[0]->data()[i]);
+    }
+
+  }
 }
 template <typename VariablePtrType, typename SessionType>
-VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
+VariablePtrType LeakyRelu(VariablePtrType left, SessionType &sess)
 {
   // define the derivative
   std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
-    fetch::ml::ops::derivatives::Sigmoid(cur_node);
+    fetch::ml::ops::derivatives::LeakyRelu(cur_node);
   };
 
   // define the forward function (i.e. the dot)
   std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
-    SigmoidImplementation(cur_node);
+    LeakyReluImplementation(cur_node);
   };
 
-  // define the return variable with the Dot computation
-  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
+  // define Variable of zeros to compare against
+  VariablePtrType zeros = SessionType::Zeroes(left->shape(), sess);
+
+  // define the return variable with the Relu computation
+  VariablePtrType ret = sess.Variable(left->shape(), "Relu", f_fn, b_fn, false);
 
   ret->prev.push_back(left);
+  ret->prev.push_back(zeros);
 
   return ret;
 }

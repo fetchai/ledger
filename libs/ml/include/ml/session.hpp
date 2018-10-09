@@ -157,10 +157,12 @@ public:
     ++layer_counter;
 
     VariablePtrType weights = std::make_shared<VariableType>();
-    VariableSetup(weights, in_shape, layer_name + "_weights", nullptr, nullptr, true, true, in_shape);
+    VariableSetup(weights, in_shape, layer_name + "_weights", nullptr, nullptr, true, true,
+                  in_shape);
 
     VariablePtrType biases = std::make_shared<VariableType>();
-    VariableSetup(biases, {1, in_shape[1]}, layer_name + "_biases", nullptr, nullptr, true, true, in_shape);
+    VariableSetup(biases, {1, in_shape[1]}, layer_name + "_biases", nullptr, nullptr, true, true,
+                  in_shape);
 
     LayerPtrType l = std::make_shared<LayerType>();
     l->weights()   = weights;
@@ -228,20 +230,20 @@ public:
 
       // calculate gradients
       BackwardGraph(loss_var);
-//
-//      std::cout << "BackwardGraph: " << std::endl;
-//      for (auto &cur_var : all_variables)
-//      {
-//        std::cout << "variable_name(): " << cur_var.second->variable_name() << std::endl;
-//        for (std::size_t idx = 0; idx < cur_var.second->data().size(); ++idx)
-//        {
-//          std::cout << "data: " << cur_var.second->data()[idx] << std::endl;
-//        }
-//        for (std::size_t idx = 0; idx < cur_var.second->grad().size(); ++idx)
-//        {
-//          std::cout << "grad: " << cur_var.second->grad()[idx] << std::endl;
-//        }
-//      }
+      //
+      //      std::cout << "BackwardGraph: " << std::endl;
+      //      for (auto &cur_var : all_variables)
+      //      {
+      //        std::cout << "variable_name(): " << cur_var.second->variable_name() << std::endl;
+      //        for (std::size_t idx = 0; idx < cur_var.second->data().size(); ++idx)
+      //        {
+      //          std::cout << "data: " << cur_var.second->data()[idx] << std::endl;
+      //        }
+      //        for (std::size_t idx = 0; idx < cur_var.second->grad().size(); ++idx)
+      //        {
+      //          std::cout << "grad: " << cur_var.second->grad()[idx] << std::endl;
+      //        }
+      //      }
 
       // apply gradients
       top_sort_map.clear();

@@ -57,7 +57,6 @@ void CrossEntropyLoss(VariablePtrType cur_node)
   left->GradientAdd(temp4);
 }
 
-
 };  // namespace derivatives
 };  // namespace ops
 };  // namespace ml

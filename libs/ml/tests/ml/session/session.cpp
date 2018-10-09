@@ -194,10 +194,10 @@ TEST(session_test, trivial_backprop_sigmoid_test)
   std::size_t n_reps = 1000;
 
   // set up some variables
-  std::size_t data_points = 1;
-  std::size_t input_size  = 1;
-  std::size_t h1_size     = 10;
-  std::size_t output_size = 1;
+  std::size_t              data_points = 1;
+  std::size_t              input_size  = 1;
+  std::size_t              h1_size     = 10;
+  std::size_t              output_size = 1;
   std::vector<std::size_t> input_shape{data_points, input_size};   // data points x input size
   std::vector<std::size_t> weights_shape{input_size, h1_size};     // input size x neurons
   std::vector<std::size_t> biases_shape{1, h1_size};               // input size x neurons

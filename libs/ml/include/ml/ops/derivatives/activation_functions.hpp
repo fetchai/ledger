@@ -55,6 +55,31 @@ void Relu(VariablePtrType cur_node)
   auto &right = cur_node->prev[1];
   auto &dy    = cur_node->grad();
 
+  auto new_grads = fetch::math::Maximum(left->data(), right->data());
+  left->GradientAdd(fetch::math::Multiply(dy, new_grads));
+
+//  for (std::size_t i = 0; i < left->data().size(); ++i)
+//  {
+//    if (left->data()[i] > right->data()[i])
+//    {
+//      left->GradientValueAdd(i, dy[i]);
+//    }
+//    else
+//    {
+//      //      left->GradientSetZero(i);
+//    }
+//  }
+}
+
+template <typename VariablePtrType>
+void LeakyRelu(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left  = cur_node->prev[0];
+  auto &right = cur_node->prev[1];
+  auto &dy    = cur_node->grad();
+
   for (std::size_t i = 0; i < left->data().size(); ++i)
   {
     if (left->data()[i] > right->data()[i])
@@ -63,11 +88,10 @@ void Relu(VariablePtrType cur_node)
     }
     else
     {
-//      left->GradientSetZero(i);
+      left->GradientValueAdd(i, fetch::math::Multiply(0.2, dy[i]));
     }
   }
 }
-
 };  // namespace derivatives
 };  // namespace ops
 };  // namespace ml
