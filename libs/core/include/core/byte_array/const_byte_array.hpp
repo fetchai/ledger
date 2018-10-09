@@ -335,7 +335,7 @@ protected:
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
-    std::size_t new_length;
+    std::size_t new_length{0};
 
     switch (resize_paradigm)
     {
@@ -377,7 +377,7 @@ protected:
                ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
                bool const           zero_reserved_space = true)
   {
-    std::size_t new_capacity_for_reserve;
+    std::size_t new_capacity_for_reserve{0};
 
     switch (resize_paradigm)
     {

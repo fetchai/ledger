@@ -64,7 +64,7 @@ uint32_t Log2(uint32_t value)
 bool EnsureLog2(uint32_t value)
 {
   uint32_t const log2_value = Log2(value);
-  return value == (1 << log2_value);
+  return value == (1u << log2_value);
 }
 
 struct CommandLineArguments

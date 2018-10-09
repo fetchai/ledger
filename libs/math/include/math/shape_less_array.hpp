@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <type_traits>
 
 namespace fetch {
 namespace math {
@@ -51,6 +52,10 @@ public:
   /* Iterators for accessing and modifying the array */
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
+
+  // TODO(private issue 282): This probably needs to be removed into the meta
+  template <typename Type, typename ReturnType = void>
+  using IsUnsignedLike = typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value, ReturnType>::type;
 
   static constexpr char const *LOGGING_NAME = "ShapeLessArray";
 
@@ -515,7 +520,8 @@ public:
     return data_[i] = t;
   }
 
-  static ShapeLessArray Arange(type const &from, type const &to, type const &delta)
+  template <typename Unsigned>
+  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned from, Unsigned to, Unsigned delta)
   {
     ShapeLessArray ret;
 
@@ -527,13 +533,14 @@ public:
     return ret;
   }
 
-  ShapeLessArray &FillArange(type from, type const &to)
+  template <typename Unsigned>
+  IsUnsignedLike<Unsigned, ShapeLessArray &> FillArange(Unsigned from, Unsigned const &to)
   {
     assert(from < to);
 
     std::size_t N     = this->size();
-    type        d     = from;
-    type        delta = (to - from) / static_cast<type>(N);
+    type        d     = static_cast<type>(from);
+    type        delta = static_cast<type>(to - from) / static_cast<type>(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {
