@@ -40,10 +40,30 @@
 
 namespace {
 
+template<typename STREAM>
+void printSeparator(STREAM& stream, std::string const& desc = std::string{})
+{
+  static std::string const line_separ("================================================================================");
+  stream << line_separ << std::endl;
+  if (!desc.empty())
+  {
+    static std::string const prefix("====   ");
+    stream << prefix << desc;
+
+    constexpr std::size_t sfx_space_len = 3;
+    std::size_t const left_side_len = prefix.size() + desc.size();
+    if (left_side_len <= line_separ.size() - sfx_space_len)
+    {
+      stream << "   " << std::string((line_separ.size() - sfx_space_len - left_side_len), '=');
+    }
+    stream << std::endl;
+  }
+}
+
 struct CommandLineArguments
 {
   std::string input_json_tx_filename;
-
+  
   static CommandLineArguments Parse(int argc, char **argv)
   {
     CommandLineArguments args;
@@ -62,18 +82,16 @@ struct CommandLineArguments
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args)
   {
-    s << '\n';
+    printSeparator(s, "COMANDLINE ARGUMENTS");
     s << "input tx file..: " << args.input_json_tx_filename << '\n';
     return s;
   }
 };
 
-void printRandomTx(std::size_t   num_of_resources  = 3,
-                   int64_t const num_of_signatures = -4,
-                   bool const    update_digest     = false)
+void printTx(fetch::chain::MutableTransaction const& tx, std::string const& desc = std::string{})
 {
-  auto tx = fetch::chain::RandomTransaction(3,3);
-  std::cout << tx << std::endl;
+  printSeparator(std::cout, desc);
+  std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
 }
 
 void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
@@ -97,32 +115,64 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
 
 fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant const &metadata_v)
 {
-  auto data = fetch::byte_array::FromBase64(metadata_v["data"].As<fetch::byte_array::ByteArray>());
-  auto fee = metadata_v["fee"].As<double>();
-  auto contract_name = metadata_v["contract_name"].As<fetch::byte_array::ByteArray>();
-
-  auto resources_v = metadata_v["resources"];
-  //if (resources_v.is_object)
-  fetch::serializers::ByteArrayBuffer resources_stream{
-    fetch::byte_array::FromBase64(resources_v.As<fetch::byte_array::ByteArray>())};
-  std::set<fetch::byte_array::ConstByteArray> resources;
-  resources_stream >> resources;
-
-  fetch::serializers::ByteArrayBuffer private_keys_stream{
-    fetch::byte_array::FromBase64(metadata_v["private_keys"].As<fetch::byte_array::ByteArray>())};
-  std::set<fetch::byte_array::ConstByteArray> private_keys;
-  resources_stream >> resources;
-
-  //metadata_v["resources"];
-
-  (void)fee;
   fetch::chain::MutableTransaction mtx;
+  mtx.set_contract_name(metadata_v["contract_name"].As<fetch::byte_array::ByteArray>());
+  mtx.set_data(fetch::byte_array::FromBase64(metadata_v["data"].As<fetch::byte_array::ByteArray>()));
+  mtx.set_fee(metadata_v["fee"].As<uint64_t>());
+  auto resources_v = metadata_v["resources"];
+  auto private_keys_v = metadata_v["private_keys"];
+
+  auto &resources = mtx.resources();
+  if (resources_v.is_array())
+  {
+      resources_v.ForEach([&](fetch::script::Variant &value) -> bool {
+        auto const result = resources.emplace(fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
+        if (!result.second)
+        {
+          std::cerr << "WARNING: Atempt to insert already existing resource \"" << *result.first << "\"!" << std::endl;
+        }
+        return true;
+    });
+  }
+  else if (!resources_v.is_undefined())
+  {
+    std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type." << std::endl;
+  }
+  
+  std::set<fetch::byte_array::ConstByteArray> private_keys;
+  if (private_keys_v.is_array())
+  {
+      private_keys_v.ForEach([&](fetch::script::Variant &value) -> bool {
+        auto const result = private_keys.emplace(fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
+        if (!result.second)
+        {
+          std::cerr << "WARNING: Atempt to insert already existing key \"" << *result.first << "\"!" << std::endl;
+        }
+        return true;
+    });
+  }
+  else if (!private_keys_v.is_undefined())
+  {
+    std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type." << std::endl;
+  }
+
+  auto txSigningAdapter = fetch::chain::TxSigningAdapterFactory(mtx);
+  for (auto const& priv_key : private_keys)
+  {
+    mtx.Sign(priv_key, txSigningAdapter);
+  }
+  
+  mtx.UpdateDigest();
+
   return mtx;
 }
 
 
 void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
 {
+  printSeparator(std::cout, "INPUT JSON");
+  std::cout << tx_jsom_string << std::endl;
+
   fetch::json::JSONDocument tx_json{tx_jsom_string};
   auto &             tx_v = tx_json.root();
 
@@ -139,7 +189,7 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
     if (metadata_v.is_object())
     {
       auto mtx = constructTxFromMetadata(metadata_v);
-
+      printTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA"); 
     }
     else
     {
@@ -160,7 +210,8 @@ int main(int argc, char **argv)
 
     if (args.input_json_tx_filename.empty())
     {
-      printRandomTx(3,3);
+      auto mtx = fetch::chain::RandomTransaction(3,3);
+      printTx(mtx, "RANDOM GENERATED TRANSACTION");
       return EXIT_SUCCESS;
     }
 
