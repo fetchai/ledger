@@ -63,7 +63,8 @@ void printSeparator(STREAM& stream, std::string const& desc = std::string{})
 struct CommandLineArguments
 {
   std::string input_json_tx_filename;
-  
+  bool is_verbose = false;
+
   static CommandLineArguments Parse(int argc, char **argv)
   {
     CommandLineArguments args;
@@ -72,6 +73,7 @@ struct CommandLineArguments
 
     fetch::commandline::Params parameters;
     parameters.add(args.input_json_tx_filename, "f", "file name for json input TX data.", std::string{});
+    parameters.add(args.is_verbose, "v", "enables verbose output printing out details", false);
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -88,9 +90,12 @@ struct CommandLineArguments
   }
 };
 
-void printTx(fetch::chain::MutableTransaction const& tx, std::string const& desc = std::string{})
+void printTx(fetch::chain::MutableTransaction const& tx, std::string const& desc = std::string{}, bool const &is_verbose=false)
 {
-  printSeparator(std::cout, desc);
+  if (is_verbose)
+  {
+    printSeparator(std::cout, desc);
+  }
   std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
 }
 
@@ -100,10 +105,9 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
   auto txdata = fetch::chain::TxSigningAdapterFactory(tx);
   tx_data_stream >> txdata;
 
-
   if (tx.Verify(txdata))
   {
-    std::cout << "SUCCESS: Transaction has been verified.";
+    std::cout << "SUCCESS: Transaction has been verified." << std::endl;
   }
   else
   {
@@ -168,10 +172,13 @@ fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant 
 }
 
 
-void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
+void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string, bool const& is_verbose)
 {
-  printSeparator(std::cout, "INPUT JSON");
-  std::cout << tx_jsom_string << std::endl;
+  if (is_verbose)
+  {
+    printSeparator(std::cout, "INPUT JSON");
+    std::cout << tx_jsom_string << std::endl;
+  }
 
   fetch::json::JSONDocument tx_json{tx_jsom_string};
   auto &             tx_v = tx_json.root();
@@ -189,7 +196,7 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
     if (metadata_v.is_object())
     {
       auto mtx = constructTxFromMetadata(metadata_v);
-      printTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA"); 
+      printTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA", is_verbose); 
     }
     else
     {
@@ -206,12 +213,15 @@ int main(int argc, char **argv)
   try
   {
     auto const   args = CommandLineArguments::Parse(argc, argv);
-    std::cout << args << std::endl;
+    if (args.is_verbose)
+    {
+      std::cout << args << std::endl;
+    }
 
     if (args.input_json_tx_filename.empty())
     {
       auto mtx = fetch::chain::RandomTransaction(3,3);
-      printTx(mtx, "RANDOM GENERATED TRANSACTION");
+      printTx(mtx, "RANDOM GENERATED TRANSACTION", args.is_verbose);
       return EXIT_SUCCESS;
     }
 
@@ -231,7 +241,7 @@ int main(int argc, char **argv)
       buffer << istrm.rdbuf();
       tx_json = buffer.str();
     }
-    handleProvidedTx(tx_json);
+    handleProvidedTx(tx_json, args.is_verbose);
 
     return EXIT_SUCCESS;
   }
