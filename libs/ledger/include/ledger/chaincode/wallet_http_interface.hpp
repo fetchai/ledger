@@ -104,8 +104,7 @@ private:
     uint64_t count = 1;
 
     {
-      json::JSONDocument doc;
-      doc = request.JSON();
+      json::JSONDocument doc = request.JSON();
 
       auto const &count_v{doc["count"]};
       if (count_v.is_int())
