@@ -32,6 +32,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
+
 #include "miner/resource_mapper.hpp"
 
 #include <random>
