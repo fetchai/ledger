@@ -174,7 +174,7 @@ private:
                    " Occupancy: ", generator_.block_occupancy(), " (", occupancy_pc, "%)");
   }
 
-  uint64_t backlog() const
+  uint64_t backlog() const override
   {
     lock_guard_type lock(pending_queue_lock_);
     return generator_.unspent().size() + pending_queue_.size();

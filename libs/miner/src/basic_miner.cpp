@@ -166,7 +166,6 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 
 uint64_t BasicMiner::backlog() const
 {
-  FETCH_LOCK(main_queue_lock_);
   return main_queue_.size();
 }
 
