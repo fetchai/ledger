@@ -69,6 +69,11 @@ public:
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
+  void Release()
+  {
+    array_.reset();
+  }
+
   // Type creations
   void MakeNull();
   void MakeUndefined();
@@ -256,6 +261,8 @@ public:
   VariantArray &operator=(VariantArray const &other) = default;
   VariantArray &operator=(VariantArray &&other) noexcept = default;
 
+  ~VariantArray() = default;
+
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
@@ -263,6 +270,14 @@ public:
   std::size_t    size() const
   {
     return size_;
+  }
+
+  void Release()
+  {
+    if (pointer_)
+    {
+      pointer_->Release();
+    }
   }
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
@@ -338,6 +353,7 @@ private:
 inline Variant::Variant()
   : type_(UNDEFINED)
 {}
+
 inline Variant::Variant(int64_t const &i)
 {
   *this = i;
