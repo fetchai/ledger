@@ -208,6 +208,8 @@ public:
       case PromiseState::WAITING:
         return false;
       }
+
+      return false;
     }  // end PINGING
     case State::QUERYING:
     {

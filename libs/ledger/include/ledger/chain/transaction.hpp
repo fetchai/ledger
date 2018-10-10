@@ -30,7 +30,6 @@ public:
   using super_type::hasher_type;
   using super_type::digest_type;
   using super_type::resource_set_type;
-  using super_type::signatures_type;
   using super_type::resources;
   using super_type::summary;
   using super_type::data;
@@ -73,7 +72,6 @@ public:
   using super_type::hasher_type;
   using super_type::digest_type;
   using super_type::resource_set_type;
-  using super_type::signatures_type;
 
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {

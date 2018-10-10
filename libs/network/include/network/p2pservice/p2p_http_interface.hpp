@@ -40,7 +40,6 @@ class P2PHttpInterface : public http::HTTPModule
 public:
   using MainChain   = chain::MainChain;
   using Muddle      = muddle::Muddle;
-  using P2PService  = P2PService;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
 
   P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
