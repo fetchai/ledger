@@ -69,10 +69,7 @@ public:
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
-  void Release()
-  {
-    array_.reset();
-  }
+  void ReleaseResources();
 
   // Type creations
   void MakeNull();
@@ -272,11 +269,14 @@ public:
     return size_;
   }
 
-  void Release()
+  void ReleaseResources()
   {
-    if (pointer_)
+    if (data_)
     {
-      pointer_->Release();
+      for (auto &variant : *data_)
+      {
+        variant.ReleaseResources();
+      }
     }
   }
 
@@ -385,6 +385,11 @@ inline Variant::Variant(float const &f)
 inline Variant::Variant(double const &f)
 {
   *this = f;
+}
+
+inline void Variant::ReleaseResources()
+{
+  array_.reset();
 }
 
 inline void Variant::MakeNull()

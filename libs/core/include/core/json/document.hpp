@@ -71,7 +71,7 @@ public:
   {
     // Variant array must be released to avoid a shared pointer circular reference/leak:
     // VariantArray contains a Variant which contains that VariantArray (in the case it's an object)
-    variants_.Release();
+    variants_.ReleaseResources();
   }
 
   script::Variant &operator[](std::size_t const &i)

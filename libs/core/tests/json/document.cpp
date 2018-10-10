@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     {
       ByteArray data = "{ \"hello\" : fals}";
 
-      for (std::size_t i = 0; i < 100000; ++i)
+      for (std::size_t i = 0; i < 1000; ++i)
       {
         try
         {
@@ -166,7 +166,32 @@ int main(int argc, char **argv)
     {
       ByteArray data = "{ \"hello\" : 3}";
 
-      for (std::size_t i = 0; i < 10000; ++i)
+      for (std::size_t i = 0; i < 1000; ++i)
+      {
+        JSONDocument test;
+        test.Parse(data);
+
+        if (i == 0)
+        {
+          std::cout << test.root() << std::endl;
+        }
+      }
+    };
+
+    SECTION("leak test, nested objects")
+    {
+      ByteArray data = R"(
+      {
+        "a": 3,
+        "x": {
+          "y": [1,2,3],
+          "z": null,
+          "q": [],
+          "hello world": {}
+        }
+      })";
+
+      for (std::size_t i = 0; i < 1000; ++i)
       {
         JSONDocument test;
         test.Parse(data);
