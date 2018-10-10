@@ -163,7 +163,6 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                   std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_,
                                                           block_packer_),
                   std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
-  , my_network_address_(std::move(my_network_address))
 {
   FETCH_UNUSED(num_slices_);
 
