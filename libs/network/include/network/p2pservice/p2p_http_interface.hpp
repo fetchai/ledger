@@ -202,11 +202,11 @@ private:
     return cache;
   }
 
-  MainChain &  chain_;
-  Muddle &     muddle_;
-  P2PService & p2p_;
+  MainChain   &chain_;
+  Muddle      &muddle_;
+  P2PService  &p2p_;
   TrustSystem &trust_;
-  Miner &      miner_;
+  Miner       &miner_;
 };
 
 }  // namespace p2p

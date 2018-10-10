@@ -32,9 +32,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
-
 #include "miner/resource_mapper.hpp"
-#include "network/details/thread_pool.hpp"
 
 #include <random>
 #include <sstream>
@@ -91,8 +89,7 @@ public:
          });
   }
 
-  ~WalletHttpInterface()
-  {}
+  ~WalletHttpInterface() = default;
 
 private:
   /**
