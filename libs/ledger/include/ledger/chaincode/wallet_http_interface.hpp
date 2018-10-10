@@ -103,15 +103,20 @@ private:
     // Determine number of locations to create
     uint64_t count = 1;
 
+    try
     {
-      json::JSONDocument doc;
-      doc = request.JSON();
+      json::JSONDocument doc = request.JSON();
 
-      auto const &count_v{doc["count"]};
+      auto const &count_v =doc["count"];
       if (count_v.is_int())
       {
         count = count_v.As<uint64_t>();
       }
+    }
+    catch (json::JSONParseException &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Json Parse failure: ", ex.what());
+      return BadJsonResponse(ErrorCode::PARSE_FAILURE);
     }
 
     // Avoid locations = 0 corner case

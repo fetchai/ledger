@@ -67,6 +67,9 @@ public:
     Parse(document);
   }
 
+  JSONDocument(JSONDocument const &) = delete;
+  JSONDocument(JSONDocument &&) = default;
+
   ~JSONDocument()
   {
     // Variant array must be released to avoid a shared pointer circular reference/leak:
@@ -182,6 +185,9 @@ public:
   {
     return variants_[0];
   }
+
+  JSONDocument &operator=(JSONDocument const &) = delete;
+  JSONDocument &operator=(JSONDocument &&) = default;
 
 private:
   std::vector<uint16_t> counters_;
