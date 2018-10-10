@@ -30,11 +30,11 @@ class Peer
 public:
   // Construction / Destruction
   Peer() = default;
-  Peer(char const *address)
+  explicit Peer(char const *address)
     : Peer(std::string{address})
   {}
-  Peer(std::string const &address);
-  Peer(std::string address, uint16_t port)
+  explicit Peer(std::string const &address);
+  explicit Peer(std::string address, uint16_t port)
     : address_{std::move(address)}
     , port_{port}
   {}
@@ -43,6 +43,7 @@ public:
   ~Peer()            = default;
 
   bool Parse(std::string const &address);
+
   void Update(std::string address, uint16_t port)
   {
     address_ = std::move(address);
@@ -53,6 +54,7 @@ public:
   {
     return address_;
   }
+
   uint16_t port() const
   {
     return port_;

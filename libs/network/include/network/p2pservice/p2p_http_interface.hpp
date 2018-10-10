@@ -41,7 +41,7 @@ public:
   using MainChain   = chain::MainChain;
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
-  using Miner       = miner::BasicMiner;
+  using Miner       = miner::MinerInterface;
 
   P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust,
                    Miner &miner)
@@ -202,11 +202,11 @@ private:
     return cache;
   }
 
-  MainChain &  chain_;
-  Muddle &     muddle_;
-  P2PService & p2p_;
+  MainChain   &chain_;
+  Muddle      &muddle_;
+  P2PService  &p2p_;
   TrustSystem &trust_;
-  Miner &      miner_;
+  Miner       &miner_;
 };
 
 }  // namespace p2p

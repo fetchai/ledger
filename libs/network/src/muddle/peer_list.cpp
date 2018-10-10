@@ -135,6 +135,8 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
   {
     router_.AddConnection(connection_handle);
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " established");
 }
 
 void PeerConnectionList::RemoveConnection(Uri const &peer)

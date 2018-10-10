@@ -58,8 +58,6 @@ public:
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
-  uint64_t backlog() const;
-
 private:
   using BitVector = bitmanip::BitVector;
 
@@ -90,7 +88,6 @@ private:
   TransactionList pending_;                          ///< The pending transaction queue
   Mutex main_queue_lock_{__LINE__, __FILE__};        ///< The lock for the main transaction queue
   TransactionList main_queue_;                       ///< The main transaction queue
-  uint64_t        backlog_ = 0;
 };
 
 }  // namespace miner

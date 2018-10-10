@@ -27,6 +27,7 @@ namespace fetch {
 namespace {
 
 using script::Variant;
+using network::Uri;
 using http::JsonHttpClient;
 
 const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
@@ -124,7 +125,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   request.MakeObject();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"]       = external_address_;
-  request["port"]       = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]       = port_;
 
   JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
@@ -156,7 +157,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
       if (script::Extract(peer_object, "host", host) && script::Extract(peer_object, "port", port))
       {
         std::string const uri = "tcp://" + host + ':' + std::to_string(port);
-        peers.emplace_back(uri);
+        peers.emplace_back(Uri{ConstByteArray{uri}});
       }
       else
       {
@@ -178,7 +179,7 @@ bool BootstrapMonitor::RegisterNode()
   request["public_key"]     = byte_array::ToBase64(identity_.identifier());
   request["network"]        = network_id_;
   request["host"]           = external_address_;
-  request["port"]           = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]           = port_;
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
   request["host_name"]      = host_name_;
