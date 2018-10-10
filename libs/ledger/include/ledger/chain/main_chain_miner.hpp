@@ -29,6 +29,8 @@
 namespace fetch {
 namespace chain {
 
+using std::this_thread::sleep_for;
+
 // TODO(issue 33): fine for now, but it would be more efficient if the block
 // coordinator launched mining tasks
 class MainChainMiner
@@ -83,21 +85,23 @@ public:
   }
 
 private:
-  using clock_type     = std::chrono::high_resolution_clock;
-  using timestamp_type = clock_type::time_point;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timestamp = Clock::time_point;
+  using Milliseconds = std::chrono::milliseconds;
+  using Microseconds = std::chrono::microseconds;
 
   std::function<void(const BlockType)> onBlockComplete_;
 
   template <typename T>
-  timestamp_type CalculateNextBlockTime(T &rng)
+  Timestamp CalculateNextBlockTime(T &rng)
   {
     auto jitterrange = block_interval_ * 0.1;
     auto jitterrange_us = std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count();
     auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
 
-    timestamp_type block_time = clock_type::now()
+    Timestamp block_time = Clock::now()
       + block_interval_
-      + std::chrono::microseconds{random_us};
+      + Microseconds{random_us};
 
     return block_time;
   }
@@ -174,7 +178,7 @@ private:
         searching_for_hash = true;
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+      sleep_for(std::chrono::milliseconds{10});
     }
   }
 
