@@ -39,9 +39,9 @@ char const *ToString(MetricHandler::Instrument instrument)
   {
   case MetricHandler::Instrument::TRANSACTION:
     return "transaction";
-  default:
-    return "unknown";
   }
+
+  return "unknown";
 }
 
 /**
@@ -56,6 +56,8 @@ char const *ToString(MetricHandler::Event event)
   {
   case MetricHandler::Event::SUBMITTED:
     return "submitted";
+  case MetricHandler::Event::STORED:
+    return "stored";
   case MetricHandler::Event::QUEUED:
     return "queued";
   case MetricHandler::Event::PACKED:
@@ -64,9 +66,9 @@ char const *ToString(MetricHandler::Event event)
     return "exec-started";
   case MetricHandler::Event::EXECUTION_COMPLETE:
     return "exec-complete";
-  default:
-    return "unknown";
   }
+
+  return "unknown";
 }
 
 }  // namespace

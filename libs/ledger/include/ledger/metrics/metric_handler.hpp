@@ -40,6 +40,7 @@ public:
   enum class Event
   {
     SUBMITTED,
+    STORED,
     QUEUED,
     PACKED,
     EXECUTION_STARTED,
