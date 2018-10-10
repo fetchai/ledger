@@ -44,7 +44,7 @@ public:
   using Miner       = miner::BasicMiner;
 
   P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust,
-      Miner &miner)
+                   Miner &miner)
     : chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
@@ -139,9 +139,9 @@ private:
   }
 
   http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
-                                    http::HTTPRequest const &   request)
+                                      http::HTTPRequest const &   request)
   {
-    script::Variant    data;
+    script::Variant data;
     data.MakeObject();
 
     data["success"] = true;
@@ -202,11 +202,11 @@ private:
     return cache;
   }
 
-  MainChain   &chain_;
-  Muddle      &muddle_;
-  P2PService  &p2p_;
+  MainChain &  chain_;
+  Muddle &     muddle_;
+  P2PService & p2p_;
   TrustSystem &trust_;
-  Miner       &miner_;
+  Miner &      miner_;
 };
 
 }  // namespace p2p

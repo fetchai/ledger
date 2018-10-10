@@ -90,7 +90,7 @@ private:
   TransactionList pending_;                          ///< The pending transaction queue
   Mutex main_queue_lock_{__LINE__, __FILE__};        ///< The lock for the main transaction queue
   TransactionList main_queue_;                       ///< The main transaction queue
-  uint64_t backlog_ = 0;
+  uint64_t        backlog_ = 0;
 };
 
 }  // namespace miner

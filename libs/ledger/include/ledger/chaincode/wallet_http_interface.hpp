@@ -343,13 +343,13 @@ private:
     return msg;
   }
 
-  TokenContract               contract_;
-  StorageInterface &          state_;
-  TransactionProcessor       &processor_;
-  KeyStore                    key_store_;
-  std::size_t                 num_lanes_{0};
-  uint32_t                    log2_lanes_{0};
-  fetch::network::ThreadPool  thread_pool_{network::MakeThreadPool(20)};
+  TokenContract              contract_;
+  StorageInterface &         state_;
+  TransactionProcessor &     processor_;
+  KeyStore                   key_store_;
+  std::size_t                num_lanes_{0};
+  uint32_t                   log2_lanes_{0};
+  fetch::network::ThreadPool thread_pool_{network::MakeThreadPool(20)};
 };
 
 }  // namespace ledger
