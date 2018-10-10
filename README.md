@@ -38,7 +38,7 @@ Build
     cmake ..
     make -j8
 
-Generate coverage quick start
+Generate coverage quick start (optional)
 =====
 
     cd build
