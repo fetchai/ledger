@@ -68,7 +68,7 @@ public:
   }
 
   JSONDocument(JSONDocument const &) = delete;
-  JSONDocument(JSONDocument &&) = default;
+  JSONDocument(JSONDocument &&)      = default;
 
   ~JSONDocument()
   {
