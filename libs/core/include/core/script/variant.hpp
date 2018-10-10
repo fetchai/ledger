@@ -269,6 +269,10 @@ public:
     return size_;
   }
 
+  // Circular references can form when constructing variants in that any variant in this subarray
+  // can point back to this subarray, causing a memory leak. To break this, we force every variant
+  // in our list to release its resources. This will not play well if the variant array is not
+  // wholly contained (but for our use case it is)
   void ReleaseResources()
   {
     if (data_)
