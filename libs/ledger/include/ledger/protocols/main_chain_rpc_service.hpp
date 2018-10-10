@@ -25,6 +25,9 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/has_worker_thread.hpp"
 
 #include <memory>
 
@@ -34,19 +37,29 @@ class MainChain;
 }
 namespace ledger {
 
+class MainChainSyncWorker;
+
 class MainChainRpcService : public muddle::rpc::Server,
                             public std::enable_shared_from_this<MainChainRpcService>
 {
 public:
+  friend class MainChainSyncWorker;
   using MuddleEndpoint  = muddle::MuddleEndpoint;
   using MainChain       = chain::MainChain;
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using Address         = muddle::Packet::Address;
   using Block           = chain::MainChain::BlockType;
+  using BlockHash       = chain::MainChain::BlockHash;
   using Promise         = service::Promise;
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
+
+  using Worker                  = MainChainSyncWorker;
+  using WorkerP                 = std::shared_ptr<Worker>;
+  using BackgroundedWork        = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
 
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
 
@@ -60,6 +73,10 @@ private:
 
   bool RequestHeaviestChainFromPeer(Address const &from);
 
+  void AddLooseBlock(const BlockHash &hash, const Address &address);
+  void ServiceLooseBlocks();
+  void RequestedChainArrived(Address const &peer, BlockList block_list);
+
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
@@ -70,7 +87,8 @@ private:
   Mutex     main_chain_rpc_client_lock_{__LINE__, __FILE__};
   RpcClient main_chain_rpc_client_;
 
-  ChainRequests chain_requests_;
+  BackgroundedWork        bg_work_;
+  BackgroundedWorkThreadP workthread_;
 };
 
 }  // namespace ledger

@@ -33,6 +33,73 @@ using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
 namespace fetch {
 namespace ledger {
 
+class MainChainSyncWorker
+{
+  public:
+  using BlockHash               = MainChainRpcService::BlockHash;
+  using BlockList               = MainChainRpcService::BlockList;
+  using Address                 = MainChainRpcService::Address;
+  using PromiseState         = fetch::service::PromiseState;
+  using Promise              = service::Promise;
+  using FutureTimepoint      = network::FutureTimepoint;
+
+  Promise             prom_;
+  BlockHash           hash_;
+  Address           address_;
+  std::shared_ptr<MainChainRpcService> client_;
+  FutureTimepoint   timeout_;
+  BlockList blocks_;
+
+  static constexpr char const *LOGGING_NAME = "MainChainSyncWorker";
+
+  MainChainSyncWorker(std::shared_ptr<MainChainRpcService> client, BlockHash hash, Address address,
+                      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+    : hash_(std::move(hash))
+    , address_(std::move(address))
+    , client_(std::move(client))
+    , timeout_(thetimeout)
+  {
+
+  }
+
+  template<class BlockHash>
+  bool Equals(const BlockHash &hash) const
+  {
+    return hash == hash_;
+  }
+
+  PromiseState Work()
+  {
+    if (!prom_)
+    {
+      prom_ = client_
+        ->main_chain_rpc_client_
+        .CallSpecificAddress(address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
+
+      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING : ", ToBase64(hash_));
+    }
+    auto promise_state = prom_ -> GetState();
+
+    switch (promise_state)
+    {
+    case PromiseState::TIMEDOUT:
+    case PromiseState::FAILED:
+      return promise_state;
+    case PromiseState::WAITING:
+      if (timeout_.IsDue())
+      {
+        return PromiseState::TIMEDOUT;
+      }
+      return promise_state;
+    case PromiseState::SUCCESS:
+      {
+        prom_->As(blocks_);
+      }
+      return promise_state;
+    }
+  }
+};
+
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
                                          TrustSystem &trust)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -96,28 +163,96 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   // the block tree
   if (block.loose())
   {
-    RequestHeaviestChainFromPeer(from);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv Block is loose, requesting longest chain from counter part");
+    AddLooseBlock(block.hash(), from);
   }
 }
 
-bool MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
+void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address)
 {
+  if (!workthread_)
+  {
+    workthread_ =
+      std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->ServiceLooseBlocks(); });
+  }
+
+  if (!bg_work_.InFlightP(hash))
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Block is loose, requesting longest chain from counter part: ", ToBase64(hash));
+    auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
+    bg_work_.Add(worker);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Block is loose, query inflight: ", ToBase64(hash));
+  }
+}
+
+void MainChainRpcService::ServiceLooseBlocks()
+{
+  auto p = bg_work_.CountPending();
+
+  if (!p)
+  {
+    // At this point, ask the chain to check it has no tips to query.
+  }
+
+  bg_work_.WorkCycle();
+
+  for (auto &successful_worker : bg_work_.Get(MainChainSyncWorker::PromiseState::SUCCESS, 1000))
+  {
+    if (successful_worker)
+    {
+      RequestedChainArrived(successful_worker -> address_, successful_worker -> blocks_);
+    }
+  }
+  bg_work_.DiscardFailures();
+  bg_work_.DiscardTimeouts();
+}
+
+
+
+void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
+{
+  bool newdata = false;
+  for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
+  {
+    // recompute the digest
+    it->UpdateDigest();
+
+    // add the block
+    newdata |= chain_.AddBlock(*it);
+  }
+
+  if (newdata)
+  {
+    trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+  }
+
+  if (newdata && !block_list.empty())
+  {
+    Block blk;
+    if (chain_.Get(block_list.back().hash(), blk))
+    {
+      blk.UpdateDigest();
+      if (blk.loose())
+      {
+        AddLooseBlock(block_list.back().hash(), peer);
+      }
+    }
+  }
+
+}
+
+  /*
   bool request_made = false;
 
-  // determine if the request is already in flight
-  if (!chain_requests_.IsInFlight(peer))
-  {
-    FETCH_LOCK(main_chain_rpc_client_lock_);
+  FETCH_LOCK(main_chain_rpc_client_lock_);
 
-    // make the request for the heaviest chain
-    auto promise = main_chain_rpc_client_.CallSpecificAddress(
-        peer, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{16});
+  // make the request for the heaviest chain
+  auto promise = main_chain_rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash, uint32_t{16});
 
-    // setup that handlers
-    promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
-      self->trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+  // setup that handlers
+  promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
 
       // extract the block list from the promise
       BlockList block_list;
@@ -135,6 +270,8 @@ bool MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
         self->chain_.AddBlock(*it);
       }
 
+      auto firsthash = block_list.first().hash();
+
       // cycle the requesting queue
       self->chain_requests_.Resolve();
       self->chain_requests_.DiscardCompleted();
@@ -142,12 +279,8 @@ bool MainChainRpcService::RequestHeaviestChainFromPeer(Address const &peer)
 
       FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Complete");
     });
-
-    request_made = true;
-  }
-
-  return request_made;
 }
+  */
 
 }  // namespace ledger
 }  // namespace fetch

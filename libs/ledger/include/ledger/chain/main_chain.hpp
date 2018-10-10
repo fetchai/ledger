@@ -229,11 +229,14 @@ public:
 
     auto topBlock = block_chain_.at(at);
 
-    while ((topBlock.body().block_number != 0) && (result.size() < limit))
+    while(result.size() < limit)
     {
       result.push_back(topBlock);
+      if (topBlock.body().block_number == 0)
+      {
+        break;
+      }
       auto hash = topBlock.body().previous_hash;
-
       // Walk down
       auto it = block_chain_.find(hash);
       if (it == block_chain_.end())
@@ -243,11 +246,8 @@ public:
             from ", byte_array::ToBase64(at)," to find genesis!");
         break;
       }
-
       topBlock = (*it).second;
     }
-
-    result.push_back(topBlock);  // this should be genesis
     return result;
   }
 
