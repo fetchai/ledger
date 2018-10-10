@@ -65,6 +65,8 @@ public:
       state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
     }
 
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing transaction sort of...");
+
     return Status::SUCCESS;
   }
 

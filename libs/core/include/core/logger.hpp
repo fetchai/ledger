@@ -317,85 +317,85 @@ public:
   }
 
   template <typename... Args>
-  void Info(Args... args)
+  void Info(Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::INFO, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::INFO);
     }
   }
 
   template <typename... Args>
-  void InfoWithName(char const *name, Args... args)
+  void InfoWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::INFO, name, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::INFO);
     }
   }
 
   template <typename... Args>
-  void Warn(Args... args)
+  void Warn(Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::WARNING, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::WARNING);
     }
   }
 
   template <typename... Args>
-  void WarnWithName(char const *name, Args... args)
+  void WarnWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::WARNING, name, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::WARNING);
     }
   }
 
   template <typename... Args>
-  void Highlight(Args... args)
+  void Highlight(Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
     }
   }
 
   template <typename... Args>
-  void HighlightWithName(char const *name, Args... args)
+  void HighlightWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::HIGHLIGHT, name, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::HIGHLIGHT);
     }
   }
 
   template <typename... Args>
-  void Error(Args... args)
+  void Error(Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::ERROR, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::ERROR);
 
       StackTrace();
@@ -405,13 +405,13 @@ public:
   }
 
   template <typename... Args>
-  void ErrorWithName(char const *name, Args... args)
+  void ErrorWithName(char const *name, Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::ERROR, name, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::ERROR);
 
       StackTrace();
@@ -421,30 +421,30 @@ public:
   }
 
   template <typename... Args>
-  void Debug(Args... args)
+  void Debug(Args &&... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
   }
 
   template <typename... Args>
-  void DebugWithName(char const *name, Args... args)
+  void DebugWithName(char const *name, Args const &... args)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
     {
       this->log_->StartEntry(DefaultLogger::Level::DEBUG, name, TopContextImpl());
-      Unroll<Args...>::Append(this, args...);
+      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
       this->log_->CloseEntry(DefaultLogger::Level::DEBUG);
     }
   }
 
-  void Debug(const std::vector<std::string> &items)
+  void Debug(std::vector<std::string> const &items)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (this->log_ != nullptr)
