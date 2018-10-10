@@ -63,7 +63,7 @@ struct CommandLineArguments
                                   CommandLineArguments const &args)
   {
     s << '\n';
-    s << "input tx file..: " << args.port << '\n';
+    s << "input tx file..: " << args.input_json_tx_filename << '\n';
     return s;
   }
 };
@@ -95,9 +95,29 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
   }
 }
 
-fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant const &metadata)
+fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant const &metadata_v)
 {
+  auto data = fetch::byte_array::FromBase64(metadata_v["data"].As<fetch::byte_array::ByteArray>());
+  auto fee = metadata_v["fee"].As<double>();
+  auto contract_name = metadata_v["contract_name"].As<fetch::byte_array::ByteArray>();
 
+  auto resources_v = metadata_v["resources"];
+  //if (resources_v.is_object)
+  fetch::serializers::ByteArrayBuffer resources_stream{
+    fetch::byte_array::FromBase64(resources_v.As<fetch::byte_array::ByteArray>())};
+  std::set<fetch::byte_array::ConstByteArray> resources;
+  resources_stream >> resources;
+
+  fetch::serializers::ByteArrayBuffer private_keys_stream{
+    fetch::byte_array::FromBase64(metadata_v["private_keys"].As<fetch::byte_array::ByteArray>())};
+  std::set<fetch::byte_array::ConstByteArray> private_keys;
+  resources_stream >> resources;
+
+  //metadata_v["resources"];
+
+  (void)fee;
+  fetch::chain::MutableTransaction mtx;
+  return mtx;
 }
 
 
@@ -105,8 +125,6 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
 {
   fetch::json::JSONDocument tx_json{tx_jsom_string};
   auto &             tx_v = tx_json.root();
-
-  bool retval = false;
 
   auto data_v = tx_v["data"];
   if (data_v.is_string())
@@ -120,11 +138,8 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
     auto metadata_v = tx_v["metadata"];
     if (metadata_v.is_object())
     {
-      metadata_v["data"];
-      metadata_v["fee"];
-      metadata_v["contract_name"];
-      metadata_v["resources"];
-      metadata_v["resources"];
+      auto mtx = constructTxFromMetadata(metadata_v);
+
     }
     else
     {
@@ -138,43 +153,41 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string)
 
 int main(int argc, char **argv)
 {
-  int exit_code = EXIT_FAILURE;
-
   try
   {
     auto const   args = CommandLineArguments::Parse(argc, argv);
+    std::cout << args << std::endl;
 
     if (args.input_json_tx_filename.empty())
     {
       printRandomTx(3,3);
+      return EXIT_SUCCESS;
+    }
+
+    std::string tx_json;
+    if (args.input_json_tx_filename.rfind("{", 0) == 0)
+    {
+      tx_json = args.input_json_tx_filename;
     }
     else
     {
-      std::string tx_json;
-      if (args.input_json_tx_filename.rfind("{", 0) == 0)
+      std::ifstream istrm(args.input_json_tx_filename, std::ios::in);
+      if (!istrm.is_open())
       {
-        tx_json = args.input_json_tx_filename;
+        throw std::runtime_error("File \"" + args.input_json_tx_filename + "\" can not be oppened.");
       }
-      else
-      {
-          std::ifstream istrm(args.input_json_tx_filename, std::ios::in);
-          if (!istrm.is_open())
-          {
-            throw std::runtime_error("File \"" + args.input_json_tx_filename + "\" can not be oppened.");
-          }
-          std::stringstream buffer;
-          buffer << istrm.rdbuf();
-          tx_json = buffer.str();
-      }
-      handleProvidedTx(tx_json);
+      std::stringstream buffer;
+      buffer << istrm.rdbuf();
+      tx_json = buffer.str();
     }
+    handleProvidedTx(tx_json);
 
-    exit_code = EXIT_SUCCESS;
+    return EXIT_SUCCESS;
   }
   catch (std::exception &ex)
   {
     std::cerr << "Fatal Error: " << ex.what() << std::endl;
   }
 
-  return exit_code;
+  return EXIT_FAILURE;
 }
