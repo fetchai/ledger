@@ -61,7 +61,7 @@ public:
     , manager_(nm)
   {
     thread_pool_ = network::MakeThreadPool(3);
-    thread_pool_->SetInterval(1000);
+    thread_pool_->SetIdleInterval(1000);
     thread_pool_->Start();
     thread_pool_->Post([this]() { thread_pool_->PostIdle([this]() { this->WorkCycle(); }); }, 1000);
   }
@@ -161,6 +161,7 @@ public:
       lane_identity_protocol_ = lane_identity_protocol;
     }
     PingingConnection(const PingingConnection &other)
+      : ResolvableTo<PingedPeer>(other)
     {
       if (this != &other)
       {
@@ -237,6 +238,8 @@ public:
           return State::FAILED;
         }
       }
+
+      return State::FAILED;
     }
     virtual PromiseCounter id() const override
     {
@@ -267,6 +270,7 @@ public:
       my_identity_            = my_identity;
     }
     IdentifyingConnection(const IdentifyingConnection &other)
+      : ResolvableTo<IdentifiedPeer>(other)
     {
       if (this != &other)
       {
@@ -316,6 +320,8 @@ public:
       case State::SUCCESS:
         return State::SUCCESS;
       }
+
+      return State::FAILED;
     }
     virtual PromiseCounter id() const override
     {
@@ -343,6 +349,7 @@ public:
       lane_identity_protocol_ = lane_identity_protocol;
     }
     LaningConnection(const LaningConnection &other)
+      : ResolvableTo<LanedPeer>(other)
     {
       if (this != &other)
       {
@@ -378,12 +385,13 @@ public:
       case State::WAITING:
         return State::WAITING;
 
-      case State::FAILED:
-        return State::FAILED;
-
       case State::TIMEDOUT:
       case State::SUCCESS:
         return State::SUCCESS;
+
+      case State::FAILED:
+      default:
+        return State::FAILED;
       }
     }
 

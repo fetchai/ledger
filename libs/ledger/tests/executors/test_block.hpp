@@ -61,7 +61,7 @@ struct TestBlock
     resource_id_map_type resources = BuildResourceMap(log2_num_lanes);
     std::size_t const    num_lanes = 1u << log2_num_lanes;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Generating block: ", num_lanes, " x ", num_slices);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Generating block: ", num_lanes, " x ", num_slices);
 
     // generate the block hash and assign the previous hash
     fetch::byte_array::ByteArray digest;

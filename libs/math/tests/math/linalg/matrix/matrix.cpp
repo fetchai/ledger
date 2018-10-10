@@ -264,7 +264,7 @@ TEST(matrix, float_addition)
   Add(A, B, R);
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R = A, R.InlineAdd(B)).AllClose(C));
-};
+}
 
 TEST(matrix, float_multiplication)
 {
@@ -307,7 +307,7 @@ TEST(matrix, float_multiplication)
   Multiply(A, B, R);
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R = A, R.InlineMultiply(B)).AllClose(C));
-};
+}
 
 TEST(matrix, float_subtraction)
 {
@@ -351,7 +351,7 @@ TEST(matrix, float_subtraction)
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineSubtract(B)).AllClose(C));
   ASSERT_TRUE((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
-};
+}
 
 TEST(matrix, dot_float)
 {
@@ -394,7 +394,7 @@ TEST(matrix, dot_float)
 
   //    ASSERT_TRUE(R.Dot(A, B).AllClose(C));
   // ASSERT_TRUE( ( R.Copy(A), R.InlineDot(B) ).AllClose(C) );
-};
+}
 
 TEST(matrix, float_division)
 {
@@ -438,7 +438,7 @@ TEST(matrix, float_division)
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineDivide(B)).AllClose(C));
   ASSERT_TRUE((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
-};
+}
 
 TEST(matrix, double_addition)
 {
@@ -483,7 +483,7 @@ TEST(matrix, double_addition)
   Add(A, B, R);
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineAdd(B)).AllClose(C));
-};
+}
 
 TEST(matrix, double_multiplication)
 {
@@ -526,7 +526,7 @@ TEST(matrix, double_multiplication)
   Multiply(A, B, R);
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineMultiply(B)).AllClose(C));
-};
+}
 
 TEST(matrix, subtraction_double)
 {
@@ -570,7 +570,7 @@ TEST(matrix, subtraction_double)
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineSubtract(B)).AllClose(C));
   ASSERT_TRUE((R.Copy(B), R.InlineReverseSubtract(A)).AllClose(C));
-};
+}
 
 TEST(matrix, double_dot)
 {
@@ -613,7 +613,7 @@ TEST(matrix, double_dot)
 
   ASSERT_TRUE(R.Dot(A, B).AllClose(C));
   // ASSERT_TRUE( ( R = A, R.InlineDot(B) ).AllClose(C) );
-};
+}
 
 TEST(matrix, double_dotTranspose)
 {
@@ -644,7 +644,7 @@ TEST(matrix, double_dotTranspose)
 	)");
 
   ASSERT_TRUE(C.DotTranspose(A, B).AllClose(R));
-};
+}
 
 TEST(matrix, double_TransposeDot)
 {
@@ -679,7 +679,7 @@ TEST(matrix, double_TransposeDot)
 	)");
 
   ASSERT_TRUE(C.TransposeDot(A, B, alpha, beta).AllClose(R));
-};
+}
 
 TEST(matrix, double_division)
 {
@@ -723,4 +723,4 @@ TEST(matrix, double_division)
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineDivide(B)).AllClose(C));
   ASSERT_TRUE((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
-};
+}

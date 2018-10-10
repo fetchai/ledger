@@ -27,6 +27,12 @@ namespace fetch {
 namespace ledger {
 namespace {
 
+/**
+ * Convert a instrument type to string
+ *
+ * @param instrument The instrument to convert
+ * @return The string representation of the instrument
+ */
 char const *ToString(MetricHandler::Instrument instrument)
 {
   switch (instrument)
@@ -38,6 +44,12 @@ char const *ToString(MetricHandler::Instrument instrument)
   }
 }
 
+/**
+ * Convert a event type to string
+ *
+ * @param event The input event type
+ * @return The string representation fo the event
+ */
 char const *ToString(MetricHandler::Event event)
 {
   switch (event)
@@ -59,36 +71,57 @@ char const *ToString(MetricHandler::Event event)
 
 }  // namespace
 
+/**
+ * Create a metric file handler with specified filename
+ *
+ * @param filename The filename of the file to be generated
+ */
 MetricFileHandler::MetricFileHandler(std::string filename)
   : filename_(std::move(filename))
-  , entry_stack_{}
+  , stack_{}
   , active_{true}
   , worker_{&MetricFileHandler::ThreadEntryPoint, this}
 {
-  entry_stack_.reserve(BUFFER_SIZE);
+  FETCH_LOCK(stack_lock_);
+  stack_.reserve(BUFFER_SIZE);
 }
 
+/**
+ * Destructor
+ */
 MetricFileHandler::~MetricFileHandler()
 {
   active_ = false;
-  entry_stack_notify_.notify_all();
+
+  {
+    FETCH_LOCK(stack_lock_);
+    stack_notify_.notify_all();
+  }
+
   worker_.join();
   worker_ = std::thread{};
 }
 
+/**
+ * Record a specified metric
+ *
+ * @param identifier The identifier of the metric
+ * @param instrument  The instrument being measured
+ * @param event The event being recorded
+ * @param timestamp The timestamp of the event
+ */
 void MetricFileHandler::RecordMetric(ConstByteArray const &identifier, Instrument instrument,
                                      Event event, Timestamp const &timestamp)
 {
   // add the entry to the stack
-  {
-    FETCH_LOCK(entry_stack_lock_);
-    entry_stack_.emplace_back(Entry{identifier, instrument, event, timestamp});
-  }
-
-  // notify / wake up the worker
-  entry_stack_notify_.notify_all();
+  FETCH_LOCK(stack_lock_);
+  stack_.emplace_back(Entry{identifier, instrument, event, timestamp});
+  stack_notify_.notify_all();
 }
 
+/**
+ * Background thread process
+ */
 void MetricFileHandler::ThreadEntryPoint()
 {
   // create the output file stream
@@ -98,25 +131,24 @@ void MetricFileHandler::ThreadEntryPoint()
   output_file << "Timestamp,Instrument,Event,Identifier" << std::endl;
 
   // main processing loop
-  std::mutex mutex;
-  Entry      current;
+  Entry current;
   while (active_)
   {
     // extract an entry from the stack or wait for one to be available
     {
-      std::unique_lock<std::mutex> lock(mutex);
+      std::unique_lock<std::mutex> lock(stack_lock_);
 
       // if the stack is empty
-      if (entry_stack_.empty())
+      if (stack_.empty())
       {
-        entry_stack_notify_.wait(lock);
+        stack_notify_.wait(lock);
         continue;
       }
       else
       {
         // must have more than one entry
-        current = entry_stack_.back();
-        entry_stack_.pop_back();
+        current = stack_.back();
+        stack_.pop_back();
       }
     }
     // generate the CSV entry

@@ -38,7 +38,7 @@ using ::testing::_;
 
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {
-protected:
+public:
   using underlying_executor_type          = FakeExecutor;
   using shared_executor_type              = std::shared_ptr<underlying_executor_type>;
   using executor_list_type                = std::vector<shared_executor_type>;
@@ -51,6 +51,7 @@ protected:
   using clock_type              = std::chrono::high_resolution_clock;
   using status_type             = underlying_execution_manager_type::Status;
 
+protected:
   void SetUp() override
   {
     auto const &config = GetParam();
@@ -70,21 +71,21 @@ protected:
     return executor;
   }
 
-  bool WaitUntilManagerIsIdle(std::size_t num_iterations = 120)
+  bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 200)
   {
     bool success = false;
 
     for (std::size_t i = 0; i < num_iterations; ++i)
     {
-      // wait for a period of time
-      std::this_thread::sleep_for(std::chrono::milliseconds{100});
-
       // exit condition
-      if (manager_->IsIdle())
+      if ((manager_->completed_executions() == num_executions) && manager_->IsIdle())
       {
         success = true;
         break;
       }
+
+      // wait for a period of time
+      std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
 
     return success;
@@ -104,12 +105,20 @@ protected:
 
   void ExecuteBlock(TestBlock &block, status_type expected_status = status_type::SCHEDULED)
   {
+    ASSERT_TRUE(manager_->IsIdle());
+
+    // determine the number of transactions that is expected from this execution
+    std::size_t expected_completions = manager_->completed_executions();
+    if (expected_status == status_type::SCHEDULED)
+    {
+      expected_completions += static_cast<std::size_t>(block.num_transactions);
+    }
 
     // execute the block
     ASSERT_EQ(manager_->Execute(block.block), expected_status);
 
     // wait for the manager to become idle again
-    ASSERT_TRUE(WaitUntilManagerIsIdle());
+    ASSERT_TRUE(WaitUntilManagerIsIdle(expected_completions));
   }
 
   void AttachState()
@@ -124,6 +133,38 @@ protected:
   execution_manager_type manager_;
   executor_list_type     executors_;
 };
+
+std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::status_type status)
+{
+  using fetch::ledger::ExecutionManager;
+
+  switch (status)
+  {
+  case ExecutionManager::Status::COMPLETE:
+    s << "Status::COMPLETE";
+    break;
+  case ExecutionManager::Status::SCHEDULED:
+    s << "Status::SCHEDULED";
+    break;
+  case ExecutionManager::Status::NOT_STARTED:
+    s << "Status::NOT_STARTED";
+    break;
+  case ExecutionManager::Status::ALREADY_RUNNING:
+    s << "Status::ALREADY_RUNNING";
+    break;
+  case ExecutionManager::Status::NO_PARENT_BLOCK:
+    s << "Status::NO_PARENT_BLOCK";
+    break;
+  case ExecutionManager::Status::UNABLE_TO_PLAN:
+    s << "Status::UNABLE_TO_PLAN";
+    break;
+  default:
+    s << "Status::UNKNOWN";
+    break;
+  }
+
+  return s;
+}
 
 TEST_P(ExecutionManagerStateTests, CheckStateRollBack)
 {

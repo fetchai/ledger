@@ -41,6 +41,11 @@ pipeline {
                 sh './scripts/ci-tool.py -B Debug'
               }
             }
+            stage('Debug Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Debug'
+              }
+            }
             stage('Static Analysis') {
               steps {
                 sh './scripts/run-static-analysis.py build-debug/'
@@ -75,6 +80,58 @@ pipeline {
             }
           }
         } // clang 6 release
+
+        stage('GCC 7 Debug') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          environment {
+            CC  = 'gcc'
+            CXX = 'g++'
+          }
+
+          stages {
+            stage('GCC Debug Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Debug'
+              }
+            }
+            stage('GCC Debug Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Debug'
+              }
+            }
+          }
+        } // gcc 7 debug
+
+        stage('GCC 7 Release') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          environment {
+            CC  = 'gcc'
+            CXX = 'g++'
+          }
+
+          stages {
+            stage('GCC Release Build') {
+              steps {
+                sh './scripts/ci-tool.py -B Release'
+              }
+            }
+            stage('GCC Release Unit Tests') {
+              steps {
+                sh './scripts/ci-tool.py -T Release'
+              }
+            }
+          }
+        } // gcc 7 release
 
       } // parallel
     } // build & test
