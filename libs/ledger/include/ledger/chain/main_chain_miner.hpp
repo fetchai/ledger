@@ -97,7 +97,7 @@ private:
   Timestamp CalculateNextBlockTime(T &rng)
   {
     auto jitterrange = block_interval_ / 10;
-    auto jitterrange_us =
+    unsigned long jitterrange_us =
       std::abs(std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count());
     auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
 
