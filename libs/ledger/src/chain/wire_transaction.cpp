@@ -45,7 +45,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_debug_data["contract_name"] = tx.contract_name();
 
     script::VariantArray resources_v(tx.resources().size());
-    auto res_it = tx.resources().cbegin();
+    auto                 res_it = tx.resources().cbegin();
     resources_v.ForEach([&res_it](fetch::script::Variant &value) -> bool {
       value = byte_array::ToBase64(*(res_it++));
       return true;
