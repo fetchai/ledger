@@ -62,7 +62,7 @@ public:
   explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest, uint32_t num_executors,
                          uint32_t log2_num_lanes, uint32_t num_slices,
                          std::string interface_address, std::string const &prefix,
-                         std::string my_network_address,
+                         std::string                         my_network_address,
                          std::chrono::steady_clock::duration block_interval);
 
   void Run(UriList const &initial_peers, bool mining);
