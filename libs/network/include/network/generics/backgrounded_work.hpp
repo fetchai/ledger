@@ -42,7 +42,8 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  std::array<PromiseState, 4> PromiseStates{{PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
+  std::array<PromiseState, 4> PromiseStates{
+      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
 
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
@@ -212,7 +213,7 @@ public:
   }
 
   template <class KEY>
-  bool InFlight(const KEY &key) // TODO(kll): Put const back here.
+  bool InFlight(const KEY &key)  // TODO(kll): Put const back here.
   {
     Lock lock(mutex_);
 
@@ -237,9 +238,9 @@ public:
     }
     return false;
   }
-  
+
   template <class KEY>
-  bool InFlightP(const KEY &key) // TODO(kll): Put const back here.
+  bool InFlightP(const KEY &key)  // TODO(kll): Put const back here.
   {
     Lock lock(mutex_);
 
@@ -296,9 +297,9 @@ public:
   }
 
 private:
-  WorkLoad workload_;
-  mutable Mutex    mutex_;  //{__LINE__, __FILE__};
-  CondVar  cv_;
+  WorkLoad      workload_;
+  mutable Mutex mutex_;  //{__LINE__, __FILE__};
+  CondVar       cv_;
 };
 
 }  // namespace network

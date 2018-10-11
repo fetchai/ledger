@@ -20,14 +20,14 @@
 #include "core/mutex.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/has_worker_thread.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
-#include "network/generics/has_worker_thread.hpp"
 
 #include <memory>
 

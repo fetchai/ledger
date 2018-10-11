@@ -34,7 +34,7 @@ public:
 
   enum
   {
-    HEAVIEST_CHAIN = 1,
+    HEAVIEST_CHAIN  = 1,
     CHAIN_PRECEDING = 2,
   };
 

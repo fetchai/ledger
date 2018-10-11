@@ -118,7 +118,8 @@ struct CommandLineArguments
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
-    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.", uint32_t{5000});
+    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.",
+                   uint32_t{5000});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
@@ -349,7 +350,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir, args.external_address, std::chrono::milliseconds(args.block_interval));
+        args.interface, args.dbdir, args.external_address,
+        std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

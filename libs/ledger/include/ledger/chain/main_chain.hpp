@@ -219,8 +219,7 @@ public:
   }
 
   std::vector<BlockType> ChainPreceding(
-    const BlockHash &at,
-    uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
+      const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     fetch::generics::MilliTimer          myTimer("MainChain::ChainPreceding");
     std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
@@ -229,7 +228,7 @@ public:
 
     auto topBlock = block_chain_.at(at);
 
-    while(result.size() < limit)
+    while (result.size() < limit)
     {
       result.push_back(topBlock);
       if (topBlock.body().block_number == 0)
@@ -243,7 +242,8 @@ public:
       {
         FETCH_LOG_INFO(LOGGING_NAME,
                        "Mainchain: Failed while walking down\
-            from ", byte_array::ToBase64(at)," to find genesis!");
+            from ",
+                       byte_array::ToBase64(at), " to find genesis!");
         break;
       }
       topBlock = (*it).second;

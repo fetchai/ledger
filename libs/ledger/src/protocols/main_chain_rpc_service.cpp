@@ -35,20 +35,20 @@ namespace ledger {
 
 class MainChainSyncWorker
 {
-  public:
-  using BlockHash               = MainChainRpcService::BlockHash;
-  using BlockList               = MainChainRpcService::BlockList;
-  using Address                 = MainChainRpcService::Address;
-  using PromiseState         = fetch::service::PromiseState;
-  using Promise              = service::Promise;
-  using FutureTimepoint      = network::FutureTimepoint;
+public:
+  using BlockHash       = MainChainRpcService::BlockHash;
+  using BlockList       = MainChainRpcService::BlockList;
+  using Address         = MainChainRpcService::Address;
+  using PromiseState    = fetch::service::PromiseState;
+  using Promise         = service::Promise;
+  using FutureTimepoint = network::FutureTimepoint;
 
-  Promise             prom_;
-  BlockHash           hash_;
-  Address           address_;
+  Promise                              prom_;
+  BlockHash                            hash_;
+  Address                              address_;
   std::shared_ptr<MainChainRpcService> client_;
-  FutureTimepoint   timeout_;
-  BlockList blocks_;
+  FutureTimepoint                      timeout_;
+  BlockList                            blocks_;
 
   static constexpr char const *LOGGING_NAME = "MainChainSyncWorker";
 
@@ -58,11 +58,9 @@ class MainChainSyncWorker
     , address_(std::move(address))
     , client_(std::move(client))
     , timeout_(thetimeout)
-  {
+  {}
 
-  }
-
-  template<class BlockHash>
+  template <class BlockHash>
   bool Equals(const BlockHash &hash) const
   {
     return hash == hash_;
@@ -72,13 +70,12 @@ class MainChainSyncWorker
   {
     if (!prom_)
     {
-      prom_ = client_
-        ->main_chain_rpc_client_
-        .CallSpecificAddress(address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
+      prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
+          address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
 
       FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING : ", ToBase64(hash_));
     }
-    auto promise_state = prom_ -> GetState();
+    auto promise_state = prom_->GetState();
 
     switch (promise_state)
     {
@@ -92,9 +89,9 @@ class MainChainSyncWorker
       }
       return promise_state;
     case PromiseState::SUCCESS:
-      {
-        prom_->As(blocks_);
-      }
+    {
+      prom_->As(blocks_);
+    }
       return promise_state;
     }
   }
@@ -171,13 +168,14 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
 {
   if (!workthread_)
   {
-    workthread_ =
-      std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->ServiceLooseBlocks(); });
+    workthread_ = std::make_shared<BackgroundedWorkThread>(
+        &bg_work_, [this]() { this->ServiceLooseBlocks(); });
   }
 
   if (!bg_work_.InFlightP(hash))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Block is loose, requesting longest chain from counter part: ", ToBase64(hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash));
     auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
     bg_work_.Add(worker);
   }
@@ -202,14 +200,12 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (successful_worker)
     {
-      RequestedChainArrived(successful_worker -> address_, successful_worker -> blocks_);
+      RequestedChainArrived(successful_worker->address_, successful_worker->blocks_);
     }
   }
   bg_work_.DiscardFailures();
   bg_work_.DiscardTimeouts();
 }
-
-
 
 void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
 {
@@ -240,47 +236,47 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
       }
     }
   }
-
 }
 
-  /*
-  bool request_made = false;
+/*
+bool request_made = false;
 
-  FETCH_LOCK(main_chain_rpc_client_lock_);
+FETCH_LOCK(main_chain_rpc_client_lock_);
 
-  // make the request for the heaviest chain
-  auto promise = main_chain_rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash, uint32_t{16});
+// make the request for the heaviest chain
+auto promise = main_chain_rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN,
+MainChainProtocol::CHAIN_PRECEDING, hash, uint32_t{16});
 
-  // setup that handlers
-  promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
+// setup that handlers
+promise->WithHandlers().Then([self = shared_from_this(), promise, peer]() {
 
-      // extract the block list from the promise
-      BlockList block_list;
-      promise->As(block_list);
+    // extract the block list from the promise
+    BlockList block_list;
+    promise->As(block_list);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Got ", block_list.size(), " blocks from peer...");
+    FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Got ", block_list.size(), " blocks from peer...");
 
-      // iterate through each of the blocks backwards and add them to the chain
-      for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
-      {
-        // recompute the digest
-        it->UpdateDigest();
+    // iterate through each of the blocks backwards and add them to the chain
+    for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
+    {
+      // recompute the digest
+      it->UpdateDigest();
 
-        // add the block
-        self->chain_.AddBlock(*it);
-      }
+      // add the block
+      self->chain_.AddBlock(*it);
+    }
 
-      auto firsthash = block_list.first().hash();
+    auto firsthash = block_list.first().hash();
 
-      // cycle the requesting queue
-      self->chain_requests_.Resolve();
-      self->chain_requests_.DiscardCompleted();
-      self->chain_requests_.DiscardFailures();
+    // cycle the requesting queue
+    self->chain_requests_.Resolve();
+    self->chain_requests_.DiscardCompleted();
+    self->chain_requests_.DiscardFailures();
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Complete");
-    });
+    FETCH_LOG_INFO(LOGGING_NAME, "Block Sync: Complete");
+  });
 }
-  */
+*/
 
 }  // namespace ledger
 }  // namespace fetch

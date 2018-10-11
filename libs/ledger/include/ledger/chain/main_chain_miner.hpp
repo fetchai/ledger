@@ -43,13 +43,14 @@ public:
   using MinerInterface        = fetch::miner::MinerInterface;
   using BlockCompleteCallback = std::function<void(BlockType const &)>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainMiner";
-  static constexpr uint32_t BLOCK_PERIOD_MS = 5000;
+  static constexpr char const *LOGGING_NAME    = "MainChainMiner";
+  static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 uint64_t minerNumber,
-                 std::chrono::steady_clock::duration block_interval = std::chrono::milliseconds{BLOCK_PERIOD_MS})
+                 uint64_t                            minerNumber,
+                 std::chrono::steady_clock::duration block_interval =
+                     std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
@@ -85,8 +86,8 @@ public:
   }
 
 private:
-  using Clock     = std::chrono::high_resolution_clock;
-  using Timestamp = Clock::time_point;
+  using Clock        = std::chrono::high_resolution_clock;
+  using Timestamp    = Clock::time_point;
   using Milliseconds = std::chrono::milliseconds;
   using Microseconds = std::chrono::microseconds;
 
@@ -96,12 +97,11 @@ private:
   Timestamp CalculateNextBlockTime(T &rng)
   {
     auto jitterrange = block_interval_ * 0.1;
-    auto jitterrange_us = std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count();
+    auto jitterrange_us =
+        std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count();
     auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
 
-    Timestamp block_time = Clock::now()
-      + block_interval_
-      + Microseconds{random_us};
+    Timestamp block_time = Clock::now() + block_interval_ + Microseconds{random_us};
 
     return block_time;
   }
@@ -187,12 +187,12 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &       mainChain_;
-  chain::BlockCoordinator &blockCoordinator_;
-  MinerInterface &         miner_;
-  std::thread              thread_;
-  uint64_t                 minerNumber_{0};
-  BlockCompleteCallback    on_block_complete_;
+  chain::MainChain &                  mainChain_;
+  chain::BlockCoordinator &           blockCoordinator_;
+  MinerInterface &                    miner_;
+  std::thread                         thread_;
+  uint64_t                            minerNumber_{0};
+  BlockCompleteCallback               on_block_complete_;
   std::chrono::steady_clock::duration block_interval_;
 };
 
