@@ -44,10 +44,14 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     tx_debug_data["fee"]           = tx.summary().fee;
     tx_debug_data["contract_name"] = tx.contract_name();
 
-    script::VariantArray resources;
-    resources.CopyFrom(tx.resources().begin(), tx.resources().end());
+    script::VariantArray resources_v(tx.resources().size());
+    auto                 res_it = tx.resources().cbegin();
+    resources_v.ForEach([&res_it](fetch::script::Variant &value) -> bool {
+      value = byte_array::ToBase64(*(res_it++));
+      return true;
+    });
 
-    tx_debug_data["resources"] = resources;
+    tx_debug_data["resources"] = resources_v;
 
     if (tx.signatures().size() > 0)
     {
