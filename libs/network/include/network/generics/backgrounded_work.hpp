@@ -42,9 +42,13 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  std::array<PromiseState, 4> PromiseStates{
-      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
-
+  static constexpr std::array<PromiseState, 4> promise_states{{
+    PromiseState::WAITING,
+    PromiseState::SUCCESS,
+    PromiseState::FAILED,
+    PromiseState::TIMEDOUT
+}};
+  
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
   BackgroundedWork()
@@ -217,7 +221,7 @@ public:
   {
     Lock lock(mutex_);
 
-    for (auto const &current_state : PromiseStates)
+    for (auto const &current_state : promise_states)
     {
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
@@ -244,7 +248,7 @@ public:
   {
     Lock lock(mutex_);
 
-    for (auto const &current_state : PromiseStates)
+    for (auto const &current_state : promise_states)
     {
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
@@ -271,7 +275,7 @@ public:
   {
     bool r = false;
 
-    for (auto const &current_state : PromiseStates)
+    for (auto const &current_state : promise_states)
     {
       Lock  lock(mutex_);
       auto &worklist_for_state = workload_[current_state];
