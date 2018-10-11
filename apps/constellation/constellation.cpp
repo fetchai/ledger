@@ -26,6 +26,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 
 #include <memory>
 #include <random>
