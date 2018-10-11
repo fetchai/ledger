@@ -87,6 +87,7 @@ public:
     }
       return promise_state;
     }
+    return PromiseState::WAITING;
   }
 
   BlockList blocks()
