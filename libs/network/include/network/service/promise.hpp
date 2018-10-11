@@ -320,6 +320,7 @@ inline Promise MakePromise(uint64_t pro, uint64_t func)
 }
 
 char const *ToString(PromiseState state);
+const std::array<PromiseState, 4> &GetAllPromiseStates();
 
 }  // namespace service
 }  // namespace fetch

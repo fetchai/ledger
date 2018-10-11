@@ -43,13 +43,6 @@ public:
   using Promise         = service::Promise;
   using FutureTimepoint = network::FutureTimepoint;
 
-  Promise                              prom_;
-  BlockHash                            hash_;
-  Address                              address_;
-  std::shared_ptr<MainChainRpcService> client_;
-  FutureTimepoint                      timeout_;
-  BlockList                            blocks_;
-
   static constexpr char const *LOGGING_NAME = "MainChainSyncWorker";
 
   MainChainSyncWorker(std::shared_ptr<MainChainRpcService> client, BlockHash hash, Address address,
@@ -95,6 +88,24 @@ public:
       return promise_state;
     }
   }
+
+  BlockList blocks()
+  {
+    return blocks_;
+  }
+
+  Address address()
+  {
+    return address_;
+  }
+
+private:
+  Promise                              prom_;
+  BlockHash                            hash_;
+  Address                              address_;
+  std::shared_ptr<MainChainRpcService> client_;
+  FutureTimepoint                      timeout_;
+  BlockList                            blocks_;
 };
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
@@ -200,7 +211,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (successful_worker)
     {
-      RequestedChainArrived(successful_worker->address_, successful_worker->blocks_);
+      RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
     }
   }
   bg_work_.DiscardFailures();
