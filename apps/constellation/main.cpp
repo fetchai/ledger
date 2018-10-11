@@ -474,7 +474,7 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.interface, args.dbdir, args.external_address,
+        args.num_slices, args.interface, args.dbdir, args.external_address,
         std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
