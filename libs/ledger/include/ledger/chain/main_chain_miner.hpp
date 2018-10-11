@@ -96,9 +96,9 @@ private:
   template <typename T>
   Timestamp CalculateNextBlockTime(T &rng)
   {
-    auto jitterrange = block_interval_ / 10;
-    unsigned long jitterrange_us = static_cast<unsigned long>(std::abs(
-        std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count()));
+    auto          jitterrange    = block_interval_ / 10;
+    unsigned long jitterrange_us = static_cast<unsigned long>(
+        std::abs(std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count()));
     auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
 
     Timestamp block_time = Clock::now() + block_interval_ + Microseconds{random_us};
