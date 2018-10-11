@@ -131,7 +131,7 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
  */
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix)
+                             std::string interface_address, std::string const &db_prefix,
                              std::string my_network_address,
                              std::chrono::steady_clock::duration block_interval)
   : active_{true}
