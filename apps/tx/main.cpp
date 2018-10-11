@@ -40,6 +40,8 @@
 
 namespace {
 
+using PrivateKeys = std::vector<fetch::byte_array::ConstByteArray>; 
+
 template<typename STREAM>
 void printSeparator(STREAM& stream, std::string const& desc = std::string{})
 {
@@ -63,6 +65,7 @@ void printSeparator(STREAM& stream, std::string const& desc = std::string{})
 struct CommandLineArguments
 {
   std::string input_json_tx_filename;
+  std::string priv_keys_filename;
   bool is_verbose = false;
 
   static CommandLineArguments Parse(int argc, char **argv)
@@ -73,6 +76,7 @@ struct CommandLineArguments
 
     fetch::commandline::Params parameters;
     parameters.add(args.input_json_tx_filename, "f", "file name for json input TX data.", std::string{});
+    parameters.add(args.priv_keys_filename, "p", "file name for prvate keys in json format. Two private kyes will be generated *IF* this option is *NOT* provided.", std::string{});
     parameters.add(args.is_verbose, "v", "enables verbose output printing out details", false);
 
     // parse the args
@@ -85,7 +89,9 @@ struct CommandLineArguments
                                   CommandLineArguments const &args)
   {
     printSeparator(s, "COMANDLINE ARGUMENTS");
-    s << "input tx file..: " << args.input_json_tx_filename << '\n';
+    s << "input tx file          : " << args.input_json_tx_filename << std::endl;
+    s << "input private keys file: " << args.priv_keys_filename << std::endl;
+    s << "verbose                : " << args.is_verbose << std::endl;
     return s;
   }
 };
@@ -205,6 +211,10 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string, bool c
     }
   }
 }
+
+
+
+
 
 }  // namespace
 
