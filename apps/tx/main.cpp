@@ -212,9 +212,20 @@ void handleProvidedTx(fetch::byte_array::ByteArray const &tx_jsom_string, bool c
   }
 }
 
+PrivateKeys getPrivateKeys(std::string const &priv_keys_filensme)
+{
+  if (args.input_json_tx_filename.empty())
+  {
+    PrivateKeys keys;
+    keys.reserve(2);
+    keys.emplace();
 
-
-
+    for (auto &key : keys)
+    {
+      keys = 
+    }
+  }
+}
 
 }  // namespace
 
