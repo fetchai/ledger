@@ -19,7 +19,6 @@
 
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/metrics/metrics.hpp"
 #include "miner/block_optimiser.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/transaction_item.hpp"
@@ -42,8 +41,6 @@ public:
 
   void EnqueueTransaction(chain::TransactionSummary const &tx) override
   {
-    FETCH_METRIC_TX_QUEUED(tx.transaction_hash);
-
     lock_guard_type lock(pending_queue_lock_);
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
@@ -84,29 +81,6 @@ public:
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing");
-
-#if 1
-    // debugging interface
-    if (num_transactions > 0)
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Block Structure: ");
-      std::size_t slice_index = 0;
-      for (auto const &slice : block.slices)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "  - Slice ", slice_index);
-
-        for (auto const &tx : slice.transactions)
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "    - Tx: ", byte_array::ToBase64(tx.transaction_hash),
-                          " (fee: ", tx.fee, ")");
-
-          FETCH_METRIC_TX_PACKED(tx.transaction_hash);
-        }
-
-        ++slice_index;
-      }
-    }
-#endif
   }
 
 private:

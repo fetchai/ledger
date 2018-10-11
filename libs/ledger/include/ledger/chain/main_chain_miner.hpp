@@ -20,6 +20,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
 
 #include <chrono>
@@ -161,6 +162,18 @@ private:
         miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
         next_block.SetBody(next_block_body);
         next_block.UpdateDigest();
+
+#ifdef FETCH_ENABLE_METRICS
+        ledger::Metrics::Timestamp const now = ledger::Metrics::Clock::now();
+
+        for (auto const &slice : next_block_body.slices)
+        {
+          for (auto const &tx : slice.transactions)
+          {
+            FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
+          }
+        }
+#endif // FETCH_ENABLE_METRICS
 
         // Mine the block
         next_block.proof().SetTarget(target_);
