@@ -90,6 +90,8 @@ public:
          });
   }
 
+  ~WalletHttpInterface() = default;
+
 private:
   /**
    * Create address(es) with some amount of wealth and submit it to the network
