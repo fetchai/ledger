@@ -125,22 +125,22 @@ TEST(ndarray, col_row_major_tets)
   _A<double>               array1{shape};
   for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    array1[i] = i;
+    array1[i] = static_cast<double>(i);
   }
   array1.MajorOrderFlip();
   for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    ASSERT_TRUE(array1[i] == i);
+    ASSERT_TRUE(static_cast<std::size_t>(array1[i]) == i);
   }
   array1.MajorOrderFlip();
   for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    ASSERT_TRUE(array1[i] == i);
+    ASSERT_TRUE(static_cast<std::size_t>(array1[i]) == i);
   }
   array1.MajorOrderFlip();
   for (std::size_t i = 0; i < array1.size(); ++i)
   {
-    ASSERT_TRUE(array1[i] == i);
+    ASSERT_TRUE(static_cast<std::size_t>(array1[i]) == i);
   }
 
   // major order is actually flipped for 2D and up - lets try a few flips
@@ -148,7 +148,7 @@ TEST(ndarray, col_row_major_tets)
   _A<double> array2{shape};
   for (std::size_t i = 0; i < array2.size(); ++i)
   {
-    array2[i] = i;
+    array2[i] = static_cast<double>(i);
   }
 
   array1.Resize(array2.size());
@@ -165,9 +165,9 @@ TEST(ndarray, concat_test)
   // A trivial concat
   std::vector<std::size_t> shape{10};
   _A<double>               array1{shape};
-  array1.FillArange(0, 10);
+  array1.FillArange(0u, 10u);
   _A<double> array2{shape};
-  array2.FillArange(0, 10);
+  array2.FillArange(0u, 10u);
   _A<double> ret_array{20};
 
   fetch::math::Concat(ret_array, {array1, array2});
@@ -184,9 +184,9 @@ TEST(ndarray, concat_test)
   // A more interesting concat
   shape = {2, 10};
   _A<double> array3{shape};
-  array1.FillArange(0, 20);
+  array1.FillArange(0u, 20u);
   _A<double> array4{shape};
-  array2.FillArange(0, 20);
+  array2.FillArange(0u, 20u);
   _A<double> ret_array2{40};
 
   fetch::math::Concat(ret_array2, {array3, array4}, 1);

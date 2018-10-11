@@ -25,7 +25,7 @@ namespace examples {
 namespace common {
 
 template <typename T>
-void ToBase64(T &stream, chain::Transaction::signatures_type::value_type const &signature)
+void ToBase64(T &stream, chain::signatures_type::value_type const &signature)
 {
   stream << "signature: " << byte_array::ToBase64(signature.second.signature_data)
          << ", sig.type: " << byte_array::ToBase64(signature.second.type)
@@ -34,7 +34,7 @@ void ToBase64(T &stream, chain::Transaction::signatures_type::value_type const &
 }
 
 template <typename T>
-void ToBase64(T &stream, chain::Transaction::signatures_type const &signatures)
+void ToBase64(T &stream, chain::signatures_type const &signatures)
 {
   for (auto const &sig : signatures)
   {

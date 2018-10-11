@@ -29,7 +29,7 @@ using namespace fetch::math;
 
 TEST(ndarray, ndarray_reduce_test)
 {
-  NDArray<double> a = NDArray<double>::Arange(0, 3 * 4 * 5, 1);
+  NDArray<double> a = NDArray<double>::Arange(0u, 3u * 4u * 5u, 1u);
   a.Reshape({3, 4, 5});
 
   NDArray<double> ret;
@@ -54,7 +54,7 @@ TEST(ndarray, ndarray_reduce_test)
 
 TEST(ndarray, dimension_reduction)
 {
-  NDArray<double> a = NDArray<double>::Arange(0, 3 * 4 * 5, 1);
+  NDArray<double> a = NDArray<double>::Arange(0u, 3u * 4u * 5u, 1u);
   a.Reshape({3, 4, 5});
 
   NDArray<double> ret;

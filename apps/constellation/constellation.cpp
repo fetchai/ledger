@@ -33,13 +33,30 @@
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
-using fetch::network::TCPClient;
 using fetch::network::Peer;
+using fetch::network::TCPClient;
+using fetch::network::Manifest;
+using fetch::network::ServiceType;
+using fetch::network::Uri;
+using fetch::network::ServiceIdentifier;
+using fetch::network::AtomicInFlightCounter;
+using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace {
+
+using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
+
+bool WaitForLaneServersToStart()
+{
+  using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
+
+  network::FutureTimepoint const deadline(std::chrono::seconds(30));
+
+  return InFlightCounter::Wait(deadline);
+}
 
 std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 {
@@ -49,12 +66,62 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
   return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
 }
 
+uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t instance = 0)
+{
+  ServiceIdentifier identifier{service, instance};
+
+  if (!manifest.HasService(identifier))
+  {
+    throw std::runtime_error("Unable to lookup requested service from the manifest");
+  }
+
+  return manifest.GetLocalPort(identifier);
+}
+
+std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
+                                                 bool force_loopback = false)
+{
+  std::map<LaneIndex, Peer> connection_map;
+
+  for (LaneIndex i = 0; i < num_lanes; ++i)
+  {
+    ServiceIdentifier identifier{ServiceType::LANE, static_cast<uint16_t>(i)};
+
+    if (!manifest.HasService(identifier))
+    {
+      throw std::runtime_error("Unable to lookup service information from the manifest");
+    }
+
+    // lookup the service information
+    auto const &service = manifest.GetService(identifier);
+
+    // ensure the service is actually TCP based
+    if (service.remote_uri.scheme() != Uri::Scheme::Tcp)
+    {
+      throw std::runtime_error("Non TCP connections not currently supported");
+    }
+
+    // update the connection map
+    if (force_loopback)
+    {
+      connection_map[i] = Peer{"127.0.0.1", service.local_port};
+    }
+    else
+    {
+      connection_map[i] = service.remote_uri.AsPeer();
+    }
+  }
+
+  return connection_map;
+}
+
 }  // namespace
 
 /**
  * Construct a constellation instance
  *
  * @param certificate The reference to the node public key
+ * @param manifest The service manifest for this instance
  * @param port_start The start port for all the services
  * @param num_executors The number of executors
  * @param num_lanes The configured number of lanes
@@ -62,19 +129,19 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
+Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix,
-                             std::string                         my_network_address,
+                             std::string interface_address, std::string const &db_prefix)
+                             std::string my_network_address,
                              std::chrono::steady_clock::duration block_interval)
   : active_{true}
+  , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_{static_cast<uint16_t>(port_start + P2P_PORT_OFFSET)}
-  , http_port_{static_cast<uint16_t>(port_start + HTTP_PORT_OFFSET)}
-  , lane_port_start_{static_cast<uint16_t>(port_start + STORAGE_PORT_OFFSET)}
-  , main_chain_port_{static_cast<uint16_t>(port_start + MAIN_CHAIN_PORT_OFFSET)}
+  , p2p_port_(LookupLocalPort(manifest_, ServiceType::P2P))
+  , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
+  , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
   , muddle_{std::move(certificate), network_manager_}
@@ -93,17 +160,16 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
-  , http_modules_{std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_,
-                                                                num_lanes_),
-                  std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
-                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
-  , my_network_address_(std::move(my_network_address))
+  , http_modules_{
+        std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
+        std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);
 
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " P ", port_start, " E ",
-                 num_executors, " S ", num_lanes_, "x", num_slices);
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " E ", num_executors, " S ",
+                 num_lanes_, "x", num_slices);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
@@ -120,8 +186,6 @@ Constellation::Constellation(CertificatePtr &&certificate, uint16_t port_start,
   {
     http_.AddModule(*module);
   }
-
-  this->my_manifest_ = GenerateManifest();
 }
 
 /**
@@ -135,69 +199,39 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // Step 1. Start all the components
   //---------------------------------------------------------------
 
+  /// NETWORKING INFRASTRUCTURE
+
   // start all the services
   network_manager_.Start();
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
 
+  /// LANE / SHARD SERVERS
+
+  // start all the lane services and wait for them to start accepting
+  // connections
   lane_services_.Start();
-
-  // add the lane connections
-  storage_->SetNumberOfLanes(num_lanes_);
-
-  std::map<LaneIndex, Peer> lane_data;
-  for (LaneIndex i = 0; i < num_lanes_; ++i)
+  if (!WaitForLaneServersToStart())
   {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    lane_data[i]             = Peer("127.0.0.1", lane_port);
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting For ASIO start to complete.");
-  network::FutureTimepoint deadline(std::chrono::seconds(30));
-
-  using InFlightCounter =
-      network::AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
-  if (!InFlightCounter::Wait(deadline))
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Network servers did not all start in time");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to start lane server instances");
     return;
   }
 
-  auto count =
-      storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
-  if (count == num_lanes_)
+  /// LANE / SHARD CLIENTS
+
+  // add the lane connections
+  storage_->SetNumberOfLanes(num_lanes_);
+  std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(30000));
+
+  // check to see if the connections where successful
+  if (count != num_lanes_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established. (1st go)");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to establish connections to lane service");
+    return;
   }
 
-  // OK, it's been a while, let's try those missing lane services again...
-
-  lane_data.clear();
-  for (LaneIndex i = 0; i < num_lanes_; ++i)
-  {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    if (!storage_->ClientForLaneConnected(i))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Retrying connections to lane ", i);
-      lane_data[i] = fetch::network::Peer("127.0.0.1", lane_port);
-    }
-  }
-  if (!lane_data.empty())
-  {
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(5000));  // Do hard stop & then a last-chance retry for the lanes.
-    auto count =
-        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
-    if (count == num_lanes_)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Lane connections established.");
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect all lanes.");
-      return;
-    }
-  }
+  /// BLOCK EXECUTION & MINING
 
   execution_manager_->Start();
   block_coordinator_.Start();
@@ -207,14 +241,13 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     miner_.Start();
   }
 
+  /// P2P (TRUST) HIGH LEVEL MANAGEMENT
+
   // P2P configuration
+  p2p_.SetLocalManifest(manifest_);
+  p2p_.Start(initial_peers);
 
-  auto manifest_copy = my_manifest_;
-  p2p_.SetLocalManifest(manifest_copy);
-
-  auto my_p2p_uri = my_manifest_.GetUri(network::ServiceIdentifier{network::ServiceType::P2P, 0});
-
-  p2p_.Start(initial_peers, my_p2p_uri);
+  /// INPUT INTERFACES
 
   // Finally start the HTTP server
   http_.Start(http_port_);
@@ -256,36 +289,6 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
-}
-
-Constellation::Manifest Constellation::GenerateManifest() const
-{
-  std::string my_uri_base = my_network_address_;
-
-  if (my_uri_base == "")
-  {
-    my_uri_base = "tcp://127.0.0.1:";
-  }
-
-  if (!network::Uri::IsUri(my_uri_base))
-  {
-    my_uri_base = std::string("tcp://") + my_uri_base + ":";
-  }
-
-  std::string my_manifest = std::string("MAINCHAIN   0     ") + my_uri_base +
-                            std::to_string(main_chain_port_) + "\n" + std::string("P2P   0     ") +
-                            my_uri_base + std::to_string(p2p_port_) + "\n";
-
-  for (uint32_t i = 0; i < num_lanes_; ++i)
-  {
-    uint16_t const lane_port = static_cast<uint16_t>(lane_port_start_ + i);
-    my_manifest += std::string("LANE   ") + std::to_string(i) + "       " + my_uri_base +
-                   std::to_string(lane_port) + "\n";
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "MANIFEST ", my_manifest);
-
-  return Manifest::FromText(my_manifest);
 }
 
 }  // namespace fetch

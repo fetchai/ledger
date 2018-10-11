@@ -69,6 +69,8 @@ public:
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
+  void ReleaseResources();
+
   // Type creations
   void MakeNull();
   void MakeUndefined();
@@ -256,6 +258,8 @@ public:
   VariantArray &operator=(VariantArray const &other) = default;
   VariantArray &operator=(VariantArray &&other) noexcept = default;
 
+  ~VariantArray() = default;
+
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
@@ -263,6 +267,21 @@ public:
   std::size_t    size() const
   {
     return size_;
+  }
+
+  // Circular references can form when constructing variants in that any variant in this subarray
+  // can point back to this subarray, causing a memory leak. To break this, we force every variant
+  // in our list to release its resources. This will not play well if the variant array is not
+  // wholly contained (but for our use case it is)
+  void ReleaseResources()
+  {
+    if (data_)
+    {
+      for (auto &variant : *data_)
+      {
+        variant.ReleaseResources();
+      }
+    }
   }
 
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
@@ -338,6 +357,7 @@ private:
 inline Variant::Variant()
   : type_(UNDEFINED)
 {}
+
 inline Variant::Variant(int64_t const &i)
 {
   *this = i;
@@ -369,6 +389,11 @@ inline Variant::Variant(float const &f)
 inline Variant::Variant(double const &f)
 {
   *this = f;
+}
+
+inline void Variant::ReleaseResources()
+{
+  array_.reset();
 }
 
 inline void Variant::MakeNull()
