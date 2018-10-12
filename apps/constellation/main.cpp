@@ -119,7 +119,7 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
   static const uint16_t DEFAULT_PORT           = 8000;
   static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
-  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000; // milliseconds.
+  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
 
   uint16_t    port{0};
   uint32_t    network_id;

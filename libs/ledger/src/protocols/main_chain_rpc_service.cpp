@@ -249,7 +249,8 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",ToBase64(block_list.back().hash())," from the block store!");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",
+                      ToBase64(block_list.back().hash()), " from the block store!");
     }
   }
 }
