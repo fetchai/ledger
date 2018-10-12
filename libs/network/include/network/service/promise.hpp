@@ -320,8 +320,8 @@ inline Promise MakePromise(uint64_t pro, uint64_t func)
   return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
-char const *   ToString(PromiseState state);
-PromiseStates &GetAllPromiseStates();
+char const *         ToString(PromiseState state);
+const PromiseStates &GetAllPromiseStates();
 
 }  // namespace service
 }  // namespace fetch
