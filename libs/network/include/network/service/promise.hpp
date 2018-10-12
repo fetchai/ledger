@@ -308,7 +308,7 @@ private:
 using PromiseCounter = details::PromiseImplementation::Counter;
 using PromiseState   = details::PromiseImplementation::State;
 using Promise        = std::shared_ptr<details::PromiseImplementation>;
-using PromiseStates         = std::array<PromiseState, 4>;
+using PromiseStates  = std::array<PromiseState, 4>;
 
 inline Promise MakePromise()
 {
