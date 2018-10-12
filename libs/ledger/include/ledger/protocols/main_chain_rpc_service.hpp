@@ -55,11 +55,11 @@ public:
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
 
-  using Worker                  = MainChainSyncWorker;
-  using WorkerP                 = std::shared_ptr<Worker>;
-  using BackgroundedWork        = network::BackgroundedWork<Worker>;
-  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
+  using Worker                    = MainChainSyncWorker;
+  using WorkerPtr                 = std::shared_ptr<Worker>;
+  using BackgroundedWork          = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
 
@@ -87,8 +87,8 @@ private:
   Mutex     main_chain_rpc_client_lock_{__LINE__, __FILE__};
   RpcClient main_chain_rpc_client_;
 
-  BackgroundedWork        bg_work_;
-  BackgroundedWorkThreadP workthread_;
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
 };
 
 }  // namespace ledger

@@ -114,11 +114,12 @@ struct CommandLineArguments
   static constexpr uint16_t P2P_PORT_OFFSET     = 1;
   static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
-  static const uint32_t DEFAULT_NUM_LANES     = 4;
-  static const uint32_t DEFAULT_NUM_SLICES    = 4;
-  static const uint32_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t DEFAULT_PORT          = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID    = 0x10;
+  static const uint32_t DEFAULT_NUM_LANES      = 4;
+  static const uint32_t DEFAULT_NUM_SLICES     = 4;
+  static const uint32_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT           = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
+  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000; // milliseconds.
 
   uint16_t    port{0};
   uint32_t    network_id;
@@ -163,7 +164,7 @@ struct CommandLineArguments
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
     parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.",
-                   uint32_t{5000});
+                   uint32_t{DEFAULT_BLOCK_INTERVAL});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
@@ -346,7 +347,7 @@ struct CommandLineArguments
     s << "db-prefix......: " << args.dbdir << '\n';
     s << "interface......: " << args.interface << '\n';
     s << "mining.........: " << args.mine << '\n';
-    s << "block interval.: " << args.block_interval << std::endl;
+    s << "block interval.: " << args.block_interval << "ms" << std::endl;
     // generate the peer listing
     s << "peers..........: ";
     for (auto const &peer : args.peers)

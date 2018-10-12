@@ -29,8 +29,6 @@
 namespace fetch {
 namespace chain {
 
-using std::this_thread::sleep_for;
-
 // TODO(issue 33): fine for now, but it would be more efficient if the block
 // coordinator launched mining tasks
 class MainChainMiner
@@ -89,30 +87,13 @@ private:
   using Clock        = std::chrono::high_resolution_clock;
   using Timestamp    = Clock::time_point;
   using Milliseconds = std::chrono::milliseconds;
-  using Microseconds = std::chrono::microseconds;
 
   std::function<void(const BlockType)> onBlockComplete_;
 
-  template <typename T>
-  Timestamp CalculateNextBlockTime(T &rng)
-  {
-    auto          jitterrange    = block_interval_ / 10;
-    unsigned long jitterrange_us = static_cast<unsigned long>(
-        std::abs(std::chrono::duration_cast<std::chrono::microseconds>(jitterrange).count()));
-    auto random_us = rng() % jitterrange_us - (jitterrange_us / 2);
-
-    Timestamp block_time = Clock::now() + block_interval_ + Microseconds{random_us};
-
-    return block_time;
-  }
-
   void MinerThreadEntrypoint()
   {
-    std::random_device rd;
-    std::mt19937       rng(rd());
-
     // schedule the next block time
-    Timestamp next_block_time = CalculateNextBlockTime(rng);
+    Timestamp next_block_time = Clock::now() + block_interval_;
 
     BlockHash previous_heaviest;
 
@@ -133,7 +114,7 @@ private:
                        " from: ", byte_array::ToBase64(block.prev()));
 
         // new heaviest has been detected
-        next_block_time    = CalculateNextBlockTime(rng);
+        next_block_time    = Clock::now() + block_interval_;
         previous_heaviest  = block.hash().Copy();
         searching_for_hash = false;
       }
@@ -152,7 +133,7 @@ private:
           }
 
           // stop searching for the hash and schedule the next time to generate a block
-          next_block_time    = CalculateNextBlockTime(rng);
+          next_block_time    = Clock::now() + block_interval_;
           searching_for_hash = false;
         }
       }
@@ -178,7 +159,8 @@ private:
         searching_for_hash = true;
       }
 
-      sleep_for(std::chrono::milliseconds{10});
+      FETCH_LOG_INFO(LOGGING_NAME, "block_interval_=", block_interval_.count());
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
   }
 
