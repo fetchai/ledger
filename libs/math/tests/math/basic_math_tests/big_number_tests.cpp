@@ -18,7 +18,6 @@
  #include "math/bignumber.hpp"
 #include "core/byte_array/encoders.hpp"
 #include <iomanip>
- //#include "unittest.hpp"
 #include <gtest/gtest.h>
 using namespace fetch::math;
 using namespace fetch::byte_array;

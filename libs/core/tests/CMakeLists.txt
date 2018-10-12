@@ -20,4 +20,8 @@ add_fetch_test(variant_test fetch-core script/variant.cpp)
 
 add_fetch_gtest(variant_test2 fetch-core script/variant/)
 
+add_fetch_gtest(json_bsic_parsing_gtest fetch-core byte-array/)
+add_fetch_gtest(tokenizer_testing_individual_consumers_gtest fetch-core json/gtest/)
+add_fetch_gtest(core_encode_decode_gtest fetch-core tokenizer/gtest/)
+
  
