@@ -174,6 +174,12 @@ private:
                    " Occupancy: ", generator_.block_occupancy(), " (", occupancy_pc, "%)");
   }
 
+  uint64_t backlog() const override
+  {
+    lock_guard_type lock(pending_queue_lock_);
+    return generator_.unspent().size() + pending_queue_.size();
+  }
+
   mutex_type pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
                                                        ///< `transaction_index_`
   transaction_queue_type pending_queue_;

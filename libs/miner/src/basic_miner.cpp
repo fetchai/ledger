@@ -164,6 +164,11 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
                  " remaining: ", main_queue_.size(), ")");
 }
 
+uint64_t BasicMiner::backlog() const
+{
+  return main_queue_.size();
+}
+
 /**
  * Internal: Generate a selection of slices
  *
