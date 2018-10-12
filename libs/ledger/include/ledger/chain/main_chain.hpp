@@ -147,7 +147,7 @@ public:
   std::vector<BlockType> ChainPreceding(
       const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
-    fetch::generics::MilliTimer          myTimer("MainChain::ChainPreceding");
+    fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
     FETCH_LOCK(main_mutex_);
 
     std::vector<BlockType> result;
