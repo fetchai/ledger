@@ -35,19 +35,17 @@ public:
 
   void AddTransaction(chain::Transaction const &tx)
   {
-    auto const &digest = tx.digest();
-
-    FETCH_METRIC_TX_SUBMITTED(digest);
+    FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
     // tell the node about the transaction
     storage_.AddTransaction(tx);
 
-    FETCH_METRIC_TX_STORED(digest);
+    FETCH_METRIC_TX_STORED(tx.digest());
 
     // tell the miner about the transaction
     miner_.EnqueueTransaction(tx.summary());
 
-    FETCH_METRIC_TX_QUEUED(digest);
+    FETCH_METRIC_TX_QUEUED(tx.digest());
   }
 
 private:
