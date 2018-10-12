@@ -30,6 +30,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+#include <condition_variable>
 
 namespace fetch {
 namespace service {
@@ -236,6 +237,7 @@ public:
 private:
   using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
+  using Condition   = std::condition_variable;
 
   void UpdateState(State state);
   void DispatchCallbacks();
@@ -252,6 +254,12 @@ private:
   Callback       callback_failure_;
   Callback       callback_completion_;
   std::string    name_;
+
+#define FETCH_PROMISE_CV
+#ifdef FETCH_PROMISE_CV
+  mutable Mutex     notify_lock_{__LINE__, __FILE__};
+  mutable Condition notify_;
+#endif
 };
 
 class PromiseBuilder
