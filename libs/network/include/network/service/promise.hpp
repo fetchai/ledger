@@ -59,7 +59,6 @@ public:
   using Callback              = std::function<void()>;
   using Clock                 = std::chrono::high_resolution_clock;
   using Timepoint             = Clock::time_point;
-  using PromiseStates         = std::array<PromiseState, 4>;
 
   static constexpr char const *LOGGING_NAME = "Promise";
   static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
@@ -309,6 +308,7 @@ private:
 using PromiseCounter = details::PromiseImplementation::Counter;
 using PromiseState   = details::PromiseImplementation::State;
 using Promise        = std::shared_ptr<details::PromiseImplementation>;
+using PromiseStates         = std::array<PromiseState, 4>;
 
 inline Promise MakePromise()
 {
