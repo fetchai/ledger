@@ -1,3 +1,8 @@
+################################################################################
+# F E T C H   C O N S T E L L A T I O N
+################################################################################
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+
 project(fetch-constellation)
 
 setup_compiler()

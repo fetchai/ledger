@@ -42,7 +42,7 @@ namespace {
 using PrivateKeys = std::set<fetch::byte_array::ConstByteArray>;
 
 template <typename STREAM>
-void printSeparator(STREAM &stream, std::string const &desc = std::string{})
+void PrintSeparator(STREAM &stream, std::string const &desc = std::string{})
 {
   static std::string const line_separ(
       "================================================================================");
@@ -97,7 +97,7 @@ struct CommandLineArguments
 
   friend std::ostream &operator<<(std::ostream &s, CommandLineArguments const &args)
   {
-    printSeparator(s, "COMANDLINE ARGUMENTS");
+    PrintSeparator(s, "COMANDLINE ARGUMENTS");
     s << "input tx file          : " << args.input_json_tx_filename << std::endl;
     s << "input private keys file: " << args.priv_keys_filename << std::endl;
     s << "verbose                : " << args.is_verbose << std::endl;
@@ -105,12 +105,12 @@ struct CommandLineArguments
   }
 };
 
-void printTx(fetch::chain::MutableTransaction const &tx, std::string const &desc = std::string{},
+void PrintTx(fetch::chain::MutableTransaction const &tx, std::string const &desc = std::string{},
              bool const &is_verbose = false)
 {
   if (is_verbose)
   {
-    printSeparator(std::cout, desc);
+    PrintSeparator(std::cout, desc);
   }
   std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
 }
@@ -133,7 +133,7 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
   }
 }
 
-fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant const &metadata_v,
+fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant const &metadata_v,
                                                          PrivateKeys const &           private_keys)
 {
   fetch::chain::MutableTransaction mtx;
@@ -174,7 +174,7 @@ fetch::chain::MutableTransaction constructTxFromMetadata(fetch::script::Variant 
   return mtx;
 }
 
-fetch::byte_array::ConstByteArray getJsonContentFromFileCmdlArg(std::string const &arg_value)
+fetch::byte_array::ConstByteArray GetJsonContentFromFileCmdlArg(std::string const &arg_value)
 {
   if (arg_value.rfind("{", 0) == 0)
   {
@@ -191,12 +191,12 @@ fetch::byte_array::ConstByteArray getJsonContentFromFileCmdlArg(std::string cons
   return buffer.str();
 }
 
-void handleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
+void HandleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
                       PrivateKeys const &private_keys, bool const &is_verbose)
 {
   if (is_verbose)
   {
-    printSeparator(std::cout, "INPUT JSON");
+    PrintSeparator(std::cout, "INPUT JSON");
     std::cout << tx_jsom_string << std::endl;
   }
 
@@ -215,8 +215,8 @@ void handleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
     auto metadata_v = tx_v["metadata"];
     if (metadata_v.is_object())
     {
-      auto mtx = constructTxFromMetadata(metadata_v, private_keys);
-      printTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA", is_verbose);
+      auto mtx = ConstructTxFromMetadata(metadata_v, private_keys);
+      PrintTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA", is_verbose);
     }
     else
     {
@@ -230,7 +230,7 @@ void handleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
   }
 }
 
-PrivateKeys getPrivateKeys(std::string const &priv_keys_filename_argument)
+PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
 {
   using SignPrivateKey = fetch::chain::TxSigningAdapter<>::private_key_type;
   PrivateKeys keys;
@@ -245,7 +245,7 @@ PrivateKeys getPrivateKeys(std::string const &priv_keys_filename_argument)
     return keys;
   }
 
-  auto priv_keys_json_string = getJsonContentFromFileCmdlArg(priv_keys_filename_argument);
+  auto priv_keys_json_string = GetJsonContentFromFileCmdlArg(priv_keys_filename_argument);
   fetch::json::JSONDocument json_doc{priv_keys_json_string};
   auto &                    doc_root_v     = json_doc.root();
   auto                      private_keys_v = doc_root_v["private_keys"];
@@ -287,13 +287,13 @@ int main(int argc, char **argv)
     if (args.input_json_tx_filename.empty())
     {
       auto mtx = fetch::chain::RandomTransaction(3, 3);
-      printTx(mtx, "RANDOM GENERATED TRANSACTION", args.is_verbose);
+      PrintTx(mtx, "RANDOM GENERATED TRANSACTION", args.is_verbose);
       return EXIT_SUCCESS;
     }
 
-    auto tx_json      = getJsonContentFromFileCmdlArg(args.input_json_tx_filename);
-    auto private_keys = getPrivateKeys(args.priv_keys_filename);
-    handleProvidedTx(tx_json, private_keys, args.is_verbose);
+    auto tx_json      = GetJsonContentFromFileCmdlArg(args.input_json_tx_filename);
+    auto private_keys = GetPrivateKeys(args.priv_keys_filename);
+    HandleProvidedTx(tx_json, private_keys, args.is_verbose);
 
     return EXIT_SUCCESS;
   }
