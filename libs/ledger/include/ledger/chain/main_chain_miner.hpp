@@ -159,7 +159,6 @@ private:
         searching_for_hash = true;
       }
 
-      FETCH_LOG_INFO(LOGGING_NAME, "block_interval_=", block_interval_.count());
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
   }

@@ -59,6 +59,7 @@ public:
   using Callback              = std::function<void()>;
   using Clock                 = std::chrono::high_resolution_clock;
   using Timepoint             = Clock::time_point;
+  using PromiseStates         = std::array<PromiseState, 4>;
 
   static constexpr char const *LOGGING_NAME = "Promise";
   static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
@@ -319,8 +320,8 @@ inline Promise MakePromise(uint64_t pro, uint64_t func)
   return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
-char const *                       ToString(PromiseState state);
-const std::array<PromiseState, 4> &GetAllPromiseStates();
+char const *   ToString(PromiseState state);
+PromiseStates &GetAllPromiseStates();
 
 }  // namespace service
 }  // namespace fetch

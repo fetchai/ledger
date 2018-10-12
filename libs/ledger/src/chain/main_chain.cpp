@@ -27,7 +27,7 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
   assert(block.body().previous_hash.size() > 0);
 
   fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
-  std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
+  std::unique_lock<Mutex> lock(main_mutex_); // we need to selectively unlock this later.
 
   if (block.hash().size() == 0)
   {

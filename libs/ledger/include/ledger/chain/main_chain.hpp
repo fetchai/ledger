@@ -61,6 +61,9 @@ public:
   using PrevHash  = fetch::byte_array::ByteArray;
   using ProofType = BlockType::proof_type;
 
+  using Mutex = fetch::mutex::Mutex;
+  using Lock  = std::lock_guard<Mutex>;
+
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction
@@ -145,7 +148,7 @@ public:
       const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     fetch::generics::MilliTimer          myTimer("MainChain::ChainPreceding");
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+    FETCH_LOCK(main_mutex_);
 
     std::vector<BlockType> result;
 
