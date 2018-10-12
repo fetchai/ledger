@@ -1819,10 +1819,23 @@ void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArr
   }
 }
 template <typename T, typename C, typename S>
-T ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
+linalg::Matrix<T, C, S> ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
 {
-  T ret;
-  return ArgMax(array, axis, ret);
+  assert(array.shape().size() == 2);
+  assert(axis == 0 || axis == 1);
+
+  if (axis == 0)
+  {
+    linalg::Matrix<T, C, S> ret{array.shape()[1]};
+    ArgMax(array, axis, ret);
+    return ret;
+  }
+  else
+  {
+    linalg::Matrix<T, C, S> ret{array.shape()[0]};
+    ArgMax(array, axis, ret);
+    return ret;
+  }
 }
 
 /**
@@ -1945,7 +1958,9 @@ namespace details {
 template <typename ArrayType>
 void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
-  ret.LazyResize(array.size());
+  //  ret.LazyResize(array.size());
+  assert(ret.size() == array.size());
+  //  assert(ret.shape() == array.shape());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
   typename ArrayType::Type array_max, array_sum;
@@ -1959,6 +1974,7 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 template <typename T, typename C>
 void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
 {
+  assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
@@ -1980,6 +1996,22 @@ template <typename T, typename C>
 NDArray<T, C> Softmax(NDArray<T, C> const &array)
 {
   NDArray<T, C> ret{array.shape()};
+  Softmax(array, ret);
+  return ret;
+}
+template <typename T, typename C, typename S>
+void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
+{
+  assert(ret.size() == array.size());
+  assert(ret.shape() == array.shape());
+
+  details::SoftmaxImplementation(array, ret);
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Softmax(linalg::Matrix<T, C, S> const &array)
+{
+  linalg::Matrix<T, C, S> ret{array.size()};
+  ret.Reshape(array.shape());
   Softmax(array, ret);
   return ret;
 }
@@ -2132,6 +2164,7 @@ fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
 // fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const
 // &array2,
 //         ArrayType &ret)
+
 template <typename ArrayType>
 void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
 {
@@ -2150,6 +2183,7 @@ ArrayType Add(ArrayType const &array1, ArrayType const &array2)
 
   return ret;
 }
+
 //
 // template <typename T, typename C>
 // void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,

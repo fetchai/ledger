@@ -20,6 +20,7 @@
 #include "core/random/lcg.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/variable.hpp"
+#include <cmath>
 #include <random>
 
 namespace fetch {
@@ -45,24 +46,29 @@ public:
   {
     shape_ = shape;
 
-    weights_         = weights;
-    weights_->data() = ArrayType::UniformRandom(shape_);
-    //    std::random_device         rd{};
-    //    std::mt19937               gen{rd()};
-    //    std::normal_distribution<> w{0.0, double(shape[1])};
-    //    for (std::size_t i = 0; i < weights_->data().size(); ++i)
-    //    {
-    //      weights_->data().Set(i, w(gen));
-    //    }
+    weights_ = weights;
     // (TODO private 273)
 
-    biases_         = biases;
-    biases_->data() = ArrayType::UniformRandom(1, shape_[1]);
-    //    std::normal_distribution<> b{1.0, double(shape[1])};
-    //    for (std::size_t i = 0; i < biases_->data().size(); ++i)
-    //    {
-    //      weights_->data().Set(i, b(gen));
-    //    }
+    biases_ = biases;
+
+    std::random_device         rd{};
+    std::mt19937               gen{rd()};
+    auto                       in  = typename ArrayType::Type(shape_[0]);
+    auto                       out = typename ArrayType::Type(shape_[1]);
+    std::normal_distribution<> d{0.0, fetch::math::Divide(2.0, in + out)};
+    for (std::size_t i = 0; i < weights_->data().size(); ++i)
+    {
+      weights_->data().Set(i, d(gen));
+    }
+    for (std::size_t i = 0; i < biases_->data().size(); ++i)
+    {
+      biases_->data().Set(i, 0);
+    }
+  }
+
+  void ActivationSetup(std::string activate)
+  {
+    activate_ = activate;
   }
 
   std::size_t InputSize()
@@ -125,10 +131,26 @@ public:
   template <typename SessionType>
   void SetInput(VariablePtrType input, SessionType &sess)
   {
-    prev_   = input;
-    dot_    = fetch::ml::ops::Dot(input, weights_, sess);
-    add_    = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
-    output_ = fetch::ml::ops::Relu(add_, sess);
+    prev_ = input;
+    dot_  = fetch::ml::ops::Dot(input, weights_, sess);
+    add_  = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+
+    if (activate_ == "LeakyRelu")
+    {
+      output_ = fetch::ml::ops::LeakyRelu(add_, sess);
+    }
+    else if (activate_ == "Relu")
+    {
+      output_ = fetch::ml::ops::Relu(add_, sess);
+    }
+    else if (activate_ == "Sigmoid")
+    {
+      output_ = fetch::ml::ops::Sigmoid(add_, sess);
+    }
+    else
+    {
+      output_ = add_;
+    }
   }
 
 private:
@@ -139,22 +161,9 @@ private:
   VariablePtrType          dot_;
   VariablePtrType          add_;
   VariablePtrType          output_;
+  std::string              activate_;
 };
 
 }  // namespace layers
 }  // namespace ml
 }  // namespace fetch
-
-//// Doing this template specialization lets us find instances of Variable<T> in an unordered_set of
-//// them
-// namespace std {
-// template <typename ArrayType>
-// struct hash<fetch::ml::layers::Layer<ArrayType>>
-//{
-//  std::size_t operator()(fetch::ml::layers::Layer<ArrayType> const &v) const
-//  {
-//    //    return &v.prev;
-//    return v.id;
-//  }
-//};
-//}  // namespace std

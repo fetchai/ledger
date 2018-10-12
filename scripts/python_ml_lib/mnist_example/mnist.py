@@ -7,7 +7,7 @@ DATA_URL = 'http://yann.lecun.com/exdb/mnist/'
 # Download and import the MNIST dataset from Yann LeCun's website.
 # Reserve 10,000 examples from the training set for validation.
 # Each image is an array of 784 (28x28) float values  from 0 (white) to 1 (black).
-def load_data(one_hot=True, reshape=None, training_size=None, validation_size=10000):
+def load_data(one_hot=True, reshape=None, training_size=10000, validation_size=50):
     x_tr = load_images('train-images-idx3-ubyte.gz')
     y_tr = load_labels('train-labels-idx1-ubyte.gz')
     x_te = load_images('t10k-images-idx3-ubyte.gz')

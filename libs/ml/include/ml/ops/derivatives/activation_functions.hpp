@@ -45,6 +45,28 @@ void Sigmoid(VariablePtrType cur_node)
   auto temp3 = fetch::math::Multiply(dy, temp2);
   left->GradientAdd(temp3);
 }
+//
+// template <typename VariablePtrType>
+// void Softmax(VariablePtrType cur_node)
+//{
+//  assert(cur_node->prev.size() == 1);
+//
+//  auto &left = cur_node->prev[0];
+//  auto &dy   = cur_node->grad();
+//
+//  for (std::size_t i = 0; i < cur_node->data().shape()[0]; ++i)
+//  {
+//    for (std::size_t j = 0; j < cur_node->data().shape()[1]; ++j)
+//    {
+//      if (cur_node->data().At(i, j) == ;
+//    }
+//  }
+//
+//  auto temp1 = fetch::math::Subtract(1.0, cur_node->data());
+//  auto temp2 = fetch::math::Multiply(cur_node->data(), temp1);
+//  auto temp3 = fetch::math::Multiply(dy, temp2);
+//  left->GradientAdd(temp3);
+//}
 
 template <typename VariablePtrType>
 void Relu(VariablePtrType cur_node)
@@ -54,19 +76,6 @@ void Relu(VariablePtrType cur_node)
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
   auto &dy    = cur_node->grad();
-
-  //  // identical???
-  //  auto new_grads = fetch::math::Maximum(left->data(), right->data());
-  //  auto new_grads2 = cur_node->data();
-  //
-  //  for (std::size_t idx = 0; idx < new_grads.size(); ++idx) {
-  //    std::cout << "new_grads[" << idx << "]: " << new_grads[idx] << " : " << new_grads2[idx] <<
-  //    std::endl;
-  //  }
-  //
-  //
-  //  left->GradientAdd(fetch::math::Dot(dy, cur_node->data()));
-  //  //  left->GradientAdd(fetch::math::Multiply(dy, new_grads));
 
   for (std::size_t i = 0; i < left->data().size(); ++i)
   {

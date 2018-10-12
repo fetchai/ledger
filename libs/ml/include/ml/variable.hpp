@@ -84,7 +84,7 @@ public:
     f_fn_(ptr);
   }
 
-  void Backward(SelfPtrType ptr)
+  void Backward(SelfPtrType ptr, typename ArrayType::Type lambda = 0.0)
   {
     assert(initialised);
     assert(b_fn_);
@@ -117,6 +117,11 @@ public:
   void GradientValueAdd(std::size_t idx, typename ArrayType::Type const &othergrad_)
   {
     grad_[idx] += othergrad_;
+  }
+
+  void GradientValueAdd(std::size_t i, std::size_t j, typename ArrayType::Type const &othergrad_)
+  {
+    grad_.Set(i, j, grad_.At(i, j) + othergrad_);
   }
 
   void GradientSetZero(std::size_t idx)

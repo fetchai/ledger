@@ -66,13 +66,13 @@ trX, trY, teX, teY = mnist.load_data(one_hot=True, training_size=2000, validatio
 
 h_lay_size = 10
 
-# weights = [
-#     np.random.randn(28*28, h_lay_size) / np.sqrt(28*28),
-#     np.random.randn(h_lay_size, 10) / np.sqrt(h_lay_size)]
 weights = [
     np.random.randn(28*28, h_lay_size) / np.sqrt(28*28),
-    np.random.randn(10, 11) / np.sqrt(10),
-    np.random.randn(11, 10) / np.sqrt(11)]
+    np.random.randn(h_lay_size, 10) / np.sqrt(h_lay_size)]
+# weights = [
+#     np.random.randn(28*28, h_lay_size) / np.sqrt(28*28),
+#     np.random.randn(10, 11) / np.sqrt(10),
+#     np.random.randn(11, 10) / np.sqrt(11)]
 
 # weights = [
 #     np.random.rand(28*28, h_lay_size) / np.sqrt(28*28),
@@ -81,7 +81,7 @@ weights = [
 #     np.ones([28*28, h_lay_size]) / np.sqrt(28*28),
 #     np.ones([h_lay_size, 10]) / np.sqrt(h_lay_size)]
 
-num_epochs, batch_size, learn_rate = 30, 10, 0.2
+num_epochs, batch_size, learn_rate = 30, 50, 0.2
 
 for i in range(num_epochs):
     for j in range(0, len(trX), batch_size):

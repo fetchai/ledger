@@ -6,6 +6,7 @@ import random                                       # normal distirbution sampli
 from tqdm import tqdm                               # visualising progress
 import numpy as np                                  # loading data from buffer
 import sys
+import matplotlib.pyplot as plt
 
 # from fetch.math.linalg import MatrixDouble          # our matrices
 from fetch.math.linalg import MatrixDouble
@@ -14,6 +15,18 @@ from fetch.ml import CrossEntropyLoss
 # from fetch.ml.layers import Layer          # our matrices
 
 # TODO: Validation size must be same as batch size for the moment
+
+
+DO_PLOTTING = 0
+
+def plot_weights(layers):
+
+    for layer in layers:
+        plt.hist(layer.weights().data())
+        plt.show()
+        plt.close()
+
+
 
 class MnistLearner():
 
@@ -27,19 +40,19 @@ class MnistLearner():
         self.y_te_filename = 't10k-labels-idx1-ubyte.gz'
 
 
-        self.training_size = 1000
-        self.validation_size = 10
+        self.training_size = 2000
+        self.validation_size = 50
 
         self.n_epochs = 30
-        self.batch_size = 10
-        self.alpha = 0.2
+        self.batch_size = 50
+        self.alpha = 0.002
 
         self.mnist_input_size = 784         # pixels in 28 * 28 mnist images
+        self.net = [10]                     # size of hidden layers
         self.mnist_output_size = 10         # 10 possible characters to recognise
 
-        self.activation_fn = 'relu'
+        self.activation_fn = 'Sigmoid'      # LeakyRelu might be good?
         self.layers = []
-        self.net = [20, 10]
         self.sess = None
         self.initialise_network()
 
@@ -58,11 +71,14 @@ class MnistLearner():
         #     self.net.append(self.layers[i])
         self.net.append(self.mnist_output_size)
 
-        self.layers.append(self.sess.Layer(self.mnist_input_size, self.net[0], "input_layer"))
+        self.layers.append(self.sess.Layer(self.mnist_input_size, self.net[0], self.activation_fn, "input_layer"))
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
-                self.layers.append(self.sess.Layer(self.net[i], self.net[i + 1], "layer_" + str(i+1)))
-        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, "output_layer"))
+                self.layers.append(self.sess.Layer(self.net[i], self.net[i + 1], self.activation_fn, "layer_" + str(i+1)))
+        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, "", "output_layer"))
+
+        if DO_PLOTTING:
+            plot_weights(self.layers)
 
         self.y_pred = self.layers[-1].Output()
 
@@ -176,73 +192,24 @@ class MnistLearner():
                 loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
 
                 # back propagate
-                self.sess.BackProp(self.X_batch, loss, self.alpha, 1)
+                self.sess.BackProp(self.X_batch, loss, self.alpha, 1000)
 
-                print("\nCEL data: ")
-                for i in range(self.validation_size):
-                    print("\n")
-                    for j in range(1):
-                        sys.stdout.write('{:0.13f}'.format(loss.data()[i, j]) + "\t")
-                print("\nCEL grad: ")
-                for i in range(self.validation_size):
-                    print("\n")
-                    for j in range(10):
-                        sys.stdout.write('{:0.13f}'.format(loss.Grads()[i, j]) + "\t")
+                # print("\nlosses: ")
+                # for i in range(loss.size()):
+                #     print(loss.data()[i])
 
-                print("\ndot_output: ")
-                for i in range(self.validation_size):
-                    print("\n")
-                    for j in range(10):
-                        sys.stdout.write('{:0.13f}'.format(self.layers[0].DotOutput().data()[i, j]) + "\t")
-
-                print("\npredictions: ")
-                print("\n")
-                for i in range(200):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[0].Output().data()[i]) + "\n")
-
-
+                sum_loss = 0
+                for i in range(loss.size()):
+                    sum_loss += loss.data()[i]
+                #     # print("\n")
+                #     # for j in range(1):
+                #     #     sys.stdout.write('{:0.13f}'.format(loss.data()[i]) + "\t")
+                print("sumloss: " + str(sum_loss))
 
             print("Getting accuracy: ")
             print("\t getting feed forward predictions..")
             # cur_pred = self.sess.Predict(self.x_te, self.y_pred)
             cur_pred = self.sess.Predict(self.x_te, self.layers[-1].Output())
-
-
-            print("\nweights: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().data()[i, j]) + "\t")
-
-            print("\nweight grads: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().Grads()[i, j]) + "\t")
-
-            print("\ndot_output: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].DotOutput().data()[i, j]) + "\t")
-
-            print("\ndot_output_grads: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].DotOutput().Grads()[i, j]) + "\t")
-
-            print("\noutput: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().data()[i, j]) + "\t")
-
-            print("\noutput_grads: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().Grads()[i, j]) + "\t")
 
             print("\t calculating argmaxes")
             max_pred = cur_pred.ArgMax(1)
@@ -251,26 +218,7 @@ class MnistLearner():
             print("DEBUG- DEBUG - DEBUG")
             print("DEBUG- DEBUG - DEBUG")
 
-            print("\npredictions: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].Output().data()[i, j]) + "\t")
-
-            print("\nweights: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().data()[i, j]) + "\t")
-
-            print("\nweights grads: ")
-            for i in range(self.validation_size):
-                print("\n")
-                for j in range(10):
-                    sys.stdout.write('{:0.13f}'.format(self.layers[-1].weights().Grads()[i, j]) + "\t")
-
             for i in range(3):
-
                 print("Cur Pred: ")
                 for j in range(10):
                     print(cur_pred[i, j])
@@ -290,7 +238,7 @@ class MnistLearner():
             sum_acc = 0
             for i in range(self.y_te.shape()[0]):
                 sum_acc += (gt[i] == max_pred[i])
-            sum_acc /= self.y_te.data().size()
+            sum_acc /= (self.y_te.data().size() / 10)
 
             print("\taccuracy: ", sum_acc)
 
@@ -311,49 +259,4 @@ def run_mnist():
 
 # import cProfile
 # cProfile.run('run_mnist()')
-
-# run_mnist()
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-# N is batch size(sample size); D_in is input dimension;
-# H is hidden dimension; D_out is output dimension.
-N, D_in, H, D_out = 4, 2, 30, 1
-
-# Create random input and output data
-x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-y = np.array([[0], [1], [1], [0]])
-
-# Randomly initialize weights
-w1 = np.random.randn(D_in, H)
-w2 = np.random.randn(H, D_out)
-
-learning_rate = 0.002
-loss_col = []
-for t in range(200):
-    # Forward pass: compute predicted y
-    h = x.dot(w1)
-    h_relu = np.maximum(h, 0)  # using ReLU as activate function
-    y_pred = h_relu.dot(w2)
-
-    # Compute and print loss
-    loss = np.square(y_pred - y).sum() # loss function
-    loss_col.append(loss)
-    print(t, loss, y_pred)
-
-    # Backprop to compute gradients of w1 and w2 with respect to loss
-    grad_y_pred = 2.0 * (y_pred - y) # the last layer's error
-    grad_w2 = h_relu.T.dot(grad_y_pred)
-    grad_h_relu = grad_y_pred.dot(w2.T) # the second laye's error
-    grad_h = grad_h_relu.copy()
-    grad_h[h < 0] = 0  # the derivate of ReLU
-    grad_w1 = x.T.dot(grad_h)
-
-    # Update weights
-    w1 -= learning_rate * grad_w1
-    w2 -= learning_rate * grad_w2
-
-plt.plot(loss_col)
-plt.show()
+run_mnist()

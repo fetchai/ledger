@@ -34,14 +34,14 @@ using LayerType = fetch::ml::Variable<ArrayType>;
 TEST(variable, simple_arithmetic)
 {
 
+  // set up sess and variables
   SessionManager<ArrayType, LayerType> sess{};
+  std::vector<std::size_t>             l1_shape{2, 4};
+  std::vector<std::size_t>             l2_shape{4, 1};
+  auto                                 l1 = sess.Variable(l1_shape);
+  auto                                 l2 = sess.Variable(l2_shape);
 
-  std::vector<std::size_t> l1_shape{2, 4};
-  std::vector<std::size_t> l2_shape{4, 1};
-
-  auto l1 = sess.Variable(l1_shape);
-  auto l2 = sess.Variable(l2_shape);
-
+  // fill values into variables
   int counter = -4;
   for (std::size_t i = 0; i < l1_shape[0]; ++i)
   {
@@ -51,7 +51,6 @@ TEST(variable, simple_arithmetic)
       counter += 1;
     }
   }
-
   counter = -2;
   for (std::size_t i = 0; i < l2_shape[0]; ++i)
   {
@@ -62,12 +61,15 @@ TEST(variable, simple_arithmetic)
     }
   }
 
+  // some neural net like linear algebra
   auto n1 = fetch::ml::ops::Dot(l1, l2, sess);
   auto n2 = fetch::ml::ops::Relu(n1, sess);
   auto n3 = fetch::ml::ops::ReduceSum(n2, 0, sess);
 
-  sess.BackwardGraph(n1);
+  // backpropagate gradients
+  sess.BackProp(l1, n1, 0.1);
 
+  // test gradient values
   counter = -2;
   for (std::size_t i = 0; i < 4; ++i)
   {
@@ -116,7 +118,7 @@ TEST(variable, trivial_backprop)
   ASSERT_TRUE(ret->shape()[0] == 2);
   ASSERT_TRUE(ret->shape()[1] == 2);
 
-  sess.BackwardGraph(ret);
+  sess.BackProp(l1, ret, 0.1);
 
   ArrayType gt{ret->shape()};
   for (std::size_t i = 0; i < ret->grad().shape()[0]; ++i)

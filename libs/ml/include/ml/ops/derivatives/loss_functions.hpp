@@ -51,10 +51,44 @@ void CrossEntropyLoss(VariablePtrType cur_node)
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
 
-  auto temp3 = fetch::math::Multiply(-1.0, right->data());
-  auto temp4 = fetch::math::Divide(right->data(), left->data());
+  auto n_data    = left->data().shape()[0];
+  auto n_classes = left->data().shape()[1];
+  auto soft_data = fetch::math::Softmax(left->data());
+  for (std::size_t i = 0; i < n_data; ++i)
+  {
+    // find the current correct index in the one-hot gt vector
+    for (std::size_t j = 0; j < n_classes; ++j)
+    {
+      auto grad = left->data().At(i, j);
 
-  left->GradientAdd(temp4);
+      if (right->data().At(i, j) == 1.0)
+      {
+        grad -= 1;
+      }
+      grad = grad / left->data().shape()[0];
+      left->GradientValueAdd(i, j, grad);
+    }
+  }
+  //  auto temp3 = fetch::math::Multiply(-1.0, right->data());
+  //  auto temp4 = fetch::math::Divide(right->data(), left->data());
+
+  //  for (std::size_t i = 0; i < n_data; ++i)
+  //  {
+  //    // find the current correct index in the one-hot gt vector
+  //    for (std::size_t j = 0; j < n_classes; ++j)
+  //    {
+  //      auto grad = soft_data.At(i, j);
+  //
+  //      if (right->data().At(i, j) == 1.0)
+  //      {
+  //        grad -= 1;
+  //      }
+  //      grad = grad / left->data().shape()[0];
+  //      left->GradientValueAdd(i, j, grad);
+  //    }
+  //  }
+  //  //  auto temp3 = fetch::math::Multiply(-1.0, right->data());
+  //  //  auto temp4 = fetch::math::Divide(right->data(), left->data());
 }
 
 };  // namespace derivatives

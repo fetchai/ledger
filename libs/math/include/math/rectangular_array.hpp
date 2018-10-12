@@ -528,7 +528,7 @@ public:
 
     height_ = h;
     width_  = w;
-    shape_  = {h, w};
+    shape_  = {height_, width_};
   }
 
   /**
@@ -545,6 +545,7 @@ public:
 
     height_ = shape[0];
     width_  = shape[1];
+    shape_  = {height_, width_};
   }
 
   void Flatten()

@@ -42,10 +42,11 @@ void BuildSession(std::string const &custom_name, pybind11::module &module)
       .def("Variable", [](SessionType &sess, std::vector<std::size_t> in_shape,
                           std::string const &variable_name =
                               "") { return sess.Variable(in_shape, variable_name); })
-      //      .def("Layer",
-      //           [](SessionType &sess, std::size_t const &in_size, std::size_t const &out_size,
-      //              std::string layer_name = "") { return sess.Layer(in_size, out_size,
-      //              layer_name); })
+      .def("Layer",
+           [](SessionType &sess, std::size_t const &in_size, std::size_t const &out_size,
+              std::string activate, std::string layer_name = "") {
+             return sess.Layer(in_size, out_size, activate, layer_name);
+           })
       .def_static("Zeroes",
                   [](SessionType &sess, std::vector<std::size_t> const &new_shape) {
                     return SessionType::Zeroes(new_shape, sess);

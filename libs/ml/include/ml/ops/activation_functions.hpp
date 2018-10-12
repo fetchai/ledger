@@ -62,6 +62,37 @@ VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
   return ret;
 }
 
+///**
+// * The Sigmoid activation squashes such that y = 1 / 1 + e^(-x)
+// * @tparam VariablePtrType
+// * @param cur_node
+// */
+// template <typename VariablePtrType>
+// void SoftmaxImplementation(VariablePtrType cur_node)
+//{
+//  cur_node->data() = fetch::math::Softmax(cur_node->prev[0]->data());
+//}
+// template <typename VariablePtrType, typename SessionType>
+// VariablePtrType Softmax(VariablePtrType left, SessionType &sess)
+//{
+//  // define the derivative
+//  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+//    fetch::ml::ops::derivatives::Softmax(cur_node);
+//  };
+//
+//  // define the forward function (i.e. the dot)
+//  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+//    SoftmaxImplementation(cur_node);
+//  };
+//
+//  // define the return variable with the Dot computation
+//  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
+//
+//  ret->prev.push_back(left);
+//
+//  return ret;
+//}
+
 /**
  * The rectified linear unit returns the elementwise maximum of 0 and y
  * @tparam ARRAY_TYPE
@@ -123,7 +154,7 @@ void LeakyReluImplementation(VariablePtrType cur_node)
     }
     else
     {
-      cur_node->data()[i] = fetch::math::Multiply(0.2, cur_node->prev[0]->data()[i]);
+      cur_node->data()[i] = fetch::math::Multiply(0.01, cur_node->prev[0]->data()[i]);
     }
   }
 }
