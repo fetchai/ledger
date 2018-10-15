@@ -179,7 +179,7 @@ public:
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
+        FETCH_LOG_WARN(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
         return;
       }
 
