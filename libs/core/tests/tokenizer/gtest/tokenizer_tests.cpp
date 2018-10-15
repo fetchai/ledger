@@ -15,10 +15,11 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include <gtest/gtest.h>
-#include "core/byte_array/tokenizer/tokenizer.hpp"
+
 #include "core/byte_array/consumers.hpp"
+#include "core/byte_array/tokenizer/tokenizer.hpp"
 #include <fstream>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -59,52 +60,51 @@ bool equals(Tokenizer const &tokenizer, std::vector<int> const &ref)
   return true;
 }
 
+enum
+{
+  E_INTEGER        = 0,
+  E_FLOATING_POINT = 1,
+  E_STRING         = 2,
+  E_KEYWORD        = 3,
+  E_TOKEN          = 4,
+  E_WHITESPACE     = 5,
+  E_CATCH_ALL      = 6
+};
 
-  enum
-  {
-    E_INTEGER        = 0,
-    E_FLOATING_POINT = 1,
-    E_STRING         = 2,
-    E_KEYWORD        = 3,
-    E_TOKEN          = 4,
-    E_WHITESPACE     = 5,
-    E_CATCH_ALL      = 6
-  };
+TEST(tokenizer_testing_individual_consumers_gtest, any_character)
+{
+  Tokenizer test;
+  test.AddConsumer(fetch::byte_array::consumers::AnyChar<E_CATCH_ALL>);
+  std::string test_str;
 
- 
-    TEST(tokenizer_testing_individual_consumers_gtest , any_character)
-    {
-      Tokenizer test;
-      test.AddConsumer(fetch::byte_array::consumers::AnyChar<E_CATCH_ALL>);
-      std::string test_str;
+  test_str = "hello world";
+  EXPECT_TRUE(test.Parse(test_str));
+  EXPECT_TRUE(test.size() == test_str.size());
 
-      test_str = "hello world";
-      EXPECT_TRUE(test.Parse(test_str));
-      EXPECT_TRUE(test.size() == test_str.size());
+  test_str = "12$1adf)(SD)S(*ASdf 09812 4e12";
+  EXPECT_TRUE(test.Parse(test_str));
+  EXPECT_TRUE(test.size() == test_str.size());
 
-      test_str = "12$1adf)(SD)S(*ASdf 09812 4e12";
-      EXPECT_TRUE(test.Parse(test_str));
-      EXPECT_TRUE(test.size() == test_str.size());
+  test_str =
+      "12$1adf)(SD)S(*ASdf 09812 4e12asd kalhsdak shd aopisfu q[wr "
+      "iqrw'prkas'd;fkla;s'dfl;ak \"";
+  EXPECT_TRUE(test.Parse(test_str));
+  EXPECT_TRUE(test.size() == test_str.size());
+}
 
-      test_str =
-          "12$1adf)(SD)S(*ASdf 09812 4e12asd kalhsdak shd aopisfu q[wr "
-          "iqrw'prkas'd;fkla;s'dfl;ak \"";
-      EXPECT_TRUE(test.Parse(test_str));
-      EXPECT_TRUE(test.size() == test_str.size());
-    }
+TEST(tokenizer_testing_individual_consumers_gtest, any_character_test)
+{
+  Tokenizer test;
+  test.AddConsumer(fetch::byte_array::consumers::NumberConsumer<E_INTEGER, E_FLOATING_POINT>);
+  test.AddConsumer(fetch::byte_array::consumers::AnyChar<E_CATCH_ALL>);
 
-    TEST(tokenizer_testing_individual_consumers_gtest , any_character_test)
-    {
-      Tokenizer test;
-      test.AddConsumer(fetch::byte_array::consumers::NumberConsumer<E_INTEGER, E_FLOATING_POINT>);
-      test.AddConsumer(fetch::byte_array::consumers::AnyChar<E_CATCH_ALL>);
+  std::string test_str;
 
-      std::string test_str;
+  test_str = "93 -12.31 -12.e+3";
+  EXPECT_TRUE(test.Parse(test_str));
+  EXPECT_TRUE(equals(test, {"93", " ", "-12.31", " ", "-12.e+3"}));
+  EXPECT_TRUE(
+      equals(test, {E_INTEGER, E_CATCH_ALL, E_FLOATING_POINT, E_CATCH_ALL, E_FLOATING_POINT}));
+}
 
-      test_str = "93 -12.31 -12.e+3";
-      EXPECT_TRUE(test.Parse(test_str));
-      EXPECT_TRUE(equals(test, {"93", " ", "-12.31", " ", "-12.e+3"}));
-      EXPECT_TRUE(equals(test, {E_INTEGER, E_CATCH_ALL, E_FLOATING_POINT, E_CATCH_ALL, E_FLOATING_POINT}));
-    }
-
-  // TODO(issue 37): Add more tests
+// TODO(issue 37): Add more tests

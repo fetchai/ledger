@@ -15,7 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include <gtest/gtest.h>
+
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -26,6 +26,7 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/object_store_syncronisation_protocol.hpp"
 #include <algorithm>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
 
@@ -128,7 +129,7 @@ public:
     CONNECT = 1
   };
 
- ControllerProtocol(ClientRegister reg, NetworkManager nm)
+  ControllerProtocol(ClientRegister reg, NetworkManager nm)
     : register_{std::move(reg)}
     , nm_{nm}
   {
@@ -222,363 +223,357 @@ private:
   std::unique_ptr<ControllerProtocol> controller_protocol_;
 };
 
+TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1)
+{
+  NetworkManager nm{1};
+  nm.Start();
 
-    TEST(storage_object_store_sync_gtest , transaction_store_protocol_local_threads_1)
-    {
-      NetworkManager nm{1};
-      nm.Start();
+  uint16_t                         initial_port = 8080;
+  std::vector<VerifiedTransaction> sent;
 
-      uint16_t                         initial_port = 8080;
-      std::vector<VerifiedTransaction> sent;
+  TestService test_service(initial_port, nm);
 
-      TestService test_service(initial_port, nm);
+  BlockUntilConnect("localhost", initial_port);
 
-      BlockUntilConnect("localhost", initial_port);
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    VerifiedTransaction tx = GetRandomTx(i);
 
-      for (std::size_t i = 0; i < 100; ++i)
-      {
-        VerifiedTransaction tx = GetRandomTx(i);
-
-        auto promise =
-            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
-
-        sent.push_back(tx);
-      }
-
-      // Now verify we can get the tx from the store
-      for (auto const &tx : sent)
-      {
-        auto promise =
-            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
-
-        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
-
-        if (fee != tx.summary().fee || tx.summary().fee == 0)
-        {
-          EXPECT_EQ(fee , tx.summary().fee);
-        }
-      }
-
-      nm.Stop();
-    }
-
-     TEST(storage_object_store_sync_gtest , transaction_store_protocol_local_threads_50)
-    {
-      NetworkManager nm{50};
-      nm.Start();
-
-      uint16_t                         initial_port = 8080;
-      std::vector<VerifiedTransaction> sent;
-
-      TestService test_service(initial_port, nm);
-
-      BlockUntilConnect("localhost", initial_port);
-
-      for (std::size_t i = 0; i < 100; ++i)
-      {
-        VerifiedTransaction tx = GetRandomTx(i);
-
-        auto promise =
-            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                     ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
-
-        sent.push_back(tx);
-      }
-
-      // Now verify we can get the tx from the store
-      for (auto const &tx : sent)
-      {
-        auto promise =
-            CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                     ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
-
-        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
-
-        if (fee != tx.summary().fee || tx.summary().fee == 0)
-        {
-          EXPECT_EQ(fee , tx.summary().fee);
-        }
-      }
-
-      nm.Stop();
-    }
-
-     TEST(storage_object_store_sync_gtest , transaction_store_protocol_local_threads_caching)
-    {
-      // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
-      NetworkManager nm{50};
-      nm.Start();
-
-      uint16_t                                  initial_port       = 8080;
-      uint16_t                                  number_of_services = 5;
-      std::vector<std::shared_ptr<TestService>> services;
-
-      // Start up our services
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        services.push_back(std::make_shared<TestService>(initial_port + i, nm));
-      }
-
-      // make sure they are all online
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        BlockUntilConnect(uint16_t(initial_port + i));
-      }
-
-      // Connect our services to each other
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        for (uint16_t j = 0; j < number_of_services; ++j)
-        {
-          if (i != j)
-          {
-            CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
-                     ControllerProtocol::CONNECT, ByteArray{"localhost"},
-                     uint16_t(initial_port + j));
-          }
-        }
-      }
-
-      // Now send all the TX to one of the clients
-      std::vector<VerifiedTransaction> sent;
-
-      std::cout << "Sending txes to clients" << std::endl;
-
-      for (std::size_t i = 0; i < 500; ++i)
-      {
-        VerifiedTransaction tx = GetRandomTx(i);
-
-        CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
+    auto promise =
+        CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
                  ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
 
-        sent.push_back(tx);
-      }
+    sent.push_back(tx);
+  }
 
-      // Check all peers have identical transaction stores
-      bool failed_to_sync = false;
+  // Now verify we can get the tx from the store
+  for (auto const &tx : sent)
+  {
+    auto promise = CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-      // wait as long as is reasonable
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
-      std::cout << "Verifying peers synced" << std::endl;
+    if (fee != tx.summary().fee || tx.summary().fee == 0)
+    {
+      EXPECT_EQ(fee, tx.summary().fee);
+    }
+  }
 
-      // Now verify we can get the tx from the each client
-      for (uint16_t i = 0; i < number_of_services; ++i)
+  nm.Stop();
+}
+
+TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_50)
+{
+  NetworkManager nm{50};
+  nm.Start();
+
+  uint16_t                         initial_port = 8080;
+  std::vector<VerifiedTransaction> sent;
+
+  TestService test_service(initial_port, nm);
+
+  BlockUntilConnect("localhost", initial_port);
+
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    VerifiedTransaction tx = GetRandomTx(i);
+
+    auto promise =
+        CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+
+    sent.push_back(tx);
+  }
+
+  // Now verify we can get the tx from the store
+  for (auto const &tx : sent)
+  {
+    auto promise = CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
+                            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+
+    uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
+
+    if (fee != tx.summary().fee || tx.summary().fee == 0)
+    {
+      EXPECT_EQ(fee, tx.summary().fee);
+    }
+  }
+
+  nm.Stop();
+}
+
+TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_caching)
+{
+  // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
+  NetworkManager nm{50};
+  nm.Start();
+
+  uint16_t                                  initial_port       = 8080;
+  uint16_t                                  number_of_services = 5;
+  std::vector<std::shared_ptr<TestService>> services;
+
+  // Start up our services
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    services.push_back(std::make_shared<TestService>(initial_port + i, nm));
+  }
+
+  // make sure they are all online
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    BlockUntilConnect(uint16_t(initial_port + i));
+  }
+
+  // Connect our services to each other
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    for (uint16_t j = 0; j < number_of_services; ++j)
+    {
+      if (i != j)
       {
-        for (auto const &tx : sent)
-        {
-          auto promise =
-              CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
-                       ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
-
-          VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
-
-          if (tx_rec.summary().fee != tx.summary().fee)
-          {
-            std::cout << "Client " << i << std::endl;
-            std::cout << ToHex(tx_rec.data()) << std::endl;
-            EXPECT_EQ(tx_rec.summary().fee , tx.summary().fee);
-          }
-        }
-
-        EXPECT_EQ(i , i);
+        CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
+                 ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + j));
       }
+    }
+  }
 
-      std::cout << "Test new joiner case" << std::endl;
+  // Now send all the TX to one of the clients
+  std::vector<VerifiedTransaction> sent;
 
-      // Now test new joiner case, add new joiner
-      services.push_back(
-          std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
+  std::cout << "Sending txes to clients" << std::endl;
 
-      BlockUntilConnect(uint16_t(initial_port + number_of_services));
+  for (std::size_t i = 0; i < 500; ++i)
+  {
+    VerifiedTransaction tx = GetRandomTx(i);
 
-      // Connect to peers
-      for (uint16_t i = 0; i < number_of_services; ++i)
+    CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
+             ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+
+    sent.push_back(tx);
+  }
+
+  // Check all peers have identical transaction stores
+  bool failed_to_sync = false;
+
+  // wait as long as is reasonable
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+  std::cout << "Verifying peers synced" << std::endl;
+
+  // Now verify we can get the tx from the each client
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    for (auto const &tx : sent)
+    {
+      auto promise =
+          CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
+                   ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+
+      VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
+
+      if (tx_rec.summary().fee != tx.summary().fee)
       {
-        CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                 TestService::CONTROLLER, ControllerProtocol::CONNECT, ByteArray{"localhost"},
-                 uint16_t(initial_port + i));
+        std::cout << "Client " << i << std::endl;
+        std::cout << ToHex(tx_rec.data()) << std::endl;
+        EXPECT_EQ(tx_rec.summary().fee, tx.summary().fee);
       }
-
-      // Wait until the sync is done
-      while (true)
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        auto promise =
-            CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                     TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
-
-        if (promise->As<bool>())
-        {
-          break;
-        }
-
-        std::cout << "Waiting for new joiner to sync." << std::endl;
-      }
-
-      std::cout << "Verifying new joiner sync." << std::endl;
-
-      failed_to_sync = false;
-
-      // Verify the new joiner
-      for (auto const &tx : sent)
-      {
-        auto promise = CallPeer(
-            nm, "localhost", uint16_t(initial_port + number_of_services), TestService::TX_STORE,
-            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
-
-        if (promise->As<VerifiedTransaction>().summary().fee != tx.summary().fee)
-        {
-          failed_to_sync = true;
-          std::cout << "Expecting: " << tx.summary().fee << std::endl;
-          EXPECT_EQ(std::string("Fees are the same ") , std::string("x"));
-        }
-      }
-
-      EXPECT_EQ(failed_to_sync , false);
-
-      nm.Stop();
     }
 
-    /*
-    SECTION("Test transaction store sync protocol (caching, then new joiner, threads 1) ")
-    {
-      // TODO: (HUT) : make this work with 1 - find the post blocking the NM.
-      NetworkManager nm{1};
-      nm.Start();
+    EXPECT_EQ(i, i);
+  }
 
-      uint16_t                                  initial_port       = 8080;
-      uint16_t                                  number_of_services = 5;
-      std::vector<std::shared_ptr<TestService>> services;
+  std::cout << "Test new joiner case" << std::endl;
 
-      // Start up our services
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        services.push_back(std::make_shared<TestService>(initial_port + i, nm));
-      }
+  // Now test new joiner case, add new joiner
+  services.push_back(
+      std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
 
-      // make sure they are all online
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        BlockUntilConnect(initial_port+i);
-      }
+  BlockUntilConnect(uint16_t(initial_port + number_of_services));
 
-      // Connect our services to each other
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        for (uint16_t j = 0; j < number_of_services; ++j)
-        {
-          if (i != j)
-          {
-            CallPeer(nm, "localhost", uint16_t(initial_port + i),
-                           TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                           ByteArray{"localhost"}, uint16_t(initial_port + j));
-          }
-        }
-      }
+  // Connect to peers
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services), TestService::CONTROLLER,
+             ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i));
+  }
 
-      // Now send all the TX to one of the clients
-      std::vector<VerifiedTransaction> sent;
+  // Wait until the sync is done
+  while (true)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-      std::cout << "Sending txes to clients" << std::endl;
-
-      for (std::size_t i = 0; i < 500; ++i)
-      {
-        VerifiedTransaction tx = GetRandomTx(i);
-
-        CallPeer(nm, "localhost", uint16_t(initial_port),
-                         TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
-                         ResourceID(tx.digest()), tx);
-
-        sent.push_back(tx);
-      }
-
-      // Check all peers have identical transaction stores
-      bool failed_to_sync = false;
-
-      // wait as long as is reasonable
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-
-      std::cout << "Verifying peers synced" << std::endl;
-
-      // Now verify we can get the tx from the each client
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        for (auto const &tx : sent)
-        {
-          auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + i),
-                           TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                           ResourceID(tx.digest()));
-
-
-          VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
-
-          if (tx_rec.summary().fee != tx.summary().fee)
-          {
-            std::cout << "Client " << i << std::endl;
-            std::cout << ToHex(tx_rec.data()) << std::endl;
-            EXPECT(tx_rec.summary().fee == tx.summary().fee);
-          }
-        }
-
-        EXPECT(i == i);
-      }
-
-      std::cout << "Test new joiner case" << std::endl;
-
-      // Now test new joiner case, add new joiner
-      services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
-
-      BlockUntilConnect(initial_port + number_of_services);
-
-      // Connect to peers
-      for (uint16_t i = 0; i < number_of_services; ++i)
-      {
-        CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                 TestService::CONTROLLER, ControllerProtocol::CONNECT,
-                 ByteArray{"localhost"}, uint16_t(initial_port + i));
-      }
-
-      // Wait until the sync is done
-      while(true)
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
                             TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
 
-        if(promise.As<bool>())
-        {
-          break;
-        }
+    if (promise->As<bool>())
+    {
+      break;
+    }
 
-        std::cout << "Waiting for new joiner to sync." << std::endl;
-      }
+    std::cout << "Waiting for new joiner to sync." << std::endl;
+  }
 
-      std::cout << "Verifying new joiner sync." << std::endl;
+  std::cout << "Verifying new joiner sync." << std::endl;
 
-      failed_to_sync = false;
+  failed_to_sync = false;
 
-      // Verify the new joiner
-      for (auto const &tx : sent)
-      {
-        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+  // Verify the new joiner
+  for (auto const &tx : sent)
+  {
+    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
                             TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
                             ResourceID(tx.digest()));
 
+    if (promise->As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+    {
+      failed_to_sync = true;
+      std::cout << "Expecting: " << tx.summary().fee << std::endl;
+      EXPECT_EQ(std::string("Fees are the same "), std::string("x"));
+    }
+  }
 
-        if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
-        {
-          failed_to_sync = true;
-          std::cout << "Expecting: " << tx.summary().fee << std::endl;
-          EXPECT("Fees are the same " == "x");
-        }
+  EXPECT_EQ(failed_to_sync, false);
+
+  nm.Stop();
+}
+
+/*
+SECTION("Test transaction store sync protocol (caching, then new joiner, threads 1) ")
+{
+  // TODO: (HUT) : make this work with 1 - find the post blocking the NM.
+  NetworkManager nm{1};
+  nm.Start();
+
+  uint16_t                                  initial_port       = 8080;
+  uint16_t                                  number_of_services = 5;
+  std::vector<std::shared_ptr<TestService>> services;
+
+  // Start up our services
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    services.push_back(std::make_shared<TestService>(initial_port + i, nm));
+  }
+
+  // make sure they are all online
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    BlockUntilConnect(initial_port+i);
+  }
+
+  // Connect our services to each other
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    for (uint16_t j = 0; j < number_of_services; ++j)
+    {
+      if (i != j)
+      {
+        CallPeer(nm, "localhost", uint16_t(initial_port + i),
+                       TestService::CONTROLLER, ControllerProtocol::CONNECT,
+                       ByteArray{"localhost"}, uint16_t(initial_port + j));
       }
+    }
+  }
 
-      EXPECT(failed_to_sync == false);
+  // Now send all the TX to one of the clients
+  std::vector<VerifiedTransaction> sent;
 
-      nm.Stop();
-    }; */
+  std::cout << "Sending txes to clients" << std::endl;
+
+  for (std::size_t i = 0; i < 500; ++i)
+  {
+    VerifiedTransaction tx = GetRandomTx(i);
+
+    CallPeer(nm, "localhost", uint16_t(initial_port),
+                     TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                     ResourceID(tx.digest()), tx);
+
+    sent.push_back(tx);
+  }
+
+  // Check all peers have identical transaction stores
+  bool failed_to_sync = false;
+
+  // wait as long as is reasonable
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+  std::cout << "Verifying peers synced" << std::endl;
+
+  // Now verify we can get the tx from the each client
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    for (auto const &tx : sent)
+    {
+      auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + i),
+                       TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                       ResourceID(tx.digest()));
+
+
+      VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
+
+      if (tx_rec.summary().fee != tx.summary().fee)
+      {
+        std::cout << "Client " << i << std::endl;
+        std::cout << ToHex(tx_rec.data()) << std::endl;
+        EXPECT(tx_rec.summary().fee == tx.summary().fee);
+      }
+    }
+
+    EXPECT(i == i);
+  }
+
+  std::cout << "Test new joiner case" << std::endl;
+
+  // Now test new joiner case, add new joiner
+  services.push_back(std::make_shared<TestService>(initial_port + number_of_services, nm));
+
+  BlockUntilConnect(initial_port + number_of_services);
+
+  // Connect to peers
+  for (uint16_t i = 0; i < number_of_services; ++i)
+  {
+    CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+             TestService::CONTROLLER, ControllerProtocol::CONNECT,
+             ByteArray{"localhost"}, uint16_t(initial_port + i));
+  }
+
+  // Wait until the sync is done
+  while(true)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                        TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+
+    if(promise.As<bool>())
+    {
+      break;
+    }
+
+    std::cout << "Waiting for new joiner to sync." << std::endl;
+  }
+
+  std::cout << "Verifying new joiner sync." << std::endl;
+
+  failed_to_sync = false;
+
+  // Verify the new joiner
+  for (auto const &tx : sent)
+  {
+    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
+                        TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                        ResourceID(tx.digest()));
+
+
+    if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+    {
+      failed_to_sync = true;
+      std::cout << "Expecting: " << tx.summary().fee << std::endl;
+      EXPECT("Fees are the same " == "x");
+    }
+  }
+
+  EXPECT(failed_to_sync == false);
+
+  nm.Stop();
+}; */

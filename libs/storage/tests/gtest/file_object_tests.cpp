@@ -15,11 +15,12 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include <gtest/gtest.h>
+
+#include "core/random/lfg.hpp"
 #include <core/byte_array/byte_array.hpp>
 #include <core/byte_array/encoders.hpp>
-#include "core/random/lfg.hpp"
 #include <crypto/hash.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <storage/file_object.hpp>
 
@@ -323,48 +324,48 @@ bool FileLoadHashConsistency()
   return true;
 }
 
-    TEST(storage_file_object_gtest , Creating_reading)
-    {
-      EXPECT_TRUE(BasicFileCreation<2>());
+TEST(storage_file_object_gtest, Creating_reading)
+{
+  EXPECT_TRUE(BasicFileCreation<2>());
 
-      EXPECT_TRUE((FileSaveLoadFixedSize<1, 1>()));
-      EXPECT_TRUE((FileSaveLoadFixedSize<2, 1>()));
-      EXPECT_TRUE((FileSaveLoadFixedSize<4, 1>()));
-      EXPECT_TRUE((FileSaveLoadFixedSize<1, 0>()));
-      EXPECT_TRUE((FileSaveLoadFixedSize<2, 0>()));
-      EXPECT_TRUE((FileSaveLoadFixedSize<4, 0>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<1, 1>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<2, 1>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<4, 1>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<1, 0>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<2, 0>()));
+  EXPECT_TRUE((FileSaveLoadFixedSize<4, 0>()));
 
-      EXPECT_TRUE(MultipleFileCreation<1>());
-      EXPECT_TRUE(MultipleFileCreation<2>());
-      EXPECT_TRUE(MultipleFileCreation<4>());
-      EXPECT_TRUE(MultipleFileCreation<9>());
-      EXPECT_TRUE(MultipleFileCreation<1023>());
+  EXPECT_TRUE(MultipleFileCreation<1>());
+  EXPECT_TRUE(MultipleFileCreation<2>());
+  EXPECT_TRUE(MultipleFileCreation<4>());
+  EXPECT_TRUE(MultipleFileCreation<9>());
+  EXPECT_TRUE(MultipleFileCreation<1023>());
 
-      EXPECT_TRUE(Overwriting<1>());
-      EXPECT_TRUE(Overwriting<2>());
-      EXPECT_TRUE(Overwriting<4>());
-      EXPECT_TRUE(Overwriting<7>());
-      EXPECT_TRUE(Overwriting<2048>());
+  EXPECT_TRUE(Overwriting<1>());
+  EXPECT_TRUE(Overwriting<2>());
+  EXPECT_TRUE(Overwriting<4>());
+  EXPECT_TRUE(Overwriting<7>());
+  EXPECT_TRUE(Overwriting<2048>());
 
-      EXPECT_TRUE(FileLoadValueConsistency<1>());
-      EXPECT_TRUE(FileLoadValueConsistency<2>());
-      EXPECT_TRUE(FileLoadValueConsistency<4>());
-      EXPECT_TRUE(FileLoadValueConsistency<7>());
-      //      EXPECT_TRUE( FileLoadValueConsistency<1023>() );
-    }
+  EXPECT_TRUE(FileLoadValueConsistency<1>());
+  EXPECT_TRUE(FileLoadValueConsistency<2>());
+  EXPECT_TRUE(FileLoadValueConsistency<4>());
+  EXPECT_TRUE(FileLoadValueConsistency<7>());
+  //      EXPECT_TRUE( FileLoadValueConsistency<1023>() );
+}
 
-    TEST(storage_file_object_gtest , Hash_consistency)
-    {
-      EXPECT_TRUE(HashConsistency<1>());
-      EXPECT_TRUE(HashConsistency<2>());
-      EXPECT_TRUE(HashConsistency<4>());
-      EXPECT_TRUE(HashConsistency<9>());
-      EXPECT_TRUE(HashConsistency<13>());
-      EXPECT_TRUE(HashConsistency<1024>());
+TEST(storage_file_object_gtest, Hash_consistency)
+{
+  EXPECT_TRUE(HashConsistency<1>());
+  EXPECT_TRUE(HashConsistency<2>());
+  EXPECT_TRUE(HashConsistency<4>());
+  EXPECT_TRUE(HashConsistency<9>());
+  EXPECT_TRUE(HashConsistency<13>());
+  EXPECT_TRUE(HashConsistency<1024>());
 
-      EXPECT_TRUE(FileLoadHashConsistency<1>());
-      EXPECT_TRUE(FileLoadHashConsistency<2>());
-      EXPECT_TRUE(FileLoadHashConsistency<4>());
-      EXPECT_TRUE(FileLoadHashConsistency<7>());
-      EXPECT_TRUE(FileLoadHashConsistency<1023>());
-    }
+  EXPECT_TRUE(FileLoadHashConsistency<1>());
+  EXPECT_TRUE(FileLoadHashConsistency<2>());
+  EXPECT_TRUE(FileLoadHashConsistency<4>());
+  EXPECT_TRUE(FileLoadHashConsistency<7>());
+  EXPECT_TRUE(FileLoadHashConsistency<1023>());
+}

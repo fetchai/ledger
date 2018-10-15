@@ -15,13 +15,14 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include <gtest/gtest.h>
-#include "storage/object_store.hpp"
+
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
+#include "storage/object_store.hpp"
 #include <algorithm>
+#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace fetch::storage;
@@ -91,371 +92,370 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
   b.third = ret;
 }
 
+TEST(storage_object_store_basic_functionality, Setting_and_getting_elements)
+{
+  for (std::size_t iterations = 3; iterations < 10; ++iterations)
+  {
+    ObjectStore<std::size_t> testStore;
+    testStore.New("testFile.db", "testIndex.db");
 
-    TEST(storage_object_store_basic_functionality , Setting_and_getting_elements)
+    for (std::size_t i = 0; i < iterations; ++i)
     {
-      for (std::size_t iterations = 3; iterations < 10; ++iterations)
+      testStore.Set(ResourceAddress(std::to_string(i)), i);
+
+      std::size_t result;
+
+      testStore.Get(ResourceAddress(std::to_string(i)), result);
+
+      // Suppress most expects to avoid spamming terminal
+      if (i != result || i == 0)
       {
-        ObjectStore<std::size_t> testStore;
-        testStore.New("testFile.db", "testIndex.db");
-
-        for (std::size_t i = 0; i < iterations; ++i)
-        {
-          testStore.Set(ResourceAddress(std::to_string(i)), i);
-
-          std::size_t result;
-
-          testStore.Get(ResourceAddress(std::to_string(i)), result);
-
-          // Suppress most expects to avoid spamming terminal
-          if (i != result || i == 0)
-          {
-            EXPECT_TRUE(i == result);
-          }
-        }
-
-        // Do a second run
-        for (std::size_t i = 0; i < iterations; ++i)
-        {
-          std::size_t result;
-
-          testStore.Get(ResourceAddress(std::to_string(i)), result);
-
-          // Suppress most expects to avoid spamming terminal
-          if (i != result || i == 0)
-          {
-            EXPECT_TRUE(i == result);
-          }
-        }
-
-        // Check against false positives
-        for (std::size_t i = 1; i < iterations; ++i)
-        {
-          std::size_t result = 0;
-
-          testStore.Get(ResourceAddress(std::to_string(i + iterations)), result);
-
-          // Suppress most expects to avoid spamming terminal
-          if (0 != result || i == 1)
-          {
-            EXPECT_TRUE(0 == result);
-          }
-        }
+        EXPECT_TRUE(i == result);
       }
     }
-    
-    TEST(storage_object_store_basic_functionality , find_over_basic_struct)
+
+    // Do a second run
+    for (std::size_t i = 0; i < iterations; ++i)
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+      std::size_t result;
 
-      for (auto const &numberOfKeys : keyTests)
+      testStore.Get(ResourceAddress(std::to_string(i)), result);
+
+      // Suppress most expects to avoid spamming terminal
+      if (i != result || i == 0)
       {
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");
+        EXPECT_TRUE(i == result);
+      }
+    }
 
-        std::vector<testType>                     objects;
-        std::vector<testType>                     objectsCopy;
-        fetch::random::LaggedFibonacciGenerator<> lfg;
+    // Check against false positives
+    for (std::size_t i = 1; i < iterations; ++i)
+    {
+      std::size_t result = 0;
 
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
-        {
-          uint64_t random = lfg();
+      testStore.Get(ResourceAddress(std::to_string(i + iterations)), result);
 
-          testType test;
-          test.first  = int(-random);
-          test.second = random;
+      // Suppress most expects to avoid spamming terminal
+      if (0 != result || i == 1)
+      {
+        EXPECT_TRUE(0 == result);
+      }
+    }
+  }
+}
 
-          test.third = std::to_string(random);
+TEST(storage_object_store_basic_functionality, find_over_basic_struct)
+{
+  std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
 
-          testStore.Set(ResourceAddress(test.third), test);
-          objects.push_back(test);
-        }
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
 
-        std::sort(objects.begin(), objects.end());
+    std::vector<testType>                     objects;
+    std::vector<testType>                     objectsCopy;
+    fetch::random::LaggedFibonacciGenerator<> lfg;
 
-        // Test successfully finding and testing to find elements
-        bool successfullyFound = true;
-        int  index             = 0;
-        for (auto const &i : objects)
-        {
-          auto it = testStore.Find(ResourceAddress(i.third));
-          if (it == testStore.end())
-          {
-            successfullyFound = false;
-            break;
-          }
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    {
+      uint64_t random = lfg();
 
-          index++;
-        }
+      testType test;
+      test.first  = int(-random);
+      test.second = random;
 
-        EXPECT_TRUE(successfullyFound == true && index == index);
+      test.third = std::to_string(random);
 
+      testStore.Set(ResourceAddress(test.third), test);
+      objects.push_back(test);
+    }
+
+    std::sort(objects.begin(), objects.end());
+
+    // Test successfully finding and testing to find elements
+    bool successfullyFound = true;
+    int  index             = 0;
+    for (auto const &i : objects)
+    {
+      auto it = testStore.Find(ResourceAddress(i.third));
+      if (it == testStore.end())
+      {
         successfullyFound = false;
+        break;
+      }
 
-        for (std::size_t i = 0; i < 100; ++i)
-        {
-          auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
+      index++;
+    }
 
-          if (it != testStore.end())
-          {
-            successfullyFound = true;
-            break;
-          }
-        }
+    EXPECT_TRUE(successfullyFound == true && index == index);
 
-        EXPECT_TRUE(successfullyFound == false);
+    successfullyFound = false;
+
+    for (std::size_t i = 0; i < 100; ++i)
+    {
+      auto it = testStore.Find(ResourceAddress(std::to_string(lfg())));
+
+      if (it != testStore.end())
+      {
+        successfullyFound = true;
+        break;
       }
     }
 
-    TEST(storage_object_store_with_STL_gtest , find_over_basic_struct_expect_failures)
+    EXPECT_TRUE(successfullyFound == false);
+  }
+}
+
+TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures)
+{
+  std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
+
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
     {
-      std::vector<std::size_t> keyTests{99, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100};
+      testType test;
+      test.first  = int(-i);
+      test.second = i;
 
-      for (auto const &numberOfKeys : keyTests)
-      {
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");
+      test.third = std::to_string(i);
 
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
-        {
-          testType test;
-          test.first  = int(-i);
-          test.second = i;
+      testStore.Set(ResourceAddress(test.third), test);
+    }
 
-          test.third = std::to_string(i);
+    bool successfullyFound = false;
 
-          testStore.Set(ResourceAddress(test.third), test);
-        }
-
-        bool successfullyFound = false;
-
-        // Expect in the case of hash collisions, we shouldn't find these
-        for (std::size_t i = numberOfKeys + 1; i < numberOfKeys * 2; ++i)
-        {
-          auto it = testStore.Find(ResourceAddress(std::to_string(i)));
-          if (it != testStore.end())
-          {
-            successfullyFound = true;
-            break;
-          }
-        }
-
-        EXPECT_TRUE(successfullyFound == false);
-      }
-    };
-
-    TEST(storage_object_store_with_STL_gtest ,  iterator_over_basic_struct)
+    // Expect in the case of hash collisions, we shouldn't find these
+    for (std::size_t i = numberOfKeys + 1; i < numberOfKeys * 2; ++i)
     {
-      std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
-      for (auto const &numberOfKeys : keyTests)
+      auto it = testStore.Find(ResourceAddress(std::to_string(i)));
+      if (it != testStore.end())
       {
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");
-
-        std::vector<testType>                     objects;
-        std::vector<testType>                     objectsCopy;
-        fetch::random::LaggedFibonacciGenerator<> lfg;
-
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
-        {
-          uint64_t random = lfg();
-
-          testType test;
-          test.first  = int(-random);
-          test.second = random;
-
-          test.third = std::to_string(random);
-
-          testStore.Set(ResourceAddress(test.third), test);
-          objects.push_back(test);
-        }
-
-        std::sort(objects.begin(), objects.end());
-
-        auto mmm = testStore.begin();
-        while (mmm != testStore.end())
-        {
-          ++mmm;
-        }
-
-        auto nnn = testStore.begin();
-        while (nnn != testStore.end())
-        {
-          ++nnn;
-        }
-
-        auto it = testStore.begin();
-
-        while (it != testStore.end())
-        {
-          ++it;
-        }
-
-        it = testStore.begin();
-        while (it != testStore.end())
-        {
-          objectsCopy.push_back(*it);
-          ++it;
-        }
-
-        for (auto i : testStore)
-        {
-        }
-
-        for (auto i : testStore)
-        {
-        }
-
-        std::sort(objectsCopy.begin(), objectsCopy.end());
-
-        EXPECT_TRUE(objectsCopy.size() == objects.size());
-        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-        EXPECT_TRUE(allMatch == true);
+        successfullyFound = true;
+        break;
       }
     }
 
-    TEST(storage_object_store_with_STL_gtest , subtree_iterator_over_basic_struct)
+    EXPECT_TRUE(successfullyFound == false);
+  }
+};
+
+TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
+{
+  std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
+
+    std::vector<testType>                     objects;
+    std::vector<testType>                     objectsCopy;
+    fetch::random::LaggedFibonacciGenerator<> lfg;
+
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
     {
-      std::vector<std::size_t> keyTests{9,  1,  2,  3,  4, 5, 6, 7,  8,  9,   10,  11,
-                                        12, 13, 14, 99, 0, 1, 9, 12, 14, 100, 1000};
-      for (auto const &numberOfKeys : keyTests)
-      {
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");
+      uint64_t random = lfg();
 
-        std::vector<testType>                     objects;
-        std::vector<testType>                     objectsCopy;
-        fetch::random::LaggedFibonacciGenerator<> lfg;
-        testType                                  dummy;
+      testType test;
+      test.first  = int(-random);
+      test.second = random;
 
-        ByteArray array;
-        array.Resize(256 / 8);
+      test.third = std::to_string(random);
 
-        for (std::size_t i = 0; i < array.size(); ++i)
-        {
-          array[i] = 0;
-        }
+      testStore.Set(ResourceAddress(test.third), test);
+      objects.push_back(test);
+    }
 
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
-        {
-          uint64_t random = lfg();
+    std::sort(objects.begin(), objects.end());
 
-          testType test;
-          test.first  = int(-random);
-          test.second = random;
-
-          test.third = std::to_string(random);
-
-          testStore.Set(ResourceAddress(test.third), test);
-          objects.push_back(test);
-        }
-
-        // Now, aim to split the store up and copy it across perfectly
-        for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
-        {
-          array[0] = static_cast<uint8_t>((keyBegin << 4u) & 0xFF);
-
-          auto rid = ResourceID(array);
-
-          testStore.Get(rid, dummy);
-
-          auto it = testStore.GetSubtree(rid, uint64_t(4));
-
-          while (it != testStore.end())
-          {
-            objectsCopy.push_back(*it);
-            ++it;
-          }
-        }
-
-        // expect iterator test to go well
-        EXPECT_EQ(objectsCopy.size() , objects.size());
-
-        std::sort(objects.begin(), objects.end());
-        std::sort(objectsCopy.begin(), objectsCopy.end());
-
-        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-        EXPECT_TRUE(allMatch == true);
-      }
-    };
-
-    TEST(storage_object_store_with_STL_gtest , subtree_iterator_over_basic_struc_split_into_256)
+    auto mmm = testStore.begin();
+    while (mmm != testStore.end())
     {
-      std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,   4, 5, 6, 7,  8,  9,   10,  11,
-                                        12, 13,  14, 99, 999, 0, 1, 9, 12, 14, 100, 1000};
-      for (auto const &numberOfKeys : keyTests)
+      ++mmm;
+    }
+
+    auto nnn = testStore.begin();
+    while (nnn != testStore.end())
+    {
+      ++nnn;
+    }
+
+    auto it = testStore.begin();
+
+    while (it != testStore.end())
+    {
+      ++it;
+    }
+
+    it = testStore.begin();
+    while (it != testStore.end())
+    {
+      objectsCopy.push_back(*it);
+      ++it;
+    }
+
+    for (auto i : testStore)
+    {
+    }
+
+    for (auto i : testStore)
+    {
+    }
+
+    std::sort(objectsCopy.begin(), objectsCopy.end());
+
+    EXPECT_TRUE(objectsCopy.size() == objects.size());
+    bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+    EXPECT_TRUE(allMatch == true);
+  }
+}
+
+TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
+{
+  std::vector<std::size_t> keyTests{9,  1,  2,  3,  4, 5, 6, 7,  8,  9,   10,  11,
+                                    12, 13, 14, 99, 0, 1, 9, 12, 14, 100, 1000};
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
+
+    std::vector<testType>                     objects;
+    std::vector<testType>                     objectsCopy;
+    fetch::random::LaggedFibonacciGenerator<> lfg;
+    testType                                  dummy;
+
+    ByteArray array;
+    array.Resize(256 / 8);
+
+    for (std::size_t i = 0; i < array.size(); ++i)
+    {
+      array[i] = 0;
+    }
+
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    {
+      uint64_t random = lfg();
+
+      testType test;
+      test.first  = int(-random);
+      test.second = random;
+
+      test.third = std::to_string(random);
+
+      testStore.Set(ResourceAddress(test.third), test);
+      objects.push_back(test);
+    }
+
+    // Now, aim to split the store up and copy it across perfectly
+    for (uint8_t keyBegin = 0; keyBegin < 16; ++keyBegin)
+    {
+      array[0] = static_cast<uint8_t>((keyBegin << 4u) & 0xFF);
+
+      auto rid = ResourceID(array);
+
+      testStore.Get(rid, dummy);
+
+      auto it = testStore.GetSubtree(rid, uint64_t(4));
+
+      while (it != testStore.end())
       {
-        using testType = TestSerDeser;
-        ObjectStore<testType> testStore;
-        testStore.New("testFile.db", "testIndex.db");
-
-        std::vector<testType>                     objects;
-        std::vector<testType>                     objectsCopy;
-        fetch::random::LaggedFibonacciGenerator<> lfg;
-
-        ByteArray array;
-        array.Resize(256 / 8);
-
-        for (std::size_t i = 0; i < array.size(); ++i)
-        {
-          array[i] = 0;
-        }
-
-        testType dummy;
-
-        // Create vector of random numbers
-        for (std::size_t i = 0; i < numberOfKeys; ++i)
-        {
-          uint64_t random = lfg();
-
-          testType test;
-          test.first  = int(-random);
-          test.second = random;
-
-          test.third = std::to_string(random);
-
-          testStore.Set(ResourceAddress(test.third), test);
-          objects.push_back(test);
-        }
-
-        // Now, aim to split the store up and copy it across perfectly
-        for (uint8_t keyBegin = 0;; ++keyBegin)
-        {
-          array[0] = (keyBegin);
-
-          auto rid = ResourceID(array);
-
-          testStore.Get(rid, dummy);
-
-          auto it = testStore.GetSubtree(rid, uint64_t(8));
-
-          while (it != testStore.end())
-          {
-            objectsCopy.push_back(*it);
-            ++it;
-          }
-
-          if (keyBegin == 0xFF)
-          {
-            break;
-          }
-        }
-
-        // expect iterator test to go well
-        EXPECT_EQ(objectsCopy.size() , objects.size());
-
-        std::sort(objects.begin(), objects.end());
-        std::sort(objectsCopy.begin(), objectsCopy.end());
-
-        bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
-        EXPECT_EQ(allMatch , true);
+        objectsCopy.push_back(*it);
+        ++it;
       }
     }
+
+    // expect iterator test to go well
+    EXPECT_EQ(objectsCopy.size(), objects.size());
+
+    std::sort(objects.begin(), objects.end());
+    std::sort(objectsCopy.begin(), objectsCopy.end());
+
+    bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+    EXPECT_TRUE(allMatch == true);
+  }
+};
+
+TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_split_into_256)
+{
+  std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,   4, 5, 6, 7,  8,  9,   10,  11,
+                                    12, 13,  14, 99, 999, 0, 1, 9, 12, 14, 100, 1000};
+  for (auto const &numberOfKeys : keyTests)
+  {
+    using testType = TestSerDeser;
+    ObjectStore<testType> testStore;
+    testStore.New("testFile.db", "testIndex.db");
+
+    std::vector<testType>                     objects;
+    std::vector<testType>                     objectsCopy;
+    fetch::random::LaggedFibonacciGenerator<> lfg;
+
+    ByteArray array;
+    array.Resize(256 / 8);
+
+    for (std::size_t i = 0; i < array.size(); ++i)
+    {
+      array[i] = 0;
+    }
+
+    testType dummy;
+
+    // Create vector of random numbers
+    for (std::size_t i = 0; i < numberOfKeys; ++i)
+    {
+      uint64_t random = lfg();
+
+      testType test;
+      test.first  = int(-random);
+      test.second = random;
+
+      test.third = std::to_string(random);
+
+      testStore.Set(ResourceAddress(test.third), test);
+      objects.push_back(test);
+    }
+
+    // Now, aim to split the store up and copy it across perfectly
+    for (uint8_t keyBegin = 0;; ++keyBegin)
+    {
+      array[0] = (keyBegin);
+
+      auto rid = ResourceID(array);
+
+      testStore.Get(rid, dummy);
+
+      auto it = testStore.GetSubtree(rid, uint64_t(8));
+
+      while (it != testStore.end())
+      {
+        objectsCopy.push_back(*it);
+        ++it;
+      }
+
+      if (keyBegin == 0xFF)
+      {
+        break;
+      }
+    }
+
+    // expect iterator test to go well
+    EXPECT_EQ(objectsCopy.size(), objects.size());
+
+    std::sort(objects.begin(), objects.end());
+    std::sort(objectsCopy.begin(), objectsCopy.end());
+
+    bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
+    EXPECT_EQ(allMatch, true);
+  }
+}

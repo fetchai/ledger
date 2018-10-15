@@ -15,15 +15,16 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
- #include "math/bignumber.hpp"
+
 #include "core/byte_array/encoders.hpp"
-#include <iomanip>
+#include "math/bignumber.hpp"
 #include <gtest/gtest.h>
+#include <iomanip>
 using namespace fetch::math;
 using namespace fetch::byte_array;
- TEST(big_number_gtest, elemntary_left_shift)
+TEST(big_number_gtest, elemntary_left_shift)
 {
-   BigUnsigned n1(0);
+  BigUnsigned n1(0);
   std::cout << "Original: " << ToHex(n1) << std::endl;
   // testing elementary left shifting
   n1 = 3;
@@ -36,7 +37,7 @@ using namespace fetch::byte_array;
   EXPECT_EQ(int(128), n1[1]);
   EXPECT_EQ(int(1), n1[2]);
 }
- TEST(big_number_gtest, incrementer_for_million_increments)
+TEST(big_number_gtest, incrementer_for_million_increments)
 {
   // testing incrementer for a million increments
   BigUnsigned n1(0);
@@ -48,8 +49,10 @@ using namespace fetch::byte_array;
         uint32_t value;
         uint8_t  bytes[sizeof(uint32_t)];
       } c;
-       for (std::size_t i = 0; i < sizeof(uint32_t); ++i)
+      for (std::size_t i = 0; i < sizeof(uint32_t); ++i)
+      {
         c.bytes[i] = n1[i + 1];
+      }
       EXPECT_EQ(count, c.value);
       for (std::size_t i = 0; i < (1ul << 8); ++i)
       {
@@ -59,29 +62,29 @@ using namespace fetch::byte_array;
     }
   }
 }
- TEST(big_number_gtest, testing_comparisons)
+TEST(big_number_gtest, testing_comparisons)
 {
   BigUnsigned a(0), b(0);
-   for (std::size_t count = 0; count < (1 << 8); ++count)
+  for (std::size_t count = 0; count < (1 << 8); ++count)
   {
     EXPECT_EQ(a, b);
-     for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
     {
       ++a;
       EXPECT_LT(b, a);
     }
-     for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
     {
       EXPECT_LT(b, a);
       ++b;
     }
-     EXPECT_EQ(a, b);
-     for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    EXPECT_EQ(a, b);
+    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
     {
       ++b;
       EXPECT_GT(b, a);
     }
-     for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
+    for (std::size_t i = 0; i < (1ul << 8) / 2; ++i)
     {
       EXPECT_GT(b, a);
       ++a;

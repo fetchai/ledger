@@ -37,4 +37,4 @@ TEST(correlation_gtest, pearson_correlation_test)
 {
   _M<double> A = _M<double>(R"(1 0 0)");
   EXPECT_EQ(0, Pearson(A, A));
-};
+}
