@@ -137,7 +137,7 @@ public:
         break;
       }
 
-      topBlock = (*it).second;
+      topBlock = it->second;
     }
 
     result.push_back(topBlock);  // this should be genesis
@@ -172,7 +172,7 @@ public:
                        byte_array::ToBase64(at), " to find genesis!");
         break;
       }
-      topBlock = (*it).second;
+      topBlock = it->second;
     }
     return result;
   }
@@ -215,11 +215,31 @@ public:
 
     if (it != block_chain_.end())
     {
-      block = (*it).second;
+      block = it->second;
       return true;
     }
 
     return false;
+  }
+
+  std::vector<BlockHash> GetMissingBlockHashes(size_t maximum)
+  {
+    std::vector<BlockHash> results;
+    for(auto const &loose_block : loose_blocks_)
+    {
+      if (maximum <= results.size())
+      {
+        break;
+      }
+      results.push_back(loose_block.first);
+    }
+    return results;
+  }
+
+  bool HasMissingBlocks() const
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
+    return !loose_blocks_.empty();
   }
 
 private:
@@ -321,7 +341,7 @@ private:
       return false;
     }
 
-    block = (*it).second;
+    block = it->second;
 
     return true;
   }
@@ -348,7 +368,7 @@ private:
       return;
     }
 
-    std::vector<BlockHash> blocks_to_add = (*it).second;
+    std::vector<BlockHash> blocks_to_add = it->second;
     loose_blocks_.erase(it);
 
     FETCH_LOG_DEBUG(LOGGING_NAME,
@@ -372,7 +392,7 @@ private:
         auto it = loose_blocks_.find(addBlock.hash());
         if (it != loose_blocks_.end())
         {
-          std::vector<BlockHash> const &next_blocks = (*it).second;
+          std::vector<BlockHash> const &next_blocks = it->second;
 
           for (auto const &block_hash : next_blocks)
           {

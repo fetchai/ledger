@@ -201,9 +201,23 @@ void MainChainRpcService::ServiceLooseBlocks()
 {
   auto p = bg_work_.CountPending();
 
-  if (!p)
+  if (!p && next_loose_tips_check_.IsDue())
   {
-    // At this point, ask the chain to check it has no tips to query.
+    // At this point, ask the chain to check it has loose elments to query.
+    if (chain_.HasMissingBlocks() && last_good_address_.size())
+    {
+      for(auto const &hash : chain_.GetMissingBlockHashes(30))
+      {
+        // TODO(katie): When we (eventually) have a working trust
+        // system, use that to generate an address here.
+        AddLooseBlock(hash, last_good_address_);
+      }
+    }
+    else
+    {
+      // we appear to be idle, throttle back the working.
+      next_loose_tips_check_.Set(std::chrono::seconds(1));
+    }
   }
 
   bg_work_.WorkCycle();
@@ -212,11 +226,17 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (successful_worker)
     {
+      last_good_address_ = successful_worker->address();
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
+      next_loose_tips_check_.Set(std::chrono::milliseconds(0)); // requery for other work soon.
     }
   }
-  bg_work_.DiscardFailures();
-  bg_work_.DiscardTimeouts();
+  if (bg_work_.CountFailures()>0 || bg_work_.CountTimeouts()>0)
+  {
+    next_loose_tips_check_.Set(std::chrono::milliseconds(0)); // requery for other work soon.
+    bg_work_.DiscardFailures();
+    bg_work_.DiscardTimeouts();
+  }
 }
 
 void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)

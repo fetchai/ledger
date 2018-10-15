@@ -54,6 +54,7 @@ public:
   using Promise         = service::Promise;
   using RpcClient       = muddle::rpc::Client;
   using TrustSystem     = p2p::P2PTrustInterface<Address>;
+  using FutureTimepoint = network::FutureTimepoint;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;
@@ -89,6 +90,9 @@ private:
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
+
+  Address last_good_address_;
+  FutureTimepoint next_loose_tips_check_;
 };
 
 }  // namespace ledger
