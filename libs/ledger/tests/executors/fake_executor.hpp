@@ -52,8 +52,8 @@ public:
     timepoint_type timestamp{clock_type::now()};
   };
 
-  using history_cache_type = std::vector<HistoryElement>;
-  using storage_type       = fetch::ledger::StorageInterface;
+  using HistoryElementCache = std::vector<HistoryElement>;
+  using StorageInterface    = fetch::ledger::StorageInterface;
 
   Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
   {
@@ -75,13 +75,13 @@ public:
     return history_.size();
   }
 
-  void CollectHistory(history_cache_type &history)
+  void CollectHistory(HistoryElementCache &history)
   {
     history_.reserve(history.size() + history_.size());  // do the allocation
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStorageInterface(storage_type &state)
+  void SetStorageInterface(StorageInterface &state)
   {
     state_ = &state;
   }
@@ -92,6 +92,6 @@ public:
   }
 
 private:
-  storage_type *     state_ = nullptr;
-  history_cache_type history_;
+  StorageInterface *  state_ = nullptr;
+  HistoryElementCache history_;
 };

@@ -65,8 +65,8 @@ public:
   static constexpr char const *LOGGING_NAME = "LaneService";
 
   // TODO(issue 7): Make config JSON
-  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm)
+  LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
+              uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
     : super_type(port, tm)
   {
 
@@ -87,7 +87,7 @@ public:
     std::string prefix;
     {
       std::stringstream s;
-      s << db_dir;
+      s << storage_path;
       s << "_lane" << std::setw(3) << std::setfill('0') << lane << "_";
       prefix = s.str();
     }
@@ -101,7 +101,14 @@ public:
 
     // TX Store
     tx_store_ = std::make_unique<transaction_store_type>();
-    tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    if (refresh_storage)
+    {
+      tx_store_->New(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    }
+    else
+    {
+      tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    }
 
     tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
                                                                 thread_pool_, tx_store_.get());
@@ -116,8 +123,16 @@ public:
 
     // State DB
     state_db_ = std::make_unique<document_store_type>();
-    state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                    prefix + "state_index_deltas.db", true);
+    if (refresh_storage)
+    {
+      state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                      prefix + "state_index_deltas.db");
+    }
+    else
+    {
+      state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                      prefix + "state_index_deltas.db", true);
+    }
 
     state_db_protocol_ =
         std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);

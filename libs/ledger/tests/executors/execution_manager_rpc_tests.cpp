@@ -37,17 +37,16 @@
 class ExecutionManagerRpcTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using underlying_executor_type       = FakeExecutor;
-  using network_manager_type           = std::unique_ptr<fetch::network::NetworkManager>;
-  using shared_executor_type           = std::shared_ptr<underlying_executor_type>;
-  using executor_list_type             = std::vector<shared_executor_type>;
-  using underlying_manager_type        = fetch::ledger::ExecutionManager;
-  using executor_factory_type          = underlying_manager_type::executor_factory_type;
-  using underlying_client_type         = fetch::ledger::ExecutionManagerRpcClient;
-  using underlying_service_type        = fetch::ledger::ExecutionManagerRpcService;
-  using execution_manager_client_type  = std::unique_ptr<underlying_client_type>;
-  using execution_manager_service_type = std::unique_ptr<underlying_service_type>;
-  using storage_type                   = std::shared_ptr<FakeStorageUnit>;
+  using NetworkManagerPtr             = std::unique_ptr<fetch::network::NetworkManager>;
+  using FakeExecutorPtr               = std::shared_ptr<FakeExecutor>;
+  using FakeExecutorList              = std::vector<FakeExecutorPtr>;
+  using ExecutionManager              = fetch::ledger::ExecutionManager;
+  using ExecutorFactory               = ExecutionManager::ExecutorFactory;
+  using ExecutionManagerRpcClient     = fetch::ledger::ExecutionManagerRpcClient;
+  using ExecutionManagerRpcService    = fetch::ledger::ExecutionManagerRpcService;
+  using ExecutionManagerRpcClientPtr  = std::unique_ptr<ExecutionManagerRpcClient>;
+  using ExecutionManagerRpcServicePtr = std::unique_ptr<ExecutionManagerRpcService>;
+  using FakeStorageUnitPtr            = std::shared_ptr<FakeStorageUnit>;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerRpcTests";
 
@@ -56,7 +55,7 @@ protected:
     static const uint16_t    PORT                = 9009;
     static const std::size_t NUM_NETWORK_THREADS = 2;
 
-    auto const &config = GetParam();
+    BlockConfig const &config = GetParam();
 
     storage_.reset(new FakeStorageUnit);
 
@@ -66,13 +65,13 @@ protected:
     network_manager_->Start();
 
     // server
-    service_ = std::make_unique<underlying_service_type>(
-        PORT, *network_manager_, config.executors, storage_, [this]() { return CreateExecutor(); });
+    service_ = std::make_unique<ExecutionManagerRpcService>(
+        PORT, *network_manager_, "exec_mgr_rpc_tests_", config.executors, storage_, [this]() { return CreateExecutor(); });
 
     service_->Start();
 
     // client
-    manager_ = std::make_unique<underlying_client_type>("127.0.0.1", PORT, *network_manager_);
+    manager_ = std::make_unique<ExecutionManagerRpcClient>("127.0.0.1", PORT, *network_manager_);
 
     // wait for the client to connect before proceeding
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connecting client to service...");
@@ -93,9 +92,9 @@ protected:
     network_manager_.reset();
   }
 
-  shared_executor_type CreateExecutor()
+  FakeExecutorPtr CreateExecutor()
   {
-    shared_executor_type executor = std::make_shared<underlying_executor_type>();
+    FakeExecutorPtr executor = std::make_shared<FakeExecutor>();
     executors_.push_back(executor);
     return executor;
   }
@@ -134,13 +133,13 @@ protected:
 
   bool CheckForExecutionOrder()
   {
-    using HistoryElement     = underlying_executor_type::HistoryElement;
-    using history_cache_type = underlying_executor_type::history_cache_type;
+    using HistoryElement      = FakeExecutor::HistoryElement;
+    using HistoryElementCache = FakeExecutor::HistoryElementCache;
 
     bool success = false;
 
     // Step 1. Collect all the data from each of the executors
-    history_cache_type history;
+    HistoryElementCache history;
     history.reserve(GetNumExecutedTransaction());
     for (auto &exec : executors_)
     {
@@ -182,11 +181,11 @@ protected:
     return success;
   }
 
-  network_manager_type           network_manager_;
-  execution_manager_client_type  manager_;
-  execution_manager_service_type service_;
-  executor_list_type             executors_;
-  storage_type                   storage_;
+  NetworkManagerPtr              network_manager_;
+  ExecutionManagerRpcClientPtr   manager_;
+  ExecutionManagerRpcServicePtr  service_;
+  FakeExecutorList               executors_;
+  FakeStorageUnitPtr             storage_;
 };
 
 TEST_P(ExecutionManagerRpcTests, BlockExecution)
@@ -196,10 +195,8 @@ TEST_P(ExecutionManagerRpcTests, BlockExecution)
   // generate a block with the desired lane and slice configuration
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
-  fetch::byte_array::ConstByteArray prev_hash;
-
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block), underlying_manager_type::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::Status::SCHEDULED);
 
   // wait for the manager to become idle again
   ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));

@@ -53,17 +53,17 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
   , service_(std::make_unique<ServiceClient>(*connection_, network_manager))
 {}
 
-ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
+ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
 {
   auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::EXECUTE, block);
   return result->As<Status>();
 }
 
-ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
+ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
 {
   auto result =
       service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
-  return result->As<block_digest_type>();
+  return result->As<BlockHash>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()

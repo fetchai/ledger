@@ -149,7 +149,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
-  , execution_manager_{std::make_shared<ExecutionManager>(
+  , execution_manager_{std::make_shared<ExecutionManager>(db_prefix,
         num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}

@@ -71,8 +71,8 @@ void Serialize(T &serializer, BlockBody const &body)
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
-  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number >>
-      body.miner_number >> body.log2_num_lanes >> body.slices;
+  serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number
+             >> body.miner_number >> body.log2_num_lanes >> body.slices;
 }
 
 template <typename P, typename H>
@@ -93,7 +93,6 @@ public:
   // Meta: Update hash
   void UpdateDigest()
   {
-
     serializers::ByteArrayBuffer buf;
     buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
         << body_.miner_number;
