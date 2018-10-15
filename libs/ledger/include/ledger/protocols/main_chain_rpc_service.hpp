@@ -91,7 +91,7 @@ private:
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
 
-  Address last_good_address_;
+  Address         last_good_address_;
   FutureTimepoint next_loose_tips_check_;
 };
 

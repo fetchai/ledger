@@ -225,7 +225,7 @@ public:
   std::vector<BlockHash> GetMissingBlockHashes(size_t maximum)
   {
     std::vector<BlockHash> results;
-    for(auto const &loose_block : loose_blocks_)
+    for (auto const &loose_block : loose_blocks_)
     {
       if (maximum <= results.size())
       {
