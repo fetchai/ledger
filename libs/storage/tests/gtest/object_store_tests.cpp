@@ -246,7 +246,7 @@ TEST(storage_object_store_with_STL_gtest, find_over_basic_struct_expect_failures
 
     EXPECT_TRUE(successfullyFound == false);
   }
-};
+}
 
 TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
 {
@@ -385,7 +385,7 @@ TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struct)
     bool allMatch = std::equal(objectsCopy.begin(), objectsCopy.end(), objects.begin());
     EXPECT_TRUE(allMatch == true);
   }
-};
+}
 
 TEST(storage_object_store_with_STL_gtest, subtree_iterator_over_basic_struc_split_into_256)
 {
