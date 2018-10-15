@@ -157,7 +157,9 @@ def test_project(build_root):
     # clear all the data files which might be hanging around
     for root, _, files in os.walk(build_root):
         for path in fnmatch.filter(files, '*.db'):
-            os.remove(os.path.join(root, path))
+            data_path = os.path.join(root, path)
+            print('Removing file:', data_path)
+            os.remove(data_path)
 
     exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
 
