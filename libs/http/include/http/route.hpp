@@ -34,6 +34,8 @@ using ViewParameters = KeyValueSet;
 class Route
 {
 public:
+  static constexpr char const *LOGGING_NAME = "HttpRoute";
+
   bool Match(byte_array::ConstByteArray const &path, ViewParameters &params)
   {
     LOG_STACK_TRACE_POINT;

@@ -44,16 +44,16 @@ int main(int argc, char **argv)
 
     SECTION("Parsing and modification of document")
     {
-      ByteArray doc_content = R"({
-  "a": 3,
-  "x": { 
-    "y": [1,2,3],
-    "z": null,
-    "q": [],
-    "hello world": {}
-  }
-}
-)";
+      ByteArray doc_content = R"(
+      {
+        "a": 3,
+        "x": {
+          "y": [1,2,3],
+          "z": null,
+          "q": [],
+          "hello world": {}
+        }
+      })";
 
       JSONDocument doc;
       doc.Parse(doc_content);
@@ -89,16 +89,16 @@ int main(int argc, char **argv)
 
     SECTION("Type parsing")
     {
-      ByteArray doc_content = R"({
-  "a": 3,
-  "b": 2.3e-2,
-  "c": 2e+9,
-  "d": "hello",
-  "e": null,
-  "f": true,
-  "g": false
-}
-)";
+      ByteArray doc_content = R"(
+      {
+        "a": 3,
+        "b": 2.3e-2,
+        "c": 2e+9,
+        "d": "hello",
+        "e": null,
+        "f": true,
+        "g": false
+      })";
 
       JSONDocument doc;
       doc.Parse(doc_content);
@@ -120,6 +120,87 @@ int main(int argc, char **argv)
 
       EXPECT_EXCEPTION(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
       EXPECT_EXCEPTION(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
+    };
+
+    SECTION("parsing test 1")
+    {
+      ByteArray data = "{ \"hello\" : 3} { \"ee\" : 4}";
+
+      JSONDocument test;
+      test.Parse(data);
+
+      // Will print as {{"ee": 4}: 3}
+      std::cout << test.root() << std::endl;
+    };
+
+    SECTION("parsing test 2")
+    {
+      ByteArray data = "{ \"hello\" : fals3}";
+
+      JSONDocument test;
+      test.Parse(data);
+
+      // Will print as { "hello" : false}
+      std::cout << test.root() << std::endl;
+    };
+
+    SECTION("parsing test 3 - do exceptions leak memory")
+    {
+      ByteArray data = "{ \"hello\" : fals}";
+
+      for (std::size_t i = 0; i < 1000; ++i)
+      {
+        try
+        {
+          JSONDocument test;
+          test.Parse(data);
+        }
+        catch (...)
+        {
+        }
+      }
+    };
+
+    // if this crashes your machine/test you probably have a leak
+    SECTION("leak test")
+    {
+      ByteArray data = "{ \"hello\" : 3}";
+
+      for (std::size_t i = 0; i < 1000; ++i)
+      {
+        JSONDocument test;
+        test.Parse(data);
+
+        if (i == 0)
+        {
+          std::cout << test.root() << std::endl;
+        }
+      }
+    };
+
+    SECTION("leak test, nested objects")
+    {
+      ByteArray data = R"(
+      {
+        "a": 3,
+        "x": {
+          "y": [1,2,3],
+          "z": null,
+          "q": [],
+          "hello world": {}
+        }
+      })";
+
+      for (std::size_t i = 0; i < 1000; ++i)
+      {
+        JSONDocument test;
+        test.Parse(data);
+
+        if (i == 0)
+        {
+          std::cout << test.root() << std::endl;
+        }
+      }
     };
 
     return 0;

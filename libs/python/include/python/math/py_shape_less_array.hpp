@@ -186,6 +186,13 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              Subtract(b, c, a);
              return a;
            })
+      .def("__rsub__",
+           [](ShapeLessArray<T> const &b, T const &c) {
+             ShapeLessArray<T> a;
+             a.LazyResize(b.size());
+             Subtract(c, b, a);
+             return a;
+           })
       .def("__div__",
            [](ShapeLessArray<T> const &b, T const &c) {
              ShapeLessArray<T> a;
@@ -235,7 +242,7 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
            })
 
       .def_static("Zeros", &ShapeLessArray<T>::Zeroes)
-      .def_static("Arange", (ShapeLessArray<T>(*)(T const &, T const &, T const &)) &
+      .def_static("Arange", (ShapeLessArray<T>(*)(std::size_t, std::size_t, std::size_t)) &
                                 ShapeLessArray<T>::Arange)
       .def_static("UniformRandom",
                   (ShapeLessArray<T>(*)(std::size_t const &)) & ShapeLessArray<T>::UniformRandom)
@@ -300,6 +307,12 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
            [](ShapeLessArray<T> const &a) {
              T ret;
              Min(a, ret);
+             return ret;
+           })
+      .def("ArgMax",
+           [](ShapeLessArray<T> const &a) {
+             T ret;
+             ArgMax(a, ret);
              return ret;
            })
       //      .def("Mean", &ShapeLessArray<T>::Mean)

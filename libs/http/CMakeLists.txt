@@ -18,4 +18,4 @@ setup_library(fetch-http)
 target_link_libraries(fetch-http PUBLIC fetch-network)
 
 add_subdirectory(examples)
-
+add_subdirectory(tests)

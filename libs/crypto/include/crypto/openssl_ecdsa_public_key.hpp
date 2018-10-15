@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
 
@@ -52,10 +54,10 @@ public:
     , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
-  ECDSAPublicKey(const byte_array::ConstByteArray &key_data)
+  ECDSAPublicKey(byte_array::ConstByteArray key_data)
     : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
     , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
-    , key_binary_{key_data}
+    , key_binary_{std::move(key_data)}
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
@@ -218,14 +220,14 @@ private:
     shrd_ptr_type<BIGNUM> x{BN_new()};
     shrd_ptr_type<BIGNUM> y{BN_new()};
 
-    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), x.get());
+    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), y.get());
 
     if (!EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
                                              session.context().get()))
     {
       throw std::runtime_error(
           "ECDSAPublicKey::ConvertFromCanonical(...): "
-          "`BN_bn2bin(...)` function failed.");
+          "`EC_POINT_set_affine_coordinates_GFp(...)` function failed.");
     }
 
     return public_key;

@@ -26,9 +26,9 @@ namespace crypto {
 class Prover
 {
 public:
-  using byte_array_type = byte_array::ByteArray;
+  using byte_array_type = byte_array::ConstByteArray;
 
-  virtual Identity identity() = 0;
+  virtual Identity identity() const = 0;
   virtual ~Prover()
   {}
 

@@ -17,11 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+namespace fetch {
+namespace service {
+class Protocol;
+class FeedSubscriptionManager;
+}  // namespace service
+}  // namespace fetch
+
 #include "core/mutex.hpp"
+#include "network/details/thread_pool.hpp"
+#include "network/generics/work_items_queue.hpp"
+#include "network/message.hpp"
 #include "network/service/abstract_publication_feed.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/types.hpp"
+//#include "network/service/server_interface.hpp"
 
+#include <condition_variable>
 #include <iterator>
 #include <vector>
 
@@ -36,9 +48,21 @@ namespace service {
  * multi-service support yet. This is, however, easily implmented at a
  * later point.
  */
+
+class ServiceServerInterface;
+
 class FeedSubscriptionManager
 {
 public:
+  using mutex_type             = fetch::mutex::Mutex;
+  using lock_type              = std::lock_guard<fetch::mutex::Mutex>;
+  using service_type           = fetch::service::ServiceServerInterface;
+  using connection_handle_type = uint64_t;
+  using publishing_workload_type =
+      std::tuple<service_type *, connection_handle_type, network::message_type const>;
+
+  static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
+
   /* A feed that services can subscribe to.
    * @feed is the feed number defined in the protocol.
    * @publisher is an implementation class that subclasses
@@ -55,7 +79,9 @@ public:
     : subscribe_mutex_(__LINE__, __FILE__)
     , feed_(feed)
     , publisher_(publisher)
-  {}
+  {
+    workers_ = network::MakeThreadPool(3);
+  }
 
   /* Attaches a feed to a given service.
    * @T is the type of the service
@@ -65,43 +91,16 @@ public:
    * messages published by the publisher are packed and send to the
    * right client.
    */
-  template <typename T>
-  void AttachToService(T *service)
+  void AttachToService(ServiceServerInterface *service);
+
+  void PublishAll(std::vector<publishing_workload_type> &workload)
   {
-    LOG_STACK_TRACE_POINT;
-
-    publisher_->create_publisher(feed_, [=](fetch::byte_array::ConstByteArray const &msg) {
-      serializer_type params;
-      params << SERVICE_FEED << feed_;
-      uint64_t p = params.Tell();
-      params << subscription_handler_type(0);  // placeholder
-
-      params.Allocate(msg.size());
-      params.WriteBytes(msg.pointer(), msg.size());
-
-      subscribe_mutex_.lock();
-      std::vector<std::size_t> remove;
-      for (std::size_t i = 0; i < subscribers_.size(); ++i)
-      {
-        auto &s = subscribers_[i];
-        params.Seek(p);
-        params << s.id;
-
-        // Copy is important here as we reuse an existing buffer
-        if (!service->DeliverResponse(s.client, params.data().Copy()))
-        {
-          remove.push_back(i);
-        }
-      }
-
-      std::reverse(remove.begin(), remove.end());
-      for (auto &i : remove)
-      {
-        subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
-      }
-      subscribe_mutex_.unlock();
-    });
+    publishing_workload_.Add(workload.begin(), workload.end());
+    workload.clear();
+    workers_->Post([this]() { this->PublishingProcessor(); });
   }
+
+  void PublishingProcessor();
 
   /* Subscribe client to feed.
    * @client is the client id.
@@ -178,6 +177,9 @@ private:
   feed_handler_type               feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
+
+  generics::WorkItemsQueue<publishing_workload_type> publishing_workload_;
+  network::ThreadPool                                workers_;
 };
 }  // namespace service
 }  // namespace fetch

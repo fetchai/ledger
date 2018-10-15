@@ -28,6 +28,7 @@
 #include "network/fetch_asio.hpp"
 #include <atomic>
 #include <utility>
+
 namespace fetch {
 namespace network {
 
@@ -36,10 +37,11 @@ namespace network {
  * The class will generically push data to its manager, and also allow pushing
  * data to the connected client.
  */
-
 class ClientConnection : public AbstractConnection
 {
 public:
+  static constexpr char const *LOGGING_NAME = "ClientConnection";
+
   using connection_type = typename AbstractConnection::shared_type;
 
   using handle_type = typename AbstractConnection::connection_handle_type;
@@ -63,12 +65,12 @@ public:
       {
         this->SetAddress(endpoint.address().to_string());
 
-        fetch::logger.Debug("Server: Connection from ",
-                            socket_ptr->remote_endpoint().address().to_string());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Connection from ",
+                        socket_ptr->remote_endpoint().address().to_string());
       }
       else
       {
-        fetch::logger.Warn("Server: Failed to get endpoint for socket!");
+        FETCH_LOG_WARN(LOGGING_NAME, "Server: Failed to get endpoint for socket!");
       }
     }
   }
@@ -101,10 +103,18 @@ public:
   void Send(message_type const &msg) override
   {
     LOG_STACK_TRACE_POINT;
+
+    if (shutting_down_)
+    {
+      return;
+    }
+
     write_mutex_.lock();
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(msg);
     write_mutex_.unlock();
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sendin g Message");
 
     if (!write_in_progress)
     {
@@ -119,22 +129,36 @@ public:
 
   void Close() override
   {
-    TODO_FAIL("not implemented");
+    shutting_down_ = true;
+    auto socket    = socket_.lock();
+    if (socket)
+    {
+      std::error_code ec;
+      socket->close(ec);
+    }
   }
 
   bool Closed() override
   {
-    TODO_FAIL("not implemented");
+    return !static_cast<bool>(socket_.lock());
   }
 
   bool is_alive() const override
   {
-    TODO_FAIL("not implemented");
+    return static_cast<bool>(socket_.lock());
+
+    // This does not appear to tell the whole story. Consider a full
+    // state DISCONNECTED->CONNECTED->DROPPED
   }
 
 private:
   void ReadHeader()
   {
+    if (shutting_down_)
+    {
+      return;
+    }
+
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
@@ -142,7 +166,7 @@ private:
       return;
     }
 
-    fetch::logger.Debug("Server: Waiting for next header.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Waiting for next header.");
     auto self(shared_from_this());
     auto cb = [this, socket_ptr, self](std::error_code ec, std::size_t len) {
       auto ptr = manager_.lock();
@@ -153,12 +177,11 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Read header.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Read header.");
         ReadBody();
       }
       else
       {
-
         ptr->Leave(this->handle());
       }
     };
@@ -169,6 +192,12 @@ private:
   void ReadBody()
   {
     LOG_STACK_TRACE_POINT;
+
+    if (shutting_down_)
+    {
+      return;
+    }
+
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
     {
@@ -179,7 +208,7 @@ private:
 
     if (header_.content.magic != networkMagic_)
     {
-      fetch::logger.Debug("Magic incorrect - closing connection.");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
       if (!ptr)
       {
@@ -200,13 +229,13 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Read body.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Recv message");
+
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       }
       else
       {
-
         ptr->Leave(this->handle());
       }
     };
@@ -231,6 +260,11 @@ private:
 
   void Write()
   {
+    if (shutting_down_)
+    {
+      return;
+    }
+
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
@@ -246,7 +280,8 @@ private:
       return;
     }
 
-    auto                  buffer = write_queue_.front();
+    auto buffer = write_queue_.front();
+
     byte_array::ByteArray header;
     SetHeader(header, buffer.size());
     write_queue_.pop_front();
@@ -262,7 +297,7 @@ private:
 
       if (!ec)
       {
-        fetch::logger.Debug("Server: Wrote message.");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Wrote message.");
         Write();
       }
       else
@@ -277,6 +312,7 @@ private:
     asio::async_write(*socket_ptr, buffers, cb);
   }
 
+  std::atomic<bool>                         shutting_down_{false};
   std::weak_ptr<asio::ip::tcp::tcp::socket> socket_;
   std::weak_ptr<ClientManager>              manager_;
   message_queue_type                        write_queue_;

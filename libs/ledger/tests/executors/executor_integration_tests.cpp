@@ -32,6 +32,8 @@
 #include <random>
 #include <thread>
 
+using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
+
 using ::testing::_;
 
 class ExecutorIntegrationTests : public ::testing::Test
@@ -39,9 +41,11 @@ class ExecutorIntegrationTests : public ::testing::Test
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using underlying_storage_type         = fetch::ledger::StorageUnitClient;
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
+  using TCPClient                       = fetch::network::TCPClient;
+  using Peer                            = fetch::network::Peer;
 
   using client_type          = std::unique_ptr<underlying_client_type>;
   using service_type         = std::unique_ptr<underlying_service_type>;
@@ -51,6 +55,8 @@ protected:
   using rng_type             = std::mt19937;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
+
+  static constexpr char const *LOGGING_NAME = "ExecutorIntegrationTests";
 
   ExecutorIntegrationTests()
   {
@@ -67,18 +73,40 @@ protected:
     network_manager_->Start();
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, false);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
+    storage_service_->Start();
+
+    LaneIndex num_lanes = NUM_LANES;
+
+    uint16_t lane_port_start = LANE_RPC_PORT_START;
 
     storage_.reset(new underlying_storage_type{*network_manager_});
-    for (std::size_t i = 0; i < NUM_LANES; ++i)
+
+    using InFlightCounter =
+        fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
+
+    fetch::network::FutureTimepoint deadline(std::chrono::seconds(40));
+    if (!InFlightCounter::Wait(deadline))
     {
-      storage_->AddLaneConnection<fetch::network::TCPClient>("localhost",
-                                                             uint16_t(LANE_RPC_PORT_START + i));
+      throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
     }
+
+    std::map<LaneIndex, Peer> lane_data;
+    for (LaneIndex i = 0; i < num_lanes; ++i)
+    {
+      uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
+      lane_data[i]             = fetch::network::Peer("127.0.0.1", lane_port);
+    }
+
+    auto count =
+        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
 
     // create the executor service
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+
+    service_->Start();
 
     // create the executor client
     executor_ =
@@ -86,19 +114,19 @@ protected:
 
     for (;;)
     {
-
       // wait for the all the clients to connect to everything
-      if (executor_->is_alive() && storage_->is_alive())
+      if (executor_->is_alive() && storage_->IsAlive())
       {
         break;
       }
-
       std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
   }
 
   void TearDown() override
   {
+    service_->Stop();
+    storage_service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();
@@ -106,6 +134,8 @@ protected:
     storage_.reset();
     storage_service_.reset();
     network_manager_.reset();
+
+    sleep(1);  // just give TCP time to settle.
   }
 
   fetch::chain::Transaction CreateDummyTransaction()
@@ -177,12 +207,8 @@ TEST_F(ExecutorIntegrationTests, CheckTokenContract)
   // create the dummy contract
   auto tx = CreateWalletTransaction();
 
-  fetch::logger.Info("#### Adding transaction...");
-
   // store the transaction inside the store
   storage_->AddTransaction(tx);
-
-  fetch::logger.Info("#### Executing transaction...");
 
   auto const status = executor_->Execute(tx.digest(), 0, {0});
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);

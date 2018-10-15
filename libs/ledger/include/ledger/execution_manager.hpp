@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/cache.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
@@ -101,8 +102,9 @@ private:
   storage_unit_type   storage_;
   execution_plan_type execution_plan_;
   mutex_type          execution_plan_lock_;
-  block_digest_type   last_block_hash_;
+  block_digest_type   last_block_hash_ = chain::GENESIS_DIGEST;
 
+  std::mutex              monitor_lock_;
   std::condition_variable monitor_wake_;
   std::condition_variable monitor_notify_;
 

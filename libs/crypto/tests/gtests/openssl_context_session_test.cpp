@@ -97,7 +97,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_basic_scenario_constructro_and_de
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
@@ -113,7 +113,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_end)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
@@ -130,7 +130,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_destructor)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
@@ -145,7 +145,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_started_and_end)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 
   {
@@ -161,7 +161,7 @@ TEST_F(OpenSSLContextSessionTest, test_Session_constructor_and_start_and_destruc
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*contextMock_, start(&testValue)).WillOnce(Return());
   EXPECT_CALL(*contextMock_, end(&testValue)).WillOnce(Return());
 

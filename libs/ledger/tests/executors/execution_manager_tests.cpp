@@ -50,6 +50,8 @@ protected:
   using storage_type            = std::shared_ptr<underlying_storage_type>;
   using clock_type              = std::chrono::high_resolution_clock;
 
+  static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
+
   void SetUp() override
   {
     auto const &config = GetParam();
@@ -170,7 +172,7 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   // generate a block with the desired lane and slice configuration
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
-  fetch::logger.Info("Num transactions: ", block.num_transactions);
+  FETCH_LOG_INFO(LOGGING_NAME, "Num transactions: ", block.num_transactions);
   EXPECT_GT(block.num_transactions, 0);
 
   // start the execution manager

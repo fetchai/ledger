@@ -26,6 +26,10 @@
 #include <limits>
 #include <vector>
 
+#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
+#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
+#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {
@@ -167,101 +171,60 @@ public:
     }
   }
 
-  /* Lazy dot routine to compute C = Dot(A, B).
+  /** Efficient vectorised and threaded dot routine to compute C = Dot(A, B).
    * @A is the first matrix.
    * @B is the second matrix.
-   *
-   * This routine takes care of the working memory.
-   */
-  Matrix &Dot(Matrix const &A, Matrix const &B)
+   **/
+  Matrix &Dot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
-    working_memory_2d_type tmpA;
-    working_memory_2d_type tmpB;
-    tmpA.LazyResize(A.height(), A.width());
-    tmpB.LazyResize(B.width(), B.height());
-    return Dot(A, B, tmpA, tmpB);
+    this->Resize(A.height(), B.width());
+
+    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+         Computes(_C = _alpha * _A * _B + _beta * _C),
+         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
+
+    gemm_nn_vector_threaded(alpha, A, B, beta, *this);
+
+    return *this;
   }
 
-  /* Dot routine to compute C = Dot(A, B).
-   * @A is the first matrix.
-   * @B is the second matrix.
-   * @tmpA working memory.
-   * @tmpB working memory.
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
    */
-  Matrix &Dot(Matrix const &A, Matrix const &B, working_memory_2d_type &tmpA,
-              working_memory_2d_type &tmpB)
+  Matrix &DotTranspose(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
-    // Assumptions made by the routine
-    assert(A.height() == tmpA.height());
-    assert(A.width() == tmpA.width());
+    this->Resize(A.height(), B.height());
 
-    assert(B.width() == tmpB.height());
-    assert(B.height() == tmpB.width());
+    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+         Computes(_C = _alpha * _A * fetch::math::linalg::T(_B) + _beta * _C),
+         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nt_vector_threaded;
 
-    assert(A.height() == B.width());
+    gemm_nt_vector_threaded(alpha, A, B, beta, *this);
 
-    //
-    tmpA.Copy(A);
-
-    for (std::size_t i = 0; i < B.height(); ++i)
-    {
-      for (std::size_t j = 0; j < B.width(); ++j)
-      {
-        tmpB.At(j, i) = B.At(i, j);
-      }
-    }
-
-    tmpA.SetPaddedZero();
-    tmpB.SetPaddedZero();
-
-    return DotTransposedOf(tmpA, tmpB);
+    return *this;
   }
 
-private:
-  Matrix &DotTransposedOf(working_memory_2d_type const &mA, working_memory_2d_type const &mB)
+  /**
+   * Efficient vectorised and threaded routine for C = T(A).B
+   * @param A
+   * @param B
+   * @return
+   */
+  Matrix &TransposeDot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
   {
+    this->Resize(A.width(), B.width());
 
-    assert(mA.width() == mB.width());
-    assert(this->height() == mA.height());
-    assert(this->width() == mB.height());
+    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
+         Computes(_C = _alpha * fetch::math::linalg::T(_A) * _B + _beta * _C),
+         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_tn_vector_threaded;
 
-    threading::Pool pool;
-    std::size_t     width = mA.padded_width();
-    for (std::size_t i = 0; i < mA.height(); ++i)
-    {
-
-      pool.Dispatch([i, this, mA, mB, width]() {
-        vector_register_type          a, b;
-        vector_register_iterator_type ib(mB.data().pointer(), mB.data().size());
-
-        for (std::size_t j = 0; j < mB.height(); ++j)
-        {
-          std::size_t k   = 0;
-          type        ele = 0;
-
-          vector_register_iterator_type ia(mA.data().pointer() + i * mA.padded_width(),
-                                           mA.padded_height());
-          vector_register_type          c(type(0));
-
-          for (; k < width; k += vector_register_type::E_BLOCK_COUNT)
-          {
-            ia.Next(a);
-            ib.Next(b);
-            c = c + a * b;
-          }
-
-          for (std::size_t l = 0; l < vector_register_type::E_BLOCK_COUNT; ++l)
-          {
-            ele += first_element(c);
-            c = shift_elements_right(c);
-          }
-
-          this->Set(i, j, ele);
-        }
-      });
-    }
-
-    pool.Wait();
+    gemm_tn_vector_threaded(alpha, A, B, beta, *this);
 
     return *this;
   }

@@ -55,10 +55,10 @@ private:
 
 class ECDSASigner : public Prover
 {
+public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-public:
   void Load(byte_array_type const &private_key) override
   {
     SetPrivateKey(private_key);
@@ -80,7 +80,7 @@ public:
     return true;
   }
 
-  Identity identity() final override
+  Identity identity() const final override
   {
     return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
   }
@@ -89,14 +89,16 @@ public:
   {
     return signature_.hash();
   }
+
   byte_array_type signature() final override
   {
     return signature_.signature();
   }
-  byte_array_type public_key()
+  byte_array_type public_key() const
   {
     return private_key_.publicKey().keyAsBin();
   }
+
   byte_array_type private_key()
   {
     return private_key_.KeyAsBin();

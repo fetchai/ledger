@@ -35,6 +35,11 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
+static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
+static constexpr std::size_t MANY_CYCLES  = 200;
+static constexpr std::size_t MID_CYCLES   = 50;
+static constexpr std::size_t FEW_CYCLES   = 10;
+
 std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;
 
@@ -158,7 +163,7 @@ public:
 // Create random data for testing
 std::vector<message_type> CreateTestData(size_t index)
 {
-  std::size_t messagesToSend = 100;
+  std::size_t messagesToSend = MID_CYCLES;
   globalMessages.clear();
   globalMessages.reserve(messagesToSend);
   bool smallPackets = true;
@@ -196,7 +201,7 @@ void TestCase0(std::string host, std::string port)
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the echo server multiple times" << std::endl;
 
-  for (std::size_t index = 0; index < 20; ++index)
+  for (std::size_t index = 0; index < FEW_CYCLES; ++index)
   {
     GetOpenPort();
   }
@@ -214,7 +219,7 @@ void TestCase1(std::string host, std::string port)
 
   uint16_t emptyPort = GetOpenPort();
 
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     Client         client(host, std::to_string(emptyPort), nmanager);
@@ -232,7 +237,7 @@ void TestCase2(std::string host, std::string port)
 
   uint16_t emptyPort = GetOpenPort();
 
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
@@ -253,7 +258,7 @@ void TestCase3(std::string host, std::string port)
   uint16_t emptyPort = GetOpenPort();
 
   std::cerr << "starting" << std::endl;
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
@@ -280,7 +285,7 @@ void TestCase4(std::string host, std::string port)
   uint16_t emptyPort = GetOpenPort();
 
   std::cerr << "starting" << std::endl;
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
@@ -307,7 +312,7 @@ void TestCase5(std::string host, std::string port)
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
 
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     Client         client(host, port, nmanager);
@@ -326,7 +331,7 @@ void TestCase6(std::string host, std::string port)
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
 
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
@@ -347,7 +352,7 @@ void TestCase7(std::string host, std::string port)
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
 
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     NetworkManager nmanager(N);
     if (index % 2 == 0)
@@ -377,7 +382,7 @@ void TestCase8(std::string host, std::string port)
 
   NetworkManager nmanager(N);
   nmanager.Start();
-  for (std::size_t index = 0; index < 1000; ++index)
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
     clients.push_back(Client(host, port, nmanager));
   }
@@ -402,7 +407,7 @@ void TestCase9(std::string host, std::string port)
     NetworkManager nmanager(N);
     nmanager.Start();
     std::atomic<std::size_t> threadCount{0};
-    std::size_t              iterations = 100;
+    std::size_t              iterations = MID_CYCLES;
 
     for (std::size_t i = 0; i < iterations; ++i)
     {
@@ -436,7 +441,7 @@ void TestCase10(std::string host, std::string port)
                "before the clients"
             << std::endl;
 
-  for (std::size_t index = 0; index < 120; ++index)
+  for (std::size_t index = 0; index < MID_CYCLES; ++index)
   {
     std::vector<Client> clients;
     NetworkManager      nmanager(N);
@@ -466,7 +471,7 @@ void TestCase10(std::string host, std::string port)
     {
       nmanager.Stop();
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
   std::cerr << "success" << std::endl;
 }
@@ -494,7 +499,7 @@ void TestCase11(std::string host, std::string port)
 
     std::size_t currentCount   = clientReceivedCount;
     auto        t1             = TimePoint();
-    std::size_t messagesToSend = 1000;
+    std::size_t messagesToSend = MANY_CYCLES;
 
     for (std::size_t j = 0; j < messagesToSend; ++j)
     {
@@ -552,7 +557,7 @@ void TestCase12(std::string host, std::string port)
 
     std::size_t currentCount   = clientReceivedCount;
     auto        t1             = TimePoint();
-    std::size_t messagesToSend = 100;
+    std::size_t messagesToSend = MID_CYCLES;
 
     for (std::size_t j = 0; j < messagesToSend; ++j)
     {
@@ -781,7 +786,7 @@ void TestCase15(std::string host, std::string const &port)
       clients.push_back(std::make_shared<VerifyClient>(host, std::to_string(emptyPort), nmanager));
     }
 
-    std::size_t messagesToSend = 100;
+    std::size_t messagesToSend = MID_CYCLES;
     globalMessages.clear();
     globalMessages.reserve(messagesToSend);
 
@@ -841,10 +846,11 @@ int main(int argc, char *argv[])
     s >> iterations;
   }
 
-  fetch::logger.Info("Running test iterations: ", iterations);
+  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {
+    // Do most likely to fail test first
     TestCase9<10>(host, port);
 
     TestCase9<1>(host, port);
@@ -872,6 +878,7 @@ int main(int argc, char *argv[])
     TestCase11<10>(host, port);
     TestCase12<10>(host, port);
     TestCase13<10>(host, port);
+
     TestCase14<10>(host, port);
     TestCase15<10>(host, port);
   }

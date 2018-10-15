@@ -322,8 +322,8 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
 
     TEST(storage_object_store_with_STL_gtest , subtree_iterator_over_basic_struct)
     {
-      std::vector<std::size_t> keyTests{9,  1,  2,  3,    4, 5, 6, 7,  8,  9,   10,   11,   12,
-                                        13, 14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000, 10000};
+      std::vector<std::size_t> keyTests{9,  1,  2,  3,  4, 5, 6, 7,  8,  9,   10,  11,
+                                        12, 13, 14, 99, 0, 1, 9, 12, 14, 100, 1000};
       for (auto const &numberOfKeys : keyTests)
       {
         using testType = TestSerDeser;
@@ -389,8 +389,8 @@ inline void Deserialize(T &serializer, TestSerDeser &b)
 
     TEST(storage_object_store_with_STL_gtest , subtree_iterator_over_basic_struc_split_into_256)
     {
-      std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,    4, 5, 6, 7,  8,  9,   10,  11,
-                                        12, 13,  14, 99, 9999, 0, 1, 9, 12, 14, 100, 1000};
+      std::vector<std::size_t> keyTests{23, 100, 1,  2,  3,   4, 5, 6, 7,  8,  9,   10,  11,
+                                        12, 13,  14, 99, 999, 0, 1, 9, 12, 14, 100, 1000};
       for (auto const &numberOfKeys : keyTests)
       {
         using testType = TestSerDeser;

@@ -50,20 +50,10 @@ class JSONDocument
     KEY = 16
   };
 
-  enum
-  {
-    PROPERTY        = 2,
-    ENTRY_ALLOCATOR = 3,
-    OBJECT          = 10,
-    ARRAY           = 11
-  };
-
 public:
   using string_type       = byte_array::ByteArray;
   using const_string_type = byte_array::ConstByteArray;
   using VariantArray      = script::VariantArray;
-
-  //  using variant_type = script::Variant;
 
   JSONDocument()
   {
@@ -75,6 +65,13 @@ public:
     : JSONDocument()
   {
     Parse(document);
+  }
+
+  ~JSONDocument()
+  {
+    // Variant array must be released to avoid a shared pointer circular reference/leak:
+    // VariantArray contains a Variant which contains that VariantArray (in the case it's an object)
+    variants_.ReleaseResources();
   }
 
   script::Variant &operator[](std::size_t const &i)
@@ -120,7 +117,7 @@ public:
         variants_[current_object.i++] = false;
         break;
       case KEYWORD_NULL:
-        variants_[current_object.i++].MakeNull();  // = nullptr;
+        variants_[current_object.i++].MakeNull();
         break;
       case STRING:
         variants_[current_object.i++].EmplaceSetString(document, t.first, t.second - t.first);
@@ -399,8 +396,6 @@ private:
   std::size_t              objects_;
 
   std::vector<char> brace_stack_;
-
-  //  variant_type root_ = nullptr;
 };
 }  // namespace json
 }  // namespace fetch

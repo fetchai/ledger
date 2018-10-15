@@ -57,7 +57,7 @@ fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_
 
   fetch::service::Promise prom = s_client.Call(std::forward<Args>(args)...);
 
-  if (!prom.Wait(2000))
+  if (!prom->Wait(2000, true))
   {
     std::cout << "Failed to make call to client" << std::endl;
     exit(1);
@@ -128,7 +128,7 @@ public:
     CONNECT = 1
   };
 
-  ControllerProtocol(ClientRegister reg, NetworkManager nm)
+ ControllerProtocol(ClientRegister reg, NetworkManager nm)
     : register_{std::move(reg)}
     , nm_{nm}
   {
@@ -157,7 +157,7 @@ private:
   ClientRegister register_;
   NetworkManager nm_;
 
-  mutex_type                                                             services_mutex_;
+  mutex_type services_mutex_{__LINE__, __FILE__};
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 };
 
@@ -202,10 +202,12 @@ public:
 
     thread_pool_->Start();
     tx_sync_protocol_->Start();
+    this->Start();
   }
 
   ~TestService()
   {
+    this->Stop();
     thread_pool_->Stop();
   }
 
@@ -251,7 +253,7 @@ private:
             CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
                      ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
+        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
         if (fee != tx.summary().fee || tx.summary().fee == 0)
         {
@@ -292,7 +294,7 @@ private:
             CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
                      ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        uint64_t fee = promise.As<VerifiedTransaction>().summary().fee;
+        uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
         if (fee != tx.summary().fee || tx.summary().fee == 0)
         {
@@ -371,7 +373,7 @@ private:
               CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
                        ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-          VerifiedTransaction tx_rec = promise.As<VerifiedTransaction>();
+          VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
 
           if (tx_rec.summary().fee != tx.summary().fee)
           {
@@ -409,7 +411,7 @@ private:
             CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
                      TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
 
-        if (promise.As<bool>())
+        if (promise->As<bool>())
         {
           break;
         }
@@ -428,7 +430,7 @@ private:
             nm, "localhost", uint16_t(initial_port + number_of_services), TestService::TX_STORE,
             ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
-        if (promise.As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+        if (promise->As<VerifiedTransaction>().summary().fee != tx.summary().fee)
         {
           failed_to_sync = true;
           std::cout << "Expecting: " << tx.summary().fee << std::endl;

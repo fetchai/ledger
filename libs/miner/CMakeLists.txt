@@ -15,5 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-miner)
-target_link_libraries(fetch-miner INTERFACE fetch-core fetch-miner)
+target_link_libraries(fetch-miner PUBLIC fetch-core fetch-ledger)
 
+# Unit tests
+add_subdirectory(tests)

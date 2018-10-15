@@ -45,7 +45,7 @@ Contract::Status SmartContract::InvokeContract(transaction_type const &tx)
   Identifier identifier;
   identifier.Parse(static_cast<std::string>(tx.contract_name()));
 
-  if (!vm_->Execute(script_, identifier.name()))
+  if (!vm_->Execute(script_, static_cast<std::string>(identifier.name())))
   {
     return Status::FAILED;
   }

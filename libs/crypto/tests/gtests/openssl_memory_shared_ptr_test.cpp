@@ -86,7 +86,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_construction)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -109,7 +109,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -124,7 +124,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_reset_with_specific_point
   TestType testValue;
   TestType testValue2;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
   EXPECT_CALL(*mock_, free_TestType(&testValue2)).WillOnce(Return());
 
@@ -139,7 +139,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_swap)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -154,7 +154,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_assign)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {
@@ -169,7 +169,7 @@ TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_copy_construct)
 {
   TestType testValue;
 
-  //* Expctation
+  //* Expectation
   EXPECT_CALL(*mock_, free_TestType(&testValue)).WillOnce(Return());
 
   {

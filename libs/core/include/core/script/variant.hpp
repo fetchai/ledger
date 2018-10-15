@@ -69,6 +69,8 @@ public:
   Variant(std::initializer_list<Variant> const &lst);
   ~Variant() = default;
 
+  void ReleaseResources();
+
   // Type creations
   void MakeNull();
   void MakeUndefined();
@@ -169,6 +171,12 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, Variant const &v);
 
+  void ForEach(std::function<bool(Variant const &key, Variant &value)> const &object_functor);
+  void ForEach(
+      std::function<bool(Variant const &key, Variant const &value)> const &object_functor) const;
+  void ForEach(std::function<bool(Variant &value)> const &object_functor);
+  void ForEach(std::function<bool(Variant const &value)> const &object_functor) const;
+
 private:
   using VariantArrayPtr = std::shared_ptr<VariantArray>;
 
@@ -250,6 +258,8 @@ public:
   VariantArray &operator=(VariantArray const &other) = default;
   VariantArray &operator=(VariantArray &&other) noexcept = default;
 
+  ~VariantArray() = default;
+
   Variant const &operator[](std::size_t const &i) const;
   Variant &      operator[](std::size_t const &i);
   void           Resize(std::size_t const &n);
@@ -259,7 +269,80 @@ public:
     return size_;
   }
 
+  // Circular references can form when constructing variants in that any variant in this subarray
+  // can point back to this subarray, causing a memory leak. To break this, we force every variant
+  // in our list to release its resources. This will not play well if the variant array is not
+  // wholly contained (but for our use case it is)
+  void ReleaseResources()
+  {
+    if (data_)
+    {
+      for (auto &variant : *data_)
+      {
+        variant.ReleaseResources();
+      }
+    }
+  }
+
   void SetData(VariantArray const &other, std::size_t offset, std::size_t size);
+
+  template <typename FROM_ITERATOR>
+  VariantArray &CopyFrom(FROM_ITERATOR const &from_start_itr, FROM_ITERATOR const &from_end_itr,
+                         std::size_t offset = 0)
+  {
+    auto const        dist      = std::distance(from_start_itr, from_end_itr);
+    std::size_t const from_size = static_cast<std::size_t>(dist);
+    if (offset + from_size > size())
+    {
+      Resize(offset + from_size);
+    }
+
+    FROM_ITERATOR start = from_start_itr;
+    FROM_ITERATOR end   = from_end_itr;
+    if (dist < 0)
+    {
+      start = from_end_itr;
+      end   = from_start_itr;
+    }
+
+    std::copy(start, end, pointer_ + offset);
+    return *this;
+  }
+
+  void ForEach(std::function<bool(Variant const &key, Variant &value)> const &object_functor)
+  {
+    assert(0 == (size() & 1));  //* even
+
+    if (!object_functor || size() == 0)
+    {
+      return;
+    }
+
+    for (std::size_t key_idx = 0, val_idx = key_idx + 1; key_idx < size();
+         key_idx += 2, val_idx += 2)
+    {
+      if (!object_functor((*this)[key_idx], (*this)[val_idx]))
+      {
+        break;
+      }
+    }
+  }
+
+  void ForEach(std::function<bool(Variant &value)> const &object_functor)
+  {
+    if (!object_functor)
+    {
+      return;
+    }
+
+    for (std::size_t val_idx = 0; val_idx < size(); ++val_idx)
+    {
+      if (!object_functor((*this)[val_idx]))
+      {
+        break;
+      }
+    }
+  }
 
 private:
   using Container    = std::vector<Variant>;
@@ -274,6 +357,7 @@ private:
 inline Variant::Variant()
   : type_(UNDEFINED)
 {}
+
 inline Variant::Variant(int64_t const &i)
 {
   *this = i;
@@ -305,6 +389,11 @@ inline Variant::Variant(float const &f)
 inline Variant::Variant(double const &f)
 {
   *this = f;
+}
+
+inline void Variant::ReleaseResources()
+{
+  array_.reset();
 }
 
 inline void Variant::MakeNull()
@@ -504,6 +593,32 @@ inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const
 
   value = element.As<T>();
   return true;
+}
+
+inline void Variant::ForEach(
+    std::function<bool(Variant const &key, Variant &value)> const &object_functor)
+{
+  assert(type_ == OBJECT);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(
+    std::function<bool(Variant const &key, Variant const &value)> const &object_functor) const
+{
+  assert(type_ == OBJECT);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(std::function<bool(Variant &value)> const &object_functor)
+{
+  assert(type_ == ARRAY);
+  array_->ForEach(object_functor);
+}
+
+inline void Variant::ForEach(std::function<bool(Variant const &value)> const &object_functor) const
+{
+  assert(type_ == ARRAY);
+  array_->ForEach(object_functor);
 }
 
 }  // namespace script
