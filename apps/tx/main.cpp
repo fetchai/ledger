@@ -77,13 +77,13 @@ struct CommandLineArguments
     fetch::commandline::Params parameters;
     parameters.add(args.input_json_tx_filename, "f",
                    "file name for json input TX data. The json string can be provided directly as "
-                   "value of this arument on command-line instead of filename.",
+                   "value of this argument on command-line instead of filename.",
                    std::string{});
     parameters.add(
         args.priv_keys_filename, "p",
-        "file name for prvate keys in json format {\"private_keys\":[\"base64_priv_key_0\"]}. Two "
-        "private kyes will be generated *IF* this option is *NOT* provided. The json string can be "
-        "provided directly as value of this arument on command-line instead of filename. IF it is "
+        "file name for private keys in json format {\"private_keys\":[\"base64_priv_key_0\"]}. Two "
+        "private keys will be generated *IF* this option is *NOT* provided. The json string can be "
+        "provided directly as value of this argument on command-line instead of filename. IF it is "
         "desired to disable signing (just generate Tx in wire format with NO signatures), then "
         "provide json {\"private_keys\":[]} with NO private keys as value for this parameter.",
         std::string{});
@@ -151,7 +151,7 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant 
           fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
       if (!result.second)
       {
-        std::cerr << "WARNING: Atempt to insert already existing resource \"" << *result.first
+        std::cerr << "WARNING: Attempt to insert already existing resource \"" << *result.first
                   << "\"!" << std::endl;
       }
       return true;
@@ -257,7 +257,7 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
           keys.emplace(fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
       if (!result.second)
       {
-        std::cerr << "WARNING: Atempt to insert already existing private key \"" << *result.first
+        std::cerr << "WARNING: Attempt to insert already existing private key \"" << *result.first
                   << "\"!" << std::endl;
       }
       return true;
@@ -296,27 +296,27 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
  used for signing. If desired, **signing can be disabled** by providing empty list of private keys.
  Bellow are examples of usage:
       @code{.sh}
-      #1. creates wire tx from esential tx data provided in `tx_input_data.json` file and signs it
+      #1. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
       #    using priv. keys provided in `private_keys.json` file:
       tx-generator -f tx_input_data.json -p private_keys.json
 
-      #2. creates wire tx from esential tx data provided as json string on command-line,
+      #2. creates wire tx from essential tx data provided as json string on command-line,
       #    and signs it using priv. keys provided as json string at command-line:
       tx-generator -f tx_input_data.json -p
  '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
 
-      #3. creates wire tx from esential tx data provided as json string on command-line,
+      #3. creates wire tx from essential tx data provided as json string on command-line,
       #    and signs it using priv. keys provided as json string at command-line:
       tx-generator -f '{"metadata": { "fee":1, "data":"YWJjZA==",
  "resources":["aGVsbG8AACBraXR0eSwgAAAAaG93IGFyZSAAAAB5b3UwAAo=",
  "R29vZAAAIGJ5ZSAAa2l0dHkAAAAhCg=="], "contract_name": "fetch.wealth" }}' -p
  '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
 
-      #4. creates wire tx from esential tx data provided in `tx_input_data.json` file and signs it
+      #4. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
       #    using 2 internally generated priv. keys:
       tx generator -f tx_input_data.json
 
-      #5. creates UNSIGNED wire tx from esential tx data provided as json string on command-line :
+      #5. creates UNSIGNED wire tx from essential tx data provided as json string on command-line :
       tx-generator -f tx_input_data.json -p '{"private_keys":[]}'
       @endcode
 
