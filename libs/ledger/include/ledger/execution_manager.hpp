@@ -55,8 +55,8 @@ public:
   using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
-  explicit ExecutionManager(std::string const &storage_path, std::size_t num_executors, StorageUnitPtr storage,
-                            ExecutorFactory const &factory);
+  explicit ExecutionManager(std::string const &storage_path, std::size_t num_executors,
+                            StorageUnitPtr storage, ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
@@ -78,7 +78,6 @@ public:
   }
 
 private:
-
   using ExecutionItemPtr  = std::unique_ptr<ExecutionItem>;
   using ExecutionItemList = std::vector<ExecutionItemPtr>;
   using ExecutionPlan     = std::vector<ExecutionItemList>;
@@ -95,7 +94,6 @@ private:
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
 
-
   Flag running_{false};
   Flag active_{false};
   Flag monitor_ready_{false};
@@ -103,26 +101,25 @@ private:
   ChainCodeCache contracts_;
   StorageUnitPtr storage_;
 
-  Mutex          execution_plan_lock_;    ///< guards `execution_plan_`
-  ExecutionPlan  execution_plan_;
+  Mutex         execution_plan_lock_;  ///< guards `execution_plan_`
+  ExecutionPlan execution_plan_;
 
-  BlockHash      last_block_hash_ = chain::GENESIS_DIGEST;
+  BlockHash last_block_hash_ = chain::GENESIS_DIGEST;
 
-  Mutex          monitor_lock_;
-  Condition      monitor_wake_;
-  Condition      monitor_notify_;
+  Mutex     monitor_lock_;
+  Condition monitor_wake_;
+  Condition monitor_notify_;
 
-  Mutex         idle_executors_lock_;     ///< guards `idle_executors`
-  ExecutorList  idle_executors_;
+  Mutex        idle_executors_lock_;  ///< guards `idle_executors`
+  ExecutorList idle_executors_;
 
-  Counter     active_count_{0};
-  Counter     completed_executions_{0};
-  Counter     remaining_executions_{0};
-  Counter     num_slices_{0};
+  Counter active_count_{0};
+  Counter completed_executions_{0};
+  Counter remaining_executions_{0};
+  Counter num_slices_{0};
 
-  ThreadPool  thread_pool_;
-  ThreadPtr   monitor_thread_;
-
+  ThreadPool thread_pool_;
+  ThreadPtr  monitor_thread_;
 
   // Block state retrieval
   Mutex               state_archive_lock_;  ///< guards state_archive_ & block_state_cache_

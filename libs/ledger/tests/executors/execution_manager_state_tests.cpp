@@ -58,8 +58,9 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>("exec_mgr_state_tests_",
-        config.executors, mock_storage_, [this]() { return CreateExecutor(); });
+    manager_ =
+        std::make_shared<ExecutionManager>("exec_mgr_state_tests_", config.executors, mock_storage_,
+                                           [this]() { return CreateExecutor(); });
   }
 
   FakeExecutorPtr CreateExecutor()

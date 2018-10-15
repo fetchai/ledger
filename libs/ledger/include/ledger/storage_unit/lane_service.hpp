@@ -126,7 +126,7 @@ public:
     if (refresh_storage)
     {
       state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                      prefix + "state_index_deltas.db");
+                     prefix + "state_index_deltas.db");
     }
     else
     {

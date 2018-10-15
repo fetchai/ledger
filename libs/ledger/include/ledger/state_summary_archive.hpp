@@ -37,7 +37,6 @@ public:
   using Hash     = StorageUnitInterface::hash_type;
   using Bookmark = StorageUnitInterface::bookmark_type;
 
-
   void New(std::string const &db_path, std::string const &index_path)
   {
     archive_.New(db_path, index_path);
@@ -131,11 +130,10 @@ public:
   }
 
 private:
-
-  using Clock = std::chrono::high_resolution_clock;
-  using Timestamp = Clock::time_point;
+  using Clock      = std::chrono::high_resolution_clock;
+  using Timestamp  = Clock::time_point;
   using ResourceID = storage::ResourceID;
-  using Archive = storage::ObjectStore<Bookmark>;
+  using Archive    = storage::ObjectStore<Bookmark>;
 
   struct CacheElement
   {
@@ -144,14 +142,13 @@ private:
       : bookmark{b}
     {}
 
-    Bookmark  bookmark{0};              ///< The bookmark being stored
-    Timestamp created_at{Clock::now()}; ///< The timestamp for the cache element
+    Bookmark  bookmark{0};               ///< The bookmark being stored
+    Timestamp created_at{Clock::now()};  ///< The timestamp for the cache element
   };
 
   using PendingMap = std::unordered_map<Hash, CacheElement>;
 
   static constexpr uint32_t CLEANUP_PERIOD_MASK = 0x1F;
-
 
   void CleanUp()
   {
@@ -175,10 +172,10 @@ private:
     }
   }
 
-  uint32_t    confirm_count_{0};    ///< Confirm call count, used for periodic work
-  Bookmark    next_bookmark_{1};    ///< The next bookmark to allocated
-  Archive     archive_;             ///< The persistent storage of state block indexes
-  PendingMap  pending_;             ///< In memory map of pending state hash vs. bookmark indexes
+  uint32_t   confirm_count_{0};  ///< Confirm call count, used for periodic work
+  Bookmark   next_bookmark_{1};  ///< The next bookmark to allocated
+  Archive    archive_;           ///< The persistent storage of state block indexes
+  PendingMap pending_;           ///< In memory map of pending state hash vs. bookmark indexes
 };
 
 }  // namespace ledger

@@ -39,14 +39,14 @@ using ::testing::_;
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using FakeExecutorPtr  = std::shared_ptr<FakeExecutor>;
-  using FakeExecutorList   = std::vector<FakeExecutorPtr>;
-  using ExecutionManager       = fetch::ledger::ExecutionManager;
-  using ExecutorFactory        = ExecutionManager::ExecutorFactory;
-  using BlockHash              = ExecutionManager::BlockHash;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using MockStorageUnitPtr     = std::shared_ptr<MockStorageUnit>;
-  using Clock                  = std::chrono::high_resolution_clock;
+  using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
+  using FakeExecutorList    = std::vector<FakeExecutorPtr>;
+  using ExecutionManager    = fetch::ledger::ExecutionManager;
+  using ExecutorFactory     = ExecutionManager::ExecutorFactory;
+  using BlockHash           = ExecutionManager::BlockHash;
+  using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
+  using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
+  using Clock               = std::chrono::high_resolution_clock;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
@@ -58,8 +58,8 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>("exec_mgr_tests",
-        config.executors, mock_storage_, [this]() { return CreateExecutor(); });
+    manager_ = std::make_shared<ExecutionManager>("exec_mgr_tests", config.executors, mock_storage_,
+                                                  [this]() { return CreateExecutor(); });
   }
 
   void TearDown() override

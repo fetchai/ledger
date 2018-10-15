@@ -32,12 +32,11 @@ class ExecutionManagerRpcService : public fetch::service::ServiceServer<fetch::n
 public:
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
-  using StorageUnitPtr      = ExecutionManager::StorageUnitPtr ;
+  using StorageUnitPtr      = ExecutionManager::StorageUnitPtr;
 
   ExecutionManagerRpcService(uint16_t port, network_manager_type const &network_manager,
-                             std::string const &storage_path,
-                             std::size_t num_executors, StorageUnitPtr storage,
-                             ExecutorFactory const &factory)
+                             std::string const &storage_path, std::size_t num_executors,
+                             StorageUnitPtr storage, ExecutorFactory const &factory)
     : ServiceServer(port, network_manager)
     , manager_(new ExecutionManager(storage_path, num_executors, storage, factory))
   {

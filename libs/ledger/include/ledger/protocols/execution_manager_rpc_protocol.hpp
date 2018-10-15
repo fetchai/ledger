@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/execution_manager_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/execution_manager_interface.hpp"
 #include "network/service/protocol.hpp"
 
 namespace fetch {
@@ -36,7 +36,6 @@ public:
     ABORT
   };
 
-
   explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
     : manager_(manager)
   {
@@ -49,9 +48,8 @@ public:
   }
 
 private:
-
-  using Status = ExecutionManagerInterface::Status;
-  using Block = ExecutionManagerInterface::Block;
+  using Status    = ExecutionManagerInterface::Status;
+  using Block     = ExecutionManagerInterface::Block;
   using FullBlock = chain::MainChain::BlockType;
 
   Status Execute(Block const &block)
@@ -63,7 +61,6 @@ private:
 
     return manager_.Execute(ful_block.body());
   }
-
 
   ExecutionManagerInterface &manager_;
 };

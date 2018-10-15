@@ -66,7 +66,8 @@ protected:
 
     // server
     service_ = std::make_unique<ExecutionManagerRpcService>(
-        PORT, *network_manager_, "exec_mgr_rpc_tests_", config.executors, storage_, [this]() { return CreateExecutor(); });
+        PORT, *network_manager_, "exec_mgr_rpc_tests_", config.executors, storage_,
+        [this]() { return CreateExecutor(); });
 
     service_->Start();
 
@@ -181,11 +182,11 @@ protected:
     return success;
   }
 
-  NetworkManagerPtr              network_manager_;
-  ExecutionManagerRpcClientPtr   manager_;
-  ExecutionManagerRpcServicePtr  service_;
-  FakeExecutorList               executors_;
-  FakeStorageUnitPtr             storage_;
+  NetworkManagerPtr             network_manager_;
+  ExecutionManagerRpcClientPtr  manager_;
+  ExecutionManagerRpcServicePtr service_;
+  FakeExecutorList              executors_;
+  FakeStorageUnitPtr            storage_;
 };
 
 TEST_P(ExecutionManagerRpcTests, BlockExecution)

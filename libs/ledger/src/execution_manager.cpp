@@ -31,8 +31,8 @@
 
 #include <iostream>
 
-static constexpr char const *LOGGING_NAME = "ExecutionManager";
-static constexpr std::size_t MAX_STARTUP_ITERATIONS = 20;
+static constexpr char const *LOGGING_NAME              = "ExecutionManager";
+static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
 static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
 
 namespace {
@@ -45,15 +45,14 @@ struct FilePaths
   static FilePaths Create(std::string const &prefix, std::string const &basename)
   {
     FilePaths f;
-    f.data_path = prefix + basename + ".db";
+    f.data_path  = prefix + basename + ".db";
     f.index_path = prefix + basename + ".index.db";
 
     return f;
   }
 };
 
-} // namespace
-
+}  // namespace
 
 namespace fetch {
 namespace ledger {
@@ -64,15 +63,15 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t num_executors, StorageUnitPtr storage,
-                                   ExecutorFactory const &factory)
+ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t num_executors,
+                                   StorageUnitPtr storage, ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
   , thread_pool_(network::MakeThreadPool(num_executors))
 {
   // define all the file paths for the databases
   FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
-  FilePaths const block_state_paths = FilePaths::Create(storage_path, "exec_block_state_map");
+  FilePaths const block_state_paths   = FilePaths::Create(storage_path, "exec_block_state_map");
 
   // load state archive updates
   {

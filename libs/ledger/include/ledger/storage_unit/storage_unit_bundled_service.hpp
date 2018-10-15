@@ -47,8 +47,8 @@ public:
   {
     for (std::size_t i = 0; i < lanes; ++i)
     {
-      lanes_.push_back(
-          std::make_shared<LaneService>(storage_path, uint32_t(i), lanes, uint16_t(port + i), tm, refresh_storage));
+      lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
+                                                     uint16_t(port + i), tm, refresh_storage));
     }
   }
 
