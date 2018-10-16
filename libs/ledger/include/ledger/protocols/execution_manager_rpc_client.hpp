@@ -42,11 +42,11 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  Status            Execute(block_type const &block) override;
-  block_digest_type LastProcessedBlock() override;
-  bool              IsActive() override;
-  bool              IsIdle() override;
-  bool              Abort() override;
+  Status    Execute(Block const &block) override;
+  BlockHash LastProcessedBlock() override;
+  bool      IsActive() override;
+  bool      IsIdle() override;
+  bool      Abort() override;
   /// @}
 
   bool is_alive() const
