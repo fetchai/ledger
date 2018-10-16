@@ -28,6 +28,7 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "network/p2pservice/p2p_service.hpp"
+#include "miner/resource_mapper.hpp"
 
 #include <random>
 #include <sstream>
@@ -42,8 +43,9 @@ public:
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
 
-  P2PHttpInterface(MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
-    : chain_(chain)
+  P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
+    : log2_num_lanes_(log2_num_lanes)
+    , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
@@ -72,9 +74,22 @@ private:
   http::HTTPResponse GetChainStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
+    std::size_t chain_length = 20;
+    bool include_transactions = false;
+
+    if (request.query().Has("size"))
+    {
+      chain_length = static_cast<std::size_t>(request.query()["size"].AsInt());
+    }
+
+    if (request.query().Has("tx"))
+    {
+      include_transactions = true;
+    }
+
     Variant response     = Variant::Object();
     response["identity"] = byte_array::ToBase64(muddle_.identity().identifier());
-    response["chain"]    = GenerateBlockList();
+    response["chain"]    = GenerateBlockList(include_transactions, chain_length);
 
     return http::CreateJsonResponse(response);
   }
@@ -131,26 +146,69 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-  Variant GenerateBlockList()
+  Variant GenerateBlockList(bool include_transactions, std::size_t length)
   {
+    using byte_array::ToBase64;
+
     // lookup the blocks from the heaviest chain
-    auto blocks = chain_.HeaviestChain(20);
+    auto blocks = chain_.HeaviestChain(length);
 
     Variant block_list = Variant::Array(blocks.size());
 
     // loop through and generate the complete block list
-    std::size_t i = 0;
+    std::size_t block_idx{0};
     for (auto &b : blocks)
     {
       // format the block number
-      auto block             = script::Variant::Object();
-      block["previous_hash"] = byte_array::ToBase64(b.prev());
-      block["current_hash"]  = byte_array::ToBase64(b.hash());
+      auto block             = Variant::Object();
+      block["previousHash"] = byte_array::ToBase64(b.prev());
+      block["currentHash"]  = byte_array::ToBase64(b.hash());
       block["proof"]         = byte_array::ToBase64(b.proof());
-      block["block_number"]  = b.body().block_number;
+      block["blockNumber"]  = b.body().block_number;
+
+      if (include_transactions)
+      {
+        auto const &slices = b.body().slices;
+
+        Variant slice_list = Variant::Array(slices.size());
+
+        std::size_t slice_idx{0};
+        for (auto const &slice : slices)
+        {
+          Variant transaction_list = Variant::Array(slice.transactions.size());
+
+          std::size_t tx_idx{0};
+          for (auto const &transaction : slice.transactions)
+          {
+            Variant tx_obj = Variant::Object();
+            tx_obj["digest"] = ToBase64(transaction.transaction_hash);
+            tx_obj["fee"] = transaction.fee;
+            tx_obj["contractName"] = transaction.contract_name;
+
+            Variant resources_array = Variant::Array(transaction.resources.size());
+
+            std::size_t res_idx{0};
+            for (auto const &resource : transaction.resources)
+            {
+              Variant res_obj = Variant::Object();
+              res_obj["resource"] = ToBase64(resource);
+              res_obj["lane"] = miner::MapResourceToLane(resource, transaction.contract_name, log2_num_lanes_);
+
+              resources_array[res_idx++] = res_obj;
+            }
+
+            tx_obj["resources"] = resources_array;
+            transaction_list[tx_idx++] = tx_obj;
+          }
+
+          slice_list[slice_idx++] = transaction_list;
+        }
+
+        block["slices"] = slice_list;
+      }
 
       // store the block in the array
-      block_list[i++] = block;
+      block_list[block_idx++] = block;
     }
 
     return block_list;
@@ -180,6 +238,7 @@ private:
     return cache;
   }
 
+  uint32_t     log2_num_lanes_;
   MainChain &  chain_;
   Muddle &     muddle_;
   P2PService & p2p_;
