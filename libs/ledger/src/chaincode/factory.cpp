@@ -28,12 +28,13 @@ static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
 namespace fetch {
 namespace ledger {
 namespace {
-using factory_registry_type = ChainCodeFactory::factory_registry_type;
-using contract_set_type     = ChainCodeFactory::contract_set_type;
 
-factory_registry_type CreateRegistry()
+using FactoryRegistry = ChainCodeFactory::FactoryRegistry;
+using ContractNameSet     = ChainCodeFactory::ContractNameSet;
+
+FactoryRegistry CreateRegistry()
 {
-  factory_registry_type registry;
+  FactoryRegistry registry;
 
   registry["fetch.dummy"] = []() { return std::make_shared<DummyContract>(); };
   registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
@@ -41,9 +42,9 @@ factory_registry_type CreateRegistry()
   return registry;
 }
 
-contract_set_type CreateContractSet(factory_registry_type const &registry)
+ContractNameSet CreateContractSet(FactoryRegistry const &registry)
 {
-  contract_set_type contracts;
+  ContractNameSet contracts;
 
   for (auto const &entry : registry)
   {
@@ -53,12 +54,12 @@ contract_set_type CreateContractSet(factory_registry_type const &registry)
   return contracts;
 }
 
-factory_registry_type const global_registry     = CreateRegistry();
-contract_set_type const     global_contract_set = CreateContractSet(global_registry);
+FactoryRegistry const global_registry     = CreateRegistry();
+ContractNameSet const     global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 
-ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type const &name) const
+ChainCodeFactory::ContractPtr ChainCodeFactory::Create(ContractName const &name) const
 {
 
   // lookup the chain code instance
@@ -70,7 +71,7 @@ ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type cons
   }
 
   // create the chain code instance
-  chain_code_type chain_code = it->second();
+  ContractPtr chain_code = it->second();
   if (!chain_code)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to construct requested chain code: ", name);
@@ -80,7 +81,7 @@ ChainCodeFactory::chain_code_type ChainCodeFactory::Create(contract_id_type cons
   return chain_code;
 }
 
-ChainCodeFactory::contract_set_type const &ChainCodeFactory::GetContracts() const
+ChainCodeFactory::ContractNameSet const &ChainCodeFactory::GetContracts() const
 {
   return global_contract_set;
 }

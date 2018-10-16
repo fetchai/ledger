@@ -25,9 +25,9 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using tx_digest_type  = chain::Transaction::digest_type;
-  using lane_index_type = uint32_t;
-  using lane_set_type   = std::unordered_set<lane_index_type>;
+  using TxDigest  = chain::Transaction::TxDigest;
+  using LaneIndex = uint32_t;
+  using LaneSet   = std::unordered_set<LaneIndex>;
 
   enum class Status
   {
@@ -40,8 +40,8 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(tx_digest_type const &hash, std::size_t slice,
-                         lane_set_type const &lanes) = 0;
+  virtual Status Execute(TxDigest const &hash, std::size_t slice,
+                         LaneSet const &lanes) = 0;
   /// @}
 
   virtual ~ExecutorInterface()

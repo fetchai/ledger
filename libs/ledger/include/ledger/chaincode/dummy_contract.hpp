@@ -27,7 +27,6 @@ namespace ledger {
 class DummyContract : public Contract
 {
 public:
-  using counter_type = std::atomic<std::size_t>;
 
   DummyContract();
   ~DummyContract() = default;
@@ -38,10 +37,13 @@ public:
   }
 
 private:
-  Status Wait(transaction_type const &tx);
-  Status Run(transaction_type const &tx);
 
-  counter_type counter_{0};
+  using Counter = std::atomic<std::size_t>;
+
+  Status Wait(Transaction const &tx);
+  Status Run(Transaction const &tx);
+
+  Counter counter_{0};
 };
 
 }  // namespace ledger

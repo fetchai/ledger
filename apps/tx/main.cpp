@@ -143,7 +143,7 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant 
   mtx.set_fee(metadata_v["fee"].As<uint64_t>());
   auto resources_v = metadata_v["resources"];
 
-  auto &resources = mtx.resources();
+  fetch::chain::MutableTransaction::ResourceSet resources;
   if (resources_v.is_array())
   {
     resources_v.ForEach([&](fetch::script::Variant &value) -> bool {
@@ -156,6 +156,8 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant 
       }
       return true;
     });
+
+    mtx.set_resources(resources);
   }
   else if (!resources_v.is_undefined())
   {
@@ -275,57 +277,57 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
 }  // namespace
 
 /**
- @brief This executable generates or verifies transaction in `wire` format.
-        Currently it's main purpose if for testing & debugging, but it can be
-        used very well for production purposes.
-
- @details The app can be used in different modes:
-    1. To **generate and sign**  random transaction (see bellow the command-line). It creates random
- Tx data, 2 private keys, signs the transaction with them, and prints that signed transaction in
- wire format to stdout:
-      @code{.sh}
-      tx-generator
-      @endcode
-
-    2. To **SIGN** transaction data (`contract_name`, `fee`, `resources`, `data`). Where the
- essential Tx data are provided in `json` format as value to command-line parameter '-f', either as
- file-name of json file or directly as json string(if param value starts with `{` character). The
- private keys (non mandatory) can be provided in `json` format as value to command-line parameter
- '-p', either as file-name of json file or directly as json string(if param value starts with `{`
- character). If `-p` parameter is **not** provided, 2 private keys are generated automatically and
- used for signing. If desired, **signing can be disabled** by providing empty list of private keys.
- Bellow are examples of usage:
-      @code{.sh}
-      #1. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
-      #    using priv. keys provided in `private_keys.json` file:
-      tx-generator -f tx_input_data.json -p private_keys.json
-
-      #2. creates wire tx from essential tx data provided as json string on command-line,
-      #    and signs it using priv. keys provided as json string at command-line:
-      tx-generator -f tx_input_data.json -p
- '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
-
-      #3. creates wire tx from essential tx data provided as json string on command-line,
-      #    and signs it using priv. keys provided as json string at command-line:
-      tx-generator -f '{"metadata": { "fee":1, "data":"YWJjZA==",
- "resources":["aGVsbG8AACBraXR0eSwgAAAAaG93IGFyZSAAAAB5b3UwAAo=",
- "R29vZAAAIGJ5ZSAAa2l0dHkAAAAhCg=="], "contract_name": "fetch.wealth" }}' -p
- '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
-
-      #4. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
-      #    using 2 internally generated priv. keys:
-      tx generator -f tx_input_data.json
-
-      #5. creates UNSIGNED wire tx from essential tx data provided as json string on command-line :
-      tx-generator -f tx_input_data.json -p '{"private_keys":[]}'
-      @endcode
-
-    3. To **VERIFY** provided transaction in wire transaction (the input transaction json content
- must be signed WIRE  Transaction, what means it MUST contain `data` element on ROOT level of the
- json document):
-      @code{.sh}
-      tx-generator -f signed_wire_tx.json
-      @endcode
+ * @brief This executable generates or verifies transaction in `wire` format.
+ *        Currently it's main purpose if for testing & debugging, but it can be
+ *        used very well for production purposes.
+ *
+ * @details The app can be used in different modes:
+ *    1. To **generate and sign**  random transaction (see bellow the command-line). It creates random
+ * Tx data, 2 private keys, signs the transaction with them, and prints that signed transaction in
+ * wire format to stdout:
+ *      @code{.sh}
+ *      tx-generator
+ *      @endcode
+ *
+ *    2. To **SIGN** transaction data (`contract_name`, `fee`, `resources`, `data`). Where the
+ * essential Tx data are provided in `json` format as value to command-line parameter '-f', either as
+ * file-name of json file or directly as json string(if param value starts with `{` character). The
+ * private keys (non mandatory) can be provided in `json` format as value to command-line parameter
+ * '-p', either as file-name of json file or directly as json string(if param value starts with `{`
+ * character). If `-p` parameter is **not** provided, 2 private keys are generated automatically and
+ * used for signing. If desired, **signing can be disabled** by providing empty list of private keys.
+ * Bellow are examples of usage:
+ *      @code{.sh}
+ *      #1. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
+ *      #    using priv. keys provided in `private_keys.json` file:
+ *      tx-generator -f tx_input_data.json -p private_keys.json
+ *
+ *      #2. creates wire tx from essential tx data provided as json string on command-line,
+ *      #    and signs it using priv. keys provided as json string at command-line:
+ *      tx-generator -f tx_input_data.json -p
+ * '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
+ *
+ *      #3. creates wire tx from essential tx data provided as json string on command-line,
+ *      #    and signs it using priv. keys provided as json string at command-line:
+ *      tx-generator -f '{"metadata": { "fee":1, "data":"YWJjZA==",
+ * "resources":["aGVsbG8AACBraXR0eSwgAAAAaG93IGFyZSAAAAB5b3UwAAo=",
+ * "R29vZAAAIGJ5ZSAAa2l0dHkAAAAhCg=="], "contract_name": "fetch.wealth" }}' -p
+ * '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
+ *
+ *      #4. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs it
+ *      #    using 2 internally generated priv. keys:
+ *      tx generator -f tx_input_data.json
+ *
+ *      #5. creates UNSIGNED wire tx from essential tx data provided as json string on command-line :
+ *      tx-generator -f tx_input_data.json -p '{"private_keys":[]}'
+ *      @endcode
+ *
+ *    3. To **VERIFY** provided transaction in wire transaction (the input transaction json content
+ * must be signed WIRE  Transaction, what means it MUST contain `data` element on ROOT level of the
+ * json document):
+ *      @code{.sh}
+ *    tx-generator -f signed_wire_tx.json
+ *    @endcode
  */
 int main(int argc, char **argv)
 {

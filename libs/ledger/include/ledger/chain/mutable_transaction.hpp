@@ -49,7 +49,8 @@ struct Signature
   }
 };
 
-using signatures_type = std::unordered_map<crypto::Identity, Signature>;
+using Signatories = std::unordered_map<crypto::Identity, Signature>;
+using Signatory = Signatories::value_type;
 
 template <typename T>
 void Serialize(T &serializer, Signature const &b)
@@ -65,30 +66,18 @@ void Deserialize(T &serializer, Signature &b)
 
 struct TransactionSummary
 {
-  using resource_type     = byte_array::ConstByteArray;
-  using digest_type       = byte_array::ConstByteArray;
-  using contract_id_type  = byte_array::ConstByteArray;
-  using resource_set_type = std::set<resource_type>;
-  using fee_type          = uint64_t;
+  using Resource     = byte_array::ConstByteArray;
+  using TxDigest     = byte_array::ConstByteArray;
+  using ContractName = byte_array::ConstByteArray;
+  using ResourceSet  = std::set<Resource>;
+  using Fee          = uint64_t;
 
-  resource_set_type resources;
-  digest_type       transaction_hash;
-  fee_type          fee{0};
+  ResourceSet resources;
+  TxDigest    transaction_hash;
+  Fee         fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
-  contract_id_type contract_name;
-
-  void Clone()
-  {
-    resource_set_type res_clone;
-    for (auto const &res : resources)
-    {
-      res_clone.insert(res.Copy());
-    }
-    resources = std::move(res_clone);
-
-    transaction_hash = transaction_hash.Copy();
-  }
+  ContractName contract_name;
 };
 
 template <typename T>
@@ -158,7 +147,7 @@ public:
     return stream_->data();
   }
 
-  bool Verify(signatures_type::value_type const &sig) const
+  bool Verify(Signatory const &sig) const
   {
     auto const &    identity  = sig.first;
     auto const &    signature = sig.second;
@@ -167,18 +156,18 @@ public:
     return signature_type{signature.signature_data}.VerifyHash(pub_key, hash);
   }
 
-  signatures_type::value_type Sign(byte_array::ConstByteArray const &private_key) const
+  Signatory Sign(byte_array::ConstByteArray const &private_key) const
   {
     return Sign(private_key_type{private_key});
   }
 
-  signatures_type::value_type Sign(private_key_type const &private_key) const
+  Signatory Sign(private_key_type const &private_key) const
   {
     crypto::Identity identity{signature_type::ecdsa_curve_type::sn,
                               private_key.publicKey().keyAsBin()};
     auto             hash = HashOfTxDataForSigning(identity);
     auto             sig  = signature_type::SignHash(private_key, hash);
-    return signatures_type::value_type{
+    return Signatory{
         std::move(identity), Signature{sig.signature(), signature_type::ecdsa_curve_type::sn}};
   }
 
@@ -241,16 +230,12 @@ TxSigningAdapter<MUTABLE_TX> TxSigningAdapterFactory(MUTABLE_TX &tx)
 class MutableTransaction
 {
 public:
-  using hasher_type             = crypto::SHA256;
-  using digest_type             = TransactionSummary::digest_type;
-  using resource_set_type       = TransactionSummary::resource_set_type;
-  using tx_signing_adapter_type = TxSigningAdapter<MutableTransaction>;
+  using Hasher         = crypto::SHA256;
+  using TxDigest       = TransactionSummary::TxDigest;
+  using ResourceSet    = TransactionSummary::ResourceSet;
+  using SigningAdapter = TxSigningAdapter<MutableTransaction>;
 
-  resource_set_type const &resources() const
-  {
-    return summary_.resources;
-  }
-  resource_set_type &resources()
+  ResourceSet const &resources() const
   {
     return summary_.resources;
   }
@@ -259,52 +244,28 @@ public:
   {
     return summary_;
   }
-  TransactionSummary &summary()
-  {
-    return summary_;
-  }
 
   byte_array::ConstByteArray const &data() const
   {
     return data_;
   }
-  byte_array::ConstByteArray &data()
-  {
-    return data_;
-  }
 
-  signatures_type const &signatures() const
-  {
-    return signatures_;
-  }
-  signatures_type &signatures()
+  Signatories const &signatures() const
   {
     return signatures_;
   }
 
-  TransactionSummary::contract_id_type const &contract_name() const
-  {
-    return summary_.contract_name;
-  }
-  TransactionSummary::contract_id_type &contract_name()
+  TransactionSummary::ContractName const &contract_name() const
   {
     return summary_.contract_name;
   }
 
-  digest_type const &digest() const
-  {
-    return summary_.transaction_hash;
-  }
-  digest_type &digest()
+  TxDigest const &digest() const
   {
     return summary_.transaction_hash;
   }
 
-  TransactionSummary::fee_type const &fee() const
-  {
-    return summary_.fee;
-  }
-  TransactionSummary::fee_type &fee()
+  TransactionSummary::Fee const &fee() const
   {
     return summary_.fee;
   }
@@ -321,15 +282,15 @@ public:
     // This is annoying but we should maintain that the fields are
     // kept in order
 
-    hasher_type hash;
+    Hasher hash;
 
     std::vector<std::pair<crypto::Identity, Signature> /*typename signatures_type::value_type*/>
         signatures;
     std::copy(signatures_.begin(), signatures_.end(), std::back_inserter(signatures));
     //* Signatures are sorted based on associated Identity value
     std::sort(signatures.begin(), signatures.end(),
-              [](signatures_type::value_type const &a,
-                 signatures_type::value_type const &b) -> bool { return a.first < b.first; });
+              [](Signatory const &a,
+                 Signatory const &b) -> bool { return a.first < b.first; });
 
     for (auto const &e : signatures)
     {
@@ -379,26 +340,26 @@ public:
   }
 
   Signature const &Sign(byte_array::ConstByteArray const &private_key,
-                        tx_signing_adapter_type &         tx_sign_adapter)
+                        SigningAdapter &               tx_sign_adapter)
   {
     return SignInternal(private_key, tx_sign_adapter);
   }
 
-  Signature const &Sign(tx_signing_adapter_type::private_key_type const &private_key,
-                        tx_signing_adapter_type &                        tx_sign_adapter)
+  Signature const &Sign(SigningAdapter::private_key_type const &private_key,
+                        SigningAdapter &                        tx_sign_adapter)
   {
     return SignInternal(private_key, tx_sign_adapter);
   }
 
   Signature const &Sign(byte_array::ConstByteArray const &private_key)
   {
-    tx_signing_adapter_type tx_sign_adapter{*this};
+    SigningAdapter tx_sign_adapter{*this};
     return SignInternal(private_key, tx_sign_adapter);
   }
 
-  Signature const &Sign(tx_signing_adapter_type::private_key_type const &private_key)
+  Signature const &Sign(SigningAdapter::private_key_type const &private_key)
   {
-    tx_signing_adapter_type tx_sign_adapter{*this};
+    SigningAdapter tx_sign_adapter{*this};
     return SignInternal(private_key, tx_sign_adapter);
   }
 
@@ -418,12 +379,12 @@ public:
     data_ = data;
   }
 
-  void set_signatures(signatures_type const &sig)
+  void set_signatures(Signatories const &sig)
   {
     signatures_ = sig;
   }
 
-  void set_contract_name(TransactionSummary::contract_id_type const &name)
+  void set_contract_name(TransactionSummary::ContractName const &name)
   {
     summary_.contract_name = name;
   }
@@ -433,72 +394,26 @@ public:
     summary_.fee = fee;
   }
 
-protected:
-  void Clone()
+  void set_resources(TransactionSummary::ResourceSet resources)
   {
-    summary_.Clone();
-    data_ = data_.Copy();
-    signatures_type sigs_clone;
-    for (auto &sig : signatures_)
-    {
-      crypto::Identity identity{sig.first};
-      identity.Clone();
-      sig.second.Clone();
-      sigs_clone[identity] = std::move(sig.second);
-    }
-    signatures_ = std::move(sigs_clone);
+    summary_.resources = std::move(resources);
   }
 
 private:
   TransactionSummary         summary_;
   byte_array::ConstByteArray data_;
-  signatures_type            signatures_;
+  Signatories                signatures_;
 
   template <typename PRIVATE_KEY_TYPE>
   Signature const &SignInternal(PRIVATE_KEY_TYPE const & private_key,
-                                tx_signing_adapter_type &tx_sign_adapter)
+                                SigningAdapter &tx_sign_adapter)
   {
     auto const result = signatures_.emplace(tx_sign_adapter.Sign(private_key));
     if (!result.second)
     {
-      throw std::runtime_error("Signature for given private key alrteady already exists.");
+      throw std::runtime_error("Signature for given private key already already exists.");
     }
     return result.first->second;
-  }
-
-  resource_set_type &resources_inten()
-  {
-    return summary_.resources;
-  }
-
-  TransactionSummary &summary_intern()
-  {
-    return summary_;
-  }
-
-  byte_array::ConstByteArray &data_intern()
-  {
-    return data_;
-  }
-
-  signatures_type &signatures_intern()
-  {
-    return signatures_;
-  }
-
-  TransactionSummary::contract_id_type &contract_name_intern()
-  {
-    return summary_.contract_name;
-  }
-
-  digest_type &digest_intern()
-  {
-    return summary_.transaction_hash;
-  }
-
-  TransactionSummary::fee_type &fee_intern()
-  {
-    return summary_.fee;
   }
 
   template <typename MUTABLE_TX>
@@ -532,8 +447,8 @@ template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   MutableTransaction &tx_ = tx;
-  stream >> tx_.contract_name_intern() >> tx_.fee_intern() >> tx_.resources_inten() >>
-      tx_.data_intern() >> tx_.signatures_intern();
+  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >>
+      tx_.data_ >> tx_.signatures_;
   tx.Reset();
 }
 
@@ -553,13 +468,13 @@ bool TxSigningAdapter<MUTABLE_TX>::operator!=(TxSigningAdapter<MUTABLE_TX> const
 }
 
 template <typename T>
-void Serialize(T &serializer, signatures_type::value_type const &b)
+void Serialize(T &serializer, Signatory const &b)
 {
   serializer << b.first << b.second;
 }
 
 template <typename T>
-void Deserialize(T &serializer, signatures_type::value_type &b)
+void Deserialize(T &serializer, Signatory &b)
 {
   serializer >> b.first >> b.second;
 }

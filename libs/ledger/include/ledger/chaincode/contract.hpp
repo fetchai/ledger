@@ -45,26 +45,25 @@ public:
     NOT_FOUND,
   };
 
-  using contract_name_type       = byte_array::ConstByteArray;
-  using transaction_type         = chain::Transaction;
-  using query_type               = script::Variant;
-  using transaction_handler_type = std::function<Status(transaction_type const &)>;
-  using transaction_handler_map_type =
-      std::unordered_map<contract_name_type, transaction_handler_type>;
-  using query_handler_type     = std::function<Status(query_type const &, query_type &)>;
-  using query_handler_map_type = std::unordered_map<contract_name_type, query_handler_type>;
-  using counter_type           = std::atomic<std::size_t>;
-  using counter_map_type       = std::unordered_map<contract_name_type, counter_type>;
-  using storage_type           = ledger::StorageInterface;
-  using resource_set_type      = chain::TransactionSummary::resource_set_type;
+  using ContractName          = chain::TransactionSummary::ContractName;
+  using Transaction           = chain::Transaction;
+  using Query                 = script::Variant;
+  using TransactionHandler    = std::function<Status(Transaction const &)>;
+  using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
+  using QueryHandler          = std::function<Status(Query const &, Query &)>;
+  using QueryHandlerMap       = std::unordered_map<ContractName, QueryHandler>;
+  using Counter               = std::atomic<std::size_t>;
+  using CounterMap            = std::unordered_map<ContractName, Counter>;
+  using StorageInterface      = ledger::StorageInterface;
+  using ResourceSet           = chain::TransactionSummary::ResourceSet;
 
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(contract_name_type const &name, query_type const &query,
-                       query_type &response)
+  Status DispatchQuery(ContractName const &name, Query const &query,
+                       Query &response)
   {
     Status status{Status::NOT_FOUND};
 
@@ -78,7 +77,7 @@ public:
     return status;
   }
 
-  Status DispatchTransaction(byte_array::ConstByteArray const &name, transaction_type const &tx)
+  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx)
   {
     Status status{Status::NOT_FOUND};
 
@@ -101,7 +100,7 @@ public:
     return status;
   }
 
-  void Attach(storage_type &state)
+  void Attach(StorageInterface &state)
   {
     state_ = &state;
   }
@@ -137,19 +136,19 @@ public:
     }
   }
 
-  bool ParseAsJson(transaction_type const &tx, script::Variant &output);
+  bool ParseAsJson(Transaction const &tx, script::Variant &output);
 
   Identifier const &identifier() const
   {
     return contract_identifier_;
   }
 
-  query_handler_map_type const &query_handlers() const
+  QueryHandlerMap const &query_handlers() const
   {
     return query_handlers_;
   }
 
-  transaction_handler_map_type const &transaction_handlers() const
+  TransactionHandlerMap const &transaction_handlers() const
   {
     return transaction_handlers_;
   }
@@ -162,17 +161,17 @@ public:
   }
 
 protected:
-  explicit Contract(byte_array::ConstByteArray const &identifer)
-    : contract_identifier_{identifer}
+  explicit Contract(byte_array::ConstByteArray const &identifier)
+    : contract_identifier_{identifier}
   {}
 
   template <typename C>
   void OnTransaction(std::string const &name, C *instance,
-                     Status (C::*func)(transaction_type const &))
+                     Status (C::*func)(Transaction const &))
   {
     if (transaction_handlers_.find(name) == transaction_handlers_.end())
     {
-      transaction_handlers_[name] = [instance, func](transaction_type const &tx) {
+      transaction_handlers_[name] = [instance, func](Transaction const &tx) {
         return (instance->*func)(tx);
       };
       transaction_counters_[name] = 0;
@@ -185,11 +184,11 @@ protected:
 
   template <typename C>
   void OnQuery(std::string const &name, C *instance,
-               Status (C::*func)(query_type const &, query_type &))
+               Status (C::*func)(Query const &, Query &))
   {
     if (query_handlers_.find(name) == query_handlers_.end())
     {
-      query_handlers_[name] = [instance, func](query_type const &query, query_type &response) {
+      query_handlers_[name] = [instance, func](Query const &query, Query &response) {
         return (instance->*func)(query, response);
       };
       query_counters_[name] = 0;
@@ -200,7 +199,7 @@ protected:
     }
   }
 
-  storage_type &state()
+  StorageInterface &state()
   {
     detailed_assert(state_ != nullptr);
     return *state_;
@@ -265,7 +264,7 @@ protected:
   }
 
 private:
-  bool LockResources(resource_set_type const &resources)
+  bool LockResources(ResourceSet const &resources)
   {
     bool success = true;
 
@@ -280,7 +279,7 @@ private:
     return success;
   }
 
-  bool UnlockResources(resource_set_type const &resources)
+  bool UnlockResources(ResourceSet const &resources)
   {
     bool success = true;
 
@@ -295,13 +294,12 @@ private:
     return success;
   }
 
-  Identifier                   contract_identifier_;
-  query_handler_map_type       query_handlers_{};
-  transaction_handler_map_type transaction_handlers_{};
-  counter_map_type             transaction_counters_{};
-  counter_map_type             query_counters_{};
-
-  storage_type *state_ = nullptr;
+  Identifier             contract_identifier_;
+  QueryHandlerMap        query_handlers_{};
+  TransactionHandlerMap  transaction_handlers_{};
+  CounterMap             transaction_counters_{};
+  CounterMap             query_counters_{};
+  StorageInterface       *state_ = nullptr;
 };
 
 }  // namespace ledger

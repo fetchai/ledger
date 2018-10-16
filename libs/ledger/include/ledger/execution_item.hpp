@@ -31,16 +31,16 @@ namespace ledger {
 class ExecutionItem
 {
 public:
-  using lane_index_type = uint32_t;
-  using tx_digest_type  = chain::Transaction::digest_type;
-  using lane_set_type   = std::unordered_set<lane_index_type>;
+  using LaneIndex = uint32_t;
+  using TxDigest  = chain::Transaction::TxDigest;
+  using LaneSet   = std::unordered_set<LaneIndex>;
 
-  ExecutionItem(tx_digest_type hash, std::size_t slice)
+  ExecutionItem(TxDigest hash, std::size_t slice)
     : hash_(std::move(hash))
     , slice_(slice)
   {}
 
-  ExecutionItem(tx_digest_type hash, lane_index_type lane, std::size_t slice)
+  ExecutionItem(TxDigest hash, LaneIndex lane, std::size_t slice)
     : hash_(std::move(hash))
     , lanes_{lane}
     , slice_(slice)
@@ -51,14 +51,14 @@ public:
     return executor.Execute(hash_, slice_, lanes_);
   }
 
-  void AddLane(lane_index_type lane)
+  void AddLane(LaneIndex lane)
   {
     lanes_.insert(lane);
   }
 
 private:
-  tx_digest_type hash_;
-  lane_set_type  lanes_;
+  TxDigest hash_;
+  LaneSet  lanes_;
   std::size_t    slice_;
 };
 

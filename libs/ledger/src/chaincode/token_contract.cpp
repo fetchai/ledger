@@ -34,6 +34,8 @@ struct WalletRecord
 {
   uint64_t balance{0};
 
+
+
   template <typename T>
   friend void Serialize(T &serializer, WalletRecord const &b)
   {
@@ -58,7 +60,7 @@ TokenContract::TokenContract()
   OnQuery("balance", this, &TokenContract::Balance);
 }
 
-Contract::Status TokenContract::CreateWealth(transaction_type const &tx)
+Contract::Status TokenContract::CreateWealth(Transaction const &tx)
 {
 
   script::Variant data;
@@ -90,7 +92,7 @@ Contract::Status TokenContract::CreateWealth(transaction_type const &tx)
   return Status::OK;
 }
 
-Contract::Status TokenContract::Transfer(transaction_type const &tx)
+Contract::Status TokenContract::Transfer(Transaction const &tx)
 {
 
   script::Variant data;
@@ -140,7 +142,7 @@ Contract::Status TokenContract::Transfer(transaction_type const &tx)
   return Status::OK;
 }
 
-Contract::Status TokenContract::Balance(query_type const &query, query_type &response)
+Contract::Status TokenContract::Balance(Query const &query, Query &response)
 {
   Status status = Status::FAILED;
 
