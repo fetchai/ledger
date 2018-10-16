@@ -16,41 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include <stack>
-#include <gtest/gtest.h>
 #include <benchmark/benchmark.h>
+#include <gtest/gtest.h>
+#include <stack>
 
-#include "storage/cached_random_access_stack.hpp"
 #include "core/random/lfg.hpp"
+#include "storage/cached_random_access_stack.hpp"
 
 using fetch::storage::CachedRandomAccessStack;
 
 class CachedRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-
-  void SetUp(const ::benchmark::State& st) override
+  void SetUp(const ::benchmark::State &st) override
   {
-    stack.New("RAS_bench.db");
+    stack_.New("RAS_bench.db");
 
     EXPECT_TRUE(stack.is_open());
-    EXPECT_TRUE(stack.DirectWrite() == false) << "Expected random access stack to not be direct write";
+    EXPECT_TRUE(stack.DirectWrite() == false)
+        << "Expected random access stack to not be direct write";
   }
 
-  void TearDown(const ::benchmark::State&) override
-  {
-  }
+  void TearDown(const ::benchmark::State &) override
+  {}
 
-  CachedRandomAccessStack<uint64_t>         stack;
-  fetch::random::LaggedFibonacciGenerator<> lfg;
+  CachedRandomAccessStack<uint64_t>         stack_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(CachedRandomAccessStackBench, WritingIntToStack)(benchmark::State& st)
+BENCHMARK_F(CachedRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
-  for(auto _ : st)
+  for (auto _ : st)
   {
-    uint64_t  random = lfg();
-    stack.Push(random);
+    uint64_t random = lfg_();
+    stack_.Push(random);
   }
 }
-
