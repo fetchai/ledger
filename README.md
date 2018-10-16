@@ -11,7 +11,7 @@ Docker - build, develop & run stuff in docker container<a name="docker"/>
 =========================================================================
 This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](https://github.com/uvue-git/docker-images/blob/master/README.md#guick_usage_guide).
 
-In short, it should be easy to use the docker environment like so:
+In short, it should be easy to use the docker environment, like so:
 
 # Build docker (optional)
     sudo develop-image/scripts/docker-build-img.sh
