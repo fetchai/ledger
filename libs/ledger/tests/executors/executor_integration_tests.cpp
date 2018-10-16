@@ -73,7 +73,7 @@ protected:
     network_manager_->Start();
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
     storage_service_->Start();
 
     LaneIndex num_lanes = NUM_LANES;
