@@ -17,3 +17,5 @@ add_fetch_gtest(executors_test fetch-ledger executors)
 target_include_directories(executors_test PRIVATE chaincode)
 add_fetch_test(main_chain_test fetch-ledger consensus/main_chain.cpp) 
 add_fetch_test(transaction_types_test fetch-ledger transaction_types.cpp)
+
+add_fetch_gtest(ledger_main_chain_gtest fetch-ledger consensus/gtest/)

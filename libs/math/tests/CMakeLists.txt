@@ -37,6 +37,9 @@ add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
 
+add_fetch_gtest(big_number_gtest fetch-math math/basic_math_tests)
+add_fetch_gtest(manhattan_gtest fetch-math math/distance/gtest)
+
 # disabled / not working tests
 add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
 
