@@ -50,7 +50,7 @@ struct Signature
 };
 
 using Signatories = std::unordered_map<crypto::Identity, Signature>;
-using Signatory = Signatories::value_type;
+using Signatory   = Signatories::value_type;
 
 template <typename T>
 void Serialize(T &serializer, Signature const &b)
@@ -167,8 +167,8 @@ public:
                               private_key.publicKey().keyAsBin()};
     auto             hash = HashOfTxDataForSigning(identity);
     auto             sig  = signature_type::SignHash(private_key, hash);
-    return Signatory{
-        std::move(identity), Signature{sig.signature(), signature_type::ecdsa_curve_type::sn}};
+    return Signatory{std::move(identity),
+                     Signature{sig.signature(), signature_type::ecdsa_curve_type::sn}};
   }
 
   void Reset()
@@ -289,8 +289,7 @@ public:
     std::copy(signatures_.begin(), signatures_.end(), std::back_inserter(signatures));
     //* Signatures are sorted based on associated Identity value
     std::sort(signatures.begin(), signatures.end(),
-              [](Signatory const &a,
-                 Signatory const &b) -> bool { return a.first < b.first; });
+              [](Signatory const &a, Signatory const &b) -> bool { return a.first < b.first; });
 
     for (auto const &e : signatures)
     {
@@ -340,7 +339,7 @@ public:
   }
 
   Signature const &Sign(byte_array::ConstByteArray const &private_key,
-                        SigningAdapter &               tx_sign_adapter)
+                        SigningAdapter &                  tx_sign_adapter)
   {
     return SignInternal(private_key, tx_sign_adapter);
   }
@@ -405,8 +404,8 @@ private:
   Signatories                signatures_;
 
   template <typename PRIVATE_KEY_TYPE>
-  Signature const &SignInternal(PRIVATE_KEY_TYPE const & private_key,
-                                SigningAdapter &tx_sign_adapter)
+  Signature const &SignInternal(PRIVATE_KEY_TYPE const &private_key,
+                                SigningAdapter &        tx_sign_adapter)
   {
     auto const result = signatures_.emplace(tx_sign_adapter.Sign(private_key));
     if (!result.second)
@@ -447,8 +446,8 @@ template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >>
-      tx_.data_ >> tx_.signatures_;
+  stream >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >>
+      tx_.signatures_;
   tx.Reset();
 }
 

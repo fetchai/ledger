@@ -27,7 +27,6 @@ namespace ledger {
 class DummyContract : public Contract
 {
 public:
-
   DummyContract();
   ~DummyContract() = default;
 
@@ -37,7 +36,6 @@ public:
   }
 
 private:
-
   using Counter = std::atomic<std::size_t>;
 
   Status Wait(Transaction const &tx);

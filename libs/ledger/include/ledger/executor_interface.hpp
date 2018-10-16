@@ -40,8 +40,7 @@ public:
 
   /// @name Executor Interface
   /// @{
-  virtual Status Execute(TxDigest const &hash, std::size_t slice,
-                         LaneSet const &lanes) = 0;
+  virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
   /// @}
 
   virtual ~ExecutorInterface()

@@ -29,7 +29,6 @@ public:
   ~TokenContract() = default;
 
 private:
-
   // transaction handlers
   Status CreateWealth(Transaction const &tx);
   Status Transfer(Transaction const &tx);

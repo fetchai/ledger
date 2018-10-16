@@ -45,7 +45,7 @@ public:
     {}
 
     ContractPtr chain_code;
-    Timepoint  timestamp{Clock::now()};
+    Timepoint   timestamp{Clock::now()};
   };
 
   using underlying_cache_type = std::unordered_map<byte_array::ConstByteArray, Element>;

@@ -57,9 +57,9 @@ public:
   }
 
 private:
-  TxDigest hash_;
-  LaneSet  lanes_;
-  std::size_t    slice_;
+  TxDigest    hash_;
+  LaneSet     lanes_;
+  std::size_t slice_;
 };
 
 }  // namespace ledger

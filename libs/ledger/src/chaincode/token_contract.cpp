@@ -34,8 +34,6 @@ struct WalletRecord
 {
   uint64_t balance{0};
 
-
-
   template <typename T>
   friend void Serialize(T &serializer, WalletRecord const &b)
   {

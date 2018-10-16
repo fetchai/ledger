@@ -46,9 +46,9 @@ public:
     {}
     HistoryElement(HistoryElement const &) = default;
 
-    TxDigest hash;
+    TxDigest       hash;
     std::size_t    slice;
-    LaneSet  lanes;
+    LaneSet        lanes;
     timepoint_type timestamp{clock_type::now()};
   };
 

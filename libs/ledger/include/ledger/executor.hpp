@@ -49,9 +49,8 @@ public:
   /// @}
 
 private:
-
-  Resources resources_;             ///< The collection of resources
-  ChainCodeCache chain_code_cache_; //< The factory to create new chain code instances
+  Resources      resources_;         ///< The collection of resources
+  ChainCodeCache chain_code_cache_;  //< The factory to create new chain code instances
 };
 
 }  // namespace ledger

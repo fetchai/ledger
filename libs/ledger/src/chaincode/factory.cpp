@@ -30,7 +30,7 @@ namespace ledger {
 namespace {
 
 using FactoryRegistry = ChainCodeFactory::FactoryRegistry;
-using ContractNameSet     = ChainCodeFactory::ContractNameSet;
+using ContractNameSet = ChainCodeFactory::ContractNameSet;
 
 FactoryRegistry CreateRegistry()
 {
@@ -55,7 +55,7 @@ ContractNameSet CreateContractSet(FactoryRegistry const &registry)
 }
 
 FactoryRegistry const global_registry     = CreateRegistry();
-ContractNameSet const     global_contract_set = CreateContractSet(global_registry);
+ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
 

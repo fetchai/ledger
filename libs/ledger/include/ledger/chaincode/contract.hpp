@@ -62,8 +62,7 @@ public:
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
-  Status DispatchQuery(ContractName const &name, Query const &query,
-                       Query &response)
+  Status DispatchQuery(ContractName const &name, Query const &query, Query &response)
   {
     Status status{Status::NOT_FOUND};
 
@@ -166,8 +165,7 @@ protected:
   {}
 
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance,
-                     Status (C::*func)(Transaction const &))
+  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &))
   {
     if (transaction_handlers_.find(name) == transaction_handlers_.end())
     {
@@ -183,8 +181,7 @@ protected:
   }
 
   template <typename C>
-  void OnQuery(std::string const &name, C *instance,
-               Status (C::*func)(Query const &, Query &))
+  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &))
   {
     if (query_handlers_.find(name) == query_handlers_.end())
     {
@@ -294,12 +291,12 @@ private:
     return success;
   }
 
-  Identifier             contract_identifier_;
-  QueryHandlerMap        query_handlers_{};
-  TransactionHandlerMap  transaction_handlers_{};
-  CounterMap             transaction_counters_{};
-  CounterMap             query_counters_{};
-  StorageInterface       *state_ = nullptr;
+  Identifier            contract_identifier_;
+  QueryHandlerMap       query_handlers_{};
+  TransactionHandlerMap transaction_handlers_{};
+  CounterMap            transaction_counters_{};
+  CounterMap            query_counters_{};
+  StorageInterface *    state_ = nullptr;
 };
 
 }  // namespace ledger
