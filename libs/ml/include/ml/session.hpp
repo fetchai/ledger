@@ -45,6 +45,8 @@ public:
   std::size_t                                      layer_counter    = 0;
   std::unordered_map<std::string, VariablePtrType> all_variables;
 
+  std::size_t batch_size = 128;
+
   SessionManager() = default;
   explicit SessionManager(typename ArrayType::Type gradient_clip)
   {
@@ -69,7 +71,8 @@ public:
     }
 
     VariablePtrType var = std::make_shared<VariableType>();
-    VariableSetup(var, in_shape, variable_name, nullptr, nullptr, true, requires_grad, grad_shape);
+    VariableSetup(var, in_shape, variable_name, nullptr, nullptr, true, requires_grad, grad_shape,
+                  true);
     return var;
   }
   /**
@@ -83,10 +86,11 @@ public:
    */
   VariablePtrType Variable(std::vector<std::size_t> const &in_shape,
                            std::string const &variable_name, FunctionSignature const &f_fn,
-                           FunctionSignature const &b_fn, bool is_leaf)
+                           FunctionSignature const &b_fn, bool is_leaf, bool apply_gradient)
   {
     VariablePtrType var = std::make_shared<VariableType>();
-    VariableSetup(var, in_shape, variable_name, f_fn, b_fn, is_leaf, false, in_shape);
+    VariableSetup(var, in_shape, variable_name, f_fn, b_fn, is_leaf, true, in_shape,
+                  apply_gradient);
     return var;
   }
 
@@ -124,8 +128,7 @@ public:
    */
   ArrayType Predict(VariablePtrType in_var, VariablePtrType out_var)
   {
-    //    auto n_examples_to_predict = in_var->shape()[0];
-
+    // figure out the path through the graph
     TopSort_NoGradientUpdate(out_var->variable_name());
     Forward(in_var, out_var);
     return out_var->data();
@@ -154,9 +157,9 @@ public:
       BackwardGraph(loss_var);
 
       // apply gradients
-      for (std::size_t i = 0; i < top_sort_vector_g.size() - 1; ++i)
+      for (std::size_t i = 0; i < top_sort_vector_g_.size() - 1; ++i)
       {
-        top_sort_vector_g[i]->GradientStep(lr, gradient_clip_);
+        top_sort_vector_g_[i]->GradientStep(lr, gradient_clip_);
       }
     }
   }
@@ -205,10 +208,10 @@ public:
 
 private:
   double gradient_clip_ = -1.0;  // negative values for gradient clip indicate clipping is off
-  std::unordered_map<std::string, VariablePtrType> top_sort_map_ng;
-  std::vector<VariablePtrType>                     top_sort_vector_ng;
-  std::unordered_map<std::string, VariablePtrType> top_sort_map_g;
-  std::vector<VariablePtrType>                     top_sort_vector_g;
+  std::unordered_map<std::string, VariablePtrType> top_sort_map_ng_;
+  std::vector<VariablePtrType>                     top_sort_vector_ng_;
+  std::unordered_map<std::string, VariablePtrType> top_sort_map_g_;
+  std::vector<VariablePtrType>                     top_sort_vector_g_;
 
   void Forward(VariablePtrType in_var, VariablePtrType out_var)
   {
@@ -216,11 +219,11 @@ private:
     assert(all_variables.find(out_var->variable_name()) != all_variables.end());
 
     // there must be a path from the output variable to the input variable
-    assert(top_sort_map_ng.find(out_var->variable_name()) != top_sort_map_ng.end());
+    assert(top_sort_map_ng_.find(out_var->variable_name()) != top_sort_map_ng_.end());
 
-    for (std::size_t i = 0; i < top_sort_vector_ng.size(); ++i)
+    for (std::size_t i = 0; i < top_sort_vector_ng_.size(); ++i)
     {
-      top_sort_vector_ng[i]->Forward(top_sort_vector_ng[i]);
+      top_sort_vector_ng_[i]->Forward(top_sort_vector_ng_[i]);
     }
   }
 
@@ -235,9 +238,9 @@ private:
     var->GradientSetOne();
 
     // iterate through the necessary variables for gradient updating
-    for (std::size_t i = top_sort_vector_ng.size(); i > 0; --i)
+    for (std::size_t i = top_sort_vector_ng_.size(); i > 0; --i)
     {
-      top_sort_vector_ng[i - 1]->Backward(top_sort_vector_ng[i - 1]);
+      top_sort_vector_ng_[i - 1]->Backward(top_sort_vector_ng_[i - 1]);
     }
   }
 
@@ -248,9 +251,9 @@ private:
   void TopSort_NoGradientUpdate(std::string &output_name)
   {
     // Conduct a topology sort
-    top_sort_map_ng.clear();
-    top_sort_vector_ng.clear();
-    TopSort(all_variables.at(output_name), top_sort_map_ng, top_sort_vector_ng, false);
+    top_sort_map_ng_.clear();
+    top_sort_vector_ng_.clear();
+    TopSort(all_variables.at(output_name), top_sort_map_ng_, top_sort_vector_ng_, false);
   }
   /**
    * Topological sorting including the leaf nodes requiring gradient upates
@@ -259,9 +262,9 @@ private:
   void TopSort_GradientUpdate(std::string &output_name)
   {
     // Conduct a topology sort
-    top_sort_map_g.clear();
-    top_sort_vector_g.clear();
-    TopSort(all_variables.at(output_name), top_sort_map_g, top_sort_vector_g, true);
+    top_sort_map_g_.clear();
+    top_sort_vector_g_.clear();
+    TopSort(all_variables.at(output_name), top_sort_map_g_, top_sort_vector_g_, true);
   }
 
   /**
@@ -360,7 +363,8 @@ private:
   void VariableSetup(VariablePtrType var, std::vector<std::size_t> in_shape,
                      std::string const &variable_name, FunctionSignature const &f_fn = nullptr,
                      FunctionSignature const &b_fn = nullptr, bool is_leaf = true,
-                     bool requires_grad = false, std::vector<std::size_t> grad_shape = {})
+                     bool requires_grad = false, std::vector<std::size_t> grad_shape = {},
+                     bool apply_gradient = true)
   {
     auto initial_data = ArrayType(in_shape);
     initial_data.SetAllZero();
@@ -384,6 +388,7 @@ private:
     assert(b_fn || is_leaf);
     var->SetBackwardFunction(b_fn);
     var->SetIsLeaf(is_leaf, requires_grad);
+    var->SetApplyGradient(apply_gradient);
     if (f_fn)
     {
       var->SetForwardFunction(f_fn);

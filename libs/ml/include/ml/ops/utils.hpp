@@ -58,8 +58,10 @@ VariablePtrType Dot(VariablePtrType left, VariablePtrType right, SessionType &se
   };
 
   // define the return variable with the Dot computation
-  std::vector<std::size_t> out_shape = {left->shape()[0], right->shape()[1]};
-  VariablePtrType          ret       = sess.Variable(out_shape, "Dot", f_fn, b_fn, false);
+  std::vector<std::size_t> out_shape     = {left->shape()[0], right->shape()[1]};
+  bool                     is_leaf       = false;
+  bool                     requires_grad = false;
+  VariablePtrType ret = sess.Variable(out_shape, "Dot", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -103,8 +105,10 @@ VariablePtrType AddBroadcast(VariablePtrType left, VariablePtrType right, Sessio
   };
 
   // define the return variable with the Dot computation
-  std::vector<std::size_t> out_shape = left->shape();  // we always assume biases are on the RHS
-  VariablePtrType          ret       = sess.Variable(out_shape, "Add", f_fn, b_fn, false);
+  std::vector<std::size_t> out_shape     = left->shape();  // we always assume biases are on the RHS
+  bool                     is_leaf       = false;
+  bool                     requires_grad = false;
+  VariablePtrType ret = sess.Variable(out_shape, "Add", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -138,7 +142,9 @@ VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, Session
   VariablePtrType node_axis = SessionType::Zeroes({1, 1}, sess);
   node_axis->data()[0]      = axis;
 
-  VariablePtrType ret = sess.Variable(left->shape(), "Sum", f_fn, b_fn, false);
+  bool            is_leaf       = false;
+  bool            requires_grad = false;
+  VariablePtrType ret = sess.Variable(left->shape(), "Sum", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
   ret->prev.push_back(node_axis);

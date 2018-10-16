@@ -21,6 +21,16 @@ def load_data(one_hot=True, reshape=None, training_size=10000, validation_size=5
         y_tr = y_tr[:training_size]
 
 
+    if validation_size is None:
+        x_te = x_te[:validation_size]
+        y_te = y_te[:validation_size]
+    else:
+        x_te = x_te[:validation_size]
+        y_te = y_te[:validation_size]
+
+
+
+
     if one_hot:
         y_tr, y_te = [to_one_hot(y) for y in (y_tr, y_te)]
 

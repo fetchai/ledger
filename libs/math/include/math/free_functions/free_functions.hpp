@@ -79,14 +79,15 @@ void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType
   for (size_t i = 0; i < updates.size(); ++i)
   {
     updates[i] = AB[i].second;
-    indices[i] = AB[i].first;
+    indices[i] = static_cast<typename ArrayType::type>(AB[i].first);
   }
 
   // scatter
   std::size_t arr_count = 0;
   for (std::size_t count = 0; count < indices.size(); ++count)
   {
-    while (arr_count < indices[count])
+    // TODO(private issue 282): Think about this code
+    while (arr_count < static_cast<std::size_t>(indices[count]))
     {
       ++arr_count;
     }
@@ -1763,7 +1764,7 @@ void ArgMax(ShapeLessArray<T, C> const &array, T &ret)
   {
     if (cur_maxval < array[i])
     {
-      ret = i;
+      ret = static_cast<T>(i);
     }
   }
 }
@@ -1792,7 +1793,7 @@ void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArr
       {
         if (cur_maxval < array.At(j, i))
         {
-          ret[i]     = j;
+          ret[i]     = static_cast<T>(j);
           cur_maxval = array.At(j, i);
         }
       }
@@ -1811,7 +1812,7 @@ void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArr
       {
         if (cur_maxval < array.At(i, j))
         {
-          ret[i]     = j;
+          ret[i]     = static_cast<T>(j);
           cur_maxval = array.At(i, j);
         }
       }

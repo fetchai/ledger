@@ -46,9 +46,11 @@ namespace {
 
 static constexpr char const *LOGGING_NAME = "main";
 
-using Prover       = fetch::crypto::Prover;
-using BootstrapPtr = std::unique_ptr<fetch::BootstrapMonitor>;
-using ProverPtr    = std::unique_ptr<Prover>;
+using Prover         = fetch::crypto::Prover;
+using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
+using ProverPtr      = std::unique_ptr<Prover>;
+using ConstByteArray = fetch::byte_array::ConstByteArray;
+using ByteArray      = fetch::byte_array::ByteArray;
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
@@ -64,7 +66,35 @@ uint32_t Log2(uint32_t value)
 bool EnsureLog2(uint32_t value)
 {
   uint32_t const log2_value = Log2(value);
-  return value == (1 << log2_value);
+  return value == (1u << log2_value);
+}
+
+ConstByteArray ReadContentsOfFile(char const *filename)
+{
+  ConstByteArray buffer;
+
+  std::ifstream stream(filename, std::ios::in | std::ios::binary);
+
+  if (stream.is_open())
+  {
+    // determine the complete size of the file
+    stream.seekg(0, std::ios::end);
+    std::streamsize const stream_size = stream.tellg();
+    stream.seekg(0, std::ios::beg);
+
+    // allocate the buffer
+    ByteArray buf;
+    buf.Resize(static_cast<std::size_t>(stream_size));
+    static_assert(sizeof(stream_size) >= sizeof(std::size_t), "Must be same size or larger");
+
+    // read in size of the buffer
+    stream.read(buf.char_pointer(), stream_size);
+
+    // update the output buffer
+    buffer = buf;
+  }
+
+  return buffer;
 }
 
 struct CommandLineArguments
@@ -72,6 +102,17 @@ struct CommandLineArguments
   using StringList  = std::vector<std::string>;
   using UriList     = fetch::Constellation::UriList;
   using AdapterList = fetch::network::Adapter::adapter_list_type;
+  using Manifest    = fetch::network::Manifest;
+  using ManifestPtr = std::unique_ptr<Manifest>;
+  using Uri         = fetch::network::Uri;
+  using Peer        = fetch::network::Peer;
+
+  using ServiceIdentifier = fetch::network::ServiceIdentifier;
+  using ServiceType       = fetch::network::ServiceType;
+
+  static constexpr uint16_t HTTP_PORT_OFFSET    = 0;
+  static constexpr uint16_t P2P_PORT_OFFSET     = 1;
+  static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
   static const uint32_t DEFAULT_NUM_LANES     = 4;
   static const uint32_t DEFAULT_NUM_SLICES    = 4;
@@ -93,6 +134,7 @@ struct CommandLineArguments
   std::string dbdir;
   std::string external_address;
   std::string host_name;
+  ManifestPtr manifest;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -105,6 +147,8 @@ struct CommandLineArguments
     fetch::commandline::Params parameters;
     std::string                bootstrap_address;
     std::string                external_address;
+    std::string                config_path;
+
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
                    DEFAULT_NUM_EXECUTORS);
@@ -128,6 +172,7 @@ struct CommandLineArguments
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
     parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
                    std::string{});
+    parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -145,12 +190,35 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
+    // if the user has explicitly passed a configuration then we must parse it here
+    if (!config_path.empty())
+    {
+      // read the contents of the manifest from the path specified
+      args.manifest = LoadManifestFromFile(config_path.c_str());
+    }
+
     args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
-      // create the boostrap node
+      // determine what the P2P port is. This is either specified with the port parameter or
+      // explicitly given via the manifest
+      uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
+
+      // if we have a valid manifest then we should respect the port configuration specified here
+      // otherwise we default to the port specified
+      if (args.manifest)
+      {
+        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::P2P});
+
+        if (uri.scheme() == Uri::Scheme::Tcp)
+        {
+          p2p_port = uri.AsPeer().port();
+        }
+      }
+
+      // create the bootstrap node
       bootstrap = std::make_unique<fetch::BootstrapMonitor>(
-          prover.identity(), args.port, args.network_id, args.token, args.host_name);
+          prover.identity(), p2p_port, args.network_id, args.token, args.host_name);
 
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
@@ -167,6 +235,12 @@ struct CommandLineArguments
     if (args.external_address.empty())
     {
       args.external_address = "127.0.0.1";
+    }
+
+    // if we do not have a correct
+    if (!args.manifest)
+    {
+      args.manifest = GenerateManifest(args.external_address, args.port, args.num_lanes);
     }
 
     return args;
@@ -209,6 +283,51 @@ struct CommandLineArguments
     }
   }
 
+  static ManifestPtr GenerateManifest(std::string const &external_address, uint16_t port,
+                                      uint32_t num_lanes)
+  {
+    ManifestPtr manifest = std::make_unique<Manifest>();
+    Peer        peer;
+
+    // register the HTTP service
+    peer.Update(external_address, port + HTTP_PORT_OFFSET);
+    manifest->AddService(ServiceIdentifier{ServiceType::HTTP}, Manifest::Entry{Uri{peer}});
+
+    // register the P2P service
+    peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
+    manifest->AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
+
+    // register all of the lanes (storage shards)
+    for (uint32_t i = 0; i < num_lanes; ++i)
+    {
+      peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + i));
+
+      manifest->AddService(ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
+                           Manifest::Entry{Uri{peer}});
+    }
+
+    return manifest;
+  }
+
+  static ManifestPtr LoadManifestFromFile(char const *filename)
+  {
+    ConstByteArray buffer = ReadContentsOfFile(filename);
+
+    // check to see if the read failed
+    if (buffer.size() == 0)
+    {
+      throw std::runtime_error("Unable to read the contents of the requested file");
+    }
+
+    ManifestPtr manifest = std::make_unique<Manifest>();
+    if (!manifest->Parse(buffer))
+    {
+      throw std::runtime_error("Unable to parse the contents of the manifest file");
+    }
+
+    return manifest;
+  }
+
   friend std::ostream &operator<<(std::ostream &              s,
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
@@ -230,6 +349,11 @@ struct CommandLineArguments
     for (auto const &peer : args.peers)
     {
       s << peer.uri() << ' ';
+    }
+
+    if (args.manifest)
+    {
+      s << '\n' << "manifest.......: " << args.manifest->ToString() << '\n';
     }
 
     // terminate and flush
@@ -340,14 +464,14 @@ int main(int argc, char **argv)
     ProverPtr p2p_key = GenerateP2PKey();
 
     BootstrapPtr bootstrap_monitor;
-    auto const   args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
+    auto         args = CommandLineArguments::Parse(argc, argv, bootstrap_monitor, *p2p_key);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), args.port, args.num_executors, args.log2_num_lanes, args.num_slices,
-        args.interface, args.dbdir, args.external_address);
+        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
+        args.num_slices, args.interface, args.dbdir);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

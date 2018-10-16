@@ -64,5 +64,5 @@ TEST(TrustTests, TrustGoesWayDown)
     trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::PEER, TrustQuality::LIED);
   }
 
-  EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);  // You **WOULDN'T LET IT LIE**... </vic_reeves>
+  EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);
 }

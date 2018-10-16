@@ -55,7 +55,7 @@ VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, Ses
 
   // define the return variable with the Dot computation
   std::vector<std::size_t> new_shape{left->shape()[0], 1};
-  VariablePtrType          ret = sess.Variable(new_shape, "MSE", f_fn, b_fn, false);
+  VariablePtrType          ret = sess.Variable(new_shape, "MSE", f_fn, b_fn, false, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -87,7 +87,7 @@ VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, Se
 
   // define the return variable with the Dot computation
   std::vector<std::size_t> new_shape = left->shape();
-  VariablePtrType          ret       = sess.Variable(new_shape, "CEL", f_fn, b_fn, false);
+  VariablePtrType          ret       = sess.Variable(new_shape, "CEL", f_fn, b_fn, false, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);

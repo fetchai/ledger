@@ -44,11 +44,13 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
 }
 
-void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &my_uri)
+void P2PService::Start(UriList const &initial_peer_list)
 {
-  resolver_.Setup(address_, my_uri);
+  Uri const p2p_uri = manifest_.GetUri(ServiceIdentifier{ServiceType::P2P});
 
-  FETCH_LOG_INFO(LOGGING_NAME, "My URI: ", my_uri.uri());
+  resolver_.Setup(address_, p2p_uri);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "P2P URI: ", p2p_uri.uri());
   FETCH_LOG_INFO(LOGGING_NAME, "Num Initial Peers: ", initial_peer_list.size());
   for (auto const &uri : initial_peer_list)
   {
@@ -58,16 +60,14 @@ void P2PService::Start(UriList const &initial_peer_list, P2PService::Uri const &
     muddle_.AddPeer(uri);
   }
 
-  thread_pool_->SetInterval(2000);
+  thread_pool_->SetIdleInterval(2000);
   thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
-
-  my_uri_ = my_uri;
 }
 
 void P2PService::Stop()
 {
-  thread_pool_->clear();
+  thread_pool_->Clear();
   thread_pool_->Stop();
 }
 
@@ -85,13 +85,13 @@ void P2PService::WorkCycle()
   UpdateTrustStatus(active_connections);
 
   // discover new good peers on the network
-  PeerDiscovery(active_addresses);
+  // PeerDiscovery(active_addresses);
 
   // make the decisions about which peers are desired and which ones we now need to drop
-  RenewDesiredPeers(active_addresses);
+  // RenewDesiredPeers(active_addresses);
 
   // perform connections updates and drops based on previous step
-  UpdateMuddlePeers(active_addresses);
+  // UpdateMuddlePeers(active_addresses);
 
   // collect up manifests from connected peers
   UpdateManifests(active_addresses);
@@ -126,14 +126,14 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
 
     // update our desired
-    // bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
+    bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
 
-    // if (new_peer && trusted_peer)
-    //{
-    //  FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
-    //   desired_peers_.insert(address);
-    // }
+    if (new_peer && trusted_peer)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trusting: ", ToBase64(address));
+      desired_peers_.insert(address);
+    }
 
     if (!trusted_peer)
     {
@@ -141,8 +141,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       desired_peers_.erase(address);
     }
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "UpdateTrustStatus peercount = ", desired_peers_.size());
 
   // for the moment we should provide the trust system with some "fake" information to ensure peers
   // are trusted
@@ -356,7 +354,7 @@ void P2PService::SetPeerGoals(uint32_t min, uint32_t max)
   max_peers_ = max;
 }
 
-void P2PService::SetLocalManifest(const Manifest &manifest)
+void P2PService::SetLocalManifest(Manifest const &manifest)
 {
   manifest_ = manifest;
   local_services_.MakeFromManifest(manifest_);

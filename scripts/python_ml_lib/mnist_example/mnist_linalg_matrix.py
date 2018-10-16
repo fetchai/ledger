@@ -7,6 +7,7 @@ from tqdm import tqdm                               # visualising progress
 import numpy as np                                  # loading data from buffer
 import sys
 import matplotlib.pyplot as plt
+import math
 
 # from fetch.math.linalg import MatrixDouble          # our matrices
 from fetch.math.linalg import MatrixDouble
@@ -17,7 +18,7 @@ from fetch.ml import CrossEntropyLoss
 # TODO: Validation size must be same as batch size for the moment
 
 
-DO_PLOTTING = 0
+DO_PLOTTING = 1
 
 def plot_weights(layers):
 
@@ -40,18 +41,18 @@ class MnistLearner():
         self.y_te_filename = 't10k-labels-idx1-ubyte.gz'
 
 
-        self.training_size = 2000
-        self.validation_size = 50
+        self.training_size = 10000
+        self.validation_size = 1000
 
         self.n_epochs = 30
         self.batch_size = 50
-        self.alpha = 0.002
+        self.alpha = 0.2
 
         self.mnist_input_size = 784         # pixels in 28 * 28 mnist images
         self.net = [10]                     # size of hidden layers
         self.mnist_output_size = 10         # 10 possible characters to recognise
 
-        self.activation_fn = 'Sigmoid'      # LeakyRelu might be good?
+        self.activation_fn = 'LeakyRelu'      # LeakyRelu might be good?
         self.layers = []
         self.sess = None
         self.initialise_network()
@@ -75,7 +76,15 @@ class MnistLearner():
         if len(self.net) > 2:
             for i in range(len(self.net) - 2):
                 self.layers.append(self.sess.Layer(self.net[i], self.net[i + 1], self.activation_fn, "layer_" + str(i+1)))
-        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, "", "output_layer"))
+        self.layers.append(self.sess.Layer(self.net[-1], self.mnist_output_size, self.activation_fn, "output_layer"))
+
+
+        # copy preinitialised numpy weights over into our layers
+        weights = np.load('weights.npy')
+        for i in range(len(weights)):
+            self.layers[i].weights().FromNumpy(weights[i])
+            # for j in range(len(weights[i])):
+            #     self.layers[i].weights().Set(i, j, weights[i][j])
 
         if DO_PLOTTING:
             plot_weights(self.layers)
@@ -154,22 +163,60 @@ class MnistLearner():
             a.append(self.layers[idx].Forward(a[-1], activate))
         return a
 
-    def assign_batch(self, cur_rep):
-        # assign X batch
-        for k in range(self.batch_size):
-            for l in range(28 * 28):
-                self.X_batch[k, l] = self.x_tr[cur_rep + k, l]
-
-        # assign Y batch
-        for k in range(self.batch_size):
-            for l in range(10):
-                self.Y_batch[k, l] = self.y_tr[cur_rep + k, l]
-        return
 
     def calculate_loss(self, X, Y):
 
         loss = CrossEntropyLoss(X, Y, self.sess)
         return loss
+
+    def do_one_pred(self):
+        return self.sess.Predict(self.X_batch, self.layers[-1].Output())
+
+    def predict(self):
+
+        n_samples = self.y_te.shape()[0]
+
+        preds = []
+        if (self.batch_size < n_samples):
+            for cur_rep in range(0, n_samples, self.batch_size):
+                self.assign_batch(self.x_te, self.y_te, cur_rep)
+                preds.append(self.do_one_pred())
+
+        elif (self.batch_size > self.y_te.shape()[0]):
+            print("not implemented prediction padding yet")
+            raise NotImplementedError
+        else:
+            preds.append(self.do_one_pred())
+
+        return preds
+
+    def assign_batch(self, x, y, cur_rep):
+        # assign X batch
+        for k in range(self.batch_size):
+            for l in range(28 * 28):
+                self.X_batch[k, l] = x[cur_rep + k, l]
+
+        # assign Y batch
+        for k in range(self.batch_size):
+            for l in range(10):
+                self.Y_batch[k, l] = y[cur_rep + k, l]
+        return
+
+    def print_accuracy(self, cur_pred):
+
+        max_pred = []
+        for item in cur_pred:
+            max_pred.extend(item.ArgMax(1))
+        gt = self.y_te.data().ArgMax(1)
+
+        sum_acc = 0
+        for i in range(self.y_te.shape()[0]):
+            sum_acc += (gt[i] == max_pred[i])
+        sum_acc /= (self.y_te.data().size() / 10)
+
+        print("\taccuracy: ", sum_acc)
+        return
+
 
     def train(self):
 
@@ -183,64 +230,31 @@ class MnistLearner():
             print("epoch ", i, ": ")
 
             # training batches
-            for j in tqdm(range(0, self.x_tr.shape()[0] - self.batch_size, self.batch_size)):
+            for j in tqdm(range(0, self.x_tr.shape()[0], self.batch_size)):
 
                 # assign fresh data batch
-                self.assign_batch(j)
+                self.assign_batch(self.x_tr, self.y_tr, j)
 
                 # loss calculation
                 loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
 
                 # back propagate
-                self.sess.BackProp(self.X_batch, loss, self.alpha, 1000)
+                self.sess.BackProp(self.X_batch, loss, self.alpha, 1)
 
-                # print("\nlosses: ")
+                # print("output: " + str(self.layers[-1].Output()[0]))
+                # print("gt: " + str(self.Y_batch[0]))
+                #
+                # sum_loss = 0
                 # for i in range(loss.size()):
-                #     print(loss.data()[i])
+                #     sum_loss += loss.data()[i]
+                # #     # print("\n")
+                # #     # for j in range(1):
+                # #     #     sys.stdout.write('{:0.13f}'.format(loss.data()[i]) + "\t")
+                # print("sumloss: " + str(sum_loss))
 
-                sum_loss = 0
-                for i in range(loss.size()):
-                    sum_loss += loss.data()[i]
-                #     # print("\n")
-                #     # for j in range(1):
-                #     #     sys.stdout.write('{:0.13f}'.format(loss.data()[i]) + "\t")
-                print("sumloss: " + str(sum_loss))
+            cur_pred = self.predict()
 
-            print("Getting accuracy: ")
-            print("\t getting feed forward predictions..")
-            # cur_pred = self.sess.Predict(self.x_te, self.y_pred)
-            cur_pred = self.sess.Predict(self.x_te, self.layers[-1].Output())
-
-            print("\t calculating argmaxes")
-            max_pred = cur_pred.ArgMax(1)
-            gt = self.y_te.data().ArgMax(1)
-
-            print("DEBUG- DEBUG - DEBUG")
-            print("DEBUG- DEBUG - DEBUG")
-
-            for i in range(3):
-                print("Cur Pred: ")
-                for j in range(10):
-                    print(cur_pred[i, j])
-
-                print("GT: ")
-                for j in range(10):
-                    print(self.y_te.data()[i, j])
-
-                print("Cur Pred Argmax: " + str(max_pred[i]))
-                print("GT Argmax: " + str(gt[i]))
-
-
-            print("DEBUG- DEBUG - DEBUG")
-            print("DEBUG- DEBUG - DEBUG")
-
-            print("\t comparing Y & Y^")
-            sum_acc = 0
-            for i in range(self.y_te.shape()[0]):
-                sum_acc += (gt[i] == max_pred[i])
-            sum_acc /= (self.y_te.data().size() / 10)
-
-            print("\taccuracy: ", sum_acc)
+            self.print_accuracy(cur_pred)
 
         return
 

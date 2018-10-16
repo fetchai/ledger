@@ -110,8 +110,8 @@ TEST(variable, trivial_backprop)
   std::vector<std::size_t> shape2{10, 2};
   auto                     l1 = sess.Variable(shape1);
   auto                     l2 = sess.Variable(shape2);
-  l1->data().FillArange(0, 20);
-  l2->data().FillArange(0, 20);
+  l1->data().FillArange(0u, 20u);
+  l2->data().FillArange(0u, 20u);
 
   auto ret = fetch::ml::ops::Dot(l1, l2, sess);
 

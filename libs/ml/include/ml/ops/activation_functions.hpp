@@ -55,7 +55,9 @@ VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
   };
 
   // define the return variable with the Dot computation
-  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
+  bool            is_leaf       = false;
+  bool            requires_grad = false;
+  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
 
@@ -124,7 +126,9 @@ VariablePtrType Relu(VariablePtrType left, SessionType &sess)
   VariablePtrType zeros = SessionType::Zeroes(left->shape(), sess);
 
   // define the return variable with the Relu computation
-  VariablePtrType ret = sess.Variable(left->shape(), "Relu", f_fn, b_fn, false);
+  bool            is_leaf       = false;
+  bool            requires_grad = false;
+  VariablePtrType ret = sess.Variable(left->shape(), "Relu", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
   ret->prev.push_back(zeros);
@@ -175,7 +179,10 @@ VariablePtrType LeakyRelu(VariablePtrType left, SessionType &sess)
   VariablePtrType zeros = SessionType::Zeroes(left->shape(), sess);
 
   // define the return variable with the Relu computation
-  VariablePtrType ret = sess.Variable(left->shape(), "Relu", f_fn, b_fn, false);
+  bool            is_leaf       = false;
+  bool            requires_grad = false;
+  VariablePtrType ret =
+      sess.Variable(left->shape(), "LeakyRelu", f_fn, b_fn, is_leaf, requires_grad);
 
   ret->prev.push_back(left);
   ret->prev.push_back(zeros);

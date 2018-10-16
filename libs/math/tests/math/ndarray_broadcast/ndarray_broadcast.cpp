@@ -32,7 +32,7 @@ using namespace fetch::math;
 
 TEST(ndarray, simple_broadcast_test)
 {
-  NDArray<double> a = NDArray<double>::Arange(0, 20, 1);
+  NDArray<double> a = NDArray<double>::Arange(0u, 20u, 1u);
   a.Reshape({1, a.size()});
   NDArray<double> b{a};
   b.Reshape({b.size(), 1});
@@ -46,17 +46,17 @@ TEST(ndarray, simple_broadcast_test)
     for (std::size_t j = 0; j < ret.shape(1); ++j)
     {
       std::vector<std::size_t> idxs = {i, j};
-      ASSERT_TRUE(ret.Get(idxs) == i + j);
+      ASSERT_TRUE(static_cast<std::size_t>(ret.Get(idxs)) == i + j);
     }
   }
 }
 
 TEST(ndarray, broadcast_3D_test)
 {
-  NDArray<double> a = NDArray<double>::Arange(0, 21, 1);
+  NDArray<double> a = NDArray<double>::Arange(0u, 21u, 1u);
   ASSERT_TRUE(a.size() == 21);
   a.Reshape({1, 3, 7});
-  NDArray<double> b = NDArray<double>::Arange(0, 21, 1);
+  NDArray<double> b = NDArray<double>::Arange(0u, 21u, 1u);
   ASSERT_TRUE(b.size() == 21);
   b.Reshape({7, 3, 1});
 
@@ -97,9 +97,9 @@ TEST(ndarray, broadcast_3D_test)
 TEST(ndarray, broadcast_shape_size_test)
 {
 
-  NDArray<double> a = NDArray<double>::Arange(0, 90, 1);
+  NDArray<double> a = NDArray<double>::Arange(0u, 90u, 1u);
   a.Reshape({1, 3, 1, 6, 5});
-  NDArray<double> b = NDArray<double>::Arange(0, 42, 1);
+  NDArray<double> b = NDArray<double>::Arange(0u, 42u, 1u);
   b.Reshape({7, 3, 2, 1, 1});
 
   std::vector<std::size_t> ret_shape = {7, 3, 2, 6, 5};

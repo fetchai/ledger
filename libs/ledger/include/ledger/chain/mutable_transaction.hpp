@@ -105,6 +105,7 @@ void Deserialize(T &serializer, TransactionSummary &b)
 
 class MutableTransaction;
 
+// TODO(HUT):  de-template this if it's only using mutable TX
 template <typename MUTABLE_TRANSACTION = MutableTransaction>
 class TxSigningAdapter
 {
@@ -243,7 +244,6 @@ public:
   using hasher_type             = crypto::SHA256;
   using digest_type             = TransactionSummary::digest_type;
   using resource_set_type       = TransactionSummary::resource_set_type;
-  using signatures_type         = signatures_type;
   using tx_signing_adapter_type = TxSigningAdapter<MutableTransaction>;
 
   resource_set_type const &resources() const

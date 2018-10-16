@@ -50,14 +50,6 @@ class JSONDocument
     KEY = 16
   };
 
-  enum
-  {
-    PROPERTY        = 2,
-    ENTRY_ALLOCATOR = 3,
-    OBJECT          = 10,
-    ARRAY           = 11
-  };
-
 public:
   using string_type       = byte_array::ByteArray;
   using const_string_type = byte_array::ConstByteArray;
@@ -73,6 +65,16 @@ public:
     : JSONDocument()
   {
     Parse(document);
+  }
+
+  JSONDocument(JSONDocument const &) = delete;
+  JSONDocument(JSONDocument &&)      = default;
+
+  ~JSONDocument()
+  {
+    // Variant array must be released to avoid a shared pointer circular reference/leak:
+    // VariantArray contains a Variant which contains that VariantArray (in the case it's an object)
+    variants_.ReleaseResources();
   }
 
   script::Variant &operator[](std::size_t const &i)
@@ -183,6 +185,9 @@ public:
   {
     return variants_[0];
   }
+
+  JSONDocument &operator=(JSONDocument const &) = delete;
+  JSONDocument &operator=(JSONDocument &&) = default;
 
 private:
   std::vector<uint16_t> counters_;

@@ -78,7 +78,7 @@ public:
   P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
   ~P2PService() = default;
 
-  void Start(UriList const &initial_peer_list, Uri const &my_uri);
+  void Start(UriList const &initial_peer_list);
   void Stop();
 
   void SetPeerGoals(uint32_t min, uint32_t max);
@@ -137,7 +137,7 @@ private:
 
   // Node Information
   Address const address_;   ///< The address / public key of the current node
-  Uri           my_uri_;    ///< The public addresss associated with this node
+  Uri           my_uri_;    ///< The public address associated with this node
   Manifest      manifest_;  ///< The manifest associated with this address
 
   // identity cache
@@ -152,7 +152,7 @@ private:
   Client              client_;                 ///< The RPC client adapter
   RequestingManifests outstanding_manifests_;  ///< The queue of outstanding promises for manifests
   RequestingPeerlists pending_peer_lists_;     ///< The queue of outstanding peer lists
-  RequestingUris      pending_resolutions_;    ///< The queue of outstaing resolutions
+  RequestingUris      pending_resolutions_;    ///< The queue of outstanding resolutions
   AddressSet desired_peers_;  ///< The desired set of addresses that we want to have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;

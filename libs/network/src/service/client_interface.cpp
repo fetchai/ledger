@@ -36,7 +36,6 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
   Promise         prom = MakePromise();
   serializer_type params;
 
-  // We're doing the serialise work TWICE to avoid some memory allocations??!?!?
   serializers::SizeCounter<serializer_type> counter;
   counter << SERVICE_FUNCTION_CALL << prom->id();
   PackCallWithPackedArguments(counter, protocol, function, args);

@@ -34,59 +34,33 @@ enum class AtomicCounterName
  * This is a count of the number of instances of a type which have
  * been created but have not yet signalled that they are completely
  * set up. It includes a wait operation so code can make sure all its
- * dependendies are ready before proceeding.
+ * dependencies are ready before proceeding.
  *
  * @tparam AtomicCounterName The name of the counter that this
  * instance will refer to from the above enumeration.
  */
 template <AtomicCounterName>
-class AtomicInflightCounter
+class AtomicInFlightCounter
 {
 public:
-private:
-  using Counter = std::atomic<unsigned int>;
-  using CondVar = std::condition_variable;
-  using Mutex   = std::mutex;
-  using Lock    = std::unique_lock<Mutex>;
+  static constexpr char const *LOGGING_NAME = "AtomicInFlightCounter";
 
-  struct TheCounter
+  AtomicInFlightCounter()
   {
-    Mutex   mutex;
-    CondVar cv;
+    Counter &counter = GetCounter();
 
-    uint32_t complete = 0;
-    uint32_t total    = 0;
-  };
-
-  static TheCounter &GetCounter()
-  {
-    static TheCounter theCounter;
-    return theCounter;
+    Lock lock(counter.mutex);
+    ++counter.total;
   }
-
-public:
-  static constexpr char const *LOGGING_NAME = "AtomicInflightCounter";
-
-  AtomicInflightCounter()
-  {
-    auto &the_counter = GetCounter();
-
-    Lock lock(the_counter.mutex);
-    ++the_counter.total;
-  }
-
-  ~AtomicInflightCounter() = default;
+  ~AtomicInFlightCounter() = default;
 
   void Completed()
   {
-    auto &the_counter = GetCounter();
+    auto &counter = GetCounter();
 
-    {
-      Lock lock(the_counter.mutex);
-      ++the_counter.complete;
-    }
-
-    the_counter.cv.notify_all();
+    Lock lock(counter.mutex);
+    ++counter.complete;
+    counter.cv.notify_all();
   }
 
   static bool Wait(const FutureTimepoint &until)
@@ -99,16 +73,33 @@ public:
 
       if (the_counter.complete >= the_counter.total)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Waited: great success");
         return true;
       }
 
       the_counter.cv.wait_for(lock, until.DueIn());
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Waited: epic fail");
-
     return false;
+  }
+
+private:
+  using CondVar = std::condition_variable;
+  using Mutex   = std::mutex;
+  using Lock    = std::unique_lock<Mutex>;
+
+  struct Counter
+  {
+    Mutex   mutex;
+    CondVar cv;
+
+    uint32_t complete = 0;
+    uint32_t total    = 0;
+  };
+
+  static Counter &GetCounter()
+  {
+    static Counter counter_instance;
+    return counter_instance;
   }
 };
 

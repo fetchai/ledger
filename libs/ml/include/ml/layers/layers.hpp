@@ -70,6 +70,10 @@ public:
   {
     activate_ = activate;
   }
+  void BiasesSetup(bool has_biases)
+  {
+    has_biases_ = has_biases;
+  }
 
   std::size_t InputSize()
   {
@@ -132,24 +136,53 @@ public:
   void SetInput(VariablePtrType input, SessionType &sess)
   {
     prev_ = input;
-    dot_  = fetch::ml::ops::Dot(input, weights_, sess);
-    add_  = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
-
-    if (activate_ == "LeakyRelu")
+    if (has_biases_)
     {
-      output_ = fetch::ml::ops::LeakyRelu(add_, sess);
-    }
-    else if (activate_ == "Relu")
-    {
-      output_ = fetch::ml::ops::Relu(add_, sess);
-    }
-    else if (activate_ == "Sigmoid")
-    {
-      output_ = fetch::ml::ops::Sigmoid(add_, sess);
+      if (activate_ != "")
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        add_    = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+        output_ = Activate(add_, sess);
+      }
+      else
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        output_ = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+      }
     }
     else
     {
-      output_ = add_;
+      if (activate_ != "")
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        output_ = Activate(dot_, sess);
+      }
+      else
+      {
+        output_ = fetch::ml::ops::Dot(input, weights_, sess);
+      }
+    }
+  }
+
+  template <typename SessionType>
+  VariablePtrType Activate(VariablePtrType hidden_states, SessionType &sess)
+  {
+
+    if (activate_ == "LeakyRelu")
+    {
+      return fetch::ml::ops::LeakyRelu(add_, sess);
+    }
+    else if (activate_ == "Relu")
+    {
+      return fetch::ml::ops::Relu(add_, sess);
+    }
+    else if (activate_ == "Sigmoid")
+    {
+      return fetch::ml::ops::Sigmoid(add_, sess);
+    }
+    else
+    {
+      return add_;
     }
   }
 
@@ -161,7 +194,8 @@ private:
   VariablePtrType          dot_;
   VariablePtrType          add_;
   VariablePtrType          output_;
-  std::string              activate_;
+  bool                     has_biases_;
+  std::string              activate_ = "LeakyRelu";
 };
 
 }  // namespace layers

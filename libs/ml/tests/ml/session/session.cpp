@@ -23,7 +23,6 @@
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-#include <random>
 
 using namespace fetch::ml;
 #define ARRAY_SIZE 100
@@ -63,19 +62,6 @@ void AssignArray(ArrayType &var, std::vector<Type> vec_val)
     {
       var.Set(i, j, vec_val[counter]);
       ++counter;
-    }
-  }
-}
-void AssignRandom(VariablePtrType var, Type mean = 0.0, Type variance = 1.0)
-{
-  std::random_device         rd{};
-  std::mt19937               gen{rd()};
-  std::normal_distribution<> d{mean, std::sqrt(variance)};
-  for (std::size_t i = 0; i < var->shape()[0]; ++i)
-  {
-    for (std::size_t j = 0; j < var->shape()[1]; ++j)
-    {
-      var->Set(i, j, d(gen));
     }
   }
 }
@@ -157,7 +143,7 @@ TEST(session_test, trivial_backprop_relu_test)
   auto gt         = sess.Variable(gt_shape, "gt", false);
 
   input_data->data().Set(0, 0, 0.001);
-  AssignRandom(weights, 0.0, 1.0 / input_size);
+  weights->data().Set(0, 0.1);
   biases->data().Fill(0.0);
   gt->data().Set(0, 0, 1.0);
 
@@ -204,9 +190,9 @@ TEST(session_test, trivial_backprop_sigmoid_test)
   auto gt         = sess.Variable(gt_shape, "gt", false);
 
   input_data->data().Set(0, 0, 0.001);
-  AssignRandom(weights, 0.0, 1.0 / input_size);
+  AssignVariableIncrement(weights, -0.55, 0.1);
   biases->data().Fill(0.0);
-  AssignRandom(weights2, 0.0, 1.0 / h1_size);
+  AssignVariableIncrement(weights, -0.55, 0.1);
   gt->data().Set(0, 0, 1.0);
 
   // Dot product

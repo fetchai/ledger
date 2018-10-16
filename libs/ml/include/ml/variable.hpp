@@ -72,6 +72,11 @@ public:
     }
   }
 
+  void SetApplyGradient(bool apply_grad = true)
+  {
+    apply_grad_ = apply_grad;
+  }
+
   void SetData(ArrayType const &indata_)
   {
     data_ = ArrayType(indata_);
@@ -255,16 +260,20 @@ public:
   void GradientStep(typename ArrayType::Type const &lr,
                     typename ArrayType::Type const &gradient_clip)
   {
-    if (gradient_clip < 0)
+
+    if (apply_grad_)
     {
-      Subtract(data_, Multiply(lr, grad_), data_);
-    }
-    else
-    {
-      auto l2_norm = fetch::math::L2Norm(grad_);
-      auto delta   = fetch::math::Divide(grad_, fetch::math::Max(l2_norm, gradient_clip));
-      delta        = Multiply(lr, delta);
-      Subtract(data_, delta, data_);
+      if (gradient_clip < 0)
+      {
+        Subtract(data_, Multiply(lr, grad_), data_);
+      }
+      else
+      {
+        auto l2_norm = fetch::math::L2Norm(grad_);
+        auto delta   = fetch::math::Divide(grad_, fetch::math::Max(l2_norm, gradient_clip));
+        delta        = Multiply(lr, delta);
+        Subtract(data_, delta, data_);
+      }
     }
   }
 
@@ -319,6 +328,7 @@ private:
   std::string       variable_name_ = "";
   bool              is_leaf_       = true;
   bool              requires_grad_ = false;
+  bool              apply_grad_    = true;
   FunctionSignature b_fn_          = nullptr;
   FunctionSignature f_fn_          = nullptr;
 };

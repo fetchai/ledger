@@ -62,7 +62,7 @@ DummyContract::Status DummyContract::Wait(transaction_type const &)
 
 DummyContract::Status DummyContract::Run(transaction_type const &)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Running that contract...");
+  FETCH_LOG_WARN(LOGGING_NAME, "Running that contract...");
   return Status::OK;
 }
 

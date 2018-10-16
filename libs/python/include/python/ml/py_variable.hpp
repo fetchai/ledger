@@ -102,6 +102,15 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
              s[i] = v;
              //             s.data().Set(i, v);
            })
+      .def("Set",
+           [](SelfType &s, std::size_t i, std::size_t j, typename ArrayType::Type v) {
+             if (i >= s.size())
+             {
+               throw py::index_error();
+             }
+             s.At(i, j) = v;
+             //             s.data().Set(i, v);
+           })
       .def("__getitem__",
            [](const SelfType &s, std::size_t i) {
              if (i >= s.size())
