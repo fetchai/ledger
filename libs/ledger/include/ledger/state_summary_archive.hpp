@@ -67,15 +67,11 @@ public:
    */
   bool AllocateBookmark(Hash const &state_hash, Bookmark &bookmark)
   {
-#ifndef NDEBUG
-    // it is expected that the user will always perform an archive check directly
-    // in this case we expect that the state hash should never actually be stored
-    // move than once
+    Bookmark dummy{0};
+    if (archive_.Get(ResourceID{state_hash}, dummy))
     {
-      Bookmark dummy{0};
-      assert(!archive_.Get(ResourceID{state_hash}, dummy));
+      return false;
     }
-#endif
 
     // check that there isn't already the same hash in the pending queue
     auto it = pending_.find(state_hash);
