@@ -56,7 +56,7 @@ public:
 
   // Construction / Destruction
   ExecutionManager(std::string const &storage_path, std::size_t num_executors,
-                            StorageUnitPtr storage, ExecutorFactory const &factory);
+                   StorageUnitPtr storage, ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
