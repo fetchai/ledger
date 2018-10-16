@@ -145,21 +145,21 @@ function(add_fetch_gtest name library directory)
       fetch_warning("Disabled Test: ${name} - ${file}")
     else()
 
-    include(CTest)
+      include(CTest)
 
-    # locate the headers for the test project
-    file(GLOB_RECURSE headers ${directory}/*.hpp)
-    file(GLOB_RECURSE srcs ${directory}/*.cpp)
+      # locate the headers for the test project
+      file(GLOB_RECURSE headers ${directory}/*.hpp)
+      file(GLOB_RECURSE srcs ${directory}/*.cpp)
 
-    # define the target
-    add_executable(${name} ${headers} ${srcs})
-    target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-    target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-    target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      # define the target
+      add_executable(${name} ${headers} ${srcs})
+      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
-    # define the test
-    add_test(${name} ${name} ${ARGV})
-    set_tests_properties(${name} PROPERTIES TIMEOUT 120)
+      # define the test
+      add_test(${name} ${name} ${ARGV})
+      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
 
     endif()
 
@@ -186,21 +186,21 @@ function(add_fetch_gbench name library directory)
       fetch_warning("Disabled benchmark: ${name} - ${file}")
     else()
 
-    # locate the headers for the benchmark
-    file(GLOB_RECURSE headers ${directory}/*.hpp)
-    file(GLOB_RECURSE srcs ${directory}/*.cpp)
+      # locate the headers for the benchmark
+      file(GLOB_RECURSE headers ${directory}/*.hpp)
+      file(GLOB_RECURSE srcs ${directory}/*.cpp)
 
-    # define the target
-    add_executable(${name} ${headers} ${srcs})
+      # define the target
+      add_executable(${name} ${headers} ${srcs})
 
-    target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
-    target_link_libraries(${name} PRIVATE ${library} benchmark)
+      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
+      target_link_libraries(${name} PRIVATE ${library} benchmark)
 
-    #Google bench requires google test
-    target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-    target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      #Google bench requires google test
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
-    target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
 
     endif()
 
