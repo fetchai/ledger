@@ -32,8 +32,8 @@ protected:
   {
     stack_.New("RAS_bench.db");
 
-    EXPECT_TRUE(stack.is_open());
-    EXPECT_TRUE(stack.DirectWrite() == false)
+    EXPECT_TRUE(stack_.is_open());
+    EXPECT_TRUE(stack_.DirectWrite() == false)
         << "Expected random access stack to not be direct write";
   }
 
