@@ -303,7 +303,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   nm.Stop();
 }
 
-TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_caching)
+TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_threads_caching)
 {
   // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
   NetworkManager nm{50};
