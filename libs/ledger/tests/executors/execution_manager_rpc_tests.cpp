@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "network/generics/atomic_inflight_counter.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_service.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 
 #include "block_configs.hpp"
 #include "fake_storage_unit.hpp"
@@ -53,8 +53,8 @@ protected:
 
   static bool WaitForLaneServersToStart()
   {
-    using InFlightCounter = fetch::network::AtomicInFlightCounter<
-      fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
+    using InFlightCounter =
+        fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
 
     fetch::network::FutureTimepoint const deadline(std::chrono::seconds(30));
 
