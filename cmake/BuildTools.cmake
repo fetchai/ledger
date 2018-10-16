@@ -202,10 +202,6 @@ function(add_fetch_gbench name library directory)
 
     target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
 
-    # define the test
-    #add_test(${name} ${name} ${ARGV})
-    #set_tests_properties(${name} PROPERTIES TIMEOUT 120)
-
     endif()
 
   endif(FETCH_ENABLE_BENCHMARKS)

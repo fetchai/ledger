@@ -12,4 +12,4 @@
 	url = github:google/googletest.git
 [submodule "vendor/benchmark"]
 	path = vendor/benchmark
-	url = git@github.com:google/benchmark.git
+	url = github:google/benchmark.git
