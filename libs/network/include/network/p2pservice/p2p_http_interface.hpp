@@ -27,8 +27,8 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 #include "miner/resource_mapper.hpp"
+#include "network/p2pservice/p2p_service.hpp"
 
 #include <random>
 #include <sstream>
@@ -43,7 +43,8 @@ public:
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
 
-  P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle, P2PService &p2p_service, TrustSystem &trust)
+  P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
+                   P2PService &p2p_service, TrustSystem &trust)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
@@ -74,8 +75,8 @@ private:
   http::HTTPResponse GetChainStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    std::size_t chain_length = 20;
-    bool include_transactions = false;
+    std::size_t chain_length         = 20;
+    bool        include_transactions = false;
 
     if (request.query().Has("size"))
     {
@@ -160,10 +161,10 @@ private:
     for (auto &b : blocks)
     {
       // format the block number
-      auto block             = Variant::Object();
+      auto block            = Variant::Object();
       block["previousHash"] = byte_array::ToBase64(b.prev());
       block["currentHash"]  = byte_array::ToBase64(b.hash());
-      block["proof"]         = byte_array::ToBase64(b.proof());
+      block["proof"]        = byte_array::ToBase64(b.proof());
       block["blockNumber"]  = b.body().block_number;
 
       if (include_transactions)
@@ -180,9 +181,9 @@ private:
           std::size_t tx_idx{0};
           for (auto const &transaction : slice.transactions)
           {
-            Variant tx_obj = Variant::Object();
-            tx_obj["digest"] = ToBase64(transaction.transaction_hash);
-            tx_obj["fee"] = transaction.fee;
+            Variant tx_obj         = Variant::Object();
+            tx_obj["digest"]       = ToBase64(transaction.transaction_hash);
+            tx_obj["fee"]          = transaction.fee;
             tx_obj["contractName"] = transaction.contract_name;
 
             Variant resources_array = Variant::Array(transaction.resources.size());
@@ -190,14 +191,15 @@ private:
             std::size_t res_idx{0};
             for (auto const &resource : transaction.resources)
             {
-              Variant res_obj = Variant::Object();
+              Variant res_obj     = Variant::Object();
               res_obj["resource"] = ToBase64(resource);
-              res_obj["lane"] = miner::MapResourceToLane(resource, transaction.contract_name, log2_num_lanes_);
+              res_obj["lane"] =
+                  miner::MapResourceToLane(resource, transaction.contract_name, log2_num_lanes_);
 
               resources_array[res_idx++] = res_obj;
             }
 
-            tx_obj["resources"] = resources_array;
+            tx_obj["resources"]        = resources_array;
             transaction_list[tx_idx++] = tx_obj;
           }
 
