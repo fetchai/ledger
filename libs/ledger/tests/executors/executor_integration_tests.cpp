@@ -65,8 +65,8 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t    EXECUTOR_RPC_PORT   = 9000;
-    static const uint16_t    LANE_RPC_PORT_START = 9001;
+    static const uint16_t    EXECUTOR_RPC_PORT   = 9120;
+    static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
 
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);

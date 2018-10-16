@@ -52,7 +52,7 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t    PORT                = 9009;
+    static const uint16_t    PORT                = 9019;
     static const std::size_t NUM_NETWORK_THREADS = 2;
 
     BlockConfig const &config = GetParam();
