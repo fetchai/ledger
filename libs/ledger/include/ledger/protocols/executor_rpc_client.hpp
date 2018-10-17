@@ -50,7 +50,7 @@ public:
     connection_->Connect(host, port);
   }
 
-  Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
+  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override
   {
     auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
     return result->As<Status>();

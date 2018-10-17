@@ -46,7 +46,7 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   TransactionSummary    summary;
   std::string           contract_name;
   byte_array::ByteArray data;
-  signatures_type       signatures;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -86,7 +86,7 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   TransactionSummary    summary;
   std::string           contract_name;
   byte_array::ByteArray data;
-  signatures_type       signatures;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);
