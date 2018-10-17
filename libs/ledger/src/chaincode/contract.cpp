@@ -22,7 +22,7 @@
 namespace fetch {
 namespace ledger {
 
-bool Contract::ParseAsJson(transaction_type const &tx, script::Variant &output)
+bool Contract::ParseAsJson(Transaction const &tx, script::Variant &output)
 {
   bool success = false;
 

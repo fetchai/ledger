@@ -19,6 +19,7 @@
 #include "core/logger.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_service.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 
 #include "block_configs.hpp"
 #include "fake_storage_unit.hpp"
@@ -50,9 +51,19 @@ protected:
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerRpcTests";
 
+  static bool WaitForLaneServersToStart()
+  {
+    using InFlightCounter =
+        fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
+
+    fetch::network::FutureTimepoint const deadline(std::chrono::seconds(30));
+
+    return InFlightCounter::Wait(deadline);
+  }
+
   void SetUp() override
   {
-    static const uint16_t    PORT                = 9009;
+    static const uint16_t    PORT                = 9019;
     static const std::size_t NUM_NETWORK_THREADS = 2;
 
     BlockConfig const &config = GetParam();
@@ -70,6 +81,8 @@ protected:
         [this]() { return CreateExecutor(); });
 
     service_->Start();
+
+    WaitForLaneServersToStart();
 
     // client
     manager_ = std::make_unique<ExecutionManagerRpcClient>("127.0.0.1", PORT, *network_manager_);

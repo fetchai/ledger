@@ -29,11 +29,11 @@ namespace ledger {
 class ExecutorRpcService : public service::ServiceServer<network::TCPServer>
 {
 public:
-  using resources_type = Executor::resources_type;
+  using Resources = Executor::Resources;
 
   // Construction / Destruction
   ExecutorRpcService(uint16_t port, network_manager_type const &network_manager,
-                     resources_type resources)
+                     Resources resources)
     : ServiceServer(port, network_manager)
     , executor_(std::move(resources))
   {

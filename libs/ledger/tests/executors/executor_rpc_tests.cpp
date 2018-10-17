@@ -67,7 +67,7 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t EXECUTOR_RPC_PORT = 9001;
+    static const uint16_t EXECUTOR_RPC_PORT = 9111;
 
     storage_.reset(new underlying_storage_type);
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);

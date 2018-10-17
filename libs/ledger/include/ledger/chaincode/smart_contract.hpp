@@ -33,7 +33,7 @@ public:
   ~SmartContract() = default;
 
 private:
-  Status InvokeContract(transaction_type const &tx);
+  Status InvokeContract(Transaction const &tx);
 
   vm::Script                  script_;
   std::unique_ptr<vm::Module> module_;
