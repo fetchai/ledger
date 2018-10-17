@@ -15,13 +15,13 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#pragma once
+#include <gtest/gtest.h>
 #include "storage/key_value_index.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
-#include "testing/unittest.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -428,35 +428,24 @@ bool LoadSaveVsBulk()
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
 
-int main()
-{
-  SCENARIO("Inserting")
-  {
-    SECTION("Value consistency")
+
+   TEST(stoage_key_value_index_gtest , Value_consistency)
     {
 
-      EXPECT(ValueConsistency());
-      EXPECT((LoadSaveValueConsistency<kvi_type, kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<kvi_type, cached_kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<cached_kvi_type, kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
-    };
+      EXPECT_TRUE(ValueConsistency());
+      EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, kvi_type>()));
+      EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, cached_kvi_type>()));
+      EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, kvi_type>()));
+      EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
+    }
 
-    SECTION("Hash consistency")
+    TEST(stoage_key_value_index_gtest , Hash_consistency)
     {
-      EXPECT(RandomInsertHashConsistency());
-      EXPECT(IntermediateFlushHashConsistency());
-      EXPECT(DoubleInsertionhConsistency());
-    };
-  };
-
-  SCENARIO("Loading and extending")
-  {
-    SECTION("Load/save consistency")
+      EXPECT_TRUE(RandomInsertHashConsistency());
+      EXPECT_TRUE(IntermediateFlushHashConsistency());
+      EXPECT_TRUE(DoubleInsertionhConsistency());
+    }
+    TEST(stoage_key_value_index_gtest , Load_save_consistency)
     {
-      EXPECT(LoadSaveVsBulk());
-    };
-  };
-
-  return 0;
-}
+      EXPECT_TRUE(LoadSaveVsBulk());
+    }

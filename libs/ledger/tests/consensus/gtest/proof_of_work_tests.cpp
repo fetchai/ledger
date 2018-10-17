@@ -15,15 +15,14 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#include <gtest/gtest.h>
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "testing/unittest.hpp"
 #include <iostream>
 using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
 
-ProofOfWork Test(ByteArray tx, uint64_t diff)
+ProofOfWork Test1(ByteArray tx, uint64_t diff)
 {
   ProofOfWork proof(tx);
   proof.SetTarget(diff);
@@ -51,40 +50,31 @@ bool TestCompare(ByteArray tx, uint64_t diff1, uint64_t diff2)
   return (proof1.digest() > proof2.digest());
 }
 
-int main(int argc, char const **argv)
-{
-  SCENARIO("testing proof of work / double SHA")
-  {
-    SECTION("Easy difficulty")
+   TEST(ledger_proof_of_work_gtest , Easy_difficulty)
     {
-      auto proof = Test("Hello world", 1);
-      EXPECT(proof.digest() < proof.target());
+      auto proof = Test1("Hello world", 1);
+      EXPECT_LT(proof.digest() , proof.target());
 
-      proof = Test("FETCH", 1);
-      EXPECT(proof.digest() < proof.target());
+      proof = Test1("FETCH", 1);
+      EXPECT_LT(proof.digest() , proof.target());
 
-      proof = Test("Blah blah", 1);
-      EXPECT(proof.digest() < proof.target());
-    };
-
-    SECTION("Slightly hard difficulty")
+      proof = Test1("Blah blah", 1);
+      EXPECT_LT(proof.digest() , proof.target());
+    }
+   TEST(ledger_proof_of_work_gtest , Slightly_hard_difficulty)
     {
-      auto proof = Test("Hello world", 10);
-      EXPECT(proof.digest() < proof.target());
-      proof = Test("FETCH", 12);
-      EXPECT(proof.digest() < proof.target());
-      proof = Test("Blah blah", 15);
-      EXPECT(proof.digest() < proof.target());
-    };
+      auto proof = Test1("Hello world", 10);
+      EXPECT_LT(proof.digest() , proof.target());
+      proof = Test1("FETCH", 12);
+      EXPECT_LT(proof.digest() , proof.target());
+      proof = Test1("Blah blah", 15);
+      EXPECT_LT(proof.digest() , proof.target());
+    }
 
-    SECTION("Comparing")
+   TEST(ledger_proof_of_work_gtest , Comparing)
     {
-      EXPECT(TestCompare("Hello world", 1, 2));
-      EXPECT(TestCompare("Hello world", 9, 10));
-      EXPECT(TestCompare("FETCH", 10, 12));
-      EXPECT(TestCompare("Blah blah", 3, 15));
-    };
-  };
-
-  return 0;
-}
+      EXPECT_TRUE(TestCompare("Hello world", 1, 2));
+      EXPECT_TRUE(TestCompare("Hello world", 9, 10));
+      EXPECT_TRUE(TestCompare("FETCH", 10, 12));
+      EXPECT_TRUE(TestCompare("Blah blah", 3, 15));
+    }

@@ -15,22 +15,21 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
+#include <gtest/gtest.h>
 #include <core/byte_array/byte_array.hpp>
 #include <core/byte_array/encoders.hpp>
-#include <core/random/lfg.hpp>
+#include "core/random/lfg.hpp"
 #include <crypto/hash.hpp>
 #include <iostream>
 #include <storage/file_object.hpp>
 
-#include <testing/unittest.hpp>
 #include <vector>
 
 using namespace fetch;
 using namespace fetch::byte_array;
 using namespace fetch::storage;
 
-fetch::random::LaggedFibonacciGenerator<> lfg;
+fetch::random::LaggedFibonacciGenerator<> lfg1;
 
 template <std::size_t BS>
 bool BasicFileCreation()
@@ -42,10 +41,10 @@ bool BasicFileCreation()
   FileObject<stack_type> file_object(stack);
   ByteArray              str;
 
-  str.Resize(1 + (lfg() % 20000));
+  str.Resize(1 + (lfg1() % 20000));
   for (std::size_t j = 0; j < str.size(); ++j)
   {
-    str[j] = uint8_t(lfg() >> 9);
+    str[j] = uint8_t(lfg1() >> 9);
   }
 
   //  auto start = std::chrono::high_resolution_clock::now();
@@ -133,10 +132,10 @@ bool HashConsistency()
   FileObject<stack_type> file_object(stack);
   ByteArray              str;
 
-  str.Resize(1 + (lfg() % 20000));
+  str.Resize(1 + (lfg1() % 20000));
   for (std::size_t j = 0; j < str.size(); ++j)
   {
-    str[j] = uint8_t(lfg() >> 9);
+    str[j] = uint8_t(lfg1() >> 9);
   }
 
   ByteArray ret;
@@ -166,10 +165,10 @@ bool FileLoadValueConsistency()
       FileObject<stack_type> file_object(stack);
       ByteArray              str;
 
-      str.Resize(1 + (lfg() % 2000));
+      str.Resize(1 + (lfg1() % 2000));
       for (std::size_t j = 0; j < str.size(); ++j)
       {
-        str[j] = uint8_t(lfg() >> 9);
+        str[j] = uint8_t(lfg1() >> 9);
       }
 
       file_object.Write(str.pointer(), str.size());
@@ -233,10 +232,10 @@ bool FileSaveLoadFixedSize()
     FileObject<stack_type> file_object(stack);
     ByteArray              str;
 
-    str.Resize(1 + (lfg() % 2000));
+    str.Resize(1 + (lfg1() % 2000));
     for (std::size_t j = 0; j < str.size(); ++j)
     {
-      str[j] = uint8_t(lfg() >> 9);
+      str[j] = uint8_t(lfg1() >> 9);
     }
 
     strings.push_back(str);
@@ -282,10 +281,10 @@ bool FileLoadHashConsistency()
       FileObject<stack_type> file_object(stack);
       ByteArray              str;
 
-      str.Resize(1 + (lfg() % 2000));
+      str.Resize(1 + (lfg1() % 2000));
       for (std::size_t j = 0; j < str.size(); ++j)
       {
-        str[j] = uint8_t(lfg() >> 9);
+        str[j] = uint8_t(lfg1() >> 9);
       }
 
       strings.push_back(str);
@@ -324,58 +323,48 @@ bool FileLoadHashConsistency()
   return true;
 }
 
-int main()
-{
-
-  SCENARIO("Basics")
-  {
-
-    SECTION("Creating / reading")
+    TEST(storage_file_object_gtest , Creating_reading)
     {
-      EXPECT(BasicFileCreation<2>());
+      EXPECT_TRUE(BasicFileCreation<2>());
 
-      EXPECT((FileSaveLoadFixedSize<1, 1>()));
-      EXPECT((FileSaveLoadFixedSize<2, 1>()));
-      EXPECT((FileSaveLoadFixedSize<4, 1>()));
-      EXPECT((FileSaveLoadFixedSize<1, 0>()));
-      EXPECT((FileSaveLoadFixedSize<2, 0>()));
-      EXPECT((FileSaveLoadFixedSize<4, 0>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<1, 1>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<2, 1>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<4, 1>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<1, 0>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<2, 0>()));
+      EXPECT_TRUE((FileSaveLoadFixedSize<4, 0>()));
 
-      EXPECT(MultipleFileCreation<1>());
-      EXPECT(MultipleFileCreation<2>());
-      EXPECT(MultipleFileCreation<4>());
-      EXPECT(MultipleFileCreation<9>());
-      EXPECT(MultipleFileCreation<1023>());
+      EXPECT_TRUE(MultipleFileCreation<1>());
+      EXPECT_TRUE(MultipleFileCreation<2>());
+      EXPECT_TRUE(MultipleFileCreation<4>());
+      EXPECT_TRUE(MultipleFileCreation<9>());
+      EXPECT_TRUE(MultipleFileCreation<1023>());
 
-      EXPECT(Overwriting<1>());
-      EXPECT(Overwriting<2>());
-      EXPECT(Overwriting<4>());
-      EXPECT(Overwriting<7>());
-      EXPECT(Overwriting<2048>());
+      EXPECT_TRUE(Overwriting<1>());
+      EXPECT_TRUE(Overwriting<2>());
+      EXPECT_TRUE(Overwriting<4>());
+      EXPECT_TRUE(Overwriting<7>());
+      EXPECT_TRUE(Overwriting<2048>());
 
-      EXPECT(FileLoadValueConsistency<1>());
-      EXPECT(FileLoadValueConsistency<2>());
-      EXPECT(FileLoadValueConsistency<4>());
-      EXPECT(FileLoadValueConsistency<7>());
-      //      EXPECT( FileLoadValueConsistency<1023>() );
-    };
+      EXPECT_TRUE(FileLoadValueConsistency<1>());
+      EXPECT_TRUE(FileLoadValueConsistency<2>());
+      EXPECT_TRUE(FileLoadValueConsistency<4>());
+      EXPECT_TRUE(FileLoadValueConsistency<7>());
+      //      EXPECT_TRUE( FileLoadValueConsistency<1023>() );
+    }
 
-    SECTION("Hash consistency")
+    TEST(storage_file_object_gtest , Hash_consistency)
     {
-      EXPECT(HashConsistency<1>());
-      EXPECT(HashConsistency<2>());
-      EXPECT(HashConsistency<4>());
-      EXPECT(HashConsistency<9>());
-      EXPECT(HashConsistency<13>());
-      EXPECT(HashConsistency<1024>());
+      EXPECT_TRUE(HashConsistency<1>());
+      EXPECT_TRUE(HashConsistency<2>());
+      EXPECT_TRUE(HashConsistency<4>());
+      EXPECT_TRUE(HashConsistency<9>());
+      EXPECT_TRUE(HashConsistency<13>());
+      EXPECT_TRUE(HashConsistency<1024>());
 
-      EXPECT(FileLoadHashConsistency<1>());
-      EXPECT(FileLoadHashConsistency<2>());
-      EXPECT(FileLoadHashConsistency<4>());
-      EXPECT(FileLoadHashConsistency<7>());
-      EXPECT(FileLoadHashConsistency<1023>());
-    };
-  };
-
-  return 0;
-}
+      EXPECT_TRUE(FileLoadHashConsistency<1>());
+      EXPECT_TRUE(FileLoadHashConsistency<2>());
+      EXPECT_TRUE(FileLoadHashConsistency<4>());
+      EXPECT_TRUE(FileLoadHashConsistency<7>());
+      EXPECT_TRUE(FileLoadHashConsistency<1023>());
+    }
