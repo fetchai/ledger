@@ -201,7 +201,7 @@ void MainChainRpcService::ServiceLooseBlocks()
 {
   auto pending_work_count = bg_work_.CountPending();
 
-  if ((pending_work_count==0) && next_loose_tips_check_.IsDue())
+  if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
     // At this point, ask the chain to check it has loose elments to query.
     if (chain_.HasMissingBlocks() && last_good_address_.size())
