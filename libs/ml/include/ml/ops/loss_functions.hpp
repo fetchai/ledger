@@ -128,6 +128,6 @@ VariablePtrType SoftmaxCrossEntropyLoss(VariablePtrType left, VariablePtrType ri
   return ret;
 }
 
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

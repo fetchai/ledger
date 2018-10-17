@@ -152,6 +152,6 @@ VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, Session
   return ret;
 }
 
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

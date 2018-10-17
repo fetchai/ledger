@@ -192,6 +192,6 @@ VariablePtrType LeakyRelu(VariablePtrType left, SessionType &sess)
   return ret;
 }
 
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch
