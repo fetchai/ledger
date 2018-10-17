@@ -9,6 +9,7 @@ project (fetch)
 #-------------------------------------------------------------------------------
 
 option(FETCH_ENABLE_TESTS           "Enable test targets"               ON)
+option(FETCH_ENABLE_BENCHMARKS      "Enable benchmarking targets"       ON)
 option(FETCH_ENABLE_EXAMPLES        "Enable example targets"            ON)
 option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"          ON)
 option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
