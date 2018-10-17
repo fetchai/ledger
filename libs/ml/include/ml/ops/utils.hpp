@@ -125,8 +125,10 @@ void ReduceSumImplementation(VariablePtrType cur_node)
 {
   cur_node->data() = fetch::math::ReduceSum(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
-template <typename VariableType, typename SessionType, typename VariablePtrType = std::shared_ptr<VariableType>>
-VariablePtrType ReduceSum(std::shared_ptr<VariableType> left, std::size_t const &axis, SessionType &sess)
+template <typename VariableType, typename SessionType,
+          typename VariablePtrType = std::shared_ptr<VariableType>>
+VariablePtrType ReduceSum(std::shared_ptr<VariableType> left, std::size_t const &axis,
+                          SessionType &sess)
 {
   // define the derivative
   std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {

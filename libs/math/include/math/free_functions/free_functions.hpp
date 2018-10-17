@@ -1586,9 +1586,9 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
     }
   }
 
-  auto   cel      = Multiply(plogx, -1.0);
-  typename ArrayType::Type n = typename ArrayType::Type(cel.shape()[0]);
-  auto   mean_cel = ReduceSum(cel, 0);
+  auto                     cel      = Multiply(plogx, -1.0);
+  typename ArrayType::Type n        = typename ArrayType::Type(cel.shape()[0]);
+  auto                     mean_cel = ReduceSum(cel, 0);
 
   return Divide(mean_cel, n);
 }
