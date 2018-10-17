@@ -21,7 +21,6 @@
 #include <iostream>
 
 #include "math/linalg/matrix.hpp"
-#include "ml/computation_graph/computation_graph.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 #include "ml/variable.hpp"

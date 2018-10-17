@@ -55,23 +55,6 @@ void CrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
   auto delta  = fetch::math::Subtract(left->data(), right->data());
   auto grad   = fetch::math::Divide(delta, n_data);
   left->GradientAdd(grad);
-
-  //
-  //  for (std::size_t i = 0; i < n_data; ++i)
-  //  {
-  //    // find the current correct index in the one-hot gt vector
-  //    for (std::size_t j = 0; j < n_classes; ++j)
-  //    {
-  //      auto grad = left->data().At(i, j);
-  //
-  //      if (right->data().At(i, j) == 1.0)
-  //      {
-  //        grad -= 1;
-  //      }
-  ////      grad = grad / left->data().shape()[0];
-  //      left->GradientValueAdd(i, j, grad);
-  //    }
-  //  }
 }
 
 template <typename VariablePtrType>
@@ -82,7 +65,7 @@ void SoftmaxCrossEntropyLoss(VariablePtrType cur_node)
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
 
-  auto delta = fetch::math::Subtract(left->prev[0]->data(), right->data());
+  auto delta = fetch::math::Subtract(left->data(), right->data());
   left->GradientAdd(delta);
 }
 
