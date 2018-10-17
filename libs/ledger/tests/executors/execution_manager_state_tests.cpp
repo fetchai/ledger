@@ -166,7 +166,7 @@ std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::status_typ
   return s;
 }
 
-TEST_P(ExecutionManagerStateTests, CheckStateRollBack)
+TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
 {
   BlockConfig const &config = GetParam();
   AttachState();  // so that we can see state updates
