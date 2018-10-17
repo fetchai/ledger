@@ -55,8 +55,8 @@ public:
   using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
-  explicit ExecutionManager(std::string const &storage_path, std::size_t num_executors,
-                            StorageUnitPtr storage, ExecutorFactory const &factory);
+  ExecutionManager(std::string const &storage_path, std::size_t num_executors,
+                   StorageUnitPtr storage, ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
