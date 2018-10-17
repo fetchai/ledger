@@ -12,7 +12,6 @@ setup_compiler()
 
 add_fetch_test(vec_exp fetch-vectorise vectorize/approx_exp.cpp)
 add_fetch_test(parallel_dispatcher_test fetch-vectorise memory/parallel_dispatcher.cpp)
-add_fetch_test(log2_test fetch-vectorise meta/test_log2.cpp)
 add_fetch_test(native_test fetch-vectorise native.cpp)
 add_fetch_test(sse_test fetch-vectorise sse.cpp)
 

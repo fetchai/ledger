@@ -15,6 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include <gtest/gtest.h>
 #include <core/byte_array/byte_array.hpp>
 #include <core/byte_array/encoders.hpp>

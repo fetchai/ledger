@@ -15,7 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#pragma once
+
 #include <gtest/gtest.h>
 #include "storage/key_value_index.hpp"
 #include "core/byte_array/const_byte_array.hpp"

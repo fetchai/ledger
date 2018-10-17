@@ -20,9 +20,6 @@ add_fetch_test(shared_rectangular_array_test fetch-math math/shared_rectangular_
 add_fetch_gtest(matrix_test fetch-math math/linalg/matrix)
 target_link_libraries(matrix_test PRIVATE pthread)
 
-add_fetch_test(manhattan_test fetch-math math/distance/manhattan.cpp)
-add_fetch_test(correlation_test fetch-math math/distance/correlation.cpp)
-
 add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
 add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
