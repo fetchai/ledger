@@ -717,20 +717,34 @@ void Expm1(ArrayType &x)
  * natural logarithm of x
  * @param x
  */
+
+
+
+
 template <typename ArrayType>
-void Log(ArrayType &x)
+fetch::math::meta::IsBlasAndShapedArrayLike<ArrayType, void> Log(ArrayType &x)
+//void Log(ArrayType &x)
 {
   kernels::stdlib::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 template <typename ArrayType>
-ArrayType Log(ArrayType const &x)
+fetch::math::meta::IsBlasAndShapedArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   ArrayType ret{x.shape()};
   ret.Copy(x);
   Log(ret);
   return ret;
 }
+
+template <typename Type>
+fetch::meta::IfIsArithmetic<Type, void> Log(Type &x)
+{
+  x = std::log(x);
+}
+
+
+/// if is arithmetic tpye
 
 /**
  * natural logarithm of x
@@ -1608,21 +1622,23 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   assert(x.shape().size() == 2);
 
   auto n_examples = x.shape()[0];
-  auto n_classes = x.shape()[1];
+//  auto n_classes  = x.shape()[1];
 
   ArrayType sce_x{x.shape()};
 
   Softmax(sce_x);
 
-  auto gt = Argmax(y, 1);
-  double log_likelihood = 0;
+  auto   gt             = ArgMax(y, 1);
+  ArrayType log_likelihood{1};
+  log_likelihood[0] = 0;
 
   for (std::size_t idx = 0; idx < n_examples; ++idx)
   {
-    log_likelihood -= Log(sce_x.At(idx, gt[idx]));
+    Log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
   }
 
-  return Divide(log_likelihood, n_examples);
+  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
 }
 
 /**

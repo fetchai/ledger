@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+// TODO (private 179)
+
+
 #include "core/byte_array/byte_array.hpp"
 #include <type_traits>
 //#include "math/shape_less_array.hpp"
@@ -68,6 +71,22 @@ struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
   using Type = R;
 };
 
+
+
+
+
+
+template <typename A, typename R>
+struct IsBlasAndShapedArrayLikeImpl
+{
+};
+template <typename R, typename T, typename C, typename S>
+struct IsBlasAndShapedArrayLikeImpl<linalg::Matrix<T, C, S>, R>
+{
+  using Type = R;
+};
+
+
 // template< typename R, typename T, typename C>
 // struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
 //{
@@ -76,6 +95,10 @@ struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
 
 template <typename A, typename R>
 using IsBlasArrayLike = typename IsBlasArrayLikeImpl<A, R>::Type;
+
+template <typename A, typename R>
+using IsBlasAndShapedArrayLike = typename IsBlasAndShapedArrayLikeImpl<A, R>::Type;
+
 //
 // template< typename T >
 // IsMathArrayLike<T, bool> IsGreat(T const& x)

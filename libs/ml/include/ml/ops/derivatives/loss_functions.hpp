@@ -57,8 +57,8 @@ void CrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
   left->GradientAdd(grad);
 }
 
-template <typename VariablePtrType>
-void SoftmaxCrossEntropyLoss(VariablePtrType cur_node)
+template <typename VariableType>
+void SoftmaxCrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
