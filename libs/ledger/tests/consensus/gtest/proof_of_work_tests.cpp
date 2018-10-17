@@ -15,6 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include <gtest/gtest.h>
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "core/byte_array/encoders.hpp"

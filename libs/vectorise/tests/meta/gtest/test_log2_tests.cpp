@@ -63,7 +63,7 @@
       EXPECT_TRUE(TEST_LOG_EX__EQ__X(27));
       EXPECT_TRUE(TEST_LOG_EX__EQ__X(28));
       EXPECT_TRUE(TEST_LOG_EX__EQ__X(29));
-    };
+    }
 
     TEST(vectorise_exact_exponents_gtest , thirty_to_thirty_nine)
     {
