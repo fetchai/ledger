@@ -64,36 +64,38 @@ VariablePtrType Sigmoid(VariablePtrType left, SessionType &sess)
   return ret;
 }
 
-///**
-// * The Sigmoid activation squashes such that y = 1 / 1 + e^(-x)
-// * @tparam VariablePtrType
-// * @param cur_node
-// */
-// template <typename VariablePtrType>
-// void SoftmaxImplementation(VariablePtrType cur_node)
-//{
-//  cur_node->data() = fetch::math::Softmax(cur_node->prev[0]->data());
-//}
-// template <typename VariablePtrType, typename SessionType>
-// VariablePtrType Softmax(VariablePtrType left, SessionType &sess)
-//{
-//  // define the derivative
-//  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
-//    fetch::ml::ops::derivatives::Softmax(cur_node);
-//  };
-//
-//  // define the forward function (i.e. the dot)
-//  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
-//    SoftmaxImplementation(cur_node);
-//  };
-//
-//  // define the return variable with the Dot computation
-//  VariablePtrType ret = sess.Variable(left->shape(), "Sigmoid", f_fn, b_fn, false);
-//
-//  ret->prev.push_back(left);
-//
-//  return ret;
-//}
+/**
+ * The Softmax gives some non-zero value to all outputs with e^(x) / (Sum(e^x))
+ * @tparam VariablePtrType
+ * @param cur_node
+ */
+template <typename VariablePtrType>
+void SoftmaxImplementation(VariablePtrType cur_node)
+{
+  cur_node->data() = fetch::math::Softmax(cur_node->prev[0]->data());
+}
+template <typename VariablePtrType, typename SessionType>
+VariablePtrType Softmax(VariablePtrType left, SessionType &sess)
+{
+  // define the derivative
+  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+    fetch::ml::ops::derivatives::Softmax(cur_node);
+  };
+
+  // define the forward function (i.e. the dot)
+  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+    SoftmaxImplementation(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  bool            is_leaf       = false;
+  bool            requires_grad = false;
+  VariablePtrType ret = sess.Variable(left->shape(), "Softmax", f_fn, b_fn, is_leaf, requires_grad);
+
+  ret->prev.push_back(left);
+
+  return ret;
+}
 
 /**
  * The rectified linear unit returns the elementwise maximum of 0 and y

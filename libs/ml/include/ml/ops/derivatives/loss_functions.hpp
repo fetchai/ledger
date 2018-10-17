@@ -52,25 +52,8 @@ void CrossEntropyLoss(VariablePtrType cur_node)
   auto &right = cur_node->prev[1];
 
   double n_data = left->data().shape()[0];
-  //  typename decltype(*cur_node)::ArrayType::Type n_data = left->data().shape()[0];
-  //  auto n_data = static_cast<typename
-  //  decltype(&cur_node)::ArrayType::Type>(left->data().shape()[0]);
-
-  auto delta = fetch::math::Subtract(left->data(), right->data());
-
-  //  std::cout << "ldata: " << left->data()[0] << std::endl;
-  //  std::cout << "cur_nodedata: " << cur_node->data()[0] << std::endl;
-  //  for (std::size_t i = 0; i < 10; ++i)
-  //  {
-  //    std::cout << "delta[i] " << delta[i] << std::endl;
-  //  }
-  //  std::cout << " - GAP - " << std::endl;
-  //  for (std::size_t i = 10; i < 20; ++i)
-  //  {
-  //    std::cout << "delta[i] " << delta[i] << std::endl;
-  //  }
-
-  auto grad = fetch::math::Divide(delta, n_data);
+  auto   delta  = fetch::math::Subtract(left->data(), right->data());
+  auto   grad   = fetch::math::Divide(delta, n_data);
   left->GradientAdd(grad);
 
   //
@@ -89,6 +72,18 @@ void CrossEntropyLoss(VariablePtrType cur_node)
   //      left->GradientValueAdd(i, j, grad);
   //    }
   //  }
+}
+
+template <typename VariablePtrType>
+void SoftmaxCrossEntropyLoss(VariablePtrType cur_node)
+{
+  assert(cur_node->prev.size() == 2);
+
+  auto &left  = cur_node->prev[0];
+  auto &right = cur_node->prev[1];
+
+  auto delta = fetch::math::Subtract(left->prev[0]->data(), right->data());
+  left->GradientAdd(delta);
 }
 
 };  // namespace derivatives

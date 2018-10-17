@@ -170,19 +170,29 @@ public:
 
     if (activate_ == "LeakyRelu")
     {
-      return fetch::ml::ops::LeakyRelu(add_, sess);
+      return fetch::ml::ops::LeakyRelu(hidden_states, sess);
     }
     else if (activate_ == "Relu")
     {
-      return fetch::ml::ops::Relu(add_, sess);
+      return fetch::ml::ops::Relu(hidden_states, sess);
     }
     else if (activate_ == "Sigmoid")
     {
-      return fetch::ml::ops::Sigmoid(add_, sess);
+      return fetch::ml::ops::Sigmoid(hidden_states, sess);
+    }
+    else if (activate_ == "Softmax")
+    {
+      return fetch::ml::ops::Softmax(hidden_states, sess);
+    }
+    else if (activate_ == "")
+    {
+      return hidden_states;
     }
     else
     {
-      return add_;
+      std::cout << "unspecified activation type" << std::endl;
+      assert(false);
+      return hidden_states;
     }
   }
 

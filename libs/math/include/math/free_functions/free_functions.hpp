@@ -1554,6 +1554,14 @@ template <typename ArrayType>
 ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   assert(x.shape() == y.shape());
+
+  // we can't handle taking log(0), and the user should ensure this is never asked for
+  // if in doubt the user can always call SoftmaxCrossEntropyLoss instead
+  for (std::size_t k = 0; k < x.size(); ++k)
+  {
+    assert(x.At(k) != 0);
+  }
+
   ArrayType logx{x.shape()};
   logx.Copy(x);
   Log(logx);
@@ -1578,13 +1586,9 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
     }
   }
 
-  auto cel = Multiply(plogx, -1.0);
-  //  auto ret1 = Multiply(y, logx);
-
-  //  auto ret2 = ReduceSum(ret1, 1);
+  auto   cel      = Multiply(plogx, -1.0);
   double n        = cel.shape()[0];
   auto   mean_cel = ReduceSum(cel, 0);
-  //  auto ret3 = ReduceSum(ret1, 1);
 
   return Divide(mean_cel, n);
 }

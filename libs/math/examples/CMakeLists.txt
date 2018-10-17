@@ -14,5 +14,4 @@ setup_library_examples(fetch-math)
 
 if (FETCH_ENABLE_EXAMPLES)
    target_link_libraries(example-math-blas-dgemm PRIVATE pthread)
-   target_link_libraries(example-math-free-functions PRIVATE pthread)
 endif(FETCH_ENABLE_EXAMPLES)

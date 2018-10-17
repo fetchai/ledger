@@ -45,6 +45,19 @@ void Sigmoid(VariablePtrType cur_node)
   auto temp3 = fetch::math::Multiply(dy, temp2);
   left->GradientAdd(temp3);
 }
+
+template <typename VariablePtrType>
+void Softmax(VariablePtrType cur_node)
+{
+
+  // TODO(private 307)
+
+  assert(cur_node->prev.size() == 1);
+
+  auto &left = cur_node->prev[0];
+  auto &dy   = cur_node->grad();
+  left->GradientAdd(dy);
+}
 //
 // template <typename VariablePtrType>
 // void Softmax(VariablePtrType cur_node)

@@ -95,6 +95,39 @@ VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, Se
   return ret;
 }
 
+/*
+ * Cross entropy loss Op
+ */
+template <typename VariablePtrType>
+void SoftmaxCELImplementation(VariablePtrType cur_node)
+{
+  cur_node->data() =
+      fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+}
+template <typename VariablePtrType, typename SessionType>
+VariablePtrType SoftmaxCrossEntropyLoss(VariablePtrType left, VariablePtrType right,
+                                        SessionType &sess)
+{
+  // define the derivative
+  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+    fetch::ml::ops::derivatives::SoftmaxCrossEntropyLoss(cur_node);
+  };
+
+  // define the forward function (i.e. the dot)
+  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+    SoftmaxCELImplementation(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  std::vector<std::size_t> new_shape = left->shape();
+  VariablePtrType          ret = sess.Variable(new_shape, "Softmax_CEL", f_fn, b_fn, false, false);
+
+  ret->prev.push_back(left);
+  ret->prev.push_back(right);
+
+  return ret;
+}
+
 };  // namespace ops
 };  // namespace ml
 };  // namespace fetch
