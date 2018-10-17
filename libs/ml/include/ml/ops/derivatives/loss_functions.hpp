@@ -86,7 +86,7 @@ void SoftmaxCrossEntropyLoss(VariablePtrType cur_node)
   left->GradientAdd(delta);
 }
 
-};  // namespace derivatives
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace derivatives
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

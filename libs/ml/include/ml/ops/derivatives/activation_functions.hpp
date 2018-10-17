@@ -124,7 +124,7 @@ void LeakyRelu(VariablePtrType cur_node)
     }
   }
 }
-};  // namespace derivatives
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace derivatives
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

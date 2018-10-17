@@ -134,7 +134,8 @@ public:
     : Matrix(shape[0], shape[1])
   {}
 
-  Matrix(self_type &other) : super_type(other)
+  Matrix(self_type &other)
+    : super_type(other)
   {
     this->LazyResize(other.height(), other.width());
     this->data() = other.data().Copy();

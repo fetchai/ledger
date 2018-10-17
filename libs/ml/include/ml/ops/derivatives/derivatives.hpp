@@ -71,7 +71,7 @@ void ReduceSum(VariablePtrType cur_node)
   //  cur_node.prev[0].grad() += cur_node.grad();
 }
 
-};  // namespace derivatives
-};  // namespace ops
-};  // namespace ml
-};  // namespace fetch
+}  // namespace derivatives
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch
