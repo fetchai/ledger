@@ -152,7 +152,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+        db_prefix, num_executors, storage_,
+        [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
@@ -163,7 +164,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);

@@ -40,7 +40,7 @@ SmartContract::SmartContract(vm::Script const &script)
   vm_     = std::make_unique<vm::VM>(module_.get());
 }
 
-Contract::Status SmartContract::InvokeContract(transaction_type const &tx)
+Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
   Identifier identifier;
   identifier.Parse(static_cast<std::string>(tx.contract_name()));
