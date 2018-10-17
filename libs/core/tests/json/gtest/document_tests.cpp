@@ -17,11 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/json/document.hpp"
-#include <iostream>
 #include <gtest/gtest.h>
+#include <iostream>
 using namespace fetch::json;
 using namespace fetch::byte_array;
-
 
 TEST(json_bsic_parsing_gtest, Nathan_test)
 {

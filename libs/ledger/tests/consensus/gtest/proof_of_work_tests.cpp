@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "ledger/chain/consensus/proof_of_work.hpp"
+#include <gtest/gtest.h>
 #include <iostream>
 using namespace fetch::chain::consensus;
 using namespace fetch::byte_array;
@@ -51,31 +51,31 @@ bool TestCompare(ByteArray tx, uint64_t diff1, uint64_t diff2)
   return (proof1.digest() > proof2.digest());
 }
 
-   TEST(ledger_proof_of_work_gtest , Easy_difficulty)
-    {
-      auto proof = Test1("Hello world", 1);
-      EXPECT_LT(proof.digest() , proof.target());
+TEST(ledger_proof_of_work_gtest, Easy_difficulty)
+{
+  auto proof = Test1("Hello world", 1);
+  EXPECT_LT(proof.digest(), proof.target());
 
-      proof = Test1("FETCH", 1);
-      EXPECT_LT(proof.digest() , proof.target());
+  proof = Test1("FETCH", 1);
+  EXPECT_LT(proof.digest(), proof.target());
 
-      proof = Test1("Blah blah", 1);
-      EXPECT_LT(proof.digest() , proof.target());
-    }
-   TEST(ledger_proof_of_work_gtest , Slightly_hard_difficulty)
-    {
-      auto proof = Test1("Hello world", 10);
-      EXPECT_LT(proof.digest() , proof.target());
-      proof = Test1("FETCH", 12);
-      EXPECT_LT(proof.digest() , proof.target());
-      proof = Test1("Blah blah", 15);
-      EXPECT_LT(proof.digest() , proof.target());
-    }
+  proof = Test1("Blah blah", 1);
+  EXPECT_LT(proof.digest(), proof.target());
+}
+TEST(ledger_proof_of_work_gtest, Slightly_hard_difficulty)
+{
+  auto proof = Test1("Hello world", 10);
+  EXPECT_LT(proof.digest(), proof.target());
+  proof = Test1("FETCH", 12);
+  EXPECT_LT(proof.digest(), proof.target());
+  proof = Test1("Blah blah", 15);
+  EXPECT_LT(proof.digest(), proof.target());
+}
 
-   TEST(ledger_proof_of_work_gtest , Comparing)
-    {
-      EXPECT_TRUE(TestCompare("Hello world", 1, 2));
-      EXPECT_TRUE(TestCompare("Hello world", 9, 10));
-      EXPECT_TRUE(TestCompare("FETCH", 10, 12));
-      EXPECT_TRUE(TestCompare("Blah blah", 3, 15));
-    }
+TEST(ledger_proof_of_work_gtest, Comparing)
+{
+  EXPECT_TRUE(TestCompare("Hello world", 1, 2));
+  EXPECT_TRUE(TestCompare("Hello world", 9, 10));
+  EXPECT_TRUE(TestCompare("FETCH", 10, 12));
+  EXPECT_TRUE(TestCompare("Blah blah", 3, 15));
+}
