@@ -157,7 +157,7 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant 
       return true;
     });
 
-    mtx.set_resources(resources);
+    mtx.set_resources(std::move(resources));
   }
   else if (!resources_v.is_undefined())
   {
