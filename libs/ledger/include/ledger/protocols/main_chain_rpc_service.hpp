@@ -67,6 +67,8 @@ public:
   void BroadcastBlock(Block const &block);
 
 private:
+  static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
+
   using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 

@@ -206,7 +206,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     // At this point, ask the chain to check it has loose elments to query.
     if (chain_.HasMissingBlocks() && last_good_address_.size())
     {
-      for (auto const &hash : chain_.GetMissingBlockHashes(30))
+      for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
         // TODO(katie): When we (eventually) have a working trust
         // system, use that to generate an address here.
