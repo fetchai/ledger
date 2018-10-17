@@ -202,7 +202,7 @@ protected:
   FakeStorageUnitPtr            storage_;
 };
 
-TEST_P(ExecutionManagerRpcTests, BlockExecution)
+TEST_P(ExecutionManagerRpcTests, DISABLED_BlockExecution)
 {
   BlockConfig const &config = GetParam();
 
