@@ -55,11 +55,11 @@ private:
   Status Execute(Block const &block)
   {
     // since the hash is not serialised we need to recalculate it
-    FullBlock ful_block{};
-    ful_block.SetBody(block);
-    ful_block.UpdateDigest();
+    FullBlock full_block{};
+    full_block.SetBody(block);
+    full_block.UpdateDigest();
 
-    return manager_.Execute(ful_block.body());
+    return manager_.Execute(full_block.body());
   }
 
   ExecutionManagerInterface &manager_;
