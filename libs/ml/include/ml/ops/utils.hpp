@@ -42,7 +42,7 @@ template <typename VariablePtrType>
 void DotImplementation(VariablePtrType cur_node)
 {
   cur_node->data() = fetch::math::Dot(cur_node->prev[0]->data(), cur_node->prev[1]->data());
-};
+}
 
 template <typename VariablePtrType, typename SessionType>
 VariablePtrType Dot(VariablePtrType left, VariablePtrType right, SessionType &sess)
@@ -89,7 +89,7 @@ void AddBroadcastImplementation(VariablePtrType cur_node)
     }
   }
   //    cur_node->data() = fetch::math::Add(cur_node->prev[0]->data(), cur_node->prev[1]->data());
-};
+}
 
 template <typename VariablePtrType, typename SessionType>
 VariablePtrType AddBroadcast(VariablePtrType left, VariablePtrType right, SessionType &sess)
@@ -125,8 +125,8 @@ void ReduceSumImplementation(VariablePtrType cur_node)
 {
   cur_node->data() = fetch::math::ReduceSum(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
-template <typename VariablePtrType, typename SessionType>
-VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, SessionType &sess)
+template <typename VariableType, typename SessionType, typename VariablePtrType = std::shared_ptr<VariableType>>
+VariablePtrType ReduceSum(std::shared_ptr<VariableType> left, std::size_t const &axis, SessionType &sess)
 {
   // define the derivative
   std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
@@ -140,7 +140,7 @@ VariablePtrType ReduceSum(VariablePtrType left, std::size_t const &axis, Session
 
   // define Variable of zeros to compare against
   VariablePtrType node_axis = SessionType::Zeroes({1, 1}, sess);
-  node_axis->data()[0]      = axis;
+  node_axis->data()[0]      = static_cast<typename VariableType::ArrayType::Type>(axis);
 
   bool            is_leaf       = false;
   bool            requires_grad = false;

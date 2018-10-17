@@ -43,17 +43,17 @@ void MeanSquareError(VariablePtrType &cur_node)
   left->GradientAdd(temp3);  //
 }
 
-template <typename VariablePtrType>
-void CrossEntropyLoss(VariablePtrType cur_node)
+template <typename VariableType>
+void CrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
   auto &left  = cur_node->prev[0];
   auto &right = cur_node->prev[1];
 
-  double n_data = left->data().shape()[0];
-  auto   delta  = fetch::math::Subtract(left->data(), right->data());
-  auto   grad   = fetch::math::Divide(delta, n_data);
+  auto n_data = static_cast<typename VariableType::ArrayType::Type>(left->data().shape()[0]);
+  auto delta  = fetch::math::Subtract(left->data(), right->data());
+  auto grad   = fetch::math::Divide(delta, n_data);
   left->GradientAdd(grad);
 
   //

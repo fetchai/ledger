@@ -34,28 +34,29 @@ class NDArrayIterator;
 /*
  * Op for mean squared error
  */
-template <typename VariablePtrType>
-void MSEImplementation(VariablePtrType cur_node)
+template <typename VariableType>
+
+void MSEImplementation(std::shared_ptr<VariableType> cur_node)
 {
   cur_node->data() =
       fetch::math::MeanSquareError(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
-template <typename VariablePtrType, typename SessionType>
-VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, SessionType &sess)
+template <typename VariableType, typename SessionType>
+std::shared_ptr<VariableType> MeanSquareError(std::shared_ptr<VariableType> left, std::shared_ptr<VariableType> right, SessionType &sess)
 {
   // define the derivative
-  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+  std::function<void(std::shared_ptr<VariableType>)> b_fn = [](std::shared_ptr<VariableType> cur_node) {
     fetch::ml::ops::derivatives::MeanSquareError(cur_node);
   };
 
   // define the forward function (i.e. the dot)
-  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+  std::function<void(std::shared_ptr<VariableType>)> f_fn = [](std::shared_ptr<VariableType> cur_node) {
     MSEImplementation(cur_node);
   };
 
   // define the return variable with the Dot computation
   std::vector<std::size_t> new_shape{left->shape()[0], 1};
-  VariablePtrType          ret = sess.Variable(new_shape, "MSE", f_fn, b_fn, false, false);
+  std::shared_ptr<VariableType>          ret = sess.Variable(new_shape, "MSE", f_fn, b_fn, false, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -66,28 +67,28 @@ VariablePtrType MeanSquareError(VariablePtrType left, VariablePtrType right, Ses
 /*
  * Cross entropy loss Op
  */
-template <typename VariablePtrType>
-void CELImplementation(VariablePtrType cur_node)
+template <typename VariableType>
+void CELImplementation(std::shared_ptr<VariableType> cur_node)
 {
   cur_node->data() =
       fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
-template <typename VariablePtrType, typename SessionType>
-VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, SessionType &sess)
+template <typename VariableType, typename SessionType>
+std::shared_ptr<VariableType> CrossEntropyLoss(std::shared_ptr<VariableType> left, std::shared_ptr<VariableType> right, SessionType &sess)
 {
   // define the derivative
-  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+  std::function<void(std::shared_ptr<VariableType>)> b_fn = [](std::shared_ptr<VariableType> cur_node) {
     fetch::ml::ops::derivatives::CrossEntropyLoss(cur_node);
   };
 
   // define the forward function (i.e. the dot)
-  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+  std::function<void(std::shared_ptr<VariableType>)> f_fn = [](std::shared_ptr<VariableType> cur_node) {
     CELImplementation(cur_node);
   };
 
   // define the return variable with the Dot computation
   std::vector<std::size_t> new_shape = left->shape();
-  VariablePtrType          ret       = sess.Variable(new_shape, "CEL", f_fn, b_fn, false, false);
+  std::shared_ptr<VariableType>          ret       = sess.Variable(new_shape, "CEL", f_fn, b_fn, false, false);
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);
@@ -98,13 +99,13 @@ VariablePtrType CrossEntropyLoss(VariablePtrType left, VariablePtrType right, Se
 /*
  * Cross entropy loss Op
  */
-template <typename VariablePtrType>
+template <typename VariableType, typename VariablePtrType = std::shared_ptr<VariableType>>
 void SoftmaxCELImplementation(VariablePtrType cur_node)
 {
   cur_node->data() =
       fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
-template <typename VariablePtrType, typename SessionType>
+template <typename VariableType, typename SessionType, typename VariablePtrType = std::shared_ptr<VariableType>>
 VariablePtrType SoftmaxCrossEntropyLoss(VariablePtrType left, VariablePtrType right,
                                         SessionType &sess)
 {

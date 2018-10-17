@@ -736,4 +736,4 @@ TEST(matrix, matrix_double_isgreaterequal_Test)
   fetch::math::Isgreaterequal(A, B, C);
 
   ASSERT_TRUE(R.AllClose(C));
-};
+}

@@ -1436,7 +1436,7 @@ void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Ma
     for (std::size_t i = 0; i < ret.size(); ++i)
     {
       ret[i] = 0;
-      for (std::size_t j = 0; j < double(obj1.shape()[0]); ++j)
+      for (std::size_t j = 0; j < obj1.shape()[0]; ++j)
       {
         ret[i] += obj1(j, i);
       }
@@ -1448,7 +1448,7 @@ void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Ma
     for (std::size_t i = 0; i < ret.size(); ++i)
     {
       ret[i] = 0;
-      for (std::size_t j = 0; j < double(obj1.shape()[1]); ++j)
+      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
       {
         ret[i] += obj1(i, j);
       }
@@ -1587,7 +1587,7 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   }
 
   auto   cel      = Multiply(plogx, -1.0);
-  double n        = cel.shape()[0];
+  typename ArrayType::Type n = typename ArrayType::Type(cel.shape()[0]);
   auto   mean_cel = ReduceSum(cel, 0);
 
   return Divide(mean_cel, n);
