@@ -34,12 +34,12 @@ public:
   using size_type                      = std::size_t;
   using pointer_type                   = T *;
   using const_pointer_type             = T const *;
-  using type                           = T;
+  using Type                           = T;
   using vector_slice_type              = VectorSlice;
   using iterator                       = ForwardIterator<T>;
   using reverse_iterator               = BackwardIterator<T>;
-  using const_parallel_dispatcher_type = ConstParallelDispatcher<type>;
-  using parallel_dispatcher_type       = ParallelDispatcher<type>;
+  using const_parallel_dispatcher_type = ConstParallelDispatcher<Type>;
+  using parallel_dispatcher_type       = ParallelDispatcher<Type>;
   using vector_register_type           = typename parallel_dispatcher_type::vector_register_type;
   using vector_register_iterator_type =
       typename parallel_dispatcher_type::vector_register_iterator_type;
@@ -47,7 +47,7 @@ public:
   enum
   {
     E_TYPE_SIZE     = type_size,
-    E_SIMD_SIZE     = (platform::VectorRegisterSize<type>::value >> 3),
+    E_SIMD_SIZE     = (platform::VectorRegisterSize<Type>::value >> 3),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT =
         (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
@@ -63,13 +63,13 @@ public:
     , size_(n)
   {}
 
-  ConstParallelDispatcher<type> in_parallel() const
+  ConstParallelDispatcher<Type> in_parallel() const
   {
-    return ConstParallelDispatcher<type>(pointer_, size());
+    return ConstParallelDispatcher<Type>(pointer_, size());
   }
-  ParallelDispatcher<type> in_parallel()
+  ParallelDispatcher<Type> in_parallel()
   {
-    return ParallelDispatcher<type>(pointer(), size());
+    return ParallelDispatcher<Type>(pointer(), size());
   }
 
   iterator begin()
@@ -95,7 +95,7 @@ public:
     assert(pointer_ != nullptr);
     if (pointer_)
     {
-      std::memset(pointer_, 0, padded_size() * sizeof(type));
+      std::memset(pointer_, 0, padded_size() * sizeof(Type));
     }
   }
 
@@ -104,13 +104,13 @@ public:
   {
     assert(pointer_ != nullptr);
 
-    std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(type));
+    std::memset(pointer_ + size(), 0, (padded_size() - size()) * sizeof(Type));
   }
 
   template <typename R = T>
   typename std::enable_if<std::is_pod<R>::value>::type SetZeroAfter(std::size_t const &n)
   {
-    std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(type));
+    std::memset(pointer_ + n, 0, (padded_size() - n) * sizeof(Type));
   }
 
   vector_slice_type slice(std::size_t const &offset, std::size_t const &length) const

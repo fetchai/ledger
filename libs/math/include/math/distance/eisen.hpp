@@ -29,15 +29,15 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Eisen(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Eisen(memory::VectorSlice<T, S> const &a,
                                                       memory::VectorSlice<T, S> const &b)
 {
-  using type = typename memory::VectorSlice<T, S>::type;
-  return type(1) - correlation::Eisen(a, b);
+  using Type = typename memory::VectorSlice<T, S>::Type;
+  return Type(1) - correlation::Eisen(a, b);
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Eisen(ShapeLessArray<T, C> const &a,
+inline typename ShapeLessArray<T, C>::Type Eisen(ShapeLessArray<T, C> const &a,
                                                  ShapeLessArray<T, C> const &b)
 {
   return Eisen(a.data(), b.data());

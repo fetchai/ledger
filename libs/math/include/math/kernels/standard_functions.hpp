@@ -620,9 +620,9 @@ struct Isgreater
 template <typename type>
 struct Isgreaterequal
 {
-  void operator()(type const &x, type &y) const
+  void operator()(type const &x, type const &y, type &z) const
   {
-    y = std::isgreaterequal(x);
+    z = std::isgreaterequal(x, y);
   }
 };
 

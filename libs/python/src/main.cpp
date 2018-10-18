@@ -20,9 +20,8 @@
 #include "python/math/py_shape_less_array.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_shared_array.hpp"
-//#include "python/memory/py_ndarray.hpp"
 #include "python/memory/py_rectangular_array.hpp"
+#include "python/memory/py_shared_array.hpp"
 
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
@@ -65,6 +64,11 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
+#include "python/ml/layers/py_layer.hpp"
+#include "python/ml/ops/py_ops.hpp"
+#include "python/ml/py_session.hpp"
+#include "python/ml/py_variable.hpp"
+
 // !!!!
 namespace py = pybind11;
 
@@ -80,6 +84,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_image            = module.def_submodule("image");
   py::module ns_fetch_image_colors     = ns_fetch_image.def_submodule("colors");
   py::module ns_fetch_math             = module.def_submodule("math");
+  py::module ns_fetch_ml               = module.def_submodule("ml");
   py::module ns_fetch_math_correlation = ns_fetch_math.def_submodule("correlation");
   py::module ns_fetch_math_distance    = ns_fetch_math.def_submodule("distance");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
@@ -245,4 +250,14 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+
+  // Machine Learning
+
+  using ArrayType = fetch::math::linalg::Matrix<double>;
+  fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
+  using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
+  fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
+  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
+
+  fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 }

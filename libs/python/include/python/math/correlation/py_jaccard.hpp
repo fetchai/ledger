@@ -26,7 +26,7 @@ namespace math {
 namespace correlation {
 
 template <typename A>
-inline typename A::type WrapperJaccard(A const &a, A const &b)
+inline typename A::Type WrapperJaccard(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {
@@ -51,7 +51,7 @@ inline void BuildJaccardCorrelation(std::string const &custom_name, pybind11::mo
 }
 
 template <typename A>
-inline typename A::type WrapperGeneralisedJaccard(A const &a, A const &b)
+inline typename A::Type WrapperGeneralisedJaccard(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {

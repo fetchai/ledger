@@ -26,7 +26,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperVariance(A const &a)
+inline typename A::Type WrapperVariance(A const &a)
 {
   return Variance(a);
 }
