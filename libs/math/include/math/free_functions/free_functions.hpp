@@ -41,6 +41,16 @@
 
 #include "math/meta/type_traits.hpp"
 
+/////////////////////////////////
+/// include specific math functions
+/////////////////////////////////
+
+#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/free_functions/standard_functions/exp.hpp"
+#include "math/free_functions/standard_functions/fmod.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
+#include "math/free_functions/standard_functions/remainder.hpp"
+
 namespace fetch {
 namespace math {
 
@@ -670,28 +680,6 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
 }
 
 /**
- * assigns the absolute of x to this array
- * @param x
- */
-template <typename ArrayType>
-void Abs(ArrayType &x)
-{
-  kernels::stdlib::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * e^x
- * @param x
- */
-template <typename ArrayType>
-void Exp(ArrayType &x)
-{
-  kernels::stdlib::Exp<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * raise 2 to power input values of x
  * @param x
  */
@@ -711,48 +699,6 @@ void Expm1(ArrayType &x)
 {
   kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * natural logarithm of x
- * @param x
- */
-
-template <typename ArrayType>
-fetch::math::meta::IsBlasArrayLike<ArrayType, void> Log(ArrayType &x)
-{
-  kernels::stdlib::Log<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename ArrayType>
-fetch::math::meta::IsBlasAndShapedArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
-{
-  ArrayType ret{x.shape()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
-}
-template <typename ArrayType>
-fetch::math::meta::IsBlasAndNoShapeArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
-{
-  ArrayType ret{x.size()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
-}
-template <typename ArrayType>
-fetch::math::meta::IsNonBlasArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
-{
-  ArrayType ret{x.shape()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
-}
-
-template <typename Type>
-fetch::meta::IfIsArithmetic<Type, void> Log(Type &x)
-{
-  x = std::log(x);
 }
 
 /// if is arithmetic tpye

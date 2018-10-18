@@ -305,20 +305,26 @@ public:
     return sum * Type(0.5);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the floating point remainder in this
+   * array
+   * @param x
+   */
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Fmod<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Fmod(data_, x.data(), data_);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the remainder in this array with
+   * quotient rounded to int
+   * @param x
+   */
   void Remainder(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Remainder<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Remainder(data_, x.data(), data_);
   }
 
   void Remquo(self_type const &x)

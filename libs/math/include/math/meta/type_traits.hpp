@@ -31,8 +31,8 @@ namespace math {
 template <typename T, typename C>
 class ShapeLessArray;
 //
-//template <typename T, typename C, typename H, typename W>
-//class RectangularArray;
+// template <typename T, typename C, typename H, typename W>
+// class RectangularArray;
 
 namespace linalg {
 template <typename T, typename C, typename S>
@@ -44,9 +44,18 @@ class NDArray;
 
 namespace meta {
 
+////////////////////////////////////
+/// ARITHMETIC TYPE CHECKER
+////////////////////////////////////
+
+template <bool C, typename R = void>
+using EnableIf = typename std::enable_if<C, R>::type;
+
+template <typename T, typename R = T>
+using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 ////////////////////////////////////
-// MATH ARRAY LIKE SPECIALIZATIONS
+/// MATH ARRAY LIKE SPECIALIZATIONS
 ////////////////////////////////////
 
 template <typename A, typename R>
@@ -58,8 +67,8 @@ struct IsMathArrayLikeImpl<ShapeLessArray<T, C>, R>
 {
   using Type = R;
 };
-//template <typename R, typename T, typename C>
-//struct IsBlasAndShapedArrayLikeImpl<fetch::math::RectangularArray<T, C>, R>
+// template <typename R, typename T, typename C>
+// struct IsBlasAndShapedArrayLikeImpl<fetch::math::RectangularArray<T, C>, R>
 //{
 //  using Type = R;
 //};
@@ -76,9 +85,50 @@ struct IsMathArrayLikeImpl<NDArray<T, C>, R>
 template <typename A, typename R>
 using IsMathArrayLike = typename IsMathArrayLikeImpl<A, R>::Type;
 
+////////////////////////////////////
+/// MATH ARRAY WITH SHAPE LIKE SPECIALIZATIONS
+////////////////////////////////////
+
+template <typename A, typename R>
+struct IsMathShapeArrayLikeImpl
+{
+};
+// template <typename R, typename T, typename C>
+// struct IsMathShapeArrayLikeImpl<fetch::math::RectangularArray<T, C>, R>
+//{
+//  using Type = R;
+//};
+template <typename R, typename T, typename C, typename S>
+struct IsMathShapeArrayLikeImpl<fetch::math::linalg::Matrix<T, C, S>, R>
+{
+  using Type = R;
+};
+template <typename R, typename T, typename C>
+struct IsMathShapeArrayLikeImpl<NDArray<T, C>, R>
+{
+  using Type = R;
+};
+template <typename A, typename R>
+using IsMathShapeArrayLike = typename IsMathShapeArrayLikeImpl<A, R>::Type;
 
 ////////////////////////////////////
-// BLAS ARRAY SPECIALIZATIONS
+/// MATH ARRAY NO SHAPE LIKE SPECIALIZATIONS
+////////////////////////////////////
+
+template <typename A, typename R>
+struct IsMathShapelessArrayLikeImpl
+{
+};
+template <typename R, typename T, typename C>
+struct IsMathShapelessArrayLikeImpl<ShapeLessArray<T, C>, R>
+{
+  using Type = R;
+};
+template <typename A, typename R>
+using IsMathShapelessArrayLike = typename IsMathShapelessArrayLikeImpl<A, R>::Type;
+
+////////////////////////////////////
+/// BLAS ARRAY SPECIALIZATIONS
 ////////////////////////////////////
 
 template <typename A, typename R>
@@ -90,20 +140,20 @@ struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
 {
   using Type = R;
 };
-//template<typename R, typename T, typename C>
-//struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
+// template<typename R, typename T, typename C>
+// struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
 //  using Type = R;
 //};
-template<typename R, typename T, typename C, typename S>
-struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R> {
+template <typename R, typename T, typename C, typename S>
+struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R>
+{
   using Type = R;
 };
 template <typename A, typename R>
 using IsBlasArrayLike = typename IsBlasArrayLikeImpl<A, R>::Type;
 
-
 ////////////////////////////////////
-// NON BLAS ARRAY SPECIALIZATIONS
+/// NON BLAS ARRAY SPECIALIZATIONS
 ////////////////////////////////////
 
 template <typename A, typename R>
@@ -118,17 +168,16 @@ struct IsNonBlasArrayLikeImpl<NDArray<T, C>, R>
 template <typename A, typename R>
 using IsNonBlasArrayLike = typename IsNonBlasArrayLikeImpl<A, R>::Type;
 
-
 ////////////////////////////////////
-// BLAS ARRAY WITH SHAPE SPECIALIZATIONS
+/// BLAS ARRAY WITH SHAPE SPECIALIZATIONS
 ////////////////////////////////////
 
 template <typename A, typename R>
 struct IsBlasAndShapedArrayLikeImpl
 {
 };
-//template <typename R, typename T, typename C>
-//struct IsBlasAndShapedArrayLikeImpl<fetch::math::RectangularArray<T, C>, R>
+// template <typename R, typename T, typename C>
+// struct IsBlasAndShapedArrayLikeImpl<fetch::math::RectangularArray<T, C>, R>
 //{
 //  using Type = R;
 //};
@@ -141,7 +190,7 @@ template <typename A, typename R>
 using IsBlasAndShapedArrayLike = typename IsBlasAndShapedArrayLikeImpl<A, R>::Type;
 
 ////////////////////////////////////
-// BLAS ARRAY WITHOUT SHAPE SPECIALIZATIONS
+/// BLAS ARRAY WITHOUT SHAPE SPECIALIZATIONS
 ////////////////////////////////////
 
 template <typename A, typename R>
@@ -155,14 +204,6 @@ struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapeLessArray<T, C>, R>
 };
 template <typename A, typename R>
 using IsBlasAndNoShapeArrayLike = typename IsBlasAndNoShapeArrayLikeImpl<A, R>::Type;
-
-
-
-
-
-
-
-
 
 }  // namespace meta
 }  // namespace math
