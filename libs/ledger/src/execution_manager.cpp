@@ -434,9 +434,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::BOOKMARKING_STATE:
     {
-
-      // lookup the final hash
-      StateHash state_hash = storage_->Hash();
+      // calculate the final state hash
+      crypto::SHA256 hash;
+      hash.Update(storage_->Hash());
+      StateHash state_hash = hash.Final();
 
       // request a bookmark
       Bookmark bookmark     = 0;

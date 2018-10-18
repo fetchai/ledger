@@ -196,7 +196,13 @@ public:
 
     auto topBlock = block_chain_.at(heaviest_.second);
 
-    while ((topBlock.body().block_number != 0) && (result.size() < limit))
+    std::size_t additional_blocks = 0;
+    if (limit > 1)
+    {
+      additional_blocks = static_cast<std::size_t>(limit - 1);
+    }
+
+    while ((topBlock.body().block_number != 0) && (result.size() < additional_blocks))
     {
       result.push_back(topBlock);
       auto hash = topBlock.body().previous_hash;
