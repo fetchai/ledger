@@ -89,10 +89,10 @@ protected:
 
   using ShutdownFlag = std::atomic<bool>;
   using Thread       = std::thread;
-  using ThreadP      = std::shared_ptr<Thread>;
+  using ThreadPtr    = std::shared_ptr<Thread>;
 
   Target *     target_{nullptr};
-  ThreadP      thread_;
+  ThreadPtr    thread_;
   ShutdownFlag shutdown_{false};
   WorkFunc     workcycle_;
 };

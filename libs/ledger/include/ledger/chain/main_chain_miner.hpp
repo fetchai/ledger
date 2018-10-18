@@ -41,17 +41,21 @@ public:
   using MinerInterface        = fetch::miner::MinerInterface;
   using BlockCompleteCallback = std::function<void(BlockType const &)>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainMiner";
+  static constexpr char const *LOGGING_NAME    = "MainChainMiner";
+  static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 uint64_t minerNumber)
+                 uint64_t                            minerNumber,
+                 std::chrono::steady_clock::duration block_interval =
+                     std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , mainChain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
     , minerNumber_{minerNumber}
+    , block_interval_{block_interval}
   {}
 
   ~MainChainMiner()
@@ -80,28 +84,16 @@ public:
   }
 
 private:
-  static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
-  static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
+  using Clock        = std::chrono::high_resolution_clock;
+  using Timestamp    = Clock::time_point;
+  using Milliseconds = std::chrono::milliseconds;
 
-  using Clock     = std::chrono::high_resolution_clock;
-  using Timestamp = Clock::time_point;
-
-  template <typename T>
-  Timestamp CalculateNextBlockTime(T &rng)
-  {
-    Timestamp block_time = Clock::now() + std::chrono::milliseconds{uint32_t{BLOCK_PERIOD_MS}};
-    block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
-
-    return block_time;
-  }
+  std::function<void(const BlockType)> onBlockComplete_;
 
   void MinerThreadEntrypoint()
   {
-    std::random_device rd;
-    std::mt19937       rng(rd());
-
     // schedule the next block time
-    Timestamp next_block_time = CalculateNextBlockTime(rng);
+    Timestamp next_block_time = Clock::now() + block_interval_;
 
     BlockHash previous_heaviest;
 
@@ -122,7 +114,7 @@ private:
                        " from: ", byte_array::ToBase64(block.prev()));
 
         // new heaviest has been detected
-        next_block_time    = CalculateNextBlockTime(rng);
+        next_block_time    = Clock::now() + block_interval_;
         previous_heaviest  = block.hash().Copy();
         searching_for_hash = false;
       }
@@ -141,7 +133,7 @@ private:
           }
 
           // stop searching for the hash and schedule the next time to generate a block
-          next_block_time    = CalculateNextBlockTime(rng);
+          next_block_time    = Clock::now() + block_interval_;
           searching_for_hash = false;
         }
       }
@@ -176,12 +168,13 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &       mainChain_;
-  chain::BlockCoordinator &blockCoordinator_;
-  MinerInterface &         miner_;
-  std::thread              thread_;
-  uint64_t                 minerNumber_{0};
-  BlockCompleteCallback    on_block_complete_;
+  chain::MainChain &                  mainChain_;
+  chain::BlockCoordinator &           blockCoordinator_;
+  MinerInterface &                    miner_;
+  std::thread                         thread_;
+  uint64_t                            minerNumber_{0};
+  BlockCompleteCallback               on_block_complete_;
+  std::chrono::steady_clock::duration block_interval_;
 };
 
 }  // namespace chain
