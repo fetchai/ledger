@@ -89,6 +89,7 @@ TEST(ndarray, max_axis_tests)
   // set up the original array and the return array
   std::vector<std::size_t> new_shape{orig_shape};
   new_shape.erase(new_shape.begin() + axis);
+
   _A<double> a{orig_shape};
 
   for (std::size_t i = 0; i < data_size; ++i)

@@ -29,9 +29,9 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type StandardDeviation(A const &a)
+inline typename A::Type StandardDeviation(A const &a)
 {
-  using type = typename A::type;
+  using type = typename A::Type;
 
   type m = Variance(a);
   return std::sqrt(m);

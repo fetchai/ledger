@@ -26,7 +26,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperMean(A const &a)
+inline typename A::Type WrapperMean(A const &a)
 {
   return Mean(a);
 }

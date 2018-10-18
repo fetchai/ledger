@@ -26,7 +26,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::type WrapperStandardDeviation(A const &a)
+inline typename A::Type WrapperStandardDeviation(A const &a)
 {
   return StandardDeviation(a);
 }

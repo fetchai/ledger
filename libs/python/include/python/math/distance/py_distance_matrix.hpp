@@ -44,39 +44,39 @@ inline A WrapperDistanceMatrix(A const &a, A const &b, std::string const &method
   ret.Resize(a.height(), b.height());
   if (method == "euclidean")
   {
-    DistanceMatrix(ret, a, b, Euclidean<typename A::type>);
+    DistanceMatrix(ret, a, b, Euclidean<typename A::Type>);
   }
   else if (method == "hamming")
   {
-    DistanceMatrix(ret, a, b, Hamming<typename A::type>);
+    DistanceMatrix(ret, a, b, Hamming<typename A::Type>);
   }
   else if (method == "manhattan")
   {
-    DistanceMatrix(ret, a, b, Manhattan<typename A::type>);
+    DistanceMatrix(ret, a, b, Manhattan<typename A::Type>);
   }
   else if (method == "pearson")
   {
-    DistanceMatrix(ret, a, b, Pearson<typename A::type>);
+    DistanceMatrix(ret, a, b, Pearson<typename A::Type>);
   }
   else if (method == "eisen")
   {
-    DistanceMatrix(ret, a, b, Eisen<typename A::type>);
+    DistanceMatrix(ret, a, b, Eisen<typename A::Type>);
   }
   else if (method == "cosine")
   {
-    DistanceMatrix(ret, a, b, Eisen<typename A::type>);
+    DistanceMatrix(ret, a, b, Eisen<typename A::Type>);
   }
   else if (method == "jaccard")
   {
-    DistanceMatrix(ret, a, b, Jaccard<typename A::type>);
+    DistanceMatrix(ret, a, b, Jaccard<typename A::Type>);
   }
   else if (method == "genelralised jaccard")
   {
-    DistanceMatrix(ret, a, b, GeneralisedJaccard<typename A::type>);
+    DistanceMatrix(ret, a, b, GeneralisedJaccard<typename A::Type>);
   }
   else if (method == "braycurtis")
   {
-    DistanceMatrix(ret, a, b, Braycurtis<typename A::type>);
+    DistanceMatrix(ret, a, b, Braycurtis<typename A::Type>);
   }
   else
   {

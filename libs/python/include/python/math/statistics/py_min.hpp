@@ -26,9 +26,9 @@ namespace fetch {
 namespace math {
 
 template <typename A>
-inline void WrapperMin(A const &a, typename A::type &ret)
+inline void WrapperMin(A const &a, typename A::Type &ret)
 {
-  Min<typename A::type, typename A::container_type>(a, ret);
+  Min<typename A::Type, typename A::container_type>(a, ret);
 }
 
 inline void BuildMinStatistics(std::string const &custom_name, pybind11::module &module)
