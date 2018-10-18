@@ -192,15 +192,15 @@ TEST(layers_test, two_layer_xor_CEL)
   SetInputXOR(input_data->data());
 
   gt->data().Set(0, 0, 1.0);  // Off
-  gt->data().Set(0, 0, 0.0);
+  gt->data().Set(0, 1, 0.0);
 
   gt->data().Set(1, 0, 0.0);  // On
   gt->data().Set(1, 1, 1.0);
 
-  gt->data().Set(2, 1, 0.0);  // On
-  gt->data().Set(2, 0, 1.0);
+  gt->data().Set(2, 0, 0.0);  // On
+  gt->data().Set(2, 1, 1.0);
 
-  gt->data().Set(3, 1, 1.0);  // Off
+  gt->data().Set(3, 0, 1.0);  // Off
   gt->data().Set(3, 1, 0.0);
 
   // loss
@@ -211,10 +211,17 @@ TEST(layers_test, two_layer_xor_CEL)
 
   // forward pass on the computational graph
   auto prediction = sess.Predict(input_data, y_pred->output());
-  ASSERT_TRUE(loss->data()[0] < 1.0);
 
-  ASSERT_TRUE(prediction[0] < 0.1);
-  ASSERT_TRUE(prediction[1] > 0.9);
-  ASSERT_TRUE(prediction[2] > 0.9);
-  ASSERT_TRUE(prediction[3] < 0.1);
+  std::cout << "loss->data()[0]: " << loss->data()[0] << std::endl;
+  for (std::size_t idx = 0; idx < prediction.size(); ++idx)
+  {
+    std::cout << "prediction[" << idx << "]: " << prediction[idx] << std::endl;
+  }
+
+  ASSERT_TRUE(loss->data()[0] < 1.0);
+  ASSERT_TRUE(prediction.AllClose(gt->data()));
+  //  ASSERT_TRUE(prediction[0] < 0.1);
+  //  ASSERT_TRUE(prediction[1] > 0.9);
+  //  ASSERT_TRUE(prediction[2] > 0.9);
+  //  ASSERT_TRUE(prediction[3] < 0.1);
 }
