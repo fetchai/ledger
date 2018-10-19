@@ -263,12 +263,14 @@ public:
 
   int AsInt() const
   {
-    return atoi(reinterpret_cast<char const *>(arr_pointer_));
+    std::string const value = static_cast<std::string>(*this);
+    return atoi(value.c_str());
   }
 
   double AsFloat() const
   {
-    return atof(reinterpret_cast<char const *>(arr_pointer_));
+    std::string const value = static_cast<std::string>(*this);
+    return atof(value.c_str());
   }
 
   std::string ToBase64() const;

@@ -25,8 +25,8 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
-  using block_type        = chain::BlockBody;
-  using block_digest_type = block_type::digest_type;
+  using Block     = chain::BlockBody;
+  using BlockHash = Block::digest_type;
 
   enum class Status
   {
@@ -47,11 +47,11 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  virtual Status            Execute(block_type const &block) = 0;
-  virtual block_digest_type LastProcessedBlock()             = 0;
-  virtual bool              IsActive()                       = 0;
-  virtual bool              IsIdle()                         = 0;
-  virtual bool              Abort()                          = 0;
+  virtual Status    Execute(Block const &block) = 0;
+  virtual BlockHash LastProcessedBlock()        = 0;
+  virtual bool      IsActive()                  = 0;
+  virtual bool      IsIdle()                    = 0;
+  virtual bool      Abort()                     = 0;
   /// @}
 };
 

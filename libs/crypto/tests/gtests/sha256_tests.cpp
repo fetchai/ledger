@@ -16,38 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
+#include "core/byte_array/encoders.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include <iostream>
 
-#include "core/random/lcg.hpp"
-#include "math/distance/pearson.hpp"
-#include "math/linalg/matrix.hpp"
-#include "testing/unittest.hpp"
+using namespace fetch;
+using namespace fetch::crypto;
 
-using namespace fetch::math::distance;
-using namespace fetch::math::linalg;
+#include <gtest/gtest.h>
 
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
-
-int main()
+using byte_array_type = byte_array::ByteArray;
+TEST(crypto_SHA_gtest, The_SHA256_implmentation_differs_from_other_libraries)
 {
-  SCENARIO("Pearson Correlation")
-  {
-    _M<double> A = _M<double>(R"(1 0 0)");
-    EXPECT(Pearson(A, A) == 0);
+  auto hash = [](byte_array_type const &s) { return byte_array::ToHex(Hash<crypto::SHA256>(s)); };
 
-    /*
-        B = _M<double>(R"(0 2 0)");
-        EXPECT( Correlation(A,B) == 3 );
-
-        B = _M<double>(R"(1 1 0)");
-        EXPECT( Correlation(A,B) == 1 );
-        */
-  };
-
-  return 0;
+  byte_array_type input = "Hello world";
+  EXPECT_EQ(hash(input), "64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c");
+  input = "some RandSom byte_array!! With !@#$%^&*() Symbols!";
+  EXPECT_EQ(hash(input), "3d4e08bae43f19e146065b7de2027f9a611035ae138a4ac1978f03cf43b61029");
 }

@@ -30,11 +30,11 @@ public:
 
 private:
   // transaction handlers
-  Status CreateWealth(transaction_type const &tx);
-  Status Transfer(transaction_type const &tx);
+  Status CreateWealth(Transaction const &tx);
+  Status Transfer(Transaction const &tx);
 
   // queries
-  Status Balance(query_type const &query, query_type &response);
+  Status Balance(Query const &query, Query &response);
 };
 
 }  // namespace ledger

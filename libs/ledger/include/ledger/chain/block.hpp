@@ -93,7 +93,6 @@ public:
   // Meta: Update hash
   void UpdateDigest()
   {
-
     serializers::ByteArrayBuffer buf;
     buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
         << body_.miner_number;

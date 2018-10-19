@@ -61,6 +61,9 @@ public:
   using PrevHash  = fetch::byte_array::ByteArray;
   using ProofType = BlockType::proof_type;
 
+  using Mutex = fetch::mutex::Mutex;
+  using Lock  = std::lock_guard<Mutex>;
+
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction
@@ -88,84 +91,7 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  bool AddBlock(BlockType &block, bool recursive_iteration = false)
-  {
-    assert(block.body().previous_hash.size() > 0);
-
-    fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
-    std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
-
-    if (block.hash().size() == 0)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Erk! You called AddBlock with no UpdateDigest");
-    }
-
-    BlockType prev_block;
-
-    if (!recursive_iteration)
-    {
-      // First check if block already exists (not checking in object store)
-      if (block_chain_.find(block.hash()) != block_chain_.end())
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Attempting to add already seen block");
-        return false;
-      }
-
-      // Look for the prev block to this one
-      auto it_prev = block_chain_.find(block.body().previous_hash);
-
-      if (it_prev == block_chain_.end())
-      {
-        // Note: think about rolling back into FS
-        FETCH_LOG_INFO(LOGGING_NAME,
-                       "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
-
-        // We can't find the prev, this is probably a loose block.
-        lock.unlock();
-        return CheckDiskForBlock(block);
-      }
-
-      prev_block = (*it_prev).second;
-
-      // Also a loose block if it points to a loose block
-      if (prev_block.loose() == true)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Block connects to loose block");
-        NewLooseBlock(block);
-        return true;
-      }
-    }
-    else
-    {
-      auto it = block_chain_.find(block.body().previous_hash);
-      assert(it != block_chain_.end());
-
-      prev_block = it->second;
-    }
-
-    // At this point we have a new block with a prev that's known and not loose. Update tips
-    block.loose()         = false;
-    bool heaviestAdvanced = UpdateTips(block, prev_block);
-
-    // Add block
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block.hash()));
-    block_chain_[block.hash()] = block;
-
-    if (heaviestAdvanced)
-    {
-      WriteToFile();
-    }
-
-    // Now we're done, it's possible this added block completed some loose blocks.
-    main_mutex_.unlock();
-
-    if (!recursive_iteration)
-    {
-      CompleteLooseBlocks(block);
-    }
-
-    return true;
-  }
+  bool AddBlock(BlockType &block, bool recursive_iteration = false);
 
   BlockType const &HeaviestBlock() const
   {
@@ -196,7 +122,13 @@ public:
 
     auto topBlock = block_chain_.at(heaviest_.second);
 
-    while ((topBlock.body().block_number != 0) && (result.size() < limit))
+    std::size_t additional_blocks = 0;
+    if (limit > 1)
+    {
+      additional_blocks = static_cast<std::size_t>(limit - 1);
+    }
+
+    while ((topBlock.body().block_number != 0) && (result.size() < additional_blocks))
     {
       result.push_back(topBlock);
       auto hash = topBlock.body().previous_hash;
@@ -211,10 +143,43 @@ public:
         break;
       }
 
-      topBlock = (*it).second;
+      topBlock = it->second;
     }
 
     result.push_back(topBlock);  // this should be genesis
+    return result;
+  }
+
+  std::vector<BlockType> ChainPreceding(
+      const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
+  {
+    fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
+    FETCH_LOCK(main_mutex_);
+
+    std::vector<BlockType> result;
+
+    auto topBlock = block_chain_.at(at);
+
+    while (result.size() < limit)
+    {
+      result.push_back(topBlock);
+      if (topBlock.body().block_number == 0)
+      {
+        break;
+      }
+      auto hash = topBlock.body().previous_hash;
+      // Walk down
+      auto it = block_chain_.find(hash);
+      if (it == block_chain_.end())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Mainchain: Failed while walking down\
+            from ",
+                       byte_array::ToBase64(at), " to find genesis!");
+        break;
+      }
+      topBlock = it->second;
+    }
     return result;
   }
 
@@ -256,11 +221,31 @@ public:
 
     if (it != block_chain_.end())
     {
-      block = (*it).second;
+      block = it->second;
       return true;
     }
 
     return false;
+  }
+
+  std::vector<BlockHash> GetMissingBlockHashes(size_t maximum)
+  {
+    std::vector<BlockHash> results;
+    for (auto const &loose_block : loose_blocks_)
+    {
+      if (maximum <= results.size())
+      {
+        break;
+      }
+      results.push_back(loose_block.first);
+    }
+    return results;
+  }
+
+  bool HasMissingBlocks() const
+  {
+    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
+    return !loose_blocks_.empty();
   }
 
 private:
@@ -362,7 +347,7 @@ private:
       return false;
     }
 
-    block = (*it).second;
+    block = it->second;
 
     return true;
   }
@@ -389,7 +374,7 @@ private:
       return;
     }
 
-    std::vector<BlockHash> blocks_to_add = (*it).second;
+    std::vector<BlockHash> blocks_to_add = it->second;
     loose_blocks_.erase(it);
 
     FETCH_LOG_DEBUG(LOGGING_NAME,
@@ -413,7 +398,7 @@ private:
         auto it = loose_blocks_.find(addBlock.hash());
         if (it != loose_blocks_.end())
         {
-          std::vector<BlockHash> const &next_blocks = (*it).second;
+          std::vector<BlockHash> const &next_blocks = it->second;
 
           for (auto const &block_hash : next_blocks)
           {

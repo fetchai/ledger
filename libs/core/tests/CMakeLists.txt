@@ -11,13 +11,15 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
-add_fetch_test(tokenizer_test fetch-core tokenizer/tokenizer.cpp)
-add_fetch_test(encode_decode_test fetch-core encode_decode.cpp)
-add_fetch_test(referenced_byte_array_test fetch-core referenced_byte_array.cpp)
+
 add_fetch_test(lfg_test fetch-core test_lfg.cpp)
-add_fetch_test(json_document_test fetch-core json/document.cpp)
 add_fetch_test(variant_test fetch-core script/variant.cpp)
 add_fetch_gtest(serializers-gtests fetch-core serializers)
 add_fetch_gtest(variant-test-gtests fetch-core script/variant/)
 add_fetch_gtest(byte-array-gtests fetch-core byte_array)
 
+add_fetch_gtest(variant_test2 fetch-core script/variant/)
+add_fetch_gtest(tokenizer_testing_individual_consumers_gtest fetch-core json/gtest/)
+add_fetch_gtest(core_encode_decode_gtest fetch-core tokenizer/gtest/)
+
+ 
