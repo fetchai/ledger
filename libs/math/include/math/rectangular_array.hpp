@@ -410,7 +410,7 @@ public:
     }
 
     std::size_t ret_height = (idxs[0][1] - idxs[0][0]) / idxs[0][2];
-    std::size_t ret_width = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
+    std::size_t ret_width  = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
     Reshape(ret_height, ret_width);
 
     std::size_t height_counter = 0;

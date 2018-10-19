@@ -49,10 +49,8 @@ void BuildVariable(std::string const &custom_name, pybind11::module &module)
       .def("Reshape", [](SelfType &a, std::size_t i, std::size_t j) { a.Reshape(i, j); })
       .def("data", [](SelfType &a) { return a.data(); })
       .def("SetData", [](SelfType &s, ArrayType const &v) { s.SetData(v); })
-      .def("SetRange", [](SelfType &ret, std::vector<std::vector<std::size_t>> &range, SelfType const &s)
-      {
-        ret.data().SetRange(range, s.data());
-      })
+      .def("SetRange", [](SelfType &ret, std::vector<std::vector<std::size_t>> &range,
+                          SelfType const &s) { ret.data().SetRange(range, s.data()); })
 
       .def("Grads", [](SelfType &s) { return s.grad(); })
       .def("FromNumpy",
