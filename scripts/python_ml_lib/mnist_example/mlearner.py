@@ -10,6 +10,8 @@ from fetch.ml import CrossEntropyLoss
 import matplotlib.pyplot as plt
 
 
+import line_profiler
+
 DO_PLOTTING = 0
 
 def plot_weights(layers):
@@ -181,11 +183,12 @@ class MLearner():
             print("not implemented prediction padding yet")
             raise NotImplementedError
         else:
-            # self.assign_batch(self.x_te, self.y_te, 0)
+            self.assign_batch(self.x_te, self.y_te, 0)
             preds.append(self.do_one_pred())
 
         return preds
 
+    @profile
     def assign_batch(self, x, y, cur_rep):
         # assign X batch
         for k in range(self.batch_size):
@@ -213,15 +216,12 @@ class MLearner():
         print("\taccuracy: ", sum_acc)
         return
 
-
+    @profile
     def train(self):
 
         self.sess.SetInput(self.layers[0], self.X_batch)
         for i in range(len(self.layers) - 1):
             self.sess.SetInput(self.layers[i + 1], self.layers[i].Output())
-
-        # assign fresh data batch
-        self.assign_batch(self.x_tr, self.y_tr, 0)
 
         # epochs
         for i in range(self.n_epochs):
@@ -231,7 +231,7 @@ class MLearner():
             for j in tqdm(range(0, self.x_tr.shape()[0], self.batch_size)):
 
                 # # assign fresh data batch
-                # self.assign_batch(self.x_tr, self.y_tr, j)
+                self.assign_batch(self.x_tr, self.y_tr, j)
 
                 # loss calculation
                 loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
@@ -248,7 +248,7 @@ class MLearner():
                 #     # print("\n")
                 #     # for j in range(1):
                 #     #     sys.stdout.write('{:0.13f}'.format(loss.data()[i]) + "\t")
-                # print("sumloss: " + str(sum_loss))
+                print("sumloss: " + str(sum_loss))
 
             cur_pred = self.predict()
 
