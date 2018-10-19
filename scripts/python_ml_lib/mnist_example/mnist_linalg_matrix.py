@@ -1,5 +1,6 @@
-# coding: utf-8
 from mlearner import MLearner
+from line_profiler import LineProfiler
+
 def run_mnist():
 
     mlearner = MLearner()
@@ -10,9 +11,4 @@ def run_mnist():
     # being training
     mlearner.train()
 
-
-
-# if __name__ == "__main__":
-#     import cProfile
-#     cProfile.runctx('run_mnist()', globals(), locals())
 run_mnist()

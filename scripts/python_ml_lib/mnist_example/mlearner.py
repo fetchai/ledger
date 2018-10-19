@@ -54,8 +54,6 @@ class MLearner():
         self.Y_batch = self.sess.Variable([self.batch_size, 10], "Y_batch")
 
 
-
-
     def initialise_network(self):
 
         self.sess = Session()
@@ -190,15 +188,8 @@ class MLearner():
 
     @profile
     def assign_batch(self, x, y, cur_rep):
-        # assign X batch
-        for k in range(self.batch_size):
-            for l in range(28 * 28):
-                self.X_batch[k, l] = x[cur_rep + k, l]
-
-        # assign Y batch
-        for k in range(self.batch_size):
-            for l in range(10):
-                self.Y_batch[k, l] = y[cur_rep + k, l]
+        self.X_batch.SetRange([[cur_rep, cur_rep + self.batch_size, 1], [0, 784, 1]], x)
+        self.Y_batch.SetRange([[cur_rep, cur_rep + self.batch_size, 1], [0, 10, 1]], y)
         return
 
     def print_accuracy(self, cur_pred):

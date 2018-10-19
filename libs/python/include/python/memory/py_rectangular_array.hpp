@@ -32,9 +32,9 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
       .def(py::init<>())
       .def(py::init<const std::size_t &>())
       .def(py::init<const std::size_t &, const std::size_t &>())
-      //    .def(py::init< RectangularArray<T> && >())
+          //    .def(py::init< RectangularArray<T> && >())
       .def(py::init<const RectangularArray<T> &>())
-      //    .def(py::self = py::self )
+          //    .def(py::self = py::self )
 
       .def("Save", &RectangularArray<T>::Save)
       .def("size", &RectangularArray<T>::size)
@@ -73,14 +73,14 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
                RectangularArray<T>::Resize)
       .def("Rotate", (void (RectangularArray<T>::*)(const double &,
                                                     const typename RectangularArray<T>::Type)) &
-                         RectangularArray<T>::Rotate)
+          RectangularArray<T>::Rotate)
       .def("Rotate", (void (RectangularArray<T>::*)(const double &, const double &, const double &,
                                                     const typename RectangularArray<T>::Type)) &
-                         RectangularArray<T>::Rotate)
-      //    .def(py::self != py::self )
-      //    .def(py::self == py::self )
+          RectangularArray<T>::Rotate)
+          //    .def(py::self != py::self )
+          //    .def(py::self == py::self )
       .def("data", (typename RectangularArray<T>::container_type & (RectangularArray<T>::*)()) &
-                       RectangularArray<T>::data)
+          RectangularArray<T>::data)
       .def("data",
            (const typename RectangularArray<T>::container_type &(RectangularArray<T>::*)() const) &
                RectangularArray<T>::data)
@@ -161,18 +161,18 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 
       .def("At",
            (const typename RectangularArray<T>::Type &(
-               RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)const) &
+           RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)const) &
                RectangularArray<T>::At)
       .def("At",
            (const typename RectangularArray<T>::Type &(
-               RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
-                                       const typename RectangularArray<T>::size_type &)const) &
+           RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
+                                   const typename RectangularArray<T>::size_type &)const) &
                RectangularArray<T>::At)
       .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &,
                                                const typename RectangularArray<T>::size_type &)) &
-                     RectangularArray<T>::At)
+          RectangularArray<T>::At)
       .def("At", (T & (RectangularArray<T>::*)(const typename RectangularArray<T>::size_type &)) &
-                     RectangularArray<T>::At)
+          RectangularArray<T>::At)
 
       .def("__getitem__",
            [](const RectangularArray<T> &s, int a) {
@@ -262,9 +262,39 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 
              s(i, j) = v;
            })
-      //      .def("__eq__", [](RectangularArray<T> &      s,
-      //                        py::array_t<double> const &arr) { std::cout << "WAS HERE" <<
-      //                        std::endl; })
+      .def("GetRange",
+           [](RectangularArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
+             assert(idxs.size() > 0);
+             assert(idxs.size() == 2);
+             for (auto cur_idx : idxs)
+             {
+               assert(cur_idx.size() == 3);
+             }
+
+             std::size_t ret_height = (idxs[0][1] - idxs[0][0]) / idxs[0][2];
+             std::size_t ret_width = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
+
+             RectangularArray<T> ret{ret_height, ret_width};
+
+             std::size_t height_counter = 0;
+             std::size_t width_counter = 0;
+             for (std::size_t i = idxs[0][0]; i < idxs[0][1]; i += idxs[0][2])
+             {
+               for (std::size_t j = idxs[1][0]; j < idxs[1][1]; j += idxs[1][2])
+               {
+                 ret.Set(height_counter, width_counter, s.At(i, j));
+               }
+             }
+
+             return ret;
+           })
+      .def("SetRange",
+           [](RectangularArray<T> &ret, std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s) {
+             ret.SetRange(idxs, s);
+           })
+          //      .def("__eq__", [](RectangularArray<T> &      s,
+          //                        py::array_t<double> const &arr) { std::cout << "WAS HERE" <<
+          //                        std::endl; })
       .def("FromNumpy",
            [](RectangularArray<T> &s, py::array_t<T> arr) {
              auto buf        = arr.request();

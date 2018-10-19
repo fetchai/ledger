@@ -79,7 +79,7 @@ public:
 
   void SetData(ArrayType const &indata_)
   {
-    data_ = ArrayType(indata_);
+    data_ = indata_;
   }
 
   void Forward(SelfPtrType ptr)
