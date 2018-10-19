@@ -354,6 +354,26 @@ Router::RoutingTable Router::GetRoutingTable() const
 }
 
 /**
+ * Lookup a routing
+ *
+ * @return The address corresponding to a handle in the table.
+ */
+bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  for(const auto &routing : routing_table_)
+  {
+    if (routing.second.handle == handle)
+    {
+      address = ToConstByteArray(routing.first);
+      return true;
+    }
+  }
+  return false;
+}
+
+
+/**
  * Periodic call initiated from the main muddle instance used for periodic maintenance of the
  * router
  */

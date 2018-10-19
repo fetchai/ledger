@@ -99,6 +99,8 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  bool HandleToAddress(const Handle &handle, Address &address) const;
+
   void Cleanup();
 
 private:

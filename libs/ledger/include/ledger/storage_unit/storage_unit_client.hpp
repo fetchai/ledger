@@ -34,6 +34,10 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -41,7 +45,9 @@
 namespace fetch {
 namespace ledger {
 
+class LaneConnectorWorkerInterface;
 class LaneConnectorWorker;
+class MuddleLaneConnectorWorker;
 
 class StorageUnitClient : public StorageUnitInterface
 {
@@ -52,11 +58,19 @@ public:
     std::atomic<uint32_t> lane{0};
   };
 
+  using Client               = muddle::rpc::Client;
+  using MuddleEp             = muddle::MuddleEndpoint;
+  using Muddle               = muddle::Muddle;
+  using Address              = Muddle::Address;
+  using Uri              = Muddle::Uri;
+  using Peer                 = fetch::network::Peer;
+
   using LaneIndex            = LaneIdentity::lane_type;
   using ServiceClient        = service::ServiceClient;
   using SharedServiceClient  = std::shared_ptr<ServiceClient>;
   using WeakServiceClient    = std::weak_ptr<ServiceClient>;
   using SharedServiceClients = std::map<LaneIndex, SharedServiceClient>;
+  using MuddleClients        = std::map<LaneIndex, Address>;
   using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
   using Handle               = ClientRegister::connection_handle_type;
   using NetworkManager       = fetch::network::NetworkManager;
@@ -65,7 +79,6 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using Mutex                = fetch::mutex::Mutex;
   using LockT                = std::lock_guard<Mutex>;
-  using Peer                 = fetch::network::Peer;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -86,12 +99,12 @@ public:
   }
 
 public:
-  template <typename T>
-  size_t AddLaneConnectionsWaiting(
-      const std::map<LaneIndex, Peer> &lanes,
+  size_t AddLaneConnectionsWaitingMuddle(
+      Muddle &muddle,
+      const std::map<LaneIndex, Uri> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
   {
-    AddLaneConnections<T>(lanes, timeout);
+    AddLaneConnectionsMuddle(muddle, lanes, timeout);
     for (;;)
     {
       {
@@ -108,27 +121,27 @@ public:
     bg_work_.DiscardTimeouts();
 
     FETCH_LOCK(mutex_);
-    return lanes_.size();
+    return lane_addresses_.size();
   }
 
-  bool ClientForLaneConnected(LaneIndex lane)
+  void AddLaneConnectionsMuddle(
+                                Muddle &muddle,
+                                const std::map<LaneIndex, Uri> &lanes,
+                                const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000)
+                                );
+
+  bool GetAddressForLane(LaneIndex lane, Address &address) const
   {
     FETCH_LOCK(mutex_);
-    auto iter = lanes_.find(lane);
-    return (iter != lanes_.end());
-  }
-
-  SharedServiceClient GetClientForLane(LaneIndex lane)
-  {
-    LockT lock(mutex_);
-    auto  iter = lanes_.find(lane);
-    if (iter != lanes_.end())
+    auto  iter = lane_addresses_.find(lane);
+    if (iter != lane_addresses_.end())
     {
-      return iter->second;
+      address = iter->second;
+      return true;
     }
-    return SharedServiceClient();
+    return false;
   }
-
+  /*
   void AddTransaction(chain::VerifiedTransaction const &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
@@ -259,12 +272,12 @@ public:
         ->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         ->As<byte_array::ByteArray>();
   }
-
+  */
   std::size_t lanes() const
   {
-    return lanes_.size();
+    return lane_addresses_.size();
   }
-
+  /*
   bool IsAlive() const
   {
     bool alive = true;
@@ -279,10 +292,12 @@ public:
     }
     return alive;
   }
-
+  */
 private:
 private:
-  friend class LaneConnectorWorker;  // this will do work for us, it's
+  friend class LaneConnectorWorkerInterface;
+  friend class MuddleLaneConnectorWorker;
+  friend class LaneConnectorWorker;  // these will do work for us, it's
                                      // easier if it has access to our
                                      // types.
   enum class State
@@ -292,44 +307,18 @@ private:
     QUERYING,
     PINGING,
     SNOOZING,
-    DONE,
+    SUCCESS,
     TIMEDOUT,
     FAILED,
   };
 
-  using Worker                  = LaneConnectorWorker;
+  using Worker                  = MuddleLaneConnectorWorker;
   using WorkerP                 = std::shared_ptr<Worker>;
-  using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
+  using BackgroundedWork        = network::BackgroundedWork<Worker>;
   using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
 
   void WorkCycle();
-
-  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane, SharedServiceClient client,
-                                                  std::string               name,
-                                                  std::chrono::milliseconds timeout);
-  template <typename T>
-  void AddLaneConnections(
-      const std::map<LaneIndex, Peer> &lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
-  {
-    if (!workthread_)
-    {
-      workthread_ =
-          std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
-    }
-
-    for (auto const &lane : lanes)
-    {
-      auto                lanenum = lane.first;
-      auto                target  = lane.second;
-      SharedServiceClient client  = register_.template CreateServiceClient<T>(
-          network_manager_, target.address(), target.port());
-      std::string name   = target.ToString();
-      auto        worker = MakeWorker(lanenum, client, name, std::chrono::milliseconds(timeout));
-      bg_work_.Add(worker);
-    }
-  }
 
   void SetLaneLog2(LaneIndex count)
   {
@@ -339,8 +328,8 @@ private:
   NetworkManager          network_manager_;
   uint32_t                log2_lanes_ = 0;
   ClientRegister          register_;
-  Mutex                   mutex_{__LINE__, __FILE__};
-  SharedServiceClients    lanes_;
+  mutable Mutex                   mutex_{__LINE__, __FILE__};
+  MuddleClients    lane_addresses_;
   BackgroundedWork        bg_work_;
   BackgroundedWorkThreadP workthread_;
 };

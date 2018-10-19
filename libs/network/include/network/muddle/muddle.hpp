@@ -145,6 +145,8 @@ public:
 
   ConnectionMap GetConnections();
 
+  bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
+
   PeerConnectionList &useClients();
 
   /// @name Peer control
