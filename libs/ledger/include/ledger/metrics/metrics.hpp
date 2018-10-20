@@ -86,6 +86,9 @@ private:
 #define FETCH_METRIC_TX_SUBMITTED(hash)                       \
   fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::ledger::Metrics::Event::SUBMITTED)
+#define FETCH_METRIC_TX_STORED(hash)                          \
+  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::ledger::Metrics::Event::STORED)
 #define FETCH_METRIC_TX_QUEUED(hash)                          \
   fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::ledger::Metrics::Event::QUEUED)
@@ -117,6 +120,7 @@ private:
 #else
 #define FETCH_METRIC_TX_SUBMITTED(hash)
 #define FETCH_METRIC_TX_QUEUED(hash)
+#define FETCH_METRIC_TX_STORED(hash)
 #define FETCH_METRIC_TX_PACKED(hash)
 #define FETCH_METRIC_TX_EXEC_STARTED(hash)
 #define FETCH_METRIC_TX_EXEC_COMPLETE(hash)

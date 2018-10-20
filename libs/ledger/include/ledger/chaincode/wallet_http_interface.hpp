@@ -66,7 +66,7 @@ public:
         uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
 
     // load permanent key store (or create it if files do not exist)
-    key_store_.Load("key_store_main.dat", "key_store_index.dat", true);
+    key_store_.Load("key_store_main.db", "key_store_index.db", true);
 
     // register all the routes
     Post("/api/wallet/register",
@@ -89,6 +89,8 @@ public:
            return OnTransactions(request);
          });
   }
+
+  ~WalletHttpInterface() = default;
 
 private:
   /**
