@@ -32,6 +32,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "testing/debug.hpp"
+
 namespace fetch {
 namespace storage {
 
@@ -284,14 +286,14 @@ public:
    */
   void SetMemoryLimit(std::size_t bytes)
   {
-
+    memory_limit_bytes_ = bytes;
   }
 
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
   event_handler_type           on_file_loaded_;
   event_handler_type           on_before_flush_;
-  std::size_t                  memory_limit_bytes_ = 0;
+  std::size_t                  memory_limit_bytes_ = std::size_t(1 << 19);
 
   // Underlying stack
   stack_type stack_;

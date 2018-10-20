@@ -48,7 +48,7 @@ public:
     for (std::size_t i = 0; i < lanes; ++i)
     {
       // Portion out memory for lanes (bytes)
-      std::size_t max_memory_per_lane = std::size_t(1 << 31) / lanes;
+      std::size_t max_memory_per_lane = std::size_t(1ULL << 31) / lanes;
 
       lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
                                                      uint16_t(port + i), tm, max_memory_per_lane, refresh_storage));
