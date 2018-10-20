@@ -392,7 +392,7 @@ public:
   void SetMemoryLimit(std::size_t bytes)
   {
     // The file store is much more likely to need caching, so we weight it 75/25
-    file_store_.SetMemoryLimit((bytes >> 2)*3);
+    file_store_.SetMemoryLimit((bytes >> 2) * 3);
     key_index_.SetMemoryLimit(bytes >> 2);
   }
 

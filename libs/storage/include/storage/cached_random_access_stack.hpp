@@ -32,8 +32,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "testing/debug.hpp"
-
 namespace fetch {
 namespace storage {
 
@@ -239,7 +237,7 @@ public:
     // Lazy policy to manage flushing is flush when the map reaches the threshold, then clear it
     using MapElement = typename decltype(data_)::value_type;
 
-    if(!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+    if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
     {
       return;
     }
