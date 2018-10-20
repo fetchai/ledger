@@ -37,7 +37,7 @@ DummyContract::DummyContract()
   OnTransaction("run", this, &DummyContract::Run);
 }
 
-DummyContract::Status DummyContract::Wait(transaction_type const &)
+DummyContract::Status DummyContract::Wait(Transaction const &)
 {
   std::random_device rd;
   std::mt19937       rng;
@@ -60,9 +60,9 @@ DummyContract::Status DummyContract::Wait(transaction_type const &)
   return Status::OK;
 }
 
-DummyContract::Status DummyContract::Run(transaction_type const &)
+DummyContract::Status DummyContract::Run(Transaction const &)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Running that contract...");
+  FETCH_LOG_WARN(LOGGING_NAME, "Running that contract...");
   return Status::OK;
 }
 
