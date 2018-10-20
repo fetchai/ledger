@@ -66,7 +66,7 @@ public:
 
   // TODO(issue 7): Make config JSON
   LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
+              uint16_t port, fetch::network::NetworkManager tm, std::size_t memory_limit, bool refresh_storage = false)
     : super_type(port, tm)
   {
 
@@ -110,6 +110,8 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
+    tx_store_->SetMemoryLimit(memory_limit/2);
+
     tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
                                                                 thread_pool_, tx_store_.get());
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
@@ -133,6 +135,8 @@ public:
       state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
                       prefix + "state_index_deltas.db", true);
     }
+
+    state_db_->SetMemoryLimit(memory_limit/2);
 
     state_db_protocol_ =
         std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);

@@ -660,6 +660,16 @@ public:
     return Iterator(this, kv, true);
   }
 
+  /**
+   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
+   *
+   * @param: bytes The number of bytes allowed as an upper bound
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {
+    stack_.SetMemoryLimit(bytes);
+  }
+
 private:
   stack_type stack_;
 
