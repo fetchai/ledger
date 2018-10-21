@@ -60,13 +60,14 @@ struct BookmarkHeader
  * VersionedRandomAccessStack implements a random access stack that can revert to a previous state.
  * It does this by having a random access stack, and also keeping a stack recording all of the
  * state-changing operations made to the stack (in the history).
- * The user can place bookmarks which allow reverting the stack to it's state at that point in time.
+ * The user can place bookmarks which allow reverting the stack to its state at that point in time.
  *
  * The history is a variant stack so as to allow different operations to be saved. However note that
  * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
-template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
+template <typename T, typename B = uint64_t,
+          typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
 private:
@@ -445,9 +446,9 @@ public:
     return b;
   }
 
-  void Flush()
+  void Flush(bool force = false)
   {
-    stack_.Flush();
+    stack_.Flush(force);
   }
 
   void ResetBookmark()
@@ -478,6 +479,16 @@ public:
   bool is_open() const
   {
     return stack_.is_open();
+  }
+
+  /**
+   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
+   *
+   * @param: bytes The number of bytes allowed as an upper bound
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {
+    stack_.SetMemoryLimit(bytes);
   }
 
 private:

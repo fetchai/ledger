@@ -384,6 +384,18 @@ public:
     return Iterator(this, key_index_.end());
   }
 
+  /**
+   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
+   *
+   * @param: bytes The number of bytes allowed as an upper bound
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {
+    // The file store is much more likely to need caching, so we weight it 75/25
+    file_store_.SetMemoryLimit((bytes >> 2) * 3);
+    key_index_.SetMemoryLimit(bytes >> 2);
+  }
+
 protected:
   /**
    * Get or create a document file
