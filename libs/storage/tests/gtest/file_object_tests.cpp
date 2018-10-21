@@ -326,7 +326,9 @@ bool FileLoadHashConsistency()
 
 TEST(storage_file_object_gtest, Creating_reading)
 {
+  std::cout << "p1" << std::endl;
   EXPECT_TRUE(BasicFileCreation<2>());
+  std::cout << "p2" << std::endl;
 
   EXPECT_TRUE((FileSaveLoadFixedSize<1, 1>()));
   EXPECT_TRUE((FileSaveLoadFixedSize<2, 1>()));
@@ -334,23 +336,27 @@ TEST(storage_file_object_gtest, Creating_reading)
   EXPECT_TRUE((FileSaveLoadFixedSize<1, 0>()));
   EXPECT_TRUE((FileSaveLoadFixedSize<2, 0>()));
   EXPECT_TRUE((FileSaveLoadFixedSize<4, 0>()));
+  std::cout << "p3" << std::endl;
 
   EXPECT_TRUE(MultipleFileCreation<1>());
   EXPECT_TRUE(MultipleFileCreation<2>());
   EXPECT_TRUE(MultipleFileCreation<4>());
   EXPECT_TRUE(MultipleFileCreation<9>());
   EXPECT_TRUE(MultipleFileCreation<1023>());
+  std::cout << "p4" << std::endl;
 
   EXPECT_TRUE(Overwriting<1>());
   EXPECT_TRUE(Overwriting<2>());
   EXPECT_TRUE(Overwriting<4>());
   EXPECT_TRUE(Overwriting<7>());
   EXPECT_TRUE(Overwriting<2048>());
+  std::cout << "p5" << std::endl;
 
   EXPECT_TRUE(FileLoadValueConsistency<1>());
   EXPECT_TRUE(FileLoadValueConsistency<2>());
   EXPECT_TRUE(FileLoadValueConsistency<4>());
   EXPECT_TRUE(FileLoadValueConsistency<7>());
+  std::cout << "argh" << std::endl;
   //      EXPECT_TRUE( FileLoadValueConsistency<1023>() );
 }
 

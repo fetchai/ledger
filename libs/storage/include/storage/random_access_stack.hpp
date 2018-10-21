@@ -403,6 +403,18 @@ public:
     return ret;
   }
 
+  /**
+   * Set limit in memory of structure - since this writes directly to disk without caching this
+   * does nothing.
+   *
+   * @param: 
+   *
+   * @return: 
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {
+  }
+
 private:
   event_handler_type   on_file_loaded_;
   event_handler_type   on_before_flush_;

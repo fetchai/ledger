@@ -250,7 +250,7 @@ bool IntermediateFlushHashConsistency()
 
     if ((i % 3) == 0)
     {
-      key_index.Flush();
+      key_index.Flush(true);
     }
 
     auto const &val = values[i];
@@ -428,7 +428,7 @@ bool LoadSaveVsBulk()
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
 
-TEST(stoage_key_value_index_gtest, Value_consistency)
+TEST(storage_key_value_index_gtest, Value_consistency)
 {
 
   EXPECT_TRUE(ValueConsistency());
@@ -438,13 +438,13 @@ TEST(stoage_key_value_index_gtest, Value_consistency)
   EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
 }
 
-TEST(stoage_key_value_index_gtest, Hash_consistency)
+TEST(storage_key_value_index_gtest, Hash_consistency)
 {
   EXPECT_TRUE(RandomInsertHashConsistency());
   EXPECT_TRUE(IntermediateFlushHashConsistency());
   EXPECT_TRUE(DoubleInsertionhConsistency());
 }
-TEST(stoage_key_value_index_gtest, Load_save_consistency)
+TEST(storage_key_value_index_gtest, Load_save_consistency)
 {
   EXPECT_TRUE(LoadSaveVsBulk());
 }

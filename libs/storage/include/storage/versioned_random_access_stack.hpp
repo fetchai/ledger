@@ -67,7 +67,7 @@ struct BookmarkHeader
  *
  */
 template <typename T, typename B = uint64_t,
-          typename S = CachedRandomAccessStack<T, BookmarkHeader<B>>>
+          typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
 private:
@@ -446,9 +446,9 @@ public:
     return b;
   }
 
-  void Flush()
+  void Flush(bool force = false)
   {
-    stack_.Flush();
+    stack_.Flush(force);
   }
 
   void ResetBookmark()

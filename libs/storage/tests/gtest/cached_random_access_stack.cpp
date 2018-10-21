@@ -165,7 +165,7 @@ TEST(cached_random_access_stack, file_writing_and_recovery)
       reference.push_back(temp);
     }
 
-    stack.Flush();
+    stack.Flush(true);
     EXPECT_TRUE(file_flushed == true);
   }
 
