@@ -274,16 +274,6 @@ public:
     return Iterator(store_.end());
   }
 
-  /**
-   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
-   *
-   * @param: bytes The number of bytes allowed as an upper bound
-   */
-  void SetMemoryLimit(std::size_t bytes)
-  {
-    store_.SetMemoryLimit(bytes);
-  }
-
 private:
   mutex::Mutex         mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;

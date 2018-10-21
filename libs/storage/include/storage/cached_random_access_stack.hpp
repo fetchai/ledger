@@ -98,7 +98,6 @@ public:
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
     stack_.Load(filename, create_if_not_exists);
-    Clear();
     this->SignalFileLoaded();
   }
 
@@ -161,7 +160,7 @@ public:
 
   void Close()
   {
-    Flush(true);
+    Flush();
 
     stack_.Close(true);
   }
@@ -233,19 +232,8 @@ public:
   /**
    * Flush all of the cached elements to file if they have been updated
    */
-  void Flush(bool force = false)
+  void Flush()
   {
-    if(!force)
-    {
-      // Lazy policy to manage flushing is flush when the map reaches the threshold, then clear it
-      using MapElement = typename decltype(data_)::value_type;
-
-      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
-      {
-        return;
-      }
-    }
-
     this->SignalBeforeFlush();
 
     for (auto &item : data_)
@@ -272,8 +260,14 @@ public:
 
     stack_.Flush(true);
 
-    // Whole map clear
-    data_.clear();
+    for (auto &item : data_)
+    {
+      item.second.reads   = 0;
+      item.second.writes  = 0;
+      item.second.updated = false;
+    }
+
+    // TODO(issue 10): Manage cache size
   }
 
   bool is_open() const
@@ -281,22 +275,10 @@ public:
     return stack_.is_open();
   }
 
-  /**
-   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
-   *
-   * @param: bytes The number of bytes allowed as an upper bound
-   */
-  void SetMemoryLimit(std::size_t bytes)
-  {
-    memory_limit_bytes_ = bytes;
-  }
-
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
   event_handler_type           on_file_loaded_;
   event_handler_type           on_before_flush_;
-  //std::size_t                  memory_limit_bytes_ = std::size_t(1 << 19);
-  std::size_t                  memory_limit_bytes_ = std::size_t(0);
 
   // Underlying stack
   stack_type stack_;

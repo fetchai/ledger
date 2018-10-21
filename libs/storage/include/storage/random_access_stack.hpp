@@ -72,7 +72,6 @@ private:
     {
       if ((!stream) || (!stream.is_open()))
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to write to stream in RAS");
         return false;
       }
       stream.seekg(0, stream.beg);
@@ -401,18 +400,6 @@ public:
     ++header_.objects;
 
     return ret;
-  }
-
-  /**
-   * Set limit in memory of structure - since this writes directly to disk without caching this
-   * does nothing.
-   *
-   * @param: 
-   *
-   * @return: 
-   */
-  void SetMemoryLimit(std::size_t bytes)
-  {
   }
 
 private:

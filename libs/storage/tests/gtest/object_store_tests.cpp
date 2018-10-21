@@ -150,7 +150,6 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
 
   for (auto const &numberOfKeys : keyTests)
   {
-    std::cout << "tst numberOfKeys" << std::endl;
     using testType = TestSerDeser;
     ObjectStore<testType> testStore;
     testStore.New("testFile.db", "testIndex.db");
@@ -176,8 +175,6 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
 
     std::sort(objects.begin(), objects.end());
 
-    std::cout << "p3" << std::endl;
-
     // Test successfully finding and testing to find elements
     bool successfullyFound = true;
     int  index             = 0;
@@ -196,7 +193,6 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
     EXPECT_TRUE(successfullyFound == true && index == index);
 
     successfullyFound = false;
-    std::cout << "p4" << std::endl;
 
     for (std::size_t i = 0; i < 100; ++i)
     {
@@ -208,7 +204,6 @@ TEST(storage_object_store_basic_functionality, find_over_basic_struct)
         break;
       }
     }
-    std::cout << "p5" << std::endl;
 
     EXPECT_TRUE(successfullyFound == false);
   }
@@ -258,7 +253,6 @@ TEST(storage_object_store_with_STL_gtest, iterator_over_basic_struct)
   std::vector<std::size_t> keyTests{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99, 100, 1010, 9999};
   for (auto const &numberOfKeys : keyTests)
   {
-    std::cout << "TT: " << numberOfKeys << std::endl;
     using testType = TestSerDeser;
     ObjectStore<testType> testStore;
     testStore.New("testFile.db", "testIndex.db");
