@@ -97,8 +97,8 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    stack_.Load(filename, create_if_not_exists);
     Clear();
+    stack_.Load(filename, create_if_not_exists);
     this->SignalFileLoaded();
   }
 
@@ -238,16 +238,16 @@ public:
    */
   void Flush(bool force = false)
   {
-    //if(!force)
-    //{
-    //  // Lazy policy to manage flushing is flush when the map reaches the threshold, then clear it
-    //  using MapElement = typename decltype(data_)::value_type;
+    if(!force)
+    {
+      // Lazy policy to manage flushing is flush when the map reaches the threshold, then manage it
+      using MapElement = typename decltype(data_)::value_type;
 
-    //  if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
-    //  {
-    //    return;
-    //  }
-    //}
+      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+      {
+        return;
+      }
+    }
 
     this->SignalBeforeFlush();
 
