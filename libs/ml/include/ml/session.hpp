@@ -220,7 +220,8 @@ private:
   std::unordered_map<std::string, VariablePtrType> top_sort_map_g_;
   std::vector<VariablePtrType>                     top_sort_vector_g_;
 
-  bool top_sort_complete_ = false; // we track whether we need to redo the topological sort or not as we go
+  bool top_sort_complete_ =
+      false;  // we track whether we need to redo the topological sort or not as we go
 
   void Forward(VariablePtrType in_var, VariablePtrType out_var)
   {
