@@ -23,6 +23,7 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "crypto/prover.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -33,6 +34,8 @@
 #include <thread>
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
+
+
 
 using ::testing::_;
 
@@ -53,6 +56,12 @@ protected:
   using storage_client_type  = std::shared_ptr<underlying_storage_type>;
   using storage_service_type = std::unique_ptr<underlying_storage_service_type>;
   using rng_type             = std::mt19937;
+ 
+  using Muddle                 = fetch::muddle::Muddle;
+ using MuddlePtr = std::unique_ptr<Muddle>;
+using Prover         = fetch::crypto::Prover;
+using ProverPtr      = std::unique_ptr<Prover>;
+using Uri = fetch::network::Uri;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
@@ -63,9 +72,65 @@ protected:
     rng_.seed(42);
   }
 
+  
+ProverPtr GenerateP2PKey()
+{
+  static constexpr char const *KEY_FILENAME = "p2p.key";
+
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::unique_ptr<Signer>;
+
+  SignerPtr certificate        = std::make_unique<Signer>();
+  bool      certificate_loaded = false;
+
+  // Step 1. Attempt to load the existing key
+  {
+    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
+
+    if (input_file.is_open())
+    {
+      fetch::byte_array::ByteArray private_key_data;
+      private_key_data.Resize(Signer::PrivateKey::ecdsa_curve_type::privateKeySize);
+
+      // attempt to read in the private key
+      input_file.read(private_key_data.char_pointer(),
+                      static_cast<std::streamsize>(private_key_data.size()));
+
+      if (!(input_file.fail() || input_file.eof()))
+      {
+        certificate->Load(private_key_data);
+        certificate_loaded = true;
+      }
+    }
+  }
+
+  // Generate a key if the load failed
+  if (!certificate_loaded)
+  {
+    certificate->GenerateKeys();
+
+    std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
+
+    if (output_file.is_open())
+    {
+      auto const private_key_data = certificate->private_key();
+
+      output_file.write(private_key_data.char_pointer(),
+                        static_cast<std::streamsize>(private_key_data.size()));
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to save P2P key");
+    }
+  }
+
+  return certificate;
+}
+
   void SetUp() override
   {
     static const uint16_t    EXECUTOR_RPC_PORT   = 9120;
+    static const uint16_t    P2P_RPC_PORT   = 9130;
     static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
 
@@ -76,11 +141,16 @@ protected:
     storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
     storage_service_->Start();
 
+    ProverPtr p2p_key = GenerateP2PKey();
+    muddle_ = std::make_unique<Muddle>(std::move(p2p_key), *network_manager_);
+
+    muddle_->Start({P2P_RPC_PORT});
+
     LaneIndex num_lanes = NUM_LANES;
 
     uint16_t lane_port_start = LANE_RPC_PORT_START;
 
-    storage_.reset(new underlying_storage_type{*network_manager_});
+    storage_.reset(new underlying_storage_type{*network_manager_, *muddle_});
 
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
@@ -91,16 +161,12 @@ protected:
       throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
     }
 
-    std::map<LaneIndex, Peer> lane_data;
+    std::map<LaneIndex, Uri> lane_data;
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
       uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-      lane_data[i]             = fetch::network::Peer("127.0.0.1", lane_port);
+      lane_data[i]             = fetch::network::Uri("tcp://127.0.0.1:"+std::to_string( lane_port));
     }
-
-    auto count =
-        storage_->AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(1000));
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
 
     // create the executor service
     service_ =
@@ -111,6 +177,10 @@ protected:
     // create the executor client
     executor_ =
         std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
+
+    auto count =
+      storage_->AddLaneConnectionsWaitingMuddle(*muddle_, lane_data, std::chrono::milliseconds(30000));
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
 
     for (;;)
     {
@@ -186,6 +256,8 @@ protected:
   service_type         service_;
   client_type          executor_;
   rng_type             rng_;
+
+  MuddlePtr            muddle_;
 };
 
 TEST_F(ExecutorIntegrationTests, CheckDummyContract)
@@ -213,3 +285,5 @@ TEST_F(ExecutorIntegrationTests, CheckTokenContract)
   auto const status = executor_->Execute(tx.digest(), 0, {0});
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 }
+
+
