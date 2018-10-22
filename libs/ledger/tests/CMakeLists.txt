@@ -11,10 +11,11 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
-add_fetch_test(ledger_identifier_test fetch-ledger identifier_test.cpp)
+
 add_fetch_gtest(chaincode_test fetch-ledger chaincode)
 add_fetch_gtest(executors_test fetch-ledger executors)
+add_fetch_gtest(identifier_test fetch-ledger gtests)
 target_include_directories(executors_test PRIVATE chaincode)
-add_fetch_test(transaction_types_test fetch-ledger transaction_types.cpp)
+
 
 add_fetch_gtest(ledger_main_chain_gtest fetch-ledger consensus/gtest/)

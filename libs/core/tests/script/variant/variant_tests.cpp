@@ -25,31 +25,27 @@
 #include <sstream>
 using namespace fetch::script;
 
-#include "testing/unittest.hpp"
+#include <gtest/gtest.h>
 
-int main()
-{
-  SCENARIO("Basic manipulation")
-  {
-    SECTION("Variant")
+    TEST(basic_manipulation, variant)
     {
       Variant x;
       x = 1;
-      EXPECT(x.type() == fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(x.type() , fetch::script::VariantType::INTEGER);
       x = "Hello world";
-      EXPECT(x.type() == fetch::script::VariantType::STRING);
+      EXPECT_EQ(x.type() , fetch::script::VariantType::STRING);
       x = nullptr;
-      EXPECT(x.type() == fetch::script::VariantType::NULL_VALUE);
+      EXPECT_EQ(x.type() , fetch::script::VariantType::NULL_VALUE);
       x = 4.21;
-      EXPECT(x.type() == fetch::script::VariantType::FLOATING_POINT);
+      EXPECT_EQ(x.type() , fetch::script::VariantType::FLOATING_POINT);
       x.MakeUndefined();
-      EXPECT(x.type() == fetch::script::VariantType::UNDEFINED);
-    };
+      EXPECT_EQ(x.type() , fetch::script::VariantType::UNDEFINED);
+    }
 
-    SECTION("Variant list")
+    TEST(basic_manipulation, variant_list)
     {
       VariantArray x(6);
-      EXPECT(x.size() == 6);
+      EXPECT_EQ(x.size() , 6);
 
       x[0] = 1.2;
       x[1] = "Hello world";
@@ -57,20 +53,20 @@ int main()
       x[3] = true;
       x[5] = nullptr;
 
-      EXPECT(x[0].type() == fetch::script::VariantType::FLOATING_POINT);
-      EXPECT(x[1].type() == fetch::script::VariantType::STRING);
-      EXPECT(x[2].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(x[3].type() == fetch::script::VariantType::BOOLEAN);
-      EXPECT(x[4].type() == fetch::script::VariantType::UNDEFINED);
-      EXPECT(x[5].type() == fetch::script::VariantType::NULL_VALUE);
-    };
+      EXPECT_EQ(x[0].type() , fetch::script::VariantType::FLOATING_POINT);
+      EXPECT_EQ(x[1].type() , fetch::script::VariantType::STRING);
+      EXPECT_EQ(x[2].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(x[3].type() , fetch::script::VariantType::BOOLEAN);
+      EXPECT_EQ(x[4].type() , fetch::script::VariantType::UNDEFINED);
+      EXPECT_EQ(x[5].type() , fetch::script::VariantType::NULL_VALUE);
+    }
 
-    SECTION("Variant object")
+    TEST(basic_manipulation , variant_object)
     {
       Variant obj                 = Variant::Object();
       obj["numberOfTransactions"] = uint32_t(9);
-      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(obj["numberOfTransactions"].As<int>() == 9);
+      EXPECT_EQ(obj["numberOfTransactions"].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(obj["numberOfTransactions"].As<int>() , 9);
 
       obj["numberOfTransactions"] = "Hello world";
       std::cout << obj["numberOfTransactions"].type() << std::endl;
@@ -80,16 +76,16 @@ int main()
 
       std::cout << obj["numberOfTransactions"].type() << std::endl;
 
-      EXPECT(obj["numberOfTransactions"].type() == fetch::script::VariantType::STRING);
-      EXPECT(obj["numberOfTransactions"].as_byte_array() == "Hello world");
+      EXPECT_EQ(obj["numberOfTransactions"].type() , fetch::script::VariantType::STRING);
+      EXPECT_EQ(obj["numberOfTransactions"].as_byte_array() , "Hello world");
 
-      EXPECT(obj["blah"].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(obj["blah"].As<int>() == 9);
+      EXPECT_EQ(obj["blah"].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(obj["blah"].As<int>() , 9);
 
-      EXPECT(obj["Hello"].type() == fetch::script::VariantType::BOOLEAN);
-      EXPECT(obj["Hello"].As<bool>() == false);
+      EXPECT_EQ(obj["Hello"].type() , fetch::script::VariantType::BOOLEAN);
+      EXPECT_EQ(obj["Hello"].As<bool>() , false);
 
-      EXPECT(obj["XX"].type() == fetch::script::VariantType::NULL_VALUE);
+      EXPECT_EQ(obj["XX"].type() , fetch::script::VariantType::NULL_VALUE);
 
       // Failing test
       Variant result                 = Variant::Object();
@@ -106,10 +102,10 @@ int main()
 
       std::cerr << asString << std::endl;
 
-      EXPECT(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") == 0);
-    };
+      EXPECT_EQ(asString.compare("{\"numberOfTransactions\":2,\"hash\":\"some_hash\"}") , 0);
+    }
 
-    SECTION("Nested variants")
+    TEST(basic_manipulation , nested_variants)
     {
       Variant x;
       x.MakeArray(2);
@@ -119,23 +115,20 @@ int main()
       x[0][2] = 7;
       x[1]    = 1.23e-6;
 
-      EXPECT(x.type() == fetch::script::VariantType::ARRAY);
-      EXPECT(x[0].type() == fetch::script::VariantType::ARRAY);
-      EXPECT(x[0][0].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(x[0][1].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(x[0][2].type() == fetch::script::VariantType::INTEGER);
-      EXPECT(x[1].type() == fetch::script::VariantType::FLOATING_POINT);
+      EXPECT_EQ(x.type() , fetch::script::VariantType::ARRAY);
+      EXPECT_EQ(x[0].type() , fetch::script::VariantType::ARRAY);
+      EXPECT_EQ(x[0][0].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(x[0][1].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(x[0][2].type() , fetch::script::VariantType::INTEGER);
+      EXPECT_EQ(x[1].type() , fetch::script::VariantType::FLOATING_POINT);
 
       std::cout << x << std::endl;
-    };
-  };
+    }
 
-  SCENARIO("Streaming")
-  {
-    SECTION("Variant list")
+    TEST(Streaming_gtest , variant_list)
     {
       VariantArray x(6);
-      EXPECT(x.size() == 6);
+      EXPECT_EQ(x.size() , 6);
 
       x[0] = 1.2;
       x[1] = "Hello world";
@@ -146,10 +139,10 @@ int main()
       std::stringstream ss;
       ss.str("");
       ss << x;
-      EXPECT(ss.str() == "[1.2, \"Hello world\", 2, true, (undefined), null]");
-    };
+      EXPECT_EQ(ss.str() , "[1.2, \"Hello world\", 2, true, (undefined), null]");
+    }
 
-    SECTION("Nested variants")
+    TEST(Streaming_gtest , nested_variants)
     {
       Variant x;
 
@@ -164,9 +157,5 @@ int main()
       ss.str("");
       ss << x;
 
-      EXPECT(ss.str() == "[[1, 3, 7], 1.23]");
-    };
-  };
-
-  return 0;
-}
+      EXPECT_EQ(ss.str() , "[[1, 3, 7], 1.23]");
+    }
