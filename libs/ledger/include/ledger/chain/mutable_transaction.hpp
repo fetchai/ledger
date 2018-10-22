@@ -28,6 +28,9 @@
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
+//#ifndef NDEBUG
+//#include "core/byte_array/encoders.hpp"
+//#endif //NDEBUG
 
 #include <functional>
 #include <set>
@@ -194,7 +197,24 @@ public:
       throw std::runtime_error("Failure while updating hash for signing");
     }
 
+#ifndef NDEBUG
+    auto const prod_digest = tx_data_hash_copy.Final();
+    std::cout << "prod. digest           [hex]: " << byte_array::ToHex(prod_digest) << std::endl;
+    std::cout << "prod. tx data          [hex]: " << byte_array::ToHex(stream_->data()) << std::endl;
+    std::cout << "prod. identity         [hex]: " << byte_array::ToHex(identity_stream_->data()) << std::endl;
+
+    hasher_type hasher;
+    serializers::ByteArrayBuffer stream;
+    stream <<  serializers::Verbatim(stream_->data()) << identity;
+    hasher.Update(stream.data());
+
+    std::cout << "real digest            [hex]: " << byte_array::ToHex(hasher.Final()) << std::endl;
+    std::cout << "real full data to sig. [hex]: " << byte_array::ToHex(stream.data()) << std::endl;
+
+    return prod_digest;
+#else
     return tx_data_hash_copy.Final();
+#endif //NDEBUG
   }
 
   bool operator==(TxSigningAdapter const &left_tx) const;

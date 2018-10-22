@@ -80,10 +80,11 @@ inline MutableTransaction RandomTransaction(std::size_t   num_of_resources  = 3,
 
 inline std::ostream &operator<<(std::ostream &os, MutableTransaction const &transaction)
 {
-  os << "contract name:   " << transaction.contract_name() << std::endl;
-  os << "hash:            " << byte_array::ToHex(transaction.summary().transaction_hash)
+  os << "contract name: " << transaction.contract_name() << std::endl;
+  os << "hash:          " << byte_array::ToHex(transaction.summary().transaction_hash)
      << std::endl;
-  os << "data:            " << byte_array::ToHex(transaction.data()) << std::endl;
+  os << "data:          " << byte_array::ToHex(transaction.data()) << std::endl;
+  os << "fee:           " << transaction.fee() << std::endl;
 
   os << "=== Resources ===========================================" << std::endl;
   for (auto const &res : transaction.resources())
