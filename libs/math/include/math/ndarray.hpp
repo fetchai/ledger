@@ -229,13 +229,13 @@ public:
    */
   // TODO(private issue 123)
   template <typename S>
-  meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const &val)
+  fetch::meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
   template <typename S>
-  meta::IfIsUnsignedLike<S, void> Set(S const &index, type const &val)
+  fetch::meta::IfIsUnsignedLike<S, void> Set(S const &index, type const &val)
   {
     assert(index < this->size());       // dimensionality check not in parent
     this->super_type::Set(index, val);  // call parent
@@ -246,7 +246,7 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices) const
+  fetch::meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -563,6 +563,36 @@ public:
   MAJOR_ORDER MajorOrder()
   {
     return major_order_;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &DotTranspose(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::DotTranspose(A, B, *this, alpha, beta);
+
+    return *this;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = T(A).B
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &TransposeDot(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::TransposeDot(A, B, *this, alpha, beta);
+
+    return *this;
   }
 
 private:

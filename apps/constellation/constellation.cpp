@@ -22,6 +22,7 @@
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
@@ -131,7 +132,9 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
  */
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix)
+                             std::string interface_address, std::string const &db_prefix,
+                             std::string                         my_network_address,
+                             std::chrono::steady_clock::duration block_interval)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
@@ -149,18 +152,19 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+        db_prefix, num_executors, storage_,
+        [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , miner_{num_lanes_, num_slices, chain_, block_coordinator_, block_packer_, p2p_port_}
-  // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
+           block_packer_, p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(chain_, muddle_, p2p_, trust_),
+        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);

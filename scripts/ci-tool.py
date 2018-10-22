@@ -11,6 +11,7 @@ import re
 import sys
 import argparse
 import subprocess
+import fnmatch
 import xml.etree.ElementTree as ET
 
 
@@ -152,6 +153,13 @@ def test_project(build_root):
 
     if not os.path.isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
+
+    # clear all the data files which might be hanging around
+    for root, _, files in os.walk(build_root):
+        for path in fnmatch.filter(files, '*.db'):
+            data_path = os.path.join(root, path)
+            print('Removing file:', data_path)
+            os.remove(data_path)
 
     exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
 

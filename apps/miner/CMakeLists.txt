@@ -1,4 +1,8 @@
+################################################################################
+# F E T C H   D E T A C H E D  M I N E R
+################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+
 project(miner)
 
 # Compiler Configuration

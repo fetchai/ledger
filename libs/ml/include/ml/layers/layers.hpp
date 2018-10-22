@@ -18,113 +18,194 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "ml/layers/base_layer.hpp"
+#include "ml/ops/ops.hpp"
+#include "ml/variable.hpp"
+#include <cmath>
+#include <random>
 
 namespace fetch {
 namespace ml {
 namespace layers {
 
-/**
- * Special layer type that feeds data into the network; it has no weights matrix
- */
-template <typename DATA_TYPE>
-class InputLayer : public BaseLayer<DATA_TYPE>
+template <typename T>
+class Layer
 {
-  using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type      = BaseLayer<DATA_TYPE>;
-
 public:
-  InputLayer(std::size_t layer_size)
-    : base_type::BaseLayer(layer_size)
-  {}
+  using ArrayType         = T;
+  using SelfType          = Layer<ArrayType>;
+  using SelfPtrType       = std::shared_ptr<SelfType>;
+  using VariableType      = fetch::ml::Variable<ArrayType>;
+  using VariablePtrType   = std::shared_ptr<VariableType>;
+  using FunctionSignature = std::function<void(VariablePtrType)>;
+  using SizeType          = std::size_t;
+  using ShapeType         = std::vector<std::size_t>;
 
-  void AssignData(std::vector<DATA_TYPE> input_data)
+  std::size_t id;
+
+  void Initialise(ShapeType const &shape, VariablePtrType weights, VariablePtrType biases)
   {
-    input_data_ = input_data;
-  }
+    shape_ = shape;
 
-private:
-  std::vector<DATA_TYPE> input_data_;
-};
+    weights_ = weights;
+    // (TODO private 273)
 
-/**
- * The base layer class.
- *
- * In general a layer has a size indicating the number of neurons
- *
- *
- */
-// template<typename DATA_TYPE, typename CONTAINER_TYPE = memory::SharedArray<DATA_TYPE>>
-template <typename DATA_TYPE>
-class Layer : public BaseLayer<DATA_TYPE>
-{
-  using container_type = memory::SharedArray<DATA_TYPE>;
-  using base_type      = BaseLayer<DATA_TYPE>;
-  using array_type     = math::NDArray<DATA_TYPE, container_type>;
+    biases_ = biases;
 
-public:
-  /**
-   * Constructor that accepts the previous layer as the input to this layer, and the layer size
-   * @param input_layer
-   */
-  Layer &operator=(Layer const &other) = default;
-  Layer(InputLayer<DATA_TYPE> &input_layer, std::size_t layer_size)
-    : base_type(layer_size)
-  {
-    AssignLayerConnection(input_layer, layer_size);
-  }
-  Layer(Layer &input_layer, std::size_t layer_size)
-  {
-    AssignLayerConnection(input_layer, layer_size);
-  }
-
-  /**
-   * helper function - returns the size of the inputs to this layer
-   * @return
-   */
-  std::size_t InputLayerSize()
-  {
-    return input_layer_size_;
-  }
-
-  /**
-   * helper function - returns the shape of the weights matrix
-   * @return
-   */
-  std::vector<std::size_t> WeightsMatrixShape()
-  {
-    return weights_matrix_shape_;
-  }
-
-private:
-  /**
-   * initialises the weights matrix with random number from -0.01 to 0.01
-   */
-  std::size_t              input_layer_size_;
-  std::vector<std::size_t> weights_matrix_shape_;
-
-  template <typename LAYER_TYPE>
-  void AssignLayerConnection(LAYER_TYPE input_layer, std::size_t new_layer_size)
-  {
-    // assign known sizes
-    this->SetLayerSize(new_layer_size);
-    input_layer_size_     = input_layer.LayerSize();
-    weights_matrix_shape_ = {InputLayerSize(), this->LayerSize()};
-
-    // instantiate the weights matrix
-    this->weights_matrix_ = ndarray_type(WeightsMatrixShape());
-    this->SetWeightsMatrix(this->weights_matrix_);
-  }
-
-  void InitialiseWeightsMatrix()
-  {
-    array_type arr{this->Size()};
-
-    for (std::size_t i = 0; i < this->Size(); ++i)
+    std::random_device         rd{};
+    std::mt19937               gen{rd()};
+    auto                       in  = typename ArrayType::Type(shape_[0]);
+    auto                       out = typename ArrayType::Type(shape_[1]);
+    std::normal_distribution<> d{0.0, fetch::math::Divide(2.0, in + out)};
+    for (std::size_t i = 0; i < weights_->data().size(); ++i)
     {
-      arr[i] = 0;
+      weights_->data().Set(i, d(gen));
+    }
+    for (std::size_t i = 0; i < biases_->data().size(); ++i)
+    {
+      biases_->data().Set(i, 0);
     }
   }
+
+  void ActivationSetup(std::string activate)
+  {
+    activate_ = activate;
+  }
+  void BiasesSetup(bool has_biases)
+  {
+    has_biases_ = has_biases;
+  }
+
+  std::size_t InputSize()
+  {
+    return weights_->shape()[0];
+  }
+
+  std::size_t OutputSize()
+  {
+    return weights_->shape()[1];
+  }
+
+  VariableType Forward()
+  {
+
+    weights_.Forward(prev_);
+    biases_.Forward(prev_);
+  }
+
+  void ZeroGrads()
+  {
+    weights_.zero_grad();
+    biases_.zero_grad();
+  }
+
+  void Step(typename ArrayType::Type lr)
+  {
+    weights_.GradientStep(lr);
+    biases_.GradientStep(lr);
+  }
+
+  VariablePtrType weights()
+  {
+    return weights_;
+  }
+
+  VariablePtrType biases()
+  {
+    return biases_;
+  }
+
+  std::vector<std::size_t> shape()
+  {
+    return shape_;
+  }
+
+  VariablePtrType dot_hidden()
+  {
+    return dot_;
+  }
+  VariablePtrType add_hidden()
+  {
+    return add_;
+  }
+  VariablePtrType output()
+  {
+    return output_;
+  }
+
+  template <typename SessionType>
+  void SetInput(VariablePtrType input, SessionType &sess)
+  {
+    prev_ = input;
+    if (has_biases_)
+    {
+      if (activate_ != "")
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        add_    = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+        output_ = Activate(add_, sess);
+      }
+      else
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        output_ = fetch::ml::ops::AddBroadcast(dot_, biases_, sess);
+      }
+    }
+    else
+    {
+      if (activate_ != "")
+      {
+        dot_    = fetch::ml::ops::Dot(input, weights_, sess);
+        output_ = Activate(dot_, sess);
+      }
+      else
+      {
+        output_ = fetch::ml::ops::Dot(input, weights_, sess);
+      }
+    }
+  }
+
+  template <typename SessionType>
+  VariablePtrType Activate(VariablePtrType hidden_states, SessionType &sess)
+  {
+
+    if (activate_ == "LeakyRelu")
+    {
+      return fetch::ml::ops::LeakyRelu(hidden_states, sess);
+    }
+    else if (activate_ == "Relu")
+    {
+      return fetch::ml::ops::Relu(hidden_states, sess);
+    }
+    else if (activate_ == "Sigmoid")
+    {
+      return fetch::ml::ops::Sigmoid(hidden_states, sess);
+    }
+    else if (activate_ == "Softmax")
+    {
+      return fetch::ml::ops::Softmax(hidden_states, sess);
+    }
+    else if (activate_ == "")
+    {
+      return hidden_states;
+    }
+    else
+    {
+      std::cout << "unspecified activation type" << std::endl;
+      assert(false);
+      return hidden_states;
+    }
+  }
+
+private:
+  std::vector<std::size_t> shape_;
+  VariablePtrType          weights_;
+  VariablePtrType          biases_;
+  VariablePtrType          prev_;
+  VariablePtrType          dot_;
+  VariablePtrType          add_;
+  VariablePtrType          output_;
+  bool                     has_biases_;
+  std::string              activate_ = "LeakyRelu";
 };
 
 }  // namespace layers

@@ -221,7 +221,7 @@ TEST(matrix, approx_softmax)
 //  ASSERT_TRUE(R.Dot(A, B).AllClose(C));
 //// ASSERT_TRUE( ( R = A, R.InlineDot(B) ).AllClose(C) );
 //
-//};
+//}
 //
 TEST(matrix, float_addition)
 {
@@ -723,4 +723,17 @@ TEST(matrix, double_division)
   ASSERT_TRUE(R.AllClose(C));
   ASSERT_TRUE((R.Copy(A), R.InlineDivide(B)).AllClose(C));
   ASSERT_TRUE((R.Copy(B), R.InlineReverseDivide(A)).AllClose(C));
+}
+
+TEST(matrix, matrix_double_isgreaterequal_Test)
+{
+
+  _M<double> A = _M<double>(R"(-2.0 -1.0 0.0 1.0 2.0; -2.0 -1.0 0.0 1.0 2.0)");
+  _M<double> B = _M<double>(R"(0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0)");
+  _M<double> C = _M<double>(R"(0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0)");
+  _M<double> R = _M<double>(R"(0.0 0.0 1.0 1.0 1.0; 0.0 0.0 1.0 1.0 1.0)");
+
+  fetch::math::Isgreaterequal(A, B, C);
+
+  ASSERT_TRUE(R.AllClose(C));
 }

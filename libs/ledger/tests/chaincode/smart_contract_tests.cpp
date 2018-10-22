@@ -42,10 +42,10 @@ using namespace fetch::ledger;
 class SmartContractTests : public ::testing::Test
 {
 protected:
-  using query_type    = Contract::query_type;
-  using contract_type = std::unique_ptr<SmartContract>;
-  using storage_type  = std::unique_ptr<MockStorageUnit>;
-  using address_type  = fetch::byte_array::ConstByteArray;
+  using Query              = Contract::Query;
+  using SmartContractPtr   = std::unique_ptr<SmartContract>;
+  using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
+  using Address            = fetch::byte_array::ConstByteArray;
 
   enum
   {
@@ -111,8 +111,8 @@ protected:
   }
 
 private:
-  contract_type contract_;
-  storage_type  storage_;
+  SmartContractPtr   contract_;
+  MockStorageUnitPtr storage_;
 };
 
 TEST_F(SmartContractTests, CompileContract)

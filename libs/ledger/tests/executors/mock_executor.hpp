@@ -33,7 +33,7 @@ public:
     ON_CALL(*this, Execute(_, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
   }
 
-  MOCK_METHOD3(Execute, Status(tx_digest_type const &, std::size_t, lane_set_type const &));
+  MOCK_METHOD3(Execute, Status(TxDigest const &, std::size_t, LaneSet const &));
 
 private:
   FakeExecutor fake_;

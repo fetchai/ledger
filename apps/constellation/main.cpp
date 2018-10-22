@@ -114,11 +114,12 @@ struct CommandLineArguments
   static constexpr uint16_t P2P_PORT_OFFSET     = 1;
   static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
-  static const uint32_t DEFAULT_NUM_LANES     = 4;
-  static const uint32_t DEFAULT_NUM_SLICES    = 4;
-  static const uint32_t DEFAULT_NUM_EXECUTORS = DEFAULT_NUM_LANES;
-  static const uint16_t DEFAULT_PORT          = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID    = 0x10;
+  static const uint32_t DEFAULT_NUM_LANES      = 4;
+  static const uint32_t DEFAULT_NUM_SLICES     = 4;
+  static const uint32_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT           = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
+  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
 
   uint16_t    port{0};
   uint32_t    network_id;
@@ -127,6 +128,7 @@ struct CommandLineArguments
   uint32_t    num_lanes;
   uint32_t    log2_num_lanes;
   uint32_t    num_slices;
+  uint32_t    block_interval;
   std::string interface;
   std::string token;
   bool        bootstrap{false};
@@ -161,6 +163,8 @@ struct CommandLineArguments
                    std::string{"node_storage"});
     parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
     parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
+    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.",
+                   uint32_t{DEFAULT_BLOCK_INTERVAL});
     parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
                    std::string{});
     parameters.add(args.token, "token",
@@ -343,7 +347,7 @@ struct CommandLineArguments
     s << "db-prefix......: " << args.dbdir << '\n';
     s << "interface......: " << args.interface << '\n';
     s << "mining.........: " << args.mine << '\n';
-
+    s << "block interval.: " << args.block_interval << "ms" << std::endl;
     // generate the peer listing
     s << "peers..........: ";
     for (auto const &peer : args.peers)
@@ -471,7 +475,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir);
+        args.num_slices, args.interface, args.dbdir, args.external_address,
+        std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

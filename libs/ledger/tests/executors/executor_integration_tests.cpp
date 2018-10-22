@@ -65,15 +65,15 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t    EXECUTOR_RPC_PORT   = 9000;
-    static const uint16_t    LANE_RPC_PORT_START = 9001;
+    static const uint16_t    EXECUTOR_RPC_PORT   = 9120;
+    static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
 
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);
     network_manager_->Start();
 
     storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_);
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
     storage_service_->Start();
 
     LaneIndex num_lanes = NUM_LANES;

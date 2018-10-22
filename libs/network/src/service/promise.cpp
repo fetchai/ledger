@@ -167,5 +167,13 @@ char const *ToString(PromiseState state)
   return name;
 }
 
+static const std::array<PromiseState, 4> promise_states{
+    {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
+
+const std::array<PromiseState, 4> &GetAllPromiseStates()
+{
+  return promise_states;
+}
+
 }  // namespace service
 }  // namespace fetch

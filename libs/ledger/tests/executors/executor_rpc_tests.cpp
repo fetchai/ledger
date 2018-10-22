@@ -21,6 +21,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "ledger/protocols/executor_rpc_service.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
+#include "network/generics/future_timepoint.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -31,6 +33,17 @@
 #include <thread>
 
 using ::testing::_;
+using fetch::network::AtomicInFlightCounter;
+using fetch::network::AtomicCounterName;
+
+bool WaitForLaneServersToStart()
+{
+  using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
+
+  fetch::network::FutureTimepoint const deadline(std::chrono::seconds(30));
+
+  return InFlightCounter::Wait(deadline);
+}
 
 class ExecutorRpcTests : public ::testing::Test
 {
@@ -54,7 +67,7 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t EXECUTOR_RPC_PORT = 9001;
+    static const uint16_t EXECUTOR_RPC_PORT = 9111;
 
     storage_.reset(new underlying_storage_type);
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);
@@ -65,6 +78,11 @@ protected:
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
 
     service_->Start();
+
+    if (!WaitForLaneServersToStart())
+    {
+      throw std::runtime_error("Failed to start tcp servers");
+    }
 
     // create the executor client
     executor_ =
