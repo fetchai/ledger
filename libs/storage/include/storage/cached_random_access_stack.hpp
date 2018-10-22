@@ -105,7 +105,7 @@ public:
   void New(std::string const &filename)
   {
     stack_.New(filename);
-    Clear();
+    Clear(true);
     this->SignalFileLoaded();
   }
 
@@ -223,9 +223,12 @@ public:
     return objects_ == 0;
   }
 
-  void Clear()
+  void Clear(bool clear_underlying = false)
   {
-    stack_.Clear();
+    if(clear_underlying)
+    {
+      stack_.Clear();
+    }
     objects_ = 0;
     data_.clear();
   }
