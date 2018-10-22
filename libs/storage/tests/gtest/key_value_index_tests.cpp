@@ -427,28 +427,6 @@ bool LoadSaveVsBulk()
     random_batched_size = test.size();
   }
 
-  if(batched_hash != bulk_hash)
-  {
-    std::cout << "fail 1!!" << std::endl;
-    std::cout << byte_array::ToHex(batched_hash) << std::endl;
-    std::cout << byte_array::ToHex(bulk_hash) << std::endl;
-  }
-
-  if(random_batched_hash == batched_hash)
-  {
-    std::cout << "fail 2" << std::endl;
-  }
-
-  if(bulk_size == batched_size)
-  {
-    std::cout << "fail 3" << std::endl;
-  }
-
-  if(random_batched_size == bulk_size)
-  {
-    std::cout << "fail 4" << std::endl;
-  }
-
   return (batched_hash == bulk_hash) && (random_batched_hash == batched_hash) &&
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
@@ -465,11 +443,8 @@ TEST(storage_key_value_index_gtest, Value_consistency)
 
 TEST(storage_key_value_index_gtest, Hash_consistency)
 {
-  std::cout << "p1" << std::endl;
   EXPECT_TRUE(RandomInsertHashConsistency());
-  std::cout << "p2" << std::endl;
   EXPECT_TRUE(IntermediateFlushHashConsistency());
-  std::cout << "p3" << std::endl;
   EXPECT_TRUE(DoubleInsertionhConsistency());
 }
 TEST(storage_key_value_index_gtest, Load_save_consistency)
