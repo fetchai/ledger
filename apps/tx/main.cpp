@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#define TX_SIGNING_DBG_OUTPUT
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
