@@ -11,7 +11,7 @@ Docker - build, develop & run stuff in docker container<a name="docker"/>
 =========================================================================
 This project has full support for Docker - it is dedicated to be used for building whole project, execute resulting binaries and do whole development using docker, please see details in [this guide](https://github.com/uvue-git/docker-images/blob/master/README.md#guick_usage_guide).
 
-In short, it should be easy to use the docker environment like so:
+In short, it should be easy to use the docker environment, like so:
 
 # Build docker (optional)
     sudo develop-image/scripts/docker-build-img.sh
@@ -38,29 +38,36 @@ Build
     cmake ..
     make -j8
 
-Generate coverage quick start
+Coverage quick start guide
 =====
 
-    cd build
-# Configure build in cmake (adds coverage flags)
+### although it's possible to do this natively, we recommend using a docker image for compatability guarantees
+    sudo ./develop-image/scripts/docker-run.sh bash
+    mkdir coverage_build
+    cd coverage_build
+
+### Configure build in cmake (adds coverage flags)
     ccmake .
 * CMAKE_BUILD_TYPE - set this to Debug
 * FETCH_ENABLE_COVERAGE - set this to ON
 * 'c' to configure
+* 'g' to generate
 * 'q' to quit
 
-# Have to remake the executables before generating coverage
-    make -j8
+### build the library
+    make -j
 
-# Generate coverage
+### generate the coverage for the part of the library you care about
     cd ../
-    ./scripts/generate_coverage.py ./build
+    ./scripts/generate_coverage.py --help
+    ./scripts/generate_coverage.py ./coverage_build/{part_of_lib}
 
-# Coverage should now be in build/coverage/...
-    ls build/coverage
+### Coverage should now be in that part of the libaray (e.g. coverage_build/{part_of_lib}/coverage/...
+    ls coverage_build/{part_of_lib}/coverage
 
-# Optional, view in browser (outside docker)
-    chromium-browser ./build/coverage
+### view the coverage reports in a browser outside of docker
+    {brower_name} ./coverage_build/{part_of_lib}/coverage
+### navigate to all_coverage/index.html to get started
 
 Test
 ====
