@@ -98,6 +98,8 @@ public:
 
   bool Dispatch(PacketPtr packet);
 
+  void Debug(const char *label1, const char *label2);
+
 private:
   using Mutex              = mutex::Mutex;
   using Index              = uint32_t;

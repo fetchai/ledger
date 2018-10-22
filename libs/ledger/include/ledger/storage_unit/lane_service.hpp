@@ -35,6 +35,9 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/object_store_syncronisation_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 
 #include <iomanip>
 #include <memory>
@@ -42,9 +45,15 @@
 namespace fetch {
 namespace ledger {
 
-class LaneService : public service::ServiceServer<fetch::network::TCPServer>
+  class LaneService //: public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
+  using Muddle                 = muddle::Muddle;
+  using MuddlePtr                 = std::shared_ptr<Muddle>;
+  using Server = fetch::muddle::rpc::Server;
+using ServerPtr            = std::shared_ptr<Server>;
+  using CertificatePtr       = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
   using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;
@@ -54,8 +63,6 @@ public:
   using client_register_type     = fetch::network::ConnectionRegister<connectivity_details_type>;
   using controller_type          = LaneController;
   using controller_protocol_type = LaneControllerProtocol;
-  using identity_type            = LaneIdentity;
-  using identity_protocol_type   = LaneIdentityProtocol;
   using connection_handle_type   = client_register_type::connection_handle_type;
   using super_type               = service::ServiceServer<fetch::network::TCPServer>;
   using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
@@ -67,22 +74,24 @@ public:
   // TODO(issue 7): Make config JSON
   LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
-    : super_type(port, tm)
   {
 
-    this->SetConnectionRegister(register_);
-
     thread_pool_ = network::MakeThreadPool(1);
+    port_ = port;
+    lane_ = lane;
 
     // Setting lane certificate up
     // TODO(issue 24): Load from somewhere
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
+
+    std::unique_ptr<crypto::Prover> certificate_;
     certificate_.reset(certificate);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
-                   " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
-
+    lane_identity_ = std::make_shared<LaneIdentity>(register_, tm, certificate_->identity());
+    muddle_ = std::make_shared<Muddle>(std::move(certificate_), tm);
+    server_ = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_P2P, CHANNEL_RPC);
+    
     // format and generate the prefix
     std::string prefix;
     {
@@ -93,11 +102,10 @@ public:
     }
 
     // Lane Identity
-    identity_ = std::make_shared<identity_type>(register_, tm, certificate_->identity());
-    identity_->SetLaneNumber(lane);
-    identity_->SetTotalLanes(total_lanes);
-    identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
-    this->Add(RPC_IDENTITY, identity_protocol_.get());
+    lane_identity_->SetLaneNumber(lane);
+    lane_identity_->SetTotalLanes(total_lanes);
+    lane_identity_protocol_ = std::make_unique<LaneIdentityProtocol>(lane_identity_.get());
+    server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
 
     // TX Store
     tx_store_ = std::make_unique<transaction_store_type>();
@@ -116,10 +124,10 @@ public:
     tx_store_protocol_->OnSetObject(
         [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
 
-    this->Add(RPC_TX_STORE, tx_store_protocol_.get());
+    server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
     // TX Sync
-    this->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
+    server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
 
     // State DB
     state_db_ = std::make_unique<document_store_type>();
@@ -136,20 +144,22 @@ public:
 
     state_db_protocol_ =
         std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
-    this->Add(RPC_STATE, state_db_protocol_.get());
+    server_->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
-    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
+    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, lane_identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
-    this->Add(RPC_CONTROLLER, controller_protocol_.get());
+    server_->Add(RPC_CONTROLLER, controller_protocol_.get());
+
+    muddle_->Debug("LaneService::INIT", "After binding services");
   }
 
-  ~LaneService() override
+  ~LaneService() 
   {
     thread_pool_->Stop();
 
-    identity_protocol_.reset();
-    identity_.reset();
+    lane_identity_protocol_.reset();
+    lane_identity_.reset();
 
     // TODO(issue 24): Remove protocol
     state_db_protocol_.reset();
@@ -166,25 +176,29 @@ public:
     controller_.reset();
   }
 
-  void Start() override
+  void Start() 
   {
-    TCPServer::Start();
+    FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane_, " Service on rpc://127.0.0.1:", port_,
+                   " ID: ", byte_array::ToBase64(lane_identity_->Identity().identifier()));
+    muddle_->Start({port_});
+
     thread_pool_->Start();
     tx_sync_protocol_->Start();
+    muddle_->Debug("LaneService::Start", "");
   }
 
-  void Stop() override
+  void Stop() 
   {
-    thread_pool_->Stop();
     tx_sync_protocol_->Stop();
-    TCPServer::Stop();
+    thread_pool_->Stop();
+    muddle_->Stop();
   }
 
 private:
   client_register_type register_;
 
-  std::shared_ptr<identity_type>          identity_;
-  std::unique_ptr<identity_protocol_type> identity_protocol_;
+  std::shared_ptr<LaneIdentity>          lane_identity_;
+  std::unique_ptr<LaneIdentityProtocol> lane_identity_protocol_;
 
   std::unique_ptr<controller_type>          controller_;
   std::unique_ptr<controller_protocol_type> controller_protocol_;
@@ -198,9 +212,12 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
+  ServerPtr server_;
+  MuddlePtr           muddle_;                ///< The muddle networking service
   mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};
-  std::unique_ptr<crypto::Prover> certificate_;
-};
+  uint16_t port_;
+  uint32_t lane_;
+  };
 
 }  // namespace ledger
 }  // namespace fetch

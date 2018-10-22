@@ -125,7 +125,7 @@ public:
       {
         return false;
       }
-      FETCH_LOG_WARN(LOGGING_NAME, " ", int(lane), ": ", peer.ToString(), " = ", target_address, "connected");
+      FETCH_LOG_WARN(LOGGING_NAME, " ", int(lane), ": ", peer.ToString(), " = ", ToBase64(target_address), "connected");
       currentstate = State::QUERYING;
       ping_prom = client->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::PING);
       lane_prom = client->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);

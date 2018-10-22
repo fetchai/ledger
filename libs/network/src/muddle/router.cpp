@@ -318,7 +318,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
   auto packet = FormatPacket(address_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
+  FETCH_LOG_INFO(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
                   channel, '-', message_num, ")");
 
   RoutePacket(packet, false);
@@ -399,7 +399,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   // register with the dispatcher that we are expecting a response
   auto promise = dispatcher_.RegisterExchange(service, channel, counter);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
+  FETCH_LOG_INFO(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
                   channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
@@ -713,6 +713,11 @@ void Router::DispatchPacket(PacketPtr packet)
       // the dispatcher has "claimed" this packet as there was an outstanding promise waiting for it
       return;
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "DispatchPacket: ", DescribePacket(*packet));
+    FETCH_LOG_INFO(LOGGING_NAME, "DispatchPacket ----------------------------------");
+    registrar_.Debug(LOGGING_NAME, "DispatchPacket");
+    FETCH_LOG_INFO(LOGGING_NAME, "DispatchPacket ----------------------------------");
 
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
     // of message subscriptions.

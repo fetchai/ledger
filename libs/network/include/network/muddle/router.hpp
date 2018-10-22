@@ -102,6 +102,10 @@ public:
   bool HandleToAddress(const Handle &handle, Address &address) const;
 
   void Cleanup();
+  void Debug(const char *label1, const char *label2)
+  {
+    registrar_ . Debug(label1, label2);
+  }
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;

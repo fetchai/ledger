@@ -102,11 +102,14 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
   Index const  index = Combine(packet->GetService(), packet->GetProtocol());
   AddressIndex address_index{index, packet->GetTarget()};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch1");
+
   {
     FETCH_LOCK(lock_);
     auto it = dispatch_map_.find(index);
     if (it != dispatch_map_.end())
     {
+  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch2");
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
@@ -119,6 +122,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     }
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch3");
   {
     FETCH_LOCK(lock_);
     auto it = address_dispatch_map_.find(address_index);
@@ -137,6 +141,19 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
   }
 
   return success;
+}
+
+
+void SubscriptionRegistrar::Debug(const char *label1, const char *label2)
+{
+  FETCH_LOG_WARN(LOGGING_NAME,label1, ":",  label2, ":SubscriptionRegistrar: --------------------------------------");
+  for (const auto &mapping : address_dispatch_map_)
+  {
+    auto numb = std::get<0>(mapping.first);
+    auto addr = std::get<1>(mapping.first);
+    FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:Addr=",  ToBase64(addr), "  Service=", ((numb>>16) & 0xFFFF));
+  }
+  FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle
