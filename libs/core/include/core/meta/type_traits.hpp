@@ -53,6 +53,9 @@ template <typename T, typename R = T>
 using IfIsStdStringLike = EnableIf<std::is_same<T, std::string>::value, R>;
 
 template <typename T, typename R = T>
+using IfIsStringLIke = EnableIf<IsByteArrayLike<T> || std::is_same<T, std::string>::value, R>;
+
+template <typename T, typename R = T>
 using IfIsUnsignedLike = EnableIf<IsUnsignedInteger<T>, R>;
 
 template <typename T, typename R = T>

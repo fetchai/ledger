@@ -126,6 +126,18 @@ public:
   template <typename T>
   meta::IfIsStdStringLike<T, T> As() const;
 
+  template <typename T>
+  meta::IfIsIntegerLike<T, bool> Is() const;
+
+  template <typename T>
+  meta::IfIsBooleanLike<T, bool> Is() const;
+
+  template <typename T>
+  meta::IfIsFloatLike<T, bool> Is() const;
+
+  template <typename T>
+  meta::IfIsStringLIke<T, bool> Is() const;
+
   bool is_int() const
   {
     return type_ == INTEGER;
@@ -511,6 +523,30 @@ meta::IfIsStdStringLike<T, T> Variant::As() const
   return static_cast<std::string>(string_);
 }
 
+template <typename T>
+meta::IfIsIntegerLike<T, bool> Variant::Is() const
+{
+  return (type_ == INTEGER);
+}
+
+template <typename T>
+meta::IfIsBooleanLike<T, bool> Variant::Is() const
+{
+  return (type_ == BOOLEAN);
+}
+
+template <typename T>
+meta::IfIsFloatLike<T, bool> Variant::Is() const
+{
+  return (type_ == FLOATING_POINT);
+}
+
+template <typename T>
+meta::IfIsStringLIke<T, bool> Variant::Is() const
+{
+  return (type_ == STRING);
+}
+
 inline std::ostream &operator<<(std::ostream &os, Variant const &v)
 {
   switch (v.type())
@@ -585,14 +621,42 @@ inline std::ostream &operator<<(std::ostream &os, VariantArray const &v)
 template <typename T>
 inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T &value)
 {
-  auto element = obj[name];
-  if (element.is_undefined())
+  bool success = false;
+
+  if (obj.is_object())
   {
-    return false;
+    auto element = obj[name];
+    if (element.Is<T>())
+    {
+      value   = element.As<T>();
+      success = true;
+    }
   }
 
-  value = element.As<T>();
-  return true;
+  return success;
+}
+
+template <typename T>
+inline bool Extract(script::Variant const &obj, byte_array::ConstByteArray const &name, T &value, T const &default_value)
+{
+  bool success = false;
+
+  if (obj.is_object())
+  {
+    auto element = obj[name];
+    if (element.Is<T>())
+    {
+      value   = element.As<T>();
+      success = true;
+    }
+    else if (element.is_undefined())
+    {
+      value   = default_value;
+      success = true;
+    }
+  }
+
+  return success;
 }
 
 inline void Variant::ForEach(
