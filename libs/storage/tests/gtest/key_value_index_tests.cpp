@@ -250,7 +250,7 @@ bool IntermediateFlushHashConsistency()
 
     if ((i % 3) == 0)
     {
-      key_index.Flush();
+      key_index.Flush(true);
     }
 
     auto const &val = values[i];
@@ -331,6 +331,8 @@ bool LoadSaveVsBulk()
   std::size_t           batch_size = 100;
   std::size_t           total      = batches * batch_size;
   std::size_t           i = 0, k = 0;
+
+  // Create test data
   while (i < total)
   {
     byte_array::ByteArray key;
@@ -350,6 +352,7 @@ bool LoadSaveVsBulk()
     ++i;
   }
 
+  // write data to key index
   key_index.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
@@ -424,11 +427,33 @@ bool LoadSaveVsBulk()
     random_batched_size = test.size();
   }
 
+  if(batched_hash != bulk_hash)
+  {
+    std::cout << "fail 1!!" << std::endl;
+    std::cout << byte_array::ToHex(batched_hash) << std::endl;
+    std::cout << byte_array::ToHex(bulk_hash) << std::endl;
+  }
+
+  if(random_batched_hash == batched_hash)
+  {
+    std::cout << "fail 2" << std::endl;
+  }
+
+  if(bulk_size == batched_size)
+  {
+    std::cout << "fail 3" << std::endl;
+  }
+
+  if(random_batched_size == bulk_size)
+  {
+    std::cout << "fail 4" << std::endl;
+  }
+
   return (batched_hash == bulk_hash) && (random_batched_hash == batched_hash) &&
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
 
-TEST(stoage_key_value_index_gtest, Value_consistency)
+TEST(storage_key_value_index_gtest, Value_consistency)
 {
 
   EXPECT_TRUE(ValueConsistency());
@@ -438,13 +463,16 @@ TEST(stoage_key_value_index_gtest, Value_consistency)
   EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
 }
 
-TEST(stoage_key_value_index_gtest, Hash_consistency)
+TEST(storage_key_value_index_gtest, Hash_consistency)
 {
+  std::cout << "p1" << std::endl;
   EXPECT_TRUE(RandomInsertHashConsistency());
+  std::cout << "p2" << std::endl;
   EXPECT_TRUE(IntermediateFlushHashConsistency());
+  std::cout << "p3" << std::endl;
   EXPECT_TRUE(DoubleInsertionhConsistency());
 }
-TEST(stoage_key_value_index_gtest, Load_save_consistency)
+TEST(storage_key_value_index_gtest, Load_save_consistency)
 {
   EXPECT_TRUE(LoadSaveVsBulk());
 }

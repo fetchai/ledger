@@ -479,7 +479,7 @@ public:
 
   byte_array::ByteArray Hash()
   {
-    stack_.Flush();
+    stack_.Flush(true);
     key_value_pair kv;
     if (stack_.size() > 0)
     {
