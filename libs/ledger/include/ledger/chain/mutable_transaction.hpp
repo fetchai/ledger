@@ -197,12 +197,14 @@ public:
 #if !defined(NDEBUG) && defined(TX_SIGNING_DBG_OUTPUT)
     auto const prod_digest = tx_data_hash_copy.Final();
     std::cerr << "prod. digest           [hex]: " << byte_array::ToHex(prod_digest) << std::endl;
-    std::cerr << "prod. tx data          [hex]: " << byte_array::ToHex(stream_->data()) << std::endl;
-    std::cerr << "prod. identity         [hex]: " << byte_array::ToHex(identity_stream_->data()) << std::endl;
+    std::cerr << "prod. tx data          [hex]: " << byte_array::ToHex(stream_->data())
+              << std::endl;
+    std::cerr << "prod. identity         [hex]: " << byte_array::ToHex(identity_stream_->data())
+              << std::endl;
 
-    hasher_type hasher;
+    hasher_type                  hasher;
     serializers::ByteArrayBuffer stream;
-    stream <<  serializers::Verbatim(stream_->data()) << identity;
+    stream << serializers::Verbatim(stream_->data()) << identity;
     hasher.Update(stream.data());
 
     std::cerr << "real digest            [hex]: " << byte_array::ToHex(hasher.Final()) << std::endl;
