@@ -235,16 +235,16 @@ public:
    */
   void Flush(bool force = false)
   {
-    if(!force)
-    {
-      // Lazy policy to manage flushing is flush when the map reaches the threshold, then clear it
-      using MapElement = typename decltype(data_)::value_type;
+    //if(!force)
+    //{
+    //  // Lazy policy to manage flushing is flush when the map reaches the threshold, then clear it
+    //  using MapElement = typename decltype(data_)::value_type;
 
-      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
-      {
-        return;
-      }
-    }
+    //  if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+    //  {
+    //    return;
+    //  }
+    //}
 
     this->SignalBeforeFlush();
 
@@ -272,8 +272,12 @@ public:
 
     stack_.Flush(true);
 
-    // Whole map clear
-    data_.clear();
+    for (auto &item : data_)
+    {
+      item.second.reads   = 0;
+      item.second.writes  = 0;
+      item.second.updated = false;
+    }
   }
 
   bool is_open() const
