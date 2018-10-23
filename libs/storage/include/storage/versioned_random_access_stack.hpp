@@ -67,7 +67,7 @@ struct BookmarkHeader
  *
  */
 template <typename T, typename B = uint64_t,
-          typename S = CachedRandomAccessStack<T, BookmarkHeader<B>>>
+          typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
 private:
