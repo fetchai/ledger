@@ -127,7 +127,7 @@ public:
       stack_.Get(i, object);
       CachedDataItem itm;
       itm.reads = 1;
-      itm.data = object;
+      itm.data  = object;
       data_.insert(std::pair<uint64_t, CachedDataItem>(i, itm));
     }
   }
@@ -280,7 +280,7 @@ public:
     std::size_t target_size   = std::size_t(float(starting_size) * 0.1);
 
     // Iterate the stack and remove less frequently used elements until you get to target size
-    for (auto it = data_.begin(); it != data_.end(); )
+    for (auto it = data_.begin(); it != data_.end();)
     {
       auto &item = *it;
 
