@@ -35,7 +35,7 @@ class SingletonPool : public Pool
   void operator=(SingletonPool const&)  = delete;
 
  private:
-  SingletonPool() {};
+  SingletonPool() : Pool() {};
 };
 
 }  // namespace threading
