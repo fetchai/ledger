@@ -50,12 +50,12 @@ protected:
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 
 private:
-
   // Create dummy transactions for testing
   void CreateNextTransaction()
   {
-    static int amount = 0;
-    std::string address = "nve3rfRigBZ+YX9lFKVNDA05fQ6V8MfEmx63+bKT0IQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    static int  amount = 0;
+    std::string address =
+        "nve3rfRigBZ+YX9lFKVNDA05fQ6V8MfEmx63+bKT0IQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     script::Variant wealth_data;
     wealth_data.MakeObject();
@@ -79,7 +79,7 @@ private:
     mtx.Sign(signer.private_key()); */
 
     precreated_tx_.push_back(chain::VerifiedTransaction::Create(std::move(mtx)));
-    //precreated_rid_.push_back(ResourceAddress{signer.public_key()});
+    // precreated_rid_.push_back(ResourceAddress{signer.public_key()});
     precreated_rid_.push_back(ResourceAddress{std::to_string(amount)});
   }
 };
