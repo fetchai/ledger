@@ -435,17 +435,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              }
              s[idx] = val;
            })
-      .def("__setitem__",
-           [](NDArray<T> &s, std::size_t idx, T val) {
-             if (idx >= s.size())
-             {
-               throw py::index_error();
-             }
-             s[idx] = val;
-           })
       .def("max",
            [](NDArray<T> &a) {
-             typename NDArray<T>::type ret = -std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = -std::numeric_limits<typename NDArray<T>::Type>::max();
              Max(a, ret);
              return a;
            })
@@ -471,7 +463,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("min",
            [](NDArray<T> const &a) {
-             typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = std::numeric_limits<typename NDArray<T>::Type>::max();
              Min(a, ret);
              return a;
            })

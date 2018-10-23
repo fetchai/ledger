@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -36,10 +37,14 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
       .def(py::init<const std::size_t &, const std::size_t &>())
       .def(py::init<const fetch::byte_array::ByteArray>())
       .def(py::init<const std::string>())
-
-      .def_static("Zeros", &Matrix<T>::Zeros)
-      .def_static("UniformRandom", &Matrix<T>::UniformRandom)
-
+      .def_static("Zeroes",
+                  (Matrix<T>(*)(std::size_t const &, std::size_t const &)) & Matrix<T>::Zeroes)
+      .def_static("Zeroes", (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::Zeroes)
+      .def_static("UniformRandom", (Matrix<T>(*)(std::size_t const &, std::size_t const &)) &
+                                       Matrix<T>::UniformRandom)
+      .def_static("UniformRandom",
+                  (Matrix<T>(*)(std::vector<std::size_t> const &)) & Matrix<T>::UniformRandom)
+      .def("Shape", [](Matrix<T> const &obj) { return obj.shape(); })
       .def("Copy",
            [](Matrix<T> const &other) {
              Matrix<T> ret;
@@ -125,9 +130,10 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__imul__",
-           [](Matrix<T> &a, Matrix<T> const &c) {
-             a.InlineMultiply(c);
-             return a;
+           [](Matrix<T> &a, Matrix<T> const &b) {
+             Matrix<T> c{a.height(), a.width()};
+             fetch::math::Multiply(a, b, c);
+             return c;
            })
       .def("__isub__",
            [](Matrix<T> &a, Matrix<T> const &c) {
@@ -156,9 +162,10 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("__imul__",
-           [](Matrix<T> &a, T const &c) {
-             a.InlineMultiply(c);
-             return a;
+           [](Matrix<T> &a, T const &b) {
+             Matrix<T> c{a.height(), a.width()};
+             fetch::math::Multiply(a, b, c);
+             return c;
            })
       .def("__isub__",
            [](Matrix<T> &a, T const &c) {
@@ -167,6 +174,25 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
            })
 
       .def("__len__", [](Matrix<T> const &a) { return a.size(); })
+
+      .def("__ge__",
+           [](Matrix<T> const &b, Matrix<T> const &c) {
+             Matrix<T> a{b.height(), b.width()};
+             Isgreaterequal(b, c, a);
+             return a;
+           })
+
+      .def("Maximum",
+           [](Matrix<T> &a, Matrix<T> const &b) {
+             if ((a.height() != b.height()) or (a.width() != b.width()))
+             {
+               throw pybind11::index_error("matrix size mismatch");
+             }
+             Matrix<T> ret(a.height(), b.width());
+
+             Maximum(a, b, ret);
+             return ret;
+           })
       .def("ArgMax",
            [](Matrix<T> &a, std::size_t const axis) {
              if (axis >= 2)

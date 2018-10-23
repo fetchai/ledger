@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/key_value_index.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
-#include "testing/unittest.hpp"
+#include "storage/key_value_index.hpp"
 #include <algorithm>
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 using namespace fetch;
@@ -428,35 +428,23 @@ bool LoadSaveVsBulk()
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
 
-int main()
+TEST(stoage_key_value_index_gtest, Value_consistency)
 {
-  SCENARIO("Inserting")
-  {
-    SECTION("Value consistency")
-    {
 
-      EXPECT(ValueConsistency());
-      EXPECT((LoadSaveValueConsistency<kvi_type, kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<kvi_type, cached_kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<cached_kvi_type, kvi_type>()));
-      EXPECT((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
-    };
+  EXPECT_TRUE(ValueConsistency());
+  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, kvi_type>()));
+  EXPECT_TRUE((LoadSaveValueConsistency<kvi_type, cached_kvi_type>()));
+  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, kvi_type>()));
+  EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
+}
 
-    SECTION("Hash consistency")
-    {
-      EXPECT(RandomInsertHashConsistency());
-      EXPECT(IntermediateFlushHashConsistency());
-      EXPECT(DoubleInsertionhConsistency());
-    };
-  };
-
-  SCENARIO("Loading and extending")
-  {
-    SECTION("Load/save consistency")
-    {
-      EXPECT(LoadSaveVsBulk());
-    };
-  };
-
-  return 0;
+TEST(stoage_key_value_index_gtest, Hash_consistency)
+{
+  EXPECT_TRUE(RandomInsertHashConsistency());
+  EXPECT_TRUE(IntermediateFlushHashConsistency());
+  EXPECT_TRUE(DoubleInsertionhConsistency());
+}
+TEST(stoage_key_value_index_gtest, Load_save_consistency)
+{
+  EXPECT_TRUE(LoadSaveVsBulk());
 }

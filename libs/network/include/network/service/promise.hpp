@@ -316,6 +316,7 @@ private:
 using PromiseCounter = details::PromiseImplementation::Counter;
 using PromiseState   = details::PromiseImplementation::State;
 using Promise        = std::shared_ptr<details::PromiseImplementation>;
+using PromiseStates  = std::array<PromiseState, 4>;
 
 inline Promise MakePromise()
 {
@@ -327,7 +328,8 @@ inline Promise MakePromise(uint64_t pro, uint64_t func)
   return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
-char const *ToString(PromiseState state);
+char const *         ToString(PromiseState state);
+const PromiseStates &GetAllPromiseStates();
 
 }  // namespace service
 }  // namespace fetch

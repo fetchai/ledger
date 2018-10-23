@@ -52,7 +52,7 @@ TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
     crypto::openssl::ECDSAPrivateKey<> key;
 
     tx.Sign(key.KeyAsBin(), txdfs);
-    chain::signatures_type::value_type const &sig = *tx.signatures().begin();
+    chain::Signatory const &sig = *tx.signatures().begin();
     EXPECT_TRUE(txdfs.Verify(sig));
     EXPECT_TRUE(tx.Verify());
   }

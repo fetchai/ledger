@@ -39,23 +39,23 @@ public:
     using clock_type     = std::chrono::high_resolution_clock;
     using timepoint_type = clock_type::time_point;
 
-    HistoryElement(tx_digest_type const &h, std::size_t s, lane_set_type l)
+    HistoryElement(TxDigest const &h, std::size_t s, LaneSet l)
       : hash(h)
       , slice(s)
       , lanes(std::move(l))
     {}
     HistoryElement(HistoryElement const &) = default;
 
-    tx_digest_type hash;
+    TxDigest       hash;
     std::size_t    slice;
-    lane_set_type  lanes;
+    LaneSet        lanes;
     timepoint_type timestamp{clock_type::now()};
   };
 
   using HistoryElementCache = std::vector<HistoryElement>;
   using StorageInterface    = fetch::ledger::StorageInterface;
 
-  Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
+  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override
   {
     history_.emplace_back(hash, slice, lanes);
 
