@@ -18,25 +18,36 @@
 
 #include "storage/versioned_random_access_stack.hpp"
 #include "core/random/lfg.hpp"
-#include "testing/unittest.hpp"
+#include <gtest/gtest.h>
 
 #include <iostream>
 #include <stack>
 #include <vector>
 using namespace fetch::storage;
 
-int main()
+
+class TestClass
 {
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
+
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};
+
+
 #define TYPE uint64_t
 
-  SCENARIO("random access stack is being created and manipulated")
+  TEST(versioned_random_access_stack_gtest , creation_and_manipulation)
   {
     VersionedRandomAccessStack<TYPE> stack;
     stack.New("versioned_random_access_stack_test_1.db", "versioned_random_access_stack_diff.db");
     VersionedRandomAccessStack<TYPE>::bookmark_type cp1, cp2, cp3;
 
-    SECTION_REF("testing basic manipulation")
-    {
+    //testing basic manipulation)
       cp1 = stack.Commit();
       stack.Push(1);
       stack.Push(2);
@@ -51,40 +62,32 @@ int main()
       stack.Push(7);
       stack.Push(9);
       stack.Pop();
+      EXPECT_EQ(stack.Top() , 7);
+      EXPECT_EQ(stack.Get(0) , 9);
+      EXPECT_EQ(stack.Get(1) , 3);
+      EXPECT_EQ(stack.Get(2) , 2);
+   
 
-      EXPECT(stack.Top() == 7);
-      EXPECT(stack.Get(0) == 9);
-      EXPECT(stack.Get(1) == 3);
-      EXPECT(stack.Get(2) == 2);
-    };
-
-    SECTION_REF("testing revert 1")
-    {
+    //testing revert 1
       stack.Revert(cp3);
-      EXPECT(stack.Top() == 5);
-      EXPECT(stack.Get(0) == 9);
-      EXPECT(stack.Get(1) == 3);
+      EXPECT_EQ(stack.Top() , 5);
+      EXPECT_EQ(stack.Get(0) , 9);
+      EXPECT_EQ(stack.Get(1) , 3);
 
-      EXPECT(stack.Get(2) == 2);
-    };
+      EXPECT_EQ(stack.Get(2) , 2);
 
-    SECTION_REF("testing revert 2")
-    {
+    //testing revert 2
       stack.Revert(cp2);
-      EXPECT(stack.Top() == 3);
-      EXPECT(stack.Get(0) == 1);
-      EXPECT(stack.Get(1) == 2);
-      EXPECT(stack.Get(2) == 3);
-    };
+      EXPECT_EQ(stack.Top() , 3);
+      EXPECT_EQ(stack.Get(0) , 1);
+      EXPECT_EQ(stack.Get(1) , 2);
+      EXPECT_EQ(stack.Get(2) , 3);
 
-    SECTION_REF("testing revert 3")
-    {
+    //testing revert 3
       stack.Revert(cp1);
-      EXPECT(stack.empty());
-    };
+      EXPECT_NE(stack.empty() , 0);
 
-    SECTION_REF("testing refilling")
-    {
+     //testing refilling
       cp1 = stack.Commit();
       stack.Push(1);
       stack.Push(2);
@@ -100,23 +103,20 @@ int main()
       stack.Push(9);
       stack.Pop();
 
-      EXPECT(stack.Top() == 7);
-      EXPECT(stack.Get(0) == 9);
-      EXPECT(stack.Get(1) == 3);
-      EXPECT(stack.Get(2) == 2);
-    };
+      EXPECT_EQ(stack.Top() , 7);
+      EXPECT_EQ(stack.Get(0) , 9);
+      EXPECT_EQ(stack.Get(1) , 3);
+      EXPECT_EQ(stack.Get(2) , 2);
 
-    SECTION_REF("testing revert 2")
-    {
+    // testing revert 2
       stack.Revert(cp2);
-      EXPECT(stack.Top() == 3);
-      EXPECT(stack.Get(0) == 1);
-      EXPECT(stack.Get(1) == 2);
-      EXPECT(stack.Get(2) == 3);
-    };
-  };
+      EXPECT_EQ(stack.Top() , 3);
+      EXPECT_EQ(stack.Get(0) , 1);
+      EXPECT_EQ(stack.Get(1) , 2);
+      EXPECT_EQ(stack.Get(2) , 3);
+  }
 
-  SCENARIO("storage of large objects")
+  TEST(versioned_random_access_stack_gtest , storage_of_large_objects)
   {
     fetch::random::LaggedFibonacciGenerator<> lfg;
 
@@ -156,14 +156,12 @@ int main()
       newElement();
       all_equal &= (stack.Top() == reference.back());
     }
-    CHECK("all top elements are equal during push", all_equal);
+    EXPECT_TRUE(all_equal);
 
     all_equal = true;
     for (std::size_t i = 0; i < reference.size(); ++i)
     {
       all_equal &= (stack.Get(i) == reference[i]);
     }
-    CHECK("all top elements are equal for random access", all_equal);
-  };
-  return 0;
-}
+    EXPECT_TRUE(all_equal);
+  }
