@@ -126,6 +126,7 @@ public:
       // Case where item isn't found, get it from the stack and insert it into the map
       stack_.Get(i, object);
       CachedDataItem itm;
+      itm.reads = 1;
       itm.data = object;
       data_.insert(std::pair<uint64_t, CachedDataItem>(i, itm));
     }
@@ -275,11 +276,26 @@ public:
 
     stack_.Flush(true);
 
-    for (auto &item : data_)
+    std::size_t starting_size = data_.size();
+    std::size_t target_size   = std::size_t(float(starting_size) * 0.1);
+
+    // Iterate the stack and remove less frequently used elements until you get to target size
+    for (auto it = data_.begin(); it != data_.end(); )
     {
-      item.second.reads   = 0;
-      item.second.writes  = 0;
-      item.second.updated = false;
+      auto &item = *it;
+
+      if (item.second.reads == 0 && item.second.writes == 0 && data_.size() >= target_size)
+      {
+        data_.erase(it++);
+      }
+      else
+      {
+        item.second.reads   = 0;
+        item.second.writes  = 0;
+        item.second.updated = false;
+
+        ++it;
+      }
     }
   }
 
