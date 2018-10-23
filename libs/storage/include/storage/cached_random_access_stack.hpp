@@ -225,7 +225,7 @@ public:
 
   void Clear(bool clear_underlying = false)
   {
-    if(clear_underlying)
+    if (clear_underlying)
     {
       stack_.Clear();
     }
@@ -238,7 +238,7 @@ public:
    */
   void Flush(bool force = false)
   {
-    if(!force)
+    if (!force)
     {
       // Lazy policy to manage flushing is flush when the map reaches the threshold, then manage it
       using MapElement = typename decltype(data_)::value_type;
@@ -289,7 +289,8 @@ public:
   }
 
   /**
-   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes.
+   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk
+   * writes.
    *
    * @param: bytes The number of bytes allowed as an upper bound
    */
@@ -299,9 +300,9 @@ public:
   }
 
 private:
-  event_handler_type           on_file_loaded_;
-  event_handler_type           on_before_flush_;
-  std::size_t                  memory_limit_bytes_ = std::size_t(1ULL << 19);
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  std::size_t        memory_limit_bytes_ = std::size_t(1ULL << 19);
 
   // Underlying stack
   stack_type stack_;
