@@ -66,8 +66,7 @@ struct BookmarkHeader
  * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
-template <typename T, typename B = uint64_t,
-          typename S = RandomAccessStack<T, BookmarkHeader<B>>>
+template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<B>>>
 class VersionedRandomAccessStack
 {
 private:
