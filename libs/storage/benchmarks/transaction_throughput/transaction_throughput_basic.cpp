@@ -203,5 +203,37 @@ BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_30k)(benchmark::State &st)
   }
 }
 
+BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_100k)(benchmark::State &st)
+{
+  std::size_t counter = 0;
+  if (printing_output)
+    std::cout << "writing" << std::endl;
+  for (auto _ : st)
+  {
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
+      counter++;
+    }
+
+    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
+    counter = 0;
+
+    if (printing_output)
+      std::cout << "read " << std::endl;
+
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+      if (i % 1000 == 0 && printing_output)
+        std::cout << "read " << i << std::endl;
+      Transaction dummy;
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
+      counter++;
+    }
+  }
+}
+
 // Macro required for all benchmarks
 BENCHMARK_MAIN();

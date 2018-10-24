@@ -46,7 +46,6 @@ TEST(slightly_better_random_access_stack, basic_functionality)
   stack.New("CRAS_test.db");
 
   EXPECT_TRUE(stack.is_open());
-  EXPECT_TRUE(stack.DirectWrite() == false) << "Expected cached random access stack to be caching";
 
   // Test push/top
   for (uint64_t i = 0; i < testSize; ++i)

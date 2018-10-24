@@ -307,8 +307,8 @@ public:
 
 private:
   // Cached items
-  static constexpr std::size_t cache_line_ln2      = 13;
-  std::size_t                  memory_limit_bytes_ = std::size_t(1ULL << 32);
+  static constexpr std::size_t cache_line_ln2      = 13;                      // Default cache lines 8192 * sizeof(T)
+  std::size_t                  memory_limit_bytes_ = std::size_t(1ULL << 29); // Default 500K memory
 
   T dummy_;
 
