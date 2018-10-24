@@ -111,13 +111,14 @@ public:
     // Found the item via local map
     if (iter != data_.end())
     {
-      //std::cout << "Found item " << i  << " " << cache_lookup << " "  << cache_subindex << std::endl;
+      // std::cout << "Found item " << i  << " " << cache_lookup << " "  << cache_subindex <<
+      // std::endl;
       //++((*iter).second.reads);
       object = iter->second.elements[cache_subindex];
     }
     else
     {
-      //std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
+      // std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
       // Case where item isn't found, load it into the cache, then access
       LoadCacheLine(i);
 
@@ -306,13 +307,13 @@ public:
 
 private:
   // Cached items
-  static constexpr std::size_t cache_line_ln2 = 13;
-  std::size_t memory_limit_bytes_ = std::size_t(1ULL << 32);
+  static constexpr std::size_t cache_line_ln2      = 13;
+  std::size_t                  memory_limit_bytes_ = std::size_t(1ULL << 32);
 
-  T           dummy_;
+  T dummy_;
 
-  event_handler_type           on_file_loaded_;
-  event_handler_type           on_before_flush_;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
 
   // Underlying stack
   mutable stack_type stack_;
@@ -325,27 +326,27 @@ private:
   };
 
   mutable std::map<uint64_t, CachedDataItem> data_;
-  mutable uint64_t    last_removed_index_ =  0;
-  uint64_t                           objects_ = 0;
+  mutable uint64_t                           last_removed_index_ = 0;
+  uint64_t                                   objects_            = 0;
 
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
-    if(items.writes == 0)
+    if (items.writes == 0)
     {
       return;
     }
 
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      //std::cout << "Flushing line: " << i << std::endl;
+      // std::cout << "Flushing line: " << i << std::endl;
 
       if (!stack_.is_open())
       {
         return;
       }
 
-      //std::cout << "flushing to: " << line + i << std::endl;
-      //std::cout << "SS: " << stack_.size() << std::endl;
+      // std::cout << "flushing to: " << line + i << std::endl;
+      // std::cout << "SS: " << stack_.size() << std::endl;
 
       // Ensure underlying stack has these locations available
       while (stack_.size() <= line + i)
@@ -363,7 +364,7 @@ private:
 
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      //std::cout << "Recovering line: " << i << std::endl;
+      // std::cout << "Recovering line: " << i << std::endl;
 
       if (!stack_.is_open())
       {
@@ -392,13 +393,13 @@ private:
         return false;
       }
 
-      //SignalBeforeFlush();
+      // SignalBeforeFlush();
     }
 
     // Find and remove next index up from the last one we removed
     auto next_to_remove = data_.upper_bound(last_removed_index_);
 
-    //for(auto const &i : data_)
+    // for(auto const &i : data_)
     //{
     //  //std::cout << "key: " << i.first << std::endl;
     //}
@@ -406,14 +407,14 @@ private:
     if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
     {
       last_removed_index_ = next_to_remove->first;
-      //std::cout << "FF1: " << next_to_remove->first << std::endl;
+      // std::cout << "FF1: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       data_.erase(next_to_remove);
     }
     else
     {
       next_to_remove = data_.begin();  // Get min element
-      //std::cout << "FF2: " << next_to_remove->first << std::endl;
+      // std::cout << "FF2: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       last_removed_index_ = next_to_remove->first;
       data_.erase(next_to_remove);
@@ -431,8 +432,8 @@ private:
 
     // Load in the cache line (memory usage now slightly over)
     uint64_t cache_index = (line >> cache_line_ln2) << cache_line_ln2;
-    //std::cout << "GL: " <<  cache_index << std::endl;
-    //std::cout << "GL2: " <<  (cache_index >> cache_line_ln2) << std::endl;
+    // std::cout << "GL: " <<  cache_index << std::endl;
+    // std::cout << "GL2: " <<  (cache_index >> cache_line_ln2) << std::endl;
     GetLine(cache_index, data_[cache_index >> cache_line_ln2]);
   }
 
