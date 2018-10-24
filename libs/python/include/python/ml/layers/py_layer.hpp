@@ -49,10 +49,7 @@ void BuildLayers(std::string const &custom_name, pybind11::module &module)
       .def("Output", [](SelfType &a) { return a.output(); })
       .def("DotHidden", [](SelfType &a) { return a.dot_hidden(); })
       .def("AddHidden", [](SelfType &a) { return a.add_hidden(); })
-<<<<<<< HEAD
-=======
       .def("BiasesSetup", [](SelfType &a, bool has_biases) { return a.BiasesSetup(has_biases); })
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
       .def("weights", [](SelfType &a) { return a.weights(); })
       .def("biases", [](SelfType &a) { return a.biases(); })
 

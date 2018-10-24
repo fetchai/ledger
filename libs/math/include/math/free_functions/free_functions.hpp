@@ -35,7 +35,6 @@
 #include <numeric>
 #include <vector>
 
-<<<<<<< HEAD
 #include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
@@ -51,18 +50,14 @@
 #include "math/free_functions/standard_functions/fmod.hpp"
 #include "math/free_functions/standard_functions/log.hpp"
 #include "math/free_functions/standard_functions/remainder.hpp"
-
-=======
-//#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nn_vector.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
-
+//#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
+//#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
+//#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 #include "math/meta/type_traits.hpp"
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 namespace fetch {
 namespace math {
 
@@ -237,8 +232,6 @@ void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T a
   assert(ret.shape().size() == 2);
   ret.Resize(A.shape()[0] * B.shape()[0]);
 
-<<<<<<< HEAD
-=======
   //  linalg::Blas<
   //      T, NDArray<T, C>,
   //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
@@ -248,22 +241,14 @@ void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T a
   //
   //  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   linalg::Blas<
       T, NDArray<T, C>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_nn_vector_threaded;
-
-  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
 
   gemm_nn_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C>
 NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B)
@@ -279,8 +264,6 @@ void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
 {
   ret.Resize(A.shape()[0], B.shape()[1]);
 
-<<<<<<< HEAD
-=======
   //  linalg::Blas<
   //      T, linalg::Matrix<T, C, S>,
   //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
@@ -290,22 +273,14 @@ void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
   //
   //  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   linalg::Blas<
       T, linalg::Matrix<T, C, S>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_nn_vector_threaded;
-
-  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
 
   gemm_nn_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B)
@@ -330,8 +305,6 @@ void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
   ret.Reshape(return_shape);
 
-<<<<<<< HEAD
-=======
   //  linalg::Blas<
   //      T, NDArray<T, C>,
   //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
@@ -343,23 +316,15 @@ void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
   //
   //  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   linalg::Blas<
       T, NDArray<T, C>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                             linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_nt_vector_threaded;
-
-  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_nt_vector;
 
   gemm_nt_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C>
 NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
@@ -381,8 +346,6 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
 {
   ret.Resize(A.shape()[0], B.shape()[0]);
 
-<<<<<<< HEAD
-=======
   //  linalg::Blas<
   //      T, linalg::Matrix<T, C, S>,
   //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
@@ -394,23 +357,15 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
   //
   //  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   linalg::Blas<
       T, linalg::Matrix<T, C, S>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                             linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_nt_vector_threaded;
-
-  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_nt_vector;
 
   gemm_nt_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
@@ -438,8 +393,6 @@ void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
   assert(ret.shape().size() == 2);
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   ret.Reshape(return_shape);
-<<<<<<< HEAD
-=======
   //
   //  linalg::Blas<
   //      T, NDArray<T, C>,
@@ -451,24 +404,16 @@ void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
   //      gemm_tn_vector_threaded;
   //
   //  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
   linalg::Blas<
       T, NDArray<T, C>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
                             linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_tn_vector_threaded;
-
-  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
 
   gemm_tn_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C>
 NDArray<T, C> TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
@@ -490,8 +435,6 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
 {
   ret.Resize(A.width(), B.width());
 
-<<<<<<< HEAD
-=======
   //  linalg::Blas<
   //      T, linalg::Matrix<T, C, S>,
   //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
@@ -503,23 +446,15 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
   //
   //  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   linalg::Blas<
       T, linalg::Matrix<T, C, S>,
       Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
       Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
                             linalg::_beta * linalg::_C),
-<<<<<<< HEAD
-      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-      gemm_tn_vector_threaded;
-
-  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
-=======
       platform::Parallelisation::VECTORISE>
       gemm_tn_vector;
 
   gemm_tn_vector(alpha, A, B, beta, ret);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
@@ -814,31 +749,6 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
 }
 
 /**
-<<<<<<< HEAD
-=======
- * assigns the absolute of x to this array
- * @param x
- */
-template <typename ArrayType>
-void Abs(ArrayType &x)
-{
-  kernels::stdlib::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * e^x
- * @param x
- */
-template <typename ArrayType>
-void Exp(ArrayType &x)
-{
-  kernels::stdlib::Exp<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
  * raise 2 to power input values of x
  * @param x
  */
@@ -859,29 +769,6 @@ void Expm1(ArrayType &x)
   kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
-
-<<<<<<< HEAD
-/// if is arithmetic tpye
-=======
-/**
- * natural logarithm of x
- * @param x
- */
-template <typename ArrayType>
-void Log(ArrayType &x)
-{
-  kernels::stdlib::Log<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename ArrayType>
-ArrayType Log(ArrayType const &x)
-{
-  ArrayType ret{x.shape()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
-}
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
 /**
  * natural logarithm of x
@@ -1745,7 +1632,6 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 }
 
 /**
-<<<<<<< HEAD
  * Cross entropy loss with x as the prediction, and y as the ground truth
  * @tparam ArrayType
  * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
@@ -1781,8 +1667,6 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 }
 
 /**
-=======
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
  * The sigmoid function
  * @tparam ArrayType
  * @tparam T

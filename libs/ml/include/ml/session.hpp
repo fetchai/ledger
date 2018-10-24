@@ -31,10 +31,6 @@ namespace ml {
 template <typename A, typename V>
 class SessionManager
 {
-<<<<<<< HEAD
-private:
-=======
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   using ArrayType         = A;
   using VariableType      = V;
   using VariablePtrType   = std::shared_ptr<VariableType>;
@@ -68,11 +64,8 @@ public:
                            std::string const &variable_name = "", bool requires_grad = false,
                            std::vector<std::size_t> grad_shape = {})
   {
-<<<<<<< HEAD
-=======
     top_sort_complete_ = false;
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     if (grad_shape.empty())
     {
       grad_shape = in_shape;
@@ -96,11 +89,8 @@ public:
                            std::string const &variable_name, FunctionSignature const &f_fn,
                            FunctionSignature const &b_fn, bool is_leaf, bool apply_gradient)
   {
-<<<<<<< HEAD
-=======
     top_sort_complete_ = false;
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     VariablePtrType var = std::make_shared<VariableType>();
     VariableSetup(var, in_shape, variable_name, f_fn, b_fn, is_leaf, true, in_shape,
                   apply_gradient);
@@ -118,15 +108,10 @@ public:
   LayerPtrType Layer(std::size_t const &in_size, std::size_t const &out_size,
                      std::string activation = "LeakyRelu", std::string layer_name = "")
   {
-<<<<<<< HEAD
-    return LayerSetup({in_size, out_size}, activation, layer_name);
-  }
-=======
     top_sort_complete_ = false;
     return LayerSetup({in_size, out_size}, activation, layer_name);
   }
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   /**
    * Define a layer in the neural net
    * @param in_shape
@@ -137,10 +122,7 @@ public:
   LayerPtrType Layer(std::vector<std::size_t> const &in_shape, std::string activation = "LeakyRelu",
                      std::string layer_name = "")
   {
-<<<<<<< HEAD
-=======
     top_sort_complete_ = false;
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     return LayerSetup(in_shape, activation, layer_name);
   }
 
@@ -152,11 +134,6 @@ public:
    */
   ArrayType Predict(VariablePtrType in_var, VariablePtrType out_var)
   {
-<<<<<<< HEAD
-    // figure out the path through the graph
-    TopSort_NoGradientUpdate(out_var->variable_name());
-=======
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     Forward(in_var, out_var);
     return out_var->data();
   }
@@ -171,16 +148,10 @@ public:
   void BackProp(VariablePtrType input_var, VariablePtrType loss_var,
                 typename ArrayType::Type const &lr, std::size_t nreps = 1)
   {
-<<<<<<< HEAD
-
-    TopSort_NoGradientUpdate(loss_var->variable_name());
-    TopSort_GradientUpdate(loss_var->variable_name());
-=======
     if (!top_sort_complete_)
     {
       TopSort(loss_var->variable_name());
     }
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
     for (std::size_t j = 0; j < nreps; ++j)
     {
@@ -223,10 +194,7 @@ public:
     ret->data().SetAllZero();
     return ret;
   }
-<<<<<<< HEAD
-=======
 
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   static VariablePtrType Zeroes(std::size_t const &in_size, std::size_t const &out_size,
                                 SessionManager &sess)
   {
@@ -241,10 +209,7 @@ public:
    */
   void SetInput(LayerPtrType layer, VariablePtrType input)
   {
-<<<<<<< HEAD
-=======
     top_sort_complete_ = false;
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     layer->SetInput(input, *this);
   }
 
@@ -255,13 +220,6 @@ private:
   std::unordered_map<std::string, VariablePtrType> top_sort_map_g_;
   std::vector<VariablePtrType>                     top_sort_vector_g_;
 
-<<<<<<< HEAD
-  void Forward(VariablePtrType in_var, VariablePtrType out_var)
-  {
-    // output_name variable must exist
-    assert(all_variables.find(out_var->variable_name()) != all_variables.end());
-
-=======
   bool top_sort_complete_ =
       false;  // we track whether we need to redo the topological sort or not as we go
 
@@ -275,7 +233,6 @@ private:
 
     // output_name variable must exist
     assert(all_variables.find(out_var->variable_name()) != all_variables.end());
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
     // there must be a path from the output variable to the input variable
     assert(top_sort_map_ng_.find(out_var->variable_name()) != top_sort_map_ng_.end());
 
@@ -303,71 +260,6 @@ private:
   }
 
   /**
-<<<<<<< HEAD
-   * Topological sorting excluding the leaf nodes requiring gradient upates
-   * @param output_name
-   */
-  void TopSort_NoGradientUpdate(std::string &output_name)
-  {
-    // Conduct a topology sort
-    top_sort_map_ng_.clear();
-    top_sort_vector_ng_.clear();
-    TopSort(all_variables.at(output_name), top_sort_map_ng_, top_sort_vector_ng_, false);
-  }
-  /**
-   * Topological sorting including the leaf nodes requiring gradient upates
-   * @param output_name
-   */
-  void TopSort_GradientUpdate(std::string &output_name)
-  {
-    // Conduct a topology sort
-    top_sort_map_g_.clear();
-    top_sort_vector_g_.clear();
-    TopSort(all_variables.at(output_name), top_sort_map_g_, top_sort_vector_g_, true);
-  }
-
-  /**
-   * nagivate backwards through computational graph
-   * if gradient_step set to false, the check for requires_gradient will be dropped
-   * @param vr
-   * @param v_set
-   */
-  void TopSort(VariablePtrType var, std::unordered_map<std::string, VariablePtrType> &top_sort_map,
-               std::vector<VariablePtrType> &top_sort_vector, bool gradient_step = false)
-  {
-    // check if we've added this variable already
-    bool is_in = (top_sort_map.find(var->variable_name()) != top_sort_map.end());
-
-    if (!is_in)  // check if we've already added this variable
-    {
-      if (gradient_step)  // some leaf nodes require gradient updates
-      {
-        if (var->requires_grad())
-        {
-          // we can update the map immediately
-          top_sort_map.insert({var->variable_name(), var});
-          for (std::size_t i = 0; i < var->prev.size(); ++i)
-          {
-            TopSort(var->prev[i], top_sort_map, top_sort_vector, gradient_step);
-          }
-          // pushing back to the vector after the recursive call ensures the right order
-          top_sort_vector.push_back(var);
-        }
-      }
-      else  // non-leaf nodes must have forward and backward functions
-      {
-        if (!var->is_leaf())
-        {
-          // we can update the map immediately
-          top_sort_map.insert({var->variable_name(), var});
-          for (std::size_t i = 0; i < var->prev.size(); ++i)
-          {
-            TopSort(var->prev[i], top_sort_map, top_sort_vector, gradient_step);
-          }
-          // pushing back to the vector after the recursive call ensures the right order
-          top_sort_vector.push_back(var);
-        }
-=======
    * nagivate backwards through computational graph
    * if gradient_step set to false, the check for requires_gradient will be dropped
    * @param vr
@@ -425,7 +317,6 @@ private:
         }
         // pushing back to the vector after the recursive call ensures the right order
         top_sort_vector_ng_.push_back(var);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
       }
     }
   }

@@ -79,11 +79,7 @@ public:
 
   void SetData(ArrayType const &indata_)
   {
-<<<<<<< HEAD
-    data_ = ArrayType(indata_);
-=======
     data_ = indata_;
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   }
 
   void Forward(SelfPtrType ptr)

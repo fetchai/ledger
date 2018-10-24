@@ -24,10 +24,6 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
-<<<<<<< HEAD
-=======
-//#include "ml/variable.hpp"
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
 using namespace fetch::ml;
 
@@ -166,69 +162,4 @@ TEST(layers_test, two_layer_xor_MSE)
   ASSERT_TRUE(prediction[1] > 0.9);
   ASSERT_TRUE(prediction[2] > 0.9);
   ASSERT_TRUE(prediction[3] < 0.1);
-<<<<<<< HEAD
-}
-
-TEST(layers_test, two_layer_xor_CEL)
-{
-  // set up session
-  SessionManager<ArrayType, VariableType> sess{};
-  Type                                    alpha  = 0.2;
-  std::size_t                             n_reps = 200;
-
-  // set up some variables
-  std::size_t data_points = 4;
-  std::size_t input_size  = 2;
-  std::size_t h1_size     = 20;
-  std::size_t output_size = 2;
-
-  std::vector<std::size_t> input_shape{data_points, input_size};
-  std::vector<std::size_t> gt_shape{data_points, output_size};
-
-  auto input_data = sess.Variable(input_shape, "Input_data");
-  auto l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
-  sess.SetInput(l1, input_data);
-  auto y_pred = sess.Layer(h1_size, output_size, "", "output_layer");
-  sess.SetInput(y_pred, l1->output());
-  auto gt = sess.Variable(gt_shape, "GroundTruthOnehot");
-  //  AssignRandomWeights_1(l1);
-  //  AssignRandomWeights_2(y_pred);
-
-  SetInputXOR(input_data->data());
-
-  gt->data().Set(0, 0, 1.0);  // Off
-  gt->data().Set(0, 1, 0.0);
-
-  gt->data().Set(1, 0, 0.0);  // On
-  gt->data().Set(1, 1, 1.0);
-
-  gt->data().Set(2, 0, 0.0);  // On
-  gt->data().Set(2, 1, 1.0);
-
-  gt->data().Set(3, 0, 1.0);  // Off
-  gt->data().Set(3, 1, 0.0);
-
-  // loss
-  auto loss = fetch::ml::ops::SoftmaxCrossEntropyLoss(y_pred->output(), gt, sess);
-
-  // backward pass to get gradient
-  sess.BackProp(input_data, loss, alpha, n_reps);
-
-  // forward pass on the computational graph
-  auto prediction = sess.Predict(input_data, y_pred->output());
-
-  std::cout << "loss->data()[0]: " << loss->data()[0] << std::endl;
-  for (std::size_t idx = 0; idx < prediction.size(); ++idx)
-  {
-    std::cout << "prediction[" << idx << "]: " << prediction[idx] << std::endl;
-  }
-
-  ASSERT_TRUE(loss->data()[0] < 1.0);
-  ASSERT_TRUE(prediction.AllClose(gt->data()));
-  //  ASSERT_TRUE(prediction[0] < 0.1);
-  //  ASSERT_TRUE(prediction[1] > 0.9);
-  //  ASSERT_TRUE(prediction[2] > 0.9);
-  //  ASSERT_TRUE(prediction[3] < 0.1);
-=======
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }

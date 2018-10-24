@@ -313,13 +313,7 @@ public:
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
-<<<<<<< HEAD
     fetch::math::Fmod(data_, x.data(), data_);
-=======
-
-    kernels::stdlib::Fmod<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   }
 
   /**
@@ -330,13 +324,7 @@ public:
   void Remainder(self_type const &x)
   {
     LazyResize(x.size());
-<<<<<<< HEAD
     fetch::math::Remainder(data_, x.data(), data_);
-=======
-
-    kernels::stdlib::Remainder<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
->>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   }
 
   void Remquo(self_type const &x)
@@ -404,7 +392,7 @@ public:
   }
 
   /**
-   * trivial implementation of softmax
+   * Apply softmax to this array
    * @param x
    * @return
    */
@@ -413,40 +401,36 @@ public:
     LazyResize(x.size());
 
     assert(x.size() == this->size());
-
-    // by subtracting the max we improve numerical stability, and the result will be identical
-    this->Subtract(x, x.Max());
-    this->Exp(*this);
-    this->Divide(*this, this->Sum());
+    fetch::math::Softmax(x, *this);
 
     return *this;
   }
 
-  /* Equality operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
+  /**
+   * Equality operator
+   * This method is sensitive to height and width
+   * @param other  the array which this instance is compared against
+   * @return
    */
   bool operator==(ShapeLessArray const &other) const
   {
-    if (size() != other.size())
+    if (this->size() != other.size())
     {
       return false;
     }
     bool ret = true;
-
-    for (size_type i = 0; i < data().size(); ++i)
+    for (size_type i = 0; i < this->data().size(); ++i)
     {
-      ret &= (data()[i] == other.data()[i]);
+      ret &= (this->data()[i] == other.data()[i]);
     }
-
     return ret;
   }
 
-  /* Not-equal operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
+  /**
+   * Not-equal operator
+   * This method is sensitive to height and width
+   * @param other the array which this instance is compared against
+   * @return
    */
   bool operator!=(ShapeLessArray const &other) const
   {
@@ -455,26 +439,25 @@ public:
 
   /**
    * += operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   */
+  template <typename OtherType>
+  meta::IsMathLike<OtherType, void> operator+=(OtherType const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+  }
+
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
    * @param other
    * @return
    */
-  void operator+=(ShapeLessArray const &other)
+  template <typename OtherType>
+  ShapeLessArray operator+(OtherType const &other)
   {
     fetch::math::Add(*this, other, *this);
-  }
-  void operator+=(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-  }
-
-  ShapeLessArray operator+(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-    return *this;
-  }
-  ShapeLessArray operator+(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
     return *this;
   }
 
@@ -501,8 +484,7 @@ public:
    * padded area of the memory.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](S const &i) const
   {
     return data_[i];
   }
@@ -841,8 +823,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = x + y; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = x + y;
+          },
           this->data(), other.data());
     }
     else
@@ -864,8 +847,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; },
-        this->data());
+        [val](vector_register_type const &x, vector_register_type &z) { z = x + val; }, this->data());
 
     return *this;
   }
@@ -882,8 +864,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = x * y; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = x * y;
+          },
           this->data(), other.data());
     }
     else
@@ -905,8 +888,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; },
-        this->data());
+        [val](vector_register_type const &x, vector_register_type &z) { z = x * val; }, this->data());
 
     return *this;
   }
@@ -924,8 +906,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = x - y; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = x - y;
+          },
           this->data(), other.data());
     }
     else
@@ -955,8 +938,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = y - x; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = y - x;
+          },
           this->data(), other.data());
     }
     else
@@ -978,8 +962,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; },
-        this->data());
+        [val](vector_register_type const &y, vector_register_type &z) { z = y - val; }, this->data());
 
     return *this;
   }
@@ -997,8 +980,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = x / y; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = x / y;
+          },
           this->data(), other.data());
     }
     else
@@ -1020,8 +1004,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; },
-        this->data());
+        [val](vector_register_type const &y, vector_register_type &z) { z = y / val; }, this->data());
 
     return *this;
   }
@@ -1031,8 +1014,7 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; },
-        this->data());
+        [val](vector_register_type const &y, vector_register_type &z) { z = val - y; }, this->data());
 
     return *this;
   }
@@ -1050,8 +1032,9 @@ public:
       auto r = range.ToTrivialRange(this->data().size());
       this->data().in_parallel().Apply(
           r,
-          [](vector_register_type const &x, vector_register_type const &y,
-             vector_register_type &z) { z = y / x; },
+          [](vector_register_type const &x, vector_register_type const &y, vector_register_type &z) {
+            z = y / x;
+          },
           this->data(), other.data());
     }
     else
@@ -1073,13 +1056,12 @@ public:
     vector_register_type val(scalar);
 
     this->data().in_parallel().Apply(
-        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; },
-        this->data());
+        [val](vector_register_type const &y, vector_register_type &z) { z = val / y; }, this->data());
 
     return *this;
   }
 
-protected:
+  protected:
   container_type data_;
   std::size_t    size_ = 0;
 };
