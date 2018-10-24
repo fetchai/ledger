@@ -400,6 +400,33 @@ public:
     return v;
   }
 
+  void SetRange(std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s)
+  {
+    assert(idxs.size() > 0);
+    assert(idxs.size() == 2);
+    for (auto cur_idx : idxs)
+    {
+      assert(cur_idx.size() == 3);
+    }
+
+    std::size_t ret_height = (idxs[0][1] - idxs[0][0]) / idxs[0][2];
+    std::size_t ret_width  = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
+    Reshape(ret_height, ret_width);
+
+    std::size_t height_counter = 0;
+    std::size_t width_counter;
+    for (std::size_t i = idxs[0][0]; i < idxs[0][1]; i += idxs[0][2])
+    {
+      width_counter = 0;
+      for (std::size_t j = idxs[1][0]; j < idxs[1][1]; j += idxs[1][2])
+      {
+        Set(height_counter, width_counter, s.At(i, j));
+        ++width_counter;
+      }
+      ++height_counter;
+    }
+  }
+
   /* Sets an element using two coordinates.
    * @param i is the position along the height.
    * @param j is the position along the width.

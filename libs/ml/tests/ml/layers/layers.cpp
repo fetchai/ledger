@@ -24,6 +24,10 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
+<<<<<<< HEAD
+=======
+//#include "ml/variable.hpp"
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
 using namespace fetch::ml;
 
@@ -162,6 +166,7 @@ TEST(layers_test, two_layer_xor_MSE)
   ASSERT_TRUE(prediction[1] > 0.9);
   ASSERT_TRUE(prediction[2] > 0.9);
   ASSERT_TRUE(prediction[3] < 0.1);
+<<<<<<< HEAD
 }
 
 TEST(layers_test, two_layer_xor_CEL)
@@ -224,4 +229,6 @@ TEST(layers_test, two_layer_xor_CEL)
   //  ASSERT_TRUE(prediction[1] > 0.9);
   //  ASSERT_TRUE(prediction[2] > 0.9);
   //  ASSERT_TRUE(prediction[3] < 0.1);
+=======
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 }

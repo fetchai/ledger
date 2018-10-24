@@ -17,8 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 // TODO (private 179)
 
+=======
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 #include "core/byte_array/byte_array.hpp"
 #include <type_traits>
 //#include "math/shape_less_array.hpp"
@@ -27,18 +30,32 @@
 
 namespace fetch {
 namespace math {
+<<<<<<< HEAD
 
 template <typename T, typename C>
 class ShapeLessArray;
 //
 // template <typename T, typename C, typename H, typename W>
 // class RectangularArray;
+=======
+namespace meta {
+
+template <typename T, typename C>
+class ShapeLessArray;
+
+template <typename T, typename C>
+class RectangularArray;
+
+// template <typename T, typename C>
+// class NDArrayIterator;
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
 namespace linalg {
 template <typename T, typename C, typename S>
 class Matrix;
 }
 
+<<<<<<< HEAD
 template <typename T, typename C>
 class NDArray;
 
@@ -140,10 +157,29 @@ struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
 {
   using Type = R;
 };
+=======
+template <typename A, typename R>
+struct IsBlasArrayLikeImpl
+{
+};
+
+template <typename R>
+struct IsBlasArrayLikeImpl<double, R>
+{
+  using Type = R;
+};
+
+// template<typename R, typename T, typename C, typename S>
+// struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R> {
+//  using Type = R;
+//};
+//
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 // template<typename R, typename T, typename C>
 // struct IsBlasArrayLikeImpl<RectangularArray<T, C>, R> {
 //  using Type = R;
 //};
+<<<<<<< HEAD
 template <typename R, typename T, typename C, typename S>
 struct IsBlasArrayLikeImpl<linalg::Matrix<T, C, S>, R>
 {
@@ -204,6 +240,29 @@ struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapeLessArray<T, C>, R>
 };
 template <typename A, typename R>
 using IsBlasAndNoShapeArrayLike = typename IsBlasAndNoShapeArrayLikeImpl<A, R>::Type;
+=======
+
+template <typename R, typename T, typename C>
+struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
+{
+  using Type = R;
+};
+
+// template< typename R, typename T, typename C>
+// struct IsMathArrayLikeImpl< fetch::math::NDArray<T, C>, R>
+//{
+//  using Type = R;
+//};
+
+template <typename A, typename R>
+using IsBlasArrayLike = typename IsBlasArrayLikeImpl<A, R>::Type;
+//
+// template< typename T >
+// IsMathArrayLike<T, bool> IsGreat(T const& x)
+//{
+//  return true;
+//}
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
 }  // namespace meta
 }  // namespace math

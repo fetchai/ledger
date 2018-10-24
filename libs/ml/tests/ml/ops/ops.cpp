@@ -404,6 +404,7 @@ TEST(ops_test, dot_add_backprop_test)
   // simple loss
   auto loss = fetch::ml::ops::MeanSquareError(y_pred, gt, sess);
 
+<<<<<<< HEAD
   // forward pass on the computational graph
   auto prediction = sess.Predict(input_data, y_pred);
 
@@ -412,6 +413,13 @@ TEST(ops_test, dot_add_backprop_test)
 
   // forward pass on the computational graph
   prediction = sess.Predict(input_data, y_pred);
+=======
+  // backward pass to get gradient
+  sess.BackProp(input_data, loss, 0.1, 200);
+
+  // forward pass on the computational graph
+  auto prediction = sess.Predict(input_data, y_pred);
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
   ASSERT_TRUE(prediction.AllClose(gt->data()));
 }

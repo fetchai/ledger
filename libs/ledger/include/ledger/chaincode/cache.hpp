@@ -31,31 +31,31 @@ namespace ledger {
 class ChainCodeCache
 {
 public:
-  using chain_code_type = ChainCodeFactory::chain_code_type;
-  using clock_type      = std::chrono::high_resolution_clock;
-  using timepoint_type  = clock_type::time_point;
+  using ContractPtr = ChainCodeFactory::ContractPtr;
+  using Clock       = std::chrono::high_resolution_clock;
+  using Timepoint   = Clock::time_point;
 
   static constexpr uint64_t CLEANUP_PERIOD = 16;
   static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
   struct Element
   {
-    Element(chain_code_type c)
+    Element(ContractPtr c)
       : chain_code{std::move(c)}
     {}
 
-    chain_code_type chain_code;
-    timepoint_type  timestamp{clock_type::now()};
+    ContractPtr chain_code;
+    Timepoint   timestamp{Clock::now()};
   };
 
   using underlying_cache_type = std::unordered_map<byte_array::ConstByteArray, Element>;
   using cache_value_type      = underlying_cache_type::value_type;
 
-  chain_code_type Lookup(byte_array::ConstByteArray const &contract_name)
+  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name)
   {
 
     // attempt to locate the contract in the cache
-    chain_code_type contract = FindInCache(contract_name);
+    ContractPtr contract = FindInCache(contract_name);
 
     // if this fails create the contract
     if (!contract)
@@ -63,7 +63,7 @@ public:
       contract = CreateContract(contract_name);
     }
 
-    // periodically run cache maintainance
+    // periodically run cache maintenance
     if ((++counter_ & CLEANUP_MASK) == 0)
     {
       RunMaintenance();
@@ -78,9 +78,9 @@ public:
   }
 
 private:
-  chain_code_type FindInCache(byte_array::ConstByteArray const &name)
+  ContractPtr FindInCache(byte_array::ConstByteArray const &name)
   {
-    chain_code_type contract;
+    ContractPtr contract;
 
     // attempt to lookup the contract in the cache
     auto it = cache_.find(name);
@@ -89,15 +89,15 @@ private:
 
       // extract the contract and refresh the cache timestamp
       contract             = it->second.chain_code;
-      it->second.timestamp = clock_type::now();
+      it->second.timestamp = Clock::now();
     }
 
     return contract;
   }
 
-  chain_code_type CreateContract(byte_array::ConstByteArray const &name)
+  ContractPtr CreateContract(byte_array::ConstByteArray const &name)
   {
-    chain_code_type contract = factory_.Create(name);
+    ContractPtr contract = factory_.Create(name);
 
     // update the cache
     cache_.emplace(name, contract);
@@ -109,7 +109,7 @@ private:
   {
     static const std::chrono::hours CACHE_LIFETIME{1};
 
-    timepoint_type const now = clock_type::now();
+    Timepoint const now = Clock::now();
 
     for (auto it = cache_.begin(), end = cache_.end(); it != end;)
     {

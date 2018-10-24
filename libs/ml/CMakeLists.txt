@@ -19,6 +19,10 @@ target_link_libraries(fetch-ml INTERFACE fetch-math)
 
 add_test_target()
 
+<<<<<<< HEAD
 #add_subdirectory(benchmark)
+=======
+add_subdirectory(benchmark)
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 #add_subdirectory(examples)
 

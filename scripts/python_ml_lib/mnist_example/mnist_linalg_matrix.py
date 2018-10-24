@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # coding: utf-8
 
 import os                                           # checking for already existing files
@@ -262,6 +263,14 @@ class MnistLearner():
 def run_mnist():
 
     mlearner = MnistLearner()
+=======
+from mlearner import MLearner
+from line_profiler import LineProfiler
+
+def run_mnist():
+
+    mlearner = MLearner()
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
     # load the data
     mlearner.load_data(one_hot=True)
@@ -269,8 +278,11 @@ def run_mnist():
     # being training
     mlearner.train()
 
+<<<<<<< HEAD
 
 
 # import cProfile
 # cProfile.run('run_mnist()')
+=======
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 run_mnist()

@@ -313,7 +313,13 @@ public:
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
+<<<<<<< HEAD
     fetch::math::Fmod(data_, x.data(), data_);
+=======
+
+    kernels::stdlib::Fmod<Type> kernel;
+    data_.in_parallel().Apply(kernel, x.data_);
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   }
 
   /**
@@ -324,7 +330,13 @@ public:
   void Remainder(self_type const &x)
   {
     LazyResize(x.size());
+<<<<<<< HEAD
     fetch::math::Remainder(data_, x.data(), data_);
+=======
+
+    kernels::stdlib::Remainder<Type> kernel;
+    data_.in_parallel().Apply(kernel, x.data_);
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
   }
 
   void Remquo(self_type const &x)

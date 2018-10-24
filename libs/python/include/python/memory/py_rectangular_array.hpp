@@ -262,6 +262,38 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 
              s(i, j) = v;
            })
+<<<<<<< HEAD
+=======
+      .def("GetRange",
+           [](RectangularArray<T> const &s, std::vector<std::vector<std::size_t>> const &idxs) {
+             assert(idxs.size() > 0);
+             assert(idxs.size() == 2);
+             for (auto cur_idx : idxs)
+             {
+               assert(cur_idx.size() == 3);
+             }
+
+             std::size_t ret_height = (idxs[0][1] - idxs[0][0]) / idxs[0][2];
+             std::size_t ret_width  = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
+
+             RectangularArray<T> ret{ret_height, ret_width};
+
+             std::size_t height_counter = 0;
+             std::size_t width_counter  = 0;
+             for (std::size_t i = idxs[0][0]; i < idxs[0][1]; i += idxs[0][2])
+             {
+               for (std::size_t j = idxs[1][0]; j < idxs[1][1]; j += idxs[1][2])
+               {
+                 ret.Set(height_counter, width_counter, s.At(i, j));
+               }
+             }
+
+             return ret;
+           })
+      .def("SetRange",
+           [](RectangularArray<T> &ret, std::vector<std::vector<std::size_t>> const &idxs,
+              RectangularArray<T> const &s) { ret.SetRange(idxs, s); })
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
       //      .def("__eq__", [](RectangularArray<T> &      s,
       //                        py::array_t<double> const &arr) { std::cout << "WAS HERE" <<
       //                        std::endl; })

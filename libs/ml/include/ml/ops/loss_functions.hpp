@@ -103,6 +103,7 @@ std::shared_ptr<VariableType> CrossEntropyLoss(std::shared_ptr<VariableType> lef
 /*
  * Cross entropy loss Op
  */
+<<<<<<< HEAD
 template <typename VariableType>
 void SoftmaxCELImplementation(std::shared_ptr<VariableType> cur_node)
 {
@@ -128,6 +129,32 @@ std::shared_ptr<VariableType> SoftmaxCrossEntropyLoss(std::shared_ptr<VariableTy
   std::vector<std::size_t>      new_shape = left->shape();
   std::shared_ptr<VariableType> ret =
       sess.Variable(new_shape, "Softmax_CEL", f_fn, b_fn, false, false);
+=======
+template <typename VariableType, typename VariablePtrType = std::shared_ptr<VariableType>>
+void SoftmaxCELImplementation(VariablePtrType cur_node)
+{
+  cur_node->data() =
+      fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+}
+template <typename VariableType, typename SessionType,
+          typename VariablePtrType = std::shared_ptr<VariableType>>
+VariablePtrType SoftmaxCrossEntropyLoss(VariablePtrType left, VariablePtrType right,
+                                        SessionType &sess)
+{
+  // define the derivative
+  std::function<void(VariablePtrType)> b_fn = [](VariablePtrType cur_node) {
+    fetch::ml::ops::derivatives::SoftmaxCrossEntropyLoss(cur_node);
+  };
+
+  // define the forward function (i.e. the dot)
+  std::function<void(VariablePtrType)> f_fn = [](VariablePtrType cur_node) {
+    SoftmaxCELImplementation(cur_node);
+  };
+
+  // define the return variable with the Dot computation
+  std::vector<std::size_t> new_shape = left->shape();
+  VariablePtrType          ret = sess.Variable(new_shape, "Softmax_CEL", f_fn, b_fn, false, false);
+>>>>>>> 0d9f5a8842a1e8f8cd1cf8fc23164d04ddd5a87f
 
   ret->prev.push_back(left);
   ret->prev.push_back(right);

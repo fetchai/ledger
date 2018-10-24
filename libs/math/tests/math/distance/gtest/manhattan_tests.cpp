@@ -16,11 +16,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "rpc/promise.hpp"
+#include <iomanip>
 #include <iostream>
-using namespace fetch::rpc;
 
-int main()
+#include "core/random/lcg.hpp"
+#include <gtest/gtest.h>
+#include <math/distance/manhattan.hpp>
+#include <math/linalg/matrix.hpp>
+
+using namespace fetch::math::distance;
+using namespace fetch::math::linalg;
+
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(manhattan_gtest, basic_info)
 {
-  return 0;
+  _M<double> A = _M<double>(R"(1 0 0)");
+  EXPECT_EQ(0, Manhattan(A, A));
+
+  _M<double> B = _M<double>(R"(0 1 0)");
+  EXPECT_EQ(Manhattan(A, B), 2);
+
+  B = _M<double>(R"(0 2 0)");
+  EXPECT_EQ(Manhattan(A, B), 3);
+
+  B = _M<double>(R"(1 1 0)");
+  EXPECT_EQ(Manhattan(A, B), 1);
 }
