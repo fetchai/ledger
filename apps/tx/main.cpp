@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#define TX_SIGNING_DBG_OUTPUT
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
@@ -115,7 +117,7 @@ void PrintTx(fetch::chain::MutableTransaction const &tx, std::string const &desc
   std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
 }
 
-void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
+void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &is_verbose = false)
 {
   fetch::chain::MutableTransaction tx;
   auto                             txdata = fetch::chain::TxSigningAdapterFactory(tx);
@@ -123,6 +125,11 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
 
   if (tx.Verify(txdata))
   {
+    if (is_verbose)
+    {
+      PrintSeparator(std::cout, "Tx");
+      std::cout << tx << std::endl;
+    }
     std::cout << "SUCCESS: Transaction has been verified." << std::endl;
   }
   else
@@ -186,7 +193,7 @@ fetch::byte_array::ConstByteArray GetJsonContentFromFileCmdlArg(std::string cons
   std::ifstream istrm(arg_value, std::ios::in);
   if (!istrm.is_open())
   {
-    throw std::runtime_error("File \"" + arg_value + "\" can not be oppened.");
+    throw std::runtime_error("File \"" + arg_value + "\" can not be opened.");
   }
   std::stringstream buffer;
   buffer << istrm.rdbuf();
@@ -210,7 +217,7 @@ void HandleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
   {
     fetch::serializers::ByteArrayBuffer stream{
         fetch::byte_array::FromBase64(data_v.As<fetch::byte_array::ByteArray>())};
-    verifyTx(stream);
+    verifyTx(stream, is_verbose);
   }
   else
   {
