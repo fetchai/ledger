@@ -16,50 +16,176 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/random_access_stack.hpp"
 #include "core/random/lfg.hpp"
+#include "storage/random_access_stack.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <stack>
+
 using namespace fetch::storage;
 
-template <typename T>
-void SimpleTest(std::size_t N = 100)
+class TestClass
 {
-  RandomAccessStack<T>                      stack;
-  std::stack<T>                             reference;
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
+
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};
+
+TEST(random_access_stack, basic_functionality)
+{
+  constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
+  RandomAccessStack<TestClass>              stack;
+  std::vector<TestClass>                    reference;
 
-  stack.New("random_access_stack_test_1.db");
-  for (std::size_t i = 0; i < N; ++i)
+  stack.New("RAS_test.db");
+
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected random access stack to be direct write";
+
+  // Test push/top
+  for (uint64_t i = 0; i < testSize; ++i)
   {
-    uint64_t val = lfg();
-    reference.push(val);
-    stack.Push(val);
+    {
+      uint64_t  random = lfg();
+      TestClass temp;
+      temp.value1 = random;
+      temp.value2 = random & 0xFF;
+
+      stack.Push(temp);
+      reference.push_back(temp);
+    }
+
+    ASSERT_TRUE(stack.Top() == reference[i])
+        << "Stack did not match reference stack at index " << i;
   }
 
-  for (std::size_t i = 0; i < N; ++i)
+  // Test index
   {
-    uint64_t a = reference.top();
-    uint64_t b = stack.Top();
-    std::cout << a << " " << b << std::endl;
-    if (a != b)
+    ASSERT_TRUE(stack.size() == reference.size());
+
+    for (uint64_t i = 0; i < testSize; ++i)
     {
-      std::cerr << "failed as " << a << " != " << b << std::endl;
-      exit(-1);
+      TestClass temp;
+      stack.Get(i, temp);
+      ASSERT_TRUE(temp == reference[i]);
     }
-    reference.pop();
+  }
+
+  // Test setting
+  for (uint64_t i = 0; i < testSize; ++i)
+  {
+    uint64_t  random = lfg();
+    TestClass temp;
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
+
+    stack.Set(i, temp);
+    reference[i] = temp;
+  }
+
+  // Test swapping
+  for (std::size_t i = 0; i < 100; ++i)
+  {
+    uint64_t pos1 = lfg() % testSize;
+    uint64_t pos2 = lfg() % testSize;
+
+    TestClass a;
+    stack.Get(pos1, a);
+
+    TestClass b;
+    stack.Get(pos2, b);
+
+    stack.Swap(pos1, pos2);
+
+    {
+      TestClass c;
+      stack.Get(pos1, c);
+
+      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i;
+    }
+
+    {
+      TestClass c;
+      stack.Get(pos2, c);
+
+      ASSERT_TRUE(c == a) << "Stack swap test failed, iteration " << i;
+    }
+  }
+
+  // Pop items off the stack
+  for (std::size_t i = 0; i < testSize; ++i)
+  {
     stack.Pop();
-    if (reference.size() != stack.size())
-    {
-      std::cerr << "size mismatch" << std::endl;
-      exit(-1);
-    }
   }
+
+  ASSERT_TRUE(stack.size() == 0);
+  ASSERT_TRUE(stack.empty() == true);
 }
 
-int main()
+TEST(random_access_stack, file_writing_and_recovery)
 {
-  SimpleTest<uint64_t>();
-  return 0;
+  constexpr uint64_t                        testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  std::vector<TestClass>                    reference;
+
+  {
+    RandomAccessStack<TestClass> stack;
+
+    // Testing closures
+    bool file_loaded  = false;
+    bool file_flushed = false;
+
+    stack.OnFileLoaded([&file_loaded] { file_loaded = true; });
+    stack.OnBeforeFlush([&file_flushed] { file_flushed = true; });
+
+    stack.New("RAS_test_2.db");
+
+    EXPECT_TRUE(file_loaded == true);
+
+    stack.SetExtraHeader(0x00deadbeefcafe00);
+    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+
+    // Fill with random numbers
+    for (uint64_t i = 0; i < testSize; ++i)
+    {
+      uint64_t  random = lfg();
+      TestClass temp;
+      temp.value1 = random;
+      temp.value2 = random & 0xFF;
+
+      stack.Push(temp);
+      reference.push_back(temp);
+    }
+
+    stack.Flush();
+    EXPECT_TRUE(file_flushed == true);
+  }
+
+  // Check values against loaded file
+  {
+    RandomAccessStack<TestClass> stack;
+
+    stack.Load("RAS_test_2.db");
+
+    EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
+
+    {
+      ASSERT_TRUE(stack.size() == reference.size());
+
+      for (uint64_t i = 0; i < testSize; ++i)
+      {
+        TestClass temp;
+        stack.Get(i, temp);
+        ASSERT_TRUE(temp == reference[i]);
+      }
+    }
+
+    stack.Close();
+  }
 }

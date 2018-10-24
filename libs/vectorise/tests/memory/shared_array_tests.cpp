@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_TESTING_ENABLED
-#include "vectorise/memory/shared_array.hpp"
 #include "iostream"
 #include "random/lcg.hpp"
+#include "vectorise/memory/shared_array.hpp"
 using namespace fetch::memory;
 
 using data_type  = uint64_t;

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
 #include "vectorise/register.hpp"
+#include "vectorise/sse.hpp"
 #include <iostream>
 
 #include "core/random/lfg.hpp"

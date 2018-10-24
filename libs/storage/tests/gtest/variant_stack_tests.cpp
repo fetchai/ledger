@@ -16,70 +16,295 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/variant_stack.hpp"
 #include "core/random/lfg.hpp"
+#include "storage/variant_stack.hpp"
 
-#include "testing/unittest.hpp"
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <stack>
+
 using namespace fetch::storage;
 
-#define TYPE uint64_t
-
-int main()
+class TestClass
 {
-  SCENARIO("usage of variant stack with basic type")
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
+
+  bool operator==(TestClass const &rhs)
   {
-    static constexpr int64_t                  N = 100;
-    VariantStack                              stack;
-    std::stack<TYPE>                          reference;
-    fetch::random::LaggedFibonacciGenerator<> lfg;
-    stack.New("variant_stack_test_1.db");
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};
 
-    SECTION_REF("populating the stack")
+TEST(variant_stack, basic_functionality)
+{
+  constexpr uint64_t                                    testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<>             lfg;
+  VariantStack                                          stack;
+  std::vector<std::tuple<TestClass, uint64_t, uint8_t>> reference;
+
+  stack.New("VS_test.db");
+
+  // Test push/top
+  for (uint64_t i = 0; i < testSize; ++i)
+  {
+    uint64_t  random = lfg();
+    TestClass temp;
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
+
+    std::tuple<TestClass, uint64_t, uint8_t> test_vals =
+        std::make_tuple(temp, uint64_t(~random), uint8_t(~random & 0xFF));
+
+    reference.push_back(test_vals);
+
+    uint64_t choose_type = i % 3;
+
+    switch (choose_type)
     {
-      EXPECT(stack.empty());
+    case 0:
+    {
+      stack.Push(std::get<0>(test_vals), choose_type);
 
-      bool all_pass = true;
-      for (int64_t i = 0; i < N; ++i)
+      TestClass tmp;
+      uint64_t  type = stack.Top(tmp);
+
+      EXPECT_TRUE(type == 0) << "Top did not return expected type of 0, returned: " << type;
+
+      ASSERT_TRUE(tmp == std::get<0>(test_vals));
+    }
+    break;
+    case 1:
+    {
+      stack.Push(std::get<1>(test_vals), choose_type);
+
+      uint64_t tmp;
+      uint64_t type = stack.Top(tmp);
+
+      EXPECT_TRUE(type == 1) << "Top did not return expected type of 1, returned: " << type;
+
+      ASSERT_TRUE(tmp == std::get<1>(test_vals));
+    }
+    break;
+    case 2:
+    {
+      stack.Push(std::get<2>(test_vals), choose_type);
+
+      uint8_t  tmp;
+      uint64_t type = stack.Top(tmp);
+
+      EXPECT_TRUE(type == 2) << "Top did not return expected type of 2, returned: " << type;
+
+      ASSERT_TRUE(tmp == std::get<2>(test_vals));
+    }
+    break;
+    default:
+      throw std::out_of_range("failed to index tuple");
+    }
+  }
+
+  // Pop items off the stack, checking their type
+  for (std::size_t i = testSize - 1;; --i)
+  {
+    uint64_t choose_type = i % 3;
+
+    EXPECT_TRUE(choose_type == stack.Type())
+        << "Type did not return expected type of " << choose_type << ", returned: " << stack.Type();
+
+    stack.Pop();
+
+    if (i == 0)
+    {
+      break;
+    }
+  }
+
+  ASSERT_TRUE(stack.size() == 0);
+  ASSERT_TRUE(stack.empty() == true);
+}
+
+TEST(variant_stack, file_writing_and_recovery)
+{
+  constexpr uint64_t                                    testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<>             lfg;
+  std::vector<std::tuple<TestClass, uint64_t, uint8_t>> reference;
+
+  {
+    VariantStack stack;
+
+    stack.New("VS_test_2.db");
+
+    // Fill without tagging by type
+    for (uint64_t i = 0; i < testSize; ++i)
+    {
+      uint64_t  random = lfg();
+      TestClass temp;
+      temp.value1 = random + 1;
+      temp.value2 = random & 0xFF;
+
+      std::tuple<TestClass, uint64_t, uint8_t> test_vals =
+          std::make_tuple(temp, uint64_t(~random), uint8_t(~random & 0xFF));
+
+      reference.push_back(test_vals);
+
+      uint64_t choose_type = i % 3;
+
+      if (choose_type == 0)
       {
-
-        SILENT_EXPECT((stack.size() == std::size_t(i)));
-        all_pass &= (stack.size() == std::size_t(i));
-
-        uint64_t val = lfg();
-        reference.push(val);
-        stack.Push(val);
-        uint64_t ref;
-        stack.Top(ref);
-
-        SILENT_EXPECT(ref == val);
-        all_pass &= (ref == val);
+        stack.Push(std::get<0>(test_vals));
       }
 
-      CHECK("populated correctly", all_pass);
-    };
-
-    SECTION_REF("checking that elements come out in the right order")
-    {
-      bool all_pass = true;
-      for (std::size_t i = 0; i < N; ++i)
+      if (choose_type == 1)
       {
-        uint64_t top, ref;
-        stack.Top(top);
-        ref = reference.top();
+        stack.Push(std::get<1>(test_vals));
+      }
 
-        reference.pop();
+      if (choose_type == 2)
+      {
+        stack.Push(std::get<2>(test_vals));
+      }
+    }
+
+    stack.Close();
+  }
+
+  // Check values against loaded file
+  {
+    VariantStack stack;
+
+    stack.Load("VS_test_2.db");
+
+    {
+      ASSERT_TRUE(stack.size() == reference.size());
+
+      for (uint64_t i = testSize - 1;; --i)
+      {
+        std::tuple<TestClass, uint64_t, uint8_t> test_vals = reference[i];
+
+        uint64_t choose_type = i % 3;
+
+        if (choose_type == 0)
+        {
+          TestClass tmp;
+          stack.Top(tmp);
+
+          ASSERT_TRUE(tmp == std::get<0>(test_vals));
+        }
+
+        if (choose_type == 1)
+        {
+          uint64_t tmp;
+          stack.Top(tmp);
+
+          ASSERT_TRUE(tmp == std::get<1>(test_vals));
+        }
+
+        if (choose_type == 2)
+        {
+          uint8_t tmp;
+          stack.Top(tmp);
+
+          ASSERT_TRUE(tmp == std::get<2>(test_vals));
+        }
+
         stack.Pop();
 
-        SILENT_EXPECT(ref == top);
-        all_pass &= (ref == top);
+        if (i == 0)
+        {
+          break;
+        }
       }
-      CHECK("all elements came out alright", all_pass);
-      EXPECT(stack.empty());
-    };
-  };
+    }
 
-  return 0;
+    stack.Close();
+  }
+
+  // Check we can clear and set new elements after loading
+  {
+    VariantStack stack;
+
+    stack.Load("VS_test_2.db");
+
+    reference.clear();
+    stack.Clear();
+
+    ASSERT_TRUE(stack.size() == reference.size());
+
+    ASSERT_TRUE(stack.size() == 0);
+    ASSERT_TRUE(stack.empty() == true);
+
+    // push types onto variant stack
+    for (uint64_t i = 0; i < testSize; ++i)
+    {
+      uint64_t  random = lfg();
+      TestClass temp;
+      temp.value1 = random;
+      temp.value2 = random & 0xFF;
+
+      std::tuple<TestClass, uint64_t, uint8_t> test_vals =
+          std::make_tuple(temp, uint64_t(~random), uint8_t(~random & 0xFF));
+
+      reference.push_back(test_vals);
+
+      uint64_t choose_type = i % 3;
+
+      switch (choose_type)
+      {
+      case 0:
+      {
+        stack.Push(std::get<0>(test_vals), choose_type);
+
+        TestClass tmp;
+        uint64_t  type = stack.Top(tmp);
+
+        EXPECT_TRUE(type == 0) << "Top did not return expected type of 0, returned: " << type;
+
+        ASSERT_TRUE(tmp == std::get<0>(test_vals));
+      }
+      break;
+      case 1:
+      {
+        stack.Push(std::get<1>(test_vals), choose_type);
+
+        uint64_t tmp;
+        uint64_t type = stack.Top(tmp);
+
+        EXPECT_TRUE(type == 1) << "Top did not return expected type of 1, returned: " << type;
+
+        ASSERT_TRUE(tmp == std::get<1>(test_vals));
+      }
+      break;
+      case 2:
+      {
+        stack.Push(std::get<2>(test_vals), choose_type);
+
+        uint8_t  tmp;
+        uint64_t type = stack.Top(tmp);
+
+        EXPECT_TRUE(type == 2) << "Top did not return expected type of 2, returned: " << type;
+
+        ASSERT_TRUE(tmp == std::get<2>(test_vals));
+      }
+      break;
+      default:
+        throw std::out_of_range("failed to index tuple");
+      }
+    }
+
+    // Pop items off the stack, checking their type
+    for (std::size_t i = testSize - 1;; --i)
+    {
+      uint64_t choose_type = i % 3;
+
+      EXPECT_TRUE(choose_type == stack.Type()) << "Type did not return expected type of "
+                                               << choose_type << ", returned: " << stack.Type();
+
+      stack.Pop();
+
+      if (i == 0)
+      {
+        break;
+      }
+    }
+  }
 }

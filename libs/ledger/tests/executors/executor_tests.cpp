@@ -21,7 +21,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor.hpp"
 
-#include "mock_storage_unit.hpp"
+#include "../chaincode/mock_storage_unit.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
