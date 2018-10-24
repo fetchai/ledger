@@ -479,7 +479,7 @@ public:
 
   byte_array::ByteArray Hash()
   {
-    stack_.Flush(true);
+    stack_.Flush();
     key_value_pair kv;
     if (stack_.size() > 0)
     {
@@ -494,9 +494,9 @@ public:
     return stack_.size();
   }
 
-  void Flush(bool force = false)
+  void Flush()
   {
-    stack_.Flush(force);
+    stack_.Flush();
   }
 
   bool is_open() const
@@ -658,16 +658,6 @@ public:
     }
 
     return Iterator(this, kv, true);
-  }
-
-  /**
-   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk writes
-   *
-   * @param: bytes The number of bytes allowed as an upper bound
-   */
-  void SetMemoryLimit(std::size_t bytes)
-  {
-    stack_.SetMemoryLimit(bytes);
   }
 
 private:

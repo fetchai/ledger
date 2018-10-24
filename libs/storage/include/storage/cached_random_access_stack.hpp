@@ -97,7 +97,6 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    Clear();
     stack_.Load(filename, create_if_not_exists);
     this->SignalFileLoaded();
   }
@@ -105,7 +104,7 @@ public:
   void New(std::string const &filename)
   {
     stack_.New(filename);
-    Clear(true);
+    Clear();
     this->SignalFileLoaded();
   }
 
@@ -126,8 +125,7 @@ public:
       // Case where item isn't found, get it from the stack and insert it into the map
       stack_.Get(i, object);
       CachedDataItem itm;
-      itm.reads = 1;
-      itm.data  = object;
+      itm.data = object;
       data_.insert(std::pair<uint64_t, CachedDataItem>(i, itm));
     }
   }
@@ -162,7 +160,7 @@ public:
 
   void Close()
   {
-    Flush(true);
+    Flush();
 
     stack_.Close(true);
   }
@@ -224,12 +222,9 @@ public:
     return objects_ == 0;
   }
 
-  void Clear(bool clear_underlying = false)
+  void Clear()
   {
-    if (clear_underlying)
-    {
-      stack_.Clear();
-    }
+    stack_.Clear();
     objects_ = 0;
     data_.clear();
   }
@@ -237,19 +232,8 @@ public:
   /**
    * Flush all of the cached elements to file if they have been updated
    */
-  void Flush(bool force = false)
+  void Flush()
   {
-    if (!force)
-    {
-      // Lazy policy to manage flushing is flush when the map reaches the threshold, then manage it
-      using MapElement = typename decltype(data_)::value_type;
-
-      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
-      {
-        return;
-      }
-    }
-
     this->SignalBeforeFlush();
 
     for (auto &item : data_)
@@ -276,27 +260,14 @@ public:
 
     stack_.Flush(true);
 
-    std::size_t starting_size = data_.size();
-    std::size_t target_size   = std::size_t(float(starting_size) * 0.1);
-
-    // Iterate the stack and remove less frequently used elements until you get to target size
-    for (auto it = data_.begin(); it != data_.end();)
+    for (auto &item : data_)
     {
-      auto &item = *it;
-
-      if (item.second.reads == 0 && item.second.writes == 0 && data_.size() >= target_size)
-      {
-        data_.erase(it++);
-      }
-      else
-      {
-        item.second.reads   = 0;
-        item.second.writes  = 0;
-        item.second.updated = false;
-
-        ++it;
-      }
+      item.second.reads   = 0;
+      item.second.writes  = 0;
+      item.second.updated = false;
     }
+
+    // TODO(issue 10): Manage cache size
   }
 
   bool is_open() const
@@ -304,21 +275,10 @@ public:
     return stack_.is_open();
   }
 
-  /**
-   * Set the limit for the amount of RAM this structure will use to amortize the cost of disk
-   * writes.
-   *
-   * @param: bytes The number of bytes allowed as an upper bound
-   */
-  void SetMemoryLimit(std::size_t bytes)
-  {
-    memory_limit_bytes_ = bytes;
-  }
-
 private:
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
-  std::size_t        memory_limit_bytes_ = std::size_t(1ULL << 19);
+  static constexpr std::size_t MAX_SIZE_BYTES = 10000;
+  event_handler_type           on_file_loaded_;
+  event_handler_type           on_before_flush_;
 
   // Underlying stack
   stack_type stack_;

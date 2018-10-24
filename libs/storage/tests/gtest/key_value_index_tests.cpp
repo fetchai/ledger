@@ -250,7 +250,7 @@ bool IntermediateFlushHashConsistency()
 
     if ((i % 3) == 0)
     {
-      key_index.Flush(true);
+      key_index.Flush();
     }
 
     auto const &val = values[i];
@@ -331,8 +331,6 @@ bool LoadSaveVsBulk()
   std::size_t           batch_size = 100;
   std::size_t           total      = batches * batch_size;
   std::size_t           i = 0, k = 0;
-
-  // Create test data
   while (i < total)
   {
     byte_array::ByteArray key;
@@ -352,7 +350,6 @@ bool LoadSaveVsBulk()
     ++i;
   }
 
-  // write data to key index
   key_index.New("test1.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
@@ -431,7 +428,7 @@ bool LoadSaveVsBulk()
          (bulk_size == batched_size) && (random_batched_size == bulk_size);
 }
 
-TEST(storage_key_value_index_gtest, Value_consistency)
+TEST(stoage_key_value_index_gtest, Value_consistency)
 {
 
   EXPECT_TRUE(ValueConsistency());
@@ -441,13 +438,13 @@ TEST(storage_key_value_index_gtest, Value_consistency)
   EXPECT_TRUE((LoadSaveValueConsistency<cached_kvi_type, cached_kvi_type>()));
 }
 
-TEST(storage_key_value_index_gtest, Hash_consistency)
+TEST(stoage_key_value_index_gtest, Hash_consistency)
 {
   EXPECT_TRUE(RandomInsertHashConsistency());
   EXPECT_TRUE(IntermediateFlushHashConsistency());
   EXPECT_TRUE(DoubleInsertionhConsistency());
 }
-TEST(storage_key_value_index_gtest, Load_save_consistency)
+TEST(stoage_key_value_index_gtest, Load_save_consistency)
 {
   EXPECT_TRUE(LoadSaveVsBulk());
 }
