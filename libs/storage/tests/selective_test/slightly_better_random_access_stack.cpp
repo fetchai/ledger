@@ -38,10 +38,10 @@ public:
 
 TEST(slightly_better_random_access_stack, basic_functionality)
 {
-  constexpr uint64_t                        testSize = 10000;
-  fetch::random::LaggedFibonacciGenerator<> lfg;
-  SlightlyBetterRandomAccessStack<TestClass>        stack;
-  std::vector<TestClass>                    reference;
+  constexpr uint64_t                         testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<>  lfg;
+  SlightlyBetterRandomAccessStack<TestClass> stack;
+  std::vector<TestClass>                     reference;
 
   stack.New("CRAS_test.db");
 

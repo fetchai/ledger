@@ -17,22 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/assert.hpp"
 #include "storage/random_access_stack.hpp"
 
+#include <algorithm>
+#include <array>
 #include <fstream>
 #include <map>
 #include <string>
-#include <array>
-#include <algorithm>
 #include <unordered_map>
 
 namespace fetch {
 namespace storage {
 
 /**
- * The SlightlyBetterRandomAccessStack owns a stack of type T (RandomAccessStack), and provides caching.
+ * The SlightlyBetterRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
+ * caching.
  *
  * It does this by maintaining a quick access structure (data_ map) that can be used without disk
  * access.
@@ -52,8 +52,7 @@ public:
   using type               = T;
 
   SlightlyBetterRandomAccessStack()
-  {
-  }
+  {}
 
   ~SlightlyBetterRandomAccessStack()
   {
@@ -86,8 +85,8 @@ public:
   {
     assert(i < objects_);
 
-    uint64_t cache_lookup   = i >> cache_line_ln2;            // Upper N bits
-    uint64_t cache_subindex = i & ((1 << cache_line_ln2) -1); // Lower total - N bits
+    uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
+    uint64_t cache_subindex = i & ((1 << cache_line_ln2) - 1);  // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -117,8 +116,8 @@ public:
   {
     assert(i < objects_);
 
-    uint64_t cache_lookup   = i >> cache_line_ln2;            // Upper N bits
-    uint64_t cache_subindex = i & ((1 << cache_line_ln2) -1); // Lower total - N bits
+    uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
+    uint64_t cache_subindex = i & ((1 << cache_line_ln2) - 1);  // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -156,21 +155,21 @@ public:
 
   uint64_t Push(type const &object)
   {
-    uint64_t       ret = objects_;
+    uint64_t ret = objects_;
 
-//    // TODO: (`HUT`) : remove, unneccessary now (?)
-//    // Ensure the underlying stack allocates enough to write back a cache line
-//    if(stack_.size() <= objects_)
-//    {
-//      for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
-//      {
-//        stack_.Push(object);
-//      }
-//
-//      // No need for a write in this case since the stack will already contain this value
-//      LoadCacheLine(objects_);
-//      stack_.Flush(false);
-//    }
+    //    // TODO: (`HUT`) : remove, unneccessary now (?)
+    //    // Ensure the underlying stack allocates enough to write back a cache line
+    //    if(stack_.size() <= objects_)
+    //    {
+    //      for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
+    //      {
+    //        stack_.Push(object);
+    //      }
+    //
+    //      // No need for a write in this case since the stack will already contain this value
+    //      LoadCacheLine(objects_);
+    //      stack_.Flush(false);
+    //    }
 
     ++objects_;
 
@@ -206,8 +205,8 @@ public:
     uint64_t cache_lookup_i = i >> cache_line_ln2;
     uint64_t cache_lookup_j = j >> cache_line_ln2;
 
-    uint64_t cache_subindex_i = i & ((1 << cache_line_ln2) -1);
-    uint64_t cache_subindex_j = j & ((1 << cache_line_ln2) -1);
+    uint64_t cache_subindex_i = i & ((1 << cache_line_ln2) - 1);
+    uint64_t cache_subindex_j = j & ((1 << cache_line_ln2) - 1);
 
     // make sure both items are in the cache
     if (data_.find(cache_lookup_i) == data_.end())
@@ -249,20 +248,20 @@ public:
    */
   void Flush(bool lazy = true)
   {
-    if(!lazy)
+    if (!lazy)
     {
-      for(auto const &i : data_)
+      for (auto const &i : data_)
       {
         FlushLine(i.first << cache_line_ln2, i.second);
       }
 
       // Trim stack size down
-      while(stack_.size() > objects_ && stack_.is_open())
+      while (stack_.size() > objects_ && stack_.is_open())
       {
         stack_.Pop();
       }
 
-      if(stack_.is_open())
+      if (stack_.is_open())
       {
         stack_.Flush(false);
       }
@@ -286,20 +285,20 @@ public:
   }
 
 private:
-  std::size_t        memory_limit_bytes_ = std::size_t(1ULL << 19);
-  uint64_t           last_removed_index_ = 0;
-  T                  dummy_;
+  std::size_t memory_limit_bytes_ = std::size_t(1ULL << 19);
+  uint64_t    last_removed_index_ = 0;
+  T           dummy_;
 
   // Underlying stack
   stack_type stack_;
 
   // Cached items
-  static constexpr std::size_t cache_line_ln2        = 5;
+  static constexpr std::size_t cache_line_ln2 = 5;
 
   struct CachedDataItem
   {
-    uint64_t                            reads   = 0;
-    uint64_t                            writes  = 0;
+    uint64_t                              reads  = 0;
+    uint64_t                              writes = 0;
     std::array<type, 1 << cache_line_ln2> elements;
   };
 
@@ -310,13 +309,13 @@ private:
   {
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      if(!stack_.is_open())
+      if (!stack_.is_open())
       {
         return;
       }
 
       // Ensure underlying stack has these locations available
-      while(stack_.size() <= line + i)
+      while (stack_.size() <= line + i)
       {
         stack_.Push(dummy_);
       }
@@ -331,13 +330,13 @@ private:
 
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      if(!stack_.is_open())
+      if (!stack_.is_open())
       {
         return;
       }
 
       // Ensure underlying stack has these locations available
-      while(stack_.size() <= line + i && stack_.is_open())
+      while (stack_.size() <= line + i && stack_.is_open())
       {
         stack_.Push(dummy_);
       }
@@ -359,7 +358,7 @@ private:
     // Find and remove next index up from the last one we removed
     auto next_to_remove = data_.upper_bound(last_removed_index_);
 
-    if(next_to_remove->first > last_removed_index_)
+    if (next_to_remove->first > last_removed_index_)
     {
       last_removed_index_ = next_to_remove->first;
       FlushLine(next_to_remove->first, next_to_remove->second);
@@ -367,7 +366,7 @@ private:
     }
     else
     {
-      next_to_remove = data_.begin(); // Get min element
+      next_to_remove = data_.begin();  // Get min element
       FlushLine(next_to_remove->first, next_to_remove->second);
       last_removed_index_ = next_to_remove->first;
       data_.erase(next_to_remove);
@@ -379,7 +378,9 @@ private:
   void LoadCacheLine(uint64_t line)
   {
     // Cull memory usage to max
-    while(ManageMemory()) {}
+    while (ManageMemory())
+    {
+    }
 
     // Load in the cache line (memory usage now slightly over)
     uint64_t cache_index = (line >> cache_line_ln2) << cache_line_ln2;
