@@ -285,6 +285,17 @@ protected:
     file_handle_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
   }
 
+  /**
+   * Set limit in memory of structure
+   *
+   * @param: bytes Bytes to allow
+   *
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {
+    stack_.SetMemoryLimit(bytes);
+  }
+
 private:
   std::fstream file_handle_;
   std::string  filename_ = "";

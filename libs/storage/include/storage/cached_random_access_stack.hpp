@@ -275,6 +275,15 @@ public:
     return stack_.is_open();
   }
 
+  /**
+   * Set limit in memory of structure
+   *
+   * @param: bytes Bytes to allow
+   *
+   */
+  void SetMemoryLimit(std::size_t bytes)
+  {}
+
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
   event_handler_type           on_file_loaded_;

@@ -407,9 +407,8 @@ public:
    * Set limit in memory of structure - since this writes directly to disk without caching this
    * does nothing.
    *
-   * @param:
+   * @param: bytes Bytes to allow
    *
-   * @return:
    */
   void SetMemoryLimit(std::size_t bytes)
   {}
