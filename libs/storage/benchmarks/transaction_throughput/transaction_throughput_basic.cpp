@@ -28,6 +28,8 @@ using namespace fetch;
 using namespace fetch::storage;
 using namespace fetch::chain;
 
+constexpr bool printing_output = false;
+
 class ObjectStoreBench : public ::benchmark::Fixture
 {
 protected:
@@ -35,7 +37,7 @@ protected:
   {
     store_.New("obj_store_bench.db", "obj_store_bench_index.db");
 
-    for (std::size_t i = 0; i < 10000; ++i)
+    for (std::size_t i = 0; i < 100000; ++i)
     {
       CreateNextTransaction();
     }
@@ -140,6 +142,7 @@ BENCHMARK_F(ObjectStoreBench, WritingTxToStore_10k)(benchmark::State &st)
 BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_10k)(benchmark::State &st)
 {
   std::size_t counter = 0;
+  if(printing_output) std::cout << "writing" << std::endl;
   for (auto _ : st)
   {
     for (std::size_t i = 0; i < 10000; ++i)
@@ -152,13 +155,43 @@ BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_10k)(benchmark::State &st)
     std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
     counter = 0;
 
+    if(printing_output) std::cout << "read " << std::endl;
+
     for (std::size_t i = 0; i < 10000; ++i)
     {
+      if(i % 1000 == 0 && printing_output) std::cout << "read " << i << std::endl;
       Transaction dummy;
       std::size_t mod_counter = counter % precreated_tx_.size();
       benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
-      // 12888964394
-      // 12221606575
+      counter++;
+    }
+  }
+}
+
+BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_30k)(benchmark::State &st)
+{
+  std::size_t counter = 0;
+  if(printing_output) std::cout << "writing" << std::endl;
+  for (auto _ : st)
+  {
+    for (std::size_t i = 0; i < 30000; ++i)
+    {
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
+      counter++;
+    }
+
+    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
+    counter = 0;
+
+    if(printing_output) std::cout << "read " << std::endl;
+
+    for (std::size_t i = 0; i < 30000; ++i)
+    {
+      if(i % 1000 == 0 && printing_output) std::cout << "read " << i << std::endl;
+      Transaction dummy;
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
       counter++;
     }
   }

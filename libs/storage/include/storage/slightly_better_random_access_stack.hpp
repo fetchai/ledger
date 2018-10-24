@@ -66,22 +66,40 @@ public:
    */
   static constexpr bool DirectWrite()
   {
-    return false;
+    return true;
   }
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
     stack_.Load(filename, create_if_not_exists);
     this->objects_ = stack_.size();
+    this->SignalFileLoaded();
   }
 
   void New(std::string const &filename)
   {
     stack_.New(filename);
     this->objects_ = 0;
+    this->SignalFileLoaded();
   }
 
-  void Get(uint64_t const &i, type &object)
+  void ClearEventHandlers()
+  {
+    on_file_loaded_  = nullptr;
+    on_before_flush_ = nullptr;
+  }
+
+  void OnFileLoaded(event_handler_type const &f)
+  {
+    on_file_loaded_ = f;
+  }
+
+  void OnBeforeFlush(event_handler_type const &f)
+  {
+    on_before_flush_ = f;
+  }
+
+  void Get(uint64_t const &i, type &object) const
   {
     assert(i < objects_);
 
@@ -93,11 +111,13 @@ public:
     // Found the item via local map
     if (iter != data_.end())
     {
+      //std::cout << "Found item " << i  << " " << cache_lookup << " "  << cache_subindex << std::endl;
       //++((*iter).second.reads);
       object = iter->second.elements[cache_subindex];
     }
     else
     {
+      //std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
       // Case where item isn't found, load it into the cache, then access
       LoadCacheLine(i);
 
@@ -246,7 +266,7 @@ public:
   /**
    * Flush all of the cached elements to file if they have been updated
    */
-  void Flush(bool lazy = true)
+  void Flush(bool lazy = true) const
   {
     if (!lazy)
     {
@@ -285,15 +305,17 @@ public:
   }
 
 private:
-  std::size_t memory_limit_bytes_ = std::size_t(1ULL << 19);
-  uint64_t    last_removed_index_ = 0;
+  // Cached items
+  static constexpr std::size_t cache_line_ln2 = 13;
+  std::size_t memory_limit_bytes_ = std::size_t(1ULL << 32);
+
   T           dummy_;
 
-  // Underlying stack
-  stack_type stack_;
+  event_handler_type           on_file_loaded_;
+  event_handler_type           on_before_flush_;
 
-  // Cached items
-  static constexpr std::size_t cache_line_ln2 = 5;
+  // Underlying stack
+  mutable stack_type stack_;
 
   struct CachedDataItem
   {
@@ -302,17 +324,28 @@ private:
     std::array<type, 1 << cache_line_ln2> elements;
   };
 
-  std::map<uint64_t, CachedDataItem> data_;
+  mutable std::map<uint64_t, CachedDataItem> data_;
+  mutable uint64_t    last_removed_index_ =  0;
   uint64_t                           objects_ = 0;
 
-  void FlushLine(uint64_t line, CachedDataItem const &items)
+  void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
+    if(items.writes == 0)
+    {
+      return;
+    }
+
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
+      //std::cout << "Flushing line: " << i << std::endl;
+
       if (!stack_.is_open())
       {
         return;
       }
+
+      //std::cout << "flushing to: " << line + i << std::endl;
+      //std::cout << "SS: " << stack_.size() << std::endl;
 
       // Ensure underlying stack has these locations available
       while (stack_.size() <= line + i)
@@ -324,12 +357,14 @@ private:
     }
   }
 
-  void GetLine(uint64_t line, CachedDataItem &items)
+  void GetLine(uint64_t line, CachedDataItem &items) const
   {
     // Make sure underlying stack has mem. locations
 
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
+      //std::cout << "Recovering line: " << i << std::endl;
+
       if (!stack_.is_open())
       {
         return;
@@ -345,28 +380,40 @@ private:
     }
   }
 
-  bool ManageMemory()
+  bool ManageMemory() const
   {
     // Lazy policy: remove items FILO style
     using MapElement = typename decltype(data_)::value_type;
 
-    if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+    for (std::size_t i = 0; i < 2; ++i)
     {
-      return false;
+      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+      {
+        return false;
+      }
+
+      //SignalBeforeFlush();
     }
 
     // Find and remove next index up from the last one we removed
     auto next_to_remove = data_.upper_bound(last_removed_index_);
 
-    if (next_to_remove->first > last_removed_index_)
+    //for(auto const &i : data_)
+    //{
+    //  //std::cout << "key: " << i.first << std::endl;
+    //}
+
+    if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
     {
       last_removed_index_ = next_to_remove->first;
+      //std::cout << "FF1: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       data_.erase(next_to_remove);
     }
     else
     {
       next_to_remove = data_.begin();  // Get min element
+      //std::cout << "FF2: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       last_removed_index_ = next_to_remove->first;
       data_.erase(next_to_remove);
@@ -375,7 +422,7 @@ private:
     return true;
   }
 
-  void LoadCacheLine(uint64_t line)
+  void LoadCacheLine(uint64_t line) const
   {
     // Cull memory usage to max
     while (ManageMemory())
@@ -384,7 +431,25 @@ private:
 
     // Load in the cache line (memory usage now slightly over)
     uint64_t cache_index = (line >> cache_line_ln2) << cache_line_ln2;
+    //std::cout << "GL: " <<  cache_index << std::endl;
+    //std::cout << "GL2: " <<  (cache_index >> cache_line_ln2) << std::endl;
     GetLine(cache_index, data_[cache_index >> cache_line_ln2]);
+  }
+
+  void SignalFileLoaded()
+  {
+    if (on_file_loaded_)
+    {
+      on_file_loaded_();
+    }
+  }
+
+  void SignalBeforeFlush() const
+  {
+    if (on_before_flush_)
+    {
+      on_before_flush_();
+    }
   }
 };
 }  // namespace storage
