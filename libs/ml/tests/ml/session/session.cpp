@@ -70,7 +70,7 @@ TEST(session_test, trivial_backprop_test)
 {
 
   // set up session
-  SessionManager<ArrayType, VariableType> sess{};
+  SessionManager<ArrayType> sess{};
 
   // set up some variables
   std::vector<std::size_t> l1_shape{2, 3};

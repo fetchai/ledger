@@ -28,7 +28,7 @@ namespace fetch {
 namespace ml {
 // TODO(private 271)
 
-template <typename A, typename V>
+template <typename A, typename V = fetch::ml::Variable<A>>
 class SessionManager
 {
   using ArrayType         = A;

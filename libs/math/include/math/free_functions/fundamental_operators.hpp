@@ -36,26 +36,26 @@ namespace math {
  * @param scalar
  * @param ret
  */
-template <typename T, typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
+template <typename T, typename C>
+void Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
-  typename ArrayType::vector_register_type val(scalar);
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ArrayType::vector_register_type const &x,
-            typename ArrayType::vector_register_type &      z) { z = x + val; },
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
+            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + val; },
       array.data());
 }
-template <typename T, typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+template <typename T, typename C>
+ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-  ArrayType ret{array.size()};
+  ShapeLessArray<T, C> ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
+template <typename T, typename C>
+void Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
 {
   ret = Add(array, scalar, ret);
 }
@@ -82,6 +82,9 @@ meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1
   return ret;
 }
 
+////////////////////////////////
+/// SCALAR - SCALAR ADDITION ///
+////////////////////////////////
 /**
  * Implementation for scalar addition. Implementing this helps keeps a uniform interface
  * @tparam T
@@ -102,6 +105,9 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
   return ret;
 }
 
+////////////////////////////////
+/// ARRAY - ARRAY ADDITION   ///
+////////////////////////////////
 
 /**
  * Adds two arrays together
