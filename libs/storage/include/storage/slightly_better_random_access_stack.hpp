@@ -51,8 +51,7 @@ public:
   using header_extra_type  = D;
   using type               = T;
 
-  SlightlyBetterRandomAccessStack()
-  {}
+  SlightlyBetterRandomAccessStack() = default;
 
   ~SlightlyBetterRandomAccessStack()
   {
@@ -391,9 +390,13 @@ private:
 
   void LoadCacheLine(uint64_t line) const
   {
-    // Cull memory usage to max
-    while (ManageMemory())
+    // Cull memory usage to max allowed
+    for (;;)
     {
+      if (!ManageMemory())
+      {
+        break;
+      }
     }
 
     // Load in the cache line (memory usage now slightly over)
