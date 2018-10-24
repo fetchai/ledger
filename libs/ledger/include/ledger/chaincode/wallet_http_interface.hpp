@@ -109,10 +109,13 @@ private:
     {
       json::JSONDocument doc = request.JSON();
 
-      auto const &count_v = doc["count"];
-      if (count_v.is_int())
+      if (doc.root().is_object())
       {
-        count = count_v.As<uint64_t>();
+        auto const &count_v = doc["count"];
+        if (count_v.is_int())
+        {
+          count = count_v.As<uint64_t>();
+        }
       }
     }
     catch (json::JSONParseException &ex)
