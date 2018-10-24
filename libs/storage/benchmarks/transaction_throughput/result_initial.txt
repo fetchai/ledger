@@ -1,0 +1,5 @@
+-----------------------------------------------------------------------------
+Benchmark                                      Time           CPU Iterations
+-----------------------------------------------------------------------------
+ObjectStoreBench/WritingTxToStore_1        69339 ns      69004 ns      20000
+ObjectStoreBench/WritingTxToStore_10      684942 ns     679652 ns       2000

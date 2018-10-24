@@ -32,10 +32,10 @@ namespace storage {
 
 /**
  * The SlightlyBetterRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
- * caching.
+ * caching in an invisible manner.
  *
  * It does this by maintaining a quick access structure (data_ map) that can be used without disk
- * access.
+ * access. The map resembles a CPU cache line.
  *
  * The stack is responsible for flushing this to disk at regular intervals to keep the map size
  * small and guard against loss of data in the event of system failure. Sets and gets will fill
@@ -60,7 +60,9 @@ public:
   }
 
   /**
-   * Indicate whether the stack is writing directly to disk or caching writes.
+   * Indicate whether the stack is writing directly to disk or caching writes. Since
+   * This class intends to invisibly provide caching it returns that it's a
+   * direct write class.
    *
    * @return: Whether the stack is written straight to disk.
    */
@@ -111,9 +113,7 @@ public:
     // Found the item via local map
     if (iter != data_.end())
     {
-      // std::cout << "Found item " << i  << " " << cache_lookup << " "  << cache_subindex <<
-      // std::endl;
-      //++((*iter).second.reads);
+      ++((*iter).second.reads);
       object = iter->second.elements[cache_subindex];
     }
     else
@@ -178,23 +178,9 @@ public:
   {
     uint64_t ret = objects_;
 
-    //    // TODO: (`HUT`) : remove, unneccessary now (?)
-    //    // Ensure the underlying stack allocates enough to write back a cache line
-    //    if(stack_.size() <= objects_)
-    //    {
-    //      for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
-    //      {
-    //        stack_.Push(object);
-    //      }
-    //
-    //      // No need for a write in this case since the stack will already contain this value
-    //      LoadCacheLine(objects_);
-    //      stack_.Flush(false);
-    //    }
-
     ++objects_;
 
-    // Guaranteed to be safe - a push would write to location size()
+    // Guaranteed to be safe - sets make sure the underlying stack has the memory
     Set(objects_ - 1, object);
 
     return ret;
@@ -338,15 +324,10 @@ private:
 
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      // std::cout << "Flushing line: " << i << std::endl;
-
       if (!stack_.is_open())
       {
         return;
       }
-
-      // std::cout << "flushing to: " << line + i << std::endl;
-      // std::cout << "SS: " << stack_.size() << std::endl;
 
       // Ensure underlying stack has these locations available
       while (stack_.size() <= line + i)
@@ -361,11 +342,8 @@ private:
   void GetLine(uint64_t line, CachedDataItem &items) const
   {
     // Make sure underlying stack has mem. locations
-
     for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
     {
-      // std::cout << "Recovering line: " << i << std::endl;
-
       if (!stack_.is_open())
       {
         return;
@@ -386,35 +364,23 @@ private:
     // Lazy policy: remove items FILO style
     using MapElement = typename decltype(data_)::value_type;
 
-    for (std::size_t i = 0; i < 2; ++i)
+    if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
     {
-      if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
-      {
-        return false;
-      }
-
-      // SignalBeforeFlush();
+      return false;
     }
 
     // Find and remove next index up from the last one we removed
     auto next_to_remove = data_.upper_bound(last_removed_index_);
 
-    // for(auto const &i : data_)
-    //{
-    //  //std::cout << "key: " << i.first << std::endl;
-    //}
-
     if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
     {
       last_removed_index_ = next_to_remove->first;
-      // std::cout << "FF1: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       data_.erase(next_to_remove);
     }
     else
     {
       next_to_remove = data_.begin();  // Get min element
-      // std::cout << "FF2: " << next_to_remove->first << std::endl;
       FlushLine(next_to_remove->first, next_to_remove->second);
       last_removed_index_ = next_to_remove->first;
       data_.erase(next_to_remove);
@@ -432,8 +398,6 @@ private:
 
     // Load in the cache line (memory usage now slightly over)
     uint64_t cache_index = (line >> cache_line_ln2) << cache_line_ln2;
-    // std::cout << "GL: " <<  cache_index << std::endl;
-    // std::cout << "GL2: " <<  (cache_index >> cache_line_ln2) << std::endl;
     GetLine(cache_index, data_[cache_index >> cache_line_ln2]);
   }
 
@@ -442,14 +406,6 @@ private:
     if (on_file_loaded_)
     {
       on_file_loaded_();
-    }
-  }
-
-  void SignalBeforeFlush() const
-  {
-    if (on_before_flush_)
-    {
-      on_before_flush_();
     }
   }
 };
