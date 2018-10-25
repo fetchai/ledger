@@ -85,98 +85,53 @@ void benchmark_layer_training(std::vector<std::size_t> layer_sizes, bool threadi
   // forward pass on the computational graph
   auto prediction = sess.Predict(input_data, y_pred->output());
 }
-//
-// int main()
-//{
-//  std::cout << "Testing without threading: " << std::endl;
-//  bool threading = false;
-//  // TINY NET
-//  std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t tiny net: " << std::endl;
-//  benchmark_large_matrices({10, 10, 10}, threading);
-//
-//  // medium net
-//  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t medium net: " << std::endl;
-//  benchmark_large_matrices({50, 30, 20}, threading);
-//
-//  // large net
-//  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t large net: " << std::endl;
-//  benchmark_large_matrices({256, 128, 64}, threading);
-//  std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
-//
-//  std::chrono::duration<double> time_span1 =
-//      std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0);
-//  std::chrono::duration<double> time_span2 =
-//      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//  std::chrono::duration<double> time_span3 =
-//      std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2);
-//  std::cout << "mini_net_training_time: " << time_span1.count() << std::endl;
-//  std::cout << "medium_net_training_time: " << time_span2.count() << std::endl;
-//  std::cout << "large_net_training_time: " << time_span3.count() << std::endl;
-//
-//  threading = true;
-//  // TINY NET
-//  t0 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t tiny net: " << std::endl;
-//  benchmark_large_matrices({10, 10, 10}, threading);
-//
-//  // medium net
-//  t1 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t medium net: " << std::endl;
-//  benchmark_large_matrices({50, 30, 20}, threading);
-//
-//  // large net
-//  t2 = std::chrono::high_resolution_clock::now();
-//  std::cout << "\t large net: " << std::endl;
-//  benchmark_large_matrices({256, 128, 64}, threading);
-//  t3 = std::chrono::high_resolution_clock::now();
-//
-//  time_span1 = std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0);
-//  time_span2 = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-//  time_span3 = std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2);
-//  std::cout << "mini_net_training_time: " << time_span1.count() << std::endl;
-//  std::cout << "medium_net_training_time: " << time_span2.count() << std::endl;
-//  std::cout << "large_net_training_time: " << time_span3.count() << std::endl;
-//
-//  return 0;
-//}
 
 static void BM_tiny_net_no_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({10, 10, 10}, false);
+  }
 }
 BENCHMARK(BM_tiny_net_no_threading);
 static void BM_medium_net_no_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({50, 30, 20}, false);
+  }
 }
 BENCHMARK(BM_medium_net_no_threading);
 static void BM_large_net_no_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({256, 128, 64}, false);
+  }
 }
 BENCHMARK(BM_large_net_no_threading);
 static void BM_tiny_net_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({10, 10, 10}, true);
+  }
 }
 BENCHMARK(BM_tiny_net_threading);
 static void BM_medium_net_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({50, 30, 20}, true);
+  }
 }
 BENCHMARK(BM_medium_net_threading);
 static void BM_large_net_threading(benchmark::State &state)
 {
   for (auto _ : state)
+  {
     benchmark_layer_training({256, 128, 64}, true);
+  }
 }
 BENCHMARK(BM_large_net_threading);
 

@@ -416,8 +416,7 @@ public:
       return false;
     }
     bool ret = true;
-
-    for (size_type i = 0; i < data().size(); ++i)
+    for (size_type i = 0; ret && i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
     }
@@ -623,7 +622,7 @@ public:
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; i < N; ++i)
+    for (std::size_t i = 0; ret && i < N; ++i)
     {
       double va = this->At(i);
       if (ignoreNaN && std::isnan(va))
