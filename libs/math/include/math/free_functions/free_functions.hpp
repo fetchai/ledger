@@ -1739,6 +1739,41 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 }
 
 /**
+ * Cross entropy loss with x as the prediction, and y as the ground truth
+ * @tparam ArrayType
+ * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
+ * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
+ * 0
+ * @return
+ */
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+
+  auto n_examples = x.shape()[0];
+  //  auto n_classes  = x.shape()[1];
+
+  ArrayType sce_x{x.shape()};
+
+  Softmax(sce_x);
+
+  auto      gt = ArgMax(y, 1);
+  ArrayType log_likelihood{1};
+  log_likelihood[0] = 0;
+
+  for (std::size_t idx = 0; idx < n_examples; ++idx)
+  {
+    //    Log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
+    std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
+  }
+
+  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+}
+
+/**
  * The sigmoid function
  * @tparam ArrayType
  * @tparam T
