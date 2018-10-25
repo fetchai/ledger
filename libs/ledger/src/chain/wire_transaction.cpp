@@ -55,25 +55,23 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
     if (tx.signatures().size() > 0)
     {
-      script::VariantArray signatures{tx.signatures().size()};
-      std::size_t          i                        = 0;
-      std::size_t          identity_serialised_size = 0;
-      auto                 eval_identity_size       = serializers::LazyEvalArgumentFactory(
+      script::Variant signatories;
+      signatories.MakeObject();
+      std::size_t identity_serialised_size = 0;
+      auto        eval_identity_size       = serializers::LazyEvalArgumentFactory(
           [&identity_serialised_size](auto &stream) { identity_serialised_size = stream.size(); });
 
       serializers::ByteArrayBuffer stream;
       for (auto const &sig : tx.signatures())
       {
-        auto &sig_v = signatures[i++];
-        sig_v.MakeObject();
         stream.Resize(0, ResizeParadigm::ABSOLUTE);
         stream.Append(sig.first, eval_identity_size, sig.second);
-        sig_v[byte_array::ToBase64(stream.data().SubArray(0, identity_serialised_size))] =
+        signatories[byte_array::ToBase64(stream.data().SubArray(0, identity_serialised_size))] =
             byte_array::ToBase64(stream.data().SubArray(
                 identity_serialised_size, stream.data().size() - identity_serialised_size));
       }
 
-      tx_debug_data["signatures"] = signatures;
+      tx_debug_data["signatories"] = signatories;
     }
     tx_v["metadata"] = tx_debug_data;
   }
