@@ -278,19 +278,7 @@ private:
     VariablePtrType var = all_variables.at(output_name);
     top_sort_map_ng_.clear();
     top_sort_vector_ng_.clear();
-    TopSort(all_variables.at(output_name), top_sort_map_ng_, top_sort_vector_ng_, false);
-  }
-  /**
-   * Topological sorting including the leaf nodes requiring gradient upates
-   * @param output_name
-   */
-  void TopSort_GradientUpdate(std::string &output_name)
-  {
-    // Conduct a topology sort
-    top_sort_map_g_.clear();
-    top_sort_vector_g_.clear();
     TopSortImpl(var);
-    top_sort_complete_ = true;
   }
 
   void TopSortImpl(VariablePtrType var)
