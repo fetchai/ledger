@@ -12,3 +12,4 @@ setup_compiler()
 
 add_executable(benchmark_layers layers/layers.cpp)
 target_link_libraries(benchmark_layers fetch-ml)
+
