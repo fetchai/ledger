@@ -86,7 +86,7 @@ void benchmark_layer_training(std::vector<std::size_t> layer_sizes, bool threadi
   auto prediction = sess.Predict(input_data, y_pred->output());
 }
 //
-//int main()
+// int main()
 //{
 //  std::cout << "Testing without threading: " << std::endl;
 //  bool threading = false;
@@ -143,37 +143,41 @@ void benchmark_layer_training(std::vector<std::size_t> layer_sizes, bool threadi
 //  return 0;
 //}
 
-
-static void BM_tiny_net_no_threading(benchmark::State& state) {
+static void BM_tiny_net_no_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({10, 10, 10}, false);
 }
 BENCHMARK(BM_tiny_net_no_threading);
-static void BM_medium_net_no_threading(benchmark::State& state) {
+static void BM_medium_net_no_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({50, 30, 20}, false);
 }
 BENCHMARK(BM_medium_net_no_threading);
-static void BM_large_net_no_threading(benchmark::State& state) {
+static void BM_large_net_no_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({256, 128, 64}, false);
 }
 BENCHMARK(BM_large_net_no_threading);
-static void BM_tiny_net_threading(benchmark::State& state) {
+static void BM_tiny_net_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({10, 10, 10}, true);
 }
 BENCHMARK(BM_tiny_net_threading);
-static void BM_medium_net_threading(benchmark::State& state) {
+static void BM_medium_net_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({50, 30, 20}, true);
 }
 BENCHMARK(BM_medium_net_threading);
-static void BM_large_net_threading(benchmark::State& state) {
+static void BM_large_net_threading(benchmark::State &state)
+{
   for (auto _ : state)
     benchmark_layer_training({256, 128, 64}, true);
 }
 BENCHMARK(BM_large_net_threading);
 
 BENCHMARK_MAIN();
-
