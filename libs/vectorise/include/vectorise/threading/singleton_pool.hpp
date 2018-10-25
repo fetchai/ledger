@@ -24,18 +24,19 @@ namespace threading {
 
 class SingletonPool : public Pool
 {
- public:
-  static SingletonPool& getInstance()
+public:
+  static SingletonPool &getInstance()
   {
     static SingletonPool instance;
     return instance;
   }
 
-  SingletonPool(SingletonPool const&)               = delete;
-  void operator=(SingletonPool const&)  = delete;
+  SingletonPool(SingletonPool const &) = delete;
+  void operator=(SingletonPool const &) = delete;
 
- private:
-  SingletonPool() : Pool() {};
+private:
+  SingletonPool()
+    : Pool(){};
 };
 
 }  // namespace threading

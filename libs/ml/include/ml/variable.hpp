@@ -49,8 +49,10 @@ public:
   {
     threaded_ = threaded;
   }
-  bool threaded(){return threaded_;}
-
+  bool threaded()
+  {
+    return threaded_;
+  }
 
   void SetBackwardFunction(FunctionSignature b_fn)
   {
@@ -338,7 +340,7 @@ private:
   bool              apply_grad_    = true;
   FunctionSignature b_fn_          = nullptr;
   FunctionSignature f_fn_          = nullptr;
-  bool threaded_ = false;
+  bool              threaded_      = false;
 };
 
 }  // namespace ml

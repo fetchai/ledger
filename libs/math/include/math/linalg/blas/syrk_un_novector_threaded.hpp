@@ -21,7 +21,6 @@
 #include "math/linalg/prototype.hpp"
 #include "vectorise/threading/singleton_pool.hpp"
 
-
 namespace fetch {
 namespace math {
 namespace linalg {

@@ -35,12 +35,12 @@
 #include <numeric>
 #include <vector>
 
-#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nn_vector.hpp"
+#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
+#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
 #include "math/meta/type_traits.hpp"
 
@@ -220,28 +220,28 @@ void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T a
 
   if (threaded)
   {
-    linalg::Blas<
-        T, NDArray<T, C>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_nn_vector_threaded;
 
     gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-
   }
   else
   {
-    linalg::Blas<
-        T, NDArray<T, C>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE>
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
         gemm_nn_vector;
 
     gemm_nn_vector(alpha, A, B, beta, ret);
   }
-
 }
 template <typename T, typename C>
 NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
@@ -259,29 +259,32 @@ void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
 
   if (threaded)
   {
-    linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_nn_vector_threaded;
 
     gemm_nn_vector_threaded(alpha, A, B, beta, ret);
   }
   else
   {
-    linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE>
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
         gemm_nn_vector;
 
     gemm_nn_vector(alpha, A, B, beta, ret);
   }
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B, bool threaded = false)
+linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
+                            bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
   linalg::Matrix<T, C, S>  ret(return_shape);
@@ -309,7 +312,7 @@ void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
         T, NDArray<T, C>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_nt_vector_threaded;
 
@@ -321,7 +324,7 @@ void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
         T, NDArray<T, C>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE>
         gemm_nt_vector;
 
@@ -366,7 +369,7 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
         T, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_nt_vector_threaded;
 
@@ -378,7 +381,7 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
         T, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE>
         gemm_nt_vector;
 
@@ -387,7 +390,8 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
+                                     bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
@@ -430,7 +434,7 @@ void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
         T, NDArray<T, C>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_tn_vector_threaded;
 
@@ -442,7 +446,7 @@ void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> 
         T, NDArray<T, C>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE>
         gemm_tn_vector;
 
@@ -487,7 +491,7 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
         T, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
         gemm_tn_vector_threaded;
 
@@ -499,7 +503,7 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
         T, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE>
         gemm_tn_vector;
 
@@ -508,7 +512,8 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
+                                     bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   linalg::Matrix<T, C, S>  ret(return_shape);

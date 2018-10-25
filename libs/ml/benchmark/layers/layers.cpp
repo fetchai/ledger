@@ -115,7 +115,6 @@ int main()
   std::cout << "medium_net_training_time: " << time_span2.count() << std::endl;
   std::cout << "large_net_training_time: " << time_span3.count() << std::endl;
 
-
   threading = true;
   // TINY NET
   t0 = std::chrono::high_resolution_clock::now();
@@ -133,16 +132,12 @@ int main()
   benchmark_large_matrices({256, 128, 64}, threading);
   t3 = std::chrono::high_resolution_clock::now();
 
-  time_span1 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0);
-  time_span2 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-  time_span3 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2);
+  time_span1 = std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0);
+  time_span2 = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+  time_span3 = std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2);
   std::cout << "mini_net_training_time: " << time_span1.count() << std::endl;
   std::cout << "medium_net_training_time: " << time_span2.count() << std::endl;
   std::cout << "large_net_training_time: " << time_span3.count() << std::endl;
-
 
   return 0;
 }

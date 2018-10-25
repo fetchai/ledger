@@ -45,12 +45,13 @@ public:
   std::size_t                                      variable_counter = 0;  // TODO(private 272)
   std::size_t                                      layer_counter    = 0;
   std::unordered_map<std::string, VariablePtrType> all_variables;
-  std::size_t batch_size = 128;
+  std::size_t                                      batch_size = 128;
 
-  explicit SessionManager(bool threaded = false) : threaded_(threaded)
-  {
-  }
-  explicit SessionManager(typename ArrayType::Type gradient_clip, bool threaded = false) : threaded_(threaded)
+  explicit SessionManager(bool threaded = false)
+    : threaded_(threaded)
+  {}
+  explicit SessionManager(typename ArrayType::Type gradient_clip, bool threaded = false)
+    : threaded_(threaded)
   {
     gradient_clip_ = gradient_clip;
   }
@@ -216,7 +217,10 @@ public:
     layer->SetInput(input, *this);
   }
 
-  bool threaded(){return threaded_;}
+  bool threaded()
+  {
+    return threaded_;
+  }
 
 private:
   double gradient_clip_ = -1.0;  // negative values for gradient clip indicate clipping is off
@@ -224,7 +228,7 @@ private:
   std::vector<VariablePtrType>                     top_sort_vector_ng_;
   std::unordered_map<std::string, VariablePtrType> top_sort_map_g_;
   std::vector<VariablePtrType>                     top_sort_vector_g_;
-  bool threaded_ = false;
+  bool                                             threaded_ = false;
 
   bool top_sort_complete_ =
       false;  // we track whether we need to redo the topological sort or not as we go
