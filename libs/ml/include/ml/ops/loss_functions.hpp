@@ -107,7 +107,7 @@ template <typename VariableType, typename VariablePtrType = std::shared_ptr<Vari
 void SoftmaxCELImplementation(VariablePtrType cur_node)
 {
   cur_node->data() =
-      fetch::math::CrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+      fetch::math::SoftmaxCrossEntropyLoss(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 template <typename VariableType, typename SessionType,
           typename VariablePtrType = std::shared_ptr<VariableType>>
