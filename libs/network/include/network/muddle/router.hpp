@@ -104,7 +104,7 @@ public:
   void Cleanup();
   void Debug(const char *label1, const char *label2)
   {
-    registrar_ . Debug(label1, label2);
+    registrar_.Debug(label1, label2);
   }
 
 private:

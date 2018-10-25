@@ -141,7 +141,7 @@ public:
   void Set(uint64_t const &i, type const &object)
   {
     FETCH_LOG_DEBUG("CachedRandomAccessStack", "Set:", i);
-   assert(i < objects_);
+    assert(i < objects_);
 
     auto iter = data_.find(i);
     if (iter != data_.end())

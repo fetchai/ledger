@@ -80,7 +80,7 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
 }
 
 std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
-                                                 bool force_loopback = false)
+                                                bool force_loopback = false)
 {
   std::map<LaneIndex, Uri> connection_map;
 
@@ -223,10 +223,9 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   storage_->SetNumberOfLanes(num_lanes_);
 
   auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
-  
+
   std::size_t const count = storage_->AddLaneConnectionsWaitingMuddle(
-                                                                      muddle_,
-      lane_connections_map, std::chrono::milliseconds(30000));
+      muddle_, lane_connections_map, std::chrono::milliseconds(30000));
 
   // check to see if the connections where successful
   if (count != num_lanes_)

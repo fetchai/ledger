@@ -85,7 +85,6 @@ bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
   return false;
 }
 
-
 PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
 {
   UriMap map;

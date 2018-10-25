@@ -51,7 +51,7 @@ public:
 
   std::string ToString() const
   {
-    return  static_cast<std::string>(ToBase64(id_));
+    return static_cast<std::string>(ToBase64(id_));
   }
 
 private:

@@ -60,6 +60,7 @@ public:
   void NotifyConnectionFailure(Handle handle);
 
   void Cleanup(Timepoint const &now = Clock::now());
+
 private:
   using Counter = std::atomic<uint16_t>;
   using Mutex   = mutex::Mutex;

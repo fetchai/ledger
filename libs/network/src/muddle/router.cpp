@@ -361,7 +361,7 @@ Router::RoutingTable Router::GetRoutingTable() const
 bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
 {
   FETCH_LOCK(routing_table_lock_);
-  for(const auto &routing : routing_table_)
+  for (const auto &routing : routing_table_)
   {
     if (routing.second.handle == handle)
     {
@@ -371,7 +371,6 @@ bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &addr
   }
   return false;
 }
-
 
 /**
  * Periodic call initiated from the main muddle instance used for periodic maintenance of the
@@ -720,7 +719,8 @@ void Router::DispatchPacket(PacketPtr packet)
     {
       return;
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message:", DescribePacket(*packet));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message:", DescribePacket(*packet));
   });
 }
 

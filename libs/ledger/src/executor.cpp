@@ -23,7 +23,6 @@
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/metrics/metrics.hpp"
-#include "core/byte_array/encoders.hpp"
 
 #include <algorithm>
 #include <chrono>

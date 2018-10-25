@@ -29,15 +29,15 @@
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include "network/service/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/object_store_syncronisation_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
 
 #include <iomanip>
 #include <memory>
@@ -45,14 +45,14 @@
 namespace fetch {
 namespace ledger {
 
-  class LaneService //: public service::ServiceServer<fetch::network::TCPServer>
+class LaneService  //: public service::ServiceServer<fetch::network::TCPServer>
 {
 public:
-  using Muddle                 = muddle::Muddle;
-  using MuddlePtr                 = std::shared_ptr<Muddle>;
-  using Server = fetch::muddle::rpc::Server;
-using ServerPtr            = std::shared_ptr<Server>;
-  using CertificatePtr       = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using Muddle         = muddle::Muddle;
+  using MuddlePtr      = std::shared_ptr<Muddle>;
+  using Server         = fetch::muddle::rpc::Server;
+  using ServerPtr      = std::shared_ptr<Server>;
+  using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
 
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
@@ -77,8 +77,8 @@ using ServerPtr            = std::shared_ptr<Server>;
   {
 
     thread_pool_ = network::MakeThreadPool(1);
-    port_ = port;
-    lane_ = lane;
+    port_        = port;
+    lane_        = lane;
 
     // Setting lane certificate up
     // TODO(issue 24): Load from somewhere
@@ -89,9 +89,9 @@ using ServerPtr            = std::shared_ptr<Server>;
     certificate_.reset(certificate);
 
     lane_identity_ = std::make_shared<LaneIdentity>(register_, tm, certificate_->identity());
-    muddle_ = std::make_shared<Muddle>(std::move(certificate_), tm);
-    server_ = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
-    
+    muddle_        = std::make_shared<Muddle>(std::move(certificate_), tm);
+    server_        = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
+
     // format and generate the prefix
     std::string prefix;
     {
@@ -152,7 +152,7 @@ using ServerPtr            = std::shared_ptr<Server>;
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
   }
 
-  ~LaneService() 
+  ~LaneService()
   {
     thread_pool_->Stop();
 
@@ -174,7 +174,7 @@ using ServerPtr            = std::shared_ptr<Server>;
     controller_.reset();
   }
 
-  void Start() 
+  void Start()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane_, " Service on rpc://127.0.0.1:", port_,
                    " ID: ", byte_array::ToBase64(lane_identity_->Identity().identifier()));
@@ -184,7 +184,7 @@ using ServerPtr            = std::shared_ptr<Server>;
     tx_sync_protocol_->Start();
   }
 
-  void Stop() 
+  void Stop()
   {
     tx_sync_protocol_->Stop();
     thread_pool_->Stop();
@@ -194,7 +194,7 @@ using ServerPtr            = std::shared_ptr<Server>;
 private:
   client_register_type register_;
 
-  std::shared_ptr<LaneIdentity>          lane_identity_;
+  std::shared_ptr<LaneIdentity>         lane_identity_;
   std::unique_ptr<LaneIdentityProtocol> lane_identity_protocol_;
 
   std::unique_ptr<controller_type>          controller_;
@@ -209,12 +209,12 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
-  ServerPtr server_;
-  MuddlePtr           muddle_;                ///< The muddle networking service
-  mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};
-  uint16_t port_;
-  uint32_t lane_;
-  };
+  ServerPtr    server_;
+  MuddlePtr    muddle_;  ///< The muddle networking service
+  mutex::Mutex certificate_lock_{__LINE__, __FILE__};
+  uint16_t     port_;
+  uint32_t     lane_;
+};
 
 }  // namespace ledger
 }  // namespace fetch

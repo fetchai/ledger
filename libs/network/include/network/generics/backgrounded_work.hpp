@@ -63,7 +63,7 @@ public:
 
   bool WorkCycle()
   {
-    Lock  lock(mutex_);
+    Lock lock(mutex_);
 
     if (workload_[PromiseState::WAITING].empty())
     {

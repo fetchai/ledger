@@ -37,9 +37,9 @@ public:
   using Promise              = service::Promise;
   using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
-  using Client = StorageUnitClient::Client;
+  using Client    = StorageUnitClient::Client;
   using ClientPtr = StorageUnitClient::ClientPtr;
-  using Address = StorageUnitClient::Address;
+  using Address   = StorageUnitClient::Address;
 
   explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
     : storage_unit_(std::move(storage_unit))
@@ -53,13 +53,14 @@ public:
 
   void Shutdown(LaneIndex lane) override
   {
-    auto ptr = GetClient();
+    auto    ptr = GetClient();
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
+        auto p =
+            ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
         FETCH_LOG_PROMISE();
         p->Wait();
       }
@@ -73,13 +74,14 @@ public:
 
   uint32_t GetLaneNumber(LaneIndex lane) override
   {
-    auto ptr = GetClient();
+    auto    ptr = GetClient();
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->CallSpecificAddress(address, RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+        auto p =
+            ptr->CallSpecificAddress(address, RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
         return p->As<uint32_t>();
       }
       catch (...)
@@ -92,16 +94,17 @@ public:
 
     return 0;
   }
- 
+
   int IncomingPeers(LaneIndex lane) override
   {
-    auto ptr = GetClient();
+    auto    ptr = GetClient();
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::INCOMING_PEERS);
         return p->As<int>();
       }
       catch (...)
@@ -118,13 +121,14 @@ public:
 
   int OutgoingPeers(LaneIndex lane) override
   {
-    auto ptr = GetClient();
+    auto    ptr = GetClient();
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::OUTGOING_PEERS);
         return p->As<int>();
       }
       catch (...)
@@ -141,13 +145,14 @@ public:
 
   virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) override
   {
-    auto ptr = GetClient();
+    auto    ptr = GetClient();
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::USE_THESE_PEERS, uris);
         return;
       }
       catch (...)
