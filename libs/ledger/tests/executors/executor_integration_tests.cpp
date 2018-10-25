@@ -132,7 +132,7 @@ ProverPtr GenerateP2PKey()
     static const uint16_t    EXECUTOR_RPC_PORT   = 9120;
     static const uint16_t    P2P_RPC_PORT   = 9130;
     static const uint16_t    LANE_RPC_PORT_START = 9141;
-    static const std::size_t NUM_LANES           = 4;
+    static const std::size_t NUM_LANES           =4;
 
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);
     network_manager_->Start();
@@ -181,11 +181,10 @@ ProverPtr GenerateP2PKey()
     auto count =
       storage_->AddLaneConnectionsWaitingMuddle(*muddle_, lane_data, std::chrono::milliseconds(30000));
     FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
-
     for (;;)
     {
       // wait for the all the clients to connect to everything
-      if (executor_->is_alive() && storage_->IsAlive())
+      if (executor_->is_alive())
       {
         break;
       }
@@ -262,7 +261,6 @@ ProverPtr GenerateP2PKey()
 
 TEST_F(ExecutorIntegrationTests, CheckDummyContract)
 {
-
   // create the dummy contract
   auto tx = CreateDummyTransaction();
 
@@ -275,7 +273,6 @@ TEST_F(ExecutorIntegrationTests, CheckDummyContract)
 
 TEST_F(ExecutorIntegrationTests, CheckTokenContract)
 {
-
   // create the dummy contract
   auto tx = CreateWalletTransaction();
 

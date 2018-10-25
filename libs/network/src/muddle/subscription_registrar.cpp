@@ -102,14 +102,11 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
   Index const  index = Combine(packet->GetService(), packet->GetProtocol());
   AddressIndex address_index{index, packet->GetTarget()};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch1");
-
   {
     FETCH_LOCK(lock_);
     auto it = dispatch_map_.find(index);
     if (it != dispatch_map_.end())
     {
-  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch2");
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
@@ -122,7 +119,6 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch3");
   {
     FETCH_LOCK(lock_);
     auto it = address_dispatch_map_.find(address_index);
@@ -147,11 +143,22 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
 void SubscriptionRegistrar::Debug(const char *label1, const char *label2)
 {
   FETCH_LOG_WARN(LOGGING_NAME,label1, ":",  label2, ":SubscriptionRegistrar: --------------------------------------");
+
+  FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(), " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(), " entries.");
+
   for (const auto &mapping : address_dispatch_map_)
   {
     auto numb = std::get<0>(mapping.first);
     auto addr = std::get<1>(mapping.first);
-    FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:Addr=",  ToBase64(addr), "  Service=", ((numb>>16) & 0xFFFF));
+    FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:address_dispatch_map_ Addr=",  ToBase64(addr), "  Service=", ((numb>>16) & 0xFFFF));
+  }
+  for (const auto &mapping : dispatch_map_)
+  {
+    auto numb = mapping.first;
+    auto serv = (numb>>16) & 0xFFFF;
+    auto chan = numb & 0xFFFF;
+    FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar:dispatch_map_ Serv=", serv , "  Chan=", chan);
   }
   FETCH_LOG_WARN(LOGGING_NAME,label1,":",  label2, ":SubscriptionRegistrar: --------------------------------------");
 }

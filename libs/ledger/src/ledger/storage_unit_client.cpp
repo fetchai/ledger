@@ -21,7 +21,9 @@
 namespace fetch {
 namespace ledger {
 
-  class MuddleLaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
+using PendingConnectionCounter = network::AtomicInFlightCounter<network::AtomicCounterName::LANE_CONNECTIONS>;
+
+class MuddleLaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
 {
 public:
   using Address        = StorageUnitClient::Address;
@@ -49,6 +51,7 @@ public:
   Muddle &muddle;
   bool added;
   Address target_address;
+  PendingConnectionCounter counter_;
 
   MuddleLaneConnectorWorker(LaneIndex thelane,  std::string thename, Uri thepeer,
                             Muddle &themuddle,
@@ -60,7 +63,7 @@ public:
    , timeout(std::move(thetimeout))
    , muddle(themuddle)
   {
-    client = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), RPC_IDENTITY, CHANNEL_RPC);
+    client = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
 
     this->Allow(State::CONNECTING, State::INITIAL)
       .Allow(State::QUERYING, State::CONNECTING)
@@ -76,6 +79,11 @@ public:
       ;
   }
   static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
+
+  virtual ~MuddleLaneConnectorWorker()
+  {
+    counter_.Completed();
+  }
 
   PromiseState Work()
   {
@@ -113,7 +121,6 @@ public:
     {
     case State::INITIAL:
       {
-        FETCH_LOG_WARN(LOGGING_NAME, " ", int(lane), ": ", peer.ToString());
         muddle.AddPeer(peer);
         currentstate = State::CONNECTING;
         return true;
@@ -125,7 +132,6 @@ public:
       {
         return false;
       }
-      FETCH_LOG_WARN(LOGGING_NAME, " ", int(lane), ": ", peer.ToString(), " = ", ToBase64(target_address), "connected");
       currentstate = State::QUERYING;
       ping_prom = client->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::PING);
       lane_prom = client->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
@@ -169,8 +175,11 @@ public:
         currentstate = State::FAILED;
         return true;
       }
-       currentstate = State::SUCCESS;
-       return true;
+      else
+      {
+        currentstate = State::SUCCESS;
+        return true;
+      }
     }
     default:
       currentstate = State::FAILED;
@@ -181,13 +190,13 @@ public:
 
 void StorageUnitClient::WorkCycle()
 {
-  auto p = bg_work_.CountPending();
-
-  bg_work_.WorkCycle();
-
-  if (p != bg_work_.CountPending() || bg_work_.CountSuccesses() > 0)
+  if (!bg_work_.WorkCycle())
   {
+    return;
+  }
 
+  if (bg_work_.CountSuccesses() > 0)
+  {
     LaneIndex total_lanecount = 0;
 
     FETCH_LOG_DEBUG(LOGGING_NAME, " PEND=", bg_work_.CountPending());
@@ -195,7 +204,7 @@ void StorageUnitClient::WorkCycle()
     FETCH_LOG_DEBUG(LOGGING_NAME, " FAIL=", bg_work_.CountFailures());
     FETCH_LOG_DEBUG(LOGGING_NAME, " TOUT=", bg_work_.CountTimeouts());
 
-    for (auto &successful_worker : bg_work_.Get(PromiseState::SUCCESS, 1000))
+    for (auto &successful_worker : bg_work_.GetSuccesses(1000))
     {
       if (successful_worker)
       {
@@ -219,6 +228,7 @@ void StorageUnitClient::WorkCycle()
 
           if (!total_lanecount)
           {
+            SetLaneLog2(uint32_t(total_lanecount));
             total_lanecount = total_lanes;
           }
           else
@@ -226,15 +236,16 @@ void StorageUnitClient::WorkCycle()
             assert(total_lanes == total_lanecount);
           }
         }
-
-        SetLaneLog2(uint32_t(lane_to_identity_map_.size()));
-
       }
     }
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lanes Connected   :", lanes_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "log2_lanes_       :", log2_lanes_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "total_lanecount   :", total_lanecount);
   }
+
+  bg_work_.DiscardFailures();
+  bg_work_.DiscardTimeouts();
 }
 
   void StorageUnitClient::AddLaneConnectionsMuddle(
@@ -259,6 +270,20 @@ void StorageUnitClient::WorkCycle()
       bg_work_.Add(worker);
     }
   }
+
+  size_t StorageUnitClient::AddLaneConnectionsWaitingMuddle(
+      Muddle &muddle,
+      const std::map<LaneIndex, Uri> &lanes,
+      const std::chrono::milliseconds &timeout)
+  {
+    AddLaneConnectionsMuddle(muddle, lanes, timeout);
+    PendingConnectionCounter::Wait(FutureTimepoint(timeout));
+
+    FETCH_LOCK(mutex_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Successfully connected ", lane_to_identity_map_.size(), " lane(s).");
+    return lane_to_identity_map_.size();
+  }
+
 
 }  // namespace ledger
 }  // namespace fetch

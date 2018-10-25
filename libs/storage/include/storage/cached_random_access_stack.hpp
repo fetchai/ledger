@@ -110,6 +110,8 @@ public:
 
   void Get(uint64_t const &i, type &object) const
   {
+    FETCH_LOG_DEBUG("CachedRandomAccessStack", "Get:", i);
+
     assert(i < objects_);
 
     auto iter = data_.find(i);
@@ -138,7 +140,8 @@ public:
    */
   void Set(uint64_t const &i, type const &object)
   {
-    assert(i < objects_);
+    FETCH_LOG_DEBUG("CachedRandomAccessStack", "Set:", i);
+   assert(i < objects_);
 
     auto iter = data_.find(i);
     if (iter != data_.end())

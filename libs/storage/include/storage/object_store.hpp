@@ -51,6 +51,7 @@ public:
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
   class Iterator;
+  static constexpr char const *LOGGING_NAME = "ObjectStore<>";
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -108,7 +109,7 @@ public:
    * @param: object The object
    *
    */
-  void Set(ResourceID const &rid, type const &object)
+  bool Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     return LocklessSet(rid, object);
@@ -175,11 +176,12 @@ public:
    * @param: object The object
    *
    */
-  void LocklessSet(ResourceID const &rid, type const &object)
+  bool LocklessSet(ResourceID const &rid, type const &object)
   {
     serializer_type ser;
     ser << object;
     store_.Set(rid, ser.data());
+    return true;
   }
 
   std::size_t size() const

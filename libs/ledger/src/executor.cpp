@@ -23,6 +23,7 @@
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/metrics/metrics.hpp"
+#include "core/byte_array/encoders.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -63,8 +64,7 @@ namespace ledger {
  */
 Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);

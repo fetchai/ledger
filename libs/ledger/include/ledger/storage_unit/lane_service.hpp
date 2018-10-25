@@ -90,7 +90,7 @@ using ServerPtr            = std::shared_ptr<Server>;
 
     lane_identity_ = std::make_shared<LaneIdentity>(register_, tm, certificate_->identity());
     muddle_ = std::make_shared<Muddle>(std::move(certificate_), tm);
-    server_ = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_P2P, CHANNEL_RPC);
+    server_ = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
     
     // format and generate the prefix
     std::string prefix;
@@ -150,8 +150,6 @@ using ServerPtr            = std::shared_ptr<Server>;
     controller_ = std::make_unique<controller_type>(RPC_IDENTITY, lane_identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
-
-    muddle_->Debug("LaneService::INIT", "After binding services");
   }
 
   ~LaneService() 
@@ -184,7 +182,6 @@ using ServerPtr            = std::shared_ptr<Server>;
 
     thread_pool_->Start();
     tx_sync_protocol_->Start();
-    muddle_->Debug("LaneService::Start", "");
   }
 
   void Stop() 
