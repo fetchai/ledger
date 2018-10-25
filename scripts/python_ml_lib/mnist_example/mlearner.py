@@ -36,7 +36,7 @@ class MLearner():
         self.training_size = 2000
         self.validation_size = 50
 
-        self.n_epochs = 3
+        self.n_epochs = 30
         self.batch_size = 50
         self.alpha = 0.2
 
