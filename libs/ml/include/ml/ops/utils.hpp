@@ -41,7 +41,7 @@ class NDArrayIterator;
 template <typename VariablePtrType>
 void DotImplementation(VariablePtrType cur_node)
 {
-  cur_node->data() = fetch::math::Dot(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+  cur_node->data() = fetch::math::Dot(cur_node->prev[0]->data(), cur_node->prev[1]->data(), cur_node->threaded());
 }
 
 template <typename VariablePtrType, typename SessionType>

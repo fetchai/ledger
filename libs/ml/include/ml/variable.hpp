@@ -45,6 +45,13 @@ public:
     variable_name_ = variable_name;
   }
 
+  void threaded(bool threaded)
+  {
+    threaded_ = threaded;
+  }
+  bool threaded(){return threaded_;}
+
+
   void SetBackwardFunction(FunctionSignature b_fn)
   {
     b_fn_ = b_fn;
@@ -331,6 +338,7 @@ private:
   bool              apply_grad_    = true;
   FunctionSignature b_fn_          = nullptr;
   FunctionSignature f_fn_          = nullptr;
+  bool threaded_ = false;
 };
 
 }  // namespace ml

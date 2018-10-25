@@ -55,8 +55,8 @@ void Dot(VariablePtrType cur_node)
   auto &right = cur_node->prev[1];
   auto &dy    = cur_node->grad();
 
-  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
-  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
+  left->GradientAdd(fetch::math::DotTranspose(dy, right->data(), cur_node->threaded()));
+  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy, cur_node->threaded()));
 }
 
 template <typename VariablePtrType>
