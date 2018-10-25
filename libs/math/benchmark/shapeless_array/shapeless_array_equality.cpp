@@ -24,19 +24,19 @@ using namespace fetch::math;
 using Type      = double;
 using ArrayType = fetch::math::ShapeLessArray<Type>;
 
-void shape_less_array_equality_equal(std::size_t size_1, std::size_t size_2, int diff_element = -1)
+bool shape_less_array_equality_equal(std::size_t size_1, std::size_t size_2, int diff_element = -1)
 {
   ArrayType array_1 = ArrayType::Zeroes(size_1);
   ArrayType array_2 = ArrayType::Zeroes(size_2);
-  bool      result;
+
   if (diff_element == -1)
   {
-    result = array_1 == array_2;
+    return array_1 == array_2;
   }
   else
   {
     array_1[diff_element] = 1;
-    result                = array_1 == array_2;
+    return array_1 == array_2;
   }
 }
 
