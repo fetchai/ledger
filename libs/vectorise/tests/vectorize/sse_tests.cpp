@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/register.hpp"
+#include "../../include/vectorise/register.hpp"
 #include "vectorise/sse.hpp"
 #include <iostream>
 
-#include "core/random/lfg.hpp"
+#include <gtest/gtest.h>
 
-fetch::random::LinearCongruentialGenerator lcg;
 using namespace fetch::vectorize;
 
 void Test1()
@@ -65,7 +64,7 @@ void Test2()
   std::cout << std::endl;
 }
 
-int main()
+TEST(vectorise_sse_gtest, basic_test)
 {
   alignas(16) double a[2] = {1, 2};
   alignas(16) double b[2] = {2, 4};

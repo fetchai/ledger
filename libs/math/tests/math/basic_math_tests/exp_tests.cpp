@@ -1,4 +1,4 @@
-/* //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
 //
@@ -22,6 +22,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/approx_exp.hpp"
+#include <gtest/gtest.h>
 
 template <uint8_t N, uint64_t C>
 void test1(double max)
@@ -36,11 +37,7 @@ void test1(double max)
     me        = std::max(r, me);
   }
   std::cout << "Peak error: " << me << std::endl;
-  if (me > max)
-  {
-    std::cout << "expected: " << max << std::endl;
-    exit(-1);
-  }
+  ASSERT_LE(me, max) << "expected: " << max;
 }
 
 template <uint8_t N, uint64_t C, std::size_t MAX = 100000000>
@@ -82,7 +79,7 @@ double test_timing(double x_value)
   //  auto t3 = std::chrono::high_resolution_clock::now();
 }
 
-void benchmark()
+/* void benchmark()
 {
   static fetch::random::LinearCongruentialGenerator gen;
   std::cout << "Test time 1: ";
@@ -108,14 +105,14 @@ void benchmark()
   {
     std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
   }
-}
+} */
 
-int main(int argc, char **argv)
+TEST(maths_exp_gtest, testing_functions)
 {
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
+  /* if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
   {
     benchmark();
-  }
+  } */
 
   test1<0, 0>(7);
   test1<0, 60801>(5);
@@ -128,6 +125,4 @@ int main(int argc, char **argv)
   test1<12, 0>(0.005);
   test1<16, 0>(0.0003);
   test1<20, 0>(0.00004);
-  return 0;
 }
- */

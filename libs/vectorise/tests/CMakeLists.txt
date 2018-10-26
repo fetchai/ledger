@@ -11,6 +11,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
-
 add_fetch_gtest(vectorise_exact_exponents_gtest fetch-vectorise meta/gtest)
+add_fetch_gtest(Vectorise_memory_gtest fetch-vectorise memory)
+add_fetch_gtest(Vectorise_approx_exp_gtest fetch-vectorise vectorize)
 
