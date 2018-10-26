@@ -90,15 +90,36 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
 MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)
 {
+  json::JSONDocument tx_json{transaction};
+  return FromWireTransaction(tx_json.root());
+}
+
+MutableTransaction FromWireTransaction(script::Variant const &transaction)
+{
   MutableTransaction tx;
 
-  json::JSONDocument tx_json{transaction};
-  auto &             tx_v = tx_json.root();
+  bool parse_error = true;
 
-  serializers::ByteArrayBuffer stream{
-      byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>())};
-  auto txdata = TxSigningAdapterFactory(tx);
-  stream >> txdata;
+  if (transaction.is_object())
+  {
+    byte_array::ConstByteArray tx_data;
+    if (script::Extract(transaction, "data", tx_data))
+    {
+      // create the input stream for the transaction
+      serializers::ByteArrayBuffer stream{byte_array::FromBase64(tx_data)};
+
+      // adapt the transaction class and deserialize
+      auto tx_adapter = TxSigningAdapterFactory(tx);
+      stream >> tx_adapter;
+
+      parse_error = false;
+    }
+  }
+
+  if (parse_error)
+  {
+    throw std::runtime_error("Incorrect transaction structure");
+  }
 
   return tx;
 }

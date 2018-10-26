@@ -20,11 +20,16 @@
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
+namespace script {
+  class Variant;
+}
 namespace chain {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
                                         bool const                add_metadata = false);
 MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
+
+MutableTransaction    FromWireTransaction(script::Variant const &transaction);
 
 }  // namespace chain
 }  // namespace fetch

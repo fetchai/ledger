@@ -112,9 +112,31 @@ public:
            std::ostringstream oss;
            try
            {
-             chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
-             auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
-             processor_.AddTransaction(vtx);
+             // parse the JSON request
+             json::JSONDocument doc{request.body()};
+
+             if (doc.root().is_array())
+             {
+               for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
+               {
+                 auto const &tx_obj = doc[i];
+
+                 // assume single transaction
+                 auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(tx_obj));
+
+                 // add the transaction to the processor
+                 processor_.AddTransaction(tx);
+               }
+             }
+             else
+             {
+               // assume single transaction
+               auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(doc.root()));
+
+               // add the transaction to the processor
+               processor_.AddTransaction(tx);
+             }
+
              oss << R"({ "submitted": true })";
            }
            catch (std::exception const &ex)
@@ -134,7 +156,6 @@ private:
   {
     try
     {
-
       // parse the incoming request
       json::JSONDocument doc;
       doc.Parse(request.body());
