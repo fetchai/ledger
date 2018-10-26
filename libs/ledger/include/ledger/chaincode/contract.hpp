@@ -62,6 +62,8 @@ public:
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
+  static constexpr char const *LOGGING_NAME = "Contract";
+
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response)
   {
     Status status{Status::NOT_FOUND};
@@ -85,13 +87,19 @@ public:
     {
 
       // lock the contract resources
-      LockResources(tx.summary().resources);
+      if (!LockResources(tx.summary().resources))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "LockResources failed.");
+      }
 
       // dispatch the contract
       status = it->second(tx);
 
       // unlock the contract resources
-      UnlockResources(tx.summary().resources);
+      if (!UnlockResources(tx.summary().resources))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "UnlockResources failed.");
+      }
 
       ++transaction_counters_[name];
     }
@@ -263,10 +271,12 @@ protected:
 private:
   bool LockResources(ResourceSet const &resources)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "LockResources...");
     bool success = true;
 
     for (auto const &group : resources)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trying a lock...");
       if (!state().Lock(CreateStateIndex(group)))
       {
         success = false;

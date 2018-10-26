@@ -230,8 +230,8 @@ void StorageUnitClient::WorkCycle()
 
           if (!total_lanecount)
           {
-            SetLaneLog2(uint32_t(total_lanecount));
             total_lanecount = total_lanes;
+            SetLaneLog2(uint32_t(total_lanecount));
           }
           else
           {

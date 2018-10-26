@@ -24,6 +24,8 @@
 namespace fetch {
 namespace serializers {
 
+class CallContext;
+
 template <typename T>
 struct TypeRegister
 {
@@ -118,6 +120,7 @@ REGISTER_SERIALIZE_SYMBOL_TYPE("str", char const *, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char *, 12);
 
 REGISTER_SERIALIZE_TYPE("excep", SerializableException, 13);
+REGISTER_SERIALIZE_TYPE("excep", const CallContext*, 14);
 
 #undef REGISTER_SERIALIZE_TYPE
 #undef REGISTER_SERIALIZE_SYMBOL_TYPE

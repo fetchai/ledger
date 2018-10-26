@@ -24,7 +24,7 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-
+#include "storage/resource_mapper.hpp"
 #include "mock_storage_unit.hpp"
 
 #include <chrono>
@@ -47,6 +47,8 @@ protected:
   using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
   using TCPClient                       = fetch::network::TCPClient;
   using Peer                            = fetch::network::Peer;
+  using ResourceID                      = fetch::storage::ResourceID;
+  using ResourceAddress =                 fetch::storage::ResourceAddress;
 
   using client_type          = std::unique_ptr<underlying_client_type>;
   using service_type         = std::unique_ptr<underlying_service_type>;

@@ -115,6 +115,8 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
 
+  using Handle = network::AbstractConnection::connection_handle_type;
+
   struct ConnectionData
   {
     Address         address;
@@ -164,6 +166,12 @@ public:
   void Debug(const char *label1, const char *label2)
   {
     router_.Debug(label1, label2);
+  }
+
+  bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ", byte_array::ToBase64(identity_.identifier()));
+    return router_.HandleToAddress(handle, identifier);
   }
 
 private:

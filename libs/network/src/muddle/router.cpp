@@ -363,6 +363,12 @@ bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &addr
   FETCH_LOCK(routing_table_lock_);
   for (const auto &routing : routing_table_)
   {
+    ByteArray output(routing.first.size());
+    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ "
+                   , std::to_string(routing.second.handle)
+                   , "/"
+                   , static_cast<std::string>(ToBase64(output)));
     if (routing.second.handle == handle)
     {
       address = ToConstByteArray(routing.first);

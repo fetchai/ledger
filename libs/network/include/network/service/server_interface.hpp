@@ -24,6 +24,7 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
+#include "network/service/call_context.hpp"
 
 namespace fetch {
 namespace service {
@@ -70,7 +71,7 @@ public:
 protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
+  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg, CallContext const *context=0)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -85,7 +86,7 @@ protected:
     switch (type)
     {
     case SERVICE_FUNCTION_CALL:
-      success = HandleRPCCallRequest(client, params);
+      success = HandleRPCCallRequest(client, params, context);
       break;
     case SERVICE_SUBSCRIBE:
       success = HandleSubscribeRequest(client, params);
@@ -101,7 +102,7 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
+  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params, CallContext const *context=0)
   {
     LOG_STACK_TRACE_POINT;
     bool            ret = true;
@@ -114,7 +115,7 @@ protected:
       params >> id;
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
-      ExecuteCall(result, client, params);
+      ExecuteCall(result, client, params, context);
     }
     catch (serializers::SerializableException const &e)
     {
@@ -206,7 +207,7 @@ protected:
 
 private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
-                   serializer_type params)
+                   serializer_type params, CallContext const *context=0)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -237,11 +238,19 @@ private:
     // If we need to add client id to function arguments
     try
     {
+
       if (function->meta_data() & Callable::CLIENT_ID_ARG)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
         CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
+        (*function)(result, extra_args, params);
+      }
+      else if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
+        CallableArgumentList extra_args;
+        extra_args.PushArgument(&context);
         (*function)(result, extra_args, params);
       }
       else

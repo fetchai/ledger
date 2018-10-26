@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/serializers/pointer_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
 #include "network/service/abstract_callable.hpp"
 #include <typeinfo>
@@ -158,8 +159,12 @@ struct UnrollPointers
       {
         // TODO(issue 11): Make serializable
         throw std::runtime_error(
-            "argument type mismatch for Callabale. TODO: Make custom "
-            "exception");
+                                 std::string("argument type mismatch for Callabale.")
+                                 + typeid(T).name()
+                                 + " != "
+                                 + arg.type.get().name()
+                                 + " TODO: Make custom "
+                                 + "exception");
       }
 
       typename std::decay<T>::type *ptr = (typename std::decay<T>::type *)arg.pointer;

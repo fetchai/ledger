@@ -56,7 +56,7 @@ public:
 
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
-  using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;
+  using DocumentStoreProtocolImpl = storage::RevertibleDocumentStoreProtocol;
   using transaction_store_type       = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
   using transaction_store_protocol_type =
       storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
@@ -68,6 +68,8 @@ public:
   using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
       client_register_type, fetch::chain::VerifiedTransaction, fetch::chain::UnverifiedTransaction>;
   using thread_pool_type = network::ThreadPool;
+
+  using Identifier = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "LaneService";
 
@@ -143,7 +145,7 @@ public:
     }
 
     state_db_protocol_ =
-        std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
+      std::make_unique<DocumentStoreProtocolImpl>(state_db_.get(), lane, total_lanes);
     server_->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
@@ -201,7 +203,7 @@ private:
   std::unique_ptr<controller_protocol_type> controller_protocol_;
 
   std::unique_ptr<document_store_type>          state_db_;
-  std::unique_ptr<document_store_protocol_type> state_db_protocol_;
+  std::unique_ptr<DocumentStoreProtocolImpl> state_db_protocol_;
 
   std::unique_ptr<transaction_store_type>          tx_store_;
   std::unique_ptr<transaction_store_protocol_type> tx_store_protocol_;

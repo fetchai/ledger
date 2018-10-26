@@ -33,6 +33,9 @@ class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using CallContext = service::CallContext;
+
+  using Identifier = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "RevertibleDocumentStoreProtocol";
 
@@ -65,9 +68,9 @@ public:
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
     this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
 
-    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
+    this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
+    this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
+    this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
   RevertibleDocumentStoreProtocol(RevertibleDocumentStore *doc_store, lane_type const &lane,
@@ -84,19 +87,28 @@ public:
 
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
-    this->ExposeWithClientArg(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
+    this->ExposeWithClientContext(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
 
     this->Expose(COMMIT, doc_store, &RevertibleDocumentStore::Commit);
     this->Expose(REVERT, doc_store, &RevertibleDocumentStore::Revert);
     this->Expose(HASH, doc_store, &RevertibleDocumentStore::Hash);
 
-    this->ExposeWithClientArg(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
-    this->ExposeWithClientArg(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
-    this->ExposeWithClientArg(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
+    this->ExposeWithClientContext(LOCK, this, &RevertibleDocumentStoreProtocol::LockResource);
+    this->ExposeWithClientContext(UNLOCK, this, &RevertibleDocumentStoreProtocol::UnlockResource);
+    this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  bool HasLock(connection_handle_type const &client_id, ResourceID const &rid)
+  bool HasLock(CallContext const *context, ResourceID const &rid)
   {
+    Identifier identifier = context->sender_address;
+    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+
+    if (!context)
+    {
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+                                               0, byte_array_type(std::string("No context for HasLock.")));
+    }
+
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
@@ -104,47 +116,72 @@ public:
       return false;
     }
 
-    return (it->second == client_id);
+    return (it->second == identifier);
   }
 
-  bool LockResource(connection_handle_type const &client_id, ResourceID const &rid)
+  bool LockResource(CallContext const *context, ResourceID const &rid)
   {
+    if (!context)
+    {
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+                                               0, byte_array_type(std::string("No context for HasLock.")));
+    }
+
+    Identifier identifier = context->sender_address;
+    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString());
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      locks_[rid.id()] = client_id;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " LOCK!!");
+      locks_[rid.id()] = identifier;
       return true;
     }
 
-    return (it->second == client_id);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " NOPE!!");
+    return (it->second == identifier);
   }
 
-  bool UnlockResource(connection_handle_type const &client_id, ResourceID const &rid)
+  bool UnlockResource(CallContext const *context, ResourceID const &rid)
   {
+    if (!context)
+    {
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+                                               0, byte_array_type(std::string("No context for HasLock.")));
+    }
 
+    Identifier identifier = context->sender_address;
+    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "UnockResource ", printable_identifier, " => ", rid.ToString());
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " NOPE!!");
       return false;
     }
 
-    if (it->second == client_id)
+    if (it->second == identifier)
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " UNLOCK!!");
       locks_.erase(it);
       return true;
     }
 
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " DENIED!!");
     return false;
   }
 
 private:
+
   Document GetLaneChecked(ResourceID const &rid)
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
                      rid.lane(log2_lanes_));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
 
@@ -159,7 +196,7 @@ private:
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
                      rid.lane(log2_lanes_));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
 
@@ -171,21 +208,45 @@ private:
     return doc_store_->GetOrCreate(rid);
   }
 
-  void SetLaneChecked(connection_handle_type const &client_id, ResourceID const &rid,
+  void SetLaneChecked(CallContext const *context, ResourceID const &rid,
                       byte_array::ConstByteArray const &value)
   {
+    if (!context)
+    {
+      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+                                               0, byte_array_type(std::string("No context for SetLaneChecked.")));
+    }
+
+    Identifier identifier = context->sender_address;
+    std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
+
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type("Set: Resource located on other lane. TODO: Set error number."));
+                                               0, byte_array_type(std::string("Set: Resource located on other lane:")+rid.ToString()+ ". TODO: Set error number."));
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
       auto                          it = locks_.find(rid.id());
-      if ((it == locks_.end()) || (it->second != client_id))
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "SetLaneChecked ", printable_identifier, " => ", rid.ToString(), " ??");
+
+      if (it == locks_.end())
       {
         throw serializers::SerializableException(  // TODO(issue 11): set exception number
-            0, byte_array_type("Client does not have a lock for the resource"));
+                                                 0, byte_array_type(std::string("There is no lock for the resource:")+ rid.ToString()));
+      }
+      if (it->second != identifier)
+      {
+        throw serializers::SerializableException(  // TODO(issue 11): set exception number
+                                                 0, byte_array_type(std::string("Client ")
+                                                                    + printable_identifier
+                                                                    + " does not have a lock for the resource:"
+                                                                    + rid.ToString()
+                                                                    + " because it is held for "
+                                                                    + static_cast<std::string>(ToBase64(it->second))
+                                                                    )
+                                                   );
       }
     }
 
@@ -204,7 +265,7 @@ private:
   uint32_t lane_assignment_ = 0;
 
   mutex::Mutex                                                 lock_mutex_{__LINE__, __FILE__};
-  std::map<byte_array::ConstByteArray, connection_handle_type> locks_;
+  std::map<byte_array::ConstByteArray, Identifier> locks_;
 };
 
 }  // namespace storage

@@ -24,6 +24,7 @@
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "crypto/identity.hpp"
 
 #include <chrono>
 #include <memory>
@@ -45,6 +46,7 @@ class Router : public MuddleEndpoint
 {
 public:
   using Address       = Packet::Address;  // == a crypto::Identity.identifier_
+  using Identity      = fetch::crypto::Identity;
   using PacketPtr     = std::shared_ptr<Packet>;
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;

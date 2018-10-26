@@ -23,8 +23,6 @@
 
 #include <stdexcept>
 
-static constexpr char const *LOGGING_NAME = "TokenContract";
-
 namespace fetch {
 namespace ledger {
 namespace {

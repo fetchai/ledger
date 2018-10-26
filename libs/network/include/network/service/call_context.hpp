@@ -17,34 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace service {
 
-class DummyContract : public Contract
+/* A class that defines the context specific parameters being passed to an invoked API func.
+ *
+ */
+class CallContext
 {
 public:
-  DummyContract();
-  ~DummyContract() = default;
+  using Address = fetch::byte_array::ConstByteArray;
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
-  {
-    return counter_;
-  }
-
-private:
-  using Counter = std::atomic<std::size_t>;
-
-  Status Wait(Transaction const &tx);
-  Status Run(Transaction const &tx);
-
-  Counter counter_{0};
+  Address sender_address;
 };
 
-}  // namespace ledger
-}  // namespace fetch
+}
+}
