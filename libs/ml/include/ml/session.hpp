@@ -43,11 +43,13 @@ public:
   std::size_t                                      variable_counter = 0;  // TODO(private 272)
   std::size_t                                      layer_counter    = 0;
   std::unordered_map<std::string, VariablePtrType> all_variables;
+  std::size_t                                      batch_size = 128;
 
-  std::size_t batch_size = 128;
-
-  SessionManager() = default;
-  explicit SessionManager(typename ArrayType::Type gradient_clip)
+  explicit SessionManager(bool threaded = false)
+    : threaded_(threaded)
+  {}
+  explicit SessionManager(typename ArrayType::Type gradient_clip, bool threaded = false)
+    : threaded_(threaded)
   {
     gradient_clip_ = gradient_clip;
   }
@@ -213,12 +215,18 @@ public:
     layer->SetInput(input, *this);
   }
 
+  bool threaded()
+  {
+    return threaded_;
+  }
+
 private:
   double gradient_clip_ = -1.0;  // negative values for gradient clip indicate clipping is off
   std::unordered_map<std::string, VariablePtrType> top_sort_map_ng_;
   std::vector<VariablePtrType>                     top_sort_vector_ng_;
   std::unordered_map<std::string, VariablePtrType> top_sort_map_g_;
   std::vector<VariablePtrType>                     top_sort_vector_g_;
+  bool                                             threaded_ = false;
 
   bool top_sort_complete_ =
       false;  // we track whether we need to redo the topological sort or not as we go
@@ -270,54 +278,49 @@ private:
     VariablePtrType var = all_variables.at(output_name);
     top_sort_map_ng_.clear();
     top_sort_vector_ng_.clear();
-    top_sort_map_g_.clear();
-    top_sort_vector_g_.clear();
     TopSortImpl(var);
-    top_sort_complete_ = true;
   }
 
   void TopSortImpl(VariablePtrType var)
   {
     // check if we've added this variable already
-    bool is_in = (top_sort_map_g_.find(var->variable_name()) != top_sort_map_g_.end());
+    bool is_in_g  = (top_sort_map_g_.find(var->variable_name()) != top_sort_map_g_.end());
+    bool is_in_ng = (top_sort_map_ng_.find(var->variable_name()) != top_sort_map_ng_.end());
 
-    if (!is_in)  // check if we've already added this variable
+    if (var->requires_grad() && !var->is_leaf() && (!is_in_ng))
     {
-      if (var->requires_grad() && !var->is_leaf())
+      // we can update the map immediately
+      top_sort_map_g_.insert({var->variable_name(), var});
+      top_sort_map_ng_.insert({var->variable_name(), var});
+      for (std::size_t i = 0; i < var->prev.size(); ++i)
       {
-        // we can update the map immediately
-        top_sort_map_g_.insert({var->variable_name(), var});
-        top_sort_map_ng_.insert({var->variable_name(), var});
-        for (std::size_t i = 0; i < var->prev.size(); ++i)
-        {
-          TopSortImpl(var->prev[i]);
-        }
-        // pushing back to the vector after the recursive call ensures the right order
-        top_sort_vector_ng_.push_back(var);
-        top_sort_vector_g_.push_back(var);
+        TopSortImpl(var->prev[i]);
       }
-      else if (var->requires_grad())
+      // pushing back to the vector after the recursive call ensures the right order
+      top_sort_vector_ng_.push_back(var);
+      top_sort_vector_g_.push_back(var);
+    }
+    else if (var->requires_grad() && (!is_in_g))
+    {
+      // we can update the map immediately
+      top_sort_map_g_.insert({var->variable_name(), var});
+      for (std::size_t i = 0; i < var->prev.size(); ++i)
       {
-        // we can update the map immediately
-        top_sort_map_g_.insert({var->variable_name(), var});
-        for (std::size_t i = 0; i < var->prev.size(); ++i)
-        {
-          TopSortImpl(var->prev[i]);
-        }
-        // pushing back to the vector after the recursive call ensures the right order
-        top_sort_vector_g_.push_back(var);
+        TopSortImpl(var->prev[i]);
       }
-      else if (!var->is_leaf())
+      // pushing back to the vector after the recursive call ensures the right order
+      top_sort_vector_g_.push_back(var);
+    }
+    else if (!var->is_leaf() && (!is_in_ng))
+    {
+      // we can update the map immediately
+      top_sort_map_ng_.insert({var->variable_name(), var});
+      for (std::size_t i = 0; i < var->prev.size(); ++i)
       {
-        // we can update the map immediately
-        top_sort_map_ng_.insert({var->variable_name(), var});
-        for (std::size_t i = 0; i < var->prev.size(); ++i)
-        {
-          TopSortImpl(var->prev[i]);
-        }
-        // pushing back to the vector after the recursive call ensures the right order
-        top_sort_vector_ng_.push_back(var);
+        TopSortImpl(var->prev[i]);
       }
+      // pushing back to the vector after the recursive call ensures the right order
+      top_sort_vector_ng_.push_back(var);
     }
   }
 
@@ -405,6 +408,9 @@ private:
 
     // initialise the variables gradients to zeros
     var->InitialiseGradients(grad_shape);
+
+    // set threading
+    var->threaded(threaded());
 
     // flag that the variable is ready for use
     var->initialised = true;

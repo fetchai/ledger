@@ -19,7 +19,7 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "vectorise/threading/pool.hpp"
+#include "vectorise/threading/singleton_pool.hpp"
 
 namespace fetch {
 namespace math {
@@ -35,7 +35,7 @@ public:
   void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta, MATRIX &c);
 
 private:
-  threading::Pool pool_;
+  threading::SingletonPool &pool_ = threading::SingletonPool::getInstance();
 };
 
 }  // namespace linalg
