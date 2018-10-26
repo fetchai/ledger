@@ -74,15 +74,25 @@ void CrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
   //  }
 }
 
-template <typename VariablePtrType>
-void SoftmaxCrossEntropyLoss(VariablePtrType cur_node)
+template <typename VariableType>
+void SoftmaxCrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
+  auto &left   = cur_node->prev[0];
+  auto &right  = cur_node->prev[1];
+  auto  n_data = static_cast<typename VariableType::ArrayType::Type>(left->data().shape()[0]);
+
+  // derivate of the softmax + cross entropy layer has some nice mathematical cancellations that
+  // simplify down to just a subtraction. That means we need to use the data from the input to the
+  // softmax, which assume is left->prev[0]->data()
+  // TODO(private #): there is no guarantee that the user actually puts a softmax before this loss
+  // function...
 
   auto delta = fetch::math::Subtract(left->prev[0]->data(), right->data());
+  //  auto delta = fetch::math::Subtract(left->data(), right->data());
+  delta = fetch::math::Divide(delta, n_data);
+
   left->GradientAdd(delta);
 }
 
