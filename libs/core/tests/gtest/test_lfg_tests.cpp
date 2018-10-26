@@ -16,22 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/versioned_random_access_stack.hpp"
+#include "bit_statistics.hpp"
 #include "core/random/lfg.hpp"
-
+#include <cmath>
 #include <gtest/gtest.h>
-#include <stack>
+#include <iostream>
+#include <vector>
 
-using namespace fetch::storage;
-
-class TestClass
+TEST(lfg_gtest, basic_test)
 {
-public:
-  uint64_t value1 = 0;
-  uint8_t  value2 = 0;
+  BitStatistics<> bst;
 
-  bool operator==(TestClass const &rhs)
+  ASSERT_TRUE(bst.TestAccuracy(1000000, 0.002));
+  for (auto &a : bst.GetProbabilities())
   {
-    return value1 == rhs.value1 && value2 == rhs.value2;
+    std::cout << a << " ";
   }
-};
+  std::cout << std::endl;
+}

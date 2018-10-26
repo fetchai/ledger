@@ -16,41 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "math/rectangular_array.hpp"
+#include <iomanip>
 #include <iostream>
 
-using namespace fetch::math;
-static fetch::random::LinearCongruentialGenerator gen;
+#include "core/random/lcg.hpp"
+#include "math/distance/distance_matrix.hpp"
+#include <gtest/gtest.h>
+#include <math/distance/hamming.hpp>
+#include <math/linalg/matrix.hpp>
 
-int main()
+using namespace fetch::math::distance;
+using namespace fetch::math::linalg;
+
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(distance_matrix_gtest, DISABLED_basic_info)
 {
-  RectangularArray<uint64_t> a, b;
-  a.Resize(3, 3);
-  for (auto &v : a)
-  {
-    v = gen();
-  }
-  std::cout << "Saving " << std::endl;
+  _M<double> A, B, R;
 
-  a.Save("test.array");
-  std::cout << "Loading" << std::endl;
-  b.Load("test.array");
-  std::cout << "Ready" << std::endl;
-  if (a.size() != b.size())
-  {
-    std::cout << "Failed 1: " << a.size() << " " << b.size() << std::endl;
-    return -1;
-  }
-  std::cout << "Checking " << std::endl;
+  R.Resize(3, 3);
+  A = _M<double>(R"(1 2 3 ; 1 1 1 ; 2 1 2)");
+  B = _M<double>(R"(1 2 9 ; 1 0 0 ; 1 2 3)");
 
-  for (std::size_t i = 0; i < a.size(); ++i)
-  {
-    if (a[i] != b[i])
-    {
-      std::cout << "Failed 2! " << i << " " << a[i] << " " << b[i] << std::endl;
-      return -1;
-    }
-  }
-  return 0;
+  EXPECT_TRUE(
+      bool(DistanceMatrix(R, A, B, Hamming<double>) == _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0 )")));
 }

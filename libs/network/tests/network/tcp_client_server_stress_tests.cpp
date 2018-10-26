@@ -27,6 +27,7 @@
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
+#include <gtest/gtest.h>
 // Test of the client and server.
 
 using namespace fetch::network;
@@ -241,7 +242,7 @@ void TestCase4(std::string host, uint16_t port)
   std::cerr << "Success." << std::endl;
 }
 
-int main(int argc, char *argv[])
+TEST(tcp_client_server_stress_gtest, testing_communication_on_port)
 {
 
   std::string host       = "localhost";
@@ -275,6 +276,4 @@ int main(int argc, char *argv[])
   }
 
   std::cerr << "finished all tests" << std::endl;
-
-  return 0;
 }

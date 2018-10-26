@@ -22,6 +22,8 @@
 #include "storage/key_value_index.hpp"
 #include <iostream>
 #include <map>
+
+#include <gtest/gtest.h>
 using namespace fetch;
 using namespace fetch::storage;
 
@@ -32,7 +34,7 @@ using key_value_index_type = KeyValueIndex<>;
 using file_store_type      = VersionedRandomAccessStack<file_block_type>;
 using file_object_type     = FileObject<file_store_type>;
 
-int main()
+TEST(storage_versioned_file_object_gtest, hash_test)
 {
   file_store_type fs;
   fs.New("a.db", "b.db");
@@ -84,11 +86,7 @@ int main()
       fs.Revert(i);
       {
         file_object_type fobj(fs, record);
-        if (expected_hashes[i] != fobj.Hash())
-        {
-          std::cout << "Expectation not met!" << std::endl;
-          exit(-1);
-        }
+        ASSERT_EQ(expected_hashes[i], fobj.Hash()) << "Expectation not met!";
 
         std::cout << "Got: " << byte_array::ToBase64(fobj.Hash()) << std::endl;
         byte_array::ByteArray x;
@@ -98,6 +96,4 @@ int main()
       }
     }
   }
-
-  return 0;
 }

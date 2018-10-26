@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
+#include "../../../core/include/core/random/lfg.hpp"
 #include "vectorise/register.hpp"
 #include <iostream>
+
+#include <gtest/gtest.h>
 using namespace fetch::vectorize;
 
 template <typename T>
@@ -195,9 +197,7 @@ ADD_TEST (^, xor)
 
 #undef ADD_TEST
 
-int main()
+TEST(vectorise_native_test, test_registers)
 {
   test_registers();
-
-  return 0;
 }

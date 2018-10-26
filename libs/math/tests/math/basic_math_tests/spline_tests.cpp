@@ -19,8 +19,11 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
-#include <math/spline/linear.hpp>
-#include <random/lcg.hpp>
+
+#include "core/random/lcg.hpp"
+#include "math/spline/linear.hpp"
+
+#include <gtest/gtest.h>
 
 // This is to avoid ambiguity in instantation
 double dsin(double x)
@@ -55,14 +58,10 @@ void test1(F &f, double from, double to, double max)
     me        = std::max(r, me);
   }
   std::cout << "Peak error: " << me << std::endl;
-  if (me > max)
-  {
-    std::cout << "expected: " << max << std::endl;
-    exit(-1);
-  }
+  ASSERT_LE(me, max) << "expected: " << max;
 }
 
-template <std::size_t N, typename F, std::size_t MAX = 100000000>
+/* template <std::size_t N, typename F, std::size_t MAX = 100000000>
 double test_timing(F &f, double x_value, double from, double to)
 {
   fetch::math::spline::Spline<> spline;
@@ -126,12 +125,10 @@ void benchmark()
   std::cout << test_timing<8>(dexp, gen.AsDouble() * 100, 0, 100) << std::endl;
   std::cout << test_timing<16>(dexp, gen.AsDouble() * 100, 0, 100) << std::endl;
   std::cout << test_timing<20>(dexp, gen.AsDouble() * 100, 0, 100) << std::endl;
-}
+} */
 
-int main(int argc, char **argv)
+TEST(spline_gtest, testing_functions)
 {
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
-    benchmark();
 
   std::cout << "Testing Sin ... " << std::endl;
   test1<8>(dsin, 0, 2 * 3.14, 2);
@@ -152,6 +149,4 @@ int main(int argc, char **argv)
   test1<8>(dexp, 0, 100, 2);
   test1<16>(dexp, 0, 100, 4e-5);
   test1<20>(dexp, 0, 100, 4e-5);
-
-  return 0;
 }

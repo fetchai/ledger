@@ -16,27 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bit_statistics.hpp"
-#include "core/random/lfg.hpp"
+#include "vectorise/math/exp.hpp"
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
 #include <cmath>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <vector>
 
-int main()
+using type        = double;
+using array_type  = fetch::memory::Array<type>;
+using vector_type = typename array_type::vector_register_type;
+
+void Exponentials(array_type const &A, array_type &C)
 {
-  BitStatistics<> bst;
+  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = fetch::vectorize::exp(a); },
+                        A);
+}
 
-  int ret = 0;
-  if (!bst.TestAccuracy(1000000, 0.002))
+TEST(vectorise_approx_exp_gtest, basic_test_with_array_size_100)
+{
+
+  std::size_t N = std::size_t(100);
+  array_type  A(N), C(N);
+
+  for (std::size_t i = 0; i < N; ++i)
   {
-    ret = -1;
+    A[i] = double(0.1 * type(i) - type(double(N) * 0.5));
   }
 
-  for (auto &a : bst.GetProbabilities())
+  Exponentials(A, C);
+  for (std::size_t i = 0; i < N; ++i)
   {
-    std::cout << a << " ";
+    std::cout << A[i] << " " << C[i] << " " << std::exp(A[i]) << std::endl;
   }
-  std::cout << std::endl;
-
-  return ret;
 }

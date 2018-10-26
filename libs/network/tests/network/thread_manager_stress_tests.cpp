@@ -21,6 +21,8 @@
 #include <iostream>
 #include <memory>
 
+#include <gtest/gtest.h>
+
 using namespace fetch::network;
 
 template <std::size_t N = 1>
@@ -126,7 +128,7 @@ void TestCase4()
   std::cout << "Success." << std::endl << std::endl;
 }
 
-int main(int argc, char *argv[])
+TEST(netword_gtest, thread_manager_stress_test)
 {
 
   TestCase1<1>();
@@ -138,5 +140,4 @@ int main(int argc, char *argv[])
   // TestCase4<10>();
 
   std::cerr << "finished all tests" << std::endl;
-  return 0;
 }
