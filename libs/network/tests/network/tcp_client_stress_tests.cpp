@@ -27,6 +27,8 @@
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 
+#include <gtest/gtest.h>
+
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test
 // transmit and receive functionality by looping back
@@ -832,7 +834,7 @@ void TestCase15(std::string host, std::string const &port)
   std::cerr << "Success." << std::endl;
 }
 
-int main(int argc, char *argv[])
+TEST(network_gtests, tcp_client_stress_tests)
 {
 
   std::string host       = "localhost";
@@ -884,5 +886,4 @@ int main(int argc, char *argv[])
   }
 
   std::cerr << "finished all tests" << std::endl;
-  return 0;
 }
