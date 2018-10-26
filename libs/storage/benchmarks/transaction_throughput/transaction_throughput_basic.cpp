@@ -35,7 +35,7 @@ protected:
   {
     store_.New("obj_store_bench.db", "obj_store_bench_index.db");
 
-    for (std::size_t i = 0; i < 10000; ++i)
+    for (std::size_t i = 0; i < 100000; ++i)
     {
       CreateNextTransaction();
     }
@@ -157,8 +157,56 @@ BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_10k)(benchmark::State &st)
       Transaction dummy;
       std::size_t mod_counter = counter % precreated_tx_.size();
       benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
-      // 12888964394
-      // 12221606575
+      counter++;
+    }
+  }
+}
+
+BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_30k)(benchmark::State &st)
+{
+  std::size_t counter = 0;
+  for (auto _ : st)
+  {
+    for (std::size_t i = 0; i < 30000; ++i)
+    {
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
+      counter++;
+    }
+
+    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
+    counter = 0;
+
+    for (std::size_t i = 0; i < 30000; ++i)
+    {
+      Transaction dummy;
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
+      counter++;
+    }
+  }
+}
+
+BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_100k)(benchmark::State &st)
+{
+  std::size_t counter = 0;
+  for (auto _ : st)
+  {
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
+      counter++;
+    }
+
+    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
+    counter = 0;
+
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+      Transaction dummy;
+      std::size_t mod_counter = counter % precreated_tx_.size();
+      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
       counter++;
     }
   }

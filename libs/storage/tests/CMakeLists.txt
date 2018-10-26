@@ -23,3 +23,4 @@ add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
 
 
 add_fetch_gtest(storage_gtest fetch-storage gtest)
+add_fetch_gtest(selective_storage_gtest fetch-storage selective_test)

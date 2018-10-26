@@ -194,7 +194,26 @@ public:
       throw std::runtime_error("Failure while updating hash for signing");
     }
 
+#if !defined(NDEBUG) && defined(TX_SIGNING_DBG_OUTPUT)
+    auto const prod_digest = tx_data_hash_copy.Final();
+    std::cerr << "prod. digest           [hex]: " << byte_array::ToHex(prod_digest) << std::endl;
+    std::cerr << "prod. tx data          [hex]: " << byte_array::ToHex(stream_->data())
+              << std::endl;
+    std::cerr << "prod. identity         [hex]: " << byte_array::ToHex(identity_stream_->data())
+              << std::endl;
+
+    hasher_type                  hasher;
+    serializers::ByteArrayBuffer stream;
+    stream << serializers::Verbatim(stream_->data()) << identity;
+    hasher.Update(stream.data());
+
+    std::cerr << "real digest            [hex]: " << byte_array::ToHex(hasher.Final()) << std::endl;
+    std::cerr << "real full data to sig. [hex]: " << byte_array::ToHex(stream.data()) << std::endl;
+
+    return prod_digest;
+#else
     return tx_data_hash_copy.Final();
+#endif
   }
 
   bool operator==(TxSigningAdapter const &left_tx) const;
