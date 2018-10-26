@@ -199,25 +199,6 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  //  Type PeakToPeak() const { return Max() - Min(); }
-  //
-  //  void StandardDeviation(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //
-  //    assert(size_ > 1);
-  //    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
-  //    Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
-  //  }
-  //
-  //  void Variance(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //    assert(size_ > 1);
-  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
-  //    / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
-  //  }
-
   void Equal(self_type const &a, self_type const &b)
   {
     assert(a.size() == b.size());
@@ -435,30 +416,6 @@ public:
     return !(this->operator==(other));
   }
 
-  /**
-   * += operator
-   * @param other
-   * @return
-   */
-  void operator+=(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-  }
-  void operator+=(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-  }
-
-  ShapeLessArray operator+(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-    return *this;
-  }
-  ShapeLessArray operator+(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-    return *this;
-  }
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
@@ -1061,7 +1018,44 @@ public:
     return *this;
   }
 
-protected:
+
+
+  /////////////////
+  /// OPERATORS ///
+  /////////////////
+
+  void operator+=(ShapeLessArray const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+  }
+  void operator+=(Type const &scalar)
+  {
+    fetch::math::Add(*this, scalar, *this);
+  }
+
+  ShapeLessArray operator+(ShapeLessArray const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+  ShapeLessArray operator+(Type const &scalar)
+  {
+    fetch::math::Add(*this, scalar, *this);
+    return *this;
+  }
+
+
+
+  ///////////////////////////////////////
+  /// MATH LIBRARY INTERFACE METHODS ////
+  ///////////////////////////////////////
+
+  Type PeakToPeak() const { return fetch::math::PeakToPeak(*this);}
+
+
+
+
+ protected:
   container_type data_;
   std::size_t    size_ = 0;
 };

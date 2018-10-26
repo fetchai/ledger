@@ -3146,5 +3146,43 @@ T Mean(ShapeLessArray<T, C> const &obj1)
   return ret;
 }
 
+
+
+
+/**
+ * Distance between max and min values in an array
+ */
+template <typename ArrayType>
+void PeakToPeak(ArrayType arr)
+{
+  return Max(arr) - Min(arr);
+}
+
+///**
+// *
+// * @param x
+// */
+//void StandardDeviation(self_type const &x)
+//{
+//  LazyResize(x.size());
+//
+//  assert(size_ > 1);
+//  kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
+//  Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
+//}
+//
+///**
+// *
+// * @param x
+// */
+//template <typename ArrayType>
+//void Variance(ArrayType const &x)
+//{
+//  kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
+//  / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
+//}
+
+
+
 }  // namespace math
 }  // namespace fetch
