@@ -23,7 +23,7 @@
 #include "mock_executor.hpp"
 #include "test_block.hpp"
 
-#include "../chaincode/mock_storage_unit.hpp"
+#include "mock_storage_unit.hpp"
 
 #include <gmock/gmock.h>
 

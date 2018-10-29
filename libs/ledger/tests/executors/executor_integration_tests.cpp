@@ -24,7 +24,7 @@
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 
-#include "../chaincode/mock_storage_unit.hpp"
+#include "mock_storage_unit.hpp"
 
 #include <chrono>
 #include <gtest/gtest.h>

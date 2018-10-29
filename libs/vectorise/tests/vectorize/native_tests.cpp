@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../../../core/include/core/random/lfg.hpp"
+#include "core/random/lfg.hpp"
 #include "vectorise/register.hpp"
 #include <iostream>
 

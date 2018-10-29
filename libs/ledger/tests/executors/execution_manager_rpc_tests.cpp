@@ -21,7 +21,7 @@
 #include "ledger/protocols/execution_manager_rpc_service.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 
-#include "../chaincode/fake_storage_unit.hpp"
+#include "fake_storage_unit.hpp"
 #include "block_configs.hpp"
 #include "mock_executor.hpp"
 #include "test_block.hpp"

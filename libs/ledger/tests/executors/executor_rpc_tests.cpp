@@ -24,7 +24,7 @@
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/generics/future_timepoint.hpp"
 
-#include "../chaincode/mock_storage_unit.hpp"
+#include "mock_storage_unit.hpp"
 
 #include <chrono>
 #include <gtest/gtest.h>

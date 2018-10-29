@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_TESTING_ENABLED
-#include "../../core/include/core/random/lcg.hpp"
+#include "core/random/lcg.hpp"
 #include "iostream"
 #include "vectorise/memory/shared_array.hpp"
 
