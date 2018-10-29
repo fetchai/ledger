@@ -2211,21 +2211,21 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 //  Softmax(array, ret);
 //  return ret;
 //}
-// template <typename T, typename C>
-// void Softmax(NDArray<T, C> &array, NDArray<T, C> &ret)
-//{
-//  assert(ret.size() == array.size());
-//  ret.LazyReshape(array.shape());
-//
-//  details::SoftmaxImplementation(array, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Softmax(NDArray<T, C> &array)
-//{
-//  NDArray<T, C> ret{array.shape()};
-//  Softmax(array, ret);
-//  return ret;
-//}
+template <typename T, typename C>
+void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
+{
+  assert(ret.size() == array.size());
+  ret.LazyReshape(array.shape());
+
+  details::SoftmaxImplementation(array, ret);
+}
+template <typename T, typename C>
+NDArray<T, C> Softmax(NDArray<T, C> const &array)
+{
+  NDArray<T, C> ret{array.shape()};
+  Softmax(array, ret);
+  return ret;
+}
 template <typename T, typename C, typename S>
 void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 {
@@ -3275,9 +3275,6 @@ T Mean(ShapeLessArray<T, C> const &obj1)
   return ret;
 }
 
-
-
-
 /**
  * Distance between max and min values in an array
  */
@@ -3291,7 +3288,7 @@ void PeakToPeak(ArrayType arr)
 // *
 // * @param x
 // */
-//void StandardDeviation(self_type const &x)
+// void StandardDeviation(self_type const &x)
 //{
 //  LazyResize(x.size());
 //
@@ -3304,14 +3301,12 @@ void PeakToPeak(ArrayType arr)
 // *
 // * @param x
 // */
-//template <typename ArrayType>
-//void Variance(ArrayType const &x)
+// template <typename ArrayType>
+// void Variance(ArrayType const &x)
 //{
 //  kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
 //  / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
 //}
-
-
 
 }  // namespace math
 }  // namespace fetch

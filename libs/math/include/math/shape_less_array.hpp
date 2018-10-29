@@ -416,7 +416,6 @@ public:
     return !(this->operator==(other));
   }
 
-
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
    *
@@ -1018,8 +1017,6 @@ public:
     return *this;
   }
 
-
-
   /////////////////
   /// OPERATORS ///
   /////////////////
@@ -1044,18 +1041,16 @@ public:
     return *this;
   }
 
-
-
   ///////////////////////////////////////
   /// MATH LIBRARY INTERFACE METHODS ////
   ///////////////////////////////////////
 
-  Type PeakToPeak() const { return fetch::math::PeakToPeak(*this);}
+  Type PeakToPeak() const
+  {
+    return fetch::math::PeakToPeak(*this);
+  }
 
-
-
-
- protected:
+protected:
   container_type data_;
   std::size_t    size_ = 0;
 };
