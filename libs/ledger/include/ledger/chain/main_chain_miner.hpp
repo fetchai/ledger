@@ -20,7 +20,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
 
 #include <chrono>
@@ -156,7 +156,7 @@ private:
         next_block.UpdateDigest();
 
 #ifdef FETCH_ENABLE_METRICS
-        ledger::Metrics::Timestamp const now = ledger::Metrics::Clock::now();
+        metrics::Metrics::Timestamp const now = metrics::Metrics::Clock::now();
 
         for (auto const &slice : next_block_body.slices)
         {

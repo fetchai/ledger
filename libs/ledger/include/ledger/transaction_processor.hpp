@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "miner/miner_interface.hpp"
 

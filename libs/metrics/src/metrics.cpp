@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/metrics/metrics.hpp"
-#include "ledger/metrics/metric_file_handler.hpp"
+#include "metrics/metrics.hpp"
+#include "metrics/metric_file_handler.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 
 Metrics &Metrics::Instance()
 {
@@ -42,5 +42,5 @@ void Metrics::RemoveMetricHandler()
   handler_object_.reset();
 }
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

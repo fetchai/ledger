@@ -20,7 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 
 /**
  * Interface for all Metric Handlers
@@ -63,5 +63,5 @@ public:
                             Timestamp const &timestamp) = 0;
 };
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

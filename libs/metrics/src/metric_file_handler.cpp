@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/metrics/metric_file_handler.hpp"
+#include "metrics/metric_file_handler.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include <fstream>
@@ -24,7 +24,7 @@
 using fetch::byte_array::ToBase64;
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 namespace {
 
 /**
@@ -160,5 +160,5 @@ void MetricFileHandler::ThreadEntryPoint()
   }
 }
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

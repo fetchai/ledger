@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/metrics/metric_handler.hpp"
+#include "metrics/metric_handler.hpp"
 
 #include <string>
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 
 /**
  * Singleton object for convenient global access to generating metric data
@@ -79,44 +79,44 @@ private:
   std::atomic<MetricHandler *>   handler_{nullptr};
 };
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch
 
 #ifdef FETCH_ENABLE_METRICS
 #define FETCH_METRIC_TX_SUBMITTED(hash)                       \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::SUBMITTED)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::SUBMITTED)
 #define FETCH_METRIC_TX_STORED(hash)                          \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::STORED)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::STORED)
 #define FETCH_METRIC_TX_QUEUED(hash)                          \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::QUEUED)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::QUEUED)
 #define FETCH_METRIC_TX_PACKED(hash)                          \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::PACKED)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::PACKED)
 #define FETCH_METRIC_TX_EXEC_STARTED(hash)                    \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::EXECUTION_STARTED)
 #define FETCH_METRIC_TX_EXEC_COMPLETE(hash)                   \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE)
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::EXECUTION_COMPLETE)
 
-#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint)         \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::SUBMITTED, timepoint)
-#define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint)            \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::QUEUED, timepoint)
-#define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)            \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::PACKED, timepoint)
-#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)      \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::EXECUTION_STARTED, timepoint)
-#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)     \
-  fetch::ledger::Metrics::Instance().RecordTransactionMetric( \
-      hash, fetch::ledger::Metrics::Event::EXECUTION_COMPLETE, timepoint)
+#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timestamp)         \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::SUBMITTED, timestamp)
+#define FETCH_METRIC_TX_QUEUED_EX(hash, timestamp)            \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::QUEUED, timestamp)
+#define FETCH_METRIC_TX_PACKED_EX(hash, timestamp)            \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::PACKED, timestamp)
+#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timestamp)      \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::EXECUTION_STARTED, timestamp)
+#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timestamp)     \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::EXECUTION_COMPLETE, timestamp)
 #else
 #define FETCH_METRIC_TX_SUBMITTED(hash)
 #define FETCH_METRIC_TX_QUEUED(hash)
