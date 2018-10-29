@@ -2198,19 +2198,19 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
-// template <typename T, typename C>
-// void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
-//{
-//  assert(ret.size() == array.size());
-//  details::SoftmaxImplementation(array, ret);
-//}
-// template <typename T, typename C>
-// ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
-//{
-//  ShapeLessArray<T, C> ret{array.size()};
-//  Softmax(array, ret);
-//  return ret;
-//}
+ template <typename T, typename C>
+ void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
+{
+  assert(ret.size() == array.size());
+  details::SoftmaxImplementation(array, ret);
+}
+ template <typename T, typename C>
+ ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
+{
+  ShapeLessArray<T, C> ret{array.size()};
+  Softmax(array, ret);
+  return ret;
+}
 template <typename T, typename C>
 void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
 {
