@@ -29,6 +29,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <mutex>
 
 namespace fetch {
 namespace ledger {
@@ -47,16 +48,8 @@ struct AdaptedTx
 
 pybind11::bytes CreateWealthTransactionsBasic(std::size_t num_transactions)
 {
-  std::cout << "Generating Identities..." << std::endl;
-
   // generate a series of keys for all the nodes
   std::vector<crypto::ECDSASigner> signers(num_transactions);
-  for (auto &signer : signers)
-  {
-    signer.GenerateKeys();
-  }
-
-  std::cout << "Generating Transaction..." << std::endl;
 
   // create all the transactions
   std::vector<AdaptedTx> transactions(num_transactions);
@@ -76,16 +69,12 @@ pybind11::bytes CreateWealthTransactionsBasic(std::size_t num_transactions)
     tx.tx.set_fee(1);
     tx.tx.set_data(oss.str());
     tx.tx.set_resources({public_key});
-    tx.tx.Sign(identity.private_key());
+    tx.tx.Sign(identity.underlying_private_key());
   }
-
-  std::cout << "Serialization..." << std::endl;
 
   // convert to a serial stream
   serializers::ByteArrayBuffer buffer;
   buffer.Append(transactions);
-
-  std::cout << "Return..." << std::endl;
 
   return {buffer.data().char_pointer(), buffer.data().size()};
 }
@@ -95,11 +84,17 @@ pybind11::bytes CreateWealthTransactionsThreaded(std::size_t num_transactions)
   threading::Pool pool;
 
   // generate a series of keys for all the nodes
-  std::vector<crypto::ECDSASigner> signers(num_transactions);
-  for (auto &signer : signers)
+  std::mutex signers_mtx;
+  std::vector<crypto::ECDSASigner> signers(0);
+  for (std::size_t i = 0; i < num_transactions; ++i)
   {
-    pool.Dispatch([&signer]() {
-      signer.GenerateKeys();
+    pool.Dispatch([&signers_mtx, &signers]() {
+      crypto::ECDSASigner identity;
+
+      {
+        std::lock_guard<std::mutex> lock(signers_mtx);
+        signers.emplace_back(std::move(identity));
+      }
     });
   }
 
@@ -124,7 +119,7 @@ pybind11::bytes CreateWealthTransactionsThreaded(std::size_t num_transactions)
       tx.tx.set_fee(1);
       tx.tx.set_data(oss.str());
       tx.tx.set_resources({public_key});
-      tx.tx.Sign(identity.private_key());
+      tx.tx.Sign(identity.underlying_private_key());
     });
   }
 
