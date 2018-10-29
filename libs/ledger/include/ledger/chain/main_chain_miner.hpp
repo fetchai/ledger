@@ -131,6 +131,8 @@ private:
           if (on_block_complete_)
           {
             on_block_complete_(next_block);
+
+            FETCH_METRIC_BLOCK_GENERATED(next_block.hash());
           }
 
           // stop searching for the hash and schedule the next time to generate a block

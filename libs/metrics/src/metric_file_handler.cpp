@@ -39,6 +39,9 @@ char const *ToString(MetricHandler::Instrument instrument)
   {
   case MetricHandler::Instrument::TRANSACTION:
     return "transaction";
+
+  case MetricHandler::Instrument::BLOCK:
+    return "block";
   }
 
   return "unknown";
@@ -68,6 +71,10 @@ char const *ToString(MetricHandler::Event event)
     return "exec-started";
   case MetricHandler::Event::EXECUTION_COMPLETE:
     return "exec-complete";
+  case MetricHandler::Event::GENERATED:
+    return "generated";
+  case MetricHandler::Event::RECEIVED:
+    return "received";
   }
 
   return "unknown";

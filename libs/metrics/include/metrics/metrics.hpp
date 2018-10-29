@@ -66,6 +66,12 @@ public:
     RecordMetric(hash, Instrument::TRANSACTION, event, timestamp);
   }
 
+  void RecordBlockMetric(ConstByteArray const &hash, Event event,
+                         Timestamp const &timestamp = Clock::now())
+  {
+    RecordMetric(hash, Instrument::BLOCK, event, timestamp);
+  }
+
   // Operators
   Metrics &operator=(Metrics const &) = delete;
   Metrics &operator=(Metrics &&) = delete;
@@ -117,6 +123,16 @@ private:
 #define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timestamp)     \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::EXECUTION_COMPLETE, timestamp)
+
+#define FETCH_METRIC_BLOCK_GENERATED(hash)                   \
+  fetch::metrics::Metrics::Instance().RecordBlockMetric( \
+      hash, fetch::metrics::Metrics::Event::GENERATED)
+
+#define FETCH_METRIC_BLOCK_RECEIVED(hash)                   \
+  fetch::metrics::Metrics::Instance().RecordBlockMetric( \
+      hash, fetch::metrics::Metrics::Event::RECEIVED)
+
+
 #else
 #define FETCH_METRIC_TX_SUBMITTED(hash)
 #define FETCH_METRIC_TX_QUEUED(hash)
@@ -130,4 +146,8 @@ private:
 #define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)
 #define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)
 #define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)
+
+#define FETCH_METRIC_BLOCK_GENERATED(hash)
+#define FETCH_METRIC_BLOCK_RECEIVED(hash)
+
 #endif
