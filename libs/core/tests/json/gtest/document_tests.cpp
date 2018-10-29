@@ -115,3 +115,39 @@ TEST(json_bsic_parsing_gtest, Parsing_exeptions)
   EXPECT_THROW(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
   EXPECT_THROW(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
 }
+
+TEST(json_bsic_parsing_gtest, large_array_of_data)
+{
+  static const std::size_t NUM_ELEMENTS = 2000;
+
+  ConstByteArray buffer;
+
+  // manually generate a valid json object
+  {
+    std::ostringstream oss;
+    oss << '[';
+    for (std::size_t i = 0; i < NUM_ELEMENTS; ++i)
+    {
+      if (i)
+      {
+        oss << ',';
+      }
+
+      oss << "{ \"id\": " << i << '}';
+    }
+    oss << ']';
+
+    buffer = ConstByteArray{oss.str()};
+  }
+
+  JSONDocument doc;
+  ASSERT_NO_THROW(doc.Parse(buffer));
+
+  ASSERT_TRUE(doc.root().is_array());
+  ASSERT_EQ(doc.root().size(), NUM_ELEMENTS);
+
+  for (std::size_t i = 0; i < NUM_ELEMENTS; ++i)
+  {
+
+  }
+}
