@@ -39,12 +39,16 @@ public:
 
   enum class Event
   {
-    SUBMITTED,
-    STORED,
-    QUEUED,
-    PACKED,
-    EXECUTION_STARTED,
-    EXECUTION_COMPLETE
+    /// @name Transaction Events
+    /// @{
+    SUBMITTED,            ///< Transaction is submitted to the system
+    STORED,               ///< Transaction has been stored in the local node
+    SYNCED,               ///< Transaction has been synced to a node
+    QUEUED,               ///< Transaction has been added to the mining queue
+    PACKED,               ///< Transaction has been packed into a block
+    EXECUTION_STARTED,    ///< Execution of the transaction has been started
+    EXECUTION_COMPLETE    ///< Execution of the transaction has been completed
+    /// @}
   };
 
   // Construction / Destruction
