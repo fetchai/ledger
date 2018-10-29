@@ -1739,6 +1739,44 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 }
 
 /**
+ * Cross entropy loss with x as the prediction, and y as the ground truth
+ * @tparam ArrayType
+ * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
+ * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
+ * 0
+ * @return
+ */
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+
+  auto n_examples = x.shape()[0];
+  //  auto n_classes  = x.shape()[1];
+
+  ArrayType sce_x{x.shape()};
+  sce_x.Copy(x);
+
+  //  Softmax(sce_x); // we assume softmax was already included in the graph (i.e. x is the output
+  //  of softmax layer)
+
+  auto      gt = ArgMax(y, 1);
+  ArrayType log_likelihood{1};
+  log_likelihood[0] = 0;
+
+  for (std::size_t idx = 0; idx < n_examples; ++idx)
+  {
+    //    Log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
+    sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
+              std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
+  }
+
+  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+}
+
+/**
  * The sigmoid function
  * @tparam ArrayType
  * @tparam T
@@ -1832,6 +1870,40 @@ inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
     for (auto i : array)
     {
       ret = std::max(ret, i);
+    }
+  }
+}
+
+template <typename T, typename C, typename S>
+void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
+         linalg::Matrix<T, C, S> &ret)
+{
+  assert(axis == 0 || axis == 1);
+
+  if (axis == 0)
+  {
+    assert(ret.shape()[0] == 1);
+    assert(ret.shape()[1] == array.shape()[1]);
+    for (std::size_t i = 0; i < array.shape()[1]; ++i)
+    {
+      ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[0]; ++j)
+      {
+        ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
+      }
+    }
+  }
+  else
+  {
+    assert(ret.shape()[0] == array.shape()[0]);
+    assert(ret.shape()[1] == 1);
+    for (std::size_t i = 0; i < array.shape()[0]; ++i)
+    {
+      ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[1]; ++j)
+      {
+        ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
+      }
     }
   }
 }
@@ -2113,42 +2185,47 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   //  assert(ret.shape() == array.shape());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
-  typename ArrayType::Type array_max, array_sum;
-  Max(array, array_max);
+  std::vector<std::size_t> arr_shape{array.shape()[0], 1};
+  ArrayType                array_max{arr_shape};
+  ArrayType                array_sum{arr_shape};
+
+  Max(array, 1, array_max);
   Subtract(array, array_max, ret);
   Exp(ret);
-  Sum(ret, array_sum);
+
+  ReduceSum(ret, 1, array_sum);
+  //  Sum(ret, array_sum);
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
-template <typename T, typename C>
-void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
-{
-  assert(ret.size() == array.size());
-  details::SoftmaxImplementation(array, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> const &array)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Softmax(array, ret);
-  return ret;
-}
-template <typename T, typename C>
-void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
-{
-  assert(ret.size() == array.size());
-  ret.LazyReshape(array.shape());
-
-  details::SoftmaxImplementation(array, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Softmax(NDArray<T, C> const &array)
-{
-  NDArray<T, C> ret{array.shape()};
-  Softmax(array, ret);
-  return ret;
-}
+// template <typename T, typename C>
+// void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
+//{
+//  assert(ret.size() == array.size());
+//  details::SoftmaxImplementation(array, ret);
+//}
+// template <typename T, typename C>
+// ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
+//{
+//  ShapeLessArray<T, C> ret{array.size()};
+//  Softmax(array, ret);
+//  return ret;
+//}
+// template <typename T, typename C>
+// void Softmax(NDArray<T, C> &array, NDArray<T, C> &ret)
+//{
+//  assert(ret.size() == array.size());
+//  ret.LazyReshape(array.shape());
+//
+//  details::SoftmaxImplementation(array, ret);
+//}
+// template <typename T, typename C>
+// NDArray<T, C> Softmax(NDArray<T, C> &array)
+//{
+//  NDArray<T, C> ret{array.shape()};
+//  Softmax(array, ret);
+//  return ret;
+//}
 template <typename T, typename C, typename S>
 void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 {
@@ -2506,11 +2583,38 @@ template <typename T, typename C, typename S>
 void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
               linalg::Matrix<T, C, S> &ret)
 {
-  assert(array1.size() == ret.size());
-  assert(array1.size() == array2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
+  // broadcasting is permissible
+  assert((array1.size() == ret.size()) || (array1.shape()[0] == ret.shape()[0]) ||
+         (array1.shape()[1] == ret.shape()[1]));
+  assert((array1.size() == array2.size()) || (array1.shape()[0] == array2.shape()[0]) ||
+         (array1.shape()[1] == array2.shape()[1]));
+
+  if (array1.size() == array2.size())
   {
-    ret[i] = array1[i] - array2[i];
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = array1[i] - array2[i];
+    }
+  }
+  else if (array1.shape()[0] == array2.shape()[0])
+  {
+    for (std::size_t i = 0; i < ret.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < ret.shape()[1]; ++j)
+      {
+        ret.Set(i, j, array1.At(i, j) - array2.At(i, 0));
+      }
+    }
+  }
+  else
+  {
+    for (std::size_t i = 0; i < ret.shape()[1]; ++i)
+    {
+      for (std::size_t j = 0; j < ret.shape()[0]; ++j)
+      {
+        ret.Set(j, i, array1.At(j, i) - array2.At(0, i));
+      }
+    }
   }
 }
 /**
@@ -2957,42 +3061,67 @@ ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, 
 }
 
 template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
+void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
             memory::Range const &range, linalg::Matrix<T, C, S> &ret)
 {
-  assert(obj1.size() == obj2.size());
+  assert((obj1.size() == obj2.size()) || (obj1.shape()[0] == obj2.shape()[0]) ||
+         (obj1.shape()[1] == obj2.shape()[1]));
   assert(obj1.size() == ret.size());
 
-  if (range.is_undefined())
+  if (obj1.size() == obj2.size())
   {
-    Divide(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
+    if (range.is_undefined())
+    {
+      Divide(obj1, obj2, ret);
+    }
+    else if (range.is_trivial())
+    {
+      auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
-        obj1.data(), obj2.data());
+      ret.data().in_parallel().Apply(
+          r,
+          [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+             typename linalg::Matrix<T, C, S>::vector_register_type const &y,
+             typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
+          obj1.data(), obj2.data());
+    }
+    else
+    {
+      TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+    }
+  }
+  else if (obj1.shape()[0] == obj2.shape()[0])
+  {
+    assert(obj2.shape()[1] == 1);
+    for (std::size_t i = 0; i < obj1.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
+      {
+        obj1.Set(i, j, obj1.At(i, j) / obj2.At(i, 0));
+      }
+    }
   }
   else
   {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+    assert(obj2.shape()[0] == 1);
+    for (std::size_t i = 0; i < obj1.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
+      {
+        obj1.Set(i, j, obj1.At(i, j) / obj2.At(0, j));
+      }
+    }
   }
 }
 template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
+void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
             linalg::Matrix<T, C, S> &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1,
-                               linalg::Matrix<T, C, S> const &obj2)
+linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2)
 {
   linalg::Matrix<T, C, S> ret{obj1.shape()};
 

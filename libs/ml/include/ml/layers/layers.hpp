@@ -204,8 +204,8 @@ private:
   VariablePtrType          dot_;
   VariablePtrType          add_;
   VariablePtrType          output_;
-  bool                     has_biases_;
-  std::string              activate_ = "LeakyRelu";
+  bool                     has_biases_ = true;
+  std::string              activate_   = "LeakyRelu";
 };
 
 }  // namespace layers

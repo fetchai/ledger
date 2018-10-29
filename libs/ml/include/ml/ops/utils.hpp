@@ -155,6 +155,10 @@ VariablePtrType ReduceSum(std::shared_ptr<VariableType> left, std::size_t const 
   return ret;
 }
 
+/**
+ *
+ */
+
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch
