@@ -20,6 +20,7 @@
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/string/replace.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -110,46 +111,56 @@ public:
     Post("/api/contract/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            std::ostringstream oss;
-           std::size_t submitted{0};
 
+           bool error_response{true};
            try
            {
-             // parse the JSON request
-             json::JSONDocument doc{request.body()};
+             std::size_t submitted{0};
 
-             if (doc.root().is_array())
+             // detect the content format, defaulting to json
+             byte_array::ConstByteArray content_type = "application/vnd+fetch.transaction+json";
+             if (request.header().Has("content-type"))
              {
-               for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
-               {
-                 auto const &tx_obj = doc[i];
+               content_type = request.header()["content-type"];
+             }
 
-                 // assume single transaction
-                 auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(tx_obj));
-
-                 // add the transaction to the processor
-                 processor_.AddTransaction(tx);
-                 ++submitted;
-               }
+             // handle the types of transaction
+             bool unknown_format = false;
+             if (content_type == "application/vnd+fetch.transaction+native")
+             {
+               submitted = SubmitNativeTx(request);
+             }
+             else if (content_type == "application/vnd+fetch.transaction+json")
+             {
+               submitted = SubmitJsonTx(request);
              }
              else
              {
-               // assume single transaction
-               auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(doc.root()));
-
-               // add the transaction to the processor
-               processor_.AddTransaction(tx);
-               ++submitted;
+               unknown_format = true;
              }
 
-             oss << R"({ "submitted": true, "count": )" << submitted << " }";
+             if (unknown_format)
+             {
+               // format the message
+               std::ostringstream error_msg;
+               error_msg << "Unknown content type: " << content_type;
+
+               oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
+             }
+             else
+             {
+               // success report the statistics
+               oss << R"({ "submitted": true, "count": )" << submitted << " }";
+               error_response = false;
+             }
            }
            catch (std::exception const &ex)
            {
              oss.clear();
-             oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
+             oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
            }
 
-           return http::CreateJsonResponse(oss.str());
+           return http::CreateJsonResponse(oss.str(), (error_response) ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK);
          });
   }
 
@@ -199,6 +210,9 @@ private:
   {
     return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
+
+  std::size_t SubmitJsonTx(http::HTTPRequest const &request);
+  std::size_t SubmitNativeTx(http::HTTPRequest const &request);
 
   std::size_t transaction_index_{0};
 
