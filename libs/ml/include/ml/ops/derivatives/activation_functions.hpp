@@ -25,13 +25,6 @@ namespace ml {
 namespace ops {
 namespace derivatives {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 template <typename VariablePtrType>
 void Sigmoid(VariablePtrType cur_node)
 {

@@ -61,12 +61,12 @@ void benchmark_layer_training(std::vector<std::size_t> layer_sizes, bool threadi
   std::vector<std::size_t> input_shape{data_points, input_size};
   std::vector<std::size_t> gt_shape{data_points, output_size};
 
-  auto input_data = sess.Variable(input_shape, "Input_data");
-  auto l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
-  auto l2         = sess.Layer(h1_size, h2_size, "LeakyRelu", "layer_2");
-  auto l3         = sess.Layer(h2_size, h3_size, "LeakyRelu", "layer_3");
-  auto y_pred     = sess.Layer(h3_size, output_size, "LeakyRelu", "output_layer");
-  auto gt         = sess.Variable(gt_shape, "GroundTruth");
+  VariablePtrType input_data = sess.Variable(input_shape, "Input_data");
+  LayerPtrType    l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
+  LayerPtrType    l2         = sess.Layer(h1_size, h2_size, "LeakyRelu", "layer_2");
+  LayerPtrType    l3         = sess.Layer(h2_size, h3_size, "LeakyRelu", "layer_3");
+  LayerPtrType    y_pred     = sess.Layer(h3_size, output_size, "LeakyRelu", "output_layer");
+  VariablePtrType gt         = sess.Variable(gt_shape, "GroundTruth");
 
   sess.SetInput(l1, input_data);
   sess.SetInput(l2, l1->output());

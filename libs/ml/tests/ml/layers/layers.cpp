@@ -24,7 +24,6 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
-//#include "ml/variable.hpp"
 
 using namespace fetch::ml;
 
