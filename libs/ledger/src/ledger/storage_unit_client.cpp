@@ -22,9 +22,9 @@ namespace fetch {
 namespace ledger {
 
 using PendingConnectionCounter =
-    network::AtomicInFlightCounter<network::AtomicCounterName::LANE_CONNECTIONS>;
+    network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class MuddleLaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
+class MuddleLaneConnectorWorker  : public network::AtomicStateMachine<StorageUnitClient::State>
 {
 public:
   using Address         = StorageUnitClient::Address;
@@ -47,6 +47,7 @@ public:
 
   std::string              name;
   Uri                      peer;
+  std::chrono::milliseconds timeduration;
   FutureTimepoint          timeout;
   Muddle &                 muddle;
   bool                     added;
@@ -107,6 +108,11 @@ public:
         currentstate == State::FAILED)
     {
       return false;
+    }
+
+    if (currentstate == State::INITIAL)
+    {
+      timeout.Set(timeduration);
     }
 
     if (timeout.IsDue())

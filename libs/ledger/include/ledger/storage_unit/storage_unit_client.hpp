@@ -45,8 +45,6 @@
 namespace fetch {
 namespace ledger {
 
-class LaneConnectorWorkerInterface;
-class LaneConnectorWorker;
 class MuddleLaneConnectorWorker;
 
 class StorageUnitClient : public StorageUnitInterface

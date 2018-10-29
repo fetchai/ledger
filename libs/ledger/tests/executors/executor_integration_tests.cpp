@@ -40,21 +40,21 @@ using ::testing::_;
 class ExecutorIntegrationTests : public ::testing::Test
 {
 protected:
-  using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
-  using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::NetworkManager;
-  using underlying_storage_type         = fetch::ledger::StorageUnitClient;
-  using underlying_storage_service_type = fetch::ledger::StorageUnitBundledService;
+  using ExecutorRpcClient          = fetch::ledger::ExecutorRpcClient;
+  using ExecutorRpcService         = fetch::ledger::ExecutorRpcService;
+  using NetworkManager = fetch::network::NetworkManager;
+  using StorageUnitClient         = fetch::ledger::StorageUnitClient;
+  using StorageUnitBundledService = fetch::ledger::StorageUnitBundledService;
   using TCPClient                       = fetch::network::TCPClient;
   using Peer                            = fetch::network::Peer;
   using ResourceID                      = fetch::storage::ResourceID;
   using ResourceAddress =                 fetch::storage::ResourceAddress;
 
-  using client_type          = std::unique_ptr<underlying_client_type>;
-  using service_type         = std::unique_ptr<underlying_service_type>;
-  using network_manager_type = std::unique_ptr<underlying_network_manager_type>;
-  using storage_client_type  = std::shared_ptr<underlying_storage_type>;
-  using storage_service_type = std::unique_ptr<underlying_storage_service_type>;
+  using ExecutorRpcClientPtr          = std::unique_ptr<ExecutorRpcClient>;
+  using ExecutorRpcServicePtr        = std::unique_ptr<ExecutorRpcService>;
+  using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
+  using StorageUnitClientPtr  = std::shared_ptr<StorageUnitClient>;
+  using StorageUnitBundledServicePtr = std::unique_ptr<StorageUnitBundledService>;
   using rng_type             = std::mt19937;
 
   using Muddle    = fetch::muddle::Muddle;
@@ -133,33 +133,44 @@ protected:
     static const uint16_t    LANE_RPC_PORT_START = 9141;
     static const std::size_t NUM_LANES           = 4;
 
-    network_manager_ = std::make_unique<underlying_network_manager_type>(2);
+    // --- Start a NETWORK MANAGER ----------------------------------
+
+    network_manager_ = std::make_unique<NetworkManager>(2);
     network_manager_->Start();
 
-    storage_service_ = std::make_unique<underlying_storage_service_type>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
-    storage_service_->Start();
+    // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
     muddle_           = std::make_unique<Muddle>(std::move(p2p_key), *network_manager_);
-
     muddle_->Start({P2P_RPC_PORT});
 
-    LaneIndex num_lanes = NUM_LANES;
+    // --- Start the STORAGE SERVICE --------------------------------
 
-    uint16_t lane_port_start = LANE_RPC_PORT_START;
+    storage_service_ = std::make_unique<StorageUnitBundledService>();
+    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
+    storage_service_->Start();
 
-    storage_.reset(new underlying_storage_type{*network_manager_, *muddle_});
+    storage_.reset(new StorageUnitClient{*network_manager_, *muddle_});
+
+    // --- Start the EXECUTOR SERVICE -------------------------------
+
+    executor_service_ = std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+    executor_service_->Start();
+
+    // --- Wait for all the services to open listening ports --------
 
     using InFlightCounter =
         fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::TCP_PORT_STARTUP>;
-
-    fetch::network::FutureTimepoint deadline(std::chrono::seconds(40));
+    fetch::network::FutureTimepoint deadline(std::chrono::seconds(30));
     if (!InFlightCounter::Wait(deadline))
     {
       throw std::runtime_error("Not all socket servers connected correctly. Aborting test");
     }
 
+    // --- Schedule lanes for connection ----------------------------
+
+    LaneIndex num_lanes = NUM_LANES;
+    uint16_t lane_port_start = LANE_RPC_PORT_START;
     std::map<LaneIndex, Uri> lane_data;
     for (LaneIndex i = 0; i < num_lanes; ++i)
     {
@@ -167,38 +178,38 @@ protected:
       lane_data[i] = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(lane_port));
     }
 
-    // create the executor service
-    service_ =
-        std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+    storage_->AddLaneConnectionsMuddle(*muddle_, lane_data);
 
-    service_->Start();
+    // --- Schedule executor for connection ---------------------
 
-    // create the executor client
-    executor_ =
-        std::make_unique<underlying_client_type>("127.0.0.1", EXECUTOR_RPC_PORT, *network_manager_);
+    executor_ = std::make_unique<ExecutorRpcClient>(*network_manager_, *muddle_);
+    executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:"+std::to_string(EXECUTOR_RPC_PORT)));
 
-    auto count = storage_->AddLaneConnectionsWaitingMuddle(*muddle_, lane_data,
-                                                           std::chrono::milliseconds(30000));
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", count, " of ", num_lanes);
-    for (;;)
+    // --- Wait for connections to finish -----------------------
+
+    using LocalServiceConnectionsCounter =
+      fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
+    if (!LocalServiceConnectionsCounter::Wait(fetch::network::FutureTimepoint(std::chrono::seconds(30))))
     {
-      // wait for the all the clients to connect to everything
-      if (executor_->is_alive())
-      {
-        break;
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds{100});
+      throw std::runtime_error("Not all local services connected correctly. Aborting test");
     }
+
+    size_t exec_count = executor_->connections();
+    size_t lane_count = storage_->lanes();
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane connections established ", lane_count, " of ", num_lanes);
+    FETCH_LOG_WARN(LOGGING_NAME, "Executor connections established ", exec_count, " of ", 1);
+
   }
 
   void TearDown() override
   {
-    service_->Stop();
+    executor_service_->Stop();
     storage_service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();
-    service_.reset();
+    executor_service_.reset();
     storage_.reset();
     storage_service_.reset();
     network_manager_.reset();
@@ -248,11 +259,11 @@ protected:
     return fetch::chain::Transaction::Create(std::move(tx));
   }
 
-  network_manager_type network_manager_;
-  storage_service_type storage_service_;
-  storage_client_type  storage_;
-  service_type         service_;
-  client_type          executor_;
+  NetworkManagerPtr network_manager_;
+  StorageUnitBundledServicePtr storage_service_;
+  StorageUnitClientPtr  storage_;
+  ExecutorRpcServicePtr         executor_service_;
+  ExecutorRpcClientPtr          executor_;
   rng_type             rng_;
 
   MuddlePtr muddle_;

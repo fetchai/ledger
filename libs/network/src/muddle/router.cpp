@@ -185,7 +185,7 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
+      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol() << " msgnum="
       << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
