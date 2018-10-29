@@ -110,6 +110,8 @@ public:
     Post("/api/contract/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            std::ostringstream oss;
+           std::size_t submitted{0};
+
            try
            {
              // parse the JSON request
@@ -126,6 +128,7 @@ public:
 
                  // add the transaction to the processor
                  processor_.AddTransaction(tx);
+                 ++submitted;
                }
              }
              else
@@ -135,9 +138,10 @@ public:
 
                // add the transaction to the processor
                processor_.AddTransaction(tx);
+               ++submitted;
              }
 
-             oss << R"({ "submitted": true })";
+             oss << R"({ "submitted": true, "count": )" << submitted << " }";
            }
            catch (std::exception const &ex)
            {
