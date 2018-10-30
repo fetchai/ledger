@@ -601,11 +601,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              fetch::math::ExpandDimensions(input_array, axis);
              return input_array;
            })
-      .def("softmax",
-           [](NDArray<T> const &array, NDArray<T> &ret) {
-             Softmax(array, ret);
-             return ret;
-           })
+      //      .def("softmax",
+      //           [](NDArray<T> &array, NDArray<T> &ret) {
+      //             Softmax(array, ret);
+      //             return ret;
+      //           })
       .def("major_order_flip", [](NDArray<T> &array) { array.MajorOrderFlip(); })
       .def("major_order",
            [](NDArray<T> &array) {

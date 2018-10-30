@@ -36,7 +36,7 @@ public:
   void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c);
 
 private:
-  threading::SingletonPool &pool_ = threading::SingletonPool::getInstance();
+  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
 };
 
 }  // namespace linalg
