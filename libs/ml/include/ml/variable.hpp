@@ -125,7 +125,7 @@ public:
 
   void GradientAdd(ArrayType const &othergrad_)
   {
-    fetch::math::Add(grad_, othergrad_, grad_);
+    grad_ += othergrad_;
   }
 
   void GradientValueAdd(std::size_t idx, typename ArrayType::Type const &othergrad_)

@@ -963,12 +963,6 @@ public:
   /// OPERATORS ///
   /////////////////
 
-  template <typename OtherType>
-  meta::IsMathLike<OtherType, void> operator+=(OtherType const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-  }
-
   /**
    * Equality operator
    * This method is sensitive to height and width

@@ -27,12 +27,11 @@
 namespace fetch {
 namespace math {
 
-namespace details {
-
 /////////////////
 /// ADDITIONS ///
 /////////////////
 
+namespace details {
 template <typename ArrayType>
 meta::IsMathArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                            memory::Range const &range, ArrayType &ret)
@@ -258,6 +257,19 @@ NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
   Add(array1, array2, ret);
   return ret;
 }
+
+//////////////////////////
+/// ADDITION OPERATORS ///
+//////////////////////////
+
+template <typename OtherType>
+meta::IsMathLike<OtherType, void> operator+=(OtherType &left, OtherType const &right)
+{
+  Add(left, right, left);
+}
+
+
+
 
 ////////////////////
 /// SUBTRACTIONS ///
