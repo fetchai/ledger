@@ -307,6 +307,12 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
   return ret;
 }
 
+/**
+ * Efficient vectorised and threaded routine for C = A.T(B)
+ * @param A
+ * @param B
+ * @return
+ */
 template <typename ArrayType>
 fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
     ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
