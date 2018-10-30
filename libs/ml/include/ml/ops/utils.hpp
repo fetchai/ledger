@@ -82,7 +82,6 @@ void AddBroadcastImplementation(VariablePtrType cur_node)
                            cur_node->prev[0]->data().At(i, j) + cur_node->prev[1]->data().At(j));
     }
   }
-  //    cur_node->data() = fetch::math::Add(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 
 template <typename VariablePtrType, typename SessionType>
@@ -147,10 +146,6 @@ VariablePtrType ReduceSum(std::shared_ptr<VariableType> left, std::size_t const 
 
   return ret;
 }
-
-/**
- *
- */
 
 }  // namespace ops
 }  // namespace ml

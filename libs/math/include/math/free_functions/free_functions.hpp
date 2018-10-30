@@ -306,74 +306,6 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
   Dot(A, B, ret, 1.0, 0.0, threaded);
   return ret;
 }
-//
-///**
-// * Efficient vectorised and threaded routine for C = A.T(B)
-// * @param A
-// * @param B
-// * @return
-// */
-// template <typename T, typename C>
-// void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha
-// = 1.0,
-//                  T beta = 0.0, bool threaded = false)
-//{
-//  assert(ret.shape().size() == 2);
-//  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-//  ret.Reshape(return_shape);
-//
-//  if (threaded)
-//  {
-//    linalg::Blas<
-//        T, NDArray<T, C>,
-//        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-//        linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A *
-//        fetch::math::linalg::T(linalg::_B) +
-//                              linalg::_beta * linalg::_C),
-//        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-//        gemm_nt_vector_threaded;
-//
-//    gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-//  }
-//  else
-//  {
-//    linalg::Blas<
-//        T, NDArray<T, C>,
-//        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-//        linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A *
-//        fetch::math::linalg::T(linalg::_B) +
-//                              linalg::_beta * linalg::_C),
-//        platform::Parallelisation::VECTORISE>
-//        gemm_nt_vector;
-//
-//    gemm_nt_vector(alpha, A, B, beta, ret);
-//  }
-//}
-// template <typename T, typename C>
-// NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
-//                           T beta = 0.0, bool threaded = false)
-//{
-//  assert(A.shape().size() == 2);
-//  assert(B.shape().size() == 2);
-//  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-//  NDArray<T, C>            ret(return_shape);
-//
-//  DotTranspose(A, B, ret, alpha, beta, threaded);
-//
-//  return ret;
-//}
-// template <typename T, typename C>
-// NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
-//{
-//  assert(A.shape().size() == 2);
-//  assert(B.shape().size() == 2);
-//  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-//  NDArray<T, C>            ret(return_shape);
-//
-//  DotTranspose(A, B, ret, 1.0, 0.0, threaded);
-//
-//  return ret;
-//}
 
 template <typename ArrayType>
 fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
@@ -1723,7 +1655,7 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
  * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
  * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
  * 0
- * @return
+ * @return Returns an Array of size 1 containing the loss value
  */
 template <typename ArrayType>
 ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
@@ -1732,12 +1664,12 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   assert(x.shape().size() == 2);
 
   auto n_examples = x.shape()[0];
-  //  auto n_classes  = x.shape()[1];
 
   ArrayType sce_x{x.shape()};
   sce_x.Copy(x);
 
-  //  Softmax(sce_x); // we assume softmax was already included in the graph (i.e. x is the output
+  // we don't explicitly call softmax, because we assume softmax was already included in the graph
+  // (i.e. x is the output
   //  of softmax layer)
 
   auto      gt = ArgMax(y, 1);
@@ -1746,7 +1678,6 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 
   for (std::size_t idx = 0; idx < n_examples; ++idx)
   {
-    //    Log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
     sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
               std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
     log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
@@ -1807,7 +1738,7 @@ T Max(T const &datum1, T const &datum2)
  * @return
  */
 template <typename T, typename C>
-T &Max(ShapeLessArray<T, C> const &array, T &ret)
+T Max(ShapeLessArray<T, C> const &array, T &ret)
 {
   using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
@@ -1853,6 +1784,15 @@ inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
   }
 }
 
+/**
+ * Finds the maximum value in each row/column depending on axis and stores the output in ret
+ * @tparam T
+ * @tparam C
+ * @tparam S
+ * @param array the array to find max over
+ * @param axis the axis along which to max
+ * @param ret the return array
+ */
 template <typename T, typename C, typename S>
 void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
          linalg::Matrix<T, C, S> &ret)
@@ -2159,9 +2099,7 @@ namespace details {
 template <typename ArrayType>
 void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
-  //  ret.LazyResize(array.size());
   assert(ret.size() == array.size());
-  //  assert(ret.shape() == array.shape());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
   std::vector<std::size_t> arr_shape{array.shape()[0], 1};
@@ -2173,7 +2111,6 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   Exp(ret);
 
   ReduceSum(ret, 1, array_sum);
-  //  Sum(ret, array_sum);
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
@@ -2195,7 +2132,6 @@ void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   ret.LazyReshape(array.shape());
-
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
@@ -2250,7 +2186,7 @@ void Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T
   details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
-NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
+NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
 {
   std::vector<std::size_t> return_shape(array1.shape());
   NDArray<T, C>            ret(return_shape);
@@ -2394,30 +2330,6 @@ void PeakToPeak(ArrayType arr)
 {
   return Max(arr) - Min(arr);
 }
-
-///**
-// *
-// * @param x
-// */
-// void StandardDeviation(self_type const &x)
-//{
-//  LazyResize(x.size());
-//
-//  assert(size_ > 1);
-//  kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
-//  Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
-//}
-//
-///**
-// *
-// * @param x
-// */
-// template <typename ArrayType>
-// void Variance(ArrayType const &x)
-//{
-//  kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
-//  / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
-//}
 
 }  // namespace math
 }  // namespace fetch

@@ -268,9 +268,6 @@ meta::IsMathLike<OtherType, void> operator+=(OtherType &left, OtherType const &r
   Add(left, right, left);
 }
 
-
-
-
 ////////////////////
 /// SUBTRACTIONS ///
 ////////////////////

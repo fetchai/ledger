@@ -62,8 +62,7 @@ void SoftmaxCrossEntropyLoss(std::shared_ptr<VariableType> cur_node)
   // derivate of the softmax + cross entropy layer has some nice mathematical cancellations that
   // simplify down to just a subtraction. That means we need to use the data from the input to the
   // softmax, which assume is left->prev[0]->data()
-  // TODO(private #): there is no guarantee that the user actually puts a softmax before this loss
-  // function...
+  // TODO(private 307): there is no guarantee that the user actually puts a softmax before this loss
 
   auto delta = fetch::math::Subtract(left->prev[0]->data(), right->data());
   //  auto delta = fetch::math::Subtract(left->data(), right->data());
