@@ -36,8 +36,8 @@ template <typename ArrayType>
 meta::IsMathArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                            memory::Range const &range, ArrayType &ret)
 {
-  assert(array1.shape() == array2.shape());
-  assert(array1.shape() == ret.shape());
+  assert(array1.size() == array2.size());
+  assert(array1.size() == ret.size());
   //  ret.Reshape(array1.size());
 
   if (range.is_undefined())
@@ -63,7 +63,7 @@ template <typename ArrayType>
 meta::IsMathArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                                 memory::Range const &range)
 {
-  ArrayType ret{array1.shape()};
+  ArrayType ret{array1.size()};
   Add(array1, array2, range, ret);
   return ret;
 }
