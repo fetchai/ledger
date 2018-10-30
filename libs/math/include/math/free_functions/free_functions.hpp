@@ -1827,7 +1827,7 @@ T Max(T const &datum1, T const &datum2)
  * @return
  */
 template <typename T, typename C>
-T &Max(ShapeLessArray<T, C> const &array, T &ret)
+T Max(ShapeLessArray<T, C> const &array, T &ret)
 {
   using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
