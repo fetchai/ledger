@@ -2249,7 +2249,7 @@ void Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T
   details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
-NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
+NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
 {
   std::vector<std::size_t> return_shape(array1.shape());
   NDArray<T, C>            ret(return_shape);

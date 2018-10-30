@@ -34,7 +34,8 @@ public:
   void operator=(SingletonPool const &) = delete;
 
 private:
-  SingletonPool(SingletonPool const &) = delete;
+  SingletonPool(SingletonPool const &)  = delete;
+  SingletonPool(SingletonPool const &&) = delete;
   SingletonPool()
     : Pool(){};
 };
