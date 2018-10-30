@@ -1757,7 +1757,8 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   ArrayType sce_x{x.shape()};
   sce_x.Copy(x);
 
-  // we don't explicitly call softmax, because we assume softmax was already included in the graph (i.e. x is the output
+  // we don't explicitly call softmax, because we assume softmax was already included in the graph
+  // (i.e. x is the output
   //  of softmax layer)
 
   auto      gt = ArgMax(y, 1);
