@@ -12,10 +12,5 @@ setup_compiler()
 
 
 
-add_fetch_test(variant_stack_test fetch-storage variant_stack.cpp)
-add_fetch_test(versioned_file_object_test fetch-storage versioned_file_object.cpp)
-add_fetch_test(versioned_kvi_test fetch-storage versioned_kvi.cpp)
-
-
 add_fetch_gtest(storage_gtest fetch-storage gtest)
 add_fetch_gtest(selective_storage_gtest fetch-storage selective_test)

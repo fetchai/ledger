@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_TESTING_ENABLED
+
 #include "core/random/lcg.hpp"
 #include "iostream"
 #include "vectorise/memory/shared_array.hpp"
@@ -76,11 +77,3 @@ TEST_P(TestClass, DISABLED_basic_Test)
   lcg2.Seed(lcg2());
 }
 INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(1, 100), );
-/* int main()
-{
-  for (std::size_t i = 0; i < 100; ++i)
-  {
-    test_set_get();
-  }
-  return 0;
-} */
