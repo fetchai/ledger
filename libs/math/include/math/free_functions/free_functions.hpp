@@ -1744,7 +1744,7 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
  * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
  * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
  * 0
- * @return
+ * @return Returns an Array of size 1 containing the loss value
  */
 template <typename ArrayType>
 ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
@@ -1753,12 +1753,11 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   assert(x.shape().size() == 2);
 
   auto n_examples = x.shape()[0];
-  //  auto n_classes  = x.shape()[1];
 
   ArrayType sce_x{x.shape()};
   sce_x.Copy(x);
 
-  //  Softmax(sce_x); // we assume softmax was already included in the graph (i.e. x is the output
+  // we don't explicitly call softmax, because we assume softmax was already included in the graph (i.e. x is the output
   //  of softmax layer)
 
   auto      gt = ArgMax(y, 1);
@@ -1767,7 +1766,6 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 
   for (std::size_t idx = 0; idx < n_examples; ++idx)
   {
-    //    Log(sce_x.At(idx, static_cast<std::size_t>(gt[idx])));
     sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
               std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
     log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
@@ -1874,6 +1872,15 @@ inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
   }
 }
 
+/**
+ * Finds the maximum value in each row/column depending on axis and stores the output in ret
+ * @tparam T
+ * @tparam C
+ * @tparam S
+ * @param array the array to find max over
+ * @param axis the axis along which to max
+ * @param ret the return array
+ */
 template <typename T, typename C, typename S>
 void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
          linalg::Matrix<T, C, S> &ret)
@@ -2180,9 +2187,7 @@ namespace details {
 template <typename ArrayType>
 void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
-  //  ret.LazyResize(array.size());
   assert(ret.size() == array.size());
-  //  assert(ret.shape() == array.shape());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
   std::vector<std::size_t> arr_shape{array.shape()[0], 1};
@@ -2194,38 +2199,10 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   Exp(ret);
 
   ReduceSum(ret, 1, array_sum);
-  //  Sum(ret, array_sum);
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
-// template <typename T, typename C>
-// void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
-//{
-//  assert(ret.size() == array.size());
-//  details::SoftmaxImplementation(array, ret);
-//}
-// template <typename T, typename C>
-// ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
-//{
-//  ShapeLessArray<T, C> ret{array.size()};
-//  Softmax(array, ret);
-//  return ret;
-//}
-// template <typename T, typename C>
-// void Softmax(NDArray<T, C> &array, NDArray<T, C> &ret)
-//{
-//  assert(ret.size() == array.size());
-//  ret.LazyReshape(array.shape());
-//
-//  details::SoftmaxImplementation(array, ret);
-//}
-// template <typename T, typename C>
-// NDArray<T, C> Softmax(NDArray<T, C> &array)
-//{
-//  NDArray<T, C> ret{array.shape()};
-//  Softmax(array, ret);
-//  return ret;
-//}
+
 template <typename T, typename C, typename S>
 void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 {
