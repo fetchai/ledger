@@ -28,6 +28,8 @@ namespace ledger {
 class TransactionProcessor
 {
 public:
+  using TransactionList = std::vector<chain::Transaction>;
+
   TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
     : storage_{storage}
     , miner_{miner}
@@ -46,6 +48,40 @@ public:
     miner_.EnqueueTransaction(tx.summary());
 
     FETCH_METRIC_TX_QUEUED(tx.digest());
+  }
+
+  void AddTransactions(TransactionList const &txs)
+  {
+    using fetch::metrics::Metrics;
+
+#ifdef FETCH_ENABLE_METRICS
+    auto const submitted = Metrics::Clock::now();
+#endif // FETCH_ENABLE_METRICS
+
+    storage_.AddTransactions(txs);
+
+#ifdef FETCH_ENABLE_METRICS
+    auto const stored = Metrics::Clock::now();
+#endif // FETCH_ENABLE_METRICS
+
+    for (auto const &tx : txs)
+    {
+      miner_.EnqueueTransaction(tx.summary());
+    }
+
+#ifdef FETCH_ENABLE_METRICS
+    auto const queued = Metrics::Clock::now();
+#endif // FETCH_ENABLE_METRICS
+
+    // dispatch the metrics
+#ifdef FETCH_ENABLE_METRICS
+    for (auto const &tx : txs)
+    {
+      FETCH_METRIC_TX_SUBMITTED_EX(tx.digest(), submitted);
+      FETCH_METRIC_TX_STORED_EX(tx.digest(), stored);
+      FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
+    }
+#endif // FETCH_ENABLE_METRICS
   }
 
 private:

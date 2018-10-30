@@ -111,6 +111,9 @@ private:
 #define FETCH_METRIC_TX_SUBMITTED_EX(hash, timestamp)         \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::SUBMITTED, timestamp)
+#define FETCH_METRIC_TX_STORED_EX(hash, timestamp)            \
+  fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
+      hash, fetch::metrics::Metrics::Event::STORED, timestamp)
 #define FETCH_METRIC_TX_QUEUED_EX(hash, timestamp)            \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::QUEUED, timestamp)
@@ -133,21 +136,23 @@ private:
       hash, fetch::metrics::Metrics::Event::RECEIVED)
 
 
-#else
+#else // !FETCH_ENABLE_METRICS
+
 #define FETCH_METRIC_TX_SUBMITTED(hash)
-#define FETCH_METRIC_TX_QUEUED(hash)
 #define FETCH_METRIC_TX_STORED(hash)
+#define FETCH_METRIC_TX_QUEUED(hash)
 #define FETCH_METRIC_TX_PACKED(hash)
 #define FETCH_METRIC_TX_EXEC_STARTED(hash)
 #define FETCH_METRIC_TX_EXEC_COMPLETE(hash)
 
-#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timepoint)
-#define FETCH_METRIC_TX_QUEUED_EX(hash, timepoint)
-#define FETCH_METRIC_TX_PACKED_EX(hash, timepoint)
-#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timepoint)
-#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timepoint)
+#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timestamp)
+#define FETCH_METRIC_TX_STORED_EX(hash, timestamp)
+#define FETCH_METRIC_TX_QUEUED_EX(hash, timestamp)
+#define FETCH_METRIC_TX_PACKED_EX(hash, timestamp)
+#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timestamp)
+#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timestamp)
 
 #define FETCH_METRIC_BLOCK_GENERATED(hash)
 #define FETCH_METRIC_BLOCK_RECEIVED(hash)
 
-#endif
+#endif // FETCH_ENABLE_METRICS

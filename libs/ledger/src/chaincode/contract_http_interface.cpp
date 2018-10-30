@@ -83,13 +83,16 @@ std::size_t ContractHttpInterface::SubmitNativeTx(http::HTTPRequest const &reque
   serializers::ByteArrayBuffer buffer(request.body());
   buffer >> transactions;
 
+  std::vector<chain::VerifiedTransaction> verified_tx;
+  verified_tx.reserve(transactions.size());
+
   for (auto const &input_tx : transactions)
   {
     // verify the transaction
-    auto tx = chain::VerifiedTransaction::Create(input_tx.tx);
-
-    processor_.AddTransaction(tx);
+    verified_tx.emplace_back(chain::VerifiedTransaction::Create(input_tx.tx));
   }
+
+  processor_.AddTransactions(verified_tx);
 
   return transactions.size();
 }

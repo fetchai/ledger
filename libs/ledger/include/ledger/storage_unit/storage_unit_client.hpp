@@ -141,6 +141,45 @@ public:
     promise->Wait();
   }
 
+  void AddTransactions(TransactionList const &txs) override
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+
+    std::vector<protocol::ElementList> transaction_lists(1 << log2_lanes_);
+
+    for (auto const &tx : txs)
+    {
+      // determine the lane for this given transaction
+      auto      res     = fetch::storage::ResourceID(tx.digest());
+      LaneIndex lane    = res.lane(log2_lanes_);
+
+      transaction_lists[lane].push_back({res, tx});
+    }
+
+    std::vector<Promise> promises;
+    promises.reserve(1 << log2_lanes_);
+
+    // dispatch all the set requests off
+    {
+      LaneIndex       lane{0};
+      for (auto const &list : transaction_lists)
+      {
+        if (!list.empty())
+        {
+          promises.emplace_back(lanes_[lane]->Call(RPC_TX_STORE, protocol::SET_BULK, list));
+        }
+
+        ++lane;
+      }
+    }
+
+    // wait for all the requests to complete
+    for (auto &promise : promises)
+    {
+      promise->Wait();
+    }
+  }
+
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
