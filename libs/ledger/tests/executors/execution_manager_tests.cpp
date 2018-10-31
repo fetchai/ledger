@@ -76,7 +76,8 @@ protected:
     return executor;
   }
 
-  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 120)
+  // One day, this test will become more reliable. Until then, timeout at 60 seconds.
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 600)
   {
     bool success = false;
 
