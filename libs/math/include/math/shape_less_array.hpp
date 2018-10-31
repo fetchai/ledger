@@ -29,6 +29,7 @@
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
+#include "math/free_functions/free_functions.hpp"
 #include "math/statistics/mean.hpp"
 
 #include <algorithm>
@@ -42,12 +43,13 @@ template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
 public:
-  using type                          = T;
+  using Type                          = T;
   using container_type                = C;
   using size_type                     = std::size_t;
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
+  using self_type                     = ShapeLessArray<T, C>;
 
   /* Iterators for accessing and modifying the array */
   using iterator         = typename container_type::iterator;
@@ -81,7 +83,7 @@ public:
     , size_(0)
   {
     // TODO(private issue 226): Make this a static function and add failure mechanism
-    std::vector<type> elems;
+    std::vector<Type> elems;
     elems.reserve(1024);
 
     for (uint64_t i = 0; i < c.size();)
@@ -105,7 +107,7 @@ public:
         {
           // FIXME(tfr) : This is potentially wrong! Error also there in matrix
           // problem is that the pointer is not necessarily null-terminated.
-          elems.push_back(type(atof(c.char_pointer() + last)));
+          elems.push_back(Type(atof(c.char_pointer() + last)));
         }
         break;
       }
@@ -156,8 +158,6 @@ public:
     data().SetPaddedZero();
   }
 
-  using self_type = ShapeLessArray<T, C>;
-
   void Sort()
   {
     std::sort(data_.pointer(), data_.pointer() + data_.size());
@@ -168,7 +168,7 @@ public:
     std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
   }
 
-  void Fill(type const &value, memory::Range const &range)
+  void Fill(Type const &value, memory::Range const &range)
   {
 
     if (range.is_undefined())
@@ -185,21 +185,21 @@ public:
     }
   }
 
-  void Fill(type const &value, memory::TrivialRange const &range)
+  void Fill(Type const &value, memory::TrivialRange const &range)
   {
     vector_register_type val(value);
 
     this->data().in_parallel().Apply(range, [val](vector_register_type &z) { z = val; });
   }
 
-  void Fill(type const &value)
+  void Fill(Type const &value)
   {
     vector_register_type val(value);
 
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  //  type PeakToPeak() const { return Max() - Min(); }
+  //  Type PeakToPeak() const { return Max() - Min(); }
   //
   //  void StandardDeviation(self_type const &x)
   //  {
@@ -207,15 +207,15 @@ public:
   //
   //    assert(size_ > 1);
   //    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
-  //    type(1) / type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
+  //    Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
   //  }
   //
   //  void Variance(self_type const &x)
   //  {
   //    LazyResize(x.size());
   //    assert(size_ > 1);
-  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, type(1)
-  //    / type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
+  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
+  //    / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
   //  }
 
   void Equal(self_type const &a, self_type const &b)
@@ -289,27 +289,27 @@ public:
 
   void ApproxSoftMax(self_type const &x)
   {
-    //    kernels::ApproxSoftMax< type, vector_register_type > kernel;
+    //    kernels::ApproxSoftMax< Type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());
   }
 
   /**
    * calculates the l2loss of data in the array
    *
-   * @return       returns single value as type
+   * @return       returns single value as Type
    *
    **/
-  type L2Loss() const
+  Type L2Loss() const
   {
-    type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
-    return sum * type(0.5);
+    Type sum = data_.in_parallel().SumReduce([](vector_register_type const &v) { return v * v; });
+    return sum * Type(0.5);
   }
 
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Fmod<type> kernel;
+    kernels::stdlib::Fmod<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -317,7 +317,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Remainder<type> kernel;
+    kernels::stdlib::Remainder<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -325,7 +325,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Remquo<type> kernel;
+    kernels::stdlib::Remquo<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -333,7 +333,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Fma<type> kernel;
+    kernels::stdlib::Fma<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -341,7 +341,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Fmax<type> kernel;
+    kernels::stdlib::Fmax<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -349,7 +349,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Fmin<type> kernel;
+    kernels::stdlib::Fmin<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -357,7 +357,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Fdim<type> kernel;
+    kernels::stdlib::Fdim<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -365,7 +365,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Nan<type> kernel;
+    kernels::stdlib::Nan<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -373,7 +373,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Nanf<type> kernel;
+    kernels::stdlib::Nanf<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -381,7 +381,7 @@ public:
   {
     LazyResize(x.size());
 
-    kernels::stdlib::Nanl<type> kernel;
+    kernels::stdlib::Nanl<Type> kernel;
     data_.in_parallel().Apply(kernel, x.data_);
   }
 
@@ -417,7 +417,7 @@ public:
     }
     bool ret = true;
 
-    for (size_type i = 0; i < data().size(); ++i)
+    for (size_type i = 0; ret && i < data().size(); ++i)
     {
       ret &= (data()[i] == other.data()[i]);
     }
@@ -442,27 +442,22 @@ public:
    */
   void operator+=(ShapeLessArray const &other)
   {
-    this->InLineAdd(other);
-    return *this;
+    fetch::math::Add(*this, other, *this);
   }
-  /**
-   * += operator
-   * @param other
-   * @return
-   */
-  void operator+=(type const &scalar)
+  void operator+=(Type const &scalar)
   {
-    this->InLineAdd(scalar);
-    return *this;
+    fetch::math::Add(*this, scalar, *this);
   }
 
   ShapeLessArray operator+(ShapeLessArray const &other)
   {
-    return this->InLineAdd(other);
+    fetch::math::Add(*this, other, *this);
+    return *this;
   }
-  ShapeLessArray operator+(type const &scalar)
+  ShapeLessArray operator+(Type const &scalar)
   {
-    return this->InLineAdd(scalar);
+    fetch::math::Add(*this, scalar, *this);
+    return *this;
   }
 
   /* One-dimensional reference index operator.
@@ -474,7 +469,7 @@ public:
    * padded area of the memory.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, type>::type &operator[](S const &i)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
   {
     return data_[i];
   }
@@ -488,7 +483,7 @@ public:
    * padded area of the memory.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, type>::type const &operator[](
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
       S const &i) const
   {
     return data_[i];
@@ -501,7 +496,7 @@ public:
    * does not accidently enter the padded area of the memory.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, type>::type const &At(S const &i) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &At(S const &i) const
   {
     return data_[i];
   }
@@ -510,14 +505,14 @@ public:
    * @param i is the index which is being accessed.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, type>::type &At(S const &i)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &At(S const &i)
   {
     return data_[i];
   }
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, type>::type const &Set(S const &   i,
-                                                                             type const &t)
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &Set(S const &   i,
+                                                                             Type const &t)
   {
     return data_[i] = t;
   }
@@ -541,12 +536,12 @@ public:
     assert(from < to);
 
     std::size_t N     = this->size();
-    type        d     = static_cast<type>(from);
-    type        delta = static_cast<type>(to - from) / static_cast<type>(N);
+    Type        d     = static_cast<Type>(from);
+    Type        delta = static_cast<Type>(to - from) / static_cast<Type>(N);
 
     for (std::size_t i = 0; i < N; ++i)
     {
-      this->data()[i] = type(d);
+      this->data()[i] = Type(d);
       d += delta;
     }
     return *this;
@@ -578,7 +573,7 @@ public:
   {
     for (std::size_t i = 0; i < this->size(); ++i)
     {
-      this->data()[i] = type(random::Random::generator.AsDouble());
+      this->data()[i] = Type(random::Random::generator.AsDouble());
     }
     return *this;
   }
@@ -591,7 +586,7 @@ public:
 
     for (std::size_t i = 0; i < this->size(); ++i)
     {
-      this->data()[i] = type(int64_t(random::Random::generator() % diff) + min);
+      this->data()[i] = Type(int64_t(random::Random::generator() % diff) + min);
     }
 
     return *this;
@@ -628,7 +623,7 @@ public:
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; i < N; ++i)
+    for (std::size_t i = 0; ret && i < N; ++i)
     {
       double va = this->At(i);
       if (ignoreNaN && std::isnan(va))
@@ -780,13 +775,13 @@ public:
     this->size_ = x.size_;
   }
 
-  void Set(std::size_t const &idx, type const &val)
+  void Set(std::size_t const &idx, Type const &val)
   {
     data_[idx] = val;
   }
 
   template <typename S>
-  meta::IfIsUnsignedLike<S, type> Get(S const &indices) const
+  fetch::meta::IfIsUnsignedLike<S, Type> Get(S const &indices) const
   {
     return data_[indices];
   }
@@ -846,7 +841,7 @@ public:
     return InlineAdd(other, range);
   }
 
-  ShapeLessArray &InlineAdd(type const &scalar)
+  ShapeLessArray &InlineAdd(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -887,7 +882,7 @@ public:
     return InlineMultiply(other, range);
   }
 
-  ShapeLessArray &InlineMultiply(type const &scalar)
+  ShapeLessArray &InlineMultiply(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -960,7 +955,7 @@ public:
     return InlineReverseSubtract(other, range);
   }
 
-  ShapeLessArray &InlineSubtract(type const &scalar)
+  ShapeLessArray &InlineSubtract(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -1002,7 +997,7 @@ public:
     return InlineDivide(other, range);
   }
 
-  ShapeLessArray &InlineDivide(type const &scalar)
+  ShapeLessArray &InlineDivide(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -1013,7 +1008,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineReverseSubtract(type const &scalar)
+  ShapeLessArray &InlineReverseSubtract(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -1055,7 +1050,7 @@ public:
     return InlineReverseDivide(other, range);
   }
 
-  ShapeLessArray &InlineReverseDivide(type const &scalar)
+  ShapeLessArray &InlineReverseDivide(Type const &scalar)
   {
     vector_register_type val(scalar);
 

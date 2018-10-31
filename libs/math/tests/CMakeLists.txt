@@ -20,9 +20,6 @@ add_fetch_test(shared_rectangular_array_test fetch-math math/shared_rectangular_
 add_fetch_gtest(matrix_test fetch-math math/linalg/matrix)
 target_link_libraries(matrix_test PRIVATE pthread)
 
-add_fetch_test(manhattan_test fetch-math math/distance/manhattan.cpp)
-add_fetch_test(correlation_test fetch-math math/distance/correlation.cpp)
-
 add_fetch_gtest(ndarray_test fetch-math math/ndarray)
 add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
 add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
@@ -33,6 +30,11 @@ add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
 
+add_fetch_gtest(big_number_gtest fetch-math math/basic_math_tests)
+add_fetch_gtest(manhattan_gtest fetch-math math/distance/gtest)
+
+# disabled / not working tests
+add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
 add_fetch_test(hamming_test fetch-math math/distance/hamming.cpp DISABLED)
 add_fetch_test(distance_matrix_test fetch-math math/distance/distance_matrix.cpp DISABLED)
 

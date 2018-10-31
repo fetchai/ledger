@@ -19,16 +19,15 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+
+#include "math/free_functions/free_functions.hpp"
 #include "math/rectangular_array.hpp"
+
 #include "vectorise/threading/pool.hpp"
 
 #include <iostream>
 #include <limits>
 #include <vector>
-
-#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
 namespace fetch {
 namespace math {
@@ -40,10 +39,11 @@ class Matrix : public S
 {
 public:
   using super_type                    = S;
-  using type                          = typename super_type::type;
+  using Type                          = typename super_type::Type;
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
   using working_memory_2d_type        = RectangularArray<T, C, true, true>;
+  using size_type                     = typename super_type::size_type;
 
   using self_type = Matrix<T, C, S>;
 
@@ -67,7 +67,7 @@ public:
   Matrix(byte_array::ConstByteArray const &c)
   {
     std::size_t       n = 1;
-    std::vector<type> elems;
+    std::vector<Type> elems;
     elems.reserve(1024);
     bool failed = false;
 
@@ -94,7 +94,7 @@ public:
         }
         else
         {
-          elems.push_back(type(atof(c.char_pointer() + last)));
+          elems.push_back(Type(atof(c.char_pointer() + last)));
         }
         break;
       }
@@ -126,12 +126,31 @@ public:
     : super_type(h, w)
   {}
 
-  static Matrix Zeros(std::size_t const &n, std::size_t const &m)
+  /**
+   * for compatibility with other vectors this constructor is nice to have
+   * @param shape
+   */
+  Matrix(std::vector<std::size_t> const &shape)
+    : Matrix(shape[0], shape[1])
+  {}
+
+  Matrix(self_type &other)
+    : super_type(other)
+  {
+    this->LazyResize(other.height(), other.width());
+    this->data() = other.data().Copy();
+  }
+
+  static Matrix Zeroes(std::size_t const &n, std::size_t const &m)
   {
     Matrix ret;
     ret.LazyResize(n, m);
     ret.data().SetAllZero();
     return ret;
+  }
+  static Matrix Zeroes(std::vector<std::size_t> const &shape)
+  {
+    return Zeroes(shape[0], shape[1]);
   }
 
   static Matrix UniformRandom(std::size_t const &n, std::size_t const &m)
@@ -144,6 +163,18 @@ public:
     ret.SetPaddedZero();
 
     return ret;
+  }
+  static Matrix UniformRandom(std::vector<std::size_t> const &shape)
+  {
+    return UniformRandom(shape[0], shape[1]);
+  }
+  template <typename F>
+  void SetAll(F &val)
+  {
+    for (auto &a : *this)
+    {
+      a = val;
+    }
   }
 
   template <typename G>
@@ -162,30 +193,14 @@ public:
     return *this;
   }
 
-  template <typename F>
-  void SetAll(F &val)
-  {
-    for (auto &a : *this)
-    {
-      a = val;
-    }
-  }
-
   /** Efficient vectorised and threaded dot routine to compute C = Dot(A, B).
    * @A is the first matrix.
    * @B is the second matrix.
    **/
-  Matrix &Dot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &Dot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.height(), B.width());
-
-    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-         Computes(_C = _alpha * _A * _B + _beta * _C),
-         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nn_vector_threaded;
-
-    gemm_nn_vector_threaded(alpha, A, B, beta, *this);
-
+    fetch::math::Dot(A, B, *this, alpha, beta);
     return *this;
   }
 
@@ -195,17 +210,10 @@ public:
    * @param B
    * @return
    */
-  Matrix &DotTranspose(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &DotTranspose(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.height(), B.height());
-
-    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-         Computes(_C = _alpha * _A * fetch::math::linalg::T(_B) + _beta * _C),
-         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nt_vector_threaded;
-
-    gemm_nt_vector_threaded(alpha, A, B, beta, *this);
-
+    fetch::math::DotTranspose(A, B, *this, alpha, beta);
     return *this;
   }
 
@@ -215,17 +223,10 @@ public:
    * @param B
    * @return
    */
-  Matrix &TransposeDot(Matrix const &A, Matrix const &B, type alpha = 1.0, type beta = 0.0)
+  self_type &TransposeDot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
     this->Resize(A.width(), B.width());
-
-    Blas<type, self_type, Signature(_C <= _alpha, _A, _B, _beta, _C),
-         Computes(_C = _alpha * fetch::math::linalg::T(_A) * _B + _beta * _C),
-         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_tn_vector_threaded;
-
-    gemm_tn_vector_threaded(alpha, A, B, beta, *this);
-
+    fetch::math::TransposeDot(A, B, *this, alpha, beta);
     return *this;
   }
 };

@@ -26,7 +26,7 @@ namespace math {
 namespace correlation {
 
 template <typename A>
-inline typename A::type WrapperPearson(A const &a, A const &b)
+inline typename A::Type WrapperPearson(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {

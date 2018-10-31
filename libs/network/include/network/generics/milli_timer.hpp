@@ -61,7 +61,7 @@ public:
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
     }
   }
 

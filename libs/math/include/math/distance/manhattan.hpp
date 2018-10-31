@@ -28,14 +28,14 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Manhattan(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Manhattan(memory::VectorSlice<T, S> const &a,
                                                           memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  using type                 = typename memory::VectorSlice<T, S>::type;
+  using Type                 = typename memory::VectorSlice<T, S>::Type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
-  type dist =
+  Type dist =
       a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
                                 [](vector_register_type const &x, vector_register_type const &y) {
                                   return max(x, y) - min(x, y);
@@ -46,7 +46,7 @@ inline typename memory::VectorSlice<T, S>::type Manhattan(memory::VectorSlice<T,
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Manhattan(ShapeLessArray<T, C> const &a,
+inline typename ShapeLessArray<T, C>::Type Manhattan(ShapeLessArray<T, C> const &a,
                                                      ShapeLessArray<T, C> const &b)
 {
   return Manhattan(a.data(), b.data());
