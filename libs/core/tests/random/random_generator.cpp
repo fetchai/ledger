@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
+#include <fcntl.h>
 #include <iostream>
 #include <memory>
 #include <random>
-#include <fcntl.h>
 
 #include "core/byte_array/byte_array.hpp"
 
@@ -38,40 +38,37 @@ uint32_t GetRandom()
   return dis(gen);
 }
 
-using message_type = fetch::byte_array::ByteArray;
-const int ITERATIONS = 2;
-const int MID_CYCLES = 10;
+using message_type    = fetch::byte_array::ByteArray;
+const int ITERATIONS  = 2;
+const int MID_CYCLES  = 10;
 const int PACKET_SIZE = 100000;
 
-class myTestFixture1: public ::testing::Test {
+class myTestFixture1 : public ::testing::Test
+{
 public:
-  myTestFixture1( )
-  {
-  }
+  myTestFixture1()
+  {}
 
-   ~myTestFixture1( )
-  {
-  }
+  ~myTestFixture1()
+  {}
 
-  void SetUp( )
-  {
-  }
+  void SetUp()
+  {}
 
-  void TearDown( )
-  {
-  }
+  void TearDown()
+  {}
 };
 
 void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
 {
   std::vector<message_type> sendData;
-  for (std::size_t iteration = 0; iteration< iterations; iteration++)
+  for (std::size_t iteration = 0; iteration < iterations; iteration++)
   {
-    for(std::size_t j=0;j<cycles;j++)
+    for (std::size_t j = 0; j < cycles; j++)
     {
       message_type arr;
       arr.Resize(packetsize);
-      for(std::size_t k=0;k<packetsize;k++)
+      for (std::size_t k = 0; k < packetsize; k++)
       {
         arr[k] = uint8_t(GetRandom());
       }
@@ -83,22 +80,22 @@ void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t pack
 void GenerateConstant(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
 {
   std::vector<message_type> sendData;
-  for (std::size_t iteration = 0; iteration< iterations; iteration++)
+  for (std::size_t iteration = 0; iteration < iterations; iteration++)
   {
-    for(std::size_t j=0;j<cycles;j++)
+    for (std::size_t j = 0; j < cycles; j++)
     {
       message_type arr;
       arr.Resize(packetsize);
-      for(std::size_t k=0;k<packetsize;k++)
+      for (std::size_t k = 0; k < packetsize; k++)
       {
-        arr[k] = uint8_t(j+k);
+        arr[k] = uint8_t(j + k);
       }
       sendData.push_back(arr);
     }
   }
 }
 
-TEST_F (myTestFixture1, SpeedTest)
+TEST_F(myTestFixture1, SpeedTest)
 {
   auto t1 = std::chrono::system_clock::now();
   GenerateConstant(ITERATIONS, MID_CYCLES, PACKET_SIZE);
@@ -118,4 +115,4 @@ TEST_F (myTestFixture1, SpeedTest)
   ASSERT_LT(ratio, 13.0);
 }
 
-}
+}  // namespace SpeedTest
