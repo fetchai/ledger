@@ -39,9 +39,9 @@ uint32_t GetRandom()
 }
 
 using message_type = fetch::byte_array::ByteArray;
-const int ITERATIONS = 10;
-const int MID_CYCLES = 50;
-const int PACKET_SIZE = 1000000;
+const int ITERATIONS = 2;
+const int MID_CYCLES = 10;
+const int PACKET_SIZE = 100000;
 
 class myTestFixture1: public ::testing::Test {
 public:
@@ -112,7 +112,10 @@ TEST_F (myTestFixture1, SpeedTest)
   std::cout << "Const: " << elapsed_seconds_c.count() << std::endl;
   std::cout << "Rand:  " << elapsed_seconds_r.count() << std::endl;
 
-  ASSERT_LT(elapsed_seconds_r.count(), elapsed_seconds_c.count() * 15.0);
+  auto ratio = elapsed_seconds_r.count() / elapsed_seconds_c.count();
+  std::cout << "Ratio:  " << ratio << std::endl;
+
+  ASSERT_LT(ratio, 13.0);
 }
 
 }
