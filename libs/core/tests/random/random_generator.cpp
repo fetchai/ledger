@@ -60,7 +60,6 @@ public:
   void TearDown( )
   {
   }
-
 };
 
 void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
@@ -112,6 +111,8 @@ TEST_F (myTestFixture1, SpeedTest)
 
   std::cout << "Const: " << elapsed_seconds_c.count() << std::endl;
   std::cout << "Rand:  " << elapsed_seconds_r.count() << std::endl;
+
+  ASSERT_LT(elapsed_seconds_r.count(), elapsed_seconds_c.count() * 15.0);
 }
 
 }
