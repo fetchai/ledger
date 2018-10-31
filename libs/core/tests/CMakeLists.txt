@@ -19,5 +19,5 @@ add_fetch_test(json_document_test fetch-core json/document.cpp)
 add_fetch_test(variant_test fetch-core script/variant.cpp)
 add_fetch_gtest(serializers-gtests fetch-core serializers)
 add_fetch_gtest(variant-test-gtests fetch-core script/variant/)
-add_fetch_gtest(byte-array-gtests fetch-core byte_array)
-
+add_fetch_gtest(byte-array-gtests fetch-core byte_array) 
+add_fetch_gtest(random_generator_test fetch-core random_generator.cpp) 
