@@ -70,9 +70,9 @@ public:
 
   void Start()
   {
+    muddle_->Start({port_});
     FETCH_LOG_INFO(LOGGING_NAME, "Establishing ExecutorRpcService on rpc://127.0.0.1:", port_,
                    " ID: ", byte_array::ToBase64(identity_.identifier()));
-    muddle_->Start({port_});
   }
 
   void Stop()

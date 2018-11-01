@@ -44,7 +44,7 @@ public:
   Address                   target_address;
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
-                          std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+                          std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : peer(std::move(thepeer))
     , timeduration(std::move(thetimeout))
     , muddle(themuddle)
@@ -94,7 +94,6 @@ public:
 
   virtual bool PossibleNewState(State &currentstate) override
   {
-    FETCH_LOG_WARN(LOGGING_NAME, ">>> PossibleNewState");
     if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
         currentstate == State::FAILED)
     {
@@ -103,13 +102,11 @@ public:
 
     if (currentstate == State::INITIAL)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> set timeout ", timeduration.count(), " milliseconds.");
       timeout.Set(timeduration);
     }
 
     if (timeout.IsDue())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> TIMEDOUT");
       currentstate = State::TIMEDOUT;
       return true;
     }
@@ -120,13 +117,10 @@ public:
     {
       muddle.AddPeer(peer);
       currentstate = State::CONNECTING;
-      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> CONNECTING");
       return true;
     }
     case State::CONNECTING:
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "CONNECTING?", peer.ToString());
-      muddle.Debug("LOGGING_NAME", "CONNECTING?");
       bool connected = muddle.GetOutgoingConnectionAddress(peer, target_address);
       if (!connected)
       {

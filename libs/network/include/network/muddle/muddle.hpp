@@ -166,6 +166,7 @@ public:
   void Debug(const char *label1, const char *label2)
   {
     router_.Debug(label1, label2);
+    clients_.Debug(label1, label2);
   }
 
   bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const

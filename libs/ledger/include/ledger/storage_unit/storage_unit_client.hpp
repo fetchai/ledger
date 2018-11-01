@@ -107,7 +107,7 @@ public:
 
   void AddLaneConnectionsMuddle(
       Muddle &muddle, const std::map<LaneIndex, Uri> &lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000));
+      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(10000));
 
   bool GetAddressForLane(LaneIndex lane, Address &address) const
   {

@@ -135,7 +135,7 @@ protected:
 
     // --- Start a NETWORK MANAGER ----------------------------------
 
-    network_manager_ = std::make_unique<NetworkManager>(2);
+    network_manager_ = std::make_unique<NetworkManager>(10);
     network_manager_->Start();
 
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------

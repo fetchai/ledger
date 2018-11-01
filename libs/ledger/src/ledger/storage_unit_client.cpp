@@ -55,11 +55,11 @@ public:
   PendingConnectionCounter  counter_;
 
   MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, Muddle &themuddle,
-                            std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+                            std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : lane(thelane)
     , name(std::move(thename))
     , peer(std::move(thepeer))
-    , timeout(std::move(thetimeout))
+    , timeduration(std::move(thetimeout))
     , muddle(themuddle)
   {
     client =

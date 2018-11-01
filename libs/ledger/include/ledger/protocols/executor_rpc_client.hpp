@@ -63,7 +63,7 @@ public:
   }
 
   void Connect(Muddle &muddle, Uri uri,
-               std::chrono::milliseconds timeout = std::chrono::milliseconds(1000));
+               std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
   Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override;
 
