@@ -24,7 +24,7 @@ namespace ledger {
 using PendingConnectionCounter =
     network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class MuddleLaneConnectorWorker  : public network::AtomicStateMachine<StorageUnitClient::State>
+class MuddleLaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
 {
 public:
   using Address         = StorageUnitClient::Address;
@@ -45,14 +45,14 @@ public:
   Promise                 ping_prom;
   std::shared_ptr<Client> client;
 
-  std::string              name;
-  Uri                      peer;
+  std::string               name;
+  Uri                       peer;
   std::chrono::milliseconds timeduration;
-  FutureTimepoint          timeout;
-  Muddle &                 muddle;
-  bool                     added;
-  Address                  target_address;
-  PendingConnectionCounter counter_;
+  FutureTimepoint           timeout;
+  Muddle &                  muddle;
+  bool                      added;
+  Address                   target_address;
+  PendingConnectionCounter  counter_;
 
   MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, Muddle &themuddle,
                             std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))

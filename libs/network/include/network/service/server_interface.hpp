@@ -19,12 +19,12 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "network/message.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
-#include "network/service/call_context.hpp"
 
 namespace fetch {
 namespace service {
@@ -71,7 +71,8 @@ public:
 protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg, CallContext const *context=0)
+  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
+                           CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -102,7 +103,8 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params, CallContext const *context=0)
+  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
+                            CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
     bool            ret = true;
@@ -207,7 +209,7 @@ protected:
 
 private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
-                   serializer_type params, CallContext const *context=0)
+                   serializer_type params, CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
 

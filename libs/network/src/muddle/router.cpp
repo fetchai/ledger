@@ -185,8 +185,8 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol() << " msgnum="
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
+      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol()
+      << " msgnum=" << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
@@ -365,10 +365,8 @@ bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &addr
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ "
-                   , std::to_string(routing.second.handle)
-                   , "/"
-                   , static_cast<std::string>(ToBase64(output)));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
+                    static_cast<std::string>(ToBase64(output)));
     if (routing.second.handle == handle)
     {
       address = ToConstByteArray(routing.first);

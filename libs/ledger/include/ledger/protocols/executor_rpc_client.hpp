@@ -23,8 +23,6 @@
 #include "core/service_ids.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
-#include "network/service/service_client.hpp"
-#include "network/tcp/tcp_client.hpp"
 #include "network/generics/atomic_state_machine.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/future_timepoint.hpp"
@@ -32,6 +30,8 @@
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/service_client.hpp"
+#include "network/tcp/tcp_client.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -41,25 +41,25 @@ class ExecutorConnectorWorker;
 class ExecutorRpcClient : public ExecutorInterface
 {
 public:
-  using MuddleEp  = muddle::MuddleEndpoint;
-  using Muddle    = muddle::Muddle;
-  using Client    = muddle::rpc::Client;
-  using ClientPtr = std::shared_ptr<Client>;
-  using ServicePtr       = std::unique_ptr<service::ServiceClient>;
-  using NetworkManager   = fetch::network::NetworkManager;
-  using ConstByteArray   = byte_array::ConstByteArray;
-  using Address   = Muddle::Address;  // == a crypto::Identity.identifier_
-  using Uri       = Muddle::Uri;
-  using PromiseState         = fetch::service::PromiseState;
-  using FutureTimepoint      = network::FutureTimepoint;
+  using MuddleEp        = muddle::MuddleEndpoint;
+  using Muddle          = muddle::Muddle;
+  using Client          = muddle::rpc::Client;
+  using ClientPtr       = std::shared_ptr<Client>;
+  using ServicePtr      = std::unique_ptr<service::ServiceClient>;
+  using NetworkManager  = fetch::network::NetworkManager;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using Address         = Muddle::Address;  // == a crypto::Identity.identifier_
+  using Uri             = Muddle::Uri;
+  using PromiseState    = fetch::service::PromiseState;
+  using FutureTimepoint = network::FutureTimepoint;
 
   std::shared_ptr<Client> client;
 
   explicit ExecutorRpcClient(NetworkManager const &tm, Muddle &muddle)
     : network_manager_(tm)
   {
-    client_ =
-        std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR, CHANNEL_RPC);
+    client_ = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
+                                       CHANNEL_RPC);
   }
 
   void Connect(Muddle &muddle, Uri uri,
@@ -86,6 +86,7 @@ public:
   {
     return client_;
   }
+
 private:
   void WorkCycle();
 
@@ -100,9 +101,9 @@ private:
     FAILED,
   };
 
-  ClientPtr client_;
-  NetworkManager          network_manager_;
-  ServicePtr       service_;
+  ClientPtr      client_;
+  NetworkManager network_manager_;
+  ServicePtr     service_;
 
   using Worker                  = ExecutorConnectorWorker;
   using WorkerP                 = std::shared_ptr<Worker>;
@@ -110,10 +111,10 @@ private:
   using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
 
-  Address address_;
+  Address                 address_;
   BackgroundedWork        bg_work_;
   BackgroundedWorkThreadP workthread_;
-  size_t connections_ = 0;
+  size_t                  connections_ = 0;
 };
 
 }  // namespace ledger

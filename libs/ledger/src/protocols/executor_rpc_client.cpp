@@ -18,14 +18,13 @@
 
 #include "ledger/protocols/executor_rpc_client.hpp"
 
-
 namespace fetch {
 namespace ledger {
 
 using PendingConnectionCounter =
     network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class ExecutorConnectorWorker  : public network::AtomicStateMachine<ExecutorRpcClient::State>
+class ExecutorConnectorWorker : public network::AtomicStateMachine<ExecutorRpcClient::State>
 {
 public:
   using Address         = ExecutorRpcClient::Address;
@@ -36,27 +35,26 @@ public:
   using State           = ExecutorRpcClient::State;
   using Client          = ExecutorRpcClient::Client;
 
-  Uri                      peer;
+  Uri                       peer;
   std::chrono::milliseconds timeduration;
-  FutureTimepoint          timeout;
-  PendingConnectionCounter counter_;
-  std::shared_ptr<Client> client;
-  Muddle &                 muddle;
-  Address target_address;
+  FutureTimepoint           timeout;
+  PendingConnectionCounter  counter_;
+  std::shared_ptr<Client>   client;
+  Muddle &                  muddle;
+  Address                   target_address;
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
-                            std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+                          std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
     : peer(std::move(thepeer))
     , timeout(std::move(thetimeout))
     , muddle(themuddle)
   {
-    client =
-      std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR, CHANNEL_RPC);
+    client = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
+                                      CHANNEL_RPC);
     this->Allow(State::CONNECTING, State::INITIAL)
-      .Allow(State::SUCCESS, State::CONNECTING)
-      .Allow(State::TIMEDOUT, State::CONNECTING)
-      .Allow(State::FAILED, State::CONNECTING)
-    ;
+        .Allow(State::SUCCESS, State::CONNECTING)
+        .Allow(State::TIMEDOUT, State::CONNECTING)
+        .Allow(State::FAILED, State::CONNECTING);
   }
 
   virtual ~ExecutorConnectorWorker()
@@ -128,8 +126,7 @@ public:
   }
 };
 
-void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri,
-                                const std::chrono::milliseconds &timeout)
+void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
   {
@@ -137,17 +134,19 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri,
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
-  auto worker = std::make_shared<ExecutorConnectorWorker>(uri, muddle,
-                                                            std::chrono::milliseconds(timeout));
+  auto worker =
+      std::make_shared<ExecutorConnectorWorker>(uri, muddle, std::chrono::milliseconds(timeout));
   bg_work_.Add(worker);
 }
 
-ExecutorInterface::Status ExecutorRpcClient::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
+ExecutorInterface::Status ExecutorRpcClient::Execute(TxDigest const &hash, std::size_t slice,
+                                                     LaneSet const &lanes)
 {
-//  auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
-//  return result->As<Status>();
+  //  auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
+  //  return result->As<Status>();
 
-  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
+                                             hash, slice, lanes);
   return result->As<ExecutorInterface::Status>();
 }
 
@@ -174,7 +173,5 @@ void ExecutorRpcClient::WorkCycle()
   bg_work_.DiscardTimeouts();
 }
 
-
-}
-}
-
+}  // namespace ledger
+}  // namespace fetch

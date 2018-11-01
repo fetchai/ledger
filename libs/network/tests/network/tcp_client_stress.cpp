@@ -22,11 +22,11 @@
 #include <memory>
 
 #include "core/byte_array/encoders.hpp"
+#include "core/commandline/params.hpp"
 #include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
-#include "core/commandline/params.hpp"
 
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test
@@ -797,7 +797,7 @@ int main(int argc, char *argv[])
 {
   std::string host       = "localhost";
   uint16_t    portNumber = 8080;
-  bool all = false;
+  bool        all        = false;
   std::size_t iterations = 1;
 
   fetch::commandline::Params params;
@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
 
   params.Parse(argc, argv);
 
-  std::string port       = std::to_string(portNumber);
+  std::string port = std::to_string(portNumber);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
@@ -824,7 +824,7 @@ int main(int argc, char *argv[])
 
     if (all)
     {
-      //TestCase8_MulticonnsValidPort<1>(host, port);
+      // TestCase8_MulticonnsValidPort<1>(host, port);
       TestCase11_CheckAllMessagesResponded<1>(host, port);
       TestCase13_CheckMessageResponseOrdering<1>(host, port);
     }
@@ -843,7 +843,7 @@ int main(int argc, char *argv[])
 
     if (all)
     {
-      //TestCase8_MulticonnsValidPort<10>(host, port);
+      // TestCase8_MulticonnsValidPort<10>(host, port);
       TestCase11_CheckAllMessagesResponded<10>(host, port);
       TestCase13_CheckMessageResponseOrdering<10>(host, port);
     }

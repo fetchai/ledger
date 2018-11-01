@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/byte_array/encoders.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -25,9 +24,9 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
-#include "storage/resource_mapper.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/generics/future_timepoint.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -44,17 +43,17 @@ using fetch::network::AtomicCounterName;
 class ExecutorRpcTests : public ::testing::Test
 {
 protected:
-  using ExecutorRpcClient          = fetch::ledger::ExecutorRpcClient;
-  using ExecutorRpcService         = fetch::ledger::ExecutorRpcService;
-  using NetworkManager = fetch::network::NetworkManager;
+  using ExecutorRpcClient  = fetch::ledger::ExecutorRpcClient;
+  using ExecutorRpcService = fetch::ledger::ExecutorRpcService;
+  using NetworkManager     = fetch::network::NetworkManager;
 
-  using ExecutorRpcClientPtr          = std::unique_ptr<ExecutorRpcClient>;
-  using ExecutorRpcServicePtr        = std::unique_ptr<ExecutorRpcService>;
-  using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
+  using ExecutorRpcClientPtr  = std::unique_ptr<ExecutorRpcClient>;
+  using ExecutorRpcServicePtr = std::unique_ptr<ExecutorRpcService>;
+  using NetworkManagerPtr     = std::unique_ptr<NetworkManager>;
 
-  using StorageUnit         = MockStorageUnit;
-  using StorageUnitPtr                    = std::shared_ptr<StorageUnit>;
-  using rng_type                        = std::mt19937;
+  using StorageUnit    = MockStorageUnit;
+  using StorageUnitPtr = std::shared_ptr<StorageUnit>;
+  using rng_type       = std::mt19937;
 
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
@@ -128,7 +127,7 @@ protected:
   void SetUp() override
   {
     static const uint16_t EXECUTOR_RPC_PORT = 9111;
-    static const uint16_t    P2P_RPC_PORT        = 9130;
+    static const uint16_t P2P_RPC_PORT      = 9130;
 
     storage_.reset(new StorageUnit);
 
@@ -146,7 +145,7 @@ protected:
     // --- Start the EXECUTOR SERVICE -------------------------------
 
     executor_service_ =
-      std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+        std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
     executor_service_->Start();
 
     // --- Wait for all the services to open listening ports --------
@@ -162,13 +161,14 @@ protected:
     // --- Schedule executor for connection ---------------------
 
     executor_ = std::make_unique<ExecutorRpcClient>(*network_manager_, *muddle_);
-    executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:"+std::to_string(EXECUTOR_RPC_PORT)));
+    executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:" + std::to_string(EXECUTOR_RPC_PORT)));
 
     // --- Wait for connections to finish -----------------------
 
-    using LocalServiceConnectionsCounter =
-      fetch::network::AtomicInFlightCounter<fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
-    if (!LocalServiceConnectionsCounter::Wait(fetch::network::FutureTimepoint(std::chrono::seconds(30))))
+    using LocalServiceConnectionsCounter = fetch::network::AtomicInFlightCounter<
+        fetch::network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
+    if (!LocalServiceConnectionsCounter::Wait(
+            fetch::network::FutureTimepoint(std::chrono::seconds(30))))
     {
       throw std::runtime_error("Not all local services connected correctly. Aborting test");
     }
@@ -228,11 +228,11 @@ protected:
     return fetch::chain::VerifiedTransaction::Create(std::move(tx));
   }
 
-  NetworkManagerPtr network_manager_;
-  StorageUnitPtr         storage_;
-  ExecutorRpcServicePtr         executor_service_;
-  ExecutorRpcClientPtr          executor_;
-  rng_type             rng_;
+  NetworkManagerPtr     network_manager_;
+  StorageUnitPtr        storage_;
+  ExecutorRpcServicePtr executor_service_;
+  ExecutorRpcClientPtr  executor_;
+  rng_type              rng_;
 
   MuddlePtr muddle_;
 };

@@ -170,7 +170,8 @@ public:
 
   bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ", byte_array::ToBase64(identity_.identifier()));
+    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
+                   byte_array::ToBase64(identity_.identifier()));
     return router_.HandleToAddress(handle, identifier);
   }
 

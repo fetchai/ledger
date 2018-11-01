@@ -18,13 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "crypto/identity.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
-#include "crypto/identity.hpp"
 
 #include <chrono>
 #include <memory>

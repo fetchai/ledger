@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
-#include "network/service/server_interface.hpp"
 #include "network/service/call_context.hpp"
+#include "network/service/server_interface.hpp"
 #include "network/tcp/tcp_server.hpp"
 
 #include <array>

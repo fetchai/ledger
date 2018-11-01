@@ -21,7 +21,7 @@ namespace fetch {
 namespace serializers {
 
 template <typename T, typename OBJ>
-inline void Serialize(T &serializer, OBJ* const (&ptr))
+inline void Serialize(T &serializer, OBJ *const(&ptr))
 {
   serializer.Allocate(sizeof(uint64_t));
 
@@ -35,6 +35,5 @@ inline void Deserialize(T &serializer, OBJ const *(&ptr))
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
 }
 
-}
-}
-
+}  // namespace serializers
+}  // namespace fetch

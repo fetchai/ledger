@@ -54,10 +54,10 @@ public:
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
 
-  using connectivity_details_type    = LaneConnectivityDetails;
-  using document_store_type          = storage::RevertibleDocumentStore;
+  using connectivity_details_type = LaneConnectivityDetails;
+  using document_store_type       = storage::RevertibleDocumentStore;
   using DocumentStoreProtocolImpl = storage::RevertibleDocumentStoreProtocol;
-  using transaction_store_type       = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
+  using transaction_store_type    = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
   using transaction_store_protocol_type =
       storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
   using client_register_type     = fetch::network::ConnectionRegister<connectivity_details_type>;
@@ -145,7 +145,7 @@ public:
     }
 
     state_db_protocol_ =
-      std::make_unique<DocumentStoreProtocolImpl>(state_db_.get(), lane, total_lanes);
+        std::make_unique<DocumentStoreProtocolImpl>(state_db_.get(), lane, total_lanes);
     server_->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
@@ -202,7 +202,7 @@ private:
   std::unique_ptr<controller_type>          controller_;
   std::unique_ptr<controller_protocol_type> controller_protocol_;
 
-  std::unique_ptr<document_store_type>          state_db_;
+  std::unique_ptr<document_store_type>       state_db_;
   std::unique_ptr<DocumentStoreProtocolImpl> state_db_protocol_;
 
   std::unique_ptr<transaction_store_type>          tx_store_;

@@ -51,14 +51,14 @@ enum
 using ResourceAddress = fetch::storage::ResourceAddress;
 using TCPClient       = fetch::network::TCPClient;
 using Peer            = fetch::network::Peer;
-using Muddle    = fetch::muddle::Muddle;
-using MuddlePtr = std::unique_ptr<Muddle>;
-using Prover    = fetch::crypto::Prover;
-using ProverPtr = std::unique_ptr<Prover>;
-using Uri       = fetch::network::Uri;
+using Muddle          = fetch::muddle::Muddle;
+using MuddlePtr       = std::unique_ptr<Muddle>;
+using Prover          = fetch::crypto::Prover;
+using ProverPtr       = std::unique_ptr<Prover>;
+using Uri             = fetch::network::Uri;
 
 static constexpr char const *LOGGING_NAME = "lane_client.cpp";
-static const uint16_t    P2P_RPC_PORT        = 9130;
+static const uint16_t        P2P_RPC_PORT = 9130;
 
 ProverPtr GenerateP2PKey()
 {
@@ -129,12 +129,11 @@ int main(int argc, char **argv)
 
   // Client setup
   fetch::network::NetworkManager tm(8);
-  MuddlePtr muddle_;
-  ProverPtr p2p_key = GenerateP2PKey();
-  muddle_           = std::make_unique<Muddle>(std::move(p2p_key), tm);
+  MuddlePtr                      muddle_;
+  ProverPtr                      p2p_key = GenerateP2PKey();
+  muddle_                                = std::make_unique<Muddle>(std::move(p2p_key), tm);
   muddle_->Start({P2P_RPC_PORT});
-  StorageUnitClient              client(tm, *muddle_);
-
+  StorageUnitClient client(tm, *muddle_);
 
   tm.Start();
 
@@ -142,11 +141,11 @@ int main(int argc, char **argv)
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-    lane_data[i]             = Uri((std::string("tcp://127.0.0.1:") + std::to_string(lane_port)).c_str());
+    lane_data[i] = Uri((std::string("tcp://127.0.0.1:") + std::to_string(lane_port)).c_str());
   }
 
   auto count =
-    client.AddLaneConnectionsWaitingMuddle(*muddle_, lane_data, std::chrono::milliseconds(30000));
+      client.AddLaneConnectionsWaitingMuddle(*muddle_, lane_data, std::chrono::milliseconds(30000));
   if (count != num_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");

@@ -33,7 +33,7 @@ class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 public:
   using connection_handle_type = network::AbstractConnection::connection_handle_type;
   using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
-  using CallContext = service::CallContext;
+  using CallContext            = service::CallContext;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -100,13 +100,13 @@ public:
 
   bool HasLock(CallContext const *context, ResourceID const &rid)
   {
-    Identifier identifier = context->sender_address;
+    Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                               0, byte_array_type(std::string("No context for HasLock.")));
+          0, byte_array_type(std::string("No context for HasLock.")));
     }
 
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
@@ -124,10 +124,10 @@ public:
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                               0, byte_array_type(std::string("No context for HasLock.")));
+          0, byte_array_type(std::string("No context for HasLock.")));
     }
 
-    Identifier identifier = context->sender_address;
+    Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString());
@@ -135,12 +135,14 @@ public:
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " LOCK!!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
+                      " LOCK!!");
       locks_[rid.id()] = identifier;
       return true;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " NOPE!!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
+                    " NOPE!!");
     return (it->second == identifier);
   }
 
@@ -149,10 +151,10 @@ public:
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                               0, byte_array_type(std::string("No context for HasLock.")));
+          0, byte_array_type(std::string("No context for HasLock.")));
     }
 
-    Identifier identifier = context->sender_address;
+    Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "UnockResource ", printable_identifier, " => ", rid.ToString());
@@ -160,29 +162,31 @@ public:
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " NOPE!!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
+                      " NOPE!!");
       return false;
     }
 
     if (it->second == identifier)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " UNLOCK!!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
+                      " UNLOCK!!");
       locks_.erase(it);
       return true;
     }
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(), " DENIED!!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
+                    " DENIED!!");
     return false;
   }
 
 private:
-
   Document GetLaneChecked(ResourceID const &rid)
   {
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
-                     rid.lane(log2_lanes_));
+                      rid.lane(log2_lanes_));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
@@ -197,7 +201,7 @@ private:
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Lane assignment is ", lane_assignment_, " vs ",
-                     rid.lane(log2_lanes_));
+                      rid.lane(log2_lanes_));
       FETCH_LOG_DEBUG(LOGGING_NAME, "Address:", byte_array::ToHex(rid.id()));
 
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
@@ -214,39 +218,37 @@ private:
     if (!context)
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                               0, byte_array_type(std::string("No context for SetLaneChecked.")));
+          0, byte_array_type(std::string("No context for SetLaneChecked.")));
     }
 
-    Identifier identifier = context->sender_address;
+    Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                               0, byte_array_type(std::string("Set: Resource located on other lane:")+rid.ToString()+ ". TODO: Set error number."));
+          0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString() +
+                             ". TODO: Set error number."));
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
       auto                          it = locks_.find(rid.id());
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "SetLaneChecked ", printable_identifier, " => ", rid.ToString(), " ??");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "SetLaneChecked ", printable_identifier, " => ", rid.ToString(),
+                      " ??");
 
       if (it == locks_.end())
       {
         throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                                 0, byte_array_type(std::string("There is no lock for the resource:")+ rid.ToString()));
+            0, byte_array_type(std::string("There is no lock for the resource:") + rid.ToString()));
       }
       if (it->second != identifier)
       {
         throw serializers::SerializableException(  // TODO(issue 11): set exception number
-                                                 0, byte_array_type(std::string("Client ")
-                                                                    + printable_identifier
-                                                                    + " does not have a lock for the resource:"
-                                                                    + rid.ToString()
-                                                                    + " because it is held for "
-                                                                    + static_cast<std::string>(ToBase64(it->second))
-                                                                    )
-                                                   );
+            0, byte_array_type(std::string("Client ") + printable_identifier +
+                               " does not have a lock for the resource:" + rid.ToString() +
+                               " because it is held for " +
+                               static_cast<std::string>(ToBase64(it->second))));
       }
     }
 
@@ -264,7 +266,7 @@ private:
 
   uint32_t lane_assignment_ = 0;
 
-  mutex::Mutex                                                 lock_mutex_{__LINE__, __FILE__};
+  mutex::Mutex                                     lock_mutex_{__LINE__, __FILE__};
   std::map<byte_array::ConstByteArray, Identifier> locks_;
 };
 
