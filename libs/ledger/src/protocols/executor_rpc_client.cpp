@@ -72,7 +72,7 @@ public:
     }
     catch (...)
     {
-      FETCH_LOG_WARN("ExecutorConnectorWorker::Work threw.");
+      FETCH_LOG_WARN(LOGGING_NAME, "ExecutorConnectorWorker::Work threw.");
       throw;
     }
     auto r = this->AtomicStateMachine::Get();
