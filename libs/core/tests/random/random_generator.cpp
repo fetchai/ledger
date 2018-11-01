@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 /* The random number generator was being exercised by the network
    stress tests but this timesout in some environments. We removed the
    random generatoring code from that test and add it here -- we will
