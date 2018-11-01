@@ -93,6 +93,7 @@ public:
     catch (...)
     {
       FETCH_LOG_WARN("MuddleLaneConnectorWorker::Work lane ", lane, " threw.");
+      throw;
     }
     auto r = this->AtomicStateMachine::Get();
 
