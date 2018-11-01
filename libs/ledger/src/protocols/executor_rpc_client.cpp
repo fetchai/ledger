@@ -72,7 +72,7 @@ public:
     }
     catch (...)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "ExecutorConnectorWorker::Work threw.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Work threw.");
       throw;
     }
     auto r = this->AtomicStateMachine::Get();
@@ -100,11 +100,13 @@ public:
 
     if (currentstate == State::INITIAL)
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> set timeout.");
       timeout.Set(timeduration);
     }
 
     if (timeout.IsDue())
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> TIMEDOUT");
       currentstate = State::TIMEDOUT;
       return true;
     }
@@ -115,6 +117,7 @@ public:
     {
       muddle.AddPeer(peer);
       currentstate = State::CONNECTING;
+      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> CONNECTING");
       return true;
     }
     case State::CONNECTING:
