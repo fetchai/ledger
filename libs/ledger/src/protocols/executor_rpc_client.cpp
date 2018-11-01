@@ -125,6 +125,8 @@ public:
     }
     case State::CONNECTING:
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "CONNECTING?", peer.ToString());
+      muddle.Debug("LOGGING_NAME", "CONNECTING?");
       bool connected = muddle.GetOutgoingConnectionAddress(peer, target_address);
       if (!connected)
       {
