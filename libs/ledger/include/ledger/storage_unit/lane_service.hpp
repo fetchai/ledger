@@ -35,6 +35,7 @@
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
+#include "storage/transient_object_store.hpp"
 
 #include <iomanip>
 #include <memory>
@@ -48,7 +49,7 @@ public:
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
   using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;
-  using transaction_store_type       = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
+  using transaction_store_type       = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
   using transaction_store_protocol_type =
       storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
   using client_register_type     = fetch::network::ConnectionRegister<connectivity_details_type>;

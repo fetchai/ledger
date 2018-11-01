@@ -494,9 +494,9 @@ public:
     return stack_.size();
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const

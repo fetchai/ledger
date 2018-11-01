@@ -23,6 +23,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "storage/transient_object_store.hpp"
 
 #include <benchmark/benchmark.h>
 #include <vector>
@@ -37,6 +38,7 @@ using fetch::chain::MutableTransaction;
 using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
+using TransientStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
 using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
 using TransactionList  = std::vector<VerifiedTransaction>;
 
@@ -47,7 +49,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 
   static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
 
-  LinearCongruentialGenerator rng;
+  static LinearCongruentialGenerator rng;
 
   TransactionList list;
   list.reserve(count);
@@ -148,9 +150,63 @@ void TxSubmitSingleSmall(benchmark::State &state)
   }
 }
 
+void TxSubmitSingleSmallAlt(benchmark::State& state)
+{
+  // create the transaction store
+  TransientStore tx_store;
+  tx_store.New("transaction.db", "transaction_index.db", true);
+
+  // create a whole series of transaction
+  TransactionList transactions = GenerateTransactions(state.max_iterations, false);
+
+  std::size_t tx_index{0};
+  for (auto _ : state)
+  {
+    auto const &tx = transactions.at(tx_index++);
+    tx_store.Set(ResourceID{tx.digest()}, tx);
+  }
+}
+
+void TransientStoreExpectedOperation(benchmark::State& state)
+{
+  // create the transient store
+  TransientStore tx_store;
+  tx_store.New("transaction.db", "transaction_index.db", true);
+
+  VerifiedTransaction dummy;
+
+  std::size_t tx_index{0};
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    // Number of Tx to send is state arg
+    TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
+    std::size_t subset = 10; // one tenth of all iterations
+    state.ResumeTiming();
+
+    for(auto const &tx : transactions)
+    {
+      // Basic pattern for a transient store is to intake X transactions into the mempool,
+      // then read some subset N of them (for block verification/packing), then commit
+      // those to the underlying object store.
+      tx_store.Set(ResourceID{tx.digest()}, tx);
+
+      benchmark::DoNotOptimize(tx_store.Get(ResourceID{tx.digest()}, dummy));
+
+      if(tx_index % subset == 0)
+      {
+        tx_store.Confirm(ResourceID{tx.digest()});
+      }
+    }
+  }
+}
+
 }  // namespace
 
+BENCHMARK(TransientStoreExpectedOperation)->Range(10, 1000000);
+BENCHMARK(TxSubmitSingleSmallAlt);
 BENCHMARK(TxSubmitFixedLarge);
 BENCHMARK(TxSubmitFixedSmall);
 BENCHMARK(TxSubmitSingleLarge);
 BENCHMARK(TxSubmitSingleSmall);
+

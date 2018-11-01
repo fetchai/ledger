@@ -189,6 +189,12 @@ public:
     return store_.size();
   }
 
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    store_.Flush(lazy);
+  }
+
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the

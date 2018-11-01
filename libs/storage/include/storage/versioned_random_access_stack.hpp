@@ -445,9 +445,9 @@ public:
     return b;
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   void ResetBookmark()
