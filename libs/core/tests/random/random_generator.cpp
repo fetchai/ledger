@@ -16,6 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+
+/* The random number generator was being exercised by the network
+   stress tests but this timesout in some environments. We removed the
+   random generatoring code from that test and add it here -- we will
+   ratio the "random-fill" time aginst a more constant-fill to verify
+   that the random code's expense does not creep upward over time.
+*/
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -42,22 +50,6 @@ using message_type    = fetch::byte_array::ByteArray;
 const int ITERATIONS  = 2;
 const int MID_CYCLES  = 10;
 const int PACKET_SIZE = 100000;
-
-class myTestFixture1 : public ::testing::Test
-{
-public:
-  myTestFixture1()
-  {}
-
-  ~myTestFixture1()
-  {}
-
-  void SetUp()
-  {}
-
-  void TearDown()
-  {}
-};
 
 void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
 {
