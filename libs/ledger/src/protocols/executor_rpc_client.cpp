@@ -46,7 +46,7 @@ public:
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
     : peer(std::move(thepeer))
-    , timeduration(thetimeout)
+    , timeduration(std::move(thetimeout))
     , muddle(themuddle)
   {
     client = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
