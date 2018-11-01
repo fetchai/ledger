@@ -85,7 +85,7 @@ void GenerateConstant(std::size_t iterations, std::size_t cycles, std::size_t pa
   }
 }
 
-TEST_F(myTestFixture1, SpeedTest)
+TEST(SpeedTest, CompareRandomSpeed)
 {
   auto t1 = std::chrono::system_clock::now();
   GenerateConstant(ITERATIONS, MID_CYCLES, PACKET_SIZE);
