@@ -92,6 +92,7 @@ public:
 
   virtual bool PossibleNewState(State &currentstate) override
   {
+    FETCH_LOG_WARN(LOGGING_NAME, ">>> PossibleNewState");
     if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
         currentstate == State::FAILED)
     {
