@@ -137,7 +137,7 @@ public:
   }
 };
 
-  void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
+void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
   {
