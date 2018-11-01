@@ -64,6 +64,10 @@ public:
   Matrix(super_type &&other)
     : super_type(std::move(other))
   {}
+  /**
+   * This constructor is useful for setting fixed valued inputs in certain tests
+   * @param c
+   */
   Matrix(byte_array::ConstByteArray const &c)
   {
     std::size_t       n = 1;
