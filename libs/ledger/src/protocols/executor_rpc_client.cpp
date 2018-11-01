@@ -66,7 +66,14 @@ public:
 
   PromiseState Work()
   {
-    this->AtomicStateMachine::Work();
+    try
+    {
+      this->AtomicStateMachine::Work();
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN("ExecutorConnectorWorker::Work lane ", lane, " threw.");
+    }
     auto r = this->AtomicStateMachine::Get();
 
     switch (r)
