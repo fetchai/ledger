@@ -1,19 +1,13 @@
 ################################################################################
-# F E T C H   C O R E   L I B R A R Y
+# F E T C H   V A R I A N T   T E S T S
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-core)
+project(fetch-variant)
 
-# CMake Configuration
+# CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
 # Compiler Configuration
 setup_compiler()
 
-setup_library(fetch-core)
-target_link_libraries(fetch-core PUBLIC fetch-vectorise)
-
-add_test_target()
-
-add_subdirectory(benchmark)
-add_subdirectory(examples)
+add_fetch_gtest(variant-tests fetch-variant .)
