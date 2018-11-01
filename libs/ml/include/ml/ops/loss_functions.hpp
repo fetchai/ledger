@@ -24,13 +24,6 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 /*
  * Op for mean squared error
  */

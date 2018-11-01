@@ -24,13 +24,6 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 /**
  * The Dot method for ML variables. Applies a standard library Dot but also tracks parents and
  * updates gradients

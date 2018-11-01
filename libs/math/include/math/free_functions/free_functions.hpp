@@ -35,14 +35,27 @@
 #include <numeric>
 #include <vector>
 
+/////////////////////////////////
+/// include specific math functions
+/////////////////////////////////
+
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/free_functions/standard_functions/exp.hpp"
+#include "math/free_functions/standard_functions/fmod.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
+#include "math/free_functions/standard_functions/remainder.hpp"
+
+/////////////////////////////////
+/// blas libraries
+/////////////////////////////////
+
 #include "math/linalg/blas/gemm_nn_vector.hpp"
 #include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
 #include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
-
-#include "math/free_functions/fundamental_operators.hpp"
 
 #include "math/meta/type_traits.hpp"
 
@@ -300,75 +313,17 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
  * @param B
  * @return
  */
-template <typename T, typename C>
-void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-                  T beta = 0.0, bool threaded = false)
-{
-  assert(ret.shape().size() == 2);
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  ret.Reshape(return_shape);
-
-  if (threaded)
-  {
-    linalg::Blas<
-        T, NDArray<T, C>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nt_vector_threaded;
-
-    gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-  }
-  else
-  {
-    linalg::Blas<
-        T, NDArray<T, C>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE>
-        gemm_nt_vector;
-
-    gemm_nt_vector(alpha, A, B, beta, ret);
-  }
-}
-template <typename T, typename C>
-NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
-                           T beta = 0.0, bool threaded = false)
-{
-  assert(A.shape().size() == 2);
-  assert(B.shape().size() == 2);
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  NDArray<T, C>            ret(return_shape);
-
-  DotTranspose(A, B, ret, alpha, beta, threaded);
-
-  return ret;
-}
-template <typename T, typename C>
-NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
-{
-  assert(A.shape().size() == 2);
-  assert(B.shape().size() == 2);
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  NDArray<T, C>            ret(return_shape);
-
-  DotTranspose(A, B, ret, 1.0, 0.0, threaded);
-
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
+    ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
+    typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
   ret.Resize(A.shape()[0], B.shape()[0]);
 
   if (threaded)
   {
     linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
+        typename ArrayType::Type, ArrayType,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                               linalg::_beta * linalg::_C),
@@ -380,7 +335,7 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
   else
   {
     linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
+        typename ArrayType::Type, ArrayType,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                               linalg::_beta * linalg::_C),
@@ -390,26 +345,27 @@ void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
     gemm_nt_vector(alpha, A, B, beta, ret);
   }
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
-                                     bool threaded = false)
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
+    ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
+    typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  linalg::Matrix<T, C, S>  ret(return_shape);
+  ArrayType                ret(return_shape);
 
   DotTranspose(A, B, ret, alpha, beta, threaded);
 
   return ret;
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, bool threaded = false)
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
+                                                                           ArrayType const &B,
+                                                                           bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  linalg::Matrix<T, C, S>  ret(return_shape);
+  ArrayType                ret(return_shape);
 
   DotTranspose(A, B, ret, 1.0, 0.0, threaded);
 
@@ -817,28 +773,6 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
 }
 
 /**
- * assigns the absolute of x to this array
- * @param x
- */
-template <typename ArrayType>
-void Abs(ArrayType &x)
-{
-  kernels::stdlib::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * e^x
- * @param x
- */
-template <typename ArrayType>
-void Exp(ArrayType &x)
-{
-  kernels::stdlib::Exp<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * raise 2 to power input values of x
  * @param x
  */
@@ -858,25 +792,6 @@ void Expm1(ArrayType &x)
 {
   kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * natural logarithm of x
- * @param x
- */
-template <typename ArrayType>
-void Log(ArrayType &x)
-{
-  kernels::stdlib::Log<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename ArrayType>
-ArrayType Log(ArrayType const &x)
-{
-  ArrayType ret{x.shape()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
 }
 
 /**
@@ -2205,7 +2120,33 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
-
+template <typename T, typename C>
+void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
+{
+  assert(ret.size() == array.size());
+  details::SoftmaxImplementation(array, ret);
+}
+template <typename T, typename C>
+ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
+{
+  ShapeLessArray<T, C> ret{array.size()};
+  Softmax(array, ret);
+  return ret;
+}
+template <typename T, typename C>
+void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
+{
+  assert(ret.size() == array.size());
+  ret.LazyReshape(array.shape());
+  details::SoftmaxImplementation(array, ret);
+}
+template <typename T, typename C>
+NDArray<T, C> Softmax(NDArray<T, C> const &array)
+{
+  NDArray<T, C> ret{array.shape()};
+  Softmax(array, ret);
+  return ret;
+}
 template <typename T, typename C, typename S>
 void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 {
@@ -2299,7 +2240,6 @@ linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &
   return ret;
 }
 
-
 /**
  * return the product of all elements in the array
  * @tparam T
@@ -2386,6 +2326,15 @@ T Mean(ShapeLessArray<T, C> const &obj1)
   T ret;
   Mean(obj1, ret);
   return ret;
+}
+
+/**
+ * Distance between max and min values in an array
+ */
+template <typename ArrayType>
+void PeakToPeak(ArrayType arr)
+{
+  return Max(arr) - Min(arr);
 }
 
 }  // namespace math

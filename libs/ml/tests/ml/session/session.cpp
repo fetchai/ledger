@@ -70,13 +70,13 @@ TEST(session_test, trivial_backprop_test)
 {
 
   // set up session
-  SessionManager<ArrayType, VariableType> sess{};
+  SessionManager<ArrayType> sess{};
 
   // set up some variables
   std::vector<std::size_t> l1_shape{2, 3};
   std::vector<std::size_t> l2_shape{3, 4};
-  auto                     l1 = sess.Variable(l1_shape, "l1_input");
-  auto                     l2 = sess.Variable(l2_shape, "l2_input");
+  VariablePtrType          l1 = sess.Variable(l1_shape, "l1_input");
+  VariablePtrType          l2 = sess.Variable(l2_shape, "l2_input");
   AssignVariableIncrement(l1, 1.0);
   AssignVariableIncrement(l2, 1.0);
 

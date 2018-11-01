@@ -18,47 +18,139 @@
 //------------------------------------------------------------------------------
 
 #include "math/meta/type_traits.hpp"
-#include "core/meta/type_traits.hpp"
+
+/**
+ * assigns the absolute of x to this array
+ * @param x
+ */
 
 namespace fetch {
 namespace math {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
+/////////////////
+/// ADDITIONS ///
+/////////////////
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
+namespace details {
+template <typename ArrayType>
+meta::IsMathArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                           memory::Range const &range, ArrayType &ret)
+{
+  assert(array1.size() == array2.size());
+  assert(array1.size() == ret.size());
+  //  ret.Reshape(array1.size());
+
+  if (range.is_undefined())
+  {
+    Add(array1, array2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
+
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x + y; },
+                                   array1.data(), array2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
 }
+template <typename ArrayType>
+meta::IsMathArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
+                                                memory::Range const &range)
+{
+  ArrayType ret{array1.size()};
+  Add(array1, array2, range, ret);
+  return ret;
+}
+
+}  // namespace details
+
+////////////////////////////////
+/// SCALAR - SCALAR ADDITION ///
+////////////////////////////////
 /**
- * add a scalar to every value in the array
+ * Implementation for scalar addition. Implementing this helps keeps a uniform interface
  * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
+ * @param scalar1
+ * @param scalar2
  * @param ret
  */
+template <typename S>
+meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 + scalar2;
+}
+template <typename S>
+meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+
+//////////////////////////////////////
+/// SHAPED ARRAY - SCALAR ADDITION ///
+//////////////////////////////////////
+
+template <typename T, typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array, T const &scalar,
+                                                ArrayType &ret)
+{
+  assert(array.shape() == ret.shape());
+  typename ArrayType::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x + val; },
+      array.data());
+}
+template <typename T, typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Add(array, scalar, ret);
+  return ret;
+}
+template <typename T, typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, void> Add(T const &scalar, ArrayType const &array,
+                                                ArrayType &ret)
+{
+  ret = Add(array, scalar, ret);
+}
+template <typename T, typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  Add(scalar, array, ret);
+  return ret;
+}
+
+/////////////////////////////////////////
+/// SHAPELESS ARRAY - SCALAR ADDITION ///
+/////////////////////////////////////////
+
 template <typename T, typename C>
 void Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
 {
-assert(array.size() == ret.size());
-typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
+            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + val; },
+      array.data());
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-ShapeLessArray<T, C> ret{array.size()};
-Add(array, scalar, ret);
-return ret;
+  ShapeLessArray<T, C> ret{array.size()};
+  Add(array, scalar, ret);
+  return ret;
 }
 template <typename T, typename C>
 void Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
@@ -73,25 +165,9 @@ ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
   return ret;
 }
 
-/**
- * Implementation for scalar addition. Implementing this helps keeps a uniform interface
- * @tparam T
- * @param scalar1
- * @param scalar2
- * @param ret
- */
-template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 + scalar2;
-}
-template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
+///////////////////////////////////////////////
+/// SHAPED ARRAY - SHAPED ARRAY  ADDITION   ///
+///////////////////////////////////////////////
 
 /**
  * Adds two arrays together
@@ -101,84 +177,65 @@ fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
  * @param array2
  * @param ret
  */
+template <typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                                ArrayType &ret)
+{
+  assert(array1.shape() == array2.shape());
+  assert(array1.shape() == ret.shape());
 
-// template <typename ArrayType>
-// fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const
-// &array2,
-//         ArrayType &ret)
+  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
+  details::Add(array1, array2, range, ret);
+}
+template <typename ArrayType>
+meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1,
+                                                     ArrayType const &array2)
+{
+  assert(array1.shape() == array2.shape());
+  ArrayType ret{array1.shape()};
+  details::Add(array1, array2, ret);
+
+  return ret;
+}
+
+////////////////////////////////////////////////////
+/// SHAPELESS ARRAY - SHAPELESS ARRAY  ADDITION  ///
+////////////////////////////////////////////////////
 
 template <typename ArrayType>
-void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
+meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1,
+                                                         ArrayType const &array2)
+{
+  assert(array1.size() == array2.size());
+  ArrayType ret{array1.size()};
+  Add(array1, array2, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &    array1,
+                                                         ArrayType const &    array2,
+                                                         memory::Range const &range)
+{
+  assert(array1.size() == array2.size());
+  ArrayType ret{array1.size()};
+  details::Add(array1, array2, range, ret);
+  return ret;
+}
+template <typename ArrayType>
+meta::IsMathShapelessArrayLike<ArrayType, void> Add(ArrayType const &array1,
+                                                    ArrayType const &array2, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(array1.size() == ret.size());
 
   memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  Add(array1, array2, range, ret);
-}
-template <typename ArrayType>
-ArrayType Add(ArrayType const &array1, ArrayType const &array2)
-{
-  assert(array1.size() == array2.size());
-  ArrayType ret{array1.shape()};
-  Add(array1, array2, ret);
-
-  return ret;
+  details::Add(array1, array2, range, ret);
 }
 
-//
-// template <typename T, typename C>
-// void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-//         ShapeLessArray<T, C> &ret)
-//{
-//  assert(array1.size() == array2.size());
-//  assert(array1.size() == ret.size());
-//
-//  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-//  Add(array1, array2, range, ret);
-//}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2)
-{
-ShapeLessArray<T, C> ret{array1.size()};
-Add(array1, array2, ret);
-return ret;
-}
-template <typename T, typename C>
-void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-    memory::Range const &range, ShapeLessArray<T, C> &ret)
-{
-assert(array1.size() == array2.size());
-ret.LazyResize(array1.size());
+////////////////////////////////////
+/// ARRAY BROADCASTING ADDITION  ///
+////////////////////////////////////
 
-if (range.is_undefined())
-{
-Add(array1, array2, ret);
-}
-else if (range.is_trivial())
-{
-auto r = range.ToTrivialRange(ret.data().size());
-
-ret.data().in_parallel().Apply(
-    r,
-[](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type const &y,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + y; },
-array1.data(), array2.data());
-}
-else
-{
-TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-}
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-    memory::Range const &range)
-{
-ShapeLessArray<T, C> ret{array1.shape()};
-Add(array1, array2, range, ret);
-return ret;
-}
 /**
  * Adds two ndarrays together with broadcasting
  * @tparam T
@@ -200,6 +257,21 @@ NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
   Add(array1, array2, ret);
   return ret;
 }
+
+//////////////////////////
+/// ADDITION OPERATORS ///
+//////////////////////////
+
+template <typename OtherType>
+meta::IsMathLike<OtherType, void> operator+=(OtherType &left, OtherType const &right)
+{
+  Add(left, right, left);
+}
+
+////////////////////
+/// SUBTRACTIONS ///
+////////////////////
+
 /**
  * subtract a scalar from every value in the array
  * @tparam T
@@ -211,22 +283,22 @@ NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
 template <typename T, typename C>
 void Subtract(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
 {
-assert(array.size() == ret.size());
-assert(array.data().size() == ret.data().size());
+  assert(array.size() == ret.size());
+  assert(array.data().size() == ret.data().size());
 
-typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
+            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - val; },
+      array.data());
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-ShapeLessArray<T, C> ret{array.size()};
-Subtract(array, scalar, ret);
-return ret;
+  ShapeLessArray<T, C> ret{array.size()};
+  Subtract(array, scalar, ret);
+  return ret;
 }
 /**
  * subtract a every value in array from scalar
@@ -273,64 +345,64 @@ void Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Mat
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-linalg::Matrix<T, C, S> ret{array.shape()};
-Subtract(array, scalar, ret);
-return ret;
+  linalg::Matrix<T, C, S> ret{array.shape()};
+  Subtract(array, scalar, ret);
+  return ret;
 }
 template <typename T, typename C, typename S>
 void Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
 {
-assert(array.size() == ret.size());
-for (std::size_t i = 0; i < ret.size(); ++i)
-{
-ret[i] = array[i] - scalar;
-}
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = array[i] - scalar;
+  }
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1,
-linalg::Matrix<T, C, S> const &array2)
+                                 linalg::Matrix<T, C, S> const &array2)
 {
-linalg::Matrix<T, C, S> ret{array1.shape()};
-Subtract(array1, array2, ret);
-return ret;
+  linalg::Matrix<T, C, S> ret{array1.shape()};
+  Subtract(array1, array2, ret);
+  return ret;
 }
 template <typename T, typename C, typename S>
 void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-    linalg::Matrix<T, C, S> &ret)
+              linalg::Matrix<T, C, S> &ret)
 {
-// broadcasting is permissible
-assert((array1.size() == ret.size()) || (array1.shape()[0] == ret.shape()[0]) ||
-(array1.shape()[1] == ret.shape()[1]));
-assert((array1.size() == array2.size()) || (array1.shape()[0] == array2.shape()[0]) ||
-(array1.shape()[1] == array2.shape()[1]));
+  // broadcasting is permissible
+  assert((array1.size() == ret.size()) || (array1.shape()[0] == ret.shape()[0]) ||
+         (array1.shape()[1] == ret.shape()[1]));
+  assert((array1.size() == array2.size()) || (array1.shape()[0] == array2.shape()[0]) ||
+         (array1.shape()[1] == array2.shape()[1]));
 
-if (array1.size() == array2.size())
-{
-for (std::size_t i = 0; i < ret.size(); ++i)
-{
-ret[i] = array1[i] - array2[i];
-}
-}
-else if (array1.shape()[0] == array2.shape()[0])
-{
-for (std::size_t i = 0; i < ret.shape()[0]; ++i)
-{
-for (std::size_t j = 0; j < ret.shape()[1]; ++j)
-{
-ret.Set(i, j, array1.At(i, j) - array2.At(i, 0));
-}
-}
-}
-else
-{
-for (std::size_t i = 0; i < ret.shape()[1]; ++i)
-{
-for (std::size_t j = 0; j < ret.shape()[0]; ++j)
-{
-ret.Set(j, i, array1.At(j, i) - array2.At(0, i));
-}
-}
-}
+  if (array1.size() == array2.size())
+  {
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = array1[i] - array2[i];
+    }
+  }
+  else if (array1.shape()[0] == array2.shape()[0])
+  {
+    for (std::size_t i = 0; i < ret.shape()[0]; ++i)
+    {
+      for (std::size_t j = 0; j < ret.shape()[1]; ++j)
+      {
+        ret.Set(i, j, array1.At(i, j) - array2.At(i, 0));
+      }
+    }
+  }
+  else
+  {
+    for (std::size_t i = 0; i < ret.shape()[1]; ++i)
+    {
+      for (std::size_t j = 0; j < ret.shape()[0]; ++j)
+      {
+        ret.Set(j, i, array1.At(j, i) - array2.At(0, i));
+      }
+    }
+  }
 }
 /**
  * subtract array from another array within a range
@@ -342,38 +414,38 @@ ret.Set(j, i, array1.At(j, i) - array2.At(0, i));
  */
 template <typename T, typename C>
 void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range, ShapeLessArray<T, C> &ret)
+              memory::Range const &range, ShapeLessArray<T, C> &ret)
 {
-assert(obj1.size() == obj2.size());
-assert(obj1.size() == ret.size());
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
 
-if (range.is_undefined())
-{
-Subtract(obj1, obj2, ret);
-}
-else if (range.is_trivial())
-{
-auto r = range.ToTrivialRange(ret.data().size());
+  if (range.is_undefined())
+  {
+    Subtract(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
 
-ret.data().in_parallel().Apply(
-    r,
-[](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type const &y,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - y; },
-obj1.data(), obj2.data());
-}
-else
-{
-TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-}
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
+           typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range)
+                              memory::Range const &range)
 {
-ShapeLessArray<T, C> ret{obj1.shape()};
-Subtract(obj1, obj2, range, ret);
-return ret;
+  ShapeLessArray<T, C> ret{obj1.shape()};
+  Subtract(obj1, obj2, range, ret);
+  return ret;
 }
 /**
  * subtract array from another array
@@ -385,18 +457,18 @@ return ret;
  */
 template <typename T, typename C>
 void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    ShapeLessArray<T, C> &ret)
+              ShapeLessArray<T, C> &ret)
 {
-memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-Subtract(obj1, obj2, range, ret);
+  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
+  Subtract(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-assert(obj1.size() == obj2.size());
-ShapeLessArray<T, C> ret{obj1.size()};
-Subtract(obj1, obj2, ret);
-return ret;
+  assert(obj1.size() == obj2.size());
+  ShapeLessArray<T, C> ret{obj1.size()};
+  Subtract(obj1, obj2, ret);
+  return ret;
 }
 /**
  * subtract array from another array with broadcasting
@@ -439,6 +511,10 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
   return ret;
 }
 
+////////////////
+/// Multiply ///
+////////////////
+
 /**
  * multiply a scalar by every value in the array
  * @tparam T
@@ -450,20 +526,20 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
 template <typename T, typename C>
 void Multiply(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
 {
-assert(array.size() == ret.size());
-typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
+            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * val; },
+      array.data());
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-ShapeLessArray<T, C> ret{array.size()};
-Multiply(array, scalar, ret);
-return ret;
+  ShapeLessArray<T, C> ret{array.size()};
+  Multiply(array, scalar, ret);
+  return ret;
 }
 template <typename T, typename C>
 void Multiply(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
@@ -488,38 +564,38 @@ ShapeLessArray<T, C> Multiply(T const &scalar, ShapeLessArray<T, C> const &array
  */
 template <typename T, typename C>
 void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range, ShapeLessArray<T, C> &ret)
+              memory::Range const &range, ShapeLessArray<T, C> &ret)
 {
-assert(obj1.size() == obj2.size());
-assert(obj1.size() == ret.size());
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
 
-if (range.is_undefined())
-{
-Multiply(obj1, obj2, ret);
-}
-else if (range.is_trivial())
-{
-auto r = range.ToTrivialRange(ret.data().size());
+  if (range.is_undefined())
+  {
+    Multiply(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
 
-ret.data().in_parallel().Apply(
-    r,
-[](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type const &y,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * y; },
-obj1.data(), obj2.data());
-}
-else
-{
-TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-}
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
+           typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range)
+                              memory::Range const &range)
 {
-ShapeLessArray<T, C> ret{obj1.size()};
-Multiply(obj1, obj2, range, ret);
-return ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
+  Multiply(obj1, obj2, range, ret);
+  return ret;
 }
 /**
  * Multiply array from another array
@@ -531,78 +607,78 @@ return ret;
  */
 template <typename T, typename C>
 void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    ShapeLessArray<T, C> &ret)
+              ShapeLessArray<T, C> &ret)
 {
-memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
-Multiply(obj1, obj2, range, ret);
+  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
+  Multiply(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-ShapeLessArray<T, C> ret{obj1.size()};
-Multiply(obj1, obj2, ret);
-return ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
+  Multiply(obj1, obj2, ret);
+  return ret;
 }
 
 template <typename T, typename C, typename S>
 void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-    memory::Range const &range, linalg::Matrix<T, C, S> &ret)
+              memory::Range const &range, linalg::Matrix<T, C, S> &ret)
 {
-assert(obj1.size() == obj2.size());
-assert(obj1.size() == ret.size());
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
 
-if (range.is_undefined())
-{
-Multiply(obj1, obj2, ret);
-}
-else if (range.is_trivial())
-{
-auto r = range.ToTrivialRange(ret.data().size());
+  if (range.is_undefined())
+  {
+    Multiply(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
 
-ret.data().in_parallel().Apply(
-    r,
-[](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
-obj1.data(), obj2.data());
-}
-else
-{
-TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-}
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
+           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
 }
 template <typename T, typename C, typename S>
 void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-    linalg::Matrix<T, C, S> &ret)
+              linalg::Matrix<T, C, S> &ret)
 {
-memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-Multiply(array1, array2, range, ret);
+  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
+  Multiply(array1, array2, range, ret);
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1,
-linalg::Matrix<T, C, S> const &array2)
+                                 linalg::Matrix<T, C, S> const &array2)
 {
-linalg::Matrix<T, C, S> ret{array1.shape()};
-Multiply(array1, array2, ret);
-return ret;
+  linalg::Matrix<T, C, S> ret{array1.shape()};
+  Multiply(array1, array2, ret);
+  return ret;
 }
 template <typename T, typename C, typename S>
 void Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
 {
-assert(array.size() == ret.size());
-typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
+  assert(array.size() == ret.size());
+  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * val; },
+      array.data());
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-linalg::Matrix<T, C, S> ret{array.shape()};
-Multiply(array, scalar, ret);
-return ret;
+  linalg::Matrix<T, C, S> ret{array.shape()};
+  Multiply(array, scalar, ret);
+  return ret;
 }
 template <typename T, typename C, typename S>
 void Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
@@ -645,17 +721,21 @@ NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
  * @param ret
  */
 template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
+meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 * scalar2;
 }
 template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
+meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 {
   S ret;
   Multiply(scalar1, scalar2, ret);
   return ret;
 }
+
+//////////////
+/// DIVIDE ///
+//////////////
 
 /**
  * divide array by a scalar
@@ -668,20 +748,20 @@ fetch::meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 template <typename T, typename C>
 void Divide(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
 {
-assert(array.size() == ret.size());
-typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  assert(array.size() == ret.size());
+  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
+            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / val; },
+      array.data());
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &array, T const &scalar)
 {
-ShapeLessArray<T, C> ret{array.size()};
-Divide(array, scalar, ret);
-return ret;
+  ShapeLessArray<T, C> ret{array.size()};
+  Divide(array, scalar, ret);
+  return ret;
 }
 /**
  * elementwise divide scalar by array element
@@ -719,38 +799,38 @@ ShapeLessArray<T, C> Divide(T const &scalar, ShapeLessArray<T, C> const &array)
  */
 template <typename T, typename C>
 void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range, ShapeLessArray<T, C> &ret)
+            memory::Range const &range, ShapeLessArray<T, C> &ret)
 {
-assert(obj1.size() == obj2.size());
-assert(obj1.size() == ret.size());
+  assert(obj1.size() == obj2.size());
+  assert(obj1.size() == ret.size());
 
-if (range.is_undefined())
-{
-Divide(obj1, obj2, ret);
-}
-else if (range.is_trivial())
-{
-auto r = range.ToTrivialRange(ret.data().size());
+  if (range.is_undefined())
+  {
+    Divide(obj1, obj2, ret);
+  }
+  else if (range.is_trivial())
+  {
+    auto r = range.ToTrivialRange(ret.data().size());
 
-ret.data().in_parallel().Apply(
-    r,
-[](typename ShapeLessArray<T, C>::vector_register_type const &x,
-typename ShapeLessArray<T, C>::vector_register_type const &y,
-typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / y; },
-obj1.data(), obj2.data());
-}
-else
-{
-TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-}
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
+           typename ShapeLessArray<T, C>::vector_register_type const &y,
+           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / y; },
+        obj1.data(), obj2.data());
+  }
+  else
+  {
+    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
+  }
 }
 template <typename T, typename C>
 void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    memory::Range const &range)
+            memory::Range const &range)
 {
-ShapeLessArray<T, C> ret{obj1.size()};
-Divide(obj1, obj2, range, ret);
-return ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
+  Divide(obj1, obj2, range, ret);
+  return ret;
 }
 /**
  * subtract array from another array
@@ -762,25 +842,25 @@ return ret;
  */
 template <typename T, typename C>
 void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-    ShapeLessArray<T, C> &ret)
+            ShapeLessArray<T, C> &ret)
 {
-memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-Divide(obj1, obj2, range, ret);
+  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
+  Divide(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
 {
-ShapeLessArray<T, C> ret{obj1.size()};
-Divide(obj1, obj2, ret);
-return ret;
+  ShapeLessArray<T, C> ret{obj1.size()};
+  Divide(obj1, obj2, ret);
+  return ret;
 }
 
 template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
+void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
             memory::Range const &range, linalg::Matrix<T, C, S> &ret)
 {
   assert((obj1.size() == obj2.size()) || (obj1.shape()[0] == obj2.shape()[0]) ||
-      (obj1.shape()[1] == obj2.shape()[1]));
+         (obj1.shape()[1] == obj2.shape()[1]));
   assert(obj1.size() == ret.size());
 
   if (obj1.size() == obj2.size())
@@ -812,7 +892,7 @@ void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
     {
       for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
       {
-        obj1.Set(i, j, obj1.At(i, j) / obj2.At(i, 0));
+        ret.Set(i, j, obj1.At(i, j) / obj2.At(i, 0));
       }
     }
   }
@@ -823,20 +903,21 @@ void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
     {
       for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
       {
-        obj1.Set(i, j, obj1.At(i, j) / obj2.At(0, j));
+        ret.Set(i, j, obj1.At(i, j) / obj2.At(0, j));
       }
     }
   }
 }
 template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2,
+void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
             linalg::Matrix<T, C, S> &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, C, S> &obj2)
+linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1,
+                               linalg::Matrix<T, C, S> const &obj2)
 {
   linalg::Matrix<T, C, S> ret{obj1.shape()};
 
@@ -846,20 +927,20 @@ linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> &obj1, linalg::Matrix<T, 
 template <typename T, typename C, typename S>
 void Divide(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
 {
-assert(array.size() == ret.size());
-typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
+  assert(array.size() == ret.size());
+  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
 
-ret.data().in_parallel().Apply(
-[val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / val; },
-array.data());
+  ret.data().in_parallel().Apply(
+      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
+            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / val; },
+      array.data());
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &array, T const &scalar)
 {
-linalg::Matrix<T, C, S> ret{array.shape()};
-Divide(array, scalar, ret);
-return ret;
+  linalg::Matrix<T, C, S> ret{array.shape()};
+  Divide(array, scalar, ret);
+  return ret;
 }
 /**
  * subtract array from another array with broadcasting
@@ -890,18 +971,17 @@ NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
  * @param ret
  */
 template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
+meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 / scalar2;
 }
 template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
+meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
 {
   S ret;
   Divide(scalar1, scalar2, ret);
   return ret;
 }
 
-
-} // namespace math
-} // namespace fetch
+}  // namespace math
+}  // namespace fetch
