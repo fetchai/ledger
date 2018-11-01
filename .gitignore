@@ -18,3 +18,5 @@ nodes/
 
 scripts/python_ml_lib/mnist_example/*.gz
 scripts/python_ml_lib/mnist_example/*.so
+scripts/python_ml_lib/*/*.so
+scripts/python_ml_lib/*/.ipynb*
