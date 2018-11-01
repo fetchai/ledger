@@ -100,7 +100,7 @@ public:
 
     if (currentstate == State::INITIAL)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> set timeout.");
+      FETCH_LOG_WARN(LOGGING_NAME, "INITIAL -> set timeout ", timeduration.count(), " milliseconds.");
       timeout.Set(timeduration);
     }
 
