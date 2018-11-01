@@ -55,6 +55,8 @@ public:
         .Allow(State::SUCCESS, State::CONNECTING)
         .Allow(State::TIMEDOUT, State::CONNECTING)
         .Allow(State::FAILED, State::CONNECTING);
+
+    FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer.ToString());
   }
 
   virtual ~ExecutorConnectorWorker()
