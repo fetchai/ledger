@@ -53,7 +53,6 @@ static void ArangeImplementation(DataType from, DataType to, DataType delta, Arr
 template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
 {
-
 public:
   using Type                          = T;
   using container_type                = C;
@@ -217,25 +216,6 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  //  Type PeakToPeak() const { return Max() - Min(); }
-  //
-  //  void StandardDeviation(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //
-  //    assert(size_ > 1);
-  //    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
-  //    Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
-  //  }
-  //
-  //  void Variance(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //    assert(size_ > 1);
-  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
-  //    / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
-  //  }
-
   void Equal(self_type const &a, self_type const &b)
   {
     assert(a.size() == b.size());
@@ -323,20 +303,26 @@ public:
     return sum * Type(0.5);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the floating point remainder in this
+   * array
+   * @param x
+   */
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Fmod<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Fmod(data_, x.data(), data_);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the remainder in this array with
+   * quotient rounded to int
+   * @param x
+   */
   void Remainder(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Remainder<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Remainder(data_, x.data(), data_);
   }
 
   void Remquo(self_type const &x)
@@ -404,101 +390,18 @@ public:
   }
 
   /**
-   * trivial implementation of softmax
+   * Apply softmax to this array
    * @param x
    * @return
    */
   self_type Softmax(self_type const &x)
   {
     LazyResize(x.size());
+
     assert(x.size() == this->size());
     fetch::math::Softmax(x, *this);
+
     return *this;
-  }
-
-  /* Equality operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
-   */
-  bool operator==(ShapeLessArray const &other) const
-  {
-    if (size() != other.size())
-    {
-      return false;
-    }
-    bool ret = true;
-
-    for (size_type i = 0; ret && i < data().size(); ++i)
-    {
-      ret &= (data()[i] == other.data()[i]);
-    }
-
-    return ret;
-  }
-
-  /* Not-equal operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
-   */
-  bool operator!=(ShapeLessArray const &other) const
-  {
-    return !(this->operator==(other));
-  }
-
-  /**
-   * += operator
-   * @param other
-   * @return
-   */
-  void operator+=(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-  }
-  void operator+=(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-  }
-
-  ShapeLessArray operator+(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-    return *this;
-  }
-  ShapeLessArray operator+(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-    return *this;
-  }
-
-  /* One-dimensional reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
-  {
-    return data_[i];
-  }
-
-  /* One-dimensional constant reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that can be
-   * used for constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
-  {
-    return data_[i];
   }
 
   /* One-dimensional constant reference access function.
@@ -529,59 +432,28 @@ public:
     return data_[i] = t;
   }
 
-  /**
-   * returns a range over this array defined using unsigned integers (only forward ranges)
-   * @tparam Unsigned an unsigned integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @param delta the increment to step through the range
-   * @return returns a shapeless array with the values in *this over the specified range
-   */
   template <typename Unsigned>
-  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned const &from, Unsigned const &to,
-                                                         Unsigned const &delta)
+  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned from, Unsigned to, Unsigned delta)
   {
-    assert(delta != 0);
+    ShapeLessArray ret;
+
+    std::size_t N = std::size_t((to - from) / delta);
+    ret.LazyResize(N);
+    ret.SetPaddedZero();
+    ret.FillArange(from, to);
+
+    return ret;
+  }
+
+  template <typename Unsigned>
+  IsUnsignedLike<Unsigned, ShapeLessArray &> FillArange(Unsigned from, Unsigned const &to)
+  {
     assert(from < to);
-    ShapeLessArray ret;
-    details::ArangeImplementation(from, to, delta, ret);
-    return ret;
-  }
-
-  /**
-   * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
-   * @tparam Signed a signed integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @param delta the increment to step through the range - may be negative
-   * @return returns a shapeless array with the values in *this over the specified range
-   */
-  template <typename Signed>
-  static IsSignedLike<Signed, ShapeLessArray> Arange(Signed const &from, Signed const &to,
-                                                     Signed const &delta)
-  {
-    assert(delta != 0);
-    assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
-    ShapeLessArray ret;
-    details::ArangeImplementation(from, to, delta, ret);
-    return ret;
-  }
-
-  /**
-   * Fills the current array with a range
-   * @tparam Unsigned an unsigned integer type
-   * @param from starting point of range
-   * @param to end of range
-   * @return a reference to this
-   */
-  template <typename DataType>
-  IsIntegralLike<DataType, ShapeLessArray> FillArange(DataType const &from, DataType const &to)
-  {
-    ShapeLessArray ret;
 
     std::size_t N     = this->size();
     Type        d     = static_cast<Type>(from);
     Type        delta = static_cast<Type>(to - from) / static_cast<Type>(N);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       this->data()[i] = Type(d);
@@ -1102,6 +974,94 @@ public:
         this->data());
 
     return *this;
+  }
+
+  /////////////////
+  /// OPERATORS ///
+  /////////////////
+
+  /**
+   * Equality operator
+   * This method is sensitive to height and width
+   * @param other  the array which this instance is compared against
+   * @return
+   */
+  bool operator==(ShapeLessArray const &other) const
+  {
+    if (size() != other.size())
+    {
+      return false;
+    }
+    bool ret = true;
+
+    for (size_type i = 0; ret && i < data().size(); ++i)
+    {
+      ret &= (data()[i] == other.data()[i]);
+    }
+
+    return ret;
+  }
+
+  /**
+   * Not-equal operator
+   * This method is sensitive to height and width
+   * @param other the array which this instance is compared against
+   * @return
+   */
+  bool operator!=(ShapeLessArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
+
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapeLessArray operator+(OtherType const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+
+  /* One-dimensional reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
+  {
+    return data_[i];
+  }
+
+  /* One-dimensional constant reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that can be
+   * used for constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
+      S const &i) const
+  {
+    return data_[i];
+  }
+
+  ///////////////////////////////////////
+  /// MATH LIBRARY INTERFACE METHODS ////
+  ///////////////////////////////////////
+
+  Type PeakToPeak() const
+  {
+    return fetch::math::PeakToPeak(*this);
   }
 
 protected:
