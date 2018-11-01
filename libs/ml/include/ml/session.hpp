@@ -28,9 +28,10 @@ namespace fetch {
 namespace ml {
 // TODO(private 271)
 
-template <typename A, typename V>
+template <typename A, typename V = fetch::ml::Variable<A>>
 class SessionManager
 {
+private:
   using ArrayType         = A;
   using VariableType      = V;
   using VariablePtrType   = std::shared_ptr<VariableType>;
@@ -43,7 +44,6 @@ public:
   std::size_t                                      variable_counter = 0;  // TODO(private 272)
   std::size_t                                      layer_counter    = 0;
   std::unordered_map<std::string, VariablePtrType> all_variables;
-  std::size_t                                      batch_size = 128;
 
   explicit SessionManager(bool threaded = false)
     : threaded_(threaded)
@@ -278,7 +278,10 @@ private:
     VariablePtrType var = all_variables.at(output_name);
     top_sort_map_ng_.clear();
     top_sort_vector_ng_.clear();
+    top_sort_map_g_.clear();
+    top_sort_vector_g_.clear();
     TopSortImpl(var);
+    top_sort_complete_ = true;
   }
 
   void TopSortImpl(VariablePtrType var)
@@ -334,7 +337,6 @@ private:
   LayerPtrType LayerSetup(std::vector<std::size_t> const &in_shape, std::string activation,
                           std::string layer_name)
   {
-    //    layer_counter->id() = layer_counter;
     if (layer_name.empty())
     {
       layer_name = "autoname_" + std::to_string(layer_counter);
