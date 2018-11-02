@@ -20,7 +20,7 @@
    stress tests but this timed out in some environments. We removed the
    random generatoring code from that test and add it here -- we will
    ratio the "random-fill" time aginst a more constant-fill to verify
-   that the random code's expense does not creep upward over time.
+   that the random code's expense does not creep upward over time...
 */
 
 #include <gmock/gmock.h>
