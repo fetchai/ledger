@@ -38,32 +38,22 @@ public:
   using State           = StorageUnitClient::State;
   using Client          = StorageUnitClient::Client;
 
-  Promise                 lane_prom;
-  Promise                 count_prom;
-  Promise                 id_prom;
-  LaneIndex               lane;
-  Promise                 ping_prom;
-  std::shared_ptr<Client> client;
-
-  std::string               name;
-  Uri                       peer;
-  std::chrono::milliseconds timeduration;
-  FutureTimepoint           timeout;
-  Muddle &                  muddle;
-  bool                      added;
-  Address                   target_address;
-  PendingConnectionCounter  counter_;
+  LaneIndex lane;
+  Promise   lane_prom;
+  Promise   count_prom;
+  Promise   id_prom;
+  Address   target_address;
 
   MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, Muddle &themuddle,
                             std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : lane(thelane)
-    , name(std::move(thename))
-    , peer(std::move(thepeer))
-    , timeduration(std::move(thetimeout))
-    , muddle(themuddle)
+    , name_(std::move(thename))
+    , peer_(std::move(thepeer))
+    , timeduration_(std::move(thetimeout))
+    , muddle_(themuddle)
   {
-    client =
-        std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+    client_ = std::make_shared<Client>(muddle_.AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+                                       CHANNEL_RPC);
 
     this->Allow(State::CONNECTING, State::INITIAL)
         .Allow(State::QUERYING, State::CONNECTING)
@@ -120,10 +110,10 @@ public:
 
     if (currentstate == State::INITIAL)
     {
-      timeout.Set(timeduration);
+      timeout_.Set(timeduration_);
     }
 
-    if (timeout.IsDue())
+    if (timeout_.IsDue())
     {
       currentstate = State::TIMEDOUT;
       return true;
@@ -133,32 +123,32 @@ public:
     {
     case State::INITIAL:
     {
-      muddle.AddPeer(peer);
+      muddle_.AddPeer(peer_);
       currentstate = State::CONNECTING;
       return true;
     }
     case State::CONNECTING:
     {
-      bool connected = muddle.GetOutgoingConnectionAddress(peer, target_address);
+      bool connected = muddle_.GetOutgoingConnectionAddress(peer_, target_address);
       if (!connected)
       {
         return false;
       }
       currentstate = State::QUERYING;
-      ping_prom =
-          client->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::PING);
-      lane_prom  = client->CallSpecificAddress(target_address, RPC_IDENTITY,
-                                              LaneIdentityProtocol::GET_LANE_NUMBER);
-      count_prom = client->CallSpecificAddress(target_address, RPC_IDENTITY,
-                                               LaneIdentityProtocol::GET_TOTAL_LANES);
-      id_prom    = client->CallSpecificAddress(target_address, RPC_IDENTITY,
-                                            LaneIdentityProtocol::GET_IDENTITY);
+      ping_prom_ =
+          client_->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::PING);
+      lane_prom  = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                               LaneIdentityProtocol::GET_LANE_NUMBER);
+      count_prom = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                                LaneIdentityProtocol::GET_TOTAL_LANES);
+      id_prom    = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                             LaneIdentityProtocol::GET_IDENTITY);
       return true;
     }
     case State::QUERYING:
     {
       std::vector<PromiseState> states;
-      states.push_back(ping_prom->GetState());
+      states.push_back(ping_prom_->GetState());
       states.push_back(lane_prom->GetState());
       states.push_back(count_prom->GetState());
       states.push_back(id_prom->GetState());
@@ -186,7 +176,7 @@ public:
 
       // Must be 4 successes.
 
-      if (ping_prom->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
+      if (ping_prom_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
       {
         currentstate = State::FAILED;
         return true;
@@ -202,6 +192,16 @@ public:
       return true;
     }
   }
+
+private:
+  Promise                   ping_prom_;
+  std::shared_ptr<Client>   client_;
+  std::string               name_;
+  Uri                       peer_;
+  std::chrono::milliseconds timeduration_;
+  PendingConnectionCounter  counter_;
+  Muddle &                  muddle_;
+  FutureTimepoint           timeout_;
 };
 
 void StorageUnitClient::WorkCycle()

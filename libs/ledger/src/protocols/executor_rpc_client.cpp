@@ -35,28 +35,22 @@ public:
   using State           = ExecutorRpcClient::State;
   using Client          = ExecutorRpcClient::Client;
 
-  Uri                       peer;
-  std::chrono::milliseconds timeduration;
-  FutureTimepoint           timeout;
-  PendingConnectionCounter  counter_;
-  std::shared_ptr<Client>   client;
-  Muddle &                  muddle;
-  Address                   target_address;
+  Address target_address;
 
   ExecutorConnectorWorker(Uri thepeer, Muddle &themuddle,
                           std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
-    : peer(std::move(thepeer))
-    , timeduration(std::move(thetimeout))
-    , muddle(themuddle)
+    : peer_(std::move(thepeer))
+    , timeduration_(std::move(thetimeout))
+    , muddle_(themuddle)
   {
-    client = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
-                                      CHANNEL_RPC);
+    client_ = std::make_shared<Client>(muddle_.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
+                                       CHANNEL_RPC);
     this->Allow(State::CONNECTING, State::INITIAL)
         .Allow(State::SUCCESS, State::CONNECTING)
         .Allow(State::TIMEDOUT, State::CONNECTING)
         .Allow(State::FAILED, State::CONNECTING);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer.ToString());
+    FETCH_LOG_WARN(LOGGING_NAME, "INIT: ", peer_.ToString());
   }
 
   virtual ~ExecutorConnectorWorker()
@@ -102,10 +96,10 @@ public:
 
     if (currentstate == State::INITIAL)
     {
-      timeout.Set(timeduration);
+      timeout_.Set(timeduration_);
     }
 
-    if (timeout.IsDue())
+    if (timeout_.IsDue())
     {
       currentstate = State::TIMEDOUT;
       return true;
@@ -115,14 +109,14 @@ public:
     {
     case State::INITIAL:
     {
-      muddle.AddPeer(peer);
+      muddle_.AddPeer(peer_);
       currentstate = State::CONNECTING;
       return true;
     }
     case State::CONNECTING:
     {
-      bool connected = muddle.GetOutgoingConnectionAddress(peer, target_address);
-      if (!connected)
+      bool connected_ = muddle_.GetOutgoingConnectionAddress(peer_, target_address);
+      if (!connected_)
       {
         return false;
       }
@@ -134,6 +128,14 @@ public:
       return true;
     }
   }
+
+private:
+  Uri                       peer_;
+  std::chrono::milliseconds timeduration_;
+  FutureTimepoint           timeout_;
+  std::shared_ptr<Client>   client_;
+  Muddle &                  muddle_;
+  PendingConnectionCounter  counter_;
 };
 
 void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::milliseconds timeout)
