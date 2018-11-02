@@ -26,7 +26,7 @@ namespace math {
 namespace distance {
 
 template <typename A>
-inline typename A::type WrapperHamming(A const &a, A const &b)
+inline typename A::Type WrapperHamming(A const &a, A const &b)
 {
   if (a.size() != b.size())
   {

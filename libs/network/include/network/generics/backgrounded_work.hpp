@@ -42,9 +42,6 @@ public:
   using Results      = std::vector<Worker>;
   using CondVar      = std::condition_variable;
 
-  static constexpr std::array<PromiseState, 4> PromiseStates{
-      {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
-
   static constexpr char const *LOGGING_NAME = "BackgroundedWork";
 
   BackgroundedWork()
@@ -193,6 +190,12 @@ public:
     workload_[PromiseState::FAILED].clear();
   }
 
+  void DiscardSuccesses()
+  {
+    Lock lock(mutex_);
+    workload_[PromiseState::FAILED].clear();
+  }
+
   void DiscardTimeouts()
   {
     Lock lock(mutex_);
@@ -229,11 +232,11 @@ public:
   }
 
   template <class KEY>
-  bool InFlight(const KEY &key) const
+  bool InFlight(const KEY &key)  // TODO(kll): Put const back here.
   {
     Lock lock(mutex_);
 
-    for (auto const &current_state : PromiseStates)
+    for (auto const &current_state : fetch::service::GetAllPromiseStates())
     {
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
@@ -256,11 +259,38 @@ public:
   }
 
   template <class KEY>
+  bool InFlightP(const KEY &key)  // TODO(kll): Put const back here.
+  {
+    Lock lock(mutex_);
+
+    for (auto const &current_state : fetch::service::GetAllPromiseStates())
+    {
+      auto &worklist_for_state = workload_[current_state];
+      auto  workitem_iter      = worklist_for_state.begin();
+      while (workitem_iter != worklist_for_state.end())
+      {
+        auto workitem = *workitem_iter;
+        if (!workitem)
+        {
+          workitem_iter = worklist_for_state.erase(workitem_iter);
+          continue;
+        }
+        if (workitem->Equals(key))
+        {
+          return true;
+        }
+        ++workitem_iter;
+      }
+    }
+    return false;
+  }
+
+  template <class KEY>
   bool Cancel(const KEY &key)
   {
     bool r = false;
 
-    for (auto const &current_state : PromiseStates)
+    for (auto const &current_state : fetch::service::GetAllPromiseStates())
     {
       Lock  lock(mutex_);
       auto &worklist_for_state = workload_[current_state];
@@ -286,9 +316,9 @@ public:
   }
 
 private:
-  WorkLoad workload_;
-  Mutex    mutex_;  //{__LINE__, __FILE__};
-  CondVar  cv_;
+  WorkLoad      workload_;
+  mutable Mutex mutex_;  //{__LINE__, __FILE__};
+  CondVar       cv_;
 };
 
 }  // namespace network

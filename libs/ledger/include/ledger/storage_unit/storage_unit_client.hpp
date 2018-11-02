@@ -327,11 +327,11 @@ private:
     FAILED,
   };
 
-  using Worker                  = MuddleLaneConnectorWorker;
-  using WorkerP                 = std::shared_ptr<Worker>;
-  using BackgroundedWork        = network::BackgroundedWork<Worker>;
-  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
+  using Worker                    = MuddleLaneConnectorWorker;
+  using WorkerPtr                 = std::shared_ptr<Worker>;
+  using BackgroundedWork          = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
   void WorkCycle();
 
@@ -340,13 +340,13 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  NetworkManager          network_manager_;
-  uint32_t                log2_lanes_ = 0;
-  ClientPtr               client_;
-  mutable Mutex           mutex_{__LINE__, __FILE__};
-  LaneToIdentity          lane_to_identity_map_;
-  BackgroundedWork        bg_work_;
-  BackgroundedWorkThreadP workthread_;
+  NetworkManager            network_manager_;
+  uint32_t                  log2_lanes_ = 0;
+  ClientPtr                 client_;
+  mutable Mutex             mutex_{__LINE__, __FILE__};
+  LaneToIdentity            lane_to_identity_map_;
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
 };
 
 }  // namespace ledger

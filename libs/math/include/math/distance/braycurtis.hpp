@@ -28,26 +28,26 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Braycurtis(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Braycurtis(memory::VectorSlice<T, S> const &a,
                                                            memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
-  using type                 = typename memory::VectorSlice<T, S>::type;
+  using Type                 = typename memory::VectorSlice<T, S>::Type;
 
-  type sumA = a.in_parallel().SumReduce(
+  Type sumA = a.in_parallel().SumReduce(
       memory::TrivialRange(0, a.size()),
       [](vector_register_type const &x, vector_register_type const &y) { return abs(x - y); }, b);
 
-  type sumB = a.in_parallel().SumReduce(
+  Type sumB = a.in_parallel().SumReduce(
       memory::TrivialRange(0, b.size()),
       [](vector_register_type const &x, vector_register_type const &y) { return abs(x + y); }, b);
 
-  return type(sumA / sumB);
+  return Type(sumA / sumB);
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Braycurtis(ShapeLessArray<T, C> const &a,
+inline typename ShapeLessArray<T, C>::Type Braycurtis(ShapeLessArray<T, C> const &a,
                                                       ShapeLessArray<T, C> const &b)
 {
   return Braycurtis(a.data(), b.data());

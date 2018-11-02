@@ -85,11 +85,11 @@ public:
   {
     while (!Empty())
     {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
     while (tasks_in_progress_ != 0)
     {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
   }
 

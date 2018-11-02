@@ -55,7 +55,7 @@ bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 
   std::ostream stream(&buffer);
 
-  stream << "HTTP/1.1 " << static_cast<uint16_t>(status_) << NEW_LINE;
+  stream << "HTTP/1.1 " << ToString(status_) << NEW_LINE;
 
   for (auto &field : header_)
   {

@@ -26,9 +26,9 @@ namespace fetch {
 namespace math {
 
 template <typename A>
-inline void WrapperMax(A const &a, typename A::type &ret)
+inline void WrapperMax(A const &a, typename A::Type &ret)
 {
-  Max<typename A::type, typename A::container_type>(a, ret);
+  Max<typename A::Type, typename A::container_type>(a, ret);
 }
 
 inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module &module)
