@@ -144,8 +144,7 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
-  auto worker =
-      std::make_shared<ExecutorConnectorWorker>(uri, muddle, timeout);
+  auto worker = std::make_shared<ExecutorConnectorWorker>(uri, muddle, timeout);
   bg_work_.Add(worker);
 }
 
