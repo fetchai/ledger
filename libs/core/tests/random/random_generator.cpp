@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 /* The random number generator was being exercised by the network
-   stress tests but this timesout in some environments. We removed the
+   stress tests but this timed out in some environments. We removed the
    random generatoring code from that test and add it here -- we will
    ratio the "random-fill" time aginst a more constant-fill to verify
    that the random code's expense does not creep upward over time.
