@@ -18,6 +18,8 @@
 
 #include "variant/variant.hpp"
 
+#include <iostream>
+
 namespace fetch {
 namespace variant {
 
@@ -82,6 +84,91 @@ Variant& Variant::operator=(Variant const &value)
 }
 
 /**
+ * Check for equality between to variant objects
+ *
+ * @param other The other variant to compare against
+ * @return true if the two variant are equal, otherwise false
+ */
+bool Variant::operator==(Variant const &other) const
+{
+  bool equal{false};
+
+  if (type_ == other.type_)
+  {
+    switch (type_)
+    {
+      case Type::UNDEFINED:
+      case Type::NULL_VALUE:
+        equal = true;
+        break;
+
+      case Type::INTEGER:
+        equal = primitive_.integer == other.primitive_.integer;
+        break;
+
+      case Type::FLOATING_POINT:
+        equal = primitive_.float_point == other.primitive_.float_point;
+        break;
+
+      case Type::BOOLEAN:
+        equal = primitive_.boolean == other.primitive_.boolean;
+        break;
+
+      case Type::STRING:
+        equal = string_ == other.string_;
+        break;
+
+      case Type::ARRAY:
+      {
+        equal = array_.size() == other.array_.size();
+
+        if (equal)
+        {
+          // check the contents
+          for (std::size_t i = 0; i < array_.size(); ++i)
+          {
+            // if the pointers are different and the contents are different
+            if ((array_[i] != other.array_[i]) && (*array_[i] != *other.array_[i]))
+            {
+              equal = false;
+              break;
+            }
+          }
+        }
+        break;
+      }
+
+      case Type::OBJECT:
+      {
+        equal = object_.size() == other.object_.size();
+
+        for (auto const &element : object_)
+        {
+          // lookup key in the other array
+          auto it = other.object_.find(element.first);
+          if (it == other.object_.end())
+          {
+            equal = false;
+            break;
+          }
+
+          // if the pointers are different and the contents are different
+          if ((element.second != it->second) && (*element.second != *(it->second)))
+          {
+            equal = false;
+            break;
+          }
+        }
+
+        break;
+      }
+    }
+  }
+
+  return equal;
+}
+
+/**
  * Internal: Reset the variant to its undefined state, releasing all held resources
  */
 void Variant::Reset()
@@ -124,6 +211,85 @@ void Variant::Reset()
   }
 
   type_ = Type::UNDEFINED;
+}
+
+/**
+ * Stream variant object out as a JSON encoded sequence
+ *
+ * @param stream The output stream
+ * @param variant The input variant
+ * @return The output stream
+ */
+std::ostream &operator<<(std::ostream &stream, Variant const &variant)
+{
+  using fetch::byte_array::ConstByteArray;
+
+  switch (variant.type_)
+  {
+  case Variant::Type::UNDEFINED:
+    stream << "(undefined)";
+    break;
+
+  case Variant::Type::INTEGER:
+    stream << variant.As<int64_t>();
+    break;
+
+  case Variant::Type::FLOATING_POINT:
+    stream << variant.As<double>();
+    break;
+
+  case Variant::Type::STRING:
+    stream << std::quoted(variant.As<std::string>());
+    break;
+
+  case Variant::Type::BOOLEAN:
+    stream << (variant.As<bool>() ? "true" : "false");
+    break;
+
+  case Variant::Type::NULL_VALUE:
+    stream << "null";
+    break;
+
+  case Variant::Type::ARRAY:
+    stream << "[";
+
+    for (std::size_t i = 0; i < variant.array_.size(); ++i)
+    {
+      if (i != 0)
+      {
+        stream << ", ";
+      }
+
+      // recursively call the stream operator
+      stream << *(variant.array_[i]);
+    }
+
+    stream << "]";
+    break;
+
+  case Variant::Type::OBJECT:
+    stream << "{";
+
+    std::size_t i{0};
+    for (auto const &element : variant.object_)
+    {
+      if (i != 0)
+      {
+        stream << ", ";
+      }
+
+      // format the element
+      stream << std::quoted(std::string{element.first}) << ": " << *(element.second);
+
+      ++i;
+    }
+
+    stream << "}";
+
+    break;
+  }
+
+  return stream;
 }
 
 } // namespace variant

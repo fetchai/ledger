@@ -121,7 +121,9 @@ public:
   template <typename T>
   meta::IfIsFloat<T, T> As() const;
   template <typename T>
-  meta::IfIsConstByteArray <T, ConstByteArray const &> As() const;
+  meta::IfIsConstByteArray<T, ConstByteArray const &> As() const;
+  template <typename T>
+  meta::IfIsStdString<T, std::string> As() const;
   /// @}
 
   std::size_t size() const;
@@ -130,6 +132,7 @@ public:
   /// @{
   Variant &operator[](std::size_t index);
   Variant const &operator[](std::size_t index) const;
+  void ResizeArray(std::size_t length);
   /// @}
 
   /// @name Object Element Access
@@ -154,7 +157,12 @@ public:
   Variant& operator=(char const *value);
 
   Variant& operator=(Variant const &value);
+
+  bool operator==(Variant const &other) const;
+  bool operator!=(Variant const &other) const;
   /// @}
+
+  friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
 private:
   using VariantList = std::vector<Variant*>;
@@ -172,8 +180,6 @@ private:
   /// @{
   Pool &pool();
   Variant *parent();
-
-  void ResizeArray(std::size_t length);
   void Reset();
   /// @}
 
@@ -414,7 +420,7 @@ meta::IfIsInteger<T, T> Variant::As() const
 {
   if (type() != Type::INTEGER)
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
+    throw std::runtime_error("Variant type mismatch, unable to extract integer value");
   }
 
   return static_cast<T>(primitive_.integer);
@@ -432,7 +438,7 @@ meta::IfIsFloat<T, T> Variant::As() const
 {
   if (type() != Type::FLOATING_POINT)
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
+    throw std::runtime_error("Variant type mismatch, unable to extract floating point value");
   }
 
   return static_cast<T>(primitive_.float_point);
@@ -450,10 +456,28 @@ meta::IfIsConstByteArray <T, Variant::ConstByteArray const &> Variant::As() cons
 {
   if (type() != Type::STRING)
   {
-    throw std::runtime_error("Variant type mismatch, unable to extract boolean value");
+    throw std::runtime_error("Variant type mismatch, unable to extract string value");
   }
 
   return string_;
+}
+
+/**
+ * std::string conversion accessor
+ *
+ * @tparam T A std::string type
+ * @return The converted value
+ * @throws std::runtime_error in the case where the conversion is not possible
+ */
+template <typename T>
+meta::IfIsStdString<T, std::string> Variant::As() const
+{
+  if (type() != Type::STRING)
+  {
+    throw std::runtime_error("Variant type mismatch, unable to extract string value");
+  }
+
+  return static_cast<std::string>(string_);
 }
 
 /**
@@ -776,6 +800,17 @@ inline void Variant::ResizeArray(std::size_t length)
 
     array_.pop_back();
   }
+}
+
+/**
+ * Check inequality between two elements
+ *
+ * @param other The other variant to check against
+ * @return true if not equal, otherwise false
+ */
+inline bool Variant::operator!=(Variant const &other) const
+{
+  return !(*this == other);
 }
 
 }  // namespace script
