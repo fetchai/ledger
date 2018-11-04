@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "variant/variant.hpp"
 
 #include <iostream>
@@ -200,6 +201,8 @@ void Variant::Reset()
         it = object_.erase(it);
 
         assert(variant->parent_ == parent);
+        FETCH_UNUSED(parent);
+
         variant->Reset();
         variant->parent_ = nullptr;
 
