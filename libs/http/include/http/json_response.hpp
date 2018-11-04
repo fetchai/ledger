@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "variant/variant.hpp"
 #include "http/mime_types.hpp"
 #include "http/response.hpp"
+#include "variant/variant.hpp"
 
 #include <sstream>
 namespace fetch {
@@ -33,7 +33,7 @@ inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &b
 }
 
 inline http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
-                                             Status                 status = Status::SUCCESS_OK)
+                                             Status                  status = Status::SUCCESS_OK)
 {
   static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
   std::stringstream body;

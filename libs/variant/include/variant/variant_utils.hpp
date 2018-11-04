@@ -54,5 +54,5 @@ bool Extract(Variant const &object, byte_array::ConstByteArray const &key, T &va
   return success;
 }
 
-} // namespace variant
-} // namespace fetch
+}  // namespace variant
+}  // namespace fetch

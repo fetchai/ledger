@@ -76,8 +76,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     variant::Variant result = variant::Variant::Object();
-    result["IP"]           = IP_;
-    result["TCPPort"]      = TCPPort_;
+    result["IP"]            = IP_;
+    result["TCPPort"]       = TCPPort_;
     std::cout << "variant: " << IP_ << ":" << TCPPort_ << std::endl;
     return result;
   }

@@ -27,8 +27,8 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
-#include "meta/type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
+#include "meta/type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
 #include <cassert>

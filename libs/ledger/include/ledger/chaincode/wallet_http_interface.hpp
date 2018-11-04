@@ -142,8 +142,8 @@ private:
       // construct the wealth generation transaction
       {
         variant::Variant wealth_data = variant::Variant::Object();
-        wealth_data["address"] = byte_array::ToBase64(address);
-        wealth_data["amount"]  = 1001;
+        wealth_data["address"]       = byte_array::ToBase64(address);
+        wealth_data["amount"]        = 1001;
 
         std::ostringstream oss;
         oss << wealth_data;
@@ -173,7 +173,7 @@ private:
       key_store_.Set(set_id, signer.private_key());
     }
 
-    variant::Variant    data;
+    variant::Variant   data;
     std::ostringstream oss;
 
     // Return old data format as a fall back (when size is 1)
@@ -186,17 +186,17 @@ private:
     }
     else
     {
-      data = variant::Variant::Object();
+      data            = variant::Variant::Object();
       data["success"] = true;
 
       variant::Variant &results_array = data["addresses"];
-      results_array = variant::Variant::Array(return_info.size());
+      results_array                   = variant::Variant::Array(return_info.size());
 
       std::size_t index{0};
       for (auto const &info : return_info)
       {
         variant::Variant &metadata = results_array[index++];
-        metadata = variant::Variant::Object();
+        metadata                   = variant::Variant::Object();
 
         metadata["address"] = std::get<0>(info);
         metadata["lane"]    = std::get<1>(info);
@@ -247,13 +247,13 @@ private:
 
       // extract all the request parameters
       if (variant::Extract(doc.root(), "from", from) && variant::Extract(doc.root(), "to", to) &&
-        variant::Extract(doc.root(), "amount", amount))
+          variant::Extract(doc.root(), "amount", amount))
       {
 
         variant::Variant data = variant::Variant::Object();
-        data["from"]   = from;
-        data["to"]     = to;
-        data["amount"] = amount;
+        data["from"]          = from;
+        data["to"]            = to;
+        data["amount"]        = amount;
 
         // convert the data into json
         std::ostringstream oss;

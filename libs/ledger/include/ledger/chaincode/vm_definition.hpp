@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "variant/variant.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "variant/variant.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {
@@ -72,17 +72,14 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S *smart_contract_instance = null
     return variant::Variant{val.c_str()};
   });
 
-  module->ExportFunction("toVariant", [](int64_t const &val) -> variant::Variant {
-    return variant::Variant{val};
-  });
+  module->ExportFunction(
+      "toVariant", [](int64_t const &val) -> variant::Variant { return variant::Variant{val}; });
 
-  module->ExportFunction("toVariant", [](int32_t const &val) -> variant::Variant {
-    return variant::Variant{val};
-  });
+  module->ExportFunction(
+      "toVariant", [](int32_t const &val) -> variant::Variant { return variant::Variant{val}; });
 
-  module->ExportFunction("toVariant", [](bool const &val) -> variant::Variant {
-    return variant::Variant{val};
-  });
+  module->ExportFunction("toVariant",
+                         [](bool const &val) -> variant::Variant { return variant::Variant{val}; });
 
   module->ExportClass<SmartContract>("Ledger")
       .ExportStaticFunction("GetOrCreateRecord",

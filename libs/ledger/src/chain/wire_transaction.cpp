@@ -20,8 +20,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
-#include "variant/variant.hpp"
 #include "core/serializers/serialisation_argument_wrapper.hpp"
+#include "variant/variant.hpp"
 
 #include <sstream>
 
@@ -44,14 +44,14 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
   if (add_metadata)
   {
     Variant &metadata = tx_v["metadata"];
-    metadata = Variant::Object();
+    metadata          = Variant::Object();
 
     metadata["data"]          = byte_array::ToBase64(tx.data());
     metadata["fee"]           = tx.summary().fee;
     metadata["contract_name"] = tx.contract_name();
 
     Variant &resources = metadata["resource"];
-    resources = Variant::Array(tx.resources().size());
+    resources          = Variant::Array(tx.resources().size());
 
     // encode all the resources as base64
     std::size_t idx{0};
@@ -63,7 +63,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
     if (!tx.signatures().empty())
     {
       Variant &signatures = metadata["identities"];
-      signatures = Variant::Array(tx.signatures().size());
+      signatures          = Variant::Array(tx.signatures().size());
 
       std::size_t idx{0};
       for (auto const &signature : tx.signatures())
@@ -95,7 +95,7 @@ MutableTransaction FromWireTransaction(ConstByteArray const &transaction)
   auto &             tx_v = tx_json.root();
 
   serializers::ByteArrayBuffer stream{FromBase64(tx_v["data"].As<ConstByteArray>())};
-  auto tx_data = TxSigningAdapterFactory(tx);
+  auto                         tx_data = TxSigningAdapterFactory(tx);
   stream >> tx_data;
 
   return tx;

@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "variant/variant.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
 #include "network_classes.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace network_mine_test {
@@ -132,10 +132,10 @@ public:
     {
 
       variant::Variant temp = variant::Variant::Object();
-      temp["minerNumber"]  = i.body().miner_number;
-      temp["blockNumber"]  = i.body().block_number;
-      temp["hashcurrent"]  = ToHex(i.hash());
-      temp["hashprev"]     = ToHex(i.body().previous_hash);
+      temp["minerNumber"]   = i.body().miner_number;
+      temp["blockNumber"]   = i.body().block_number;
+      temp["hashcurrent"]   = ToHex(i.hash());
+      temp["hashprev"]      = ToHex(i.body().previous_hash);
 
       result[index++] = temp;
     }

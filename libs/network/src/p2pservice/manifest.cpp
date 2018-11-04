@@ -151,9 +151,9 @@ bool Manifest::ExtractSection(Variant const &obj, ServiceType service, std::size
   if (obj.IsObject())
   {
     ConstByteArray uri_str;
-    uint16_t port;
+    uint16_t       port;
 
-    bool const has_uri = variant::Extract(obj, "uri", uri_str);
+    bool const has_uri  = variant::Extract(obj, "uri", uri_str);
     bool const has_port = variant::Extract(obj, "port", port);
 
     if (!has_uri)

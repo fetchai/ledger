@@ -147,7 +147,7 @@ protected:
     bool success = false;
 
     // formulate the query
-    Query query = Variant::Object();
+    Query query      = Variant::Object();
     query["address"] = byte_array::ToBase64(address);
 
     Query response;

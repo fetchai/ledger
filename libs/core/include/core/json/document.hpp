@@ -43,15 +43,15 @@ public:
     KEYWORD_NULL  = 2,
     STRING        = 3,
 
-    NUMBER_INT    = 5,
-    NUMBER_FLOAT  = 6,
+    NUMBER_INT   = 5,
+    NUMBER_FLOAT = 6,
 
-    OPEN_OBJECT   = 11,
-    CLOSE_OBJECT  = 12,
-    OPEN_ARRAY    = 13,
-    CLOSE_ARRAY   = 14,
+    OPEN_OBJECT  = 11,
+    CLOSE_OBJECT = 12,
+    OPEN_ARRAY   = 13,
+    CLOSE_ARRAY  = 14,
 
-    KEY           = 16
+    KEY = 16
   };
 
 public:
@@ -110,13 +110,12 @@ public:
   JSONDocument &operator=(JSONDocument &&) = default;
 
 private:
-
   struct JSONObject
   {
-    uint64_t start  = 0;
-    uint64_t size   = 1;
-    uint64_t i      = 0;
-    uint8_t  type   = 0;
+    uint64_t start = 0;
+    uint64_t size  = 1;
+    uint64_t i     = 0;
+    uint8_t  type  = 0;
   };
 
   struct JSONToken
@@ -126,8 +125,9 @@ private:
     uint8_t  type   = 0;
   };
 
-  void Tokenise(ConstByteArray const &document);
-  static void ExtractPrimitive(Variant &variant, JSONToken const &token, ConstByteArray const &document);
+  void        Tokenise(ConstByteArray const &document);
+  static void ExtractPrimitive(Variant &variant, JSONToken const &token,
+                               ConstByteArray const &document);
 
   std::vector<uint16_t>    counters_;
   std::vector<JSONToken *> object_stack_;

@@ -18,9 +18,9 @@
 
 #include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "crypto/fnv.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "crypto/fnv.hpp"
 
 #include <stdexcept>
 
@@ -73,7 +73,7 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx)
   }
 
   ConstByteArray address;
-  uint64_t amount{0};
+  uint64_t       amount{0};
 
   if (Extract(data, "address", address) && Extract(data, "amount", amount))
   {
@@ -158,7 +158,7 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
     GetStateRecord(record, address);
 
     // formulate the response
-    response = Variant::Object();
+    response            = Variant::Object();
     response["balance"] = record.balance;
 
     status = Status::OK;

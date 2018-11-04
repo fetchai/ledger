@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "variant/variant.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "variant/variant.hpp"
 
 #include <atomic>
 #include <functional>
@@ -31,7 +31,7 @@
 
 namespace fetch {
 namespace variant {
-  class Variant;
+class Variant;
 }
 namespace ledger {
 

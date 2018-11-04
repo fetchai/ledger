@@ -146,7 +146,7 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &i
 }
 
 fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant const &metadata_v,
-                                                         PrivateKeys const &           private_keys)
+                                                         PrivateKeys const &private_keys)
 {
   using fetch::chain::MutableTransaction;
   using fetch::byte_array::ConstByteArray;
@@ -156,7 +156,6 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant
   mtx.set_contract_name(metadata_v["contract_name"].As<ConstByteArray>());
   mtx.set_data(FromBase64(metadata_v["data"].As<ConstByteArray>()));
   mtx.set_fee(metadata_v["fee"].As<uint64_t>());
-
 
   MutableTransaction::ResourceSet resources;
   if (metadata_v.Has("resources"))
@@ -270,7 +269,7 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
   auto priv_keys_json_string = GetJsonContentFromFileCmdlArg(priv_keys_filename_argument);
   fetch::json::JSONDocument json_doc{priv_keys_json_string};
 
-  auto const &doc_root_v     = json_doc.root();
+  auto const &doc_root_v = json_doc.root();
 
   if (doc_root_v.Has("private_keys"))
   {

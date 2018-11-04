@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
 #include "variant/variant.hpp"
+#include "core/macros.hpp"
 
 #include <iostream>
 
@@ -30,7 +30,7 @@ namespace variant {
  * @param value The value to be assigned
  * @return Reference to the current object
  */
-Variant& Variant::operator=(Variant const &value)
+Variant &Variant::operator=(Variant const &value)
 {
   Reset();
 
@@ -40,45 +40,45 @@ Variant& Variant::operator=(Variant const &value)
   // based on the new type update accordingly
   switch (type_)
   {
-    case Type::UNDEFINED:
-    case Type::NULL_VALUE:
-      // empty types are conveyed based on the type field alone
-      break;
+  case Type::UNDEFINED:
+  case Type::NULL_VALUE:
+    // empty types are conveyed based on the type field alone
+    break;
 
-    case Type::BOOLEAN:
-    case Type::INTEGER:
-    case Type::FLOATING_POINT:
-      primitive_ = value.primitive_;
-      break;
+  case Type::BOOLEAN:
+  case Type::INTEGER:
+  case Type::FLOATING_POINT:
+    primitive_ = value.primitive_;
+    break;
 
-    case Type::STRING:
-      string_ = value.string_;
-      break;
+  case Type::STRING:
+    string_ = value.string_;
+    break;
 
-    case Type::ARRAY:
-      ResizeArray(value.array_.size());
-      for (std::size_t i = 0, end = value.array_.size(); i < end; ++i)
-      {
-        *(array_.at(i)) = *(value.array_.at(i));
-      }
-      break;
-
-    case Type::OBJECT:
+  case Type::ARRAY:
+    ResizeArray(value.array_.size());
+    for (std::size_t i = 0, end = value.array_.size(); i < end; ++i)
     {
-      for (auto const &element : value.object_)
-      {
-        // create an element
-        Variant *obj = pool().Allocate();
-        obj->parent_ = parent();
-
-        // make a deep copy
-        *obj = *element.second;
-
-        // update our object
-        object_.emplace(element.first, obj);
-      }
-      break;
+      *(array_.at(i)) = *(value.array_.at(i));
     }
+    break;
+
+  case Type::OBJECT:
+  {
+    for (auto const &element : value.object_)
+    {
+      // create an element
+      Variant *obj = pool().Allocate();
+      obj->parent_ = parent();
+
+      // make a deep copy
+      *obj = *element.second;
+
+      // update our object
+      object_.emplace(element.first, obj);
+    }
+    break;
+  }
   }
 
   return *this;
@@ -98,71 +98,71 @@ bool Variant::operator==(Variant const &other) const
   {
     switch (type_)
     {
-      case Type::UNDEFINED:
-      case Type::NULL_VALUE:
-        equal = true;
-        break;
+    case Type::UNDEFINED:
+    case Type::NULL_VALUE:
+      equal = true;
+      break;
 
-      case Type::INTEGER:
-        equal = primitive_.integer == other.primitive_.integer;
-        break;
+    case Type::INTEGER:
+      equal = primitive_.integer == other.primitive_.integer;
+      break;
 
-      case Type::FLOATING_POINT:
-        equal = primitive_.float_point == other.primitive_.float_point;
-        break;
+    case Type::FLOATING_POINT:
+      equal = primitive_.float_point == other.primitive_.float_point;
+      break;
 
-      case Type::BOOLEAN:
-        equal = primitive_.boolean == other.primitive_.boolean;
-        break;
+    case Type::BOOLEAN:
+      equal = primitive_.boolean == other.primitive_.boolean;
+      break;
 
-      case Type::STRING:
-        equal = string_ == other.string_;
-        break;
+    case Type::STRING:
+      equal = string_ == other.string_;
+      break;
 
-      case Type::ARRAY:
+    case Type::ARRAY:
+    {
+      equal = array_.size() == other.array_.size();
+
+      if (equal)
       {
-        equal = array_.size() == other.array_.size();
-
-        if (equal)
+        // check the contents
+        for (std::size_t i = 0; i < array_.size(); ++i)
         {
-          // check the contents
-          for (std::size_t i = 0; i < array_.size(); ++i)
-          {
-            // if the pointers are different and the contents are different
-            if ((array_[i] != other.array_[i]) && (*array_[i] != *other.array_[i]))
-            {
-              equal = false;
-              break;
-            }
-          }
-        }
-        break;
-      }
-
-      case Type::OBJECT:
-      {
-        equal = object_.size() == other.object_.size();
-
-        for (auto const &element : object_)
-        {
-          // lookup key in the other array
-          auto it = other.object_.find(element.first);
-          if (it == other.object_.end())
-          {
-            equal = false;
-            break;
-          }
-
           // if the pointers are different and the contents are different
-          if ((element.second != it->second) && (*element.second != *(it->second)))
+          if ((array_[i] != other.array_[i]) && (*array_[i] != *other.array_[i]))
           {
             equal = false;
             break;
           }
         }
-
-        break;
       }
+      break;
+    }
+
+    case Type::OBJECT:
+    {
+      equal = object_.size() == other.object_.size();
+
+      for (auto const &element : object_)
+      {
+        // lookup key in the other array
+        auto it = other.object_.find(element.first);
+        if (it == other.object_.end())
+        {
+          equal = false;
+          break;
+        }
+
+        // if the pointers are different and the contents are different
+        if ((element.second != it->second) && (*element.second != *(it->second)))
+        {
+          equal = false;
+          break;
+        }
+      }
+
+      break;
+    }
     }
   }
 
@@ -176,41 +176,40 @@ void Variant::Reset()
 {
   switch (type_)
   {
-    case Type::UNDEFINED:
-    case Type::NULL_VALUE:
-    case Type::INTEGER:
-    case Type::FLOATING_POINT:
-    case Type::BOOLEAN:
-      break;
-    case Type::STRING:
-      string_ = ConstByteArray();
-      break;
+  case Type::UNDEFINED:
+  case Type::NULL_VALUE:
+  case Type::INTEGER:
+  case Type::FLOATING_POINT:
+  case Type::BOOLEAN:
+    break;
+  case Type::STRING:
+    string_ = ConstByteArray();
+    break;
 
-    case Type::ARRAY:
-      ResizeArray(0);
-      break;
+  case Type::ARRAY:
+    ResizeArray(0);
+    break;
 
-    case Type::OBJECT:
+  case Type::OBJECT:
+  {
+    Variant *parent = (parent_) ? parent_ : this;
+
+    auto it = object_.begin();
+    while (it != object_.end())
     {
-      Variant *parent = (parent_) ? parent_ : this;
+      Variant *variant = it->second;
+      it               = object_.erase(it);
 
-      auto it = object_.begin();
-      while (it != object_.end())
-      {
-        Variant *variant = it->second;
-        it = object_.erase(it);
+      assert(variant->parent_ == parent);
+      FETCH_UNUSED(parent);
 
-        assert(variant->parent_ == parent);
-        FETCH_UNUSED(parent);
+      variant->Reset();
+      variant->parent_ = nullptr;
 
-        variant->Reset();
-        variant->parent_ = nullptr;
-
-        pool().Release(variant);
-
-      }
-      break;
+      pool().Release(variant);
     }
+    break;
+  }
   }
 
   type_ = Type::UNDEFINED;
@@ -295,5 +294,5 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
   return stream;
 }
 
-} // namespace variant
-} // namespace fetch
+}  // namespace variant
+}  // namespace fetch

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/is_log2.hpp"
 #include "core/mutex.hpp"
+#include "meta/is_log2.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/optimisation/bitvector.hpp"
 #include "vectorise/threading/pool.hpp"

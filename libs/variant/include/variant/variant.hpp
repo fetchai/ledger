@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "meta/type_traits.hpp"
@@ -25,8 +24,8 @@
 
 #include <cstdint>
 #include <stdexcept>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace variant {
@@ -77,27 +76,54 @@ public:
   ~Variant();
 
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsBoolean<T>* = nullptr);
+  explicit Variant(T const &value, meta::IfIsBoolean<T> * = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsInteger<T>* = nullptr);
+  explicit Variant(T const &value, meta::IfIsInteger<T> * = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFloat<T>* = nullptr);
+  explicit Variant(T const &value, meta::IfIsFloat<T> * = nullptr);
   template <typename T>
-  explicit Variant(T &&value, meta::IfIsString<T>* = nullptr);
+  explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
   explicit Variant(char const *value);
 
   /// @name Basic Type Access
   /// @{
-  Type type() const { return type_; }
+  Type type() const
+  {
+    return type_;
+  }
 
-  bool IsUndefined() const { return type() == Type::UNDEFINED; }
-  bool IsInteger() const { return type() == Type::INTEGER; }
-  bool IsFloatingPoint() const { return type() == Type::FLOATING_POINT; }
-  bool IsBoolean() const { return type() == Type::BOOLEAN; }
-  bool IsString() const { return type() == Type::STRING; }
-  bool IsNull() const { return type() == Type::NULL_VALUE; }
-  bool IsArray() const { return type() == Type::ARRAY; }
-  bool IsObject() const { return type() == Type::OBJECT; }
+  bool IsUndefined() const
+  {
+    return type() == Type::UNDEFINED;
+  }
+  bool IsInteger() const
+  {
+    return type() == Type::INTEGER;
+  }
+  bool IsFloatingPoint() const
+  {
+    return type() == Type::FLOATING_POINT;
+  }
+  bool IsBoolean() const
+  {
+    return type() == Type::BOOLEAN;
+  }
+  bool IsString() const
+  {
+    return type() == Type::STRING;
+  }
+  bool IsNull() const
+  {
+    return type() == Type::NULL_VALUE;
+  }
+  bool IsArray() const
+  {
+    return type() == Type::ARRAY;
+  }
+  bool IsObject() const
+  {
+    return type() == Type::OBJECT;
+  }
   /// @}
 
   /// @name Type Checking
@@ -109,7 +135,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, bool> Is() const;
   template <typename T>
-  meta::IfIsString <T, bool> Is() const;
+  meta::IfIsString<T, bool> Is() const;
   /// @}
 
   /// @name Element Access
@@ -130,33 +156,33 @@ public:
 
   /// @name Array Element Access
   /// @{
-  Variant &operator[](std::size_t index);
+  Variant &      operator[](std::size_t index);
   Variant const &operator[](std::size_t index) const;
-  void ResizeArray(std::size_t length);
+  void           ResizeArray(std::size_t length);
   /// @}
 
   /// @name Object Element Access
   /// @{
-  Variant &operator[](ConstByteArray const &key);
+  Variant &      operator[](ConstByteArray const &key);
   Variant const &operator[](ConstByteArray const &key) const;
-  bool Has(ConstByteArray const &key) const;
+  bool           Has(ConstByteArray const &key) const;
   /// @}
 
   /// @name Operators
   /// @{
   template <typename T>
-  meta::IfIsBoolean<T, Variant&> operator=(T const &value);
+  meta::IfIsBoolean<T, Variant &> operator=(T const &value);
   template <typename T>
-  meta::IfIsInteger<T, Variant&> operator=(T const &value);
+  meta::IfIsInteger<T, Variant &> operator=(T const &value);
   template <typename T>
-  meta::IfIsFloat<T, Variant&> operator=(T const &value);
+  meta::IfIsFloat<T, Variant &> operator=(T const &value);
   template <typename T>
-  meta::IfIsAByteArray<T, Variant&> operator=(T const &value);
+  meta::IfIsAByteArray<T, Variant &> operator=(T const &value);
   template <typename T>
-  meta::IfIsStdString <T, Variant&> operator=(T const &value);
-  Variant& operator=(char const *value);
+  meta::IfIsStdString<T, Variant &> operator=(T const &value);
+  Variant &                         operator=(char const *value);
 
-  Variant& operator=(Variant const &value);
+  Variant &operator=(Variant const &value);
 
   bool operator==(Variant const &other) const;
   bool operator!=(Variant const &other) const;
@@ -165,9 +191,9 @@ public:
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
 private:
-  using VariantList = std::vector<Variant*>;
-  using VariantObject = std::unordered_map<ConstByteArray, Variant*>;
-  using Pool = detail::ElementPool<Variant>;
+  using VariantList   = std::vector<Variant *>;
+  using VariantObject = std::unordered_map<ConstByteArray, Variant *>;
+  using Pool          = detail::ElementPool<Variant>;
 
   union PrimitiveData
   {
@@ -178,14 +204,14 @@ private:
 
   /// @name Helper Methods
   /// @{
-  Pool &pool();
+  Pool &   pool();
   Variant *parent();
-  void Reset();
+  void     Reset();
   /// @}
 
   // Memory management
-  Variant       *parent_{nullptr};        ///< The parent to which all sub-variants are allocated
-  Pool           pool_;                   ///< The pool of variant objects (populated for top only)
+  Variant *parent_{nullptr};  ///< The parent to which all sub-variants are allocated
+  Pool     pool_;             ///< The pool of variant objects (populated for top only)
 
   // Data Elements
   Type           type_{Type::UNDEFINED};  ///< The type of the variant
@@ -252,8 +278,7 @@ inline Variant Variant::Object()
  */
 inline Variant::Variant(std::size_t pool_reserve)
   : pool_(pool_reserve)
-{
-}
+{}
 
 /**
  * (Deep) copy construct a variant from another variant
@@ -281,10 +306,10 @@ inline Variant::~Variant()
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsBoolean<T>*)
+Variant::Variant(T const &value, meta::IfIsBoolean<T> *)
   : Variant()
 {
-  type_ = Type::BOOLEAN;
+  type_              = Type::BOOLEAN;
   primitive_.boolean = value;
 }
 
@@ -295,10 +320,10 @@ Variant::Variant(T const &value, meta::IfIsBoolean<T>*)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsInteger<T>*)
+Variant::Variant(T const &value, meta::IfIsInteger<T> *)
   : Variant()
 {
-  type_ = Type::INTEGER;
+  type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
 }
 
@@ -309,10 +334,10 @@ Variant::Variant(T const &value, meta::IfIsInteger<T>*)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFloat<T>*)
+Variant::Variant(T const &value, meta::IfIsFloat<T> *)
   : Variant()
 {
-  type_ = Type::FLOATING_POINT;
+  type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
 }
 
@@ -323,10 +348,10 @@ Variant::Variant(T const &value, meta::IfIsFloat<T>*)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T &&value, meta::IfIsString<T>*)
+Variant::Variant(T &&value, meta::IfIsString<T> *)
   : Variant()
 {
-  type_ = Type::STRING;
+  type_   = Type::STRING;
   string_ = std::forward<T>(value);
 }
 
@@ -338,7 +363,7 @@ Variant::Variant(T &&value, meta::IfIsString<T>*)
 inline Variant::Variant(char const *value)
   : Variant()
 {
-  type_ = Type::STRING;
+  type_   = Type::STRING;
   string_ = value;
 }
 
@@ -452,7 +477,7 @@ meta::IfIsFloat<T, T> Variant::As() const
  * @throws std::runtime_error in the case where the conversion is not possible
  */
 template <typename T>
-meta::IfIsConstByteArray <T, Variant::ConstByteArray const &> Variant::As() const
+meta::IfIsConstByteArray<T, Variant::ConstByteArray const &> Variant::As() const
 {
   if (type() != Type::STRING)
   {
@@ -488,11 +513,11 @@ meta::IfIsStdString<T, std::string> Variant::As() const
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsBoolean<T, Variant&> Variant::operator=(T const &value)
+meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_ = Type::BOOLEAN;
+  type_              = Type::BOOLEAN;
   primitive_.boolean = value;
 
   return *this;
@@ -506,14 +531,15 @@ meta::IfIsBoolean<T, Variant&> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsInteger<T, Variant&> Variant::operator=(T const &value)
+meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_ = Type::INTEGER;
+  type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
 
-  return *this;}
+  return *this;
+}
 
 /**
  * Float assignment operator
@@ -523,11 +549,11 @@ meta::IfIsInteger<T, Variant&> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFloat<T, Variant&> Variant::operator=(T const &value)
+meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_ = Type::FLOATING_POINT;
+  type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
 
   return *this;
@@ -541,11 +567,11 @@ meta::IfIsFloat<T, Variant&> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsAByteArray<T, Variant&> Variant::operator=(T const &value)
+meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_ = Type::STRING;
+  type_   = Type::STRING;
   string_ = value;
 
   return *this;
@@ -559,11 +585,11 @@ meta::IfIsAByteArray<T, Variant&> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsStdString <T, Variant&> Variant::operator=(T const &value)
+meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
 {
   Reset();
 
-  type_ = Type::STRING;
+  type_   = Type::STRING;
   string_ = ConstByteArray{value};
 
   return *this;
@@ -575,11 +601,11 @@ meta::IfIsStdString <T, Variant&> Variant::operator=(T const &value)
  * @param value The value to be assigned
  * @return Reference to the current object
  */
-inline Variant& Variant::operator=(char const *value)
+inline Variant &Variant::operator=(char const *value)
 {
   Reset();
 
-  type_ = Type::STRING;
+  type_   = Type::STRING;
   string_ = ConstByteArray{value};
 
   return *this;
@@ -710,24 +736,24 @@ inline std::size_t Variant::size() const
 
   switch (type_)
   {
-    case Type::UNDEFINED:
-    case Type::INTEGER:
-    case Type::FLOATING_POINT:
-    case Type::BOOLEAN:
-    case Type::NULL_VALUE:
-      break;
+  case Type::UNDEFINED:
+  case Type::INTEGER:
+  case Type::FLOATING_POINT:
+  case Type::BOOLEAN:
+  case Type::NULL_VALUE:
+    break;
 
-    case Type::STRING:
-      length = string_.size();
-      break;
+  case Type::STRING:
+    length = string_.size();
+    break;
 
-    case Type::ARRAY:
-      length = array_.size();
-      break;
+  case Type::ARRAY:
+    length = array_.size();
+    break;
 
-    case Type::OBJECT:
-      length = object_.size();
-      break;
+  case Type::OBJECT:
+    length = object_.size();
+    break;
   }
 
   return length;
@@ -813,5 +839,5 @@ inline bool Variant::operator!=(Variant const &other) const
   return !(*this == other);
 }
 
-}  // namespace script
+}  // namespace variant
 }  // namespace fetch

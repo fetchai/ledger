@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "fetch_version.hpp"
 
 #include <chrono>
 #include <sstream>
@@ -123,7 +123,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
 
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
 
-  Variant request = Variant::Object();
+  Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"]       = external_address_;
   request["port"]       = port_;
@@ -175,7 +175,7 @@ bool BootstrapMonitor::RegisterNode()
 {
   bool success = false;
 
-  Variant request = Variant::Object();
+  Variant request           = Variant::Object();
   request["public_key"]     = byte_array::ToBase64(identity_.identifier());
   request["network"]        = network_id_;
   request["host"]           = external_address_;
@@ -205,7 +205,7 @@ bool BootstrapMonitor::NotifyNode()
 {
   bool success = false;
 
-  Variant request = Variant::Object();
+  Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
   Variant                 response;

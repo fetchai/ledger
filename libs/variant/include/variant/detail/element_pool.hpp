@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
 #include <unordered_set>
 #include <vector>
-#include <memory>
 
 namespace fetch {
 namespace variant {
@@ -36,15 +36,14 @@ template <typename T>
 class ElementPool
 {
 public:
-
   // Construction / Destruction
   ElementPool() = default;
   explicit ElementPool(std::size_t size);
   ElementPool(ElementPool const &) = delete;
-  ElementPool(ElementPool &&) = default;
-  ~ElementPool() = default;
+  ElementPool(ElementPool &&)      = default;
+  ~ElementPool()                   = default;
 
-  T *Allocate();
+  T *  Allocate();
   void Release(T *element);
   bool empty() const;
 
@@ -53,15 +52,14 @@ public:
   ElementPool &operator=(ElementPool &&) = default;
 
 private:
-
   static constexpr std::size_t DEFAULT_ALLOCATE_BATCH = 10;
 
   void Reserve(std::size_t size);
 
   using ElementPtr     = std::shared_ptr<T>;
   using UnderlyingPool = std::vector<ElementPtr>;
-  using ElementList    = std::vector<T*>;
-  using ElementSet     = std::unordered_set<T*>;
+  using ElementList    = std::vector<T *>;
+  using ElementSet     = std::unordered_set<T *>;
 
   UnderlyingPool pool_;
   ElementList    free_;
@@ -157,6 +155,6 @@ void ElementPool<T>::Reserve(std::size_t size)
   }
 }
 
-} // namespace detail
-} // namespace variant
-} // namespace fetch
+}  // namespace detail
+}  // namespace variant
+}  // namespace fetch

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 // would be nice to remove these
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <string>
 #include <type_traits>
@@ -47,7 +47,7 @@ constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteAr
 
 template <typename T>
 constexpr bool IsAByteArray = (std::is_same<T, byte_array::ByteArray>::value ||
-                              std::is_same<T, byte_array::ConstByteArray>::value);
+                               std::is_same<T, byte_array::ConstByteArray>::value);
 
 template <typename T>
 constexpr bool IsStdString = std::is_same<T, std::string>::value;
@@ -61,8 +61,8 @@ constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
 
-//template <typename T, typename R = T>
-//using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
+// template <typename T, typename R = T>
+// using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsInteger = EnableIf<IsInteger<T>, R>;

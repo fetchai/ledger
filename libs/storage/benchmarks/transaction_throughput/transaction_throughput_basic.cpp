@@ -58,8 +58,8 @@ private:
         "nve3rfRigBZ+YX9lFKVNDA05fQ6V8MfEmx63+bKT0IQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     variant::Variant wealth_data = variant::Variant::Object();
-    wealth_data["address"] = address;
-    wealth_data["amount"]  = amount++;
+    wealth_data["address"]       = address;
+    wealth_data["amount"]        = amount++;
 
     std::ostringstream oss;
     oss << wealth_data;

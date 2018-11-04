@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "variant/variant.hpp"
 #include "http/client.hpp"
 #include "http/method.hpp"
+#include "variant/variant.hpp"
 
 #include <string>
 #include <unordered_map>

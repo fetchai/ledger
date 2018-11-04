@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "variant/variant.hpp"
 
 #include <gtest/gtest.h>
@@ -27,10 +27,9 @@ namespace {
 class VariantTests : public ::testing::Test
 {
 protected:
-
-  using Variant         = fetch::variant::Variant;
-  using ConstByteArray  = fetch::byte_array::ConstByteArray;
-  using ByteArray       = fetch::byte_array::ByteArray;
+  using Variant        = fetch::variant::Variant;
+  using ConstByteArray = fetch::byte_array::ConstByteArray;
+  using ByteArray      = fetch::byte_array::ByteArray;
 };
 
 TEST_F(VariantTests, PrimitiveConstruction)
@@ -120,7 +119,6 @@ TEST_F(VariantTests, PrimitiveAssignment)
   v = 3.66;
   EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
 }
-
 
 TEST_F(VariantTests, CheckPrimitiveIsValue)
 {
@@ -254,7 +252,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_EQ(1, v.As<int>());
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
 
@@ -268,7 +266,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_EQ(20, v.As<int>());
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
 
@@ -282,7 +280,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
 
@@ -296,7 +294,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_FLOAT_EQ(3.14f, v.As<float>());
     EXPECT_FLOAT_EQ(3.14, v.As<double>());
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
 
@@ -310,7 +308,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_FLOAT_EQ(2.71828f, v.As<float>());
     EXPECT_DOUBLE_EQ(2.71828, v.As<double>());
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
 
@@ -324,7 +322,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_EQ(v.As<ConstByteArray>(), "this is a simple string");
   }
 
@@ -338,7 +336,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_EQ(v.As<ConstByteArray>(), "this is a simple string");
   }
 
@@ -352,7 +350,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
-    //EXPECT_THROW(v.As<std::string>(), std::runtime_error);
+    // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_EQ(v.As<ConstByteArray>(), "this is a simple string");
   }
 }
@@ -450,10 +448,10 @@ TEST_F(VariantTests, CheckCopyAssignment)
   }
 
   {
-    Variant obj = Variant::Object();
-    obj["does"] = Variant::Object();
-    obj["does"]["nested"] = Variant::Object();
-    obj["does"]["nested"]["copy"] = Variant::Object();
+    Variant obj                           = Variant::Object();
+    obj["does"]                           = Variant::Object();
+    obj["does"]["nested"]                 = Variant::Object();
+    obj["does"]["nested"]["copy"]         = Variant::Object();
     obj["does"]["nested"]["copy"]["work"] = true;
 
     Variant next_obj{obj};
@@ -520,13 +518,12 @@ TEST_F(VariantTests, ListNesting)
 
 TEST_F(VariantTests, BasicObject)
 {
-  Variant v = Variant::Object();
-  v["key"] = "value";
-  v["number"] = 42;
-  v["obj"] = Variant::Object();
+  Variant v         = Variant::Object();
+  v["key"]          = "value";
+  v["number"]       = 42;
+  v["obj"]          = Variant::Object();
   v["obj"]["array"] = Variant::Array(1);
-  v["obj"]["size"] = 1;
-
+  v["obj"]["size"]  = 1;
 
   EXPECT_EQ(v.size(), 3);
 
@@ -561,10 +558,10 @@ TEST_F(VariantTests, SizeValues)
   Variant i{10};
   Variant f{2.3};
   Variant s{"foo"};
-  Variant n = Variant::Null();
-  Variant a = Variant::Array(1);
-  Variant o = Variant::Object();
-  o["key"] = 2;
+  Variant n  = Variant::Null();
+  Variant a  = Variant::Array(1);
+  Variant o  = Variant::Object();
+  o["key"]   = 2;
   o["value"] = 3;
 
   EXPECT_EQ(u.size(), 0);
@@ -576,11 +573,10 @@ TEST_F(VariantTests, SizeValues)
   EXPECT_EQ(o.size(), 2);
 }
 
-
 TEST_F(VariantTests, ConstArrayAccess)
 {
   Variant v = Variant::Array(1);
-  v[0] = 42;
+  v[0]      = 42;
 
   {
     Variant const &w{v};
@@ -592,7 +588,7 @@ TEST_F(VariantTests, ConstArrayAccess)
 TEST_F(VariantTests, ConstObjectAccess)
 {
   Variant v = Variant::Object();
-  v["key"] = "value";
+  v["key"]  = "value";
 
   {
     Variant const &w{v};
@@ -600,7 +596,6 @@ TEST_F(VariantTests, ConstObjectAccess)
     ConstByteArray value = w["key"].As<ConstByteArray>();
     EXPECT_EQ(value, "value");
   }
-
 }
 
 TEST_F(VariantTests, IllAdvisedOperations)
@@ -622,4 +617,4 @@ TEST_F(VariantTests, IllAdvisedOperations)
   }
 }
 
-} // namespace
+}  // namespace

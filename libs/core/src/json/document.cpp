@@ -30,7 +30,8 @@ namespace json {
  * @param token The token to be converted
  * @param document The whole document
  */
-void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token, ConstByteArray const &document)
+void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
+                                    ConstByteArray const &document)
 {
   bool success{false};
 
@@ -102,15 +103,12 @@ void JSONDocument::Parse(ConstByteArray const &document)
   // process all the token
   for (std::size_t idx = 0, end = tokens_.size(); idx < end; ++idx)
   {
-    JSONToken const &token      = tokens_[idx];
+    JSONToken const &token = tokens_[idx];
 
     // determine if this is a primitive type
-    bool const is_primitive = (token.type == KEYWORD_TRUE) ||
-                              (token.type == KEYWORD_FALSE) ||
-                              (token.type == KEYWORD_NULL) ||
-                              (token.type == STRING) ||
-                              (token.type == NUMBER_INT) ||
-                              (token.type == NUMBER_FLOAT);
+    bool const is_primitive = (token.type == KEYWORD_TRUE) || (token.type == KEYWORD_FALSE) ||
+                              (token.type == KEYWORD_NULL) || (token.type == STRING) ||
+                              (token.type == NUMBER_INT) || (token.type == NUMBER_FLOAT);
 
     if (is_primitive)
     {
@@ -123,7 +121,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
         }
 
         // since the token is a key
-        key = document.SubArray(token.first, token.second - token.first);
+        key   = document.SubArray(token.first, token.second - token.first);
         state = ObjectState::VALUE;
 
         continue;
@@ -172,7 +170,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
           assert(context->IsObject());
 
           Variant &next_element = (*context)[key];
-          next_element = Variant::Object();
+          next_element          = Variant::Object();
 
           variant_stack.push_back(&next_element);
         }
@@ -183,7 +181,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
 
           // create the object inside of the array
           Variant &next_element = (*context)[next_idx];
-          next_element = Variant::Object();
+          next_element          = Variant::Object();
 
           // add it to the stack
           variant_stack.push_back(&next_element);
@@ -232,7 +230,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
           assert(context->IsObject());
 
           Variant &next_element = (*context)[key];
-          next_element = Variant::Array(0);
+          next_element          = Variant::Array(0);
 
           variant_stack.push_back(&next_element);
         }
@@ -243,7 +241,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
 
           // create the object inside of the array
           Variant &next_element = (*context)[next_idx];
-          next_element = Variant::Array(0);
+          next_element          = Variant::Array(0);
 
           // add it to the stack
           variant_stack.push_back(&next_element);
@@ -310,68 +308,68 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
   {
     uint16_t const *words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
     uint32_t const *words   = reinterpret_cast<uint32_t const *>(ptr + pos);
-    char const &c = *(ptr + pos);
+    char const &    c       = *(ptr + pos);
     if ((document.size() - pos) > 2)
     {
       // Handling white spaces
       switch (words16[0])
       {
-        case 0x2020:  // a
-        case 0x200A:  //
-        case 0x200D:  //
-        case 0x2009:  //
-        case 0x0A20:  //
-        case 0x0A0A:  //
-        case 0x0A0D:  //
-        case 0x0A09:  //
-        case 0x0D20:  //
-        case 0x0D0A:  //
-        case 0x0D0D:  //
-        case 0x0D09:  //
-        case 0x0920:  //
-        case 0x090A:  //
-        case 0x090D:  //
-        case 0x0909:  //
-          pos += 2;
-          continue;
+      case 0x2020:  // a
+      case 0x200A:  //
+      case 0x200D:  //
+      case 0x2009:  //
+      case 0x0A20:  //
+      case 0x0A0A:  //
+      case 0x0A0D:  //
+      case 0x0A09:  //
+      case 0x0D20:  //
+      case 0x0D0A:  //
+      case 0x0D0D:  //
+      case 0x0D09:  //
+      case 0x0920:  //
+      case 0x090A:  //
+      case 0x090D:  //
+      case 0x0909:  //
+        pos += 2;
+        continue;
       }
     }
 
     switch (c)
     {
-      case '\n':
-        ++line;
-        // Falls through.
-      case '\t':
-      case ' ':
-      case '\r':
-        ++pos;
-        continue;
+    case '\n':
+      ++line;
+      // Falls through.
+    case '\t':
+    case ' ':
+    case '\r':
+      ++pos;
+      continue;
     }
     // Handling keywords
     if ((document.size() - pos) > 4)
     {
       switch (words[0])
       {
-        case 0x65757274:  // true
-          ++objects_;
-          tokens_.push_back({uint32_t(pos), pos + 4, KEYWORD_TRUE});
-          pos += 4;
-          ++element_counter;
-          continue;
-        case 0x736C6166:  // fals
-          ++objects_;
-          tokens_.push_back({pos, pos + 5, KEYWORD_FALSE});
-          pos += 4;
-          ++pos;
-          ++element_counter;
-          continue;
-        case 0x6C6C756E:  // null
-          ++objects_;     // TODO(issue 35): Move
-          tokens_.push_back({pos, pos + 4, KEYWORD_NULL});
-          pos += 4;
-          ++element_counter;
-          continue;
+      case 0x65757274:  // true
+        ++objects_;
+        tokens_.push_back({uint32_t(pos), pos + 4, KEYWORD_TRUE});
+        pos += 4;
+        ++element_counter;
+        continue;
+      case 0x736C6166:  // fals
+        ++objects_;
+        tokens_.push_back({pos, pos + 5, KEYWORD_FALSE});
+        pos += 4;
+        ++pos;
+        ++element_counter;
+        continue;
+      case 0x6C6C756E:  // null
+        ++objects_;     // TODO(issue 35): Move
+        tokens_.push_back({pos, pos + 4, KEYWORD_NULL});
+        pos += 4;
+        ++element_counter;
+        continue;
       }
     }
     uint64_t oldpos = pos;
@@ -379,91 +377,91 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
 
     switch (c)
     {
-      case '"':
-        ++objects_;
-        ++element_counter;
-        byte_array::consumers::StringConsumer<STRING>(document, pos);
-        tokens_.push_back({oldpos + 1, pos - 1, STRING});
-        break;
-      case '{':
-        brace_stack_.push_back('}');
-        counters_.emplace_back(element_counter);
-        element_counter = 0;
-        tokens_.push_back({pos, 0, OPEN_OBJECT});
-        object_stack_.emplace_back(&tokens_.back());
+    case '"':
+      ++objects_;
+      ++element_counter;
+      byte_array::consumers::StringConsumer<STRING>(document, pos);
+      tokens_.push_back({oldpos + 1, pos - 1, STRING});
+      break;
+    case '{':
+      brace_stack_.push_back('}');
+      counters_.emplace_back(element_counter);
+      element_counter = 0;
+      tokens_.push_back({pos, 0, OPEN_OBJECT});
+      object_stack_.emplace_back(&tokens_.back());
 
-        ++pos;
-        break;
-      case '}':
-        if (brace_stack_.back() != '}')
-        {
-          throw JSONParseException("Expected '}', but found ']'");
-        }
-        brace_stack_.pop_back();
-        tokens_.push_back({pos, uint64_t(element_counter), CLOSE_OBJECT});
-        object_stack_.back()->second = (element_counter);
+      ++pos;
+      break;
+    case '}':
+      if (brace_stack_.back() != '}')
+      {
+        throw JSONParseException("Expected '}', but found ']'");
+      }
+      brace_stack_.pop_back();
+      tokens_.push_back({pos, uint64_t(element_counter), CLOSE_OBJECT});
+      object_stack_.back()->second = (element_counter);
 
-        object_stack_.pop_back();
-        element_counter = counters_.back();
-        counters_.pop_back();
-        ++element_counter;
-        ++pos;
-        ++objects_;
-        break;
-      case '[':
-        brace_stack_.push_back(']');
-        counters_.emplace_back(element_counter);
+      object_stack_.pop_back();
+      element_counter = counters_.back();
+      counters_.pop_back();
+      ++element_counter;
+      ++pos;
+      ++objects_;
+      break;
+    case '[':
+      brace_stack_.push_back(']');
+      counters_.emplace_back(element_counter);
 
-        element_counter = 0;
-        tokens_.push_back({pos, 0, OPEN_ARRAY});
-        object_stack_.emplace_back(&tokens_.back());
+      element_counter = 0;
+      tokens_.push_back({pos, 0, OPEN_ARRAY});
+      object_stack_.emplace_back(&tokens_.back());
 
-        ++pos;
-        break;
-      case ']':
-        if (brace_stack_.back() != ']')
-        {
-          throw JSONParseException("Expected ']', but found '}'.");
-        }
-        brace_stack_.pop_back();
-        tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
-        object_stack_.back()->second = element_counter;
+      ++pos;
+      break;
+    case ']':
+      if (brace_stack_.back() != ']')
+      {
+        throw JSONParseException("Expected ']', but found '}'.");
+      }
+      brace_stack_.pop_back();
+      tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
+      object_stack_.back()->second = element_counter;
 
-        object_stack_.pop_back();
-        element_counter = counters_.back();
-        ++element_counter;
-        counters_.pop_back();
+      object_stack_.pop_back();
+      element_counter = counters_.back();
+      ++element_counter;
+      counters_.pop_back();
 
-        ++pos;
-        ++objects_;
+      ++pos;
+      ++objects_;
 
-        break;
+      break;
 
-      case ':':
-        if (brace_stack_.back() != '}')
-        {
-          throw JSONParseException("Cannot set property outside of object context");
-        }
-        //        tokens_.back().type = KEY;
-        ++pos;
-        break;
+    case ':':
+      if (brace_stack_.back() != '}')
+      {
+        throw JSONParseException("Cannot set property outside of object context");
+      }
+      //        tokens_.back().type = KEY;
+      ++pos;
+      break;
 
-      case ',':
-        //        tokens_.push_back({pos, 0, NEW_ENTRY});
-        ++pos;
-        break;
+    case ',':
+      //        tokens_.push_back({pos, 0, NEW_ENTRY});
+      ++pos;
+      break;
 
-      default:  // If none of the above it must be number:
+    default:  // If none of the above it must be number:
 
-        ++element_counter;
-        type =
+      ++element_counter;
+      type =
           uint8_t(byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(document, pos));
-        if (type == uint8_t(-1))
-        {
-          throw JSONParseException("Unable to parse integer.");
-        }
-        tokens_.push_back({oldpos, pos - oldpos, type});
-        break;
+      if (type == uint8_t(-1))
+      {
+        throw JSONParseException("Unable to parse integer.");
+      }
+      tokens_.push_back({oldpos, pos - oldpos, type});
+      break;
     }
   }
 
@@ -473,5 +471,5 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
   }
 }
 
-} // namespace json
-} // namespace fetch
+}  // namespace json
+}  // namespace fetch
