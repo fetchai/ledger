@@ -294,8 +294,6 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
   brace_stack_.reserve(32);
   brace_stack_.clear();
 
-  object_stack_.reserve(32);
-  object_stack_.clear();
   counters_.reserve(32);
   counters_.clear();
   tokens_.reserve(1024);
@@ -388,7 +386,6 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       counters_.emplace_back(element_counter);
       element_counter = 0;
       tokens_.push_back({pos, 0, OPEN_OBJECT});
-      object_stack_.emplace_back(&tokens_.back());
 
       ++pos;
       break;
@@ -399,9 +396,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       }
       brace_stack_.pop_back();
       tokens_.push_back({pos, uint64_t(element_counter), CLOSE_OBJECT});
-      object_stack_.back()->second = (element_counter);
 
-      object_stack_.pop_back();
       element_counter = counters_.back();
       counters_.pop_back();
       ++element_counter;
@@ -414,7 +409,6 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
 
       element_counter = 0;
       tokens_.push_back({pos, 0, OPEN_ARRAY});
-      object_stack_.emplace_back(&tokens_.back());
 
       ++pos;
       break;
@@ -425,9 +419,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
       }
       brace_stack_.pop_back();
       tokens_.push_back({pos, element_counter, CLOSE_ARRAY});
-      object_stack_.back()->second = element_counter;
 
-      object_stack_.pop_back();
       element_counter = counters_.back();
       ++element_counter;
       counters_.pop_back();

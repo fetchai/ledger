@@ -59,17 +59,12 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using Variant        = variant::Variant;
 
-  JSONDocument()
-  {
-    counters_.reserve(32);
-  }
-
-  JSONDocument(ConstByteArray const &document)
-    : JSONDocument()
+  explicit JSONDocument(ConstByteArray const &document)
   {
     Parse(document);
   }
 
+  JSONDocument()                     = default;
   JSONDocument(JSONDocument const &) = delete;
   JSONDocument(JSONDocument &&)      = default;
   ~JSONDocument()                    = default;
