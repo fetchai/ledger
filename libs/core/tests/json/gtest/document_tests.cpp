@@ -110,3 +110,52 @@ TEST(JsonTests, ParsingExeptions)
   EXPECT_THROW(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
   EXPECT_THROW(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
 }
+
+TEST(JsonTests, LargeArray)
+{
+  static const std::size_t ARRAY_SIZE = 10000;
+
+  std::string json_text;
+
+  // formulate a large array of objects
+  {
+    std::ostringstream oss;
+
+    oss << '[';
+
+    for (std::size_t i = 0; i < ARRAY_SIZE; ++i)
+    {
+      if (i)
+        oss << ',';
+
+      oss << R"({"value": )" << i << '}' << '\n';
+    }
+
+    oss << ']';
+
+    // update the json text field
+    json_text = oss.str();
+  }
+
+  // parse the JSON document
+  JSONDocument doc;
+  ASSERT_NO_THROW(doc.Parse(json_text));
+
+  auto const &root = doc.root();
+
+  ASSERT_TRUE(root.IsArray());
+  ASSERT_EQ(root.size(), ARRAY_SIZE);
+
+  for (std::size_t i = 0; i < ARRAY_SIZE; ++i)
+  {
+    auto const &obj = root[i];
+
+    ASSERT_TRUE(obj.IsObject());
+    ASSERT_TRUE(obj.Has("value"));
+
+    auto const &element = obj["value"];
+
+    EXPECT_TRUE(element.Is<std::size_t>());
+    EXPECT_EQ(element.As<std::size_t>(), i);
+  }
+}
