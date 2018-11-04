@@ -151,7 +151,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, Variant&> operator=(T const &value);
   template <typename T>
-  meta::IfIsByteArray<T, Variant&> operator=(T const &value);
+  meta::IfIsAByteArray<T, Variant&> operator=(T const &value);
   template <typename T>
   meta::IfIsStdString <T, Variant&> operator=(T const &value);
   Variant& operator=(char const *value);
@@ -541,7 +541,7 @@ meta::IfIsFloat<T, Variant&> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsByteArray<T, Variant&> Variant::operator=(T const &value)
+meta::IfIsAByteArray<T, Variant&> Variant::operator=(T const &value)
 {
   Reset();
 

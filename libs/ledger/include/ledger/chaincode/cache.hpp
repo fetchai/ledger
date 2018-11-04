@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/meta/is_log2.hpp"
+#include "meta/is_log2.hpp"
 #include "ledger/chaincode/factory.hpp"
 
 #include <algorithm>

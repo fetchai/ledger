@@ -21,7 +21,7 @@
 #include "core/commandline/params.hpp"
 #include "core/json/document.hpp"
 #include "core/macros.hpp"
-#include "core/script/variant.hpp"
+#include "variant/variant.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/metrics/metrics.hpp"

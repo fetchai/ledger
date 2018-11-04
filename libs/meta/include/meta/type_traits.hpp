@@ -46,14 +46,14 @@ template <typename T>
 constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
 
 template <typename T>
-constexpr bool IsByteArray = (std::is_same<T, byte_array::ByteArray>::value ||
+constexpr bool IsAByteArray = (std::is_same<T, byte_array::ByteArray>::value ||
                               std::is_same<T, byte_array::ConstByteArray>::value);
 
 template <typename T>
 constexpr bool IsStdString = std::is_same<T, std::string>::value;
 
 template <typename T>
-constexpr bool IsStringLike = IsStdString<T> || IsByteArray<T>;
+constexpr bool IsStringLike = IsStdString<T> || IsAByteArray<T>;
 
 template <typename T>
 constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
@@ -74,7 +74,7 @@ template <typename T, typename R = void>
 using IfIsBoolean = EnableIf<IsBoolean<T>, R>;
 
 template <typename T, typename R = void>
-using IfIsByteArray = EnableIf<IsByteArray<T>, R>;
+using IfIsAByteArray = EnableIf<IsAByteArray<T>, R>;
 
 template <typename T, typename R = void>
 using IfIsStdString = EnableIf<IsStdString<T>, R>;
@@ -93,6 +93,9 @@ using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 
 template <typename T, typename R = void>
 using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
+
+template <typename T, typename R = void>
+using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 }  // namespace meta
 }  // namespace fetch

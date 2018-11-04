@@ -27,7 +27,7 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
-#include "core/meta/type_traits.hpp"
+#include "meta/type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
@@ -2344,7 +2344,7 @@ ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
  * @param ret
  */
 template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+fetch::meta::IfIsArithmetic<S> Add(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 + scalar2;
 }

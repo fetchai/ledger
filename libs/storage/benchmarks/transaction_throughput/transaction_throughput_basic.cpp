@@ -57,8 +57,7 @@ private:
     std::string address =
         "nve3rfRigBZ+YX9lFKVNDA05fQ6V8MfEmx63+bKT0IQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    script::Variant wealth_data;
-    wealth_data.MakeObject();
+    variant::Variant wealth_data = variant::Variant::Object();
     wealth_data["address"] = address;
     wealth_data["amount"]  = amount++;
 

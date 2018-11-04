@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/script/variant.hpp"
+#include "variant/variant.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
@@ -125,13 +125,13 @@ public:
   {
     auto chainArray = node_->HeaviestChain();
 
-    script::Variant result = script::Variant::Array(chainArray.size());
+    variant::Variant result = variant::Variant::Array(chainArray.size());
 
     std::size_t index = 0;
     for (auto &i : chainArray)
     {
 
-      script::Variant temp = script::Variant::Object();
+      variant::Variant temp = variant::Variant::Object();
       temp["minerNumber"]  = i.body().miner_number;
       temp["blockNumber"]  = i.body().block_number;
       temp["hashcurrent"]  = ToHex(i.hash());
@@ -153,10 +153,10 @@ public:
   //  auto heaviestBlock = chainArray.first;
   //  auto chainArrays   = chainArray.second;
 
-  //  script::Variant result = script::Variant::Object();
+  //  variant::Variant result = variant::Variant::Object();
 
   //  {
-  //    script::Variant temp = script::Variant::Object();
+  //    variant::Variant temp = variant::Variant::Object();
   //    temp["minerNumber"]  = heaviestBlock.body().miner_number;
   //    temp["blockNumber"]  = heaviestBlock.body().block_number;
   //    temp["hashcurrent"]  = ToHex(heaviestBlock.hash());
@@ -166,17 +166,17 @@ public:
   //  }
 
   //  // We now have an array of arrays
-  //  script::Variant arrays = script::Variant::Array(chainArray.second.size());
+  //  variant::Variant arrays = variant::Variant::Array(chainArray.second.size());
 
   //  std::size_t i = 0;
   //  std::size_t j = 0;
   //  for (auto &chain : chainArray.second)
   //  {
-  //    script::Variant chainVar = script::Variant::Array(chain.size());
+  //    variant::Variant chainVar = variant::Variant::Array(chain.size());
 
   //    for (auto &block : chain)
   //    {
-  //      script::Variant temp = script::Variant::Object();
+  //      variant::Variant temp = variant::Variant::Object();
   //      temp["minerNumber"]  = block.body().miner_number;
   //      temp["blockNumber"]  = block.body().block_number;
   //      temp["hashcurrent"]  = ToHex(block.hash());

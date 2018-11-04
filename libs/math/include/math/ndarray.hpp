@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/meta/type_traits.hpp"
+#include "meta/type_traits.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
@@ -229,13 +229,13 @@ public:
    */
   // TODO(private issue 123)
   template <typename S>
-  fetch::meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const &val)
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
   template <typename S>
-  fetch::meta::IfIsUnsignedLike<S, void> Set(S const &index, type const &val)
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(S const &index, type const &val)
   {
     assert(index < this->size());       // dimensionality check not in parent
     this->super_type::Set(index, val);  // call parent
@@ -246,7 +246,7 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  fetch::meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, T> Get(std::vector<S> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));

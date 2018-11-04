@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
-#include "core/script/variant.hpp"
+#include "variant/variant.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 
@@ -47,6 +47,7 @@ public:
     Entry(Uri const uri, uint16_t port);
   };
 
+  using Variant           = variant::Variant;
   using ConstByteArray    = byte_array::ConstByteArray;
   using ServiceType       = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
@@ -145,7 +146,7 @@ public:
   Manifest &operator=(Manifest const &other) = default;
 
 private:
-  bool ExtractSection(script::Variant const &obj, ServiceType service, std::size_t instance = 0);
+  bool ExtractSection(Variant const &obj, ServiceType service, std::size_t instance = 0);
 
   ServiceMap service_map_;  ///< The underlying service map
 };

@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "core/meta/type_traits.hpp"
+#include "meta/type_traits.hpp"
 #include "core/random.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
@@ -781,7 +781,7 @@ public:
   }
 
   template <typename S>
-  fetch::meta::IfIsUnsignedLike<S, Type> Get(S const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, Type> Get(S const &indices) const
   {
     return data_[indices];
   }

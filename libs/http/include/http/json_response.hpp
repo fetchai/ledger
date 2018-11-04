@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
+#include "variant/variant.hpp"
 #include "http/mime_types.hpp"
 #include "http/response.hpp"
 
@@ -32,7 +32,7 @@ inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &b
   return http::HTTPResponse(body, jsonMimeType, status);
 }
 
-inline http::HTTPResponse CreateJsonResponse(script::Variant const &doc,
+inline http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
                                              Status                 status = Status::SUCCESS_OK)
 {
   static const auto jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
