@@ -22,44 +22,14 @@
 
 namespace fetch {
 namespace json {
-namespace {
 
-char const *TypeToString(uint16_t t)
-{
-  switch (t)
-  {
-    case JSONDocument::KEYWORD_TRUE:
-      return "TRUE ";
-    case JSONDocument::KEYWORD_FALSE:
-      return "FALSE";
-    case JSONDocument::KEYWORD_NULL:
-      return "NULL ";
-    case JSONDocument::STRING:
-      return "STRNG";
-
-    case JSONDocument::NUMBER_INT:
-      return "INT  ";
-    case JSONDocument::NUMBER_FLOAT:
-      return "FLOAT";
-
-    case JSONDocument::OPEN_OBJECT:
-      return "{OBJ ";
-    case JSONDocument::CLOSE_OBJECT:
-      return "}OBJ ";
-    case JSONDocument::OPEN_ARRAY:
-      return "[ARR ";
-    case JSONDocument::CLOSE_ARRAY:
-      return "]ARR ";
-
-    case JSONDocument::KEY:
-      return "KEY  ";
-    default:
-      return "UNKN ";
-  }
-}
-
-} // namespace
-
+/**
+ * Extract a primitive value from a JSONToken
+ *
+ * @param variant The output variant
+ * @param token The token to be converted
+ * @param document The whole document
+ */
 void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token, ConstByteArray const &document)
 {
   bool success{false};
@@ -106,6 +76,11 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token, Co
   }
 }
 
+/**
+ * Parse a JSON document
+ *
+ * @param document The input document
+ */
 void JSONDocument::Parse(ConstByteArray const &document)
 {
   using VariantStack = std::vector<Variant *>;
@@ -306,6 +281,11 @@ void JSONDocument::Parse(ConstByteArray const &document)
   }
 }
 
+/**
+ * Tokenise the input document to be parsed
+ *
+ * @param document The document to tokenise
+ */
 void JSONDocument::Tokenise(ConstByteArray const &document)
 {
   int      line = 0;
