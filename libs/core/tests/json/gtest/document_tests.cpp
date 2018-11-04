@@ -126,7 +126,9 @@ TEST(JsonTests, LargeArray)
     for (std::size_t i = 0; i < ARRAY_SIZE; ++i)
     {
       if (i)
+      {
         oss << ',';
+      }
 
       oss << R"({"value": )" << i << '}' << '\n';
     }
