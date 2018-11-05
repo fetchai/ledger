@@ -51,7 +51,7 @@ TCPServer::~TCPServer()
 
       if (ec)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Closed TCP server server acceptor: ", ec.message());
+        FETCH_LOG_INFO(LOGGING_NAME, "Closed TCP server server acceptor: ", ec.message());
       }
     }
     else
@@ -62,13 +62,13 @@ TCPServer::~TCPServer()
 
   while (destruct_guard_.use_count() > 1)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for TCP server ", this, " start closure to clear");
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " start closure to clear");
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
   while (!acceptor_.expired() && running_)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
@@ -200,7 +200,7 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Acceptor in TCP server received EC");
+      FETCH_LOG_INFO(LOGGING_NAME, "Acceptor in TCP server received EC");
     }
   };
 
