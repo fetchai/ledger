@@ -63,7 +63,7 @@ pybind11::bytes CreateWealthTransactionsBasic(std::size_t num_transactions)
     std::ostringstream oss;
     oss << R"( { "address": ")"
         << byte_array::ToBase64(public_key)
-        << R"(", "amount": 10 )";
+        << R"(", "amount": 10 })";
 
     tx.tx.set_contract_name("fetch.token.wealth");
     tx.tx.set_fee(1);
@@ -113,7 +113,7 @@ pybind11::bytes CreateWealthTransactionsThreaded(std::size_t num_transactions)
       std::ostringstream oss;
       oss << R"( { "address": ")"
           << byte_array::ToBase64(public_key)
-          << R"(", "amount": 10 )";
+          << R"(", "amount": 10 })";
 
       tx.tx.set_contract_name("fetch.token.wealth");
       tx.tx.set_fee(1);
