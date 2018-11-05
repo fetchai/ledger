@@ -27,7 +27,8 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
+TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
+                                           miner::MinerInterface &miner)
   : storage_{storage}
   , miner_{miner}
 {}
@@ -100,7 +101,7 @@ void TransactionProcessor::Dispatcher()
   {
     chain::VerifiedTransaction tx;
 
-    bool dispatch = false;
+    bool dispatch  = false;
     bool populated = false;
 
     // the dispatcher works in two modes
@@ -151,7 +152,7 @@ void TransactionProcessor::Dispatcher()
         {
           FETCH_METRIC_TX_STORED_EX(tx.digest(), stored);
         }
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
       }
 
       // enqueue all the transactions
@@ -167,7 +168,7 @@ void TransactionProcessor::Dispatcher()
       {
         FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
       }
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
       // clear the transaction list
       txs.clear();
@@ -175,5 +176,5 @@ void TransactionProcessor::Dispatcher()
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

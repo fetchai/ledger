@@ -50,9 +50,9 @@ public:
   using hash_type     = byte_array::ConstByteArray;
   using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
 
-  using Transaction = chain::Transaction;
+  using Transaction     = chain::Transaction;
   using TransactionList = std::vector<Transaction>;
-  using ConstByteArray = byte_array::ConstByteArray;
+  using ConstByteArray  = byte_array::ConstByteArray;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;

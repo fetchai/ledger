@@ -24,7 +24,7 @@ namespace {
 
 struct AdaptedTx
 {
-  chain::MutableTransaction tx;
+  chain::MutableTransaction                          tx;
   chain::TxSigningAdapter<chain::MutableTransaction> adapter{tx};
 
   template <typename T>
@@ -34,13 +34,12 @@ struct AdaptedTx
   }
 };
 
-} // namespace
+}  // namespace
 
 constexpr char const *           ContractHttpInterface::LOGGING_NAME;
 byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX("/api/contract/");
 byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
 byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
-
 
 std::size_t ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request)
 {

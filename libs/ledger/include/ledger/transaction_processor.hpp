@@ -18,14 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "network/details/thread_pool.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "metrics/metrics.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
+#include "network/details/thread_pool.hpp"
 
-#include <thread>
 #include <atomic>
+#include <thread>
 
 namespace fetch {
 namespace ledger {
@@ -40,8 +40,8 @@ public:
   // Construction / Destruction
   TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner);
   TransactionProcessor(TransactionProcessor const &) = delete;
-  TransactionProcessor(TransactionProcessor &&) = delete;
-  ~TransactionProcessor() = default;
+  TransactionProcessor(TransactionProcessor &&)      = delete;
+  ~TransactionProcessor()                            = default;
 
   /// @name Processor Controls
   /// @{
@@ -60,7 +60,7 @@ public:
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 private:
-  static constexpr std::size_t QUEUE_SIZE = 1u << 20u; // 1,048,576
+  static constexpr std::size_t QUEUE_SIZE = 1u << 20u;  // 1,048,576
 
   using Flag            = std::atomic<bool>;
   using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
@@ -71,13 +71,13 @@ private:
   void Verifier();
   void Dispatcher();
 
-  StorageUnitInterface  &storage_;
+  StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
 
-  Flag                   active_{true};
-  Threads                threads_;
-  VerifiedQueue          verified_queue_;
-  UnverifiedQueue        unverified_queue_;
+  Flag            active_{true};
+  Threads         threads_;
+  VerifiedQueue   verified_queue_;
+  UnverifiedQueue unverified_queue_;
 };
 
 /**

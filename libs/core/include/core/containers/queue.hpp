@@ -35,14 +35,13 @@ template <std::size_t SIZE>
 class SingleThreadedIndex
 {
 public:
-
   // Construction / Destruction
   explicit SingleThreadedIndex(std::size_t initial)
     : index_(initial)
   {}
   SingleThreadedIndex(SingleThreadedIndex const &) = delete;
-  SingleThreadedIndex(SingleThreadedIndex &&) = delete;
-  ~SingleThreadedIndex() = default;
+  SingleThreadedIndex(SingleThreadedIndex &&)      = delete;
+  ~SingleThreadedIndex()                           = default;
 
   /**
    * Post increment operator
@@ -70,7 +69,6 @@ private:
   static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
 };
 
-
 /**
  * A Multi threaded index
  *
@@ -80,7 +78,6 @@ template <std::size_t SIZE>
 class MultiThreadedIndex : protected SingleThreadedIndex<SIZE>
 {
 public:
-
   // Construction / Destruction
   explicit MultiThreadedIndex(std::size_t initial)
     : SingleThreadedIndex<SIZE>(initial)
@@ -94,13 +91,12 @@ public:
    */
   std::size_t operator++(int)
   {
-    std::lock_guard<std::mutex> lock(lock_);
+    std::lock_guard<std::mutex>       lock(lock_);
     return SingleThreadedIndex<SIZE>::operator++(1);
   }
 
 private:
-
-  std::mutex  lock_;
+  std::mutex lock_;
 };
 
 /**
@@ -111,21 +107,21 @@ private:
  * @tparam Producer The thread safety model for the producer size of the queue
  * @tparam Consumer The thread safety model for the consumer size of the queue
  */
-template<typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIndex<SIZE>,typename ConsumerIndex = MultiThreadedIndex<SIZE>>
+template <typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIndex<SIZE>,
+          typename ConsumerIndex = MultiThreadedIndex<SIZE>>
 class Queue
 {
 public:
-
   // Construction / Destruction
-  Queue() = default;
+  Queue()              = default;
   Queue(Queue const &) = delete;
-  Queue(Queue &&) = delete;
-  ~Queue() = default;
+  Queue(Queue &&)      = delete;
+  ~Queue()             = default;
 
   /// @name Queue Interaction
   /// @{
   T Pop();
-  template<typename R, typename P>
+  template <typename R, typename P>
   bool Pop(T &value, std::chrono::duration<R, P> const &duration);
   void Push(T const &element);
   void Push(T &&element);
@@ -139,11 +135,11 @@ protected:
   using Array = std::array<T, SIZE>;
   using Mutex = std::mutex;
 
-  Array         queue_;               ///< The main element container
-  ProducerIndex write_index_{0};      ///< The write index
-  ConsumerIndex read_index_{0};       ///< The read index
-  Tickets       read_count_{0};       ///< The read semaphore/tickets object
-  Tickets       write_count_{SIZE};   ///< The write semaphore/tickets object
+  Array         queue_;              ///< The main element container
+  ProducerIndex write_index_{0};     ///< The write index
+  ConsumerIndex read_index_{0};      ///< The read index
+  Tickets       read_count_{0};      ///< The read semaphore/tickets object
+  Tickets       write_count_{SIZE};  ///< The write semaphore/tickets object
 
   // static asserts
   static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
@@ -162,7 +158,7 @@ protected:
  * @return The element retrieved from the queue
  */
 template <typename T, std::size_t N, typename P, typename C>
-T Queue<T,N,P,C>::Pop()
+T Queue<T, N, P, C>::Pop()
 {
   read_count_.Wait();
 
@@ -186,7 +182,7 @@ T Queue<T,N,P,C>::Pop()
  */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename Rep, typename Per>
-bool Queue<T,N,P,C>::Pop(T &value, std::chrono::duration<Rep, Per> const &duration)
+bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &duration)
 {
   if (!read_count_.Wait(duration))
   {
@@ -212,7 +208,7 @@ bool Queue<T,N,P,C>::Pop(T &value, std::chrono::duration<Rep, Per> const &durati
  * @param element The reference to the element
  */
 template <typename T, std::size_t N, typename P, typename C>
-void Queue<T,N, P, C>::Push(T const &element)
+void Queue<T, N, P, C>::Push(T const &element)
 {
   write_count_.Wait();
 
@@ -233,7 +229,7 @@ void Queue<T,N, P, C>::Push(T const &element)
  * @param element The reference to the element
  */
 template <typename T, std::size_t N, typename P, typename C>
-void Queue<T,N, P, C>::Push(T &&element)
+void Queue<T, N, P, C>::Push(T &&element)
 {
   write_count_.Wait();
 
@@ -255,5 +251,5 @@ using MPSCQueue = Queue<T, N, MultiThreadedIndex<N>, SingleThreadedIndex<N>>;
 template <typename T, std::size_t N>
 using MPMCQueue = Queue<T, N, MultiThreadedIndex<N>, MultiThreadedIndex<N>>;
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

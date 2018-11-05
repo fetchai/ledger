@@ -113,7 +113,6 @@ inline bool ResourceID::operator==(ResourceID const &other) const
   return id_ == other.id_;
 }
 
-
 /**
  * Serializes a specified `ResourceID` object with the given serializer
  *
@@ -196,4 +195,4 @@ struct hash<fetch::storage::ResourceID>
   }
 };
 
-} // namespace std
+}  // namespace std

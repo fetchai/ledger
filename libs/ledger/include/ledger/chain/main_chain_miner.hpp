@@ -167,7 +167,7 @@ private:
             FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
           }
         }
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
         // Mine the block
         next_block.proof().SetTarget(target_);

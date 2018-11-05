@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <condition_variable>
 #include <cstddef>
 #include <mutex>
-#include <condition_variable>
 
 namespace fetch {
 namespace core {
@@ -30,20 +30,19 @@ namespace core {
 class Tickets
 {
 public:
-
   // Construction / Destruction
   Tickets(std::size_t initial = 0)
     : count_{initial}
   {}
 
   Tickets(Tickets const &) = delete;
-  Tickets(Tickets &&) = delete;
-  ~Tickets() = default;
+  Tickets(Tickets &&)      = delete;
+  ~Tickets()               = default;
 
   void Post();
   void Wait();
 
-  template<typename R, typename P>
+  template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
 
   // Operators
@@ -51,7 +50,6 @@ public:
   Tickets &operator=(Tickets &&) = delete;
 
 private:
-
   std::mutex              mutex_;
   std::condition_variable cv_;
   std::size_t             count_;
@@ -86,10 +84,10 @@ inline void Tickets::Wait()
   --count_;
 }
 
-template<typename R, typename P>
+template <typename R, typename P>
 bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
 {
-  using Clock = std::chrono::high_resolution_clock;
+  using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
 
   // calculate the deadline
@@ -135,7 +133,5 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
   return success;
 }
 
-} // namespace core
-} // namespace fetch
-
-
+}  // namespace core
+}  // namespace fetch

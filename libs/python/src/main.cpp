@@ -95,7 +95,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
 
-  py::module ns_fetch_ledger           = module.def_submodule("ledger");
+  py::module ns_fetch_ledger = module.def_submodule("ledger");
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -264,7 +264,6 @@ PYBIND11_MODULE(fetch, module)
   fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
-
 
   // Ledger
   fetch::ledger::BuildBenchmarking(ns_fetch_ledger);

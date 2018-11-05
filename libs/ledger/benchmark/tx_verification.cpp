@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "crypto/ecdsa.hpp"
 
 #include <benchmark/benchmark.h>
 
@@ -27,9 +27,9 @@ using fetch::crypto::ECDSASigner;
 
 namespace {
 
-void VerifyTx(benchmark::State& state)
+void VerifyTx(benchmark::State &state)
 {
-  ECDSASigner signer;
+  ECDSASigner        signer;
   MutableTransaction mtx;
   mtx.set_contract_name("foo.bar.is.a.baz");
   mtx.Sign(signer.underlying_private_key());
@@ -40,6 +40,6 @@ void VerifyTx(benchmark::State& state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(VerifyTx);

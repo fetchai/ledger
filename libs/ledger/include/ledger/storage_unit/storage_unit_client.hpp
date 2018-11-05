@@ -150,8 +150,8 @@ public:
     for (auto const &tx : txs)
     {
       // determine the lane for this given transaction
-      auto      res     = fetch::storage::ResourceID(tx.digest());
-      LaneIndex lane    = res.lane(log2_lanes_);
+      auto      res  = fetch::storage::ResourceID(tx.digest());
+      LaneIndex lane = res.lane(log2_lanes_);
 
       transaction_lists[lane].push_back({res, tx});
     }
@@ -161,7 +161,7 @@ public:
 
     // dispatch all the set requests off
     {
-      LaneIndex       lane{0};
+      LaneIndex lane{0};
       for (auto const &list : transaction_lists)
       {
         if (!list.empty())

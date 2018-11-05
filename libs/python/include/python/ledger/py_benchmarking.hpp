@@ -18,25 +18,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/stl_types.hpp"
 #include "core/json/document.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "crypto/ecdsa.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
 #include "vectorise/threading/pool.hpp"
 
-#include <string>
 #include <cstddef>
-#include <vector>
-#include <sstream>
 #include <iostream>
 #include <mutex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
 struct AdaptedTx
 {
-  chain::MutableTransaction tx;
+  chain::MutableTransaction                          tx;
   chain::TxSigningAdapter<chain::MutableTransaction> adapter{tx};
 
   template <typename T>
@@ -56,14 +56,12 @@ pybind11::bytes CreateWealthTransactionsBasic(std::size_t num_transactions)
   for (std::size_t i = 0; i < num_transactions; ++i)
   {
     auto &identity = signers.at(i);
-    auto &tx = transactions.at(i);
+    auto &tx       = transactions.at(i);
 
     auto const public_key = identity.public_key();
 
     std::ostringstream oss;
-    oss << R"( { "address": ")"
-        << byte_array::ToBase64(public_key)
-        << R"(", "amount": 10 })";
+    oss << R"( { "address": ")" << byte_array::ToBase64(public_key) << R"(", "amount": 10 })";
 
     tx.tx.set_contract_name("fetch.token.wealth");
     tx.tx.set_fee(1);
@@ -84,7 +82,7 @@ pybind11::bytes CreateWealthTransactionsThreaded(std::size_t num_transactions)
   threading::Pool pool;
 
   // generate a series of keys for all the nodes
-  std::mutex signers_mtx;
+  std::mutex                       signers_mtx;
   std::vector<crypto::ECDSASigner> signers(0);
   for (std::size_t i = 0; i < num_transactions; ++i)
   {
@@ -106,14 +104,12 @@ pybind11::bytes CreateWealthTransactionsThreaded(std::size_t num_transactions)
   {
     pool.Dispatch([i, &transactions, &signers]() {
       auto &identity = signers.at(i);
-      auto &tx = transactions.at(i);
+      auto &tx       = transactions.at(i);
 
       auto const public_key = identity.public_key();
 
       std::ostringstream oss;
-      oss << R"( { "address": ")"
-          << byte_array::ToBase64(public_key)
-          << R"(", "amount": 10 })";
+      oss << R"( { "address": ")" << byte_array::ToBase64(public_key) << R"(", "amount": 10 })";
 
       tx.tx.set_contract_name("fetch.token.wealth");
       tx.tx.set_fee(1);

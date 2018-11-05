@@ -19,8 +19,8 @@
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
-#include "core/string/replace.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -157,7 +157,9 @@ public:
              oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
            }
 
-           return http::CreateJsonResponse(oss.str(), (error_response) ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK);
+           return http::CreateJsonResponse(oss.str(), (error_response)
+                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                          : http::Status::SUCCESS_OK);
          });
   }
 

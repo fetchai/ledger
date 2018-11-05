@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 
 #include <benchmark/benchmark.h>
@@ -38,11 +38,11 @@ using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
 using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
-using TransactionList = std::vector<VerifiedTransaction>;
+using TransactionList  = std::vector<VerifiedTransaction>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
-  static constexpr std::size_t TX_SIZE = 2048;
+  static constexpr std::size_t TX_SIZE      = 2048;
   static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
 
   static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
@@ -78,7 +78,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
   return list;
 }
 
-void TxSubmitFixedLarge(benchmark::State& state)
+void TxSubmitFixedLarge(benchmark::State &state)
 {
   // create the transaction store
   TransactionStore tx_store;
@@ -96,7 +96,7 @@ void TxSubmitFixedLarge(benchmark::State& state)
   }
 }
 
-void TxSubmitFixedSmall(benchmark::State& state)
+void TxSubmitFixedSmall(benchmark::State &state)
 {
   // create the transaction store
   TransactionStore tx_store;
@@ -114,7 +114,7 @@ void TxSubmitFixedSmall(benchmark::State& state)
   }
 }
 
-void TxSubmitSingleLarge(benchmark::State& state)
+void TxSubmitSingleLarge(benchmark::State &state)
 {
   // create the transaction store
   TransactionStore tx_store;
@@ -131,7 +131,7 @@ void TxSubmitSingleLarge(benchmark::State& state)
   }
 }
 
-void TxSubmitSingleSmall(benchmark::State& state)
+void TxSubmitSingleSmall(benchmark::State &state)
 {
   // create the transaction store
   TransactionStore tx_store;
@@ -148,7 +148,7 @@ void TxSubmitSingleSmall(benchmark::State& state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(TxSubmitFixedLarge);
 BENCHMARK(TxSubmitFixedSmall);

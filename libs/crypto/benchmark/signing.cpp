@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 
 #include <benchmark/benchmark.h>
@@ -40,7 +40,7 @@ template <std::size_t LENGTH>
 ConstByteArray GenerateRandomData()
 {
   static constexpr std::size_t RNG_WORD_SIZE = sizeof(RNG::random_type);
-  static constexpr std::size_t NUM_WORDS = LENGTH / RNG_WORD_SIZE;
+  static constexpr std::size_t NUM_WORDS     = LENGTH / RNG_WORD_SIZE;
 
   static_assert((LENGTH % RNG_WORD_SIZE) == 0, "Size must be a multiple of random type");
 
@@ -56,13 +56,13 @@ ConstByteArray GenerateRandomData()
   return ConstByteArray{buffer};
 }
 
-void VerifySignature(benchmark::State& state)
+void VerifySignature(benchmark::State &state)
 {
   // generate a random message
   ConstByteArray msg = GenerateRandomData<2048>();
 
   // create the signer and verifier
-  ECDSASigner signer;
+  ECDSASigner   signer;
   ECDSAVerifier verifier(signer.identity());
 
   // create the signed data
@@ -81,6 +81,6 @@ void VerifySignature(benchmark::State& state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(VerifySignature);
