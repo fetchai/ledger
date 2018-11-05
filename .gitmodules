@@ -1,15 +1,15 @@
 [submodule "vendor/asio"]
 	path = vendor/asio
-	url = github:chriskohlhoff/asio.git
+	url = ../../chriskohlhoff/asio.git
 [submodule "vendor/pybind11"]
 	path = vendor/pybind11
-	url = github:pybind/pybind11.git
+	url = ../../pybind/pybind11.git
 [submodule "docker-images"]
 	path = docker-images
-	url = github:uvue-git/docker-images.git
+	url = ../docker-images.git
 [submodule "vendor/googletest"]
 	path = vendor/googletest
-	url = github:google/googletest.git
+	url = ../../google/googletest.git
 [submodule "vendor/benchmark"]
 	path = vendor/benchmark
-	url = github:google/benchmark.git
+	url = ../../google/benchmark.git
