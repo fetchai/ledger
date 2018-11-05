@@ -28,7 +28,6 @@ namespace network {
 enum class AtomicCounterName
 {
   TCP_PORT_STARTUP,
-  LANE_CONNECTIONS,
   LOCAL_SERVICE_CONNECTIONS,
 };
 
