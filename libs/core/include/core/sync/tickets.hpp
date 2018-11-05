@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cassert>
 #include <condition_variable>
 #include <cstddef>
 #include <mutex>
@@ -25,7 +26,7 @@ namespace fetch {
 namespace core {
 
 /**
- * Semaphore like object
+ * Semaphore like synchronization object
  */
 class Tickets
 {
@@ -56,6 +57,9 @@ private:
   bool                    shutdown_{false};
 };
 
+/**
+ * Post / increment the internal counter
+ */
 inline void Tickets::Post()
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -65,6 +69,11 @@ inline void Tickets::Post()
   }
 }
 
+/**
+ * Wait / decrement the internal counter
+ *
+ * This function will block until a ticket can be claimed
+ */
 inline void Tickets::Wait()
 {
   std::unique_lock<std::mutex> lock(mutex_);
@@ -84,6 +93,16 @@ inline void Tickets::Wait()
   --count_;
 }
 
+/**
+ * Wait / decrement the internal counter
+ *
+ * This function will block maximally for the specified duration
+ *
+ * @tparam R The representation of the duration
+ * @tparam P The period for the duration
+ * @param duration The maximum duration to wait for the ticket
+ * @return true if a ticket was acquired, otherwise false
+ */
 template <typename R, typename P>
 bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
 {
