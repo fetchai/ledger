@@ -28,31 +28,26 @@ using NativeRegister = VectorRegister<T>;
 
 fetch::random::LinearCongruentialGenerator lcg;
 
-#define ADD_TEST(OP, NAME)                                     \
-  template <typename T, bool integral = true>                  \
-  void test_##NAME()                                           \
-  {                                                            \
-    T a;                                                       \
-    T b;                                                       \
-    if (integral)                                              \
-    {                                                          \
-      a = T(lcg());                                            \
-      b = T(lcg());                                            \
-    }                                                          \
-    else                                                       \
-    {                                                          \
-      a = T(lcg.AsDouble());                                   \
-      b = T(lcg.AsDouble());                                   \
-    }                                                          \
-    NativeRegister<T> A(a), B(b);                              \
-    NativeRegister<T> C          = A OP B;                     \
-    T                          c = T(a OP b);                  \
-    if (T(C) != c)                                             \
-    {                                                          \
-      std::cout << T(C) << " != " << c << std::endl;           \
-      std::cout << "for " #NAME << " using " #OP << std::endl; \
-      exit(-1);                                                \
-    }                                                          \
+#define ADD_TEST(OP, NAME)                                                      \
+  template <typename T, bool integral = true>                                   \
+  void test_##NAME()                                                            \
+  {                                                                             \
+    T a;                                                                        \
+    T b;                                                                        \
+    if (integral)                                                               \
+    {                                                                           \
+      a = T(lcg());                                                             \
+      b = T(lcg());                                                             \
+    }                                                                           \
+    else                                                                        \
+    {                                                                           \
+      a = T(lcg.AsDouble());                                                    \
+      b = T(lcg.AsDouble());                                                    \
+    }                                                                           \
+    NativeRegister<T> A(a), B(b);                                               \
+    NativeRegister<T> C          = A OP B;                                      \
+    T                          c = T(a OP b);                                   \
+    ASSERT_EQ(T(C), c) << T(C) << " != " << c << "for " #NAME << " using " #OP; \
   }
 
 ADD_TEST(*, multiply)
@@ -160,31 +155,26 @@ void test_registers()
   }
 }
 
-#define ADD_TEST(OP, NAME)                                     \
-  template <typename T, bool integral = true>                  \
-  void mtest_##NAME()                                          \
-  {                                                            \
-    T a;                                                       \
-    T b;                                                       \
-    if (integral)                                              \
-    {                                                          \
-      a = lcg();                                               \
-      b = lcg();                                               \
-    }                                                          \
-    else                                                       \
-    {                                                          \
-      a = lcg.AsDouble();                                      \
-      b = lcg.AsDouble();                                      \
-    }                                                          \
-    NativeRegister<T> A(a), B(b);                              \
-    NativeRegister<T> C          = A OP B;                     \
-    T                          c = T(a OP b);                  \
-    if (T(C) != c)                                             \
-    {                                                          \
-      std::cout << T(C) << " != " << c << std::endl;           \
-      std::cout << "for " #NAME << " using " #OP << std::endl; \
-      exit(-1);                                                \
-    }                                                          \
+#define ADD_TEST(OP, NAME)                                                      \
+  template <typename T, bool integral = true>                                   \
+  void mtest_##NAME()                                                           \
+  {                                                                             \
+    T a;                                                                        \
+    T b;                                                                        \
+    if (integral)                                                               \
+    {                                                                           \
+      a = lcg();                                                                \
+      b = lcg();                                                                \
+    }                                                                           \
+    else                                                                        \
+    {                                                                           \
+      a = lcg.AsDouble();                                                       \
+      b = lcg.AsDouble();                                                       \
+    }                                                                           \
+    NativeRegister<T> A(a), B(b);                                               \
+    NativeRegister<T> C          = A OP B;                                      \
+    T                          c = T(a OP b);                                   \
+    ASSERT_EQ(T(C), c) << T(C) << " != " << c << "for " #NAME << " using " #OP; \
   }
 
 ADD_TEST(*, multiply)

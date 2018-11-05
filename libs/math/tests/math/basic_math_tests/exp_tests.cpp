@@ -78,7 +78,7 @@ double test_timing(double x_value)
   return (us3 - us1) / (us2 - us1);
   //  auto t3 = std::chrono::high_resolution_clock::now();
 }
-
+// TODO(private issue 332): Move to a benchmark
 /* void benchmark()
 {
   static fetch::random::LinearCongruentialGenerator gen;

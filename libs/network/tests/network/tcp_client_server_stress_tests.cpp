@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+/* //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
 //
@@ -277,3 +277,4 @@ TEST(tcp_client_server_stress_gtest, testing_communication_on_port)
 
   std::cerr << "finished all tests" << std::endl;
 }
+ */

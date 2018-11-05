@@ -61,6 +61,8 @@ void test1(F &f, double from, double to, double max)
   ASSERT_LE(me, max) << "expected: " << max;
 }
 
+// TODO(private issue 332): Move to a benchmark
+
 /* template <std::size_t N, typename F, std::size_t MAX = 100000000>
 double test_timing(F &f, double x_value, double from, double to)
 {

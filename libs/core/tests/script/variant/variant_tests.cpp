@@ -125,7 +125,7 @@ TEST(basic_manipulation, nested_variants)
   std::cout << x << std::endl;
 }
 
-TEST(Streaming_gtest, variant_list)
+TEST(streaming_gtest, variant_list)
 {
   VariantArray x(6);
   EXPECT_EQ(x.size(), 6);
@@ -142,7 +142,7 @@ TEST(Streaming_gtest, variant_list)
   EXPECT_EQ(ss.str(), "[1.2, \"Hello world\", 2, true, (undefined), null]");
 }
 
-TEST(Streaming_gtest, nested_variants)
+TEST(streaming_gtest, nested_variants)
 {
   Variant x;
 

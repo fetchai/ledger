@@ -79,11 +79,7 @@ TEST(versioned_kvi_gtest, basic_test)
       book.key   = h1;
       book.value = key_Index.Commit();
       bookmarks.push_back(book);
-      if (h1 != key_Index.Hash())
-      {
-        std::cerr << "Expected hash to be the same before and after commit" << std::endl;
-        exit(-1);
-      }
+      ASSERT_EQ(h1, key_Index.Hash()) << "Expected hash to be the same before and after commit";
     }
   }
 

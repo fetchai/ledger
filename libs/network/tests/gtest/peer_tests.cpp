@@ -22,7 +22,7 @@
 
 using fetch::network::Peer;
 
-TEST(NetworkPeerTests, CheckBasicConstruction)
+TEST(network_Peer_gtest, CheckBasicConstruction)
 {
   Peer peer("localhost", 9090);
 
@@ -30,7 +30,7 @@ TEST(NetworkPeerTests, CheckBasicConstruction)
   EXPECT_EQ(peer.port(), 9090);
 }
 
-TEST(NetworkPeerTests, CheckParseConstruction)
+TEST(network_Peer_gtest, CheckParseConstruction)
 {
   Peer peer("localhost:9090");
 

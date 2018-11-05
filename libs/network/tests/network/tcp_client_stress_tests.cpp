@@ -21,8 +21,8 @@
 #include <iostream>
 #include <memory>
 
+#include "../include/helper_functions.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
@@ -208,7 +208,7 @@ void TestCase0(std::string host, std::string port)
     GetOpenPort();
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -226,7 +226,7 @@ void TestCase1(std::string host, std::string port)
     NetworkManager nmanager(N);
     Client         client(host, std::to_string(emptyPort), nmanager);
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -246,7 +246,7 @@ void TestCase2(std::string host, std::string port)
     Client client(host, std::to_string(emptyPort), nmanager);
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -273,7 +273,7 @@ void TestCase3(std::string host, std::string port)
       nmanager.Stop();
     }
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -300,7 +300,7 @@ void TestCase4(std::string host, std::string port)
       nmanager.Stop();
     }
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -319,7 +319,7 @@ void TestCase5(std::string host, std::string port)
     NetworkManager nmanager(N);
     Client         client(host, port, nmanager);
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -340,7 +340,7 @@ void TestCase6(std::string host, std::string port)
     Client client(host, port, nmanager);
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -367,7 +367,7 @@ void TestCase7(std::string host, std::string port)
       nmanager.Stop();
     }
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -389,7 +389,7 @@ void TestCase8(std::string host, std::string port)
     clients.push_back(Client(host, port, nmanager));
   }
   nmanager.Stop();
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -432,7 +432,7 @@ void TestCase9(std::string host, std::string port)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -475,7 +475,7 @@ void TestCase10(std::string host, std::string port)
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-  std::cerr << "success" << std::endl;
+  SUCCEED() << "success" << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -531,7 +531,7 @@ void TestCase11(std::string host, std::string port)
 
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -589,7 +589,7 @@ void TestCase12(std::string host, std::string port)
 
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -647,29 +647,18 @@ void TestCase13(std::string host, std::string port)
     }
 
     // Verify we transmitted correctly
-    if (globalMessages.size() == 0)
-    {
-      std::cerr << "Failed to receive messages" << std::endl;
-      exit(1);
-    }
+    EXPECT_NE(globalMessages.size(), 0) << "Failed to receive messages" << std::endl;
 
-    if (globalMessages.size() != sendData.size())
-    {
-      std::cerr << "Failed to receive all messages" << std::endl;
-      exit(1);
-    }
+    EXPECT_NE(globalMessages.size(), sendData.size())
+        << "Failed to receive all messages" << std::endl;
 
     for (std::size_t i = 0; i < globalMessages.size(); ++i)
     {
-      if (globalMessages[i] != sendData[i])
-      {
-        std::cerr << "Failed to verify messages" << std::endl;
-        exit(1);
-      }
+      EXPECT_NE(globalMessages[i], sendData[i]) << "Failed to verify messages" << std::endl;
     }
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -737,17 +726,10 @@ void TestCase14(std::string host, std::string port)
     }
 
     // Verify we transmitted correctly
-    if (globalMessages.size() == 0)
-    {
-      std::cerr << "Failed to receive messages" << std::endl;
-      exit(1);
-    }
+    EXPECT_NE(globalMessages.size(), 0) << "Failed to receive messages" << std::endl;
 
-    if (globalMessages.size() != sendData.size())
-    {
-      std::cerr << "Failed to receive all messages" << std::endl;
-      exit(1);
-    }
+    EXPECT_NE(globalMessages.size(), sendData.size())
+        << "Failed to receive all messages" << std::endl;
 
     // We need to sort since this will not be ordered
     std::sort(globalMessages.begin(), globalMessages.end());
@@ -764,7 +746,7 @@ void TestCase14(std::string host, std::string port)
 
     nmanager.Stop();
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -831,7 +813,7 @@ void TestCase15(std::string host, std::string const &port)
       nmanager.Stop();
     }
   }
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 TEST(network_gtests, tcp_client_stress_tests)
@@ -842,11 +824,11 @@ TEST(network_gtests, tcp_client_stress_tests)
   std::string port       = std::to_string(portNumber);
   std::size_t iterations = 1;
 
-  if (argc > 1)
+  /* if (argc > 1)
   {
     std::stringstream s(argv[1]);
     s >> iterations;
-  }
+  } */
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 

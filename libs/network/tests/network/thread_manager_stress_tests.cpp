@@ -59,7 +59,7 @@ void TestCase1()
     tmanager.Stop();
   }
 
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -111,7 +111,7 @@ void TestCase3()
       std::cout << std::endl;
     }
   }
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -125,7 +125,7 @@ void TestCase4()
     tmanager.Start();
     tmanager.Post([&tmanager]() { tmanager.Stop(); });
   }
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl << std::endl;
 }
 
 TEST(netword_gtest, thread_manager_stress_test)

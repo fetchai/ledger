@@ -76,4 +76,4 @@ TEST_P(TestClass, DISABLED_basic_Test)
   lcg1.Seed(lcg1());
   lcg2.Seed(lcg2());
 }
-INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(1, 100), );
+INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(0, 100), );

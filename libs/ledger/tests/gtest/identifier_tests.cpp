@@ -32,7 +32,7 @@ TEST(identifier_gtest, basic_checks)
   EXPECT_EQ(id[2], "baz");
 }
 
-TEST(identifier_ancestroy_checks, direct_parent)
+TEST(identifier_ancestry_checks, direct_parent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar");
@@ -45,7 +45,7 @@ TEST(identifier_ancestroy_checks, direct_parent)
   EXPECT_FALSE(child.IsParentTo(parent));
 }
 
-TEST(identifier_ancestroy_checks, indirect_Parent)
+TEST(identifier_ancestry_checks, indirect_Parent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar.baz");
@@ -58,7 +58,7 @@ TEST(identifier_ancestroy_checks, indirect_Parent)
   EXPECT_FALSE(child.IsParentTo(parent));
 }
 
-TEST(identifier_ancestroy_checks, Child)
+TEST(identifier_ancestry_checks, Child)
 {
   Identifier parent("foo.baz");
   Identifier child("foo.bar");
@@ -69,7 +69,7 @@ TEST(identifier_ancestroy_checks, Child)
   EXPECT_FALSE(parent.IsChildTo(child));
 }
 
-TEST(identifier_ancestroy_checks, Append)
+TEST(identifier_ancestry_checks, Append)
 {
   Identifier id;
   id.Append("foo");
@@ -80,7 +80,7 @@ TEST(identifier_ancestroy_checks, Append)
   EXPECT_EQ(id.full_name(), "foo.bar.baz.x.y.z");
 }
 
-TEST(identifier_ancestroy_checks, Append_invalid_namespace_at_beginning)
+TEST(identifier_ancestry_checks, Append_invalid_namespace_at_beginning)
 {
   Identifier id;
 
@@ -98,7 +98,7 @@ TEST(identifier_ancestroy_checks, Append_invalid_namespace_at_beginning)
   EXPECT_TRUE(exception_received);
 }
 
-TEST(identifier_ancestroy_checks, Append_invalid_namespace_in_the_middle)
+TEST(identifier_ancestry_checks, Append_invalid_namespace_in_the_middle)
 {
   Identifier id;
   id.Append("foo");

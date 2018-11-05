@@ -43,6 +43,6 @@ TEST(rectangular_load_save_gtest, basic_tests)
 
   for (std::size_t i = 0; i < a.size(); ++i)
   {
-    ASSERT_EQ(a[i], b[i]);
+    ASSERT_EQ(a[i], b[i]) << "Failed 1: " << a.size() << " " << b.size();
   }
 }
