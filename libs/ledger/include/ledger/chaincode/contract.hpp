@@ -271,12 +271,10 @@ protected:
 private:
   bool LockResources(ResourceSet const &resources)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "LockResources...");
     bool success = true;
 
     for (auto const &group : resources)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trying a lock...");
       if (!state().Lock(CreateStateIndex(group)))
       {
         success = false;
