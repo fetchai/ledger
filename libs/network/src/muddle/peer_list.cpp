@@ -117,8 +117,8 @@ void PeerConnectionList::Debug(std::string const &prefix) const
     auto metadata = peer_metadata_.find(uri) != peer_metadata_.end();
 
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "PeerConnectionList:peer_connections_ Uri=", uri.ToString(),
-                   "  Handle=", handle, "  MetaData?=", metadata);
+                   "PeerConnectionList:peer_connections_ Uri=", uri.ToString(), "  Handle=", handle,
+                   "  MetaData?=", metadata);
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix,

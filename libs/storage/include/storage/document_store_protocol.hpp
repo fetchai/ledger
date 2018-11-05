@@ -136,7 +136,8 @@ public:
       return true;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource failed ", printable_identifier, " => ", rid.ToString());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource failed ", printable_identifier, " => ",
+                    rid.ToString());
     return (it->second == identifier);
   }
 
@@ -155,7 +156,8 @@ public:
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "UnlockResource not locked ", printable_identifier, " => ", rid.ToString());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "UnlockResource not locked ", printable_identifier, " => ",
+                      rid.ToString());
       return false;
     }
 
@@ -165,7 +167,8 @@ public:
       return true;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource denied ", printable_identifier, " => ", rid.ToString());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource denied ", printable_identifier, " => ",
+                    rid.ToString());
     return false;
   }
 
