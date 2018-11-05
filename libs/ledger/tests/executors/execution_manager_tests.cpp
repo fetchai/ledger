@@ -36,7 +36,6 @@
 
 using ::testing::_;
 
-
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
