@@ -104,9 +104,9 @@ public:
   bool HandleToAddress(const Handle &handle, Address &address) const;
 
   void Cleanup();
-  void Debug(const char *label1, const char *label2)
+  void Debug(std::string const &prefix)
   {
-    registrar_.Debug(label1, label2);
+    registrar_.Debug(prefix);
   }
 
 private:

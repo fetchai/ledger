@@ -241,18 +241,21 @@ private:
     try
     {
 
+      CallableArgumentList extra_args;
+
       if (function->meta_data() & Callable::CLIENT_ID_ARG)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
-        CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
-        (*function)(result, extra_args, params);
       }
-      else if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
+      if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
-        CallableArgumentList extra_args;
         extra_args.PushArgument(&context);
+      }
+
+      if (!extra_args.empty())
+      {
         (*function)(result, extra_args, params);
       }
       else

@@ -101,13 +101,13 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-void PeerConnectionList::Debug(const char *label1, const char *label2) const
+void PeerConnectionList::Debug(std::string const &prefix) const
 {
-  FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                 ":PeerConnectionList: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "PeerConnectionList: --------------------------------------");
 
-  FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                 ":PeerConnectionList:peer_connections_ = ", peer_connections_.size(), " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "PeerConnectionList:peer_connections_ = ", peer_connections_.size(), " entries.");
 
   for (auto const &element : peer_connections_)
   {
@@ -116,21 +116,21 @@ void PeerConnectionList::Debug(const char *label1, const char *label2) const
 
     auto metadata = peer_metadata_.find(uri) != peer_metadata_.end();
 
-    FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                   ":PeerConnectionList:peer_connections_ Uri=", uri.ToString(),
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "PeerConnectionList:peer_connections_ Uri=", uri.ToString(),
                    "  Handle=", handle, "  MetaData?=", metadata);
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                 ":PeerConnectionList:persistent_peers_ = ", persistent_peers_.size(), " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "PeerConnectionList:persistent_peers_ = ", persistent_peers_.size(), " entries.");
   for (auto const &uri : persistent_peers_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                   ":PeerConnectionList:persistent_peers__ Uri=", uri.ToString());
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "PeerConnectionList:persistent_peers__ Uri=", uri.ToString());
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, label1, ":", label2,
-                 ":PeerConnectionList: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "PeerConnectionList: --------------------------------------");
 }
 
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer)

@@ -98,7 +98,7 @@ public:
 
   bool Dispatch(PacketPtr packet);
 
-  void Debug(const char *label1, const char *label2);
+  void Debug(std::string const &prefix);
 
 private:
   using Mutex              = mutex::Mutex;

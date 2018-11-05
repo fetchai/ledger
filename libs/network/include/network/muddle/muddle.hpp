@@ -163,10 +163,10 @@ public:
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
 
-  void Debug(const char *label1, const char *label2)
+  void Debug(std::string const &prefix)
   {
-    router_.Debug(label1, label2);
-    clients_.Debug(label1, label2);
+    router_.Debug(prefix);
+    clients_.Debug(prefix);
   }
 
   bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const

@@ -100,7 +100,7 @@ public:
 
   bool UriToHandle(const Uri &uri, Handle &handle) const;
 
-  void Debug(const char *prefix1, const char *prefix2) const;
+  void Debug(std::string const &prefix) const;
 
 private:
   using Clock     = std::chrono::steady_clock;
