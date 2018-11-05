@@ -293,7 +293,7 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
     EXPECT_THROW(v.As<int>(), std::runtime_error);
     EXPECT_FLOAT_EQ(3.14f, v.As<float>());
-    EXPECT_FLOAT_EQ(3.14, v.As<double>());
+    EXPECT_FLOAT_EQ(3.14f, static_cast<float>(v.As<double>()));
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
     EXPECT_THROW(v.As<ConstByteArray>(), std::runtime_error);
   }
