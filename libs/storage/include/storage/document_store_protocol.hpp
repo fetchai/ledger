@@ -219,7 +219,7 @@ private:
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString());
+          0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString()));
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
