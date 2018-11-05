@@ -60,7 +60,7 @@ public:
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 private:
-  static constexpr std::size_t QUEUE_SIZE = 1u << 15u; // 32768
+  static constexpr std::size_t QUEUE_SIZE = 1u << 20u; // 1,048,576
 
   using Flag            = std::atomic<bool>;
   using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
