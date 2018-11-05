@@ -57,7 +57,7 @@ using Prover          = fetch::crypto::Prover;
 using ProverPtr       = std::unique_ptr<Prover>;
 using Uri             = fetch::network::Uri;
 
-static constexpr char const *LOGGING_NAME = "lane_client.cpp";
+static constexpr char const *LOGGING_NAME = "examples/lane_client";
 static const uint16_t        P2P_RPC_PORT = 9130;
 
 ProverPtr GenerateP2PKey()
