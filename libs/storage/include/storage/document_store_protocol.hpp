@@ -83,8 +83,6 @@ public:
     SetLaneLog2(maxlanes);
     assert(maxlanes == (1u << log2_lanes_));
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Spinning up lane ", lane_assignment_);
-
     this->Expose(GET, this, &RevertibleDocumentStoreProtocol::GetLaneChecked);
     this->Expose(GET_OR_CREATE, this, &RevertibleDocumentStoreProtocol::GetOrCreateLaneChecked);
     this->ExposeWithClientContext(SET, this, &RevertibleDocumentStoreProtocol::SetLaneChecked);
@@ -130,19 +128,15 @@ public:
     Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString());
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
-                      " LOCK!!");
       locks_[rid.id()] = identifier;
       return true;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
-                    " NOPE!!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource failed ", printable_identifier, " => ", rid.ToString());
     return (it->second == identifier);
   }
 
@@ -157,26 +151,21 @@ public:
     Identifier  identifier           = context->sender_address;
     std::string printable_identifier = static_cast<std::string>(ToBase64(identifier));
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "UnockResource ", printable_identifier, " => ", rid.ToString());
     std::lock_guard<mutex::Mutex> lock(lock_mutex_);
     auto                          it = locks_.find(rid.id());
     if (it == locks_.end())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
-                      " NOPE!!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "UnlockResource not locked ", printable_identifier, " => ", rid.ToString());
       return false;
     }
 
     if (it->second == identifier)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
-                      " UNLOCK!!");
       locks_.erase(it);
       return true;
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource ", printable_identifier, " => ", rid.ToString(),
-                    " DENIED!!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LockResource denied ", printable_identifier, " => ", rid.ToString());
     return false;
   }
 
@@ -227,15 +216,11 @@ private:
     if (lane_assignment_ != rid.lane(log2_lanes_))
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString() +
-                             ". TODO: Set error number."));
+          0, byte_array_type(std::string("Set: Resource located on other lane:") + rid.ToString());
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
       auto                          it = locks_.find(rid.id());
-
-      FETCH_LOG_DEBUG(LOGGING_NAME, "SetLaneChecked ", printable_identifier, " => ", rid.ToString(),
-                      " ??");
 
       if (it == locks_.end())
       {
