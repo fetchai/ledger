@@ -51,7 +51,6 @@ public:
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
   class Iterator;
-  static constexpr char const *LOGGING_NAME = "ObjectStore<>";
 
   /**
    * Create a new file for the object store with the filename parameters for the
