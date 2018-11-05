@@ -17,10 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/queue.hpp"
+#include "network/details/thread_pool.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "miner/miner_interface.hpp"
+
+#include <thread>
+#include <atomic>
 
 namespace fetch {
 namespace ledger {
@@ -28,26 +33,78 @@ namespace ledger {
 class TransactionProcessor
 {
 public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}
-    , miner_{miner}
-  {}
+  using MutableTransaction = chain::MutableTransaction;
 
-  void AddTransaction(chain::Transaction const &tx)
-  {
-    FETCH_METRIC_TX_SUBMITTED(tx.digest());
+  using TransactionList = std::vector<chain::Transaction>;
 
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
+  // Construction / Destruction
+  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner);
+  TransactionProcessor(TransactionProcessor const &) = delete;
+  TransactionProcessor(TransactionProcessor &&) = delete;
+  ~TransactionProcessor() = default;
 
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
-  }
+  /// @name Processor Controls
+  /// @{
+  void Start();
+  void Stop();
+  /// @}
+
+  /// @name Transaction Processing
+  /// @{
+  void AddTransaction(MutableTransaction const &mtx);
+  void AddTransaction(MutableTransaction &&mtx);
+  /// @}
+
+  // Operators
+  TransactionProcessor &operator=(TransactionProcessor const &) = delete;
+  TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 private:
-  StorageUnitInterface & storage_;
+  static constexpr std::size_t QUEUE_SIZE = 1u << 15u; // 32768
+
+  using Flag            = std::atomic<bool>;
+  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
+  using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
+  using ThreadPtr       = std::unique_ptr<std::thread>;
+  using Threads         = std::vector<ThreadPtr>;
+
+  void Verifier();
+  void Dispatcher();
+
+  StorageUnitInterface  &storage_;
   miner::MinerInterface &miner_;
+
+  Flag                   active_{true};
+  Threads                threads_;
+  VerifiedQueue          verified_queue_;
+  UnverifiedQueue        unverified_queue_;
 };
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
+{
+  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
+
+  // enqueue the transaction to the unverified queue
+  unverified_queue_.Push(mtx);
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
+{
+  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
+
+  // enqueue the transaction to the unverified queue
+  unverified_queue_.Push(std::move(mtx));
+}
 
 }  // namespace ledger
 }  // namespace fetch

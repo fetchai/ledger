@@ -88,13 +88,15 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 
 MutableTransaction FromWireTransaction(ConstByteArray const &transaction)
 {
+  json::JSONDocument tx_json{transaction};
+  return FromWireTransaction(tx_json.root());
+}
+
+MutableTransaction FromWireTransaction(variant::Variant const &transaction)
+{
   MutableTransaction tx;
 
-  // parse the input stream as JSON
-  json::JSONDocument tx_json{transaction};
-  auto &             tx_v = tx_json.root();
-
-  serializers::ByteArrayBuffer stream{FromBase64(tx_v["data"].As<ConstByteArray>())};
+  serializers::ByteArrayBuffer stream{FromBase64(transaction["data"].As<ConstByteArray>())};
   auto                         tx_data = TxSigningAdapterFactory(tx);
   stream >> tx_data;
 

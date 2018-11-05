@@ -49,6 +49,8 @@ public:
   Group                      resource_group() const;
   Group                      lane(std::size_t log2_num_lanes) const;
 
+  bool operator==(ResourceID const &other) const;
+
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 
@@ -105,6 +107,12 @@ inline ResourceID::Group ResourceID::lane(std::size_t log2_num_lanes) const
 
   return resource_group() & group_mask;
 }
+
+inline bool ResourceID::operator==(ResourceID const &other) const
+{
+  return id_ == other.id_;
+}
+
 
 /**
  * Serializes a specified `ResourceID` object with the given serializer
@@ -172,3 +180,20 @@ private:
 
 }  // namespace storage
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::storage::ResourceID>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this is generally fine because the resource ID is in fact a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
+} // namespace std

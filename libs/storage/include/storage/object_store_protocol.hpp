@@ -33,10 +33,31 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
+  struct Element
+  {
+    ResourceID key;
+    T          value;
+
+    template <typename S>
+    friend void Serialize(S &s, Element const &e)
+    {
+      s << e.key << e.value;
+    }
+
+    template <typename S>
+    friend void Deserialize(S &s, Element &e)
+    {
+      s >> e.key >> e.value;
+    }
+  };
+
+  using ElementList = std::vector<Element>;
+
   enum
   {
     GET = 0,
     SET,
+    SET_BULK,
     HAS
   };
 
@@ -46,6 +67,7 @@ public:
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
+    this->Expose(SET_BULK, this, &self_type::SetBulk);
     this->Expose(HAS, obj_store, &ObjectStore<T>::Has);
   }
 
@@ -65,6 +87,27 @@ private:
     }
 
     obj_store_->Set(rid, object);
+  }
+
+  void SetBulk(ElementList const &elements)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects in object store protocol");
+
+    if (on_set_)
+    {
+      for(auto const &element : elements)
+      {
+        on_set_(element.value);
+      }
+    }
+
+    obj_store_->WithLock([this, &elements]()
+    {
+      for (Element const &element : elements)
+      {
+        obj_store_->LocklessSet(element.key, element.value);
+      }
+    });
   }
 
   T Get(ResourceID const &rid)
