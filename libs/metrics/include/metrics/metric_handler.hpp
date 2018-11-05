@@ -20,7 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 
 /**
  * Interface for all Metric Handlers
@@ -34,16 +34,28 @@ public:
 
   enum class Instrument
   {
-    TRANSACTION
+    TRANSACTION,
+    BLOCK
   };
 
   enum class Event
   {
-    SUBMITTED,
-    QUEUED,
-    PACKED,
-    EXECUTION_STARTED,
-    EXECUTION_COMPLETE
+    /// @name Transaction Events
+    /// @{
+    SUBMITTED,            ///< Transaction is submitted to the system
+    STORED,               ///< Transaction has been stored in the local node
+    SYNCED,               ///< Transaction has been synced to a node
+    QUEUED,               ///< Transaction has been added to the mining queue
+    PACKED,               ///< Transaction has been packed into a block
+    EXECUTION_STARTED,    ///< Execution of the transaction has been started
+    EXECUTION_COMPLETE,   ///< Execution of the transaction has been completed
+    /// @}
+
+    /// @name Block Events
+    /// @{
+    GENERATED,            ///< Block was generated from a node
+    RECEIVED              ///< Block was received by a node
+    /// @}
   };
 
   // Construction / Destruction
@@ -62,5 +74,5 @@ public:
                             Timestamp const &timestamp) = 0;
 };
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

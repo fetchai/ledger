@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "metrics/metrics.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
@@ -28,7 +29,13 @@
 #include <set>
 #include <utility>
 #include <vector>
+
 namespace fetch {
+namespace chain {
+  class VerifiedTransaction;
+}
+
+
 namespace storage {
 
 template <typename R, typename T, typename S = T>
@@ -232,6 +239,11 @@ public:
           {
             continue;
           }
+
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewElement(obj.data.digest());
+#endif // FETCH_ENABLE_METRICS
+
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -478,6 +490,11 @@ private:
           {
             continue;
           }
+
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewElement(obj.data.digest());
+#endif // FETCH_ENABLE_METRICS
+
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -498,6 +515,23 @@ private:
       thread_pool_->Post([this]() { this->SyncSubtree(); });
     }
   }
+
+#ifdef FETCH_ENABLE_METRICS
+  typename std::enable_if<std::is_same<T, chain::VerifiedTransaction>::value>::type
+  RecordNewElement(byte_array::ConstByteArray const &identifier)
+  {
+    using fetch::metrics::Metrics;
+    using fetch::metrics::MetricHandler;
+
+    // record the event
+    Metrics::Instance().RecordMetric(
+      identifier,
+      MetricHandler::Instrument::TRANSACTION,
+      MetricHandler::Event::SYNCED
+    );
+  }
+#endif // FETCH_ENABLE_METRICS
+
 };
 
 }  // namespace storage

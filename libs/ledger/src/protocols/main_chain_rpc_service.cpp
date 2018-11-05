@@ -23,6 +23,7 @@
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
 #include "network/muddle/packet.hpp"
+#include "metrics/metrics.hpp"
 
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
@@ -162,6 +163,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(from), ')');
+
+  FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
   trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
