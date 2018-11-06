@@ -140,8 +140,8 @@ private:
       doc.Parse(request.body());
 
       // dispatch the contract type
-      script::Variant response;
-      auto            contract = contract_cache_.Lookup(contract_name);
+      variant::Variant response;
+      auto             contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
       contract->Attach(storage_);
