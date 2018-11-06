@@ -12,9 +12,10 @@ setup_compiler()
 
 
 add_fetch_gtest(serializers-gtests fetch-core serializers)
-add_fetch_gtest(byte-array-gtests fetch-core byte_array)
 add_fetch_gtest(variant_test2 fetch-core gtest)
-add_fetch_gtest(variant_test fetch-core script/variant)
+add_fetch_gtest(byte-array-gtests fetch-core byte_array) 
+add_fetch_gtest(random_generator_test fetch-core random)
+add_fetch_gtest(variant_test2 fetch-core script/variant/)
 add_fetch_gtest(tokenizer_testing_individual_consumers_gtest fetch-core json/gtest/)
 add_fetch_gtest(core_encode_decode_gtest fetch-core tokenizer/gtest/)
 

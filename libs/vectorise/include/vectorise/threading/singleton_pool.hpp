@@ -17,28 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/base.hpp"
-#include "math/linalg/prototype.hpp"
-#include "vectorise/threading/singleton_pool.hpp"
+#include "vectorise/threading/pool.hpp"
 
 namespace fetch {
-namespace math {
-namespace linalg {
+namespace threading {
 
-template <typename S, typename MATRIX>
-class Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-           Computes(_C = _alpha * T(_A) * _A + _beta * _C),
-           platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+class SingletonPool : public Pool
 {
 public:
-  using type = S;
+  static SingletonPool &GetInstance()
+  {
+    static SingletonPool instance;
+    return instance;
+  }
 
-  void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c);
+  void operator=(SingletonPool const &) = delete;
 
 private:
-  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
+  SingletonPool(SingletonPool const &)  = delete;
+  SingletonPool(SingletonPool const &&) = delete;
+  SingletonPool()
+    : Pool(){};
 };
 
-}  // namespace linalg
-}  // namespace math
+}  // namespace threading
 }  // namespace fetch

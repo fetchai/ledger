@@ -17,28 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/base.hpp"
-#include "math/linalg/prototype.hpp"
-#include "vectorise/threading/singleton_pool.hpp"
+#include <cmath>
 
 namespace fetch {
 namespace math {
-namespace linalg {
+namespace free_functions {
+namespace kernels {
 
-template <typename S, typename MATRIX>
-class Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-           Computes(_C = _alpha * T(_A) * _A + _beta * _C),
-           platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+template <typename type>
+struct Abs
 {
-public:
-  using type = S;
-
-  void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c);
-
-private:
-  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
+  void operator()(type const &x, type &y) const
+  {
+    y = std::abs(x);
+  }
 };
 
-}  // namespace linalg
+}  // namespace kernels
+}  // namespace free_functions
 }  // namespace math
 }  // namespace fetch

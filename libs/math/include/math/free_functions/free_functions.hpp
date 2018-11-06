@@ -35,12 +35,27 @@
 #include <numeric>
 #include <vector>
 
-//#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
+/////////////////////////////////
+/// include specific math functions
+/////////////////////////////////
+
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/free_functions/standard_functions/exp.hpp"
+#include "math/free_functions/standard_functions/fmod.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
+#include "math/free_functions/standard_functions/remainder.hpp"
+
+/////////////////////////////////
+/// blas libraries
+/////////////////////////////////
+
 #include "math/linalg/blas/gemm_nn_vector.hpp"
+#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
+#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_tn_vector.hpp"
+#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
 #include "math/meta/type_traits.hpp"
 
@@ -213,67 +228,82 @@ void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
  */
 template <typename T, typename C>
 void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-         T beta = 0.0)
+         T beta = 0.0, bool threaded = false)
 {
   assert(ret.shape().size() == 2);
   ret.Resize(A.shape()[0] * B.shape()[0]);
 
-  //  linalg::Blas<
-  //      T, NDArray<T, C>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-  //      linalg::_beta * linalg::_C), platform::Parallelisation::VECTORISE |
-  //      platform::Parallelisation::THREADING> gemm_nn_vector_threaded;
-  //
-  //  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  if (threaded)
+  {
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
 
-  linalg::Blas<
-      T, NDArray<T, C>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_nn_vector;
+    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
+        gemm_nn_vector;
 
-  gemm_nn_vector(alpha, A, B, beta, ret);
+    gemm_nn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C>
-NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B)
+NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
   NDArray<T, C>            ret(return_shape);
-  Dot(A, B, ret);
+  Dot(A, B, ret, threaded);
   return ret;
 }
 template <typename T, typename C, typename S>
 void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-         linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0)
+         linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
 {
   ret.Resize(A.shape()[0], B.shape()[1]);
 
-  //  linalg::Blas<
-  //      T, linalg::Matrix<T, C, S>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-  //      linalg::_beta * linalg::_C), platform::Parallelisation::VECTORISE |
-  //      platform::Parallelisation::THREADING> gemm_nn_vector_threaded;
-  //
-  //  gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  if (threaded)
+  {
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
 
-  linalg::Blas<
-      T, linalg::Matrix<T, C, S>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B + linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_nn_vector;
+    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
+        gemm_nn_vector;
 
-  gemm_nn_vector(alpha, A, B, beta, ret);
+    gemm_nn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B)
+linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
+                            bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
   linalg::Matrix<T, C, S>  ret(return_shape);
-  Dot(A, B, ret);
+  Dot(A, B, ret, 1.0, 0.0, threaded);
   return ret;
 }
 
@@ -283,85 +313,61 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
  * @param B
  * @return
  */
-template <typename T, typename C>
-void DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-                  T beta = 0.0)
-{
-  assert(ret.shape().size() == 2);
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  ret.Reshape(return_shape);
-
-  //  linalg::Blas<
-  //      T, NDArray<T, C>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A *
-  //      fetch::math::linalg::T(linalg::_B) +
-  //                            linalg::_beta * linalg::_C),
-  //      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-  //      gemm_nt_vector_threaded;
-  //
-  //  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-
-  linalg::Blas<
-      T, NDArray<T, C>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                            linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_nt_vector;
-
-  gemm_nt_vector(alpha, A, B, beta, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> DotTranspose(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
-                           T beta = 0.0)
-{
-  assert(A.shape().size() == 2);
-  assert(B.shape().size() == 2);
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  NDArray<T, C>            ret(return_shape);
-
-  DotTranspose(A, B, ret, alpha, beta);
-
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-void DotTranspose(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0)
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
+    ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
+    typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
   ret.Resize(A.shape()[0], B.shape()[0]);
 
-  //  linalg::Blas<
-  //      T, linalg::Matrix<T, C, S>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * linalg::_A *
-  //      fetch::math::linalg::T(linalg::_B) +
-  //                            linalg::_beta * linalg::_C),
-  //      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-  //      gemm_nt_vector_threaded;
-  //
-  //  gemm_nt_vector_threaded(alpha, A, B, beta, ret);
+  if (threaded)
+  {
+    linalg::Blas<
+        typename ArrayType::Type, ArrayType,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nt_vector_threaded;
 
-  linalg::Blas<
-      T, linalg::Matrix<T, C, S>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                            linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_nt_vector;
+    gemm_nt_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<
+        typename ArrayType::Type, ArrayType,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE>
+        gemm_nt_vector;
 
-  gemm_nt_vector(alpha, A, B, beta, ret);
+    gemm_nt_vector(alpha, A, B, beta, ret);
+  }
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0)
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
+    ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
+    typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  linalg::Matrix<T, C, S>  ret(return_shape);
+  ArrayType                ret(return_shape);
 
-  DotTranspose(A, B, ret, alpha, beta);
+  DotTranspose(A, B, ret, alpha, beta, threaded);
+
+  return ret;
+}
+template <typename ArrayType>
+fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
+                                                                           ArrayType const &B,
+                                                                           bool threaded = false)
+{
+
+  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
+  ArrayType                ret(return_shape);
+
+  DotTranspose(A, B, ret, 1.0, 0.0, threaded);
 
   return ret;
 }
@@ -374,82 +380,114 @@ linalg::Matrix<T, C, S> DotTranspose(linalg::Matrix<T, C, S> const &A,
  */
 template <typename T, typename C>
 void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-                  T beta = 0.0)
+                  T beta = 0.0, bool threaded = false)
 {
   assert(ret.shape().size() == 2);
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   ret.Reshape(return_shape);
-  //
-  //  linalg::Blas<
-  //      T, NDArray<T, C>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) *
-  //      linalg::_B +
-  //                            linalg::_beta * linalg::_C),
-  //      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-  //      gemm_tn_vector_threaded;
-  //
-  //  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
 
-  linalg::Blas<
-      T, NDArray<T, C>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-                            linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_tn_vector;
+  if (threaded)
+  {
+    linalg::Blas<
+        T, NDArray<T, C>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_tn_vector_threaded;
 
-  gemm_tn_vector(alpha, A, B, beta, ret);
+    gemm_tn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<
+        T, NDArray<T, C>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE>
+        gemm_tn_vector;
+
+    gemm_tn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C>
 NDArray<T, C> TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
-                           T beta = 0.0)
+                           T beta = 0.0, bool threaded = false)
 {
   assert(A.shape().size() == 2);
   assert(B.shape().size() == 2);
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   NDArray<T, C>            ret(return_shape);
 
-  TransposeDot(A, B, ret, alpha, beta);
+  TransposeDot(A, B, ret, alpha, beta, threaded);
+
+  return ret;
+}
+template <typename T, typename C>
+NDArray<T, C> TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
+{
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  NDArray<T, C>            ret(return_shape);
+
+  TransposeDot(A, B, ret, 1.0, 0.0, threaded);
 
   return ret;
 }
 
 template <typename T, typename C, typename S>
 void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0)
+                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
 {
   ret.Resize(A.width(), B.width());
 
-  //  linalg::Blas<
-  //      T, linalg::Matrix<T, C, S>,
-  //      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-  //      linalg::_C), Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) *
-  //      linalg::_B +
-  //                            linalg::_beta * linalg::_C),
-  //      platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-  //      gemm_tn_vector_threaded;
-  //
-  //  gemm_tn_vector_threaded(alpha, A, B, beta, ret);
+  if (threaded)
+  {
+    linalg::Blas<
+        T, linalg::Matrix<T, C, S>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_tn_vector_threaded;
 
-  linalg::Blas<
-      T, linalg::Matrix<T, C, S>,
-      Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-      Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-                            linalg::_beta * linalg::_C),
-      platform::Parallelisation::VECTORISE>
-      gemm_tn_vector;
+    gemm_tn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<
+        T, linalg::Matrix<T, C, S>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE>
+        gemm_tn_vector;
 
-  gemm_tn_vector(alpha, A, B, beta, ret);
+    gemm_tn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
-                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0)
+                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
+                                     bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   linalg::Matrix<T, C, S>  ret(return_shape);
 
-  TransposeDot(A, B, ret, alpha, beta);
+  TransposeDot(A, B, ret, alpha, beta, threaded);
+
+  return ret;
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
+                                     linalg::Matrix<T, C, S> const &B, bool threaded = false)
+{
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  linalg::Matrix<T, C, S>  ret(return_shape);
+
+  TransposeDot(A, B, ret, 1.0, 0.0, threaded);
 
   return ret;
 }
@@ -735,28 +773,6 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
 }
 
 /**
- * assigns the absolute of x to this array
- * @param x
- */
-template <typename ArrayType>
-void Abs(ArrayType &x)
-{
-  kernels::stdlib::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * e^x
- * @param x
- */
-template <typename ArrayType>
-void Exp(ArrayType &x)
-{
-  kernels::stdlib::Exp<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * raise 2 to power input values of x
  * @param x
  */
@@ -776,25 +792,6 @@ void Expm1(ArrayType &x)
 {
   kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * natural logarithm of x
- * @param x
- */
-template <typename ArrayType>
-void Log(ArrayType &x)
-{
-  kernels::stdlib::Log<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-template <typename ArrayType>
-ArrayType Log(ArrayType const &x)
-{
-  ArrayType ret{x.shape()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
 }
 
 /**
@@ -1659,6 +1656,43 @@ ArrayType CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 }
 
 /**
+ * Cross entropy loss with x as the prediction, and y as the ground truth
+ * @tparam ArrayType
+ * @param x a 2d array with axis 0 = examples, and axis 1 = dimension in prediction space
+ * @param y same size as x with the correct predictions set to 1 in axis 1 and all other positions =
+ * 0
+ * @return Returns an Array of size 1 containing the loss value
+ */
+template <typename ArrayType>
+ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
+{
+  assert(x.shape() == y.shape());
+  assert(x.shape().size() == 2);
+
+  auto n_examples = x.shape()[0];
+
+  ArrayType sce_x{x.shape()};
+  sce_x.Copy(x);
+
+  // we don't explicitly call softmax, because we assume softmax was already included in the graph
+  // (i.e. x is the output
+  //  of softmax layer)
+
+  auto      gt = ArgMax(y, 1);
+  ArrayType log_likelihood{1};
+  log_likelihood[0] = 0;
+
+  for (std::size_t idx = 0; idx < n_examples; ++idx)
+  {
+    sce_x.Set(idx, static_cast<std::size_t>(gt[idx]),
+              std::log(sce_x.At(idx, static_cast<std::size_t>(gt[idx]))));
+    log_likelihood[0] -= sce_x.At(idx, static_cast<std::size_t>(gt[idx]));
+  }
+
+  return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
+}
+
+/**
  * The sigmoid function
  * @tparam ArrayType
  * @tparam T
@@ -1710,7 +1744,7 @@ T Max(T const &datum1, T const &datum2)
  * @return
  */
 template <typename T, typename C>
-T &Max(ShapeLessArray<T, C> const &array, T &ret)
+T Max(ShapeLessArray<T, C> const &array, T &ret)
 {
   using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
@@ -1752,6 +1786,49 @@ inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
     for (auto i : array)
     {
       ret = std::max(ret, i);
+    }
+  }
+}
+
+/**
+ * Finds the maximum value in each row/column depending on axis and stores the output in ret
+ * @tparam T
+ * @tparam C
+ * @tparam S
+ * @param array the array to find max over
+ * @param axis the axis along which to max
+ * @param ret the return array
+ */
+template <typename T, typename C, typename S>
+void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
+         linalg::Matrix<T, C, S> &ret)
+{
+  assert(axis == 0 || axis == 1);
+
+  if (axis == 0)
+  {
+    assert(ret.shape()[0] == 1);
+    assert(ret.shape()[1] == array.shape()[1]);
+    for (std::size_t i = 0; i < array.shape()[1]; ++i)
+    {
+      ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[0]; ++j)
+      {
+        ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
+      }
+    }
+  }
+  else
+  {
+    assert(ret.shape()[0] == array.shape()[0]);
+    assert(ret.shape()[1] == 1);
+    for (std::size_t i = 0; i < array.shape()[0]; ++i)
+    {
+      ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[1]; ++j)
+      {
+        ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
+      }
     }
   }
 }
@@ -2028,27 +2105,29 @@ namespace details {
 template <typename ArrayType>
 void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 {
-  //  ret.LazyResize(array.size());
   assert(ret.size() == array.size());
-  //  assert(ret.shape() == array.shape());
 
   // by subtracting the max we improve numerical stability, and the result will be identical
-  typename ArrayType::Type array_max, array_sum;
-  Max(array, array_max);
+  std::vector<std::size_t> arr_shape{array.shape()[0], 1};
+  ArrayType                array_max{arr_shape};
+  ArrayType                array_sum{arr_shape};
+
+  Max(array, 1, array_max);
   Subtract(array, array_max, ret);
   Exp(ret);
-  Sum(ret, array_sum);
+
+  ReduceSum(ret, 1, array_sum);
   Divide(ret, array_sum, ret);
 }
 }  // namespace details
 template <typename T, typename C>
-void Softmax(ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> const &array)
+ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
 {
   ShapeLessArray<T, C> ret{array.size()};
   Softmax(array, ret);
@@ -2059,7 +2138,6 @@ void Softmax(NDArray<T, C> const &array, NDArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   ret.LazyReshape(array.shape());
-
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
@@ -2114,7 +2192,7 @@ void Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T
   details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
-NDArray<T, C> &Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
+NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
 {
   std::vector<std::size_t> return_shape(array1.shape());
   NDArray<T, C>            ret(return_shape);
@@ -2159,822 +2237,6 @@ linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &
   linalg::Matrix<T, C, S>  compare(return_shape);
   compare.Fill(scalar);
   Maximum(array1, compare, ret);
-  return ret;
-}
-
-/**
- * add a scalar to every value in the array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + val; },
-      array.data());
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array, T const &scalar)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Add(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename C>
-void Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
-{
-  ret = Add(array, scalar, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Add(scalar, array, ret);
-  return ret;
-}
-
-/**
- * Implementation for scalar addition. Implementing this helps keeps a uniform interface
- * @tparam T
- * @param scalar1
- * @param scalar2
- * @param ret
- */
-template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 + scalar2;
-}
-template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Add(scalar1, scalar2, ret);
-  return ret;
-}
-
-/**
- * Adds two arrays together
- * @tparam T
- * @tparam C
- * @param array1
- * @param array2
- * @param ret
- */
-
-// template <typename ArrayType>
-// fetch::math::meta::IsBlasArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const
-// &array2,
-//         ArrayType &ret)
-
-template <typename ArrayType>
-void Add(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
-{
-  assert(array1.size() == array2.size());
-  assert(array1.size() == ret.size());
-
-  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  Add(array1, array2, range, ret);
-}
-template <typename ArrayType>
-ArrayType Add(ArrayType const &array1, ArrayType const &array2)
-{
-  assert(array1.size() == array2.size());
-  ArrayType ret{array1.shape()};
-  Add(array1, array2, ret);
-
-  return ret;
-}
-
-//
-// template <typename T, typename C>
-// void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-//         ShapeLessArray<T, C> &ret)
-//{
-//  assert(array1.size() == array2.size());
-//  assert(array1.size() == ret.size());
-//
-//  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-//  Add(array1, array2, range, ret);
-//}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2)
-{
-  ShapeLessArray<T, C> ret{array1.size()};
-  Add(array1, array2, ret);
-  return ret;
-}
-template <typename T, typename C>
-void Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-         memory::Range const &range, ShapeLessArray<T, C> &ret)
-{
-  assert(array1.size() == array2.size());
-  ret.LazyResize(array1.size());
-
-  if (range.is_undefined())
-  {
-    Add(array1, array2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + y; },
-        array1.data(), array2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-                         memory::Range const &range)
-{
-  ShapeLessArray<T, C> ret{array1.shape()};
-  Add(array1, array2, range, ret);
-  return ret;
-}
-/**
- * Adds two ndarrays together with broadcasting
- * @tparam T
- * @tparam C
- * @param array1
- * @param array2
- * @param range
- * @param ret
- */
-template <typename T, typename C>
-void Add(NDArray<T, C> &array1, NDArray<T, C> &array2, NDArray<T, C> &ret)
-{
-  Broadcast([](T x, T y) { return x + y; }, array1, array2, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
-{
-  NDArray<T, C> ret{array1.shape()};
-  Add(array1, array2, ret);
-  return ret;
-}
-/**
- * subtract a scalar from every value in the array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  assert(array.data().size() == ret.data().size());
-
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - val; },
-      array.data());
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &array, T const &scalar)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Subtract(array, scalar, ret);
-  return ret;
-}
-/**
- * subtract a every value in array from scalar
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Subtract(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = scalar - array[i];
-  }
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(T const &scalar, ShapeLessArray<T, C> const &array)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Subtract(scalar, array, ret);
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Subtract(scalar, array, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Subtract(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
-{
-  assert(array.size() == ret.size());
-  assert(array.shape() == ret.shape());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = scalar - array[i];
-  }
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Subtract(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Subtract(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = array[i] - scalar;
-  }
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Subtract(linalg::Matrix<T, C, S> const &array1,
-                                 linalg::Matrix<T, C, S> const &array2)
-{
-  linalg::Matrix<T, C, S> ret{array1.shape()};
-  Subtract(array1, array2, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-              linalg::Matrix<T, C, S> &ret)
-{
-  assert(array1.size() == ret.size());
-  assert(array1.size() == array2.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret[i] = array1[i] - array2[i];
-  }
-}
-/**
- * subtract array from another array within a range
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              memory::Range const &range, ShapeLessArray<T, C> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  if (range.is_undefined())
-  {
-    Subtract(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - y; },
-        obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-                              memory::Range const &range)
-{
-  ShapeLessArray<T, C> ret{obj1.shape()};
-  Subtract(obj1, obj2, range, ret);
-  return ret;
-}
-/**
- * subtract array from another array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              ShapeLessArray<T, C> &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Subtract(obj1, obj2, range, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
-{
-  assert(obj1.size() == obj2.size());
-  ShapeLessArray<T, C> ret{obj1.size()};
-  Subtract(obj1, obj2, ret);
-  return ret;
-}
-/**
- * subtract array from another array with broadcasting
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-{
-  Broadcast([](T x, T y) { return x - y; }, obj1, obj2, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-{
-  assert(obj1.shape() == obj2.shape());
-  NDArray<T, C> ret{obj1.shape()};
-  Subtract(obj1, obj2, ret);
-  return ret;
-}
-/**
- * Implementation for scalar subtraction. Implementing this helps keeps a uniform interface
- * @tparam T
- * @param scalar1
- * @param scalar2
- * @param ret
- */
-template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 - scalar2;
-}
-template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Subtract(scalar1, scalar2, ret);
-  return ret;
-}
-
-/**
- * multiply a scalar by every value in the array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * val; },
-      array.data());
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &array, T const &scalar)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename C>
-void Multiply(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
-{
-  Multiply(array, scalar, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(T const &scalar, ShapeLessArray<T, C> const &array)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Multiply(scalar, array, ret);
-  return ret;
-}
-
-/**
- * Multiply array by another array within a range
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              memory::Range const &range, ShapeLessArray<T, C> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  if (range.is_undefined())
-  {
-    Multiply(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * y; },
-        obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-                              memory::Range const &range)
-{
-  ShapeLessArray<T, C> ret{obj1.size()};
-  Multiply(obj1, obj2, range, ret);
-  return ret;
-}
-/**
- * Multiply array from another array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              ShapeLessArray<T, C> &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
-  Multiply(obj1, obj2, range, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
-{
-  ShapeLessArray<T, C> ret{obj1.size()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-              memory::Range const &range, linalg::Matrix<T, C, S> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  if (range.is_undefined())
-  {
-    Multiply(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
-        obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-              linalg::Matrix<T, C, S> &ret)
-{
-  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  Multiply(array1, array2, range, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1,
-                                 linalg::Matrix<T, C, S> const &array2)
-{
-  linalg::Matrix<T, C, S> ret{array1.shape()};
-  Multiply(array1, array2, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
-{
-  assert(array.size() == ret.size());
-  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * val; },
-      array.data());
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
-{
-  Multiply(array, scalar, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Multiply(scalar, array, ret);
-  return ret;
-}
-
-/**
- * Multiply array by another array with broadcasting
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-{
-  Broadcast([](T x, T y) { return x * y; }, obj1, obj2, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Multiply(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-{
-  NDArray<T, C> ret{obj1.shape()};
-  Multiply(obj1, obj2, ret);
-  return ret;
-}
-/**
- * Implementation for scalar multiplication. Implementing this helps keeps a uniform interface
- * @tparam T
- * @param scalar1
- * @param scalar2
- * @param ret
- */
-template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 * scalar2;
-}
-template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Multiply(scalar1, scalar2, ret);
-  return ret;
-}
-
-/**
- * divide array by a scalar
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / val; },
-      array.data());
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &array, T const &scalar)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Divide(array, scalar, ret);
-  return ret;
-}
-/**
- * elementwise divide scalar by array element
- * @tparam T
- * @tparam C
- * @param scalar
- * @param array
- * @param ret
- */
-template <typename T, typename C>
-void Divide(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = val / x; },
-      array.data());
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Divide(T const &scalar, ShapeLessArray<T, C> const &array)
-{
-  ShapeLessArray<T, C> ret{array.size()};
-  Divide(scalar, array, ret);
-  return ret;
-}
-/**
- * Divide array by another array within a range
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            memory::Range const &range, ShapeLessArray<T, C> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  if (range.is_undefined())
-  {
-    Divide(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / y; },
-        obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            memory::Range const &range)
-{
-  ShapeLessArray<T, C> ret{obj1.size()};
-  Divide(obj1, obj2, range, ret);
-  return ret;
-}
-/**
- * subtract array from another array
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            ShapeLessArray<T, C> &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Divide(obj1, obj2, range, ret);
-}
-template <typename T, typename C>
-ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
-{
-  ShapeLessArray<T, C> ret{obj1.size()};
-  Divide(obj1, obj2, ret);
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-            memory::Range const &range, linalg::Matrix<T, C, S> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  if (range.is_undefined())
-  {
-    Divide(obj1, obj2, ret);
-  }
-  else if (range.is_trivial())
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
-        obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
-}
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-            linalg::Matrix<T, C, S> &ret)
-{
-  memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
-  Divide(obj1, obj2, range, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1,
-                               linalg::Matrix<T, C, S> const &obj2)
-{
-  linalg::Matrix<T, C, S> ret{obj1.shape()};
-
-  Divide(obj1, obj2, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
-{
-  assert(array.size() == ret.size());
-  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / val; },
-      array.data());
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &array, T const &scalar)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Divide(array, scalar, ret);
-  return ret;
-}
-/**
- * subtract array from another array with broadcasting
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2, NDArray<T, C> &ret)
-{
-  Broadcast([](T x, T y) { return x / y; }, obj1, obj2, ret);
-}
-template <typename T, typename C>
-NDArray<T, C> Divide(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
-{
-  assert(obj1.shape() == obj2.shape());
-  NDArray<T, C> ret{obj1.shape()};
-  Divide(obj1, obj2, ret);
-  return ret;
-}
-/**
- * Implementation for scalar division. Implementing this helps keeps a uniform interface
- * @tparam T
- * @param scalar1
- * @param scalar2
- * @param ret
- */
-template <typename S>
-fetch::meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
-{
-  ret = scalar1 / scalar2;
-}
-template <typename S>
-fetch::meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
-{
-  S ret;
-  Divide(scalar1, scalar2, ret);
   return ret;
 }
 
@@ -3064,6 +2326,15 @@ T Mean(ShapeLessArray<T, C> const &obj1)
   T ret;
   Mean(obj1, ret);
   return ret;
+}
+
+/**
+ * Distance between max and min values in an array
+ */
+template <typename ArrayType>
+void PeakToPeak(ArrayType arr)
+{
+  return Max(arr) - Min(arr);
 }
 
 }  // namespace math

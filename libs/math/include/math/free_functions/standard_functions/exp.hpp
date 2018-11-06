@@ -17,28 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/base.hpp"
-#include "math/linalg/prototype.hpp"
-#include "vectorise/threading/singleton_pool.hpp"
+#include "math/kernels/standard_functions/exp.hpp"
+#include "math/meta/type_traits.hpp"
+
+/**
+ * e^x
+ * @param x
+ */
 
 namespace fetch {
 namespace math {
-namespace linalg {
 
-template <typename S, typename MATRIX>
-class Blas<S, MATRIX, Signature(L(_C) <= _alpha, L(_A), _beta, L(_C)),
-           Computes(_C = _alpha * T(_A) * _A + _beta * _C),
-           platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+template <typename ArrayType>
+fetch::math::meta::IsMathArrayLike<ArrayType, void> Exp(ArrayType &x)
 {
-public:
-  using type = S;
+  free_functions::kernels::Exp<typename ArrayType::Type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
 
-  void operator()(type const &alpha, MATRIX const &a, type const &beta, MATRIX &c);
+template <typename Type>
+fetch::math::meta::IfIsArithmetic<Type, void> Exp(Type &x)
+{
+  x = std::exp(x);
+}
 
-private:
-  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
-};
-
-}  // namespace linalg
 }  // namespace math
 }  // namespace fetch

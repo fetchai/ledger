@@ -199,25 +199,6 @@ public:
     this->data().in_parallel().Apply([val](vector_register_type &z) { z = val; });
   }
 
-  //  Type PeakToPeak() const { return Max() - Min(); }
-  //
-  //  void StandardDeviation(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //
-  //    assert(size_ > 1);
-  //    kernels::StandardDeviation<type, vector_register_type> kernel(fetch::math::statistics::Mean,
-  //    Type(1) / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data());
-  //  }
-  //
-  //  void Variance(self_type const &x)
-  //  {
-  //    LazyResize(x.size());
-  //    assert(size_ > 1);
-  //    kernels::Variance<type, vector_register_type> kernel(fetch::math::statistics::Mean, Type(1)
-  //    / Type(size_)); this->data_.in_parallel().Apply(kernel, x.data_);
-  //  }
-
   void Equal(self_type const &a, self_type const &b)
   {
     assert(a.size() == b.size());
@@ -305,20 +286,26 @@ public:
     return sum * Type(0.5);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the floating point remainder in this
+   * array
+   * @param x
+   */
   void Fmod(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Fmod<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Fmod(data_, x.data(), data_);
   }
 
+  /**
+   * Divide this array by another shapeless array and store the remainder in this array with
+   * quotient rounded to int
+   * @param x
+   */
   void Remainder(self_type const &x)
   {
     LazyResize(x.size());
-
-    kernels::stdlib::Remainder<Type> kernel;
-    data_.in_parallel().Apply(kernel, x.data_);
+    fetch::math::Remainder(data_, x.data(), data_);
   }
 
   void Remquo(self_type const &x)
@@ -386,7 +373,7 @@ public:
   }
 
   /**
-   * trivial implementation of softmax
+   * Apply softmax to this array
    * @param x
    * @return
    */
@@ -395,98 +382,9 @@ public:
     LazyResize(x.size());
 
     assert(x.size() == this->size());
-
-    // by subtracting the max we improve numerical stability, and the result will be identical
-    this->Subtract(x, x.Max());
-    this->Exp(*this);
-    this->Divide(*this, this->Sum());
+    fetch::math::Softmax(x, *this);
 
     return *this;
-  }
-
-  /* Equality operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
-   */
-  bool operator==(ShapeLessArray const &other) const
-  {
-    if (size() != other.size())
-    {
-      return false;
-    }
-    bool ret = true;
-
-    for (size_type i = 0; i < data().size(); ++i)
-    {
-      ret &= (data()[i] == other.data()[i]);
-    }
-
-    return ret;
-  }
-
-  /* Not-equal operator.
-   * @other is the array which this instance is compared against.
-   *
-   * This method is sensitive to height and width.
-   */
-  bool operator!=(ShapeLessArray const &other) const
-  {
-    return !(this->operator==(other));
-  }
-
-  /**
-   * += operator
-   * @param other
-   * @return
-   */
-  void operator+=(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-  }
-  void operator+=(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-  }
-
-  ShapeLessArray operator+(ShapeLessArray const &other)
-  {
-    fetch::math::Add(*this, other, *this);
-    return *this;
-  }
-  ShapeLessArray operator+(Type const &scalar)
-  {
-    fetch::math::Add(*this, scalar, *this);
-    return *this;
-  }
-
-  /* One-dimensional reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that is
-   * meant for non-constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
-  {
-    return data_[i];
-  }
-
-  /* One-dimensional constant reference index operator.
-   * @param n is the index which is being accessed.
-   *
-   * This operator acts as a one-dimensional array accessor that can be
-   * used for constant object instances. Note this accessor is "slow" as
-   * it takes care that the developer does not accidently enter the
-   * padded area of the memory.
-   */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const
-  {
-    return data_[i];
   }
 
   /* One-dimensional constant reference access function.
@@ -623,7 +521,7 @@ public:
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; i < N; ++i)
+    for (std::size_t i = 0; ret && i < N; ++i)
     {
       double va = this->At(i);
       if (ignoreNaN && std::isnan(va))
@@ -1059,6 +957,94 @@ public:
         this->data());
 
     return *this;
+  }
+
+  /////////////////
+  /// OPERATORS ///
+  /////////////////
+
+  /**
+   * Equality operator
+   * This method is sensitive to height and width
+   * @param other  the array which this instance is compared against
+   * @return
+   */
+  bool operator==(ShapeLessArray const &other) const
+  {
+    if (size() != other.size())
+    {
+      return false;
+    }
+    bool ret = true;
+
+    for (size_type i = 0; ret && i < data().size(); ++i)
+    {
+      ret &= (data()[i] == other.data()[i]);
+    }
+
+    return ret;
+  }
+
+  /**
+   * Not-equal operator
+   * This method is sensitive to height and width
+   * @param other the array which this instance is compared against
+   * @return
+   */
+  bool operator!=(ShapeLessArray const &other) const
+  {
+    return !(this->operator==(other));
+  }
+
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapeLessArray operator+(OtherType const &other)
+  {
+    fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+
+  /* One-dimensional reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that is
+   * meant for non-constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i)
+  {
+    return data_[i];
+  }
+
+  /* One-dimensional constant reference index operator.
+   * @param n is the index which is being accessed.
+   *
+   * This operator acts as a one-dimensional array accessor that can be
+   * used for constant object instances. Note this accessor is "slow" as
+   * it takes care that the developer does not accidently enter the
+   * padded area of the memory.
+   */
+  template <typename S>
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
+      S const &i) const
+  {
+    return data_[i];
+  }
+
+  ///////////////////////////////////////
+  /// MATH LIBRARY INTERFACE METHODS ////
+  ///////////////////////////////////////
+
+  Type PeakToPeak() const
+  {
+    return fetch::math::PeakToPeak(*this);
   }
 
 protected:
