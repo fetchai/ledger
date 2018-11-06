@@ -243,10 +243,57 @@ public:
   {
     assert(filename_ != "");
     assert(i < size());
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    int64_t start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+  }
+
+  /**
+   * Copy array of objects onto the stack, don't respect current stack size, just
+   * update it if neccessary.
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   */
+  void SetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    auto ret = LazySetBulk(i, elements, objects);
+
+    if(ret)
+    {
+      StoreHeader();
+    }
+  }
+
+  /**
+   * Lazy implementation of SetBulk - updates the header without flushing it
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   * @return bool Whether the bulk set updated the header (number of elements)
+   */
+  bool LazySetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(objects), std::streamsize(sizeof(type)) * std::streamsize(elements));
+
+    // Catch case where a set extends the underlying stack
+    if((i + elements) > header_.objects)
+    {
+      header_.objects = i + elements;
+      return true;
+    }
+
+    return false;
   }
 
   void SetExtraHeader(header_extra_type const &he)

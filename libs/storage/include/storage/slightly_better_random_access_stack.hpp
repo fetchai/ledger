@@ -328,14 +328,18 @@ private:
         return;
       }
 
+      /*
       // Ensure underlying stack has these locations available
       while (stack_.size() <= line + i)
       {
         stack_.Push(dummy_);
       }
 
-      stack_.Set(line + i, items.elements[i]);
+      stack_.Set(line + i, items.elements[i]); */
+
     }
+
+    stack_.SetBulk(line, 1 << cache_line_ln2, items.elements.data());
   }
 
   void GetLine(uint64_t line, CachedDataItem &items) const
