@@ -59,6 +59,7 @@ Coverage quick start guide
 
 ### generate the coverage for the part of the library you care about
     cd ../
+    ./scripts/generate_coverage.py --help
     ./scripts/generate_coverage.py ./coverage_build/{part_of_lib}
 
 ### Coverage should now be in that part of the libaray (e.g. coverage_build/{part_of_lib}/coverage/...

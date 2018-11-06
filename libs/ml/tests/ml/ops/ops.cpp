@@ -404,14 +404,11 @@ TEST(ops_test, dot_add_backprop_test)
   // simple loss
   auto loss = fetch::ml::ops::MeanSquareError(y_pred, gt, sess);
 
+  // backward pass to get gradient
+  sess.BackProp(input_data, loss, 0.1, 200);
+
   // forward pass on the computational graph
   auto prediction = sess.Predict(input_data, y_pred);
-
-  // backward pass to get gradient
-  sess.BackProp(input_data, loss, 0.1, 100);
-
-  // forward pass on the computational graph
-  prediction = sess.Predict(input_data, y_pred);
 
   ASSERT_TRUE(prediction.AllClose(gt->data()));
 }
