@@ -28,6 +28,7 @@
 #include <fstream>
 #include <functional>
 #include <string>
+#include <algorithm>
 
 #include "core/assert.hpp"
 #include "storage/storage_exception.hpp"
@@ -294,6 +295,35 @@ public:
     }
 
     return false;
+  }
+
+  /**
+   * Get bulk elements, will fill the pointer with as many elements as are valid, otherwise
+   * nothing.
+   *
+   * @param: i Location of first object to be read
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   */
+  void GetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    // Figure out how many elements are valid to get, only get those
+    if(i >= header_.objects)
+    {
+      return;
+    }
+
+    assert(header_.objects >= i);
+
+    // i is valid location, elements are 1 or more at this point
+    elements = std::min(elements, std::size_t(header_.objects - i));
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(objects), std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)

@@ -321,22 +321,9 @@ private:
       return;
     }
 
-    for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
+    if (!stack_.is_open())
     {
-      if (!stack_.is_open())
-      {
-        return;
-      }
-
-      /*
-      // Ensure underlying stack has these locations available
-      while (stack_.size() <= line + i)
-      {
-        stack_.Push(dummy_);
-      }
-
-      stack_.Set(line + i, items.elements[i]); */
-
+      return;
     }
 
     stack_.SetBulk(line, 1 << cache_line_ln2, items.elements.data());
@@ -344,22 +331,12 @@ private:
 
   void GetLine(uint64_t line, CachedDataItem &items) const
   {
-    // Make sure underlying stack has mem. locations
-    for (std::size_t i = 0; i < (1 << cache_line_ln2); ++i)
+    if (!stack_.is_open())
     {
-      if (!stack_.is_open())
-      {
-        return;
-      }
-
-      // Ensure underlying stack has these locations available
-      while (stack_.size() <= line + i && stack_.is_open())
-      {
-        stack_.Push(dummy_);
-      }
-
-      stack_.Get(line + i, items.elements[i]);
+      return;
     }
+
+    stack_.GetBulk(line, 1 << cache_line_ln2, items.elements.data());
   }
 
   bool ManageMemory() const

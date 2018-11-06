@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------------
 Benchmark                                      Time           CPU Iterations
 -----------------------------------------------------------------------------
-ObjectStoreBench/WritingTxToStore_1        69456 ns      68922 ns      30000
-ObjectStoreBench/WritingTxToStore_10      695070 ns     687470 ns       2000
-ObjectStoreBench/WritingTxToStore_1k    69453827 ns   68197500 ns         20
-ObjectStoreBench/WritingTxToStore_10k  874128564 ns  862080000 ns          1
-ObjectStoreBench/RdWrTxToStore_10k     880098898 ns  879132000 ns          1
-ObjectStoreBench/RdWrTxToStore_30k    2373991806 ns 2353312000 ns          1
-ObjectStoreBench/RdWrTxToStore_100k   9283173536 ns 9132669000 ns          1
+ObjectStoreBench/WritingTxToStore_1        19695 ns      19687 ns      38488
+ObjectStoreBench/WritingTxToStore_10      203464 ns     203110 ns       3887
+ObjectStoreBench/WritingTxToStore_1k    19900754 ns   19881725 ns         40
+ObjectStoreBench/WritingTxToStore_10k  199609836 ns  199231500 ns          4
+ObjectStoreBench/RdWrTxToStore_10k     244338771 ns  243992000 ns          3
+ObjectStoreBench/RdWrTxToStore_30k     780104960 ns  778268000 ns          1
+ObjectStoreBench/RdWrTxToStore_100k   4087683546 ns 4079707000 ns          1
