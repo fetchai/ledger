@@ -39,5 +39,18 @@ using _M = Matrix<D, _S<D>>;
 
 TEST(free_functions, sigmoid_test)
 {
-  ASSERT_TRUE(1)
+//  matrix_type array1{2, 2};
+//
+//  array1.Set(0, 0, 0);
+//  array1.Set(0, 1, 1);
+//  array1.Set(1, 0, 0);
+//  array1.Set(1, 1, 1);
+
+//  matrix_type output = fetch::math::Sigmoid(array1);
+
+  matrix_type A;
+  fetch::math::Sigmoid(A);
+
+  ASSERT_TRUE(1);
+
 }
