@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "variant/variant.hpp"
 
 #include <atomic>
 #include <functional>
@@ -30,7 +30,7 @@
 #include <unordered_map>
 
 namespace fetch {
-namespace script {
+namespace variant {
 class Variant;
 }
 namespace ledger {
@@ -47,7 +47,7 @@ public:
 
   using ContractName          = chain::TransactionSummary::ContractName;
   using Transaction           = chain::Transaction;
-  using Query                 = script::Variant;
+  using Query                 = variant::Variant;
   using TransactionHandler    = std::function<Status(Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
   using QueryHandler          = std::function<Status(Query const &, Query &)>;
@@ -145,7 +145,7 @@ public:
     }
   }
 
-  bool ParseAsJson(Transaction const &tx, script::Variant &output);
+  bool ParseAsJson(Transaction const &tx, variant::Variant &output);
 
   Identifier const &identifier() const
   {

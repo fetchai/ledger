@@ -18,11 +18,18 @@
 
 #include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/script/variant.hpp"
 #include "crypto/fnv.hpp"
+#include "variant/variant.hpp"
+#include "variant/variant_utils.hpp"
 
 #include <stdexcept>
 
+static constexpr char const *LOGGING_NAME = "TokenContract";
+
+using fetch::variant::Variant;
+using fetch::variant::Extract;
+using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::FromBase64;
 namespace fetch {
 namespace ledger {
 namespace {
@@ -58,18 +65,18 @@ TokenContract::TokenContract()
 
 Contract::Status TokenContract::CreateWealth(Transaction const &tx)
 {
-
-  script::Variant data;
+  Variant data;
   if (!ParseAsJson(tx, data))
   {
     return Status::FAILED;
   }
 
-  byte_array::ByteArray address;
-  uint64_t              amount = 0;
+  ConstByteArray address;
+  uint64_t       amount{0};
+
   if (Extract(data, "address", address) && Extract(data, "amount", amount))
   {
-    address = byte_array::FromBase64(address);  //  the address needs to be converted
+    address = FromBase64(address);  //  the address needs to be converted
 
     // retrieve the record (if it exists)
     WalletRecord record{};
@@ -90,20 +97,18 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx)
 
 Contract::Status TokenContract::Transfer(Transaction const &tx)
 {
-
-  script::Variant data;
+  Variant data;
   if (!ParseAsJson(tx, data))
   {
     return Status::FAILED;
   }
 
-  byte_array::ByteArray to_address;
-  byte_array::ByteArray from_address;
-  uint64_t              amount = 0;
+  ConstByteArray to_address;
+  ConstByteArray from_address;
+  uint64_t       amount{0};
   if (Extract(data, "from", from_address) && Extract(data, "to", to_address) &&
       Extract(data, "amount", amount))
   {
-
     to_address   = byte_array::FromBase64(to_address);    //  the address needs to be converted
     from_address = byte_array::FromBase64(from_address);  //  the address needs to be converted
 
@@ -142,17 +147,17 @@ Contract::Status TokenContract::Balance(Query const &query, Query &response)
 {
   Status status = Status::FAILED;
 
-  byte_array::ByteArray address;
+  ConstByteArray address;
   if (Extract(query, "address", address))
   {
-    address = byte_array::FromBase64(address);
+    address = FromBase64(address);
 
     // lookup the record
     WalletRecord record{};
     GetStateRecord(record, address);
 
     // formulate the response
-    response.MakeObject();
+    response            = Variant::Object();
     response["balance"] = record.balance;
 
     status = Status::OK;

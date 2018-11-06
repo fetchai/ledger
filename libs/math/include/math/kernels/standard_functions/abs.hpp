@@ -17,4 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-// TODO(private issue 236): Needs to be implemented for smart contracts.
+#include <cmath>
+
+namespace fetch {
+namespace math {
+namespace free_functions {
+namespace kernels {
+
+template <typename type>
+struct Abs
+{
+  void operator()(type const &x, type &y) const
+  {
+    y = std::abs(x);
+  }
+};
+
+}  // namespace kernels
+}  // namespace free_functions
+}  // namespace math
+}  // namespace fetch

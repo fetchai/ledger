@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,27 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include <gtest/gtest.h>
+#include <cmath>
 
-using namespace fetch;
-using namespace fetch::script;
-using namespace fetch::serializers;
+namespace fetch {
+namespace math {
+namespace free_functions {
+namespace kernels {
 
-TEST(variant_test, variant_basic_functionality)
+/**
+ * Computes the floating-point remainder of the division operation x / y
+ */
+
+template <typename type>
+struct Fmod
 {
-  VariantArray arr = VariantArray(100);
-  for (std::size_t i = 0; i < arr.size(); ++i)
+  void operator()(type const &x, type &y) const
   {
-    arr[i] = i;
+    y = std::fmod(x);
   }
+};
 
-  VariantArray other(arr, 50, 10);
-  EXPECT_TRUE(other.size() == 10);
-
-  for (std::size_t i = 0; i < other.size(); ++i)
-  {
-    EXPECT_TRUE(other[i].As<std::size_t>() == (50 + i));
-  }
-}
+}  // namespace kernels
+}  // namespace free_functions
+}  // namespace math
+}  // namespace fetch
