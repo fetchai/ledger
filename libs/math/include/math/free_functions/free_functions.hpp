@@ -985,10 +985,10 @@ void Cosh(ArrayType &x)
  * hyperbolic tangent of x
  * @param x
  */
-template <typename ArrayType>
-void Tanh(ArrayType &x)
+template <typename T, typename C>
+void Tanh(ShapeLessArray<T, C> &x)
 {
-  kernels::stdlib::Tanh<typename ArrayType::Type> kernel;
+  kernels::stdlib::Tanh<typename ShapeLessArray<T, C>::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
@@ -1721,7 +1721,7 @@ linalg::Matrix<T, C, S> Tanh(linalg::Matrix<T, C, S> const &A)
   linalg::Matrix<T, C, S> ret{A.shape()};
   ret.Copy(A);
   Multiply(2.0, ret, ret);
-  Sigmoid(ret);
+  ret = Sigmoid(ret);
   Multiply(2.0, ret, ret);
   Subtract(ret, 1.0, ret);
 

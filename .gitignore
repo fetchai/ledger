@@ -18,3 +18,6 @@ nodes/
 
 scripts/python_ml_lib/mnist_example/*.gz
 scripts/python_ml_lib/mnist_example/*.so
+
+*.DS_Store
+*.ipynb_checkpoints/
