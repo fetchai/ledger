@@ -145,7 +145,7 @@ int main(int argc, char **argv)
   }
 
   auto count =
-      client.AddLaneConnectionsWaitingMuddle(*muddle_, lane_data, std::chrono::milliseconds(30000));
+      client.AddLaneConnectionsWaiting(*muddle_, lane_data, std::chrono::milliseconds(30000));
   if (count != num_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");

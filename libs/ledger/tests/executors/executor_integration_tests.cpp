@@ -154,8 +154,9 @@ protected:
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 
+    auto executor_muddle = Muddle::CreateMuddle(*network_manager_);
     executor_service_ =
-        std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+      std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
 
     // --- Wait for all the services to open listening ports --------
@@ -179,7 +180,7 @@ protected:
       lane_data[i] = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(lane_port));
     }
 
-    storage_->AddLaneConnectionsMuddle(*muddle_, lane_data);
+    storage_->AddLaneConnections(*muddle_, lane_data);
 
     // --- Schedule executor for connection ---------------------
 

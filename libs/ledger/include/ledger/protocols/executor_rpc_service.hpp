@@ -29,7 +29,8 @@
 namespace fetch {
 namespace ledger {
 
-class ExecutorRpcService  //: public service::ServiceServer<network::TCPServer>
+
+class ExecutorRpcService
 {
 public:
   using Resources              = Executor::Resources;
@@ -38,25 +39,19 @@ public:
   using Identity               = crypto::Identity;
   using Server                 = fetch::muddle::rpc::Server;
   using ServerPtr              = std::shared_ptr<Server>;
-  using CertificatePtr         = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using CertificatePtr         = Muddle::CertificatePtr;
   using ExecutorRpcProtocolPtr = std::shared_ptr<ExecutorRpcProtocol>;
 
   static constexpr char const *LOGGING_NAME = "ExecutorRpcService";
 
   // Construction / Destruction
-  ExecutorRpcService(uint16_t port, fetch::network::NetworkManager tm, Resources resources)
-    //: ServiceServer(port, network_manager)
+  ExecutorRpcService(uint16_t port, Resources resources, std::shared_ptr<Muddle> muddle)
     : executor_(std::move(resources))
+    , muddle_(std::move(muddle))
   {
     port_                            = port;
-    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
-    certificate->GenerateKeys();
 
-    std::unique_ptr<crypto::Prover> certificate_;
-    certificate_.reset(certificate);
-
-    identity_ = certificate_->identity();
-    muddle_   = std::make_shared<Muddle>(std::move(certificate_), tm);
+    identity_ = muddle_->identity();
     server_   = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC);
     protocol_ = std::make_shared<ExecutorRpcProtocol>(executor_);
 
@@ -84,8 +79,8 @@ private:
   Identity               identity_;
   uint16_t               port_;
   ServerPtr              server_;
-  MuddlePtr              muddle_;  ///< The muddle networking service
   Executor               executor_;
+  MuddlePtr              muddle_;
   ExecutorRpcProtocolPtr protocol_;
 };
 

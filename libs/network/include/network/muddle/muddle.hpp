@@ -28,6 +28,7 @@
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
+#include "crypto/ecdsa.hpp"
 
 #include <chrono>
 #include <memory>
@@ -128,6 +129,21 @@ public:
   using ConnectionMap      = std::unordered_map<Address, Uri>;
 
   static constexpr char const *LOGGING_NAME = "Muddle";
+
+  /* Utility instance creation function. In a real application, create
+     the muddle using loaded certificates and keys. In tests, call
+     this to just get one now.*/
+
+  static std::shared_ptr<Muddle> CreateMuddle(fetch::network::NetworkManager tm)
+  {
+    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    certificate->GenerateKeys();
+
+    std::unique_ptr<crypto::Prover> certificate_;
+    certificate_.reset(certificate);
+
+    return std::make_shared<Muddle>(std::move(certificate_), tm);
+  }
 
   // Construction / Destruction
   Muddle(CertificatePtr &&certificate, NetworkManager const &nm);

@@ -226,7 +226,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
 
-  std::size_t const count = storage_->AddLaneConnectionsWaitingMuddle(
+  std::size_t const count = storage_->AddLaneConnectionsWaiting(
       muddle_, lane_connections_map, std::chrono::milliseconds(30000));
 
   // check to see if the connections where successful

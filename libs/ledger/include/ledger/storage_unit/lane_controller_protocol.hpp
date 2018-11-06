@@ -26,8 +26,7 @@ class LaneControllerProtocol : public service::Protocol
 public:
   enum
   {
-    CONNECT = 1,
-    SHUTDOWN,
+    SHUTDOWN = 1,
     START_SYNC,
     STOP_SYNC,
     INCOMING_PEERS,
@@ -37,8 +36,6 @@ public:
 
   LaneControllerProtocol(LaneController *ctrl)
   {
-
-    this->Expose(CONNECT, ctrl, &LaneController::RPCConnect);
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
     this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
     this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);

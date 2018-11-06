@@ -135,8 +135,6 @@ public:
         return false;
       }
       currentstate = State::QUERYING;
-      ping_prom_ =
-          client_->CallSpecificAddress(target_address, RPC_IDENTITY, LaneIdentityProtocol::PING);
       lane_prom  = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
                                                LaneIdentityProtocol::GET_LANE_NUMBER);
       count_prom = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
@@ -148,7 +146,6 @@ public:
     case State::QUERYING:
     {
       std::vector<PromiseState> states;
-      states.push_back(ping_prom_->GetState());
       states.push_back(lane_prom->GetState());
       states.push_back(count_prom->GetState());
       states.push_back(id_prom->GetState());
@@ -174,18 +171,10 @@ public:
         }
       }
 
-      // Must be 4 successes.
+      // Must be 3 successes.
 
-      if (ping_prom_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
-      {
-        currentstate = State::FAILED;
-        return true;
-      }
-      else
-      {
-        currentstate = State::SUCCESS;
-        return true;
-      }
+      currentstate = State::SUCCESS;
+      return true;
     }
     default:
       currentstate = State::FAILED;
@@ -264,7 +253,7 @@ void StorageUnitClient::WorkCycle()
   bg_work_.DiscardTimeouts();
 }
 
-void StorageUnitClient::AddLaneConnectionsMuddle(Muddle &                         muddle,
+void StorageUnitClient::AddLaneConnections(Muddle &                         muddle,
                                                  const std::map<LaneIndex, Uri> & lanes,
                                                  const std::chrono::milliseconds &timeout)
 {
@@ -286,11 +275,11 @@ void StorageUnitClient::AddLaneConnectionsMuddle(Muddle &                       
   }
 }
 
-size_t StorageUnitClient::AddLaneConnectionsWaitingMuddle(Muddle &                         muddle,
+size_t StorageUnitClient::AddLaneConnectionsWaiting(Muddle &                         muddle,
                                                           const std::map<LaneIndex, Uri> & lanes,
                                                           const std::chrono::milliseconds &timeout)
 {
-  AddLaneConnectionsMuddle(muddle, lanes, timeout);
+  AddLaneConnections(muddle, lanes, timeout);
   PendingConnectionCounter::Wait(FutureTimepoint(timeout));
 
   FETCH_LOCK(mutex_);

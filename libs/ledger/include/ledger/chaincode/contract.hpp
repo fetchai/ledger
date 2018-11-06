@@ -89,7 +89,8 @@ public:
       // lock the contract resources
       if (!LockResources(tx.summary().resources))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "LockResources failed.");
+        FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
+        return Status::FAILED;
       }
 
       // dispatch the contract
@@ -98,7 +99,8 @@ public:
       // unlock the contract resources
       if (!UnlockResources(tx.summary().resources))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "UnlockResources failed.");
+        FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
+        return Status::FAILED;
       }
 
       ++transaction_counters_[name];

@@ -101,11 +101,11 @@ public:
   }
 
 public:
-  size_t AddLaneConnectionsWaitingMuddle(
+  size_t AddLaneConnectionsWaiting(
       Muddle &muddle, const std::map<LaneIndex, Uri> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000));
 
-  void AddLaneConnectionsMuddle(
+  void AddLaneConnections(
       Muddle &muddle, const std::map<LaneIndex, Uri> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(10000));
 

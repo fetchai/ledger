@@ -39,11 +39,6 @@ public:
 
   static constexpr char const *LOGGING_NAME = "LaneIdentity";
 
-  enum
-  {
-    PING_MAGIC = 1337
-  };
-
   LaneIdentity(client_register_type reg, network_manager_type const &nm, crypto::Identity identity)
     : identity_(std::move(identity))
     , register_(std::move(reg))
@@ -55,10 +50,6 @@ public:
 
   /// External controls
   /// @{
-  ping_type Ping()
-  {
-    return PING_MAGIC;
-  }
 
   crypto::Identity Hello(connection_handle_type const &client, crypto::Identity const &iden)
   {
