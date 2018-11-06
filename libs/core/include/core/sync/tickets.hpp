@@ -89,7 +89,9 @@ inline void Tickets::Wait()
   }
 
   if (shutdown_)
+  {
     return;
+  }
 
   assert(count_ > 0);
   --count_;
