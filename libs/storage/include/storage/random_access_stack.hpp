@@ -24,11 +24,11 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
 #include <string>
-#include <algorithm>
 
 #include "core/assert.hpp"
 #include "storage/storage_exception.hpp"
@@ -263,7 +263,7 @@ public:
   {
     auto ret = LazySetBulk(i, elements, objects);
 
-    if(ret)
+    if (ret)
     {
       StoreHeader();
     }
@@ -285,10 +285,11 @@ public:
     int64_t start = int64_t((i * sizeof(type)) + header_.size());
 
     file_handle_.seekg(start, file_handle_.beg);
-    file_handle_.write(reinterpret_cast<char const *>(objects), std::streamsize(sizeof(type)) * std::streamsize(elements));
+    file_handle_.write(reinterpret_cast<char const *>(objects),
+                       std::streamsize(sizeof(type)) * std::streamsize(elements));
 
     // Catch case where a set extends the underlying stack
-    if((i + elements) > header_.objects)
+    if ((i + elements) > header_.objects)
     {
       header_.objects = i + elements;
       return true;
@@ -312,7 +313,7 @@ public:
     int64_t start = int64_t((i * sizeof(type)) + header_.size());
 
     // Figure out how many elements are valid to get, only get those
-    if(i >= header_.objects)
+    if (i >= header_.objects)
     {
       return;
     }
@@ -323,7 +324,8 @@ public:
     elements = std::min(elements, std::size_t(header_.objects - i));
 
     file_handle_.seekg(start, file_handle_.beg);
-    file_handle_.read(reinterpret_cast<char *>(objects), std::streamsize(sizeof(type)) * std::streamsize(elements));
+    file_handle_.read(reinterpret_cast<char *>(objects),
+                      std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)

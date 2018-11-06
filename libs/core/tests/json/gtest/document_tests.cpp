@@ -55,20 +55,17 @@ TEST(json_bsic_parsing_gtest, Parsing_and_modification_of_document)
 
   std::stringstream ss;
   ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+  EXPECT_EQ(ss.str(), R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
 
   doc["a"] = 4;
   ss.str("");
   ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+  EXPECT_EQ(ss.str(), R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
 
   doc["x"]["y"][1] = 5;
   ss.str("");
   ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
+  EXPECT_EQ(ss.str(), R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
 
   doc["x"]["z"] = fetch::script::Variant({1, 2, 3, 4, 5});
   ss.str("");
