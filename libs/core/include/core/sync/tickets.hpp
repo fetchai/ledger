@@ -79,7 +79,9 @@ inline void Tickets::Wait()
   std::unique_lock<std::mutex> lock(mutex_);
 
   if (shutdown_)
+  {
     return;
+  }
 
   if (count_ == 0)
   {
@@ -122,7 +124,9 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
     for (;;)
     {
       if (shutdown_)
+      {
         return false;
+      }
 
       if (count_ == 0)
       {
