@@ -1715,6 +1715,19 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
   return ret;
 }
 
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> Tanh(linalg::Matrix<T, C, S> const &A)
+{
+  linalg::Matrix<T, C, S> ret{A.shape()};
+  ret.Copy(A);
+  Multiply(2.0, ret, ret);
+  Sigmoid(ret);
+  Multiply(2.0, ret, ret);
+  Subtract(ret, 1.0, ret);
+
+  return ret;
+}
+
 /**
  * Max function for two values
  * @tparam T
