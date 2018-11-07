@@ -20,83 +20,83 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
-#include "core/script/variant.hpp"
 #include "core/serializers/serialisation_argument_wrapper.hpp"
+#include "variant/variant.hpp"
 
 #include <sstream>
+
+using fetch::variant::Variant;
+using fetch::byte_array::ToBase64;
+using fetch::byte_array::FromBase64;
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace chain {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const add_metadata)
 {
-  script::Variant tx_v;
-  tx_v.MakeObject();
+  Variant tx_v = Variant::Object();
+
   // TODO(pbukva) (private issue: find nice way to deal with versioning of raw (C++) transaction and
   // version of wire format)
   tx_v["ver"] = "1.0";
 
   if (add_metadata)
   {
-    script::Variant tx_debug_data;
-    tx_debug_data.MakeObject();
-    tx_debug_data["data"]          = byte_array::ToBase64(tx.data());
-    tx_debug_data["fee"]           = tx.summary().fee;
-    tx_debug_data["contract_name"] = tx.contract_name();
+    Variant &metadata = tx_v["metadata"];
+    metadata          = Variant::Object();
 
-    script::VariantArray resources_v(tx.resources().size());
-    auto                 res_it = tx.resources().cbegin();
-    resources_v.ForEach([&res_it](fetch::script::Variant &value) -> bool {
-      value = byte_array::ToBase64(*(res_it++));
-      return true;
-    });
+    metadata["data"]          = byte_array::ToBase64(tx.data());
+    metadata["fee"]           = tx.summary().fee;
+    metadata["contract_name"] = tx.contract_name();
 
-    tx_debug_data["resources"] = resources_v;
+    Variant &resources = metadata["resource"];
+    resources          = Variant::Array(tx.resources().size());
 
-    if (tx.signatures().size() > 0)
+    // encode all the resources as base64
+    std::size_t idx{0};
+    for (auto const &resource : tx.resources())
     {
-      script::Variant signatories;
-      signatories.MakeObject();
-      std::size_t identity_serialised_size = 0;
-      auto        eval_identity_size       = serializers::LazyEvalArgumentFactory(
-          [&identity_serialised_size](auto &stream) { identity_serialised_size = stream.size(); });
-
-      serializers::ByteArrayBuffer stream;
-      for (auto const &sig : tx.signatures())
-      {
-        stream.Resize(0, ResizeParadigm::ABSOLUTE);
-        stream.Append(sig.first, eval_identity_size, sig.second);
-        signatories[byte_array::ToBase64(stream.data().SubArray(0, identity_serialised_size))] =
-            byte_array::ToBase64(stream.data().SubArray(
-                identity_serialised_size, stream.data().size() - identity_serialised_size));
-      }
-
-      tx_debug_data["signatories"] = signatories;
+      resources[idx++] = ToBase64(resource);
     }
-    tx_v["metadata"] = tx_debug_data;
+
+    if (!tx.signatures().empty())
+    {
+      Variant &signatures = metadata["identities"];
+      signatures          = Variant::Array(tx.signatures().size());
+
+      std::size_t idx{0};
+      for (auto const &signature : tx.signatures())
+      {
+        signatures[idx++] = ToBase64(signature.first.identifier());
+      }
+    }
   }
 
-  auto                         txdfs = TxSigningAdapterFactory(tx);
+  // generate the wire format for the transaction
   serializers::ByteArrayBuffer stream;
-  stream.Append(txdfs);
-  tx_v["data"] = byte_array::ToBase64(stream.data());
+  stream.Append(TxSigningAdapterFactory(tx));
 
+  tx_v["data"] = ToBase64(stream.data());
+
+  // encode the transaction object into JSON
   std::stringstream str_stream;
   str_stream << tx_v;
+
   return str_stream.str();
 }
 
-MutableTransaction FromWireTransaction(byte_array::ConstByteArray const &transaction)
+MutableTransaction FromWireTransaction(ConstByteArray const &transaction)
 {
   MutableTransaction tx;
 
+  // parse the input stream as JSON
   json::JSONDocument tx_json{transaction};
   auto &             tx_v = tx_json.root();
 
-  serializers::ByteArrayBuffer stream{
-      byte_array::FromBase64(tx_v["data"].As<byte_array::ByteArray>())};
-  auto txdata = TxSigningAdapterFactory(tx);
-  stream >> txdata;
+  serializers::ByteArrayBuffer stream{FromBase64(tx_v["data"].As<ConstByteArray>())};
+  auto                         tx_data = TxSigningAdapterFactory(tx);
+  stream >> tx_data;
 
   return tx;
 }
