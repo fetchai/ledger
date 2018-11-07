@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/script/variant.hpp"
 #include "http/client.hpp"
 #include "http/method.hpp"
+#include "variant/variant.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -36,7 +36,7 @@ namespace http {
 class JsonHttpClient
 {
 public:
-  using Variant        = script::Variant;
+  using Variant        = variant::Variant;
   using ConstByteArray = byte_array::ConstByteArray;
   using Headers        = std::unordered_map<std::string, std::string>;
 
