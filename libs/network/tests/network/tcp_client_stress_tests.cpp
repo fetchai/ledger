@@ -621,7 +621,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multiple_clients)
 {
-  
+
   std::cerr << "Info: Bouncing messages off echo/loopback\
     server and checking ordering, multiple clients"
             << std::endl;
