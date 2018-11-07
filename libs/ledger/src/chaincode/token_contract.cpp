@@ -24,7 +24,7 @@
 
 #include <stdexcept>
 
-static constexpr char const *LOGGING_NAME = "TokenContract";
+//static constexpr char const *LOGGING_NAME = "TokenContract";
 
 using fetch::variant::Variant;
 using fetch::variant::Extract;
