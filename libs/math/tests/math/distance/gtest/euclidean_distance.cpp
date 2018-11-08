@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest>
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
 #include "core/random/lcg.hpp"
-#include "testing/unittest.hpp"
 #include <math/distance/euclidean.hpp>
 #include <math/linalg/matrix.hpp>
 

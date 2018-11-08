@@ -21,11 +21,15 @@
 #include <iostream>
 
 #include "core/random/lcg.hpp"
-#include <math/free_functions/clustering_algorithms/k_means.hpp>
+#include "math/free_functions/free_functions.hpp"
 #include <math/linalg/matrix.hpp>
 
-using namespace fetch::math::clustering;
 using namespace fetch::math::linalg;
+
+using data_type            = float;
+using container_type       = fetch::memory::SharedArray<data_type>;
+using matrix_type          = Matrix<data_type, container_type>;
+using vector_register_type = typename matrix_type::vector_register_type;
 
 template <typename D>
 using _S = fetch::memory::SharedArray<D>;
@@ -33,9 +37,9 @@ using _S = fetch::memory::SharedArray<D>;
 template <typename D>
 using _M = Matrix<D, _S<D>>;
 
-TEST(distance_tests, kmeans)
+TEST(free_functions, sigmoid_test)
 {
-_M<double> A = _M<double>(R"(1 2; 3 4; 1 2; 0 0)");
-ASSERT_TRUE(KMeans(A, 2) == 0);
-
+  matrix_type A;
+  fetch::math::Sigmoid(A);
+  ASSERT_TRUE(1);
 }
