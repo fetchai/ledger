@@ -158,7 +158,7 @@ public:
           assigned_k   = j;
         }
       }
-      k_assignment.Set(i, 0, assigned_k);
+      k_assignment.Set(i, 0, static_cast<typename ArrayType::Type>(assigned_k));
       ++k_count[assigned_k];
     }
 
@@ -195,7 +195,7 @@ public:
         if (empty_clusters[i] == 1)
         {
           reassigned_k[i] = static_cast<std::size_t>(k_assignment[i]);
-          k_assignment[i] = data_idxs[i];
+          k_assignment[i] = static_cast<typename ArrayType::Type>(data_idxs[i]);
           ++k_count[i];
         }
       }
@@ -213,7 +213,7 @@ public:
       {
         if (empty_clusters[i] == 1)
         {
-          k_assignment[i] = reassigned_k[i];
+          k_assignment[i] = static_cast<typename ArrayType::Type>(reassigned_k[i]);
         }
       }
     }
@@ -241,7 +241,7 @@ public:
     {
       for (std::size_t i = 0; i < n_dimensions; ++i)
       {
-        k_means.Set(m, i, k_means.At(m, i) / k_count[m]);
+        k_means.Set(m, i, k_means.At(m, i) / static_cast<typename ArrayType::Type>(k_count[m]));
       }
     }
   }
@@ -288,7 +288,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t K)
   {
     for (std::size_t i = 0; i < n_points; ++i)
     {
-      ret[i] = i;
+      ret[i] = static_cast<typename ArrayType::Type>(i);
     }
   }
   else  // real work happens in these cases
