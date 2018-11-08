@@ -185,8 +185,8 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
+      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol()
+      << " msgnum=" << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
@@ -351,6 +351,29 @@ Router::RoutingTable Router::GetRoutingTable() const
 {
   FETCH_LOCK(routing_table_lock_);
   return routing_table_;
+}
+
+/**
+ * Lookup a routing
+ *
+ * @return The address corresponding to a handle in the table.
+ */
+bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  for (const auto &routing : routing_table_)
+  {
+    ByteArray output(routing.first.size());
+    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
+                    static_cast<std::string>(ToBase64(output)));
+    if (routing.second.handle == handle)
+    {
+      address = ToConstByteArray(routing.first);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -700,8 +723,8 @@ void Router::DispatchPacket(PacketPtr packet)
     {
       return;
     }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message:", DescribePacket(*packet));
   });
 }
 

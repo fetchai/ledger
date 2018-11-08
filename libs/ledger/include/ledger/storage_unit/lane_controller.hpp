@@ -333,8 +333,8 @@ public:
           shared_service_client_type conn =
               register_.CreateServiceClient<client_type>(manager_, peer.address(), peer.port());
 
-          currently_identifying.Add(
-            uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()));
+          currently_identifying.Add(uri, IdentifyingConnection(conn, lane_identity_protocol_,
+                                                               ptr->Identity()));
         }
         catch (std::exception &ex)
         {

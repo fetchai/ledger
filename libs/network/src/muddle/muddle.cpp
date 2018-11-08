@@ -106,6 +106,16 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
+bool Muddle::GetOutgoingConnectionAddress(const Uri &uri, Address &address) const
+{
+  PeerConnectionList::Handle handle;
+  if (!clients_.UriToHandle(uri, handle))
+  {
+    return false;
+  }
+  return router_.HandleToAddress(handle, address);
+}
+
 Muddle::ConnectionMap Muddle::GetConnections()
 {
   ConnectionMap connection_map;

@@ -108,7 +108,7 @@ public:
    * @param: object The object
    *
    */
-  void Set(ResourceID const &rid, type const &object)
+  bool Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     return LocklessSet(rid, object);
@@ -175,11 +175,12 @@ public:
    * @param: object The object
    *
    */
-  void LocklessSet(ResourceID const &rid, type const &object)
+  bool LocklessSet(ResourceID const &rid, type const &object)
   {
     serializer_type ser;
     ser << object;
     store_.Set(rid, ser.data());
+    return true;
   }
 
   std::size_t size() const

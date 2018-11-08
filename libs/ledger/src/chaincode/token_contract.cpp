@@ -24,13 +24,12 @@
 
 #include <stdexcept>
 
-static constexpr char const *LOGGING_NAME = "TokenContract";
+//static constexpr char const *LOGGING_NAME = "TokenContract";
 
 using fetch::variant::Variant;
 using fetch::variant::Extract;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-
 namespace fetch {
 namespace ledger {
 namespace {

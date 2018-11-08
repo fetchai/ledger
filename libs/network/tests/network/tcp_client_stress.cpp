@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "core/byte_array/encoders.hpp"
+#include "core/commandline/params.hpp"
 #include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
@@ -38,7 +39,6 @@ using namespace fetch::byte_array;
 static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
 static constexpr std::size_t MANY_CYCLES  = 200;
 static constexpr std::size_t MID_CYCLES   = 50;
-static constexpr std::size_t FEW_CYCLES   = 10;
 
 std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;
@@ -196,21 +196,7 @@ std::vector<message_type> CreateTestData(size_t index)
 }
 
 template <std::size_t N = 1>
-void TestCase0(std::string host, std::string port)
-{
-  std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open the echo server multiple times" << std::endl;
-
-  for (std::size_t index = 0; index < FEW_CYCLES; ++index)
-  {
-    GetOpenPort();
-  }
-
-  std::cerr << "Success." << std::endl;
-}
-
-template <std::size_t N = 1>
-void TestCase1(std::string host, std::string port)
+void TestCase1_InvalidTargetDeadNetman(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port\
@@ -228,7 +214,7 @@ void TestCase1(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase2(std::string host, std::string port)
+void TestCase2_InvalidTarget(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port\
@@ -247,35 +233,10 @@ void TestCase2(std::string host, std::string port)
   std::cerr << "Success." << std::endl;
 }
 
-template <std::size_t N = 1>
-void TestCase3(std::string host, std::string port)
-{
-  std::cerr << "\nTEST CASE 3. Threads: " << N << std::endl;
-  std::cerr << "Info: Attempting to open a connection to a port that\
-    doesn't exist (NM jittering)"
-            << std::endl;
-
-  uint16_t emptyPort = GetOpenPort();
-
-  std::cerr << "starting" << std::endl;
-  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
-  {
-    NetworkManager nmanager(N);
-    if (index % 2 == 0)
-    {
-      nmanager.Start();
-    }
-    Client client(host, std::to_string(emptyPort), nmanager);
-    if (index % 3 == 0)
-    {
-      nmanager.Stop();
-    }
-  }
-  std::cerr << "Success." << std::endl;
-}
+// Testcase 3 was a dupe of TC4
 
 template <std::size_t N = 1>
-void TestCase4(std::string host, std::string port)
+void TestCase4_InvalidTargetFlakeyNetman(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 4. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port that\
@@ -302,7 +263,7 @@ void TestCase4(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase5(std::string host, std::string port)
+void TestCase5_ValidTargetDeadNetman(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 5. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port that\
@@ -321,7 +282,7 @@ void TestCase5(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase6(std::string host, std::string port)
+void TestCase6_ValidTargetLiveNetman(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 6. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a\
@@ -342,7 +303,7 @@ void TestCase6(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase7(std::string host, std::string port)
+void TestCase7_ValidTargetFlakeyNetman(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 7. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a\
@@ -369,7 +330,7 @@ void TestCase7(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase8(std::string host, std::string port)
+void TestCase8_MulticonnsValidPort(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 8. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open multiple\
@@ -391,7 +352,7 @@ void TestCase8(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase9(std::string host, std::string port)
+void TestCase9_AsyncMulticonnsValidPort(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 9. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open multiple\
@@ -434,7 +395,7 @@ void TestCase9(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase10(std::string host, std::string port)
+void TestCase10_NetmanDiesBeforeClients(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 10. Threads: " << N << std::endl;
   std::cerr << "Info: (Legacy) Usually breaks due to the NM being destroyed "
@@ -477,7 +438,7 @@ void TestCase10(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase11(std::string host, std::string port)
+void TestCase11_CheckAllMessagesResponded(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 11. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback server and counting them" << std::endl;
@@ -533,7 +494,7 @@ void TestCase11(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase12(std::string host, std::string port)
+void TestCase12_CheckAllMessagesRespondedSlow(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 12. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
@@ -591,7 +552,7 @@ void TestCase12(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase13(std::string host, std::string port)
+void TestCase13_CheckMessageResponseOrdering(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 13. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
@@ -671,7 +632,7 @@ void TestCase13(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase14(std::string host, std::string port)
+void TestCase14_CheckMessageResponseOrderingMulticon(std::string host, std::string port)
 {
   std::cerr << "\nTEST CASE 14. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
@@ -766,7 +727,7 @@ void TestCase14(std::string host, std::string port)
 }
 
 template <std::size_t N = 1>
-void TestCase15(std::string host, std::string const &port)
+void TestCase15_KilledDuringTransmitMulticon(std::string host, std::string const &port)
 {
   std::cerr << "\nTEST CASE 15. Threads: " << N << std::endl;
   std::cerr << "Info: Killing during transmission, multiple clients" << std::endl;
@@ -834,53 +795,70 @@ void TestCase15(std::string host, std::string const &port)
 
 int main(int argc, char *argv[])
 {
-
   std::string host       = "localhost";
   uint16_t    portNumber = 8080;
-  std::string port       = std::to_string(portNumber);
+  bool        all        = false;
   std::size_t iterations = 1;
 
-  if (argc > 1)
-  {
-    std::stringstream s(argv[1]);
-    s >> iterations;
-  }
+  fetch::commandline::Params params;
+
+  params.add(iterations, "iterations", "Set the number of iterations.", std::size_t(1));
+  params.add(host, "host", "Set the hostname to use.", std::string("localhost"));
+  params.add(portNumber, "port", "Set the port to run using.", uint16_t(8080));
+  params.add(all, "all", "Run ALL the tests, not just the sanity checkers.", false);
+
+  params.Parse(argc, argv);
+
+  std::string port = std::to_string(portNumber);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
   for (std::size_t i = 0; i < iterations; ++i)
   {
     // Do most likely to fail test first
-    TestCase9<10>(host, port);
+    if (all)
+    {
+      TestCase9_AsyncMulticonnsValidPort<1>(host, port);
+    }
+    TestCase9_AsyncMulticonnsValidPort<10>(host, port);
 
-    TestCase9<1>(host, port);
-    TestCase0<1>(host, port);
-    TestCase1<1>(host, port);
-    TestCase2<1>(host, port);
-    TestCase3<1>(host, port);
-    TestCase4<1>(host, port);
-    TestCase5<1>(host, port);
-    TestCase6<1>(host, port);
-    TestCase7<1>(host, port);
-    TestCase11<1>(host, port);
-    TestCase12<1>(host, port);
-    TestCase13<1>(host, port);
-    TestCase14<1>(host, port);
-    TestCase15<1>(host, port);
+    if (all)
+    {
+      // TestCase8_MulticonnsValidPort<1>(host, port);
+      TestCase11_CheckAllMessagesResponded<1>(host, port);
+      TestCase13_CheckMessageResponseOrdering<1>(host, port);
+    }
 
-    TestCase1<10>(host, port);
-    TestCase2<10>(host, port);
-    TestCase3<10>(host, port);
-    TestCase4<10>(host, port);
-    TestCase5<10>(host, port);
-    TestCase6<10>(host, port);
-    TestCase7<10>(host, port);
-    TestCase11<10>(host, port);
-    TestCase12<10>(host, port);
-    TestCase13<10>(host, port);
+    if (all)
+    {
+      TestCase1_InvalidTargetDeadNetman<1>(host, port);
+      TestCase2_InvalidTarget<1>(host, port);
+      TestCase4_InvalidTargetFlakeyNetman<1>(host, port);
+      TestCase5_ValidTargetDeadNetman<1>(host, port);
+      TestCase6_ValidTargetLiveNetman<1>(host, port);
+      TestCase7_ValidTargetFlakeyNetman<1>(host, port);
+      TestCase12_CheckAllMessagesRespondedSlow<1>(host, port);
+      TestCase13_CheckMessageResponseOrdering<1>(host, port);
+    }
 
-    TestCase14<10>(host, port);
-    TestCase15<10>(host, port);
+    if (all)
+    {
+      // TestCase8_MulticonnsValidPort<10>(host, port);
+      TestCase11_CheckAllMessagesResponded<10>(host, port);
+      TestCase13_CheckMessageResponseOrdering<10>(host, port);
+    }
+
+    // Save runtime by only doing the multiple-thread testcases.
+    TestCase1_InvalidTargetDeadNetman<10>(host, port);
+    TestCase2_InvalidTarget<10>(host, port);
+    TestCase4_InvalidTargetFlakeyNetman<10>(host, port);
+    TestCase5_ValidTargetDeadNetman<10>(host, port);
+    TestCase6_ValidTargetLiveNetman<10>(host, port);
+    TestCase7_ValidTargetFlakeyNetman<10>(host, port);
+    TestCase12_CheckAllMessagesRespondedSlow<10>(host, port);
+
+    TestCase14_CheckMessageResponseOrderingMulticon<10>(host, port);
+    TestCase15_KilledDuringTransmitMulticon<10>(host, port);
   }
 
   std::cerr << "finished all tests" << std::endl;

@@ -17,34 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-
-#include <atomic>
-
 namespace fetch {
-namespace ledger {
+namespace serializers {
 
-class DummyContract : public Contract
+template <typename T, typename OBJ>
+inline void Serialize(T &serializer, OBJ *const(&ptr))
 {
-public:
-  DummyContract();
-  ~DummyContract() = default;
+  serializer.Allocate(sizeof(uint64_t));
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
+  // Writing the size to the byte array
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&ptr), sizeof(std::nullptr_t));
+}
 
-  std::size_t counter() const
-  {
-    return counter_;
-  }
+template <typename T, typename OBJ>
+inline void Deserialize(T &serializer, OBJ const *(&ptr))
+{
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+}
 
-private:
-  using Counter = std::atomic<std::size_t>;
-
-  Status Wait(Transaction const &tx);
-  Status Run(Transaction const &tx);
-
-  Counter counter_{0};
-};
-
-}  // namespace ledger
+}  // namespace serializers
 }  // namespace fetch

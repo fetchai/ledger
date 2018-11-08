@@ -51,8 +51,68 @@ enum
 using ResourceAddress = fetch::storage::ResourceAddress;
 using TCPClient       = fetch::network::TCPClient;
 using Peer            = fetch::network::Peer;
+using Muddle          = fetch::muddle::Muddle;
+using MuddlePtr       = std::unique_ptr<Muddle>;
+using Prover          = fetch::crypto::Prover;
+using ProverPtr       = std::unique_ptr<Prover>;
+using Uri             = fetch::network::Uri;
 
-static constexpr char const *LOGGING_NAME = "lane_client.cpp";
+static constexpr char const *LOGGING_NAME = "examples/lane_client";
+static const uint16_t        P2P_RPC_PORT = 9130;
+
+ProverPtr GenerateP2PKey()
+{
+  static constexpr char const *KEY_FILENAME = "p2p.key";
+
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::unique_ptr<Signer>;
+
+  SignerPtr certificate        = std::make_unique<Signer>();
+  bool      certificate_loaded = false;
+
+  // Step 1. Attempt to load the existing key
+  {
+    std::ifstream input_file(KEY_FILENAME, std::ios::in | std::ios::binary);
+
+    if (input_file.is_open())
+    {
+      fetch::byte_array::ByteArray private_key_data;
+      private_key_data.Resize(Signer::PrivateKey::ecdsa_curve_type::privateKeySize);
+
+      // attempt to read in the private key
+      input_file.read(private_key_data.char_pointer(),
+                      static_cast<std::streamsize>(private_key_data.size()));
+
+      if (!(input_file.fail() || input_file.eof()))
+      {
+        certificate->Load(private_key_data);
+        certificate_loaded = true;
+      }
+    }
+  }
+
+  // Generate a key if the load failed
+  if (!certificate_loaded)
+  {
+    certificate->GenerateKeys();
+
+    std::ofstream output_file(KEY_FILENAME, std::ios::out | std::ios::binary);
+
+    if (output_file.is_open())
+    {
+      auto const private_key_data = certificate->private_key();
+
+      output_file.write(private_key_data.char_pointer(),
+                        static_cast<std::streamsize>(private_key_data.size()));
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to save P2P key");
+    }
+  }
+
+  return certificate;
+}
 
 int main(int argc, char **argv)
 {
@@ -69,19 +129,23 @@ int main(int argc, char **argv)
 
   // Client setup
   fetch::network::NetworkManager tm(8);
-  StorageUnitClient              client(tm);
+  MuddlePtr                      muddle_;
+  ProverPtr                      p2p_key = GenerateP2PKey();
+  muddle_                                = std::make_unique<Muddle>(std::move(p2p_key), tm);
+  muddle_->Start({P2P_RPC_PORT});
+  StorageUnitClient client(tm, *muddle_);
 
   tm.Start();
 
-  std::map<LaneIndex, Peer> lane_data;
+  std::map<LaneIndex, Uri> lane_data;
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
     uint16_t const lane_port = static_cast<uint16_t>(lane_port_start + i);
-    lane_data[i]             = Peer("127.0.0.1", lane_port);
+    lane_data[i] = Uri((std::string("tcp://127.0.0.1:") + std::to_string(lane_port)).c_str());
   }
 
   auto count =
-      client.AddLaneConnectionsWaiting<TCPClient>(lane_data, std::chrono::milliseconds(30000));
+      client.AddLaneConnectionsWaiting(*muddle_, lane_data, std::chrono::milliseconds(30000));
   if (count != num_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");

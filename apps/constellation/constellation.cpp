@@ -79,10 +79,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
-                                                 bool force_loopback = false)
+std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
+                                                bool force_loopback = false)
 {
-  std::map<LaneIndex, Peer> connection_map;
+  std::map<LaneIndex, Uri> connection_map;
 
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
@@ -105,11 +105,11 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
     // update the connection map
     if (force_loopback)
     {
-      connection_map[i] = Peer{"127.0.0.1", service.local_port};
+      connection_map[i] = Uri{"tcp://127.0.0.1:" + std::to_string(service.local_port)};
     }
     else
     {
-      connection_map[i] = service.remote_uri.AsPeer();
+      connection_map[i] = service.remote_uri;
     }
   }
 
@@ -149,7 +149,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
-  , storage_(std::make_shared<StorageUnitClient>(network_manager_))
+  , storage_(std::make_shared<StorageUnitClient>(network_manager_, muddle_))
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         db_prefix, num_executors, storage_,
@@ -223,7 +223,10 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
+
+  auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
+
+  std::size_t const count = storage_->AddLaneConnectionsWaiting(
       BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(1000));
 
   // check to see if the connections where successful

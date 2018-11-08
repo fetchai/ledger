@@ -21,8 +21,6 @@
 #include <chrono>
 #include <random>
 
-static constexpr char const *LOGGING_NAME = "DummyContract";
-
 static constexpr std::size_t MINIMUM_TIME = 50;
 static constexpr std::size_t MAXIMUM_TIME = 200;
 static constexpr std::size_t DELTA_TIME   = MAXIMUM_TIME - MINIMUM_TIME;

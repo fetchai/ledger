@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/server_interface.hpp"
 #include "network/tcp/tcp_server.hpp"
 
@@ -118,8 +119,11 @@ private:
       metadata_[index] = {from, service, channel, counter};
     }
 
+    service::CallContext context;
+    context.sender_address = from;
+
     // dispatch down to the core RPC level
-    PushProtocolRequest(index, payload);
+    PushProtocolRequest(index, payload, &context);
   }
 
   MuddleEndpoint &endpoint_;

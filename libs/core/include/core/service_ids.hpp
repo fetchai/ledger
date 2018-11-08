@@ -24,6 +24,8 @@ namespace fetch {
 static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
 static constexpr uint16_t SERVICE_P2P        = 1;
 static constexpr uint16_t SERVICE_MAIN_CHAIN = 2;
+static constexpr uint16_t SERVICE_LANE       = 3;
+static constexpr uint16_t SERVICE_EXECUTOR   = 4;
 
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC =

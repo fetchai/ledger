@@ -20,30 +20,68 @@
 #include "core/service_ids.hpp"
 #include "ledger/executor.hpp"
 #include "ledger/protocols/executor_rpc_protocol.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include "network/service/server.hpp"
 #include "network/tcp/tcp_server.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class ExecutorRpcService : public service::ServiceServer<network::TCPServer>
+
+class ExecutorRpcService
 {
 public:
-  using Resources = Executor::Resources;
+  using Resources              = Executor::Resources;
+  using Muddle                 = muddle::Muddle;
+  using MuddlePtr              = std::shared_ptr<Muddle>;
+  using Identity               = crypto::Identity;
+  using Server                 = fetch::muddle::rpc::Server;
+  using ServerPtr              = std::shared_ptr<Server>;
+  using CertificatePtr         = Muddle::CertificatePtr;
+  using ExecutorRpcProtocolPtr = std::shared_ptr<ExecutorRpcProtocol>;
+
+  static constexpr char const *LOGGING_NAME = "ExecutorRpcService";
 
   // Construction / Destruction
-  ExecutorRpcService(uint16_t port, network_manager_type const &network_manager,
-                     Resources resources)
-    : ServiceServer(port, network_manager)
-    , executor_(std::move(resources))
+  ExecutorRpcService(uint16_t port, Resources resources, std::shared_ptr<Muddle> muddle)
+    : executor_(std::move(resources))
+    , muddle_(std::move(muddle))
   {
-    this->Add(RPC_EXECUTOR, &protocol_);
+    port_                            = port;
+
+    identity_ = muddle_->identity();
+    server_   = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC);
+    protocol_ = std::make_shared<ExecutorRpcProtocol>(executor_);
+
+    server_->Add(RPC_EXECUTOR, protocol_.get());
   }
-  ~ExecutorRpcService() override = default;
+  ~ExecutorRpcService()
+  {
+    muddle_->Stop();
+    protocol_.reset();
+  }
+
+  void Start()
+  {
+    muddle_->Start({port_});
+    FETCH_LOG_INFO(LOGGING_NAME, "Establishing ExecutorRpcService on rpc://127.0.0.1:", port_,
+                   " ID: ", byte_array::ToBase64(identity_.identifier()));
+  }
+
+  void Stop()
+  {
+    muddle_->Stop();
+  }
 
 private:
-  Executor            executor_;
-  ExecutorRpcProtocol protocol_{executor_};
+  Identity               identity_;
+  uint16_t               port_;
+  ServerPtr              server_;
+  Executor               executor_;
+  MuddlePtr              muddle_;
+  ExecutorRpcProtocolPtr protocol_;
 };
 
 }  // namespace ledger

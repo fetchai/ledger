@@ -63,7 +63,6 @@ namespace ledger {
  */
 Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources

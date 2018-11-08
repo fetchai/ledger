@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "crypto/identity.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
@@ -45,6 +46,7 @@ class Router : public MuddleEndpoint
 {
 public:
   using Address       = Packet::Address;  // == a crypto::Identity.identifier_
+  using Identity      = fetch::crypto::Identity;
   using PacketPtr     = std::shared_ptr<Packet>;
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
@@ -99,7 +101,13 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  bool HandleToAddress(const Handle &handle, Address &address) const;
+
   void Cleanup();
+  void Debug(std::string const &prefix)
+  {
+    registrar_.Debug(prefix);
+  }
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
