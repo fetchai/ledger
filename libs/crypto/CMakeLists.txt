@@ -15,7 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-crypto)
-target_link_libraries(fetch-crypto PUBLIC fetch-core vendor-openssl)
+target_link_libraries(fetch-crypto PUBLIC fetch-core fetch-meta vendor-openssl)
 
 add_test_target()
 

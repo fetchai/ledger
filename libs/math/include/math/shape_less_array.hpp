@@ -20,11 +20,11 @@
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "core/meta/type_traits.hpp"
 #include "core/random.hpp"
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
+#include "meta/type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -38,6 +38,18 @@
 
 namespace fetch {
 namespace math {
+
+namespace details {
+template <typename DataType, typename ArrayType>
+static void ArangeImplementation(DataType const &from, DataType const &to, DataType const &delta,
+                                 ArrayType &ret)
+{
+  std::size_t N = std::size_t((to - from) / delta);
+  ret.LazyResize(N);
+  ret.SetPaddedZero();
+  ret.FillArange(from, to);
+}
+}  // namespace details
 
 template <typename T, typename C = memory::SharedArray<T>>
 class ShapeLessArray
@@ -60,6 +72,12 @@ public:
   using IsUnsignedLike =
       typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
                               ReturnType>::type;
+  template <typename Type, typename ReturnType = void>
+  using IsSignedLike =
+      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
+                              ReturnType>::type;
+  template <typename Type, typename ReturnType = void>
+  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value, ReturnType>::type;
 
   static constexpr char const *LOGGING_NAME = "ShapeLessArray";
 
@@ -415,28 +433,59 @@ public:
     return data_[i] = t;
   }
 
+  /**
+   * returns a range over this array defined using unsigned integers (only forward ranges)
+   * @tparam Unsigned an unsigned integer type
+   * @param from starting point of range
+   * @param to end of range
+   * @param delta the increment to step through the range
+   * @return returns a shapeless array with the values in *this over the specified range
+   */
   template <typename Unsigned>
-  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned from, Unsigned to, Unsigned delta)
+  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned const &from, Unsigned const &to,
+                                                         Unsigned const &delta)
   {
+    assert(delta != 0);
+    assert(from < to);
     ShapeLessArray ret;
-
-    std::size_t N = std::size_t((to - from) / delta);
-    ret.LazyResize(N);
-    ret.SetPaddedZero();
-    ret.FillArange(from, to);
-
+    details::ArangeImplementation(from, to, delta, ret);
     return ret;
   }
 
-  template <typename Unsigned>
-  IsUnsignedLike<Unsigned, ShapeLessArray &> FillArange(Unsigned from, Unsigned const &to)
+  /**
+   * returns a range over this array defined using signed integers (i.e. permitting backward ranges)
+   * @tparam Signed a signed integer type
+   * @param from starting point of range
+   * @param to end of range
+   * @param delta the increment to step through the range - may be negative
+   * @return returns a shapeless array with the values in *this over the specified range
+   */
+  template <typename Signed>
+  static IsSignedLike<Signed, ShapeLessArray> Arange(Signed const &from, Signed const &to,
+                                                     Signed const &delta)
   {
-    assert(from < to);
+    assert(delta != 0);
+    assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
+    ShapeLessArray ret;
+    details::ArangeImplementation(from, to, delta, ret);
+    return ret;
+  }
+
+  /**
+   * Fills the current array with a range
+   * @tparam Unsigned an unsigned integer type
+   * @param from starting point of range
+   * @param to end of range
+   * @return a reference to this
+   */
+  template <typename DataType>
+  IsIntegralLike<DataType, ShapeLessArray> FillArange(DataType const &from, DataType const &to)
+  {
+    ShapeLessArray ret;
 
     std::size_t N     = this->size();
     Type        d     = static_cast<Type>(from);
     Type        delta = static_cast<Type>(to - from) / static_cast<Type>(N);
-
     for (std::size_t i = 0; i < N; ++i)
     {
       this->data()[i] = Type(d);
@@ -679,7 +728,7 @@ public:
   }
 
   template <typename S>
-  fetch::meta::IfIsUnsignedLike<S, Type> Get(S const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, Type> Get(S const &indices) const
   {
     return data_[indices];
   }

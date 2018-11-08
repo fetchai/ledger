@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/meta/type_traits.hpp"
+#include "meta/type_traits.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -35,7 +35,7 @@ public:
   byte_array::ByteArray Final();
 
   template <typename T>
-  meta::IfIsPodLike<T> Final()
+  meta::IfIsPod<T, T> Final()
   {
     typename std::remove_const<T>::type pod;
     Final(reinterpret_cast<uint8_t *>(&pod), sizeof(pod));
@@ -48,13 +48,13 @@ public:
   }
 
   template <typename T>
-  meta::IfIsPodLike<T, bool> Update(T const &pod)
+  meta::IfIsPod<T, bool> Update(T const &pod)
   {
     return Update(reinterpret_cast<uint8_t const *>(&pod), sizeof(pod));
   }
 
   template <typename T>
-  meta::IfIsPodLike<T, bool> Update(std::vector<T> const &vect)
+  meta::IfIsPod<T, bool> Update(std::vector<T> const &vect)
   {
     return Update(reinterpret_cast<uint8_t const *>(vect.data()), vect.size() * sizeof(T));
   }
