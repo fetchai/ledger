@@ -149,14 +149,14 @@ public:
     server_->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
-    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
+    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, lane_identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Initialised.");
   }
 
-  ~LaneService() override
+  virtual ~LaneService()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Teardown.");
     thread_pool_->Stop();
@@ -189,12 +189,12 @@ public:
     tx_sync_protocol_->Start();
   }
 
-  void Stop() override
+  void Stop()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Stopping.");
+    muddle_->Stop();
     thread_pool_->Stop();
     tx_sync_protocol_->Stop();
-    TCPServer::Stop();
   }
 
 private:

@@ -136,6 +136,11 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     }
   }
 
+  if (!success)
+  {
+    Debug("While dispatching");
+  }
+
   return success;
 }
 

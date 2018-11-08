@@ -60,6 +60,7 @@ public:
   using ClientPtr = std::shared_ptr<Client>;
   using MuddleEp  = muddle::MuddleEndpoint;
   using Muddle    = muddle::Muddle;
+  using MuddlePtr = std::shared_ptr<Muddle>;
   using Address   = Muddle::Address;  // == a crypto::Identity.identifier_
   using Uri       = Muddle::Uri;
   using Peer      = fetch::network::Peer;
@@ -81,11 +82,12 @@ public:
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
-  explicit StorageUnitClient(NetworkManager const &tm, Muddle &muddle)
+  explicit StorageUnitClient(NetworkManager const &tm, Muddle const &main_muddle)
     : network_manager_(tm)
   {
+    muddle_ = std::make_shared<Muddle>(main_muddle, tm);
     client_ =
-        std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+        std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
   }
 
   StorageUnitClient(StorageUnitClient const &) = delete;
@@ -346,6 +348,7 @@ private:
   LaneToIdentity            lane_to_identity_map_;
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
+  MuddlePtr                 muddle_;
 };
 
 }  // namespace ledger

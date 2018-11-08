@@ -62,6 +62,16 @@ Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   , clients_(router_)
 {}
 
+Muddle::Muddle(Muddle const &parent_muddle, NetworkManager const &nm)
+  : identity_(parent_muddle.identity())
+  , network_manager_(nm)
+  , dispatcher_()
+  , register_(std::make_shared<MuddleRegister>(dispatcher_))
+  , router_(identity_.identifier(), *register_, dispatcher_)
+  , thread_pool_(network::MakeThreadPool(1))
+  , clients_(router_)
+{}
+
 /**
  * Starts the muddle node and attaches it to the network
  *

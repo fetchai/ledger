@@ -41,7 +41,6 @@ public:
   LaneIndex lane;
   Promise   lane_prom;
   Promise   count_prom;
-  Promise   id_prom;
   Address   target_address;
 
   MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, Muddle &themuddle,
@@ -63,9 +62,10 @@ public:
         .Allow(State::TIMEDOUT, State::CONNECTING)
         .Allow(State::TIMEDOUT, State::QUERYING)
 
+        .Allow(State::FAILED, State::CONNECTING)
+        .Allow(State::FAILED, State::QUERYING)
         .Allow(State::FAILED, State::INITIAL)
-
-        .Allow(State::FAILED, State::PINGING);
+      ;
   }
   static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
 
@@ -110,12 +110,14 @@ public:
 
     if (currentstate == State::INITIAL)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Timeout for lane ", lane, " set ", timeduration_.count());
       timeout_.Set(timeduration_);
     }
 
     if (timeout_.IsDue())
     {
       currentstate = State::TIMEDOUT;
+      FETCH_LOG_INFO(LOGGING_NAME, "Timeout for lane ", lane);
       return true;
     }
 
@@ -123,6 +125,7 @@ public:
     {
     case State::INITIAL:
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "INITIAL lane ", lane);
       muddle_.AddPeer(peer_);
       currentstate = State::CONNECTING;
       return true;
@@ -136,44 +139,42 @@ public:
       }
       currentstate = State::QUERYING;
       lane_prom  = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
-                                               LaneIdentityProtocol::GET_LANE_NUMBER);
+                                                LaneIdentityProtocol::GET_LANE_NUMBER);
       count_prom = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
                                                 LaneIdentityProtocol::GET_TOTAL_LANES);
-      id_prom    = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
-      ping_        = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-    case State::PINGING:
-      std::vector<PromiseState> states;
-      auto result = ping_->GetState();
-      states.push_back(count_prom->GetState());
-      states.push_back(id_prom->GetState());
-      for (unsigned int i = 0; i < 4; i++)
-      case PromiseState::FAILED:
-        else
-          currentstate = State::TIMEDOUT;
-      return true;
 
-    }  // end CONNECTING
-      for (unsigned int i = 0; i < 4; i++)
+      currentstate = State::QUERYING;
+      return true;
+    }
+    case State::QUERYING:
+    {
+      auto p1 = count_prom->GetState();
+      auto p2 = lane_prom->GetState();
+
+      if ((p1 == PromiseState::FAILED) || (p2 == PromiseState::FAILED))
       {
-        if (states[i] == PromiseState::WAITING)
-        {
-          return false;
-        }
+        FETCH_LOG_INFO(LOGGING_NAME, "Querying failed for lane ", lane);
+        currentstate = State::FAILED;
+        return true;
       }
 
-      // Must be 3 successes.
+      if ((p1 == PromiseState::WAITING) || (p2 == PromiseState::WAITING))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "WAITING lane ", lane);
+        return false;
+      }
 
       currentstate = State::SUCCESS;
       return true;
     }
     default:
+      FETCH_LOG_INFO(LOGGING_NAME, "Defaulted to fail for lane ", lane);
       currentstate = State::FAILED;
       return true;
     }
   }
 
 private:
-  Promise                   ping_prom_;
   std::shared_ptr<Client>   client_;
   std::string               name_;
   Uri                       peer_;
@@ -194,10 +195,10 @@ void StorageUnitClient::WorkCycle()
   {
     LaneIndex total_lanecount = 0;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, " PEND=", bg_work_.CountPending());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " SUCC=", bg_work_.CountSuccesses());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " FAIL=", bg_work_.CountFailures());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " TOUT=", bg_work_.CountTimeouts());
+    FETCH_LOG_INFO(LOGGING_NAME, " PEND=", bg_work_.CountPending());
+    FETCH_LOG_INFO(LOGGING_NAME, " SUCC=", bg_work_.CountSuccesses());
+    FETCH_LOG_INFO(LOGGING_NAME, " FAIL=", bg_work_.CountFailures());
+    FETCH_LOG_INFO(LOGGING_NAME, " TOUT=", bg_work_.CountTimeouts());
 
     for (auto &successful_worker : bg_work_.GetSuccesses(1000))
     {
@@ -205,7 +206,7 @@ void StorageUnitClient::WorkCycle()
       {
         auto lanenum = successful_worker->lane;
         FETCH_LOG_VARIABLE(lanenum);
-        FETCH_LOG_DEBUG(LOGGING_NAME, " PROCESSING lane ", lanenum);
+        FETCH_LOG_INFO(LOGGING_NAME, " PROCESSING lane ", lanenum);
 
         LaneIndex        lane;
         LaneIndex        total_lanes;
@@ -213,7 +214,6 @@ void StorageUnitClient::WorkCycle()
 
         successful_worker->lane_prom->As(lane);
         successful_worker->count_prom->As(total_lanes);
-        successful_worker->id_prom->As(lane_identity);
 
         // TODO(issue 24): Verify expected identity
 
@@ -234,9 +234,9 @@ void StorageUnitClient::WorkCycle()
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lanes Connected   :", lanes_.size());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "log2_lanes_       :", log2_lanes_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "total_lanecount   :", total_lanecount);
+    FETCH_LOG_INFO(LOGGING_NAME, "Lanes Connected   :", lane_to_identity_map_.size());
+    FETCH_LOG_INFO(LOGGING_NAME, "log2_lanes_       :", log2_lanes_);
+    FETCH_LOG_INFO(LOGGING_NAME, "total_lanecount   :", total_lanecount);
   }
 
   bg_work_.DiscardFailures();
