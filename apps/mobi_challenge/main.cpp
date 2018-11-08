@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "miner.hpp"
-#include "world.hpp"
 #include "osm_handler.hpp"
+#include "world.hpp"
 
 #include <algorithm>
 #include <iostream>
