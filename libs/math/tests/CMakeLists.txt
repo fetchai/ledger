@@ -35,7 +35,7 @@ add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
 add_fetch_gtest(big_number_gtest fetch-math math/basic_math_tests)
 add_fetch_gtest(distances_gtest fetch-math math/distance/gtest)
 
-add_fetch_gtest(kmeans_gtest fetch-math math/clustering)
+add_fetch_gtest(clustering_test fetch-math math/clustering)
 
 
 # disabled / not working tests

@@ -70,7 +70,7 @@ public:
   std::size_t max_loops;
 
   KMeansImplementation(ArrayType const &data, std::size_t n_clusters, ArrayType &ret,
-                                std::size_t max_loops = 100)
+                       std::size_t max_loops = 100)
     : n_clusters(n_clusters)
     , max_loops(max_loops)
   {
