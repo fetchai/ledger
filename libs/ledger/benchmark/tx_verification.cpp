@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,18 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 
-namespace fetch {
-namespace variant {
-class Variant;
+#include <benchmark/benchmark.h>
+
+using fetch::chain::MutableTransaction;
+using fetch::crypto::ECDSASigner;
+
+namespace {
+
+void VerifyTx(benchmark::State &state)
+{
+  ECDSASigner        signer;
+  MutableTransaction mtx;
+  mtx.set_contract_name("foo.bar.is.a.baz");
+  mtx.Sign(signer.underlying_private_key());
+
+  for (auto _ : state)
+  {
+    mtx.Verify();
+  }
 }
-namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
-                                        bool const                add_metadata = false);
-MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
-MutableTransaction    FromWireTransaction(variant::Variant const &transaction);
+}  // namespace
 
-}  // namespace chain
-}  // namespace fetch
+BENCHMARK(VerifyTx);

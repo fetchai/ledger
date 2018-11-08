@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,18 +16,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include "metrics/metrics.hpp"
+#include "metrics/metric_file_handler.hpp"
 
 namespace fetch {
-namespace variant {
-class Variant;
+namespace metrics {
+
+Metrics &Metrics::Instance()
+{
+  static Metrics instance;
+  return instance;
 }
-namespace chain {
 
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
-                                        bool const                add_metadata = false);
-MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
-MutableTransaction    FromWireTransaction(variant::Variant const &transaction);
+void Metrics::ConfigureFileHandler(std::string filename)
+{
+  std::unique_ptr<MetricHandler> new_handler(new MetricFileHandler(std::move(filename)));
 
-}  // namespace chain
+  handler_.store(new_handler.get());
+  handler_object_ = std::move(new_handler);
+}
+
+void Metrics::RemoveMetricHandler()
+{
+  handler_.store(nullptr);
+  handler_object_.reset();
+}
+
+}  // namespace metrics
 }  // namespace fetch
