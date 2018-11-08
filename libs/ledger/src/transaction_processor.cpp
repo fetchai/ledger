@@ -44,7 +44,7 @@ void TransactionProcessor::Start()
   threads_.reserve(num_verifier_threads + 1);
 
   // create the verifier threads
-  for (std::size_t i = 0, end = 2 * std::thread::hardware_concurrency(); i < end; ++i)
+  for (std::size_t i = 0, end = num_verifier_threads; i < end; ++i)
   {
     threads_.emplace_back(std::make_unique<std::thread>(&TransactionProcessor::Verifier, this));
   }
@@ -89,7 +89,8 @@ void TransactionProcessor::Verifier()
 }
 
 /**
- * Internal: Dispatch thread process for
+ * Internal: Dispatch thread process for verified transactions to be sent to the storage
+ * engine and the mining interface.
  */
 void TransactionProcessor::Dispatcher()
 {

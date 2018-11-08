@@ -121,7 +121,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(60000, true);
+  TransactionList transactions = GenerateTransactions(state.max_iterations, true);
 
   std::size_t tx_index{0};
   for (auto _ : state)
@@ -138,7 +138,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   tx_store.New("transaction.db", "transaction_index.db", true);
 
   // create a whole series of transaction
-  TransactionList transactions = GenerateTransactions(60000, false);
+  TransactionList transactions = GenerateTransactions(state.max_iterations, false);
 
   std::size_t tx_index{0};
   for (auto _ : state)

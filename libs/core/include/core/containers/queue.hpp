@@ -133,7 +133,6 @@ public:
 
 protected:
   using Array = std::array<T, SIZE>;
-  using Mutex = std::mutex;
 
   Array         queue_;              ///< The main element container
   ProducerIndex write_index_{0};     ///< The write index
@@ -143,6 +142,8 @@ protected:
 
   // static asserts
   static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
+  static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
+  static_assert(std::is_copy_assignable<T>::value, "T must have copy assignment");
 };
 
 /**
