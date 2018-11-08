@@ -32,13 +32,10 @@ class Tickets
 {
 public:
   // Construction / Destruction
-  Tickets(std::size_t initial = 0)
-    : count_{initial}
-  {}
-
+  Tickets(std::size_t initial = 0);
   Tickets(Tickets const &) = delete;
   Tickets(Tickets &&)      = delete;
-  ~Tickets()               = default;
+  ~Tickets();
 
   void Post();
   void Wait();
@@ -54,8 +51,18 @@ private:
   std::mutex              mutex_;
   std::condition_variable cv_;
   std::size_t             count_;
-  bool                    shutdown_{false};
+  std::atomic<bool>       shutdown_{false};
 };
+
+inline Tickets::Tickets(std::size_t initial)
+  : count_{initial}
+{}
+
+inline Tickets::~Tickets()
+{
+  shutdown_ = true;
+  cv_.notify_all();
+}
 
 /**
  * Post / increment the internal counter
