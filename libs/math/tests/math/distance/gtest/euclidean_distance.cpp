@@ -35,9 +35,9 @@ using _M = Matrix<D, _S<D>>;
 
 TEST(distance_tests, euclidean_distance)
 {
-    _M<double> A = _M<double>(R"(1 2; 3 4)");
-    ASSERT_TRUE(Euclidean(A, A) == 0);
+  _M<double> A = _M<double>(R"(1 2; 3 4)");
+  ASSERT_TRUE(Euclidean(A, A) == 0);
 
-    _M<double> B = _M<double>(R"(1 2; 3 2)");
-    ASSERT_TRUE(Euclidean(A, B) == 2);
+  _M<double> B = _M<double>(R"(1 2; 3 2)");
+  ASSERT_TRUE(Euclidean(A, B) == 2);
 }

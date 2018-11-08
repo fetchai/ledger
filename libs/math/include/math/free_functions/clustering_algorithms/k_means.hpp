@@ -33,60 +33,60 @@ namespace clustering {
 
 namespace details {
 
-
 template <typename ArrayType>
 class KMeansImplementation
 {
- public:
+public:
   std::size_t n_points;
   std::size_t n_dimensions;
-  std::size_t K;
+  std::size_t n_clusters;
 
   bool   not_converged = true;
   double running_mean;  // we'll use this find the smallest euclidean distance out of K comparisons
 
   std::default_random_engine rng;
 
-  std::vector<std::size_t> data_idxs; // a vector of indices to the data used for shuffling
-  std::vector<std::size_t> empty_clusters; // a vector tracking whenever a cluster goes empty
+  std::vector<std::size_t> data_idxs;       // a vector of indices to the data used for shuffling
+  std::vector<std::size_t> empty_clusters;  // a vector tracking whenever a cluster goes empty
 
-  ArrayType k_means;            // current cluster centres
-  ArrayType prev_k_means;       // previous cluster centres (for checking convergence)
-  ArrayType temp_k;             // a container for ease of access to using Euclidean function
-
+  ArrayType k_means;       // current cluster centres
+  ArrayType prev_k_means;  // previous cluster centres (for checking convergence)
+  ArrayType temp_k;        // a container for ease of access to using Euclidean function
 
   ArrayType k_assignment;       // current data to cluster assignment
   ArrayType prev_k_assignment;  // previous data to cluster assignment (for checkign convergence)
-  std::vector<std::size_t> reassigned_k;       // reassigned data to cluster assignment
+  std::vector<std::size_t> reassigned_k;  // reassigned data to cluster assignment
 
-  std::vector<std::size_t> k_count;  // count of how many data points per cluster (for checking reassignment)
-  std::vector<ArrayType> k_euclids; // container for current euclid distances
+  std::vector<std::size_t>
+                         k_count;  // count of how many data points per cluster (for checking reassignment)
+  std::vector<ArrayType> k_euclids;  // container for current euclid distances
 
-  std::size_t assigned_k; // current cluster to assign
+  std::size_t assigned_k;  // current cluster to assign
 
   bool reassign;
 
-
-
-  bool max_loops_not_reached = true;
-  std::size_t loop_counter = 0;
+  bool        max_loops_not_reached = true;
+  std::size_t loop_counter          = 0;
   std::size_t max_loops;
 
-  KMeansImplementation(ArrayType const &data, std::size_t K, ArrayType &ret, std::size_t max_loops = 100) : K(K), max_loops(max_loops)
+  KMeansImplementation(ArrayType const &data, std::size_t n_clusters, ArrayType &ret,
+                                std::size_t max_loops = 100)
+    : n_clusters(n_clusters)
+    , max_loops(max_loops)
   {
-    n_points = data.shape()[0];
+    n_points     = data.shape()[0];
     n_dimensions = data.shape()[1];
 
     // initialise k means
-    std::vector<std::size_t> k_means_shape{K, n_dimensions};
-    k_means = ArrayType(k_means_shape);
+    std::vector<std::size_t> k_means_shape{n_clusters, n_dimensions};
+    k_means      = ArrayType(k_means_shape);
     prev_k_means = ArrayType::Zeroes(k_means_shape);
-    temp_k = ArrayType(data.shape());
+    temp_k       = ArrayType(data.shape());
 
-    data_idxs = std::vector<std::size_t>(n_points); // vector with 100 ints.
-    std::iota (std::begin(data_idxs), std::end(data_idxs), 0);
+    data_idxs = std::vector<std::size_t>(n_points);  // vector with 100 ints.
+    std::iota(std::begin(data_idxs), std::end(data_idxs), 0);
     std::shuffle(data_idxs.begin(), data_idxs.end(), rng);
-    for (std::size_t i = 0; i < K; ++i)
+    for (std::size_t i = 0; i < n_clusters; ++i)
     {
       for (std::size_t j = 0; j < n_dimensions; ++j)
       {
@@ -95,20 +95,22 @@ class KMeansImplementation
     }
 
     // instantiate counter with zeros
-    k_count = std::vector<std::size_t>{0, K};
+    k_count = std::vector<std::size_t>{0, n_clusters};
 
     // initialise assignment
     std::vector<std::size_t> k_assignment_shape{n_points, 1};
-    k_assignment = ArrayType(k_assignment_shape);  // it's okay not to initialise as long as we take the
-    prev_k_assignment = ArrayType(k_assignment_shape);  // need to keep a record of previous to check for convergence
+    k_assignment =
+        ArrayType(k_assignment_shape);  // it's okay not to initialise as long as we take the
+    prev_k_assignment = ArrayType(
+        k_assignment_shape);  // need to keep a record of previous to check for convergence
     for (std::size_t l = 0; l < prev_k_assignment.size(); ++l)
     {
       prev_k_assignment.Set(l, -1);
     }
 
     // initialise size of euclidean distance container
-    k_euclids = std::vector<ArrayType>(K);
-    empty_clusters = std::vector<std::size_t>(K);
+    k_euclids      = std::vector<ArrayType>(n_clusters);
+    empty_clusters = std::vector<std::size_t>(n_clusters);
 
     ///////////////////////
     /// COMPUTE K MEANS ///
@@ -120,7 +122,7 @@ class KMeansImplementation
     }
     UnReassign();
 
-    ret = k_assignment; // assign the final output
+    ret = k_assignment;  // assign the final output
   };
 
   /**
@@ -131,7 +133,7 @@ class KMeansImplementation
   {
     // replicate kmeans which is 1 x n_dims into n_data x n_dims
     // allows for easy call to EuclideanDistance
-    for (std::size_t i = 0; i < K; ++i)
+    for (std::size_t i = 0; i < n_clusters; ++i)
     {
       for (std::size_t j = 0; j < n_points; ++j)
       {
@@ -148,19 +150,20 @@ class KMeansImplementation
     for (std::size_t i = 0; i < n_points; ++i)
     {
       running_mean = std::numeric_limits<double>::max();
-      for (std::size_t j = 0; j < K; ++j)
+      for (std::size_t j = 0; j < n_clusters; ++j)
       {
         if (k_euclids[j][i] < running_mean)
         {
           running_mean = k_euclids[j][i];
-          assigned_k = j;
+          assigned_k   = j;
         }
       }
       k_assignment.Set(i, 0, assigned_k);
       ++k_count[assigned_k];
     }
 
-    // sometimes we get an empty cluster - in these cases we should reassign one data point to that cluster
+    // sometimes we get an empty cluster - in these cases we should reassign one data point to that
+    // cluster
     Reassign();
   }
 
@@ -172,12 +175,12 @@ class KMeansImplementation
     // search for empty clusters
     reassign = false;
     std::fill(empty_clusters.begin(), empty_clusters.end(), 0);
-    for (std::size_t i = 0; i < K; ++i)
+    for (std::size_t i = 0; i < n_clusters; ++i)
     {
       if (k_count[i] == 0)
       {
         empty_clusters[i] = 1;
-        reassign = true;
+        reassign          = true;
       }
     }
 
@@ -187,7 +190,7 @@ class KMeansImplementation
       std::fill(reassigned_k.begin(), reassigned_k.end(), 0);
       std::shuffle(data_idxs.begin(), data_idxs.end(), rng);
 
-      for (std::size_t i = 0; i < K; ++i)
+      for (std::size_t i = 0; i < n_clusters; ++i)
       {
         if (empty_clusters[i] == 1)
         {
@@ -206,7 +209,7 @@ class KMeansImplementation
   {
     if (reassign)
     {
-      for (std::size_t i = 0; i < K; ++i)
+      for (std::size_t i = 0; i < n_clusters; ++i)
       {
         if (empty_clusters[i] == 1)
         {
@@ -234,7 +237,7 @@ class KMeansImplementation
     }
 
     // divide sums to get KMeans
-    for (std::size_t m = 0; m < K; ++m)
+    for (std::size_t m = 0; m < n_clusters; ++m)
     {
       for (std::size_t i = 0; i < n_dimensions; ++i)
       {
@@ -267,7 +270,6 @@ class KMeansImplementation
   }
 };
 
-
 }  // namespace details
 
 template <typename ArrayType>
@@ -291,7 +293,6 @@ ArrayType KMeans(ArrayType const &data, std::size_t K)
   }
   else  // real work happens in these cases
   {
-    // TODO(private #) need to implement greedy and heuristic k means
     details::KMeansImplementation<ArrayType>(data, K, ret);
   }
 

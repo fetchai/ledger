@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 namespace fetch {
 namespace math {

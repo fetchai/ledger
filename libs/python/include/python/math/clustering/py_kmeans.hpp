@@ -47,7 +47,7 @@ inline void BuildKMeansClustering(std::string const &custom_name, pybind11::modu
 
   namespace py = pybind11;
   module.def(custom_name.c_str(), &WrapperKMeans<Matrix<double>>)
-  .def(custom_name.c_str(), &WrapperKMeans<Matrix<float>>);
+      .def(custom_name.c_str(), &WrapperKMeans<Matrix<float>>);
 }
 
 }  // namespace clustering

@@ -35,7 +35,6 @@ using _M = Matrix<D, _S<D>>;
 
 TEST(distance_tests, kmeans)
 {
-_M<double> A = _M<double>(R"(1 2; 3 4; 1 2; 0 0)");
-ASSERT_TRUE(KMeans(A, 2) == 0);
-
+  _M<double> A = _M<double>(R"(1 2; 3 4; 1 2; 0 0)");
+  ASSERT_TRUE(KMeans(A, 2) == 0);
 }
