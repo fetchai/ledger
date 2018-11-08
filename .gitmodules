@@ -6,7 +6,7 @@
 	url = ../../pybind/pybind11.git
 [submodule "docker-images"]
 	path = docker-images
-	url = ../docker-images.git
+	url = ../../uvue-git/docker-images.git
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = ../../google/googletest.git
