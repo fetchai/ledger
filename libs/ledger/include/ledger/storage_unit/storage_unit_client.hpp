@@ -290,7 +290,6 @@ private:
     INITIAL = 0,
     CONNECTING,
     QUERYING,
-    PINGING,
     SNOOZING,
     DONE,
     TIMEDOUT,

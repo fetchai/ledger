@@ -54,8 +54,7 @@ public:
   {
     // Ideal path first.
     this->Allow(State::CONNECTING, State::INITIAL)
-        .Allow(State::PINGING, State::CONNECTING)
-        .Allow(State::QUERYING, State::PINGING)
+        .Allow(State::QUERYING, State::CONNECTING)
         .Allow(State::DONE, State::QUERYING)
 
         // Waiting for liveness.
@@ -63,18 +62,14 @@ public:
         .Allow(State::CONNECTING, State::SNOOZING)
 
         // Retrying from scratch.
-        .Allow(State::INITIAL, State::PINGING)
         .Allow(State::INITIAL, State::QUERYING)
 
         // We can timeout from any of the non-finish states.
         .Allow(State::TIMEDOUT, State::INITIAL)
         .Allow(State::TIMEDOUT, State::CONNECTING)
-        .Allow(State::TIMEDOUT, State::PINGING)
         .Allow(State::TIMEDOUT, State::QUERYING)
         .Allow(State::TIMEDOUT, State::SNOOZING)
-
-        // Wrong magic causes us to bail with a failure.
-        .Allow(State::FAILED, State::PINGING);
+      ;
   }
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
@@ -109,8 +104,6 @@ public:
       return "CONNECTING";
     case State::QUERYING:
       return "QUERYING";
-    case State::PINGING:
-      return "PINGING";
     case State::SNOOZING:
       return "SNOOZING";
     case State::DONE:
@@ -173,44 +166,15 @@ public:
         currentstate = State::SNOOZING;
         return true;
       }
-      ping_        = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-      currentstate = State::PINGING;
+
+      lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+      count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
+      id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
+      currentstate = State::QUERYING;
       return true;
+
     }  // end CONNECTING
-    case State::PINGING:
-    {
-      auto result = ping_->GetState();
 
-      switch (result)
-      {
-      case PromiseState::TIMEDOUT:
-      case PromiseState::FAILED:
-      {
-        currentstate = State::INITIAL;
-        return true;
-      }
-      case PromiseState::SUCCESS:
-      {
-        if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
-        {
-          currentstate = State::FAILED;
-          return true;
-        }
-        else
-        {
-          lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-          count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-          id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-          currentstate = State::QUERYING;
-          return true;
-        }
-      }
-      case PromiseState::WAITING:
-        return false;
-      }
-
-      return false;
-    }  // end PINGING
     case State::QUERYING:
     {
       auto lp_st = lane_prom->GetState();

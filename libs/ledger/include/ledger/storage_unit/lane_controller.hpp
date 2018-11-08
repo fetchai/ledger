@@ -68,11 +68,6 @@ public:
 
   /// External controls
   /// @{
-  void RPCConnect(byte_array::ByteArray const &host, uint16_t const &port)
-  {
-    Connect(host, port);
-  }
-
   void RPCConnectToURIs(const std::vector<Uri> &uris)
   {
     for (auto const &uri : uris)
@@ -143,120 +138,8 @@ public:
     return services_[n];
   }
 
-  using PingedPeer     = shared_service_client_type;
   using IdentifiedPeer = std::pair<shared_service_client_type, crypto::Identity>;
   using LanedPeer      = std::pair<shared_service_client_type, LaneIdentity::lane_type>;
-
-  class PingingConnection : public network::ResolvableTo<PingedPeer>
-  {
-  public:
-    static constexpr char const *LOGGING_NAME = "PingingConnection";
-
-    using Timepoint = network::ResolvableTo<PingedPeer>::Timepoint;
-
-    PingingConnection(shared_service_client_type conn, protocol_handler_type lane_identity_protocol)
-    {
-      attempts_               = 0;
-      conn_                   = conn;
-      lane_identity_protocol_ = lane_identity_protocol;
-    }
-    PingingConnection(const PingingConnection &other)
-      : ResolvableTo<PingedPeer>(other)
-    {
-      if (this != &other)
-      {
-        this->conn_                   = other.conn_;
-        this->attempts_               = other.attempts_;
-        this->timeout_                = other.timeout_;
-        this->lane_identity_protocol_ = other.lane_identity_protocol_;
-        this->prom_                   = other.prom_;
-      }
-    }
-
-    shared_service_client_type GetConn()
-    {
-      return conn_;
-    }
-
-    virtual State GetState() override
-    {
-      return GetState(Clock::now());
-    }
-
-    State StartConnectionAttempt(const Timepoint &now)
-    {
-      attempts_++;
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:StartConnectionAttempt ", attempts_);
-      auto p = conn_->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
-      prom_.Adopt(p);
-      timeout_.SetMilliseconds(now, 100);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:CreatedPromise.. ", prom_.id());
-      return State::WAITING;
-    }
-
-    virtual State GetState(Timepoint const &now) override
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState ");
-      if (prom_.empty())
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState EMPTY");
-        return StartConnectionAttempt(now);
-      }
-
-      switch (prom_.GetState())
-      {
-      case State::TIMEDOUT:  // should never see this.
-      case State::WAITING:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState == WAIT/TIME");
-        if (timeout_.IsDue(now))
-        {
-          if (attempts_ >= 10)
-          {
-            FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SET FAIL TIMEOUT");
-            return State::TIMEDOUT;
-          }
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState TRYAGAIN");
-          return StartConnectionAttempt(now);
-        }
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState WAITMORE");
-        return State::WAITING;
-
-      case State::FAILED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState FAILED");
-        return State::FAILED;
-
-      case State::SUCCESS:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState SUCCESS");
-        if (prom_.Get() == LaneIdentity::PING_MAGIC)
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Workcycle:GetState MAGIC");
-          return State::SUCCESS;
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Ping failed with wrong magic identifier");
-          return State::FAILED;
-        }
-      }
-
-      return State::FAILED;
-    }
-    virtual PromiseCounter id() const override
-    {
-      return prom_.id();
-    }
-    virtual PingedPeer Get() const override
-    {
-      return conn_;
-    }
-
-  private:
-    network::PromiseOf<LaneIdentity::ping_type> prom_;
-    shared_service_client_type                  conn_;
-    network::FutureTimepoint                    timeout_;
-    protocol_handler_type                       lane_identity_protocol_;
-    int                                         attempts_;
-  };
 
   class IdentifyingConnection : public network::ResolvableTo<IdentifiedPeer>
   {
@@ -411,11 +294,9 @@ public:
     network::FutureTimepoint                    timeout_;
   };
 
-  using PingingPeers     = network::RequestingQueueOf<Uri, PingedPeer, PingingConnection>;
   using IdentifyingPeers = network::RequestingQueueOf<Uri, IdentifiedPeer, IdentifyingConnection>;
   using LaningPeers      = network::RequestingQueueOf<Uri, LanedPeer, LaningConnection>;
 
-  PingingPeers     currently_pinging;
   IdentifyingPeers currently_identifying;
   LaningPeers      currently_laning;
 
@@ -437,7 +318,7 @@ public:
 
     for (auto &uri : create)
     {
-      if ((currently_pinging.IsInFlight(uri)) || (currently_identifying.IsInFlight(uri)) ||
+      if ((currently_identifying.IsInFlight(uri)) ||
           (currently_laning.IsInFlight(uri)))
       {
         continue;
@@ -452,7 +333,8 @@ public:
           shared_service_client_type conn =
               register_.CreateServiceClient<client_type>(manager_, peer.address(), peer.port());
 
-          currently_pinging.Add(uri, PingingConnection(conn, lane_identity_protocol_));
+          currently_identifying.Add(
+            uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()));
         }
         catch (std::exception &ex)
         {
@@ -462,31 +344,6 @@ public:
       else
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "Incorrect URI format");
-      }
-    }
-
-    {
-      currently_pinging.Resolve(now);
-
-      for (auto &failure : currently_pinging.GetFailures(ALL_AVAILABLE))
-      {
-        Uri const &uri = failure.key;
-
-        FETCH_LOG_WARN(LOGGING_NAME, "Ping failure on ", uri.uri());
-
-        // get the underlying connection and close it
-        auto conn = failure.promise.GetConn();
-        conn->Close();
-        conn.reset();
-      }
-
-      for (auto &success : currently_pinging.Get(ALL_AVAILABLE))
-      {
-        auto const &uri = success.key;
-
-        auto conn = success.promised;
-        currently_identifying.Add(
-            uri, IdentifyingConnection(conn, lane_identity_protocol_, ptr->Identity()));
       }
     }
 
@@ -607,156 +464,6 @@ public:
         }
       }
     }
-  }
-
-  shared_service_client_type Connect(const Uri &uri)
-  {
-    if (uri.scheme() == Uri::Scheme::Tcp)
-    {
-      auto const &peer = uri.AsPeer();
-
-      return Connect(peer.address(), peer.port());
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Incorrect URI format");
-    }
-    return shared_service_client_type();
-  }
-
-  shared_service_client_type Connect(byte_array::ByteArray const &host, uint16_t const &port)
-  {
-    std::string identifier = std::string(host);
-    identifier += ":";
-    identifier += std::to_string(port);
-    FETCH_LOG_INFO(LOGGING_NAME, "Connecting to lane ", identifier);
-
-    shared_service_client_type client =
-        register_.CreateServiceClient<client_type>(manager_, host, port);
-
-    auto ident = lane_identity_.lock();
-    if (!ident)
-    {
-      // TODO(issue 7): Throw exception
-      TODO_FAIL("Identity lost");
-    }
-
-    // Waiting for connection to be open
-
-    using State = enum { WAITING, TIMEOUT, FAILED, OK };
-
-    State r;
-
-    for (int n = 0; n < 5; n++)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trying to ping lane service @ ", ident, "    ", identifier,
-                     " attempt ", n);
-      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::PING);
-      FETCH_LOG_PROMISE();
-      r = WAITING;
-      if (!p->Wait(100, false))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Response was failed promise");
-        r = TIMEOUT;
-      }
-      else
-      {
-        if (p->As<LaneIdentity::ping_type>() == LaneIdentity::PING_MAGIC)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Response was PING_MAGIC");
-          r = OK;
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Response was not a PING_MAGIC");
-          r = FAILED;
-        }
-      }
-      if (r == OK || r == FAILED)
-      {
-        break;
-      }
-    }
-
-    switch (r)
-    {
-    case FAILED:
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Connection failed - closing in LaneController::Connect:1: == ", identifier);
-      client->Close();
-      client.reset();
-      return nullptr;
-
-    case WAITING:
-    case TIMEOUT:
-      FETCH_LOG_WARN(
-          LOGGING_NAME,
-          "Connection timed out - closing in LaneController::Connect:1: == ", identifier);
-      client->Close();
-      client.reset();
-      return nullptr;
-
-    case OK:
-      break;
-    }
-
-    crypto::Identity peer_identity;
-    {
-      auto ptr = lane_identity_.lock();
-      if (!ptr)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Lane identity not valid!");
-        client->Close();
-        client.reset();
-        return nullptr;
-      }
-
-      auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::HELLO, ptr->Identity());
-
-      FETCH_LOG_PROMISE();
-      if (!p->Wait(1000, true))  // TODO(issue 7): Make timeout configurable
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "Connection timed out - closing in LaneController::Connect:2:");
-        client->Close();
-        client.reset();
-        return nullptr;
-      }
-      p->As(peer_identity);
-      FETCH_LOG_WARN(LOGGING_NAME, "Connection LaneController::Connect:2 IDENT EXCHANGED");
-    }
-
-    // Exchaning info
-    auto p = client->Call(lane_identity_protocol_, LaneIdentityProtocol::GET_LANE_NUMBER);
-
-    FETCH_LOG_PROMISE();
-    p->Wait(1000, true);  // TODO(issue 7): Make timeout configurable
-    if (p->As<LaneIdentity::lane_type>() != ident->GetLaneNumber())
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Could not connect to lane with different lane number: ",
-                      p->As<LaneIdentity::lane_type>(), " vs ", ident->GetLaneNumber());
-      client->Close();
-      client.reset();
-      // TODO(issue 11): Throw exception
-      return nullptr;
-    }
-
-    {
-      FETCH_LOCK(services_mutex_);
-      services_[client->handle()] = client;
-    }
-
-    // Setting up details such that the rest of the lane what kind of
-    // connection we are dealing with.
-    auto details = register_.GetDetails(client->handle());
-
-    details->is_outgoing = true;
-    details->is_peer     = true;
-    details->identity    = peer_identity;
-
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Remote identity: ", byte_array::ToBase64(peer_identity.identifier()));
-    return client;
   }
 
   /// @}

@@ -68,6 +68,7 @@ public:
   LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
               uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
     : super_type(port, tm)
+    , lane_(lane)
   {
 
     this->SetConnectionRegister(register_);
@@ -142,10 +143,13 @@ public:
     controller_ = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     this->Add(RPC_CONTROLLER, controller_protocol_.get());
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Initialised.");
   }
 
   ~LaneService() override
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Teardown.");
     thread_pool_->Stop();
 
     identity_protocol_.reset();
@@ -168,6 +172,7 @@ public:
 
   void Start() override
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Starting.");
     TCPServer::Start();
     thread_pool_->Start();
     tx_sync_protocol_->Start();
@@ -175,6 +180,7 @@ public:
 
   void Stop() override
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Stopping.");
     thread_pool_->Stop();
     tx_sync_protocol_->Stop();
     TCPServer::Stop();
@@ -200,6 +206,8 @@ private:
 
   mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};
   std::unique_ptr<crypto::Prover> certificate_;
+
+  uint32_t lane_;
 };
 
 }  // namespace ledger

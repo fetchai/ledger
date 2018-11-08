@@ -224,12 +224,12 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
   std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
-      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(30000));
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(1000));
 
   // check to see if the connections where successful
   if (count != num_lanes_)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to establish connections to lane service");
+    FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (",count," of ",num_lanes_,")");
     return;
   }
 
