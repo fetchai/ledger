@@ -82,12 +82,13 @@ public:
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
-  explicit StorageUnitClient(NetworkManager const &tm, Muddle const &main_muddle)
+  explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
   {
-    muddle_ = std::make_shared<Muddle>(main_muddle, tm);
+    muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("STOR"), tm);
     client_ =
         std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+    muddle_->Start({});
   }
 
   StorageUnitClient(StorageUnitClient const &) = delete;
@@ -104,11 +105,11 @@ public:
 
 public:
   size_t AddLaneConnectionsWaiting(
-      Muddle &muddle, const std::map<LaneIndex, Uri> &lanes,
+      const std::map<LaneIndex, Uri> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000));
 
   void AddLaneConnections(
-      Muddle &muddle, const std::map<LaneIndex, Uri> &lanes,
+      const std::map<LaneIndex, Uri> &lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(10000));
 
   bool GetAddressForLane(LaneIndex lane, Address &address) const

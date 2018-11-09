@@ -117,7 +117,12 @@ public:
   void ReadBytes(container_type *const dest, std::size_t const &dest_size,
                  std::size_t const &src_offset = 0) const
   {
-    assert(src_offset + dest_size <= size());
+    //assert(src_offset + dest_size <= size());
+    if (src_offset + dest_size > size())
+    {
+      FETCH_LOG_WARN("ConstByteArray", "ReadBytes target array is too big for us to fill. dest_size=",dest_size, " src_offset=", src_offset, " size=", size());
+      throw std::range_error("ReadBytes target array is too big");
+    }
     std::memcpy(dest, pointer() + src_offset, dest_size);
   }
 

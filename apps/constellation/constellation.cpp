@@ -145,11 +145,11 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{std::move(certificate), network_manager_}
+  , muddle_{Muddle::CreateNetworkId("****"), std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
-  , storage_(std::make_shared<StorageUnitClient>(network_manager_, muddle_))
+  , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         db_prefix, num_executors, storage_,
@@ -226,7 +226,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
 
-  std::size_t const count = storage_->AddLaneConnectionsWaiting(muddle_,
+  std::size_t const count = storage_->AddLaneConnectionsWaiting(
       BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(10000));
 
   // check to see if the connections where successful

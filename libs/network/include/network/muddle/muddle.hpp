@@ -115,6 +115,7 @@ public:
   using Identity        = crypto::Identity;
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
+  using NetworkId       = MuddleEndpoint::NetworkId;
 
   using Handle = network::AbstractConnection::connection_handle_type;
 
@@ -134,7 +135,7 @@ public:
      the muddle using loaded certificates and keys. In tests, call
      this to just get one now.*/
 
-  static std::shared_ptr<Muddle> CreateMuddle(fetch::network::NetworkManager tm)
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId network_id, fetch::network::NetworkManager tm)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
@@ -142,12 +143,20 @@ public:
     std::unique_ptr<crypto::Prover> certificate_;
     certificate_.reset(certificate);
 
-    return std::make_shared<Muddle>(std::move(certificate_), tm);
+    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+  }
+
+  static inline uint32_t CreateNetworkId(const char *p)
+  {
+    return
+      (uint32_t(p[0]) << 24) |
+      (uint32_t(p[1]) << 16) |
+      (uint32_t(p[2]) << 8) |
+      (uint32_t(p[3]));
   }
 
   // Construction / Destruction
-  Muddle(CertificatePtr &&certificate, NetworkManager const &nm);
-  Muddle(Muddle const &parent_muddle, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;
@@ -186,6 +195,8 @@ public:
     clients_.Debug(prefix);
   }
 
+  const std::string &NetworkIdStr();
+
   bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
@@ -221,6 +232,8 @@ private:
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
+  NetworkId            network_id_;
+  std::string           network_id_str_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
@@ -235,6 +248,10 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "    ", this);
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), " to ", NetworkIdStr());
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
+                 byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
 }
 

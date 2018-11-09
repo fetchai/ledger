@@ -123,7 +123,15 @@ private:
     context.sender_address = from;
 
     // dispatch down to the core RPC level
-    PushProtocolRequest(index, payload, &context);
+    try
+    {
+      PushProtocolRequest(index, payload, &context);
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
+                      " on: ", service, ':', channel, ':', counter, " -- ", ex.what());
+    }
   }
 
   MuddleEndpoint &endpoint_;

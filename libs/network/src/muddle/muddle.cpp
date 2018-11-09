@@ -51,26 +51,30 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+  Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(identity_.identifier(), *register_, dispatcher_)
+  , router_(network_id, identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(network::MakeThreadPool(1))
   , clients_(router_)
-{}
+{
+  char tmp[5];
 
-Muddle::Muddle(Muddle const &parent_muddle, NetworkManager const &nm)
-  : identity_(parent_muddle.identity())
-  , network_manager_(nm)
-  , dispatcher_()
-  , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1))
-  , clients_(router_)
-{}
+  tmp[4]=0;
+  tmp[3]=char(network_id & 0xFF);
+  network_id >>=8;
+  tmp[2]=char(network_id & 0xFF);
+  network_id >>=8;
+  tmp[1]=char(network_id & 0xFF);
+  network_id >>=8;
+  tmp[0]=char(network_id & 0xFF);
+
+  network_id_str_ = std::string(tmp);
+
+  }
 
 /**
  * Starts the muddle node and attaches it to the network
@@ -82,6 +86,8 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
+
+  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ", NetworkIdStr());
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -99,6 +105,12 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // schedule the maintenance (which shall force the connection of the peers)
   RunPeriodicMaintenance();
 }
+
+  const std::string &Muddle::NetworkIdStr()
+  {
+    return network_id_str_;
+  }
+
 
 /**
  * Stops the muddle node and removes it from the network

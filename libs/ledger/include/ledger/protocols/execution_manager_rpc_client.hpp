@@ -20,25 +20,40 @@
 #include "ledger/execution_manager_interface.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/generics/has_worker_thread.hpp"
+#include "network/generics/backgrounded_work.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace ledger {
 
+class ExecutionManagerRpcConnectorWorker;
+
 class ExecutionManagerRpcClient : public ExecutionManagerInterface
 {
 public:
-  using NetworkClient    = network::TCPClient;
-  using NetworkClientPtr = std::shared_ptr<NetworkClient>;
-  using ServicePtr       = std::unique_ptr<fetch::service::ServiceClient>;
   using ConstByteArray   = byte_array::ConstByteArray;
   using NetworkManager   = network::NetworkManager;
+  using PromiseState         = fetch::service::PromiseState;
+  using Promise              = service::Promise;
+  using FutureTimepoint      = network::FutureTimepoint;
+  using MuddleEp  = muddle::MuddleEndpoint;
+  using Muddle    = muddle::Muddle;
+  using MuddlePtr = std::shared_ptr<Muddle>;
+  using Uri       = Muddle::Uri;
+  using Address       = Muddle::Address;
+  using Client          = muddle::rpc::Client;
+  using ClientPtr = std::shared_ptr<Client>;
 
   // Construction / Destruction
-  ExecutionManagerRpcClient(ConstByteArray const &host, uint16_t const &port,
-                            NetworkManager const &network_manager);
+  ExecutionManagerRpcClient(NetworkManager const &network_manager);
   ~ExecutionManagerRpcClient() override = default;
+
+  void AddConnection(const Uri &uri, const std::chrono::milliseconds &timeout);
 
   /// @name Execution Manager Interface
   /// @{
@@ -49,14 +64,28 @@ public:
   bool      Abort() override;
   /// @}
 
-  bool is_alive() const
+  void WorkCycle(void);
+
+  std::size_t connections() const
   {
-    return service_->is_alive();
+    return connections_;
   }
 
 private:
-  NetworkClientPtr connection_;
-  ServicePtr       service_;
+  friend class ExecutionManagerRpcConnectorWorker;
+  using Worker                    = ExecutionManagerRpcConnectorWorker;
+  using WorkerPtr                 = std::shared_ptr<Worker>;
+  using BackgroundedWork          = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
+
+  NetworkManager            network_manager_;
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
+  MuddlePtr                 muddle_;
+  Address address_;
+  size_t                  connections_ = 0;
+  ClientPtr                 client_;
 };
 
 }  // namespace ledger

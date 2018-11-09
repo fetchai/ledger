@@ -52,6 +52,7 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
+  using NetworkId     = MuddleEndpoint::NetworkId;
 
   struct RoutingData
   {
@@ -64,7 +65,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRoute";
 
   // Construction / Destruction
-  Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -109,6 +110,8 @@ public:
     registrar_.Debug(prefix);
   }
 
+  virtual NetworkId network_id() override { return network_id_; }
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -147,6 +150,8 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+
+  NetworkId network_id_;
 };
 
 }  // namespace muddle

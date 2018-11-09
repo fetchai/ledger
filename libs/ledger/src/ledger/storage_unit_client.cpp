@@ -31,6 +31,7 @@ public:
   using FutureTimepoint = StorageUnitClient::FutureTimepoint;
   using LaneIndex       = StorageUnitClient::LaneIndex;
   using Muddle          = StorageUnitClient::Muddle;
+  using MuddlePtr       = std::shared_ptr<Muddle>;
   using Peer            = fetch::network::Peer;
   using Promise         = StorageUnitClient::Promise;
   using PromiseState    = StorageUnitClient::PromiseState;
@@ -43,7 +44,7 @@ public:
   Promise   count_prom;
   Address   target_address;
 
-  MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, Muddle &themuddle,
+  MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, MuddlePtr themuddle,
                             std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : lane(thelane)
     , name_(std::move(thename))
@@ -51,7 +52,7 @@ public:
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
   {
-    client_ = std::make_shared<Client>(muddle_.AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
                                        CHANNEL_RPC);
 
     this->Allow(State::CONNECTING, State::INITIAL)
@@ -126,13 +127,13 @@ public:
     case State::INITIAL:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "INITIAL lane ", lane);
-      muddle_.AddPeer(peer_);
+      muddle_->AddPeer(peer_);
       currentstate = State::CONNECTING;
       return true;
     }
     case State::CONNECTING:
     {
-      bool connected = muddle_.GetOutgoingConnectionAddress(peer_, target_address);
+      bool connected = muddle_->GetOutgoingConnectionAddress(peer_, target_address);
       if (!connected)
       {
         return false;
@@ -180,7 +181,7 @@ private:
   Uri                       peer_;
   std::chrono::milliseconds timeduration_;
   PendingConnectionCounter  counter_;
-  Muddle &                  muddle_;
+  MuddlePtr                 muddle_;
   FutureTimepoint           timeout_;
 };
 
@@ -243,9 +244,8 @@ void StorageUnitClient::WorkCycle()
   bg_work_.DiscardTimeouts();
 }
 
-void StorageUnitClient::AddLaneConnections(Muddle &                         muddle,
-                                                 const std::map<LaneIndex, Uri> & lanes,
-                                                 const std::chrono::milliseconds &timeout)
+void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
+                                           const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
   {
@@ -259,17 +259,16 @@ void StorageUnitClient::AddLaneConnections(Muddle &                         mudd
     auto        peer    = lane.second;
     std::string name    = peer.ToString();
 
-    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, muddle,
+    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, muddle_,
                                                               std::chrono::milliseconds(timeout));
     bg_work_.Add(worker);
   }
 }
 
-size_t StorageUnitClient::AddLaneConnectionsWaiting(Muddle &                         muddle,
-                                                          const std::map<LaneIndex, Uri> & lanes,
-                                                          const std::chrono::milliseconds &timeout)
+size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Uri> & lanes,
+                                                    const std::chrono::milliseconds &timeout)
 {
-  AddLaneConnections(muddle, lanes, timeout);
+  AddLaneConnections(lanes, timeout);
   PendingConnectionCounter::Wait(FutureTimepoint(timeout));
 
   FETCH_LOCK(mutex_);

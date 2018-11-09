@@ -37,8 +37,8 @@ public:
   LaneControllerProtocol(LaneController *ctrl)
   {
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
-    this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
-    this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);
+    //    this->Expose(INCOMING_PEERS, ctrl, &LaneController::IncomingPeers);
+    //    this->Expose(OUTGOING_PEERS, ctrl, &LaneController::OutgoingPeers);
     this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);
   }
 };
