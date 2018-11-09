@@ -24,13 +24,6 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 /**
  * The Dot method for ML variables. Applies a standard library Dot but also tracks parents and
  * updates gradients
@@ -41,7 +34,8 @@ class NDArrayIterator;
 template <typename VariablePtrType>
 void DotImplementation(VariablePtrType cur_node)
 {
-  cur_node->data() = fetch::math::Dot(cur_node->prev[0]->data(), cur_node->prev[1]->data());
+  cur_node->data() =
+      fetch::math::Dot(cur_node->prev[0]->data(), cur_node->prev[1]->data(), cur_node->threaded());
 }
 
 template <typename VariablePtrType, typename SessionType>
@@ -88,7 +82,6 @@ void AddBroadcastImplementation(VariablePtrType cur_node)
                            cur_node->prev[0]->data().At(i, j) + cur_node->prev[1]->data().At(j));
     }
   }
-  //    cur_node->data() = fetch::math::Add(cur_node->prev[0]->data(), cur_node->prev[1]->data());
 }
 
 template <typename VariablePtrType, typename SessionType>

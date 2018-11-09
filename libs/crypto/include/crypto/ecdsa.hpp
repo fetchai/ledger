@@ -104,6 +104,11 @@ public:
     return private_key_.KeyAsBin();
   }
 
+  PrivateKey const &underlying_private_key()
+  {
+    return private_key_;
+  }
+
 private:
   PrivateKey private_key_;
   Signature  signature_;

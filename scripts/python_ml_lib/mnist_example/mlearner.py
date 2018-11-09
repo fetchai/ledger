@@ -36,7 +36,7 @@ class MLearner():
         self.training_size = 2000
         self.validation_size = 50
 
-        self.n_epochs = 3
+        self.n_epochs = 30
         self.batch_size = 50
         self.alpha = 0.2
 
@@ -210,9 +210,13 @@ class MLearner():
     @profile
     def train(self):
 
+
         self.sess.SetInput(self.layers[0], self.X_batch)
         for i in range(len(self.layers) - 1):
             self.sess.SetInput(self.layers[i + 1], self.layers[i].Output())
+
+        # loss calculation
+        self.loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
 
         # epochs
         for i in range(self.n_epochs):
@@ -224,18 +228,15 @@ class MLearner():
                 # # assign fresh data batch
                 self.assign_batch(self.x_tr, self.y_tr, j)
 
-                # loss calculation
-                loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
+                # # loss calculation
+                # loss = self.calculate_loss(self.layers[-1].Output(), self.Y_batch)
 
                 # back propagate
-                self.sess.BackProp(self.X_batch, loss, self.alpha, 1)
-
-                # print("output: " + str(self.layers[-1].Output()[0]))
-                # print("gt: " + str(self.Y_batch[0]))
+                self.sess.BackProp(self.X_batch, self.loss, self.alpha, 1)
 
                 sum_loss = 0
-                for i in range(loss.size()):
-                    sum_loss += loss.data()[i]
+                for i in range(self.loss.size()):
+                    sum_loss += self.loss.data()[i]
                 #     # print("\n")
                 #     # for j in range(1):
                 #     #     sys.stdout.write('{:0.13f}'.format(loss.data()[i]) + "\t")

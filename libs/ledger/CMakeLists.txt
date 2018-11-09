@@ -24,7 +24,9 @@ target_link_libraries(fetch-ledger PUBLIC
   fetch-storage
   fetch-miner
   fetch-vm
+  fetch-metrics
 )
 
 add_test_target()
 add_subdirectory(examples)
+add_subdirectory(benchmark)

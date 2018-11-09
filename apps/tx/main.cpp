@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#define TX_SIGNING_DBG_OUTPUT
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
 
 #include "core/json/document.hpp"
-#include "core/script/variant.hpp"
+#include "variant/variant.hpp"
+#include "variant/variant_utils.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chain/helper_functions.hpp"
@@ -38,6 +41,10 @@
 #include <vector>
 
 namespace {
+
+using fetch::byte_array::ConstByteArray;
+using fetch::variant::Extract;
+using fetch::byte_array::FromBase64;
 
 using PrivateKeys = std::set<fetch::byte_array::ConstByteArray>;
 
@@ -115,7 +122,7 @@ void PrintTx(fetch::chain::MutableTransaction const &tx, std::string const &desc
   std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
 }
 
-void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
+void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &is_verbose = false)
 {
   fetch::chain::MutableTransaction tx;
   auto                             txdata = fetch::chain::TxSigningAdapterFactory(tx);
@@ -123,6 +130,11 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
 
   if (tx.Verify(txdata))
   {
+    if (is_verbose)
+    {
+      PrintSeparator(std::cout, "Tx");
+      std::cout << tx << std::endl;
+    }
     std::cout << "SUCCESS: Transaction has been verified." << std::endl;
   }
   else
@@ -133,33 +145,39 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream)
   }
 }
 
-fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::script::Variant const &metadata_v,
-                                                         PrivateKeys const &           private_keys)
+fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant const &metadata_v,
+                                                         PrivateKeys const &private_keys)
 {
-  fetch::chain::MutableTransaction mtx;
-  mtx.set_contract_name(metadata_v["contract_name"].As<fetch::byte_array::ByteArray>());
-  mtx.set_data(
-      fetch::byte_array::FromBase64(metadata_v["data"].As<fetch::byte_array::ByteArray>()));
+  using fetch::chain::MutableTransaction;
+  using fetch::byte_array::ConstByteArray;
+  using fetch::byte_array::FromBase64;
+
+  MutableTransaction mtx;
+  mtx.set_contract_name(metadata_v["contract_name"].As<ConstByteArray>());
+  mtx.set_data(FromBase64(metadata_v["data"].As<ConstByteArray>()));
   mtx.set_fee(metadata_v["fee"].As<uint64_t>());
-  auto resources_v = metadata_v["resources"];
 
-  fetch::chain::MutableTransaction::ResourceSet resources;
-  if (resources_v.is_array())
+  MutableTransaction::ResourceSet resources;
+  if (metadata_v.Has("resources"))
   {
-    resources_v.ForEach([&](fetch::script::Variant &value) -> bool {
-      auto const result = resources.emplace(
-          fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
-      if (!result.second)
-      {
-        std::cerr << "WARNING: Attempt to insert already existing resource \"" << *result.first
-                  << "\"!" << std::endl;
-      }
-      return true;
-    });
+    auto const &resources_v = metadata_v["resources"];
 
-    mtx.set_resources(std::move(resources));
+    if (resources_v.IsArray())
+    {
+      for (std::size_t i = 0, end = resources_v.size(); i < end; ++i)
+      {
+        auto const result = resources.emplace(resources_v[i].As<ConstByteArray>());
+        if (!result.second)
+        {
+          std::cerr << "WARNING: Attempt to insert already existing resource \"" << *result.first
+                    << "\"!" << std::endl;
+        }
+      }
+
+      mtx.set_resources(std::move(resources));
+    }
   }
-  else if (!resources_v.is_undefined())
+  else
   {
     std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type."
               << std::endl;
@@ -186,7 +204,7 @@ fetch::byte_array::ConstByteArray GetJsonContentFromFileCmdlArg(std::string cons
   std::ifstream istrm(arg_value, std::ios::in);
   if (!istrm.is_open())
   {
-    throw std::runtime_error("File \"" + arg_value + "\" can not be oppened.");
+    throw std::runtime_error("File \"" + arg_value + "\" can not be opened.");
   }
   std::stringstream buffer;
   buffer << istrm.rdbuf();
@@ -205,17 +223,18 @@ void HandleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
   fetch::json::JSONDocument tx_json{tx_jsom_string};
   auto &                    tx_v = tx_json.root();
 
-  auto data_v = tx_v["data"];
-  if (data_v.is_string())
+  ConstByteArray data;
+
+  if (Extract(tx_v, "data", data))
   {
-    fetch::serializers::ByteArrayBuffer stream{
-        fetch::byte_array::FromBase64(data_v.As<fetch::byte_array::ByteArray>())};
-    verifyTx(stream);
+    fetch::serializers::ByteArrayBuffer stream{FromBase64(data)};
+    verifyTx(stream, is_verbose);
   }
-  else
+  else if (tx_v.Has("metadata"))
   {
-    auto metadata_v = tx_v["metadata"];
-    if (metadata_v.is_object())
+    auto const &metadata_v = tx_v["metadata"];
+
+    if (metadata_v.IsObject())
     {
       auto mtx = ConstructTxFromMetadata(metadata_v, private_keys);
       PrintTx(mtx, "TRANSACTION FROM PROVIDED INPUT METADATA", is_verbose);
@@ -249,26 +268,31 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
 
   auto priv_keys_json_string = GetJsonContentFromFileCmdlArg(priv_keys_filename_argument);
   fetch::json::JSONDocument json_doc{priv_keys_json_string};
-  auto &                    doc_root_v     = json_doc.root();
-  auto                      private_keys_v = doc_root_v["private_keys"];
 
-  if (private_keys_v.is_array())
+  auto const &doc_root_v = json_doc.root();
+
+  if (doc_root_v.Has("private_keys"))
   {
-    private_keys_v.ForEach([&keys](fetch::script::Variant &value) -> bool {
-      auto const result =
-          keys.emplace(fetch::byte_array::FromBase64(value.As<fetch::byte_array::ByteArray>()));
-      if (!result.second)
+    auto const &private_keys_v = doc_root_v["private_keys"];
+
+    if (private_keys_v.IsArray())
+    {
+      for (std::size_t i = 0, end = private_keys_v.size(); i < end; ++i)
       {
-        std::cerr << "WARNING: Attempt to insert already existing private key \"" << *result.first
-                  << "\"!" << std::endl;
+        auto const result = keys.emplace(FromBase64(private_keys_v[0].As<ConstByteArray>()));
+
+        if (!result.second)
+        {
+          std::cerr << "WARNING: Attempt to insert already existing private key \"" << *result.first
+                    << "\"!" << std::endl;
+        }
       }
-      return true;
-    });
-  }
-  else if (!private_keys_v.is_undefined())
-  {
-    std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type."
-              << std::endl;
+    }
+    else
+    {
+      std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type."
+                << std::endl;
+    }
   }
 
   return keys;
