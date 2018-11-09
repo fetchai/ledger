@@ -35,7 +35,7 @@ using _M = Matrix<D, _S<D>>;
 
 TEST(distance_tests, clustering_test)
 {
-  _M<double> A = _M<double>{4, 2};
+  _M<double> A = _M<double>{8, 2};
   A.Set(0, 0, -2);
   A.Set(0, 1, -2);
   A.Set(1, 0, -1);
@@ -45,7 +45,10 @@ TEST(distance_tests, clustering_test)
   A.Set(3, 0, 2);
   A.Set(3, 1, 2);
 
-  auto output = KMeans(A, 2);
+  // generate random seed
+  std::size_t r_seed = 1153486;
+
+  auto output = KMeans(A, 2, r_seed);
   ASSERT_TRUE(output[0] == output[1]);
   ASSERT_TRUE(output[2] == output[3]);
 }

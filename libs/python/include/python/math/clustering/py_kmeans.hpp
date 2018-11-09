@@ -26,7 +26,8 @@ namespace math {
 namespace clustering {
 
 template <typename A>
-inline A WrapperKMeans(A const &a, std::size_t const &b)
+inline A WrapperKMeans(A const &a, std::size_t const &b, std::size_t const &r_seed,
+                       std::size_t const &max_loops)
 {
   if (b > a.shape()[0])
   {
@@ -37,7 +38,7 @@ inline A WrapperKMeans(A const &a, std::size_t const &b)
     throw std::range_error("cannot have fewer than 2 clusters");
   }
 
-  return KMeans(a, b);
+  return KMeans(a, b, r_seed, max_loops);
 }
 
 inline void BuildKMeansClustering(std::string const &custom_name, pybind11::module &module)
@@ -46,6 +47,8 @@ inline void BuildKMeansClustering(std::string const &custom_name, pybind11::modu
   using namespace fetch::memory;
 
   namespace py = pybind11;
+  //  module.def(custom_name.c_str(), &WrapperKMeans<Matrix<double>>, "KMeans algorithm",
+  //  py::arg("max_loops") = 100)
   module.def(custom_name.c_str(), &WrapperKMeans<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperKMeans<Matrix<float>>);
 }
