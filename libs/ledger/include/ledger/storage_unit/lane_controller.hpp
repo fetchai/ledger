@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/service_client.hpp"
-#include "network/uri.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include "core/service_ids.hpp"
+#include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -37,7 +37,7 @@
 namespace fetch {
 namespace ledger {
 
-  class LaneController
+class LaneController
 {
 public:
   using connectivity_details_type  = LaneConnectivityDetails;
@@ -45,36 +45,35 @@ public:
   using service_client_type        = fetch::service::ServiceClient;
   using shared_service_client_type = std::shared_ptr<service_client_type>;
   using weak_service_client_type   = std::shared_ptr<service_client_type>;
-  using NetworkManager   = network::NetworkManager;
+  using NetworkManager             = network::NetworkManager;
   using mutex_type                 = fetch::mutex::Mutex;
   using protocol_handler_type      = service::protocol_handler_type;
   using Clock                      = std::chrono::steady_clock;
   using thread_pool_type           = network::ThreadPool;
 
   using ThreadPool = network::ThreadPool;
-  using Muddle    = muddle::Muddle;
-  using MuddlePtr = std::shared_ptr<Muddle>;
-  using Uri       = Muddle::Uri;
-  using UriSet                     = std::unordered_set<Uri>;
-  using Address       = Muddle::Address;
-  using Client          = muddle::rpc::Client;
-  using ClientPtr = std::shared_ptr<Client>;
+  using Muddle     = muddle::Muddle;
+  using MuddlePtr  = std::shared_ptr<Muddle>;
+  using Uri        = Muddle::Uri;
+  using UriSet     = std::unordered_set<Uri>;
+  using Address    = Muddle::Address;
+  using Client     = muddle::rpc::Client;
+  using ClientPtr  = std::shared_ptr<Client>;
 
   static constexpr char const *LOGGING_NAME = "LaneController";
 
-  LaneController(std::weak_ptr<LaneIdentity> identity,
-                 NetworkManager const &nm)
+  LaneController(std::weak_ptr<LaneIdentity> identity, NetworkManager const &nm)
     : lane_identity_(std::move(identity))
     , manager_(nm)
   {
     threadpool_ = network::MakeThreadPool(1);
-    threadpool_ -> Start();
-    threadpool_ -> PostIdle([this](){ this->WorkCycle(); });
-    threadpool_ -> SetIdleInterval(1000);
+    threadpool_->Start();
+    threadpool_->PostIdle([this]() { this->WorkCycle(); });
+    threadpool_->SetIdleInterval(1000);
 
     muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("LANE"), nm);
-    client_ =
-      std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+                                       CHANNEL_RPC);
     muddle_->Start({});
   }
 
@@ -115,7 +114,6 @@ public:
   /// @{
 
   void WorkCycle();
-
 
   void UseThesePeers(UriSet uris)
   {
@@ -181,7 +179,7 @@ public:
   /// @}
 private:
   std::weak_ptr<LaneIdentity> lane_identity_;
-  NetworkManager        manager_;
+  NetworkManager              manager_;
 
   // Most methods do not need both mutexes. If they do, they should
   // acquire them in alphabetic order
@@ -190,11 +188,11 @@ private:
   mutex::Mutex desired_connections_mutex_{__LINE__, __FILE__};
 
   std::unordered_map<Uri, Address> peer_connections_;
-  UriSet                                              desired_connections_;
+  UriSet                           desired_connections_;
 
   ThreadPool threadpool_;
-  ClientPtr                 client_;
-  MuddlePtr muddle_;
+  ClientPtr  client_;
+  MuddlePtr  muddle_;
 };
 
 }  // namespace ledger

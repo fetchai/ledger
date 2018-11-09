@@ -85,8 +85,10 @@ public:
     connection_register_ = reg;
   }
 
-  
-  uint16_t                                  port() { return port_; };
+  uint16_t port()
+  {
+    return port_;
+  };
 
 private:
   using InFlightCounter = AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;

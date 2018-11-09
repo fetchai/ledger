@@ -51,7 +51,7 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-  Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
@@ -63,18 +63,17 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
 {
   char tmp[5];
 
-  tmp[4]=0;
-  tmp[3]=char(network_id & 0xFF);
-  network_id >>=8;
-  tmp[2]=char(network_id & 0xFF);
-  network_id >>=8;
-  tmp[1]=char(network_id & 0xFF);
-  network_id >>=8;
-  tmp[0]=char(network_id & 0xFF);
+  tmp[4] = 0;
+  tmp[3] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[2] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[1] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[0] = char(network_id & 0xFF);
 
   network_id_str_ = std::string(tmp);
-
-  }
+}
 
 /**
  * Starts the muddle node and attaches it to the network
@@ -106,11 +105,10 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   RunPeriodicMaintenance();
 }
 
-  const std::string &Muddle::NetworkIdStr()
-  {
-    return network_id_str_;
-  }
-
+const std::string &Muddle::NetworkIdStr()
+{
+  return network_id_str_;
+}
 
 /**
  * Stops the muddle node and removes it from the network

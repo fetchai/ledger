@@ -29,7 +29,6 @@
 namespace fetch {
 namespace ledger {
 
-
 class ExecutorRpcService
 {
 public:
@@ -49,7 +48,7 @@ public:
     : executor_(std::move(resources))
     , muddle_(std::move(muddle))
   {
-    port_                            = port;
+    port_ = port;
 
     identity_ = muddle_->identity();
     server_   = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_EXECUTOR, CHANNEL_RPC);

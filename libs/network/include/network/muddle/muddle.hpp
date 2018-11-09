@@ -19,6 +19,7 @@
 
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
@@ -28,7 +29,6 @@
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
-#include "crypto/ecdsa.hpp"
 
 #include <chrono>
 #include <memory>
@@ -135,7 +135,8 @@ public:
      the muddle using loaded certificates and keys. In tests, call
      this to just get one now.*/
 
-  static std::shared_ptr<Muddle> CreateMuddle(NetworkId network_id, fetch::network::NetworkManager tm)
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
+                                              fetch::network::NetworkManager tm)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
@@ -148,11 +149,8 @@ public:
 
   static inline uint32_t CreateNetworkId(const char *p)
   {
-    return
-      (uint32_t(p[0]) << 24) |
-      (uint32_t(p[1]) << 16) |
-      (uint32_t(p[2]) << 8) |
-      (uint32_t(p[3]));
+    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |
+           (uint32_t(p[3]));
   }
 
   // Construction / Destruction
@@ -233,7 +231,7 @@ private:
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
-  std::string           network_id_str_;
+  std::string          network_id_str_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const

@@ -110,7 +110,10 @@ public:
     registrar_.Debug(prefix);
   }
 
-  virtual NetworkId network_id() override { return network_id_; }
+  virtual NetworkId network_id() override
+  {
+    return network_id_;
+  }
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;

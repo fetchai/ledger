@@ -86,8 +86,8 @@ public:
     : network_manager_(tm)
   {
     muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("STOR"), tm);
-    client_ =
-        std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+                                       CHANNEL_RPC);
     muddle_->Start({});
   }
 
@@ -105,11 +105,11 @@ public:
 
 public:
   size_t AddLaneConnectionsWaiting(
-      const std::map<LaneIndex, Uri> &lanes,
+      const std::map<LaneIndex, Uri> & lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000));
 
   void AddLaneConnections(
-      const std::map<LaneIndex, Uri> &lanes,
+      const std::map<LaneIndex, Uri> & lanes,
       const std::chrono::milliseconds &timeout = std::chrono::milliseconds(10000));
 
   bool GetAddressForLane(LaneIndex lane, Address &address) const

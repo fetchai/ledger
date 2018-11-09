@@ -63,8 +63,9 @@ public:
   using controller_type          = LaneController;
   using controller_protocol_type = LaneControllerProtocol;
   using super_type               = service::ServiceServer<fetch::network::TCPServer>;
-//  using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
-//    client_register_type, fetch::chain::VerifiedTransaction, fetch::chain::UnverifiedTransaction>;
+  //  using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
+  //    client_register_type, fetch::chain::VerifiedTransaction,
+  //    fetch::chain::UnverifiedTransaction>;
   using thread_pool_type = network::ThreadPool;
 
   using Identifier = byte_array::ConstByteArray;
@@ -89,10 +90,11 @@ public:
     certificate_.reset(certificate);
 
     std::string network_id = std::string("000") + std::to_string(lane_);
-    network_id = std::string("L") + network_id.substr(network_id.length()-3);
+    network_id             = std::string("L") + network_id.substr(network_id.length() - 3);
 
     lane_identity_ = std::make_shared<LaneIdentity>(tm, certificate_->identity());
-    muddle_        = std::make_shared<Muddle>(Muddle::CreateNetworkId(network_id.c_str()), std::move(certificate_), tm);
+    muddle_        = std::make_shared<Muddle>(Muddle::CreateNetworkId(network_id.c_str()),
+                                       std::move(certificate_), tm);
     server_        = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
     // format and generate the prefix
@@ -121,11 +123,12 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    //tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
+    // tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
     //                                                          thread_pool_, tx_store_.get());
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
-//    tx_store_protocol_->OnSetObject(
-//        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
+    //    tx_store_protocol_->OnSetObject(
+    //        [this](fetch::chain::VerifiedTransaction const &tx) {
+    //        tx_sync_protocol_->AddToCache(tx); });
 
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
@@ -150,7 +153,7 @@ public:
     server_->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
-    controller_ = std::make_unique<controller_type>(lane_identity_, tm);
+    controller_          = std::make_unique<controller_type>(lane_identity_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
@@ -187,7 +190,7 @@ public:
     muddle_->Start({port_});
 
     thread_pool_->Start();
-    //tx_sync_protocol_->Start();
+    // tx_sync_protocol_->Start();
   }
 
   void Stop()
@@ -195,7 +198,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Stopping.");
     muddle_->Stop();
     thread_pool_->Stop();
-    //tx_sync_protocol_->Stop();
+    // tx_sync_protocol_->Stop();
   }
 
 private:
@@ -212,7 +215,7 @@ private:
   std::unique_ptr<transaction_store_protocol_type> tx_store_protocol_;
 
   //  std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
-  thread_pool_type                       thread_pool_;
+  thread_pool_type thread_pool_;
 
   ServerPtr    server_;
   MuddlePtr    muddle_;  ///< The muddle networking service

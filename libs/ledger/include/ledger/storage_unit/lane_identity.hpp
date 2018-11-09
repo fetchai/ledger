@@ -72,11 +72,11 @@ public:
 
   void AuthenticateController()
   {
-//    auto details = register_.GetDetails(client);
-//    {
-//      std::lock_guard<mutex_type> lock(*details);
-//      details->is_controller = true;
-//    }
+    //    auto details = register_.GetDetails(client);
+    //    {
+    //      std::lock_guard<mutex_type> lock(*details);
+    //      details->is_controller = true;
+    //    }
   }
 
   crypto::Identity Identity()

@@ -38,17 +38,18 @@ class ExecutionManagerRpcConnectorWorker
 {
 public:
   using Address         = ExecutionManagerRpcClient::Address;
-  using PromiseState         = ExecutionManagerRpcClient::PromiseState;
+  using PromiseState    = ExecutionManagerRpcClient::PromiseState;
   using FutureTimepoint = ExecutionManagerRpcClient::FutureTimepoint;
   using Muddle          = ExecutionManagerRpcClient::Muddle;
   using MuddlePtr       = std::shared_ptr<Muddle>;
   using Uri             = ExecutionManagerRpcClient::Uri;
   using Client          = ExecutionManagerRpcClient::Client;
 
-  Address   target_address;
+  Address target_address;
 
-  ExecutionManagerRpcConnectorWorker(Uri thepeer, MuddlePtr themuddle,
-                                     std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
+  ExecutionManagerRpcConnectorWorker(
+      Uri thepeer, MuddlePtr themuddle,
+      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
@@ -94,7 +95,7 @@ private:
   PendingConnectionCounter  counter_;
   MuddlePtr                 muddle_;
   FutureTimepoint           timeout_;
-  bool trying_ = false;
+  bool                      trying_ = false;
 };
 
 void ExecutionManagerRpcClient::WorkCycle(void)
@@ -105,24 +106,24 @@ void ExecutionManagerRpcClient::WorkCycle(void)
   }
   for (auto &successful_worker : bg_work_.GetSuccesses(1000))
   {
-    address_ = std::move(successful_worker->target_address);
+    address_     = std::move(successful_worker->target_address);
     connections_ = 1;
   }
   bg_work_.DiscardFailures();
   bg_work_.DiscardTimeouts();
 }
 
-
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
   : network_manager_(network_manager)
-  {
-    muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
-    client_ =
-        std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
-    muddle_->Start({});
-  }
+{
+  muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
+  client_ =
+      std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+  muddle_->Start({});
+}
 
-void ExecutionManagerRpcClient::AddConnection(const Uri &uri, const std::chrono::milliseconds &timeout)
+void ExecutionManagerRpcClient::AddConnection(const Uri &                      uri,
+                                              const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
   {
@@ -130,40 +131,43 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &uri, const std::chrono:
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
-  auto worker = std::make_shared<ExecutionManagerRpcConnectorWorker>(uri, muddle_,
-                                                                     std::chrono::milliseconds(timeout));
+  auto worker = std::make_shared<ExecutionManagerRpcConnectorWorker>(
+      uri, muddle_, std::chrono::milliseconds(timeout));
   bg_work_.Add(worker);
 }
 
-
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
 {
-  auto result = client_->CallSpecificAddress(address_,RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::EXECUTE, block);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::EXECUTE, block);
   return result->As<Status>();
 }
 
 ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result =
-      client_->CallSpecificAddress(address_,RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
   return result->As<BlockHash>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()
 {
-  auto result = client_->CallSpecificAddress(address_,RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_ACTIVE);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::IS_ACTIVE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::IsIdle()
 {
-  auto result = client_->CallSpecificAddress(address_,RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_IDLE);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::IS_IDLE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
 {
-  auto result = client_->CallSpecificAddress(address_,RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::ABORT);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::ABORT);
   return result->As<bool>();
 }
 

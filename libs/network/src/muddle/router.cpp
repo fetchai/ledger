@@ -201,7 +201,8 @@ std::string DescribePacket(Packet const &packet)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
@@ -720,13 +721,14 @@ void Router::DispatchPacket(PacketPtr packet)
 
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
     // of message subscriptions.
-    try {
+    try
+    {
       if (registrar_.Dispatch(packet))
       {
         return;
       }
     }
-    catch(std::exception &ex)
+    catch (std::exception &ex)
     {
       FETCH_LOG_WARN(LOGGING_NAME, DescribePacket(*packet));
       FETCH_LOG_ERROR(LOGGING_NAME, "Exception processing packet ", ex.what());

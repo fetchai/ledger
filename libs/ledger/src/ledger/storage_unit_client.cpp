@@ -44,7 +44,8 @@ public:
   Promise   count_prom;
   Address   target_address;
 
-  MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer, MuddlePtr themuddle,
+  MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer,
+                            MuddlePtr                 themuddle,
                             std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : lane(thelane)
     , name_(std::move(thename))
@@ -65,8 +66,7 @@ public:
 
         .Allow(State::FAILED, State::CONNECTING)
         .Allow(State::FAILED, State::QUERYING)
-        .Allow(State::FAILED, State::INITIAL)
-      ;
+        .Allow(State::FAILED, State::INITIAL);
   }
   static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
 
@@ -139,9 +139,9 @@ public:
         return false;
       }
       currentstate = State::QUERYING;
-      lane_prom  = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
-                                                LaneIdentityProtocol::GET_LANE_NUMBER);
-      count_prom = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+      lane_prom    = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                               LaneIdentityProtocol::GET_LANE_NUMBER);
+      count_prom   = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
                                                 LaneIdentityProtocol::GET_TOTAL_LANES);
 
       currentstate = State::QUERYING;

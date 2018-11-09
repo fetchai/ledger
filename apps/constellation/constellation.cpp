@@ -232,7 +232,8 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   // check to see if the connections where successful
   if (count != num_lanes_)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (",count," of ",num_lanes_,")");
+    FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (", count,
+                    " of ", num_lanes_, ")");
     return;
   }
 

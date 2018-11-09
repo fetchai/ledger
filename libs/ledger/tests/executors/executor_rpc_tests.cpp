@@ -146,7 +146,7 @@ protected:
 
     auto executor_muddle = Muddle::CreateMuddle(*network_manager_);
     executor_service_ =
-      std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
+        std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
 
     // --- Wait for all the services to open listening ports --------
