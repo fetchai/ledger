@@ -33,13 +33,14 @@ protected:
     stack_.New("RAS_bench.db");
 
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == true) << "Expected slightly better random access stack to be direct write";
+    EXPECT_TRUE(stack_.DirectWrite() == true)
+        << "Expected slightly better random access stack to be direct write";
   }
 
   void TearDown(const ::benchmark::State &) override
   {}
 
-  SlightlyBetterRandomAccessStack<uint64_t>               stack_;
+  SlightlyBetterRandomAccessStack<uint64_t> stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 

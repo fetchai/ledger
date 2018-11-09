@@ -45,6 +45,6 @@ BENCHMARK_F(VariantStackBench, WritingIntToStack)(benchmark::State &st)
   for (auto _ : st)
   {
     uint64_t random = lfg_();
-    stack_.Push(random) ;
+    stack_.Push(random);
   }
 }
