@@ -33,12 +33,6 @@ if(FETCH_ENABLE_EXAMPLES)
   add_executable(example-network-rpc-client rpc/client.cpp)
   target_link_libraries(example-network-rpc-client PRIVATE fetch-network)
 
-  add_executable(example-network-rrpc-client reverse_rpc/client.cpp)
-  target_link_libraries(example-network-rrpc-client PRIVATE fetch-network)
-
-  add_executable(example-network-rrpc-server reverse_rpc/server.cpp)
-  target_link_libraries(example-network-rrpc-server PRIVATE fetch-network)
-
   add_executable(example-network-mrpc-server muddle_rpc/server.cpp)
   target_link_libraries(example-network-mrpc-server PRIVATE fetch-network)
 

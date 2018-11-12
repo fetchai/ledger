@@ -244,7 +244,7 @@ void StorageUnitClient::WorkCycle()
   bg_work_.DiscardTimeouts();
 }
 
-void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
+  void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
                                            const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
@@ -265,7 +265,8 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
   }
 }
 
-size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Uri> & lanes,
+size_t StorageUnitClient::AddLaneConnectionsWaiting(
+                                                    const std::map<LaneIndex, Uri> & lanes,
                                                     const std::chrono::milliseconds &timeout)
 {
   AddLaneConnections(lanes, timeout);
