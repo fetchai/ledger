@@ -156,8 +156,7 @@ private:
   http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
                                       http::HTTPRequest const &   request)
   {
-    script::Variant data;
-    data.MakeObject();
+    variant::Variant data = variant::Variant::Object();
 
     data["success"] = true;
     data["backlog"] = miner_.backlog();
