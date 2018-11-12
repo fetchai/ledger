@@ -70,7 +70,7 @@ public:
     InitialiseKMeans(data);
 
     // instantiate counter with zeros
-    k_count_ = std::vector<std::size_t>{0, n_clusters_};
+    k_count_ = std::vector<std::size_t>(n_clusters_, 0);
 
     // initialise assignment
     std::vector<std::size_t> k_assignment_shape{n_points_, 1};
@@ -124,7 +124,7 @@ private:
 
       std::vector<std::size_t> assigned_data_points{data_idxs_[0]};
 
-      std::vector<ArrayType> cluster_distances{n_clusters_};
+      std::vector<ArrayType> cluster_distances(n_clusters_);
       std::size_t            assigned_cluster = 0;
 
       std::vector<typename ArrayType::Type> weights(
