@@ -76,7 +76,7 @@ public:
   }
 
 private:
-  using Variant = script::Variant;
+  using Variant = variant::Variant;
 
   http::HTTPResponse GetChainStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)

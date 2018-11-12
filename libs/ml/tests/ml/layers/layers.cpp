@@ -24,7 +24,6 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
-//#include "ml/variable.hpp"
 
 using namespace fetch::ml;
 
@@ -163,4 +162,67 @@ TEST(layers_test, two_layer_xor_MSE)
   ASSERT_TRUE(prediction[1] > 0.9);
   ASSERT_TRUE(prediction[2] > 0.9);
   ASSERT_TRUE(prediction[3] < 0.1);
+}
+
+TEST(layers_test, two_layer_xor_SoftCEL)
+{
+  // set up session
+  SessionManager<ArrayType, VariableType> sess{};
+  Type                                    alpha  = 0.2;
+  std::size_t                             n_reps = 500;
+
+  // set up some variables
+  std::size_t data_points = 4;
+  std::size_t input_size  = 2;
+  std::size_t h1_size     = 20;
+  std::size_t output_size = 2;
+
+  std::vector<std::size_t> input_shape{data_points, input_size};
+  std::vector<std::size_t> gt_shape{data_points, output_size};
+
+  auto input_data = sess.Variable(input_shape, "Input_data");
+  auto l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
+  sess.SetInput(l1, input_data);
+  auto logits = sess.Layer(h1_size, output_size, "LeakyRelu", "output_layer");
+  sess.SetInput(logits, l1->output());
+  auto gt = sess.Variable(gt_shape, "GroundTruth");
+  AssignRandomWeights_1(l1);
+  AssignRandomWeights_2(logits);
+
+  SetInputXOR(input_data->data());
+
+  gt->data().Set(0, 0, 1.0);  // false:0
+  gt->data().Set(0, 1, 0.0);  // false:0
+
+  gt->data().Set(1, 0, 0.0);  // true:1
+  gt->data().Set(1, 1, 1.0);  // true:1
+
+  gt->data().Set(2, 0, 0.0);  // true:1
+  gt->data().Set(2, 1, 1.0);  // true:1
+
+  gt->data().Set(3, 0, 1.0);  // false:0
+  gt->data().Set(3, 1, 0.0);  // false:0
+
+  //
+  auto y_pred = fetch::ml::ops::Softmax(logits->output(), sess);
+
+  // loss
+  auto loss = fetch::ml::ops::SoftmaxCrossEntropyLoss(y_pred, gt, sess);
+
+  // backward pass to get gradient
+  sess.BackProp(input_data, loss, alpha, n_reps);
+
+  // forward pass on the computational graph
+  auto prediction = sess.Predict(input_data, y_pred);
+
+  ASSERT_TRUE(loss->data()[0] < 1.0);
+
+  ASSERT_TRUE(prediction.At(0, 0) > 0.5);
+  ASSERT_TRUE(prediction.At(0, 1) < 0.5);
+  ASSERT_TRUE(prediction.At(1, 0) < 0.5);
+  ASSERT_TRUE(prediction.At(1, 1) > 0.5);
+  ASSERT_TRUE(prediction.At(2, 0) < 0.5);
+  ASSERT_TRUE(prediction.At(2, 1) > 0.5);
+  ASSERT_TRUE(prediction.At(3, 0) > 0.5);
+  ASSERT_TRUE(prediction.At(3, 1) < 0.5);
 }

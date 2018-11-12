@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,25 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include <gtest/gtest.h>
+#include <cmath>
 
-using namespace fetch;
-using namespace fetch::script;
-using namespace fetch::serializers;
+namespace fetch {
+namespace math {
+namespace free_functions {
+namespace kernels {
 
-TEST(variant_test, variant_serialization)
+/*
+ * Natural log of x
+ */
+template <typename type>
+struct Log
 {
-  Variant a, b;
-  a = 982;
-  /*
-    TypedByteArrayBuffer ser;
-    ser << a;
+  void operator()(type const &x, type &y) const
+  {
+    y = std::log(x);
+  }
+};
 
-    ser.seek(0);
-
-    ser >> b;
-  */
-  //  EXPECT_TRUE( a.As<int>() == b.As<int>());
-}
+}  // namespace kernels
+}  // namespace free_functions
+}  // namespace math
+}  // namespace fetch

@@ -24,6 +24,8 @@
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
 
+#include "math/meta/type_traits.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>

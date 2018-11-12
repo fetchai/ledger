@@ -115,6 +115,9 @@ public:
     memcpy(reinterpret_cast<uint8_t *>(&last_position_), first.data, sizeof(uint64_t));
     memcpy(reinterpret_cast<uint8_t *>(&length_), first.data + sizeof(uint64_t), sizeof(uint64_t));
 
+    // Previously written blocks should at least have header size - if not something has gone wrong
+    assert(length_ >= HEADER_SIZE);
+
     block_count_ = length_ / block_type::BYTES;
     if (block_count_ * block_type::BYTES < length_)
     {

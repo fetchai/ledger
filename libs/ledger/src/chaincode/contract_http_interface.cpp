@@ -24,7 +24,7 @@ namespace {
 
 struct AdaptedTx
 {
-  chain::MutableTransaction tx;
+  chain::MutableTransaction                          tx;
   chain::TxSigningAdapter<chain::MutableTransaction> adapter{tx};
 
   template <typename T>
@@ -34,13 +34,12 @@ struct AdaptedTx
   }
 };
 
-} // namespace
+}  // namespace
 
 constexpr char const *           ContractHttpInterface::LOGGING_NAME;
 byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX("/api/contract/");
 byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
 byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
-
 
 std::size_t ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request)
 {
@@ -49,27 +48,21 @@ std::size_t ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
-  if (doc.root().is_array())
+  if (doc.root().IsArray())
   {
     for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
     {
       auto const &tx_obj = doc[i];
 
-      // assume single transaction
-      auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(tx_obj));
-
       // add the transaction to the processor
-      processor_.AddTransaction(tx);
+      processor_.AddTransaction(chain::FromWireTransaction(tx_obj));
       ++submitted;
     }
   }
   else
   {
-    // assume single transaction
-    auto tx = chain::VerifiedTransaction::Create(chain::FromWireTransaction(doc.root()));
-
     // add the transaction to the processor
-    processor_.AddTransaction(tx);
+    processor_.AddTransaction(chain::FromWireTransaction(doc.root()));
     ++submitted;
   }
 
@@ -83,16 +76,10 @@ std::size_t ContractHttpInterface::SubmitNativeTx(http::HTTPRequest const &reque
   serializers::ByteArrayBuffer buffer(request.body());
   buffer >> transactions;
 
-  std::vector<chain::VerifiedTransaction> verified_tx;
-  verified_tx.reserve(transactions.size());
-
   for (auto const &input_tx : transactions)
   {
-    // verify the transaction
-    verified_tx.emplace_back(chain::VerifiedTransaction::Create(input_tx.tx));
+    processor_.AddTransaction(input_tx.tx);
   }
-
-  processor_.AddTransactions(verified_tx);
 
   return transactions.size();
 }

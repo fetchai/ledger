@@ -24,6 +24,7 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -244,10 +245,88 @@ public:
   {
     assert(filename_ != "");
     assert(i < size());
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    int64_t start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+  }
+
+  /**
+   * Copy array of objects onto the stack, don't respect current stack size, just
+   * update it if neccessary.
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   */
+  void SetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    auto ret = LazySetBulk(i, elements, objects);
+
+    if (ret)
+    {
+      StoreHeader();
+    }
+  }
+
+  /**
+   * Lazy implementation of SetBulk - updates the header without flushing it
+   *
+   * @param: i Location of first object to be written
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   *
+   * @return bool Whether the bulk set updated the header (number of elements)
+   */
+  bool LazySetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(objects),
+                       std::streamsize(sizeof(type)) * std::streamsize(elements));
+
+    // Catch case where a set extends the underlying stack
+    if ((i + elements) > header_.objects)
+    {
+      header_.objects = i + elements;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get bulk elements, will fill the pointer with as many elements as are valid, otherwise
+   * nothing.
+   *
+   * @param: i Location of first object to be read
+   * @param: elements Number of elements to copy
+   * @param: objects Pointer to array of elements
+   */
+  void GetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  {
+    assert(filename_ != "");
+
+    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+
+    // Figure out how many elements are valid to get, only get those
+    if (i >= header_.objects)
+    {
+      return;
+    }
+
+    assert(header_.objects >= i);
+
+    // i is valid location, elements are 1 or more at this point
+    elements = std::min(elements, std::size_t(header_.objects - i));
+
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(objects),
+                      std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)

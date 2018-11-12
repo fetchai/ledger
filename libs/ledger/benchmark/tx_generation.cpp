@@ -33,7 +33,7 @@ namespace {
 
 struct AdaptedTx
 {
-  MutableTransaction tx;
+  MutableTransaction                   tx;
   TxSigningAdapter<MutableTransaction> adapter{tx};
 
   template <typename T>
@@ -45,7 +45,7 @@ struct AdaptedTx
 
 static const std::size_t NUM_TRANSACTIONS = 50000;
 
-void TxGeneration(benchmark::State& state)
+void TxGeneration(benchmark::State &state)
 {
 
   for (auto _ : state)
@@ -58,14 +58,12 @@ void TxGeneration(benchmark::State& state)
     for (std::size_t i = 0; i < NUM_TRANSACTIONS; ++i)
     {
       auto &identity = signers.at(i);
-      auto &tx = transactions.at(i);
+      auto &tx       = transactions.at(i);
 
       auto const public_key = identity.public_key();
 
       std::ostringstream oss;
-      oss << R"( { "address": ")"
-          << ToBase64(public_key)
-          << R"(", "amount": 10 )";
+      oss << R"( { "address": ")" << ToBase64(public_key) << R"(", "amount": 10 )";
 
       tx.tx.set_contract_name("fetch.token.wealth");
       tx.tx.set_fee(1);
@@ -80,14 +78,14 @@ void TxGeneration(benchmark::State& state)
   }
 }
 
-void TxGenerationThreaded(benchmark::State& state)
+void TxGenerationThreaded(benchmark::State &state)
 {
   for (auto _ : state)
   {
     Pool pool;
 
     // generate a series of keys for all the nodes
-    std::mutex signers_mtx;
+    std::mutex               signers_mtx;
     std::vector<ECDSASigner> signers(0);
     for (std::size_t i = 0; i < NUM_TRANSACTIONS; ++i)
     {
@@ -109,14 +107,12 @@ void TxGenerationThreaded(benchmark::State& state)
     {
       pool.Dispatch([i, &transactions, &signers]() {
         auto &identity = signers.at(i);
-        auto &tx = transactions.at(i);
+        auto &tx       = transactions.at(i);
 
         auto const public_key = identity.public_key();
 
         std::ostringstream oss;
-        oss << R"( { "address": ")"
-            << ToBase64(public_key)
-            << R"(", "amount": 10 )";
+        oss << R"( { "address": ")" << ToBase64(public_key) << R"(", "amount": 10 )";
 
         tx.tx.set_contract_name("fetch.token.wealth");
         tx.tx.set_fee(1);
@@ -134,7 +130,7 @@ void TxGenerationThreaded(benchmark::State& state)
   }
 }
 
-} // namespace
+}  // namespace
 
 BENCHMARK(TxGeneration);
 BENCHMARK(TxGenerationThreaded);

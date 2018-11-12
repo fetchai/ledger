@@ -95,14 +95,13 @@ private:
 
     if (on_set_)
     {
-      for(auto const &element : elements)
+      for (auto const &element : elements)
       {
         on_set_(element.value);
       }
     }
 
-    obj_store_->WithLock([this, &elements]()
-    {
+    obj_store_->WithLock([this, &elements]() {
       for (Element const &element : elements)
       {
         obj_store_->LocklessSet(element.key, element.value);

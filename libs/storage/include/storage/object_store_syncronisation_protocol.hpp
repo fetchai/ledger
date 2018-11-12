@@ -32,9 +32,8 @@
 
 namespace fetch {
 namespace chain {
-  class VerifiedTransaction;
+class VerifiedTransaction;
 }
-
 
 namespace storage {
 
@@ -242,7 +241,7 @@ public:
 
 #ifdef FETCH_ENABLE_METRICS
           RecordNewElement(obj.data.digest());
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
           store_->LocklessSet(rid, obj.data);
 
@@ -493,7 +492,7 @@ private:
 
 #ifdef FETCH_ENABLE_METRICS
           RecordNewElement(obj.data.digest());
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
           store_->LocklessSet(rid, obj.data);
 
@@ -509,7 +508,8 @@ private:
     {
       needs_sync_ = false;
       thread_pool_->Post([this]() { this->IdleUntilPeers(); });
-    }    else
+    }
+    else
     {
       thread_pool_->Post([this]() { this->SyncSubtree(); });
     }
@@ -523,14 +523,10 @@ private:
     using fetch::metrics::MetricHandler;
 
     // record the event
-    Metrics::Instance().RecordMetric(
-      identifier,
-      MetricHandler::Instrument::TRANSACTION,
-      MetricHandler::Event::SYNCED
-    );
+    Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
+                                     MetricHandler::Event::SYNCED);
   }
-#endif // FETCH_ENABLE_METRICS
-
+#endif  // FETCH_ENABLE_METRICS
 };
 
 }  // namespace storage

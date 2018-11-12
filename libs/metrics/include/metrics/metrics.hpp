@@ -89,54 +89,53 @@ private:
 }  // namespace fetch
 
 #ifdef FETCH_ENABLE_METRICS
-#define FETCH_METRIC_TX_SUBMITTED(hash)                       \
+#define FETCH_METRIC_TX_SUBMITTED(hash)                        \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::SUBMITTED)
-#define FETCH_METRIC_TX_STORED(hash)                          \
+#define FETCH_METRIC_TX_STORED(hash)                           \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::STORED)
-#define FETCH_METRIC_TX_QUEUED(hash)                          \
+#define FETCH_METRIC_TX_QUEUED(hash)                           \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::QUEUED)
-#define FETCH_METRIC_TX_PACKED(hash)                          \
+#define FETCH_METRIC_TX_PACKED(hash)                           \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::PACKED)
-#define FETCH_METRIC_TX_EXEC_STARTED(hash)                    \
+#define FETCH_METRIC_TX_EXEC_STARTED(hash)                     \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::EXECUTION_STARTED)
-#define FETCH_METRIC_TX_EXEC_COMPLETE(hash)                   \
+#define FETCH_METRIC_TX_EXEC_COMPLETE(hash)                    \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::EXECUTION_COMPLETE)
 
-#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timestamp)         \
+#define FETCH_METRIC_TX_SUBMITTED_EX(hash, timestamp)          \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::SUBMITTED, timestamp)
-#define FETCH_METRIC_TX_STORED_EX(hash, timestamp)            \
+#define FETCH_METRIC_TX_STORED_EX(hash, timestamp)             \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::STORED, timestamp)
-#define FETCH_METRIC_TX_QUEUED_EX(hash, timestamp)            \
+#define FETCH_METRIC_TX_QUEUED_EX(hash, timestamp)             \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::QUEUED, timestamp)
-#define FETCH_METRIC_TX_PACKED_EX(hash, timestamp)            \
+#define FETCH_METRIC_TX_PACKED_EX(hash, timestamp)             \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::PACKED, timestamp)
-#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timestamp)      \
+#define FETCH_METRIC_TX_EXEC_STARTED_EX(hash, timestamp)       \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::EXECUTION_STARTED, timestamp)
-#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timestamp)     \
+#define FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, timestamp)      \
   fetch::metrics::Metrics::Instance().RecordTransactionMetric( \
       hash, fetch::metrics::Metrics::Event::EXECUTION_COMPLETE, timestamp)
 
-#define FETCH_METRIC_BLOCK_GENERATED(hash)                   \
-  fetch::metrics::Metrics::Instance().RecordBlockMetric( \
-      hash, fetch::metrics::Metrics::Event::GENERATED)
+#define FETCH_METRIC_BLOCK_GENERATED(hash)                    \
+  fetch::metrics::Metrics::Instance().RecordBlockMetric(hash, \
+                                                        fetch::metrics::Metrics::Event::GENERATED)
 
-#define FETCH_METRIC_BLOCK_RECEIVED(hash)                   \
-  fetch::metrics::Metrics::Instance().RecordBlockMetric( \
-      hash, fetch::metrics::Metrics::Event::RECEIVED)
+#define FETCH_METRIC_BLOCK_RECEIVED(hash)                     \
+  fetch::metrics::Metrics::Instance().RecordBlockMetric(hash, \
+                                                        fetch::metrics::Metrics::Event::RECEIVED)
 
-
-#else // !FETCH_ENABLE_METRICS
+#else  // !FETCH_ENABLE_METRICS
 
 #define FETCH_METRIC_TX_SUBMITTED(hash)
 #define FETCH_METRIC_TX_STORED(hash)
@@ -155,4 +154,4 @@ private:
 #define FETCH_METRIC_BLOCK_GENERATED(hash)
 #define FETCH_METRIC_BLOCK_RECEIVED(hash)
 
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS

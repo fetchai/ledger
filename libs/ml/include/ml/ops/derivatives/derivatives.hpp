@@ -25,13 +25,6 @@ namespace ml {
 namespace ops {
 namespace derivatives {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 template <typename VariablePtrType>
 void AddBroadcast(VariablePtrType cur_node)
 {
@@ -46,17 +39,15 @@ void AddBroadcast(VariablePtrType cur_node)
   //    right->GradientAdd(fetch::math::ReduceMean(dy, 0));
 }
 
-template <typename VariablePtrType>
-void Dot(VariablePtrType cur_node)
+template <typename VariableType>
+void Dot(std::shared_ptr<VariableType> cur_node)
 {
   assert(cur_node->prev.size() == 2);
 
-  auto &left  = cur_node->prev[0];
-  auto &right = cur_node->prev[1];
-  auto &dy    = cur_node->grad();
-
-  left->GradientAdd(fetch::math::DotTranspose(dy, right->data()));
-  right->GradientAdd(fetch::math::TransposeDot(left->data(), dy));
+  cur_node->prev[0]->GradientAdd(
+      fetch::math::DotTranspose(cur_node->grad(), cur_node->prev[1]->data(), cur_node->threaded()));
+  cur_node->prev[1]->GradientAdd(
+      fetch::math::TransposeDot(cur_node->prev[0]->data(), cur_node->grad(), cur_node->threaded()));
 }
 
 template <typename VariablePtrType>

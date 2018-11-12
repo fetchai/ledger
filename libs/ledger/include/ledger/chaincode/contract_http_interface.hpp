@@ -19,8 +19,8 @@
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
-#include "core/string/replace.hpp"
 #include "core/serializers/stl_types.hpp"
+#include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -96,13 +96,10 @@ public:
            tx.set_contract_name("fetch.dummy.run");
            tx.set_data(std::to_string(transaction_index_++));
 
-           auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
-
-           processor_.AddTransaction(vtx);
+           processor_.AddTransaction(tx);
 
            std::ostringstream oss;
-           oss << R"({ "submitted": true, "tx": ")"
-               << static_cast<std::string>(byte_array::ToBase64(vtx.digest())) << "\" }";
+           oss << R"({ "submitted": true })";
 
            return http::CreateJsonResponse(oss.str());
          });
@@ -160,7 +157,9 @@ public:
              oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
            }
 
-           return http::CreateJsonResponse(oss.str(), (error_response) ? http::Status::CLIENT_ERROR_BAD_REQUEST : http::Status::SUCCESS_OK);
+           return http::CreateJsonResponse(oss.str(), (error_response)
+                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                          : http::Status::SUCCESS_OK);
          });
   }
 
@@ -176,8 +175,8 @@ private:
       doc.Parse(request.body());
 
       // dispatch the contract type
-      script::Variant response;
-      auto            contract = contract_cache_.Lookup(contract_name);
+      variant::Variant response;
+      auto             contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
       contract->Attach(storage_);

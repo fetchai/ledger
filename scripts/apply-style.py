@@ -150,7 +150,7 @@ def main():
     # process all the files
     success = False
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        result = map(handler, project_sources(project_root))
+        result = pool.map(handler, project_sources(project_root))
 
         if args.all:
             result = list(result)
