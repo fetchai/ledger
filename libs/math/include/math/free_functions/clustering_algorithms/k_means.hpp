@@ -122,8 +122,7 @@ private:
       std::size_t n_remaining_data_points, n_assigned_data_points;
       std::size_t n_remaining_clusters, n_assigned_clusters;
 
-      std::vector<std::size_t> assigned_data_points{};
-      assigned_data_points.push_back(data_idxs[0]);
+      std::vector<std::size_t> assigned_data_points{data_idxs[0]};
 
       std::vector<ArrayType> cluster_distances{n_clusters};
       std::size_t            assigned_cluster = 0;
