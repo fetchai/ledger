@@ -139,7 +139,8 @@ protected:
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_           = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), std::move(p2p_key), *network_manager_);
+    muddle_           = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), std::move(p2p_key),
+                                   *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the EXECUTOR SERVICE -------------------------------

@@ -177,7 +177,8 @@ public:
         }
         if (!list.empty())
         {
-          promises.emplace_back(client_->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET_BULK, list));
+          promises.emplace_back(
+              client_->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET_BULK, list));
         }
 
         ++lane;

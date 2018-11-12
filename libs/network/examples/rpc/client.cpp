@@ -21,7 +21,6 @@
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -36,7 +35,7 @@ using Server = fetch::muddle::rpc::Server;
 using Client = fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
-const int CHANNEL_RPC = 1;
+const int CHANNEL_RPC  = 1;
 
 int main()
 {
@@ -46,10 +45,10 @@ int main()
 
   tm.Start();
   auto client_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
-  client_muddle -> Start({});
-  client_muddle -> AddPeer(fetch::network::Uri{"tcp://127.0.0.1:8080"});
-  auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(), SERVICE_TEST,
-                                          CHANNEL_RPC);
+  client_muddle->Start({});
+  client_muddle->AddPeer(fetch::network::Uri{"tcp://127.0.0.1:8080"});
+  auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(),
+                                         SERVICE_TEST, CHANNEL_RPC);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   Muddle::Address target_address;
   if (!client_muddle->GetOutgoingConnectionAddress(peer, target_address))
@@ -58,16 +57,16 @@ int main()
     exit(1);
   }
 
-  auto prom = client->CallSpecificAddress(target_address,MYPROTO, GREET, "Fetch");
-  auto res = prom->As<std::string>();
-  std::cout << res  << std::endl;
+  auto prom = client->CallSpecificAddress(target_address, MYPROTO, GREET, "Fetch");
+  auto res  = prom->As<std::string>();
+  std::cout << res << std::endl;
 
-  auto px = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, "Greet");
+  auto px = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, "Greet");
 
   // Promises
-  auto p1 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, 2, 7);
-  auto p2 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, 4, 3);
-  auto p3 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION);
+  auto p1 = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, 2, 7);
+  auto p2 = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, 4, 3);
+  auto p3 = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
   if (p1->IsWaiting())
@@ -107,7 +106,7 @@ int main()
   std::size_t N = 100000;
   for (std::size_t i = 0; i < N; ++i)
   {
-    promises.push_back(client->CallSpecificAddress(target_address,MYPROTO, ADD, 4, 3));
+    promises.push_back(client->CallSpecificAddress(target_address, MYPROTO, ADD, 4, 3));
   }
   fetch::logger.Highlight("DONE!");
 

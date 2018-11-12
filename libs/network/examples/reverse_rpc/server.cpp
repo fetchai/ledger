@@ -28,7 +28,7 @@ using Server = fetch::muddle::rpc::Server;
 using Client = fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
-const int CHANNEL_RPC = 1;
+const int CHANNEL_RPC  = 1;
 
 #include <iostream>
 
@@ -42,7 +42,9 @@ class ClientRegister
 public:
   void Register(CallContext const *context)
   {
-    std::cout << "\rRegistering " << ToBase64(context->sender_address) << std::endl << std::endl << "> " << std::flush;
+    std::cout << "\rRegistering " << ToBase64(context->sender_address) << std::endl
+              << std::endl
+              << "> " << std::flush;
 
     mutex_.lock();
     registered_aeas_.insert(context->sender_address);
@@ -55,7 +57,8 @@ public:
     mutex_.lock();
     for (auto &id : registered_aeas_)
     {
-      auto prom = client_ -> CallSpecificAddress(id, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val);
+      auto prom =
+          client_->CallSpecificAddress(id, FetchProtocols::NODE_TO_AEA, NodeToAEA::SEARCH, val);
       std::string s = prom->As<std::string>();
       if (s != "")
       {
@@ -71,13 +74,13 @@ public:
   void register_service_instance(std::shared_ptr<Muddle> muddle_ptr)
   {
     client_ = std::make_shared<Client>(muddle_ptr->AsEndpoint(), Muddle::Address(), SERVICE_TEST,
-                                          CHANNEL_RPC);
+                                       CHANNEL_RPC);
   }
 
 private:
-  std::set<Muddle::Address>                        registered_aeas_;
-  fetch::mutex::Mutex                       mutex_{__LINE__, __FILE__};
-  std::shared_ptr<Client> client_;
+  std::set<Muddle::Address> registered_aeas_;
+  fetch::mutex::Mutex       mutex_{__LINE__, __FILE__};
+  std::shared_ptr<Client>   client_;
 };
 
 // Next we make a protocol for the implementation
@@ -89,7 +92,7 @@ public:
     , Protocol()
   {
     this->ExposeWithClientContext(AEAToNode::REGISTER, (ClientRegister *)this,
-                              &ClientRegister::Register);
+                                  &ClientRegister::Register);
   }
 
 private:
@@ -122,7 +125,7 @@ int main()
 
   tm.Start();
   server_muddle->Start({8080});
-  auto server        = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+  auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
 
   OEFService service(*server);
 
