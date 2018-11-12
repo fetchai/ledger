@@ -1,6 +1,6 @@
 #include "core/logger.hpp"
 
-//using Logger = fetch::log::Logger;
+// using Logger = fetch::log::Logger;
 
 void breakpoint(void)
 {
