@@ -38,8 +38,8 @@ TEST(clustering_test, kmeans_test)
 
   for (std::size_t i = 0; i < 50; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(-i - 50.));
-    A.Set(i, 1, static_cast<data_type>(-i - 50.));
+    A.Set(i, 0, static_cast<data_type>(-i - 50));
+    A.Set(i, 1, static_cast<data_type>(-i - 50));
   }
   for (std::size_t i = 50; i < 100; ++i)
   {
