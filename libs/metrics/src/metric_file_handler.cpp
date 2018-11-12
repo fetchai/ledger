@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/metrics/metric_file_handler.hpp"
+#include "metrics/metric_file_handler.hpp"
 #include "core/byte_array/encoders.hpp"
 
 #include <fstream>
@@ -24,7 +24,7 @@
 using fetch::byte_array::ToBase64;
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 namespace {
 
 /**
@@ -39,9 +39,12 @@ char const *ToString(MetricHandler::Instrument instrument)
   {
   case MetricHandler::Instrument::TRANSACTION:
     return "transaction";
-  default:
-    return "unknown";
+
+  case MetricHandler::Instrument::BLOCK:
+    return "block";
   }
+
+  return "unknown";
 }
 
 /**
@@ -56,6 +59,10 @@ char const *ToString(MetricHandler::Event event)
   {
   case MetricHandler::Event::SUBMITTED:
     return "submitted";
+  case MetricHandler::Event::STORED:
+    return "stored";
+  case MetricHandler::Event::SYNCED:
+    return "synced";
   case MetricHandler::Event::QUEUED:
     return "queued";
   case MetricHandler::Event::PACKED:
@@ -64,9 +71,13 @@ char const *ToString(MetricHandler::Event event)
     return "exec-started";
   case MetricHandler::Event::EXECUTION_COMPLETE:
     return "exec-complete";
-  default:
-    return "unknown";
+  case MetricHandler::Event::GENERATED:
+    return "generated";
+  case MetricHandler::Event::RECEIVED:
+    return "received";
   }
+
+  return "unknown";
 }
 
 }  // namespace
@@ -158,5 +169,5 @@ void MetricFileHandler::ThreadEntryPoint()
   }
 }
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

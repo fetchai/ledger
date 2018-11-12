@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,18 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
-namespace fetch {
-namespace variant {
-class Variant;
+#include "core/random/lcg.hpp"
+#include <math/distance/euclidean.hpp>
+#include <math/linalg/matrix.hpp>
+
+using namespace fetch::math::distance;
+using namespace fetch::math::linalg;
+
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(distance_tests, euclidean_distance)
+{
+  _M<double> A = _M<double>(R"(1 2; 3 4)");
+  ASSERT_TRUE(Euclidean(A, A) == 0);
+
+  _M<double> B = _M<double>(R"(1 2; 3 2)");
+  ASSERT_TRUE(Euclidean(A, B) == 2);
 }
-namespace chain {
-
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
-                                        bool const                add_metadata = false);
-MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
-MutableTransaction    FromWireTransaction(variant::Variant const &transaction);
-
-}  // namespace chain
-}  // namespace fetch

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,18 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
-namespace fetch {
-namespace variant {
-class Variant;
+#include "core/random/lcg.hpp"
+#include <math/free_functions/clustering_algorithms/k_means.hpp>
+#include <math/linalg/matrix.hpp>
+
+using namespace fetch::math::clustering;
+using namespace fetch::math::linalg;
+
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(distance_tests, clustering_test)
+{
+  _M<double> A = _M<double>{4, 2};
+  A.Set(0, 0, -2);
+  A.Set(0, 1, -2);
+  A.Set(1, 0, -1);
+  A.Set(1, 1, -1);
+  A.Set(2, 0, 1);
+  A.Set(2, 1, 1);
+  A.Set(3, 0, 2);
+  A.Set(3, 1, 2);
+
+  auto output = KMeans(A, 2);
+  ASSERT_TRUE(output[0] == output[1]);
+  ASSERT_TRUE(output[2] == output[3]);
 }
-namespace chain {
-
-byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
-                                        bool const                add_metadata = false);
-MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
-MutableTransaction    FromWireTransaction(variant::Variant const &transaction);
-
-}  // namespace chain
-}  // namespace fetch

@@ -241,6 +241,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
 
   execution_manager_->Start();
   block_coordinator_.Start();
+  tx_processor_.Start();
 
   if (mining)
   {
@@ -284,6 +285,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
     miner_.Stop();
   }
 
+  tx_processor_.Stop();
   block_coordinator_.Stop();
   execution_manager_->Stop();
 
