@@ -164,7 +164,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , block_coordinator_{chain_, *execution_manager_}
   , consensus_miners_{{1, std::make_shared<DummyMiner>()}, {2, std::make_shared<BadMiner>()}}
   , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
-           block_packer_, *consensus_miners_[1], p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
+           block_packer_, consensus_miners_[1], p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
@@ -246,7 +246,7 @@ void Constellation::Run(UriList const &initial_peers, int mining)
 
   if (mining>0)
   {
-    miner_.SetConsensusMiner(*consensus_miners_[mining]);
+    miner_.SetConsensusMiner(consensus_miners_[mining]);
     miner_.Start();
   }
 

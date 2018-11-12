@@ -37,7 +37,7 @@ public:
   using BlockType               = chain::MainChain::BlockType;
   using BlockHash               = chain::MainChain::BlockHash;
   using BodyType                = chain::MainChain::BlockType::body_type;
-  using ConsensusMinerInterface = fetch::chain::consensus::ConsensusMinerInterface;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
   using MinerInterface          = fetch::miner::MinerInterface;
   using BlockCompleteCallback   = std::function<void(BlockType const &)>;
 
@@ -127,7 +127,7 @@ private:
 
       if (searching_for_hash)
       {
-        if (consensus_miner_.Mine(next_block, 100))
+        if (consensus_miner_->Mine(next_block, 100))
         {
           // Add the block
           blockCoordinator_.AddBlock(next_block);
