@@ -38,48 +38,6 @@ template <typename ArrayType>
 class KMeansImplementation
 {
 public:
-  std::size_t n_points;
-  std::size_t n_dimensions;
-  std::size_t n_clusters;
-
-  bool   not_converged = true;
-  double running_mean;  // we'll use this find the smallest euclidean distance out of K comparisons
-
-  std::default_random_engine rng;
-
-  std::vector<std::size_t> data_idxs;       // a vector of indices to the data used for shuffling
-  std::vector<std::size_t> empty_clusters;  // a vector tracking whenever a cluster goes empty
-
-  ArrayType k_means;       // current cluster centres
-  ArrayType prev_k_means;  // previous cluster centres (for checking convergence)
-  ArrayType temp_k;        // a container for ease of access to using Euclidean function
-
-  ArrayType k_assignment;       // current data to cluster assignment
-  ArrayType prev_k_assignment;  // previous data to cluster assignment (for checkign convergence)
-  std::vector<std::size_t> reassigned_k;  // reassigned data to cluster assignment
-
-  std::vector<std::size_t>
-                         k_count;  // count of how many data points per cluster (for checking reassignment)
-  std::vector<ArrayType> k_euclids;  // container for current euclid distances
-
-  std::size_t assigned_k;  // current cluster to assign
-
-  std::size_t no_change_count = 0;  // number of times there was no change in k_assignment in a row
-  std::size_t max_no_change_convergence;  // max number of times k_assignment can not change before
-                                          // convergence
-
-  bool reassign;
-
-  std::size_t loop_counter = 0;
-  std::size_t max_loops;
-
-  enum InitMode
-  {
-    KMeansPP = 0,
-    Forgy    = 1
-  };
-  std::size_t init_mode;
-
   /**
    * The constructor for the KMeans implementation object
    * @param data the data itself in the format of a 2D array of n_points x n_dims
@@ -89,9 +47,9 @@ public:
    * @param max_loops maximum number of loops before assuming convergence
    * @param init_mode what type of initialization to use
    */
-  KMeansImplementation(ArrayType const &data, std::size_t &n_clusters, ArrayType &ret,
-                       std::size_t &r_seed, std::size_t &max_loops, std::size_t init_mode = 0,
-                       std::size_t max_no_change_convergence = 10)
+  KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
+                       std::size_t const &r_seed, std::size_t const &max_loops,
+                       std::size_t init_mode = 0, std::size_t max_no_change_convergence = 10)
     : n_clusters(n_clusters)
     , max_no_change_convergence(max_no_change_convergence)
     , max_loops(max_loops)
@@ -142,6 +100,7 @@ public:
     ret = k_assignment;  // assign the final output
   };
 
+private:
   void InitialiseKMeans(ArrayType const &data)
   {
     // shuffle the data
@@ -413,12 +372,53 @@ public:
 
     return true;
   }
+
+  std::size_t n_points;
+  std::size_t n_dimensions;
+  std::size_t n_clusters;
+
+  double running_mean;  // we'll use this find the smallest euclidean distance out of K comparisons
+
+  std::default_random_engine rng;
+
+  std::vector<std::size_t> data_idxs;       // a vector of indices to the data used for shuffling
+  std::vector<std::size_t> empty_clusters;  // a vector tracking whenever a cluster goes empty
+
+  ArrayType k_means;       // current cluster centres
+  ArrayType prev_k_means;  // previous cluster centres (for checking convergence)
+  ArrayType temp_k;        // a container for ease of access to using Euclidean function
+
+  ArrayType k_assignment;       // current data to cluster assignment
+  ArrayType prev_k_assignment;  // previous data to cluster assignment (for checkign convergence)
+  std::vector<std::size_t> reassigned_k;  // reassigned data to cluster assignment
+
+  std::vector<std::size_t>
+                         k_count;  // count of how many data points per cluster (for checking reassignment)
+  std::vector<ArrayType> k_euclids;  // container for current euclid distances
+
+  std::size_t assigned_k;  // current cluster to assign
+
+  std::size_t no_change_count = 0;  // number of times there was no change in k_assignment in a row
+  std::size_t max_no_change_convergence;  // max number of times k_assignment can not change before
+  // convergence
+
+  bool reassign;
+
+  std::size_t loop_counter = 0;
+  std::size_t max_loops;
+
+  enum InitMode
+  {
+    KMeansPP = 0,
+    Forgy    = 1
+  };
+  std::size_t init_mode;
 };
 
 }  // namespace details
 
 template <typename ArrayType>
-ArrayType KMeans(ArrayType const &data, std::size_t K, std::size_t r_seed,
+ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const &r_seed,
                  std::size_t max_loops = 100)
 {
   std::size_t n_points = data.shape()[0];
