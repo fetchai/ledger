@@ -38,13 +38,13 @@ TEST(clustering_test, kmeans_test)
 
   for (std::size_t i = 0; i < 50; ++i)
   {
-    A.Set(i, 0, -i - 50);
-    A.Set(i, 1, -i - 50);
+    A.Set(i, 0, static_cast<data_type>(-i - 50.));
+    A.Set(i, 1, static_cast<data_type>(-i - 50.));
   }
   for (std::size_t i = 50; i < 100; ++i)
   {
-    A.Set(i, 0, i);
-    A.Set(i, 1, i);
+    A.Set(i, 0, static_cast<data_type>(i));
+    A.Set(i, 1, static_cast<data_type>(i));
   }
 
   auto now    = std::chrono::system_clock::now();
@@ -57,11 +57,11 @@ TEST(clustering_test, kmeans_test)
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
   for (std::size_t j = 0; j < clusters.size() / 2; ++j)
   {
-    ASSERT_TRUE(group_0 == clusters[j]);
+    ASSERT_TRUE(group_0 == static_cast<std::size_t>(clusters[j]));
   }
   std::size_t group_1 = static_cast<std::size_t>(clusters[clusters.size() / 2]);
   for (std::size_t j = clusters.size() / 2; j < clusters.size(); ++j)
   {
-    ASSERT_TRUE(group_1 == clusters[j]);
+    ASSERT_TRUE(group_1 == static_cast<std::size_t>(clusters[j]));
   }
 }
