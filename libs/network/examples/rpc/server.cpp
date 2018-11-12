@@ -32,7 +32,7 @@ using Server = fetch::muddle::rpc::Server;
 using Client = fetch::muddle::rpc::Client;
 
 const int SERVICE_TEST = 1;
-const int CHANNEL_RPC = 1;
+const int CHANNEL_RPC  = 1;
 
 // First we make a service implementation
 class Implementation
@@ -77,7 +77,7 @@ int main()
   fetch::network::NetworkManager tm(8);
   auto server_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
   tm.Start();
-  auto server        = std::make_shared<Server>(server_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+  auto server = std::make_shared<Server>(server_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
   server_muddle->Start({8080});
 
   std::string dummy;
