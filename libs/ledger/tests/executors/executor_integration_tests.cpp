@@ -50,15 +50,15 @@ protected:
   using ResourceID                = fetch::storage::ResourceID;
   using ResourceAddress           = fetch::storage::ResourceAddress;
 
-  using ExecutorRpcClientPtr         = std::unique_ptr<ExecutorRpcClient>;
-  using ExecutorRpcServicePtr        = std::unique_ptr<ExecutorRpcService>;
-  using NetworkManagerPtr            = std::unique_ptr<NetworkManager>;
+  using ExecutorRpcClientPtr         = std::shared_ptr<ExecutorRpcClient>;
+  using ExecutorRpcServicePtr        = std::shared_ptr<ExecutorRpcService>;
+  using NetworkManagerPtr            = std::shared_ptr<NetworkManager>;
   using StorageUnitClientPtr         = std::shared_ptr<StorageUnitClient>;
-  using StorageUnitBundledServicePtr = std::unique_ptr<StorageUnitBundledService>;
+  using StorageUnitBundledServicePtr = std::shared_ptr<StorageUnitBundledService>;
   using rng_type                     = std::mt19937;
 
   using Muddle    = fetch::muddle::Muddle;
-  using MuddlePtr = std::unique_ptr<Muddle>;
+  using MuddlePtr = std::shared_ptr<Muddle>;
   using Prover    = fetch::crypto::Prover;
   using ProverPtr = std::unique_ptr<Prover>;
   using Uri       = fetch::network::Uri;
@@ -79,7 +79,7 @@ protected:
     using Signer    = fetch::crypto::ECDSASigner;
     using SignerPtr = std::unique_ptr<Signer>;
 
-    SignerPtr certificate        = std::make_unique<Signer>();
+    SignerPtr certificate        = std::unique_ptr<Signer>();
     bool      certificate_loaded = false;
 
     // Step 1. Attempt to load the existing key
@@ -135,28 +135,28 @@ protected:
 
     // --- Start a NETWORK MANAGER ----------------------------------
 
-    network_manager_ = std::make_unique<NetworkManager>(10);
+    network_manager_ = std::make_shared<NetworkManager>(10);
     network_manager_->Start();
 
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_           = std::make_unique<Muddle>(std::move(p2p_key), *network_manager_);
+    muddle_           = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), std::move(p2p_key), *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the STORAGE SERVICE --------------------------------
 
-    storage_service_ = std::make_unique<StorageUnitBundledService>();
+    storage_service_ = std::make_shared<StorageUnitBundledService>();
     storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
     storage_service_->Start();
 
-    storage_.reset(new StorageUnitClient{*network_manager_, *muddle_});
+    storage_.reset(new StorageUnitClient{*network_manager_});
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 
-    auto executor_muddle = Muddle::CreateMuddle(*network_manager_);
+    auto executor_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), *network_manager_);
     executor_service_ =
-        std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
+      std::make_shared<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
 
     // --- Wait for all the services to open listening ports --------
@@ -180,11 +180,11 @@ protected:
       lane_data[i] = fetch::network::Uri("tcp://127.0.0.1:" + std::to_string(lane_port));
     }
 
-    storage_->AddLaneConnections(*muddle_, lane_data);
+    storage_->AddLaneConnections(lane_data);
 
     // --- Schedule executor for connection ---------------------
 
-    executor_ = std::make_unique<ExecutorRpcClient>(*network_manager_, *muddle_);
+    executor_ = std::make_shared<ExecutorRpcClient>(*network_manager_, *muddle_);
     executor_->Connect(*muddle_, Uri("tcp://127.0.0.1:" + std::to_string(EXECUTOR_RPC_PORT)));
 
     // --- Wait for connections to finish -----------------------

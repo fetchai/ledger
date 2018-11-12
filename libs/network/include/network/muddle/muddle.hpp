@@ -147,6 +147,11 @@ public:
     return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
   }
 
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId network_id, std::unique_ptr<crypto::Prover> prover, fetch::network::NetworkManager tm)
+  {
+    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+  }
+
   static inline uint32_t CreateNetworkId(const char *p)
   {
     return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |

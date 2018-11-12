@@ -170,9 +170,14 @@ public:
       LaneIndex lane{0};
       for (auto const &list : transaction_lists)
       {
+        Address address;
+        if (!GetAddressForLane(lane, address))
+        {
+          TODO_FAIL("Could not get address for lane ", lane);
+        }
         if (!list.empty())
         {
-          promises.emplace_back(lanes_[lane]->Call(RPC_TX_STORE, protocol::SET_BULK, list));
+          promises.emplace_back(client_->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET_BULK, list));
         }
 
         ++lane;

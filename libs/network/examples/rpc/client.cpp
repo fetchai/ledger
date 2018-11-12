@@ -20,9 +20,23 @@
 #include "core/serializers/byte_array.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
+
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
 #include <iostream>
+
 using namespace fetch::service;
 using namespace fetch::byte_array;
+
+using Muddle = fetch::muddle::Muddle;
+using Server = fetch::muddle::rpc::Server;
+using Client = fetch::muddle::rpc::Client;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC = 1;
 
 int main()
 {
@@ -31,29 +45,29 @@ int main()
   fetch::network::NetworkManager tm(2);
 
   tm.Start();
+  auto client_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
+  client_muddle -> Start({});
+  client_muddle -> AddPeer(fetch::network::Uri{"tcp://127.0.0.1:8080"});
+  auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(), SERVICE_TEST,
+                                          CHANNEL_RPC);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  Muddle::Address target_address;
+  if (!client_muddle->GetOutgoingConnectionAddress(peer, target_address))
   {
-    fetch::network::TCPClient connection(tm);
-    connection.Connect("localhost", 8080);
-
-    ServiceClient client(connection, tm);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::cout << "Can't connect" << std::endl;
+    exit(1);
   }
 
-  fetch::network::TCPClient connection(tm);
-  connection.Connect("localhost", 8080);
+  auto prom = client->CallSpecificAddress(target_address,MYPROTO, GREET, "Fetch");
+  auto res = prom->As<std::string>();
+  std::cout << res  << std::endl;
 
-  ServiceClient client(connection, tm);
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-  std::cout << client.Call(MYPROTO, GREET, "Fetch")->As<std::string>() << std::endl;
-
-  auto px = client.Call(MYPROTO, SLOWFUNCTION, "Greet");
+  auto px = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, "Greet");
 
   // Promises
-  auto p1 = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
-  auto p2 = client.Call(MYPROTO, SLOWFUNCTION, 4, 3);
-  auto p3 = client.Call(MYPROTO, SLOWFUNCTION);
+  auto p1 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, 2, 7);
+  auto p2 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION, 4, 3);
+  auto p3 = client->CallSpecificAddress(target_address,MYPROTO, SLOWFUNCTION);
   //  client.WithDecorators(aes, ... ).Call( MYPROTO,SLOWFUNCTION, 4, 3 );
 
   if (p1->IsWaiting())
@@ -93,7 +107,7 @@ int main()
   std::size_t N = 100000;
   for (std::size_t i = 0; i < N; ++i)
   {
-    promises.push_back(client.Call(MYPROTO, ADD, 4, 3));
+    promises.push_back(client->CallSpecificAddress(target_address,MYPROTO, ADD, 4, 3));
   }
   fetch::logger.Highlight("DONE!");
 
@@ -128,35 +142,6 @@ int main()
             << " us\n";
 
   // Benchmarking
-  tm.Stop();
-
-  return 0;
-}
-
-int xmain()
-{
-
-  fetch::network::NetworkManager tm(1);
-  tm.Start();  // Started thread manager before client construction!
-
-  fetch::network::TCPClient connection(tm);
-  connection.Connect("localhost", 8080);
-
-  ServiceClient client(connection, tm);
-
-  auto promise = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
-
-  FETCH_LOG_PROMISE();
-  if (!promise->Wait(500, true))
-  {  // wait 500 ms for a response
-    std::cout << "no response from node: " << client.is_alive() << std::endl;
-    promise = client.Call(MYPROTO, SLOWFUNCTION, 2, 7);
-  }
-  else
-  {
-    std::cout << "response from node!" << std::endl << std::endl;
-  }
-
   tm.Stop();
 
   return 0;

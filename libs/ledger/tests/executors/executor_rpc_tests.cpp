@@ -58,7 +58,7 @@ protected:
   static constexpr std::size_t IDENTITY_SIZE = 64;
 
   using Muddle    = fetch::muddle::Muddle;
-  using MuddlePtr = std::unique_ptr<Muddle>;
+  using MuddlePtr = std::shared_ptr<Muddle>;
   using Prover    = fetch::crypto::Prover;
   using ProverPtr = std::unique_ptr<Prover>;
   using Uri       = fetch::network::Uri;
@@ -139,12 +139,12 @@ protected:
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------
 
     ProverPtr p2p_key = GenerateP2PKey();
-    muddle_           = std::make_unique<Muddle>(std::move(p2p_key), *network_manager_);
+    muddle_           = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), std::move(p2p_key), *network_manager_);
     muddle_->Start({P2P_RPC_PORT});
 
     // --- Start the EXECUTOR SERVICE -------------------------------
 
-    auto executor_muddle = Muddle::CreateMuddle(*network_manager_);
+    auto executor_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), *network_manager_);
     executor_service_ =
         std::make_unique<ExecutorRpcService>(EXECUTOR_RPC_PORT, storage_, executor_muddle);
     executor_service_->Start();
