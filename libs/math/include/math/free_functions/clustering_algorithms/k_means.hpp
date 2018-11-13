@@ -312,7 +312,7 @@ private:
         if (empty_clusters_[i] == 1)
         {
           reassigned_k_[data_idxs_[i]] = static_cast<int>(k_assignment_[i]);
-          k_assignment_[data_idxs_[i]] = i;
+          k_assignment_[data_idxs_[i]] = static_cast<typename ArrayType::Type>(i);
           ++k_count_[i];
         }
       }
