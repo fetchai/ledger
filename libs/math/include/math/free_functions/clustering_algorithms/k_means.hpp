@@ -164,8 +164,8 @@ private:
         }
 
         // select smallest distance to cluster for each data point and square
-        std::size_t
-            temp_cluster_assign;  // temporary variable used to avoid randomising for last cluster
+        std::size_t temp_cluster_assign =
+            n_points_;  // temporary variable initialised to unreachable value to catch errors
         for (std::size_t m = 0; m < n_points_; ++m)
         {
           // ignore already assigned data points
