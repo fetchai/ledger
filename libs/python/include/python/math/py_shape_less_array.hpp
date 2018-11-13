@@ -245,16 +245,27 @@ void BuildShapeLessArray(std::string const &custom_name, pybind11::module &modul
              a.InlineDivide(c);
              return a;
            })
-
       .def_static("Zeros", &ShapeLessArray<T>::Zeroes)
-      .def_static("Arange", (ShapeLessArray<T>(*)(std::size_t, std::size_t, std::size_t)) &
-                                ShapeLessArray<T>::Arange)
+      .def_static("Arange",
+                  [](int from, int to, int delta) {
+                    if ((from > to) && (delta > 0))
+                    {
+                      throw std::runtime_error("invalid range specified");
+                    }
+                    else if ((from < to) && (delta < 0))
+                    {
+                      throw std::runtime_error("invalid range specified");
+                    }
+                    else
+                    {
+                      return ShapeLessArray<T>::Arange(from, to, delta);
+                    }
+                  })
       .def_static("UniformRandom",
                   (ShapeLessArray<T>(*)(std::size_t const &)) & ShapeLessArray<T>::UniformRandom)
       .def_static("UniformRandomIntegers",
                   (ShapeLessArray<T>(*)(std::size_t const &, int64_t const &, int64_t const &)) &
                       ShapeLessArray<T>::UniformRandomIntegers)
-
       .def("AllClose", &ShapeLessArray<T>::AllClose)
 
       // various free functions

@@ -19,6 +19,7 @@
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
@@ -95,13 +96,10 @@ public:
            tx.set_contract_name("fetch.dummy.run");
            tx.set_data(std::to_string(transaction_index_++));
 
-           auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
-
-           processor_.AddTransaction(vtx);
+           processor_.AddTransaction(tx);
 
            std::ostringstream oss;
-           oss << R"({ "submitted": true, "tx": ")"
-               << static_cast<std::string>(byte_array::ToBase64(vtx.digest())) << "\" }";
+           oss << R"({ "submitted": true })";
 
            return http::CreateJsonResponse(oss.str());
          });
@@ -110,20 +108,58 @@ public:
     Post("/api/contract/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            std::ostringstream oss;
+
+           bool error_response{true};
            try
            {
-             chain::MutableTransaction tx{chain::FromWireTransaction(request.body())};
-             auto                      vtx = chain::VerifiedTransaction::Create(std::move(tx));
-             processor_.AddTransaction(vtx);
-             oss << R"({ "submitted": true })";
+             std::size_t submitted{0};
+
+             // detect the content format, defaulting to json
+             byte_array::ConstByteArray content_type = "application/vnd+fetch.transaction+json";
+             if (request.header().Has("content-type"))
+             {
+               content_type = request.header()["content-type"];
+             }
+
+             // handle the types of transaction
+             bool unknown_format = false;
+             if (content_type == "application/vnd+fetch.transaction+native")
+             {
+               submitted = SubmitNativeTx(request);
+             }
+             else if (content_type == "application/vnd+fetch.transaction+json")
+             {
+               submitted = SubmitJsonTx(request);
+             }
+             else
+             {
+               unknown_format = true;
+             }
+
+             if (unknown_format)
+             {
+               // format the message
+               std::ostringstream error_msg;
+               error_msg << "Unknown content type: " << content_type;
+
+               oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
+             }
+             else
+             {
+               // success report the statistics
+               oss << R"({ "submitted": true, "count": )" << submitted << " }";
+               error_response = false;
+             }
            }
            catch (std::exception const &ex)
            {
              oss.clear();
-             oss << R"({ "submitted": false, "error": ")" << ex.what() << "\" }";
+             oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
            }
 
-           return http::CreateJsonResponse(oss.str());
+           return http::CreateJsonResponse(oss.str(), (error_response)
+                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                          : http::Status::SUCCESS_OK);
          });
   }
 
@@ -134,14 +170,13 @@ private:
   {
     try
     {
-
       // parse the incoming request
       json::JSONDocument doc;
       doc.Parse(request.body());
 
       // dispatch the contract type
-      script::Variant response;
-      auto            contract = contract_cache_.Lookup(contract_name);
+      variant::Variant response;
+      auto             contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
       contract->Attach(storage_);
@@ -174,6 +209,9 @@ private:
   {
     return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
+
+  std::size_t SubmitJsonTx(http::HTTPRequest const &request);
+  std::size_t SubmitNativeTx(http::HTTPRequest const &request);
 
   std::size_t transaction_index_{0};
 

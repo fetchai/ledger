@@ -20,6 +20,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
 
 #include <chrono>
@@ -136,6 +137,8 @@ private:
           if (on_block_complete_)
           {
             on_block_complete_(next_block);
+
+            FETCH_METRIC_BLOCK_GENERATED(next_block.hash());
           }
 
           // stop searching for the hash and schedule the next time to generate a block
@@ -159,6 +162,18 @@ private:
         miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
         next_block.SetBody(next_block_body);
         next_block.UpdateDigest();
+
+#ifdef FETCH_ENABLE_METRICS
+        metrics::Metrics::Timestamp const now = metrics::Metrics::Clock::now();
+
+        for (auto const &slice : next_block_body.slices)
+        {
+          for (auto const &tx : slice.transactions)
+          {
+            FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
+          }
+        }
+#endif  // FETCH_ENABLE_METRICS
 
         // Mine the block
         next_block.proof().SetTarget(target_);

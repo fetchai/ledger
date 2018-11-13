@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
+#include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
 using fetch::muddle::Packet;
@@ -166,6 +167,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   if (block.proof()())
   {
     trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+   
+    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
     // add the block?
     chain_.AddBlock(block);

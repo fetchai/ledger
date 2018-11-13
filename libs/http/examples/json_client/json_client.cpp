@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   // create the client
   fetch::http::JsonHttpClient client(host, port);
 
-  fetch::script::Variant response;
+  fetch::variant::Variant response;
   if (client.Get("/?format=json", response))
   {
     std::cout << "Response\n\n" << response << std::endl;

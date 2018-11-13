@@ -21,13 +21,13 @@
 #include "core/commandline/params.hpp"
 #include "core/json/document.hpp"
 #include "core/macros.hpp"
-#include "core/script/variant.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 #include "network/adapters.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
+#include "variant/variant.hpp"
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
   try
   {
 #ifdef FETCH_ENABLE_METRICS
-    fetch::ledger::Metrics::Instance().ConfigureFileHandler("metrics.csv");
+    fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
 #endif  // FETCH_ENABLE_METRICS
 
     // create and load the main certificate for the bootstrapper
