@@ -56,7 +56,7 @@ public:
     , init_mode_(init_mode)
   {
     // seed random number generator
-    rng_.seed(r_seed);
+    rng_.seed(uint32_t(r_seed));
 
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
@@ -82,6 +82,7 @@ public:
     {
       prev_k_assignment_.Set(l, -1);
     }
+    reassigned_k_ = std::vector<int>(n_points_, -1);  // technically this limits us to fewer groups
 
     // initialise size of euclidean distance container
     k_euclids_      = std::vector<ArrayType>(n_clusters_);
@@ -163,6 +164,8 @@ private:
         }
 
         // select smallest distance to cluster for each data point and square
+        std::size_t
+            temp_cluster_assign;  // temporary variable used to avoid randomising for last cluster
         for (std::size_t m = 0; m < n_points_; ++m)
         {
           // ignore already assigned data points
@@ -179,6 +182,9 @@ private:
               }
             }
             weights[m] = cluster_distances[assigned_cluster][m];
+
+            // checking for special case of only one cluster remaining
+            temp_cluster_assign = m;
           }
           else
           {
@@ -187,14 +193,31 @@ private:
         }
         fetch::math::Square(weights);
 
-        // select point as new cluster centre
-        std::piecewise_constant_distribution<typename ArrayType::Type> dist(
-            std::begin(interval), std::end(interval), std::begin(weights));
-        assigned_data_points.push_back(static_cast<std::size_t>(dist(rng_)));
-
-        for (std::size_t j = 0; j < n_dimensions_; ++j)
+        // final cluster assignment is simpler
+        if (cur_cluster == (n_clusters_ - 1))
         {
-          k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
+          for (std::size_t j = 0; j < n_dimensions_; ++j)
+          {
+            k_means_.Set(cur_cluster, j, data.At(temp_cluster_assign, j));
+          }
+        }
+        else
+        {
+          // select point as new cluster centre
+          std::piecewise_constant_distribution<typename ArrayType::Type> dist(
+              std::begin(interval), std::end(interval), std::begin(weights));
+
+          auto        val      = dist(rng_);
+          std::size_t tmp_rand = static_cast<std::size_t>(val);
+
+          assert((tmp_rand < n_points_) && (tmp_rand >= 0));
+
+          assigned_data_points.push_back(tmp_rand);
+
+          for (std::size_t j = 0; j < n_dimensions_; ++j)
+          {
+            k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
+          }
         }
       }
       break;
@@ -281,15 +304,15 @@ private:
     // if a category has been completely eliminated! we should randomly assign one data point to it
     if (reassign_)
     {
-      std::fill(reassigned_k_.begin(), reassigned_k_.end(), 0);
+      std::fill(reassigned_k_.begin(), reassigned_k_.end(), -1);
       std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
 
       for (std::size_t i = 0; i < n_clusters_; ++i)
       {
         if (empty_clusters_[i] == 1)
         {
-          reassigned_k_[i] = static_cast<std::size_t>(k_assignment_[i]);
-          k_assignment_[i] = static_cast<typename ArrayType::Type>(data_idxs_[i]);
+          reassigned_k_[data_idxs_[i]] = static_cast<int>(k_assignment_[i]);
+          k_assignment_[data_idxs_[i]] = i;
           ++k_count_[i];
         }
       }
@@ -307,7 +330,7 @@ private:
       {
         if (empty_clusters_[i] == 1)
         {
-          k_assignment_[i] = static_cast<typename ArrayType::Type>(reassigned_k_[i]);
+          k_assignment_[i] = static_cast<typename ArrayType::Type>(reassigned_k_[data_idxs_[i]]);
         }
       }
     }
@@ -321,9 +344,10 @@ private:
   {
     std::fill(k_means_.begin(), k_means_.end(), 0);
     // get KSums
+    std::size_t cur_k;
     for (std::size_t i = 0; i < n_points_; ++i)
     {
-      auto cur_k = static_cast<std::size_t>(k_assignment_[i]);
+      cur_k = static_cast<std::size_t>(k_assignment_[i]);
       for (std::size_t j = 0; j < n_dimensions_; ++j)
       {
         k_means_.Set(cur_k, j, k_means_.At(cur_k, j) + data.At(i, j));
@@ -387,9 +411,9 @@ private:
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
   ArrayType temp_k_;        // a container for ease of access to using Euclidean function
 
-  ArrayType k_assignment_;       // current data to cluster assignment
-  ArrayType prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
-  std::vector<std::size_t> reassigned_k_;  // reassigned data to cluster assignment
+  ArrayType k_assignment_;         // current data to cluster assignment
+  ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
+  std::vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
   std::vector<std::size_t>
                          k_count_;  // count of how many data points per cluster (for checking reassignment)
