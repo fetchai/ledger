@@ -38,6 +38,26 @@ template <typename ArrayType>
 class KMeansImplementation
 {
 public:
+  KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
+                       std::size_t const &r_seed, std::size_t const &max_loops,
+                       std::size_t init_mode, std::size_t max_no_change_convergence)
+    : n_clusters_(n_clusters)
+    , max_no_change_convergence_(max_no_change_convergence)
+    , max_loops_(max_loops)
+    , init_mode_(init_mode)
+  {
+    n_points_     = data.shape()[0];
+    n_dimensions_ = data.shape()[1];
+
+    std::vector<std::size_t> k_assignment_shape{n_points_, 1};
+    k_assignment_ =
+        ArrayType(k_assignment_shape);  // it's okay not to initialise as long as we take the
+
+    KMeansSetup(data, r_seed);
+
+    ComputeKMeans(data, ret);
+  }
+
   /**
    * The constructor for the KMeans implementation object
    * @param data the data itself in the format of a 2D array of n_points x n_dims
@@ -49,17 +69,30 @@ public:
    */
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops,
-                       std::size_t init_mode = 0, std::size_t max_no_change_convergence = 10)
+                       ArrayType const &k_assignment, std::size_t max_no_change_convergence)
     : n_clusters_(n_clusters)
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
-    , init_mode_(init_mode)
+    , k_assignment_(k_assignment)
+  {
+    n_points_     = data.shape()[0];
+    n_dimensions_ = data.shape()[1];
+
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+                                   // be to use that
+
+    KMeansSetup(data, r_seed);
+
+    ComputeKMeans(data, ret);
+  }
+
+  /**
+   * The remainder of initialization that is common to all constructors is carried out here
+   */
+  void KMeansSetup(ArrayType const &data, std::size_t const &r_seed)
   {
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
-
-    n_points_     = data.shape()[0];
-    n_dimensions_ = data.shape()[1];
 
     // initialise k means
     std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
@@ -67,15 +100,13 @@ public:
     prev_k_means_ = ArrayType::Zeroes(k_means_shape);
     temp_k_       = ArrayType(data.shape());
 
-    InitialiseKMeans(data);
-
     // instantiate counter with zeros
     k_count_ = std::vector<std::size_t>(n_clusters_, 0);
+    InitialiseKMeans(data);
+    std::fill(k_count_.begin(), k_count_.end(), 0);  // reset the k_count
 
     // initialise assignment
     std::vector<std::size_t> k_assignment_shape{n_points_, 1};
-    k_assignment_ =
-        ArrayType(k_assignment_shape);  // it's okay not to initialise as long as we take the
     prev_k_assignment_ = ArrayType(
         k_assignment_shape);  // need to keep a record of previous to check for convergence
     for (std::size_t l = 0; l < prev_k_assignment_.size(); ++l)
@@ -87,10 +118,14 @@ public:
     // initialise size of euclidean distance container
     k_euclids_      = std::vector<ArrayType>(n_clusters_);
     empty_clusters_ = std::vector<std::size_t>(n_clusters_);
+  };
 
-    ///////////////////////
-    /// COMPUTE K MEANS ///
-    ///////////////////////
+private:
+  /**
+   * The main iterative loop that calculates KMeans clustering
+   */
+  void ComputeKMeans(ArrayType const &data, ArrayType &ret)
+  {
     while (NotConverged())
     {
       Assign(data);
@@ -99,9 +134,13 @@ public:
     UnReassign();
 
     ret = k_assignment_;  // assign the final output
-  };
+  }
 
-private:
+  /**
+   * kmeans cluster centre initialisation
+   * This is very important for defining the behaviour of the clustering algorithm
+   * @param data
+   */
   void InitialiseKMeans(ArrayType const &data)
   {
     // shuffle the data
@@ -111,6 +150,38 @@ private:
 
     switch (init_mode_)
     {
+
+    case InitMode::PrevK:
+    {
+      assert(k_assignment_.shape()[0] == n_points_);
+      assert(k_assignment_.size() == n_points_);
+      std::fill(k_count_.begin(), k_count_.end(), 0);
+      for (std::size_t j = 0; j < n_points_; ++j)
+      {
+        if (!(k_assignment_.At(j, 0) <
+              0))  // previous unassigned data points must be assigned with a negative cluster value
+        {
+          ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+        }
+      }
+
+      // check if any clusters begin empty
+      bool sufficient_previous_assignment = true;
+      for (std::size_t j = 0; sufficient_previous_assignment && j < n_clusters_; ++j)
+      {
+        if (k_count_[j] == 0)
+        {
+          sufficient_previous_assignment = false;
+        }
+      }
+
+      // if any clusters begin empty, we'll actually default to KMeans++ via fall through
+      if (sufficient_previous_assignment)
+      {
+        PartialUpdate(data);
+        break;
+      }
+    }
     case InitMode::KMeansPP:
     {
       // assign first cluster centre
@@ -207,8 +278,8 @@ private:
           std::piecewise_constant_distribution<typename ArrayType::Type> dist(
               std::begin(interval), std::end(interval), std::begin(weights));
 
-          auto        val      = dist(rng_);
-          std::size_t tmp_rand = static_cast<std::size_t>(val);
+          auto val      = dist(rng_);
+          auto tmp_rand = static_cast<std::size_t>(val);
 
           assert((tmp_rand < n_points_) && (tmp_rand >= 0));
 
@@ -365,6 +436,37 @@ private:
   }
 
   /**
+   * Calculate kMeans cluster centres under the assumption that there may be some data points not
+   * yet assigned
+   */
+  void PartialUpdate(ArrayType const &data)
+  {
+    std::fill(k_means_.begin(), k_means_.end(), 0);
+    // get KSums
+    std::size_t cur_k;
+    for (std::size_t i = 0; i < n_points_; ++i)
+    {
+      if (!(k_assignment_[i] < 0))  // ignore if no assignment made yet
+      {
+        cur_k = static_cast<std::size_t>(k_assignment_[i]);
+        for (std::size_t j = 0; j < n_dimensions_; ++j)
+        {
+          k_means_.Set(cur_k, j, k_means_.At(cur_k, j) + data.At(i, j));
+        }
+      }
+    }
+
+    // divide sums to get KMeans
+    for (std::size_t m = 0; m < n_clusters_; ++m)
+    {
+      for (std::size_t i = 0; i < n_dimensions_; ++i)
+      {
+        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+      }
+    }
+  }
+
+  /**
    * checks for convergence of iterative algorithm
    */
   bool NotConverged()
@@ -400,6 +502,13 @@ private:
   std::size_t n_dimensions_;
   std::size_t n_clusters_;
 
+  std::size_t no_change_count_ = 0;  // number of times there was no change in k_assignment in a row
+  std::size_t max_no_change_convergence_;  // max number of times k_assignment can not change before
+                                           // convergence
+
+  std::size_t loop_counter_ = 0;
+  std::size_t max_loops_;
+
   double running_mean_;  // we'll use this find the smallest euclidean distance out of K comparisons
 
   std::default_random_engine rng_;
@@ -415,34 +524,38 @@ private:
   ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
   std::vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  std::vector<std::size_t>
-                         k_count_;  // count of how many data points per cluster (for checking reassignment)
+  std::vector<std::size_t> k_count_{
+      n_clusters_};  // count of how many data points per cluster (for checking reassignment)
   std::vector<ArrayType> k_euclids_;  // container for current euclid distances
 
   std::size_t assigned_k_;  // current cluster to assign
 
-  std::size_t no_change_count_ = 0;  // number of times there was no change in k_assignment in a row
-  std::size_t max_no_change_convergence_;  // max number of times k_assignment can not change before
-  // convergence
-
   bool reassign_;
-
-  std::size_t loop_counter_ = 0;
-  std::size_t max_loops_;
 
   enum InitMode
   {
-    KMeansPP = 0,
-    Forgy    = 1
+    KMeansPP = 0,  // kmeans++, a good default choice
+    Forgy    = 1,  // Forgy, randomly initialize clusters to data points
+    PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
   };
   std::size_t init_mode_;
 };
 
 }  // namespace details
 
+/**
+ * Interface to KMeans algorithm
+ * @tparam ArrayType    fetch library Array type
+ * @param data          input data to cluster in format n_data x n_dims
+ * @param K             number of clusters
+ * @param r_seed        random seed
+ * @param max_loops     maximum loops until convergence assumed
+ * @return              ArrayType of format n_data x 1 with values indicating cluster
+ */
 template <typename ArrayType>
 ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const &r_seed,
-                 std::size_t max_loops = 100)
+                 std::size_t max_loops = 100, std::size_t init_mode = 0,
+                 std::size_t max_no_change_convergence = 10)
 {
   std::size_t n_points = data.shape()[0];
 
@@ -462,7 +575,48 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const 
   }
   else  // real work happens in these cases
   {
-    details::KMeansImplementation<ArrayType>(data, K, ret, r_seed, max_loops);
+    details::KMeansImplementation<ArrayType>(data, K, ret, r_seed, max_loops, init_mode,
+                                             max_no_change_convergence);
+  }
+
+  return ret;
+}
+
+/**
+ * Interface to KMeans algorithm
+ * @tparam ArrayType        fetch library Array type
+ * @param data              input data to cluster in format n_data x n_dims
+ * @param K                 number of clusters
+ * @param r_seed            random seed
+ * @param prev_assignment   previous K assignment on which to initialise
+ * @param max_loops         maximum loops until convergence assumed
+ * @return                  ArrayType of format n_data x 1 with values indicating cluster
+ */
+template <typename ArrayType>
+ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const &r_seed,
+                 ArrayType const &prev_assignment, std::size_t max_loops = 100,
+                 std::size_t max_no_change_convergence = 10)
+{
+  std::size_t n_points = data.shape()[0];
+
+  // we can't have more clusters than data points
+  assert(K <= n_points);  // you can't have more clusters than data points
+  assert(K > 1);          // why would you run k means clustering with only one cluster?
+
+  std::vector<std::size_t> ret_array_shape{n_points, 1};
+  ArrayType                ret{ret_array_shape};
+
+  if (n_points == K)  // very easy to cluster!
+  {
+    for (std::size_t i = 0; i < n_points; ++i)
+    {
+      ret[i] = static_cast<typename ArrayType::Type>(i);
+    }
+  }
+  else  // real work happens in these cases
+  {
+    details::KMeansImplementation<ArrayType>(data, K, ret, r_seed, max_loops, prev_assignment,
+                                             max_no_change_convergence);
   }
 
   return ret;
