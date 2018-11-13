@@ -75,6 +75,9 @@ public:
     , max_loops_(max_loops)
     , k_assignment_(k_assignment)
   {
+    // seed random number generator
+    rng_.seed(uint32_t(r_seed));
+
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
