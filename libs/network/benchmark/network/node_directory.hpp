@@ -32,6 +32,10 @@
 
 #include "core/byte_array/byte_array.hpp"
 
+
+#include "network/muddle/rpc/muddle_test_client.hpp"
+#include "network/muddle/rpc/muddle_test_server.hpp"
+
 #include <set>
 #include <utility>
 
@@ -41,12 +45,9 @@ namespace network_benchmark {
 class NodeDirectory
 {
 public:
-  using clientType = service::ServiceClient;
-
   static constexpr char const *LOGGING_NAME = "NodeDirectory";
 
-  NodeDirectory(network::NetworkManager tm)
-    : tm_{tm}
+  NodeDirectory()
   {}
 
   NodeDirectory(NodeDirectory &rhs)  = delete;
@@ -56,10 +57,6 @@ public:
 
   ~NodeDirectory()
   {
-    for (auto &i : serviceClients_)
-    {
-      delete i.second;
-    }
   }
 
   // Only call this during node setup (not thread safe)
@@ -68,11 +65,7 @@ public:
     LOG_STACK_TRACE_POINT;
     if (serviceClients_.find(endpoint) == serviceClients_.end())
     {
-      fetch::network::TCPClient connection(tm_);
-      connection.Connect(endpoint.IP(), endpoint.TCPPort());
-
-      auto client = new clientType(connection, tm_);
-
+      auto client = MuddleTestClient::CreateTestClient(endpoint.IP(), endpoint.TCPPort());
       serviceClients_[endpoint] = client;
     }
   }
@@ -223,16 +216,11 @@ public:
 
   void Reset()
   {
-    for (auto &i : serviceClients_)
-    {
-      delete i.second;
-    }
     serviceClients_.clear();
   }
 
 private:
-  fetch::network::NetworkManager   tm_;
-  std::map<Endpoint, clientType *> serviceClients_;
+  std::map<Endpoint, TClientPtr> serviceClients_;
 };
 
 }  // namespace network_benchmark

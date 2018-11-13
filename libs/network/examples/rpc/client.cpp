@@ -21,14 +21,14 @@
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
 
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-
 #include <iostream>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 
 using Muddle = fetch::muddle::Muddle;
 using Server = fetch::muddle::rpc::Server;

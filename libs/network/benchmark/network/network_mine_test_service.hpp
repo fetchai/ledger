@@ -30,26 +30,27 @@ namespace fetch {
 namespace network_mine_test {
 
 template <typename T>
-class NetworkMineTestService : public service::ServiceServer<fetch::network::TCPServer>,
-                               public http::HTTPServer
+class NetworkMineTestService : public http::HTTPServer
 {
 public:
   static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
+  TServerPtr server;
 
-  NetworkMineTestService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
-    : ServiceServer(tcpPort, tm)
-    , HTTPServer(tm)
+  NetworkMineTestService(uint16_t tcpPort, uint16_t httpPort)
+    : HTTPServer(tm)
     , http_port_(httpPort)
   {
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
                     " and HTTP port: ", httpPort);
-    node_ = std::make_shared<T>(tm, tcpPort);
+    node_ = std::make_shared<T>(tcpPort);
+
+    server = MuddleTestServer::CreateTestServer(tcpPort);
 
     httpInterface_           = std::make_shared<network_mine_test::HttpInterface<T>>(node_);
     networkMineTestProtocol_ = std::make_unique<protocols::NetworkMineTestProtocol<T>>(node_);
 
-    this->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
+    server->Add(protocols::FetchProtocols::NETWORK_MINE_TEST, networkMineTestProtocol_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour

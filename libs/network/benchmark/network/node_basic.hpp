@@ -49,8 +49,8 @@ class NodeBasic
 public:
   static constexpr char const *LOGGING_NAME = "NodeBasic";
 
-  explicit NodeBasic(network::NetworkManager tm)
-    : nodeDirectory_{tm}
+  explicit NodeBasic()
+    : nodeDirectory_{}
   {}
 
   NodeBasic(NodeBasic &rhs)  = delete;
