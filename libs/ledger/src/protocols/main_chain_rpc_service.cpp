@@ -163,16 +163,24 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(from), ')');
 
-  trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
-  // add the block?
-  chain_.AddBlock(block);
-
-  // if we got a block and it is loose then it it probably means that we need to sync the rest of
-  // the block tree
-  if (block.loose())
+  if (block.proof()())
   {
-    AddLooseBlock(block.hash(), from);
+    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+
+    // add the block?
+    chain_.AddBlock(block);
+
+    // if we got a block and it is loose then it it probably means that we need to sync the rest of
+    // the block tree
+    if (block.loose())
+    {
+      AddLooseBlock(block.hash(), from);
+    }
+  }
+  else
+  {
+    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
+    FETCH_LOG_INFO(LOGGING_NAME, "Peer ", ToBase64(from), " LIED!");
   }
 }
 
@@ -242,16 +250,24 @@ void MainChainRpcService::ServiceLooseBlocks()
 void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
 {
   bool newdata = false;
+  bool lied    = false;
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest
     it->UpdateDigest();
 
     // add the block
-    newdata |= chain_.AddBlock(*it);
+    if (it->proof()())
+    {
+      newdata |= chain_.AddBlock(*it);
+    }
+    else
+    {
+      lied = true;
+    }
   }
 
-  if (newdata)
+  if (newdata && !lied)
   {
     trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
   }
