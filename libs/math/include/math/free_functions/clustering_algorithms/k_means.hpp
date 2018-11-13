@@ -69,11 +69,11 @@ public:
    */
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops,
-                       ArrayType const &k_assignment, std::size_t max_no_change_convergence)
+                       ArrayType k_assignment, std::size_t max_no_change_convergence)
     : n_clusters_(n_clusters)
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
-    , k_assignment_(k_assignment)
+    , k_assignment_(std::move(k_assignment))
   {
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
