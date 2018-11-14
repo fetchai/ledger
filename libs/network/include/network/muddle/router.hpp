@@ -125,6 +125,7 @@ private:
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
+  using BlackList  = fetch::muddle::Blacklist;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
