@@ -48,8 +48,8 @@ template <typename IDENTITY>
 class P2PTrustBayRank : public P2PTrustInterface<IDENTITY>
 {
 protected:
-  const double threshold = 20.0;
-  using Gaussian         = math::statistics::Gaussian<double>;
+  const double threshold_ = 20.0;
+  using Gaussian          = math::statistics::Gaussian<double>;
   struct PeerTrustRating
   {
     IDENTITY peer_identity;
@@ -118,7 +118,9 @@ public:
   IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const override
   {
     if (maximum_count > trust_store_.size())
+    {
       return GetBestPeers(maximum_count);
+    }
 
     IdentitySet result;
     result.reserve(maximum_count);
@@ -142,7 +144,9 @@ public:
         result.insert(trust_store_[pos].peer_identity);
         inserted_element_counter += 1;
         if (inserted_element_counter >= maximum_count)
+        {
           break;
+        }
       }
     }
 
@@ -159,7 +163,7 @@ public:
 
       for (std::size_t pos = 0, end = std::min(maximum, trust_store_.size()); pos < end; ++pos)
       {
-        if (trust_store_[pos].score < threshold)
+        if (trust_store_[pos].score < threshold_)
         {
           break;
         }
@@ -206,7 +210,7 @@ public:
 
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
   {
-    return GetTrustRatingOfPeer(peer_ident) > threshold;
+    return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
   // Operators

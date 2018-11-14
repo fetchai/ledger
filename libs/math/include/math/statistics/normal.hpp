@@ -87,8 +87,8 @@ class Gaussian
 public:
   Gaussian(){};
   Gaussian(T pi, T tau)
-    : _pi(pi)
-    , _tau(tau)
+    : pi_(pi)
+    , tau_(tau)
   {}
 
   static Gaussian ClassicForm(T mu, T sigma)
@@ -101,114 +101,114 @@ public:
   Gaussian operator*(const Gaussian &g) const
   {
     // Multiply two Gaussians.
-    T new_pi  = this->_pi + g._pi;
-    T new_tau = this->_tau + g._tau;
+    T new_pi  = this->pi_ + g.pi_;
+    T new_tau = this->tau_ + g.tau_;
     return Gaussian(new_pi, new_tau);
   }
   Gaussian operator*=(const Gaussian &g)
   {
     // Multiply myself and another Gaussian.
-    this->_pi += g._pi;
-    this->_tau += g._tau;
+    this->pi_ += g.pi_;
+    this->tau_ += g.tau_;
     return *this;
   }
 
   Gaussian operator*(T s) const
   {
     // Multiply by scalar. This action increases only the variance.
-    T k       = 1 + this->_pi * s * s;
-    T new_pi  = this->_pi / k;
-    T new_tau = this->_tau / k;
+    T k       = 1 + this->pi_ * s * s;
+    T new_pi  = this->pi_ / k;
+    T new_tau = this->tau_ / k;
     return Gaussian(new_pi, new_tau);
   }
   Gaussian operator*=(T s)
   {
     // Multiply myself by scalar. This action increases only the variance.
-    T k = 1 + this->_pi * s * s;
-    this->_pi /= k;
-    this->_tau /= k;
+    T k = 1 + this->pi_ * s * s;
+    this->pi_ /= k;
+    this->tau_ /= k;
     return *this;
   }
 
   Gaussian operator/(const Gaussian &g) const
   {
     // Divide two Gaussians.
-    T new_pi  = this->_pi - g._pi;
-    T new_tau = this->_tau - g._tau;
+    T new_pi  = this->pi_ - g.pi_;
+    T new_tau = this->tau_ - g.tau_;
     return Gaussian(new_pi, new_tau);
   }
   Gaussian operator/=(const Gaussian &g)
   {
     // Divide by Gaussian.
-    this->_pi -= g._pi;
-    this->_tau -= g._tau;
+    this->pi_ -= g.pi_;
+    this->tau_ -= g.tau_;
     return *this;
   }
 
   Gaussian operator+(const Gaussian &g) const
   {
     // Add two Gaussians.
-    T new_pi  = 1. / (1. / this->_pi + 1. / g._pi);
-    T new_tau = new_pi * (this->_tau / this->_pi + g._tau / g._pi);
+    T new_pi  = 1. / (1. / this->pi_ + 1. / g.pi_);
+    T new_tau = new_pi * (this->tau_ / this->pi_ + g.tau_ / g.pi_);
     return Gaussian(new_pi, new_tau);
   }
   Gaussian operator+=(const Gaussian &g)
   {
     // Add myslef and a Gaussian.
-    T new_pi   = 1. / (1. / this->_pi + 1. / g._pi);
-    this->_tau = new_pi * (this->_tau / this->_pi + g._tau / g._pi);
-    this->_pi  = new_pi;
+    T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);
+    this->tau_ = new_pi * (this->tau_ / this->pi_ + g.tau_ / g.pi_);
+    this->pi_  = new_pi;
     return *this;
   }
 
   Gaussian operator-() const
   {
     // Invert the mean value.
-    return Gaussian(this->_pi, -this->_tau);
+    return Gaussian(this->pi_, -this->tau_);
   }
   Gaussian operator-(const Gaussian &g) const
   {
     // Subtract two Gaussians.
-    T new_pi  = 1. / (1. / this->_pi + 1. / g._pi);
-    T new_tau = new_pi * (this->_tau / this->_pi - g._tau / g._pi);
+    T new_pi  = 1. / (1. / this->pi_ + 1. / g.pi_);
+    T new_tau = new_pi * (this->tau_ / this->pi_ - g.tau_ / g.pi_);
     return Gaussian(new_pi, new_tau);
   }
   Gaussian operator-=(const Gaussian &g)
   {
     // Subtract a Gaussian from myslef.
-    T new_pi   = 1. / (1. / this->_pi + 1. / g._pi);
-    this->_tau = new_pi * (this->_tau / this->_pi - g._tau / g._pi);
-    this->_pi  = new_pi;
+    T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);
+    this->tau_ = new_pi * (this->tau_ / this->pi_ - g.tau_ / g.pi_);
+    this->pi_  = new_pi;
     return *this;
   }
 
   void set_mu_sigma(T mu, T sigma)
   {
-    _pi  = 1 / (sigma * sigma);
-    _tau = mu * _pi;
+    pi_  = 1 / (sigma * sigma);
+    tau_ = mu * pi_;
   }
 
   T pi() const
   {
-    return _pi;
+    return pi_;
   }
   T tau() const
   {
-    return _tau;
+    return tau_;
   }
 
   T mu() const
   {
-    return _tau / _pi;
+    return tau_ / pi_;
   }
   T sigma() const
   {
-    return 1 / sqrt(_pi);
+    return 1 / sqrt(pi_);
   }
 
 private:
-  T _pi  = 0.;
-  T _tau = 0.;
+  T pi_  = 0.;
+  T tau_ = 0.;
 };
 
 template <typename T>
