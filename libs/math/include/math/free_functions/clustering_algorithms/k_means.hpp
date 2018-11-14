@@ -97,16 +97,10 @@ public:
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
 
-    // initialise k means
-    std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
-    k_means_      = ArrayType(k_means_shape);
-    prev_k_means_ = ArrayType::Zeroes(k_means_shape);
-    temp_k_       = ArrayType(data.shape());
+    temp_k_ = ArrayType(data.shape());
 
     // instantiate counter with zeros
-    k_count_ = std::vector<std::size_t>(n_clusters_, 0);
     InitialiseKMeans(data);
-    std::fill(k_count_.begin(), k_count_.end(), 0);  // reset the k_count
 
     // initialise assignment
     std::vector<std::size_t> k_assignment_shape{n_points_, 1};
@@ -146,10 +140,22 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
+    k_count_ = std::vector<std::size_t>(n_clusters_, 0);
+
     // shuffle the data
     data_idxs_ = std::vector<std::size_t>(n_points_);
     std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
     std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+
+    //
+
+    if (n_clusters_ != 0)
+    {
+      // initialise k means
+      std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
+      k_means_      = ArrayType(k_means_shape);
+      prev_k_means_ = ArrayType::Zeroes(k_means_shape);
+    }
 
     switch (init_mode_)
     {
@@ -158,25 +164,66 @@ private:
     {
       assert(k_assignment_.shape()[0] == n_points_);
       assert(k_assignment_.size() == n_points_);
-      std::fill(k_count_.begin(), k_count_.end(), 0);
-      for (std::size_t j = 0; j < n_points_; ++j)
+
+      // check if we know enough to initialise from previous clusters
+      bool sufficient_previous_assignment;
+      if (n_clusters_ == 0)
       {
-        if (!(k_assignment_.At(j, 0) <
-              0))  // previous unassigned data points must be assigned with a negative cluster value
+        // if user has not set a specific value for K then we must infer it from how many non-zero
+        // counts we find
+        for (std::size_t j = 0; j < n_points_; ++j)
         {
-          ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+          if (!(k_assignment_.At(j, 0) < 0))  // previous unassigned data points must be assigned
+                                              // with a negative cluster value
+          {
+            while (k_count_.size() <= k_assignment_.At(j, 0))
+            {
+              k_count_.emplace_back(0);
+            }
+            ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+          }
+        }
+
+        // if user wants us to figure out how many clusters to set then we only need to find a
+        // single case with non-zero count
+        sufficient_previous_assignment = false;
+        for (std::size_t j = 0; (!sufficient_previous_assignment) && j < n_clusters_; ++j)
+        {
+          if (k_count_[j] != 0)
+          {
+            sufficient_previous_assignment = true;
+          }
+        }
+      }
+      else
+      {
+        // if user has set a specific value for K then we must have non-zero count for every cluster
+        std::fill(k_count_.begin(), k_count_.end(), 0);
+        for (std::size_t j = 0; j < n_points_; ++j)
+        {
+          if (!(k_assignment_.At(j, 0) < 0))  // previous unassigned data points must be assigned
+                                              // with a negative cluster value
+          {
+            ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+          }
+        }
+
+        sufficient_previous_assignment = true;
+        for (std::size_t j = 0; sufficient_previous_assignment && j < n_clusters_; ++j)
+        {
+          if (k_count_[j] == 0)
+          {
+            sufficient_previous_assignment = false;
+          }
         }
       }
 
-      // check if any clusters begin empty
-      bool sufficient_previous_assignment = true;
-      for (std::size_t j = 0; sufficient_previous_assignment && j < n_clusters_; ++j)
-      {
-        if (k_count_[j] == 0)
-        {
-          sufficient_previous_assignment = false;
-        }
-      }
+      n_clusters_ = k_count_.size();
+
+      // initialise k means
+      std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
+      k_means_      = ArrayType(k_means_shape);
+      prev_k_means_ = ArrayType::Zeroes(k_means_shape);
 
       // if any clusters begin empty, we'll actually default to KMeans++ via fall through
       if (sufficient_previous_assignment)
@@ -202,6 +249,9 @@ private:
     default:
       throw std::runtime_error("no such initialization mode for KMeans");
     }
+
+    // reset the kcount
+    std::fill(k_count_.begin(), k_count_.end(), 0);  // reset the k_count
   }
 
   /**
@@ -551,7 +601,7 @@ private:
  * @return              ArrayType of format n_data x 1 with values indicating cluster
  */
 template <typename ArrayType>
-ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const &r_seed,
+ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t const &K,
                  std::size_t max_loops = 100, std::size_t init_mode = 0,
                  std::size_t max_no_change_convergence = 10)
 {
@@ -591,15 +641,15 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const 
  * @return                  ArrayType of format n_data x 1 with values indicating cluster
  */
 template <typename ArrayType>
-ArrayType KMeans(ArrayType const &data, std::size_t const &K, std::size_t const &r_seed,
-                 ArrayType const &prev_assignment, std::size_t max_loops = 100,
+ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType const &prev_assignment,
+                 std::size_t const &K = 0, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t n_points = data.shape()[0];
 
   // we can't have more clusters than data points
   assert(K <= n_points);  // you can't have more clusters than data points
-  assert(K > 1);          // why would you run k means clustering with only one cluster?
+  assert(K != 1);         // why would you run k means clustering with only one cluster?
 
   std::vector<std::size_t> ret_array_shape{n_points, 1};
   ArrayType                ret{ret_array_shape};
