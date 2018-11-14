@@ -48,6 +48,19 @@
 
 namespace fetch {
 
+namespace chain {
+namespace consensus {
+
+enum class ConsensusMinerType
+{
+  NO_MINER    = 0,
+  DUMMY_MINER = 1,
+  BAD_MINER   = 2
+};
+
+}  // namespace consensus
+}  // namespace chain
+
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -67,15 +80,13 @@ public:
                          std::string                         my_network_address,
                          std::chrono::steady_clock::duration block_interval);
 
-  void Run(UriList const &initial_peers, int mining);
+  void Run(UriList const &initial_peers, chain::consensus::ConsensusMinerType const &mining);
   void SignalStop();
 
 private:
-  using Muddle                = muddle::Muddle;
-  using NetworkManager        = network::NetworkManager;
-  using BlockPackingAlgorithm = miner::BasicMiner;
-  using ConsensusMiners =
-      std::unordered_map<int, std::shared_ptr<chain::consensus::ConsensusMinerInterface>>;
+  using Muddle                 = muddle::Muddle;
+  using NetworkManager         = network::NetworkManager;
+  using BlockPackingAlgorithm  = miner::BasicMiner;
   using Miner                  = chain::MainChainMiner;
   using BlockCoordinator       = chain::BlockCoordinator;
   using MainChain              = chain::MainChain;
@@ -134,9 +145,7 @@ private:
   MainChain             chain_;              ///< The main block chain component
   BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
-  ConsensusMiners
-        consensus_miners_;  ///< The consensus miners, one from the map needs to be injected to Miner
-  Miner miner_;             ///< The miner and block generation component
+  Miner                 miner_;              ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services

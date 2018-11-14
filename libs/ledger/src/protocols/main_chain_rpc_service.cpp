@@ -164,11 +164,11 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(from), ')');
 
+  FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+
   if (block.proof()())
   {
     trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
-    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
     // add the block?
     chain_.AddBlock(block);

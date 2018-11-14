@@ -52,6 +52,8 @@ using ProverPtr      = std::unique_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
+using fetch::chain::consensus::ConsensusMinerType;
+
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
 
@@ -97,6 +99,12 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   return buffer;
 }
 
+std::ostream &operator<<(std::ostream &os, const ConsensusMinerType &obj)
+{
+  os << static_cast<std::underlying_type<ConsensusMinerType>::type>(obj);
+  return os;
+}
+
 struct CommandLineArguments
 {
   using StringList  = std::vector<std::string>;
@@ -121,22 +129,22 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
   static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
 
-  uint16_t    port{0};
-  uint32_t    network_id;
-  UriList     peers;
-  uint32_t    num_executors;
-  uint32_t    num_lanes;
-  uint32_t    log2_num_lanes;
-  uint32_t    num_slices;
-  uint32_t    block_interval;
-  std::string interface;
-  std::string token;
-  bool        bootstrap{false};
-  int         mine{0};  // 0 no mining, 1->DummyMiner, 2->BadMiner
-  std::string dbdir;
-  std::string external_address;
-  std::string host_name;
-  ManifestPtr manifest;
+  uint16_t           port{0};
+  uint32_t           network_id;
+  UriList            peers;
+  uint32_t           num_executors;
+  uint32_t           num_lanes;
+  uint32_t           log2_num_lanes;
+  uint32_t           num_slices;
+  uint32_t           block_interval;
+  std::string        interface;
+  std::string        token;
+  bool               bootstrap{false};
+  ConsensusMinerType mine{ConsensusMinerType::NO_MINER};
+  std::string        dbdir;
+  std::string        external_address;
+  std::string        host_name;
+  ManifestPtr        manifest;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -150,6 +158,7 @@ struct CommandLineArguments
     std::string                bootstrap_address;
     std::string                external_address;
     std::string                config_path;
+    int                        mine;
 
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
@@ -170,7 +179,7 @@ struct CommandLineArguments
     parameters.add(args.token, "token",
                    "The authentication token to be used with bootstrapping the client",
                    std::string{});
-    parameters.add(args.mine, "mine", "Enable mining on this node", 0);
+    parameters.add(mine, "mine", "Enable mining on this node", 0);
 
     parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
@@ -183,6 +192,8 @@ struct CommandLineArguments
 
     // update the peers
     args.SetPeers(raw_peers);
+
+    args.mine = static_cast<ConsensusMinerType>(mine);
 
     // ensure that the number lanes is a valid power of 2
     if (!EnsureLog2(args.num_lanes))

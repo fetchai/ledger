@@ -49,6 +49,9 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 
 using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
+using fetch::chain::consensus::ConsensusMinerType;
+
+using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -121,6 +124,28 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
   return connection_map;
 }
 
+/**
+ * ConsensusMinerInterface factory method
+ */
+ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+{
+  switch (miner_type)
+  {
+  case ConsensusMinerType::DUMMY_MINER:
+  {
+    return std::make_shared<DummyMiner>();
+  }
+  case ConsensusMinerType::BAD_MINER:
+  {
+    return std::make_shared<BadMiner>();
+  }
+  default:
+  {
+    return nullptr;
+  }
+  }
+}
+
 }  // namespace
 
 /**
@@ -162,10 +187,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , consensus_miners_{{1, std::make_shared<DummyMiner>()}, {2, std::make_shared<BadMiner>()}}
-  , miner_{num_lanes_,    num_slices,           chain_,    block_coordinator_,
-           block_packer_, consensus_miners_[1], p2p_port_, block_interval}
-  // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_,         num_slices,    chain_,
+           block_coordinator_, block_packer_, GetConsensusMiner(ConsensusMinerType::NO_MINER),
+           p2p_port_,          block_interval}  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
@@ -202,7 +226,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, int mining)
+void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &mining)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -246,9 +270,9 @@ void Constellation::Run(UriList const &initial_peers, int mining)
   block_coordinator_.Start();
   tx_processor_.Start();
 
-  if (mining > 0)
+  if (mining != ConsensusMinerType::NO_MINER)
   {
-    miner_.SetConsensusMiner(consensus_miners_[mining]);
+    miner_.SetConsensusMiner(GetConsensusMiner(mining));
     miner_.Start();
   }
 
@@ -284,7 +308,7 @@ void Constellation::Run(UriList const &initial_peers, int mining)
   p2p_.Stop();
 
   // tear down all the services
-  if (mining > 0)
+  if (mining != ConsensusMinerType::NO_MINER)
   {
     miner_.Stop();
   }
