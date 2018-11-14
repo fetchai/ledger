@@ -563,6 +563,15 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
+void Router::KillConnection(Handle handle)
+{
+  auto conn = register_.LookupConnection(handle).lock();
+  if (conn)
+  {
+    conn -> Close();
+  }
+}
+
 /**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
  *
@@ -689,9 +698,10 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
     {
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
-        
         FETCH_LOG_WARN(LOGGING_NAME, "Oh yikes, should blacklist ", ToBase64(packet->GetSender()));
         // this is where we prevent incoming connections.
+        KillConnection(handle);
+        return;
       }
 
       // make the association with
