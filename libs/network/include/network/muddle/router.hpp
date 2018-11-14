@@ -100,6 +100,7 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  void DropPeer(Address const &peer);
   void Cleanup();
 
   void Blacklist(Address const &target);
@@ -115,7 +116,6 @@ private:
   using BlackList  = fetch::muddle::Blacklist;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
-  void DropPeer(Address const &peer);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
