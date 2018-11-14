@@ -82,7 +82,7 @@ protected:
 
     double ComputeCurrentTrust(time_t current_time) const
     {
-      double const time_delta = double(std::max(0L, last_modified + 100 - current_time)) / 100.0;
+      double const time_delta = double(std::max(0L, last_modified + 100 - current_time)) / 300.0;
       return trust * time_delta;
     }
 
