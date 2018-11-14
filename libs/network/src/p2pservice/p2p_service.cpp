@@ -130,6 +130,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (name[0]>='A' && name[0]<='Z')
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Trust (fake) negging!! ", name);
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
     }
 
