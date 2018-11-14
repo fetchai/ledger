@@ -134,6 +134,7 @@ private:
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
+  void KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet);
 
