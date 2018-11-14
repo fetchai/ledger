@@ -51,7 +51,6 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
-  using BlackList     = muddle::Blacklist;
 
   struct RoutingData
   {
@@ -113,6 +112,7 @@ private:
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
+  using BlackList  = fetch::muddle::Blacklist;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 

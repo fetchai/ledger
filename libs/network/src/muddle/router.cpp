@@ -698,8 +698,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
     {
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Oh yikes, should blacklist ", ToBase64(packet->GetSender()));
         // this is where we prevent incoming connections.
+        FETCH_LOG_WARN(LOGGING_NAME, "Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
         KillConnection(handle);
         return;
       }
