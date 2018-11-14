@@ -153,12 +153,14 @@ public:
   void            DropPeer(Uri const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
+
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
   /// @}
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
-
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

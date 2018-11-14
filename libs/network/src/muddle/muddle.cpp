@@ -263,5 +263,15 @@ void Muddle::CreateTcpClient(Uri const &peer)
   client.Connect(tcp_peer.address(), tcp_peer.port());
 }
 
+void Muddle::Blacklist(Address const &target)
+{
+  router_.Blacklist(target);
+}
+
+void Muddle::Whitelist(Address const &target)
+{
+  router_.Whitelist(target);
+}
+
 }  // namespace muddle
 }  // namespace fetch

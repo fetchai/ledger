@@ -32,7 +32,7 @@ namespace muddle {
  *
  * @param router The reference to the router
  */
-PeerConnectionList::PeerConnectionList(Router &router)
+  PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
