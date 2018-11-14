@@ -233,8 +233,8 @@ private:
     }
 
     // assign remaining cluster centres
-    std::size_t n_remaining_data_points, n_assigned_data_points;
-    std::size_t n_remaining_clusters, n_assigned_clusters;
+    std::size_t n_remaining_data_points = n_points_ - 1;
+    std::size_t n_remaining_clusters    = n_clusters_ - 1;
 
     std::vector<std::size_t> assigned_data_points{data_idxs_[0]};
 
@@ -249,13 +249,8 @@ private:
 
     for (std::size_t cur_cluster = 1; cur_cluster < n_clusters_; ++cur_cluster)
     {
-      n_remaining_data_points = n_points_ - 1;
-      n_remaining_clusters    = n_clusters_ - 1;
-      n_assigned_data_points  = n_points_ - n_remaining_data_points;
-      n_assigned_clusters     = n_clusters_ - n_remaining_clusters;
-
       // calculate distances to all clusters
-      for (std::size_t i = 0; i < n_assigned_clusters; ++i)
+      for (std::size_t i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
       {
         for (std::size_t l = 0; l < n_points_; ++l)
         {
@@ -265,20 +260,10 @@ private:
           }
         }
 
-        // overwrite the data points already assigned to clusters
-        for (std::size_t l = 0; l < n_assigned_data_points; ++l)
-        {
-          for (std::size_t k = 0; k < n_dimensions_; ++k)
-          {
-            temp_k_.Set(assigned_data_points[l], k, 0);
-          }
-        }
         cluster_distances[i] = fetch::math::metrics::EuclideanDistance(data, temp_k_, 1);
       }
 
       // select smallest distance to cluster for each data point and square
-      std::size_t temp_cluster_assign =
-          n_points_;  // temporary variable initialised to unreachable value to catch errors
       for (std::size_t m = 0; m < n_points_; ++m)
       {
         // ignore already assigned data points
@@ -286,7 +271,7 @@ private:
             assigned_data_points.end())
         {
           running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
-          for (std::size_t i = 0; i < n_assigned_clusters; ++i)
+          for (std::size_t i = 0; i < (n_clusters_ - n_remaining_clusters); ++i)
           {
             if (cluster_distances[i][m] < running_mean_)
             {
@@ -295,9 +280,6 @@ private:
             }
           }
           weights[m] = cluster_distances[assigned_cluster][m];
-
-          // checking for special case of only one cluster remaining
-          temp_cluster_assign = m;
         }
         else
         {
@@ -306,32 +288,25 @@ private:
       }
       fetch::math::Square(weights);
 
-      // final cluster assignment is simpler
-      if (cur_cluster == (n_clusters_ - 1))
+      // select point as new cluster centre
+      std::piecewise_constant_distribution<typename ArrayType::Type> dist(
+          std::begin(interval), std::end(interval), std::begin(weights));
+
+      auto val      = dist(rng_);
+      auto tmp_rand = static_cast<std::size_t>(val);
+
+      assert((tmp_rand < n_points_) && (tmp_rand >= 0));
+
+      assigned_data_points.push_back(tmp_rand);
+
+      for (std::size_t j = 0; j < n_dimensions_; ++j)
       {
-        for (std::size_t j = 0; j < n_dimensions_; ++j)
-        {
-          k_means_.Set(cur_cluster, j, data.At(temp_cluster_assign, j));
-        }
+        k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
       }
-      else
-      {
-        // select point as new cluster centre
-        std::piecewise_constant_distribution<typename ArrayType::Type> dist(
-            std::begin(interval), std::end(interval), std::begin(weights));
 
-        auto val      = dist(rng_);
-        auto tmp_rand = static_cast<std::size_t>(val);
-
-        assert((tmp_rand < n_points_) && (tmp_rand >= 0));
-
-        assigned_data_points.push_back(tmp_rand);
-
-        for (std::size_t j = 0; j < n_dimensions_; ++j)
-        {
-          k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
-        }
-      }
+      // update count of remaining data points and clusters
+      --n_remaining_data_points;
+      --n_remaining_clusters;
     }
   }
 

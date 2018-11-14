@@ -34,27 +34,27 @@ TEST(clustering_test, kmeans_test_2d_4k)
 
   matrix_type A{100, 2};
   matrix_type ret{100, 1};
-  std::size_t K = 2;
+  std::size_t K = 4;
 
   for (std::size_t i = 0; i < 25; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(-i - 50));
-    A.Set(i, 1, static_cast<data_type>(-i - 50));
+    A.Set(i, 0, -static_cast<data_type>(i) - 50);
+    A.Set(i, 1, -static_cast<data_type>(i) - 50);
   }
   for (std::size_t i = 25; i < 50; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(-i - 50));
-    A.Set(i, 1, static_cast<data_type>(i + 50));
+    A.Set(i, 0, -static_cast<data_type>(i) - 50);
+    A.Set(i, 1, static_cast<data_type>(i) + 50);
   }
   for (std::size_t i = 50; i < 75; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(i + 50));
-    A.Set(i, 1, static_cast<data_type>(-i - 50));
+    A.Set(i, 0, static_cast<data_type>(i) + 50);
+    A.Set(i, 1, -static_cast<data_type>(i) - 50);
   }
   for (std::size_t i = 75; i < 100; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(i + 50));
-    A.Set(i, 1, static_cast<data_type>(i + 50));
+    A.Set(i, 0, static_cast<data_type>(i) + 50);
+    A.Set(i, 1, static_cast<data_type>(i) + 50);
   }
 
   std::size_t random_seed = 123456;
