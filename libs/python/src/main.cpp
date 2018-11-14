@@ -33,6 +33,9 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
+
+#include "python/math/clustering/py_kmeans.hpp"
+
 #include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
@@ -64,6 +67,8 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
+#include "python/ledger/py_benchmarking.hpp"
+
 #include "python/ml/layers/py_layer.hpp"
 #include "python/ml/ops/py_ops.hpp"
 #include "python/ml/py_session.hpp"
@@ -87,11 +92,14 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_ml               = module.def_submodule("ml");
   py::module ns_fetch_math_correlation = ns_fetch_math.def_submodule("correlation");
   py::module ns_fetch_math_distance    = ns_fetch_math.def_submodule("distance");
+  py::module ns_fetch_math_clustering  = ns_fetch_math.def_submodule("clustering");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
   py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
   py::module ns_fetch_memory           = module.def_submodule("memory");
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
+
+  py::module ns_fetch_ledger = module.def_submodule("ledger");
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -229,6 +237,10 @@ PYBIND11_MODULE(fetch, module)
 
   ////////////
 
+  fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
+
+  ////////////
+
   fetch::math::BuildExpStatistics("Exp", ns_fetch_math_statistics);
   fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
 
@@ -260,4 +272,7 @@ PYBIND11_MODULE(fetch, module)
   fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
+
+  // Ledger
+  fetch::ledger::BuildBenchmarking(ns_fetch_ledger);
 }

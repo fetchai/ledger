@@ -15,6 +15,8 @@ nodes/
 *~
 *.swp
 .idea/
+*.osm
 
-scripts/python_ml_lib/mnist_example/*.gz
-scripts/python_ml_lib/mnist_example/*.so
+*.gz
+*.so
+.ipynb*

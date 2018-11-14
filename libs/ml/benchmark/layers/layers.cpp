@@ -23,7 +23,8 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
-//#include "ml/variable.hpp"
+
+#include "benchmark/benchmark.h"
 
 using namespace fetch::ml;
 
@@ -42,10 +43,10 @@ void set_random_data(VariablePtrType x)
   }
 }
 
-void benchmark_large_matrices(std::vector<std::size_t> layer_sizes)
+void benchmark_layer_training(std::vector<std::size_t> layer_sizes, bool threading)
 {
   // set up session
-  SessionManager<ArrayType, VariableType> sess{};
+  SessionManager<ArrayType, VariableType> sess{threading};
   Type                                    alpha = 0.2;
   std::size_t n_reps = 100;  // can be considered value of n_epochs * n_batches
 
@@ -60,12 +61,12 @@ void benchmark_large_matrices(std::vector<std::size_t> layer_sizes)
   std::vector<std::size_t> input_shape{data_points, input_size};
   std::vector<std::size_t> gt_shape{data_points, output_size};
 
-  auto input_data = sess.Variable(input_shape, "Input_data");
-  auto l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
-  auto l2         = sess.Layer(h1_size, h2_size, "LeakyRelu", "layer_2");
-  auto l3         = sess.Layer(h2_size, h3_size, "LeakyRelu", "layer_3");
-  auto y_pred     = sess.Layer(h3_size, output_size, "LeakyRelu", "output_layer");
-  auto gt         = sess.Variable(gt_shape, "GroundTruth");
+  VariablePtrType input_data = sess.Variable(input_shape, "Input_data");
+  LayerPtrType    l1         = sess.Layer(input_size, h1_size, "LeakyRelu", "layer_1");
+  LayerPtrType    l2         = sess.Layer(h1_size, h2_size, "LeakyRelu", "layer_2");
+  LayerPtrType    l3         = sess.Layer(h2_size, h3_size, "LeakyRelu", "layer_3");
+  LayerPtrType    y_pred     = sess.Layer(h3_size, output_size, "LeakyRelu", "output_layer");
+  VariablePtrType gt         = sess.Variable(gt_shape, "GroundTruth");
 
   sess.SetInput(l1, input_data);
   sess.SetInput(l2, l1->output());
@@ -85,33 +86,53 @@ void benchmark_large_matrices(std::vector<std::size_t> layer_sizes)
   auto prediction = sess.Predict(input_data, y_pred->output());
 }
 
-int main()
+static void BM_tiny_net_no_threading(benchmark::State &state)
 {
-  // TINY NET
-  std::cout << "beginning training of tiny_net: " << std::endl;
-  std::chrono::high_resolution_clock::time_point t0 = std::chrono::high_resolution_clock::now();
-  benchmark_large_matrices({10, 10, 10});
-  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-  // medium net
-  std::cout << "beginning training of medium_net: " << std::endl;
-  benchmark_large_matrices({50, 30, 20});
-  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-
-  // large net
-  std::cout << "beginning training of large_net: " << std::endl;
-  benchmark_large_matrices({256, 128, 64});
-  std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
-
-  std::chrono::duration<double> time_span1 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0);
-  std::chrono::duration<double> time_span2 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-  std::chrono::duration<double> time_span3 =
-      std::chrono::duration_cast<std::chrono::duration<double>>(t3 - t2);
-  std::cout << "mini_net_training_time: " << time_span1.count() << std::endl;
-  std::cout << "medium_net_training_time: " << time_span2.count() << std::endl;
-  std::cout << "large_net_training_time: " << time_span3.count() << std::endl;
-
-  return 0;
+  for (auto _ : state)
+  {
+    benchmark_layer_training({10, 10, 10}, false);
+  }
 }
+BENCHMARK(BM_tiny_net_no_threading);
+static void BM_medium_net_no_threading(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    benchmark_layer_training({50, 30, 20}, false);
+  }
+}
+BENCHMARK(BM_medium_net_no_threading);
+static void BM_large_net_no_threading(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    benchmark_layer_training({256, 128, 64}, false);
+  }
+}
+BENCHMARK(BM_large_net_no_threading);
+static void BM_tiny_net_threading(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    benchmark_layer_training({10, 10, 10}, true);
+  }
+}
+BENCHMARK(BM_tiny_net_threading);
+static void BM_medium_net_threading(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    benchmark_layer_training({50, 30, 20}, true);
+  }
+}
+BENCHMARK(BM_medium_net_threading);
+static void BM_large_net_threading(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    benchmark_layer_training({256, 128, 64}, true);
+  }
+}
+BENCHMARK(BM_large_net_threading);
+
+BENCHMARK_MAIN();

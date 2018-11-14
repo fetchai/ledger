@@ -10,10 +10,12 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
+
+add_fetch_gbench(benchmark_shapeless_array fetch-math shapeless_array)
+
 if(TRUE)
   fetch_warning("Disabled Bencmark: benchmark_linalg_matrix (does not compile)")
 else()
   add_executable(benchmark_linalg_matrix benchmark/linalg/matrix.cpp)
   target_link_libraries(benchmark_linalg_matrix PRIVATE fetch-math)
 endif()
-

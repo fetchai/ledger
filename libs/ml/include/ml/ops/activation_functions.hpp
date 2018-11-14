@@ -24,13 +24,6 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
 /**
  * The Sigmoid activation squashes such that y = 1 / 1 + e^(-x)
  * @tparam VariablePtrType

@@ -36,6 +36,8 @@ using ::testing::_;
 using namespace fetch;
 using namespace fetch::ledger;
 
+using fetch::variant::Variant;
+
 class TokenContractTests : public ::testing::Test
 {
 protected:
@@ -145,8 +147,7 @@ protected:
     bool success = false;
 
     // formulate the query
-    Query query;
-    query.MakeObject();
+    Query query      = Variant::Object();
     query["address"] = byte_array::ToBase64(address);
 
     Query response;

@@ -17,73 +17,68 @@
 //------------------------------------------------------------------------------
 
 #include "core/json/document.hpp"
+
 #include <gtest/gtest.h>
 #include <iostream>
-using namespace fetch::json;
-using namespace fetch::byte_array;
 
-TEST(json_bsic_parsing_gtest, Nathan_test)
+using fetch::json::JSONDocument;
+using fetch::variant::Variant;
+using fetch::byte_array::ConstByteArray;
+
+TEST(JsonTests, SimpleParseTest)
 {
-  ByteArray    data = "{\"HTTPPort\": 8081, \"IP\": \"localhost\", \"TCPPort\": 9081}";
-  JSONDocument test(data);
-  std::cout << data << std::endl;
-  std::cout << "---" << std::endl;
-  std::cout << test.root() << std::endl;
+  char const *text = R"({
+    "empty": {},
+    "array": [1,2,3,4,5],
+    "arrayMixed": [
+      {
+        "value": 1
+      },
+      4
+    ]
+  })";
 
-  std::string IP_   = std::string(test["IP"].as_byte_array());
-  uint32_t    port_ = test["TCPPort"].As<uint16_t>();
-
-  std::cerr << "port is is " << port_ << std::endl;
-  std::cerr << "IP is " << IP_ << " >>> " << test["IP"] << std::endl;
-}
-
-TEST(json_bsic_parsing_gtest, Parsing_and_modification_of_document)
-{
-  ByteArray doc_content = R"({
-  "a": 3,
-  "x": { 
-    "y": [1,2,3],
-    "z": null,
-    "q": [],
-    "hello world": {}
-  }
-}
-)";
-
+  // parse the JSON text
   JSONDocument doc;
-  doc.Parse(doc_content);
+  ASSERT_NO_THROW(doc.Parse(text));
 
-  std::stringstream ss;
-  ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 3, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+  auto const &root = doc.root();
 
-  doc["a"] = 4;
-  ss.str("");
-  ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 4, "x": {"y": [1, 2, 3], "z": null, "q": [], "hello world": {}}})");
+  EXPECT_TRUE(root.IsObject());
+  EXPECT_EQ(root.size(), 3);
+  EXPECT_TRUE(root.Has("empty"));
+  EXPECT_TRUE(root.Has("array"));
+  EXPECT_TRUE(root.Has("arrayMixed"));
 
-  doc["x"]["y"][1] = 5;
-  ss.str("");
-  ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 4, "x": {"y": [1, 5, 3], "z": null, "q": [], "hello world": {}}})");
+  auto const &empty = doc["empty"];
+  EXPECT_TRUE(empty.IsObject());
+  EXPECT_EQ(empty.size(), 0);
 
-  doc["x"]["z"] = fetch::script::Variant({1, 2, 3, 4, 5});
-  ss.str("");
-  ss << doc.root();
-  EXPECT_EQ(ss.str(),
-            R"({"a": 4, "x": {"y": [1, 5, 3], "z": [1, 2, 3, 4, 5], "q": [], "hello world": {}}})");
+  auto const &array = doc["array"];
+  EXPECT_TRUE(array.IsArray());
+  EXPECT_EQ(array.size(), 5);
+  EXPECT_EQ(array[0].As<int>(), 1);
+  EXPECT_EQ(array[1].As<int>(), 2);
+  EXPECT_EQ(array[2].As<int>(), 3);
+  EXPECT_EQ(array[3].As<int>(), 4);
+  EXPECT_EQ(array[4].As<int>(), 5);
 
-  ss.str("");
-  ss << doc["x"]["y"];
-  EXPECT_EQ("[1, 5, 3]", ss.str());
+  auto const &array_mixed = doc["arrayMixed"];
+  EXPECT_TRUE(array_mixed.IsArray());
+  EXPECT_EQ(array_mixed.size(), 2);
+
+  auto const &array_obj = array_mixed[0];
+  EXPECT_TRUE(array_obj.IsObject());
+  EXPECT_EQ(array_obj.size(), 1);
+  EXPECT_TRUE(array_obj.Has("value"));
+  EXPECT_EQ(array_obj["value"].As<int>(), 1);
+
+  EXPECT_EQ(array_mixed[1].As<int>(), 4);
 }
 
-TEST(json_bsic_parsing_gtest, Type_parsing)
+TEST(JsonTests, TypeParsing)
 {
-  ByteArray doc_content = R"({
+  char const *doc_content = R"({
   "a": 3,
   "b": 2.3e-2,
   "c": 2e+9,
@@ -96,17 +91,17 @@ TEST(json_bsic_parsing_gtest, Type_parsing)
 
   JSONDocument doc;
   doc.Parse(doc_content);
-  EXPECT_EQ(doc["a"].type(), fetch::script::VariantType::INTEGER);
-  EXPECT_EQ(doc["b"].type(), fetch::script::VariantType::FLOATING_POINT);
-  EXPECT_EQ(doc["c"].type(), fetch::script::VariantType::FLOATING_POINT);
-  EXPECT_EQ(doc["d"].type(), fetch::script::VariantType::STRING);
-  EXPECT_EQ(doc["e"].type(), fetch::script::VariantType::NULL_VALUE);
+  EXPECT_EQ(doc["a"].type(), Variant::Type::INTEGER);
+  EXPECT_EQ(doc["b"].type(), Variant::Type::FLOATING_POINT);
+  EXPECT_EQ(doc["c"].type(), Variant::Type::FLOATING_POINT);
+  EXPECT_EQ(doc["d"].type(), Variant::Type::STRING);
+  EXPECT_EQ(doc["e"].type(), Variant::Type::NULL_VALUE);
 
-  EXPECT_EQ(doc["f"].type(), fetch::script::VariantType::BOOLEAN);
-  EXPECT_EQ(doc["g"].type(), fetch::script::VariantType::BOOLEAN);
+  EXPECT_EQ(doc["f"].type(), Variant::Type::BOOLEAN);
+  EXPECT_EQ(doc["g"].type(), Variant::Type::BOOLEAN);
 }
 
-TEST(json_bsic_parsing_gtest, Parsing_exeptions)
+TEST(JsonTests, ParsingExeptions)
 {
   JSONDocument doc;
   EXPECT_THROW(doc.Parse("{"), fetch::json::JSONParseException);
@@ -114,4 +109,55 @@ TEST(json_bsic_parsing_gtest, Parsing_exeptions)
 
   EXPECT_THROW(doc.Parse(R"(["a":"b"])"), fetch::json::JSONParseException);
   EXPECT_THROW(doc.Parse(R"({"a": 2.fs})"), fetch::json::JSONParseException);
+}
+
+TEST(JsonTests, LargeArray)
+{
+  static const std::size_t ARRAY_SIZE = 10000;
+
+  std::string json_text;
+
+  // formulate a large array of objects
+  {
+    std::ostringstream oss;
+
+    oss << '[';
+
+    for (std::size_t i = 0; i < ARRAY_SIZE; ++i)
+    {
+      if (i)
+      {
+        oss << ',';
+      }
+
+      oss << R"({"value": )" << i << '}' << '\n';
+    }
+
+    oss << ']';
+
+    // update the json text field
+    json_text = oss.str();
+  }
+
+  // parse the JSON document
+  JSONDocument doc;
+  ASSERT_NO_THROW(doc.Parse(json_text));
+
+  auto const &root = doc.root();
+
+  ASSERT_TRUE(root.IsArray());
+  ASSERT_EQ(root.size(), ARRAY_SIZE);
+
+  for (std::size_t i = 0; i < ARRAY_SIZE; ++i)
+  {
+    auto const &obj = root[i];
+
+    ASSERT_TRUE(obj.IsObject());
+    ASSERT_TRUE(obj.Has("value"));
+
+    auto const &element = obj["value"];
+
+    EXPECT_TRUE(element.Is<std::size_t>());
+    EXPECT_EQ(element.As<std::size_t>(), i);
+  }
 }
