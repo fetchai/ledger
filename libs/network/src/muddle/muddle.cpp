@@ -165,7 +165,7 @@ Muddle::ConnectionMap Muddle::GetConnections()
   return connection_map;
 }
 
-void DropPeer(Address const &peer)
+void Muddle::DropPeer(Address const &peer)
 {
   router_.DropPeer(peer);
 }
