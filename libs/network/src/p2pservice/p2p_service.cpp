@@ -125,6 +125,13 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
     }
 
+    std::string name(ToBase64(address));
+
+    if (name[0]>='A' && name[0]<='Z')
+    {
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+    }
+
     // update our desired
     bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
@@ -139,6 +146,10 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "No longer trust: ", ToBase64(address));
       desired_peers_.erase(address);
+      if (trust_system_.GetTrustRatingOfPeer(address) < 0.0)
+      {
+        blacklisted_peers_.insert(address);
+      }
     }
   }
 
@@ -267,6 +278,10 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
     }
+  }
+  for (auto const &address : blacklisted_peers_)
+  {
+    muddle_.Blacklist(address);
   }
 }
 
