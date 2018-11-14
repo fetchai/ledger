@@ -132,7 +132,7 @@ struct CommandLineArguments
   std::string interface;
   std::string token;
   bool        bootstrap{false};
-  int         mine{0}; //0 no mining, 1->DummyMiner, 2->BadMiner
+  int         mine{0};  // 0 no mining, 1->DummyMiner, 2->BadMiner
   std::string dbdir;
   std::string external_address;
   std::string host_name;

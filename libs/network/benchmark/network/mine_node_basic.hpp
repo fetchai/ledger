@@ -146,7 +146,7 @@ public:
   void startMining()
   {
     fetch::chain::consensus::DummyMiner miner;
-    auto closure = [this, &miner] {
+    auto                                closure = [this, &miner] {
       // Loop code
       while (!stopped_)
       {

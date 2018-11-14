@@ -18,12 +18,12 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "ledger/chain/consensus/bad_miner.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
-#include "ledger/chain/consensus/bad_miner.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -163,8 +163,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
   , consensus_miners_{{1, std::make_shared<DummyMiner>()}, {2, std::make_shared<BadMiner>()}}
-  , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
-           block_packer_, consensus_miners_[1], p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_,    num_slices,           chain_,    block_coordinator_,
+           block_packer_, consensus_miners_[1], p2p_port_, block_interval}
+  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
@@ -245,7 +246,7 @@ void Constellation::Run(UriList const &initial_peers, int mining)
   block_coordinator_.Start();
   tx_processor_.Start();
 
-  if (mining>0)
+  if (mining > 0)
   {
     miner_.SetConsensusMiner(consensus_miners_[mining]);
     miner_.Start();
@@ -283,7 +284,7 @@ void Constellation::Run(UriList const &initial_peers, int mining)
   p2p_.Stop();
 
   // tear down all the services
-  if (mining>0)
+  if (mining > 0)
   {
     miner_.Stop();
   }

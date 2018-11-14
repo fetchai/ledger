@@ -25,20 +25,19 @@
 
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;
-using Gaussian =  fetch::math::statistics::Gaussian<double>;
-
+using Gaussian = fetch::math::statistics::Gaussian<double>;
 
 template <typename IDENTITY>
 class P2PTrustBayRankExtendedForTest : public P2PTrustBayRank<IDENTITY>
-{  
+{
 public:
-    // Construction / Destruction
+  // Construction / Destruction
   P2PTrustBayRankExtendedForTest()                                          = default;
   P2PTrustBayRankExtendedForTest(const P2PTrustBayRankExtendedForTest &rhs) = delete;
   P2PTrustBayRankExtendedForTest(P2PTrustBayRankExtendedForTest &&rhs)      = delete;
   ~P2PTrustBayRankExtendedForTest() override                                = default;
 
-    // Operators
+  // Operators
   P2PTrustBayRankExtendedForTest operator=(const P2PTrustBayRankExtendedForTest &rhs) = delete;
   P2PTrustBayRankExtendedForTest operator=(P2PTrustBayRankExtendedForTest &&rhs) = delete;
 
@@ -57,31 +56,28 @@ public:
   }
 };
 
-
 TEST(TrustTests, BayNewInfo)
 {
   P2PTrustBayRankExtendedForTest<std::string> trust;
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
                     fetch::p2p::TrustQuality::NEW_INFORMATION);
-  auto g = trust.GetGaussianOfPeer("peer1");
+  auto g  = trust.GetGaussianOfPeer("peer1");
   auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
-  EXPECT_EQ(g.mu()>rg.mu(), true);
-  EXPECT_EQ(g.sigma()<rg.sigma(), true);
+  EXPECT_EQ(g.mu() > rg.mu(), true);
+  EXPECT_EQ(g.sigma() < rg.sigma(), true);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
 }
-
 
 TEST(TrustTests, BayBadInfo)
 {
   P2PTrustBayRankExtendedForTest<std::string> trust;
 
-  trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
-                    fetch::p2p::TrustQuality::LIED);
+  trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, fetch::p2p::TrustQuality::LIED);
 
   auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
-  auto g = trust.GetGaussianOfPeer("peer1");
-  EXPECT_EQ(g.mu()<rg.mu(), true);
-  EXPECT_EQ(g.sigma()<rg.sigma(), true);
+  auto g  = trust.GetGaussianOfPeer("peer1");
+  EXPECT_EQ(g.mu() < rg.mu(), true);
+  EXPECT_EQ(g.sigma() < rg.sigma(), true);
 
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);
 
@@ -94,7 +90,6 @@ TEST(TrustTests, BayBadInfo)
                     fetch::p2p::TrustQuality::NEW_INFORMATION);
 
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
-
 }
 
 TEST(TrustTests, BayBadConnection)
@@ -115,7 +110,7 @@ TEST(TrustTests, BayBadConnection)
                     fetch::p2p::TrustQuality::BAD_CONNECTION);
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
                     fetch::p2p::TrustQuality::BAD_CONNECTION);
-  
+
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
 
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
@@ -131,7 +126,7 @@ TEST(TrustTests, BayBadConnection)
                     fetch::p2p::TrustQuality::BAD_CONNECTION);
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
                     fetch::p2p::TrustQuality::BAD_CONNECTION);
-  
+
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), false);
 
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,

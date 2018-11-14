@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "math/statistics/normal.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <algorithm>
 #include <array>
@@ -36,8 +36,6 @@
 namespace fetch {
 namespace p2p {
 
-
-
 using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
 extern const reference_players_type reference_players_;
 
@@ -46,21 +44,20 @@ inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQual
   return reference_players_.at(static_cast<std::size_t>(quality));
 }
 
-
 template <typename IDENTITY>
 class P2PTrustBayRank : public P2PTrustInterface<IDENTITY>
 {
 protected:
   const double threshold = 20.0;
-  using Gaussian = math::statistics::Gaussian<double>;
+  using Gaussian         = math::statistics::Gaussian<double>;
   struct PeerTrustRating
   {
     IDENTITY peer_identity;
     Gaussian g;
-    double score;
-    void update_score()
+    double   score;
+    void     update_score()
     {
-      score = g.mu()-3*g.sigma();
+      score = g.mu() - 3 * g.sigma();
     }
   };
   using TrustStore   = std::vector<PeerTrustRating>;
@@ -89,12 +86,12 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    auto ranking      = ranking_store_.find(peer_ident);
+    auto ranking = ranking_store_.find(peer_ident);
 
     size_t pos;
     if (ranking == ranking_store_.end())
     {
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100/6.), 0};
+      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0};
       pos = trust_store_.size();
       trust_store_.push_back(new_record);
     }
@@ -104,8 +101,8 @@ public:
     }
 
     Gaussian const &reference_player = LookupReferencePlayer(quality);
-    bool honest = quality==TrustQuality::NEW_INFORMATION||quality==TrustQuality::DUPLICATE;
-    updateGaussian(honest, trust_store_[pos].g, reference_player, 100/12., 1/6., 0.2);
+    bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+    updateGaussian(honest, trust_store_[pos].g, reference_player, 100 / 12., 1 / 6., 0.2);
     trust_store_[pos].update_score();
 
     dirty_ = true;
@@ -120,20 +117,21 @@ public:
 
   IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const override
   {
-    if (maximum_count>trust_store_.size()) return GetBestPeers(maximum_count);
+    if (maximum_count > trust_store_.size())
+      return GetBestPeers(maximum_count);
 
     IdentitySet result;
     result.reserve(maximum_count);
 
-    size_t max_trial = maximum_count*1000;
-    std::random_device rd;
-    std::mt19937       g(rd());
-    std::uniform_int_distribution<size_t> distribution(0, trust_store_.size()-1);
+    size_t                                max_trial = maximum_count * 1000;
+    std::random_device                    rd;
+    std::mt19937                          g(rd());
+    std::uniform_int_distribution<size_t> distribution(0, trust_store_.size() - 1);
 
     {
       FETCH_LOCK(mutex_);
 
-      for (std::size_t i = 0, pos=0, inserted_element_counter=0; i < max_trial; ++i)
+      for (std::size_t i = 0, pos = 0, inserted_element_counter = 0; i < max_trial; ++i)
       {
         pos = distribution(g);
         if (trust_store_[pos].score < minimum_trust)
@@ -143,12 +141,12 @@ public:
 
         result.insert(trust_store_[pos].peer_identity);
         inserted_element_counter += 1;
-        if (inserted_element_counter>=maximum_count) break;
+        if (inserted_element_counter >= maximum_count)
+          break;
       }
     }
 
     return result;
-
   }
 
   IdentitySet GetBestPeers(std::size_t maximum) const override
@@ -219,38 +217,42 @@ protected:
   Gaussian truncate(Gaussian const &g, double beta, double eps)
   {
     // Calculate approximated truncated Gaussian
-    double m = std::sqrt(2)*beta*math::statistics::normal::quantile<double>(0, 1 , (eps+1.)/2.);
+    double m =
+        std::sqrt(2) * beta * math::statistics::normal::quantile<double>(0, 1, (eps + 1.) / 2.);
     double k = sqrt(g.pi());
-    double r = g.tau()/k - m*k;
-    double v = math::statistics::normal::pdf<double>(0, 1, r)/math::statistics::normal::cdf<double>(0, 1, r);
-    double w = v*(v + r);
+    double r = g.tau() / k - m * k;
+    double v = math::statistics::normal::pdf<double>(0, 1, r) /
+               math::statistics::normal::cdf<double>(0, 1, r);
+    double w = v * (v + r);
 
-    double new_pi = g.pi()/(1-w);
-    double new_tau = (g.tau() + k*v)/(1 - w);
-    Gaussian t = Gaussian(new_pi, new_tau);
+    double   new_pi  = g.pi() / (1 - w);
+    double   new_tau = (g.tau() + k * v) / (1 - w);
+    Gaussian t       = Gaussian(new_pi, new_tau);
 
-    return t/g;
+    return t / g;
   }
 
-  void updateGaussian(bool honest, Gaussian &s, Gaussian const &ref,
-    double beta, double drift, double eps)
+  void updateGaussian(bool honest, Gaussian &s, Gaussian const &ref, double beta, double drift,
+                      double eps)
   {
     // Calculate new distribution for g1 assuming that g1 won with g2.
     // beta corresponds to a measure of how difficult the game is to master.
     // drift corresponds to a natural drift of your score between "games".
     // eps is a draw margin by which you must be "better" to beat your opponent.
     s *= drift;
-    Gaussian s_ref = ref*drift;
-    Gaussian h     = s*beta;
-    Gaussian h_ref = s_ref*beta;
+    Gaussian s_ref = ref * drift;
+    Gaussian h     = s * beta;
+    Gaussian h_ref = s_ref * beta;
 
-    if (honest){
-      Gaussian u = truncate(h-h_ref, beta, eps);
-      s *= (u+h_ref)*beta;
+    if (honest)
+    {
+      Gaussian u = truncate(h - h_ref, beta, eps);
+      s *= (u + h_ref) * beta;
     }
-    else {
-      Gaussian u = truncate(h_ref-h, beta, eps);
-      s *= (-u+h_ref)*beta;
+    else
+    {
+      Gaussian u = truncate(h_ref - h, beta, eps);
+      s *= (-u + h_ref) * beta;
     }
   }
 

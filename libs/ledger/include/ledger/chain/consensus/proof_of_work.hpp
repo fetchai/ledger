@@ -89,14 +89,14 @@ private:
 template <typename T>
 inline void Serialize(T &serializer, ProofOfWork const &p)
 {
-  serializer << p.header() << p.target() ;
+  serializer << p.header() << p.target();
 }
 
 template <typename T>
 inline void Deserialize(T &serializer, ProofOfWork &p)
 {
   ProofOfWork::header_type header;
-  math::BigUnsigned target, digest;
+  math::BigUnsigned        target, digest;
   serializer >> header >> target;
   p.SetHeader(header);
   p.SetTarget(target);
