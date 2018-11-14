@@ -19,6 +19,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "variant/variant_utils.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -89,7 +90,7 @@ bool Manifest::Parse(ConstByteArray const &text)
     doc.Parse(text);
 
     // extract the elements
-    if (doc.root().is_object())
+    if (doc.root().IsObject())
     {
       // attempt to extract the main section of the manifest
       if (ExtractSection(doc["p2p"], ServiceType::P2P) &&
@@ -98,7 +99,7 @@ bool Manifest::Parse(ConstByteArray const &text)
         auto lanes = doc["lanes"];
 
         // sanity check the type of the variant
-        if (lanes.is_array())
+        if (lanes.IsArray())
         {
           bool failures = false;
 
@@ -142,26 +143,27 @@ bool Manifest::Parse(ConstByteArray const &text)
   return success;
 }
 
-bool Manifest::ExtractSection(script::Variant const &obj, ServiceType service, std::size_t instance)
+bool Manifest::ExtractSection(Variant const &obj, ServiceType service, std::size_t instance)
 {
   bool success = false;
 
   // ensure things are as we expect
-  if (obj.is_object())
+  if (obj.IsObject())
   {
-    auto uri_element  = obj["uri"];
-    auto port_element = obj["port"];
+    ConstByteArray uri_str;
+    uint16_t       port;
 
-    Uri      uri;
-    uint16_t port{0};
+    bool const has_uri  = variant::Extract(obj, "uri", uri_str);
+    bool const has_port = variant::Extract(obj, "port", port);
 
-    // check to see if the uri element is valid
-    if (!uri_element.is_string())
+    if (!has_uri)
     {
       return false;
     }
 
-    if (!uri.Parse(uri_element.As<ConstByteArray>()))
+    // parse the URI string
+    Uri uri;
+    if (!uri.Parse(uri_str))
     {
       return false;
     }
@@ -174,14 +176,9 @@ bool Manifest::ExtractSection(script::Variant const &obj, ServiceType service, s
 
     auto const &peer = uri.AsPeer();
 
-    // extract a port if one is present
-    if (port_element.is_int())
+    // in the case where the port is not specified (and/or valid) default to the URI port
+    if (!has_port)
     {
-      port = port_element.As<uint16_t>();
-    }
-    else
-    {
-      // in the case where the port is not specified (and/or valid) default to the URI port
       port = peer.port();
     }
 

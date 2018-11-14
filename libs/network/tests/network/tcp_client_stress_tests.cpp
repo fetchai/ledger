@@ -189,7 +189,7 @@ std::vector<message_type> CreateTestData(size_t index)
     arr.Resize(packetSize);
     for (std::size_t z = 0; z < arr.size(); z++)
     {
-      arr[z] = uint8_t(GetRandom());
+      arr[z] = uint8_t(z + i);
     }
     sendData.push_back(arr);
   }

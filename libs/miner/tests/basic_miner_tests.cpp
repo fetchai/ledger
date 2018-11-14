@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/meta/is_log2.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "meta/is_log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 
