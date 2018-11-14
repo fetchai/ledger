@@ -118,8 +118,8 @@ public:
   std::vector<BlockType> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
-    fetch::generics::MilliTimer          myTimer("MainChain::HeaviestChain");
-    Lock lock(main_mutex_);
+    fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
+    Lock                        lock(main_mutex_);
 
     std::vector<BlockType> result;
 
@@ -157,7 +157,7 @@ public:
       const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
-    Lock lock(main_mutex_);
+    Lock                        lock(main_mutex_);
 
     std::vector<BlockType> result;
 

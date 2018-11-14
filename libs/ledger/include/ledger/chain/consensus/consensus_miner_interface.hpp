@@ -23,19 +23,18 @@ namespace fetch {
 namespace chain {
 namespace consensus {
 
-class ConsensusMinerInterface {
+class ConsensusMinerInterface
+{
 public:
   using BlockType = chain::MainChain::BlockType;
-  
-  ConsensusMinerInterface() = default;
+
+  ConsensusMinerInterface()          = default;
   virtual ~ConsensusMinerInterface() = default;
 
-  virtual void Mine(BlockType &block) = 0;
+  virtual void Mine(BlockType &block)                      = 0;
   virtual bool Mine(BlockType &block, uint64_t iterations) = 0;
-
 };
 
-
-}
-}
-}
+}  // namespace consensus
+}  // namespace chain
+}  // namespace fetch

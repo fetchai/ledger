@@ -19,9 +19,9 @@
 
 #include "http/module.hpp"
 #include "http/server.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
@@ -43,8 +43,8 @@
 #include <random>
 #include <thread>
 #include <tuple>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 
@@ -71,29 +71,30 @@ public:
   void SignalStop();
 
 private:
-  using Muddle                  = muddle::Muddle;
-  using NetworkManager          = network::NetworkManager;
-  using BlockPackingAlgorithm   = miner::BasicMiner;
-  using ConsensusMiners         = std::unordered_map<int, std::shared_ptr<chain::consensus::ConsensusMinerInterface>>;
-  using Miner                   = chain::MainChainMiner;
-  using BlockCoordinator        = chain::BlockCoordinator;
-  using MainChain               = chain::MainChain;
-  using MainChainRpcService     = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
-  using LaneServices            = ledger::StorageUnitBundledService;
-  using StorageUnitClient       = ledger::StorageUnitClient;
-  using LaneIndex               = StorageUnitClient::LaneIndex;
-  using StorageUnitClientPtr    = std::shared_ptr<StorageUnitClient>;
-  using Flag                    = std::atomic<bool>;
-  using ExecutionManager        = ledger::ExecutionManager;
-  using ExecutionManagerPtr     = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl       = ledger::LaneRemoteControl;
-  using HttpServer              = http::HTTPServer;
-  using HttpModule              = http::HTTPModule;
-  using HttpModulePtr           = std::shared_ptr<HttpModule>;
-  using HttpModules             = std::vector<HttpModulePtr>;
-  using TransactionProcessor    = ledger::TransactionProcessor;
-  using TrustSystem             = p2p::P2PTrustBayRank<Muddle::Address>;
+  using Muddle                = muddle::Muddle;
+  using NetworkManager        = network::NetworkManager;
+  using BlockPackingAlgorithm = miner::BasicMiner;
+  using ConsensusMiners =
+      std::unordered_map<int, std::shared_ptr<chain::consensus::ConsensusMinerInterface>>;
+  using Miner                  = chain::MainChainMiner;
+  using BlockCoordinator       = chain::BlockCoordinator;
+  using MainChain              = chain::MainChain;
+  using MainChainRpcService    = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
+  using LaneServices           = ledger::StorageUnitBundledService;
+  using StorageUnitClient      = ledger::StorageUnitClient;
+  using LaneIndex              = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
+  using Flag                   = std::atomic<bool>;
+  using ExecutionManager       = ledger::ExecutionManager;
+  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl      = ledger::LaneRemoteControl;
+  using HttpServer             = http::HTTPServer;
+  using HttpModule             = http::HTTPModule;
+  using HttpModulePtr          = std::shared_ptr<HttpModule>;
+  using HttpModules            = std::vector<HttpModulePtr>;
+  using TransactionProcessor   = ledger::TransactionProcessor;
+  using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
 
   /// @name Configuration
   /// @{
@@ -130,11 +131,12 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain               chain_;              ///< The main block chain component
-  BlockPackingAlgorithm   block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator        block_coordinator_;  ///< The block execution coordinator
-  ConsensusMiners         consensus_miners_;   ///< The consensus miners, one from the map needs to be injected to Miner
-  Miner                   miner_;              ///< The miner and block generation component
+  MainChain             chain_;              ///< The main block chain component
+  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
+  ConsensusMiners
+        consensus_miners_;  ///< The consensus miners, one from the map needs to be injected to Miner
+  Miner miner_;             ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services

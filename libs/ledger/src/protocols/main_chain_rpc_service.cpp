@@ -167,7 +167,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   if (block.proof()())
   {
     trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-   
+
     FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
     // add the block?
