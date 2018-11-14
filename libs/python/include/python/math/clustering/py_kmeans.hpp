@@ -27,15 +27,8 @@ namespace clustering {
 
 template <typename A>
 inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
-                       std::size_t max_loops)
-{
-  std::cout << "wrapper: " << std::endl;
-  return WrapperKMeans(data, K, r_seed, max_loops, 0, 10);
-}
-template <typename A>
-inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
-                       std::size_t max_loops, std::size_t init_mode,
-                       std::size_t max_no_change_convergence)
+                       std::size_t max_loops, std::size_t init_mode = 0,
+                       std::size_t max_no_change_convergence = 10)
 {
   std::cout << "wrapper2: " << std::endl;
   if (K > data.shape()[0])
