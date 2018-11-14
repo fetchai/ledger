@@ -18,6 +18,8 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "ledger/chain/consensus/bad_miner.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -44,6 +46,9 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
+
+using fetch::chain::consensus::DummyMiner;
+using fetch::chain::consensus::BadMiner;
 
 namespace fetch {
 namespace {
@@ -157,8 +162,10 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
-           block_packer_, p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
+  , consensus_miners_{{1, std::make_shared<DummyMiner>()}, {2, std::make_shared<BadMiner>()}}
+  , miner_{num_lanes_,    num_slices,           chain_,    block_coordinator_,
+           block_packer_, consensus_miners_[1], p2p_port_, block_interval}
+  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
   , tx_processor_{*storage_, block_packer_}
   , http_{http_network_manager_}
@@ -195,7 +202,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, bool mining)
+void Constellation::Run(UriList const &initial_peers, int mining)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -243,8 +250,9 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Start();
   tx_processor_.Start();
 
-  if (mining)
+  if (mining > 0)
   {
+    miner_.SetConsensusMiner(consensus_miners_[mining]);
     miner_.Start();
   }
 
@@ -280,7 +288,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   p2p_.Stop();
 
   // tear down all the services
-  if (mining)
+  if (mining > 0)
   {
     miner_.Stop();
   }

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,36 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
+#include "ledger/chain/main_chain.hpp"
 
-#include "core/random/lcg.hpp"
-#include <math/free_functions/clustering_algorithms/k_means.hpp>
-#include <math/linalg/matrix.hpp>
+namespace fetch {
+namespace chain {
+namespace consensus {
 
-using namespace fetch::math::clustering;
-using namespace fetch::math::linalg;
-
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
-
-TEST(distance_tests, clustering_test)
+class ConsensusMinerInterface
 {
-  _M<double> A = _M<double>{4, 2};
-  A.Set(0, 0, -2);
-  A.Set(0, 1, -2);
-  A.Set(1, 0, -1);
-  A.Set(1, 1, -1);
-  A.Set(2, 0, 1);
-  A.Set(2, 1, 1);
-  A.Set(3, 0, 2);
-  A.Set(3, 1, 2);
+public:
+  using BlockType = chain::MainChain::BlockType;
 
-  auto output = KMeans(A, 2);
-  ASSERT_TRUE(output[0] == output[1]);
-  ASSERT_TRUE(output[2] == output[3]);
-}
+  ConsensusMinerInterface()          = default;
+  virtual ~ConsensusMinerInterface() = default;
+
+  virtual void Mine(BlockType &block)                      = 0;
+  virtual bool Mine(BlockType &block, uint64_t iterations) = 0;
+};
+
+}  // namespace consensus
+}  // namespace chain
+}  // namespace fetch

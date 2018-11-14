@@ -164,7 +164,7 @@ private:
       auto block            = Variant::Object();
       block["previousHash"] = byte_array::ToBase64(b.prev());
       block["currentHash"]  = byte_array::ToBase64(b.hash());
-      block["proof"]        = byte_array::ToBase64(b.proof());
+      block["proof"]        = byte_array::ToBase64(b.proof().header());
       block["blockNumber"]  = b.body().block_number;
 
       if (include_transactions)

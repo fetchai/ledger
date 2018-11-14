@@ -26,7 +26,7 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
   assert(block.body().previous_hash.size() > 0);
 
   fetch::generics::MilliTimer myTimer("MainChain::AddBlock");
-  std::unique_lock<Mutex>     lock(main_mutex_);  // we need to selectively unlock this later.
+  Lock                        lock(main_mutex_);  // we need to selectively unlock this later.
 
   if (block.hash().size() == 0)
   {
@@ -54,7 +54,7 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
                      "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
 
       // We can't find the prev, this is probably a loose block.
-      lock.unlock();
+      // lock.unlock();
       return CheckDiskForBlock(block);
     }
 
@@ -68,10 +68,13 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
       return true;
     }
   }
-  else
+  else  // else of recursive_iteration==true
   {
     auto it = block_chain_.find(block.body().previous_hash);
-    assert(it != block_chain_.end());
+    if (it == block_chain_.end())
+    {
+      return false;
+    }
 
     prev_block = it->second;
   }
@@ -90,7 +93,7 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
   }
 
   // Now we're done, it's possible this added block completed some loose blocks.
-  main_mutex_.unlock();
+  // main_mutex_.unlock();
 
   if (!recursive_iteration)
   {

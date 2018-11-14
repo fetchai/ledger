@@ -132,7 +132,7 @@ struct CommandLineArguments
   std::string interface;
   std::string token;
   bool        bootstrap{false};
-  bool        mine{false};
+  int         mine{0};  // 0 no mining, 1->DummyMiner, 2->BadMiner
   std::string dbdir;
   std::string external_address;
   std::string host_name;
@@ -170,7 +170,7 @@ struct CommandLineArguments
     parameters.add(args.token, "token",
                    "The authentication token to be used with bootstrapping the client",
                    std::string{});
-    parameters.add(args.mine, "mine", "Enable mining on this node", false);
+    parameters.add(args.mine, "mine", "Enable mining on this node", 0);
 
     parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});

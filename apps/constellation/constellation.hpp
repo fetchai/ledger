@@ -19,6 +19,7 @@
 
 #include "http/module.hpp"
 #include "http/server.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
 #include "ledger/execution_manager.hpp"
@@ -31,7 +32,7 @@
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
-#include "network/p2pservice/p2ptrust.hpp"
+#include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -42,6 +43,7 @@
 #include <random>
 #include <thread>
 #include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace fetch {
@@ -65,13 +67,15 @@ public:
                          std::string                         my_network_address,
                          std::chrono::steady_clock::duration block_interval);
 
-  void Run(UriList const &initial_peers, bool mining);
+  void Run(UriList const &initial_peers, int mining);
   void SignalStop();
 
 private:
-  using Muddle                 = muddle::Muddle;
-  using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = miner::BasicMiner;
+  using Muddle                = muddle::Muddle;
+  using NetworkManager        = network::NetworkManager;
+  using BlockPackingAlgorithm = miner::BasicMiner;
+  using ConsensusMiners =
+      std::unordered_map<int, std::shared_ptr<chain::consensus::ConsensusMinerInterface>>;
   using Miner                  = chain::MainChainMiner;
   using BlockCoordinator       = chain::BlockCoordinator;
   using MainChain              = chain::MainChain;
@@ -90,7 +94,7 @@ private:
   using HttpModulePtr          = std::shared_ptr<HttpModule>;
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
-  using TrustSystem            = p2p::P2PTrust<Muddle::Address>;
+  using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
 
   /// @name Configuration
   /// @{
@@ -130,7 +134,9 @@ private:
   MainChain             chain_;              ///< The main block chain component
   BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
-  Miner                 miner_;              ///< The miner and block generation component
+  ConsensusMiners
+        consensus_miners_;  ///< The consensus miners, one from the map needs to be injected to Miner
+  Miner miner_;             ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services
