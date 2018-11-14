@@ -129,7 +129,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (name[0]>='A' && name[0]<='Z')
     {
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      //trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
     }
 
     // update our desired
