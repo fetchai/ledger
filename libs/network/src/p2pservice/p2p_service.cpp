@@ -268,6 +268,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   }
   for (auto const &address : blacklisted_peers_)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting: ", ToBase64(address));
     muddle_.Blacklist(address);
   }
 }

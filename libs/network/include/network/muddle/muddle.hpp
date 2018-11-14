@@ -151,6 +151,7 @@ public:
   /// @{
   void            AddPeer(Uri const &peer);
   void            DropPeer(Uri const &peer);
+  void            DropPeer(Address const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
 

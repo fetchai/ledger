@@ -135,6 +135,11 @@ Muddle::ConnectionMap Muddle::GetConnections()
   return connection_map;
 }
 
+void DropPeer(Address const &peer)
+{
+  router_.DropPeer(peer);
+}
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
@@ -265,6 +270,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
+  DropPeer(target);
   router_.Blacklist(target);
 }
 
