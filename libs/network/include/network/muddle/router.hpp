@@ -25,6 +25,7 @@
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <memory>
@@ -52,7 +53,6 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
-  using NetworkId     = MuddleEndpoint::NetworkId;
 
   struct RoutingData
   {
@@ -115,6 +115,9 @@ public:
     return network_id_;
   }
 
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
+  bool IsBlacklisted(Address const &target) const;
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -140,6 +143,7 @@ private:
   Address const         address_;
   RawAddress const      address_raw_;
   MuddleRegister const &register_;
+  BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
 

@@ -188,6 +188,9 @@ public:
   void            DropPeer(Uri const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
+
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
   /// @}
 
   // Operators
@@ -208,7 +211,6 @@ public:
                    byte_array::ToBase64(identity_.identifier()));
     return router_.HandleToAddress(handle, identifier);
   }
-
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

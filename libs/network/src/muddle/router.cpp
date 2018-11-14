@@ -113,6 +113,28 @@ Packet::RawAddress ConvertAddress(Packet::Address const &address)
 }
 
 /**
+ * Convert one address format to another
+ *
+ * @param address The input address
+ * @return The output address
+ */
+  /*
+Packet::Address &&ConvertAddress(Packet::RawAddress const &raw_address)
+{
+  Packet::Address address;
+  ByteArray buffer;
+  if (raw_address.size() != address.size())
+  {
+    throw std::runtime_error("Unable to convert one address to another");
+  }
+  buffer.Resize(raw_address.size());
+  std::memcpy(buffer.pointer(), raw_address.data(), raw_address.size());
+  address = buffer;
+  return std::move(address);
+}
+  */
+
+/**
  * Comparison operation
  *
  * @param lhs Reference initial address to compare
@@ -690,6 +712,13 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
   {
     if (CHANNEL_ROUTING == packet->GetProtocol())
     {
+      if (blacklist_.Contains(packet->GetSenderRaw()))
+      {
+        
+        FETCH_LOG_WARN(LOGGING_NAME, "Oh yikes, should blacklist ", ToBase64(packet->GetSender()));
+        // this is where we prevent incoming connections.
+      }
+
       // make the association with
       AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
@@ -799,6 +828,21 @@ void Router::CleanEchoCache()
       ++it;
     }
   }
+}
+
+void Router::Blacklist(Address const &target)
+{
+  blacklist_.Add(target);
+}
+
+void Router::Whitelist(Address const &target)
+{
+  blacklist_.Remove(target);
+}
+
+bool Router::IsBlacklisted(Address const &target) const
+{
+  return blacklist_.Contains(target);
 }
 
 }  // namespace muddle
