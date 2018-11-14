@@ -53,10 +53,6 @@ public:
   {
     Packet::Address address;
     byte_array::ByteArray buffer;
-    if (raw_address.size() != address.size())
-    {
-      throw std::runtime_error("Unable to convert one address to another");
-    }
     buffer.Resize(raw_address.size());
     std::memcpy(buffer.pointer(), raw_address.data(), raw_address.size());
     address = buffer;

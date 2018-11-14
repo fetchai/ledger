@@ -113,28 +113,6 @@ Packet::RawAddress ConvertAddress(Packet::Address const &address)
 }
 
 /**
- * Convert one address format to another
- *
- * @param address The input address
- * @return The output address
- */
-  /*
-Packet::Address &&ConvertAddress(Packet::RawAddress const &raw_address)
-{
-  Packet::Address address;
-  ByteArray buffer;
-  if (raw_address.size() != address.size())
-  {
-    throw std::runtime_error("Unable to convert one address to another");
-  }
-  buffer.Resize(raw_address.size());
-  std::memcpy(buffer.pointer(), raw_address.data(), raw_address.size());
-  address = buffer;
-  return std::move(address);
-}
-  */
-
-/**
  * Comparison operation
  *
  * @param lhs Reference initial address to compare
