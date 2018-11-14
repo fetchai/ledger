@@ -154,6 +154,7 @@ private:
   RequestingPeerlists pending_peer_lists_;     ///< The queue of outstanding peer lists
   RequestingUris      pending_resolutions_;    ///< The queue of outstanding resolutions
   AddressSet desired_peers_;  ///< The desired set of addresses that we want to have connections to
+  AddressSet blacklisted_peers_;  ///< The set of addresses that we will not have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
   std::size_t             work_cycle_count_ = 0;  ///< Counter to manage periodic task intervals
