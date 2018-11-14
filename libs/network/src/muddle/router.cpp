@@ -702,7 +702,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
         // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME, "Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
+        FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
         KillConnection(handle);
         return;
       }
@@ -831,6 +831,20 @@ void Router::Whitelist(Address const &target)
 bool Router::IsBlacklisted(Address const &target) const
 {
   return blacklist_.Contains(target);
+}
+
+void Router::DropPeer(Address const &peer)
+{
+  Handle h = LookupHandle(ConvertAddress(peer));
+  if (h)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Dropping ", ToBase64(peer));
+    KillConnection(h);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Not dropping ", ToBase64(peer), " -- not connected");
+  }
 }
 
 }  // namespace muddle
