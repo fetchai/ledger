@@ -25,6 +25,17 @@
 
 using fetch::storage::VariantStack;
 
+class TestClass
+{
+public:
+  uint64_t value1 = 0;
+  uint8_t  value2 = 0;
+
+  bool operator==(TestClass const &rhs)
+  {
+    return value1 == rhs.value1 && value2 == rhs.value2;
+  }
+};
 class VariantStackBench : public ::benchmark::Fixture
 {
 protected:
@@ -42,9 +53,18 @@ protected:
 
 BENCHMARK_F(VariantStackBench, WritingIntToStack)(benchmark::State &st)
 {
+  TestClass temp;
+  uint64_t  choose_type;
+  uint64_t  i = 0;
   for (auto _ : st)
   {
     uint64_t random = lfg_();
-    stack_.Push(random);
+    temp.value1     = random;
+    temp.value2     = random & 0xFF;
+    std::tuple<TestClass, uint64_t, uint8_t> test_vals =
+        std::make_tuple(temp, uint64_t(~random), uint8_t(~random & 0xFF));
+    choose_type = i % 3;
+    ++i;
+    stack_.Push(std::get<0>(test_vals), choose_type);
   }
 }
