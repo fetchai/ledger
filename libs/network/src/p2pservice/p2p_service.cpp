@@ -60,7 +60,7 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  thread_pool_->SetIdleInterval(2000);
+  thread_pool_->SetIdleInterval(4000);
   thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 }
@@ -97,7 +97,6 @@ void P2PService::WorkCycle()
   UpdateManifests(active_addresses);
 
   // increment the work cycle counter (used for scheduling of periodic events)
-  ++work_cycle_count_;
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
@@ -163,22 +162,13 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 {
-  static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
-  static constexpr std::size_t MAX_PEERS_PER_CYCLE   = 20;
-
-  bool const discover_new_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 4;
-
-  // determine if we should request new information from the network
-  if (discover_new_peers)
+  for (auto const &address : pending_peer_lists_.FilterOutInFlight(active_addresses))
   {
-    for (auto const &address : pending_peer_lists_.FilterOutInFlight(active_addresses))
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Discover new peers from: ", ToBase64(address));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Discover new peers from: ", ToBase64(address));
 
-      auto prom = network::PromiseOf<AddressSet>(client_.CallSpecificAddress(
-          address, RPC_P2P_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS));
-      pending_peer_lists_.Add(address, prom);
-    }
+    auto prom = network::PromiseOf<AddressSet>(client_.CallSpecificAddress(
+        address, RPC_P2P_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS));
+    pending_peer_lists_.Add(address, prom);
   }
 
   // resolve the any remaining promises
@@ -212,13 +202,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
-
-  bool const renew_desired_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 8;
-  if (renew_desired_peers)
-  {
-    desired_peers_ = trust_system_.GetBestPeers(min_peers_);
-  }
+  desired_peers_ = trust_system_.GetBestPeers(min_peers_);
 }
 
 void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)

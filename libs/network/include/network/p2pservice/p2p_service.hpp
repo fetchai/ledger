@@ -157,7 +157,6 @@ private:
   AddressSet blacklisted_peers_;  ///< The set of addresses that we will not have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
-  std::size_t             work_cycle_count_ = 0;  ///< Counter to manage periodic task intervals
   ///@}
 
   uint32_t min_peers_ = 2;
