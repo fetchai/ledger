@@ -59,7 +59,7 @@ ADD_TEST(-, subtract)
 ADD_TEST(/, divide)
 ADD_TEST(&, and)
 ADD_TEST(|, or)
-ADD_TEST (^, xor)
+ADD_TEST(^, xor)
 #undef ADD_TEST
 
 void test_registers()
@@ -191,7 +191,7 @@ ADD_TEST(-, subtract)
 ADD_TEST(/, divide)
 ADD_TEST(&, and)
 ADD_TEST(|, or)
-ADD_TEST (^, xor)
+ADD_TEST(^, xor)
 
 #undef ADD_TEST
 

@@ -49,28 +49,26 @@ TEST(free_functions, sigmoid_test_2x2)
 
   matrix_type output = fetch::math::Sigmoid(array1);
 
-  matrix_type numpy_output = matrix_type (R"(
+  matrix_type numpy_output = matrix_type(R"(
 	0.57444252 0.76852478;
  0.66818777 1
 	)");
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-
 }
 
 // Test sigmoid function output against numpy output for 1x1 input matrix of random values
 TEST(free_functions, sigmoid_test_1x1)
 {
   matrix_type input{1, 1};
-  matrix_type output{1,1};
-  matrix_type numpy_output{1,1};
-
+  matrix_type output{1, 1};
+  matrix_type numpy_output{1, 1};
 
   for (std::size_t i = 0; i < input.size(); ++i)
   {
-    input.Set(i,0);
-    output.Set(i,0);
-    numpy_output.Set(i,0);
+    input.Set(i, 0);
+    output.Set(i, 0);
+    numpy_output.Set(i, 0);
   }
 
   input.Set(0, 0, 0.3);
@@ -81,7 +79,6 @@ TEST(free_functions, sigmoid_test_1x1)
   numpy_output.Set(0, 0.574442516811659);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-
 }
 
 // Test tanh function output against numpy output for 2x2 input matrix of random values
@@ -96,11 +93,10 @@ TEST(free_functions, tanh_test_2x2)
 
   matrix_type output = fetch::math::Tanh(array1);
 
-  matrix_type numpy_output = matrix_type (R"(
+  matrix_type numpy_output = matrix_type(R"(
 	0.29131261 0.83365461;
  0.60436778 1.
 	)");
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-
 }
