@@ -33,6 +33,55 @@ using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
 
+int factorial(int n);
+matrix_type combinations(int n, int r);
+
+// Helper function
+int factorial(int n)
+{
+  int i;
+  for(i = n-1; i > 1; i--)
+    n *= i;
+
+  return n;
+}
+
+// Helper function
+matrix_type combinations(int n, int r)
+{
+  int n_combinations = factorial(n)/factorial(r)/factorial(n-r);
+  int current_dim = 0;
+  int current_row = 0;
+
+  std::vector<bool> v(static_cast<unsigned long>(n));
+  std::fill(v.end() - r, v.end(), true);
+
+  matrix_type output_array{static_cast<std::size_t>(n_combinations), static_cast<std::size_t>(r)};
+  do {
+    for (int i = 0; i < n; ++i) {
+      if (v[static_cast<unsigned long>(i)]) {
+        if (current_dim == 0){
+          int dim0 = (i + 1);
+          // std::cout << "dim0: " << dim0 << " ";
+          current_dim = current_dim + 1;
+          current_dim = current_dim % r;
+          output_array.At(static_cast<std::size_t>(current_row), 0) = dim0;
+        }
+        else if (current_dim == 1){
+          int dim1 = (i + 1);
+          // std::cout << "dim1: " << dim1 << " ";
+          current_dim = current_dim + 1;
+          current_dim = current_dim % r;
+          output_array.At(static_cast<std::size_t>(current_row), 1) = dim1;
+          current_row = current_row + 1;
+        }
+      }
+    }
+    // std::cout << "\n";
+  } while (std::next_permutation(v.begin(), v.end()));
+  return output_array;
+}
+
 TEST(clustering_test, kmeans_test_2d_4k)
 {
 
@@ -97,11 +146,16 @@ TEST(clustering_test, kmeans_test_4dimensions)
   int n_points = n_clusters*5;  // Each cluster will consist of 5 points
   matrix_type A{static_cast<std::size_t>(n_points), static_cast<std::size_t>(n_dimensions)};
 
-  int n = 4;
-  int r = 2;
+  matrix_type com = combinations(4, 2);
 
-  std::vector<bool> v(static_cast<unsigned long>(n));
-  std::fill(v.end() - r, v.end(), true);
+  for (std::size_t i = 0; i < 6; ++i){
+    for (std::size_t j = 0; j < 2; ++j){
+      std::cout << com.At(i,j);
+    }
+    std::cout << std::endl;
+  }
+
+
 //
 //  do {
 //    for (int i = 0; i < n; ++i) {
@@ -115,19 +169,45 @@ TEST(clustering_test, kmeans_test_4dimensions)
 
 
 
-
-
-
-  do {
-    for (int i = 0; i < n; ++i) {
-      if (v[static_cast<unsigned long>(i)]) {
-        int dim1 = (i + 1);
-        int dim2 = (i + 1);
-        std::cout << dim1 << " " << dim2;
-      }
-    }
-    std::cout << "\n";
-  } while (std::next_permutation(v.begin(), v.end()));
+//  int n = 4;
+//  int r = 2;
+//  int n_combinations = factorial(n)/factorial(r)/factorial(n-r);
+//  int which_dim = 0;
+//  int row = 0;
+//
+//  std::vector<bool> v(static_cast<unsigned long>(n));
+//  std::fill(v.end() - r, v.end(), true);
+//
+//  matrix_type output_array{static_cast<std::size_t>(n_combinations), static_cast<std::size_t>(r)};
+//  do {
+//    for (int i = 0; i < n; ++i) {
+//      if (v[static_cast<unsigned long>(i)]) {
+//        if (which_dim == 0){
+//          int dim0 = (i + 1);
+//          std::cout << "dim0: " << dim0 << " ";
+//          which_dim = which_dim + 1;
+//          which_dim = which_dim % r;
+//          output_array.At(static_cast<std::size_t>(row), 0) = dim0;
+//        }
+//        else if (which_dim == 1){
+//          int dim1 = (i + 1);
+//          std::cout << "dim1: " << dim1 << " ";
+//          which_dim = which_dim + 1;
+//          which_dim = which_dim % r;
+//          output_array.At(static_cast<std::size_t>(row), 1) = dim1;
+//          row = row + 1;
+//        }
+//      }
+//    }
+//    std::cout << "\n";
+//  } while (std::next_permutation(v.begin(), v.end()));
+//
+//  for (std::size_t i = 0; i < 6; ++i){
+//    for (std::size_t j = 0; j < 2; ++j){
+//      std::cout << output_array.At(i,j);
+//    }
+//    std::cout << std::endl;
+//  }
 
 
 
