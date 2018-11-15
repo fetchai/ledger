@@ -32,6 +32,20 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
+enum InitMode
+{
+  KMeansPP = 0,  // kmeans++, a good default choice
+  Forgy    = 1,  // Forgy, randomly initialize clusters to data points
+  PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
+};
+enum KInferenceMode
+{
+  Off            = 0,
+  NClusters      = 1,  // infer K by counting number of previously assigned clusters
+  HighestCluster = 2,  // infer K by using highest valued previous cluster assignment
+  Invalid        = std::numeric_limits<std::size_t>::max()
+};
+
 namespace details {
 
 template <typename ArrayType>
@@ -45,13 +59,13 @@ public:
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , init_mode_(init_mode)
+    , k_inference_mode_(KInferenceMode::Off)
   {
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
     std::vector<std::size_t> k_assignment_shape{n_points_, 1};
-    k_assignment_ =
-        ArrayType(k_assignment_shape);  // it's okay not to initialise as long as we take the
+    k_assignment_ = ArrayType(k_assignment_shape);
 
     KMeansSetup(data, r_seed);
 
@@ -74,6 +88,7 @@ public:
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , k_assignment_(std::move(k_assignment))
+    , k_inference_mode_(KInferenceMode::Off)
   {
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
@@ -87,6 +102,46 @@ public:
     KMeansSetup(data, r_seed);
 
     ComputeKMeans(data, ret);
+
+    // in some cases, we need to remap cluster labels back to input previous labelling scheme
+    if ((init_mode_ == InitMode::PrevK) && (k_inference_mode_ == KInferenceMode::NClusters))
+    {
+      ReMapClusters();
+    }
+
+    // assign the final output
+    ret = k_assignment_;
+  }
+
+  KMeansImplementation(ArrayType const &data, ArrayType &ret, std::size_t const &r_seed,
+                       std::size_t const &max_loops, ArrayType k_assignment,
+                       std::size_t max_no_change_convergence, std::size_t const &k_inference_mode)
+    : max_no_change_convergence_(max_no_change_convergence)
+    , max_loops_(max_loops)
+    , k_assignment_(std::move(k_assignment))
+    , k_inference_mode_(k_inference_mode)
+  {
+    // seed random number generator
+    rng_.seed(uint32_t(r_seed));
+
+    n_points_     = data.shape()[0];
+    n_dimensions_ = data.shape()[1];
+
+    init_mode_ = InitMode::PrevK;  // since prev_k_assignment is specified, the initialization will
+    // be to use that
+
+    KMeansSetup(data, r_seed);
+
+    ComputeKMeans(data, ret);
+
+    // in some cases, we need to remap cluster labels back to input previous labelling scheme
+    if ((init_mode_ == InitMode::PrevK) && (k_inference_mode_ == KInferenceMode::NClusters))
+    {
+      ReMapClusters();
+    }
+
+    // assign the final output
+    ret = k_assignment_;
   }
 
   /**
@@ -96,6 +151,7 @@ public:
   {
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
+    loop_counter_ = 0;
 
     temp_k_ = ArrayType(data.shape());
 
@@ -129,8 +185,6 @@ private:
       Update(data);
     }
     UnReassign();
-
-    ret = k_assignment_;  // assign the final output
   }
 
   /**
@@ -140,21 +194,22 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
-    k_count_ = std::vector<std::size_t>(n_clusters_, 0);
-
-    // shuffle the data
-    data_idxs_ = std::vector<std::size_t>(n_points_);
-    std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
-    std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
-
-    //
-
-    if (n_clusters_ != 0)
+    if (k_inference_mode_ == KInferenceMode::Off)
     {
-      // initialise k means
-      std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
-      k_means_      = ArrayType(k_means_shape);
-      prev_k_means_ = ArrayType::Zeroes(k_means_shape);
+      k_count_ = std::vector<std::size_t>(n_clusters_, 0);
+
+      // shuffle the data
+      data_idxs_ = std::vector<std::size_t>(n_points_);
+      std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
+      std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
+
+      if (n_clusters_ != 0)
+      {
+        // initialise k means
+        std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
+        k_means_      = ArrayType(k_means_shape);
+        prev_k_means_ = ArrayType::Zeroes(k_means_shape);
+      }
     }
 
     switch (init_mode_)
@@ -167,36 +222,13 @@ private:
 
       // check if we know enough to initialise from previous clusters
       bool sufficient_previous_assignment;
-      if (n_clusters_ == 0)
+      if (k_inference_mode_ != KInferenceMode::Off)
       {
-        // if user has not set a specific value for K then we must infer it from how many non-zero
-        // counts we find
-        for (std::size_t j = 0; j < n_points_; ++j)
-        {
-          if (!(k_assignment_.At(j, 0) < 0))  // previous unassigned data points must be assigned
-                                              // with a negative cluster value
-          {
-            while (k_count_.size() <= static_cast<std::size_t>(k_assignment_.At(j, 0)))
-            {
-              k_count_.emplace_back(0);
-            }
-            ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
-          }
-        }
-
-        // if user wants us to figure out how many clusters to set then we only need to find a
-        // single case with non-zero count
-        sufficient_previous_assignment = false;
-        for (std::size_t j = 0; (!sufficient_previous_assignment) && j < n_clusters_; ++j)
-        {
-          if (k_count_[j] != 0)
-          {
-            sufficient_previous_assignment = true;
-          }
-        }
+        InferK(sufficient_previous_assignment);
       }
       else
       {
+
         // if user has set a specific value for K then we must have non-zero count for every cluster
         std::fill(k_count_.begin(), k_count_.end(), 0);
         for (std::size_t j = 0; j < n_points_; ++j)
@@ -252,6 +284,86 @@ private:
 
     // reset the kcount
     std::fill(k_count_.begin(), k_count_.end(), 0);  // reset the k_count
+  }
+
+  /**
+   * Infers the value of K based on previously assigned data points to clusters
+   * @param sufficient_previous_assignment boolean indicating whether we have enough previous
+   * assignment to initialise this way
+   */
+  void InferK(bool &sufficient_previous_assignment)
+  {
+    assert(k_inference_mode_ != KInferenceMode::Invalid);
+    assert(k_count_.size() == 0);
+
+    if (k_inference_mode_ == KInferenceMode::HighestCluster)
+    {
+      // infer K to be equal to the value of the highest numbered cluster encountered in the
+      // assignment
+
+      for (std::size_t j = 0; j < n_points_; ++j)
+      {
+        // previous unassigned data points must be assigned with a negative cluster value
+        if (!(k_assignment_.At(j, 0) < 0))
+        {
+          while (k_count_.size() <= static_cast<std::size_t>(k_assignment_.At(j, 0)))
+          {
+            k_count_.emplace_back(0);
+          }
+          ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+        }
+      }
+    }
+    else if (k_inference_mode_ == KInferenceMode::NClusters)
+    {
+      // map previously assigned clusters numbers to counst
+      std::unordered_map<std::size_t, std::size_t> prev_cluster_count{};
+
+      // infer K to be equal to the number of previously assigned clusters (regardless of cluster
+      // value)
+      for (std::size_t j = 0; j < n_points_; ++j)
+      {
+        // if this data point is assigned
+        int cur_assignment = static_cast<int>(k_assignment_.At(j, 0));
+        if (cur_assignment >= 0)
+        {
+          // if this cluster already exists in the map
+          if (prev_cluster_count.find(static_cast<std::size_t>(cur_assignment)) !=
+              prev_cluster_count.end())
+          {
+            ++(prev_cluster_count.find(static_cast<std::size_t>(cur_assignment))->second);
+          }
+          else
+          {
+            prev_cluster_count.insert(
+                std::pair<std::size_t, std::size_t>(static_cast<std::size_t>(cur_assignment), 1));
+          }
+        }
+      }
+
+      std::size_t cluster_count = 0;
+      for (auto pc : prev_cluster_count)
+      {
+        // re-assign the previous assignments in order 0 - number of specified clusters in data
+        k_count_.emplace_back(pc.second);
+
+        // keep a map of new assignments to previous assignments
+        cluster_assignment_map_.insert(
+            std::pair<std::size_t, std::size_t>(cluster_count, pc.first));
+        ++cluster_count;
+      }
+    }
+
+    // if user wants us to figure out how many clusters to set then we only need to find a
+    // single case with non-zero count
+    sufficient_previous_assignment = false;
+    for (std::size_t j = 0; (!sufficient_previous_assignment) && j < n_clusters_; ++j)
+    {
+      if (k_count_[j] != 0)
+      {
+        sufficient_previous_assignment = true;
+      }
+    }
   }
 
   /**
@@ -385,7 +497,7 @@ private:
     std::fill(k_count_.begin(), k_count_.end(), 0);
     for (std::size_t i = 0; i < n_points_; ++i)
     {
-      running_mean_ = std::numeric_limits<double>::max();
+      running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
       for (std::size_t j = 0; j < n_clusters_; ++j)
       {
         if (k_euclids_[j][i] < running_mean_)
@@ -546,18 +658,33 @@ private:
     return true;
   }
 
-  std::size_t n_points_;
-  std::size_t n_dimensions_;
-  std::size_t n_clusters_;
+  void ReMapClusters()
+  {
+    for (std::size_t i = 0; i < n_points_; ++i)
+    {
+      assert(cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i, 0))) !=
+             cluster_assignment_map_.end());
+      // overwrite every clust assignment with its equivalent previous label at input
+      k_assignment_.Set(
+          i, 0,
+          cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i, 0)))->second);
+    }
+  }
 
-  std::size_t no_change_count_ = 0;  // number of times there was no change in k_assignment in a row
-  std::size_t max_no_change_convergence_;  // max number of times k_assignment can not change before
-                                           // convergence
+  static constexpr std::size_t INVALID       = std::numeric_limits<std::size_t>::max();
+  std::size_t                  n_points_     = INVALID;
+  std::size_t                  n_dimensions_ = INVALID;
+  std::size_t                  n_clusters_   = INVALID;
 
-  std::size_t loop_counter_ = 0;
-  std::size_t max_loops_;
+  std::size_t no_change_count_ = INVALID;  // times there was no change in k_assignment in a row
+  std::size_t max_no_change_convergence_ =
+      INVALID;  // max no change k_assignment before convergence
+  std::size_t loop_counter_ = INVALID;
+  std::size_t max_loops_    = INVALID;
+  std::size_t assigned_k_   = INVALID;  // current cluster to assign
 
-  double running_mean_;  // we'll use this find the smallest euclidean distance out of K comparisons
+  typename ArrayType::Type running_mean_ =
+      INVALID;  // used to find the smallest distance out of K comparisons
 
   std::default_random_engine rng_;
 
@@ -572,21 +699,17 @@ private:
   ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
   std::vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  std::vector<std::size_t> k_count_{
-      n_clusters_};  // count of how many data points per cluster (for checking reassignment)
-  std::vector<ArrayType> k_euclids_;  // container for current euclid distances
+  std::vector<std::size_t> k_count_;    // count of how many data points assigned per cluster
+  std::vector<ArrayType>   k_euclids_;  // container for current euclid distances
 
-  std::size_t assigned_k_;  // current cluster to assign
+  // map previously assigned clusters to current clusters
+  std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
 
   bool reassign_;
 
-  enum InitMode
-  {
-    KMeansPP = 0,  // kmeans++, a good default choice
-    Forgy    = 1,  // Forgy, randomly initialize clusters to data points
-    PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
-  };
   std::size_t init_mode_;
+
+  std::size_t k_inference_mode_ = KInferenceMode::Invalid;
 };
 
 }  // namespace details
@@ -634,25 +757,51 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
  * Interface to KMeans algorithm
  * @tparam ArrayType        fetch library Array type
  * @param data              input data to cluster in format n_data x n_dims
- * @param K                 number of clusters
  * @param r_seed            random seed
  * @param prev_assignment   previous K assignment on which to initialise
+ * @param k_inference_mode  the method for defining how to infer K
  * @param max_loops         maximum loops until convergence assumed
+ * @param max_no_change_convergence     number of iterations with no change to assignment that
+ * counts as convergence
  * @return                  ArrayType of format n_data x 1 with values indicating cluster
  */
 template <typename ArrayType>
 ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType const &prev_assignment,
-                 std::size_t const &K = 0, std::size_t max_loops = 100,
+                 std::size_t const &k_inference_mode, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
-  std::size_t n_points = data.shape()[0];
-
-  // we can't have more clusters than data points
-  assert(K <= n_points);  // you can't have more clusters than data points
-  assert(K != 1);         // why would you run k means clustering with only one cluster?
-
+  std::size_t              n_points = data.shape()[0];
   std::vector<std::size_t> ret_array_shape{n_points, 1};
   ArrayType                ret{ret_array_shape};
+  details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
+                                           max_no_change_convergence, k_inference_mode);
+
+  return ret;
+}
+
+/**
+ * Interface to KMeans algorithm
+ * @tparam ArrayType        fetch library Array type
+ * @param data              input data to cluster in format n_data x n_dims
+ * @param r_seed            random seed
+ * @param K                 number of clusters
+ * @param prev_assignment   previous K assignment on which to initialise
+ * @param max_loops         maximum loops until convergence assumed
+ * @param max_no_change_convergence     number of iterations with no change to assignment that
+ * counts as convergence
+ * @return                  ArrayType of format n_data x 1 with values indicating cluster
+ */
+template <typename ArrayType>
+ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t const &K,
+                 ArrayType const &prev_assignment, std::size_t max_loops = 100,
+                 std::size_t max_no_change_convergence = 10)
+{
+  std::size_t              n_points = data.shape()[0];
+  std::vector<std::size_t> ret_array_shape{n_points, 1};
+  ArrayType                ret{ret_array_shape};
+
+  assert(K <= n_points);  // you can't have more clusters than data points
+  assert(K != 1);         // why would you run k means clustering with only one cluster?
 
   if (n_points == K)  // very easy to cluster!
   {
@@ -666,7 +815,6 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType con
     details::KMeansImplementation<ArrayType>(data, K, ret, r_seed, max_loops, prev_assignment,
                                              max_no_change_convergence);
   }
-
   return ret;
 }
 
