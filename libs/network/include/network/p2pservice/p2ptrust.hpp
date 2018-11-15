@@ -246,7 +246,7 @@ public:
   P2PTrust operator=(P2PTrust &&rhs) = delete;
 
 protected:
-  void SortIfNeeded()
+  void SortIfNeeded() const
   {
     auto const current_time = GetCurrentTime();
 
