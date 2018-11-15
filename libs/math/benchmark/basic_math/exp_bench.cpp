@@ -29,13 +29,14 @@ static void BM_ApproxExpImplementation(benchmark::State &state)
 {
 
   fetch::math::ApproxExpImplementation<N, C> fexp;
-  double                                     x = state.range(0);
+  int64_t                                    x = state.range(0);
+  volatile double                            y;
   for (auto _ : state)
   {
     // Running loop to get greater benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      x = fexp(x);
+      y = fexp(x);
     }
   }
 }
@@ -54,13 +55,14 @@ BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 12, 60801)
 
 static void BM_exp(benchmark::State &state)
 {
-  double x = state.range(0);
+  int64_t         x = state.range(0);
+  volatile double y;
   for (auto _ : state)
   {
     // Running loop to get greater benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      x = exp(x);
+      y = exp(x);
     }
   }
 }

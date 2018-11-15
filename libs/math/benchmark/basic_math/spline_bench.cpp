@@ -56,7 +56,7 @@ template <std::size_t N>
 static void BM_sin_spline(benchmark::State &state)
 {
   spline.SetFunction(dsin, 0, 100, N);
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -70,7 +70,7 @@ BENCHMARK_TEMPLATE(BM_sin_spline, 20)->RangeMultiplier(10)->Range(1, 100)->Compl
 
 static void BM_sin(benchmark::State &state)
 {
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -84,7 +84,7 @@ template <std::size_t N>
 static void BM_cos_spline(benchmark::State &state)
 {
   spline.SetFunction(dcos, 0, 100, N);
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -98,7 +98,7 @@ BENCHMARK_TEMPLATE(BM_cos_spline, 20)->RangeMultiplier(10)->Range(1, 100)->Compl
 
 static void BM_cos(benchmark::State &state)
 {
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -112,7 +112,7 @@ template <std::size_t N>
 static void BM_tan_spline(benchmark::State &state)
 {
   spline.SetFunction(dtan, 0, 100, N);
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -123,11 +123,10 @@ static void BM_tan_spline(benchmark::State &state)
 BENCHMARK_TEMPLATE(BM_tan_spline, 8)->Apply(CustomArguments)->Complexity();
 BENCHMARK_TEMPLATE(BM_tan_spline, 16)->Apply(CustomArguments)->Complexity();
 BENCHMARK_TEMPLATE(BM_tan_spline, 20)->RangeMultiplier(10)->Range(1, 100)->Complexity();
-;
 
 static void BM_tan(benchmark::State &state)
 {
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -141,7 +140,7 @@ template <std::size_t N>
 static void BM_exp_spline(benchmark::State &state)
 {
   spline.SetFunction(dexp, 0, 100, N);
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
@@ -155,7 +154,7 @@ BENCHMARK_TEMPLATE(BM_exp_spline, 20)->RangeMultiplier(10)->Range(1, 100)->Compl
 
 static void BM_exponent(benchmark::State &state)
 {
-  volatile double x;
+  int64_t         x;
   volatile double y;
   for (auto _ : state)
   {
