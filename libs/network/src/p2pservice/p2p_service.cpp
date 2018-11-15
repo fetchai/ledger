@@ -146,11 +146,11 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (!trusted_peer)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "No longer trust: ", ToBase64(address));
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL: Untrusting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
       desired_peers_.erase(address);
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting? ", ToBase64(address), " trust=", trust_system_.GetTrustRatingOfPeer(address));
       if (trust_system_.GetTrustRatingOfPeer(address) < 0.0)
       {
+        FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
         blacklisted_peers_.insert(address);
       }
     }
