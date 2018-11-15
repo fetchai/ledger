@@ -18,12 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include <cassert>
+#include <iterator>
 
 namespace fetch {
 namespace memory {
 
 template <typename T>
-class ForwardIterator
+ class ForwardIterator: public std::iterator <std::forward_iterator_tag, T>
 {
 public:
   ForwardIterator() = delete;
@@ -69,7 +70,7 @@ private:
 };
 
 template <typename T>
-class BackwardIterator
+class BackwardIterator: public std::iterator <std::forward_iterator_tag, T>
 {
 public:
   BackwardIterator() = delete;
