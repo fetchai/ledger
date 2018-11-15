@@ -70,51 +70,49 @@ private:
 };
 
 template <typename T>
-using BackwardIterator = std::reverse_iterator<ForwardIterator<T>>;
-// template <typename T>
-// class BackwardIterator
-//{
-// public:
-//  BackwardIterator() = delete;
-//
-//  BackwardIterator(BackwardIterator const &other) = default;
-//  BackwardIterator(BackwardIterator &&other)      = default;
-//  BackwardIterator &operator=(BackwardIterator const &other) = default;
-//  BackwardIterator &operator=(BackwardIterator &&other) = default;
-//
-//  BackwardIterator(T *pos)
-//    : pos_(pos)
-//  {}
-//  BackwardIterator(T *pos, T *begin)
-//    : pos_(pos)
-//    , begin_(begin)
-//  {}
-//
-//  BackwardIterator &operator++()
-//  {
-//    --pos_;
-//    return *this;
-//  }
-//
-//  T &operator*()
-//  {
-//    assert(pos_ != nullptr);
-//    assert((begin_ != nullptr) && (pos_ > begin_));
-//    return *pos_;
-//  }
-//
-//  bool operator==(BackwardIterator const &other)
-//  {
-//    return other.pos_ == pos_;
-//  }
-//  bool operator!=(BackwardIterator const &other)
-//  {
-//    return other.pos_ != pos_;
-//  }
-//
-// private:
-//  T *pos_   = nullptr;
-//  T *begin_ = nullptr;
-//};
+class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
+{
+public:
+  BackwardIterator() = delete;
+
+  BackwardIterator(BackwardIterator const &other) = default;
+  BackwardIterator(BackwardIterator &&other)      = default;
+  BackwardIterator &operator=(BackwardIterator const &other) = default;
+  BackwardIterator &operator=(BackwardIterator &&other) = default;
+
+  BackwardIterator(T *pos)
+    : pos_(pos)
+  {}
+  BackwardIterator(T *pos, T *begin)
+    : pos_(pos)
+    , begin_(begin)
+  {}
+
+  BackwardIterator &operator++()
+  {
+    --pos_;
+    return *this;
+  }
+
+  T &operator*()
+  {
+    assert(pos_ != nullptr);
+    assert((begin_ != nullptr) && (pos_ > begin_));
+    return *pos_;
+  }
+
+  bool operator==(BackwardIterator const &other)
+  {
+    return other.pos_ == pos_;
+  }
+  bool operator!=(BackwardIterator const &other)
+  {
+    return other.pos_ != pos_;
+  }
+
+private:
+  T *pos_   = nullptr;
+  T *begin_ = nullptr;
+};
 }  // namespace memory
 }  // namespace fetch
