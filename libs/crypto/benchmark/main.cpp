@@ -16,31 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/metrics/metrics.hpp"
-#include "ledger/metrics/metric_file_handler.hpp"
+#include <benchmark/benchmark.h>
 
-namespace fetch {
-namespace ledger {
-
-Metrics &Metrics::Instance()
-{
-  static Metrics instance;
-  return instance;
-}
-
-void Metrics::ConfigureFileHandler(std::string filename)
-{
-  std::unique_ptr<MetricHandler> new_handler(new MetricFileHandler(std::move(filename)));
-
-  handler_.store(new_handler.get());
-  handler_object_ = std::move(new_handler);
-}
-
-void Metrics::RemoveMetricHandler()
-{
-  handler_.store(nullptr);
-  handler_object_.reset();
-}
-
-}  // namespace ledger
-}  // namespace fetch
+BENCHMARK_MAIN();
