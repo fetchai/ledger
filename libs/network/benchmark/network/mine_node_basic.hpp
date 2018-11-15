@@ -53,9 +53,8 @@ class MineNodeBasic
 public:
   static constexpr char const *LOGGING_NAME = "MineNodeBasic";
 
-  explicit MineNodeBasic(network::NetworkManager tm, uint64_t minerNumber)
-    : nodeDirectory_{tm}
-    , minerNumber_{minerNumber}
+  explicit MineNodeBasic(uint64_t minerNumber)
+    : minerNumber_{minerNumber}
   {}
 
   MineNodeBasic(MineNodeBasic &rhs)  = delete;

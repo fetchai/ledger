@@ -98,6 +98,8 @@ public:
 
   bool Dispatch(PacketPtr packet);
 
+  void Debug(std::string const &prefix);
+
 private:
   using Mutex              = mutex::Mutex;
   using Index              = uint32_t;

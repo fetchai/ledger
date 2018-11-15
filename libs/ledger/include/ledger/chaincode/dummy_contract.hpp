@@ -30,6 +30,8 @@ public:
   DummyContract();
   ~DummyContract() = default;
 
+  static constexpr char const *LOGGING_NAME = "DummyContract";
+
   std::size_t counter() const
   {
     return counter_;

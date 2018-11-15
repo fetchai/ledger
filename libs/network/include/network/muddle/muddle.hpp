@@ -19,6 +19,7 @@
 
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
@@ -114,6 +115,9 @@ public:
   using Identity        = crypto::Identity;
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
+  using NetworkId       = MuddleEndpoint::NetworkId;
+
+  using Handle = network::AbstractConnection::connection_handle_type;
 
   struct ConnectionData
   {
@@ -127,8 +131,37 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Muddle";
 
+  /* Utility instance creation function. In a real application, create
+     the muddle using loaded certificates and keys. In tests, call
+     this to just get one now.*/
+
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
+                                              fetch::network::NetworkManager tm)
+  {
+    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    certificate->GenerateKeys();
+
+    std::unique_ptr<crypto::Prover> certificate_;
+    certificate_.reset(certificate);
+
+    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+  }
+
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
+                                              std::unique_ptr<crypto::Prover> prover,
+                                              fetch::network::NetworkManager  tm)
+  {
+    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+  }
+
+  static inline uint32_t CreateNetworkId(const char *p)
+  {
+    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |
+           (uint32_t(p[3]));
+  }
+
   // Construction / Destruction
-  Muddle(CertificatePtr &&certificate, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;
@@ -145,20 +178,40 @@ public:
 
   ConnectionMap GetConnections();
 
+  bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
+
   PeerConnectionList &useClients();
 
   /// @name Peer control
   /// @{
   void            AddPeer(Uri const &peer);
   void            DropPeer(Uri const &peer);
+  void            DropPeer(Address const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
+
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
   /// @}
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
 
+  void Debug(std::string const &prefix)
+  {
+    router_.Debug(prefix);
+    clients_.Debug(prefix);
+  }
+
+  const std::string &NetworkIdStr();
+
+  bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
+                   byte_array::ToBase64(identity_.identifier()));
+    return router_.HandleToAddress(handle, identifier);
+  }
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
@@ -187,6 +240,8 @@ private:
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
+  NetworkId            network_id_;
+  std::string          network_id_str_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
@@ -201,6 +256,10 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "    ", this);
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), " to ", NetworkIdStr());
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
+                 byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
 }
 

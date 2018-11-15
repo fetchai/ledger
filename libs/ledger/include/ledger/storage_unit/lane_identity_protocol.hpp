@@ -26,8 +26,7 @@ class LaneIdentityProtocol : public service::Protocol
 public:
   enum
   {
-    PING = 1,
-    HELLO,
+    HELLO = 1,
     GET_IDENTITY,
     GET_LANE_NUMBER,
     GET_TOTAL_LANES,
@@ -37,8 +36,7 @@ public:
 
   LaneIdentityProtocol(LaneIdentity *ctrl)
   {
-    this->Expose(PING, ctrl, &LaneIdentity::Ping);
-    this->ExposeWithClientArg(HELLO, ctrl, &LaneIdentity::Hello);
+    this->Expose(HELLO, ctrl, &LaneIdentity::Hello);
     this->Expose(GET_IDENTITY, ctrl, &LaneIdentity::Identity);
     this->Expose(GET_LANE_NUMBER, ctrl, &LaneIdentity::GetLaneNumber);
     this->Expose(GET_TOTAL_LANES, ctrl, &LaneIdentity::GetTotalLanes);

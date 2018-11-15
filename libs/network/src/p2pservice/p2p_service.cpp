@@ -60,8 +60,10 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  thread_pool_->SetIdleInterval(2000);
-  thread_pool_->Start();
+  FETCH_LOG_INFO(LOGGING_NAME, "Establishing P2P Service on tcp://127.0.0.1:", "??",
+                 " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
+
+  thread_pool_->SetIdleInterval(4000);  thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 }
 
@@ -85,19 +87,18 @@ void P2PService::WorkCycle()
   UpdateTrustStatus(active_connections);
 
   // discover new good peers on the network
-  // PeerDiscovery(active_addresses);
+  PeerDiscovery(active_addresses);
 
   // make the decisions about which peers are desired and which ones we now need to drop
-  // RenewDesiredPeers(active_addresses);
+  RenewDesiredPeers(active_addresses);
 
   // perform connections updates and drops based on previous step
-  // UpdateMuddlePeers(active_addresses);
+  UpdateMuddlePeers(active_addresses);
 
   // collect up manifests from connected peers
   UpdateManifests(active_addresses);
 
   // increment the work cycle counter (used for scheduling of periodic events)
-  ++work_cycle_count_;
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
@@ -119,10 +120,18 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   {
     auto const &address = element.first;
 
-    // ensure that the trust system is informed of new addresses
+    //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+    }
+    
+    std::string name(ToBase64(address));
+
+    if (name[0]>='a' && name[0]<='z')
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
     }
 
     // update our desired
@@ -137,44 +146,40 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (!trusted_peer)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "No longer trust: ", ToBase64(address));
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL: Untrusting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
       desired_peers_.erase(address);
+      if (trust_system_.GetTrustRatingOfPeer(address) < 0.0)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
+        blacklisted_peers_.insert(address);
+      }
     }
   }
 
   // for the moment we should provide the trust system with some "fake" information to ensure peers
   // are trusted
-  for (auto const &peer : desired_peers_)
-  {
-    trust_system_.AddFeedback(peer, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
-  }
+  //for (auto const &peer : desired_peers_)
+  //{
+    //trust_system_.AddFeedback(peer, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+  //  }
 }
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 {
-  static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
-  static constexpr std::size_t MAX_PEERS_PER_CYCLE   = 20;
-
-  bool const discover_new_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 4;
-
-  // determine if we should request new information from the network
-  if (discover_new_peers)
+  for (auto const &address : pending_peer_lists_.FilterOutInFlight(active_addresses))
   {
-    for (auto const &address : pending_peer_lists_.FilterOutInFlight(active_addresses))
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Discover new peers from: ", ToBase64(address));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Discover new peers from: ", ToBase64(address));
 
-      auto prom = network::PromiseOf<AddressSet>(client_.CallSpecificAddress(
-          address, RPC_P2P_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS));
-      pending_peer_lists_.Add(address, prom);
-    }
+    auto prom = network::PromiseOf<AddressSet>(client_.CallSpecificAddress(
+        address, RPC_P2P_RESOLVER, ResolverProtocol::GET_RANDOM_GOOD_PEERS));
+    pending_peer_lists_.Add(address, prom);
   }
 
   // resolve the any remaining promises
   pending_peer_lists_.Resolve();
 
   // process any peer discovery updates that are returned from the queue
-  for (auto &result : pending_peer_lists_.Get(MAX_PEERS_PER_CYCLE))
+  for (auto &result : pending_peer_lists_.Get(32))
   {
     Address const &from      = result.key;
     AddressSet &   addresses = result.promised;
@@ -201,13 +206,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  static constexpr std::size_t DISCOVERY_PERIOD_MASK = 0xF;
-
-  bool const renew_desired_peers = (work_cycle_count_ & DISCOVERY_PERIOD_MASK) == 8;
-  if (renew_desired_peers)
-  {
-    desired_peers_ = trust_system_.GetBestPeers(min_peers_);
-  }
+  desired_peers_ = trust_system_.GetBestPeers(min_peers_);
 }
 
 void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
@@ -267,6 +266,11 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
     }
+  }
+  for (auto const &address : blacklisted_peers_)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting: ", ToBase64(address));
+    muddle_.Blacklist(address);
   }
 }
 

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <utility>
 
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
@@ -29,58 +30,144 @@ using fetch::network::NetworkManager;
 
 namespace fetch {
 namespace ledger {
-namespace {
 
-using NetworkClientPtr = ExecutionManagerRpcClient::NetworkClientPtr;
-using NetworkClient    = ExecutionManagerRpcClient::NetworkClient;
+using PendingConnectionCounter =
+    network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-NetworkClientPtr CreateConnection(ConstByteArray const &host, uint16_t port,
-                                  NetworkManager const &network_manager)
+class ExecutionManagerRpcConnectorWorker
 {
-  // create and connect service client
-  NetworkClientPtr connection = std::make_shared<NetworkClient>(network_manager);
-  connection->Connect(host, port);
+public:
+  using Address         = ExecutionManagerRpcClient::Address;
+  using PromiseState    = ExecutionManagerRpcClient::PromiseState;
+  using FutureTimepoint = ExecutionManagerRpcClient::FutureTimepoint;
+  using Muddle          = ExecutionManagerRpcClient::Muddle;
+  using MuddlePtr       = std::shared_ptr<Muddle>;
+  using Uri             = ExecutionManagerRpcClient::Uri;
+  using Client          = ExecutionManagerRpcClient::Client;
 
-  return connection;
+  Address target_address;
+
+  ExecutionManagerRpcConnectorWorker(
+      Uri thepeer, MuddlePtr themuddle,
+      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
+    : peer_(std::move(thepeer))
+    , timeduration_(std::move(thetimeout))
+    , muddle_(themuddle)
+  {
+    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
+                                       CHANNEL_RPC);
+  }
+  static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
+
+  virtual ~ExecutionManagerRpcConnectorWorker()
+  {
+    counter_.Completed();
+  }
+
+  PromiseState Work()
+  {
+    if (!trying_)
+    {
+      trying_ = true;
+      timeout_.Set(timeduration_);
+      muddle_->AddPeer(peer_);
+      return PromiseState::WAITING;
+    }
+
+    if (timeout_.IsDue())
+    {
+      return PromiseState::TIMEDOUT;
+    }
+
+    bool connected = muddle_->GetOutgoingConnectionAddress(peer_, target_address);
+    if (!connected)
+    {
+      return PromiseState::WAITING;
+    }
+
+    return PromiseState::SUCCESS;
+  }
+
+private:
+  std::shared_ptr<Client>   client_;
+  Uri                       peer_;
+  std::chrono::milliseconds timeduration_;
+  PendingConnectionCounter  counter_;
+  MuddlePtr                 muddle_;
+  FutureTimepoint           timeout_;
+  bool                      trying_ = false;
+};
+
+void ExecutionManagerRpcClient::WorkCycle(void)
+{
+  if (!bg_work_.WorkCycle())
+  {
+    return;
+  }
+  for (auto &successful_worker : bg_work_.GetSuccesses(1000))
+  {
+    address_     = std::move(successful_worker->target_address);
+    connections_ = 1;
+  }
+  bg_work_.DiscardFailures();
+  bg_work_.DiscardTimeouts();
 }
 
-}  // namespace
+ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
+  : network_manager_(network_manager)
+{
+  muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
+  client_ =
+      std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+  muddle_->Start({});
+}
 
-ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
-                                                     uint16_t const &      port,
-                                                     NetworkManager const &network_manager)
-  : connection_(CreateConnection(host, port, network_manager))
-  , service_(std::make_unique<ServiceClient>(*connection_, network_manager))
-{}
+void ExecutionManagerRpcClient::AddConnection(const Uri &                      uri,
+                                              const std::chrono::milliseconds &timeout)
+{
+  if (!workthread_)
+  {
+    workthread_ =
+        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+  }
+
+  auto worker = std::make_shared<ExecutionManagerRpcConnectorWorker>(
+      uri, muddle_, std::chrono::milliseconds(timeout));
+  bg_work_.Add(worker);
+}
 
 ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
 {
-  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::EXECUTE, block);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::EXECUTE, block);
   return result->As<Status>();
 }
 
 ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result =
-      service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
   return result->As<BlockHash>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()
 {
-  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_ACTIVE);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::IS_ACTIVE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::IsIdle()
 {
-  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_IDLE);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::IS_IDLE);
   return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
 {
-  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::ABORT);
+  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
+                                             ExecutionManagerRpcProtocol::ABORT);
   return result->As<bool>();
 }
 

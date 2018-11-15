@@ -185,8 +185,8 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
+      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol()
+      << " msgnum=" << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
@@ -201,12 +201,14 @@ std::string DescribePacket(Packet const &packet)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
+  , network_id_(network_id)
 {}
 
 /**
@@ -351,6 +353,29 @@ Router::RoutingTable Router::GetRoutingTable() const
 {
   FETCH_LOCK(routing_table_lock_);
   return routing_table_;
+}
+
+/**
+ * Lookup a routing
+ *
+ * @return The address corresponding to a handle in the table.
+ */
+bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  for (const auto &routing : routing_table_)
+  {
+    ByteArray output(routing.first.size());
+    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
+                    static_cast<std::string>(ToBase64(output)));
+    if (routing.second.handle == handle)
+    {
+      address = ToConstByteArray(routing.first);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -541,6 +566,15 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
+void Router::KillConnection(Handle handle)
+{
+  auto conn = register_.LookupConnection(handle).lock();
+  if (conn)
+  {
+    conn -> Close();
+  }
+}
+
 /**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
  *
@@ -665,6 +699,14 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
   {
     if (CHANNEL_ROUTING == packet->GetProtocol())
     {
+      if (blacklist_.Contains(packet->GetSenderRaw()))
+      {
+        // this is where we prevent incoming connections.
+        FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
+        KillConnection(handle);
+        return;
+      }
+
       // make the association with
       AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
@@ -696,12 +738,21 @@ void Router::DispatchPacket(PacketPtr packet)
 
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
     // of message subscriptions.
-    if (registrar_.Dispatch(packet))
+    try
     {
+      if (registrar_.Dispatch(packet))
+      {
+        return;
+      }
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, DescribePacket(*packet));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Exception processing packet ", ex.what());
       return;
     }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message:", DescribePacket(*packet));
   });
 }
 
@@ -764,6 +815,35 @@ void Router::CleanEchoCache()
       // move on to the next element in the cache
       ++it;
     }
+  }
+}
+
+void Router::Blacklist(Address const &target)
+{
+  blacklist_.Add(target);
+}
+
+void Router::Whitelist(Address const &target)
+{
+  blacklist_.Remove(target);
+}
+
+bool Router::IsBlacklisted(Address const &target) const
+{
+  return blacklist_.Contains(target);
+}
+
+void Router::DropPeer(Address const &peer)
+{
+  Handle h = LookupHandle(ConvertAddress(peer));
+  if (h)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Dropping ", ToBase64(peer));
+    KillConnection(h);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Not dropping ", ToBase64(peer), " -- not connected");
   }
 }
 

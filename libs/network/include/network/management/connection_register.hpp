@@ -124,6 +124,7 @@ public:
 
   void Leave(connection_handle_type id) override
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "ConnectionRegisterImpl::Leave");
     {
       RemoveService(id);
 

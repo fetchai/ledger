@@ -51,6 +51,11 @@ public:
 
   bool operator==(ResourceID const &other) const;
 
+  std::string ToString() const
+  {
+    return static_cast<std::string>(ToBase64(id_));
+  }
+
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 

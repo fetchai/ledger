@@ -18,15 +18,22 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace protocols {
+namespace serializers {
 
-struct QuickStartProtocols
+template <typename T, typename OBJ>
+inline void Serialize(T &serializer, OBJ *const(&ptr))
 {
-  enum
-  {
-    QUICK_START = 1
-  };
-};
+  serializer.Allocate(sizeof(uint64_t));
 
-}  // namespace protocols
+  // Writing the size to the byte array
+  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&ptr), sizeof(std::nullptr_t));
+}
+
+template <typename T, typename OBJ>
+inline void Deserialize(T &serializer, OBJ const *(&ptr))
+{
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+}
+
+}  // namespace serializers
 }  // namespace fetch

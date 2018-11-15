@@ -51,16 +51,29 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(identity_.identifier(), *register_, dispatcher_)
+  , router_(network_id, identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(network::MakeThreadPool(1))
   , clients_(router_)
-{}
+{
+  char tmp[5];
+
+  tmp[4] = 0;
+  tmp[3] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[2] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[1] = char(network_id & 0xFF);
+  network_id >>= 8;
+  tmp[0] = char(network_id & 0xFF);
+
+  network_id_str_ = std::string(tmp);
+}
 
 /**
  * Starts the muddle node and attaches it to the network
@@ -72,6 +85,8 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
+
+  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ", NetworkIdStr());
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -90,6 +105,11 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   RunPeriodicMaintenance();
 }
 
+const std::string &Muddle::NetworkIdStr()
+{
+  return network_id_str_;
+}
+
 /**
  * Stops the muddle node and removes it from the network
  */
@@ -104,6 +124,16 @@ void Muddle::Stop()
   // tear down all the clients
   // TODO(EJF): Need to have a nice shutdown method
   // clients_.clear();
+}
+
+bool Muddle::GetOutgoingConnectionAddress(const Uri &uri, Address &address) const
+{
+  PeerConnectionList::Handle handle;
+  if (!clients_.UriToHandle(uri, handle))
+  {
+    return false;
+  }
+  return router_.HandleToAddress(handle, address);
 }
 
 Muddle::ConnectionMap Muddle::GetConnections()
@@ -133,6 +163,11 @@ Muddle::ConnectionMap Muddle::GetConnections()
   }
 
   return connection_map;
+}
+
+void Muddle::DropPeer(Address const &peer)
+{
+  router_.DropPeer(peer);
 }
 
 /**
@@ -261,6 +296,18 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.AsPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
+}
+
+void Muddle::Blacklist(Address const &target)
+{
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
+  DropPeer(target);
+  router_.Blacklist(target);
+}
+
+void Muddle::Whitelist(Address const &target)
+{
+  router_.Whitelist(target);
 }
 
 }  // namespace muddle

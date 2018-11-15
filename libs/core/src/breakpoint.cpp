@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,26 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-enum AEACommands
-{
-  GET_INFO = 1,
-  CONNECT  = 2
-};
+#include "core/logger.hpp"
 
-enum PeerToPeerCommands
-{
-  SEND_MESSAGE = 1,
-  GET_MESSAGES = 2
-};
+// using Logger = fetch::log::Logger;
 
-enum PeerToPeerFeed
+void breakpoint(void)
 {
-  NEW_MESSAGE = 1,
-  CONNECTING  = 2
-};
-
-enum FetchProtocols
-{
-  AEA_PROTOCOL = 1,
-  PEER_TO_PEER = 2
-};
+  FETCH_LOG_ERROR("breakpoint", "breakpoint function");
+}

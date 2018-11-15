@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/uri.hpp"
+#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -97,6 +98,10 @@ public:
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
+
+  bool UriToHandle(const Uri &uri, Handle &handle) const;
+
+  void Debug(std::string const &prefix) const;
 
 private:
   using Clock     = std::chrono::steady_clock;

@@ -22,10 +22,23 @@
 #include "core/serializers/byte_array.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
+using Muddle = fetch::muddle::Muddle;
+using Server = fetch::muddle::rpc::Server;
+using Client = fetch::muddle::rpc::Client;
+
 #include <iostream>
+
 using namespace fetch::commandline;
 using namespace fetch::service;
 using namespace fetch::byte_array;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
 
 class AEA
 {
@@ -82,23 +95,37 @@ int main(int argc, char **argv)
 
   // Client setup
   fetch::network::NetworkManager tm;
-  fetch::network::TCPClient      connection(tm);
-  connection.Connect("localhost", 8080);
-  ServiceClient client(connection, tm);
+
+  auto                client_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
+  fetch::network::Uri peer("tcp://127.0.0.1:8080");
+  client_muddle->AddPeer(peer);
+  auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(),
+                                         SERVICE_TEST, CHANNEL_RPC);
+  auto server = std::make_shared<Server>(client_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  Muddle::Address target_address;
+  if (!client_muddle->GetOutgoingConnectionAddress(peer, target_address))
+  {
+    std::cout << "Can't connect" << std::endl;
+    exit(1);
+  }
 
   AEAProtocol aea_prot;
-
   for (std::size_t i = 0; i < params.arg_size(); ++i)
   {
     aea_prot.AddString(params.GetArg(i));
   }
 
   tm.Start();
+  client_muddle->Start({});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  client.Add(FetchProtocols::NODE_TO_AEA, &aea_prot);
+  server->Add(FetchProtocols::NODE_TO_AEA, &aea_prot);
 
-  auto p = client.Call(FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
+  auto p =
+      client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);
 
   FETCH_LOG_PROMISE();
   if (p->Wait())

@@ -21,76 +21,78 @@
 namespace fetch {
 namespace ledger {
 
-std::shared_ptr<LaneConnectorWorker> StorageUnitClient::MakeWorker(
-    LaneIndex lane, SharedServiceClient client, std::string name, std::chrono::milliseconds timeout)
-{
-  return std::make_shared<LaneConnectorWorker>(lane, client, name, timeout);
-}
+using PendingConnectionCounter =
+    network::AtomicInFlightCounter<network::AtomicCounterName::LOCAL_SERVICE_CONNECTIONS>;
 
-class LaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
+class MuddleLaneConnectorWorker : public network::AtomicStateMachine<StorageUnitClient::State>
 {
 public:
-  using State               = StorageUnitClient::State;
-  using SharedServiceClient = StorageUnitClient::SharedServiceClient;
-  using Promise             = StorageUnitClient::Promise;
-  using PromiseState        = StorageUnitClient::PromiseState;
-  using LaneIndex           = StorageUnitClient::LaneIndex;
-  using FutureTimepoint     = StorageUnitClient::FutureTimepoint;
+  using Address         = StorageUnitClient::Address;
+  using FutureTimepoint = StorageUnitClient::FutureTimepoint;
+  using LaneIndex       = StorageUnitClient::LaneIndex;
+  using Muddle          = StorageUnitClient::Muddle;
+  using MuddlePtr       = std::shared_ptr<Muddle>;
+  using Peer            = fetch::network::Peer;
+  using Promise         = StorageUnitClient::Promise;
+  using PromiseState    = StorageUnitClient::PromiseState;
+  using Uri             = StorageUnitClient::Uri;
+  using State           = StorageUnitClient::State;
+  using Client          = StorageUnitClient::Client;
 
-  LaneIndex           lane;
-  Promise             lane_prom;
-  SharedServiceClient client;
-  Promise             count_prom;
-  Promise             id_prom;
+  LaneIndex lane;
+  Promise   lane_prom;
+  Promise   count_prom;
+  Address   target_address;
 
-  LaneConnectorWorker(LaneIndex thelane, SharedServiceClient theclient, std::string thename,
-                      std::chrono::milliseconds thetimeout = std::chrono::milliseconds(1000))
+  MuddleLaneConnectorWorker(LaneIndex thelane, std::string thename, Uri thepeer,
+                            MuddlePtr                 themuddle,
+                            std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : lane(thelane)
-    , client(std::move(theclient))
-    , attempts_(0)
     , name_(std::move(thename))
-    , timeout_(std::move(thetimeout))
-    , max_attempts_(10)
+    , peer_(std::move(thepeer))
+    , timeduration_(std::move(thetimeout))
+    , muddle_(themuddle)
   {
-    // Ideal path first.
+    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+                                       CHANNEL_RPC);
+
     this->Allow(State::CONNECTING, State::INITIAL)
-        .Allow(State::PINGING, State::CONNECTING)
-        .Allow(State::QUERYING, State::PINGING)
-        .Allow(State::DONE, State::QUERYING)
+        .Allow(State::QUERYING, State::CONNECTING)
+        .Allow(State::SUCCESS, State::QUERYING)
 
-        // Waiting for liveness.
-        .Allow(State::SNOOZING, State::CONNECTING)
-        .Allow(State::CONNECTING, State::SNOOZING)
-
-        // Retrying from scratch.
-        .Allow(State::INITIAL, State::PINGING)
-        .Allow(State::INITIAL, State::QUERYING)
-
-        // We can timeout from any of the non-finish states.
         .Allow(State::TIMEDOUT, State::INITIAL)
         .Allow(State::TIMEDOUT, State::CONNECTING)
-        .Allow(State::TIMEDOUT, State::PINGING)
         .Allow(State::TIMEDOUT, State::QUERYING)
-        .Allow(State::TIMEDOUT, State::SNOOZING)
 
-        // Wrong magic causes us to bail with a failure.
-        .Allow(State::FAILED, State::PINGING);
+        .Allow(State::FAILED, State::CONNECTING)
+        .Allow(State::FAILED, State::QUERYING)
+        .Allow(State::FAILED, State::INITIAL);
   }
+  static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
 
-  static constexpr char const *LOGGING_NAME = "StorageUnitClient::LaneConnectorWorker";
-
-  virtual ~LaneConnectorWorker() = default;
+  virtual ~MuddleLaneConnectorWorker()
+  {
+    counter_.Completed();
+  }
 
   PromiseState Work()
   {
-    this->AtomicStateMachine::Work();
+    try
+    {
+      this->AtomicStateMachine::Work();
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "MuddleLaneConnectorWorker::Work lane ", lane, " threw.");
+      throw;
+    }
     auto r = this->AtomicStateMachine::Get();
 
     switch (r)
     {
     case State::TIMEDOUT:
       return PromiseState::TIMEDOUT;
-    case State::DONE:
+    case State::SUCCESS:
       return PromiseState::SUCCESS;
     case State::FAILED:
       return PromiseState::FAILED;
@@ -99,43 +101,24 @@ public:
     }
   }
 
-  char const *GetStateName(State state)
-  {
-    switch (state)
-    {
-    case State::INITIAL:
-      return "INITIAL";
-    case State::CONNECTING:
-      return "CONNECTING";
-    case State::QUERYING:
-      return "QUERYING";
-    case State::PINGING:
-      return "PINGING";
-    case State::SNOOZING:
-      return "SNOOZING";
-    case State::DONE:
-      return "DONE";
-    case State::TIMEDOUT:
-      return "TIMEDOUT";
-    case State::FAILED:
-      return "FAILED";
-    default:
-      return "?";
-    }
-  }
-
   virtual bool PossibleNewState(State &currentstate) override
   {
-
-    if (currentstate == State::TIMEDOUT || currentstate == State::DONE ||
+    if (currentstate == State::TIMEDOUT || currentstate == State::SUCCESS ||
         currentstate == State::FAILED)
     {
       return false;
     }
 
+    if (currentstate == State::INITIAL)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Timeout for lane ", lane, " set ", timeduration_.count());
+      timeout_.Set(timeduration_);
+    }
+
     if (timeout_.IsDue())
     {
       currentstate = State::TIMEDOUT;
+      FETCH_LOG_INFO(LOGGING_NAME, "Timeout for lane ", lane);
       return true;
     }
 
@@ -143,173 +126,156 @@ public:
     {
     case State::INITIAL:
     {
-      // we no longer use a fixed number of attempts.
+      FETCH_LOG_INFO(LOGGING_NAME, "INITIAL lane ", lane);
+      muddle_->AddPeer(peer_);
       currentstate = State::CONNECTING;
       return true;
     }
-    case State::SNOOZING:
-    {
-      if (next_attempt_.IsDue())
-      {
-        currentstate = State::CONNECTING;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
     case State::CONNECTING:
     {
-      if (!client->is_alive())
+      bool connected = muddle_->GetOutgoingConnectionAddress(peer_, target_address);
+      if (!connected)
       {
-        FETCH_LOG_DEBUG(LOGGING_NAME, " Lane ", lane, " (", name_, ") not yet alive.");
-        attempts_++;
-        if (attempts_ > max_attempts_)
-        {
-          currentstate = State::TIMEDOUT;
-        }
-        next_attempt_.SetMilliseconds(300);
-        currentstate = State::SNOOZING;
-        return true;
+        return false;
       }
-      ping_        = client->Call(RPC_IDENTITY, LaneIdentityProtocol::PING);
-      currentstate = State::PINGING;
-      return true;
-    }  // end CONNECTING
-    case State::PINGING:
-    {
-      auto result = ping_->GetState();
+      currentstate = State::QUERYING;
+      lane_prom    = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                               LaneIdentityProtocol::GET_LANE_NUMBER);
+      count_prom   = client_->CallSpecificAddress(target_address, RPC_IDENTITY,
+                                                LaneIdentityProtocol::GET_TOTAL_LANES);
 
-      switch (result)
+      currentstate = State::QUERYING;
+      return true;
+    }
+    case State::QUERYING:
+    {
+      auto p1 = count_prom->GetState();
+      auto p2 = lane_prom->GetState();
+
+      if ((p1 == PromiseState::FAILED) || (p2 == PromiseState::FAILED))
       {
-      case PromiseState::TIMEDOUT:
-      case PromiseState::FAILED:
-      {
-        currentstate = State::INITIAL;
+        FETCH_LOG_INFO(LOGGING_NAME, "Querying failed for lane ", lane);
+        currentstate = State::FAILED;
         return true;
       }
-      case PromiseState::SUCCESS:
+
+      if ((p1 == PromiseState::WAITING) || (p2 == PromiseState::WAITING))
       {
-        if (ping_->As<LaneIdentity::ping_type>() != LaneIdentity::PING_MAGIC)
-        {
-          currentstate = State::FAILED;
-          return true;
-        }
-        else
-        {
-          lane_prom    = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
-          count_prom   = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_TOTAL_LANES);
-          id_prom      = client->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_IDENTITY);
-          currentstate = State::QUERYING;
-          return true;
-        }
-      }
-      case PromiseState::WAITING:
+        FETCH_LOG_INFO(LOGGING_NAME, "WAITING lane ", lane);
         return false;
       }
 
-      return false;
-    }  // end PINGING
-    case State::QUERYING:
-    {
-      auto lp_st = lane_prom->GetState();
-      auto ct_st = count_prom->GetState();
-      auto id_st = id_prom->GetState();
-
-      if (lp_st == PromiseState::FAILED || id_st == PromiseState::FAILED ||
-          ct_st == PromiseState::FAILED || lp_st == PromiseState::TIMEDOUT ||
-          id_st == PromiseState::TIMEDOUT || ct_st == PromiseState::TIMEDOUT)
-      {
-        currentstate = State::INITIAL;
-        return true;
-      }
-
-      if (lp_st == PromiseState::SUCCESS || id_st == PromiseState::SUCCESS ||
-          ct_st == PromiseState::SUCCESS)
-      {
-        currentstate = State::DONE;
-        return true;
-      }
-      return false;
-    }  // end QUERYING
+      currentstate = State::SUCCESS;
+      return true;
+    }
     default:
-      return false;
+      FETCH_LOG_INFO(LOGGING_NAME, "Defaulted to fail for lane ", lane);
+      currentstate = State::FAILED;
+      return true;
     }
   }
 
 private:
-  FutureTimepoint next_attempt_;
-  size_t          attempts_;
-  Promise         ping_;
-
-  byte_array::ByteArray host_;
-  std::string           name_;
-  FutureTimepoint       timeout_;
-  size_t                max_attempts_;
+  std::shared_ptr<Client>   client_;
+  std::string               name_;
+  Uri                       peer_;
+  std::chrono::milliseconds timeduration_;
+  PendingConnectionCounter  counter_;
+  MuddlePtr                 muddle_;
+  FutureTimepoint           timeout_;
 };
 
 void StorageUnitClient::WorkCycle()
 {
-  auto p = bg_work_.CountPending();
-
-  bg_work_.WorkCycle();
-
-  if (p != bg_work_.CountPending() || bg_work_.CountSuccesses() > 0)
+  if (!bg_work_.WorkCycle())
   {
+    return;
+  }
 
+  if (bg_work_.CountSuccesses() > 0)
+  {
     LaneIndex total_lanecount = 0;
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, " PEND=", bg_work_.CountPending());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " SUCC=", bg_work_.CountSuccesses());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " FAIL=", bg_work_.CountFailures());
-    FETCH_LOG_DEBUG(LOGGING_NAME, " TOUT=", bg_work_.CountTimeouts());
+    FETCH_LOG_INFO(LOGGING_NAME, " PEND=", bg_work_.CountPending());
+    FETCH_LOG_INFO(LOGGING_NAME, " SUCC=", bg_work_.CountSuccesses());
+    FETCH_LOG_INFO(LOGGING_NAME, " FAIL=", bg_work_.CountFailures());
+    FETCH_LOG_INFO(LOGGING_NAME, " TOUT=", bg_work_.CountTimeouts());
 
-    for (auto &successful_worker : bg_work_.Get(PromiseState::SUCCESS, 1000))
+    for (auto &successful_worker : bg_work_.GetSuccesses(1000))
     {
       if (successful_worker)
       {
         auto lanenum = successful_worker->lane;
         FETCH_LOG_VARIABLE(lanenum);
-        FETCH_LOG_DEBUG(LOGGING_NAME, " PROCESSING lane ", lanenum);
+        FETCH_LOG_INFO(LOGGING_NAME, " PROCESSING lane ", lanenum);
 
-        WeakServiceClient wp(successful_worker->client);
-        LaneIndex         lane;
-        LaneIndex         total_lanes;
+        LaneIndex        lane;
+        LaneIndex        total_lanes;
+        crypto::Identity lane_identity;
 
         successful_worker->lane_prom->As(lane);
         successful_worker->count_prom->As(total_lanes);
 
+        // TODO(issue 24): Verify expected identity
+
         {
           FETCH_LOCK(mutex_);
-          lanes_[lane] = std::move(successful_worker->client);
+          lane_to_identity_map_[lane] = std::move(successful_worker->target_address);
 
           if (!total_lanecount)
           {
             total_lanecount = total_lanes;
+            SetLaneLog2(uint32_t(total_lanecount));
           }
           else
           {
             assert(total_lanes == total_lanecount);
           }
         }
-
-        SetLaneLog2(uint32_t(lanes_.size()));
-
-        crypto::Identity lane_identity;
-        successful_worker->id_prom->As(lane_identity);
-        // TODO(issue 24): Verify expected identity
-
-        {
-          auto details      = register_.GetDetails(lanes_[lane]->handle());
-          details->identity = lane_identity;
-        }
       }
     }
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lanes Connected   :", lanes_.size());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "log2_lanes_       :", log2_lanes_);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "total_lanecount   :", total_lanecount);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Lanes Connected   :", lane_to_identity_map_.size());
+    FETCH_LOG_INFO(LOGGING_NAME, "log2_lanes_       :", log2_lanes_);
+    FETCH_LOG_INFO(LOGGING_NAME, "total_lanecount   :", total_lanecount);
   }
+
+  bg_work_.DiscardFailures();
+  bg_work_.DiscardTimeouts();
+}
+
+  void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
+                                           const std::chrono::milliseconds &timeout)
+{
+  if (!workthread_)
+  {
+    workthread_ =
+        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+  }
+
+  for (auto const &lane : lanes)
+  {
+    auto        lanenum = lane.first;
+    auto        peer    = lane.second;
+    std::string name    = peer.ToString();
+
+    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, muddle_,
+                                                              std::chrono::milliseconds(timeout));
+    bg_work_.Add(worker);
+  }
+}
+
+size_t StorageUnitClient::AddLaneConnectionsWaiting(
+                                                    const std::map<LaneIndex, Uri> & lanes,
+                                                    const std::chrono::milliseconds &timeout)
+{
+  AddLaneConnections(lanes, timeout);
+  PendingConnectionCounter::Wait(FutureTimepoint(timeout));
+
+  FETCH_LOCK(mutex_);
+  FETCH_LOG_INFO(LOGGING_NAME, "Successfully connected ", lane_to_identity_map_.size(),
+                 " lane(s).");
+  return lane_to_identity_map_.size();
 }
 
 }  // namespace ledger

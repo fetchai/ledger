@@ -87,10 +87,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
-                                                 bool force_loopback = false)
+std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIndex num_lanes,
+                                                bool force_loopback = false)
 {
-  std::map<LaneIndex, Peer> connection_map;
+  std::map<LaneIndex, Uri> connection_map;
 
   for (LaneIndex i = 0; i < num_lanes; ++i)
   {
@@ -113,11 +113,11 @@ std::map<LaneIndex, Peer> BuildLaneConnectionMap(Manifest const &manifest, LaneI
     // update the connection map
     if (force_loopback)
     {
-      connection_map[i] = Peer{"127.0.0.1", service.local_port};
+      connection_map[i] = Uri{"tcp://127.0.0.1:" + std::to_string(service.local_port)};
     }
     else
     {
-      connection_map[i] = service.remote_uri.AsPeer();
+      connection_map[i] = service.remote_uri;
     }
   }
 
@@ -175,7 +175,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{std::move(certificate), network_manager_}
+  , muddle_{Muddle::CreateNetworkId("****"), std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
@@ -255,13 +255,17 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
 
   // add the lane connections
   storage_->SetNumberOfLanes(num_lanes_);
-  std::size_t const count = storage_->AddLaneConnectionsWaiting<TCPClient>(
-      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(30000));
+
+  auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
+
+  std::size_t const count = storage_->AddLaneConnectionsWaiting(
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(10000));
 
   // check to see if the connections where successful
   if (count != num_lanes_)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to establish connections to lane service");
+    FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (", count,
+                    " of ", num_lanes_, ")");
     return;
   }
 
