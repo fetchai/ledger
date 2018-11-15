@@ -206,6 +206,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
   desired_peers_ = trust_system_.GetBestPeers(min_peers_);
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: RenewDesiredPeers. #=", desired_peers_.size());
 }
 
 void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
