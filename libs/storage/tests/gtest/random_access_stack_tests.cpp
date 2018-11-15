@@ -123,7 +123,7 @@ TEST(random_access_stack, basic_functionality)
   {
     stack.Pop();
     reference.pop_back();
-    ASSERT_EQ(stack.size() , reference.size());
+    ASSERT_EQ(stack.size(), reference.size());
   }
 
   ASSERT_TRUE(stack.size() == 0);
