@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "ledger/metrics/metric_handler.hpp"
+#include "metrics/metric_handler.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace fetch {
-namespace ledger {
+namespace metrics {
 
 /**
  * A Metric Handler that outputs recorded metrics to a CSV file
@@ -75,5 +75,5 @@ private:
   std::thread             worker_;        ///< The worker thread
 };
 
-}  // namespace ledger
+}  // namespace metrics
 }  // namespace fetch

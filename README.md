@@ -27,8 +27,8 @@ Initiate
 Running on Ubuntu
 =========
     sudo apt-get install libssl-dev cmake
-    sudo apt-get install libpng-dev
-    sudo apt-get install python-dev
+    sudo apt-get install python3-dev
+    sudo apt-get install clang
 
 Build
 =====
@@ -92,3 +92,4 @@ Note: this takes a long time, and running with the fix flag may cause clang to b
 variable names without propagating their updates). Therefore it is recommended you have a clean HEAD so as
 to identify the changes that have been made. Build the project again before pushing it as it's likely
 to be broken
+

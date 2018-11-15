@@ -20,4 +20,4 @@ target_link_libraries(fetch-crypto PUBLIC fetch-core fetch-meta vendor-openssl)
 add_test_target()
 
 add_subdirectory(examples)
-
+add_subdirectory(benchmark)

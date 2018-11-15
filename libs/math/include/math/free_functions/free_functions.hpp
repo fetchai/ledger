@@ -1569,7 +1569,16 @@ linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1)
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceMean(linalg::Matrix<T, C, S> const &obj1, std::size_t const &axis)
 {
-  T n = obj1.shape()[0];
+  assert(axis == 0 || axis == 1);
+  T n;
+  if (axis == 0)
+  {
+    n = obj1.shape()[1];
+  }
+  else
+  {
+    n = obj1.shape()[0];
+  }
   return Divide(ReduceSum(obj1, axis), n);
 }
 
@@ -1599,6 +1608,7 @@ ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
   ret = ReduceSum(ret, 0);
 
   ret = Divide(ret, typename ArrayType::Type(A.shape()[0]));
+  // TODO(private 343)
   ret = Divide(ret, typename ArrayType::Type(
                         2));  // division by 2 allows us to cancel out with a 2 in the derivative
   return ret;

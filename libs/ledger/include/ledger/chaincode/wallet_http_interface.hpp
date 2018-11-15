@@ -166,7 +166,7 @@ private:
         FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
         // dispatch the transaction
-        processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
+        processor_.AddTransaction(std::move(mtx));
       }
 
       storage::ResourceID set_id = storage::ResourceAddress{address};
@@ -282,11 +282,8 @@ private:
 
         mtx.Sign(priv_key, tx_sign_adapter);
 
-        // create the final / sealed transaction
-        chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
-
         // dispatch to the wider system
-        processor_.AddTransaction(tx);
+        processor_.AddTransaction(std::move(mtx));
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }

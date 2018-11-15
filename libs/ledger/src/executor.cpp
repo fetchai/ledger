@@ -22,7 +22,7 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -30,6 +30,8 @@
 #include <thread>
 
 static constexpr char const *LOGGING_NAME = "Executor";
+
+using fetch::metrics::Metrics;
 
 namespace fetch {
 namespace ledger {

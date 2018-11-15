@@ -26,13 +26,16 @@ add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
 add_fetch_gtest(ndarray_broadcast_test fetch-math math/ndarray_broadcast)
 add_fetch_gtest(ndarray_squeeze_test fetch-math math/ndarray_squeeze)
 
+add_fetch_gtest(free_functions_gtest fetch-math math/free_functions)
+
 add_fetch_gtest(relu_test fetch-math math/kernels/relu)
 add_fetch_gtest(sign_test fetch-math math/kernels/sign)
 add_fetch_gtest(l2loss_test fetch-math math/shape_less_array/l2loss)
 
 add_fetch_gtest(big_number_gtest fetch-math math/basic_math_tests)
+add_fetch_gtest(distances_gtest fetch-math math/distance/gtest)
+add_fetch_gtest(clustering_test fetch-math math/clustering)
 add_fetch_gtest(manhattan_gtest fetch-math math/distance/gtest)
-add_fetch_gtest(free_function_gtest fetch-math math/free_functions)
 
 # disabled / not working tests
 add_fetch_test(load_image_read_exceptions_test fetch-math image/load_image_read_exceptions.cpp DISABLED)
