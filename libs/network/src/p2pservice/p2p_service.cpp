@@ -217,7 +217,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   AddressSet const new_peers     = desired_peers_ - active_addresses;
   AddressSet const dropped_peers = outgoing_peers - desired_peers_;
 
-  for(auto const &d : desired_peers)
+  for(auto const &d : desired_peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
   }
