@@ -19,7 +19,6 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "core/containers/set_difference.hpp"
 #include "network/p2pservice/manifest.hpp"
-#include "network/p2pservice/p2ptrust.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -217,6 +216,19 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
 
   AddressSet const new_peers     = desired_peers_ - active_addresses;
   AddressSet const dropped_peers = outgoing_peers - desired_peers_;
+
+  for(auto const &d : desired_peers)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
+  }
+  for(auto const &d : dropped_peers)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: LOSE: ", ToBase64(d));
+  }
+  for(auto const &d : new_peers)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: GAIN: ", ToBase64(d));
+  }
 
   // process pending resolutions
   pending_resolutions_.Resolve();
