@@ -84,28 +84,29 @@ public:
   void SignalStop();
 
 private:
-  using Muddle                 = muddle::Muddle;
-  using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = miner::BasicMiner;
-  using Miner                  = chain::MainChainMiner;
-  using BlockCoordinator       = chain::BlockCoordinator;
-  using MainChain              = chain::MainChain;
-  using MainChainRpcService    = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
-  using LaneServices           = ledger::StorageUnitBundledService;
-  using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = StorageUnitClient::LaneIndex;
-  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
-  using Flag                   = std::atomic<bool>;
-  using ExecutionManager       = ledger::ExecutionManager;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl      = ledger::LaneRemoteControl;
-  using HttpServer             = http::HTTPServer;
-  using HttpModule             = http::HTTPModule;
-  using HttpModulePtr          = std::shared_ptr<HttpModule>;
-  using HttpModules            = std::vector<HttpModulePtr>;
-  using TransactionProcessor   = ledger::TransactionProcessor;
-  using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using Muddle                  = muddle::Muddle;
+  using NetworkManager          = network::NetworkManager;
+  using BlockPackingAlgorithm   = miner::BasicMiner;
+  using Miner                   = chain::MainChainMiner;
+  using BlockCoordinator        = chain::BlockCoordinator;
+  using MainChain               = chain::MainChain;
+  using MainChainRpcService     = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
+  using LaneServices            = ledger::StorageUnitBundledService;
+  using StorageUnitClient       = ledger::StorageUnitClient;
+  using LaneIndex               = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr    = std::shared_ptr<StorageUnitClient>;
+  using Flag                    = std::atomic<bool>;
+  using ExecutionManager        = ledger::ExecutionManager;
+  using ExecutionManagerPtr     = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl       = ledger::LaneRemoteControl;
+  using HttpServer              = http::HTTPServer;
+  using HttpModule              = http::HTTPModule;
+  using HttpModulePtr           = std::shared_ptr<HttpModule>;
+  using HttpModules             = std::vector<HttpModulePtr>;
+  using TransactionProcessor    = ledger::TransactionProcessor;
+  using TrustSystem             = p2p::P2PTrustBayRank<Muddle::Address>;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
   /// @name Configuration
   /// @{
@@ -142,10 +143,11 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;              ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
-  Miner                 miner_;              ///< The miner and block generation component
+  MainChain               chain_;              ///< The main block chain component
+  BlockPackingAlgorithm   block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator        block_coordinator_;  ///< The block execution coordinator
+  ConsensusMinerInterface consensus_miner_;
+  Miner                   miner_;  ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services

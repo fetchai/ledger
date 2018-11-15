@@ -47,7 +47,7 @@ public:
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 ConsensusMinerInterface consensus_miner, uint64_t minerNumber,
+                 ConsensusMinerInterface &consensus_miner, uint64_t minerNumber,
                  std::chrono::steady_clock::duration block_interval =
                      std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/free_functions/statistics/mean.hpp"
 #include "math/shape_less_array.hpp"
-#include "math/statistics/mean.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>

@@ -154,7 +154,7 @@ public:
   }
   Gaussian operator+=(const Gaussian &g)
   {
-    // Add myslef and a Gaussian.
+    // Add myself and a Gaussian.
     T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);
     this->tau_ = new_pi * (this->tau_ / this->pi_ + g.tau_ / g.pi_);
     this->pi_  = new_pi;
@@ -175,7 +175,7 @@ public:
   }
   Gaussian operator-=(const Gaussian &g)
   {
-    // Subtract a Gaussian from myslef.
+    // Subtract a Gaussian from myself.
     T new_pi   = 1. / (1. / this->pi_ + 1. / g.pi_);
     this->tau_ = new_pi * (this->tau_ / this->pi_ - g.tau_ / g.pi_);
     this->pi_  = new_pi;

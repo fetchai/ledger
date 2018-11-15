@@ -45,6 +45,7 @@
 #include "math/free_functions/standard_functions/fmod.hpp"
 #include "math/free_functions/standard_functions/log.hpp"
 #include "math/free_functions/standard_functions/remainder.hpp"
+#include "math/free_functions/statistics/normal.hpp"
 
 /////////////////////////////////
 /// blas libraries
