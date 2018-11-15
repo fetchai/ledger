@@ -59,7 +59,6 @@ public:
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , init_mode_(init_mode)
-    , k_inference_mode_(KInferenceMode::Off)
   {
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
@@ -88,7 +87,6 @@ public:
     , max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , k_assignment_(std::move(k_assignment))
-    , k_inference_mode_(KInferenceMode::Off)
   {
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
