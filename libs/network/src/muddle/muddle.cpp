@@ -270,6 +270,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
   router_.Blacklist(target);
 }
