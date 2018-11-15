@@ -120,12 +120,12 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   {
     auto const &address = element.first;
 
-    // ensure that the trust system is informed of new addresses
-   // if (!trust_system_.IsPeerKnown(address))
-   //{
-   //  trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
-   //}
-
+    //ensure that the trust system is informed of new addresses
+    if (!trust_system_.IsPeerKnown(address))
+    {
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+    }
+    
     std::string name(ToBase64(address));
 
     if (name[0]>='a' && name[0]<='z')
