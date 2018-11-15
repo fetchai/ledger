@@ -42,8 +42,7 @@ enum KInferenceMode
 {
   Off            = 0,
   NClusters      = 1,  // infer K by counting number of previously assigned clusters
-  HighestCluster = 2,  // infer K by using highest valued previous cluster assignment
-  Invalid        = std::numeric_limits<std::size_t>::max()
+  HighestCluster = 2   // infer K by using highest valued previous cluster assignment
 };
 
 namespace details {
@@ -291,7 +290,7 @@ private:
    */
   void InferK(bool &sufficient_previous_assignment)
   {
-    assert(k_inference_mode_ != KInferenceMode::Invalid);
+    assert(k_inference_mode_ != KInferenceMode::Off);
     assert(k_count_.size() == 0);
 
     if (k_inference_mode_ == KInferenceMode::HighestCluster)
@@ -707,7 +706,7 @@ private:
 
   std::size_t init_mode_;
 
-  std::size_t k_inference_mode_ = KInferenceMode::Invalid;
+  std::size_t k_inference_mode_ = KInferenceMode::Off;
 };
 
 }  // namespace details
