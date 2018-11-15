@@ -29,43 +29,34 @@ static void BM_ApproxExpImplementation(benchmark::State &state)
 {
 
   fetch::math::ApproxExpImplementation<N, C> fexp;
-  int64_t                                    x = state.range(0);
-  volatile double                            y;
+  double                                     x = (double)state.range(0);
+  double                                     result;
   for (auto _ : state)
   {
-    // Running loop to get greater benchmarks.
+    // Single iteration is too small to get accurate benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      y = fexp(x);
+      result = fexp(x);
     }
   }
 }
-BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 0, 0)
-    ->RangeMultiplier(10)
-    ->Range(1, 1000000)
-    ->Complexity();
-BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 8, 60801)
-    ->RangeMultiplier(10)
-    ->Range(1, 1000000)
-    ->Complexity();
-BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 12, 60801)
-    ->RangeMultiplier(10)
-    ->Range(1, 1000000)
-    ->Complexity();
+BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 0, 0)->RangeMultiplier(10)->Range(1, 1000000);
+BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 8, 60801)->RangeMultiplier(10)->Range(1, 100000);
+BENCHMARK_TEMPLATE(BM_ApproxExpImplementation, 12, 60801)->RangeMultiplier(10)->Range(1, 1000000);
 
 static void BM_exp(benchmark::State &state)
 {
-  int64_t         x = state.range(0);
-  volatile double y;
+  double x = (double)state.range(0);
+  double result;
   for (auto _ : state)
   {
-    // Running loop to get greater benchmarks.
+    // Single iteration is too small to get accurate benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      y = exp(x);
+      result = exp(x);
     }
   }
 }
-BENCHMARK(BM_exp)->RangeMultiplier(10)->Range(1, 1000000)->Complexity();
+BENCHMARK(BM_exp)->RangeMultiplier(10)->Range(1, 1000000);
 
 BENCHMARK_MAIN();
