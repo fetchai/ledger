@@ -66,10 +66,11 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
 
-    if (clients_.find(handle) != clients_.end())
+    auto client{clients_.find(handle)};
+    if (client != clients_.end())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Client ", handle, " is leaving");
-      clients_.erase(handle);
+      clients_.erase(client);
     }
   }
 
@@ -79,9 +80,10 @@ public:
     bool ret = true;
     clients_mutex_.lock();
 
-    if (clients_.find(client) != clients_.end())
+    auto which{clients_.find(client)};
+    if (which != clients_.end())
     {
-      auto c = clients_[client];
+      auto c = which->second;
       clients_mutex_.unlock();
       c->Send(msg);
       FETCH_LOG_DEBUG(LOGGING_NAME, "Client manager did send message to ", client);
