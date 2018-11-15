@@ -664,7 +664,9 @@ private:
       // overwrite every clust assignment with its equivalent previous label at input
       k_assignment_.Set(
           i, 0,
-          cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i, 0)))->second);
+          static_cast<typename ArrayType::Type>(
+              cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i, 0)))
+                  ->second));
     }
   }
 
