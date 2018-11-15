@@ -22,6 +22,10 @@
 
 #include "math/free_functions/clustering_algorithms/k_means.hpp"
 #include <math/linalg/matrix.hpp>
+#include <cmath>
+#include <algorithm>
+#include <string>
+#include <vector>
 
 using namespace fetch::math::linalg;
 
@@ -79,6 +83,60 @@ TEST(clustering_test, kmeans_test_2d_4k)
   for (std::size_t j = 75; j < 100; ++j)
   {
     ASSERT_TRUE(group_3 == static_cast<std::size_t>(clusters[j]));
+  }
+}
+
+
+TEST(clustering_test, kmeans_test_4dimensions)
+{
+
+  int n_dimensions = 4;
+  float base = 2.0;
+  float out = std::pow(base, static_cast<float>(n_dimensions));  // Each dimension will be positive or negative for 2^n combinations
+  int n_clusters = static_cast<int>(out);
+  int n_points = n_clusters*5;  // Each cluster will consist of 5 points
+  matrix_type A{static_cast<std::size_t>(n_points), static_cast<std::size_t>(n_dimensions)};
+
+  int n = 4;
+  int r = 2;
+
+  std::vector<bool> v(static_cast<unsigned long>(n));
+  std::fill(v.end() - r, v.end(), true);
+//
+//  do {
+//    for (int i = 0; i < n; ++i) {
+//      if (v[static_cast<unsigned long>(i)]) {
+//        std::cout << (i + 1) << " ";
+//      }
+//    }
+//    std::cout << "\n";
+//  } while (std::next_permutation(v.begin(), v.end()));
+
+
+
+
+
+
+
+  do {
+    for (int i = 0; i < n; ++i) {
+      if (v[static_cast<unsigned long>(i)]) {
+        int dim1 = (i + 1);
+        int dim2 = (i + 1);
+        std::cout << dim1 << " " << dim2;
+      }
+    }
+    std::cout << "\n";
+  } while (std::next_permutation(v.begin(), v.end()));
+
+
+
+  for(int c=0; c < n_clusters; ++c)
+  {
+    for (int p = 0; p < n_points; ++p)
+    {
+
+    }
   }
 }
 
