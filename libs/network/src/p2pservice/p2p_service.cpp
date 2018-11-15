@@ -128,9 +128,9 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     std::string name(ToBase64(address));
 
-    if (name[0]>='A' && name[0]<='Z')
+    if (name[0]>='A' && name[0]<='M')
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Trust (fake) negging!! ", name);
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
     }
 
