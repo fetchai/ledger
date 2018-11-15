@@ -173,11 +173,6 @@ TEST(clustering_test, kmeans_test_previous_assignment_no_K)
   std::size_t random_seed = 123456;
   matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, prev_k);
 
-  for (std::size_t j = 0; j < clusters.size(); ++j)
-  {
-    std::cout << "clusters[" << j << "]: " << clusters[j] << std::endl;
-  }
-
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
   for (std::size_t j = 0; j < 25; ++j)
   {
