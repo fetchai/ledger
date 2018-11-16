@@ -27,10 +27,9 @@ namespace clustering {
 
 template <typename A>
 inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
-                       std::size_t max_loops, std::size_t init_mode = 0,
+                       std::size_t max_loops, InitMode init_mode = InitMode::KMeansPP,
                        std::size_t max_no_change_convergence = 10)
 {
-  std::cout << "wrapper2: " << std::endl;
   if (K > data.shape()[0])
   {
     throw std::range_error("cannot have more clusters than data points");

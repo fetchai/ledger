@@ -32,13 +32,13 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-enum InitMode
+enum class InitMode
 {
   KMeansPP = 0,  // kmeans++, a good default choice
   Forgy    = 1,  // Forgy, randomly initialize clusters to data points
   PrevK    = 2   // PrevK, use previous k_assignment to determine cluster centres
 };
-enum KInferenceMode
+enum class KInferenceMode
 {
   Off            = 0,
   NClusters      = 1,  // infer K by counting number of previously assigned clusters
@@ -52,12 +52,12 @@ class KMeansImplementation
 {
 public:
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
-                       std::size_t const &r_seed, std::size_t const &max_loops,
-                       std::size_t init_mode, std::size_t max_no_change_convergence)
+                       std::size_t const &r_seed, std::size_t const &max_loops, InitMode init_mode,
+                       std::size_t max_no_change_convergence)
     : n_clusters_(n_clusters)
     , max_no_change_convergence_(std::move(max_no_change_convergence))
     , max_loops_(max_loops)
-    , init_mode_(std::move(init_mode))
+    , init_mode_(init_mode)
   {
 
     n_points_     = data.shape()[0];
@@ -114,11 +114,12 @@ public:
 
   KMeansImplementation(ArrayType const &data, ArrayType &ret, std::size_t const &r_seed,
                        std::size_t const &max_loops, ArrayType k_assignment,
-                       std::size_t max_no_change_convergence, std::size_t k_inference_mode)
+                       std::size_t           max_no_change_convergence,
+                       KInferenceMode const &k_inference_mode)
     : max_no_change_convergence_(max_no_change_convergence)
     , max_loops_(max_loops)
     , k_assignment_(std::move(k_assignment))
-    , k_inference_mode_(std::move(k_inference_mode))
+    , k_inference_mode_(k_inference_mode)
   {
 
     // seed random number generator
@@ -685,8 +686,8 @@ private:
   std::size_t max_loops_    = INVALID;
   std::size_t assigned_k_   = INVALID;  // current cluster to assign
 
-  typename ArrayType::Type running_mean_ =
-      0;  // used to find the smallest distance out of K comparisons
+  // used to find the smallest distance out of K comparisons
+  typename ArrayType::Type running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
 
   std::default_random_engine rng_;
 
@@ -709,9 +710,8 @@ private:
 
   bool reassign_;
 
-  std::size_t init_mode_;
-
-  std::size_t k_inference_mode_ = KInferenceMode::Off;
+  InitMode       init_mode_        = InitMode::KMeansPP;
+  KInferenceMode k_inference_mode_ = KInferenceMode::Off;
 };
 
 }  // namespace details
@@ -727,7 +727,7 @@ private:
  */
 template <typename ArrayType>
 ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t const &K,
-                 std::size_t max_loops = 100, std::size_t init_mode = 0,
+                 std::size_t max_loops = 100, InitMode init_mode = InitMode::KMeansPP,
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t n_points = data.shape()[0];
@@ -769,7 +769,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
  */
 template <typename ArrayType>
 ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType const &prev_assignment,
-                 std::size_t const &k_inference_mode, std::size_t max_loops = 100,
+                 KInferenceMode const &k_inference_mode, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t              n_points = data.shape()[0];
