@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
@@ -35,19 +35,19 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using BlockType             = chain::MainChain::BlockType;
-  using BlockHash             = chain::MainChain::BlockHash;
-  using BodyType              = chain::MainChain::BlockType::body_type;
-  using Miner                 = fetch::chain::consensus::DummyMiner;
-  using MinerInterface        = fetch::miner::MinerInterface;
-  using BlockCompleteCallback = std::function<void(BlockType const &)>;
+  using BlockType               = chain::MainChain::BlockType;
+  using BlockHash               = chain::MainChain::BlockHash;
+  using BodyType                = chain::MainChain::BlockType::body_type;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+  using MinerInterface          = fetch::miner::MinerInterface;
+  using BlockCompleteCallback   = std::function<void(BlockType const &)>;
 
   static constexpr char const *LOGGING_NAME    = "MainChainMiner";
   static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 uint64_t                            minerNumber,
+                 ConsensusMinerInterface &consensus_miner, uint64_t minerNumber,
                  std::chrono::steady_clock::duration block_interval =
                      std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
@@ -55,6 +55,7 @@ public:
     , mainChain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
+    , consensus_miner_{consensus_miner}
     , minerNumber_{minerNumber}
     , block_interval_{block_interval}
   {}
@@ -82,6 +83,11 @@ public:
   void OnBlockComplete(BlockCompleteCallback const &func)
   {
     on_block_complete_ = func;
+  }
+
+  void SetConsensusMiner(ConsensusMinerInterface consensus_miner)
+  {
+    consensus_miner_ = consensus_miner;
   }
 
 private:
@@ -122,7 +128,7 @@ private:
 
       if (searching_for_hash)
       {
-        if (Miner::Mine(next_block, 100))
+        if (consensus_miner_->Mine(next_block, 100))
         {
           // Add the block
           blockCoordinator_.AddBlock(next_block);
@@ -186,6 +192,7 @@ private:
   chain::MainChain &                  mainChain_;
   chain::BlockCoordinator &           blockCoordinator_;
   MinerInterface &                    miner_;
+  ConsensusMinerInterface             consensus_miner_;
   std::thread                         thread_;
   uint64_t                            minerNumber_{0};
   BlockCompleteCallback               on_block_complete_;

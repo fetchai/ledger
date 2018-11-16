@@ -30,7 +30,7 @@
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/free_functions/free_functions.hpp"
-#include "math/statistics/mean.hpp"
+#include "math/free_functions/statistics/mean.hpp"
 
 #include <algorithm>
 #include <type_traits>
