@@ -35,6 +35,8 @@ using matrix_type    = Matrix<data_type, container_type>;
 
 int factorial(int n);
 matrix_type combinations(int n, int r);
+std::size_t add_cluster_to_matrix(int n_points_per_cluster, int n_dimensions, std::vector<int> dimension_signs,
+    std::size_t row, matrix_type &A, int initial_val_magnitude = 50);
 
 // Helper function
 int factorial(int n)
@@ -79,15 +81,31 @@ matrix_type combinations(int n, int r)
         }
       }
     }while (std::next_permutation(v.begin(), v.end()));
-    for (std::size_t k = 0; k < output_array.shape()[0]; ++k) {
-        for (std::size_t j = 0;  j< output_array.shape()[1]; ++j)
-        {
-          std::cout << output_array.At(k,j) << "\t\t";
-        }
-        std::cout << std::endl;
-      }
   return output_array;
 }
+
+
+// Helper function
+std::size_t add_cluster_to_matrix(int n_points_per_cluster, int n_dimensions, std::vector<int> dimension_signs,
+    std::size_t row, matrix_type &A, int initial_val_magnitude){
+  int val_magnitude = initial_val_magnitude;
+  // Create specified number of points in each cluster
+  for (std::size_t p=0; p < static_cast<std::size_t>(n_points_per_cluster); ++p){
+    // Determine values along each dimension for the current point
+    for (std::size_t k=0; k<static_cast<std::size_t>(n_dimensions); ++k)
+    {
+      // Assign value to current dimension (column in array A) of current point (row in array A), starting at input row
+      int sign = dimension_signs[k];
+      int val = val_magnitude * sign;
+      A.Set(row, k, val);
+    }
+    row += 1;
+    // Increment magnitude of values within cluster so not all points are identical in each cluster
+    val_magnitude += 5;
+  }
+  return row;
+}
+
 
 TEST(clustering_test, kmeans_test_2d_4k)
 {
@@ -146,34 +164,24 @@ TEST(clustering_test, kmeans_test_2d_4k)
 TEST(clustering_test, kmeans_test_ndimensions)
 {
 
-  int n_dimensions = 6;
+  bool to_print = false;
+  int n_dimensions = 4;
   float base = 2.0;
   // Each dimension will be positive or negative for 2^n combinations
   float out = std::pow(base, static_cast<float>(n_dimensions));
   int n_clusters = static_cast<int>(out);
   int n_points_per_cluster = 5;
-  int n_points = n_clusters*n_points_per_cluster;
-  std::size_t row = 0;
+  int n_points = n_clusters * n_points_per_cluster;
   matrix_type A{static_cast<std::size_t>(n_points), static_cast<std::size_t>(n_dimensions)};
 
   // Trivial case: all dimensions are negative
-  // Initialize first point in each cluster with magnitude 50 in each dimension
-  int val_magnitude = 50;
   std::vector<int> dimension_signs (static_cast<std::size_t>(n_dimensions), -1);
-  // Create specified number of points in each cluster
-  for (std::size_t p=0; p < static_cast<std::size_t>(n_points_per_cluster); ++p){
-    // Determine values along each dimension for the current point
-    for (std::size_t k=0; k<static_cast<std::size_t>(n_dimensions); ++k)
-    {
-      // Assign value to current dimension (column in array A) of current point (row in array A)
-      int sign = dimension_signs[k];
-      int val = val_magnitude * sign;
-      A.Set(row, k, val);
-    }
-    row = row + 1;
-    // Increment magnitude of values within cluster so not all points are identical in each cluster
-    val_magnitude += 5;
-  }
+  std::size_t row = 0;
+  int initial_val_magnitude = 50;
+  // Initialize first point in each cluster with magnitude 50 in each dimension
+  std::size_t next_row = add_cluster_to_matrix(n_points_per_cluster, n_dimensions, dimension_signs, row, A,
+      initial_val_magnitude);
+  row = next_row;
 
   // r represents number of dimensions that are positive
   for (int r = 1; r <= n_dimensions; ++r){
@@ -188,27 +196,11 @@ TEST(clustering_test, kmeans_test_ndimensions)
         int positive_dimension = static_cast<int>(combinations_array.At(i,j)) - 1;
         dimension_signs[static_cast<std::size_t>(positive_dimension)] = 1;
       }
-      std::cout << std::endl;
 
-      // Initialize first point in each cluster with magnitude 50 in each dimension
-      int val_magnitude = 50;
-      // Create specified number of points in each cluster
-      for (std::size_t p=0; p < static_cast<std::size_t>(n_points_per_cluster); ++p){
-        // Determine values along each dimension for the current point
-        for (std::size_t k=0; k<static_cast<std::size_t>(n_dimensions); ++k)
-        {
-          // Assign value to current dimension (column in array A) of current point (row in array A)
-          int sign = dimension_signs[k];
-          int val = val_magnitude * sign;
-          A.Set(row, k, val);
-        }
-        // Increment magnitude of values within cluster so not all points are identical in each cluster
-        row = row + 1;
-        val_magnitude += 5;
-      }
-
+      std::size_t next_row = add_cluster_to_matrix(n_points_per_cluster, n_dimensions, dimension_signs, row, A,
+                                                   initial_val_magnitude);
+      row = next_row;
     }
-    std::cout << std::endl << "next starts at row: " << row << " of " << n_points << std::endl;
   }
 
   std::size_t random_seed = 123456;
@@ -222,14 +214,15 @@ TEST(clustering_test, kmeans_test_ndimensions)
   }
 
   // Print matrix
-  for (std::size_t l = 0; l < A.shape()[0]; ++l) {
-    for (std::size_t m = 0; m < A.shape()[1]; ++m)
-    {
-      std::cout << A.At(l,m) << "\t\t";
+  if (to_print){
+    for (std::size_t l = 0; l < A.shape()[0]; ++l) {
+      for (std::size_t m = 0; m < A.shape()[1]; ++m)
+      {
+        std::cout << A.At(l,m) << "\t\t";
+      }
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
   }
-
   matrix_type combinations_array = combinations(n_dimensions, 0);
 }
 
