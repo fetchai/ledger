@@ -357,6 +357,11 @@ private:
       n_clusters_ = cluster_count;
     }
 
+    // failing this assertion generally implies that there are fewer than 2 separate
+    // cluster labels for the previously assigned data - this is not permissble since
+    // it makes inference impossible
+    assert(n_clusters_ > 1);
+
     // if user wants us to figure out how many clusters to set then we only need to find a
     // single case with non-zero count
     sufficient_previous_assignment = false;
