@@ -28,21 +28,19 @@ using namespace fetch::math::combinatorics;
 // Factorial function - test edge case (0!)
 TEST(combinatorics, test_factorial_zero)
 {
-  std::size_t input = 0;
+  std::size_t input  = 0;
   std::size_t output = factorial(input);
-  assert(output == 1);
+  ASSERT_TRUE(output == 1);
 }
-
 
 // Factorial function - test standard input (12!)
 TEST(combinatorics, test_factorial_standard_input)
 {
-  std::size_t input = 12;
-  std::size_t output = factorial(input);
+  std::size_t input        = 12;
+  std::size_t output       = factorial(input);
   std::size_t numpy_output = 479001600;
   ASSERT_TRUE(output == numpy_output);
 }
-
 
 // Combinations function - test standard input
 TEST(combinatorics, test_combinations_standard_input)
@@ -97,7 +95,6 @@ TEST(combinatorics, test_combinations_standard_input)
   ASSERT_TRUE(fetch_output == python_output);
 }
 
-
 // Combinations function - edge case - n=r
 TEST(combinatorics, test_combinations_edge_case1)
 {
@@ -118,7 +115,6 @@ TEST(combinatorics, test_combinations_edge_case1)
   ASSERT_TRUE(fetch_output == python_output);
 }
 
-
 // Combinations function - edge case - n=r=1
 TEST(combinatorics, test_combinations_edge_case2)
 {
@@ -134,7 +130,6 @@ TEST(combinatorics, test_combinations_edge_case2)
   fetch_output = combinations(n, r);
   ASSERT_TRUE(fetch_output == python_output);
 }
-
 
 // Combinations function - edge case - r=0
 TEST(combinatorics, test_combinations_edge_case3)
