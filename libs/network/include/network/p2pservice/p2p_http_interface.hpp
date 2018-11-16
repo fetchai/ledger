@@ -43,6 +43,8 @@ public:
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
 
+  static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
+
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
                    P2PService &p2p_service, TrustSystem &trust)
     : log2_num_lanes_(log2_num_lanes)
@@ -129,6 +131,8 @@ private:
                                     http::HTTPRequest const &   request)
   {
     auto const best_peers = trust_.GetBestPeers(100);
+
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: ", best_peers.size());
 
     Variant response = Variant::Array(best_peers.size());
 
