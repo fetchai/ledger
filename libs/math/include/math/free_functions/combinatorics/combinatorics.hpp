@@ -48,7 +48,8 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
    * @param r: The number of items to select
    * @return: Matrix of size (num possible combinations, r), where each row contains a unique combination of r items
    */
-  assert (n != 1);
+  // assert (n != 1);
+  assert (r <= n);
   if (r == 0){
     fetch::math::linalg::Matrix<double> output_array{};
     return output_array;
