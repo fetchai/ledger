@@ -15,6 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 
+
 add_fetch_gtest(p2ptrust_gtest fetch-network p2ptrust)
 add_fetch_gtest(muddle_gtest fetch-network muddle)
 add_fetch_gtest(p2p_gtest fetch-network p2p)
@@ -23,3 +24,5 @@ add_fetch_gtest(network_gtest fetch-network network)
 add_fetch_gtest(peer_gtest fetch-network gtest)
 include_directories(network_gtest PRIVATE ../../ledger/include)
 target_include_directories(network_gtest PRIVATE include)
+target_include_directories(muddle_gtest PRIVATE include)
+target_link_libraries(muddle-tests PRIVATE fetch-ledger)

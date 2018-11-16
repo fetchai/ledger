@@ -34,35 +34,31 @@ TEST(clustering_test, kmeans_test_2d_4k)
 
   matrix_type A{100, 2};
   matrix_type ret{100, 1};
-  std::size_t K = 2;
+  std::size_t K = 4;
 
   for (std::size_t i = 0; i < 25; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(-i - 50));
-    A.Set(i, 1, static_cast<data_type>(-i - 50));
+    A.Set(i, 0, -static_cast<data_type>(i) - 50);
+    A.Set(i, 1, -static_cast<data_type>(i) - 50);
   }
   for (std::size_t i = 25; i < 50; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(-i - 50));
-    A.Set(i, 1, static_cast<data_type>(i + 50));
+    A.Set(i, 0, -static_cast<data_type>(i) - 50);
+    A.Set(i, 1, static_cast<data_type>(i) + 50);
   }
   for (std::size_t i = 50; i < 75; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(i + 50));
-    A.Set(i, 1, static_cast<data_type>(-i - 50));
+    A.Set(i, 0, static_cast<data_type>(i) + 50);
+    A.Set(i, 1, -static_cast<data_type>(i) - 50);
   }
   for (std::size_t i = 75; i < 100; ++i)
   {
-    A.Set(i, 0, static_cast<data_type>(i + 50));
-    A.Set(i, 1, static_cast<data_type>(i + 50));
+    A.Set(i, 0, static_cast<data_type>(i) + 50);
+    A.Set(i, 1, static_cast<data_type>(i) + 50);
   }
 
-  auto now    = std::chrono::system_clock::now();
-  auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-  auto r_seed =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now_ms.time_since_epoch()).count();
-  std::size_t random_seed = static_cast<std::size_t>(r_seed);
-  matrix_type clusters    = fetch::math::clustering::KMeans(A, K, random_seed);
+  std::size_t random_seed = 123456;
+  matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
   for (std::size_t j = 0; j < 25; ++j)
@@ -83,5 +79,108 @@ TEST(clustering_test, kmeans_test_2d_4k)
   for (std::size_t j = 75; j < 100; ++j)
   {
     ASSERT_TRUE(group_3 == static_cast<std::size_t>(clusters[j]));
+  }
+}
+
+TEST(clustering_test, kmeans_test_previous_assignment)
+{
+  std::size_t n_points = 50;
+
+  std::size_t K = 2;
+  matrix_type A{n_points, 2};
+  matrix_type prev_k{n_points, 1};
+  matrix_type ret{n_points, 1};
+
+  for (std::size_t i = 0; i < 25; ++i)
+  {
+    A.Set(i, 0, static_cast<data_type>(-i - 50));
+    A.Set(i, 1, static_cast<data_type>(-i - 50));
+  }
+  for (std::size_t i = 25; i < 50; ++i)
+  {
+    A.Set(i, 0, static_cast<data_type>(i + 50));
+    A.Set(i, 1, static_cast<data_type>(i + 50));
+  }
+
+  for (std::size_t i = 0; i < 5; ++i)
+  {
+    prev_k.Set(i, 0, 0);
+  }
+  for (std::size_t i = 5; i < 25; ++i)
+  {
+    prev_k.Set(i, 0, -1);
+  }
+  for (std::size_t i = 25; i < 30; ++i)
+  {
+    prev_k.Set(i, 0, 1);
+  }
+  for (std::size_t i = 30; i < 50; ++i)
+  {
+    prev_k.Set(i, 0, -1);
+  }
+
+  std::size_t random_seed = 123456;
+  matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, prev_k, K);
+
+  std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
+  for (std::size_t j = 0; j < 25; ++j)
+  {
+    ASSERT_TRUE(group_0 == static_cast<std::size_t>(clusters[j]));
+  }
+  std::size_t group_1 = static_cast<std::size_t>(clusters[25]);
+  for (std::size_t j = 25; j < 50; ++j)
+  {
+    ASSERT_TRUE(group_1 == static_cast<std::size_t>(clusters[j]));
+  }
+}
+
+TEST(clustering_test, kmeans_test_previous_assignment_no_K)
+{
+  std::size_t n_points = 50;
+
+  matrix_type A{n_points, 2};
+  matrix_type prev_k{n_points, 1};
+  matrix_type ret{n_points, 1};
+
+  for (std::size_t i = 0; i < 25; ++i)
+  {
+    A.Set(i, 0, static_cast<data_type>(-i - 50));
+    A.Set(i, 1, static_cast<data_type>(-i - 50));
+  }
+  for (std::size_t i = 25; i < 50; ++i)
+  {
+    A.Set(i, 0, static_cast<data_type>(i + 50));
+    A.Set(i, 1, static_cast<data_type>(i + 50));
+  }
+
+  for (std::size_t i = 0; i < 5; ++i)
+  {
+    prev_k.Set(i, 0, 0);
+  }
+  for (std::size_t i = 5; i < 25; ++i)
+  {
+    prev_k.Set(i, 0, -1);
+  }
+  for (std::size_t i = 25; i < 30; ++i)
+  {
+    prev_k.Set(i, 0, 1);
+  }
+  for (std::size_t i = 30; i < 50; ++i)
+  {
+    prev_k.Set(i, 0, -1);
+  }
+
+  std::size_t random_seed = 123456;
+  matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, prev_k);
+
+  std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
+  for (std::size_t j = 0; j < 25; ++j)
+  {
+    ASSERT_TRUE(group_0 == static_cast<std::size_t>(clusters[j]));
+  }
+  std::size_t group_1 = static_cast<std::size_t>(clusters[25]);
+  for (std::size_t j = 25; j < 50; ++j)
+  {
+    ASSERT_TRUE(group_1 == static_cast<std::size_t>(clusters[j]));
   }
 }

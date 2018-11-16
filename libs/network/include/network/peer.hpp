@@ -66,7 +66,7 @@ public:
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;
 
-  bool operator==(Peer const &other) const;
+  bool operator==(Peer const &other) const noexcept;
   bool operator<(Peer const &other) const;
 
   template <typename T>
@@ -96,7 +96,7 @@ inline std::string Peer::ToUri() const
   return "tcp://" + address_ + ':' + std::to_string(port_);
 }
 
-inline bool Peer::operator==(Peer const &other) const
+inline bool Peer::operator==(Peer const &other) const noexcept
 {
   return ((address_ == other.address_) && (port_ == other.port_));
 }
