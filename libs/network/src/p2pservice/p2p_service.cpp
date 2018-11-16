@@ -27,7 +27,7 @@
 namespace fetch {
 namespace p2p {
 
-FutureTimepoint start_mistrust;
+  P2PService::FutureTimepoint start_mistrust;
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust)
   : muddle_(muddle)
