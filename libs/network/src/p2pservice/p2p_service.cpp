@@ -133,12 +133,12 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (start_mistrust.IsDue())
     {
-      if (name[0]=='Z' || name[1]=='Z')
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      }
+      //if (name[0]=='Z' || name[1]=='Z')
+      //{
+      //  FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
+      //  trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      //  trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      //}
     }
 
     // update our desired
