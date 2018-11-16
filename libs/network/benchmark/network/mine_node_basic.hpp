@@ -145,7 +145,8 @@ public:
   // Mining loop
   void startMining()
   {
-    auto closure = [this] {
+    fetch::chain::consensus::DummyMiner miner;
+    auto                                closure = [this, &miner] {
       // Loop code
       while (!stopped_)
       {
@@ -164,7 +165,7 @@ public:
 
         // Mine the block
         nextBlock.proof().SetTarget(target_);
-        miner::Mine(nextBlock);
+        miner.Mine(nextBlock);
 
         if (stopped_)
         {

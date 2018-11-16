@@ -411,7 +411,7 @@ TEST_P(JsonTests, CheckParsing)
   {
     doc.Parse(config.input_text);
   }
-  catch (fetch::json::JSONParseException e)
+  catch (fetch::json::JSONParseException const &)
   {
     did_throw = true;
   }

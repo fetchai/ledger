@@ -25,53 +25,26 @@ namespace fetch {
 namespace chain {
 namespace consensus {
 
-class DummyMiner : public ConsensusMinerInterface
+class BadMiner : public ConsensusMinerInterface
 {
 
 public:
-  DummyMiner()  = default;
-  ~DummyMiner() = default;
+  BadMiner()  = default;
+  ~BadMiner() = default;
 
   // Blocking mine
   void Mine(BlockType &block) override
   {
-    uint64_t initNonce = GetRandom();
-    block.body().nonce = initNonce;
-
+    block.body().nonce = 0;
     block.UpdateDigest();
-
-    while (!block.proof()())
-    {
-      block.body().nonce++;
-      block.UpdateDigest();
-    }
   }
 
   // Mine for set number of iterations
   bool Mine(BlockType &block, uint64_t iterations) override
   {
-    uint32_t initNonce = GetRandom();
-    block.body().nonce = initNonce;
-
+    block.body().nonce = 0;
     block.UpdateDigest();
-
-    while (!block.proof()() && iterations > 0)
-    {
-      block.body().nonce++;
-      block.UpdateDigest();
-      iterations--;
-    }
-
-    return block.proof()();
-  }
-
-private:
-  static uint32_t GetRandom()
-  {
-    std::random_device                      rd;
-    std::mt19937                            gen(rd());
-    std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
-    return dis(gen);
+    return true;
   }
 };
 }  // namespace consensus

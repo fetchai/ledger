@@ -825,8 +825,8 @@ void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
   }
 }
 template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            memory::Range const &range)
+ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
+                            memory::Range const &range)
 {
   ShapeLessArray<T, C> ret{obj1.size()};
   Divide(obj1, obj2, range, ret);
