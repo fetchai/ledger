@@ -249,9 +249,8 @@ private:
             sufficient_previous_assignment = false;
           }
         }
+        n_clusters_ = k_count_.size();
       }
-
-      n_clusters_ = k_count_.size();
 
       // initialise k means
       std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
@@ -314,6 +313,7 @@ private:
           ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
         }
       }
+      n_clusters_ = k_count_.size();
     }
     else if (k_inference_mode_ == KInferenceMode::NClusters)
     {
@@ -353,6 +353,8 @@ private:
             std::pair<std::size_t, std::size_t>(cluster_count, pc.first));
         ++cluster_count;
       }
+
+      n_clusters_ = cluster_count;
     }
 
     // if user wants us to figure out how many clusters to set then we only need to find a
