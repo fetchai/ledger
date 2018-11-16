@@ -39,7 +39,9 @@ std::size_t factorial(std::size_t n)
 
   // General solution
   for (std::size_t i = n - 1; i > 1; i--)
+  {
     n *= i;
+  }
 
   return n;
 }
