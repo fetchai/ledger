@@ -69,6 +69,9 @@ public:
     KMeansSetup(data, r_seed);
 
     ComputeKMeans(data, ret);
+
+    // assign the final output
+    ret = k_assignment_;
   }
 
   /**
