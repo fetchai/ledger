@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "math/free_functions/clustering_algorithms/k_means.hpp"
+#include "math/free_functions/standard_functions/combinatorics.hpp"
 #include <math/linalg/matrix.hpp>
 #include <cmath>
 #include <algorithm>
@@ -35,50 +36,50 @@ using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
 
 // Helper function
-int factorial(int n)
-{
-  if (n == 0){
-    return 1;
-  }
-  int i;
-  for(i = n-1; i > 1; i--)
-    n *= i;
-
-  return n;
-}
-
+//int fetch::math::combinatorics::factorial(int n)
+//{
+//  if (n == 0){
+//    return 1;
+//  }
+//  int i;
+//  for(i = n-1; i > 1; i--)
+//    n *= i;
+//
+//  return n;
+//}
+//
 // Helper function
-matrix_type combinations(int n, int r)
-{
-  if (r == 0){
-    matrix_type output_array{};
-    return output_array;
-  }
-
-  int n_combinations = factorial(n)/factorial(r)/factorial(n-r);
-  std::size_t current_dim = 0;
-  std::size_t current_row = 0;
-
-  std::vector<bool> v(static_cast<unsigned long>(n));
-  std::fill(v.end() - r, v.end(), true);
-
-  matrix_type output_array{static_cast<std::size_t>(n_combinations), static_cast<std::size_t>(r)};
-  do {
-    for (int i = 0; i < n; ++i) {
-      if (v[static_cast<unsigned long>(i)]) {
-          int dim = (i+1);
-          output_array.Set(current_row, current_dim, static_cast<data_type>(dim));
-          if (current_dim == static_cast<std::size_t>(r)-1){
-            current_row += 1;
-          }
-          current_dim = current_dim + 1;
-          current_dim = current_dim % static_cast<std::size_t>(r);
-
-        }
-      }
-    }while (std::next_permutation(v.begin(), v.end()));
-  return output_array;
-}
+//matrix_type fetch::math::combinatorics::combinations(int n, int r)
+//{
+//  if (r == 0){
+//    matrix_type output_array{};
+//    return output_array;
+//  }
+//
+//  int n_fetch::math::combinatorics::combinations = fetch::math::combinatorics::factorial(n)/fetch::math::combinatorics::factorial(r)/fetch::math::combinatorics::factorial(n-r);
+//  std::size_t current_dim = 0;
+//  std::size_t current_row = 0;
+//
+//  std::vector<bool> v(static_cast<unsigned long>(n));
+//  std::fill(v.end() - r, v.end(), true);
+//
+//  matrix_type output_array{static_cast<std::size_t>(n_fetch::math::combinatorics::combinations), static_cast<std::size_t>(r)};
+//  do {
+//    for (int i = 0; i < n; ++i) {
+//      if (v[static_cast<unsigned long>(i)]) {
+//          int dim = (i+1);
+//          output_array.Set(current_row, current_dim, static_cast<data_type>(dim));
+//          if (current_dim == static_cast<std::size_t>(r)-1){
+//            current_row += 1;
+//          }
+//          current_dim = current_dim + 1;
+//          current_dim = current_dim % static_cast<std::size_t>(r);
+//
+//        }
+//      }
+//    }while (std::next_permutation(v.begin(), v.end()));
+//  return output_array;
+//}
 
 
 // Helper function
@@ -182,7 +183,7 @@ TEST(clustering_test, kmeans_test_ndimensions)
   // r represents number of dimensions that are positive
   for (int r = 1; r <= n_dimensions; ++r){
     // Each row of array tells us which dimensions are positive
-    matrix_type combinations_array = combinations(n_dimensions, r);
+    matrix_type combinations_array = fetch::math::combinatorics::combinations(n_dimensions, r);
 
     // Create vector of size (1 x n_dimensions) that indicates whether dimension is positive or negative in current
     // cluster
