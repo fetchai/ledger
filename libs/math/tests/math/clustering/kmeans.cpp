@@ -143,10 +143,10 @@ TEST(clustering_test, kmeans_test_2d_4k)
 }
 
 
-TEST(clustering_test, kmeans_test_4dimensions)
+TEST(clustering_test, kmeans_test_ndimensions)
 {
 
-  int n_dimensions = 4;
+  int n_dimensions = 6;
   float base = 2.0;
   // Each dimension will be positive or negative for 2^n combinations
   float out = std::pow(base, static_cast<float>(n_dimensions));
@@ -210,6 +210,18 @@ TEST(clustering_test, kmeans_test_4dimensions)
     }
     std::cout << std::endl << "next starts at row: " << row << " of " << n_points << std::endl;
   }
+
+  std::size_t random_seed = 123456;
+  matrix_type clusters = fetch::math::clustering::KMeans(A, random_seed, static_cast<std::size_t>(n_clusters));
+
+  for (std::size_t c = 0; c < static_cast<std::size_t>(n_clusters); ++c){
+    std::size_t current_cluster = static_cast<std::size_t>(clusters[c]);
+    for (std::size_t p = 0; p < static_cast<std::size_t>(n_points); ++p){
+      ASSERT_TRUE(current_cluster == static_cast<std::size_t>(clusters[c]));
+    }
+  }
+
+  // Print matrix
   for (std::size_t l = 0; l < A.shape()[0]; ++l) {
     for (std::size_t m = 0; m < A.shape()[1]; ++m)
     {
