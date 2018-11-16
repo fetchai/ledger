@@ -26,17 +26,13 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <chrono>
 
 using namespace fetch::math::linalg;
 
 using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
-
-int factorial(int n);
-matrix_type combinations(int n, int r);
-std::size_t add_cluster_to_matrix(int n_points_per_cluster, int n_dimensions, std::vector<int> dimension_signs,
-    std::size_t row, matrix_type &A, int initial_val_magnitude = 50);
 
 // Helper function
 int factorial(int n)
@@ -165,7 +161,7 @@ TEST(clustering_test, kmeans_test_ndimensions)
 {
 
   bool to_print = false;
-  int n_dimensions = 4;
+  int n_dimensions = 5;
   float base = 2.0;
   // Each dimension will be positive or negative for 2^n combinations
   float out = std::pow(base, static_cast<float>(n_dimensions));
@@ -223,7 +219,6 @@ TEST(clustering_test, kmeans_test_ndimensions)
       std::cout << std::endl;
     }
   }
-  matrix_type combinations_array = combinations(n_dimensions, 0);
 }
 
 TEST(clustering_test, kmeans_test_previous_assignment)
