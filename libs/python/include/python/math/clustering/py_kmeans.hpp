@@ -39,7 +39,7 @@ inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r
   {
     throw std::range_error("cannot have fewer than 2 clusters");
   }
-  return KMeans(data, K, r_seed, max_loops, init_mode, max_no_change_convergence);
+  return KMeans(data, r_seed, K, max_loops, init_mode, max_no_change_convergence);
 }
 
 inline void BuildKMeansClustering(std::string const &custom_name, pybind11::module &module)

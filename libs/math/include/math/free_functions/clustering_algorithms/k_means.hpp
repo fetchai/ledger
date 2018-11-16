@@ -54,15 +54,11 @@ public:
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops,
                        std::size_t init_mode, std::size_t max_no_change_convergence)
-  //    : n_clusters_(n_clusters)
-  //    , max_no_change_convergence_(std::move(max_no_change_convergence))
-  //    , max_loops_(max_loops)
-  //    , init_mode_(std::move(init_mode))
+    : n_clusters_(n_clusters)
+    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_loops_(max_loops)
+    , init_mode_(std::move(init_mode))
   {
-    n_clusters_                = n_clusters;
-    max_no_change_convergence_ = max_no_change_convergence;
-    max_loops_                 = max_loops;
-    init_mode_                 = init_mode;
 
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
@@ -87,15 +83,11 @@ public:
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops,
                        ArrayType k_assignment, std::size_t max_no_change_convergence)
-  //    : n_clusters_(n_clusters)
-  //    , max_no_change_convergence_(std::move(max_no_change_convergence))
-  //    , max_loops_(max_loops)
-  //    , k_assignment_(std::move(k_assignment))
+    : n_clusters_(n_clusters)
+    , max_no_change_convergence_(std::move(max_no_change_convergence))
+    , max_loops_(max_loops)
+    , k_assignment_(std::move(k_assignment))
   {
-    n_clusters_                = n_clusters;
-    max_no_change_convergence_ = max_no_change_convergence;
-    max_loops_                 = max_loops;
-    k_assignment_              = k_assignment;
 
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
@@ -123,15 +115,11 @@ public:
   KMeansImplementation(ArrayType const &data, ArrayType &ret, std::size_t const &r_seed,
                        std::size_t const &max_loops, ArrayType k_assignment,
                        std::size_t max_no_change_convergence, std::size_t k_inference_mode)
-  //    : max_no_change_convergence_(max_no_change_convergence)
-  //    , max_loops_(max_loops)
-  //    , k_assignment_(std::move(k_assignment))
-  //    , k_inference_mode_(std::move(k_inference_mode))
+    : max_no_change_convergence_(max_no_change_convergence)
+    , max_loops_(max_loops)
+    , k_assignment_(std::move(k_assignment))
+    , k_inference_mode_(std::move(k_inference_mode))
   {
-    max_no_change_convergence_ = max_no_change_convergence;
-    max_loops_                 = max_loops;
-    k_assignment_              = k_assignment;
-    k_inference_mode_          = k_inference_mode;
 
     // seed random number generator
     rng_.seed(uint32_t(r_seed));
@@ -698,7 +686,7 @@ private:
   std::size_t assigned_k_   = INVALID;  // current cluster to assign
 
   typename ArrayType::Type running_mean_ =
-      INVALID;  // used to find the smallest distance out of K comparisons
+      0;  // used to find the smallest distance out of K comparisons
 
   std::default_random_engine rng_;
 

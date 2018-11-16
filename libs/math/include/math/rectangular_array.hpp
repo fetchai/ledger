@@ -71,7 +71,7 @@ public:
    * vector size found on the system. Space is allocated, but the
    * contructor of the underlying data structure is not invoked.
    */
-  RectangularArray(std::size_t const &n)
+  explicit RectangularArray(std::size_t const &n)
   {
     Resize(n, 1);
   }
