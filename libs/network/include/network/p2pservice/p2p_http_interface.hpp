@@ -134,7 +134,8 @@ private:
 
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: ", best_peers.size());
 
-    Variant response = Variant::Array(best_peers.size());
+    Variant response           = Variant::Object();
+    Variant trusts = Variant::Array(best_peers.size());
 
     // populate the response
     std::size_t index = 0;
@@ -145,9 +146,10 @@ private:
       peer_data["trust"]    = trust_.GetTrustRatingOfPeer(peer);
       peer_data["rank"]     = trust_.GetRankOfPeer(peer);
 
-      response[index++] = peer_data;
+      trusts[index++] = peer_data;
     }
 
+    response["trusts"] = trusts;
     return http::CreateJsonResponse(response);
   }
 
