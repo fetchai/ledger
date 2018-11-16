@@ -27,6 +27,8 @@
 namespace fetch {
 namespace p2p {
 
+FutureTimepoint start_mistrust;
+
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
@@ -64,6 +66,8 @@ void P2PService::Start(UriList const &initial_peer_list)
 
   thread_pool_->SetIdleInterval(4000);  thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
+
+  start_mistrust.Set(std::chrono::milliseconds(10000));
 }
 
 void P2PService::Stop()
@@ -127,15 +131,14 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     
     std::string name(ToBase64(address));
 
-    if (name[0]=='Z' || name[1]=='Z')
+    if (start_mistrust.IsDue())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      if (name[0]=='Z' || name[1]=='Z')
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      }
     }
 
     // update our desired
