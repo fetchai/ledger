@@ -25,12 +25,13 @@ namespace fetch {
 namespace math {
 namespace combinatorics {
 
+/**
+ * Calculates the factorial of an integer (n!)
+ * @param n - Integer for which this function calculates the factorial
+ * @return - Integer solution to n!
+ */
 std::size_t factorial(std::size_t n)
 {
-  /** Calculates the factorial of an integer (n!)
-   * @param n: Integer for which this function calculates the factorial
-   * @return: Integer solution to n!
-   */
   // Trivial case
   if (n == 0)
   {
@@ -46,14 +47,43 @@ std::size_t factorial(std::size_t n)
   return n;
 }
 
+/**
+ * Recursively calculates "n Choose r" in a safe and efficient way, avoiding potential overflow
+ * errors from factorial function
+ * @param n - The total number of items to choose from
+ * @param r - The size of each combination
+ * @return - Number of combinations as float
+ */
+float calculateNumCombinations(std::size_t n, std::size_t r)
+{
+  assert(r <= n);
+
+  // Base case
+  if (r == 0)
+  {
+    return 1;
+  }
+
+  // Sometimes faster to calculate equivalent definition "n Choose n-r" than "n Choose r"
+  if (r > n / 2)
+  {
+    return calculateNumCombinations(n, n - r);
+  }
+
+  // Recursive implementation
+  float fraction = static_cast<float>(n) / static_cast<float>(r);
+  return fraction * calculateNumCombinations(n - 1, r - 1);
+}
+
+/**
+ * Calculates all size r combinations of items [1,...,n]
+ * @param n - The total number of items to choose from, where items will be selected from [1,...,n]
+ * @param r - The number of items to select
+ * @return - Matrix of size (num possible combinations, r), where each row contains a unique
+ * combination of r items
+ */
 fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
 {
-  /** Calculates all size r combinations of n items
-   * @param n: The total number of items to choose from, where items will be selected from [1,...,n]
-   * @param r: The number of items to select
-   * @return: Matrix of size (num possible combinations, r), where each row contains a unique
-   * combination of r items
-   */
   assert(r <= n);
   if (r == 0)
   {
@@ -61,7 +91,7 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
     return output_array;
   }
 
-  std::size_t n_combinations = factorial(n) / factorial(r) / factorial(n - r);
+  auto        n_combinations = static_cast<std::size_t>(calculateNumCombinations(n, r));
   std::size_t current_dim    = 0;
   std::size_t current_row    = 0;
 

@@ -42,6 +42,54 @@ TEST(combinatorics, test_factorial_standard_input)
   ASSERT_TRUE(output == numpy_output);
 }
 
+// calculateNumCombinations function - test standard input
+TEST(combinatorics, test_num_combinations_standard_input)
+{
+  std::size_t n = 5;
+  std::size_t r = 2;
+
+  float fetch_output  = calculateNumCombinations(n, r);
+  float python_output = 10;
+
+  ASSERT_TRUE(fetch_output == python_output);
+}
+
+// Combinations function - edge case - n=r
+TEST(combinatorics, test_num_combinations_edge_case1)
+{
+  std::size_t n = 5;
+  std::size_t r = 5;
+
+  float fetch_output  = calculateNumCombinations(n, r);
+  float python_output = 1;
+
+  ASSERT_TRUE(fetch_output == python_output);
+}
+
+// Combinations function - edge case - n=r=1
+TEST(combinatorics, test_num_combinations_edge_case2)
+{
+  std::size_t n = 1;
+  std::size_t r = 1;
+
+  float fetch_output  = calculateNumCombinations(n, r);
+  float python_output = 1;
+
+  ASSERT_TRUE(fetch_output == python_output);
+}
+
+// Combinations function - edge case - r=0
+TEST(combinatorics, test_num_combinations_edge_case3)
+{
+  std::size_t n = 12;
+  std::size_t r = 0;
+
+  float fetch_output  = calculateNumCombinations(n, r);
+  float python_output = 1;
+
+  ASSERT_TRUE(fetch_output == python_output);
+}
+
 // Combinations function - test standard input
 TEST(combinatorics, test_combinations_standard_input)
 {
