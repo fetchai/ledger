@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/statistics/variance.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/statistics/variance.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
