@@ -17,26 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
-#include "math/statistics/variance.hpp"
-#include "vectorise/memory/range.hpp"
-
-#include <cmath>
+#include "ledger/chain/main_chain.hpp"
 
 namespace fetch {
-namespace math {
-namespace statistics {
+namespace chain {
+namespace consensus {
 
-template <typename A>
-inline typename A::Type StandardDeviation(A const &a)
+class ConsensusMinerInterface
 {
-  using type = typename A::Type;
+public:
+  using BlockType = chain::MainChain::BlockType;
 
-  type m = Variance(a);
-  return std::sqrt(m);
-}
+  ConsensusMinerInterface()          = default;
+  virtual ~ConsensusMinerInterface() = default;
 
-}  // namespace statistics
-}  // namespace math
+  virtual void Mine(BlockType &block)                      = 0;
+  virtual bool Mine(BlockType &block, uint64_t iterations) = 0;
+};
+
+}  // namespace consensus
+}  // namespace chain
 }  // namespace fetch
