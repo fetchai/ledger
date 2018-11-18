@@ -67,49 +67,80 @@ def parse_commandline():
 
     parser.add_argument('-w', '--warn-only', dest='fix', action='store_false', help='Only display warnings')
     parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to do in parallel')
-    parser.add_argument('-a', '--all', action='store_true', help='Evaluate all files, do not stop on first failure')
+    parser.add_argument('-a', '--all', dest='all', action='store_true', help='Evaluate all files, do not stop on first failure')
+    parser.add_argument('-b', '--embrace', dest='dont_goto_fail', action='store_true', help='Put single-statement then/else clauses and loop bodies in braces')
     parser.add_argument('filename', metavar='<filename>', action='store', nargs='*', help='process only <filename>s (default: the whole project tree)')
 
     return parser.parse_args()
 
 
+blocks = re.compile(r'( *)(?:if|while|for|else)\b')
+indentation = re.compile(r' *')
+is_long = re.compile(r'(.*)\\$')
+is_empty = re.compile(r'\s*(?://.*)?$')
+
+def opening(level):
+    return ' ' * level + '{'
+def closing(level):
+    return ' ' * level + '}'
+def block_entry(level):
+    return re.compile(opening(level) + '.*')
+def extra_line(line_text, padding):
+    if padding:
+        return line_text + ' ' * (padding - len(line_text)) + '\\'
+    else:
+        return line_text
+
 def postprocess(lines):
-    """ Scans an array of clang-formatted strings and turns any single statement 
-    that is a for/while body or then/else clause of an if-statement
+    """ Scans an array of clang-formatted strings and tries to turn any single statement 
+    that is either a then/else clause of an if-statement or a for/while loop body
     into a braced block."""
 
-    blocks = re.compile(r'( *)(?:if|while|for|else)\b')
-    indentation = re.compile(' *')
+    # These two arrays are tightly coupled.
+    levels = []
     unbraced = []
-    empties = 0
+
+    empties = []
+    in_long = None 
 
     for line in lines:
-        if line:
-            if unbraced:
-                recent_level = len(unbraced) * 2
-                if line == ' ' * recent_level + '{': unbraced[-1] = False
+        if is_empty.match(line):
+            empties.append(line)
+        else:
+            if levels:
+                recent_level = levels[-1]
+                if block_entry(recent_level).match(line):
+                    unbraced[-1] = False
                 else:
                     level = len(indentation.match(line)[0])
                     if level == recent_level + 2:
-                        if unbraced[-1]: yield ' ' * recent_level + '{'
-                    else:
-                        while level <= recent_level:
-                            if recent_level and unbraced.pop(): yield ' ' * recent_level + '}'
-                            recent_level -= 2
+                        if unbraced[-1]:
+                            yield extra_line(' ' * recent_level + '{', in_long)
+                    elif level <= recent_level:
+                        while unbraced and level <= recent_level:
+                            recent_level = levels.pop()
+                            if unbraced.pop():
+                                yield extra_line(closing(recent_level), in_long)
+                            recent_level = levels[-1] if levels else -1
             match = blocks.match(line)
-            if match: unbraced.append(True)
+            if match:
+                levels.append(len(match[1]))
+                unbraced.append(True)
             while empties:
-                yield ''
-                empties -= 1
+                for e in empties: yield e
+                empties.clear()
             yield line
-        else:
-            empties += 1
+            match = is_long.match(line)
+            in_long = match and len(match[1])
+
     while empties:
-        yield ''
-        empties -= 1
+        for e in empties: yield e
+        empties.clear()
 
 
 def postprocess_contents(contents):
+    """ Applies postprocess() to source code in a string."""
+
     return '\n'.join(postprocess(contents.split('\n')))
 
 
@@ -184,11 +215,18 @@ def main():
         # apply twice to allow the changes to "settle"
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
-        postprocess_file(source_path)
+
+        if args.dont_goto_fail:
+            postprocess_file(source_path)
+
         return True
 
     def diff_style_to_file(source_path):
-        formatted_output = postprocess_contents(subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode())
+        formatted_output = subprocess.check_output(cmd_prefix + [source_path], cwd=project_root).decode()
+
+        if args.dont_goto_fail:
+            formatted_output = postprocess_contents(formatted_output)
+
         rel_path = os.path.relpath(source_path, project_root)
         return compare_against_original(formatted_output, source_path, rel_path)
 
