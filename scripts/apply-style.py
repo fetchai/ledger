@@ -118,22 +118,23 @@ def postprocess(lines):
                             yield extra_line(' ' * recent_level + '{', in_long)
                     elif level <= recent_level:
                         while unbraced and level <= recent_level:
-                            recent_level = levels.pop()
+                            levels.pop()
                             if unbraced.pop():
                                 yield extra_line(closing(recent_level), in_long)
-                            recent_level = levels[-1] if levels else -1
+                            if levels:
+                                recent_level = levels[-1]
             match = blocks.match(line)
             if match:
                 levels.append(len(match[1]))
                 unbraced.append(True)
-            while empties:
+            if empties:
                 for e in empties: yield e
                 empties.clear()
             yield line
             match = is_long.match(line)
             in_long = match and len(match[1])
 
-    while empties:
+    if empties:
         for e in empties: yield e
         empties.clear()
 
