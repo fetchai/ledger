@@ -201,12 +201,12 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
     if (!addresses.empty())
     {
-      for (auto const &address : addresses)
+      for (auto const &new_address : addresses)
       {
         // update the trust
-        if (!trust_system_.IsPeerKnown(address))
+        if (!trust_system_.IsPeerKnown(new_address))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(address),
+          FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(new_address),
                          " (from: ", ToBase64(from), ")");
 
           trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
