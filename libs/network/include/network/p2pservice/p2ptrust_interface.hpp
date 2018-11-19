@@ -42,10 +42,17 @@ enum class TrustQuality
   NEW_INFORMATION = 3
 };
 
+
 template <typename IDENTITY>
 class P2PTrustInterface
 {
 public:
+  struct PeerTrust
+  {
+    string name;
+    double trust;
+  };
+
   using IdentitySet    = typename std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
 
@@ -66,7 +73,7 @@ public:
                            TrustSubject subject, TrustQuality quality) = 0;
 
   virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
-  virtual std::shared_ptr<variant::Variant>  GetPeersAndTrusts() const=0;
+  virtual std::list<PeerTrust> GetPeersAndTrusts() const=0;
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 
