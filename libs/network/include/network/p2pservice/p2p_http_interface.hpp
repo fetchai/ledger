@@ -142,9 +142,9 @@ private:
     for (auto const &peer : best_peers)
     {
       Variant peer_data     = Variant::Object();
-      peer_data["identity"] = byte_array::ToBase64(peer);
-      peer_data["trust"]    = trust_.GetTrustRatingOfPeer(peer);
-      peer_data["rank"]     = trust_.GetRankOfPeer(peer);
+      peer_data["target"] = byte_array::ToBase64(peer);
+      peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
+      peer_data["weight"]    = trust_.GetTrustRatingOfPeer(peer);
 
       trusts[index++] = peer_data;
     }
