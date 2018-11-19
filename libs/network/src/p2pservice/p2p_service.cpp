@@ -128,8 +128,10 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
     }
-    
+
     std::string name(ToBase64(address));
+
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for:", name)
 
     if (start_mistrust.IsDue())
     {
