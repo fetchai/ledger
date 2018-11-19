@@ -66,7 +66,7 @@ public:
                            TrustSubject subject, TrustQuality quality) = 0;
 
   virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
-  virtual variant::Variant GetPeersAndTrusts() const=0;
+  virtual std::shared_ptr<variant::Variant>  GetPeersAndTrusts() const=0;
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 
