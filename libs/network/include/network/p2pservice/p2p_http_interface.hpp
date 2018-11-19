@@ -130,14 +130,17 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto trust_list = trust_.GetPeersAndTrusts();
+    auto peers_trusts = trust_.GetPeersAndTrusts();
+    auto trust_list = std::make_shared<variant::Variant>();
+    trust_list->MakeArray(peers_trusts.size());
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus: ", trust_list->size());
-
-    for(size_t i = 0, end=trust_list->size(); i< end;i++)
+    for(const auto &pt : peers_trusts)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus: add source: ", i);
-      ((*trust_list)[i])["source"] = byte_array::ToBase64(muddle_.identity().identifier());
+      variant::Variant peer_data     = variant::Variant::Object();
+      peer_data["target"] = pt.name;
+      peer_data["value"]  = pt.trust;
+      peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
+      (*trust_list)[pos++] = peer_data;
     }
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
 
