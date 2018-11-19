@@ -49,7 +49,7 @@ class P2PTrustInterface
 public:
   struct PeerTrust
   {
-    string name;
+    std::string name;
     double trust;
   };
 
