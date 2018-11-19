@@ -193,6 +193,7 @@ public:
       PeerTrust pt;
       pt.name = std::string(byte_array::ToBase64(trust_store_[pos].peer_identity));
       pt.trust = trust_store_[pos].trust;
+      trust_list.push_back(pt);
     }
 
     return trust_list;
