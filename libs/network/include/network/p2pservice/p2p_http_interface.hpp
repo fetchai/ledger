@@ -132,9 +132,9 @@ private:
   {
     auto trust_list = trust_.GetPeersAndTrusts();
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus: ", trust_list.size());
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus: ", trust_list->size());
 
-    for(size_t i = 0, end=trust_list.size(); i< end;i++)
+    for(size_t i = 0, end=trust_list->size(); i< end;i++)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus: add source: ", i);
       ((*trust_list)[i])["source"] = byte_array::ToBase64(muddle_.identity().identifier());
