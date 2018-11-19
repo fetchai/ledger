@@ -131,7 +131,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     std::string name(ToBase64(address));
 
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for:", name)
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for:", name);
 
     if (start_mistrust.IsDue())
     {
