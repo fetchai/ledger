@@ -117,19 +117,21 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                  [](auto const &e) { return e.first; });
 }
 
-void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
+void P2PService::UpdateTrustStatus(AddressSet    active_addresses)
 {
-  for (auto const &element : active_connections)
+  for (auto const &element : active_addresses)
   {
-    auto const &address = element.first;
+    auto const &address = element; //.first;
 
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
     }
-    
+
     std::string name(ToBase64(address));
+
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for:", name);
 
     if (start_mistrust.IsDue())
     {
