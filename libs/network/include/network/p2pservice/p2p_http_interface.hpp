@@ -149,7 +149,7 @@ private:
       trusts[index++] = peer_data;
     }
 
-    response["i_am"] = byte_array::ToBase64(muddle_.identity());
+    response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier);
     response["trusts"] = trusts;
     return http::CreateJsonResponse(response);
   }
