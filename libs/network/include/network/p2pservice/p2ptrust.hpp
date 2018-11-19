@@ -181,11 +181,12 @@ public:
     return result;
   }
 
-  variant::Variant GetPeersAndTrusts() const override
+  std::shared_ptr<variant::Variant> GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
 
-    variant::Variant trust_list = variant::Variant::Array(trust_store_.size());
+    auto trust_list = std::make_shared<variant::Variant>();
+    trust_list->MakeArray(trust_store_.size());
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {
       variant::Variant peer_data     = variant::Variant::Object();
