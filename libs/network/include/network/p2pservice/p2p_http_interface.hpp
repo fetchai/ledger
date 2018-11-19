@@ -144,7 +144,7 @@ private:
       Variant peer_data     = Variant::Object();
       peer_data["target"] = byte_array::ToBase64(peer);
       peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
-      peer_data["weight"]    = trust_.GetTrustRatingOfPeer(peer);
+      peer_data["value"]    = trust_.GetTrustRatingOfPeer(peer);
 
       trusts[index++] = peer_data;
     }
