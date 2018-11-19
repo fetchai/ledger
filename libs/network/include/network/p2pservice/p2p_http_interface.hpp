@@ -130,27 +130,18 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto const best_peers = trust_.GetBestPeers(100);
+    auto trust_list = trust_.GetPeersAndTrusts();
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: ", best_peers.size());
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: ", trust_list.size());
 
-    Variant response           = Variant::Object();
-    Variant trusts = Variant::Array(best_peers.size());
-
-    // populate the response
-    std::size_t index = 0;
-    for (auto const &peer : best_peers)
+    for(size_t i = 0, end=trust_list.size(); i< end;i++)
     {
-      Variant peer_data     = Variant::Object();
-      peer_data["target"] = byte_array::ToBase64(peer);
-      peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
-      peer_data["value"]    = trust_.GetTrustRatingOfPeer(peer);
-
-      trusts[index++] = peer_data;
+      trust_list[i]["source"] = byte_array::ToBase64(muddle_.identity().identifier());
     }
 
+    Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"] = trusts;
+    response["trusts"] = trust_list;
     return http::CreateJsonResponse(response);
   }
 
