@@ -181,6 +181,22 @@ public:
     return result;
   }
 
+  variant::Variant GetPeersAndTrusts() const override
+  {
+    FETCH_LOCK(mutex_);
+
+    variant::Variant trust_list = variant::Variant::Array(trust_store_.size());
+    for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
+    {
+      variant::Variant peer_data     = variant::Variant::Object();
+      peer_data["target"] = byte_array::ToBase64(trust_store_[pos].peer_identity);
+      peer_data["value"]    = trust_store_[pos].trust;
+      trust_list[pos++] = peer_data;
+    }
+
+    return trust_list;
+  }
+
   IdentitySet GetBestPeers(std::size_t maximum) const override
   {
     IdentitySet result;
@@ -287,10 +303,10 @@ protected:
   }
 
 private:
-  bool          dirty_ = false;
+  mutable bool          dirty_ = false;
   mutable Mutex mutex_{__LINE__, __FILE__};
-  TrustStore    trust_store_;
-  RankingStore  ranking_store_;
+  mutable TrustStore    trust_store_;
+  mutable RankingStore  ranking_store_;
 };
 
 }  // namespace p2p
