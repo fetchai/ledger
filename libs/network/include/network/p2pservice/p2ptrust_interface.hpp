@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <string>
+#include <list>
 #include <unordered_set>
 
 namespace fetch {
