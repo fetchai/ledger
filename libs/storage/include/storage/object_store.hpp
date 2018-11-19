@@ -179,7 +179,7 @@ public:
   {
     serializer_type ser;
     ser << object;
-    store_.Set(rid, ser.data());
+    /* store_.Set(rid, ser.data()); */ // temporarily disable disk writes
   }
 
   std::size_t size() const

@@ -286,6 +286,10 @@ public:
 
   void AddToCache(T const &o)
   {
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewCacheElement(o.digest());
+#endif  // FETCH_ENABLE_METRICS
+
     std::lock_guard<mutex::Mutex> lock(mutex_);
     CachedObject                  obj;
     obj.data = o;
@@ -525,6 +529,17 @@ private:
     // record the event
     Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
                                      MetricHandler::Event::SYNCED);
+  }
+
+  typename std::enable_if<std::is_same<T, chain::VerifiedTransaction>::value>::type
+  RecordNewCacheElement(byte_array::ConstByteArray const &identifier)
+  {
+    using fetch::metrics::Metrics;
+    using fetch::metrics::MetricHandler;
+
+    // record the event
+    Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
+                                     MetricHandler::Event::RECEIVED_FOR_SYNC);
   }
 #endif  // FETCH_ENABLE_METRICS
 };
