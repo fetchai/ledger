@@ -192,7 +192,7 @@ public:
       variant::Variant peer_data     = variant::Variant::Object();
       peer_data["target"] = byte_array::ToBase64(trust_store_[pos].peer_identity);
       peer_data["value"]    = trust_store_[pos].trust;
-      trust_list[pos++] = peer_data;
+      (*trust_list)[pos++] = peer_data;
     }
 
     return trust_list;
