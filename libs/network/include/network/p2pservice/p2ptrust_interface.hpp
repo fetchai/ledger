@@ -43,16 +43,18 @@ enum class TrustQuality
   NEW_INFORMATION = 3
 };
 
+struct PeerTrust
+{
+  std::string name;
+  double trust;
+};
+
 
 template <typename IDENTITY>
 class P2PTrustInterface
 {
 public:
-  struct PeerTrust
-  {
-    std::string name;
-    double trust;
-  };
+  using PeerTrust = fetch::p2p::PeerTrust;
 
   using IdentitySet    = typename std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;

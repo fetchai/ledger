@@ -131,22 +131,23 @@ private:
                                     http::HTTPRequest const &   request)
   {
     auto peers_trusts = trust_.GetPeersAndTrusts();
-    auto trust_list = std::make_shared<variant::Variant>();
-    trust_list->MakeArray(peers_trusts.size());
+    variant::Variant trust_list;
+    trust_list.MakeArray(peers_trusts.size());
 
+    std::size_t pos = 0;
     for(const auto &pt : peers_trusts)
     {
       variant::Variant peer_data     = variant::Variant::Object();
       peer_data["target"] = pt.name;
       peer_data["value"]  = pt.trust;
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
-      (*trust_list)[pos++] = peer_data;
+      trust_list[pos++] = peer_data;
     }
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
 
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"] = *trust_list;
+    response["trusts"] = trust_list;
     return http::CreateJsonResponse(response);
   }
 
