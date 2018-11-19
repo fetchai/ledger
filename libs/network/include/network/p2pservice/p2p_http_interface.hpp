@@ -137,12 +137,12 @@ private:
     for(size_t i = 0, end=trust_list.size(); i< end;i++)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: add source: ", i);
-      trust_list[i]["source"] = byte_array::ToBase64(muddle_.identity().identifier());
+      ((*trust_list)[i])["source"] = byte_array::ToBase64(muddle_.identity().identifier());
     }
 
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"] = trust_list;
+    response["trusts"] = *trust_list;
     return http::CreateJsonResponse(response);
   }
 
