@@ -84,6 +84,13 @@ Variant &Variant::operator=(Variant const &value)
   return *this;
 }
 
+void Variant::MakeArray(std::size_t elements)
+{
+  type_ = Type::ARRAY;
+  ResizeArray(elements);
+}
+
+
 /**
  * Check for equality between to variant objects
  *
