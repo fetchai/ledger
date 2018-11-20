@@ -191,7 +191,8 @@ public:
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {
       PeerTrust pt;
-      pt.name = std::string(byte_array::ToBase64(trust_store_[pos].peer_identity));
+      pt.address = trust_store_[pos].peer_identity;
+      pt.name = std::string(byte_array::ToBase64(pt.address));
       pt.trust = trust_store_[pos].trust;
       trust_list.push_back(pt);
     }

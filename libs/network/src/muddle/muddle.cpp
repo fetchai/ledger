@@ -280,5 +280,11 @@ void Muddle::Whitelist(Address const &target)
   router_.Whitelist(target);
 }
 
+
+bool Muddle::IsBlacklisted(Address const &target) const
+{
+  return router_.IsBlacklisted(target);
+}
+
 }  // namespace muddle
 }  // namespace fetch
