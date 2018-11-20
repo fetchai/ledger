@@ -54,7 +54,9 @@ public:
     for (std::size_t i = 0;; ++i)
     {
       if (client.is_alive())
+      {
         break;
+      }
       std::cout << "Waiting for client to connect..." << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
