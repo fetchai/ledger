@@ -198,12 +198,12 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
+    data_idxs_ = std::vector<std::size_t>(n_points_);
     if (k_inference_mode_ == KInferenceMode::Off)
     {
       k_count_ = std::vector<std::size_t>(n_clusters_, 0);
 
       // shuffle the data
-      data_idxs_ = std::vector<std::size_t>(n_points_);
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
       std::shuffle(data_idxs_.begin(), data_idxs_.end(), rng_);
 
