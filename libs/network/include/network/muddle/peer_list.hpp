@@ -107,6 +107,7 @@ public:
   UriMap GetUriMap() const;
 
   PeerSet GetBlacklistedPeers() const;
+
 private:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
@@ -121,8 +122,8 @@ private:
     bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 
-  using Mutex   = mutex::Mutex;
-  using Lock    = std::lock_guard<Mutex>;
+  using Mutex = mutex::Mutex;
+  using Lock  = std::lock_guard<Mutex>;
 
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
@@ -135,6 +136,7 @@ private:
   PeerSet       blacklisted_;
 
   bool ReadyForRetry(const PeerMetadata &metadata) const;
+  bool Blacklisted(Uri const &peer) const;
 };
 
 }  // namespace muddle

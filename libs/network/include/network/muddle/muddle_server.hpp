@@ -59,8 +59,8 @@ public:
    * @param args The arguments for the underlying network server
    */
   template <typename... Args>
-  constexpr MuddleServer(Router &router, Args &&...args)
-	  noexcept(std::is_nothrow_constructible_v<NetworkServer, Args...>)
+  constexpr MuddleServer(Router &router, Args &&... args) noexcept(
+      std::is_nothrow_constructible_v<NetworkServer, Args...>)
     : Networkserver(std::forward<Args>(args)...)
     , router_(router)
   {}

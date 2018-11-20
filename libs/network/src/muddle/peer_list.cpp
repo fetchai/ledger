@@ -39,7 +39,10 @@ PeerConnectionList::PeerConnectionList(Router &router)
 bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
-  if(IsBlacklisted(peer)) return false;
+  if (Blacklisted(peer))
+  {
+    return false;
+  }
   persistent_peers_.emplace(peer);
   return true;
 }
@@ -56,25 +59,36 @@ std::size_t PeerConnectionList::GetNumPeers() const
   return persistent_peers_.size();
 }
 
-void PeerConnectionList::Blacklist(Uri const &peer) {
-	FETCH_LOCK(lock_);
-	blacklisted_.insert(peer);
+void PeerConnectionList::Blacklist(Uri const &peer)
+{
+  FETCH_LOCK(lock_);
+  blacklisted_.insert(peer);
 }
 
-bool PeerConnectionList::IsBlacklisted(Uri const &peer) const {
-	FETCH_LOCK(lock_);
-	return blacklisted_.find(peer) != blacklisted_.cend();
+bool PeerConnectionList::IsBlacklisted(Uri const &peer) const
+{
+  FETCH_LOCK(lock_);
+  return Blacklisted(peer);
 }
 
-PeerConnectionList::PeerSet GetBlacklistedPeers() const {
-	FETCH_LOCK(lock_);
-	return blacklisted_;
+PeerConnectionList::PeerSet GetBlacklistedPeers() const
+{
+  FETCH_LOCK(lock_);
+  return blacklisted_;
+}
+
+bool PeerConnectionList::Blacklisted(Uri const &peer) const
+{
+  return blacklisted_.find(peer) != blacklisted_.cend();
 }
 
 bool PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
 {
   FETCH_LOCK(lock_);
-  if(IsBlacklisted(peer)) return false;
+  if (Blacklisted(peer))
+  {
+    return false;
+  }
   // update the metadata
   auto &metadata     = peer_metadata_[peer];
   metadata.connected = false;
