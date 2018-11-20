@@ -19,23 +19,20 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
-#include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
-
-#include <benchmark/benchmark.h>
-#include <vector>
-
 #include "core/random/lfg.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
 #include "network/service/server.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/object_store_syncronisation_protocol.hpp"
+
+#include <benchmark/benchmark.h>
+#include <vector>
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -128,8 +125,6 @@ public:
     std::shared_ptr<ServiceClient> client =
         register_.CreateServiceClient<TCPClient>(nm_, host, port);
 
-    std::cout << "+++ Connecting to " << port << std::endl;
-
     // Wait for connection to be open
     if (!client->WaitForAlive(1000))
     {
@@ -151,6 +146,7 @@ private:
   std::unordered_map<connection_handle_type, shared_service_client_type> services_;
 };
 
+// Convienience function to check a port is open
 void BlockUntilConnect(std::string host, uint16_t port)
 {
   NetworkManager nm{1};
@@ -179,7 +175,7 @@ void BlockUntilConnect(uint16_t port)
   BlockUntilConnect("localhost", port);
 }
 
-
+// Convenience function to call peer
 template <typename... Args>
 fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
                                  Args &&... args)
@@ -228,7 +224,7 @@ public:
     thread_pool_ = MakeThreadPool(1);
     this->SetConnectionRegister(register_);
 
-    // Load TX store
+    // Load/create TX store
     std::string prefix = std::to_string(port);
     tx_store_->New(prefix + "_tst_transaction.db", prefix + "_tst_transaction_index.db", true);
 
@@ -248,13 +244,10 @@ public:
     thread_pool_->Start();
     tx_sync_protocol_->Start();
     this->Start();
-
-    std::cout << "Create " << this << std::endl;
   }
 
   ~TestService()
   {
-    std::cout << "Destroy " << this << std::endl;
     this->Stop();
     thread_pool_->Stop();
   }
@@ -287,44 +280,28 @@ void TxSync(benchmark::State &state)
       std::vector<std::shared_ptr<TestService>> services;
 
       // Start up our services
-      //std::cout << "Starting services" << std::endl;
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
         services.push_back(std::make_shared<TestService>(initial_port + i, nm));
       }
 
-      //std::cout << "wait for input 1!" << std::endl;
-      //std::size_t numbe = 0;
-      //std::cin >> numbe;
-
       // make sure they are all online
-      //std::cout << "brinking services online" << std::endl;
       for (uint16_t i = 0; i < number_of_services; ++i)
       {
         BlockUntilConnect(uint16_t(initial_port + i));
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-
       // Connect our services to each other (chain config)
-      //std::cout << "connect services" << std::endl;
       for (uint16_t i = 1; i < number_of_services; ++i)
       {
         CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
                  ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i - 1));
-        //std::cout << "" << std::endl;
       }
 
-      //std::cout << "connect services done." << std::endl;
-
-      //std::cout << "wait for input 2!" << std::endl;
-      //std::size_t number = 0;
-      //std::cin >> number;
-
       // Now send all the TX to one of the clients
-      auto transactions = GenerateTransactions(std::size_t(state.range(0)), false);
+      auto transactions = GenerateTransactions(std::size_t(state.range(0)), true);
 
+      /*               resume timing              */
       state.ResumeTiming();
 
       for(auto const &tx : transactions)
@@ -333,12 +310,10 @@ void TxSync(benchmark::State &state)
                  ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
       }
 
-      //std::cout << "Verifying peers synced!" << std::endl;
-
       for (std::size_t i = 0; i < 10000; ++i)
       {
         // Check last node in chain until they have seen all TXs
-        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + 1),
+        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services -1),
                                 TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::SYNCED_COUNT);
 
         uint64_t obj_count = promise->As<uint64_t>();
@@ -357,6 +332,7 @@ void TxSync(benchmark::State &state)
         }
       }
 
+      // Stop timing so that tear down not part of test
       state.PauseTiming();
       nm.Stop();
     }
