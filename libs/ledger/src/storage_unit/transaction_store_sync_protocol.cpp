@@ -25,11 +25,11 @@ using fetch::metrics::MetricHandler;
 using fetch::metrics::Metrics;
 
 #ifdef FETCH_ENABLE_METRICS
-static void RecordNewElement(ConstByteArray const &identifier, MetricHandler::Timestamp const &timestamp)
+static void RecordNewElement(ConstByteArray const &identifier)
 {
   // record the event
   Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
-                                   MetricHandler::Event::SYNCED, timestamp);
+                                   MetricHandler::Event::SYNCED);
 }
 
 static void RecordNewCacheElement(ConstByteArray const &identifier)
@@ -238,19 +238,20 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
 
     if (!incoming_objects.empty())
     {
-#ifdef FETCH_ENABLE_METRICS
-      auto const timepoint = metrics::MetricHandler::Clock::now();
-
       for (auto const &tx : incoming_objects)
       {
         if (!store_.Has(storage::ResourceID{tx.digest()}))
         {
-          RecordNewElement(tx.digest(), timepoint);
+          FETCH_LOG_INFO(LOGGING_NAME, "Oh look a 'new' tx: ", byte_array::ToBase64(tx.digest()));
+
+          // dispatch the transaction to the new store
+          sink_.OnTransaction(tx);
+
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewElement(tx.digest());
+#endif // FETCH_ENABLE_METRICS
         }
       }
-#endif // FETCH_ENABLE_METRICS
-
-      sink_.OnTransactions(std::move(incoming_objects));
     }
 
     // remove the entry
@@ -457,7 +458,18 @@ void TransactionStoreSyncProtocol::RealiseSubtreePromises()
     promise->As<TxList>(incoming_txs);
 
     // dispatch the transaction to the transaction sink
-    sink_.OnTransactions(std::move(incoming_txs));
+    for (auto &tx : incoming_txs)
+    {
+      if (!store_.Has(storage::ResourceID{tx.digest()}))
+      {
+        // dispatch the transaction to the new store
+        sink_.OnTransaction(tx);
+
+#ifdef FETCH_ENABLE_METRICS
+        RecordNewElement(tx.digest());
+#endif // FETCH_ENABLE_METRICS
+      }
+    }
   }
 
   // clear the promises out ("failed" attempts are stored in `roots_to_sync`)
