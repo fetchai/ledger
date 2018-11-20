@@ -59,7 +59,7 @@ public:
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
-  static constexpr char const *LOGGING_NAME = "MuddleRoute";
+  static constexpr char const *LOGGING_NAME = "MuddleRouter";
 
   // Construction / Destruction
   Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);

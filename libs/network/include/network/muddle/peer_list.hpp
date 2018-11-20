@@ -43,6 +43,7 @@ public:
   using ConnectionPtr = std::shared_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using PeerMap       = std::unordered_map<Uri, ConnectionPtr>;
+  using PeerSet       = std::unordered_set<Uri>;
 
   enum class ConnectionState
   {
@@ -78,14 +79,20 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void        AddPersistentPeer(Uri const &peer);
+  bool        AddPersistentPeer(Uri const &peer);
   void        RemovePersistentPeer(Uri const &peer);
   std::size_t GetNumPeers() const;
   /// @}
 
+  /// @name Blacklisted connections
+  /// @{
+  void Blacklist(Uri const &peer);
+  bool IsBlacklisted(Uri const &peer) const;
+  /// @}
+
   /// @name Peer based connection information
   /// @{
-  void AddConnection(Uri const &peer, ConnectionPtr const &conn);
+  bool AddConnection(Uri const &peer, ConnectionPtr const &conn);
   void OnConnectionEstablished(Uri const &peer);
   void RemoveConnection(Uri const &peer);
   void Disconnect(Uri const &peer);
@@ -99,6 +106,7 @@ public:
 
   UriMap GetUriMap() const;
 
+  PeerSet GetBlacklistedPeers() const;
 private:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
@@ -115,7 +123,6 @@ private:
 
   using Mutex   = mutex::Mutex;
   using Lock    = std::lock_guard<Mutex>;
-  using PeerSet = std::unordered_set<Uri>;
 
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
@@ -125,6 +132,7 @@ private:
   PeerSet       persistent_peers_;
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;
+  PeerSet       blacklisted_;
 
   bool ReadyForRetry(const PeerMetadata &metadata) const;
 };

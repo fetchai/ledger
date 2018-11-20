@@ -36,10 +36,12 @@ PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
-void PeerConnectionList::AddPersistentPeer(Uri const &peer)
+bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
+  if(IsBlacklisted(peer)) return false;
   persistent_peers_.emplace(peer);
+  return true;
 }
 
 void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
@@ -54,15 +56,34 @@ std::size_t PeerConnectionList::GetNumPeers() const
   return persistent_peers_.size();
 }
 
-void PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
+void PeerConnectionList::Blacklist(Uri const &peer) {
+	FETCH_LOCK(lock_);
+	blacklisted_.insert(peer);
+}
+
+bool PeerConnectionList::IsBlacklisted(Uri const &peer) const {
+	FETCH_LOCK(lock_);
+	return blacklisted_.find(peer) != blacklisted_.cend();
+}
+
+PeerConnectionList::PeerSet GetBlacklistedPeers() const {
+	FETCH_LOCK(lock_);
+	return blacklisted_;
+}
+
+bool PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
 {
   FETCH_LOCK(lock_);
+  if(IsBlacklisted(peer)) return false;
   // update the metadata
   auto &metadata     = peer_metadata_[peer];
   metadata.connected = false;
   ++metadata.attempts;
 
+  // When this assignment comes AFTER metadata update, we have an invariant:
+  // whenever there's a connection, there's metadata.
   peer_connections_[peer] = conn;
+  return true;
 }
 
 PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
