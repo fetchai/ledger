@@ -69,7 +69,7 @@ private:
   static constexpr std::size_t QUEUE_SIZE = 1u << 20u;  // 1,048,576
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::SimpleQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
   using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;

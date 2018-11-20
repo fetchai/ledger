@@ -113,6 +113,10 @@ template <typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIn
 class Queue
 {
 public:
+  static constexpr std::size_t QUEUE_LENGTH = SIZE;
+
+  using Element = T;
+
   // Construction / Destruction
   Queue()              = default;
   Queue(Queue const &) = delete;
@@ -167,6 +171,8 @@ T Queue<T, N, P, C>::Pop()
   T value = queue_[read_index_++];
 
   write_count_.Post();
+
+  return value;
 }
 
 /**
@@ -254,10 +260,14 @@ template <typename T, std::size_t N>
 using MPMCQueue = Queue<T, N, MultiThreadedIndex<N>, MultiThreadedIndex<N>>;
 
 
+#if 0
 template <typename T, std::size_t SIZE>
 class SimpleQueue
 {
 public:
+  static constexpr std::size_t QUEUE_LENGTH = SIZE;
+  using Element = T;
+
   // Construction / Destruction
   SimpleQueue()    = default;
   SimpleQueue(SimpleQueue const &) = delete;
@@ -382,6 +392,7 @@ protected:
   static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
   static_assert(std::is_copy_assignable<T>::value, "T must have copy assignment");
 };
+#endif
 
 }  // namespace core
 }  // namespace fetch
