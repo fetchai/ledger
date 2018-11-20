@@ -242,8 +242,6 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
       {
         if (!store_.Has(storage::ResourceID{tx.digest()}))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Oh look a 'new' tx: ", byte_array::ToBase64(tx.digest()));
-
           // dispatch the transaction to the new store
           sink_.OnTransaction(tx);
 
