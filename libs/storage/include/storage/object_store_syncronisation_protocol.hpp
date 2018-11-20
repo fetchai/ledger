@@ -47,7 +47,8 @@ public:
     PULL_OBJECTS  = 2,
     PULL_SUBTREE  = 3,
     START_SYNC    = 4,
-    FINISHED_SYNC = 5
+    FINISHED_SYNC = 5,
+    SYNCED_COUNT  = 6,
   };
 
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
@@ -71,6 +72,7 @@ public:
     this->Expose(PULL_SUBTREE, this, &self_type::PullSubtree);
     this->Expose(START_SYNC, this, &self_type::StartSync);
     this->Expose(FINISHED_SYNC, this, &self_type::FinishedSync);
+    this->Expose(SYNCED_COUNT, this, &self_type::SyncedCount);
   }
 
   void Start()
@@ -81,6 +83,9 @@ public:
       return;
     }
     running_ = true;
+
+    //std::cout << "starting sync for: " << this << std::endl;
+
     thread_pool_->Post([this]() { this->IdleUntilPeers(); });
   }
 
@@ -101,13 +106,14 @@ public:
 
     if (register_.number_of_services() == 0)
     {
+      //std::cout << "No peers for : " << this << std::endl;
       thread_pool_->Post([this]() { this->IdleUntilPeers(); },
                          1000);  // TODO(issue 9): Make time variable
     }
     else
     {
       // If we need to sync our object store (esp. when joining the network)
-      if (needs_sync_)
+      if (needs_sync_ && false) // disable for benchmarking with Ed
       {
         thread_pool_->Post([this]() { this->SetupSync(); });
       }
@@ -163,6 +169,8 @@ public:
 
   void FetchObjectsFromPeers()
   {
+    //std::cout << "fetching: " << this << std::endl;
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "Fetching objects ", typeid(T).name(), " from peer");
 
     if (!running_)
@@ -187,6 +195,8 @@ public:
       }
     });
 
+    //std::cout << "realize1: " << this << std::endl;
+
     if (running_)
     {
       thread_pool_->Post([this]() { this->RealisePromises(); });
@@ -195,6 +205,7 @@ public:
 
   void RealisePromises()
   {
+    //std::cout << "realize2: " << this << std::endl;
     if (!running_)
     {
       return;
@@ -204,6 +215,7 @@ public:
 
     new_objects_.clear();
 
+    //std::cout << "realize3: " << this << std::endl;
     for (auto &p : object_list_promises_)
     {
 
@@ -227,7 +239,16 @@ public:
       }
       std::lock_guard<mutex::Mutex> lock(mutex_);
 
-      store_->WithLock([this]() {
+      if(incoming_objects_.size() > 0)
+      {
+        std::cout << "Incoming size:" << incoming_objects_.size() << ":"<<this << std::endl;
+      }
+
+      std::cout << "Writing. " << this << std::endl;
+
+      uint64_t unique_received = 0;
+
+      store_->WithLock([this, &unique_received]() {
         for (auto &o : incoming_objects_)
         {
           CachedObject obj;
@@ -236,8 +257,11 @@ public:
 
           if (store_->LocklessHas(rid))
           {
+            std::cout << "Store already has tx!" << std::endl;
             continue;
           }
+
+          unique_received++;
 
 #ifdef FETCH_ENABLE_METRICS
           RecordNewElement(obj.data.digest());
@@ -248,8 +272,12 @@ public:
           cache_.push_back(obj);
         }
       });
+
+      synced_count_ += unique_received;
+      std::cout << "Writing. " << this << std::endl;
     }
 
+    //std::cout << "realize4: " << this << std::endl;
     object_list_promises_.clear();
     if (running_)
     {
@@ -286,6 +314,7 @@ public:
 
   void AddToCache(T const &o)
   {
+    //std::cout << "Adding tx to cache " << this << std::endl;
 #ifdef FETCH_ENABLE_METRICS
           RecordNewCacheElement(o.digest());
 #endif  // FETCH_ENABLE_METRICS
@@ -338,6 +367,7 @@ private:
   register_type         register_;
   thread_pool_type      thread_pool_;
   const uint64_t        PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
+  uint64_t              synced_count_ = 0;
 
   mutex::Mutex    mutex_{__LINE__, __FILE__};
   ObjectStore<T> *store_;
@@ -400,12 +430,19 @@ private:
     return store_->size();
   }
 
+  uint64_t SyncedCount()
+  {
+    return synced_count_;
+  }
+
   std::vector<S> PullObjects(uint64_t const &client_handle)
   {
+    //std::cout << "Asked to pull O: " << this << std::endl;
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
     if (cache_.begin() == cache_.end())
     {
+    //std::cout << "Asked to pull Oxxxx: " << this << std::endl;
       return std::vector<S>();
     }
 
@@ -421,6 +458,7 @@ private:
       }
     }
 
+    //std::cout << "Asked to pull Oyyyjkl: " << ret.size() << ":" << this << std::endl;
     return ret;
   }
 
@@ -482,7 +520,9 @@ private:
       }
       promise->template As<std::vector<S>>(incoming_objects_);
 
-      store_->WithLock([this]() {
+      uint64_t unique_received = 0;
+
+      store_->WithLock([this, &unique_received]() {
         for (auto &o : incoming_objects_)
         {
           CachedObject obj;
@@ -493,6 +533,7 @@ private:
           {
             continue;
           }
+          unique_received++;
 
 #ifdef FETCH_ENABLE_METRICS
           RecordNewElement(obj.data.digest());
@@ -503,6 +544,13 @@ private:
           cache_.push_back(obj);
         }
       });
+
+      if(unique_received > 0)
+      {
+        std::cout << "new count: " << synced_count_ << std::endl;
+      }
+
+      synced_count_ += unique_received;
     }
 
     subtree_promises_.clear();
