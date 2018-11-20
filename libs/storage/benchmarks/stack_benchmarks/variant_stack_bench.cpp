@@ -55,16 +55,27 @@ BENCHMARK_F(VariantStackBench, WritingIntToStack)(benchmark::State &st)
 {
   TestClass temp;
   uint64_t  choose_type;
-  uint64_t  i = 0;
+  uint64_t  i      = 0;
+  uint64_t  random = 1;
+  temp.value1      = random;
+  temp.value2      = random & 0xFF;
   for (auto _ : st)
   {
-    uint64_t random = lfg_();
-    temp.value1     = random;
-    temp.value2     = random & 0xFF;
-    std::tuple<TestClass, uint64_t, uint8_t> test_vals =
-        std::make_tuple(temp, uint64_t(~random), uint8_t(~random & 0xFF));
     choose_type = i % 3;
     ++i;
-    stack_.Push(std::get<0>(test_vals), choose_type);
+    switch (choose_type)
+    {
+    case 0:
+      stack_.Push(temp, choose_type);
+      break;
+    case 1:
+      stack_.Push(++random, choose_type);
+      break;
+    case 2:
+      stack_.Push(uint8_t(~random & 0xFF), choose_type);
+      break;
+    }
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
   }
 }
