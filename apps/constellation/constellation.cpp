@@ -178,7 +178,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
   // configure all the lane services
-  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_, tx_processor_);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));

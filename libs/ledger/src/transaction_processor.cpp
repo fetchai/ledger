@@ -71,19 +71,51 @@ void TransactionProcessor::Stop()
 }
 
 /**
+ * Handle incoming transacations
+ *
+ * @param tx
+ */
+void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction &&tx)
+{
+  unverified_queue_.Push(tx.AsMutable());
+}
+
+/**
  * Internal: Thread process for the verification of
  */
 void TransactionProcessor::Verifier()
 {
   MutableTransaction mtx;
 
+  bool success{false};
+
   while (active_)
   {
     // wait for a mutable transaction to be available
     if (unverified_queue_.Pop(mtx, std::chrono::milliseconds{300}))
     {
+      if (mtx.resources().size() == 0)
+      {
+        FETCH_LOG_INFO("TxProc", "Whoops no resources?");
+      }
+
       // convert the transaction to a verified one and enqueue
-      verified_queue_.Push(chain::VerifiedTransaction::Create(mtx));
+      auto const tx = chain::VerifiedTransaction::Create(mtx, &success);
+
+      // check the status
+      if (success)
+      {
+        if (tx.digest().size() == 0)
+        {
+          FETCH_LOG_INFO("TxProc", "Bogus Hash begin");
+        }
+
+        verified_queue_.Push(tx);
+      }
+      else
+      {
+        FETCH_LOG_WARN("TxProc", "Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
+      }
     }
   }
 }
@@ -129,7 +161,13 @@ void TransactionProcessor::Dispatcher()
     // update our transaction list if needed
     if (populated)
     {
+      if (tx.digest().size() == 0)
+      {
+        FETCH_LOG_WARN("TxProc", "Bogus Hash?");
+      }
+
       txs.emplace_back(std::move(tx));
+      FETCH_METRIC_TX_SUBMITTED(txs.back().digest());
     }
 
     // if required dispatch all the transactions
@@ -138,12 +176,16 @@ void TransactionProcessor::Dispatcher()
       // add the transactions to the storage engine
       if (txs.size() == 1)
       {
+        FETCH_LOG_DEBUG("TxProc", "Storing single TX");
+
         storage_.AddTransaction(txs[0]);
 
         FETCH_METRIC_TX_STORED(txs[0].digest());
       }
       else
       {
+        FETCH_LOG_DEBUG("TxProc", "Storing batch TX ", txs.size());
+
         storage_.AddTransactions(txs);
 
 #ifdef FETCH_ENABLE_METRICS
@@ -176,6 +218,7 @@ void TransactionProcessor::Dispatcher()
     }
   }
 }
+
 
 }  // namespace ledger
 }  // namespace fetch

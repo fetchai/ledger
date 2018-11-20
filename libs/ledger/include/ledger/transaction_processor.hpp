@@ -23,6 +23,7 @@
 #include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
 #include "network/details/thread_pool.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
 
 #include <atomic>
 #include <thread>
@@ -30,7 +31,7 @@
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor
+class TransactionProcessor : public UnverifiedTransactionSink
 {
 public:
   using MutableTransaction = chain::MutableTransaction;
@@ -55,6 +56,11 @@ public:
   void AddTransaction(MutableTransaction &&mtx);
   /// @}
 
+  /// @name Unverified Transaction Sink
+  /// @{
+  void OnTransaction(chain::UnverifiedTransaction &&tx) override;
+  /// @}
+
   // Operators
   TransactionProcessor &operator=(TransactionProcessor const &) = delete;
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
@@ -63,7 +69,7 @@ private:
   static constexpr std::size_t QUEUE_SIZE = 1u << 20u;  // 1,048,576
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::SimpleQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
   using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
@@ -87,8 +93,6 @@ private:
  */
 inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
 {
-  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
-
   // enqueue the transaction to the unverified queue
   unverified_queue_.Push(mtx);
 }
@@ -100,8 +104,6 @@ inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
  */
 inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
 {
-  FETCH_METRIC_TX_SUBMITTED(mtx.digest());
-
   // enqueue the transaction to the unverified queue
   unverified_queue_.Push(std::move(mtx));
 }
