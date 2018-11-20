@@ -33,18 +33,9 @@ public:
 
   /// @name Transaction Handlers
   /// @{
-  virtual void OnTransaction(chain::UnverifiedTransaction &&tx) = 0;
-  virtual void OnTransactions(TransactionList &&txs);
+  virtual void OnTransaction(chain::UnverifiedTransaction const &tx) = 0;
   /// @}
 };
-
-inline void UnverifiedTransactionSink::OnTransactions(TransactionList &&txs)
-{
-  for (auto &tx : txs)
-  {
-    OnTransaction(std::move(tx));
-  }
-}
 
 } // namespace ledger
 } // namespace fetch

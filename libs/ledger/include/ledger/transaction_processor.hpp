@@ -58,7 +58,7 @@ public:
 
   /// @name Unverified Transaction Sink
   /// @{
-  void OnTransaction(chain::UnverifiedTransaction &&tx) override;
+  void OnTransaction(chain::UnverifiedTransaction const &tx) override;
   /// @}
 
   // Operators

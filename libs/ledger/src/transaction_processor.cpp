@@ -75,7 +75,7 @@ void TransactionProcessor::Stop()
  *
  * @param tx
  */
-void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction &&tx)
+void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
 {
   unverified_queue_.Push(tx.AsMutable());
 }
@@ -161,11 +161,6 @@ void TransactionProcessor::Dispatcher()
     // update our transaction list if needed
     if (populated)
     {
-      if (tx.digest().size() == 0)
-      {
-        FETCH_LOG_WARN("TxProc", "Bogus Hash?");
-      }
-
       txs.emplace_back(std::move(tx));
       FETCH_METRIC_TX_SUBMITTED(txs.back().digest());
     }
