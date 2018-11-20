@@ -54,7 +54,9 @@ int main()
         } c;
 
         for (std::size_t i = 0; i < sizeof(uint32_t); ++i)
+        {
           c.bytes[i] = n1[i + 1];
+        }
         SILENT_EXPECT(c.value == count);
 
         for (std::size_t i = 0; i < (1ul << 8); ++i)
