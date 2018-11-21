@@ -152,40 +152,6 @@ public:
     return Get(PromiseState::TIMEDOUT, limit);
   }
 
-  Results GetFailuresAndTimeouts(std::size_t limit)
-  {
-    Lock    lock(mutex_);
-    Results results;
-
-    auto &times = workload_[PromiseState::TIMEDOUT];
-    auto &fails = workload_[PromiseState::FAILED];
-
-    while(results.size() < limit && !times.empty() && !fails.empty())
-    {
-      if (!times.empty())
-      {
-        results.push_back(times.front());
-        times.pop_front();
-      }
-
-      
-
-      std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
-      auto copy_end = worklist_for_state.begin();
-      advance(copy_end, static_cast<long>(limit));
-      worklist_for_state.erase(worklist_for_state.begin(), copy_end);
-    }
-    {
-      auto &worklist_for_state = workload_[PromiseState::FAILED];
-      std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
-      auto copy_end = worklist_for_state.begin();
-      advance(copy_end, static_cast<long>(limit));
-      worklist_for_state.erase(worklist_for_state.begin(), copy_end);
-    }
-
-    return results;
-  }
-
   std::size_t CountPending()
   {
     Lock lock(mutex_);
