@@ -235,14 +235,16 @@ private:
       uint64_t indsize = ConsumeIndent(document, pos);
 
       uint64_t prev = pos;
-      while((pos < document.size()) && (document[pos)!='\n'))
-        {
-          ++pos;
-        }
+      while ((pos < document.size()) && (document[pos] != '\n'))
+      {
+        ++pos;
+      }
       uint64_t size = pos - prev;
 
       if (pos >= document.size())
+      {
         break;
+      }
 
       if ((indsize != block_indent_size) && (size != 0))
       {

@@ -106,7 +106,9 @@ public:
     {
       bool success = nodeDirectory_.GetHeader(hash, walkBlock);
       if (!success)
+      {
         break;
+      }
 
       walkBlock.UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body().previous_hash;
