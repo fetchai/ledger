@@ -214,6 +214,7 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
 void MainChainRpcService::ServiceLooseBlocks()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....");
+  try {
   auto pending_work_count = bg_work_.CountPending();
 
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
@@ -256,6 +257,13 @@ void MainChainRpcService::ServiceLooseBlocks()
       trust_.AddFeedback(failed_worker->address(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
     }
     next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+  }
+  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... DONE");
+
+  }catch (...)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... EXCEPT");
+  
   }
 }
 
