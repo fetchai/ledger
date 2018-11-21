@@ -221,6 +221,7 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
 
 void MainChainRpcService::ServiceLooseBlocks()
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....");
   auto pending_work_count = bg_work_.CountPending();
 
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
