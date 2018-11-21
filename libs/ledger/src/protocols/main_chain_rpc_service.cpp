@@ -60,6 +60,8 @@ public:
     return hash == hash_;
   }
 
+  BlockHash hash() { return hash_; }
+
   PromiseState Work()
   {
     if (!prom_)
@@ -215,13 +217,13 @@ void MainChainRpcService::ServiceLooseBlocks()
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
     // At this point, ask the chain to check it has loose elments to query.
-    if (chain_.HasMissingBlocks() && last_good_address_.size())
+    if (chain_.HasMissingBlocks())
     {
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
-        // TODO(katie): When we (eventually) have a working trust
-        // system, use that to generate an address here.
-        AddLooseBlock(hash, last_good_address_);
+        // Get a random peer to send the req to...
+        auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
+        AddLooseBlock(hash, (*random_peer_list.begin()));
       }
     }
     else
@@ -237,16 +239,18 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (successful_worker)
     {
-      last_good_address_ = successful_worker->address();
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
       next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
     }
   }
-  if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
+
+  for (auto &failed_worker : bg_work_.GetFailuresAndTimeouts(1000))
   {
+    if (failed_worker)
+    {
+      trust_.AddFeedback(failed_worker->address(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
+    }
     next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
-    bg_work_.DiscardFailures();
-    bg_work_.DiscardTimeouts();
   }
 }
 
