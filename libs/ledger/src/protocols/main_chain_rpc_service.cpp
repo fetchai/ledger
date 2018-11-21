@@ -217,6 +217,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   try {
   auto pending_work_count = bg_work_.CountPending();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1");
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
     // At this point, ask the chain to check it has loose elments to query.
@@ -243,20 +244,29 @@ void MainChainRpcService::ServiceLooseBlocks()
 
   for (auto &successful_worker : bg_work_.Get(MainChainSyncWorker::PromiseState::SUCCESS, 1000))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....2");
     if (successful_worker)
     {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....3");
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....4");
       next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....5");
     }
   }
 
   for (auto &failed_worker : bg_work_.GetFailuresAndTimeouts(1000))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....6");
     if (failed_worker)
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....7");
     {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....8");
       trust_.AddFeedback(failed_worker->address(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....9");
     }
     next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....10");
   }
   FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... DONE");
 
