@@ -87,6 +87,7 @@ public:
         FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
+      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request still waiting for to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::SUCCESS:
       {
