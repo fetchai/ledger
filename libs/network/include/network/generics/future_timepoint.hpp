@@ -98,6 +98,11 @@ public:
     std::this_thread::sleep_for(DueIn());
   }
 
+  std::string Explain() const
+  {
+    return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(DueIn()).count())+"ms";
+  }
+
 private:
   Timepoint due_time_;
 };
