@@ -2169,8 +2169,7 @@ void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Softmax(linalg::Matrix<T, C, S> const &array)
 {
-  linalg::Matrix<T, C, S> ret{array.size()};
-  ret.Reshape(array.shape());
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Softmax(array, ret);
   return ret;
 }
