@@ -196,8 +196,19 @@ void Muddle::RunPeriodicMaintenance()
   if (time_since_last_cleanup >= CLEANUP_INTERVAL)
   {
     // clean up and pending message handlers and also trigger the timeout logic
-    dispatcher_.Cleanup();
-
+    auto bad_connections = dispatcher_.Cleanup();
+    if (trust_system_ != nullptr)
+    {
+      for (auto &handle : bad_connections)
+      {
+        Packet::Address address;
+        router_.HandleToAddress(handle, address);
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Adding BAD_CONNECTION feedback for peer: ", ToBase64(address));
+        trust_system_->AddFeedback(address, p2p::TrustSubject::PEER,
+                                   p2p::TrustQuality::BAD_CONNECTION);
+      }
+    }
     // clean up echo caches and other temporary stored objects
     router_.Cleanup();
 
@@ -302,7 +313,7 @@ void Muddle::Blacklist(Address const &target)
 {
   FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
-  if (trust_system_!=nullptr && trust_system_->GetTrustUncertaintyOfPeer(target)>10.)
+  if (trust_system_ != nullptr && trust_system_->GetTrustUncertaintyOfPeer(target) > 10.)
   {
     return;
   }

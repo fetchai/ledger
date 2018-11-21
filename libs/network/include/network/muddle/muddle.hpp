@@ -158,7 +158,7 @@ public:
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
                                               std::unique_ptr<crypto::Prover> prover,
                                               fetch::network::NetworkManager  tm,
-                                              TrustSystem *trust_system)
+                                              TrustSystem *                   trust_system)
   {
     auto m = std::make_shared<Muddle>(network_id, std::move(prover), tm);
     m->SetUpTrust(trust_system);
@@ -226,8 +226,6 @@ public:
 
   void SetUpTrust(TrustSystem *trust_system)
   {
-    dispatcher_.AddTrustSystem(trust_system);
-    dispatcher_.AddRouter(&router_);
     trust_system_ = trust_system;
   }
 
@@ -261,7 +259,7 @@ private:
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
   std::string          network_id_str_;
-  TrustSystem         *trust_system_ = nullptr;
+  TrustSystem *        trust_system_ = nullptr;
 };
 
 inline Muddle::Identity const &Muddle::identity() const

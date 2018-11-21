@@ -19,9 +19,9 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
-#include "network/service/promise.hpp"
-#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/muddle/router.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
+#include "network/service/promise.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -35,12 +35,12 @@ namespace muddle {
 class Dispatcher
 {
 public:
-  using Promise     = service::Promise;
-  using PacketPtr   = std::shared_ptr<Packet>;
-  using Clock       = std::chrono::steady_clock;
-  using Timepoint   = Clock::time_point;
-  using Handle      = uint64_t;
-  using TrustSystem = p2p::P2PTrustInterface<Router::Address>;
+  using Promise        = service::Promise;
+  using PacketPtr      = std::shared_ptr<Packet>;
+  using Clock          = std::chrono::steady_clock;
+  using Timepoint      = Clock::time_point;
+  using Handle         = uint64_t;
+  using BadConnections = std::unordered_set<Handle>;
 
   static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
@@ -62,10 +62,7 @@ public:
   void NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter);
   void NotifyConnectionFailure(Handle handle);
 
-  void Cleanup(Timepoint const &now = Clock::now());
-
-  void AddTrustSystem(TrustSystem *trust_system);
-  void AddRouter(Router *router);
+  BadConnections Cleanup(Timepoint const &now = Clock::now());
 
 private:
   using Counter = std::atomic<uint16_t>;
@@ -80,7 +77,6 @@ private:
   using PromiseMap = std::unordered_map<uint64_t, PromiseEntry>;
   using PromiseSet = std::unordered_set<uint64_t>;
   using HandleMap  = std::unordered_map<Handle, PromiseSet>;
-  using BadConnections = std::unordered_set<Handle>;
 
   Mutex    counter_lock_{__LINE__, __FILE__};
   uint16_t counter_{1};
@@ -90,10 +86,6 @@ private:
 
   Mutex     handles_lock_{__LINE__, __FILE__};
   HandleMap handles_;
-
-  TrustSystem *trust_system_ = nullptr;
-  Router      *router_       = nullptr;
-
 };
 
 inline uint16_t Dispatcher::GetNextCounter()

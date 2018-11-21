@@ -21,11 +21,11 @@
 #include "crypto/identity.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
-#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <memory>
@@ -46,13 +46,14 @@ class MuddleRegister;
 class Router : public MuddleEndpoint
 {
 public:
-  using Address       = Packet::Address;  // == a crypto::Identity.identifier_
-  using Identity      = fetch::crypto::Identity;
-  using PacketPtr     = std::shared_ptr<Packet>;
-  using Payload       = Packet::Payload;
-  using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
-  using Handle        = network::AbstractConnection::connection_handle_type;
-  using ThreadPool    = network::ThreadPool;
+  using Address             = Packet::Address;  // == a crypto::Identity.identifier_
+  using Identity            = fetch::crypto::Identity;
+  using PacketPtr           = std::shared_ptr<Packet>;
+  using Payload             = Packet::Payload;
+  using ConnectionPtr       = std::weak_ptr<network::AbstractConnection>;
+  using Handle              = network::AbstractConnection::connection_handle_type;
+  using ThreadPool          = network::ThreadPool;
+  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   struct RoutingData
   {
@@ -118,6 +119,7 @@ public:
   void Blacklist(Address const &target);
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -154,6 +156,9 @@ private:
                                  ///< routing_table_lock_)
   HandleMap
       routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
+
+  HandleDirectAddrMap routing_table_handles_direct_addr_;  ///< Map of handles to direct address
+                                                           ///< (Protected by routing_table_lock)
 
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
   EchoCache     echo_cache_;

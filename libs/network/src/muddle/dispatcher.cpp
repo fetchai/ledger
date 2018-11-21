@@ -149,14 +149,6 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
       }
     }
   }
-
-  if (trust_system_!=nullptr && router_!=nullptr)
-  {
-    Packet::Address address;
-    router_->HandleToAddress(handle, address);
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding BAD_CONNECTION feedback for peer: ", ToBase64(address));
-    trust_system_->AddFeedback(address, p2p::TrustSubject::PEER, p2p::TrustQuality::BAD_CONNECTION);
-  }
 }
 
 /**
@@ -164,13 +156,13 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
  *
  * @param now The reference time out (by default the current time)
  */
-void Dispatcher::Cleanup(Timepoint const &now)
+Dispatcher::BadConnections Dispatcher::Cleanup(Timepoint const &now)
 {
   FETCH_LOCK(promises_lock_);
   FETCH_LOCK(handles_lock_);
 
-  PromiseSet dead_promises{};
-  BadConnections bad_connections{};
+  PromiseSet                 dead_promises{};
+  Dispatcher::BadConnections bad_connections{};
 
   // Step 1. Determine which of the promises is now deemed to be dead
   auto promise_it = promises_.begin();
@@ -201,7 +193,7 @@ void Dispatcher::Cleanup(Timepoint const &now)
     {
       auto &promise_set = handle_it->second;
 
-      if (promise_set.find(id)!=promise_set.end())
+      if (promise_set.find(id) != promise_set.end())
       {
         bad_connections.insert(handle_it->first);
       }
@@ -221,26 +213,7 @@ void Dispatcher::Cleanup(Timepoint const &now)
     }
   }
 
-  if (trust_system_!=nullptr && router_!=nullptr)
-  {
-    for(auto& handle : bad_connections)
-    {
-      Packet::Address address;
-      router_->HandleToAddress(handle, address);
-      FETCH_LOG_INFO(LOGGING_NAME, "Adding BAD_CONNECTION feedback for peer: ", ToBase64(address));
-      trust_system_->AddFeedback(address, p2p::TrustSubject::PEER, p2p::TrustQuality::BAD_CONNECTION);
-    }
-  }
-}
-
-void Dispatcher::AddTrustSystem(TrustSystem *trust_system)
-{
-  trust_system_ = trust_system;
-}
-
-void Dispatcher::AddRouter(Router *router)
-{
-  router_ = router;
+  return bad_connections;
 }
 
 }  // namespace muddle

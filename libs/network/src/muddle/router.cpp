@@ -363,13 +363,19 @@ Router::RoutingTable Router::GetRoutingTable() const
 bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
 {
   FETCH_LOCK(routing_table_lock_);
+  auto address_it = routing_table_handles_direct_addr_.find(handle);
+  if (address_it != routing_table_handles_direct_addr_.end())
+  {
+    address = address_it->second;
+    return true;
+  }
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
     FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
                     static_cast<std::string>(ToBase64(output)));
-    if (routing.second.handle == handle)
+    if (routing.second.handle == handle && routing.second.direct)
     {
       address = ToConstByteArray(routing.first);
       return true;
@@ -498,6 +504,11 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
       // associate the new handle with the address
       routing_table_handles_[handle].insert(address);
 
+      if (direct)
+      {
+        routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
+      }
+
       // signal an update was made to the table
       update_complete = true;
     }
@@ -571,7 +582,7 @@ void Router::KillConnection(Handle handle)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    conn -> Close();
+    conn->Close();
   }
 }
 
@@ -702,7 +713,9 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
         // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
+                       "  killing handle=", handle);
         KillConnection(handle);
         return;
       }
