@@ -215,8 +215,8 @@ void MainChainRpcService::ServiceLooseBlocks()
       {
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        Address addr =  (*random_peer_list.begin())
-        AddLooseBlock(hash, addr);
+        Address address =  (*random_peer_list.begin());
+        AddLooseBlock(hash, address);
 
         FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(addr));
       }
@@ -249,7 +249,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   }
 }
 
-void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
+void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
 {
   bool newdata = false;
 
@@ -266,7 +266,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
 
   if (newdata)
   {
-    trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    trust_.AddFeedback(address, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
   }
 
   if (newdata && !block_list.empty())
@@ -277,7 +277,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
       blk.UpdateDigest();
       if (blk.loose())
       {
-        AddLooseBlock(block_list.back().hash(), peer);
+        AddLooseBlock(block_list.back().hash(), address);
       }
     }
     else
