@@ -228,16 +228,20 @@ void MainChainRpcService::ServiceLooseBlocks()
   FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1");
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1a");
     // At this point, ask the chain to check it has loose elments to query.
     if (chain_.HasMissingBlocks())
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1b");
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1c");
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
         Address address =  (*random_peer_list.begin());
         AddLooseBlock(hash, address);
 
+        FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1d");
         FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
       }
     }
@@ -245,6 +249,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     {
       // we appear to be idle, throttle back the working.
       next_loose_tips_check_.Set(std::chrono::seconds(1));
+      FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1e");
     }
   }
 
