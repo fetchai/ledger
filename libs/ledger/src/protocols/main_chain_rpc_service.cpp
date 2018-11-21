@@ -269,16 +269,10 @@ void MainChainRpcService::ServiceLooseBlocks()
     }
   }
 
-  for (auto &failed_worker : bg_work_.GetFailuresAndTimeouts(1000))
+  if (bg_work_.CountFailures()>0 || bg_work_.CountTimeouts()>0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....6");
-    if (failed_worker)
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....7");
-    {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....8");
-      trust_.AddFeedback(failed_worker->address(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....9");
-    }
+    bg_work_.DiscardFailures();
+    bg_work_.DiscardTimeouts();
     next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
     FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....10");
   }
