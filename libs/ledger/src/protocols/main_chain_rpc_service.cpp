@@ -216,6 +216,8 @@ void MainChainRpcService::ServiceLooseBlocks()
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
         AddLooseBlock(hash, (*random_peer_list.begin()));
+
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
       }
     }
     else
@@ -249,6 +251,9 @@ void MainChainRpcService::ServiceLooseBlocks()
 void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
 {
   bool newdata = false;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP: ", ToBase64(address), " replied with ", block_list.size(), " blocks");
+
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest

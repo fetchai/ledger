@@ -137,6 +137,21 @@ public:
     return results;
   }
 
+  Results GetFailures(std::size_t limit)
+  {
+    return Get(PromiseState::FAILED, limit);
+  }
+
+  Results GetSuccesses(std::size_t limit)
+  {
+    return Get(PromiseState::SUCCESS, limit);
+  }
+
+  Results GetTimeouts(std::size_t limit)
+  {
+    return Get(PromiseState::TIMEDOUT, limit);
+  }
+
   Results GetFailuresAndTimeouts(std::size_t limit)
   {
     Lock    lock(mutex_);
