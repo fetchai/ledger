@@ -10,7 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(lfg_test fetch-core test_lfg.cpp)
 add_fetch_gtest(serializers-gtests fetch-core serializers)
 add_fetch_gtest(byte-array-gtests fetch-core byte_array)
 add_fetch_gtest(random_generator_test fetch-core random)
