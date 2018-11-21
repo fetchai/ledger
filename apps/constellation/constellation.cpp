@@ -220,6 +220,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   {
     http_.AddModule(*module);
   }
+
+  muddle_.SetUpTrust(&trust_);
 }
 
 /**

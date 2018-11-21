@@ -236,6 +236,11 @@ public:
     return ranking;
   }
 
+  double GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const override
+  {
+    return 0.0;
+  }
+
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
   {
     return GetTrustRatingOfPeer(peer_ident) > 0.0;

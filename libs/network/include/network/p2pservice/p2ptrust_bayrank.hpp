@@ -208,6 +208,24 @@ public:
     return ranking;
   }
 
+  double GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const override
+  {
+    double sigma = 0.0;
+
+    FETCH_LOCK(mutex_);
+
+    auto ranking_it = ranking_store_.find(peer_ident);
+    if (ranking_it != ranking_store_.end())
+    {
+      if (ranking_it->second < trust_store_.size())
+      {
+        sigma = trust_store_[ranking_it->second].g.sigma();
+      }
+    }
+
+    return sigma;
+  }
+
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
   {
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
