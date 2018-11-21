@@ -73,6 +73,8 @@ public:
     }
     auto promise_state = prom_->GetState();
 
+    
+
     switch (promise_state)
     {
     case PromiseState::TIMEDOUT:
@@ -82,6 +84,11 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
+      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request to: ", ToBase64(hash_),
+                     " timeout due in: ",
+                     std::chrono::duration_cast<milliseconds>(timeout_.DueIn()).count(),
+                     "ms."
+                     );
       if (timeout_.IsDue())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
@@ -96,6 +103,7 @@ public:
       }
       return promise_state;
     }
+    FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request default still waiting for to: ", ToBase64(hash_));
     return PromiseState::WAITING;
   }
 
