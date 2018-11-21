@@ -253,6 +253,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     }
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....wibble");
   bg_work_.WorkCycle();
 
   for (auto &successful_worker : bg_work_.Get(MainChainSyncWorker::PromiseState::SUCCESS, 1000))
