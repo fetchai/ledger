@@ -116,6 +116,7 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
   using NetworkId       = MuddleEndpoint::NetworkId;
+  using TrustSystem     = p2p::P2PTrustInterface<Muddle::Address>;
 
   using Handle = network::AbstractConnection::connection_handle_type;
 
@@ -152,6 +153,16 @@ public:
                                               fetch::network::NetworkManager  tm)
   {
     return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+  }
+
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
+                                              std::unique_ptr<crypto::Prover> prover,
+                                              fetch::network::NetworkManager  tm,
+                                              TrustSystem *trust_system)
+  {
+    auto m = std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    m->SetUpTrust(trust_system);
+    return m;
   }
 
   static inline uint32_t CreateNetworkId(const char *p)
@@ -212,6 +223,14 @@ public:
                    byte_array::ToBase64(identity_.identifier()));
     return router_.HandleToAddress(handle, identifier);
   }
+
+  void SetUpTrust(TrustSystem *trust_system)
+  {
+    dispatcher_.AddTrustSystem(trust_system);
+    dispatcher_.AddRouter(&router_);
+    trust_system_ = trust_system;
+  }
+
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
@@ -242,6 +261,7 @@ private:
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
   std::string          network_id_str_;
+  TrustSystem         *trust_system_ = nullptr;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
