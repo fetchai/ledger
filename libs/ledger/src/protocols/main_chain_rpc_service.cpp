@@ -215,9 +215,10 @@ void MainChainRpcService::ServiceLooseBlocks()
       {
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        AddLooseBlock(hash, (*random_peer_list.begin()));
+        Address addr =  (*random_peer_list.begin())
+        AddLooseBlock(hash, addr);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(addr));
       }
     }
     else
