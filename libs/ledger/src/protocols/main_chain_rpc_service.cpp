@@ -168,10 +168,15 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
 
   if (block.proof()())
   {
-    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
     // add the block?
-    chain_.AddBlock(block);
+    if (chain_.AddBlock(block))
+    {
+      trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    }
+    else
+    {
+      trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+    }
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree
