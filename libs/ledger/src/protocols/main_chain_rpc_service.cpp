@@ -218,7 +218,7 @@ void MainChainRpcService::ServiceLooseBlocks()
         Address address =  (*random_peer_list.begin());
         AddLooseBlock(hash, address);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(addr));
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
       }
     }
     else
