@@ -203,6 +203,7 @@ public:
 
   void Blacklist(Address const &target);
   void Whitelist(Address const &target);
+  bool IsBlacklisted(Address const &target) const;
   /// @}
 
   // Operators

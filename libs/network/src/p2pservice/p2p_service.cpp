@@ -128,17 +128,22 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
     }
-    
+
     std::string name(ToBase64(address));
+
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for: ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name, "  ----  ", element.second.ToString());
 
     if (start_mistrust.IsDue())
     {
-      //if (name[0]=='Z' || name[1]=='Z')
-      //{
-      //  FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
-      //  trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      //  trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      //}
+      if (name[0]=='Z' || name[1]=='Z')
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
+      }
     }
 
     // update our desired
@@ -196,15 +201,15 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
     if (!addresses.empty())
     {
-      for (auto const &address : addresses)
+      for (auto const &new_address : addresses)
       {
         // update the trust
-        if (!trust_system_.IsPeerKnown(address))
+        if (!trust_system_.IsPeerKnown(new_address))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(address),
+          FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(new_address),
                          " (from: ", ToBase64(from), ")");
 
-          trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+          trust_system_.AddFeedback(from, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
         }
       }
     }

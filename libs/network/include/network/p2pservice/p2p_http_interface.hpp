@@ -130,24 +130,25 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto const best_peers = trust_.GetBestPeers(100);
+    auto peers_trusts = trust_.GetPeersAndTrusts();
+    variant::Variant trust_list;
+    trust_list.MakeArray(peers_trusts.size());
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetTrustStatus: ", best_peers.size());
-
-    Variant response = Variant::Array(best_peers.size());
-
-    // populate the response
-    std::size_t index = 0;
-    for (auto const &peer : best_peers)
+    std::size_t pos = 0;
+    for(const auto &pt : peers_trusts)
     {
-      Variant peer_data     = Variant::Object();
-      peer_data["identity"] = byte_array::ToBase64(peer);
-      peer_data["trust"]    = trust_.GetTrustRatingOfPeer(peer);
-      peer_data["rank"]     = trust_.GetRankOfPeer(peer);
-
-      response[index++] = peer_data;
+      variant::Variant peer_data     = variant::Variant::Object();
+      peer_data["target"] = pt.name;
+      peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
+      peer_data["value"]  = pt.trust;
+      peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
+      trust_list[pos++] = peer_data;
     }
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
 
+    Variant response           = Variant::Object();
+    response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
+    response["trusts"] = trust_list;
     return http::CreateJsonResponse(response);
   }
 
