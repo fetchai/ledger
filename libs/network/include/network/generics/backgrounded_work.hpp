@@ -157,8 +157,19 @@ public:
     Lock    lock(mutex_);
     Results results;
 
+    auto &times = workload_[PromiseState::TIMEDOUT];
+    auto &fails = workload_[PromiseState::FAILED];
+
+    while(results.size() < limit && !times.empty() && !fails.empty())
     {
-      auto &worklist_for_state = workload_[PromiseState::TIMEDOUT];
+      if (!times.empty())
+      {
+        results.push_back(times.front());
+        times.pop_front();
+      }
+
+      
+
       std::copy_n(worklist_for_state.begin(), limit, std::inserter(results, results.begin()));
       auto copy_end = worklist_for_state.begin();
       advance(copy_end, static_cast<long>(limit));
