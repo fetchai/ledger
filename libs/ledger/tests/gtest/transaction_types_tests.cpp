@@ -19,12 +19,12 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include <iostream>
- #include "ledger/chain/helper_functions.hpp"
+#include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include <gtest/gtest.h>
+#include <iostream>
 
 using namespace fetch::chain;
 using namespace fetch::byte_array;
@@ -43,11 +43,11 @@ TEST(testing_ser_deser_transactions, Ser_deser_transactions_into_ConstTransactio
   }
   EXPECT_EQ(tx.resources().count("a"), 1);
 }
- TEST(testing_ser_deser_transactions, random_transaction_generation)
+TEST(testing_ser_deser_transactions, random_transaction_generation)
 {
   for (std::size_t i = 0; i < 1000; ++i)
   {
-    MutableTransaction mutableTx = fetch::chain::RandomTransaction();
+    MutableTransaction        mutableTx   = fetch::chain::RandomTransaction();
     const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
     std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i
               << "] ==========================================" << std::endl;
@@ -63,4 +63,4 @@ TEST(testing_ser_deser_transactions, Ser_deser_transactions_into_ConstTransactio
     }
     EXPECT_TRUE(mutableTx.Verify());
   }
-} 
+}

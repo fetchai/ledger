@@ -19,9 +19,9 @@
 #include "ledger/identifier.hpp"
 #include <gtest/gtest.h>
 
- using fetch::ledger::Identifier;
+using fetch::ledger::Identifier;
 
- TEST(identifier_gtest, basic_checks)
+TEST(identifier_gtest, basic_checks)
 {
   Identifier id("foo.bar.baz");
   EXPECT_EQ(id.name(), "baz");
@@ -30,7 +30,7 @@
   EXPECT_EQ(id[1], "bar");
   EXPECT_EQ(id[2], "baz");
 }
- TEST(identifier_ancestry_checks, direct_parent)
+TEST(identifier_ancestry_checks, direct_parent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar");
@@ -41,7 +41,7 @@
   EXPECT_FALSE(parent.IsChildTo(child));
   EXPECT_FALSE(child.IsParentTo(parent));
 }
- TEST(identifier_ancestry_checks, indirect_Parent)
+TEST(identifier_ancestry_checks, indirect_Parent)
 {
   Identifier parent("foo");
   Identifier child("foo.bar.baz");
@@ -52,7 +52,7 @@
   EXPECT_FALSE(parent.IsChildTo(child));
   EXPECT_FALSE(child.IsParentTo(parent));
 }
- TEST(identifier_ancestry_checks, Child)
+TEST(identifier_ancestry_checks, Child)
 {
   Identifier parent("foo.baz");
   Identifier child("foo.bar");
@@ -61,7 +61,7 @@
   EXPECT_FALSE(child.IsParentTo(parent));
   EXPECT_FALSE(parent.IsChildTo(child));
 }
- TEST(identifier_ancestry_checks, Append)
+TEST(identifier_ancestry_checks, Append)
 {
   Identifier id;
   id.Append("foo");
@@ -70,11 +70,11 @@
   id.Append("x.y.z");
   EXPECT_EQ(id.full_name(), "foo.bar.baz.x.y.z");
 }
- TEST(identifier_ancestry_checks, Append_invalid_namespace_at_beginning)
+TEST(identifier_ancestry_checks, Append_invalid_namespace_at_beginning)
 {
   Identifier id;
-   bool exception_received = false;
-   try
+  bool       exception_received = false;
+  try
   {
     id.Append(".foo");
   }
@@ -84,12 +84,12 @@
   }
   EXPECT_TRUE(exception_received);
 }
- TEST(identifier_ancestry_checks, Append_invalid_namespace_in_the_middle)
+TEST(identifier_ancestry_checks, Append_invalid_namespace_in_the_middle)
 {
   Identifier id;
   id.Append("foo");
-   bool exception_received = false;
-   try
+  bool exception_received = false;
+  try
   {
     id.Append(".bar");
   }
