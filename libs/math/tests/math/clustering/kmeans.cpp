@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include "math/free_functions/clustering_algorithms/k_means.hpp"
-#include "math/free_functions/standard_functions/combinatorics.hpp"
+#include "math/free_functions/combinatorics/combinatorics.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>

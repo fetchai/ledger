@@ -24,11 +24,7 @@ namespace fetch {
 namespace memory {
 
 template <typename T>
-<<<<<<< HEAD
 class ForwardIterator : public std::iterator<std::forward_iterator_tag, T>
-=======
-class ForwardIterator : public std::iterator<std::forward_iterator_tag, T>
->>>>>>> 9e1fa5ac8dd27bcd4cef9daafbaac3447b31536b
 {
 public:
   ForwardIterator() = delete;
@@ -74,11 +70,7 @@ private:
 };
 
 template <typename T>
-<<<<<<< HEAD
 class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
-=======
-class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
->>>>>>> 9e1fa5ac8dd27bcd4cef9daafbaac3447b31536b
 {
 public:
   BackwardIterator() = delete;
