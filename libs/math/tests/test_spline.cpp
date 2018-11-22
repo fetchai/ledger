@@ -64,10 +64,6 @@ void test1(F &f, double from, double to, double max)
 
 int main(int argc, char **argv)
 {
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
-  {
-    benchmark();
-  }
 
   std::cout << "Testing Sin ... " << std::endl;
   test1<8>(dsin, 0, 2 * 3.14, 2);
