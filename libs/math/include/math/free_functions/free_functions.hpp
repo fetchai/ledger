@@ -1049,7 +1049,11 @@ void Erfc(ArrayType &x)
 }
 
 /**
- * factorial of x-1
+ * Returns the gamma function of x.
+ * If the magnitude of x is too large, an overflow range error occurs.
+ * If too small, an underflow range error may occur.
+ * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain error or a pole error
+ * (or none, depending on implementation).
  * @param x
  */
 template <typename ArrayType>
@@ -1060,7 +1064,11 @@ void Tgamma(ArrayType &x)
 }
 
 /**
- * log of factorial of x-1
+ * Returns the log of the gamma function of x.
+ * If the magnitude of x is too large, an overflow range error occurs.
+ * If too small, an underflow range error may occur.
+ * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain error or a pole error
+ * (or none, depending on implementation).
  * @param x
  */
 template <typename ArrayType>
