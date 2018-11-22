@@ -17,34 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "math/free_functions/statistics/mean.hpp"
-#include "math/linalg/matrix.hpp"
-#include "python/fetch_pybind.hpp"
+#include "math/shape_less_array.hpp"
+#include "vectorise/memory/range.hpp"
+
+#include <cmath>
 
 namespace fetch {
 namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::Type WrapperMean(A const &a)
+inline typename A::Type Variance(A const &a)
 {
-  return Mean(a);
-}
+  using vector_register_type = typename A::vector_register_type;
+  using type                 = typename A::Type;
 
-inline void BuildMeanStatistics(std::string const &custom_name, pybind11::module &module)
-{
-  using namespace fetch::math::linalg;
-  using namespace fetch::memory;
+  type                 m = Mean(a);
+  vector_register_type mean(m);
 
-  namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMean<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperMean<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperMean<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMean<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<ShapeLessArray<float>>)
-      .def(custom_name.c_str(), &WrapperMean<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperMean<NDArray<float>>);
+  type ret = a.data().in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                              [mean](vector_register_type const &x) {
+                                                vector_register_type d = x - mean;
+                                                return d * d;
+                                              });
+
+  ret /= static_cast<type>(a.size());
+
+  return ret;
 }
 
 }  // namespace statistics

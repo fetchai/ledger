@@ -19,6 +19,7 @@
 
 #include "http/module.hpp"
 #include "http/server.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
 #include "ledger/execution_manager.hpp"
@@ -31,7 +32,7 @@
 #include "network/muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
-#include "network/p2pservice/p2ptrust.hpp"
+#include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -42,9 +43,23 @@
 #include <random>
 #include <thread>
 #include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace fetch {
+
+namespace chain {
+namespace consensus {
+
+enum class ConsensusMinerType
+{
+  NO_MINER    = 0,
+  DUMMY_MINER = 1,
+  BAD_MINER   = 2
+};
+
+}  // namespace consensus
+}  // namespace chain
 
 /**
  * Top level container for all components that are required to run a ledger instance
@@ -65,32 +80,33 @@ public:
                          std::string                         my_network_address,
                          std::chrono::steady_clock::duration block_interval);
 
-  void Run(UriList const &initial_peers, bool mining);
+  void Run(UriList const &initial_peers, chain::consensus::ConsensusMinerType const &mining);
   void SignalStop();
 
 private:
-  using Muddle                 = muddle::Muddle;
-  using NetworkManager         = network::NetworkManager;
-  using BlockPackingAlgorithm  = miner::BasicMiner;
-  using Miner                  = chain::MainChainMiner;
-  using BlockCoordinator       = chain::BlockCoordinator;
-  using MainChain              = chain::MainChain;
-  using MainChainRpcService    = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
-  using LaneServices           = ledger::StorageUnitBundledService;
-  using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = StorageUnitClient::LaneIndex;
-  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
-  using Flag                   = std::atomic<bool>;
-  using ExecutionManager       = ledger::ExecutionManager;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl      = ledger::LaneRemoteControl;
-  using HttpServer             = http::HTTPServer;
-  using HttpModule             = http::HTTPModule;
-  using HttpModulePtr          = std::shared_ptr<HttpModule>;
-  using HttpModules            = std::vector<HttpModulePtr>;
-  using TransactionProcessor   = ledger::TransactionProcessor;
-  using TrustSystem            = p2p::P2PTrust<Muddle::Address>;
+  using Muddle                  = muddle::Muddle;
+  using NetworkManager          = network::NetworkManager;
+  using BlockPackingAlgorithm   = miner::BasicMiner;
+  using Miner                   = chain::MainChainMiner;
+  using BlockCoordinator        = chain::BlockCoordinator;
+  using MainChain               = chain::MainChain;
+  using MainChainRpcService     = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
+  using LaneServices            = ledger::StorageUnitBundledService;
+  using StorageUnitClient       = ledger::StorageUnitClient;
+  using LaneIndex               = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr    = std::shared_ptr<StorageUnitClient>;
+  using Flag                    = std::atomic<bool>;
+  using ExecutionManager        = ledger::ExecutionManager;
+  using ExecutionManagerPtr     = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl       = ledger::LaneRemoteControl;
+  using HttpServer              = http::HTTPServer;
+  using HttpModule              = http::HTTPModule;
+  using HttpModulePtr           = std::shared_ptr<HttpModule>;
+  using HttpModules             = std::vector<HttpModulePtr>;
+  using TransactionProcessor    = ledger::TransactionProcessor;
+  using TrustSystem             = p2p::P2PTrustBayRank<Muddle::Address>;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
   /// @name Configuration
   /// @{
@@ -127,10 +143,11 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;              ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
-  Miner                 miner_;              ///< The miner and block generation component
+  MainChain               chain_;              ///< The main block chain component
+  BlockPackingAlgorithm   block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator        block_coordinator_;  ///< The block execution coordinator
+  ConsensusMinerInterface consensus_miner_;
+  Miner                   miner_;  ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services

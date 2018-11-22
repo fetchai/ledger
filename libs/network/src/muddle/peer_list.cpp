@@ -56,13 +56,13 @@ std::size_t PeerConnectionList::GetNumPeers() const
 
 void PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
 {
-  Lock lock(lock_);
-  peer_connections_[peer] = conn;
-
+  FETCH_LOCK(lock_);
   // update the metadata
   auto &metadata     = peer_metadata_[peer];
   metadata.connected = false;
   ++metadata.attempts;
+
+  peer_connections_[peer] = conn;
 }
 
 PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
@@ -87,7 +87,7 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer)
+PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer) const
 {
   FETCH_LOCK(lock_);
   auto metadataiter = peer_metadata_.find(peer);
@@ -95,19 +95,19 @@ PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri cons
   {
     return ConnectionState::UNKNOWN;
   }
-  auto &metadata = metadataiter->second;
+  auto const &metadata = metadataiter->second;
+
   if (metadata.connected)
   {
     return ConnectionState::CONNECTED;
   }
+
   if (ReadyForRetry(metadata))
   {
     return ConnectionState::TRYING;
   }
-  else
-  {
-    return ConnectionState(int(ConnectionState::BACKOFF) + metadata.consecutive_failures);
-  }
+
+  return ConnectionState(int(ConnectionState::BACKOFF) + metadata.consecutive_failures);
 }
 
 void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
@@ -156,6 +156,20 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " lost");
 }
 
+void PeerConnectionList::Disconnect(Uri const &peer)
+{
+  FETCH_LOCK(lock_);
+
+  if (peer_metadata_.erase(peer))
+  {
+    peer_connections_.erase(peer);
+  }
+
+  persistent_peers_.erase(peer);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+}
+
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
 {
   std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
@@ -166,9 +180,9 @@ bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
 
 PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
 {
-  FETCH_LOCK(lock_);
-
   PeerList peers;
+
+  FETCH_LOCK(lock_);
 
   // determine which of the persistent peers are no longer active
   for (auto const &peer : persistent_peers_)

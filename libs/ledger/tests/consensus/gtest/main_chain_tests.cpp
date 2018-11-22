@@ -63,7 +63,6 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 
 using block_type = MainChain::BlockType;
 using body_type  = MainChain::BlockType::body_type;
-using miner      = fetch::chain::consensus::DummyMiner;
 
 static constexpr std::size_t NUM_BLOCKS = 1000;
 
@@ -203,8 +202,9 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof)
 {
-  std::vector<block_type> blocks;
-  std::size_t             blockIterations = 10;
+  std::vector<block_type>             blocks;
+  std::size_t                         blockIterations = 10;
+  fetch::chain::consensus::DummyMiner miner;
 
   for (std::size_t diff = 1; diff < 16; diff <<= 1)
   {
@@ -220,7 +220,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
       block.UpdateDigest();
       block.proof().SetTarget(diff);  // Number of zeroes
 
-      miner::Mine(block);
+      miner.Mine(block);
 
       blocks.push_back(block);
     }
@@ -242,7 +242,8 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 {
-  std::vector<block_type> blocks;
+  std::vector<block_type>             blocks;
+  fetch::chain::consensus::DummyMiner miner;
 
   for (std::size_t j = 0; j < 10; ++j)
   {
@@ -254,7 +255,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
     block.UpdateDigest();
     block.proof().SetTarget(8);  // Number of zeroes
 
-    miner::Mine(block);
+    miner.Mine(block);
 
     blocks.push_back(block);
   }
