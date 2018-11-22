@@ -59,7 +59,7 @@ static void BM_sin_spline(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = spline(x);
+    benchmark::DoNotOptimize(result = spline(x));
   }
 }
 BENCHMARK_TEMPLATE(BM_sin_spline, 8)->Apply(DegreeArguments);
@@ -72,7 +72,7 @@ static void BM_sin(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = sin(x);
+    benchmark::DoNotOptimize(result = sin(x));
   }
 }
 BENCHMARK(BM_sin)->Apply(DegreeArguments);
@@ -86,7 +86,7 @@ static void BM_cos_spline(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = spline(x);
+    benchmark::DoNotOptimize(result = spline(x));
   }
 }
 BENCHMARK_TEMPLATE(BM_cos_spline, 8)->Apply(DegreeArguments);
@@ -99,7 +99,7 @@ static void BM_cos(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = cos(x);
+    benchmark::DoNotOptimize(result = cos(x));
   }
 }
 BENCHMARK(BM_cos)->Apply(DegreeArguments);
@@ -113,7 +113,7 @@ static void BM_tan_spline(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = spline(x);
+    benchmark::DoNotOptimize(result = spline(x));
   }
 }
 BENCHMARK_TEMPLATE(BM_tan_spline, 8)->Apply(DegreeArguments);
@@ -126,7 +126,7 @@ static void BM_tan(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = tan(x);
+    benchmark::DoNotOptimize(result = tan(x));
   }
 }
 BENCHMARK(BM_tan)->Apply(DegreeArguments);
@@ -140,7 +140,7 @@ static void BM_exp_spline(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = spline(x);
+    benchmark::DoNotOptimize(result = spline(x));
   }
 }
 BENCHMARK_TEMPLATE(BM_exp_spline, 8)->Apply(DegreeArguments);
@@ -153,7 +153,7 @@ static void BM_exponent(benchmark::State &state)
   double result;
   for (auto _ : state)
   {
-    result = exp(x);
+    benchmark::DoNotOptimize(result = exp(x));
   }
 }
 BENCHMARK(BM_exponent)->Apply(DegreeArguments);

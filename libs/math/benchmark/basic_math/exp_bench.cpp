@@ -36,7 +36,7 @@ static void BM_ApproxExpImplementation(benchmark::State &state)
     // Single iteration is too small to get accurate benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      result = fexp(x);
+      benchmark::DoNotOptimize(result = fexp(x));
     }
   }
 }
@@ -53,7 +53,7 @@ static void BM_exp(benchmark::State &state)
     // Single iteration is too small to get accurate benchmarks.
     for (int i = 0; i < 1000; i++)
     {
-      result = exp(x);
+      benchmark::DoNotOptimize(result = exp(x));
     }
   }
 }
