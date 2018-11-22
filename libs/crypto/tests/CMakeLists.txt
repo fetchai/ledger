@@ -10,6 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(ecdsa_test fetch-crypto ecdsa.cpp DISABLED)
-add_fetch_gtest(fetch-crypto-gtests fetch-crypto gtests)
+
+add_fetch_gtest(fetch_crypto_gtest fetch-crypto gtests)
 
