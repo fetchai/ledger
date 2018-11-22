@@ -134,7 +134,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
   }
   
-  for(auto cont &pt : trust_system_.GetPeersAndTrusts())
+  for(auto const &pt : trust_system_.GetPeersAndTrusts())
   {
     auto address = pt.address();
     std::string name(ToBase64(address));
