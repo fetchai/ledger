@@ -82,8 +82,6 @@ public:
   void Start(UriList const &initial_peer_list);
   void Stop();
 
-  void SetPeerGoals(uint32_t min, uint32_t max);
-
   Identity const &identity() const
   {
     return muddle_.identity();
