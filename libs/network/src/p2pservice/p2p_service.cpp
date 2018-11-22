@@ -41,8 +41,8 @@ namespace p2p {
   , resolver_proto_{resolver_, *this}
   , client_(muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
   , local_services_(lane_management_)
-  , max_peers(max_peers_)
-  , fidgety_peers(fidgety_peers_)
+  , max_peers_(max_peers)
+  , fidgety_peers_(fidgety_peers)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -221,7 +221,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  auto static_peers = trust_system_.GetBestPeers(max_peers_ - fidget_peers_);
+  auto static_peers = trust_system_.GetBestPeers(max_peers_ - fidgety_peers_);
   auto fidget_peers = trust_system_.GetBestPeers(fidget_peers_);
 
   desired_peers_.clear();
