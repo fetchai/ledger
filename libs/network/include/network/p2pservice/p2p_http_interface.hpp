@@ -132,11 +132,25 @@ private:
   {
     auto peers_trusts = trust_.GetPeersAndTrusts();
     variant::Variant trust_list;
-    trust_list.MakeArray(peers_trusts.size());
+
+    std::size_t count = 0;
+    for(const auto &pt : peers_trusts)
+    {
+      if (pt.has_transacted)
+      {
+        count++;
+      }
+    }
+
+    trust_list.MakeArray(count);
 
     std::size_t pos = 0;
     for(const auto &pt : peers_trusts)
     {
+      if (!pt.has_transacted)
+      {
+        continue;
+      }
       variant::Variant peer_data     = variant::Variant::Object();
       peer_data["target"] = pt.name;
       peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
