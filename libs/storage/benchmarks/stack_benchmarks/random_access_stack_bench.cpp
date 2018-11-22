@@ -45,10 +45,13 @@ protected:
 
 BENCHMARK_F(RandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
-  uint64_t random = 1;
+  uint64_t random;
   for (auto _ : st)
   {
-    stack_.Push(++random);
+    st.PauseTiming();
+    random = lfg_();
+    st.ResumeTiming();
+    stack_.Push(random);
   }
 }
 
