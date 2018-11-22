@@ -17,42 +17,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
-#include <vector>
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+
+#include <random>
+
 namespace fetch {
-namespace serializers {
+namespace chain {
+namespace consensus {
 
-template <typename T>
-void Serialize(T &serializer, std::vector<std::string> const &vec)
+class BadMiner : public ConsensusMinerInterface
 {
-  // Allocating memory for the size
-  serializer.Allocate(sizeof(uint64_t));
-  uint64_t size = vec.size();
 
-  // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
+public:
+  BadMiner()  = default;
+  ~BadMiner() = default;
 
-  for (auto const &a : vec)
+  // Blocking mine
+  void Mine(BlockType &block) override
   {
-    serializer << a;
+    block.body().nonce = 0;
+    block.UpdateDigest();
   }
-}
 
-template <typename T>
-void Deserialize(T &serializer, std::vector<std::string> &vec)
-{
-  uint64_t size;
-  // Writing the size to the byte array
-  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&size), sizeof(uint64_t));
-
-  // Reading the data
-  vec.resize(size);
-
-  for (auto &a : vec)
+  // Mine for set number of iterations
+  bool Mine(BlockType &block, uint64_t iterations) override
   {
-    serializer >> a;
+    block.body().nonce = 0;
+    block.UpdateDigest();
+    return true;
   }
-}
-
-}  // namespace serializers
+};
+}  // namespace consensus
+}  // namespace chain
 }  // namespace fetch

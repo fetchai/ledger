@@ -74,14 +74,16 @@ void test_set_get()
 
   array = array;
   /*
-  if(array.reference_count() != 3) {
+  if(array.reference_count() != 3)
+  {
     std::cout << "expected array to be referenced exactly 3 times";
     std::cout << "but is referenced " << array.reference_count() <<  std::endl;
   }
 
-  if(testing::total_shared_objects != 1) {
+  if(testing::total_shared_objects != 1)
+  {
     std::cout << "expected exactly 1 object but " <<
-  testing::total_shared_objects;
+      testing::total_shared_objects;
     std::cout << "found" << std::endl;
   }
   */

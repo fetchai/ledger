@@ -30,12 +30,18 @@ public:
   void Reset()
   {
     for (std::size_t i = 0; i < couplings_.size(); ++i)
+    {
       couplings_[i] = 0.;
+    }
     for (std::size_t i = 0; i < coupling_sum_.size(); ++i)
+    {
       coupling_sum_[i] = 0;
+    }
 
     for (auto &c : couples_to_)
+    {
       c.clear();
+    }
 
     energy_offset_          = 0;
     max_abs_coupling_       = 0.0;
@@ -86,9 +92,13 @@ public:
       energy_offset_ += c * 0.25;  // One fourth due to symmetry
 
       if (c < 0)
+      {
         c = -c;
+      }
       if (max_abs_coupling_ < (0.25 * c))
+      {
         max_abs_coupling_ = 0.25 * c;
+      }
     }
     else
     {
@@ -109,12 +119,16 @@ public:
       cost_type field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
       cost_type ff    = field < 0 ? -field : field;
       if (ff > max_abs_coupling_)
+      {
         max_abs_coupling_ = ff;
+      }
     }
     normalisation_constant_ = 1. / max_abs_coupling_ / max_conn;
 
     if (!normalise)
+    {
       normalisation_constant_ = 1.0;
+    }
 
     for (std::size_t i = 0; i < size_; ++i)
     {

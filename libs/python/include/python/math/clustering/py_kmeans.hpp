@@ -26,18 +26,19 @@ namespace math {
 namespace clustering {
 
 template <typename A>
-inline A WrapperKMeans(A const &a, std::size_t const &b, std::size_t const &r_seed,
-                       std::size_t const &max_loops)
+inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
+                       std::size_t max_loops, InitMode init_mode = InitMode::KMeansPP,
+                       std::size_t max_no_change_convergence = 10)
 {
-  if (b > a.shape()[0])
+  if (K > data.shape()[0])
   {
     throw std::range_error("cannot have more clusters than data points");
   }
-  else if (b < 2)
+  else if (K < 2)
   {
     throw std::range_error("cannot have fewer than 2 clusters");
   }
-  return KMeans(a, b, r_seed, max_loops);
+  return KMeans(data, r_seed, K, max_loops, init_mode, max_no_change_convergence);
 }
 
 inline void BuildKMeansClustering(std::string const &custom_name, pybind11::module &module)

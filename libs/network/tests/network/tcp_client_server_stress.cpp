@@ -123,10 +123,14 @@ void TestCase1(std::string host, uint16_t port)
   {
     NetworkManager nmanager(N);
     if (index % 2)
+    {
       nmanager.Start();
+    }
     Server server(port, nmanager);
     if (index % 3)
+    {
       nmanager.Stop();
+    }
     nmanager.Start();
   }
 
@@ -154,7 +158,9 @@ void TestCase2(std::string host, uint16_t port)
     }
     client.Send("test this");
     if (index % 3)
+    {
       nmanager.Stop();
+    }
   }
 
   std::cerr << "Success." << std::endl;
@@ -195,7 +201,9 @@ void TestCase3(std::string host, uint16_t port)
     }
 
     if (index % 3)
+    {
       nmanager.Stop();
+    }
   }
 
   std::cerr << "Success." << std::endl;
@@ -230,7 +238,9 @@ void TestCase4(std::string host, uint16_t port)
     }
 
     if (index % 2)
+    {
       server.reset();
+    }
 
     while (threadCount != iterations)
     {

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/statistics/standard_deviation.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/statistics/standard_deviation.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
