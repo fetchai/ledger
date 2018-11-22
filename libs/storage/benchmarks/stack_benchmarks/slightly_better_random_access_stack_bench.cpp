@@ -21,11 +21,11 @@
 #include <stack>
 
 #include "core/random/lfg.hpp"
-#include "storage/cached_random_access_stack.hpp"
+#include "storage/slightly_better_random_access_stack.hpp"
 
-using fetch::storage::CachedRandomAccessStack;
+using fetch::storage::SlightlyBetterRandomAccessStack;
 
-class CachedRandomAccessStackBench : public ::benchmark::Fixture
+class SlightlyBetterRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
   void SetUp(const ::benchmark::State &st) override
@@ -33,18 +33,18 @@ protected:
     stack_.New("RAS_bench.db");
 
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == false)
-        << "Expected random access stack to not be direct write";
+    EXPECT_TRUE(stack_.DirectWrite() == true)
+        << "Expected slightly better random access stack to be direct write";
   }
 
   void TearDown(const ::benchmark::State &) override
   {}
 
-  CachedRandomAccessStack<uint64_t>         stack_;
+  SlightlyBetterRandomAccessStack<uint64_t> stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(CachedRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(SlightlyBetterRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
   uint64_t random;
   for (auto _ : st)
