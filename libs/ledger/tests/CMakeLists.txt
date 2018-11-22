@@ -12,9 +12,9 @@ setup_compiler()
 
 
 
-add_fetch_gtest(chaincode_test fetch-ledger chaincode)
-add_fetch_gtest(executors_test fetch-ledger executors)
-target_include_directories(executors_test PRIVATE chaincode)
+add_fetch_gtest(chaincode_gtest fetch-ledger chaincode)
+add_fetch_gtest(executors_gtest fetch-ledger executors)
+target_include_directories(executors_gtest PRIVATE chaincode)
 
 
 add_fetch_gtest(ledger_main_chain_gtest fetch-ledger consensus/gtest/)
