@@ -25,6 +25,7 @@ add_fetch_gtest(ndarray_view_test fetch-math math/ndarray_view)
 add_fetch_gtest(ndarray_iterator_test fetch-math math/ndarray_iterator)
 add_fetch_gtest(ndarray_broadcast_test fetch-math math/ndarray_broadcast)
 add_fetch_gtest(ndarray_squeeze_test fetch-math math/ndarray_squeeze)
+add_fetch_gtest(combinatorics fetch-math math/combinatorics)
 
 add_fetch_gtest(free_functions_gtest fetch-math math/free_functions)
 

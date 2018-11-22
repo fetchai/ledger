@@ -63,6 +63,11 @@ public:
   Matrix(super_type &&other)
     : super_type(std::move(other))
   {}
+
+  explicit Matrix(std::size_t const &n)
+    : super_type(n)
+  {}
+
   /**
    * This constructor is useful for setting fixed valued inputs in certain tests
    * @param c

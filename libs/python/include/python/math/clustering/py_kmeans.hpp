@@ -27,10 +27,9 @@ namespace clustering {
 
 template <typename A>
 inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
-                       std::size_t max_loops, std::size_t init_mode = 0,
+                       std::size_t max_loops, InitMode init_mode = InitMode::KMeansPP,
                        std::size_t max_no_change_convergence = 10)
 {
-  std::cout << "wrapper2: " << std::endl;
   if (K > data.shape()[0])
   {
     throw std::range_error("cannot have more clusters than data points");
@@ -39,7 +38,7 @@ inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r
   {
     throw std::range_error("cannot have fewer than 2 clusters");
   }
-  return KMeans(data, K, r_seed, max_loops, init_mode, max_no_change_convergence);
+  return KMeans(data, r_seed, K, max_loops, init_mode, max_no_change_convergence);
 }
 
 inline void BuildKMeansClustering(std::string const &custom_name, pybind11::module &module)
