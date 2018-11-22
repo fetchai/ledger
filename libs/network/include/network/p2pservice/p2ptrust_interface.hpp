@@ -19,7 +19,6 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "variant/variant.hpp"
-#include "network/muddle/muddle.hpp"
 
 #include <iostream>
 #include <string>

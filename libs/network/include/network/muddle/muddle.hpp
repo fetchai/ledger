@@ -29,6 +29,7 @@
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <chrono>
 #include <memory>
