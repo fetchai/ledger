@@ -228,11 +228,11 @@ void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 
   for(auto const &p : static_peers)
   {
-    desired_peers_.add(p);
+    desired_peers_.insert(p);
   }
   for(auto const &p : fidget_peers)
   {
-    desired_peers_.add(p);
+    desired_peers_.insert(p);
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "KLL: RenewDesiredPeers. #=", desired_peers_.size());
@@ -246,8 +246,6 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
 
   AddressSet const new_peers     = desired_peers_ - active_addresses;
   AddressSet const dropped_peers = outgoing_peers - desired_peers_;
-
-  FETCH_LOG_INFO(LOGGING_NAME, "KLL: UpdateMuddlePeers: ", 
 
   for(auto const &d : desired_peers_)
   {
@@ -394,12 +392,6 @@ P2PService::AddressSet P2PService::GetRandomGoodPeers()
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 
   return result;
-}
-
-void P2PService::SetPeerGoals(uint32_t min, uint32_t max)
-{
-  min_peers_ = min;
-  max_peers_ = max;
 }
 
 void P2PService::SetLocalManifest(Manifest const &manifest)
