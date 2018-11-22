@@ -91,12 +91,12 @@ TEST(free_functions, tanh_test_2x2)
   array1.Set(1, 0, 0.7);
   array1.Set(1, 1, 22);
 
-  matrix_type output = fetch::math::Tanh(array1);
+  fetch::math::Tanh(array1);
 
   matrix_type numpy_output = matrix_type(R"(
 	0.29131261 0.83365461;
  0.60436778 1.
 	)");
 
-  ASSERT_TRUE(output.AllClose(numpy_output));
+  ASSERT_TRUE(array1.AllClose(numpy_output));
 }
