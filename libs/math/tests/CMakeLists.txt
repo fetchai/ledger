@@ -32,4 +32,4 @@ add_fetch_gtest(big_number_gtest fetch-math math/basic_math_tests)
 add_fetch_gtest(distances_gtest fetch-math math/distance/gtest)
 add_fetch_gtest(clustering_gtest fetch-math math/clustering)
 
-add_fetch_gtest(math_gtest fetch-math gtest)
+add_fetch_gtest(math_gtest fetch-math math/gtest)
