@@ -41,7 +41,8 @@ enum class TrustQuality
   LIED            = 0,
   BAD_CONNECTION  = 1,
   DUPLICATE       = 2,
-  NEW_INFORMATION = 3
+  NEW_INFORMATION = 3,
+  NEW_PEER        = 4,
 };
 
 
