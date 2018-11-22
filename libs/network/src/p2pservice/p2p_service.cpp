@@ -125,6 +125,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   for (auto const &element : active_connections)
   {
     auto const &address = element.first;
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update GOT CONNECTION: ", std::string(ToBase64(address)));
 
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
