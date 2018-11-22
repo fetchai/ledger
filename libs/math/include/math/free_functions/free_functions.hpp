@@ -796,7 +796,7 @@ void Expm1(ArrayType &x)
 }
 
 /**
- * natural logarithm of x
+ * logarithm of x with base 10
  * @param x
  */
 template <typename ArrayType>
