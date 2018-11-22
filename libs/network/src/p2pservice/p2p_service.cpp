@@ -136,7 +136,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   
   for(auto const &pt : trust_system_.GetPeersAndTrusts())
   {
-    auto address = pt.address();
+    auto address = pt.address;
     std::string name(ToBase64(address));
 
     FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for: ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name, "  ----  ", element.second.ToString());
