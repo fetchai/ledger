@@ -987,7 +987,7 @@ void Cosh(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsBlasArrayLike<ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IsMathArrayLike<ArrayType, void> Tanh(ArrayType &x)
 {
   kernels::stdlib::Tanh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -1726,8 +1726,8 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
   return ret;
 }
 
-//template <typename T, typename C, typename S>
-//linalg::Matrix<T, C, S> Tanh(linalg::Matrix<T, C, S> const &A)
+// template <typename T, typename C, typename S>
+// linalg::Matrix<T, C, S> Tanh(linalg::Matrix<T, C, S> const &A)
 //{
 //  linalg::Matrix<T, C, S> ret{A.shape()};
 //  ret.Copy(A);
