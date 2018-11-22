@@ -21,7 +21,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/distance/distance_matrix.hpp"
-#include "testing/unittest.hpp"
+#include <gtest/gtest.h>
 #include <math/distance/hamming.hpp>
 #include <math/linalg/matrix.hpp>
 
@@ -34,9 +34,7 @@ using _S = fetch::memory::SharedArray<D>;
 template <typename D>
 using _M = Matrix<D, _S<D>>;
 
-int main()
-{
-  SCENARIO("Basic info")
+TEST(distance_matrix_gtest, DISABLED_basic_info)
   {
     _M<double> A, B, R;
 
@@ -44,9 +42,6 @@ int main()
     A = _M<double>(R"(1 2 3 ; 1 1 1 ; 2 1 2)");
     B = _M<double>(R"(1 2 9 ; 1 0 0 ; 1 2 3)");
 
-    EXPECT(bool(DistanceMatrix(R, A, B, Hamming<double>) ==
-                _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0 )")));
-  };
-
-  return 0;
-}
+    EXPECT_TRUE(
+      bool(DistanceMatrix`(R, A, B, Hamming<double>) == _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0 )")));
+  }
