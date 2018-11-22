@@ -129,7 +129,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
     }
 
     std::string name(ToBase64(address));
