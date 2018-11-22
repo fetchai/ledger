@@ -56,6 +56,7 @@ public:
     IDENTITY address;
     std::string name;
     double trust;
+    bool has_transacted;
   };
   //using PeerTrust = fetch::p2p::PeerTrust;
 
