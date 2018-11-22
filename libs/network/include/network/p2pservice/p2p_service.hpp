@@ -75,7 +75,8 @@ public:
   static constexpr char const *LOGGING_NAME = "P2PService";
 
   // Construction / Destruction
-  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
+  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
+             std::size_t max_peers, std::size_t fidgety_peers);
   ~P2PService() = default;
 
   void Start(UriList const &initial_peer_list);
@@ -159,8 +160,8 @@ private:
   P2PManagedLocalServices local_services_;
   ///@}
 
-  uint32_t min_peers_ = 2;
-  uint32_t max_peers_ = 3;
+  std::size_t max_peers_;
+  std::size_t fidgety_peers_;
 };
 
 }  // namespace p2p
