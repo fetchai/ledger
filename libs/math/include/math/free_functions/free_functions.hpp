@@ -818,7 +818,7 @@ void Log2(ArrayType &x)
 }
 
 /**
- * natural log 1 + x
+ * ln (1 + x)
  * @param x
  */
 template <typename ArrayType>
