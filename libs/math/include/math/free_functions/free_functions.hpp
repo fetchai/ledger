@@ -222,7 +222,7 @@ void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
 }
 
 /**
- * Efficient vectorised and threaded routine for C = A.T(B)
+ * Efficient vectorised and threaded routine for C = A.B, the dot product between A and B
  * @param A
  * @param B
  * @return
