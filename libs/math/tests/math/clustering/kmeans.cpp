@@ -35,55 +35,9 @@ using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
 
-// Helper function
-//int fetch::math::combinatorics::factorial(int n)
-//{
-//  if (n == 0){
-//    return 1;
-//  }
-//  int i;
-//  for(i = n-1; i > 1; i--)
-//    n *= i;
-//
-//  return n;
-//}
-//
-// Helper function
-//matrix_type fetch::math::combinatorics::combinations(int n, int r)
-//{
-//  if (r == 0){
-//    matrix_type output_array{};
-//    return output_array;
-//  }
-//
-//  int n_fetch::math::combinatorics::combinations = fetch::math::combinatorics::factorial(n)/fetch::math::combinatorics::factorial(r)/fetch::math::combinatorics::factorial(n-r);
-//  std::size_t current_dim = 0;
-//  std::size_t current_row = 0;
-//
-//  std::vector<bool> v(static_cast<unsigned long>(n));
-//  std::fill(v.end() - r, v.end(), true);
-//
-//  matrix_type output_array{static_cast<std::size_t>(n_fetch::math::combinatorics::combinations), static_cast<std::size_t>(r)};
-//  do {
-//    for (int i = 0; i < n; ++i) {
-//      if (v[static_cast<unsigned long>(i)]) {
-//          int dim = (i+1);
-//          output_array.Set(current_row, current_dim, static_cast<data_type>(dim));
-//          if (current_dim == static_cast<std::size_t>(r)-1){
-//            current_row += 1;
-//          }
-//          current_dim = current_dim + 1;
-//          current_dim = current_dim % static_cast<std::size_t>(r);
-//
-//        }
-//      }
-//    }while (std::next_permutation(v.begin(), v.end()));
-//  return output_array;
-//}
 
-
-// Helper function
-std::size_t add_cluster_to_matrix(int n_points_per_cluster, int n_dimensions, std::vector<int> dimension_signs,
+// Helper function for kmeans_test_ndimensions
+std::size_t add_cluster_to_matrix(int n_points_per_cluster, std::size_t n_dimensions, std::vector<int> dimension_signs,
     std::size_t row, matrix_type &A, int initial_val_magnitude){
   int val_magnitude = initial_val_magnitude;
   // Create specified number of points in each cluster
@@ -161,8 +115,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
 TEST(clustering_test, kmeans_test_ndimensions)
 {
 
-  bool to_print = false;
-  int n_dimensions = 5;
+  std::size_t n_dimensions = 5;
   float base = 2.0;
   // Each dimension will be positive or negative for 2^n combinations
   float out = std::pow(base, static_cast<float>(n_dimensions));
@@ -181,7 +134,7 @@ TEST(clustering_test, kmeans_test_ndimensions)
   row = next_row;
 
   // r represents number of dimensions that are positive
-  for (int r = 1; r <= n_dimensions; ++r){
+  for (std::size_t r = 1; r <= n_dimensions; ++r){
     // Each row of array tells us which dimensions are positive
     matrix_type combinations_array = fetch::math::combinatorics::combinations(n_dimensions, r);
 
@@ -204,20 +157,9 @@ TEST(clustering_test, kmeans_test_ndimensions)
   matrix_type clusters = fetch::math::clustering::KMeans(A, random_seed, static_cast<std::size_t>(n_clusters));
 
   for (std::size_t c = 0; c < static_cast<std::size_t>(n_clusters); ++c){
-    std::size_t current_cluster = static_cast<std::size_t>(clusters[c]);
+    auto current_cluster = static_cast<std::size_t>(clusters[c]);
     for (std::size_t p = 0; p < static_cast<std::size_t>(n_points); ++p){
       ASSERT_TRUE(current_cluster == static_cast<std::size_t>(clusters[c]));
-    }
-  }
-
-  // Print matrix
-  if (to_print){
-    for (std::size_t l = 0; l < A.shape()[0]; ++l) {
-      for (std::size_t m = 0; m < A.shape()[1]; ++m)
-      {
-        std::cout << A.At(l,m) << "\t\t";
-      }
-      std::cout << std::endl;
     }
   }
 }
