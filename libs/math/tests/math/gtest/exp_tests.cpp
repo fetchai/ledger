@@ -21,8 +21,8 @@
 #include <iostream>
 
 #include "core/random/lcg.hpp"
-#include <gtest/gtest.h>
 #include "math/approx_exp.hpp"
+#include <gtest/gtest.h>
 
 template <uint8_t N, uint64_t C>
 void test1(double max)

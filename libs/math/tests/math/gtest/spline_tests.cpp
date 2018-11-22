@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
+#include "gtest/gtest.h"
+#include "math/spline/linear.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
- #include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/spline/linear.hpp"
- // This is to avoid ambiguity in instantation
+// This is to avoid ambiguity in instantation
 double dsin(double x)
 {
   return sin(x);
@@ -39,12 +39,12 @@ double dexp(double x)
 {
   return exp(x);
 }
- template <std::size_t N, typename F>
+template <std::size_t N, typename F>
 void test1(F &f, double from, double to, double max)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(f, from, to, N);
-   double me = 0;
+  double me = 0;
   for (double x = from; x < to; x += 0.0001)
   {
     double y0 = spline(x);

@@ -35,7 +35,7 @@ using _M = Matrix<D, _S<D>>;
 
 TEST(hamming_gtest, DISABLED_basic_info)
 {
-    _M<double> A = _M<double>(R"(1 2; 3 4)");
+  _M<double> A = _M<double>(R"(1 2; 3 4)");
   EXPECT_EQ(Hamming(A, A), 4);
 
   _M<double> B = _M<double>(R"(1 2; 3 2)");
