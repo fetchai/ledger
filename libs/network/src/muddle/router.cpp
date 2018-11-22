@@ -237,6 +237,16 @@ void Router::Route(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
+  if (blacklist_.Contains(packet->GetSenderRaw()))
+  {
+    // this is where we prevent incoming connections.
+      FETCH_LOG_WARN(LOGGING_NAME,
+                       "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
+                       "  killing handle=", handle);
+      KillConnection(handle);
+      return;
+  }
+
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
@@ -710,16 +720,6 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
   {
     if (CHANNEL_ROUTING == packet->GetProtocol())
     {
-      if (blacklist_.Contains(packet->GetSenderRaw()))
-      {
-        // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
-                       "  killing handle=", handle);
-        KillConnection(handle);
-        return;
-      }
-
       // make the association with
       AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
