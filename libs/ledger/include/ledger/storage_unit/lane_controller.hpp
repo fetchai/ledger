@@ -454,7 +454,7 @@ public:
 
           currently_pinging.Add(uri, PingingConnection(conn, lane_identity_protocol_));
         }
-        catch (std::exception &ex)
+        catch (std::exception const &ex)
         {
           FETCH_LOG_ERROR(LOGGING_NAME, "Error generated creating service client: ", ex.what());
         }

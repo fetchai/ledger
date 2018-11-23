@@ -349,7 +349,7 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
       // signal successful execution
       success = true;
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Caught exception in ThreadPool::ExecuteWorkload - ",
                       ex.what());

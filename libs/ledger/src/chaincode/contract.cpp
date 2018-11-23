@@ -34,7 +34,7 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
     document.Parse(tx.data());
     success = true;
   }
-  catch (json::JSONParseException &ex)
+  catch (json::JSONParseException const &ex)
   {
     // expected
   }

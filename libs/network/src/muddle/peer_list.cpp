@@ -36,6 +36,11 @@ PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
+PeerConnectionList::PeerConnectionList(Router &router, PeerSet blacklisted)
+  : router_(router)
+  , blacklisted_(std::move(blacklisted))
+{}
+
 bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
@@ -71,7 +76,7 @@ bool PeerConnectionList::IsBlacklisted(Uri const &peer) const
   return Blacklisted(peer);
 }
 
-PeerConnectionList::PeerSet GetBlacklistedPeers() const
+PeerConnectionList::PeerSet PeerConnectionList::GetBlacklistedPeers() const
 {
   FETCH_LOCK(lock_);
   return blacklisted_;

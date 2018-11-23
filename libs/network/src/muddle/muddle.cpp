@@ -51,7 +51,7 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(Muddle::CertificatePtr certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
@@ -205,6 +205,10 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
+  if (clients_.IsBlacklisted(peer))
+  {
+    return;
+  }
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -251,7 +255,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
       // dispatch the message to router
       router_.Route(conn_handle, packet);
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", conn_handle,
                       " error: ", ex.what());

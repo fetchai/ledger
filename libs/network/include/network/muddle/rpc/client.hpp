@@ -127,7 +127,7 @@ protected:
 
       return true;  //?
     }
-    catch (std::exception &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
                       e.what());

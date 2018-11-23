@@ -128,7 +128,7 @@ public:
   static constexpr char const *LOGGING_NAME = "Muddle";
 
   // Construction / Destruction
-  Muddle(CertificatePtr &&certificate, NetworkManager const &nm);
+  Muddle(CertificatePtr certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;

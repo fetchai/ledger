@@ -462,7 +462,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
         {
           storage_->Commit(bookmark);
         }
-        catch (std::exception &ex)
+        catch (std::exception const &ex)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Unable to commit state. Error: ", ex.what());
         }

@@ -114,7 +114,7 @@ private:
         count = count_v.As<uint64_t>();
       }
     }
-    catch (json::JSONParseException &ex)
+    catch (json::JSONParseException const &ex)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Json Parse failure: ", ex.what());
       return BadJsonResponse(ErrorCode::PARSE_FAILURE);

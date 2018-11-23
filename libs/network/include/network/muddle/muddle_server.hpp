@@ -36,16 +36,16 @@ namespace muddle {
  * @tparam T A network server class, for example TCPServer. This class must be derived from
  * AbstractNetworkServer.
  */
-template <typename Networkserver>
-class MuddleServer final : public Networkserver
+template <typename NetworkServer>
+class MuddleServer final : public NetworkServer
 {
 public:
   using connection_handle_type = network::AbstractNetworkServer::connection_handle_type;
   using message_type           = network::message_type;
   using ByteArrayBuffer        = serializers::ByteArrayBuffer;
 
-  // ensure the Networkserver type that we are using is actually what we where expecting
-  static_assert(std::is_base_of<network::AbstractNetworkServer, Networkserver>::value,
+  // ensure the NetworkServer type that we are using is actually what we where expecting
+  static_assert(std::is_base_of<network::AbstractNetworkServer, NetworkServer>::value,
                 "The network server type must be of network::AbstractNetworkServer");
 
   static constexpr char const *LOGGING_NAME = "MuddleSrv";
@@ -53,15 +53,15 @@ public:
   /**
    * Constructs the instance of this server
    *
-   * @tparam Args The types associated with the constructor for the Networkserver type
+   * @tparam Args The types associated with the constructor for the NetworkServer type
    *
    * @param router The reference to the router
    * @param args The arguments for the underlying network server
    */
   template <typename... Args>
   constexpr MuddleServer(Router &router, Args &&... args) noexcept(
-      std::is_nothrow_constructible_v<NetworkServer, Args...>)
-    : Networkserver(std::forward<Args>(args)...)
+      std::is_nothrow_constructible<NetworkServer, Args...>::value)
+    : NetworkServer(std::forward<Args>(args)...)
     , router_(router)
   {}
   MuddleServer(MuddleServer const &) = delete;

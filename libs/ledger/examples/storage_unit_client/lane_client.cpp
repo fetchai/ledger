@@ -243,7 +243,7 @@ int main(int argc, char **argv)
         }
       }
     }
-    catch (serializers::SerializableException &e)
+    catch (serializers::SerializableException const &e)
     {
       std::cerr << "error: " << e.what() << std::endl;
     }

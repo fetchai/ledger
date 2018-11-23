@@ -197,7 +197,7 @@ private:
         FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
       }
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
     }
