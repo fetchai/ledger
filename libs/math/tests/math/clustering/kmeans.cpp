@@ -36,16 +36,16 @@ using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
 
 // Helper function for kmeans_test_ndimensions
-std::size_t add_cluster_to_matrix(int n_points_per_cluster, std::size_t n_dimensions,
+std::size_t add_cluster_to_matrix(std::size_t n_points_per_cluster, std::size_t n_dimensions,
                                   std::vector<int> dimension_signs, std::size_t row, matrix_type &A,
                                   int initial_val_magnitude)
 {
   int val_magnitude = initial_val_magnitude;
   // Create specified number of points in each cluster
-  for (std::size_t p = 0; p < static_cast<std::size_t>(n_points_per_cluster); ++p)
+  for (std::size_t p = 0; p < (n_points_per_cluster); ++p)
   {
     // Determine values along each dimension for the current point
-    for (std::size_t k = 0; k < static_cast<std::size_t>(n_dimensions); ++k)
+    for (std::size_t k = 0; k < n_dimensions; ++k)
     {
       // Assign value to current dimension (column in array A) of current point (row in array A),
       // starting at input row
@@ -120,9 +120,9 @@ TEST(clustering_test, kmeans_test_ndimensions)
   float       base         = 2.0;
   // Each dimension will be positive or negative for 2^n combinations
   float       out                  = std::pow(base, static_cast<float>(n_dimensions));
-  int         n_clusters           = static_cast<int>(out);
-  int         n_points_per_cluster = 5;
-  int         n_points             = n_clusters * n_points_per_cluster;
+  std::size_t n_clusters           = static_cast<std::size_t>(out);
+  std::size_t n_points_per_cluster = 5;
+  std::size_t n_points             = n_clusters * n_points_per_cluster;
   matrix_type A{static_cast<std::size_t>(n_points), static_cast<std::size_t>(n_dimensions)};
 
   // Trivial case: all dimensions are negative
