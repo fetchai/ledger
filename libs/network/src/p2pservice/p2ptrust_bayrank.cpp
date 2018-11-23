@@ -23,13 +23,41 @@
 namespace fetch {
 namespace p2p {
 
+std::ostream& operator<<(std::ostream& o, const fetch::p2p::TrustQuality& q)
+{
+  switch(q)
+  {
+    case fetch::p2p::TrustQuality::LIED: {
+      o << "LIED";
+      break;
+    }
+    case fetch::p2p::TrustQuality::NEW_INFORMATION: {
+      o << "NEW_INFORMATION";
+      break;
+    }
+    case fetch::p2p::TrustQuality::BAD_CONNECTION: {
+      o << "BAD_CONNECTION";
+      break;
+    }
+    case fetch::p2p::TrustQuality::DUPLICATE: {
+      o << "DUPLICATE";
+      break;
+    }
+    case fetch::p2p::TrustQuality::NEW_PEER: {
+      o << "NEW_PEER";
+      break;
+    }
+  }
+  return o;
+}
+
 using Gaussian = math::statistics::Gaussian<double>;
 
 const reference_players_type reference_players_ = {
     /* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
     /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
     /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-    /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.)
+    /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 16.)
 
 };
 }  // namespace p2p

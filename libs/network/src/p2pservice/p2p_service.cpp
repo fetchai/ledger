@@ -83,6 +83,11 @@ void P2PService::WorkCycle()
   AddressSet    active_addresses;
   GetConnectionStatus(active_connections, active_addresses);
 
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): active connections: ");
+  for(auto& aa : active_addresses)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, ToBase64(aa));
+  }
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
 
@@ -126,14 +131,15 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
     }
 
     std::string name(ToBase64(address));
 
     FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for: ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name, "  ----  ", element.second.ToString());
 
-    if (start_mistrust.IsDue())
+    //TODO(ATTILA): We don't want this. Less logging?
+    /*if (start_mistrust.IsDue())
     {
       if (name[0]=='Z' || name[1]=='Z')
       {
@@ -144,7 +150,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
         trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
         trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
       }
-    }
+    }*/
 
     // update our desired
     bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
@@ -209,7 +215,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
           FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(new_address),
                          " (from: ", ToBase64(from), ")");
 
-          trust_system_.AddFeedback(from, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+          trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
         }
       }
     }
@@ -218,7 +224,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  desired_peers_ = trust_system_.GetBestPeers(min_peers_);
+  desired_peers_ = trust_system_.GetBestPeers(max_peers_);
   FETCH_LOG_INFO(LOGGING_NAME, "KLL: RenewDesiredPeers. #=", desired_peers_.size());
 }
 
@@ -371,9 +377,9 @@ P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
-  AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
+  AddressSet const result = trust_system_.GetRandomPeers(20, 0.0); //TODO(ATTILA): Why is 20 hardcoded?
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }

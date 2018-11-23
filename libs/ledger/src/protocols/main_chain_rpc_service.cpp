@@ -243,11 +243,15 @@ void MainChainRpcService::ServiceLooseBlocks()
         FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1c");
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        Address address =  (*random_peer_list.begin());
-        AddLooseBlock(hash, address);
+        FETCH_LOG_INFO(LOGGING_NAME, "Got random peers: ", random_peer_list.size());
+        if (random_peer_list.begin()!=random_peer_list.end())
+        {
+          Address address =  (*random_peer_list.begin());
+          AddLooseBlock(hash, address);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1d");
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
+          FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1d");
+          FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
+        }
       }
     }
     else
