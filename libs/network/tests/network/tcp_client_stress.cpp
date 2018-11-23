@@ -21,13 +21,11 @@
 #include <iostream>
 #include <memory>
 
-#include "../include/helper_functions.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "helper_functions.hpp"
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
-
-#include <gtest/gtest.h>
 
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test
@@ -37,14 +35,10 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-// static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
-static constexpr std::size_t MANY_CYCLES = 200;
-static constexpr std::size_t MID_CYCLES  = 50;
-static constexpr std::size_t FEW_CYCLES  = 10;
-std::string                  host        = "localhost";
-uint16_t                     portNumber  = 8080;
-std::string                  port        = std::to_string(portNumber);
-std::size_t                  N           = 1;
+static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
+static constexpr std::size_t MANY_CYCLES  = 200;
+static constexpr std::size_t MID_CYCLES   = 50;
+static constexpr std::size_t FEW_CYCLES   = 10;
 
 std::atomic<std::size_t> clientReceivedCount{0};
 bool                     printingClientResponses = false;
@@ -201,8 +195,10 @@ std::vector<message_type> CreateTestData(size_t index)
   return sendData;
 }
 
-TEST(tcp_client_stress_gtest, open_echo_server_multiple_times)
+template <std::size_t N = 1>
+void TestCase0(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the echo server multiple times" << std::endl;
 
   for (std::size_t index = 0; index < FEW_CYCLES; ++index)
@@ -210,11 +206,13 @@ TEST(tcp_client_stress_gtest, open_echo_server_multiple_times)
     GetOpenPort();
   }
 
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_dead)
+template <std::size_t N = 1>
+void TestCase1(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port\
     that doesn't exist (NM dead)"
             << std::endl;
@@ -226,11 +224,13 @@ TEST(tcp_client_stress_gtest, NM_dead)
     NetworkManager nmanager(N);
     Client         client(host, std::to_string(emptyPort), nmanager);
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_alive)
+template <std::size_t N = 1>
+void TestCase2(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 2. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port\
     that doesn't exist (NM alive)"
             << std::endl;
@@ -244,11 +244,13 @@ TEST(tcp_client_stress_gtest, NM_alive)
     Client client(host, std::to_string(emptyPort), nmanager);
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_jittering)
+template <std::size_t N = 1>
+void TestCase3(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 3. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port that\
     doesn't exist (NM jittering)"
             << std::endl;
@@ -269,11 +271,40 @@ TEST(tcp_client_stress_gtest, NM_jittering)
       nmanager.Stop();
     }
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_dead_existing_port)
+template <std::size_t N = 1>
+void TestCase4(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 4. Threads: " << N << std::endl;
+  std::cerr << "Info: Attempting to open a connection to a port that\
+    doesn't exist (NM jittering)"
+            << std::endl;
+
+  uint16_t emptyPort = GetOpenPort();
+
+  std::cerr << "starting" << std::endl;
+  for (std::size_t index = 0; index < MANY_CYCLES; ++index)
+  {
+    NetworkManager nmanager(N);
+    if (index % 2 == 0)
+    {
+      nmanager.Start();
+    }
+    Client client(host, std::to_string(emptyPort), nmanager);
+    if (index % 3 == 0)
+    {
+      nmanager.Stop();
+    }
+  }
+  std::cerr << "Success." << std::endl;
+}
+
+template <std::size_t N = 1>
+void TestCase5(std::string host, std::string port)
+{
+  std::cerr << "\nTEST CASE 5. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a port that\
     does exist (NM dead)"
             << std::endl;
@@ -286,11 +317,13 @@ TEST(tcp_client_stress_gtest, NM_dead_existing_port)
     NetworkManager nmanager(N);
     Client         client(host, port, nmanager);
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_alive_existing_port)
+template <std::size_t N = 1>
+void TestCase6(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 6. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a\
     port that does exist (NM alive)"
             << std::endl;
@@ -305,11 +338,13 @@ TEST(tcp_client_stress_gtest, NM_alive_existing_port)
     Client client(host, port, nmanager);
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
+template <std::size_t N = 1>
+void TestCase7(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 7. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open a connection to a\
     port that does exist (NM jittering)"
             << std::endl;
@@ -330,39 +365,38 @@ TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
       nmanager.Stop();
     }
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, move_constr)
+template <std::size_t N = 1>
+void TestCase8(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 8. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open multiple\
     connections to a port that does exist (move constr)"
             << std::endl;
 
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
-  std::vector<Client *>          clients;
+  std::vector<Client>            clients;
 
   NetworkManager nmanager(N);
   nmanager.Start();
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    Client client(host, port, nmanager);
-    clients.push_back(&client);
+    clients.push_back(Client(host, port, nmanager));
   }
   nmanager.Stop();
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
+template <std::size_t N = 1>
+void TestCase9(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 9. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open multiple\
     connections to a port that does exist, async"
             << std::endl;
-  std::string hostID     = "localhost";
-  uint16_t    portNo     = 8080;
-  std::string portNumber = std::to_string(portNo);
-  std::size_t N          = 1;
 
   // Start echo server
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
@@ -377,9 +411,9 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
 
     for (std::size_t i = 0; i < iterations; ++i)
     {
-      std::thread([&hostID, &portNumber, &nmanager, &threadCount] {
+      std::thread([&host, &port, &nmanager, &threadCount] {
         NetworkManager managerCopy = nmanager;
-        auto           i           = std::make_shared<Client>(hostID, portNumber, managerCopy);
+        auto           i           = std::make_shared<Client>(host, port, managerCopy);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         i->Send("test");
         threadCount++;
@@ -396,33 +430,33 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
+template <std::size_t N = 1>
+void TestCase10(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 10. Threads: " << N << std::endl;
   std::cerr << "Info: (Legacy) Usually breaks due to the NM being destroyed "
                "before the clients"
             << std::endl;
 
   for (std::size_t index = 0; index < MID_CYCLES; ++index)
   {
-    std::vector<Client *> clients;
-    NetworkManager        nmanager(N);
+    std::vector<Client> clients;
+    NetworkManager      nmanager(N);
     nmanager.Start();
 
     for (std::size_t j = 0; j < 4; ++j)
     {
-      Client client(host, port, nmanager);
-      clients.push_back(&client);
+      clients.push_back(Client(host, port, nmanager));
     }
 
     nmanager.Stop();
 
     for (std::size_t j = 0; j < 4; ++j)
     {
-      Client client(host, port, nmanager);
-      clients.push_back(&client);
+      clients.push_back(Client(host, port, nmanager));
     }
     nmanager.Start();
     if (index % 2)
@@ -439,11 +473,13 @@ TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-  SUCCEED() << "success" << std::endl;
+  std::cerr << "success" << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
+template <std::size_t N = 1>
+void TestCase11(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 11. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback server and counting them" << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -493,11 +529,13 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
 
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_clients)
+template <std::size_t N = 1>
+void TestCase12(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 12. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
     server and counting them, slow client "
             << std::endl;
@@ -549,11 +587,13 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
 
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
+template <std::size_t N = 1>
+void TestCase13(std::string host, std::string port)
 {
+  std::cerr << "\nTEST CASE 13. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
     server and checking ordering"
             << std::endl;
@@ -605,23 +645,35 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
     }
 
     // Verify we transmitted correctly
-    EXPECT_NE(globalMessages.size(), 0) << "Failed to receive messages" << std::endl;
+    if (globalMessages.size() == 0)
+    {
+      std::cerr << "Failed to receive messages" << std::endl;
+      exit(1);
+    }
 
-    EXPECT_EQ(globalMessages.size(), sendData.size())
-        << "Failed to receive all messages" << std::endl;
+    if (globalMessages.size() != sendData.size())
+    {
+      std::cerr << "Failed to receive all messages" << std::endl;
+      exit(1);
+    }
 
     for (std::size_t i = 0; i < globalMessages.size(); ++i)
     {
-      EXPECT_EQ(globalMessages[i], sendData[i]) << "Failed to verify messages" << std::endl;
+      if (globalMessages[i] != sendData[i])
+      {
+        std::cerr << "Failed to verify messages" << std::endl;
+        exit(1);
+      }
     }
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multiple_clients)
+template <std::size_t N = 1>
+void TestCase14(std::string host, std::string port)
 {
-
+  std::cerr << "\nTEST CASE 14. Threads: " << N << std::endl;
   std::cerr << "Info: Bouncing messages off echo/loopback\
     server and checking ordering, multiple clients"
             << std::endl;
@@ -683,10 +735,17 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
     }
 
     // Verify we transmitted correctly
-    EXPECT_NE(globalMessages.size(), 0) << "Failed to receive messages" << std::endl;
+    if (globalMessages.size() == 0)
+    {
+      std::cerr << "Failed to receive messages" << std::endl;
+      exit(1);
+    }
 
-    EXPECT_EQ(globalMessages.size(), sendData.size())
-        << "Failed to receive all messages" << std::endl;
+    if (globalMessages.size() != sendData.size())
+    {
+      std::cerr << "Failed to receive all messages" << std::endl;
+      exit(1);
+    }
 
     // We need to sort since this will not be ordered
     std::sort(globalMessages.begin(), globalMessages.end());
@@ -694,16 +753,22 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
 
     for (std::size_t i = 0; i < globalMessages.size(); ++i)
     {
-      ASSERT_EQ(globalMessages[i], sendData[i]) << "Failed to verify messages" << std::endl;
+      if (globalMessages[i] != sendData[i])
+      {
+        std::cerr << "Failed to verify messages" << std::endl;
+        exit(1);
+      }
     }
 
     nmanager.Stop();
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
 }
 
-TEST(tcp_client_stress_gtest, killing_during_transmission)
+template <std::size_t N = 1>
+void TestCase15(std::string host, std::string const &port)
 {
+  std::cerr << "\nTEST CASE 15. Threads: " << N << std::endl;
   std::cerr << "Info: Killing during transmission, multiple clients" << std::endl;
 
   uint16_t emptyPort = GetOpenPort();
@@ -764,5 +829,60 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
       nmanager.Stop();
     }
   }
-  SUCCEED() << "Success." << std::endl;
+  std::cerr << "Success." << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+
+  std::string host       = "localhost";
+  uint16_t    portNumber = 8080;
+  std::string port       = std::to_string(portNumber);
+  std::size_t iterations = 1;
+
+  if (argc > 1)
+  {
+    std::stringstream s(argv[1]);
+    s >> iterations;
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
+
+  for (std::size_t i = 0; i < iterations; ++i)
+  {
+    // Do most likely to fail test first
+    TestCase9<10>(host, port);
+
+    TestCase9<1>(host, port);
+    TestCase0<1>(host, port);
+    TestCase1<1>(host, port);
+    TestCase2<1>(host, port);
+    TestCase3<1>(host, port);
+    TestCase4<1>(host, port);
+    TestCase5<1>(host, port);
+    TestCase6<1>(host, port);
+    TestCase7<1>(host, port);
+    TestCase11<1>(host, port);
+    TestCase12<1>(host, port);
+    TestCase13<1>(host, port);
+    TestCase14<1>(host, port);
+    TestCase15<1>(host, port);
+
+    TestCase1<10>(host, port);
+    TestCase2<10>(host, port);
+    TestCase3<10>(host, port);
+    TestCase4<10>(host, port);
+    TestCase5<10>(host, port);
+    TestCase6<10>(host, port);
+    TestCase7<10>(host, port);
+    TestCase11<10>(host, port);
+    TestCase12<10>(host, port);
+    TestCase13<10>(host, port);
+
+    TestCase14<10>(host, port);
+    TestCase15<10>(host, port);
+  }
+
+  std::cerr << "finished all tests" << std::endl;
+  return 0;
 }
