@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/random_access_stack.hpp"
 #include "core/random/lfg.hpp"
+#include "storage/random_access_stack.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
