@@ -278,6 +278,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
+    trust_system_->AddFeedback(peer.AsIdentity(), p2p::TrustSubject::PEER, p2p::TrustQuality::BAD_CONNECTION);
   });
 
   strong_conn->OnLeave([this, peer]() {
