@@ -11,7 +11,9 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 
+
 add_fetch_gbench(benchmark_shapeless_array fetch-math shapeless_array)
+add_fetch_gbench(benchmark_basic_math fetch-math basic_math)
 
 if(TRUE)
   fetch_warning("Disabled Bencmark: benchmark_linalg_matrix (does not compile)")
