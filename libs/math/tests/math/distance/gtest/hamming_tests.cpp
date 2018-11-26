@@ -20,7 +20,7 @@
 #include <iostream>
 
 #include "core/random/lcg.hpp"
-#include "testing/unittest.hpp"
+#include <gtest/gtest.h>
 #include <math/distance/hamming.hpp>
 #include <math/linalg/matrix.hpp>
 
@@ -33,20 +33,15 @@ using _S = fetch::memory::SharedArray<D>;
 template <typename D>
 using _M = Matrix<D, _S<D>>;
 
-int main()
+TEST(hamming_gtest, DISABLED_basic_info)
 {
-  SCENARIO("Basic info")
-  {
-    _M<double> A = _M<double>(R"(1 2; 3 4)");
-    EXPECT(Hamming(A, A) == 4);
+  _M<double> A = _M<double>(R"(1 2; 3 4)");
+  EXPECT_EQ(Hamming(A, A), 4);
 
-    _M<double> B = _M<double>(R"(1 2; 3 2)");
-    EXPECT(Hamming(A, B) == 3);
+  _M<double> B = _M<double>(R"(1 2; 3 2)");
+  EXPECT_EQ(Hamming(A, B), 3);
 
-    A = _M<double>(R"(1 2 3)");
-    B = _M<double>(R"(1 2 9)");
-    EXPECT(Hamming(A, B) == 2);
-  };
-
-  return 0;
+  A = _M<double>(R"(1 2 3)");
+  B = _M<double>(R"(1 2 9)");
+  EXPECT_EQ(Hamming(A, B), 2);
 }
