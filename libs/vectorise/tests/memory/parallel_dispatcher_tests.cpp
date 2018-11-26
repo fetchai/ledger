@@ -21,6 +21,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include <gtest/gtest.h>
+
 using namespace fetch::memory;
 
 using type                 = float;
@@ -29,49 +31,57 @@ using vector_register_type = typename ndarray_type::vector_register_type;
 #define M 10000   // 100000
 #define N 100000  // 4 * 100000
 
-int main(int argc, char **argv)
+class ParallerDispatcherTest : public ::testing::Test
 {
-  ndarray_type a(N), c(N), b(N);
-
-  for (std::size_t i = 0; i < N; ++i)
+protected:
+  void SetUp() override
   {
-    b[i] = type(i);
-  }
-
-  if ((argc >= 2) && (std::string(argv[1]) == "comp"))
-  {
-
-    // Standard implementation
-    for (std::size_t i = 0; i < M; ++i)
+    a_ = ndarray_type(N);
+    c_ = ndarray_type(N);
+    b_ = ndarray_type(N);
+    for (std::size_t i = 0; i < N; ++i)
     {
-      for (std::size_t j = 0; j < N; j += 4)
-      {
-
-        // We write it out such that the compiler might use SSE
-        a[j]     = std::exp(1 + std::log(b[j]));
-        a[j + 1] = std::exp(1 + std::log(b[j + 1]));
-        a[j + 2] = std::exp(1 + std::log(b[j + 2]));
-        a[j + 3] = std::exp(1 + std::log(b[j + 3]));
-      }
-    }
-  }
-  else if ((argc >= 2) && (std::string(argv[1]) == "kernel"))
-  {
-    for (std::size_t i = 0; i < M; ++i)
-    {
-
-      // Here we use a kernel to compute the same, using an approximation
-      a.in_parallel().Apply(
-          [](vector_register_type const &x, vector_register_type &y) {
-            static vector_register_type one(1);
-
-            // We approximate the exponential function by a clever first order
-            // Taylor expansion
-            y = approx_exp(one + approx_log(x));
-          },
-          b);
+      b_[i] = type(i);
     }
   }
 
-  return 0;
+  void TearDown() override
+  {}
+
+  ndarray_type a_, b_, c_;
+};
+////////////
+TEST_F(ParallerDispatcherTest, Comp_test)
+{
+  // Standard implementation
+  for (std::size_t i = 0; i < M; ++i)
+  {
+    for (std::size_t j = 0; j < N; j += 4)
+    {
+
+      // We write it out such that the compiler might use SSE
+      a_[j]     = std::exp(1 + std::log(b_[j]));
+      a_[j + 1] = std::exp(1 + std::log(b_[j + 1]));
+      a_[j + 2] = std::exp(1 + std::log(b_[j + 2]));
+      a_[j + 3] = std::exp(1 + std::log(b_[j + 3]));
+    }
+  }
+}
+
+TEST_F(ParallerDispatcherTest, kernel_test)
+{
+  for (std::size_t i = 0; i < M; ++i)
+  {
+
+    // Here we use a_ kernel to compute the same, using an approximation
+    a_.in_parallel().Apply(
+        [](vector_register_type const &x, vector_register_type &y) {
+          static vector_register_type one(1);
+
+          // We approximate the exponential function by a clever first order
+          // Taylor expansion
+          y = approx_exp(one + approx_log(x));
+        },
+        b_);
+  }
 }
