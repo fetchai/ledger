@@ -24,7 +24,7 @@
 
 using namespace fetch::vectorize;
 
-TEST(vectorise_sse_gtest , register_test1)
+TEST(vectorise_sse_gtest, register_test1)
 {
   alignas(16) int a[4] = {1, 2, 3, 4};
   alignas(16) int b[4] = {2, 4, 8, 16};
@@ -42,7 +42,7 @@ TEST(vectorise_sse_gtest , register_test1)
   ASSERT_EQ(c[3], 60);
 }
 
-TEST(vectorise_sse_gtest , register_test2)
+TEST(vectorise_sse_gtest, register_test2)
 {
   alignas(16) float a[4] = {1, 2, 3, 4};
   alignas(16) float b[4] = {2, 4, 8, 16};
@@ -53,7 +53,7 @@ TEST(vectorise_sse_gtest , register_test2)
   r3 = r1 * r2;
   r3 = cst * r3 - r1;
   r3.Store(c);
-  
+
   ASSERT_EQ(c[0], 5);
   ASSERT_EQ(c[1], 22);
   ASSERT_EQ(c[2], 69);
