@@ -109,7 +109,12 @@ private:
                  Packet::Payload const &payload, Address const &transmitter)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
+                    " via:", byte_array::ToBase64(transmitter),
                     " on: ", service, ':', channel, ':', counter);
+
+    service::CallContext context;
+    context.sender_address = from;
+    context.transmitter_address = transmitter;
 
     // insert data into the metadata
     uint64_t index = 0;

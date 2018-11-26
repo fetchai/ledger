@@ -94,7 +94,9 @@ inline void Subscription::SetMessageHandler(MessageCallback const &cb)
  * @param payload The payload of the message
  */
 inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload, Address const &transmitter) const
+                                   uint16_t counter, Payload const &payload) const,
+                                   Address const &transmitter
+                                   ) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
 

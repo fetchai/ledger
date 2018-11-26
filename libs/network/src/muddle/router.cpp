@@ -244,12 +244,18 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else if (packet->GetTargetRaw() == address_)
   {
-    // when the message is targetted at use we must handle it
-    DispatchPacket(packet);
+    // when the message is targetted at us we must handle it
+    Address transmitter;
+
+    HandleToAddress(handle, transmitter);
+
+    // KLL populate this from handle.
+    DispatchPacket(packet, transmitter);
   }
   else
   {
     // update the routing table if required
+    // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
 
     // if this message does not belong to us we must route it along the path
@@ -353,6 +359,29 @@ Router::RoutingTable Router::GetRoutingTable() const
 {
   FETCH_LOCK(routing_table_lock_);
   return routing_table_;
+}
+
+/**
+ * Lookup a routing
+ *
+ * @return The address corresponding to a handle in the table.
+ */
+bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  for (const auto &routing : routing_table_)
+  {
+    ByteArray output(routing.first.size());
+    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
+                    static_cast<std::string>(ToBase64(output)));
+    if (routing.second.handle == handle)
+    {
+      address = ToConstByteArray(routing.first);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -653,7 +682,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   {
     if (packet->GetSender() != address_)
     {
-      DispatchPacket(packet);
+      DispatchPacket(packet, address_);
     }
 
     // serialize the packet to the buffer
@@ -726,7 +755,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 {
-  dispatch_thread_pool_->Post([this, packet]() {
+  dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
     // determine if this was an exchange based node
