@@ -16,10 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iomanip>
 #include <iostream>
 
-int main(int argc, char *argv[])
+#include "core/random/lcg.hpp"
+#include <gtest/gtest.h>
+#include <math/distance/hamming.hpp>
+#include <math/linalg/matrix.hpp>
+
+using namespace fetch::math::distance;
+using namespace fetch::math::linalg;
+
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(hamming_gtest, DISABLED_basic_info)
 {
-  std::cout << "dummy" << std::endl;
-  return 0;
+  _M<double> A = _M<double>(R"(1 2; 3 4)");
+  EXPECT_EQ(Hamming(A, A), 4);
+
+  _M<double> B = _M<double>(R"(1 2; 3 2)");
+  EXPECT_EQ(Hamming(A, B), 3);
+
+  A = _M<double>(R"(1 2 3)");
+  B = _M<double>(R"(1 2 9)");
+  EXPECT_EQ(Hamming(A, B), 2);
 }
