@@ -76,12 +76,20 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   Metrics::Timestamp const started = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
+#if 0
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the
   // first one).
   chain::Transaction tx;
   if (!resources_->GetTransaction(hash, tx))
   {
+    return Status::TX_LOOKUP_FAILURE;
+  }
+
+  // This is a failure case that appears too often
+  if (tx.contract_name().size() == 0)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
     return Status::TX_LOOKUP_FAILURE;
   }
 
@@ -107,6 +115,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   // detach the chain code from the current context
   chain_code->Detach();
+#endif
 
 #ifdef FETCH_ENABLE_METRICS
   Metrics::Timestamp const completed = Metrics::Clock::now();

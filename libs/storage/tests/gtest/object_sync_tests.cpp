@@ -24,7 +24,7 @@
 #include "network/service/server.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "storage/object_store_syncronisation_protocol.hpp"
+#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -167,7 +167,7 @@ class TestService : public ServiceServer<TCPServer>
 public:
   using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
   using TransactionStore = ObjectStore<VerifiedTransaction>;
-  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
+  using TxSyncProtocol   = TransactionStoreSyncProtocol;
   using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
   using Super                    = ServiceServer<TCPServer>;
 
@@ -189,11 +189,11 @@ public:
     tx_store_->New(prefix + "_tst_transaction.db", prefix + "_tst_transaction_index.db", true);
 
     tx_sync_protocol_ =
-        std::make_unique<TxSyncProtocol>(TX_STORE_SYNC, register_, thread_pool_, tx_store_.get());
+        std::make_unique<TxSyncProtocol>(TX_STORE_SYNC, register_, thread_pool_, *tx_store_, 1);
 
     tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     tx_store_protocol_->OnSetObject(
-        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
+        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
     this->Add(TX_STORE, tx_store_protocol_.get());
     this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());

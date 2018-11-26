@@ -24,6 +24,7 @@
 #include "core/service_ids.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
+#include "metrics/metrics.hpp"
 
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
