@@ -23,12 +23,14 @@
 #include "core/random/lcg.hpp"
 #include "math/rectangular_array.hpp"
 
+#include <gtest/gtest.h>
+
 using namespace fetch::math;
 
 using data_type  = double;
 using array_type = RectangularArray<data_type>;
 
-void test1()
+TEST(shared_rectangulary_array_gtest, basic_test)
 {
   std::vector<double>                               dataset;
   static fetch::random::LinearCongruentialGenerator gen;
@@ -37,11 +39,8 @@ void test1()
 
   array_type mem(N, M);
 
-  if ((N != mem.height()) || (M != mem.width()))
-  {
-    std::cout << "size mismatch I " << std::endl;
-    exit(-1);
-  }
+  ASSERT_FALSE((N != mem.height()) || (M != mem.width())) << "size mismatch I ";
+
   for (std::size_t i = 0; i < N; ++i)
   {
     for (std::size_t j = 0; j < M; ++j)
@@ -57,87 +56,52 @@ void test1()
   {
     for (std::size_t j = 0; j < M; ++j)
     {
-      if (mem(i, j) != dataset[k])
-      {
-        std::cout << "Data differs!" << std::endl;
-        exit(-1);
-      }
+      ASSERT_EQ(mem(i, j), dataset[k]) << "Data differs!";
       ++k;
     }
   }
 
   for (std::size_t i = 0; i < N * M; ++i)
   {
-    if (mem[i] != dataset[i])
-    {
-      std::cout << "Data differs II!" << std::endl;
-      exit(-1);
-    }
+    ASSERT_EQ(mem[i], dataset[i]) << "Data differs II!";
   }
 
   array_type mem2(mem);
-  if ((mem2.height() != mem.height()) || (mem2.width() != mem.width()))
-  {
-    std::cout << "size mismatch II " << std::endl;
-    exit(-1);
-  }
+  ASSERT_FALSE((mem2.height() != mem.height()) || (mem2.width() != mem.width()))
+      << "size mismatch II ";
+
   k = 0;
   for (std::size_t i = 0; i < N; ++i)
   {
     for (std::size_t j = 0; j < M; ++j)
     {
-      if (mem2(i, j) != dataset[k])
-      {
-        std::cout << "Data differs III!" << std::endl;
-        exit(-1);
-      }
+      ASSERT_EQ(mem2(i, j), dataset[k]) << "Data differs III!";
       ++k;
     }
   }
 
   for (std::size_t i = 0; i < N * M; ++i)
   {
-    if (mem2[i] != dataset[i])
-    {
-      std::cout << "Data differs IV!" << std::endl;
-      exit(-1);
-    }
+    ASSERT_EQ(mem2[i], dataset[i]) << "Data differs IV!";
   }
 
   array_type mem3;
   mem3 = mem;
-  if ((mem3.height() != mem.height()) || (mem3.width() != mem.width()))
-  {
-    std::cout << "size mismatch III " << std::endl;
-    exit(-1);
-  }
+  ASSERT_FALSE((mem3.height() != mem.height()) || (mem3.width() != mem.width()))
+      << "size mismatch III ";
+
   k = 0;
   for (std::size_t i = 0; i < N; ++i)
   {
     for (std::size_t j = 0; j < M; ++j)
     {
-      if (mem3(i, j) != dataset[k])
-      {
-        std::cout << "Data differs V!" << std::endl;
-        exit(-1);
-      }
+      ASSERT_EQ(mem3(i, j), dataset[k]) << "Data differs V!";
       ++k;
     }
   }
 
   for (std::size_t i = 0; i < N * M; ++i)
   {
-    if (mem3[i] != dataset[i])
-    {
-      std::cout << "Data differs VI!" << std::endl;
-      exit(-1);
-    }
+    ASSERT_EQ(mem3[i], dataset[i]) << "Data differs VI!";
   }
-}
-
-int main()
-{
-  test1();
-
-  return 0;
 }

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/random_access_stack.hpp"
 #include "core/random/lfg.hpp"
+#include "storage/random_access_stack.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
@@ -118,10 +118,12 @@ TEST(random_access_stack, basic_functionality)
     }
   }
 
-  // Pop items off the stack
+  // Pop items off the stack and check size
   for (std::size_t i = 0; i < testSize; ++i)
   {
     stack.Pop();
+    reference.pop_back();
+    ASSERT_EQ(stack.size(), reference.size());
   }
 
   ASSERT_TRUE(stack.size() == 0);

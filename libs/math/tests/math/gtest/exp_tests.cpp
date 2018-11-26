@@ -22,6 +22,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/approx_exp.hpp"
+#include <gtest/gtest.h>
 
 template <uint8_t N, uint64_t C>
 void test1(double max)
@@ -36,11 +37,7 @@ void test1(double max)
     me        = std::max(r, me);
   }
   std::cout << "Peak error: " << me << std::endl;
-  if (me > max)
-  {
-    std::cout << "expected: " << max << std::endl;
-    exit(-1);
-  }
+  ASSERT_LE(me, max) << "expected: " << max;
 }
 
 template <uint8_t N, uint64_t C, std::size_t MAX = 100000000>
@@ -81,41 +78,10 @@ double test_timing(double x_value)
   return (us3 - us1) / (us2 - us1);
   //  auto t3 = std::chrono::high_resolution_clock::now();
 }
+// TODO(private issue 332): Move to a benchmark
 
-void benchmark()
+TEST(exp_gtest, testing_exp)
 {
-  static fetch::random::LinearCongruentialGenerator gen;
-  std::cout << "Test time 1: ";
-  for (std::size_t i = 0; i < 10; ++i)
-  {
-    std::cout << test_timing<0, 0>(gen.AsDouble() * 100) << " " << std::flush;
-  }
-
-  std::cout << "Test time 2: ";
-  for (std::size_t i = 0; i < 10; ++i)
-  {
-    std::cout << test_timing<8, 60801>(gen.AsDouble() * 100) << " " << std::flush;
-  }
-
-  std::cout << "Test time 3: ";
-  for (std::size_t i = 0; i < 10; ++i)
-  {
-    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
-  }
-
-  std::cout << "Test time 4: ";
-  for (std::size_t i = 0; i < 16; ++i)
-  {
-    std::cout << test_timing<12, 60801>(gen.AsDouble() * 100) << " " << std::flush;
-  }
-}
-
-int main(int argc, char **argv)
-{
-  if ((argc == 2) && (std::string(argv[1]) == "benchmark"))
-  {
-    benchmark();
-  }
 
   test1<0, 0>(7);
   test1<0, 60801>(5);
@@ -128,5 +94,4 @@ int main(int argc, char **argv)
   test1<12, 0>(0.005);
   test1<16, 0>(0.0003);
   test1<20, 0>(0.00004);
-  return 0;
 }
