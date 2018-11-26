@@ -55,6 +55,7 @@ protected:
     IDENTITY peer_identity;
     Gaussian g;
     double   score;
+    bool scored;
     void     update_score()
     {
       score = g.mu() - 3 * g.sigma();
@@ -100,8 +101,9 @@ public:
       //  FETCH_LOG_WARN(LOGGING_NAME, "KLL: WAS NOT     : ", ToBase64(item.first));
       //}
 
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0};
+      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
       pos = trust_store_.size();
+      ranking_store_[peer_ident] = pos;
       trust_store_.push_back(new_record);
     }
     else
@@ -109,8 +111,14 @@ public:
       pos = ranking->second;
     }
 
+    if (quality == TrustQuality::NEW_PEER)
+    {
+      return; // we're introducing this element, not rating it.
+    }
+
     Gaussian const &reference_player = LookupReferencePlayer(quality);
     bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+    trust_store_[pos].scored = true;
     updateGaussian(honest, trust_store_[pos].g, reference_player, 100 / 12., 1 / 6., 0.2);
     trust_store_[pos].update_score();
 
@@ -121,7 +129,9 @@ public:
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
   {
     FETCH_LOCK(mutex_);
-    return ranking_store_.find(peer_ident) != ranking_store_.end();
+    auto r = ranking_store_.find(peer_ident) != ranking_store_.end();
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Discovered peer?: ", r, " for ", ToBase64(peer_ident));
+    return r;
   }
 
   IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const override
@@ -213,6 +223,7 @@ public:
       pt.address = trust_store_[pos].peer_identity;
       pt.name = std::string(byte_array::ToBase64(pt.address));
       pt.trust = trust_store_[pos].score;
+      pt.has_transacted = trust_store_[pos].scored;
       trust_list.push_back(pt);
     }
 
@@ -323,7 +334,7 @@ protected:
         //               ToBase64(trust_store_[i].peer_identity),
         //               ", ",
         //               trust_store_[i].score,
-        //               " <=> ",
+        //               " <=> ", 
         //               threshold_);
       }
 
@@ -331,6 +342,7 @@ protected:
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
     {
       ranking_store_[trust_store_[pos].peer_identity] = pos;
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", ToBase64(trust_store_[pos].peer_identity), " => ", pos);
     }
 //    FETCH_LOG_WARN(LOGGING_NAME, "KLL: sorting things: ",
 //                   "  trust_store_=",trust_store_.size(),

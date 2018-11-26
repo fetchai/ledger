@@ -136,7 +136,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
 
   // set the main chain
   block_subscription_->SetMessageHandler(
-      [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload) {
+      [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload, Address const &transmitter) {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
         BlockSerializer serialiser(payload);
@@ -149,7 +149,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
         block.UpdateDigest();
 
         // dispatch the event
-        OnNewBlock(from, block);
+        OnNewBlock(transmitter, block);
       });
 }
 

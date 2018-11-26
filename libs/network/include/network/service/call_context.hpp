@@ -31,6 +31,7 @@ public:
   using Address = fetch::byte_array::ConstByteArray;
 
   Address sender_address;
+  Address transmitter_address;
 };
 
 }  // namespace service

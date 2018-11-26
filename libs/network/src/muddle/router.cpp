@@ -724,7 +724,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  *
  * @param packet The packet that was received
  */
-void Router::DispatchPacket(PacketPtr packet)
+void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 {
   dispatch_thread_pool_->Post([this, packet]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
@@ -740,7 +740,7 @@ void Router::DispatchPacket(PacketPtr packet)
     // of message subscriptions.
     try
     {
-      if (registrar_.Dispatch(packet))
+      if (registrar_.Dispatch(packet, transmitter))
       {
         return;
       }

@@ -38,7 +38,8 @@ public:
   using Handle  = uint64_t;
   using MessageCallback =
       std::function<void(Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/,
-                         uint16_t /*counter*/, Packet::Payload const & /*payload*/
+                         uint16_t /*counter*/, Packet::Payload const & /*payload*/,
+                         Address const & /*transmitter*/
                          )>;
   using Mutex = mutex::Mutex;
 
@@ -56,7 +57,7 @@ public:
 
   void SetMessageHandler(MessageCallback const &cb);
   void Dispatch(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
-                Payload const &payload) const;
+                Payload const &payload, Address const &transmitter) const;
 
 private:
   mutable Mutex   callback_lock_{__LINE__, __FILE__};
@@ -93,14 +94,14 @@ inline void Subscription::SetMessageHandler(MessageCallback const &cb)
  * @param payload The payload of the message
  */
 inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload) const
+                                   uint16_t counter, Payload const &payload, Address const &transmitter) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
 
   FETCH_LOCK(callback_lock_);
   if (callback_)
   {
-    callback_(address, service, channel, counter, payload);
+    callback_(address, service, channel, counter, payload, transmitter);
   }
   else
   {

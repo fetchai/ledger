@@ -55,8 +55,8 @@ public:
       // register the subscription with our handler
       subscription_->SetMessageHandler([this](Address const &from, uint16_t service,
                                               uint16_t channel, uint16_t counter,
-                                              Packet::Payload const &payload) {
-        OnMessage(from, service, channel, counter, payload);
+                                              Packet::Payload const &payload, Address const &transmitter) {
+                                         OnMessage(from, service, channel, counter, payload, transmitter);
       });
     }
     else
@@ -106,7 +106,7 @@ protected:
 
 private:
   void OnMessage(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
-                 Packet::Payload const &payload)
+                 Packet::Payload const &payload, Address const &transmitter)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
                     " on: ", service, ':', channel, ':', counter);
@@ -121,6 +121,7 @@ private:
 
     service::CallContext context;
     context.sender_address = from;
+    context.transmitter_address = transmitter;
 
     // dispatch down to the core RPC level
     try
