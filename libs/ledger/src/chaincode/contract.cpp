@@ -22,7 +22,7 @@
 namespace fetch {
 namespace ledger {
 
-bool Contract::ParseAsJson(transaction_type const &tx, script::Variant &output)
+bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
 {
   bool success = false;
 
@@ -41,7 +41,7 @@ bool Contract::ParseAsJson(transaction_type const &tx, script::Variant &output)
 
   if (success)
   {
-    output = document.root();
+    output = std::move(document.root());
   }
 
   return success;

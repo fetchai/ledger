@@ -35,13 +35,17 @@ class NetworkBenchmarkService : public service::ServiceServer<fetch::network::TC
                                 public http::HTTPServer
 {
 public:
-  NetworkBenchmarkService(fetch::network::NetworkManager tm, uint16_t tcpPort, uint16_t httpPort)
+  static constexpr char const *LOGGING_NAME = "NetworkBenchmarkService";
+
+  NetworkBenchmarkService(fetch::network::NetworkManager const &tm, uint16_t tcpPort,
+                          uint16_t httpPort)
     : ServiceServer(tcpPort, tm)
-    , HTTPServer(httpPort, tm)
+    , HTTPServer(tm)
+    , http_port_{httpPort}
   {
     LOG_STACK_TRACE_POINT;
-    fetch::logger.Debug("Constructing test node service with TCP port: ", tcpPort,
-                        " and HTTP port: ", httpPort);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
+                    " and HTTP port: ", httpPort);
     node_ = std::make_shared<T>(tm);
 
     httpInterface_            = std::make_shared<network_benchmark::HttpInterface<T>>(node_);
@@ -58,10 +62,18 @@ public:
 
   void Start()
   {
-    node_->Start();
+    TCPServer::Start();
+    HTTPServer::Start(http_port_);
+  }
+
+  void Stop()
+  {
+    TCPServer::Stop();
+    HTTPServer::Stop();
   }
 
 private:
+  uint16_t                                                http_port_;
   std::shared_ptr<T>                                      node_;
   std::shared_ptr<network_benchmark::HttpInterface<T>>    httpInterface_;
   std::unique_ptr<protocols::NetworkBenchmarkProtocol<T>> networkBenchmarkProtocol_;

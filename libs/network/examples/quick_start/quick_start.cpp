@@ -28,7 +28,7 @@ using namespace fetch;
 using namespace fetch::commandline;
 using namespace fetch::quick_start;
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
   // Networking needs this
   fetch::network::NetworkManager tm(5);

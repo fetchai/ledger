@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -61,26 +62,16 @@ public:
       client_register_type, fetch::chain::VerifiedTransaction, fetch::chain::UnverifiedTransaction>;
   using thread_pool_type = network::ThreadPool;
 
-  enum
-  {
-    IDENTITY = 1,
-    STATE,
-    TX_STORE,
-    TX_STORE_SYNC,
-    SLICE_STORE,
-    SLICE_STORE_SYNC,
-    CONTROLLER
-  };
+  static constexpr char const *LOGGING_NAME = "LaneService";
 
   // TODO(issue 7): Make config JSON
-  LaneService(std::string const &db_dir, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, bool start_sync = true)
+  LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
+              uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
     : super_type(port, tm)
   {
 
     this->SetConnectionRegister(register_);
 
-    fetch::logger.Warn("Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port);
     thread_pool_ = network::MakeThreadPool(1);
 
     // Setting lane certificate up
@@ -89,11 +80,14 @@ public:
     certificate->GenerateKeys();
     certificate_.reset(certificate);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Establishing Lane ", lane, " Service on rpc://127.0.0.1:", port,
+                   " ID: ", byte_array::ToBase64(certificate_->identity().identifier()));
+
     // format and generate the prefix
     std::string prefix;
     {
       std::stringstream s;
-      s << db_dir;
+      s << storage_path;
       s << "_lane" << std::setw(3) << std::setfill('0') << lane << "_";
       prefix = s.str();
     }
@@ -103,46 +97,54 @@ public:
     identity_->SetLaneNumber(lane);
     identity_->SetTotalLanes(total_lanes);
     identity_protocol_ = std::make_unique<identity_protocol_type>(identity_.get());
-    this->Add(IDENTITY, identity_protocol_.get());
+    this->Add(RPC_IDENTITY, identity_protocol_.get());
 
     // TX Store
     tx_store_ = std::make_unique<transaction_store_type>();
-    tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    if (refresh_storage)
+    {
+      tx_store_->New(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    }
+    else
+    {
+      tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
+    }
 
-    tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(TX_STORE_SYNC, register_,
+    tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
                                                                 thread_pool_, tx_store_.get());
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
     tx_store_protocol_->OnSetObject(
         [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
 
-    this->Add(TX_STORE, tx_store_protocol_.get());
+    this->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
     // TX Sync
-    this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());
+    this->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
 
     // State DB
     state_db_ = std::make_unique<document_store_type>();
-    state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                    prefix + "state_index_deltas.db", true);
+    if (refresh_storage)
+    {
+      state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                     prefix + "state_index_deltas.db");
+    }
+    else
+    {
+      state_db_->Load(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
+                      prefix + "state_index_deltas.db", true);
+    }
 
     state_db_protocol_ =
         std::make_unique<document_store_protocol_type>(state_db_.get(), lane, total_lanes);
-    this->Add(STATE, state_db_protocol_.get());
+    this->Add(RPC_STATE, state_db_protocol_.get());
 
     // Controller
-    controller_          = std::make_unique<controller_type>(IDENTITY, identity_, register_, tm);
+    controller_ = std::make_unique<controller_type>(RPC_IDENTITY, identity_, register_, tm);
     controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
-    this->Add(CONTROLLER, controller_protocol_.get());
-
-    thread_pool_->Start();
-
-    if (start_sync)
-    {
-      tx_sync_protocol_->Start();
-    }
+    this->Add(RPC_CONTROLLER, controller_protocol_.get());
   }
 
-  ~LaneService()
+  ~LaneService() override
   {
     thread_pool_->Stop();
 
@@ -164,6 +166,20 @@ public:
     controller_.reset();
   }
 
+  void Start() override
+  {
+    TCPServer::Start();
+    thread_pool_->Start();
+    tx_sync_protocol_->Start();
+  }
+
+  void Stop() override
+  {
+    thread_pool_->Stop();
+    tx_sync_protocol_->Stop();
+    TCPServer::Stop();
+  }
+
 private:
   client_register_type register_;
 
@@ -182,7 +198,7 @@ private:
   std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
   thread_pool_type                       thread_pool_;
 
-  mutex::Mutex                    certificate_lock_;
+  mutex::Mutex                    certificate_lock_{__LINE__, __FILE__};
   std::unique_ptr<crypto::Prover> certificate_;
 };
 

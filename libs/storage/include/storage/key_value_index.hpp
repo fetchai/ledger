@@ -194,6 +194,8 @@ public:
   using key_value_pair = KeyValuePair<>;
   using key_type       = typename key_value_pair::key_type;
 
+  static constexpr char const *LOGGING_NAME = "KeyValueIndex";
+
   KeyValueIndex()
   {
     stack_.OnFileLoaded([this]() { root_ = stack_.header_extra(); });

@@ -21,6 +21,8 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/protocols/executor_rpc_client.hpp"
 #include "ledger/protocols/executor_rpc_service.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
+#include "network/generics/future_timepoint.hpp"
 
 #include "mock_storage_unit.hpp"
 
@@ -31,13 +33,24 @@
 #include <thread>
 
 using ::testing::_;
+using fetch::network::AtomicInFlightCounter;
+using fetch::network::AtomicCounterName;
+
+bool WaitForLaneServersToStart()
+{
+  using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
+
+  fetch::network::FutureTimepoint const deadline(std::chrono::seconds(30));
+
+  return InFlightCounter::Wait(deadline);
+}
 
 class ExecutorRpcTests : public ::testing::Test
 {
 protected:
   using underlying_client_type          = fetch::ledger::ExecutorRpcClient;
   using underlying_service_type         = fetch::ledger::ExecutorRpcService;
-  using underlying_network_manager_type = underlying_client_type::network_manager_type;
+  using underlying_network_manager_type = underlying_client_type::NetworkManager;
   using client_type                     = std::unique_ptr<underlying_client_type>;
   using service_type                    = std::unique_ptr<underlying_service_type>;
   using network_manager_type            = std::unique_ptr<underlying_network_manager_type>;
@@ -54,7 +67,7 @@ protected:
 
   void SetUp() override
   {
-    static const uint16_t EXECUTOR_RPC_PORT = 9001;
+    static const uint16_t EXECUTOR_RPC_PORT = 9111;
 
     storage_.reset(new underlying_storage_type);
     network_manager_ = std::make_unique<underlying_network_manager_type>(2);
@@ -63,6 +76,13 @@ protected:
     // create the executor service
     service_ =
         std::make_unique<underlying_service_type>(EXECUTOR_RPC_PORT, *network_manager_, storage_);
+
+    service_->Start();
+
+    if (!WaitForLaneServersToStart())
+    {
+      throw std::runtime_error("Failed to start tcp servers");
+    }
 
     // create the executor client
     executor_ =
@@ -77,6 +97,7 @@ protected:
 
   void TearDown() override
   {
+    service_->Stop();
     network_manager_->Stop();
 
     executor_.reset();

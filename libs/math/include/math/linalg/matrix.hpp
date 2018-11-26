@@ -19,7 +19,10 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
+
+#include "math/free_functions/free_functions.hpp"
 #include "math/rectangular_array.hpp"
+
 #include "vectorise/threading/pool.hpp"
 
 #include <iostream>
@@ -35,13 +38,13 @@ template <typename T, typename C = fetch::memory::SharedArray<T>,
 class Matrix : public S
 {
 public:
+  using self_type                     = Matrix<T, C, S>;
   using super_type                    = S;
-  using type                          = typename super_type::type;
+  using Type                          = typename super_type::Type;
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
   using working_memory_2d_type        = RectangularArray<T, C, true, true>;
-
-  using self_type = Matrix<T, C, S>;
+  using size_type                     = typename super_type::size_type;
 
   enum
   {
@@ -60,10 +63,14 @@ public:
   Matrix(super_type &&other)
     : super_type(std::move(other))
   {}
+  /**
+   * This constructor is useful for setting fixed valued inputs in certain tests
+   * @param c
+   */
   Matrix(byte_array::ConstByteArray const &c)
   {
     std::size_t       n = 1;
-    std::vector<type> elems;
+    std::vector<Type> elems;
     elems.reserve(1024);
     bool failed = false;
 
@@ -90,7 +97,7 @@ public:
         }
         else
         {
-          elems.push_back(type(atof(c.char_pointer() + last)));
+          elems.push_back(Type(atof(c.char_pointer() + last)));
         }
         break;
       }
@@ -122,12 +129,31 @@ public:
     : super_type(h, w)
   {}
 
-  static Matrix Zeros(std::size_t const &n, std::size_t const &m)
+  /**
+   * for compatibility with other vectors this constructor is nice to have
+   * @param shape
+   */
+  Matrix(std::vector<std::size_t> const &shape)
+    : Matrix(shape[0], shape[1])
+  {}
+
+  Matrix(self_type &other)
+    : super_type(other)
+  {
+    this->LazyResize(other.height(), other.width());
+    this->data() = other.data().Copy();
+  }
+
+  static Matrix Zeroes(std::size_t const &n, std::size_t const &m)
   {
     Matrix ret;
     ret.LazyResize(n, m);
     ret.data().SetAllZero();
     return ret;
+  }
+  static Matrix Zeroes(std::vector<std::size_t> const &shape)
+  {
+    return Zeroes(shape[0], shape[1]);
   }
 
   static Matrix UniformRandom(std::size_t const &n, std::size_t const &m)
@@ -140,6 +166,18 @@ public:
     ret.SetPaddedZero();
 
     return ret;
+  }
+  static Matrix UniformRandom(std::vector<std::size_t> const &shape)
+  {
+    return UniformRandom(shape[0], shape[1]);
+  }
+  template <typename F>
+  void SetAll(F &val)
+  {
+    for (auto &a : *this)
+    {
+      a = val;
+    }
   }
 
   template <typename G>
@@ -158,111 +196,40 @@ public:
     return *this;
   }
 
-  template <typename F>
-  void SetAll(F &val)
-  {
-    for (auto &a : *this)
-    {
-      a = val;
-    }
-  }
-
-  /* Lazy dot routine to compute C = Dot(A, B).
+  /** Efficient vectorised and threaded dot routine to compute C = Dot(A, B).
    * @A is the first matrix.
    * @B is the second matrix.
-   *
-   * This routine takes care of the working memory.
-   */
-  Matrix &Dot(Matrix const &A, Matrix const &B)
+   **/
+  self_type &Dot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
-    working_memory_2d_type tmpA;
-    working_memory_2d_type tmpB;
-    tmpA.LazyResize(A.height(), A.width());
-    tmpB.LazyResize(B.width(), B.height());
-    return Dot(A, B, tmpA, tmpB);
+    this->Resize(A.height(), B.width());
+    fetch::math::Dot(A, B, *this, alpha, beta);
+    return *this;
   }
 
-  /* Dot routine to compute C = Dot(A, B).
-   * @A is the first matrix.
-   * @B is the second matrix.
-   * @tmpA working memory.
-   * @tmpB working memory.
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
    */
-  Matrix &Dot(Matrix const &A, Matrix const &B, working_memory_2d_type &tmpA,
-              working_memory_2d_type &tmpB)
+  self_type &DotTranspose(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
-    // Assumptions made by the routine
-    assert(A.height() == tmpA.height());
-    assert(A.width() == tmpA.width());
-
-    assert(B.width() == tmpB.height());
-    assert(B.height() == tmpB.width());
-
-    assert(A.height() == B.width());
-
-    //
-    tmpA.Copy(A);
-
-    for (std::size_t i = 0; i < B.height(); ++i)
-    {
-      for (std::size_t j = 0; j < B.width(); ++j)
-      {
-        tmpB.At(j, i) = B.At(i, j);
-      }
-    }
-
-    tmpA.SetPaddedZero();
-    tmpB.SetPaddedZero();
-
-    return DotTransposedOf(tmpA, tmpB);
+    this->Resize(A.height(), B.height());
+    fetch::math::DotTranspose(A, B, *this, alpha, beta);
+    return *this;
   }
 
-private:
-  Matrix &DotTransposedOf(working_memory_2d_type const &mA, working_memory_2d_type const &mB)
+  /**
+   * Efficient vectorised and threaded routine for C = T(A).B
+   * @param A
+   * @param B
+   * @return
+   */
+  self_type &TransposeDot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
   {
-
-    assert(mA.width() == mB.width());
-    assert(this->height() == mA.height());
-    assert(this->width() == mB.height());
-
-    threading::Pool pool;
-    std::size_t     width = mA.padded_width();
-    for (std::size_t i = 0; i < mA.height(); ++i)
-    {
-
-      pool.Dispatch([i, this, mA, mB, width]() {
-        vector_register_type          a, b;
-        vector_register_iterator_type ib(mB.data().pointer(), mB.data().size());
-
-        for (std::size_t j = 0; j < mB.height(); ++j)
-        {
-          std::size_t k   = 0;
-          type        ele = 0;
-
-          vector_register_iterator_type ia(mA.data().pointer() + i * mA.padded_width(),
-                                           mA.padded_height());
-          vector_register_type          c(type(0));
-
-          for (; k < width; k += vector_register_type::E_BLOCK_COUNT)
-          {
-            ia.Next(a);
-            ib.Next(b);
-            c = c + a * b;
-          }
-
-          for (std::size_t l = 0; l < vector_register_type::E_BLOCK_COUNT; ++l)
-          {
-            ele += first_element(c);
-            c = shift_elements_right(c);
-          }
-
-          this->Set(i, j, ele);
-        }
-      });
-    }
-
-    pool.Wait();
-
+    this->Resize(A.width(), B.width());
+    fetch::math::TransposeDot(A, B, *this, alpha, beta);
     return *this;
   }
 };

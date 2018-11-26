@@ -31,6 +31,29 @@
 
 #include <iostream>
 
+static constexpr char const *LOGGING_NAME              = "ExecutionManager";
+static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;
+static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
+
+namespace {
+
+struct FilePaths
+{
+  std::string data_path;
+  std::string index_path;
+
+  static FilePaths Create(std::string const &prefix, std::string const &basename)
+  {
+    FilePaths f;
+    f.data_path  = prefix + basename + ".db";
+    f.index_path = prefix + basename + ".index.db";
+
+    return f;
+  }
+};
+
+}  // namespace
+
 namespace fetch {
 namespace ledger {
 
@@ -40,16 +63,26 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type storage,
-                                   executor_factory_type const &factory)
+ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t num_executors,
+                                   StorageUnitPtr storage, ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
   , thread_pool_(network::MakeThreadPool(num_executors))
 {
+  // define all the file paths for the databases
+  FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
+  FilePaths const block_state_paths   = FilePaths::Create(storage_path, "exec_block_state_map");
+
+  // load state archive updates
+  {
+    std::lock_guard<Mutex> lock(state_archive_lock_);
+    state_archive_.New(state_archive_paths.data_path, state_archive_paths.index_path);
+    block_state_cache_.New(block_state_paths.data_path, block_state_paths.index_path);
+  }
 
   // setup the executor pool
   {
-    std::lock_guard<mutex_type> lock(idle_executors_lock_);
+    std::lock_guard<Mutex> lock(idle_executors_lock_);
 
     // ensure lists are reserved
     idle_executors_.reserve(num_executors);
@@ -65,10 +98,10 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, storage_unit_type 
 /**
  * Initiates the execution of a given block across the set of executors
  *
- * @param block The block to be exectued
+ * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
+ExecutionManager::Status ExecutionManager::Execute(Block const &block)
 {
 
   // if the execution manager is not running then no further transactions
@@ -115,7 +148,10 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
   num_slices_      = block.slices.size();
 
   // trigger the monitor / dispatch thread
-  monitor_wake_.notify_one();
+  {
+    std::lock_guard<std::mutex> lock(monitor_lock_);
+    monitor_wake_.notify_one();
+  }
 
   return Status::SCHEDULED;
 }
@@ -127,22 +163,22 @@ ExecutionManager::Status ExecutionManager::Execute(block_type const &block)
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(block_type const &block)
+bool ExecutionManager::PlanExecution(Block const &block)
 {
-  std::lock_guard<mutex_type> lock(execution_plan_lock_);
+  std::lock_guard<Mutex> lock(execution_plan_lock_);
 
   // clear and resize the execution plan
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  //  fetch::logger.Info("Planning ", block.slices.size(), " slices...");
+  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
 
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    fetch::logger.Info("Planning slice ", slice_index, "...");
+    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
 
     // process the transactions
     for (auto const &tx : slice.transactions)
@@ -167,8 +203,8 @@ bool ExecutionManager::PlanExecution(block_type const &block)
       }
       else
       {
-        fetch::logger.Warn("Unable to plan execution of tx: ",
-                           byte_array::ToBase64(tx.transaction_hash));
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
+                       byte_array::ToBase64(tx.transaction_hash));
         return false;
       }
     }
@@ -188,11 +224,11 @@ bool ExecutionManager::PlanExecution(block_type const &block)
  */
 void ExecutionManager::DispatchExecution(ExecutionItem &item)
 {
-  shared_executor_type executor;
+  ExecutorPtr executor;
 
   // lookup a free executor
   {
-    std::lock_guard<mutex_type> lock(idle_executors_lock_);
+    std::lock_guard<Mutex> lock(idle_executors_lock_);
     if (!idle_executors_.empty())
     {
       executor = idle_executors_.back();
@@ -202,7 +238,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   // We must have a executor present for this to work. This should always
   // be the case provided num_executors == num_threads (in thread pool)
-  detailed_assert(executor);
+  assert(executor);
 
   if (executor)
   {
@@ -217,7 +253,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     ++completed_executions_;
 
     {
-      std::lock_guard<mutex_type> lock(idle_executors_lock_);
+      std::lock_guard<Mutex> lock(idle_executors_lock_);
       idle_executors_.push_back(executor);
     }
 
@@ -237,14 +273,14 @@ void ExecutionManager::Start()
   monitor_thread_ = std::make_unique<std::thread>(&ExecutionManager::MonitorThreadEntrypoint, this);
 
   // wait for the monitor thread to be setup
-  for (std::size_t i = 0; i < 20; ++i)
+  for (std::size_t i = 0; i < MAX_STARTUP_ITERATIONS; ++i)
   {
     if (monitor_ready_)
     {
       break;
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    std::this_thread::sleep_for(std::chrono::milliseconds{STARTUP_ITERATION_TIME_MS});
   }
 
   if (!monitor_ready_)
@@ -252,7 +288,7 @@ void ExecutionManager::Start()
     throw std::runtime_error("Failed waiting for the monitor to start");
   }
 
-  // fireup the main worker thread pool
+  // fire up the main worker thread pool
   thread_pool_->Start();
 }
 
@@ -265,8 +301,11 @@ void ExecutionManager::Stop()
 
   // trigger the monitor thread to wake up (so that it sees the change in
   // running_)
-  monitor_wake_.notify_one();
-  monitor_notify_.notify_one();
+  {
+    std::lock_guard<std::mutex> lock(monitor_lock_);
+    monitor_wake_.notify_all();
+    monitor_notify_.notify_all();
+  }
 
   // wait for the monitor thread to exit
   monitor_thread_->join();
@@ -276,9 +315,9 @@ void ExecutionManager::Stop()
   thread_pool_->Stop();
 }
 
-ExecutionManagerInterface::block_digest_type ExecutionManager::LastProcessedBlock()
+ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
 {
-  // TODO(issue 33): thread saftey
+  // TODO(issue 33): thread safety
   return last_block_hash_;
 }
 
@@ -309,9 +348,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
   MonitorState state = MonitorState::IDLE;
 
-  std::size_t       next_slice = 0;
-  std::mutex        wait_lock;
-  block_digest_type current_block;
+  std::size_t next_slice = 0;
+
+  BlockHash current_block;
 
   while (running_)
   {
@@ -325,7 +364,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       // enter the idle state where we wait for the next block to be posted
       {
-        std::unique_lock<std::mutex> lock(wait_lock);
+        std::unique_lock<std::mutex> lock(monitor_lock_);
         monitor_wake_.wait(lock);
       }
 
@@ -344,7 +383,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::SCHEDULE_NEXT_SLICE:
     {
-      std::lock_guard<mutex_type> lock(execution_plan_lock_);
+      std::lock_guard<Mutex> lock(execution_plan_lock_);
 
       if (execution_plan_.empty())
       {
@@ -379,11 +418,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // wait for the execution to complete
       if (remaining_executions_ > 0)
       {
-        std::unique_lock<std::mutex> lock(wait_lock);
+        std::unique_lock<std::mutex> lock(monitor_lock_);
         monitor_notify_.wait_for(lock, std::chrono::milliseconds{100});
       }
 
-      // determine the next state (provided we have comlete
+      // determine the next state (provided we have complete
       if (remaining_executions_ == 0)
       {
         state = (num_slices_ > next_slice) ? MonitorState::SCHEDULE_NEXT_SLICE
@@ -395,28 +434,29 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
     case MonitorState::BOOKMARKING_STATE:
     {
-
-      // lookup the final hash
-      hash_type state_hash = storage_->Hash();
+      // calculate the final state hash
+      crypto::SHA256 hash;
+      hash.Update(storage_->Hash());
+      StateHash state_hash = hash.Final();
 
       // request a bookmark
-      bookmark_type bookmark     = 0;
-      bool          new_bookmark = false;
+      Bookmark bookmark     = 0;
+      bool     new_bookmark = false;
+
       if (state_hash.size())
       {
-        std::lock_guard<mutex_type> lock(state_archive_lock_);
-        new_bookmark = state_archive_.RecordBookmark(state_hash, bookmark);
+        std::lock_guard<Mutex> lock(state_archive_lock_);
+        new_bookmark = state_archive_.AllocateBookmark(state_hash, bookmark);
       }
       else
       {
-        logger.Warn("Unable to request state hash");
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to request state hash");
       }
 
       // only need to commit the new bookmark if there is actually a change in
       // state
       if (new_bookmark)
       {
-
         // commit the changes in state
         try
         {
@@ -424,19 +464,19 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
         catch (std::exception &ex)
         {
-          logger.Warn("Unable to commit state. Error: ", ex.what());
+          FETCH_LOG_WARN(LOGGING_NAME, "Unable to commit state. Error: ", ex.what());
         }
 
         // update the state archives
         {
-          std::lock_guard<mutex_type> lock(state_archive_lock_);
+          std::lock_guard<Mutex> lock(state_archive_lock_);
           if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
           {
-            logger.Warn("Unable to confirm bookmark: ", bookmark);
+            FETCH_LOG_WARN(LOGGING_NAME, "Unable to confirm bookmark: ", bookmark);
           }
 
           // update the block state cache
-          block_state_cache_.emplace(current_block, state_hash);
+          block_state_cache_.Set(ResourceID{current_block}, state_hash);
         }
       }
 
@@ -449,29 +489,31 @@ void ExecutionManager::MonitorThreadEntrypoint()
   }
 }
 
-bool ExecutionManager::AttemptRestoreToBlock(block_digest_type const &digest)
+bool ExecutionManager::AttemptRestoreToBlock(BlockHash const &digest)
 {
-  std::lock_guard<mutex_type> lock(state_archive_lock_);
+  bool success = false;
+
+  assert(digest.size() == 32);
+
+  std::lock_guard<Mutex> lock(state_archive_lock_);
 
   // need to load the state from a previous application, so lookup the
   // corresponding state hash
-  auto cache_it = block_state_cache_.find(digest);
-  if (cache_it == block_state_cache_.end())
+  StateHash state_hash{};
+  if (block_state_cache_.Get(ResourceID{digest}, state_hash))
   {
-    return false;
+    Bookmark bookmark{0};
+
+    // lookup the bookmark
+    if (state_archive_.LookupBookmark(state_hash, bookmark))
+    {
+      // revert
+      storage_->Revert(bookmark);
+      success = true;
+    }
   }
 
-  // lookup the cached bookmark
-  bookmark_type bookmark{0};
-  if (!state_archive_.LookupBookmark(cache_it->second, bookmark))
-  {
-    return false;
-  }
-
-  // revert the storage engine to the previous bookmark
-  storage_->Revert(bookmark);
-
-  return true;
+  return success;
 }
 
 }  // namespace ledger

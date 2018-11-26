@@ -76,6 +76,54 @@ int main()
       EXPECT(!child.IsParentTo(parent));
       EXPECT(!parent.IsChildTo(child));
     };
+
+    SECTION("Append")
+    {
+      Identifier id;
+      id.Append("foo");
+      id.Append("bar");
+      id.Append("baz");
+      id.Append("x.y.z");
+
+      EXPECT(id.full_name() == "foo.bar.baz.x.y.z");
+    };
+
+    SECTION("Append invalid namespace at beginning")
+    {
+      Identifier id;
+
+      bool exception_received = false;
+
+      try
+      {
+        id.Append(".foo");
+      }
+      catch (std::runtime_error const &ex)
+      {
+        exception_received = true;
+      }
+
+      EXPECT(exception_received);
+    };
+
+    SECTION("Append invalid namespace in the middle")
+    {
+      Identifier id;
+      id.Append("foo");
+
+      bool exception_received = false;
+
+      try
+      {
+        id.Append(".bar");
+      }
+      catch (std::runtime_error const &ex)
+      {
+        exception_received = true;
+      }
+
+      EXPECT(exception_received);
+    };
   };
 
   return 0;

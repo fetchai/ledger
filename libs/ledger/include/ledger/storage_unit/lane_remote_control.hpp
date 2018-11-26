@@ -17,152 +17,158 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/service/service_client.hpp"
 
 #include <unordered_map>
 namespace fetch {
 namespace ledger {
 
-class LaneRemoteControl
+class LaneRemoteControl : public p2p::LaneManagement
 {
 public:
-  using service_type        = service::ServiceClient;
-  using shared_service_type = std::shared_ptr<service_type>;
-  using weak_service_type   = std::weak_ptr<service_type>;
-  using lane_index_type     = uint32_t;
+  static constexpr char const *LOGGING_NAME = "LaneRemoteControl";
 
-  enum
-  {
-    CONTROLLER_PROTOCOL_ID = LaneService::CONTROLLER,
-    IDENTITY_PROTOCOL_ID   = LaneService::IDENTITY
-  };
+  using Mutex                = mutex::Mutex;
+  using Promise              = service::Promise;
+  using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
-  LaneRemoteControl()
+  explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
+    : storage_unit_(std::move(storage_unit))
   {}
+
   LaneRemoteControl(LaneRemoteControl const &other) = default;
   LaneRemoteControl(LaneRemoteControl &&other)      = default;
   LaneRemoteControl &operator=(LaneRemoteControl const &other) = default;
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = default;
+  ~LaneRemoteControl() override                           = default;
 
-  ~LaneRemoteControl() = default;
-
-  void AddClient(lane_index_type const &lane, weak_service_type const &client)
+  void Shutdown(LaneIndex lane) override
   {
-    clients_[lane] = client;
-  }
-
-  void Connect(lane_index_type const &lane, byte_array::ByteArray const &host, uint16_t const &port)
-  {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::CONNECT, host, port);
-      p.Wait();
-    }
-  }
-
-  void TryConnect(lane_index_type const &lane, p2p::EntryPoint const &ep)
-  {
-    auto ptr = clients_[lane].lock();
-    if (ptr)
-    {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::TRY_CONNECT, ep);
-      p.Wait();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
+        FETCH_LOG_PROMISE();
+        p->Wait();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Remote lane shutdown call failed.");
+        throw;
+      }
     }
   }
 
-  void Shutdown(lane_index_type const &lane)
+  uint32_t GetLaneNumber(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::SHUTDOWN);
-      p.Wait();
+      try
+      {
+        auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+        return p->As<uint32_t>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote GET_LANE_NUMBER");
+        throw;
+      }
     }
-  }
-
-  uint32_t GetLaneNumber(lane_index_type const &lane)
-  {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
-    if (ptr)
-    {
-      auto p = ptr->Call(IDENTITY_PROTOCOL_ID, LaneIdentityProtocol::GET_LANE_NUMBER);
-      return p.As<uint32_t>();
-    }
-
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @GetLaneNumber");
 
     return 0;
   }
 
-  int IncomingPeers(lane_index_type const &lane)
+  int IncomingPeers(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
-
-    auto ptr = clients_[lane].lock();
+    auto ptr = LookupLane(lane);
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::INCOMING_PEERS);
-      return p.As<int>();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
+        return p->As<int>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute remote INCOMING_PEERS");
+        throw;
+      }
     }
 
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @IncomingPeers");
 
     return 0;
   }
 
-  int OutgoingPeers(lane_index_type const &lane)
+  int OutgoingPeers(LaneIndex lane) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
+    auto ptr = LookupLane(lane);
 
-    auto ptr = clients_[lane].lock();
     if (ptr)
     {
-      auto p = ptr->Call(CONTROLLER_PROTOCOL_ID, LaneControllerProtocol::OUTGOING_PEERS);
-      return p.As<int>();
+      try
+      {
+        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
+        return p->As<int>();
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote OUTGOING_PEERS");
+        throw;
+      }
     }
 
-    TODO_FAIL("client connection has died");
+    TODO_FAIL("client connection has died, @OutgoingPeers");
 
     return 0;
   }
 
-  bool IsAlive(lane_index_type const &lane)
+  virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) override
   {
-    if (clients_.find(lane) == clients_.end())
-    {
-      TODO_FAIL("Client not found");
-    }
+    auto ptr = LookupLane(lane);
 
-    auto ptr = clients_[lane].lock();
-    return bool(ptr);
+    if (ptr)
+    {
+      try
+      {
+        ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+        return;
+      }
+      catch (...)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to exxecute remote USE_THESE_PEERS");
+        throw;
+      }
+    }
+    TODO_FAIL("client connection has died, @UseThesePeers");
+  }
+
+  bool IsAlive(LaneIndex lane) override
+  {
+    return static_cast<bool>(LookupLane(lane));
   }
 
 private:
-  std::unordered_map<lane_index_type, weak_service_type> clients_;
+  SharedService LookupLane(LaneIndex lane) const
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "LookupLane ", lane, " in ", clients_.size());
+
+    FETCH_LOCK(mutex_);
+
+    return storage_unit_->GetClientForLane(lane);
+  }
+
+  StorageUnitClientPtr storage_unit_;
+  mutable Mutex        mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger

@@ -17,24 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "ledger/execution_manager.hpp"
-#include "ledger/executor.hpp"
-
-#include "ledger/chain/block_coordinator.hpp"
+#include "http/module.hpp"
+#include "http/server.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/main_chain_miner.hpp"
-
-#include "http/server.hpp"
-#include "ledger/chain/main_chain_remote_control.hpp"
-#include "ledger/chain/main_chain_service.hpp"
-#include "ledger/chaincode/contract_http_interface.hpp"
+#include "ledger/execution_manager.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
-#include "miner/annealer_miner.hpp"
+#include "miner/basic_miner.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
-#include "network/peer.hpp"
+#include "network/p2pservice/p2ptrust.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -49,130 +46,112 @@
 
 namespace fetch {
 
+/**
+ * Top level container for all components that are required to run a ledger instance
+ */
 class Constellation
 {
 public:
-  using network_manager_type   = std::unique_ptr<network::NetworkManager>;
-  using executor_type          = std::shared_ptr<ledger::Executor>;
-  using executor_list_type     = std::vector<executor_type>;
-  using storage_client_type    = std::shared_ptr<ledger::StorageUnitClient>;
-  using connection_type        = network::TCPClient;
-  using execution_manager_type = std::shared_ptr<ledger::ExecutionManager>;
-  using storage_service_type   = ledger::StorageUnitBundledService;
-  using flag_type              = std::atomic<bool>;
+  using Peer2PeerService = p2p::P2PService;
+  using CertificatePtr   = Peer2PeerService::CertificatePtr;
+  using UriList          = std::vector<network::Uri>;
+  using Manifest         = network::Manifest;
 
-  using block_coordinator_type = std::unique_ptr<chain::BlockCoordinator>;
-  using chain_miner_type       = std::unique_ptr<chain::MainChainMiner>;
+  static constexpr char const *LOGGING_NAME = "constellation";
 
-  using clock_type        = std::chrono::high_resolution_clock;
-  using timepoint_type    = clock_type::time_point;
-  using string_list_type  = std::vector<std::string>;
-  using p2p_service_type  = std::unique_ptr<p2p::P2PService>;
-  using http_server_type  = std::unique_ptr<http::HTTPServer>;
-  using peer_list_type    = std::vector<network::Peer>;
-  using http_module_type  = std::shared_ptr<http::HTTPModule>;
-  using http_modules_type = std::vector<http_module_type>;
-  using miner_type        = std::unique_ptr<miner::MinerInterface>;
-  using tx_processor_type = std::unique_ptr<ledger::TransactionProcessor>;
+  explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest, uint32_t num_executors,
+                         uint32_t log2_num_lanes, uint32_t num_slices,
+                         std::string interface_address, std::string const &prefix,
+                         std::string                         my_network_address,
+                         std::chrono::steady_clock::duration block_interval);
 
-  using main_chain_service_type = std::unique_ptr<chain::MainChainService>;
-  using main_chain_remote_type  = std::unique_ptr<chain::MainChainRemoteControl>;
-
-  using service_type        = service::ServiceClient;
-  using client_type         = fetch::network::TCPClient;
-  using shared_service_type = std::shared_ptr<service_type>;
-
-  static constexpr uint16_t    MAIN_CHAIN_PORT_OFFSET = 2;
-  static constexpr uint16_t    P2P_PORT_OFFSET        = 1;
-  static constexpr uint16_t    HTTP_PORT_OFFSET       = 0;
-  static constexpr uint16_t    STORAGE_PORT_OFFSET    = 10;
-  static constexpr uint32_t    DEFAULT_MINING_TARGET  = 10;
-  static constexpr uint32_t    DEFAULT_IDLE_SPEED     = 2000;
-  static constexpr uint16_t    DEFAULT_PORT_START     = 5000;
-  static constexpr std::size_t DEFAULT_NUM_LANES      = 8;
-  static constexpr std::size_t DEFAULT_NUM_SLICES     = 4;
-  static constexpr std::size_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
-  //  static const std::string DEFAULT_DB_PREFIX =;
-
-  static std::unique_ptr<Constellation> Create(uint16_t    port_start    = DEFAULT_PORT_START,
-                                               std::size_t num_executors = DEFAULT_NUM_EXECUTORS,
-                                               std::size_t num_lanes     = DEFAULT_NUM_LANES,
-                                               std::size_t num_slices    = DEFAULT_NUM_SLICES,
-                                               std::string const &prefix = "node_storage")
-  {
-
-    std::unique_ptr<Constellation> constellation{
-        new Constellation{port_start, num_executors, num_lanes, num_slices, "127.0.0.1", prefix}};
-
-    return constellation;
-  }
-
-  explicit Constellation(uint16_t           port_start        = DEFAULT_PORT_START,
-                         std::size_t        num_executors     = DEFAULT_NUM_EXECUTORS,
-                         std::size_t        num_lanes         = DEFAULT_NUM_LANES,
-                         std::size_t        num_slices        = DEFAULT_NUM_SLICES,
-                         std::string const &interface_address = "127.0.0.1",
-                         std::string const &prefix            = "node_storage");
-
-  void Run(peer_list_type const &initial_peers = peer_list_type{});
-
-  executor_type CreateExecutor()
-  {
-    logger.Warn("Creating local executor...");
-    return executor_type{new ledger::Executor(storage_)};
-  }
+  void Run(UriList const &initial_peers, bool mining);
+  void SignalStop();
 
 private:
+  using Muddle                 = muddle::Muddle;
+  using NetworkManager         = network::NetworkManager;
+  using BlockPackingAlgorithm  = miner::BasicMiner;
+  using Miner                  = chain::MainChainMiner;
+  using BlockCoordinator       = chain::BlockCoordinator;
+  using MainChain              = chain::MainChain;
+  using MainChainRpcService    = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
+  using LaneServices           = ledger::StorageUnitBundledService;
+  using StorageUnitClient      = ledger::StorageUnitClient;
+  using LaneIndex              = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
+  using Flag                   = std::atomic<bool>;
+  using ExecutionManager       = ledger::ExecutionManager;
+  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl      = ledger::LaneRemoteControl;
+  using HttpServer             = http::HTTPServer;
+  using HttpModule             = http::HTTPModule;
+  using HttpModulePtr          = std::shared_ptr<HttpModule>;
+  using HttpModules            = std::vector<HttpModulePtr>;
+  using TransactionProcessor   = ledger::TransactionProcessor;
+  using TrustSystem            = p2p::P2PTrust<Muddle::Address>;
+
   /// @name Configuration
   /// @{
-  flag_type   active_{true};       ///< Flag to control running of main thread
+  Flag        active_;             ///< Flag to control running of main thread
+  Manifest    manifest_;           ///< The service manifest
   std::string interface_address_;  ///< The publicly facing interface IP address
   uint32_t    num_lanes_;          ///< The configured number of lanes
   uint32_t    num_slices_;         ///< The configured number of slices per block
   uint16_t    p2p_port_;           ///< The port that the P2P interface is running from
   uint16_t    http_port_;          ///< The port of the HTTP server
   uint16_t    lane_port_start_;    ///< The starting port of all the lane services
-  uint16_t    main_chain_port_;    ///< The main chain port
   /// @}
 
   /// @name Network Orchestration
   /// @{
-  network_manager_type network_manager_;  ///< Top level network coordinator
+  NetworkManager   network_manager_;       ///< Top level network coordinator
+  NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
+  Muddle           muddle_;                ///< The muddle networking service
+  TrustSystem      trust_;                 ///< The trust subsystem
+  Peer2PeerService p2p_;                   ///< The main p2p networking stack
   /// @}
 
-  /// @name Lane Storage Components
+  /// @name Transaction and State Database shards
   /// @{
-  storage_service_type storage_service_;  ///< The combination of all the lane services
-  storage_client_type  storage_;          ///< The storage client
+  LaneServices         lane_services_;  ///< The lane services
+  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
   /// @}
 
-  /// @name Block Execution
+  /// @name Block Processing
   /// @{
-  executor_list_type     executors_;          ///< The list of transaction executors
-  execution_manager_type execution_manager_;  ///< The execution manager
+  ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
   /// @}
 
-  /// @name Blockchain Components
-  /// @{
-  main_chain_service_type main_chain_service_;  ///< The main chain
-  main_chain_remote_type  main_chain_remote_;   ///< The controller unit of the main chain
-
-  tx_processor_type      tx_processor_;        ///< The transaction processor
-  block_coordinator_type block_coordinator_;   ///< The block coordinator
-  miner_type             transaction_packer_;  ///< The colourful puzzle solver
-  chain_miner_type       main_chain_miner_;    ///< The main chain miner
+  /// @name Blockchain and Mining
+  /// @[
+  MainChain             chain_;              ///< The main block chain component
+  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
+  Miner                 miner_;              ///< The miner and block generation component
   /// @}
 
-  /// @name P2P Networking Components
+  /// @name Top Level Services
   /// @{
-  p2p_service_type p2p_;  ///< The P2P networking component
+  MainChainRpcServicePtr main_chain_service_;  ///< Service for block transmission over the network
+  TransactionProcessor   tx_processor_;        ///< The transaction entrypoint
   /// @}
 
-  /// @name API Components
+  /// @name HTTP Server
   /// @{
-  http_server_type  http_;          ///< The HTTP interfaces server
-  http_modules_type http_modules_;  ///< The list of registered HTTP modules
+  HttpServer  http_;          ///< The HTTP server
+  HttpModules http_modules_;  ///< The set of modules currently configured
   /// @}
 };
+
+/**
+ * Signal that constellation should attempt to shutdown gracefully
+ */
+inline void Constellation::SignalStop()
+{
+  active_ = false;
+}
 
 }  // namespace fetch

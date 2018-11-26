@@ -32,28 +32,30 @@
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {
 public:
+  static constexpr char const *LOGGING_NAME = "FakeExecutor";
+
   struct HistoryElement
   {
     using clock_type     = std::chrono::high_resolution_clock;
     using timepoint_type = clock_type::time_point;
 
-    HistoryElement(tx_digest_type const &h, std::size_t s, lane_set_type l)
+    HistoryElement(TxDigest const &h, std::size_t s, LaneSet l)
       : hash(h)
       , slice(s)
       , lanes(std::move(l))
     {}
     HistoryElement(HistoryElement const &) = default;
 
-    tx_digest_type hash;
+    TxDigest       hash;
     std::size_t    slice;
-    lane_set_type  lanes;
+    LaneSet        lanes;
     timepoint_type timestamp{clock_type::now()};
   };
 
-  using history_cache_type = std::vector<HistoryElement>;
-  using storage_type       = fetch::ledger::StorageInterface;
+  using HistoryElementCache = std::vector<HistoryElement>;
+  using StorageInterface    = fetch::ledger::StorageInterface;
 
-  Status Execute(tx_digest_type const &hash, std::size_t slice, lane_set_type const &lanes) override
+  Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) override
   {
     history_.emplace_back(hash, slice, lanes);
 
@@ -63,6 +65,8 @@ public:
       state_->Set(fetch::storage::ResourceAddress{hash}, "executed");
     }
 
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Executing transaction sort of...");
+
     return Status::SUCCESS;
   }
 
@@ -71,13 +75,13 @@ public:
     return history_.size();
   }
 
-  void CollectHistory(history_cache_type &history)
+  void CollectHistory(HistoryElementCache &history)
   {
     history_.reserve(history.size() + history_.size());  // do the allocation
     history.insert(history.end(), history_.begin(), history_.end());
   }
 
-  void SetStorageInterface(storage_type &state)
+  void SetStorageInterface(StorageInterface &state)
   {
     state_ = &state;
   }
@@ -88,6 +92,6 @@ public:
   }
 
 private:
-  storage_type *     state_ = nullptr;
-  history_cache_type history_;
+  StorageInterface *  state_ = nullptr;
+  HistoryElementCache history_;
 };

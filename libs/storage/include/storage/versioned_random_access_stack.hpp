@@ -74,6 +74,8 @@ private:
   using header_extra_type = B;
   using header_type       = BookmarkHeader<B>;
 
+  static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
+
   /**
    * To be pushed onto the history stack as a variant.
    *

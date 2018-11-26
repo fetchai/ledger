@@ -17,62 +17,137 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/generics/resolvable.hpp"
 #include "network/service/promise.hpp"
 
 namespace fetch {
-
 namespace network {
 
-template <class TYPE>
-class PromiseOf
+/**
+ * Simple wrapper around the service promise which mandates the return time from the underlying
+ * promise.
+ *
+ * @tparam RESULT The expected return type of the promise
+ */
+template <typename RESULT>
+class PromiseOf : public ResolvableTo<RESULT>
 {
 public:
-  using promise_type = fetch::service::Promise;
+  using Promise        = service::Promise;
+  using State          = fetch::service::PromiseState;
+  using PromiseBuilder = fetch::service::details::PromiseBuilder;
+  using PromiseCounter = fetch::service::PromiseCounter;
 
-  PromiseOf(promise_type &promise)
+  // Construction / Destruction
+  PromiseOf() = default;
+  explicit PromiseOf(Promise promise);
+  PromiseOf(PromiseOf const &rhs) = default;
+  ~PromiseOf()                    = default;
+
+  // Promise Accessors
+  RESULT Get() const override;
+  bool   Wait(uint32_t timeout_ms      = std::numeric_limits<uint32_t>::max(),
+              bool     throw_exception = true) const;
+
+  Promise const &GetInnerPromise() const
   {
-    this->promise_ = promise;
+    return promise_;
+  }
+  PromiseBuilder WithHandlers()
+  {
+    return promise_->WithHandlers();
   }
 
-  PromiseOf(const PromiseOf &rhs)
+  bool empty()
   {
-    promise_ = rhs.promise_;
+    return !promise_;
   }
 
-  PromiseOf operator=(const PromiseOf &rhs)
+  State GetState() override
   {
-    promise_ = rhs.promise_;
+    return promise_->GetState();
   }
 
-  PromiseOf operator=(PromiseOf &&rhs)
+  PromiseCounter id() const override
   {
-    promise_ = std::move(rhs.promise_);
+    return promise_->id();
   }
 
-  TYPE Get()
+  std::string &name()
   {
-    return promise_.As<TYPE>();
+    return promise_->name();
+  }
+  const std::string &name() const
+  {
+    return promise_->name();
   }
 
-  TYPE get()
+  // TODO(EJF): This seems a little scary, is this a copy or move?
+  void Adopt(Promise &promise)
   {
-    return promise_.As<TYPE>();
+    promise_ = promise;
   }
 
-  operator bool() const
-  {
-    return promise_.is_fulfilled();
-  }
+  // Operators
+  explicit operator bool() const;
 
-  bool Wait()
-  {
-    promise_.Wait();
-    return promise_.is_fulfilled();
-  }
+  PromiseOf &operator=(PromiseOf const &rhs) = default;
+  PromiseOf &operator=(PromiseOf &&rhs) noexcept = default;
 
 private:
-  promise_type promise_;
+  Promise promise_;
 };
+
+/**
+ * Construct a PromiseOf from and specified Promise
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @param promise The promise value
+ */
+template <typename TYPE>
+inline PromiseOf<TYPE>::PromiseOf(Promise promise)
+  : promise_(std::move(promise))
+{}
+
+/**
+ * Gets the value of the promise
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @return Return the value from the promise, or throw an exception if not possible
+ */
+template <typename TYPE>
+inline TYPE PromiseOf<TYPE>::Get() const
+{
+  return promise_->As<TYPE>();
+}
+
+/**
+ * Checks to see if the promise has been fulfilled
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @return true if the promise has been fulfilled, otherwise false
+ */
+template <typename TYPE>
+inline PromiseOf<TYPE>::operator bool() const
+{
+  return promise_ && promise_->IsSuccessful();
+}
+
+/**
+ * Waits for the promise to complete
+ *
+ * @tparam TYPE The expected return type of the promise
+ * @param timeout_ms The timeout in milliseconds to wait for this promise to conclude
+ * @param throw_exception Signal if the function should throw an exception in the case of an error
+ * @return true if the promise has been fulfilled (given the constraints), otherwise false
+ */
+template <typename TYPE>
+inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+{
+  FETCH_LOG_PROMISE();
+  promise_->Wait(timeout_ms, throw_exception);
+  return promise_->IsSuccessful();
+}
 
 }  // namespace network
 }  // namespace fetch

@@ -1,3 +1,22 @@
+v0.0.4
+
+- New routing based P2P network subsystem
+- Implemented input transaction endpoints
+- Added benchmark metric support
+- Overhaul of logging subsystem including compile time logging level
+- Update minimum cmake version supported from v3.6 -> v3.5
+- Add initial test network bootstraping module
+- Removal of old Swarm based networking code
+- Add transaction signing support with EC secp256k1
+- Add transaction submission http endpoints
+- Implment initial (parallel) transaction processing pipeline
+- Overhaul of the block processing infrastructure
+- Various bug fixes and library updates
+
+v0.0.3
+
+- Virtual Machine Reference count fix
+
 v0.0.2
 
 - Initial development version of the virtual machine

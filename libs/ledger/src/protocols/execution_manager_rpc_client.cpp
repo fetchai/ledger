@@ -19,62 +19,69 @@
 #include <memory>
 
 #include "core/serializers/stl_types.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
-#include "network/protocols/fetch_protocols.hpp"
+
+using fetch::service::ServiceClient;
+using fetch::byte_array::ConstByteArray;
+using fetch::network::NetworkManager;
 
 namespace fetch {
 namespace ledger {
+namespace {
 
-ExecutionManagerRpcClient::ExecutionManagerRpcClient(byte_array::ConstByteArray const &host,
-                                                     uint16_t const &                  port,
-                                                     network::NetworkManager const &network_manager)
+using NetworkClientPtr = ExecutionManagerRpcClient::NetworkClientPtr;
+using NetworkClient    = ExecutionManagerRpcClient::NetworkClient;
 
+NetworkClientPtr CreateConnection(ConstByteArray const &host, uint16_t port,
+                                  NetworkManager const &network_manager)
 {
-  network::TCPClient connection(network_manager);
-  connection.Connect(host, port);
+  // create and connect service client
+  NetworkClientPtr connection = std::make_shared<NetworkClient>(network_manager);
+  connection->Connect(host, port);
 
-  service_ = std::make_unique<fetch::service::ServiceClient>(connection, network_manager);
+  return connection;
 }
 
-ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(block_type const &block)
-{
-  auto result = service_->Call(fetch::protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::EXECUTE, block);
+}  // namespace
 
-  return result.As<Status>();
+ExecutionManagerRpcClient::ExecutionManagerRpcClient(ConstByteArray const &host,
+                                                     uint16_t const &      port,
+                                                     NetworkManager const &network_manager)
+  : connection_(CreateConnection(host, port, network_manager))
+  , service_(std::make_unique<ServiceClient>(*connection_, network_manager))
+{}
+
+ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
+{
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::EXECUTE, block);
+  return result->As<Status>();
 }
 
-ExecutionManagerInterface::block_digest_type ExecutionManagerRpcClient::LastProcessedBlock()
+ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
-
-  return result.As<block_digest_type>();
+  auto result =
+      service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::LAST_PROCESSED_BLOCK);
+  return result->As<BlockHash>();
 }
 
 bool ExecutionManagerRpcClient::IsActive()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_ACTIVE);
-
-  return result.As<bool>();
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_ACTIVE);
+  return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::IsIdle()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::IS_IDLE);
-
-  return result.As<bool>();
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::IS_IDLE);
+  return result->As<bool>();
 }
 
 bool ExecutionManagerRpcClient::Abort()
 {
-  auto result = service_->Call(protocols::FetchProtocols::EXECUTION_MANAGER,
-                               ExecutionManagerRpcProtocol::ABORT);
-
-  return result.As<bool>();
+  auto result = service_->Call(RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::ABORT);
+  return result->As<bool>();
 }
 
 }  // namespace ledger

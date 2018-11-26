@@ -7,9 +7,15 @@ CMakeCache.txt
 # Merge Outputs
 *.orig
 
+nodes/
+
 # Legacy Editors
 \#*#
 .\#*
 *~
 *.swp
 .idea/
+
+*.gz
+*.so
+.ipynb*

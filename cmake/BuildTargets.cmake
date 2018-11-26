@@ -74,32 +74,64 @@ macro(setup_compiler)
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
-  # fetch logging defines
-  set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -DFETCH_DISABLE_COUT_LOGGING")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DFETCH_DISABLE_COUT_LOGGING")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFETCH_DISABLE_COUT_LOGGING")
+  set(_is_clang_compiler FALSE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(_is_clang_compiler TRUE)
+  endif()
+
+  if(FETCH_ENABLE_COVERAGE)
+    if (_is_clang_compiler)
+      set(CMAKE_CXX_FLAGS_DEBUG "-g -fprofile-instr-generate -fcoverage-mapping -O0")
+    else()
+      message(SEND_ERROR "Coverage flag enabled but clang compiler not found, CMake will exit.")
+    endif()
+  endif(FETCH_ENABLE_COVERAGE)
 
   # debug sanitizer configuration
   string(LENGTH "${FETCH_DEBUG_SANITIZER}" _debug_sanitizer_parameter_length)
   if(${_debug_sanitizer_parameter_length} GREATER 0)
-    string(REGEX MATCH "(thread|address|undefined)" _debug_sanitizer_valid "${FETCH_DEBUG_SANITIZER}")
-    string(LENGTH "${_debug_sanitizer_valid}" _debug_sanitizer_match_length)
+    if (_is_clang_compiler)
+      string(REGEX MATCH "(thread|address|undefined)" _debug_sanitizer_valid "${FETCH_DEBUG_SANITIZER}")
+      string(LENGTH "${_debug_sanitizer_valid}" _debug_sanitizer_match_length)
 
-    if(${_debug_sanitizer_match_length} GREATER 0)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
-      set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+      if(${_debug_sanitizer_match_length} GREATER 0)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+      else()
+        message(SEND_ERROR "Incorrect sanitizer configuration: ${FETCH_DEBUG_SANITIZER} Valid choices are thread, address or undefined")
+      endif()
     else()
-      message(SEND_ERROR "Incorrect sanitizer configuration: ${FETCH_DEBUG_SANITIZER} Valid choices are thread, address or undefined")
+      message(SEND_ERROR "Debug sanitizers are only available for clang based compilers")
     endif()
   endif()
 
-  if(FETCH_ENABLE_COVERAGE)
+  # add a metric flag if needed
+  if (FETCH_ENABLE_METRICS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
+  endif (FETCH_ENABLE_METRICS)
 
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fprofile-instr-generate -fcoverage-mapping -O0")
-    else()
-      message(FATAL_ERROR "Coverage flag enabled but clang compiler not found, CMake will exit.")
-    endif()
+  # needed for configuration files etc
+  include_directories(${FETCH_ROOT_BINARY_DIR})
+
+  # handle default logging level
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "")
+    set (FETCH_COMPILE_LOGGING_LEVEL "info")
+  endif()
+
+  # based on the configued logging level
+  if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "debug")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=4)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "info")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=3)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "warn")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=2)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "error")
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=1)
+  elseif ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "none")
+    add_definitions(-DFETCH_DISABLE_COUT_LOGGING)
+    add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=0)
+  else()
+    message(SEND_ERROR "Invalid settings for FETCH_COMPILE_LOGGING_LEVEL. Please choose one of: debug,info,warn,error,none")
   endif()
 
 endmacro(setup_compiler)
@@ -131,6 +163,11 @@ function(configure_vendor_targets)
 
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
+
+  # Google Benchmark
+  # Do not build the google benchmark library tests
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
 
 endfunction(configure_vendor_targets)
 
@@ -168,6 +205,10 @@ macro(detect_environment)
 
   if (FETCH_ENABLE_CLANG_TIDY)
 
+    if (VERSION LESSER_EQUAL 3.6)
+      message( FATAL_ERROR "You need CMake 3.6 to use Clang tidy" )
+    endif()
+
     find_program(
       CLANG_TIDY_EXE
       NAMES "clang-tidy"
@@ -191,3 +232,57 @@ macro(detect_environment)
   endif(FETCH_ENABLE_CLANG_TIDY)
 
 endmacro()
+
+function (generate_configuration_file)
+
+  # execute git to determine the version
+  execute_process(
+    COMMAND git describe --dirty=-wip --always
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE version
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  # determine the format of the output from the above command
+  string(REGEX MATCHALL "^v.*" is_normal_version "${version}")
+  if (is_normal_version)
+
+    # cmake regex processing to extract all meaningful elements
+    string (REGEX REPLACE "v([0-9]+)\\..*" "\\1" FETCH_VERSION_MAJOR "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.([0-9]+)\\..*" "\\1" FETCH_VERSION_MINOR "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" FETCH_VERSION_PATCH "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g([0-9a-f]+).*" "\\1" FETCH_VERSION_COMMIT "${version}")
+    string (REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-g[0-9a-f]+-(wip)" "\\1" FETCH_VERSION_VALID "${version}")
+
+    set (FETCH_VERSION_STR "${version}")
+
+    # handle the error conditions
+    if (${FETCH_VERSION_COMMIT} STREQUAL ${version})
+      set (FETCH_VERSION_COMMIT "")
+    endif ()
+
+    # correct the match
+    if (${FETCH_VERSION_VALID} STREQUAL "wip")
+      set (FETCH_VERSION_VALID "false")
+    else ()
+      set (FETCH_VERSION_VALID "true")
+    endif ()
+
+  else()
+    set (FETCH_VERSION_MAJOR 0)
+    set (FETCH_VERSION_MINOR 0)
+    set (FETCH_VERSION_PATCH 0)
+    set (FETCH_VERSION_COMMIT "${version}")
+    set (FETCH_VERSION_VALID "false")
+    set (FETCH_VERSION_STR "Unknown version with hash: ${version}")
+  endif()
+
+  # generate the version file
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/fetch_version.hpp
+  )
+
+  message(STATUS "Project Version: ${FETCH_VERSION_STR}")
+
+endfunction()

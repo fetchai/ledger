@@ -24,6 +24,8 @@
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
 
+#include "math/meta/type_traits.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -47,13 +49,15 @@ class RectangularArray : public math::ShapeLessArray<T, C>
 {
 public:
   using super_type     = math::ShapeLessArray<T, C>;
-  using type           = typename super_type::type;
+  using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
   using size_type      = typename super_type::size_type;
 
   using self_type                     = RectangularArray<T, C>;
   using vector_register_type          = typename super_type::vector_register_type;
   using vector_register_iterator_type = typename super_type::vector_register_iterator_type;
+
+  static constexpr char const *LOGGING_NAME = "RectangularArray";
 
   /* Contructs an empty rectangular array. */
   RectangularArray()
@@ -104,7 +108,7 @@ public:
     }
   }
 
-  static RectangularArray Zeros(std::size_t const &n, std::size_t const &m)
+  static RectangularArray Zeroes(std::size_t const &n, std::size_t const &m)
   {
     RectangularArray ret;
     ret.LazyResize(n, m);
@@ -200,7 +204,7 @@ public:
    * @radians is the rotation angle in radians.
    * @fill is the data empty entries awill be filled with.
    */
-  void Rotate(double const &radians, type const fill = type())
+  void Rotate(double const &radians, Type const fill = Type())
   {
     Rotate(radians, 0.5 * static_cast<double>(height()), 0.5 * static_cast<double>(width()), fill);
   }
@@ -211,7 +215,7 @@ public:
    * @cj is the position along the width.
    * @fill is the data empty entries awill be filled with.
    */
-  void Rotate(double const &radians, double const &ci, double const &cj, type const fill = type())
+  void Rotate(double const &radians, double const &ci, double const &cj, Type const fill = Type())
   {
     assert(false);
     // TODO(tfr): FIXME, make new implementation
@@ -276,7 +280,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type &operator[](std::size_t const &i)
+  Type &operator[](std::size_t const &i)
   {
     return At(i);
   }
@@ -289,7 +293,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  type const &operator[](std::size_t const &i) const
+  Type const &operator[](std::size_t const &i) const
   {
     return At(i);
   }
@@ -332,7 +336,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  type const &At(size_type const &i) const
+  Type const &At(size_type const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -343,7 +347,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  type &At(size_type const &i)
+  Type &At(size_type const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -355,7 +359,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  type const &At(size_type const &i, size_type const &j) const
+  Type const &At(size_type const &i, size_type const &j) const
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -367,7 +371,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  type &At(size_type const &i, size_type const &j)
+  Type &At(size_type const &i, size_type const &j)
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -379,7 +383,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  type const &Set(size_type const &n, type const &v)
+  Type const &Set(size_type const &n, Type const &v)
   {
     assert(n < super_type::data().size());
     super_type::data()[n] = v;
@@ -391,11 +395,38 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  type const &Set(size_type const &i, size_type const &j, type const &v)
+  Type const &Set(size_type const &i, size_type const &j, Type const &v)
   {
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
     return v;
+  }
+
+  void SetRange(std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s)
+  {
+    assert(idxs.size() > 0);
+    assert(idxs.size() == 2);
+    for (auto cur_idx : idxs)
+    {
+      assert(cur_idx.size() == 3);
+    }
+
+    std::size_t ret_height = (idxs[0][1] - idxs[0][0]) / idxs[0][2];
+    std::size_t ret_width  = (idxs[1][1] - idxs[1][0]) / idxs[1][2];
+    Reshape(ret_height, ret_width);
+
+    std::size_t height_counter = 0;
+    std::size_t width_counter;
+    for (std::size_t i = idxs[0][0]; i < idxs[0][1]; i += idxs[0][2])
+    {
+      width_counter = 0;
+      for (std::size_t j = idxs[1][0]; j < idxs[1][1]; j += idxs[1][2])
+      {
+        Set(height_counter, width_counter, s.At(i, j));
+        ++width_counter;
+      }
+      ++height_counter;
+    }
   }
 
   /* Sets an element using two coordinates.
@@ -406,7 +437,7 @@ public:
    * This function is here to satisfy the requirement for an
    * optimisation problem container.
    */
-  type const &Insert(size_type const &i, size_type const &j, type const &v)
+  Type const &Insert(size_type const &i, size_type const &j, Type const &v)
   {
     return Set(i, j, v);
   }
@@ -526,7 +557,7 @@ public:
 
     height_ = h;
     width_  = w;
-    shape_  = {h, w};
+    shape_  = {height_, width_};
   }
 
   /**
@@ -537,12 +568,13 @@ public:
   void Reshape(std::vector<std::size_t> const &shape)
   {
     assert(shape.size() == 2);
-    assert((shape[0] * shape[1]) == (height_ * width_));
+    //    assert((shape[0] * shape[1]) == (height_ * width_));
 
     Reserve(shape[0], shape[1]);
 
     height_ = shape[0];
     width_  = shape[1];
+    shape_  = {height_, width_};
   }
 
   void Flatten()
@@ -550,7 +582,11 @@ public:
     Reshape(width_ * height_, 1);
   }
 
-  void Fill(type const &value, memory::Range const &rows, memory::Range const &cols)
+  void Fill(Type const &value)
+  {
+    super_type::Fill(value);
+  }
+  void Fill(Type const &value, memory::Range const &rows, memory::Range const &cols)
   {
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
@@ -558,7 +594,7 @@ public:
     // TODO(tfr): Implement
   }
 
-  void Fill(type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
+  void Fill(Type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
   {
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());
@@ -634,7 +670,7 @@ public:
       TODO_FAIL("Could not write width - todo: make custom exc");
     }
 
-    if (fwrite(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fwrite(super_type::data().pointer(), sizeof(Type), this->padded_size(), fp) !=
         this->padded_size())
     {
       TODO_FAIL("Could not write matrix body - todo: make custom exc");
@@ -684,7 +720,7 @@ public:
 
     Resize(height, width);
 
-    if (fread(super_type::data().pointer(), sizeof(type), this->padded_size(), fp) !=
+    if (fread(super_type::data().pointer(), sizeof(Type), this->padded_size(), fp) !=
         (this->padded_size()))
     {
       TODO_FAIL("failed to read body of matrix - TODO, ,make custom exception");
@@ -706,7 +742,7 @@ public:
   }
 
   /* Returns height, width of array */
-  std::vector<size_type> const &shape() const
+  std::vector<size_type> shape() const
   {
     return shape_;
   }

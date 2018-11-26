@@ -56,10 +56,12 @@ public:
   void Start()
   {
     network_manager_.Start();
+    service_.Start();
   }
 
   void Stop()
   {
+    service_.Stop();
     network_manager_.Stop();
   }
 

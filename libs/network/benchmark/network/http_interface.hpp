@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/script/variant.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/color_log.hpp"
 #include "http/server.hpp"
 #include "network_classes.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace network_benchmark {
@@ -138,12 +138,12 @@ public:
   {
     auto transactions = node_->GetTransactions();
 
-    script::Variant result = script::Variant::Array(transactions.size());
+    variant::Variant result = variant::Variant::Array(transactions.size());
 
     std::size_t index = 0;
     for (auto &i : transactions)
     {
-      result[index++] = byte_array::ToHex(i.summary().transaction_hash);
+      result[index++] = byte_array::ToBase64(i.summary().transaction_hash);
     }
 
     std::ostringstream ret;
@@ -183,7 +183,7 @@ public:
   {
     auto res = node_->TransactionsHash();
 
-    script::Variant result = script::Variant::Object();
+    variant::Variant result = variant::Variant::Object();
 
     result["numberOfTransactions"] = res.first;
     result["hash"]                 = res.second;
@@ -280,7 +280,7 @@ public:
                                     http::HTTPRequest const &   req)
   {
     LOG_STACK_TRACE_POINT;
-    script::Variant result = script::Variant::Object();
+    variant::Variant result = variant::Variant::Object();
 
     result["timeToComplete"] = node_->TimeToComplete();
 
@@ -293,7 +293,7 @@ public:
   http::HTTPResponse Finished(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
     LOG_STACK_TRACE_POINT;
-    script::Variant result = script::Variant::Object();
+    variant::Variant result = variant::Variant::Object();
 
     result["finished"] = node_->finished();
 

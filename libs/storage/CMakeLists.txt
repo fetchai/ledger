@@ -35,3 +35,4 @@ if(FETCH_ENABLE_EXAMPLES)
 endif(FETCH_ENABLE_EXAMPLES)
 
 add_test_target()
+add_benchmark_target()

@@ -1650,7 +1650,7 @@ bool Analyser::AnnotateInvokeOp(const ExpressionNodePtr &node)
     }
     else
     {
-      // Variable
+      // variable
       AddError(lhs->token, "operand does not support function-call operator");
       return false;
     }

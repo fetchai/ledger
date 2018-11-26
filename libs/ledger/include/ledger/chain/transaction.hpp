@@ -27,13 +27,13 @@ class UnverifiedTransaction : private MutableTransaction
 public:
   using super_type = MutableTransaction;
   using super_type::VERSION;
-  using super_type::hasher_type;
-  using super_type::digest_type;
-  using super_type::resource_set_type;
+  using super_type::Hasher;
+  using super_type::TxDigest;
+  using super_type::ResourceSet;
   using super_type::resources;
-  using super_type::signatures;
   using super_type::summary;
   using super_type::data;
+  using super_type::signatures;
   using super_type::contract_name;
   using super_type::digest;
 
@@ -69,10 +69,9 @@ class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
   using super_type = UnverifiedTransaction;
-  using super_type::hasher_type;
-  using super_type::digest_type;
-  using super_type::resource_set_type;
-  using super_type::signatures;
+  using super_type::Hasher;
+  using super_type::TxDigest;
+  using super_type::ResourceSet;
 
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {

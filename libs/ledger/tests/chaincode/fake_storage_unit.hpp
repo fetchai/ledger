@@ -39,6 +39,8 @@ public:
   using mutex_type         = std::mutex;
   using lock_guard_type    = std::lock_guard<mutex_type>;
 
+  static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
+
   Document GetOrCreate(ResourceAddress const &key) override
   {
     lock_guard_type lock(mutex_);
@@ -172,7 +174,7 @@ public:
     }
     else
     {
-      fetch::logger.Info("Reverting to clean state: ", bookmark);
+      FETCH_LOG_INFO(LOGGING_NAME, "Reverting to clean state: ", bookmark);
 
       state_.clear();
     }

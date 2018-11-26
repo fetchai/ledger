@@ -116,7 +116,7 @@ void TestSerializationSpeed()
   buffer << a;
 
   high_resolution_clock::time_point t2 = high_resolution_clock::now();
-  buffer.Seek(0);
+  buffer.seek(0);
   buffer >> b;
   std::sort(c.begin(), c.end());
   high_resolution_clock::time_point t3  = high_resolution_clock::now();

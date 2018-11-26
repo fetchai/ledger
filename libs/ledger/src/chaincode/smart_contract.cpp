@@ -18,9 +18,9 @@
 
 #include "ledger/chaincode/smart_contract.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/script/variant.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
+#include "variant/variant.hpp"
 
 #include <stdexcept>
 
@@ -40,12 +40,12 @@ SmartContract::SmartContract(vm::Script const &script)
   vm_     = std::make_unique<vm::VM>(module_.get());
 }
 
-Contract::Status SmartContract::InvokeContract(transaction_type const &tx)
+Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
   Identifier identifier;
   identifier.Parse(static_cast<std::string>(tx.contract_name()));
 
-  if (!vm_->Execute(script_, identifier.name()))
+  if (!vm_->Execute(script_, static_cast<std::string>(identifier.name())))
   {
     return Status::FAILED;
   }

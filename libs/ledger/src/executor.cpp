@@ -22,33 +22,38 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "metrics/metrics.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <random>
 #include <thread>
 
+static constexpr char const *LOGGING_NAME = "Executor";
+
+using fetch::metrics::Metrics;
+
 namespace fetch {
 namespace ledger {
 
-#if 0
-std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
-{
-  std::vector<uint16_t> elements(lane_set.size());
-  std::copy(lane_set.begin(), lane_set.end(), elements.begin());
-  std::sort(elements.begin(), elements.end());
-
-  bool not_first_loop = false;
-  for (auto element : elements)
-  {
-    if (not_first_loop)
-      stream << ',';
-    stream << element;
-    not_first_loop = true;
-  }
-  return stream;
-}
-#endif
+// Useful to include when debugging:
+//
+// std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
+//{
+//  std::vector<uint16_t> elements(lane_set.size());
+//  std::copy(lane_set.begin(), lane_set.end(), elements.begin());
+//  std::sort(elements.begin(), elements.end());
+//
+//  bool not_first_loop = false;
+//  for (auto element : elements)
+//  {
+//    if (not_first_loop)
+//      stream << ',';
+//    stream << element;
+//    not_first_loop = true;
+//  }
+//  return stream;
+//}
 
 /**
  * Executes a given transaction across a series of lanes
@@ -58,15 +63,18 @@ std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &la
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice,
-                                   lane_set_type const &lanes)
+Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
 
-  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
   FETCH_UNUSED(lanes);
+
+#ifdef FETCH_ENABLE_METRICS
+  Metrics::Timestamp const started = Metrics::Clock::now();
+#endif  // FETCH_ENABLE_METRICS
 
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the
@@ -78,7 +86,7 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   }
 
   Identifier identifier;
-  identifier.Parse(static_cast<std::string>(tx.contract_name()));
+  identifier.Parse(tx.contract_name());
 
   // Lookup the chain code associated with the transaction
   auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
@@ -100,7 +108,14 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   // detach the chain code from the current context
   chain_code->Detach();
 
-  fetch::logger.Info("Executing tx ", byte_array::ToBase64(hash), " (success)");
+#ifdef FETCH_ENABLE_METRICS
+  Metrics::Timestamp const completed = Metrics::Clock::now();
+#endif  // FETCH_ENABLE_METRICS
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash), " (success)");
+
+  FETCH_METRIC_TX_EXEC_STARTED_EX(hash, started);
+  FETCH_METRIC_TX_EXEC_COMPLETE_EX(hash, completed);
 
   return Status::SUCCESS;
 }

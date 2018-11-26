@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/script/variant.hpp"
 #include "ledger/chaincode/contract.hpp"
+#include "variant/variant.hpp"
 #include "vm/module.hpp"
 
 namespace fetch {
@@ -34,65 +34,57 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S *smart_contract_instance = null
 
   module->ExportClass<byte_array::ByteArray>("ByteArray").Constructor<std::string>();
 
-  module->ExportClass<script::Variant>("Variant").Constructor();
+  module->ExportClass<variant::Variant>("Variant").Constructor();
 
-  module->ExportFunction("toString", [](script::Variant const &var) -> std::string {
-    if (var.is_string())
+  module->ExportFunction("toString", [](variant::Variant const &var) -> std::string {
+    if (var.Is<std::string>())
     {
       return var.As<std::string>();
     }
     return std::string("");
   });
 
-  module->ExportFunction("toInt32", [](script::Variant const &var) -> int32_t {
-    if (var.is_int())
+  module->ExportFunction("toInt32", [](variant::Variant const &var) -> int32_t {
+    if (var.Is<int32_t>())
     {
-      return int32_t(var.As<int64_t>());
+      return var.As<int32_t>();
     }
     return int32_t(0);
   });
 
-  module->ExportFunction("toInt64", [](script::Variant const &var) -> int64_t {
-    if (var.is_int())
+  module->ExportFunction("toInt64", [](variant::Variant const &var) -> int64_t {
+    if (var.Is<int64_t>())
     {
       return var.As<int64_t>();
     }
     return int64_t(0);
   });
 
-  module->ExportFunction("toBool", [](script::Variant const &var) -> bool {
-    if (var.is_int())
+  module->ExportFunction("toBool", [](variant::Variant const &var) -> bool {
+    if (var.Is<bool>())
     {
-      return int32_t(var.As<bool>());
+      return var.As<bool>();
     }
     return bool(false);
   });
 
-  module->ExportFunction("toVariant", [](std::string const &val) -> script::Variant {
-    script::Variant ret;
-    ret = byte_array::ByteArray(val);
-    return ret;
+  module->ExportFunction("toVariant", [](std::string const &val) -> variant::Variant {
+    return variant::Variant{val.c_str()};
   });
 
-  module->ExportFunction("toVariant", [](int64_t const &val) -> script::Variant {
-    script::Variant ret = val;
-    return ret;
-  });
+  module->ExportFunction(
+      "toVariant", [](int64_t const &val) -> variant::Variant { return variant::Variant{val}; });
 
-  module->ExportFunction("toVariant", [](int32_t const &val) -> script::Variant {
-    script::Variant ret = val;
-    return ret;
-  });
+  module->ExportFunction(
+      "toVariant", [](int32_t const &val) -> variant::Variant { return variant::Variant{val}; });
 
-  module->ExportFunction("toVariant", [](bool const &val) -> script::Variant {
-    script::Variant ret = val;
-    return ret;
-  });
+  module->ExportFunction("toVariant",
+                         [](bool const &val) -> variant::Variant { return variant::Variant{val}; });
 
   module->ExportClass<SmartContract>("Ledger")
       .ExportStaticFunction("GetOrCreateRecord",
-                            [](std::string const &address) -> script::Variant {
-                              script::Variant ret;
+                            [](std::string const &address) -> variant::Variant {
+                              variant::Variant ret;
 
                               return ret;
                             })

@@ -19,6 +19,7 @@
 
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
@@ -29,10 +30,11 @@
 
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/wire_transaction.hpp"
 
-#include <sstream>
-
+#include <algorithm>
 #include <iostream>
+#include <sstream>
 
 namespace fetch {
 namespace ledger {
@@ -40,6 +42,11 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 public:
+  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
+  static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
+  static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
+  static byte_array::ConstByteArray const PATH_SEPARATOR;
+
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
     : storage_{storage}
     , processor_{processor}
@@ -53,18 +60,24 @@ public:
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
 
-      // define the api prefix
-      std::string const api_prefix =
-          "/api/contract/" + string::Replace(contract_name, '.', '/') + '/';
+      byte_array::ByteArray contract_path{contract_name};
+      contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
+                            static_cast<char const &>(PATH_SEPARATOR[0]));
+
+      byte_array::ByteArray api_path;
+      //* ByteArry from `contract_name` performs deep copy due to const -> non-const
+      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR);
+      std::size_t const api_path_base_size = api_path.size();
 
       // enumerate all of the contract query handlers
       auto const &query_handlers = contract->query_handlers();
       for (auto const &handler : query_handlers)
       {
-        std::string const &query_name = handler.first;
-        std::string const  api_path   = api_prefix + query_name;
+        byte_array::ConstByteArray const &query_name = handler.first;
+        api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
+        api_path.Append(query_name);
 
-        fetch::logger.Info("API: ", api_path);
+        FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
 
         Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
                                                          http::HTTPRequest const &request) {
@@ -77,37 +90,93 @@ public:
     Post("/api/debug/submit",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            chain::MutableTransaction tx;
+
            tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
            tx.set_fee(transaction_index_);
            tx.set_contract_name("fetch.dummy.run");
            tx.set_data(std::to_string(transaction_index_++));
 
-           auto vtx = chain::VerifiedTransaction::Create(std::move(tx));
-
-           processor_.AddTransaction(vtx);
+           processor_.AddTransaction(tx);
 
            std::ostringstream oss;
-           oss << R"({ "submitted": true, "tx": ")"
-               << static_cast<std::string>(byte_array::ToBase64(vtx.digest())) << "\" }";
+           oss << R"({ "submitted": true })";
 
            return http::CreateJsonResponse(oss.str());
+         });
+
+    // new transaction
+    Post("/api/contract/submit",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           std::ostringstream oss;
+
+           bool error_response{true};
+           try
+           {
+             std::size_t submitted{0};
+
+             // detect the content format, defaulting to json
+             byte_array::ConstByteArray content_type = "application/vnd+fetch.transaction+json";
+             if (request.header().Has("content-type"))
+             {
+               content_type = request.header()["content-type"];
+             }
+
+             // handle the types of transaction
+             bool unknown_format = false;
+             if (content_type == "application/vnd+fetch.transaction+native")
+             {
+               submitted = SubmitNativeTx(request);
+             }
+             else if (content_type == "application/vnd+fetch.transaction+json")
+             {
+               submitted = SubmitJsonTx(request);
+             }
+             else
+             {
+               unknown_format = true;
+             }
+
+             if (unknown_format)
+             {
+               // format the message
+               std::ostringstream error_msg;
+               error_msg << "Unknown content type: " << content_type;
+
+               oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
+             }
+             else
+             {
+               // success report the statistics
+               oss << R"({ "submitted": true, "count": )" << submitted << " }";
+               error_response = false;
+             }
+           }
+           catch (std::exception const &ex)
+           {
+             oss.clear();
+             oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
+           }
+
+           return http::CreateJsonResponse(oss.str(), (error_response)
+                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                          : http::Status::SUCCESS_OK);
          });
   }
 
 private:
-  http::HTTPResponse OnQuery(std::string const &contract_name, std::string const &query,
-                             http::HTTPRequest const &request)
+  http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
+                             byte_array::ConstByteArray const &query,
+                             http::HTTPRequest const &         request)
   {
     try
     {
-
       // parse the incoming request
       json::JSONDocument doc;
       doc.Parse(request.body());
 
       // dispatch the contract type
-      script::Variant response;
-      auto            contract = contract_cache_.Lookup(contract_name);
+      variant::Variant response;
+      auto             contract = contract_cache_.Lookup(contract_name);
 
       // attach, dispatch and detach
       contract->Attach(storage_);
@@ -125,12 +194,12 @@ private:
       }
       else
       {
-        fetch::logger.Warn("Error running query. status = ", static_cast<int>(status));
+        FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
       }
     }
     catch (std::exception &ex)
     {
-      fetch::logger.Warn("Query error: ", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
     }
 
     return JsonBadRequest();
@@ -138,8 +207,11 @@ private:
 
   static http::HTTPResponse JsonBadRequest()
   {
-    return http::CreateJsonResponse("", http::status_code::CLIENT_ERROR_BAD_REQUEST);
+    return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
+
+  std::size_t SubmitJsonTx(http::HTTPRequest const &request);
+  std::size_t SubmitNativeTx(http::HTTPRequest const &request);
 
   std::size_t transaction_index_{0};
 

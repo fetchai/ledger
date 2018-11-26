@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
+#include "metrics/metrics.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
@@ -28,7 +29,12 @@
 #include <set>
 #include <utility>
 #include <vector>
+
 namespace fetch {
+namespace chain {
+class VerifiedTransaction;
+}
+
 namespace storage {
 
 template <typename R, typename T, typename S = T>
@@ -43,10 +49,13 @@ public:
     START_SYNC    = 4,
     FINISHED_SYNC = 5
   };
+
   using self_type             = ObjectStoreSyncronisationProtocol<R, T, S>;
   using protocol_handler_type = service::protocol_handler_type;
   using register_type         = R;
   using thread_pool_type      = network::ThreadPool;
+
+  static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 
   ObjectStoreSyncronisationProtocol(protocol_handler_type const &p, register_type r,
                                     thread_pool_type tp, ObjectStore<T> *store)
@@ -66,7 +75,7 @@ public:
 
   void Start()
   {
-    fetch::logger.Debug("Starting synchronisation of ", typeid(T).name());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting synchronisation of ", typeid(T).name());
     if (running_)
     {
       return;
@@ -127,13 +136,13 @@ public:
         auto                    ptr     = peer.lock();
         fetch::service::Promise promise = ptr->Call(protocol_, OBJECT_COUNT);
 
-        uint64_t remote_size = promise.As<uint64_t>();
+        uint64_t remote_size = promise->As<uint64_t>();
 
         obj_size = std::max(obj_size, remote_size);
       }
     });
 
-    fetch::logger.Info("Expected tx size: ", obj_size);
+    FETCH_LOG_INFO(LOGGING_NAME, "Expected tx size: ", obj_size);
 
     // If there are objects to sync from the network, fetch N roots from each of the peers in
     // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
@@ -154,7 +163,7 @@ public:
 
   void FetchObjectsFromPeers()
   {
-    fetch::logger.Debug("Fetching objects ", typeid(T).name(), " from peer");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Fetching objects ", typeid(T).name(), " from peer");
 
     if (!running_)
     {
@@ -204,12 +213,13 @@ public:
       }
 
       incoming_objects_.clear();
-      if (!p.Wait(100, false))
+      FETCH_LOG_PROMISE();
+      if (!p->Wait(1000, false))
       {
         continue;
       }
 
-      p.template As<std::vector<S>>(incoming_objects_);
+      p->template As<std::vector<S>>(incoming_objects_);
 
       if (!running_)
       {
@@ -228,6 +238,11 @@ public:
           {
             continue;
           }
+
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewElement(obj.data.digest());
+#endif  // FETCH_ENABLE_METRICS
+
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -320,7 +335,7 @@ private:
   thread_pool_type      thread_pool_;
   const uint64_t        PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
 
-  mutex::Mutex    mutex_;
+  mutex::Mutex    mutex_{__LINE__, __FILE__};
   ObjectStore<T> *store_;
 
   struct CachedObject
@@ -353,7 +368,7 @@ private:
   uint64_t max_cache_           = 2000;
   double   max_cache_life_time_ = 20000;  // TODO(issue 7): Make cache configurable
 
-  mutable mutex::Mutex          object_list_mutex_;
+  mutable mutex::Mutex          object_list_mutex_{__LINE__, __FILE__};
   std::vector<service::Promise> object_list_promises_;
   std::vector<T>                new_objects_;
   std::vector<S>                incoming_objects_;
@@ -456,13 +471,12 @@ private:
 
       // Timeout fail, push this subtree back onto the root for another go
       incoming_objects_.clear();
-      if (!promise.Wait(100, false))
+      if (!promise->Wait(100, false))
       {
         roots_to_sync_.push(root);
         continue;
       }
-
-      promise.template As<std::vector<S>>(incoming_objects_);
+      promise->template As<std::vector<S>>(incoming_objects_);
 
       store_->WithLock([this]() {
         for (auto &o : incoming_objects_)
@@ -475,6 +489,11 @@ private:
           {
             continue;
           }
+
+#ifdef FETCH_ENABLE_METRICS
+          RecordNewElement(obj.data.digest());
+#endif  // FETCH_ENABLE_METRICS
+
           store_->LocklessSet(rid, obj.data);
 
           cache_.push_back(obj);
@@ -495,6 +514,19 @@ private:
       thread_pool_->Post([this]() { this->SyncSubtree(); });
     }
   }
+
+#ifdef FETCH_ENABLE_METRICS
+  typename std::enable_if<std::is_same<T, chain::VerifiedTransaction>::value>::type
+  RecordNewElement(byte_array::ConstByteArray const &identifier)
+  {
+    using fetch::metrics::Metrics;
+    using fetch::metrics::MetricHandler;
+
+    // record the event
+    Metrics::Instance().RecordMetric(identifier, MetricHandler::Instrument::TRANSACTION,
+                                     MetricHandler::Event::SYNCED);
+  }
+#endif  // FETCH_ENABLE_METRICS
 };
 
 }  // namespace storage
