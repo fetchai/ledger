@@ -64,6 +64,8 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ProtocolId const &p, 
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
   this->ExposeWithClientArg(PULL_OBJECTS, this, &Self::PullObjects);
   this->Expose(PULL_SUBTREE, this, &Self::PullSubtree);
+  this->Expose(START_SYNC, this, &Self::StartSync);
+  this->Expose(FINISHED_SYNC, this, &Self::FinishedSync);
 }
 
 /**
@@ -382,15 +384,15 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(b
   return ret;
 }
 
-//void TransactionStoreSyncProtocol::StartSync()
-//{
-//  needs_sync_ = true;
-//}
-//
-//bool TransactionStoreSyncProtocol::FinishedSync()
-//{
-//  return !needs_sync_;
-//}
+void TransactionStoreSyncProtocol::StartSync()
+{
+  needs_sync_ = true;
+}
+
+bool TransactionStoreSyncProtocol::FinishedSync()
+{
+  return !needs_sync_;
+}
 
 uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {

@@ -45,6 +45,15 @@ class TransactionStoreSyncProtocol : public fetch::service::Protocol
 {
 public:
 
+  enum
+  {
+    OBJECT_COUNT  = 1,
+    PULL_OBJECTS  = 2,
+    PULL_SUBTREE  = 3,
+    START_SYNC    = 4,
+    FINISHED_SYNC = 5,
+  };
+
   using Register = fetch::network::ConnectionRegister<LaneConnectivityDetails>;
 
   using UnverifiedTransaction = chain::UnverifiedTransaction;
@@ -79,13 +88,6 @@ protected:
 
 private:
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
-
-  enum
-  {
-    OBJECT_COUNT  = 1,
-    PULL_OBJECTS  = 2,
-    PULL_SUBTREE  = 3,
-  };
 
   struct CachedObject
   {
@@ -122,12 +124,10 @@ private:
   void RealisePromises(std::size_t index = 0);
   void TrimCache();
 
-
   TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
 
-//  void StartSync();
-//  bool FinishedSync();
-
+  void StartSync();
+  bool FinishedSync();
 
   // Reverse bits in byte
   uint8_t Reverse(uint8_t c);
@@ -165,15 +165,8 @@ private:
 // Reverse bits in byte
 inline uint8_t TransactionStoreSyncProtocol::Reverse(uint8_t c)
 {
-#if 1
   // https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64Bits
   return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
-#else
-  c = uint8_t(((c & 0xF0) >> 4) | ((c & 0x0F) << 4));
-    c = uint8_t(((c & 0xCC) >> 2) | ((c & 0x33) << 2));
-    c = uint8_t(((c & 0xAA) >> 1) | ((c & 0x55) << 1));
-    return c;
-#endif
 }
 
 }  // namespace storage
