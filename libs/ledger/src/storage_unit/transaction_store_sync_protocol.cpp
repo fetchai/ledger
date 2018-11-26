@@ -291,7 +291,7 @@ void TransactionStoreSyncProtocol::TrimCache()
     std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
                  [&cut_off](CachedObject const &object) {
                    // we only copy objects which are young that we want to keep
-                   return object.created_ > cut_off;
+                   return object.created > cut_off;
                  });
 
     FETCH_LOG_INFO(LOGGING_NAME, "New cache size: ", next_cache.size(),
@@ -453,7 +453,7 @@ void TransactionStoreSyncProtocol::SyncSubtree()
 
       byte_array::ByteArray array;
 
-      // TODO: This should be linked the a ResourceID size
+      // TODO(unknown): This should be linked the a ResourceID size
       array.Resize(256 / 8);
       array[0] = root;
 

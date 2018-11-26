@@ -37,6 +37,12 @@ namespace {
 
 class DummySink : public fetch::ledger::VerifiedTransactionSink
 {
+
+  std::size_t const       threshold_;
+  std::size_t             count_{0};
+  std::mutex              lock_;
+  std::condition_variable condition_;
+
 public:
   explicit DummySink(std::size_t threshold)
     : threshold_(threshold)
@@ -74,11 +80,6 @@ public:
 
     condition_.wait(lock);
   }
-
-  std::size_t const       threshold_;
-  std::size_t             count_{0};
-  std::mutex              lock_;
-  std::condition_variable condition_;
 };
 
 void TransactionVerifierBench(benchmark::State &state)

@@ -91,8 +91,8 @@ private:
     using Timepoint = Clock::time_point;
     using HandleSet = std::unordered_set<uint64_t>;
 
-    CachedObject(UnverifiedTransaction const &value)
-      : data(value)
+    CachedObject(UnverifiedTransaction value)
+      : data(std::move(value))
     {}
 
     CachedObject(UnverifiedTransaction &&value)
@@ -101,7 +101,7 @@ private:
 
     UnverifiedTransaction data;
     HandleSet             delivered_to;
-    Timepoint             created_{Clock::now()};
+    Timepoint             created{Clock::now()};
   };
 
   using Self   = TransactionStoreSyncProtocol;

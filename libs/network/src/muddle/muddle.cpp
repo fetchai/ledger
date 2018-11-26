@@ -116,7 +116,9 @@ Muddle::ConnectionMap Muddle::GetConnections()
   for (auto const &entry : routing_table)
   {
     if (!entry.second.direct)
+    {
       continue;
+    }
 
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
