@@ -73,9 +73,9 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
         notify_.wait(lock);
       }
     }
-#else // !FETCH_PROMISE_CV
+#else   // !FETCH_PROMISE_CV
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-#endif // FETCH_PROMISE_CV
+#endif  // FETCH_PROMISE_CV
   }
 
   if (IsWaiting())
@@ -109,7 +109,7 @@ void PromiseImplementation::UpdateState(State state)
     FETCH_LOCK(notify_lock_);
     if (state_ == State::WAITING)
     {
-      state_ = state;
+      state_   = state;
       dispatch = true;
 
       // wake up all the pending threads

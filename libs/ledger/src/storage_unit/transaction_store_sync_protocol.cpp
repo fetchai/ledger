@@ -281,24 +281,21 @@ void TransactionStoreSyncProtocol::TrimCache()
 
     // reserve the space for the next cache
     Cache next_cache;
-    next_cache.reserve(cache_.size()); // worst case
+    next_cache.reserve(cache_.size());  // worst case
 
     // compute the deadline for the cache entries
-    auto const cut_off = CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
+    auto const cut_off =
+        CachedObject::Clock::now() - std::chrono::milliseconds(uint32_t{MAX_CACHE_LIFETIME_MS});
 
     // generate the next cache version
-    std::copy_if(
-      cache_.begin(),
-      cache_.end(),
-      std::back_inserter(next_cache),
-      [&cut_off](CachedObject const &object) {
+    std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
+                 [&cut_off](CachedObject const &object) {
+                   // we only copy objects which are young that we want to keep
+                   return object.created_ > cut_off;
+                 });
 
-        // we only copy objects which are young that we want to keep
-        return object.created_ > cut_off;
-      }
-    );
-
-    FETCH_LOG_INFO(LOGGING_NAME, "New cache size: ", next_cache.size(), " Old cache size: ", cache_.size());
+    FETCH_LOG_INFO(LOGGING_NAME, "New cache size: ", next_cache.size(),
+                   " Old cache size: ", cache_.size());
 
     // replace the old cache
     cache_ = std::move(next_cache);
@@ -333,14 +330,13 @@ void TransactionStoreSyncProtocol::OnTransaction(chain::VerifiedTransaction cons
 
 #ifdef FETCH_ENABLE_METRICS
     RecordNewElement(tx.digest());
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
   }
 }
 
 void TransactionStoreSyncProtocol::OnTransactions(TransactionList const &txs)
 {
-  store_.WithLock([this, &txs]()
-  {
+  store_.WithLock([this, &txs]() {
     for (auto const &tx : txs)
     {
       ResourceID const rid(tx.digest());
@@ -351,7 +347,7 @@ void TransactionStoreSyncProtocol::OnTransactions(TransactionList const &txs)
 
 #ifdef FETCH_ENABLE_METRICS
         RecordNewElement(tx.digest());
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
       }
     }
   });
@@ -364,7 +360,8 @@ void TransactionStoreSyncProtocol::OnTransactions(TransactionList const &txs)
  *
  * @return: the subtree the client is requesting as a vector (size limited)
  */
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask)
+TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
+    byte_array::ConstByteArray const &rid, uint64_t mask)
 {
   TxList ret;
 
@@ -400,7 +397,8 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
   return store_.size();
 }
 
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(uint64_t const &client_handle)
+TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
+    uint64_t const &client_handle)
 {
   // Creating result
   TxList ret;
@@ -510,6 +508,5 @@ void TransactionStoreSyncProtocol::RealiseSubtreePromises()
   }
 }
 
-
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

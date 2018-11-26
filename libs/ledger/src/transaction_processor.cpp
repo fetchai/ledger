@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "metrics/metrics.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "metrics/metrics.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -60,14 +60,14 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
 {
 #ifdef FETCH_ENABLE_METRICS
   auto const submitted = metrics::Metrics::Clock::now();
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
   // dispatch all the transactions to the storage engine
   storage_.AddTransactions(txs);
 
 #ifdef FETCH_ENABLE_METRICS
   auto const stored = metrics::Metrics::Clock::now();
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 
   // enqueue all of the transactions
   for (auto const &tx : txs)
@@ -84,7 +84,7 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
     FETCH_METRIC_TX_STORED_EX(tx.digest(), stored);
     FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
   }
-#endif // FETCH_ENABLE_METRICS
+#endif  // FETCH_ENABLE_METRICS
 }
 
 }  // namespace ledger

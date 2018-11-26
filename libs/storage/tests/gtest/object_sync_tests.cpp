@@ -21,10 +21,10 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
+#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/service/server.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -165,9 +165,9 @@ private:
 class TestService : public ServiceServer<TCPServer>
 {
 public:
-  using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
-  using TransactionStore = ObjectStore<VerifiedTransaction>;
-  using TxSyncProtocol   = TransactionStoreSyncProtocol;
+  using ClientRegister           = ConnectionRegister<LaneConnectivityDetails>;
+  using TransactionStore         = ObjectStore<VerifiedTransaction>;
+  using TxSyncProtocol           = TransactionStoreSyncProtocol;
   using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
   using Super                    = ServiceServer<TCPServer>;
 

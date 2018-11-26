@@ -42,7 +42,8 @@ public:
   StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
   void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
-             fetch::network::NetworkManager const &tm, std::size_t verification_threads, bool refresh_storage = false)
+             fetch::network::NetworkManager const &tm, std::size_t verification_threads,
+             bool refresh_storage = false)
   {
     for (std::size_t i = 0; i < lanes; ++i)
     {

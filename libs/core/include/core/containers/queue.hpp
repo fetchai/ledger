@@ -259,7 +259,6 @@ using MPSCQueue = Queue<T, N, MultiThreadedIndex<N>, SingleThreadedIndex<N>>;
 template <typename T, std::size_t N>
 using MPMCQueue = Queue<T, N, MultiThreadedIndex<N>, MultiThreadedIndex<N>>;
 
-
 #if 0
 template <typename T, std::size_t SIZE>
 class SimpleQueue

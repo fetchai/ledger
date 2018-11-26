@@ -145,8 +145,8 @@ struct CommandLineArguments
   std::string        external_address;
   std::string        host_name;
   ManifestPtr        manifest;
-  std::size_t processor_threads;
-  std::size_t verification_threads;
+  std::size_t        processor_threads;
+  std::size_t        verification_threads;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -188,8 +188,10 @@ struct CommandLineArguments
     parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
                    std::string{});
     parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
-    parameters.add(args.processor_threads, "processor-threads", "The number of processor threads", std::size_t{std::thread::hardware_concurrency()});
-    parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads", std::size_t{std::thread::hardware_concurrency()});
+    parameters.add(args.processor_threads, "processor-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
+    parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -492,9 +494,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir, args.external_address,
-        args.processor_threads, args.verification_threads,
-        std::chrono::milliseconds(args.block_interval));
+        args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
+        args.verification_threads, std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

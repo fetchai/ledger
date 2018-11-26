@@ -28,7 +28,7 @@ public:
   using TransactionList = std::vector<chain::UnverifiedTransaction>;
 
   // Construction / Destruction
-  UnverifiedTransactionSink() = default;
+  UnverifiedTransactionSink()          = default;
   virtual ~UnverifiedTransactionSink() = default;
 
   /// @name Transaction Handlers
@@ -43,7 +43,7 @@ public:
   using TransactionList = std::vector<chain::VerifiedTransaction>;
 
   // Construction / Destruction
-  VerifiedTransactionSink() = default;
+  VerifiedTransactionSink()          = default;
   virtual ~VerifiedTransactionSink() = default;
 
   /// @name Transaction Handlers
@@ -61,5 +61,5 @@ inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
   }
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

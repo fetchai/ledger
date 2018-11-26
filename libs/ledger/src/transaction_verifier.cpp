@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
 #include "metrics/metrics.hpp"
-#include "ledger/transaction_verifier.hpp"
 
 #include <chrono>
 
@@ -92,7 +92,8 @@ void TransactionVerifier::Verifier()
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
       }
     }
   }
@@ -159,6 +160,5 @@ void TransactionVerifier::Dispatcher()
   }
 }
 
-
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

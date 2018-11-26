@@ -83,7 +83,8 @@ public:
     return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans, bool *status = nullptr)
+  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans,
+                                    bool *                                  status = nullptr)
   {
     VerifiedTransaction ret;
 

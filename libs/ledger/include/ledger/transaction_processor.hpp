@@ -17,11 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "miner/miner_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-
+#include "miner/miner_interface.hpp"
 
 #include <atomic>
 #include <thread>
@@ -29,8 +28,7 @@
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor : public UnverifiedTransactionSink
-                           , public VerifiedTransactionSink
+class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
   using MutableTransaction = chain::MutableTransaction;
@@ -38,7 +36,8 @@ public:
   using TransactionList = std::vector<chain::Transaction>;
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner, std::size_t num_threads);
+  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner,
+                       std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
   ~TransactionProcessor() override                   = default;
@@ -60,7 +59,6 @@ public:
   TransactionProcessor &operator=(TransactionProcessor &&) = delete;
 
 protected:
-
   /// @name Unverified Transaction Sink
   /// @{
   void OnTransaction(chain::UnverifiedTransaction const &tx) override;
@@ -73,10 +71,9 @@ protected:
   /// @}
 
 private:
-
-  StorageUnitInterface&   storage_;
-  miner::MinerInterface&  miner_;
-  TransactionVerifier     verifier_;
+  StorageUnitInterface & storage_;
+  miner::MinerInterface &miner_;
+  TransactionVerifier    verifier_;
 };
 
 /**

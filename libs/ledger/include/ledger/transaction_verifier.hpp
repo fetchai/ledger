@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
 
 #include <cstddef>
 #include <thread>
@@ -40,7 +40,7 @@ public:
     , sink_(sink)
   {}
   TransactionVerifier(TransactionVerifier const &) = delete;
-  TransactionVerifier(TransactionVerifier &&) = delete;
+  TransactionVerifier(TransactionVerifier &&)      = delete;
   ~TransactionVerifier();
 
   /// @name Processor Controls
@@ -76,7 +76,7 @@ private:
   std::size_t batch_size_{DEFAULT_BATCH_SIZE};
   std::size_t verifying_threads_;
 
-  Sink           &sink_;
+  Sink &          sink_;
   Flag            active_{true};
   Threads         threads_;
   VerifiedQueue   verified_queue_;
@@ -93,6 +93,5 @@ inline void TransactionVerifier::AddTransaction(MutableTransaction &&mtx)
   unverified_queue_.Push(std::move(mtx));
 }
 
-
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

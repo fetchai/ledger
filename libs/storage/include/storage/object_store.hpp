@@ -183,8 +183,8 @@ public:
 
 //#define DISABLE_DISK_WRITES
 #ifndef DISABLE_DISK_WRITES
-    store_.Set(rid, ser.data()); // temporarily disable disk writes
-#endif // !DISABLE_DISK_WRITES
+    store_.Set(rid, ser.data());  // temporarily disable disk writes
+#endif                            // !DISABLE_DISK_WRITES
   }
 
   std::size_t size() const

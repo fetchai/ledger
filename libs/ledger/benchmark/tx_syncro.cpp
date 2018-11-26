@@ -38,32 +38,33 @@
 //#include <iostream>
 //#include <utility>
 //
-//namespace {
+// namespace {
 //
-//using fetch::byte_array::ConstByteArray;
-//using fetch::byte_array::ByteArray;
-//using fetch::storage::ResourceID;
-//using fetch::chain::VerifiedTransaction;
-//using fetch::chain::MutableTransaction;
-//using fetch::crypto::ECDSASigner;
-//using fetch::random::LinearCongruentialGenerator;
+// using fetch::byte_array::ConstByteArray;
+// using fetch::byte_array::ByteArray;
+// using fetch::storage::ResourceID;
+// using fetch::chain::VerifiedTransaction;
+// using fetch::chain::MutableTransaction;
+// using fetch::crypto::ECDSASigner;
+// using fetch::random::LinearCongruentialGenerator;
 //
-//using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
-//using TransactionList  = std::vector<VerifiedTransaction>;
+// using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
+// using TransactionList  = std::vector<VerifiedTransaction>;
 //
-//using namespace fetch::storage;
-//using namespace fetch::byte_array;
-//using namespace fetch::network;
-//using namespace fetch::chain;
-//using namespace fetch::service;
-//using namespace fetch::ledger;
+// using namespace fetch::storage;
+// using namespace fetch::byte_array;
+// using namespace fetch::network;
+// using namespace fetch::chain;
+// using namespace fetch::service;
+// using namespace fetch::ledger;
 //
-//TransactionList GenerateTransactions(std::size_t count, bool large_packets)
+// TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 //{
 //  static constexpr std::size_t TX_SIZE      = 2048;
 //  static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
 //
-//  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
+//  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of
+//  64bits");
 //
 //  LinearCongruentialGenerator rng;
 //
@@ -96,18 +97,19 @@
 //  return list;
 //}
 //
-//class ControllerProtocol : public Protocol
+// class ControllerProtocol : public Protocol
 //{
 //
 //  using connectivity_details_type  = LaneConnectivityDetails;
 //  using service_client_type        = fetch::service::ServiceClient;
 //  using shared_service_client_type = std::shared_ptr<service_client_type>;
-//  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
-//  using mutex_type                 = fetch::mutex::Mutex;
-//  using connection_handle_type     = client_register_type::connection_handle_type;
-//  using ClientRegister             = ConnectionRegister<LaneConnectivityDetails>;
+//  using client_register_type       =
+//  fetch::network::ConnectionRegister<connectivity_details_type>; using mutex_type =
+//  fetch::mutex::Mutex; using connection_handle_type     =
+//  client_register_type::connection_handle_type; using ClientRegister             =
+//  ConnectionRegister<LaneConnectivityDetails>;
 //
-//public:
+// public:
 //  enum
 //  {
 //    CONNECT = 1
@@ -138,7 +140,7 @@
 //    }
 //  }
 //
-//private:
+// private:
 //  ClientRegister register_;
 //  NetworkManager nm_;
 //
@@ -147,7 +149,7 @@
 //};
 //
 //// Convienience function to check a port is open
-//void BlockUntilConnect(std::string host, uint16_t port)
+// void BlockUntilConnect(std::string host, uint16_t port)
 //{
 //  NetworkManager nm{1};
 //  nm.Start();
@@ -170,14 +172,14 @@
 //  }
 //}
 //
-//void BlockUntilConnect(uint16_t port)
+// void BlockUntilConnect(uint16_t port)
 //{
 //  BlockUntilConnect("localhost", port);
 //}
 //
 //// Convenience function to call peer
-//template <typename... Args>
-//fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
+// template <typename... Args>
+// fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
 //                                 Args &&... args)
 //{
 //  TCPClient client(nm);
@@ -202,9 +204,9 @@
 //  return prom;
 //}
 //
-//class TestService : public ServiceServer<TCPServer>
+// class TestService : public ServiceServer<TCPServer>
 //{
-//public:
+// public:
 //  using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
 //  using TransactionStore = ObjectStore<VerifiedTransaction>;
 //  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
@@ -252,7 +254,7 @@
 //    thread_pool_->Stop();
 //  }
 //
-//private:
+// private:
 //  ThreadPool     thread_pool_;
 //  ClientRegister register_;
 //
@@ -263,7 +265,7 @@
 //  std::unique_ptr<ControllerProtocol> controller_protocol_;
 //};
 //
-//void TxSync(benchmark::State &state)
+// void TxSync(benchmark::State &state)
 //{
 //
 //  for (auto _ : state)
@@ -295,7 +297,8 @@
 //      for (uint16_t i = 1; i < number_of_services; ++i)
 //      {
 //        CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
-//                 ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i - 1));
+//                 ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i -
+//                 1));
 //      }
 //
 //      // Now send all the TX to one of the clients
@@ -314,7 +317,8 @@
 //      {
 //        // Check last node in chain until they have seen all TXs
 //        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services -1),
-//                                TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::SYNCED_COUNT);
+//                                TestService::TX_STORE_SYNC,
+//                                TestService::TxSyncProtocol::SYNCED_COUNT);
 //
 //        uint64_t obj_count = promise->As<uint64_t>();
 //
@@ -344,4 +348,4 @@
 //
 //} // end namespace
 //
-//BENCHMARK(TxSync)->Range(8, 8<<10);
+// BENCHMARK(TxSync)->Range(8, 8<<10);

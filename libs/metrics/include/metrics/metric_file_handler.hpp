@@ -52,7 +52,7 @@ public:
   MetricFileHandler &operator=(MetricFileHandler &&) = delete;
 
 private:
-  static constexpr std::size_t BUFFER_SIZE = 1 << 18u; // 262144
+  static constexpr std::size_t BUFFER_SIZE = 1 << 18u;  // 262144
 
   struct Entry
   {

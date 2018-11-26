@@ -23,10 +23,10 @@
 
 #include "tx_generation.hpp"
 
-#include <thread>
+#include <benchmark/benchmark.h>
 #include <condition_variable>
 #include <iostream>
-#include <benchmark/benchmark.h>
+#include <thread>
 
 using fetch::chain::VerifiedTransaction;
 using fetch::chain::MutableTransaction;
@@ -38,7 +38,6 @@ namespace {
 class DummySink : public fetch::ledger::VerifiedTransactionSink
 {
 public:
-
   explicit DummySink(std::size_t threshold)
     : threshold_(threshold)
   {}
@@ -76,19 +75,20 @@ public:
     condition_.wait(lock);
   }
 
-  std::size_t const threshold_;
-  std::size_t count_{0};
-  std::mutex lock_;
+  std::size_t const       threshold_;
+  std::size_t             count_{0};
+  std::mutex              lock_;
   std::condition_variable condition_;
 };
 
 void TransactionVerifierBench(benchmark::State &state)
 {
-//  std::cout << "Tx Verification - threads: " << state.range(0) << " num txs: " << state.range(1) << std::endl;
+  //  std::cout << "Tx Verification - threads: " << state.range(0) << " num txs: " << state.range(1)
+  //  << std::endl;
 
   // generate the transactions
   ECDSASigner signer;
-  auto const txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), false, &signer);
+  auto const  txs = GenerateTransactions(static_cast<std::size_t>(state.range(1)), false, &signer);
 
   // wait for the
   for (auto _ : state)
@@ -114,11 +114,10 @@ void TransactionVerifierBench(benchmark::State &state)
 
     state.PauseTiming();
     verifier->Stop();
-
   }
 }
 
-void CreateRanges(benchmark::internal::Benchmark* b)
+void CreateRanges(benchmark::internal::Benchmark *b)
 {
   int const max_threads = static_cast<int>(std::thread::hardware_concurrency());
 

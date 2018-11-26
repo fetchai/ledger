@@ -25,12 +25,12 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
-#include <condition_variable>
 
 namespace fetch {
 namespace service {

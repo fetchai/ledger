@@ -59,7 +59,7 @@ public:
   using connection_handle_type   = client_register_type::connection_handle_type;
   using super_type               = service::ServiceServer<fetch::network::TCPServer>;
   using tx_sync_protocol_type    = TransactionStoreSyncProtocol;
-  using thread_pool_type = network::ThreadPool;
+  using thread_pool_type         = network::ThreadPool;
 
   static constexpr char const *LOGGING_NAME = "LaneService";
 
@@ -110,9 +110,8 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
-                                                                thread_pool_, *tx_store_,
-                                                                verification_threads);
+    tx_sync_protocol_ = std::make_unique<tx_sync_protocol_type>(
+        RPC_TX_STORE_SYNC, register_, thread_pool_, *tx_store_, verification_threads);
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
 
     // TODO(EJF): Not a huge fan of this weak coupling, also the handlers inside the object store

@@ -29,9 +29,10 @@ namespace {
 using fetch::crypto::ECDSASigner;
 using fetch::chain::VerifiedTransaction;
 
-using TransactionList  = std::vector<VerifiedTransaction>;
+using TransactionList = std::vector<VerifiedTransaction>;
 
-inline TransactionList GenerateTransactions(std::size_t count, bool large_packets, ECDSASigner* signer = nullptr)
+inline TransactionList GenerateTransactions(std::size_t count, bool large_packets,
+                                            ECDSASigner *signer = nullptr)
 {
   static constexpr std::size_t TX_SIZE      = 2048;
   static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
@@ -81,5 +82,4 @@ inline TransactionList GenerateTransactions(std::size_t count, bool large_packet
   return list;
 }
 
-
-} // namespace
+}  // namespace

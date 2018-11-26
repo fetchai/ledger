@@ -18,9 +18,9 @@
 
 #include "core/containers/queue.hpp"
 
+#include <atomic>
 #include <gtest/gtest.h>
 #include <memory>
-#include <atomic>
 #include <thread>
 #include <vector>
 
@@ -30,7 +30,7 @@ class QueueTests : public ::testing::Test
 {
 protected:
   static constexpr std::size_t ELEMENT_SIZE = 1024;
-  using Element  = std::array<uint16_t, ELEMENT_SIZE>;
+  using Element                             = std::array<uint16_t, ELEMENT_SIZE>;
 
   template <std::size_t NUM_THREADS, typename Queue>
   void RunTestMultiProducerTest(Queue &queue)
@@ -41,33 +41,31 @@ protected:
     using ThreadPtr  = std::unique_ptr<std::thread>;
     using ThreadList = std::vector<ThreadPtr>;
 
-    static const std::size_t NUM_LOOPS               = 50;
-    static const std::size_t NUM_ELEMENTS_PER_THREAD = (Queue::QUEUE_LENGTH * NUM_LOOPS) / NUM_THREADS;
-    static const std::size_t TOTAL_NUM_ELEMENTS      = NUM_THREADS * NUM_ELEMENTS_PER_THREAD;
+    static const std::size_t NUM_LOOPS = 50;
+    static const std::size_t NUM_ELEMENTS_PER_THREAD =
+        (Queue::QUEUE_LENGTH * NUM_LOOPS) / NUM_THREADS;
+    static const std::size_t TOTAL_NUM_ELEMENTS = NUM_THREADS * NUM_ELEMENTS_PER_THREAD;
 
     ThreadList threads(NUM_THREADS);
 
     uint16_t thread_idx{0};
     for (auto &thread : threads)
     {
-      thread = std::make_unique<std::thread>(
-        [&queue, thread_idx]()
+      thread = std::make_unique<std::thread>([&queue, thread_idx]() {
+        // create the boiler plate element
+        Element element;
+        std::fill(element.begin(), element.end(), thread_idx);
+
+        for (std::size_t i = 0; i < NUM_ELEMENTS_PER_THREAD; ++i)
         {
-          // create the boiler plate element
-          Element element;
-          std::fill(element.begin(), element.end(), thread_idx);
+          // uniquely identify the element
+          element.front() = static_cast<uint16_t>(i);
+          element.back()  = static_cast<uint16_t>(i);
 
-          for (std::size_t i = 0; i < NUM_ELEMENTS_PER_THREAD; ++i)
-          {
-            // uniquely identify the element
-            element.front() = static_cast<uint16_t>(i);
-            element.back() = static_cast<uint16_t>(i);
-
-            // add the element to the queue
-            queue.Push(element);
-          }
+          // add the element to the queue
+          queue.Push(element);
         }
-      );
+      });
 
       ++thread_idx;
     }
@@ -113,7 +111,6 @@ protected:
       thread->join();
     }
     threads.clear();
-
   }
 };
 
@@ -146,4 +143,4 @@ TEST_F(QueueTests, CheckSimpleQueue)
 }
 #endif
 
-} // namespace
+}  // namespace
