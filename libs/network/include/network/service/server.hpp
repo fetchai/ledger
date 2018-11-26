@@ -101,13 +101,18 @@ public:
     LOG_STACK_TRACE_POINT;
   }
 
+  ServiceServer(ServiceServer const &) = delete;
+  ServiceServer(ServiceServer &&)      = delete;
+  ServiceServer &operator=(ServiceServer const &) = delete;
+  ServiceServer &operator=(ServiceServer &&) = delete;
+
   ~ServiceServer()
   {
     LOG_STACK_TRACE_POINT;
 
     client_rpcs_mutex_.lock();
 
-    for (auto &c : client_rpcs_)
+    for (auto const &c : client_rpcs_)
     {
       delete c.second;
     }

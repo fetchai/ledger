@@ -152,21 +152,13 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   service_classification_type type;
   params >> type;
 
-  if ((type == SERVICE_RESULT) || (type == 0))
+  switch (type)
   {
+  case SERVICE_RESULT:
+  case SERVICE_FUNCTION_CALL:
     ProcessRPCResult(msg, params);
-    // PromiseCounter id;
-    // params >> id;
-
-    // Promise p = ExtractPromise(id);
-
-    // auto ret = msg.SubArray(params.tell(), msg.size() - params.tell());
-    // p->Fulfill(ret);
-
-    // FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id, " due to finishing delivering the
-    // response");
-  }
-  else if (type == SERVICE_ERROR)
+    break;
+  case SERVICE_ERROR:
   {
     PromiseCounter id;
     params >> id;
@@ -180,8 +172,9 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
                     " due to finishing delivering the response (error)");
+    break;
   }
-  else if (type == SERVICE_FEED)
+  case SERVICE_FEED:
   {
     feed_handler_type         feed;
     subscription_handler_type sub;
@@ -199,7 +192,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
             cancelled_subscriptions_.end())
         {
           FETCH_LOG_ERROR(LOGGING_NAME,
-                          "PubSub:  We were sent a subscription ID we never allocated: ", int(sub));
+                          "PubSub: We've received a subscription ID we never allocated: ", int(sub));
           return false;
         }
         else
@@ -238,13 +231,19 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
       FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Callback is null for feed ", feed, " in subscription ",
                       int(sub));
     }
+    break;
   }
-  else
+  case SERVICE_DISCONNECT:
+  {
+    break;
+  }
+  default:
   {
     PromiseCounter id;
     params >> id;
     FETCH_LOG_WARN(LOGGING_NAME, " type not recognised ", type, "  promise=", id);
     ret = false;
+  }
   }
 
   return ret;

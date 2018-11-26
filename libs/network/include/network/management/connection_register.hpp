@@ -67,30 +67,24 @@ public:
   virtual ~ConnectionRegisterImpl() = default;
 
   template <typename T, typename... Args>
-  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
+  shared_service_client_type CreateServiceClient(NetworkManager const &nm, Args &&... args)
   {
     using Clock     = std::chrono::high_resolution_clock;
     using Timepoint = Clock::time_point;
 
-    T connection(tm);
+    T connection(nm);
     connection.Connect(std::forward<Args>(args)...);
 
     // wait for the connection to be established
     Timepoint const start     = Clock::now();
     Timepoint const threshold = start + std::chrono::seconds{10};
-    while (!connection.is_alive())
+    while (!connection.is_alive() && Clock::now() < threshold)
     {
-      // termination condition
-      if (Clock::now() >= threshold)
-      {
-        break;
-      }
-
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
 
     shared_service_client_type service =
-        std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);
+        std::make_shared<service_client_type>(connection.connection_pointer().lock(), nm);
 
     auto wptr = connection.connection_pointer();
     auto ptr  = wptr.lock();
@@ -117,7 +111,7 @@ public:
   {
     on_client_enter_ = f;
   }
-  void OnClientLeave(callback_client_enter_type const &f)
+  void OnClientLeave(callback_client_leave_type const &f)
   {
     on_client_leave_ = f;
   }
@@ -302,9 +296,9 @@ public:
   }
 
   template <typename T, typename... Args>
-  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
+  shared_service_client_type CreateServiceClient(NetworkManager const &nm, Args &&... args)
   {
-    return ptr_->template CreateServiceClient<T, Args...>(tm, std::forward<Args>(args)...);
+    return ptr_->template CreateServiceClient<T, Args...>(nm, std::forward<Args>(args)...);
   }
 
   std::size_t size() const
@@ -317,7 +311,7 @@ public:
     return ptr_->OnClientEnter(f);
   }
 
-  void OnClientLeave(callback_client_enter_type const &f)
+  void OnClientLeave(callback_client_leave_type const &f)
   {
     return ptr_->OnClientLeave(f);
   }

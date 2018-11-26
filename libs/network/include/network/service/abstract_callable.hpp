@@ -123,7 +123,7 @@ struct Packer<T>
  * @args are the arguments to the function.
  *
  * For this function to work, it is a requirement that there exists a
- * serilization implementation for all argument types in the argument
+ * serialization implementation for all argument types in the argument
  * list.
  *
  * The serializer is is always left at position 0.
@@ -232,14 +232,7 @@ public:
     std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), (void *)value});
   }
 
-  CallableArgumentType const &operator[](std::size_t const &n) const
-  {
-    return std::vector<CallableArgumentType>::operator[](n);
-  }
-  CallableArgumentType &operator[](std::size_t const &n)
-  {
-    return std::vector<CallableArgumentType>::operator[](n);
-  }
+  using std::vector<CallableArgumentType>::operator[];
 };
 
 /* Abstract class for callables.
