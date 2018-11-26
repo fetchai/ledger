@@ -42,12 +42,13 @@ public:
   StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
   void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
-             fetch::network::NetworkManager const &tm, UnverifiedTransactionSink &sink, bool refresh_storage = false)
+             fetch::network::NetworkManager const &tm, std::size_t verification_threads, bool refresh_storage = false)
   {
     for (std::size_t i = 0; i < lanes; ++i)
     {
       lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
-                                                     uint16_t(port + i), tm, sink, refresh_storage));
+                                                     uint16_t(port + i), tm, verification_threads,
+                                                     refresh_storage));
     }
   }
 

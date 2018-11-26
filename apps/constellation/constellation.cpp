@@ -134,6 +134,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
                              std::string                         my_network_address,
+                             std::size_t processor_threads, std::size_t verification_threads,
                              std::chrono::steady_clock::duration block_interval)
   : active_{true}
   , manifest_(std::move(manifest))
@@ -160,7 +161,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
            block_packer_, p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
-  , tx_processor_{*storage_, block_packer_}
+  , tx_processor_{*storage_, block_packer_, processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
@@ -178,7 +179,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
   // configure all the lane services
-  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_, tx_processor_);
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_, verification_threads);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));

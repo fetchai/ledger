@@ -63,6 +63,7 @@ public:
                          uint32_t log2_num_lanes, uint32_t num_slices,
                          std::string interface_address, std::string const &prefix,
                          std::string                         my_network_address,
+                         std::size_t processor_threads, std::size_t verification_threads,
                          std::chrono::steady_clock::duration block_interval);
 
   void Run(UriList const &initial_peers, bool mining);

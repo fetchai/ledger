@@ -65,7 +65,8 @@ public:
 
   // TODO(issue 7): Make config JSON
   LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, UnverifiedTransactionSink &sink, bool refresh_storage = false)
+              uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
+              bool refresh_storage = false)
     : super_type(port, tm)
   {
 
@@ -110,7 +111,8 @@ public:
     }
 
     tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
-                                                                thread_pool_, *tx_store_, sink);
+                                                                thread_pool_, *tx_store_,
+                                                                verification_threads);
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
 
     // TODO(EJF): Not a huge fan of this weak coupling, also the handlers inside the object store

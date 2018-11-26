@@ -17,13 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/queue.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
-#include "network/details/thread_pool.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
+
 
 #include <atomic>
 #include <thread>
@@ -32,6 +30,7 @@ namespace fetch {
 namespace ledger {
 
 class TransactionProcessor : public UnverifiedTransactionSink
+                           , public VerifiedTransactionSink
 {
 public:
   using MutableTransaction = chain::MutableTransaction;
@@ -39,10 +38,10 @@ public:
   using TransactionList = std::vector<chain::Transaction>;
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner);
+  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
-  ~TransactionProcessor()                            = default;
+  ~TransactionProcessor() override                   = default;
 
   /// @name Processor Controls
   /// @{
@@ -56,35 +55,45 @@ public:
   void AddTransaction(MutableTransaction &&mtx);
   /// @}
 
+  // Operators
+  TransactionProcessor &operator=(TransactionProcessor const &) = delete;
+  TransactionProcessor &operator=(TransactionProcessor &&) = delete;
+
+protected:
+
   /// @name Unverified Transaction Sink
   /// @{
   void OnTransaction(chain::UnverifiedTransaction const &tx) override;
   /// @}
 
-  // Operators
-  TransactionProcessor &operator=(TransactionProcessor const &) = delete;
-  TransactionProcessor &operator=(TransactionProcessor &&) = delete;
+  /// @name Transaction Handlers
+  /// @{
+  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransactions(TransactionList const &txs) override;
+  /// @}
 
 private:
-  static constexpr std::size_t QUEUE_SIZE = 1u << 20u;  // 1,048,576
 
-  using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
-  using ThreadPtr       = std::unique_ptr<std::thread>;
-  using Threads         = std::vector<ThreadPtr>;
-
-  void Verifier();
-  void Dispatcher();
-
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
-
-  Flag            active_{true};
-  Threads         threads_;
-  VerifiedQueue   verified_queue_;
-  UnverifiedQueue unverified_queue_;
+  StorageUnitInterface&   storage_;
+  miner::MinerInterface&  miner_;
+  TransactionVerifier     verifier_;
 };
+
+/**
+ * Start the transaction processor
+ */
+inline void TransactionProcessor::Start()
+{
+  verifier_.Start();
+}
+
+/**
+ * Stop the transactions processor
+ */
+inline void TransactionProcessor::Stop()
+{
+  verifier_.Stop();
+}
 
 /**
  * Add a single transaction to the processor
@@ -93,8 +102,7 @@ private:
  */
 inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
 {
-  // enqueue the transaction to the unverified queue
-  unverified_queue_.Push(mtx);
+  verifier_.AddTransaction(mtx);
 }
 
 /**
@@ -104,8 +112,7 @@ inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
  */
 inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
 {
-  // enqueue the transaction to the unverified queue
-  unverified_queue_.Push(std::move(mtx));
+  verifier_.AddTransaction(std::move(mtx));
 }
 
 }  // namespace ledger

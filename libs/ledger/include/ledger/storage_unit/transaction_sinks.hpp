@@ -37,5 +37,29 @@ public:
   /// @}
 };
 
+class VerifiedTransactionSink
+{
+public:
+  using TransactionList = std::vector<chain::VerifiedTransaction>;
+
+  // Construction / Destruction
+  VerifiedTransactionSink() = default;
+  virtual ~VerifiedTransactionSink() = default;
+
+  /// @name Transaction Handlers
+  /// @{
+  virtual void OnTransaction(chain::VerifiedTransaction const &tx) = 0;
+  virtual void OnTransactions(TransactionList const &txs);
+  /// @}
+};
+
+inline void VerifiedTransactionSink::OnTransactions(TransactionList const &txs)
+{
+  for (auto const &tx : txs)
+  {
+    OnTransaction(tx);
+  }
+}
+
 } // namespace ledger
 } // namespace fetch

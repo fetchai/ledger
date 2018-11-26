@@ -30,6 +30,7 @@
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/transaction_verifier.hpp"
 
 
 #include <set>
@@ -40,6 +41,7 @@ namespace fetch {
 namespace ledger {
 
 class TransactionStoreSyncProtocol : public fetch::service::Protocol
+                                   , public VerifiedTransactionSink
 {
 public:
 
@@ -56,7 +58,7 @@ public:
 
   // Construction / Destruction
   TransactionStoreSyncProtocol(ProtocolId const &p, Register r,
-                               ThreadPool tp, ObjectStore &store, UnverifiedTransactionSink &sink);
+                               ThreadPool tp, ObjectStore &store, std::size_t verification_threads);
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol const &) = delete;
   TransactionStoreSyncProtocol(TransactionStoreSyncProtocol &&) = delete;
   ~TransactionStoreSyncProtocol() override = default;
@@ -66,10 +68,14 @@ public:
 
   void OnNewTx(VerifiedTransaction const &o);
 
-
   // Operators
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol const &) = delete;
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
+
+protected:
+
+  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransactions(TransactionList const &txs) override;
 
 private:
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
@@ -139,8 +145,7 @@ private:
   Register    register_;
   ThreadPool  thread_pool_;
   ObjectStore &store_;                         ///< The pointer to the object store
-
-  UnverifiedTransactionSink &sink_;
+  TransactionVerifier verifier_;
 
   std::atomic<bool> running_{false};
 
@@ -149,8 +154,6 @@ private:
 
   mutable mutex::Mutex          object_list_mutex_{__LINE__, __FILE__};
   std::vector<service::Promise> object_list_promises_;  // GUARDED_BY(object_list_mutex_);
-//  std::vector<T>                new_objects_;           // GUARDED_BY(object_list_mutex_);
-//  TxList                incoming_objects_;      // GUARDED_BY(object_list_mutex_);
 
   // Syncing with other peers on startup
   bool                                              needs_sync_ = true;

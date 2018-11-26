@@ -52,13 +52,14 @@ namespace ledger {
  * @param store The object store to be used
  */
 TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ProtocolId const &p, Register r,
-                                                           ThreadPool tp, ObjectStore &store, UnverifiedTransactionSink &sink)
+                                                           ThreadPool tp, ObjectStore &store,
+                                                           std::size_t verification_threads)
   : fetch::service::Protocol()
   , protocol_(p)
   , register_(std::move(r))
   , thread_pool_(std::move(tp))
   , store_(store)
-  , sink_(sink)
+  , verifier_(*this, verification_threads)
 {
   this->Expose(OBJECT_COUNT, this, &Self::ObjectCount);
   this->ExposeWithClientArg(PULL_OBJECTS, this, &Self::PullObjects);
@@ -75,6 +76,8 @@ void TransactionStoreSyncProtocol::Start()
     return;
   }
 
+  verifier_.Start();
+
   FETCH_LOG_INFO(LOGGING_NAME, "Starting transaction synchronisation");
 
   running_ = true;
@@ -87,6 +90,8 @@ void TransactionStoreSyncProtocol::Start()
 void TransactionStoreSyncProtocol::Stop()
 {
   running_ = false;
+
+  verifier_.Stop();
 }
 
 /**
@@ -240,15 +245,7 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
     {
       for (auto const &tx : incoming_objects)
       {
-        if (!store_.Has(storage::ResourceID{tx.digest()}))
-        {
-          // dispatch the transaction to the new store
-          sink_.OnTransaction(tx);
-
-#ifdef FETCH_ENABLE_METRICS
-          RecordNewElement(tx.digest());
-#endif // FETCH_ENABLE_METRICS
-        }
+        verifier_.AddTransaction(tx.AsMutable());
       }
     }
 
@@ -322,6 +319,40 @@ void TransactionStoreSyncProtocol::OnNewTx(VerifiedTransaction const &o)
 
   FETCH_LOCK(cache_mutex_);
   cache_.emplace_back(o);
+}
+
+void TransactionStoreSyncProtocol::OnTransaction(chain::VerifiedTransaction const &tx)
+{
+  ResourceID const rid(tx.digest());
+
+  if (!store_.Has(rid))
+  {
+    store_.Set(rid, tx);
+
+#ifdef FETCH_ENABLE_METRICS
+    RecordNewElement(tx.digest());
+#endif // FETCH_ENABLE_METRICS
+  }
+}
+
+void TransactionStoreSyncProtocol::OnTransactions(TransactionList const &txs)
+{
+  store_.WithLock([this, &txs]()
+  {
+    for (auto const &tx : txs)
+    {
+      ResourceID const rid(tx.digest());
+
+      if (!store_.LocklessHas(rid))
+      {
+        store_.LocklessSet(rid, tx);
+
+#ifdef FETCH_ENABLE_METRICS
+        RecordNewElement(tx.digest());
+#endif // FETCH_ENABLE_METRICS
+      }
+    }
+  });
 }
 
 /**
@@ -451,22 +482,14 @@ void TransactionStoreSyncProtocol::RealiseSubtreePromises()
       continue;
     }
 
-    // retrieve the incoming transctions from the peer
+    // retrieve the incoming transactions from the peer
     TxList incoming_txs;
     promise->As<TxList>(incoming_txs);
 
     // dispatch the transaction to the transaction sink
     for (auto &tx : incoming_txs)
     {
-      if (!store_.Has(storage::ResourceID{tx.digest()}))
-      {
-        // dispatch the transaction to the new store
-        sink_.OnTransaction(tx);
-
-#ifdef FETCH_ENABLE_METRICS
-        RecordNewElement(tx.digest());
-#endif // FETCH_ENABLE_METRICS
-      }
+      verifier_.AddTransaction(tx.AsMutable());
     }
   }
 
