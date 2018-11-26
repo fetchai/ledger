@@ -36,15 +36,13 @@ TEST(vectorise_sse_gtest , register_test1)
   r3 = r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  ASSERT_EQ(c[0], 1);
+  ASSERT_EQ(c[1], 6);
+  ASSERT_EQ(c[2], 21);
+  ASSERT_EQ(c[3], 60);
 }
 
-TEST(vectorise_sse_gtest , regitter_test2)
+TEST(vectorise_sse_gtest , register_test2)
 {
   alignas(16) float a[4] = {1, 2, 3, 4};
   alignas(16) float b[4] = {2, 4, 8, 16};
@@ -55,13 +53,11 @@ TEST(vectorise_sse_gtest , regitter_test2)
   r3 = r1 * r2;
   r3 = cst * r3 - r1;
   r3.Store(c);
-
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  
+  ASSERT_EQ(c[0], 5);
+  ASSERT_EQ(c[1], 22);
+  ASSERT_EQ(c[2], 69);
+  ASSERT_EQ(c[3], 188);
 }
 
 TEST(vectorise_sse_gtest, register_test3)
@@ -76,10 +72,6 @@ TEST(vectorise_sse_gtest, register_test3)
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 2; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  ASSERT_EQ(c[0], 5.4);
+  ASSERT_EQ(c[1], 23.6);
 }
