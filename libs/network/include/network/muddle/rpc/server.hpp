@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/server_interface.hpp"
 #include "network/tcp/tcp_server.hpp"
 
@@ -54,8 +55,8 @@ public:
       // register the subscription with our handler
       subscription_->SetMessageHandler([this](Address const &from, uint16_t service,
                                               uint16_t channel, uint16_t counter,
-                                              Packet::Payload const &payload) {
-        OnMessage(from, service, channel, counter, payload);
+                                              Packet::Payload const &payload, Address const &transmitter) {
+                                         OnMessage(from, service, channel, counter, payload, transmitter);
       });
     }
     else
@@ -105,10 +106,15 @@ protected:
 
 private:
   void OnMessage(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
-                 Packet::Payload const &payload)
+                 Packet::Payload const &payload,Address const &transmitter)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
+                    " via:", byte_array::ToBase64(transmitter),
                     " on: ", service, ':', channel, ':', counter);
+
+    service::CallContext context;
+    context.sender_address = from;
+    context.transmitter_address = transmitter;
 
     // insert data into the metadata
     uint64_t index = 0;
@@ -119,7 +125,7 @@ private:
     }
 
     // dispatch down to the core RPC level
-    PushProtocolRequest(index, payload);
+    PushProtocolRequest(index, payload, &context);
   }
 
   MuddleEndpoint &endpoint_;

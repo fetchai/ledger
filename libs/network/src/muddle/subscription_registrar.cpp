@@ -95,7 +95,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t 
  * @param packet The packet
  * @return true if successfully dispatched, otherwise false
  */
-bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
+bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 {
   bool success = false;
 
@@ -110,7 +110,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {
@@ -127,7 +127,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {

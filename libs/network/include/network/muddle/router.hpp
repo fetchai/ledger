@@ -100,6 +100,8 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  bool HandleToAddress(const Handle &handle, Address &address) const;
+
   void DropPeer(Address const &peer);
   void Cleanup();
 
@@ -125,7 +127,7 @@ private:
   void DispatchDirect(Handle handle, PacketPtr packet);
   void KillConnection(Handle handle);
 
-  void DispatchPacket(PacketPtr packet);
+  void DispatchPacket(PacketPtr packet, Address transmitter);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();

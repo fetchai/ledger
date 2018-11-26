@@ -136,7 +136,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
 
   // set the main chain
   block_subscription_->SetMessageHandler(
-      [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload) {
+                                         [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload, Address transmitter) {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
         BlockSerializer serialiser(payload);
