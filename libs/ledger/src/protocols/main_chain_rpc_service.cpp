@@ -149,7 +149,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
         block.UpdateDigest();
 
         // dispatch the event
-        OnNewBlock(transmitter, block);
+        OnNewBlock(from, block, transmitter);
       });
 }
 
@@ -170,10 +170,11 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
+  void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(from), ")  "
+                 " (via transmitter: ", ToBase64(from), ")");
 
   if (block.proof()())
   {
