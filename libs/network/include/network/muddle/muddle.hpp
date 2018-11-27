@@ -163,6 +163,12 @@ public:
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
+
+  void Debug(std::string const &prefix)
+  {
+    router_.Debug(prefix);
+    clients_.Debug(prefix);
+  }
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

@@ -132,6 +132,8 @@ Muddle::ConnectionMap Muddle::GetConnections()
     }
   }
 
+  
+
   return connection_map;
 }
 
