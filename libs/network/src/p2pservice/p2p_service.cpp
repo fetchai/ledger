@@ -131,7 +131,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
-      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
+      trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::INTRODUCTION);
     }
 
   }
@@ -219,7 +219,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
           FETCH_LOG_INFO(LOGGING_NAME, "Discovered peer: ", ToBase64(new_address),
                          " (from: ", ToBase64(from), ")");
 
-          trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
+          trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::INTRODUCTION);
 
           trust_system_.AddFeedback(from, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
         }
