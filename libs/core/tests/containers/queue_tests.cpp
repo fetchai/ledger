@@ -132,15 +132,4 @@ TEST_F(QueueTests, CheckMultiProducerMultiConsumer)
   RunTestMultiProducerTest<NUM_THREADS>(queue);
 }
 
-#if 0
-TEST_F(QueueTests, CheckSimpleQueue)
-{
-  static constexpr std::size_t QUEUE_SIZE  = 1024;
-  static constexpr std::size_t NUM_THREADS = 8;
-
-  fetch::core::SimpleQueue<Element, QUEUE_SIZE> queue;
-  RunTestMultiProducerTest<NUM_THREADS>(queue);
-}
-#endif
-
 }  // namespace
