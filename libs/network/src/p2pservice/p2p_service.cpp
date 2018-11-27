@@ -90,7 +90,7 @@ void P2PService::WorkCycle()
   identity_cache_.Update(active_connections);
 
   // update the trust system with current connection information
-  UpdateTrustStatus(active_connections);
+  UpdateTrustStatus(active_connections, active_addresses);
 
   // discover new good peers on the network
   PeerDiscovery(active_addresses);
@@ -120,7 +120,8 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                  [](auto const &e) { return e.first; });
 }
 
-void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
+
+void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections, AddressSet const &active_addresses)
 {
   for (auto const &element : active_connections)
   {
@@ -133,6 +134,11 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
     }
 
+  }
+
+  for (auto const &element : active_addresses)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update GOT ACTIVE: ", std::string(ToBase64(address)));
   }
 
   for(auto const &pt : trust_system_.GetPeersAndTrusts())

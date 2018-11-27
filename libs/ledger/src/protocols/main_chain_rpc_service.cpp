@@ -149,7 +149,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
         block.UpdateDigest();
 
         // dispatch the event
-        OnNewBlock(from, block);
+        OnNewBlock(transmitter, block);
       });
 }
 
