@@ -658,8 +658,14 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (packet->GetSender() != address_)
     {
       DispatchPacket(packet, address_);
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Dispatch a broadcast packet from someone else.");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Not dispatching this packet because it's a broadcast. Send it on.");
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Forward broadcast packet.");
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
