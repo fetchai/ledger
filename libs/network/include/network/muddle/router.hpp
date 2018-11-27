@@ -104,6 +104,10 @@ public:
 
   void DropPeer(Address const &peer);
   void Cleanup();
+  void Debug(std::string const &prefix)
+  {
+    registrar_.Debug(prefix);
+  }
 
   void Blacklist(Address const &target);
   void Whitelist(Address const &target);
