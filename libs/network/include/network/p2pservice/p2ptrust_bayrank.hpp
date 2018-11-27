@@ -111,8 +111,11 @@ public:
       pos = ranking->second;
     }
 
-    if (quality == TrustQuality::NEW_PEER)
+    if (quality == TrustQuality::INTRODUCTION)
     {
+      trust_store_[pos].update_score();
+      dirty_ = true;
+      SortIfNeeded();
       return; // we're introducing this element, not rating it.
     }
 

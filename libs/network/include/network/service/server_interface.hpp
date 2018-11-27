@@ -71,7 +71,7 @@ public:
 protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
+  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
                            CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
@@ -103,7 +103,7 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
+  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
                             CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;

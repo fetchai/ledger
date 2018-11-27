@@ -385,29 +385,6 @@ bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &addr
 }
 
 /**
- * Lookup a routing
- *
- * @return The address corresponding to a handle in the table.
- */
-bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
-{
-  FETCH_LOCK(routing_table_lock_);
-  for (const auto &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
-                    static_cast<std::string>(ToBase64(output)));
-    if (routing.second.handle == handle)
-    {
-      address = ToConstByteArray(routing.first);
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Periodic call initiated from the main muddle instance used for periodic maintenance of the
  * router
  */
@@ -682,7 +659,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   {
     if (packet->GetSender() != address_)
     {
-      DispatchPacket(packet, address_);
+      DispatchPacket(packet, packet->GetSender());
     }
 
     // serialize the packet to the buffer
