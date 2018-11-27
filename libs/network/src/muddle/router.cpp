@@ -369,6 +369,12 @@ Router::RoutingTable Router::GetRoutingTable() const
 bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
 {
   FETCH_LOCK(routing_table_lock_);
+  auto address_it = routing_table_handles_direct_addr_.find(handle);
+  if (address_it != routing_table_handles_direct_addr_.end())
+  {
+    address = address_it->second;
+    return true;
+  }
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
@@ -470,6 +476,11 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
   // sanity check
   assert(handle);
+
+  if (direct)
+  {
+    routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
+  }
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
