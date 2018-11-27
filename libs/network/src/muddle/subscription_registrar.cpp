@@ -172,7 +172,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix)
                    "  Chan=", chan);
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 ":ubscriptionRegistrar: --------------------------------------");
+                 "SubscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle
