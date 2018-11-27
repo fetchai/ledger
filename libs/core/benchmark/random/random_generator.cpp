@@ -23,17 +23,20 @@
    that the random code's expense does not creep upward over time...
 */
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <benchmark/benchmark.h>
 
 #include <memory>
 #include <random>
 
 #include "core/byte_array/byte_array.hpp"
 
-using ::testing::_;
+namespace {
 
-namespace SpeedTest {
+using ByteArray       = fetch::byte_array::ByteArray;
+const int ITERATIONS  = 2;
+const int MID_CYCLES  = 10;
+const int PACKET_SIZE = 100000;
+
 uint32_t GetRandom()
 {
   static std::random_device                      rd;
@@ -43,21 +46,16 @@ uint32_t GetRandom()
   return dis(gen);
 }
 
-using message_type    = fetch::byte_array::ByteArray;
-const int ITERATIONS  = 2;
-const int MID_CYCLES  = 10;
-const int PACKET_SIZE = 100000;
-
-void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
+void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t packet_size)
 {
-  std::vector<message_type> sendData;
+  std::vector<ByteArray> sendData;
   for (std::size_t iteration = 0; iteration < iterations; iteration++)
   {
     for (std::size_t j = 0; j < cycles; j++)
     {
-      message_type arr;
-      arr.Resize(packetsize);
-      for (std::size_t k = 0; k < packetsize; k++)
+      ByteArray arr;
+      arr.Resize(packet_size);
+      for (std::size_t k = 0; k < packet_size; k++)
       {
         arr[k] = uint8_t(GetRandom());
       }
@@ -66,16 +64,16 @@ void GenerateRandom(std::size_t iterations, std::size_t cycles, std::size_t pack
   }
 }
 
-void GenerateConstant(std::size_t iterations, std::size_t cycles, std::size_t packetsize)
+void GenerateConstant(std::size_t iterations, std::size_t cycles, std::size_t packet_size)
 {
-  std::vector<message_type> sendData;
+  std::vector<ByteArray> sendData;
   for (std::size_t iteration = 0; iteration < iterations; iteration++)
   {
     for (std::size_t j = 0; j < cycles; j++)
     {
-      message_type arr;
-      arr.Resize(packetsize);
-      for (std::size_t k = 0; k < packetsize; k++)
+      ByteArray arr;
+      arr.Resize(packet_size);
+      for (std::size_t k = 0; k < packet_size; k++)
       {
         arr[k] = uint8_t(j + k);
       }
@@ -84,24 +82,23 @@ void GenerateConstant(std::size_t iterations, std::size_t cycles, std::size_t pa
   }
 }
 
-TEST(SpeedTest, CompareRandomSpeed)
+void BenchmarkConstant(benchmark::State &state)
 {
-  auto t1 = std::chrono::system_clock::now();
-  GenerateConstant(ITERATIONS, MID_CYCLES, PACKET_SIZE);
-  auto t2 = std::chrono::system_clock::now();
-  GenerateRandom(ITERATIONS, MID_CYCLES, PACKET_SIZE);
-  auto t3 = std::chrono::system_clock::now();
-
-  std::chrono::duration<double> elapsed_seconds_c = t2 - t1;
-  std::chrono::duration<double> elapsed_seconds_r = t3 - t2;
-
-  std::cout << "Const: " << elapsed_seconds_c.count() << std::endl;
-  std::cout << "Rand:  " << elapsed_seconds_r.count() << std::endl;
-
-  auto ratio = elapsed_seconds_r.count() / elapsed_seconds_c.count();
-  std::cout << "Ratio:  " << ratio << std::endl;
-
-  ASSERT_LT(ratio, 13.0);
+  for (auto _ : state)
+  {
+    GenerateConstant(ITERATIONS, MID_CYCLES, PACKET_SIZE);
+  }
 }
 
-}  // namespace SpeedTest
+void BenchmarkRandom(benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    GenerateRandom(ITERATIONS, MID_CYCLES, PACKET_SIZE);
+  }
+}
+
+BENCHMARK(BenchmarkRandom);
+BENCHMARK(BenchmarkConstant);
+
+}  // namespace
