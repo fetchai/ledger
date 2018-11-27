@@ -90,7 +90,7 @@ void P2PService::WorkCycle()
   identity_cache_.Update(active_connections);
 
   // update the trust system with current connection information
-  UpdateTrustStatus(active_connections, active_addresses);
+  UpdateTrustStatus(active_connections);
 
   // discover new good peers on the network
   PeerDiscovery(active_addresses);
