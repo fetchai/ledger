@@ -118,6 +118,8 @@ Muddle::ConnectionMap Muddle::GetConnections()
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
+    FETCH_LOG_DEBUG(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", address);
+
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
     if (it != uri_map.end())
