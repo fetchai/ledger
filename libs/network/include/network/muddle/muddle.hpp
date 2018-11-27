@@ -143,7 +143,7 @@ public:
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections();
+  ConnectionMap GetConnections(bool direct_only = true);
 
   PeerConnectionList &useClients();
 

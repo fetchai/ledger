@@ -106,7 +106,7 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
-Muddle::ConnectionMap Muddle::GetConnections()
+Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
 
@@ -118,7 +118,13 @@ Muddle::ConnectionMap Muddle::GetConnections()
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", address);
+    if (direct_only && !entry.second.direct)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ", address);
+      continue;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", address);
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
