@@ -83,10 +83,10 @@ private:
 
   static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
 
-  uint32_t const  log2_num_lanes_;                   ///< The log2 of the number of lanes
-  uint32_t const  max_num_threads_;                  ///< The configured maximum number of threads
-  ThreadPool      thread_pool_;                      ///< The thread pool used to dispatch work
-  Mutex           pending_lock_{__LINE__, __FILE__}; ///< The lock for the pending transaction queue
+  uint32_t const log2_num_lanes_;                    ///< The log2 of the number of lanes
+  uint32_t const max_num_threads_;                   ///< The configured maximum number of threads
+  ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
+  Mutex          pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue
   TransactionList pending_;                          ///< The pending transaction queue
   std::mutex      main_queue_lock_;                  ///< The lock for the main transaction queue
   TransactionList main_queue_;                       ///< The main transaction queue

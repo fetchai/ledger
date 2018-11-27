@@ -30,7 +30,6 @@
 
 #include "core/byte_array/byte_array.hpp"
 
-
 namespace {
 
 using ByteArray       = fetch::byte_array::ByteArray;
@@ -102,4 +101,4 @@ void BenchmarkRandom(benchmark::State &state)
 BENCHMARK(BenchmarkRandom);
 BENCHMARK(BenchmarkConstant);
 
-} // namespace
+}  // namespace
