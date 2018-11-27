@@ -100,7 +100,7 @@ private:
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const &params,
                                      http::HTTPRequest const &   request)
   {
-    auto const connections = muddle_.GetConnections();
+    auto const connections = muddle_.GetConnections(true);
 
     Variant response = Variant::Array(connections.size());
 
@@ -147,6 +147,13 @@ private:
     std::size_t pos = 0;
     for(const auto &pt : peers_trusts)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "GetTrustStatus: ",
+                     " name=", pt.name,
+                     " black?=",  muddle_.IsBlacklisted(pt.address),
+                     " trust=", pt.trust,
+                     " inclded?=", pt.has_transacted
+                     );
+
       if (!pt.has_transacted)
       {
         continue;

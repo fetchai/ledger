@@ -176,7 +176,7 @@ public:
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections(bool direct_only = true);
+  ConnectionMap GetConnections(bool direct_only = false);
 
   bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
 

@@ -150,11 +150,11 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
     if (direct_only && !entry.second.direct)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ", address);
+      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ", ToBase64(address));
       continue;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", address);
+    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address));
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
