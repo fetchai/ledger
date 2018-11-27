@@ -100,6 +100,8 @@ inline char const *ToString(TrustSubject subject)
     return "Transaction";
   case TrustSubject::PEER:
     return "Peer";
+  case TrustSubject::NEW_PEER:
+    return "NewPeer";
   default:
     return "Unknown";
   }
