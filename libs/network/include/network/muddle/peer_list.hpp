@@ -98,7 +98,7 @@ public:
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
-
+  void Debug(std::string const &prefix) const;
   bool UriToHandle(const Uri &uri, Handle &handle) const;
 
   void Debug(std::string const &prefix) const;
