@@ -252,6 +252,10 @@ void MainChainRpcService::ServiceLooseBlocks()
           FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1d");
           FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
         }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "I didn't get a random good peer!");
+        }
       }
     }
     else
