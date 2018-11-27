@@ -167,7 +167,23 @@ public:
   void Debug(std::string const &prefix)
   {
     router_.Debug(prefix);
-    clients_.Debug(prefix);
+    auto handles = clients_.Debug(prefix);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "HandleToAddress: --------------------------------------");
+    for(auto const &handle : handles)
+    {
+      Address address;
+      if (router_.HandleToAddress(handle, address))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, prefix, "  Handle=", handle,"  Address=", ToBase64(address));
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, prefix, "  Handle=", handle,"  Address=unavailable.");
+      }
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "HandleToAddress: --------------------------------------");
   }
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;

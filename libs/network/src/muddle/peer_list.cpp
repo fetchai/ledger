@@ -87,8 +87,9 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-void PeerConnectionList::Debug(std::string const &prefix) const
+  std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix ) const
 {
+  std::list<Handle> handles;
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "PeerConnectionList: --------------------------------------");
 
@@ -105,6 +106,7 @@ void PeerConnectionList::Debug(std::string const &prefix) const
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
                    "PeerConnectionList:peer_connections_ Uri=", uri.ToString(), "  Handle=", handle,
                    "  MetaData?=", metadata);
+    handles.push_back(handle);
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
@@ -117,6 +119,8 @@ void PeerConnectionList::Debug(std::string const &prefix) const
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "PeerConnectionList: --------------------------------------");
+
+  return handles;
 }
 
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer)
