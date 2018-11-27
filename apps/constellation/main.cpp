@@ -145,6 +145,8 @@ struct CommandLineArguments
   std::string        external_address;
   std::string        host_name;
   ManifestPtr        manifest;
+  std::size_t        processor_threads;
+  std::size_t        verification_threads;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -186,6 +188,10 @@ struct CommandLineArguments
     parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
                    std::string{});
     parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
+    parameters.add(args.processor_threads, "processor-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
+    parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -347,20 +353,22 @@ struct CommandLineArguments
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << '\n';
-    s << "port...........: " << args.port << '\n';
-    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << '\n';
-    s << "num executors..: " << args.num_executors << '\n';
-    s << "num lanes......: " << args.num_lanes << '\n';
-    s << "num slices.....: " << args.num_slices << '\n';
-    s << "bootstrap......: " << args.bootstrap << '\n';
-    s << "host name......: " << args.host_name << '\n';
-    s << "external addr..: " << args.external_address << '\n';
-    s << "db-prefix......: " << args.dbdir << '\n';
-    s << "interface......: " << args.interface << '\n';
-    s << "mining.........: " << args.mine << '\n';
-    s << "block interval.: " << args.block_interval << "ms" << std::endl;
+    s << "port......................: " << args.port << '\n';
+    s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
+    s << "num executors.............: " << args.num_executors << '\n';
+    s << "num lanes.................: " << args.num_lanes << '\n';
+    s << "num slices................: " << args.num_slices << '\n';
+    s << "bootstrap.................: " << args.bootstrap << '\n';
+    s << "host name.................: " << args.host_name << '\n';
+    s << "external address..........: " << args.external_address << '\n';
+    s << "db-prefix.................: " << args.dbdir << '\n';
+    s << "interface.................: " << args.interface << '\n';
+    s << "mining....................: " << args.mine << '\n';
+    s << "tx processor threads......: " << args.processor_threads << '\n';
+    s << "shard verification threads: " << args.verification_threads << '\n';
+    s << "block interval............: " << args.block_interval << "ms" << std::endl;
     // generate the peer listing
-    s << "peers..........: ";
+    s << "peers.....................: ";
     for (auto const &peer : args.peers)
     {
       s << peer.uri() << ' ';
@@ -486,8 +494,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir, args.external_address,
-        std::chrono::milliseconds(args.block_interval));
+        args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
+        args.verification_threads, std::chrono::milliseconds(args.block_interval));
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

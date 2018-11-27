@@ -45,6 +45,7 @@ public:
     SUBMITTED,           ///< Transaction is submitted to the system
     STORED,              ///< Transaction has been stored in the local node
     SYNCED,              ///< Transaction has been synced to a node
+    RECEIVED_FOR_SYNC,   ///< Transaction has been submitted for syncro
     QUEUED,              ///< Transaction has been added to the mining queue
     PACKED,              ///< Transaction has been packed into a block
     EXECUTION_STARTED,   ///< Execution of the transaction has been started

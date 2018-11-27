@@ -58,6 +58,8 @@ public:
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
+  uint64_t backlog() const override;
+
 private:
   using BitVector = bitmanip::BitVector;
 
