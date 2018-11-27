@@ -100,8 +100,6 @@ inline char const *ToString(TrustSubject subject)
     return "Transaction";
   case TrustSubject::PEER:
     return "Peer";
-  case TrustSubject::INTRODUCTION:
-    return "Introduction";
   default:
     return "Unknown";
   }
@@ -119,6 +117,8 @@ inline char const *ToString(TrustQuality quality)
     return "Duplicate";
   case TrustQuality::NEW_INFORMATION:
     return "New Information";
+  case TrustQuality::INTRODUCTION:
+    return "Introduction";
   default:
     return "Unknown";
   }
