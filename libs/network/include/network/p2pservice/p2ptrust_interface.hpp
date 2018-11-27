@@ -42,7 +42,7 @@ enum class TrustQuality
   BAD_CONNECTION  = 1,
   DUPLICATE       = 2,
   NEW_INFORMATION = 3,
-  NEW_PEER        = 4,
+  INTRODUCTION    = 4,
 };
 
 
@@ -100,8 +100,8 @@ inline char const *ToString(TrustSubject subject)
     return "Transaction";
   case TrustSubject::PEER:
     return "Peer";
-  case TrustSubject::NEW_PEER:
-    return "NewPeer";
+  case TrustSubject::INTRODUCTION:
+    return "Introduction";
   default:
     return "Unknown";
   }
