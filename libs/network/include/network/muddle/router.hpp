@@ -51,6 +51,7 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
+  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   struct RoutingData
   {
@@ -153,6 +154,9 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+
+  HandleDirectAddrMap routing_table_handles_direct_addr_;  ///< Map of handles to direct address
+  ///< (Protected by routing_table_lock)
 };
 
 }  // namespace muddle
