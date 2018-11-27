@@ -33,20 +33,19 @@ void Exponentials(array_type const &A, array_type &C)
                         A);
 }
 
-TEST(vectorise_approx_exp_gtest, basic_test_with_array_size_100)
+TEST(vectorise_exp_gtest, exp_test)
 {
-
   std::size_t N = std::size_t(100);
   array_type  A(N), C(N);
-
-  for (std::size_t i = 0; i < N; ++i)
+  A[0] = double(-5);
+  for (std::size_t i = 1; i < N; ++i)
   {
-    A[i] = double(0.1 * type(i) - type(double(N) * 0.5));
+    A[i] = A[i-1] + 0.1;
   }
 
   Exponentials(A, C);
   for (std::size_t i = 0; i < N; ++i)
   {
-    std::cout << A[i] << " " << C[i] << " " << std::exp(A[i]) << std::endl;
+    EXPECT_NEAR(C[i] , std::exp(A[i]) ,0.0001);
   }
 }
