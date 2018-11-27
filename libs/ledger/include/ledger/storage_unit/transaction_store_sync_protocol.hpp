@@ -28,7 +28,7 @@
 #include "network/management/connection_register.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
-#include "storage/object_store.hpp"
+#include "storage/transient_object_store.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
 
@@ -55,7 +55,7 @@ public:
 
   using UnverifiedTransaction = chain::UnverifiedTransaction;
   using VerifiedTransaction   = chain::VerifiedTransaction;
-  using ObjectStore           = storage::ObjectStore<VerifiedTransaction>;
+  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
   using ProtocolId            = service::protocol_handler_type;
   using ThreadPool            = network::ThreadPool;
   using ServiceMap            = Register::service_map_type;
@@ -79,8 +79,8 @@ public:
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 protected:
+
   void OnTransaction(chain::VerifiedTransaction const &tx) override;
-  void OnTransactions(TransactionList const &txs) override;
 
 private:
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide

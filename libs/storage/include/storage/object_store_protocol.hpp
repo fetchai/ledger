@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/protocol.hpp"
-#include "storage/object_store.hpp"
+#include "storage/transient_object_store.hpp"
 #include <functional>
 
 namespace fetch {
@@ -61,14 +61,14 @@ public:
     HAS
   };
 
-  ObjectStoreProtocol(ObjectStore<T> *obj_store)
+  ObjectStoreProtocol(TransientObjectStore<T> *obj_store)
     : fetch::service::Protocol()
   {
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
     this->Expose(SET_BULK, this, &self_type::SetBulk);
-    this->Expose(HAS, obj_store, &ObjectStore<T>::Has);
+    this->Expose(HAS, obj_store, &TransientObjectStore<T>::Has);
   }
 
   void OnSetObject(event_set_object_type const &f)
@@ -93,12 +93,15 @@ private:
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects in object store protocol");
 
+    // loop through and set all the values
+    for (Element const &element : elements)
+    {
+      Set(element.key, element.value);
+    }
+
+#if 0
     if (on_set_)
     {
-      for (auto const &element : elements)
-      {
-        on_set_(element.value);
-      }
     }
 
     obj_store_->WithLock([this, &elements]() {
@@ -107,6 +110,7 @@ private:
         obj_store_->LocklessSet(element.key, element.value);
       }
     });
+#endif
   }
 
   T Get(ResourceID const &rid)
@@ -121,7 +125,7 @@ private:
     return ret;
   }
 
-  ObjectStore<T> *      obj_store_;
+  TransientObjectStore<T> *      obj_store_;
   event_set_object_type on_set_;
 };
 

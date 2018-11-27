@@ -36,9 +36,9 @@ namespace storage {
 template <typename Object>
 class TransientObjectStore
 {
-
   using ThreadPtr  = std::shared_ptr<std::thread>;
   ThreadPtr thread_;
+
 public:
   using Archive = ObjectStore<Object>;
 

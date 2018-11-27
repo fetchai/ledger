@@ -334,25 +334,6 @@ void TransactionStoreSyncProtocol::OnTransaction(chain::VerifiedTransaction cons
   }
 }
 
-void TransactionStoreSyncProtocol::OnTransactions(TransactionList const &txs)
-{
-  store_.WithLock([this, &txs]() {
-    for (auto const &tx : txs)
-    {
-      ResourceID const rid(tx.digest());
-
-      if (!store_.LocklessHas(rid))
-      {
-        store_.LocklessSet(rid, tx);
-
-#ifdef FETCH_ENABLE_METRICS
-        RecordNewElement(tx.digest());
-#endif  // FETCH_ENABLE_METRICS
-      }
-    }
-  });
-}
-
 /**
  * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
  *
@@ -367,11 +348,13 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
 
   uint64_t counter = 0;
 
-  store_.WithLock([this, &ret, &counter, &rid, mask]() {
-    // This is effectively saying get all objects whose ID begins rid & mask
-    auto it = store_.GetSubtree(ResourceID(rid), mask);
+  auto &archive = store_.archive();
 
-    while (it != store_.end() && counter++ < PULL_LIMIT_)
+  archive.WithLock([&archive, &ret, &counter, &rid, mask]() {
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = archive.GetSubtree(ResourceID(rid), mask);
+
+    while (it != archive.end() && counter++ < PULL_LIMIT_)
     {
       ret.push_back(*it);
       ++it;
@@ -394,7 +377,7 @@ bool TransactionStoreSyncProtocol::FinishedSync()
 uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
-  return store_.size();
+  return store_.archive().size();
 }
 
 TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
