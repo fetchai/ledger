@@ -181,8 +181,8 @@ struct CommandLineArguments
                    std::string{});
     parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
 
-    parameters.add(args.fidgety_peers, "fidgety-peers", "How many peers should be used for exploring.", 3);
-    parameters.add(args.max_peers, "max-peers", "Max peer count.", 6);
+    parameters.add(args.fidgety_peers, "fidgety-peers", "How many peers should be used for exploring.", std::size_t(3));
+    parameters.add(args.max_peers, "max-peers", "Max peer count.", std::size_t(6));
 
                    // parse the args
     parameters.Parse(argc, argv);
