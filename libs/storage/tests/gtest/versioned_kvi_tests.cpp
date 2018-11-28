@@ -21,7 +21,7 @@
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
 #include "storage/key_value_index.hpp"
-#include "testing/unittest.hpp"
+#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <iomanip>
@@ -32,7 +32,7 @@ using namespace fetch::storage;
 
 using kvi_type = KeyValueIndex<>;
 
-kvi_type key_index;
+kvi_type key_Index;
 
 struct TestData
 {
@@ -40,10 +40,10 @@ struct TestData
   uint64_t              value;
 };
 
-std::map<byte_array::ConstByteArray, uint64_t> reference;
-fetch::random::LaggedFibonacciGenerator<>      lfg;
+std::map<byte_array::ConstByteArray, uint64_t> reference1;
+fetch::random::LaggedFibonacciGenerator<>      lfgen;
 
-int main()
+TEST(versioned_kvi_gtest, basic_test)
 {
   std::vector<TestData> bookmarks;
 
@@ -54,36 +54,32 @@ int main()
     key.Resize(256 / 8);
     for (std::size_t j = 0; j < key.size(); ++j)
     {
-      key[j] = uint8_t(lfg() >> 9);
+      key[j] = uint8_t(lfgen() >> 9);
     }
 
-    if (reference.find(key) != reference.end())
+    if (reference1.find(key) != reference1.end())
     {
       continue;
     }
 
-    reference[key] = lfg();
-    values.push_back({key, reference[key]});
+    reference1[key] = lfgen();
+    values.push_back({key, reference1[key]});
   }
 
   // Insterting data
-  key_index.New("test1.db", "diff.db");
+  key_Index.New("test1.db", "diff.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_index.Set(val.key, val.value, val.key);
+    key_Index.Set(val.key, val.value, val.key);
     if ((i % 2) == 0)
     {
-      byte_array::ByteArray h1 = key_index.Hash();
+      byte_array::ByteArray h1 = key_Index.Hash();
       TestData              book;
       book.key   = h1;
-      book.value = key_index.Commit();
+      book.value = key_Index.Commit();
       bookmarks.push_back(book);
-      if (h1 != key_index.Hash())
-      {
-        std::cerr << "Expected hash to be the same before and after commit" << std::endl;
-        exit(-1);
-      }
+      ASSERT_EQ(h1, key_Index.Hash()) << "Expected hash to be the same before and after commit";
     }
   }
 
@@ -92,14 +88,8 @@ int main()
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val  = values[i];
-    uint64_t    data = key_index.Get(val.key);
-    if (data != val.value)
-    {
-      std::cout << "Error for " << i << std::endl;
-      std::cout << "Expected: " << val.value << std::endl;
-      std::cout << "Got: " << data << std::endl;
-      return -1;
-    }
+    uint64_t    data = key_Index.Get(val.key);
+    ASSERT_EQ(data, val.value);
     ok &= (data == val.value);
   }
 
@@ -107,15 +97,9 @@ int main()
   std::reverse(bookmarks.begin(), bookmarks.end());
   for (auto &b : bookmarks)
   {
-    key_index.Revert(b.value);
+    key_Index.Revert(b.value);
     std::cout << "Reverting: " << b.value << " " << byte_array::ToBase64(b.key) << " "
-              << byte_array::ToBase64(key_index.Hash()) << std::endl;
-    if (b.key != key_index.Hash())
-    {
-      std::cout << "Expected " << std::endl;
-      exit(-1);
-    }
+              << byte_array::ToBase64(key_Index.Hash()) << std::endl;
+    ASSERT_EQ(b.key, key_Index.Hash());
   }
-
-  return ok ? 0 : -1;
 }

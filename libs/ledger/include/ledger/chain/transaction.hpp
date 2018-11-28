@@ -44,6 +44,11 @@ public:
     return digest() < other.digest();
   }
 
+  MutableTransaction const &AsMutable() const
+  {
+    return static_cast<MutableTransaction const &>(*this);
+  }
+
   MutableTransaction GetMutable() const
   {
     return MutableTransaction{*this};
@@ -78,11 +83,18 @@ public:
     return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans)
+  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans,
+                                    bool *                                  status = nullptr)
   {
     VerifiedTransaction ret;
+
     // TODO(private issue #189)
-    ret.Finalise(trans);
+    bool const success = ret.Finalise(trans);
+    if (status)
+    {
+      *status = success;
+    }
+
     return ret;
   }
 
