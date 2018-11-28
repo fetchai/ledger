@@ -220,7 +220,6 @@ public:
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
                    "HandleToAddress: --------------------------------------");
   }
-
   const std::string &NetworkIdStr();
 
   bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const

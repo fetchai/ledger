@@ -107,10 +107,7 @@ public:
 
   void DropPeer(Address const &peer);
   void Cleanup();
-  void Debug(std::string const &prefix)
-  {
-    registrar_.Debug(prefix);
-  }
+  void Debug(std::string const &prefix) const;
 
   virtual NetworkId network_id() override
   {

@@ -98,7 +98,7 @@ public:
 
   bool Dispatch(PacketPtr packet, Address transmitter);
 
-  void Debug(std::string const &prefix);
+  void Debug(std::string const &prefix) const;
 
 private:
   using Mutex              = mutex::Mutex;
