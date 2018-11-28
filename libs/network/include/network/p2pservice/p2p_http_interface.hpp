@@ -159,7 +159,7 @@ private:
                      " inclded?=", incl
                      );
 
-      if (!pt.has_transacted)
+      if (!incl)
       {
         continue;
       }
