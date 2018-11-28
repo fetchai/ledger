@@ -150,7 +150,7 @@ private:
   std::vector<service::Promise> object_list_promises_;  // GUARDED_BY(object_list_mutex_);
 
   // Syncing with other peers on startup
-  bool                                              needs_sync_ = true;
+  bool                                              needs_sync_ = false;
   std::vector<std::pair<uint8_t, service::Promise>> subtree_promises_;
   std::queue<uint8_t>                               roots_to_sync_;
   uint64_t                                          root_mask_ = 0;

@@ -82,7 +82,7 @@ public:
 private:
 
   using Mutex = fetch::mutex::Mutex;
-  using Queue = fetch::core::MPSCQueue<ResourceID, 1 << 13>;
+  using Queue = fetch::core::SimpleQueue<ResourceID, 1 << 13>;
 
   void ThreadLoop();
 
