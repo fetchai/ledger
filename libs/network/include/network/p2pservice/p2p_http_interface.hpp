@@ -130,6 +130,7 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
+    muddle_.Debug(LOGGING_NAME + ":GetTrustStatus:");
     auto peers_trusts = trust_.GetPeersAndTrusts();
     variant::Variant trust_list;
 
