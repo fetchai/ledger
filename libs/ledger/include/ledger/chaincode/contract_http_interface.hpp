@@ -84,6 +84,21 @@ public:
           return OnQuery(contract_name, query_name, request);
         });
       }
+
+      auto const &transaction_handlers = contract->transaction_handlers();
+      for (auto const &handler : transaction_handlers)
+      {
+        byte_array::ConstByteArray const &query_name = handler.first;
+        api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
+        api_path.Append(query_name);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+
+        Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
+                                                         http::HTTPRequest const &request) {
+          return On(contract_name, query_name, request);
+        });
+      }
     }
 
     // add custom debug handlers
@@ -165,6 +180,47 @@ public:
 
 private:
   http::HTTPResponse OnQuery(byte_array::ConstByteArray const &contract_name,
+                             byte_array::ConstByteArray const &query,
+                             http::HTTPRequest const &         request)
+  {
+    try
+    {
+      // parse the incoming request
+      json::JSONDocument doc;
+      doc.Parse(request.body());
+
+      // dispatch the contract type
+      variant::Variant response;
+      auto             contract = contract_cache_.Lookup(contract_name);
+
+      // attach, dispatch and detach
+      contract->Attach(storage_);
+      auto const status = contract->DispatchQuery(query, doc.root(), response);
+      contract->Detach();
+
+      if (status == Contract::Status::OK)
+      {
+        // encode the response
+        std::ostringstream oss;
+        oss << response;
+
+        // generate the response object
+        return http::CreateJsonResponse(oss.str());
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
+      }
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
+    }
+
+    return JsonBadRequest();
+  }
+
+  http::HTTPResponse OnTransaction(byte_array::ConstByteArray const &contract_name,
                              byte_array::ConstByteArray const &query,
                              http::HTTPRequest const &         request)
   {
