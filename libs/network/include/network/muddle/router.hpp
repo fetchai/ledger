@@ -110,6 +110,7 @@ public:
   void Blacklist(Address const &target);
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
+  bool IsConnected(Address const &target) const;
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;

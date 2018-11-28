@@ -160,6 +160,8 @@ public:
   bool IsBlacklisted(Address const &target) const;
   /// @}
 
+  bool IsConnected(Address const &target) const;
+
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;

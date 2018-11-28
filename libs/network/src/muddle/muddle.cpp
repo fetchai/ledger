@@ -106,6 +106,11 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
+bool Muddle::IsConnected(Address const &target) const
+{
+  return router_.IsConnected(target);
+}
+
 Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
