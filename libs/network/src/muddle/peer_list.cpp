@@ -87,7 +87,7 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-  std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix ) const
+std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix ) const
 {
   std::list<Handle> handles;
   FETCH_LOG_WARN(LOGGING_NAME, prefix,

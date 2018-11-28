@@ -139,7 +139,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
   return success;
 }
 
-void SubscriptionRegistrar::Debug(std::string const &prefix)
+void SubscriptionRegistrar::Debug(std::string const &prefix) const
 {
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "SubscriptionRegistrar: --------------------------------------");
