@@ -45,6 +45,7 @@
 #include "math/free_functions/standard_functions/fmod.hpp"
 #include "math/free_functions/standard_functions/log.hpp"
 #include "math/free_functions/standard_functions/remainder.hpp"
+#include "math/free_functions/statistics/normal.hpp"
 
 /////////////////////////////////
 /// blas libraries
@@ -2168,8 +2169,7 @@ void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Softmax(linalg::Matrix<T, C, S> const &array)
 {
-  linalg::Matrix<T, C, S> ret{array.size()};
-  ret.Reshape(array.shape());
+  linalg::Matrix<T, C, S> ret{array.shape()};
   Softmax(array, ret);
   return ret;
 }

@@ -18,6 +18,8 @@
 
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
+#include "ledger/chain/consensus/bad_miner.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/chaincode/wallet_http_interface.hpp"
 #include "ledger/execution_manager.hpp"
@@ -44,6 +46,12 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
+
+using fetch::chain::consensus::DummyMiner;
+using fetch::chain::consensus::BadMiner;
+using fetch::chain::consensus::ConsensusMinerType;
+
+using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -116,6 +124,28 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
   return connection_map;
 }
 
+/**
+ * ConsensusMinerInterface factory method
+ */
+ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+{
+  switch (miner_type)
+  {
+  case ConsensusMinerType::DUMMY_MINER:
+  {
+    return std::make_shared<DummyMiner>();
+  }
+  case ConsensusMinerType::BAD_MINER:
+  {
+    return std::make_shared<BadMiner>();
+  }
+  default:
+  {
+    return nullptr;
+  }
+  }
+}
+
 }  // namespace
 
 /**
@@ -133,7 +163,8 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string                         my_network_address,
+                             std::string my_network_address, std::size_t processor_threads,
+                             std::size_t                         verification_threads,
                              std::chrono::steady_clock::duration block_interval)
   : active_{true}
   , manifest_(std::move(manifest))
@@ -157,14 +188,17 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
-  , miner_{num_lanes_,    num_slices, chain_,        block_coordinator_,
-           block_packer_, p2p_port_,  block_interval}  // p2p_port_ fairly arbitrary
+  , consensus_miner_{GetConsensusMiner(ConsensusMinerType::NO_MINER)}
+  , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
+           block_packer_, consensus_miner_, p2p_port_, block_interval}
+  // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
-  , tx_processor_{*storage_, block_packer_}
+  , tx_processor_{*storage_, block_packer_, processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_),
+        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_,
+                                                block_packer_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);
@@ -178,7 +212,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
   // configure all the lane services
-  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_,
+                       verification_threads);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
@@ -195,7 +230,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, bool mining)
+void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &mining)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
@@ -243,8 +278,10 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   block_coordinator_.Start();
   tx_processor_.Start();
 
-  if (mining)
+  if (mining != ConsensusMinerType::NO_MINER)
   {
+    consensus_miner_ = GetConsensusMiner(mining);
+    miner_.SetConsensusMiner(consensus_miner_);
     miner_.Start();
   }
 
@@ -280,7 +317,7 @@ void Constellation::Run(UriList const &initial_peers, bool mining)
   p2p_.Stop();
 
   // tear down all the services
-  if (mining)
+  if (mining != ConsensusMinerType::NO_MINER)
   {
     miner_.Stop();
   }

@@ -145,6 +145,11 @@ Muddle::ConnectionMap Muddle::GetConnections()
 
   for (auto const &entry : routing_table)
   {
+    if (!entry.second.direct)
+    {
+      continue;
+    }
+
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
@@ -266,7 +271,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    clients_.RemoveConnection(peer);
+    clients_.Disconnect(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {

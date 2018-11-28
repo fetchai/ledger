@@ -46,9 +46,12 @@ protected:
 
 BENCHMARK_F(CachedRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
+  uint64_t random;
   for (auto _ : st)
   {
-    uint64_t random = lfg_();
+    st.PauseTiming();
+    random = lfg_();
+    st.ResumeTiming();
     stack_.Push(random);
   }
 }

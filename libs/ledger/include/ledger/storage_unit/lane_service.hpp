@@ -27,6 +27,7 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/muddle/muddle.hpp"
@@ -36,7 +37,6 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "storage/object_store_syncronisation_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
 
 #include <iomanip>
@@ -66,7 +66,9 @@ public:
   //  using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
   //    client_register_type, fetch::chain::VerifiedTransaction,
   //    fetch::chain::UnverifiedTransaction>;
-  using thread_pool_type = network::ThreadPool;
+  //using thread_pool_type = network::ThreadPool;
+  using tx_sync_protocol_type    = TransactionStoreSyncProtocol;
+  using thread_pool_type         = network::ThreadPool;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -74,7 +76,9 @@ public:
 
   // TODO(issue 7): Make config JSON
   LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
+              uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
+              bool refresh_storage = false)
+    : super_type(port, tm)
   {
 
     thread_pool_ = network::MakeThreadPool(1);
@@ -123,12 +127,15 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    // tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
-    //                                                          thread_pool_, tx_store_.get());
+    tx_sync_protocol_ = std::make_unique<tx_sync_protocol_type>(
+        RPC_TX_STORE_SYNC, register_, thread_pool_, *tx_store_, verification_threads);
     tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
-    //    tx_store_protocol_->OnSetObject(
-    //        [this](fetch::chain::VerifiedTransaction const &tx) {
-    //        tx_sync_protocol_->AddToCache(tx); });
+
+    // TODO(EJF): Not a huge fan of this weak coupling, also the handlers inside the object store
+    // feel like an after market addition
+    tx_store_protocol_->OnSetObject(
+        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+
 
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
