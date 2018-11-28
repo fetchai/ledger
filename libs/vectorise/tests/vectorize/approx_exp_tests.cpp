@@ -16,36 +16,43 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/exp.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 #include <iostream>
 
-using type        = double;
-using array_type  = fetch::memory::Array<type>;
+using type        = float;
+using array_type  = fetch::memory::SharedArray<type>;
 using vector_type = typename array_type::vector_register_type;
 
 void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply([](vector_type const &a, vector_type &c) { c = fetch::vectorize::exp(a); },
-                        A);
+  C.in_parallel().Apply(
+      [](vector_type const &x, vector_type &y) { y = fetch::vectorize::approx_exp(x); }, A);
 }
 
-TEST(vectorise_exp_gtest, exp_test)
+TEST(vectorise_approx_exp_gtest, exp_test)
 {
-  std::size_t N = std::size_t(100);
+  std::size_t N       = std::size_t(20);
+  float       exp_val = 0.0, initial_value = 1;
   array_type  A(N), C(N);
-  A[0] = double(-5);
-  for (std::size_t i = 1; i < N; ++i)
-  {
-    A[i] = A[i - 1] + 0.1;
-  }
 
-  Exponentials(A, C);
-  for (std::size_t i = 0; i < N; ++i)
+  for (std::size_t j = 1; j < 12; j++)
   {
-    EXPECT_NEAR(C[i], std::exp(A[i]), 0.0001);
+    initial_value = initial_value * 2;
+    std::cout << initial_value << "\n";
+    A[0] = float(initial_value - 1.0);
+    for (std::size_t i = 1; i < N; ++i)
+    {
+      A[i] = float(A[i - 1] + 0.1);
+    }
+    Exponentials(A, C);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      exp_val = std::exp(A[i]);
+      std::cout << "values : Actual value = " << A[i] << "  fetch_approx_exp = " << C[i]
+                << "  std::exp =" << exp_val << " diff is =" << exp_val - C[i] << "\n";
+    }
   }
 }
