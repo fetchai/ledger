@@ -65,7 +65,9 @@ public:
                          uint32_t log2_num_lanes, uint32_t num_slices,
                          std::string interface_address, std::string const &prefix,
                          std::string                         my_network_address,
-                         std::chrono::steady_clock::duration block_interval);
+                         std::chrono::steady_clock::duration block_interval,
+                             uint32_t max_peers,
+                             uint32_t fidgety_peers);
 
   void Run(UriList const &initial_peers, int mining);
   void SignalStop();
