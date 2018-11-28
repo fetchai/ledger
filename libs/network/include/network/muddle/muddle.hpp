@@ -185,23 +185,7 @@ public:
     FETCH_LOG_WARN(LOGGING_NAME, prefix,
                    "HandleToAddress: --------------------------------------");
   }
-
-  typedef enum
-    {
-      HAVE_HANDLE,
-      CAN_CONNECT,
-      CAN_ROUTE,
-      WONT_TALK
-    } ConnectivityState;
-
-  struct ConnectivityInformation
-  {
-    Address address;
-    ConnectivityState state;
-  };
-
-  std::list<ConnectivityInformation> GetAllKnownConnections();
-
+  
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
