@@ -138,6 +138,9 @@ struct CommandLineArguments
   std::string host_name;
   ManifestPtr manifest;
 
+  uint32_t    max_peers;
+  uint32_t    fidgety_peers;
+
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
   {
@@ -178,7 +181,10 @@ struct CommandLineArguments
                    std::string{});
     parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
 
-    // parse the args
+    parameters.add(args.fidgety_peers, "fidgety-peers", "How many peers should be used for exploring.", 3);
+    parameters.add(args.max_peers, "max-peers", "Max peer count.", 6);
+
+                   // parse the args
     parameters.Parse(argc, argv);
 
     // update the peers
@@ -476,7 +482,9 @@ int main(int argc, char **argv)
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
         args.num_slices, args.interface, args.dbdir, args.external_address,
-        std::chrono::milliseconds(args.block_interval));
+        std::chrono::milliseconds(args.block_interval),
+        args.max_peers, args.fidgety_peers
+    );
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
