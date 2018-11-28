@@ -132,20 +132,9 @@ private:
   {
     muddle_.Debug(std::string(LOGGING_NAME) + ":GetTrustStatus:");
     auto peers_trusts = trust_.GetPeersAndTrusts();
-    variant::Variant trust_list;
 
-    std::size_t count = 0;
-    for(const auto &pt : peers_trusts)
-    {
-      if (pt.has_transacted)
-      {
-        count++;
-      }
-    }
+    std::vector<variant::Variant> peer_data_list;
 
-    trust_list.MakeArray(count);
-
-    std::size_t pos = 0;
     for(const auto &pt : peers_trusts)
     {
       auto is_conn = muddle_.IsConnected(pt.address);
@@ -168,9 +157,12 @@ private:
       peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
       peer_data["value"]  = pt.trust;
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
-      trust_list[pos++] = peer_data;
+      peer_data_list.push_back(peer_data);
     }
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
+
+    variant::Variant trust_list;
+    trust_list.MakeArrayFrom(peer_data_list);
 
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
