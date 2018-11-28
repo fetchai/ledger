@@ -481,6 +481,21 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
   return registrar_.Register(address, service, channel);
 }
 
+bool MuddleEndpoint::IsConnected(Address const &target) const
+{
+  auto raw_address = ConvertAddress(target);
+  auto iter = routing_table_.find(raw_address);
+  if (iter == routing_table_.end())
+  {
+    return false;
+  }
+  if (!iter->second.direct)
+  {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Internal: Add an entry into the routing table for the given address and handle.
  *
