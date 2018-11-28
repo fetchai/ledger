@@ -148,11 +148,15 @@ private:
     std::size_t pos = 0;
     for(const auto &pt : peers_trusts)
     {
+      auto is_conn = muddle_.IsConnected(pt.address);
+      auto incl = pt.has_transacted || is_conn;
       FETCH_LOG_INFO(LOGGING_NAME, "GetTrustStatus: ",
                      " name=", pt.name,
                      " black?=",  muddle_.IsBlacklisted(pt.address),
                      " trust=", pt.trust,
-                     " inclded?=", pt.has_transacted
+                     " has_transacted=", pt.has_transacted,
+                     " is_conn=", is_conn,
+                     " inclded?=", incl
                      );
 
       if (!pt.has_transacted)
