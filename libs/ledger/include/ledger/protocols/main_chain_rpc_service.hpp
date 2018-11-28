@@ -34,6 +34,7 @@
 namespace fetch {
 namespace chain {
 class MainChain;
+class BlockCoordinator;
 }
 namespace ledger {
 
@@ -46,6 +47,7 @@ public:
   friend class MainChainSyncWorker;
   using MuddleEndpoint  = muddle::MuddleEndpoint;
   using MainChain       = chain::MainChain;
+  using BlockCoordinator = chain::BlockCoordinator;
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using Address         = muddle::Packet::Address;
@@ -62,7 +64,7 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, BlockCoordinator &block_coordinator);
 
   void BroadcastBlock(Block const &block);
 
@@ -83,6 +85,7 @@ private:
   MuddleEndpoint &endpoint_;
   MainChain &     chain_;
   TrustSystem &   trust_;
+  BlockCoordinator & block_coordinator_;
   SubscriptionPtr block_subscription_;
 
   MainChainProtocol main_chain_protocol_;

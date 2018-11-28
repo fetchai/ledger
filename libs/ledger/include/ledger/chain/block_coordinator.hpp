@@ -62,6 +62,7 @@ public:
     // does not fire all of the time.
     auto heaviestHash = chain_.HeaviestBlock().hash();
 
+
     if (block.hash() == heaviestHash)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.hash()),
@@ -71,6 +72,10 @@ public:
         std::lock_guard<mutex_type> lock(mutex_);
         pending_blocks_.push_front(std::make_shared<BlockBody>(block.body()));
       }
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()), " Heaviest: ", ToBase64(heaviestHash));
     }
   }
 

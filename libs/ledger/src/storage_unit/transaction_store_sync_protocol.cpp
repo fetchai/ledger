@@ -174,7 +174,7 @@ void TransactionStoreSyncProtocol::FetchObjectsFromPeers()
     return;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Fetching objects from peer");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Fetching objects from peer");
 
   generics::MilliTimer lock_timer("ObjectSync:FetchObjectsFromPeers");
   FETCH_LOCK(object_list_mutex_);
@@ -206,14 +206,17 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
     return;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for promise backlog index: ", index);
+  if (index > 0)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for promise backlog index: ", index);
+  }
 
-  generics::MilliTimer lock_timer("ObjectSync:RealisePromises", 10);
+  generics::MilliTimer lock_timer("ObjectSync:RealisePromises", 1000);
   FETCH_LOCK(object_list_mutex_);
 
   // reserve the elements required for the cache elements
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Promise backlog before: ", object_list_promises_.size());
+  std::size_t processed_promises = 0;
+  std::size_t total_incoming = 0;
 
   auto it = object_list_promises_.begin();
   while (it != object_list_promises_.end())
@@ -245,6 +248,8 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
 
     if (!incoming_objects.empty())
     {
+      total_incoming += incoming_objects.size();
+
       for (auto const &tx : incoming_objects)
       {
         verifier_.AddTransaction(tx.AsMutable());
@@ -253,9 +258,10 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
 
     // remove the entry
     it = object_list_promises_.erase(it);
+    ++processed_promises;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Promise backlog after: ", object_list_promises_.size());
+  FETCH_LOG_WARN(LOGGING_NAME, "Status :- outstanding responses: ", object_list_promises_.size(), " incoming tx: ", total_incoming, " from: ", processed_promises, " responses");
 
   if (object_list_promises_.empty())
   {
@@ -276,7 +282,7 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
 void TransactionStoreSyncProtocol::TrimCache()
 {
   {
-    generics::MilliTimer timer("ObjectSync:TrimCache", 10);
+    generics::MilliTimer timer("ObjectSync:TrimCache", 500);
     FETCH_LOCK(cache_mutex_);
 
     // reserve the space for the next cache
@@ -387,7 +393,7 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
   TxList ret;
 
   {
-    generics::MilliTimer timer("ObjectSync:PullObjects");
+    generics::MilliTimer timer("ObjectSync:PullObjects", 500);
     FETCH_LOCK(cache_mutex_);
 
     if (!cache_.empty())

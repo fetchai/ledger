@@ -117,8 +117,12 @@ public:
 
     // TODO(EJF): Not a huge fan of this weak coupling, also the handlers inside the object store
     // feel like an after market addition
-    tx_store_protocol_->OnSetObject(
-        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+//    tx_store_protocol_->OnSetObject(
+//        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+
+    tx_store_->SetCallback([this](fetch::chain::VerifiedTransaction const &tx) {
+      tx_sync_protocol_->OnNewTx(tx);
+    });
 
     this->Add(RPC_TX_STORE, tx_store_protocol_.get());
 

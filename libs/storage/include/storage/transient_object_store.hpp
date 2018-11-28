@@ -40,7 +40,8 @@ class TransientObjectStore
   ThreadPtr thread_;
 
 public:
-  using Archive = ObjectStore<Object>;
+  using Callback = std::function<void(Object const &)>;
+  using Archive  = ObjectStore<Object>;
 
   // Construction / Destruction
   TransientObjectStore()
@@ -75,6 +76,11 @@ public:
   bool Confirm(ResourceID const &rid);
   /// @}
 
+  void SetCallback(Callback cb)
+  {
+    set_callback_ = std::move(cb);
+  }
+
   // Operators
   TransientObjectStore &operator=(TransientObjectStore const &) = delete;
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
@@ -103,6 +109,8 @@ private:
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
   void AddToWriteQueue(ResourceID const &rid);
+
+  Callback set_callback_;
 
   Cache   cache_;
   Archive archive_;
@@ -141,6 +149,12 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object)
 {
   // add the element into the cache
   SetInCache(rid, object);
+
+  // dispatch the callback if necessary
+  if (set_callback_)
+  {
+    set_callback_(object);
+  }
 }
 
 template <typename O>
