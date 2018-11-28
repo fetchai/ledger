@@ -135,7 +135,7 @@ public:
 
     auto      res     = fetch::storage::ResourceID(tx.digest());
     LaneIndex lane    = res.lane(log2_lanes_);
-    auto      promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::SET, res, tx);
+    auto      promise = lanes_.at(lane)->Call(RPC_TX_STORE, protocol::SET, res, tx);
 
     FETCH_LOG_PROMISE();
     promise->Wait();
@@ -153,7 +153,7 @@ public:
       auto      res  = fetch::storage::ResourceID(tx.digest());
       LaneIndex lane = res.lane(log2_lanes_);
 
-      transaction_lists[lane].push_back({res, tx});
+      transaction_lists.at(lane).push_back({res, tx});
     }
 
     std::vector<Promise> promises;
@@ -166,7 +166,7 @@ public:
       {
         if (!list.empty())
         {
-          promises.emplace_back(lanes_[lane]->Call(RPC_TX_STORE, protocol::SET_BULK, list));
+          promises.emplace_back(lanes_.at(lane)->Call(RPC_TX_STORE, protocol::SET_BULK, list));
         }
 
         ++lane;
