@@ -254,7 +254,7 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route doing association");
+    //FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route doing association");
     // update the routing table if required
     // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
