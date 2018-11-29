@@ -235,7 +235,7 @@ void Router::Stop()
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
   if (packet->IsDirect())
   {
