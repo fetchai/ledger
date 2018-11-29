@@ -41,8 +41,11 @@ namespace ledger {
 
 class ContractHttpInterface : public http::HTTPModule
 {
+  using SubmitTxRetval = std::pair<std::size_t, std::size_t>;
+
 public:
-  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
+  //using TransactionHandlerMethod = http::HTTPResponse(ContractHttpInterface::*)(http::ViewParameters const &, http::HTTPRequest const &);
+  //using TransactionHandlerMap = std::unordered_map<byte_array::ConstByteArray, TransactionHandlerMethod>;  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
   static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
   static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
   static byte_array::ConstByteArray const PATH_SEPARATOR;
@@ -51,7 +54,6 @@ public:
     : storage_{storage}
     , processor_{processor}
   {
-
     // create all the contracts
     auto const &contracts = contract_cache_.factory().GetContracts();
     for (auto const &contract_name : contracts)
@@ -94,9 +96,11 @@ public:
 
         FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
 
-        Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
-                                                         http::HTTPRequest const &request) {
-          return On(contract_name, query_name, request);
+        //auto const& tx_handler = transaction_handlers_.at(api_path);
+
+        Post(api_path, [this/*, &tx_handler*/](http::ViewParameters const &params,
+                                           http::HTTPRequest const &request) {
+            return OnTransaction(params, request, );
         });
       }
     }
@@ -121,61 +125,9 @@ public:
 
     // new transaction
     Post("/api/contract/submit",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           std::ostringstream oss;
-
-           bool error_response{true};
-           try
-           {
-             std::size_t submitted{0};
-
-             // detect the content format, defaulting to json
-             byte_array::ConstByteArray content_type = "application/vnd+fetch.transaction+json";
-             if (request.header().Has("content-type"))
-             {
-               content_type = request.header()["content-type"];
-             }
-
-             // handle the types of transaction
-             bool unknown_format = false;
-             if (content_type == "application/vnd+fetch.transaction+native")
-             {
-               submitted = SubmitNativeTx(request);
-             }
-             else if (content_type == "application/vnd+fetch.transaction+json")
-             {
-               submitted = SubmitJsonTx(request);
-             }
-             else
-             {
-               unknown_format = true;
-             }
-
-             if (unknown_format)
-             {
-               // format the message
-               std::ostringstream error_msg;
-               error_msg << "Unknown content type: " << content_type;
-
-               oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
-             }
-             else
-             {
-               // success report the statistics
-               oss << R"({ "submitted": true, "count": )" << submitted << " }";
-               error_response = false;
-             }
-           }
-           catch (std::exception const &ex)
-           {
-             oss.clear();
-             oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
-           }
-
-           return http::CreateJsonResponse(oss.str(), (error_response)
-                                                          ? http::Status::CLIENT_ERROR_BAD_REQUEST
-                                                          : http::Status::SUCCESS_OK);
-         });
+         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+        return OnTransaction(params, request);
+      });
   }
 
 private:
@@ -220,45 +172,71 @@ private:
     return JsonBadRequest();
   }
 
-  http::HTTPResponse OnTransaction(byte_array::ConstByteArray const &contract_name,
-                             byte_array::ConstByteArray const &query,
-                             http::HTTPRequest const &         request)
+  http::HTTPResponse OnTransaction(http::ViewParameters const &, http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr)
   {
+    std::ostringstream oss;
+    bool error_response{true};
     try
     {
-      // parse the incoming request
-      json::JSONDocument doc;
-      doc.Parse(request.body());
+      SubmitTxRetval submitted;
 
-      // dispatch the contract type
-      variant::Variant response;
-      auto             contract = contract_cache_.Lookup(contract_name);
-
-      // attach, dispatch and detach
-      contract->Attach(storage_);
-      auto const status = contract->DispatchQuery(query, doc.root(), response);
-      contract->Detach();
-
-      if (status == Contract::Status::OK)
+      // detect the content format, defaulting to json
+      byte_array::ConstByteArray content_type = "application/json";
+      if (request.header().Has("content-type"))
       {
-        // encode the response
-        std::ostringstream oss;
-        oss << response;
+        content_type = request.header()["content-type"];
+      }
 
-        // generate the response object
-        return http::CreateJsonResponse(oss.str());
+      // handle the types of transaction
+      bool unknown_format = false;
+      if (content_type == "application/vnd+fetch.transaction+native")
+      {
+        submitted = SubmitNativeTx(request, expected_contract_name);
+      }
+      else if (content_type == "application/vnd+fetch.transaction+json" || content_type == "application/json")
+      {
+        submitted = SubmitJsonTx(request, expected_contract_name);
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Error running query. status = ", static_cast<int>(status));
+        unknown_format = true;
+      }
+
+      if (unknown_format)
+      {
+        // format the message
+        std::ostringstream error_msg;
+        error_msg << "Unknown content type: " << content_type;
+
+        oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
+      }
+      else if (submitted.first == submitted.second)
+      {
+        // success report the statistics
+        oss << R"({ "submitted": true, "count": )" << submitted.first << " }";
+        error_response = false;
+      }
+      else
+      {
+        // success report the statistics
+        oss << R"({ "submitted": true, "count": )" << submitted.first  << " }";
+        error_response = false;
       }
     }
-    catch (std::exception &ex)
+    catch (std::exception const &ex)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Query error: ", ex.what());
+      oss.clear();
+      oss << R"({ "submitted": false, "error": ")" << std::quoted(ex.what()) << " }";
     }
 
-    return JsonBadRequest();
+    return http::CreateJsonResponse(oss.str(), (error_response)
+                                                   ? http::Status::CLIENT_ERROR_BAD_REQUEST
+                                                   : http::Status::SUCCESS_OK);
+  }
+
+  http::HTTPResponse OnWealth(http::ViewParameters const &, http::HTTPRequest const &)
+  {
+    return http::HTTPResponse{};
   }
 
   static http::HTTPResponse JsonBadRequest()
@@ -266,14 +244,16 @@ private:
     return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
-  std::size_t SubmitJsonTx(http::HTTPRequest const &request);
-  std::size_t SubmitNativeTx(http::HTTPRequest const &request);
+  SubmitTxRetval SubmitJsonTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr);
+  SubmitTxRetval SubmitNativeTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr);
 
   std::size_t transaction_index_{0};
 
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_;
+
+  //static TransactionHandlerMap const transaction_handlers_;
 };
 
 }  // namespace ledger

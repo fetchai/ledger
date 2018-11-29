@@ -41,47 +41,74 @@ byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX
 byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
 byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
 
-std::size_t ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request)
+//using THM = ContractHttpInterface::TransactionHandlerMap;
+//THM const ContractHttpInterface::transaction_handlers_({
+//  THM::value_type{"fetch.token.transfer", &ContractHttpInterface::OnTransfer},
+//  THM::value_type{"fetch.token.wealth", &ContractHttpInterface::OnWealth}
+//});
+
+ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name)
 {
   std::size_t submitted{0};
+  std::size_t expected_count{0};
 
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
   if (doc.root().IsArray())
   {
+    expected_count = doc.root().size();
     for (std::size_t i = 0, end = doc.root().size(); i < end; ++i)
     {
       auto const &tx_obj = doc[i];
 
+      chain::MutableTransaction tx{chain::FromWireTransaction(tx_obj)};
+
+      if (expected_contract_name && tx.contract_name() != *expected_contract_name)
+      {
+        continue;
+      }
+
       // add the transaction to the processor
-      processor_.AddTransaction(chain::FromWireTransaction(tx_obj));
+      processor_.AddTransaction(std::move(tx));
       ++submitted;
     }
   }
   else
   {
-    // add the transaction to the processor
-    processor_.AddTransaction(chain::FromWireTransaction(doc.root()));
-    ++submitted;
+    expected_count = 1;
+    chain::MutableTransaction tx{chain::FromWireTransaction(doc.root())};
+
+    if (expected_contract_name && tx.contract_name() == *expected_contract_name)
+    {
+      // add the transaction to the processor
+      processor_.AddTransaction(std::move(tx));
+      ++submitted;
+    }
   }
 
-  return submitted;
+  return SubmitTxRetval{submitted, expected_count};
 }
 
-std::size_t ContractHttpInterface::SubmitNativeTx(http::HTTPRequest const &request)
+ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitNativeTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name)
 {
   std::vector<AdaptedTx> transactions;
 
   serializers::ByteArrayBuffer buffer(request.body());
   buffer >> transactions;
 
+  std::size_t submitted{0};
   for (auto const &input_tx : transactions)
   {
-    processor_.AddTransaction(input_tx.tx);
-  }
+    if (expected_contract_name && input_tx.tx.contract_name() != *expected_contract_name)
+    {
+      continue;
+    }
 
-  return transactions.size();
+    processor_.AddTransaction(input_tx.tx);
+    ++submitted;
+  }
+  return SubmitTxRetval{submitted, transactions.size()};
 }
 
 }  // namespace ledger
