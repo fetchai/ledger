@@ -246,20 +246,16 @@ void Router::Route(Handle handle, PacketPtr packet)
     Address transmitter;
 
     HandleToAddress(handle, transmitter);
-
-    // KLL populate this from handle.
     DispatchPacket(packet, transmitter);
   }
   else
   {
-    //FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route doing association");
     // update the routing table if required
     // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
 
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route done");
   }
 }
 
@@ -518,15 +514,16 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   // sanity check
   assert(handle);
 
-  if (direct)
-  {
-    routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
-  }
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
   {
     FETCH_LOCK(routing_table_lock_);
+
+    if (direct)
+    {
+      routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
+    }
 
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
@@ -712,14 +709,11 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (packet->GetSender() != address_)
     {
       DispatchPacket(packet, address_);
-      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Dispatch a broadcast packet from someone else.");
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Not dispatching this packet because it's a broadcast. Send it on.");
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Forward broadcast packet.");
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
@@ -766,12 +760,11 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
         // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
+        FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
         KillConnection(handle);
         return;
       }
 
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL:DispatchDirect doing association");
       // make the association with
       AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
@@ -782,7 +775,6 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       }
     }
   }
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL:DispatchDirect done");
 }
 
 /**
@@ -895,12 +887,12 @@ void Router::DropPeer(Address const &peer)
   Handle h = LookupHandle(ConvertAddress(peer));
   if (h)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Dropping ", ToBase64(peer));
+    FETCH_LOG_WARN(LOGGING_NAME, "Dropping ", ToBase64(peer));
     KillConnection(h);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Not dropping ", ToBase64(peer), " -- not connected");
+    FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
   }
 }
 
