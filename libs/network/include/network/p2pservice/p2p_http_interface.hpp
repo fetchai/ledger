@@ -159,7 +159,7 @@ private:
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
       peer_data_list.push_back(peer_data);
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus returning ", peer_data_list.size(), " trusts");
 
     variant::Variant trust_list;
     trust_list.MakeArrayFrom(peer_data_list);
@@ -167,6 +167,7 @@ private:
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
     response["trusts"] = trust_list;
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done" );
     return http::CreateJsonResponse(response);
   }
 
