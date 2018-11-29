@@ -235,7 +235,7 @@ void Router::Stop()
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
+  FETCH_LOG_INFO(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
   if (packet->IsDirect())
   {
@@ -254,6 +254,7 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
   else
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route doing association");
     // update the routing table if required
     // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
@@ -772,6 +773,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
         return;
       }
 
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL:DispatchDirect doing association");
       // make the association with
       AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
