@@ -260,6 +260,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 
     // if this message does not belong to us we must route it along the path
     RoutePacket(packet);
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Route done");
   }
 }
 
@@ -507,7 +508,7 @@ bool Router::IsConnected(Address const &target) const
  * @param direct Signal that this connection is a direct connection
  * @return true if an update was performed, otherwise false
  */
-bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
+bool Router::(Handle handle, Packet::RawAddress const &address,
                                         bool direct)
 {
   bool update_complete = false;
@@ -781,6 +782,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       }
     }
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL:DispatchDirect done");
 }
 
 /**
