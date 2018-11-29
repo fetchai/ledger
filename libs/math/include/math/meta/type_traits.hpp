@@ -249,9 +249,9 @@ struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapeLessArray<T, C>, R>
 template <typename A, typename R>
 using IsBlasAndNoShapeArrayLike = typename IsBlasAndNoShapeArrayLikeImpl<A, R>::Type;
 
-//////////////////////////
-/// NOT IMPLEMENTED ERROR
-/////////////////////////
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT CURRENTLY IMPLEMENTED
+//////////////////////////////////////////////////////////////
 
 template <typename A, typename R>
 struct IsNotImplementedImpl

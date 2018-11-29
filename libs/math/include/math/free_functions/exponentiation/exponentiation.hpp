@@ -77,7 +77,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Expm1(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-void Log10(ArrayType &x)
+fetch::math::meta::IsMathArrayLike<ArrayType, void> Log10(ArrayType &x)
 {
   kernels::stdlib::Log10<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
