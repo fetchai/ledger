@@ -16,22 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/versioned_random_access_stack.hpp"
-#include "core/random/lfg.hpp"
+#include <iomanip>
+#include <iostream>
 
+#include "core/random/lcg.hpp"
+#include "math/distance/distance_matrix.hpp"
 #include <gtest/gtest.h>
-#include <stack>
+#include <math/distance/hamming.hpp>
+#include <math/linalg/matrix.hpp>
 
-using namespace fetch::storage;
+using namespace fetch::math::distance;
+using namespace fetch::math::linalg;
 
-class TestClass
+template <typename D>
+using _S = fetch::memory::SharedArray<D>;
+
+template <typename D>
+using _M = Matrix<D, _S<D>>;
+
+TEST(distance_matrix_gtest, DISABLED_basic_info)
 {
-public:
-  uint64_t value1 = 0;
-  uint8_t  value2 = 0;
+  _M<double> A, B, R;
 
-  bool operator==(TestClass const &rhs)
-  {
-    return value1 == rhs.value1 && value2 == rhs.value2;
-  }
-};
+  R.Resize(3, 3);
+  A = _M<double>(R"(1 2 3 ; 1 1 1 ; 2 1 2)");
+  B = _M<double>(R"(1 2 9 ; 1 0 0 ; 1 2 3)");
+
+  EXPECT_TRUE(
+      bool(DistanceMatrix(R, A, B, Hamming<double>) == _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0 )")));
+}

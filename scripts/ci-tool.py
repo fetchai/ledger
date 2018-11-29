@@ -114,6 +114,7 @@ def parse_commandline():
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
+    parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
 
 
@@ -203,6 +204,8 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type
     }
+    if args.metrics:
+        options['FETCH_ENABLE_METRICS'] = 1
 
     if args.build:
         build_project(project_root, build_root, options)

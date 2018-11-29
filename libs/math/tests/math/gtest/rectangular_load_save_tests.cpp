@@ -16,45 +16,33 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>
-#include <cmath>
+#include "core/random/lfg.hpp"
+#include "math/rectangular_array.hpp"
+#include <gtest/gtest.h>
 #include <iostream>
-#include <math/exp.hpp>
-#include <random/lcg.hpp>
 
-template <std::size_t N, std::size_t C>
-void test1(double max)
+using namespace fetch::math;
+static fetch::random::LinearCongruentialGenerator gen;
+
+TEST(rectangular_load_save_gtest, basic_tests)
 {
-  fetch::math::Exp<N, C> fexp;
-  double                 me = 0;
-  for (double x = -300; x < 300; x += 0.1)
+  RectangularArray<uint64_t> a, b;
+  a.Resize(3, 3);
+  for (auto &v : a)
   {
-    double y0 = fexp(x);
-    double y1 = exp(x);
-    double r  = fabs(y0 - y1) / y1 * 100;
-    me        = std::max(r, me);
+    v = gen();
   }
-  std::cout << "Peak error: " << me << std::endl;
-  if (me > max)
+  std::cout << "Saving " << std::endl;
+
+  a.Save("test.array");
+  std::cout << "Loading" << std::endl;
+  b.Load("test.array");
+  std::cout << "Ready" << std::endl;
+  ASSERT_EQ(a.size(), b.size());
+  std::cout << "Checking " << std::endl;
+
+  for (std::size_t i = 0; i < a.size(); ++i)
   {
-    std::cout << "expected: " << max << std::endl;
-    exit(-1);
+    ASSERT_EQ(a[i], b[i]) << "Failed 1: " << a.size() << " " << b.size();
   }
-}
-
-int main(int argc, char **argv)
-{
-
-  test1<0, 0>(7);
-  test1<0, 60801>(5);
-  test1<8, 60801>(0.08);
-  test1<12, 60801>(0.005);
-  test1<16, 60801>(0.0003);
-  test1<20, 60801>(0.00004);
-
-  test1<8, 0>(0.08);
-  test1<12, 0>(0.005);
-  test1<16, 0>(0.0003);
-  test1<20, 0>(0.00004);
-  return 0;
 }

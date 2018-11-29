@@ -1,7 +1,7 @@
 ################################################################################
 # F E T C H   H T T P   L I B R A R Y  T E S T S
 ################################################################################
-cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-http-tests)
 
 # CMake configuration
@@ -13,4 +13,4 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 # Test Targets
 #-------------------------------------------------------------------------------
-add_fetch_gtest(http-tests fetch-http .)
+add_fetch_gtest(http_gtest fetch-http .)
