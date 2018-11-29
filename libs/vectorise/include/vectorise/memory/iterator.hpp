@@ -114,5 +114,6 @@ private:
   T *pos_   = nullptr;
   T *begin_ = nullptr;
 };
+
 }  // namespace memory
 }  // namespace fetch
