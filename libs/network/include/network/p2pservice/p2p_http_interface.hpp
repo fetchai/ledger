@@ -42,14 +42,16 @@ public:
   using MainChain   = chain::MainChain;
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
+  using Miner       = miner::MinerInterface;
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust)
+                   P2PService &p2p_service, TrustSystem &trust, Miner &miner)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
+    , miner_(miner)
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -66,6 +68,10 @@ public:
     Get("/api/status/trust",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetTrustStatus(params, request);
+        });
+    Get("/api/status/backlog",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetBacklogStatus(params, request);
         });
   }
 
@@ -145,6 +151,20 @@ private:
     }
 
     return http::CreateJsonResponse(response);
+  }
+
+  http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
+                                      http::HTTPRequest const &   request)
+  {
+    variant::Variant data = variant::Variant::Object();
+
+    data["success"] = true;
+    data["backlog"] = miner_.backlog();
+
+    std::ostringstream oss;
+
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
@@ -245,6 +265,7 @@ private:
   Muddle &     muddle_;
   P2PService & p2p_;
   TrustSystem &trust_;
+  Miner &      miner_;
 };
 
 }  // namespace p2p

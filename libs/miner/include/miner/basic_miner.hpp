@@ -58,6 +58,8 @@ public:
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
+  uint64_t backlog() const override;
+
 private:
   using BitVector = bitmanip::BitVector;
 
@@ -86,7 +88,7 @@ private:
   ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
   Mutex          pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue
   TransactionList pending_;                          ///< The pending transaction queue
-  Mutex main_queue_lock_{__LINE__, __FILE__};        ///< The lock for the main transaction queue
+  std::mutex      main_queue_lock_;                  ///< The lock for the main transaction queue
   TransactionList main_queue_;                       ///< The main transaction queue
 };
 

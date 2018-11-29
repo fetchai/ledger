@@ -63,6 +63,8 @@ char const *ToString(MetricHandler::Event event)
     return "stored";
   case MetricHandler::Event::SYNCED:
     return "synced";
+  case MetricHandler::Event::RECEIVED_FOR_SYNC:
+    return "received_for_sync";
   case MetricHandler::Event::QUEUED:
     return "queued";
   case MetricHandler::Event::PACKED:

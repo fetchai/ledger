@@ -121,7 +121,8 @@ public:
    *
    * @param: f The closure
    */
-  void WithLock(std::function<void()> const &f)
+  template <typename F>
+  void WithLock(F const &f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();
@@ -179,7 +180,8 @@ public:
   {
     serializer_type ser;
     ser << object;
-    store_.Set(rid, ser.data());
+
+    store_.Set(rid, ser.data());  // temporarily disable disk writes
   }
 
   std::size_t size() const
