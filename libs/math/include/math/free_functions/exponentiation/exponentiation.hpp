@@ -38,16 +38,18 @@ namespace fetch {
 namespace math {
 
 namespace details {
-template <typename T>
-void SquareImpl(T const &x, T &ret){{assert(x.size() == ret.size());
-for (std::size_t i = 0; i < x.size(); ++i)
+template<typename T>
+void SquareImpl(T const &x, T &ret)
 {
-  ret[i] = x[i] * x[i];
+  {
+    assert(x.size() == ret.size());
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+      ret[i] = x[i] * x[i];
+    }
+  }  // namespace details
 }
-}  // namespace details
-};  // namespace math
-}  // namespace fetch
-
+}
 /**
  * maps every element of the array x to x' = 2^x
  * @param x - array
@@ -181,4 +183,4 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> ApproxLog(ArrayType &x)
 }
 
 }  // math
-}  // exponentiation
+}  // fetch
