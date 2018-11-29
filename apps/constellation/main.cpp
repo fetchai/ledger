@@ -140,6 +140,7 @@ struct CommandLineArguments
 
   uint32_t    max_peers;
   uint32_t    fidgety_peers;
+  uint32_t    peers_update_cycle_ms;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -183,6 +184,7 @@ struct CommandLineArguments
 
     parameters.add(args.fidgety_peers, "fidgety-peers", "How many peers should be used for exploring.", uint32_t(3));
     parameters.add(args.max_peers, "max-peers", "Max peer count.", uint32_t(6));
+    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.", uint32_t(4000));
 
                    // parse the args
     parameters.Parse(argc, argv);
@@ -483,7 +485,8 @@ int main(int argc, char **argv)
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
         args.num_slices, args.interface, args.dbdir, args.external_address,
         std::chrono::milliseconds(args.block_interval),
-        args.max_peers, args.fidgety_peers
+        args.max_peers, args.fidgety_peers,
+        args.peers_update_cycle_ms
     );
 
     // update the instance pointer
