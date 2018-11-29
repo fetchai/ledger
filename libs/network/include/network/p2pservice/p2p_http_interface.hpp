@@ -46,12 +46,11 @@ public:
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust)
+                   P2PService &p2p_service)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
-    , trust_(trust)
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -131,7 +130,7 @@ private:
                                     http::HTTPRequest const &   request)
   {
     muddle_.Debug(std::string(LOGGING_NAME) + ":GetTrustStatus:");
-    auto peers_trusts = trust_.GetPeersAndTrusts();
+    auto peers_trusts = p2p_.GetPeersAndTrusts();
 
     std::vector<variant::Variant> peer_data_list;
 
@@ -267,7 +266,6 @@ private:
   MainChain &  chain_;
   Muddle &     muddle_;
   P2PService & p2p_;
-  TrustSystem &trust_;
 };
 
 }  // namespace p2p

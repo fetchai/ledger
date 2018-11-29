@@ -57,6 +57,7 @@ public:
     std::string name;
     double trust;
     bool has_transacted;
+    bool active;
   };
   //using PeerTrust = fetch::p2p::PeerTrust;
 

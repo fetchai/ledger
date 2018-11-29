@@ -71,6 +71,7 @@ public:
   using AddressSet           = std::unordered_set<Address>;
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
   using FutureTimepoint      = network::FutureTimepoint;
+  using PeerTrust            = TrustInterface::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 
@@ -105,6 +106,8 @@ public:
   {
     return identity_cache_;
   }
+
+    std::list<PeerTrust>  GetPeersAndTrusts() const;
 
 private:
   using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
