@@ -89,26 +89,34 @@ void P2PService::WorkCycle()
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 1");
   GetConnectionStatus(active_connections, active_addresses);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 2");
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 3");
   // update the trust system with current connection information
   UpdateTrustStatus(active_connections);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 4");
   // discover new good peers on the network
   PeerDiscovery(active_addresses);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 5");
   // make the decisions about which peers are desired and which ones we now need to drop
   RenewDesiredPeers(active_addresses);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 6");
   // perform connections updates and drops based on previous step
   UpdateMuddlePeers(active_addresses);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 7");
   // collect up manifests from connected peers
   UpdateManifests(active_addresses);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "KLL: WorkCycle, 8");
   // increment the work cycle counter (used for scheduling of periodic events)
 }
 
