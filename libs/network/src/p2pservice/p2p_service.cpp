@@ -112,7 +112,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
   muddle_.Debug("P2PService::GetConnectionStatus,");
- 
+
   // get a summary of addresses and associated URIs
   active_connections = muddle_.GetConnections(true);
 
@@ -229,6 +229,18 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
       }
     }
   }
+}
+
+std::list<P2PService::PeerTrust>  P2PService::GetPeersAndTrusts() const
+{
+  auto peersAndTrusts = trust_system_.GetPeersAndTrusts();
+  std::list<PeerTrust> r;
+  for(auto const &pt : peersAndTrusts)
+  {
+      r.push_back(pt);
+      r.back().active = (desired_peers_.find(pt.address) != desired_peers_.end());
+  }
+  return r;
 }
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)

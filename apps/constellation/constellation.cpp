@@ -173,7 +173,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_),
+        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);
