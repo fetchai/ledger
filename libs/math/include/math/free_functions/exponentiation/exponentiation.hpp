@@ -121,7 +121,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Sqrt(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-void Cbrt(ArrayType &x)
+fetch::math::meta::IsMathArrayLike<ArrayType, void> Cbrt(ArrayType &x)
 {
   kernels::stdlib::Cbrt<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
