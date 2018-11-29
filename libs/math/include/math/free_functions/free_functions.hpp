@@ -61,6 +61,7 @@
 #include "math/meta/type_traits.hpp"
 
 #include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/trigonometry/trigonometry.hpp"
 
 namespace fetch {
 namespace math {
