@@ -400,6 +400,10 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
     {
       for (auto &c : cache_)
       {
+        // limit the object pull size
+        if (ret.size() >= 80000)
+          break;
+
         if (c.delivered_to.find(client_handle) == c.delivered_to.end())
         {
           c.delivered_to.insert(client_handle);
