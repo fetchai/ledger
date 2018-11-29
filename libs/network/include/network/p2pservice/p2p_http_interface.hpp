@@ -155,6 +155,7 @@ private:
       peer_data["target"] = pt.name;
       peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
       peer_data["value"]  = pt.trust;
+      peer_data["active"]  = pt.active;
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
       peer_data_list.push_back(peer_data);
     }
