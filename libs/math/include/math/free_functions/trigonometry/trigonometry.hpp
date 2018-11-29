@@ -175,8 +175,8 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Tanh(ArrayType &x)
 }
 
 /**
- * maps every element of the array x to x' = asinh(x),, where asinh is the arc hyperbolic sine (inverse hyperbolic sine)
- * of a number in radians.
+ * maps every element of the array x to x' = asinh(x),, where asinh is the arc hyperbolic sine
+ * (inverse hyperbolic sine) of a number in radians.
  * @param x - array
  */
 template <typename ArrayType>
@@ -187,8 +187,8 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Asinh(ArrayType &x)
 }
 
 /**
- * maps every element of the array x to x' = acosh(x), where acosh is the arc hyperbolic cosine (inverse hyperbolic
- * cosine) of a number in radians.
+ * maps every element of the array x to x' = acosh(x), where acosh is the arc hyperbolic cosine
+ * (inverse hyperbolic cosine) of a number in radians.
  * @param x - array
  */
 template <typename ArrayType>
@@ -199,8 +199,8 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Acosh(ArrayType &x)
 }
 
 /**
- * maps every element of the array x to x' = atanh(x), where atanh arc hyperbolic tangent (inverse hyperbolic tangent)
- * of a number in radians.
+ * maps every element of the array x to x' = atanh(x), where atanh arc hyperbolic tangent (inverse
+ * hyperbolic tangent) of a number in radians.
  * @param x - array
  */
 template <typename ArrayType>
@@ -211,8 +211,8 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Atanh(ArrayType &x)
 }
 
 /**
- * Computes the square root of the sum of the squares of x and y, without undue overflow or underflow at intermediate
- * stages of the computation.
+ * Computes the square root of the sum of the squares of x and y, without undue overflow or
+ * underflow at intermediate stages of the computation.
  */
 template <typename ArrayType>
 fetch::math::meta::IsNotImplementedLike<ArrayType, void> Hypot(ArrayType &x)
@@ -221,5 +221,5 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Hypot(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch
