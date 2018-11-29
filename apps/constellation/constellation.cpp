@@ -141,7 +141,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              std::string                         my_network_address,
                              std::chrono::steady_clock::duration block_interval,
                              uint32_t max_peers,
-                             uint32_t fidgety_peers)
+                             uint32_t fidgety_peers,
+                             uint32_t peers_update_cycle_ms)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
@@ -154,7 +155,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , http_network_manager_{4}
   , muddle_{Muddle::CreateNetworkId("****"), std::move(certificate), network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, max_peers, fidgety_peers}
+  , p2p_{muddle_, lane_control_, trust_, max_peers, fidgety_peers, peers_update_cycle_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)

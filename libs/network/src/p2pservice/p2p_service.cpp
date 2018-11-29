@@ -30,7 +30,7 @@ namespace p2p {
   P2PService::FutureTimepoint start_mistrust;
 
   P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
-                         std::size_t max_peers, std::size_t fidgety_peers)
+                         std::size_t max_peers, std::size_t fidgety_peers, uint32_t process_cycle_ms)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -43,6 +43,7 @@ namespace p2p {
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , fidgety_peers_(fidgety_peers)
+  , process_cycle_ms_(process_cycle_ms)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -67,9 +68,12 @@ void P2PService::Start(UriList const &initial_peer_list)
   FETCH_LOG_INFO(LOGGING_NAME, "Establishing P2P Service on tcp://127.0.0.1:", "??",
                  " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
 
-  thread_pool_->SetIdleInterval(100);  
-  thread_pool_->Start();
-  thread_pool_->PostIdle([this]() { WorkCycle(); });
+  if (process_cycle_ms_ > 0)
+  {
+    thread_pool_->SetIdleInterval(100);
+    thread_pool_->Start();
+    thread_pool_->PostIdle([this]() { WorkCycle(); });
+  }
 
   start_mistrust.Set(std::chrono::milliseconds(10000));
 }

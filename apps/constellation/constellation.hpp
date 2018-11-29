@@ -67,7 +67,8 @@ public:
                          std::string                         my_network_address,
                          std::chrono::steady_clock::duration block_interval,
                              uint32_t max_peers,
-                             uint32_t fidgety_peers);
+                         uint32_t fidgety_peers,
+                         uint32_t peers_update_cycle_ms);
 
   void Run(UriList const &initial_peers, int mining);
   void SignalStop();
