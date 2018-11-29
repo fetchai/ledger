@@ -38,7 +38,7 @@ namespace fetch {
 namespace math {
 
 namespace details {
-template<typename T>
+template <typename T>
 void SquareImpl(T const &x, T &ret)
 {
   {
@@ -49,7 +49,7 @@ void SquareImpl(T const &x, T &ret)
     }
   }  // namespace details
 }
-}
+}  // namespace details
 /**
  * maps every element of the array x to x' = 2^x
  * @param x - array
@@ -182,5 +182,5 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> ApproxLog(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-}  // math
-}  // fetch
+}  // namespace math
+}  // namespace fetch
