@@ -233,7 +233,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
   auto static_peers = trust_system_.GetBestPeers(max_peers_ - fidgety_peers_);
-  auto fidget_peers = trust_system_.GetRandomPeers(fidgety_peers_);
+  auto fidget_peers = trust_system_.GetRandomPeers(fidgety_peers_, 0.0);
 
   desired_peers_.clear();
 
