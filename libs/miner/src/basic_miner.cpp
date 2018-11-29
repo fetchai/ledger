@@ -101,7 +101,8 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 {
   assert(num_lanes == (1u << log2_num_lanes_));
 
-  FETCH_LOCK(main_queue_lock_);
+  // TODO(private issue #402): Remove unnecessary locking
+  std::lock_guard<std::mutex> lock(main_queue_lock_);
 
   // add the entire contents of the pending queue into the main queue
   {
@@ -162,6 +163,11 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", main_queue_.size(), ")");
+}
+
+uint64_t BasicMiner::backlog() const
+{
+  return main_queue_.size();
 }
 
 /**

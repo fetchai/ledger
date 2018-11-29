@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
+#include "gtest/gtest.h"
+#include "math/spline/linear.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
-#include <math/spline/linear.hpp>
-#include <random/lcg.hpp>
-
 // This is to avoid ambiguity in instantation
 double dsin(double x)
 {
@@ -39,13 +39,11 @@ double dexp(double x)
 {
   return exp(x);
 }
-
 template <std::size_t N, typename F>
 void test1(F &f, double from, double to, double max)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(f, from, to, N);
-
   double me = 0;
   for (double x = from; x < to; x += 0.0001)
   {
@@ -55,35 +53,25 @@ void test1(F &f, double from, double to, double max)
     me        = std::max(r, me);
   }
   std::cout << "Peak error: " << me << std::endl;
-  if (me > max)
-  {
-    std::cout << "expected: " << max << std::endl;
-    exit(-1);
-  }
+  ASSERT_LE(me, max) << "expected: " << max;
 }
-
-int main(int argc, char **argv)
+// TODO(private issue 332): Move to a benchmark
+TEST(spline_gtest, testing_spline)
 {
-
   std::cout << "Testing Sin ... " << std::endl;
   test1<8>(dsin, 0, 2 * 3.14, 2);
   test1<16>(dsin, 0, 2 * 3.14, 4e-5);
   test1<20>(dsin, 0, 2 * 3.14, 4e-5);
-
   std::cout << "Testing Cos ... " << std::endl;
   test1<8>(dcos, 0, 2 * 3.14, 2);
   test1<16>(dcos, 0, 2 * 3.14, 4e-5);
   test1<20>(dcos, 0, 2 * 3.14, 4e-4);
-
   std::cout << "Testing Tan ... " << std::endl;
   test1<20>(dtan, -3.14 / 2., 3.14 / 2., 0.002);
   test1<16>(dtan, -3.14 / 2., 3.14 / 2., 0.05);
   test1<8>(dtan, -3.14 / 2., 3.14 / 2., 400);
-
   std::cout << "Testing Exp ... " << std::endl;
   test1<8>(dexp, 0, 100, 2);
   test1<16>(dexp, 0, 100, 4e-5);
   test1<20>(dexp, 0, 100, 4e-5);
-
-  return 0;
 }
