@@ -506,7 +506,7 @@ bool Router::IsConnected(Address const &target) const
  * @param direct Signal that this connection is a direct connection
  * @return true if an update was performed, otherwise false
  */
-bool Router::(Handle handle, Packet::RawAddress const &address,
+bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
                                         bool direct)
 {
   bool update_complete = false;
