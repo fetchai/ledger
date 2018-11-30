@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include <cassert>
 #include "math/meta/type_traits.hpp"
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -106,5 +106,5 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

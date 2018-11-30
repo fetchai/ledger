@@ -151,5 +151,5 @@ void Nearbyint(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

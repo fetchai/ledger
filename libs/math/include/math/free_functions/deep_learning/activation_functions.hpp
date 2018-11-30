@@ -33,9 +33,9 @@
 #include "math/free_functions/standard_functions/fmod.hpp"
 #include "math/free_functions/standard_functions/remainder.hpp"
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"
+#include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 
 namespace fetch {
@@ -89,15 +89,15 @@ void Relu(ArrayType &x)
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
 {
-linalg::Matrix<T, C, S> ret{A.shape()};
-ret.Copy(A);
+  linalg::Matrix<T, C, S> ret{A.shape()};
+  ret.Copy(A);
 
-Multiply(-1.0, ret, ret);
-Exp(ret);
-Add(ret, 1.0, ret);
-Divide(1.0, ret, ret);
+  Multiply(-1.0, ret, ret);
+  Exp(ret);
+  Add(ret, 1.0, ret);
+  Divide(1.0, ret, ret);
 
-return ret;
+  return ret;
 }
 
 /**
@@ -169,5 +169,5 @@ linalg::Matrix<T, C, S> Softmax(linalg::Matrix<T, C, S> const &array)
   return ret;
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

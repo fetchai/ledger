@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include <cassert>
 #include "math/meta/type_traits.hpp"
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -125,5 +125,5 @@ inline void Min(T const &datum1, T const &datum2, T &ret)
   ret = std::min(datum1, datum2);
 }
 
-} // math
-} // math
+}  // namespace math
+}  // namespace fetch

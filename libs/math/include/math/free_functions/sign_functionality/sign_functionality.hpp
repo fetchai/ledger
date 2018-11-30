@@ -19,8 +19,8 @@
 
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_functions.hpp"
-#include <cassert>
 #include "math/meta/type_traits.hpp"
+#include <cassert>
 
 namespace fetch {
 namespace math {
@@ -58,5 +58,5 @@ void Sign(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

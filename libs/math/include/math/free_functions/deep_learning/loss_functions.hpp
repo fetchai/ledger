@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/kernels/standard_functions.hpp"
 #include <cassert>
-#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-#include "math/free_functions/exponentiation/exponentiation.hpp"
 
 namespace fetch {
 namespace math {
@@ -162,7 +162,7 @@ ArrayType MeanSquareError(ArrayType const &A, ArrayType const &B)
   ret = Divide(ret, typename ArrayType::Type(A.shape()[0]));
   // TODO(private 343)
   ret = Divide(ret, typename ArrayType::Type(
-      2));  // division by 2 allows us to cancel out with a 2 in the derivative
+                        2));  // division by 2 allows us to cancel out with a 2 in the derivative
   return ret;
 }
 
@@ -254,5 +254,5 @@ ArrayType SoftmaxCrossEntropyLoss(ArrayType const &x, ArrayType const &y)
   return Divide(log_likelihood, static_cast<typename ArrayType::Type>(n_examples));
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

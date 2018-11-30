@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/assert.hpp"
 
 #include "vectorise/memory/range.hpp"
@@ -27,8 +26,8 @@
 #include "math/kernels/basic_arithmetics.hpp"
 #include "math/kernels/standard_functions.hpp"
 
-#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/free_functions/comparison/comparison.hpp"
+#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 
 #include "math/linalg/blas/gemm_nn_vector.hpp"
 #include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
@@ -181,19 +180,19 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
 template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array, T &ret)
 {
-using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
-ret = array.data().in_parallel().Reduce(
-    memory::TrivialRange(0, array.size()),
-    [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
-return ret;
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  return ret;
 }
 template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array)
 {
-T ret;
-Max(array, ret);
-return ret;
+  T ret;
+  Max(array, ret);
+  return ret;
 }
 
 /**
@@ -207,22 +206,22 @@ return ret;
 template <typename T, typename C>
 inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
 {
-using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
-if (r.is_trivial())
-{
-ret = array.data().in_parallel().Reduce(
-    r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
-}
-else
-{  // non-trivial range is not vectorised
-typename ShapeLessArray<T, C>::Type ret =
-    -std::numeric_limits<typename ShapeLessArray<T, C>::Type>::max();
-for (auto i : array)
-{
-ret = std::max(ret, i);
-}
-}
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return max(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename ShapeLessArray<T, C>::Type ret =
+        -std::numeric_limits<typename ShapeLessArray<T, C>::Type>::max();
+    for (auto i : array)
+    {
+      ret = std::max(ret, i);
+    }
+  }
 }
 
 /**
@@ -236,36 +235,36 @@ ret = std::max(ret, i);
  */
 template <typename T, typename C, typename S>
 void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
-    linalg::Matrix<T, C, S> &ret)
+         linalg::Matrix<T, C, S> &ret)
 {
-assert(axis == 0 || axis == 1);
+  assert(axis == 0 || axis == 1);
 
-if (axis == 0)
-{
-assert(ret.shape()[0] == 1);
-assert(ret.shape()[1] == array.shape()[1]);
-for (std::size_t i = 0; i < array.shape()[1]; ++i)
-{
-ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-for (std::size_t j = 0; j < array.shape()[0]; ++j)
-{
-ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
-}
-}
-}
-else
-{
-assert(ret.shape()[0] == array.shape()[0]);
-assert(ret.shape()[1] == 1);
-for (std::size_t i = 0; i < array.shape()[0]; ++i)
-{
-ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-for (std::size_t j = 0; j < array.shape()[1]; ++j)
-{
-ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
-}
-}
-}
+  if (axis == 0)
+  {
+    assert(ret.shape()[0] == 1);
+    assert(ret.shape()[1] == array.shape()[1]);
+    for (std::size_t i = 0; i < array.shape()[1]; ++i)
+    {
+      ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[0]; ++j)
+      {
+        ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
+      }
+    }
+  }
+  else
+  {
+    assert(ret.shape()[0] == array.shape()[0]);
+    assert(ret.shape()[1] == 1);
+    for (std::size_t i = 0; i < array.shape()[0]; ++i)
+    {
+      ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
+      for (std::size_t j = 0; j < array.shape()[1]; ++j)
+      {
+        ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
+      }
+    }
+  }
 }
 
 /**
@@ -336,11 +335,11 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
 template <typename T, typename C>
 inline void Min(ShapeLessArray<T, C> const &array, T &ret)
 {
-using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
-ret = array.data().in_parallel().Reduce(
-    memory::TrivialRange(0, array.size()),
-    [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+  ret = array.data().in_parallel().Reduce(
+      memory::TrivialRange(0, array.size()),
+      [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
 }
 
 /**
@@ -354,21 +353,21 @@ ret = array.data().in_parallel().Reduce(
 template <typename T, typename C>
 inline void Min(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
 {
-using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
 
-if (r.is_trivial())
-{
-ret = array.data().in_parallel().Reduce(
-    r, [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
-}
-else
-{  // non-trivial range is not vectorised
-typename T::Type ret = std::numeric_limits<typename T::Type>::max();
-for (auto i : array)
-{
-ret = std::min(ret, i);
-}
-}
+  if (r.is_trivial())
+  {
+    ret = array.data().in_parallel().Reduce(
+        r, [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+  }
+  else
+  {  // non-trivial range is not vectorised
+    typename T::Type ret = std::numeric_limits<typename T::Type>::max();
+    for (auto i : array)
+    {
+      ret = std::min(ret, i);
+    }
+  }
 }
 
 /**
@@ -446,57 +445,57 @@ ArrayType &MaximumImplementation(ArrayType const &array1, ArrayType const &array
 template <typename T, typename C>
 void Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2, NDArray<T, C> &ret)
 {
-assert(ret.shape() == array1.shape());
-assert(array1.shape() == array2.shape());
-details::MaximumImplementation(array1, array2, ret);
+  assert(ret.shape() == array1.shape());
+  assert(array1.shape() == array2.shape());
+  details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
 NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
 {
-std::vector<std::size_t> return_shape(array1.shape());
-NDArray<T, C>            ret(return_shape);
-Maximum(array1, array2, ret);
-return ret;
+  std::vector<std::size_t> return_shape(array1.shape());
+  NDArray<T, C>            ret(return_shape);
+  Maximum(array1, array2, ret);
+  return ret;
 }
 template <typename T, typename C>
 void Maximum(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-    ShapeLessArray<T, C> &ret)
+             ShapeLessArray<T, C> &ret)
 {
-details::MaximumImplementation(array1, array2, ret);
+  details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Maximum(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2)
 {
-ShapeLessArray<T, C> ret(array1.size());
-Maximum(array1, array2, ret);
-return ret;
+  ShapeLessArray<T, C> ret(array1.size());
+  Maximum(array1, array2, ret);
+  return ret;
 }
 
 template <typename T, typename C, typename S>
 void Maximum(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-    linalg::Matrix<T, C, S> &ret)
+             linalg::Matrix<T, C, S> &ret)
 {
-details::MaximumImplementation(array1, array2, ret);
+  details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1,
-linalg::Matrix<T, C, S> const &array2)
+                                linalg::Matrix<T, C, S> const &array2)
 {
-std::vector<std::size_t> return_shape(array1.shape());
-linalg::Matrix<T, C, S>  ret(return_shape);
-Maximum(array1, array2, ret);
-return ret;
+  std::vector<std::size_t> return_shape(array1.shape());
+  linalg::Matrix<T, C, S>  ret(return_shape);
+  Maximum(array1, array2, ret);
+  return ret;
 }
 
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &scalar)
 {
-std::vector<std::size_t> return_shape(array1.shape());
-linalg::Matrix<T, C, S>  ret(return_shape);
-linalg::Matrix<T, C, S>  compare(return_shape);
-compare.Fill(scalar);
-Maximum(array1, compare, ret);
-return ret;
+  std::vector<std::size_t> return_shape(array1.shape());
+  linalg::Matrix<T, C, S>  ret(return_shape);
+  linalg::Matrix<T, C, S>  compare(return_shape);
+  compare.Fill(scalar);
+  Maximum(array1, compare, ret);
+  return ret;
 }
 
 /**
@@ -509,18 +508,18 @@ return ret;
 template <typename T, typename C>
 void Product(ShapeLessArray<T, C> const &obj1, T &ret)
 {
-ret = obj1.data().in_parallel().Reduce(
-    memory::TrivialRange(0, obj1.size()),
-    [](typename ShapeLessArray<T, C>::vector_register_type const &a,
-       typename ShapeLessArray<T, C>::vector_register_type const &b) ->
-        typename ShapeLessArray<T, C>::vector_register_type { return a * b; });
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ShapeLessArray<T, C>::vector_register_type const &a,
+         typename ShapeLessArray<T, C>::vector_register_type const &b) ->
+      typename ShapeLessArray<T, C>::vector_register_type { return a * b; });
 }
 template <typename T, typename C>
 T Product(ShapeLessArray<T, C> const &obj1)
 {
-T ret;
-Product(obj1, ret);
-return ret;
+  T ret;
+  Product(obj1, ret);
+  return ret;
 }
 /**
  * return the product of all elements in the vector
@@ -551,18 +550,18 @@ T Product(std::vector<T> const &obj1)
 template <typename T, typename C>
 void Sum(ShapeLessArray<T, C> const &obj1, T &ret)
 {
-ret = obj1.data().in_parallel().Reduce(
-    memory::TrivialRange(0, obj1.size()),
-    [](typename ShapeLessArray<T, C>::vector_register_type const &a,
-       typename ShapeLessArray<T, C>::vector_register_type const &b) ->
-        typename ShapeLessArray<T, C>::vector_register_type { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ShapeLessArray<T, C>::vector_register_type const &a,
+         typename ShapeLessArray<T, C>::vector_register_type const &b) ->
+      typename ShapeLessArray<T, C>::vector_register_type { return a + b; });
 }
 template <typename T, typename C>
 T Sum(ShapeLessArray<T, C> const &obj1)
 {
-T ret;
-Sum(obj1, ret);
-return ret;
+  T ret;
+  Sum(obj1, ret);
+  return ret;
 }
 
 /**
@@ -576,15 +575,15 @@ template <typename T, typename C>
 void Mean(ShapeLessArray<T, C> const &obj1, T &ret)
 {
 
-Sum(obj1, ret);
-Divide(ret, T(obj1.size()), ret);
+  Sum(obj1, ret);
+  Divide(ret, T(obj1.size()), ret);
 }
 template <typename T, typename C>
 T Mean(ShapeLessArray<T, C> const &obj1)
 {
-T ret;
-Mean(obj1, ret);
-return ret;
+  T ret;
+  Mean(obj1, ret);
+  return ret;
 }
 
 /**
@@ -606,119 +605,119 @@ void PeakToPeak(ArrayType arr)
 template <typename T, typename C>
 void ArgMax(ShapeLessArray<T, C> const &array, T &ret)
 {
-ret          = 0;
-T cur_maxval = std::numeric_limits<T>::lowest();
+  ret          = 0;
+  T cur_maxval = std::numeric_limits<T>::lowest();
 
-// just using ret as a free variable to store the current maxval for the loop here
-for (std::size_t i = 0; i < array.size(); ++i)
-{
-if (cur_maxval < array[i])
-{
-ret = static_cast<T>(i);
-}
-}
+  // just using ret as a free variable to store the current maxval for the loop here
+  for (std::size_t i = 0; i < array.size(); ++i)
+  {
+    if (cur_maxval < array[i])
+    {
+      ret = static_cast<T>(i);
+    }
+  }
 }
 template <typename T, typename C>
 T ArgMax(ShapeLessArray<T, C> const &array)
 {
-T ret;
-return ArgMax(array, ret);
+  T ret;
+  return ArgMax(array, ret);
 }
 
 template <typename T, typename C, typename S>
 void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArray<T, C> &ret)
 {
-assert(axis < 2);
+  assert(axis < 2);
 
-if (axis == 0)
-{
-assert(ret.size() == array.width());
-T cur_maxval;
+  if (axis == 0)
+  {
+    assert(ret.size() == array.width());
+    T cur_maxval;
 
-// just using ret as a free variable to store the current maxval for the loop here
-for (std::size_t i = 0; i < array.width(); ++i)
-{
-cur_maxval = std::numeric_limits<T>::lowest();
-for (std::size_t j = 0; j < array.height(); ++j)
-{
-if (cur_maxval < array.At(j, i))
-{
-ret[i]     = static_cast<T>(j);
-cur_maxval = array.At(j, i);
-}
-}
-}
-}
-else
-{
-assert(ret.size() == array.height());
-T cur_maxval;
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (std::size_t i = 0; i < array.width(); ++i)
+    {
+      cur_maxval = std::numeric_limits<T>::lowest();
+      for (std::size_t j = 0; j < array.height(); ++j)
+      {
+        if (cur_maxval < array.At(j, i))
+        {
+          ret[i]     = static_cast<T>(j);
+          cur_maxval = array.At(j, i);
+        }
+      }
+    }
+  }
+  else
+  {
+    assert(ret.size() == array.height());
+    T cur_maxval;
 
-// just using ret as a free variable to store the current maxval for the loop here
-for (std::size_t i = 0; i < array.height(); ++i)
-{
-cur_maxval = std::numeric_limits<T>::lowest();
-for (std::size_t j = 0; j < array.width(); ++j)
-{
-if (cur_maxval < array.At(i, j))
-{
-ret[i]     = static_cast<T>(j);
-cur_maxval = array.At(i, j);
-}
-}
-}
-}
+    // just using ret as a free variable to store the current maxval for the loop here
+    for (std::size_t i = 0; i < array.height(); ++i)
+    {
+      cur_maxval = std::numeric_limits<T>::lowest();
+      for (std::size_t j = 0; j < array.width(); ++j)
+      {
+        if (cur_maxval < array.At(i, j))
+        {
+          ret[i]     = static_cast<T>(j);
+          cur_maxval = array.At(i, j);
+        }
+      }
+    }
+  }
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
 {
-assert(array.shape().size() == 2);
-assert(axis == 0 || axis == 1);
+  assert(array.shape().size() == 2);
+  assert(axis == 0 || axis == 1);
 
-if (axis == 0)
-{
-linalg::Matrix<T, C, S> ret{array.shape()[1]};
-ArgMax(array, axis, ret);
-return ret;
-}
-else
-{
-linalg::Matrix<T, C, S> ret{array.shape()[0]};
-ArgMax(array, axis, ret);
-return ret;
-}
+  if (axis == 0)
+  {
+    linalg::Matrix<T, C, S> ret{array.shape()[1]};
+    ArgMax(array, axis, ret);
+    return ret;
+  }
+  else
+  {
+    linalg::Matrix<T, C, S> ret{array.shape()[0]};
+    ArgMax(array, axis, ret);
+    return ret;
+  }
 }
 
 template <typename T, typename C>
 void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
 {
-assert(perm.size() == input_array.shape().size());
+  assert(perm.size() == input_array.shape().size());
 
-// set up an initial array
-NDArray<T, C> ret = input_array.Copy();
+  // set up an initial array
+  NDArray<T, C> ret = input_array.Copy();
 
-NDArrayIterator<T, typename NDArray<T, C>::container_type> it_input(input_array);
-NDArrayIterator<T, typename NDArray<T, C>::container_type> it_ret(ret);
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_input(input_array);
+  NDArrayIterator<T, typename NDArray<T, C>::container_type> it_ret(ret);
 
-it_ret.Transpose(perm);
-while (it_ret)
-{
-*it_input = *it_ret;
-++it_input;
-++it_ret;
-}
+  it_ret.Transpose(perm);
+  while (it_ret)
+  {
+    *it_input = *it_ret;
+    ++it_input;
+    ++it_ret;
+  }
 
-std::vector<std::size_t> new_shape;
-for (std::size_t i = 0; i < perm.size(); ++i)
-{
-new_shape.push_back(input_array.shape()[perm[i]]);
-}
-input_array.Reshape(new_shape);
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    new_shape.push_back(input_array.shape()[perm[i]]);
+  }
+  input_array.Reshape(new_shape);
 }
 template <typename T, typename C>
 void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
 {
-assert(perm.size() == input_array.shape().size());
+  assert(perm.size() == input_array.shape().size());
 }
 
 /**
@@ -729,83 +728,83 @@ assert(perm.size() == input_array.shape().size());
  */
 template <typename T, typename C>
 void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-    T beta = 0.0, bool threaded = false)
+         T beta = 0.0, bool threaded = false)
 {
-assert(ret.shape().size() == 2);
-ret.Resize(A.shape()[0] * B.shape()[0]);
+  assert(ret.shape().size() == 2);
+  ret.Resize(A.shape()[0] * B.shape()[0]);
 
-if (threaded)
-{
-linalg::Blas<T, NDArray<T, C>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-linalg::_C),
-Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-gemm_nn_vector_threaded;
+  if (threaded)
+  {
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
 
-gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-}
-else
-{
-linalg::Blas<T, NDArray<T, C>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-linalg::_C),
-Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE>
-gemm_nn_vector;
+    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<T, NDArray<T, C>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
+        gemm_nn_vector;
 
-gemm_nn_vector(alpha, A, B, beta, ret);
-}
+    gemm_nn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C>
 NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
 {
-std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-NDArray<T, C>            ret(return_shape);
-Dot(A, B, ret, threaded);
-return ret;
+  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
+  NDArray<T, C>            ret(return_shape);
+  Dot(A, B, ret, threaded);
+  return ret;
 }
 template <typename T, typename C, typename S>
 void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-    linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+         linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
 {
-ret.Resize(A.shape()[0], B.shape()[1]);
+  ret.Resize(A.shape()[0], B.shape()[1]);
 
-if (threaded)
-{
-linalg::Blas<T, linalg::Matrix<T, C, S>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-linalg::_C),
-Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-gemm_nn_vector_threaded;
+  if (threaded)
+  {
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_nn_vector_threaded;
 
-gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-}
-else
-{
-linalg::Blas<T, linalg::Matrix<T, C, S>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-linalg::_C),
-Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE>
-gemm_nn_vector;
+    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<T, linalg::Matrix<T, C, S>,
+                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
+                           linalg::_C),
+                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
+                                       linalg::_beta * linalg::_C),
+                 platform::Parallelisation::VECTORISE>
+        gemm_nn_vector;
 
-gemm_nn_vector(alpha, A, B, beta, ret);
-}
+    gemm_nn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-bool threaded = false)
+                            bool threaded = false)
 {
-std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
-linalg::Matrix<T, C, S>  ret(return_shape);
-Dot(A, B, ret, 1.0, 0.0, threaded);
-return ret;
+  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
+  linalg::Matrix<T, C, S>  ret(return_shape);
+  Dot(A, B, ret, 1.0, 0.0, threaded);
+  return ret;
 }
 
 /**
@@ -827,9 +826,9 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
         typename ArrayType::Type, ArrayType,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-            gemm_nt_vector_threaded;
+        gemm_nt_vector_threaded;
 
     gemm_nt_vector_threaded(alpha, A, B, beta, ret);
   }
@@ -839,9 +838,9 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
         typename ArrayType::Type, ArrayType,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-            linalg::_beta * linalg::_C),
+                              linalg::_beta * linalg::_C),
         platform::Parallelisation::VECTORISE>
-            gemm_nt_vector;
+        gemm_nt_vector;
 
     gemm_nt_vector(alpha, A, B, beta, ret);
   }
@@ -881,116 +880,116 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(Array
  */
 template <typename T, typename C>
 void TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-    T beta = 0.0, bool threaded = false)
+                  T beta = 0.0, bool threaded = false)
 {
-assert(ret.shape().size() == 2);
-std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-ret.Reshape(return_shape);
+  assert(ret.shape().size() == 2);
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  ret.Reshape(return_shape);
 
-if (threaded)
-{
-linalg::Blas<
-    T, NDArray<T, C>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-gemm_tn_vector_threaded;
+  if (threaded)
+  {
+    linalg::Blas<
+        T, NDArray<T, C>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_tn_vector_threaded;
 
-gemm_tn_vector_threaded(alpha, A, B, beta, ret);
-}
-else
-{
-linalg::Blas<
-    T, NDArray<T, C>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE>
-gemm_tn_vector;
+    gemm_tn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<
+        T, NDArray<T, C>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE>
+        gemm_tn_vector;
 
-gemm_tn_vector(alpha, A, B, beta, ret);
-}
+    gemm_tn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C>
 NDArray<T, C> TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, T alpha = 1.0,
-    T beta = 0.0, bool threaded = false)
+                           T beta = 0.0, bool threaded = false)
 {
-assert(A.shape().size() == 2);
-assert(B.shape().size() == 2);
-std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-NDArray<T, C>            ret(return_shape);
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  NDArray<T, C>            ret(return_shape);
 
-TransposeDot(A, B, ret, alpha, beta, threaded);
+  TransposeDot(A, B, ret, alpha, beta, threaded);
 
-return ret;
+  return ret;
 }
 template <typename T, typename C>
 NDArray<T, C> TransposeDot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
 {
-assert(A.shape().size() == 2);
-assert(B.shape().size() == 2);
-std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-NDArray<T, C>            ret(return_shape);
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  NDArray<T, C>            ret(return_shape);
 
-TransposeDot(A, B, ret, 1.0, 0.0, threaded);
+  TransposeDot(A, B, ret, 1.0, 0.0, threaded);
 
-return ret;
+  return ret;
 }
 
 template <typename T, typename C, typename S>
 void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-    linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
 {
-ret.Resize(A.width(), B.width());
+  ret.Resize(A.width(), B.width());
 
-if (threaded)
-{
-linalg::Blas<
-    T, linalg::Matrix<T, C, S>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-gemm_tn_vector_threaded;
+  if (threaded)
+  {
+    linalg::Blas<
+        T, linalg::Matrix<T, C, S>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
+        gemm_tn_vector_threaded;
 
-gemm_tn_vector_threaded(alpha, A, B, beta, ret);
-}
-else
-{
-linalg::Blas<
-    T, linalg::Matrix<T, C, S>,
-Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-    linalg::_beta * linalg::_C),
-platform::Parallelisation::VECTORISE>
-gemm_tn_vector;
+    gemm_tn_vector_threaded(alpha, A, B, beta, ret);
+  }
+  else
+  {
+    linalg::Blas<
+        T, linalg::Matrix<T, C, S>,
+        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
+        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
+                              linalg::_beta * linalg::_C),
+        platform::Parallelisation::VECTORISE>
+        gemm_tn_vector;
 
-gemm_tn_vector(alpha, A, B, beta, ret);
-}
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
-linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
-bool threaded = false)
-{
-std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-linalg::Matrix<T, C, S>  ret(return_shape);
-
-TransposeDot(A, B, ret, alpha, beta, threaded);
-
-return ret;
+    gemm_tn_vector(alpha, A, B, beta, ret);
+  }
 }
 template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
-linalg::Matrix<T, C, S> const &B, bool threaded = false)
+                                     linalg::Matrix<T, C, S> const &B, T alpha = 1.0, T beta = 0.0,
+                                     bool threaded = false)
 {
-std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-linalg::Matrix<T, C, S>  ret(return_shape);
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  linalg::Matrix<T, C, S>  ret(return_shape);
 
-TransposeDot(A, B, ret, 1.0, 0.0, threaded);
+  TransposeDot(A, B, ret, alpha, beta, threaded);
 
-return ret;
+  return ret;
+}
+template <typename T, typename C, typename S>
+linalg::Matrix<T, C, S> TransposeDot(linalg::Matrix<T, C, S> const &A,
+                                     linalg::Matrix<T, C, S> const &B, bool threaded = false)
+{
+  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
+  linalg::Matrix<T, C, S>  ret(return_shape);
+
+  TransposeDot(A, B, ret, 1.0, 0.0, threaded);
+
+  return ret;
 }
 
 /**
@@ -1003,26 +1002,26 @@ return ret;
 template <typename T, typename C>
 void ExpandDimensions(NDArray<T, C> &input_array, std::size_t const &axis)
 {
-assert(axis <= input_array.shape().size());
+  assert(axis <= input_array.shape().size());
 
-std::vector<std::size_t> new_shape;
-for (std::size_t i = 0; i <= input_array.shape().size(); ++i)
-{
-if (i < axis)
-{
-new_shape.push_back(input_array.shape()[i]);
-}
-else if (i == axis)
-{
-new_shape.push_back(1);
-}
-else
-{
-new_shape.push_back(input_array.shape()[i - 1]);
-}
-}
+  std::vector<std::size_t> new_shape;
+  for (std::size_t i = 0; i <= input_array.shape().size(); ++i)
+  {
+    if (i < axis)
+    {
+      new_shape.push_back(input_array.shape()[i]);
+    }
+    else if (i == axis)
+    {
+      new_shape.push_back(1);
+    }
+    else
+    {
+      new_shape.push_back(input_array.shape()[i - 1]);
+    }
+  }
 
-input_array.Reshape(new_shape);
+  input_array.Reshape(new_shape);
 }
 /**
  * The special case of axis = -1 is permissible, so we declare this function signature to capture it
@@ -1034,18 +1033,18 @@ input_array.Reshape(new_shape);
 template <typename T, typename C>
 void ExpandDimensions(NDArray<T, C> &input_array, int const &axis)
 {
-assert(axis <= static_cast<int>(input_array.size()));
-std::size_t new_axis;
-if (axis < 0)
-{
-assert(axis == -1);
-new_axis = input_array.shape().size();
-}
-else
-{
-new_axis = static_cast<std::size_t>(axis);
-}
-ExpandDimensions(input_array, new_axis);
+  assert(axis <= static_cast<int>(input_array.size()));
+  std::size_t new_axis;
+  if (axis < 0)
+  {
+    assert(axis == -1);
+    new_axis = input_array.shape().size();
+  }
+  else
+  {
+    new_axis = static_cast<std::size_t>(axis);
+  }
+  ExpandDimensions(input_array, new_axis);
 }
 
 /**
@@ -1084,80 +1083,80 @@ void ConcatImplementation(std::vector<ArrayType> const &input_arrays, ArrayType 
 template <typename T, typename C>
 void Concat(ShapeLessArray<T, C> &ret, std::vector<ShapeLessArray<T, C>> const &input_arrays)
 {
-details::ConcatImplementation(input_arrays, ret);
+  details::ConcatImplementation(input_arrays, ret);
 }
 template <typename T, typename C>
 ShapeLessArray<T, C> Concat(std::vector<ShapeLessArray<T, C>> const &input_arrays)
 {
-ShapeLessArray<T, C> ret;
-Concat(ret, input_arrays);
-return ret;
+  ShapeLessArray<T, C> ret;
+  Concat(ret, input_arrays);
+  return ret;
 }
 
 template <typename T, typename C>
 void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
 {
-assert(input_arrays.size() > 0);
-assert(input_arrays[0].shape().size() > 0);
+  assert(input_arrays.size() > 0);
+  assert(input_arrays[0].shape().size() > 0);
 
-if (input_arrays.size() == 1)
-{
-ret.ResizeFromShape(input_arrays[0].shape());
-ret.Copy(input_arrays[0]);
-}
-else
-{
-// figure out the size of the axis dim after concatenation
-std::size_t new_axis_dim = input_arrays[0].shape()[axis];
-assert(axis < input_arrays[0].shape().size());
-for (std::size_t i = 0; i < (input_arrays.size() - 1); ++i)
-{
-assert(input_arrays[i].shape() == input_arrays[i + 1].shape());
-new_axis_dim += input_arrays[i + 1].shape()[axis];
-}
+  if (input_arrays.size() == 1)
+  {
+    ret.ResizeFromShape(input_arrays[0].shape());
+    ret.Copy(input_arrays[0]);
+  }
+  else
+  {
+    // figure out the size of the axis dim after concatenation
+    std::size_t new_axis_dim = input_arrays[0].shape()[axis];
+    assert(axis < input_arrays[0].shape().size());
+    for (std::size_t i = 0; i < (input_arrays.size() - 1); ++i)
+    {
+      assert(input_arrays[i].shape() == input_arrays[i + 1].shape());
+      new_axis_dim += input_arrays[i + 1].shape()[axis];
+    }
 
-// figure out the size and shape of the output array
-std::vector<std::size_t> new_shape = {input_arrays[0].shape()};
-new_shape[axis]                    = new_axis_dim;
-ret.ResizeFromShape(new_shape);
+    // figure out the size and shape of the output array
+    std::vector<std::size_t> new_shape = {input_arrays[0].shape()};
+    new_shape[axis]                    = new_axis_dim;
+    ret.ResizeFromShape(new_shape);
 
-// identify the axis based stride
-std::size_t stride = input_arrays[0].shape()[axis];
+    // identify the axis based stride
+    std::size_t stride = input_arrays[0].shape()[axis];
 
-for (std::size_t j = 0; j < input_arrays.size(); ++j)
-{
-// figure out the part of the return array to fill with this input array
-std::vector<std::vector<std::size_t>> step{};
-for (std::size_t i = 0; i < ret.shape().size(); ++i)
-{
-if (i == axis)
-{
-step.push_back({j * stride, (j + 1) * stride, 1});
-}
-else
-{
-step.push_back({0, ret.shape()[i], 1});
-}
-}
+    for (std::size_t j = 0; j < input_arrays.size(); ++j)
+    {
+      // figure out the part of the return array to fill with this input array
+      std::vector<std::vector<std::size_t>> step{};
+      for (std::size_t i = 0; i < ret.shape().size(); ++i)
+      {
+        if (i == axis)
+        {
+          step.push_back({j * stride, (j + 1) * stride, 1});
+        }
+        else
+        {
+          step.push_back({0, ret.shape()[i], 1});
+        }
+      }
 
-// copy the data across
-NDArrayIterator<T, C> ret_iterator{ret, step};
-NDArrayIterator<T, C> arr_iterator{input_arrays[j]};
-for (std::size_t k = 0; k < input_arrays[j].size(); ++k)
-{
-*ret_iterator = *arr_iterator;
-++ret_iterator;
-++arr_iterator;
-}
-}
-}
+      // copy the data across
+      NDArrayIterator<T, C> ret_iterator{ret, step};
+      NDArrayIterator<T, C> arr_iterator{input_arrays[j]};
+      for (std::size_t k = 0; k < input_arrays[j].size(); ++k)
+      {
+        *ret_iterator = *arr_iterator;
+        ++ret_iterator;
+        ++arr_iterator;
+      }
+    }
+  }
 }
 template <typename T, typename C>
 NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
 {
-NDArray<T, C> ret;
-Concat(ret, input_arrays);
-return ret;
+  NDArray<T, C> ret;
+  Concat(ret, input_arrays);
+  return ret;
 }
 
 /**
@@ -1180,9 +1179,9 @@ void DynamicStitchImplementation(ArrayType &input_array, ArrayType const &indice
 }  // namespace details
 template <typename T, typename C>
 void DynamicStitch(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &indices,
-ShapeLessArray<T, C> const &data)
+                   ShapeLessArray<T, C> const &data)
 {
-details::DynamicStitchImplementation(input_array, indices, data);
+  details::DynamicStitchImplementation(input_array, indices, data);
 }
 template <typename T, typename C>
 void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T, C> &data)
@@ -1196,5 +1195,5 @@ void DynamicStitch(NDArray<T, C> &input_array, NDArray<T, C> &indices, NDArray<T
   input_array.MajorOrderFlip();
 }
 
-} // math
-} // fetch
+}  // namespace math
+}  // namespace fetch

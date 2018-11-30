@@ -53,5 +53,5 @@ void Lgamma(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-} // math
-} // math
+}  // namespace math
+}  // namespace fetch
