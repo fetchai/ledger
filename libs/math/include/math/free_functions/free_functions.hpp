@@ -60,6 +60,8 @@
 
 #include "math/meta/type_traits.hpp"
 
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+
 namespace fetch {
 namespace math {
 
@@ -78,6 +80,9 @@ class Matrix;
 template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array);
 
+/*
+ * Adds sparse updates to the variable referenced
+ */
 namespace details {
 template <typename ArrayType>
 void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType &indices)
@@ -222,7 +227,7 @@ void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
 }
 
 /**
- * Efficient vectorised and threaded routine for C = A.T(B)
+ * Efficient vectorised and threaded routine for C = A.B, the dot product between A and B
  * @param A
  * @param B
  * @return
@@ -774,116 +779,6 @@ NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
 }
 
 /**
- * raise 2 to power input values of x
- * @param x
- */
-template <typename ArrayType>
-void Exp2(ArrayType &x)
-{
-  kernels::stdlib::Exp2<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * exp(x) - 1
- * @param x
- */
-template <typename ArrayType>
-void Expm1(ArrayType &x)
-{
-  kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * natural logarithm of x
- * @param x
- */
-template <typename ArrayType>
-void Log10(ArrayType &x)
-{
-  kernels::stdlib::Log10<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * log base 2
- * @param x
- */
-template <typename ArrayType>
-void Log2(ArrayType &x)
-{
-  kernels::stdlib::Log2<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * natural log 1 + x
- * @param x
- */
-template <typename ArrayType>
-void Log1p(ArrayType &x)
-{
-  kernels::stdlib::Log1p<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * square root
- * @param x
- */
-template <typename ArrayType>
-void Sqrt(ArrayType &x)
-{
-  kernels::stdlib::Sqrt<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * cubic root x
- * @param x
- */
-template <typename ArrayType>
-void Cbrt(ArrayType &x)
-{
-  kernels::stdlib::Cbrt<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * raise to power
- * @param x
- */
-template <typename ArrayType>
-void Pow(ArrayType &x)
-{
-  kernels::stdlib::Pow<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * square
- * @param x
- */
-template <typename ArrayType>
-void Square(ArrayType &x)
-{
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    x[i] = x[i] * x[i];
-  }
-}
-template <typename ArrayType>
-void Square(ArrayType const &x, ArrayType &ret)
-{
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    ret[i] = x[i];
-    ret[i] = ret[i] * ret[i];
-  }
-}
-
-/**
  * sine of x
  * @param x
  */
@@ -987,7 +882,7 @@ void Cosh(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-void Tanh(ArrayType &x)
+fetch::math::meta::IsMathArrayLike<ArrayType, void> Tanh(ArrayType &x)
 {
   kernels::stdlib::Tanh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -1049,7 +944,11 @@ void Erfc(ArrayType &x)
 }
 
 /**
- * factorial of x-1
+ * Returns the gamma function of x.
+ * If the magnitude of x is too large, an overflow range error occurs.
+ * If too small, an underflow range error may occur.
+ * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain
+ * error or a pole error (or none, depending on implementation).
  * @param x
  */
 template <typename ArrayType>
@@ -1060,7 +959,11 @@ void Tgamma(ArrayType &x)
 }
 
 /**
- * log of factorial of x-1
+ * Returns the log of the gamma function of x.
+ * If the magnitude of x is too large, an overflow range error occurs.
+ * If too small, an underflow range error may occur.
+ * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain
+ * error or a pole error (or none, depending on implementation).
  * @param x
  */
 template <typename ArrayType>
@@ -1214,7 +1117,9 @@ void Isnan(ArrayType &x)
 }
 
 /**
- *
+ * If no errors occur and there are two inputs, the hypotenuse of a right-angled triangle is
+ * computed as sqrt(x^2 + y^2) If no errors occur and there are 3 points, then the distance from the
+ * origin in 3D space is returned as sqrt(x^2 + y^2 + z^2)
  * @param x
  */
 template <typename ArrayType>
@@ -1225,161 +1130,172 @@ void Hypot(ArrayType &x)
 }
 
 /**
- *
+ * Decomposes given floating point value arg into a normalized fraction and an integral power of
+ * two.
  * @param x
  */
 template <typename ArrayType>
-void Frexp(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Frexp(ArrayType &x)
 {
   kernels::stdlib::Frexp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Multiplies a floating point value x by the number 2 raised to the exp power.
  * @param x
  */
 template <typename ArrayType>
-void Ldexp(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ldexp(ArrayType &x)
 {
   kernels::stdlib::Ldexp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Decomposes given floating point value x into integral and fractional parts, each having the same
+ * type and sign as x. The integral part (in floating-point format) is stored in the object pointed
+ * to by iptr.
  * @param x
  */
 template <typename ArrayType>
-void Modf(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Modf(ArrayType &x)
 {
   kernels::stdlib::Modf<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Multiplies a floating point value x by FLT_RADIX raised to power exp.
  * @param x
  */
 template <typename ArrayType>
-void Scalbn(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbn(ArrayType &x)
 {
   kernels::stdlib::Scalbn<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Multiplies a floating point value x by FLT_RADIX raised to power exp.
  * @param x
  */
 template <typename ArrayType>
-void Scalbln(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbln(ArrayType &x)
 {
   kernels::stdlib::Scalbln<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Extracts the value of the unbiased exponent from the floating-point argument arg, and returns it
+ * as a signed integer value.
  * @param x
  */
 template <typename ArrayType>
-void Ilogb(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ilogb(ArrayType &x)
 {
   kernels::stdlib::Ilogb<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Extracts the value of the unbiased radix-independent exponent from the floating-point argument
+ * arg, and returns it as a floating-point value.
  * @param x
  */
 template <typename ArrayType>
-void Logb(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
 {
   kernels::stdlib::Logb<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Returns the next representable value of from in the direction of to.
  * @param x
  */
 template <typename ArrayType>
-void Nextafter(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nextafter(ArrayType &x)
 {
   kernels::stdlib::Nextafter<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Returns the next representable value of from in the direction of to. If from equals to to, to is
+ * returned, converted from long double to the return type of the function without loss of range or
+ * precision.
  * @param x
  */
 template <typename ArrayType>
-void Nexttoward(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nexttoward(ArrayType &x)
 {
   kernels::stdlib::Nexttoward<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Composes a floating point value with the magnitude of x and the sign of y.
  * @param x
  */
 template <typename ArrayType>
-void Copysign(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Copysign(ArrayType &x)
 {
   kernels::stdlib::Copysign<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Categorizes floating point value arg into the following categories: zero, subnormal, normal,
+ * infinite, NAN, or implementation-defined category.
  * @param x
  */
 template <typename ArrayType>
-void Fpclassify(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Fpclassify(ArrayType &x)
 {
   kernels::stdlib::Fpclassify<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the given floating point number arg is normal, i.e. is neither zero, subnormal,
+ * infinite, nor NaN.
  * @param x
  */
 template <typename ArrayType>
-void Isnormal(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isnormal(ArrayType &x)
 {
   kernels::stdlib::Isnormal<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the given floating point number arg is negative.
  * @param x
  */
 template <typename ArrayType>
-void Signbit(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Signbit(ArrayType &x)
 {
   kernels::stdlib::Signbit<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the floating point number x is greater than the floating-point number y, without
+ * setting floating-point exceptions.
  * @param x
  */
 template <typename ArrayType>
-void Isgreater(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreater(ArrayType &x)
 {
   kernels::stdlib::Isgreater<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ *  Determines if the floating point number x is greater than or equal to the floating-point number
+ * y, without setting floating-point exceptions.
  * @param x
  */
 template <typename ArrayType>
@@ -1390,70 +1306,74 @@ void Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
 }
 
 /**
- *
+ * Determines if the floating point number x is less than the floating-point number y, without
+ * setting floating-point exceptions.
  * @param x
  */
 template <typename ArrayType>
-void Isless(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isless(ArrayType &x)
 {
   kernels::stdlib::Isless<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the floating point number x is less than or equal to the floating-point number y,
+ * without setting floating-point exceptions.
  * @param x
  */
 template <typename ArrayType>
-void Islessequal(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessequal(ArrayType &x)
 {
   kernels::stdlib::Islessequal<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the floating point number x is less than or greater than the floating-point number
+ * y, without setting floating-point exceptions.
  * @param x
  */
 template <typename ArrayType>
-void Islessgreater(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessgreater(ArrayType &x)
 {
   kernels::stdlib::Islessgreater<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- *
+ * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
+ * thus cannot be meaningfully compared with each other.
  * @param x
  */
 template <typename ArrayType>
-void Isunordered(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
 {
   kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-void ApproxExp(ArrayType &x)
-{
-  kernels::ApproxExp<typename ArrayType::vector_register_type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
+// /**
+// *
+// * @param x
+// */
+// template <typename ArrayType>
+// void ApproxExp(ArrayType &x)
+//{
+//  kernels::ApproxExp<typename ArrayType::vector_register_type> kernel;
+//  x.data().in_parallel().Apply(kernel, x.data());
+//}
 
-/**
- *
- * @param x
- */
-template <typename ArrayType>
-void ApproxLog(ArrayType &x)
-{
-  kernels::ApproxLog<typename ArrayType::vector_register_type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
+// /**
+// *
+// * @param x
+// */
+// template <typename ArrayType>
+// void ApproxLog(ArrayType &x)
+//{
+//  kernels::ApproxLog<typename ArrayType::vector_register_type> kernel;
+//  x.data().in_parallel().Apply(kernel, x.data());
+//}
 
 /**
  *
@@ -1478,7 +1398,7 @@ void Relu(ArrayType &x)
 }
 
 /**
- * replaces data with the sign (1 or -1)
+ * replaces data with the sign (1, 0, or -1)
  * @param x
  */
 template <typename ArrayType>
@@ -1716,7 +1636,6 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
 {
   linalg::Matrix<T, C, S> ret{A.shape()};
   ret.Copy(A);
-  //  ret.data() = A.data().copy();
 
   Multiply(-1.0, ret, ret);
   Exp(ret);
