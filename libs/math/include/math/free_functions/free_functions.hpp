@@ -69,6 +69,7 @@
 #include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/free_functions/sign/sign.cpp"
 
 namespace fetch {
 namespace math {
@@ -307,17 +308,6 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
 }
 
 /**
- * Composes a floating point value with the magnitude of x and the sign of y.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Copysign(ArrayType &x)
-{
-  kernels::stdlib::Copysign<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * Categorizes floating point value arg into the following categories: zero, subnormal, normal,
  * infinite, NAN, or implementation-defined category.
  * @param x
@@ -342,17 +332,6 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isnormal(ArrayType &x)
 }
 
 /**
- * Determines if the given floating point number arg is negative.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Signbit(ArrayType &x)
-{
-  kernels::stdlib::Signbit<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
  * thus cannot be meaningfully compared with each other.
  * @param x
@@ -361,17 +340,6 @@ template <typename ArrayType>
 fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
 {
   kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * replaces data with the sign (1, 0, or -1)
- * @param x
- */
-template <typename ArrayType>
-void Sign(ArrayType &x)
-{
-  kernels::Sign<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
