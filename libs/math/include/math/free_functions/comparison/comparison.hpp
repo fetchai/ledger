@@ -19,6 +19,7 @@
 
 #include "math/kernels/standard_functions.hpp"
 #include <cassert>
+#include "math/meta/type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -79,11 +80,12 @@ void Islessgreater(ArrayType &x)
 }
 
 /**
- *
+ * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
+ * thus cannot be meaningfully compared with each other.
  * @param x
  */
 template <typename ArrayType>
-void Isunordered(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
 {
   kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

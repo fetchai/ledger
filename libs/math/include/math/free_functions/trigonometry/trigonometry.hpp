@@ -171,11 +171,13 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Atanh(ArrayType &x)
 }
 
 /**
- * Computes the square root of the sum of the squares of x and y, without undue overflow or
- * underflow at intermediate stages of the computation.
+ * If no errors occur and there are two inputs, the hypotenuse of a right-angled triangle is
+ * computed as sqrt(x^2 + y^2) If no errors occur and there are 3 points, then the distance from the
+ * origin in 3D space is returned as sqrt(x^2 + y^2 + z^2)
+ * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Hypot(ArrayType &x)
+void Hypot(ArrayType &x)
 {
   kernels::stdlib::Hypot<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

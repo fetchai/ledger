@@ -140,5 +140,16 @@ void Llrint(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
+/**
+ * round to nearest int in float format
+ * @param x
+ */
+template <typename ArrayType>
+void Nearbyint(ArrayType &x)
+{
+  kernels::stdlib::Nearbyint<typename ArrayType::Type> kernel;
+  x.data().in_parallel().Apply(kernel, x.data());
+}
+
 } // math
 } // fetch

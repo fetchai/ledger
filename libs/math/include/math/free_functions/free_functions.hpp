@@ -91,41 +91,5 @@ class Matrix;
 template <typename T, typename C>
 T Max(ShapeLessArray<T, C> const &array);
 
-/**
- * round to nearest int in float format
- * @param x
- */
-template <typename ArrayType>
-void Nearbyint(ArrayType &x)
-{
-  kernels::stdlib::Nearbyint<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * If no errors occur and there are two inputs, the hypotenuse of a right-angled triangle is
- * computed as sqrt(x^2 + y^2) If no errors occur and there are 3 points, then the distance from the
- * origin in 3D space is returned as sqrt(x^2 + y^2 + z^2)
- * @param x
- */
-template <typename ArrayType>
-void Hypot(ArrayType &x)
-{
-  kernels::stdlib::Hypot<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
- * thus cannot be meaningfully compared with each other.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
-{
-  kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
 }  // namespace math
 }  // namespace fetch
