@@ -68,7 +68,7 @@ void VerifySignature(benchmark::State &state)
   // create the signed data
   if (!signer.Sign(msg))
   {
-    throw std::runtime_error("Unable to sign the message");
+    throw std::runtime_error("Unable to sign_functionality the message");
   }
 
   // extract the signature

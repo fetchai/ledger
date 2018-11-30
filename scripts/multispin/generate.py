@@ -7,7 +7,7 @@ def make_codes(N, TB):
     variables = [ ] 
     variables2 = [ ]   
     for i in range(N):
-        print "energy_type ds%d = site.spin ^ neighbour%d.spin ^ site.sign[ %d ];" % (i,i, i)
+        print "energy_type ds%d = site.spin ^ neighbour%d.spin ^ site.sign_functionality[ %d ];" % (i,i, i)
         variables.append( "ds%d" % i )
     print
     print "spin_type flip = 0;";

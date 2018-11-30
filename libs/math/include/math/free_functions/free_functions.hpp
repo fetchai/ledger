@@ -69,9 +69,9 @@
 #include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/sign/sign.cpp"
-#include "math/free_functions/type/type.cpp"
-#include "math/free_functions/numerical_decomposition/numerical_decomposition.cpp"
+#include "math/free_functions/sign_functionality/sign_functionality.hpp"
+#include "math/free_functions/type/type_identification.hpp"
+#include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"
 
 namespace fetch {
 namespace math {

@@ -60,7 +60,7 @@ TEST(ndarray, zeros_out)
     ASSERT_TRUE(test_array[i] == 0);
   }
 
-  // check that sign(0) = 0
+  // check that sign_functionality(0) = 0
   test_array_2 = test_array;
   fetch::math::Sign(test_array_2);
 
@@ -82,7 +82,7 @@ TEST(ndarray, negative_ones)
     ASSERT_TRUE(test_array[i] <= 0);
   }
 
-  // check that sign(-) = -1
+  // check that sign_functionality(-) = -1
   test_array_2 = test_array;
   fetch::math::Sign(test_array_2);
 

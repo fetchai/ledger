@@ -47,7 +47,7 @@ TEST(ndarray, l2_basic)
   double                                    test_loss        = 0;
   double                                    manual_test_loss = 0;
 
-  // check that sign(0) = 0
+  // check that sign_functionality(0) = 0
   test_loss = test_array.L2Loss();
 
   for (std::size_t i = 0; i < n; ++i)

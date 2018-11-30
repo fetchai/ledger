@@ -60,19 +60,23 @@
 
 #include "math/meta/type_traits.hpp"
 
-#include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/trigonometry/trigonometry.hpp"
-#include "math/free_functions/comparison/comparison.hpp"
-#include "math/free_functions/statistics/distributions.hpp"
-#include "math/free_functions/precision/precision.hpp"
-#include "math/free_functions/iteration/iteration.hpp"
-#include "math/free_functions/deep_learning/activation_functions.hpp"
-#include "math/free_functions/deep_learning/loss_functions.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/free_functions/sign/sign.cpp"
-
 namespace fetch {
 namespace math {
+
+template <typename T, typename C>
+class ShapeLessArray;
+template <typename T, typename C>
+class NDArray;
+template <typename T, typename C>
+class NDArrayIterator;
+
+namespace linalg {
+template <typename T, typename C, typename S>
+class Matrix;
+}
+
+template <typename T, typename C>
+T Max(ShapeLessArray<T, C> const &array);
 
 /**
  * calculates bit mask on this

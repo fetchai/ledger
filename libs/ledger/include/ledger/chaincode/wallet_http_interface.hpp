@@ -156,7 +156,7 @@ private:
         mtx.set_fee(rng() & 0x1FF);
         mtx.PushResource(address);
 
-        // sign the transaction
+        // sign_functionality the transaction
         mtx.Sign(signer.private_key());
 
         uint32_t lane = miner::MapResourceToLane(address, mtx.contract_name(), log2_lanes_);
@@ -279,7 +279,7 @@ private:
               http::Status::CLIENT_ERROR_BAD_REQUEST);
         }
 
-        // sign the transaction
+        // sign_functionality the transaction
         auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
 
         mtx.Sign(priv_key, tx_sign_adapter);

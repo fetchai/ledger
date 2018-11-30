@@ -73,6 +73,21 @@
 namespace fetch {
 namespace math {
 
+template <typename T, typename C>
+class ShapeLessArray;
+template <typename T, typename C>
+class NDArray;
+template <typename T, typename C>
+class NDArrayIterator;
+
+namespace linalg {
+template <typename T, typename C, typename S>
+class Matrix;
+}
+
+template <typename T, typename C>
+T Max(ShapeLessArray<T, C> const &array);
+
 template <typename T, typename C, typename S>
 void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Matrix<T, C, S> &ret)
 {
