@@ -65,6 +65,7 @@
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/statistics/distributions.hpp"
 #include "math/free_functions/precision/precision.hpp"
+#include "math/free_functions/iteration/iteration.hpp"
 
 namespace fetch {
 namespace math {
@@ -918,30 +919,6 @@ template <typename ArrayType>
 fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
 {
   kernels::stdlib::Logb<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Returns the next representable value of from in the direction of to.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nextafter(ArrayType &x)
-{
-  kernels::stdlib::Nextafter<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Returns the next representable value of from in the direction of to. If from equals to to, to is
- * returned, converted from long double to the return type of the function without loss of range or
- * precision.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nexttoward(ArrayType &x)
-{
-  kernels::stdlib::Nexttoward<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
