@@ -166,6 +166,7 @@ private:
 
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = chain_.HeaviestBlock().hash();
     response["trusts"] = trust_list;
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done" );
     return http::CreateJsonResponse(response);
