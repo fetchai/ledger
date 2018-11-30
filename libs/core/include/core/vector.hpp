@@ -23,7 +23,7 @@ namespace fetch {
 namespace vector {
 
 /**
- * vector that is helpful in debug mode
+ * vector that range checks access in debug mode
  * @tparam T
  */
 template<typename T>
@@ -32,10 +32,11 @@ struct Vector : public std::vector<T> {
 
   T &operator[](std::size_t index)
   {
+
 #ifndef NDEBUG
     return this->at(index);
 #else
-    return (*this)[index];
+    return std::vector<T>::operator[](index);
 #endif
   }
 
@@ -44,9 +45,10 @@ struct Vector : public std::vector<T> {
 #ifndef NDEBUG
     return this->at(index);
 #else
-    return (*this)[index];
+    return std::vector<T>::operator[](index);
 #endif
   }
 };
 
-}}
+}
+}
