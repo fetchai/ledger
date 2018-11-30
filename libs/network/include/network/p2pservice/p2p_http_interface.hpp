@@ -92,7 +92,11 @@ private:
     Variant response     = Variant::Object();
     response["identity"] = byte_array::ToBase64(muddle_.identity().identifier());
     response["chain"]    = GenerateBlockList(include_transactions, chain_length);
-
+    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    
     return http::CreateJsonResponse(response);
   }
 
