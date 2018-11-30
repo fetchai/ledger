@@ -45,6 +45,7 @@ void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
+#if 0
   // dispatch the transaction to the storage engine
   storage_.AddTransaction(tx);
 
@@ -54,10 +55,18 @@ void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
   miner_.EnqueueTransaction(tx.summary());
 
   FETCH_METRIC_TX_QUEUED(tx.digest());
+#endif
 }
 
 void TransactionProcessor::OnTransactions(TransactionList const &txs)
 {
+#if 1
+  for (auto const &tx : txs)
+  {
+    (void)tx;
+    FETCH_METRIC_TX_SUBMITTED(tx.digest());
+  }
+#else
 #ifdef FETCH_ENABLE_METRICS
   auto const submitted = metrics::Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
@@ -85,6 +94,7 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
     FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
   }
 #endif  // FETCH_ENABLE_METRICS
+#endif
 }
 
 }  // namespace ledger
