@@ -55,6 +55,8 @@ ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitJsonTx(http::
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
+  FETCH_LOG_INFO(LOGGING_NAME, "NEW TRANSACTION RECEIVED", request.body());
+
   if (doc.root().IsArray())
   {
     expected_count = doc.root().size();
@@ -79,7 +81,7 @@ ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitJsonTx(http::
     expected_count = 1;
     chain::MutableTransaction tx{chain::FromWireTransaction(doc.root())};
 
-    if (expected_contract_name && tx.contract_name() == *expected_contract_name)
+    if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
     {
       // add the transaction to the processor
       processor_.AddTransaction(std::move(tx));
@@ -108,6 +110,7 @@ ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitNativeTx(http
     processor_.AddTransaction(input_tx.tx);
     ++submitted;
   }
+
   return SubmitTxRetval{submitted, transactions.size()};
 }
 

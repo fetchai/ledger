@@ -46,6 +46,7 @@ class ContractHttpInterface : public http::HTTPModule
 public:
   //using TransactionHandlerMethod = http::HTTPResponse(ContractHttpInterface::*)(http::ViewParameters const &, http::HTTPRequest const &);
   //using TransactionHandlerMap = std::unordered_map<byte_array::ConstByteArray, TransactionHandlerMethod>;  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
+  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
   static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
   static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
   static byte_array::ConstByteArray const PATH_SEPARATOR;
@@ -54,10 +55,15 @@ public:
     : storage_{storage}
     , processor_{processor}
   {
+    byte_array::ByteArray contract_full_name;
+
     // create all the contracts
     auto const &contracts = contract_cache_.factory().GetContracts();
     for (auto const &contract_name : contracts)
     {
+      contract_full_name.Resize(0, ResizeParadigm::ABSOLUTE);
+      contract_full_name.Append(contract_name, CONTRACT_NAME_SEPARATOR);
+      std::size_t const contract_full_name_base_size = contract_full_name.size();
 
       // create the contract
       auto contract = contract_cache_.factory().Create(contract_name);
@@ -79,13 +85,16 @@ public:
         api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
         api_path.Append(query_name);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+        //FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+        FETCH_LOG_INFO(LOGGING_NAME, "QUERY API HANDLER: ", api_path);
 
         Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
                                                          http::HTTPRequest const &request) {
           return OnQuery(contract_name, query_name, request);
         });
       }
+
+      FETCH_LOG_INFO(LOGGING_NAME, "API: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
       auto const &transaction_handlers = contract->transaction_handlers();
       for (auto const &handler : transaction_handlers)
@@ -94,13 +103,16 @@ public:
         api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
         api_path.Append(query_name);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+        FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path);
 
         //auto const& tx_handler = transaction_handlers_.at(api_path);
 
-        Post(api_path, [this/*, &tx_handler*/](http::ViewParameters const &params,
+        contract_full_name.Resize(contract_full_name_base_size, ResizeParadigm::ABSOLUTE);
+        contract_full_name.Append(query_name);
+
+        Post(api_path, [this, contract_full_name](http::ViewParameters const &params,
                                            http::HTTPRequest const &request) {
-            return OnTransaction(params, request, );
+            return OnTransaction(params, request, &contract_full_name);
         });
       }
     }
@@ -128,6 +140,11 @@ public:
          [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         return OnTransaction(params, request);
       });
+
+    Post("/api/contract/balance", [this](http::ViewParameters const &,
+                                                     http::HTTPRequest const &request) {
+      return OnQuery("fetch.token", "balance", request);
+    });
   }
 
 private:
@@ -137,6 +154,7 @@ private:
   {
     try
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "OnQuery: ", request.body());
       // parse the incoming request
       json::JSONDocument doc;
       doc.Parse(request.body());
@@ -210,11 +228,15 @@ private:
 
         oss << R"({ "submitted": false, "error": )" << std::quoted(error_msg.str()) << " }";
       }
-      else if (submitted.first == submitted.second)
+      else if (submitted.first != submitted.second)
       {
-        // success report the statistics
-        oss << R"({ "submitted": true, "count": )" << submitted.first << " }";
-        error_response = false;
+        // format the message
+        std::ostringstream error_msg;
+        error_msg << "Some transactions has not submitted due to wrong contract type." << content_type;
+
+        oss << R"({ "submitted": false, "count": )" << submitted.first
+            << R"(, "expected_count": )" <<  submitted.second
+            << R"(, "error": "Some transactions have NOT been submitted due to miss-matching contract name."})";
       }
       else
       {
@@ -232,11 +254,6 @@ private:
     return http::CreateJsonResponse(oss.str(), (error_response)
                                                    ? http::Status::CLIENT_ERROR_BAD_REQUEST
                                                    : http::Status::SUCCESS_OK);
-  }
-
-  http::HTTPResponse OnWealth(http::ViewParameters const &, http::HTTPRequest const &)
-  {
-    return http::HTTPResponse{};
   }
 
   static http::HTTPResponse JsonBadRequest()
