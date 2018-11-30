@@ -165,8 +165,10 @@ private:
     trust_list.MakeArrayFrom(peer_data_list);
 
     Variant response           = Variant::Object();
-    response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"] = byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
     response["trusts"] = trust_list;
     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done" );
     return http::CreateJsonResponse(response);
