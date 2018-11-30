@@ -74,138 +74,141 @@
 namespace fetch {
 namespace math {
 
+/**
+ * calculates bit mask on this
+ * @param x
+ */
+namespace details {
+template <typename ArrayType>
+void BooleanMaskImplementation(ArrayType &input_array, ArrayType const &mask, ArrayType &ret)
+{
+  assert(input_array.size() == mask.size());
+
+  std::size_t counter = 0;
+  for (std::size_t i = 0; i < input_array.size(); ++i)
+  {
+    assert((mask[i] == 1) || (mask[i] == 0));
+    // TODO(private issue 193): implement boolean only ndarray to avoid cast
+    if (bool(mask[i]))
+    {
+      ret[counter] = input_array[i];
+      ++counter;
+    }
+  }
+
+  ret.LazyResize(counter);
+}
+}  // namespace details
 template <typename T, typename C>
-class ShapeLessArray;
+void BooleanMask(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &mask,
+                 ShapeLessArray<T, C> &ret)
+{
+  details::BooleanMaskImplementation(input_array, mask, ret);
+}
 template <typename T, typename C>
-class NDArray;
+ShapeLessArray<T, C> BooleanMask(ShapeLessArray<T, C> &      input_array,
+                                 ShapeLessArray<T, C> const &mask)
+{
+  ShapeLessArray<T, C> ret;
+  BooleanMask(input_array, mask, ret);
+  return ret;
+}
 template <typename T, typename C>
-class NDArrayIterator;
+void BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask, NDArray<T, C> &ret)
+{
+  assert(input_array.shape().size() >= mask.shape().size());
+  assert(mask.shape().size() > 0);
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
+  // because tensorflow is row major by default - we have to flip the mask and array to get the same
+  // answer
+  // TODO(private issue 208)
+  input_array.MajorOrderFlip();
+  mask.MajorOrderFlip();
+
+  if (mask.shape() == input_array.shape())
+  {
+    details::BooleanMaskImplementation(input_array, mask, ret);
+  }
+  else
+  {
+    for (std::size_t j = 0; j < mask.shape().size(); ++j)
+    {
+      assert(mask.shape()[j] == input_array.shape()[j]);
+    }
+
+    // new shape should be n-k+1 dimensions
+    std::vector<std::size_t> new_shape;
+    NDArray<T, C>            ret{new_shape};
+
+    // TODO(private issue 207): perhaps a little bit hacky to implement boolean mask as a
+    // multiplication
+    Broadcast([](T x, T y) { return x * y; }, input_array, mask, ret);
+  }
 }
-
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+NDArray<T, C> BooleanMask(NDArray<T, C> &input_array, NDArray<T, C> &mask)
+{
+  NDArray<T, C> ret;
+  BooleanMask(input_array, mask, ret);
+  return ret;
+}
 
 /**
- * round to nearest int in float format
+ * finite check
  * @param x
  */
 template <typename ArrayType>
-void Nearbyint(ArrayType &x)
+void Isfinite(ArrayType &x)
 {
-  kernels::stdlib::Nearbyint<typename ArrayType::Type> kernel;
+  kernels::stdlib::Isfinite<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- * If no errors occur and there are two inputs, the hypotenuse of a right-angled triangle is
- * computed as sqrt(x^2 + y^2) If no errors occur and there are 3 points, then the distance from the
- * origin in 3D space is returned as sqrt(x^2 + y^2 + z^2)
+ * checks for inf values
  * @param x
  */
 template <typename ArrayType>
-void Hypot(ArrayType &x)
+void Isinf(ArrayType &x)
 {
-  kernels::stdlib::Hypot<typename ArrayType::Type> kernel;
+  kernels::stdlib::Isinf<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- * Decomposes given floating point value arg into a normalized fraction and an integral power of
- * two.
+ * checks for nans
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Frexp(ArrayType &x)
+void Isnan(ArrayType &x)
 {
-  kernels::stdlib::Frexp<typename ArrayType::Type> kernel;
+  kernels::stdlib::Isnan<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- * Multiplies a floating point value x by the number 2 raised to the exp power.
+ * Categorizes floating point value arg into the following categories: zero, subnormal, normal,
+ * infinite, NAN, or implementation-defined category.
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ldexp(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Fpclassify(ArrayType &x)
 {
-  kernels::stdlib::Ldexp<typename ArrayType::Type> kernel;
+  kernels::stdlib::Fpclassify<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 /**
- * Decomposes given floating point value x into integral and fractional parts, each having the same
- * type and sign as x. The integral part (in floating-point format) is stored in the object pointed
- * to by iptr.
+ * Determines if the given floating point number arg is normal, i.e. is neither zero, subnormal,
+ * infinite, nor NaN.
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Modf(ArrayType &x)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isnormal(ArrayType &x)
 {
-  kernels::stdlib::Modf<typename ArrayType::Type> kernel;
+  kernels::stdlib::Isnormal<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
-/**
- * Multiplies a floating point value x by FLT_RADIX raised to power exp.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbn(ArrayType &x)
-{
-  kernels::stdlib::Scalbn<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Multiplies a floating point value x by FLT_RADIX raised to power exp.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbln(ArrayType &x)
-{
-  kernels::stdlib::Scalbln<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Extracts the value of the unbiased exponent from the floating-point argument arg, and returns it
- * as a signed integer value.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ilogb(ArrayType &x)
-{
-  kernels::stdlib::Ilogb<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Extracts the value of the unbiased radix-independent exponent from the floating-point argument
- * arg, and returns it as a floating-point value.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
-{
-  kernels::stdlib::Logb<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
- * thus cannot be meaningfully compared with each other.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
-{
-  kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-}  // namespace math
-}  // namespace fetch
+} // math
+} // fetch
