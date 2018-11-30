@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "ledger/chain/block_coordinator.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 

@@ -28,8 +28,8 @@
 #include "network/management/connection_register.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
-#include "storage/transient_object_store.hpp"
 #include "storage/resource_mapper.hpp"
+#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
 #include <set>
@@ -79,7 +79,6 @@ public:
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 protected:
-
   void OnTransaction(chain::VerifiedTransaction const &tx) override;
 
 private:

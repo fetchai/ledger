@@ -49,7 +49,7 @@ public:
   using connectivity_details_type    = LaneConnectivityDetails;
   using document_store_type          = storage::RevertibleDocumentStore;
   using document_store_protocol_type = storage::RevertibleDocumentStoreProtocol;
-  using transaction_store_type       = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
+  using transaction_store_type = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
   using transaction_store_protocol_type =
       storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
   using client_register_type     = fetch::network::ConnectionRegister<connectivity_details_type>;
@@ -117,12 +117,12 @@ public:
 
     // TODO(EJF): Not a huge fan of this weak coupling, also the handlers inside the object store
     // feel like an after market addition
-//    tx_store_protocol_->OnSetObject(
-//        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+    //    tx_store_protocol_->OnSetObject(
+    //        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx);
+    //        });
 
-    tx_store_->SetCallback([this](fetch::chain::VerifiedTransaction const &tx) {
-      tx_sync_protocol_->OnNewTx(tx);
-    });
+    tx_store_->SetCallback(
+        [this](fetch::chain::VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
     this->Add(RPC_TX_STORE, tx_store_protocol_.get());
 

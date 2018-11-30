@@ -48,7 +48,6 @@ public:
   Tickets &operator=(Tickets &&) = delete;
 
 private:
-
   std::mutex              mutex_;
   std::condition_variable cv_;
   std::size_t             count_;

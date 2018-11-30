@@ -264,20 +264,20 @@ class SimpleQueue
 {
 public:
   static constexpr std::size_t QUEUE_LENGTH = SIZE;
-  using Element = T;
+  using Element                             = T;
 
   // Construction / Destruction
-  SimpleQueue()    = default;
+  SimpleQueue()                    = default;
   SimpleQueue(SimpleQueue const &) = delete;
   SimpleQueue(SimpleQueue &&)      = delete;
-  ~SimpleQueue()             = default;
+  ~SimpleQueue()                   = default;
 
   /// @name Queue Interaction
   /// @{
   T Pop()
   {
     std::unique_lock<std::mutex> lock(mutex_);
-    T value;
+    T                            value;
     for (;;)
     {
       if (queue_.empty())
@@ -300,9 +300,9 @@ public:
   template <typename R, typename P>
   bool Pop(T &value, std::chrono::duration<R, P> const &duration)
   {
-    using Clock = std::chrono::high_resolution_clock;
-    using Timestamp = Clock::time_point;
-    Timestamp const deadline = Clock::now() + duration;
+    using Clock                           = std::chrono::high_resolution_clock;
+    using Timestamp                       = Clock::time_point;
+    Timestamp const              deadline = Clock::now() + duration;
     std::unique_lock<std::mutex> lock(mutex_);
     for (;;)
     {
@@ -367,9 +367,10 @@ public:
   // Operators
   SimpleQueue &operator=(SimpleQueue const &) = delete;
   SimpleQueue &operator=(SimpleQueue &&) = delete;
+
 protected:
   using Array = std::deque<T>;
-  Array                   queue_;              ///< The main element container
+  Array                   queue_;  ///< The main element container
   std::mutex              mutex_;
   std::condition_variable condition_;
   // static asserts

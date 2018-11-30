@@ -62,7 +62,6 @@ public:
     // does not fire all of the time.
     auto heaviestHash = chain_.HeaviestBlock().hash();
 
-
     if (block.hash() == heaviestHash)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.hash()),
@@ -75,7 +74,8 @@ public:
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()), " Heaviest: ", ToBase64(heaviestHash));
+      FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()),
+                     " Heaviest: ", ToBase64(heaviestHash));
     }
   }
 

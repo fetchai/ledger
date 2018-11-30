@@ -216,7 +216,7 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
 
   // reserve the elements required for the cache elements
   std::size_t processed_promises = 0;
-  std::size_t total_incoming = 0;
+  std::size_t total_incoming     = 0;
 
   auto it = object_list_promises_.begin();
   while (it != object_list_promises_.end())
@@ -261,7 +261,8 @@ void TransactionStoreSyncProtocol::RealisePromises(std::size_t index)
     ++processed_promises;
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Status :- outstanding responses: ", object_list_promises_.size(), " incoming tx: ", total_incoming, " from: ", processed_promises, " responses");
+  FETCH_LOG_WARN(LOGGING_NAME, "Status :- outstanding responses: ", object_list_promises_.size(),
+                 " incoming tx: ", total_incoming, " from: ", processed_promises, " responses");
 
   if (object_list_promises_.empty())
   {

@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
 
@@ -36,14 +36,14 @@ using fetch::chain::MutableTransaction;
 using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
-using ObjectStore = fetch::storage::ObjectStore<VerifiedTransaction>;
-using TransientStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
+using ObjectStore      = fetch::storage::ObjectStore<VerifiedTransaction>;
+using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
 using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
-using TransactionList = std::vector<VerifiedTransaction>;
+using TransactionList  = std::vector<VerifiedTransaction>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
-  static constexpr std::size_t TX_SIZE = 2048;
+  static constexpr std::size_t TX_SIZE      = 2048;
   static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
 
   static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
@@ -79,7 +79,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
   return list;
 }
 
-void TxSubmitWrites(benchmark::State& state)
+void TxSubmitWrites(benchmark::State &state)
 {
   // create the store
   ObjectStore store;
@@ -94,11 +94,12 @@ void TxSubmitWrites(benchmark::State& state)
     number_of_tx = oss.str();
   }
 
-  if(small_tx)
+  if (small_tx)
   {
     number_of_tx += " small_tx";
     state.SetLabel(number_of_tx);
-  } else
+  }
+  else
   {
     number_of_tx += " large_tx";
     state.SetLabel(number_of_tx);
@@ -116,7 +117,8 @@ void TxSubmitWrites(benchmark::State& state)
       store.Set(ResourceID{tx.digest()}, tx);
     }
 
-    // For a fair test must force flush to disk after writes - note this makes the results for small tx writes very poor
+    // For a fair test must force flush to disk after writes - note this makes the results for small
+    // tx writes very poor
     store.Flush(false);
   }
 }

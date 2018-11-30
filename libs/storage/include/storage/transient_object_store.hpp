@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/object_store.hpp"
-#include "core/mutex.hpp"
 #include "core/containers/queue.hpp"
+#include "core/mutex.hpp"
+#include "storage/object_store.hpp"
 
 #include <unordered_map>
 
@@ -27,16 +27,16 @@ namespace fetch {
 namespace storage {
 
 /**
- * The transient object store is a cached version of the object store, where objects that are likely to be requested
- * very soon after being written are stored in a cache. Once items are finished with they can be 'confirmed',
- * that is, written to the underlying object store.
+ * The transient object store is a cached version of the object store, where objects that are likely
+ * to be requested very soon after being written are stored in a cache. Once items are finished with
+ * they can be 'confirmed', that is, written to the underlying object store.
  *
  * @tparam O The object being stored in the object store
  */
 template <typename Object>
 class TransientObjectStore
 {
-  using ThreadPtr  = std::shared_ptr<std::thread>;
+  using ThreadPtr = std::shared_ptr<std::thread>;
   ThreadPtr thread_;
 
 public:
@@ -46,15 +46,15 @@ public:
   // Construction / Destruction
   TransientObjectStore()
   {
-    thread_ = std::make_shared<std::thread>([this]{ThreadLoop();});
+    thread_ = std::make_shared<std::thread>([this] { ThreadLoop(); });
   }
 
   TransientObjectStore(TransientObjectStore const &) = delete;
-  TransientObjectStore(TransientObjectStore &&) = delete;
+  TransientObjectStore(TransientObjectStore &&)      = delete;
 
   ~TransientObjectStore()
   {
-    if(thread_->joinable())
+    if (thread_->joinable())
     {
       // TODO: (`HUT`) : tidy the implementation of this up
       stop_ = true;
@@ -63,7 +63,10 @@ public:
     }
   }
 
-  Archive &archive() { return archive_; }
+  Archive &archive()
+  {
+    return archive_;
+  }
 
   void New(std::string const &doc_file, std::string const &index_file, bool const &create = true);
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true);
@@ -86,7 +89,6 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
 private:
-
   using Mutex = fetch::mutex::Mutex;
   using Queue = fetch::core::SimpleQueue<ResourceID, 1 << 13>;
 
@@ -98,12 +100,17 @@ private:
     std::size_t writes{0};
     std::size_t reads{0};
 
-    bool expired() const { return reads >= writes; }
+    bool expired() const
+    {
+      return reads >= writes;
+    }
 
-    CacheEntry(Object const &o) : obj{o} {}
+    CacheEntry(Object const &o)
+      : obj{o}
+    {}
   };
 
-  using Cache   = std::unordered_map<ResourceID, CacheEntry>;
+  using Cache = std::unordered_map<ResourceID, CacheEntry>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
@@ -116,18 +123,20 @@ private:
   Archive archive_;
 
   mutable Mutex cache_mutex_{__LINE__, __FILE__};
-  Queue confirm_queue_;
-  bool stop_ = false;
+  Queue         confirm_queue_;
+  bool          stop_ = false;
 };
 
 template <typename O>
-void TransientObjectStore<O>::New(std::string const &doc_file, std::string const &index_file, bool const &create)
+void TransientObjectStore<O>::New(std::string const &doc_file, std::string const &index_file,
+                                  bool const &create)
 {
   archive_.New(doc_file, index_file, create);
 }
 
 template <typename O>
-void TransientObjectStore<O>::Load(std::string const &doc_file, std::string const &index_file, bool const &create)
+void TransientObjectStore<O>::Load(std::string const &doc_file, std::string const &index_file,
+                                   bool const &create)
 {
   archive_.Load(doc_file, index_file, create);
 }
@@ -179,7 +188,7 @@ void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
   FETCH_LOCK(cache_mutex_);
   typename Cache ::iterator it;
-  bool inserted{false};
+  bool                      inserted{false};
 
   // attempt to insert the element into the map
   std::tie(it, inserted) = cache_.emplace(rid, object);
@@ -205,14 +214,14 @@ bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
  *
  * @param: rid The resource id for the object
  *
- * @return: bool Whether the object was confirmed (or scheduled) from the cache into the underlying store.
- *               Note, there can be races if this function is called multiple times with the same RID, this
+ * @return: bool Whether the object was confirmed (or scheduled) from the cache into the underlying
+ * store. Note, there can be races if this function is called multiple times with the same RID, this
  *               is not the intended usage.
  */
 template <typename O>
 bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
 {
-  if(!IsInCache(rid))
+  if (!IsInCache(rid))
   {
     return false;
   }
@@ -235,15 +244,15 @@ void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
-  constexpr std::size_t bulk_size_max = 100;
+  constexpr std::size_t   bulk_size_max = 100;
   std::vector<ResourceID> items_to_confirm;
 
-  while(!stop_)
+  while (!stop_)
   {
     items_to_confirm.clear();
 
     // Take up to bulk RIDs from the queue
-    while(items_to_confirm.size() < bulk_size_max && !stop_)
+    while (items_to_confirm.size() < bulk_size_max && !stop_)
     {
       auto rid = confirm_queue_.Pop();
       items_to_confirm.push_back(rid);
@@ -252,9 +261,9 @@ void TransientObjectStore<O>::ThreadLoop()
     O placeholder_obj;
 
     // Push to underlying obj. store
-    for(auto const &rid : items_to_confirm)
+    for (auto const &rid : items_to_confirm)
     {
-      if(GetFromCache(rid, placeholder_obj))
+      if (GetFromCache(rid, placeholder_obj))
       {
         archive_.Set(rid, placeholder_obj);
       }
@@ -262,5 +271,5 @@ void TransientObjectStore<O>::ThreadLoop()
   }
 }
 
-} // namespace storage
-} // namespace fetch
+}  // namespace storage
+}  // namespace fetch

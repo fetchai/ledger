@@ -125,8 +125,8 @@ private:
     return ret;
   }
 
-  TransientObjectStore<T> *      obj_store_;
-  event_set_object_type on_set_;
+  TransientObjectStore<T> *obj_store_;
+  event_set_object_type    on_set_;
 };
 
 }  // namespace storage

@@ -38,7 +38,7 @@ using fetch::chain::MutableTransaction;
 using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
-using TransientStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
+using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
 using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
 using TransactionList  = std::vector<VerifiedTransaction>;
 
@@ -150,7 +150,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   }
 }
 
-void TxSubmitSingleSmallAlt(benchmark::State& state)
+void TxSubmitSingleSmallAlt(benchmark::State &state)
 {
   // create the transaction store
   TransientStore tx_store;
@@ -167,7 +167,7 @@ void TxSubmitSingleSmallAlt(benchmark::State& state)
   }
 }
 
-void TransientStoreExpectedOperation(benchmark::State& state)
+void TransientStoreExpectedOperation(benchmark::State &state)
 {
   // create the transient store
   TransientStore tx_store;
@@ -181,10 +181,10 @@ void TransientStoreExpectedOperation(benchmark::State& state)
     state.PauseTiming();
     // Number of Tx to send is state arg
     TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
-    std::size_t subset = 10; // one tenth of all iterations
+    std::size_t     subset       = 10;  // one tenth of all iterations
     state.ResumeTiming();
 
-    for(auto const &tx : transactions)
+    for (auto const &tx : transactions)
     {
       // Basic pattern for a transient store is to intake X transactions into the mempool,
       // then read some subset N of them (for block verification/packing), then commit
@@ -193,7 +193,7 @@ void TransientStoreExpectedOperation(benchmark::State& state)
 
       benchmark::DoNotOptimize(tx_store.Get(ResourceID{tx.digest()}, dummy));
 
-      if(tx_index % subset == 0)
+      if (tx_index % subset == 0)
       {
         tx_store.Confirm(ResourceID{tx.digest()});
       }
@@ -209,4 +209,3 @@ BENCHMARK(TxSubmitFixedLarge);
 BENCHMARK(TxSubmitFixedSmall);
 BENCHMARK(TxSubmitSingleLarge);
 BENCHMARK(TxSubmitSingleSmall);
-

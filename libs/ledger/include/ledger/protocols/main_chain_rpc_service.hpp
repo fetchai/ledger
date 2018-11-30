@@ -35,7 +35,7 @@ namespace fetch {
 namespace chain {
 class MainChain;
 class BlockCoordinator;
-}
+}  // namespace chain
 namespace ledger {
 
 class MainChainSyncWorker;
@@ -45,18 +45,18 @@ class MainChainRpcService : public muddle::rpc::Server,
 {
 public:
   friend class MainChainSyncWorker;
-  using MuddleEndpoint  = muddle::MuddleEndpoint;
-  using MainChain       = chain::MainChain;
+  using MuddleEndpoint   = muddle::MuddleEndpoint;
+  using MainChain        = chain::MainChain;
   using BlockCoordinator = chain::BlockCoordinator;
-  using Subscription    = muddle::Subscription;
-  using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using Address         = muddle::Packet::Address;
-  using Block           = chain::MainChain::BlockType;
-  using BlockHash       = chain::MainChain::BlockHash;
-  using Promise         = service::Promise;
-  using RpcClient       = muddle::rpc::Client;
-  using TrustSystem     = p2p::P2PTrustInterface<Address>;
-  using FutureTimepoint = network::FutureTimepoint;
+  using Subscription     = muddle::Subscription;
+  using SubscriptionPtr  = std::shared_ptr<Subscription>;
+  using Address          = muddle::Packet::Address;
+  using Block            = chain::MainChain::BlockType;
+  using BlockHash        = chain::MainChain::BlockHash;
+  using Promise          = service::Promise;
+  using RpcClient        = muddle::rpc::Client;
+  using TrustSystem      = p2p::P2PTrustInterface<Address>;
+  using FutureTimepoint  = network::FutureTimepoint;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;
@@ -64,7 +64,8 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
-  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust, BlockCoordinator &block_coordinator);
+  MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
+                      BlockCoordinator &block_coordinator);
 
   void BroadcastBlock(Block const &block);
 
@@ -82,11 +83,11 @@ private:
   void ServiceLooseBlocks();
   void RequestedChainArrived(Address const &peer, BlockList block_list);
 
-  MuddleEndpoint &endpoint_;
-  MainChain &     chain_;
-  TrustSystem &   trust_;
-  BlockCoordinator & block_coordinator_;
-  SubscriptionPtr block_subscription_;
+  MuddleEndpoint &  endpoint_;
+  MainChain &       chain_;
+  TrustSystem &     trust_;
+  BlockCoordinator &block_coordinator_;
+  SubscriptionPtr   block_subscription_;
 
   MainChainProtocol main_chain_protocol_;
 
