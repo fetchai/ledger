@@ -61,14 +61,6 @@
 #include "math/meta/type_traits.hpp"
 
 #include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/free_functions/trigonometry/trigonometry.hpp"
-#include "math/free_functions/comparison/comparison.hpp"
-#include "math/free_functions/statistics/distributions.hpp"
-#include "math/free_functions/precision/precision.hpp"
-#include "math/free_functions/iteration/iteration.hpp"
-#include "math/free_functions/deep_learning/activation_functions.hpp"
-#include "math/free_functions/deep_learning/loss_functions.hpp"
-#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 
 namespace fetch {
 namespace math {
@@ -162,7 +154,6 @@ template <typename T, typename C, typename S>
 linalg::Matrix<T, C, S> ReduceSum(linalg::Matrix<T, C, S> const &obj1)
 {
   std::size_t axis = obj1.shape().size() - 1;
-  //  linalg::Matrix<T, C, S> ret = ReduceSum(obj1, axis);
 
   return ReduceSumImpl(obj1, axis);
 }

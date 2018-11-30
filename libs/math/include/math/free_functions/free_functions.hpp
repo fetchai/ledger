@@ -72,24 +72,3 @@
 #include "math/free_functions/sign_functionality/sign_functionality.hpp"
 #include "math/free_functions/type/type_identification.hpp"
 #include "math/free_functions/numerical_decomposition/numerical_decomposition.hpp"
-
-namespace fetch {
-namespace math {
-
-template <typename T, typename C>
-class ShapeLessArray;
-template <typename T, typename C>
-class NDArray;
-template <typename T, typename C>
-class NDArrayIterator;
-
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
-
-template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
-
-}  // namespace math
-}  // namespace fetch
