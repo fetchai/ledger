@@ -70,6 +70,7 @@
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/free_functions/sign/sign.cpp"
+#include "math/free_functions/type/type.cpp"
 
 namespace fetch {
 namespace math {
