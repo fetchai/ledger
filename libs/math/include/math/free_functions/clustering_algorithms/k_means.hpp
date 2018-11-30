@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/vector.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/metrics/metrics.hpp"
 #include "math/meta/type_traits.hpp"
 #include "random"
-#include <vector>
 
 /**
  * assigns the absolute of x to this array
@@ -31,6 +31,8 @@
 namespace fetch {
 namespace math {
 namespace clustering {
+
+using vector_size_t = fetch::vector::Vector<std::size_t>;
 
 enum class InitMode
 {
@@ -51,6 +53,8 @@ template <typename ArrayType>
 class KMeansImplementation
 {
 public:
+
+
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops, InitMode init_mode,
                        std::size_t max_no_change_convergence)
@@ -63,7 +67,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    std::vector<std::size_t> k_assignment_shape{n_points_, 1};
+    vector_size_t k_assignment_shape{n_points_, 1};
     k_assignment_ = ArrayType(k_assignment_shape);
 
     KMeansSetup(data, r_seed);
@@ -163,18 +167,18 @@ public:
     InitialiseKMeans(data);
 
     // initialise assignment
-    std::vector<std::size_t> k_assignment_shape{n_points_, 1};
+    vector_size_t k_assignment_shape{n_points_, 1};
     prev_k_assignment_ = ArrayType(
         k_assignment_shape);  // need to keep a record of previous to check for convergence
     for (std::size_t l = 0; l < prev_k_assignment_.size(); ++l)
     {
       prev_k_assignment_.Set(l, -1);
     }
-    reassigned_k_ = std::vector<int>(n_points_, -1);  // technically this limits us to fewer groups
+    reassigned_k_ = fetch::vector::Vector<int>(n_points_, -1);  // technically this limits us to fewer groups
 
     // initialise size of euclidean distance container
-    k_euclids_      = std::vector<ArrayType>(n_clusters_);
-    empty_clusters_ = std::vector<std::size_t>(n_clusters_);
+    k_euclids_      = fetch::vector::Vector<ArrayType>(n_clusters_);
+    empty_clusters_ = vector_size_t(n_clusters_);
   };
 
 private:
@@ -198,10 +202,10 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
-    data_idxs_ = std::vector<std::size_t>(n_points_);
+    data_idxs_ = vector_size_t(n_points_);
     if (k_inference_mode_ == KInferenceMode::Off)
     {
-      k_count_ = std::vector<std::size_t>(n_clusters_, 0);
+      k_count_ = vector_size_t(n_clusters_, 0);
 
       // shuffle the data
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
@@ -210,7 +214,7 @@ private:
       if (n_clusters_ != 0)
       {
         // initialise k means
-        std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
+        vector_size_t k_means_shape{n_clusters_, n_dimensions_};
         k_means_      = ArrayType(k_means_shape);
         prev_k_means_ = ArrayType::Zeroes(k_means_shape);
       }
@@ -256,7 +260,7 @@ private:
       }
 
       // initialise k means
-      std::vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
+      vector_size_t k_means_shape{n_clusters_, n_dimensions_};
       k_means_      = ArrayType(k_means_shape);
       prev_k_means_ = ArrayType::Zeroes(k_means_shape);
 
@@ -409,14 +413,14 @@ private:
     std::size_t n_remaining_data_points = n_points_ - 1;
     std::size_t n_remaining_clusters    = n_clusters_ - 1;
 
-    std::vector<std::size_t> assigned_data_points{data_idxs_[0]};
+    vector_size_t assigned_data_points{data_idxs_[0]};
 
-    std::vector<ArrayType> cluster_distances(n_clusters_);
+    fetch::vector::Vector<ArrayType> cluster_distances(n_clusters_);
     std::size_t            assigned_cluster = 0;
 
-    std::vector<typename ArrayType::Type> weights(
+    fetch::vector::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
-    std::vector<typename ArrayType::Type> interval(
+    fetch::vector::Vector<typename ArrayType::Type> interval(
         n_points_);  // interval for defining random distribtion
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
 
@@ -701,8 +705,8 @@ private:
 
   std::default_random_engine rng_;
 
-  std::vector<std::size_t> data_idxs_;       // a vector of indices to the data used for shuffling
-  std::vector<std::size_t> empty_clusters_;  // a vector tracking whenever a cluster goes empty
+  vector_size_t data_idxs_;       // a vector of indices to the data used for shuffling
+  vector_size_t empty_clusters_;  // a vector tracking whenever a cluster goes empty
 
   ArrayType k_means_;       // current cluster centres
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
@@ -710,10 +714,10 @@ private:
 
   ArrayType k_assignment_;         // current data to cluster assignment
   ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
-  std::vector<int> reassigned_k_;  // reassigned data to cluster assignment
+  fetch::vector::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  std::vector<std::size_t> k_count_;    // count of how many data points assigned per cluster
-  std::vector<ArrayType>   k_euclids_;  // container for current euclid distances
+  vector_size_t k_count_;    // count of how many data points assigned per cluster
+  fetch::vector::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
@@ -746,7 +750,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
-  std::vector<std::size_t> ret_array_shape{n_points, 1};
+  vector_size_t ret_array_shape{n_points, 1};
   ArrayType                ret{ret_array_shape};
 
   if (n_points == K)  // very easy to cluster!
@@ -783,7 +787,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType con
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t              n_points = data.shape()[0];
-  std::vector<std::size_t> ret_array_shape{n_points, 1};
+  vector_size_t ret_array_shape{n_points, 1};
   ArrayType                ret{ret_array_shape};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
@@ -809,7 +813,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t              n_points = data.shape()[0];
-  std::vector<std::size_t> ret_array_shape{n_points, 1};
+  vector_size_t ret_array_shape{n_points, 1};
   ArrayType                ret{ret_array_shape};
 
   assert(K <= n_points);  // you can't have more clusters than data points
