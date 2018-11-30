@@ -32,7 +32,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using vector_size_t = fetch::vector::Vector<std::size_t>;
+using vector_size_t = fetch::Vector<std::size_t>;
 
 enum class InitMode
 {
@@ -174,10 +174,10 @@ public:
     {
       prev_k_assignment_.Set(l, -1);
     }
-    reassigned_k_ = fetch::vector::Vector<int>(n_points_, -1);  // technically this limits us to fewer groups
+    reassigned_k_ = fetch::Vector<int>(n_points_, -1);  // technically this limits us to fewer groups
 
     // initialise size of euclidean distance container
-    k_euclids_      = fetch::vector::Vector<ArrayType>(n_clusters_);
+    k_euclids_      = fetch::Vector<ArrayType>(n_clusters_);
     empty_clusters_ = vector_size_t(n_clusters_);
   };
 
@@ -415,12 +415,12 @@ private:
 
     vector_size_t assigned_data_points{data_idxs_[0]};
 
-    fetch::vector::Vector<ArrayType> cluster_distances(n_clusters_);
+    fetch::Vector<ArrayType> cluster_distances(n_clusters_);
     std::size_t            assigned_cluster = 0;
 
-    fetch::vector::Vector<typename ArrayType::Type> weights(
+    fetch::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
-    fetch::vector::Vector<typename ArrayType::Type> interval(
+    fetch::Vector<typename ArrayType::Type> interval(
         n_points_);  // interval for defining random distribtion
     std::iota(std::begin(interval), std::end(interval), 0);  // fill interval with range
 
@@ -714,10 +714,10 @@ private:
 
   ArrayType k_assignment_;         // current data to cluster assignment
   ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
-  fetch::vector::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
+  fetch::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
   vector_size_t k_count_;    // count of how many data points assigned per cluster
-  fetch::vector::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
+  fetch::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
