@@ -62,6 +62,7 @@
 
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/trigonometry/trigonometry.hpp"
+#include "math/free_functions/comparison/comparison.hpp"
 
 namespace fetch {
 namespace math {
@@ -1136,66 +1137,6 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Signbit(ArrayType &x)
 }
 
 /**
- * Determines if the floating point number x is greater than the floating-point number y, without
- * setting floating-point exceptions.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreater(ArrayType &x)
-{
-  kernels::stdlib::Isgreater<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- *  Determines if the floating point number x is greater than or equal to the floating-point number
- * y, without setting floating-point exceptions.
- * @param x
- */
-template <typename ArrayType>
-void Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
-{
-  kernels::stdlib::Isgreaterequal<typename ArrayType::Type> kernel;
-  z.data().in_parallel().Apply(kernel, x.data(), y.data());
-}
-
-/**
- * Determines if the floating point number x is less than the floating-point number y, without
- * setting floating-point exceptions.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isless(ArrayType &x)
-{
-  kernels::stdlib::Isless<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the floating point number x is less than or equal to the floating-point number y,
- * without setting floating-point exceptions.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessequal(ArrayType &x)
-{
-  kernels::stdlib::Islessequal<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Determines if the floating point number x is less than or greater than the floating-point number
- * y, without setting floating-point exceptions.
- * @param x
- */
-template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessgreater(ArrayType &x)
-{
-  kernels::stdlib::Islessgreater<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
  * Determines if the floating point numbers x and y are unordered, that is, one or both are NaN and
  * thus cannot be meaningfully compared with each other.
  * @param x
@@ -1500,27 +1441,6 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
 }
 
 /**
- * Max function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-T Max(T const &datum1, T const &datum2, T &ret)
-{
-  ret = std::max(datum1, datum2);
-  return ret;
-}
-template <typename T>
-T Max(T const &datum1, T const &datum2)
-{
-  T ret{};
-  ret = Max(datum1, datum2, ret);
-  return ret;
-}
-
-/**
  * Finds the maximum value in an array
  * @tparam T data type
  * @tparam C container type
@@ -1767,19 +1687,6 @@ linalg::Matrix<T, C, S> ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t
     ArgMax(array, axis, ret);
     return ret;
   }
-}
-
-/**
- * Min function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-template <typename T>
-inline void Min(T const &datum1, T const &datum2, T &ret)
-{
-  ret = std::min(datum1, datum2);
 }
 
 /**
