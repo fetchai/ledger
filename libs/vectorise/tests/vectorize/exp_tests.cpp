@@ -37,7 +37,7 @@ TEST(vectorise_exp_gtest, exp_test)
 {
   std::size_t N = std::size_t(100);
   array_type  A(N), C(N);
-  //Exponent value not accurate outside these bounds(-5 , 5) due to being a taylor series around 0
+  // Exponent value not accurate outside these bounds(-5 , 5) due to being a taylor series around 0
   A[0] = double(-5);
   for (std::size_t i = 1; i < N; ++i)
   {
