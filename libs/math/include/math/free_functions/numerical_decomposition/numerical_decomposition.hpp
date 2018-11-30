@@ -17,47 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/kernels/approx_exp.hpp"
-//#include "math/kernels/approx_log.hpp"
-//#include "math/kernels/approx_logistic.hpp"
-//#include "math/kernels/approx_soft_max.hpp"
-//#include "math/kernels/basic_arithmetics.hpp"
-//#include "math/kernels/relu.hpp"
-//#include "math/kernels/sign.hpp"
 #include "math/kernels/standard_functions.hpp"
-
-//#include "core/assert.hpp"
-//#include "math/ndarray_broadcast.hpp"
-//#include "meta/type_traits.hpp"
-//#include "vectorise/memory/range.hpp"
-//#include <algorithm>
 #include <cassert>
-//#include <numeric>
-//#include <vector>
-
-/////////////////////////////////
-/// include specific math functions
-/////////////////////////////////
-
-//#include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-//#include "math/free_functions/standard_functions/abs.hpp"
-//#include "math/free_functions/standard_functions/exp.hpp"
-//#include "math/free_functions/standard_functions/fmod.hpp"
-//#include "math/free_functions/standard_functions/log.hpp"
-//#include "math/free_functions/standard_functions/remainder.hpp"
-//#include "math/free_functions/statistics/normal.hpp"
-
-/////////////////////////////////
-/// blas libraries
-/////////////////////////////////
-
-//#include "math/linalg/blas/gemm_nn_vector.hpp"
-//#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_nt_vector.hpp"
-//#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-//#include "math/linalg/blas/gemm_tn_vector.hpp"
-//#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
-
 #include "math/meta/type_traits.hpp"
 
 namespace fetch {
