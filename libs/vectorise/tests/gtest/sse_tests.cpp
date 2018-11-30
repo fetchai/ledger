@@ -36,10 +36,10 @@ TEST(vectorise_sse_gtest, register_test1)
   r3 = r3 - r1;
   r3.Store(c);
 
-  ASSERT_EQ(c[0], 1);
-  ASSERT_EQ(c[1], 6);
-  ASSERT_EQ(c[2], 21);
-  ASSERT_EQ(c[3], 60);
+  EXPECT_EQ(c[0], 1);
+  EXPECT_EQ(c[1], 6);
+  EXPECT_EQ(c[2], 21);
+  EXPECT_EQ(c[3], 60);
 }
 
 TEST(vectorise_sse_gtest, register_test2)
@@ -54,10 +54,10 @@ TEST(vectorise_sse_gtest, register_test2)
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  ASSERT_EQ(c[0], 5);
-  ASSERT_EQ(c[1], 22);
-  ASSERT_EQ(c[2], 69);
-  ASSERT_EQ(c[3], 188);
+  EXPECT_EQ(c[0], 5);
+  EXPECT_EQ(c[1], 22);
+  EXPECT_EQ(c[2], 69);
+  EXPECT_EQ(c[3], 188);
 }
 
 TEST(vectorise_sse_gtest, register_test3)
@@ -72,6 +72,6 @@ TEST(vectorise_sse_gtest, register_test3)
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  ASSERT_EQ(c[0], 5.4);
-  ASSERT_EQ(c[1], 23.6);
+  EXPECT_EQ(c[0], 5.4);
+  EXPECT_EQ(c[1], 23.6);
 }

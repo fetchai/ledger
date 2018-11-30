@@ -28,16 +28,15 @@ using namespace fetch::memory;
 using type                 = float;
 using ndarray_type         = SharedArray<type>;
 using vector_register_type = typename ndarray_type::vector_register_type;
-#define M 10000   // 100000
-#define N 100000  // 4 * 100000
+#define M 10000
+#define N 100000
 
-class ParallerDispatcherTest : public ::testing::Test
+class ParallelDispatcherTest : public ::testing::Test
 {
 protected:
   void SetUp() override
   {
     a_ = ndarray_type(N);
-    c_ = ndarray_type(N);
     b_ = ndarray_type(N);
     for (std::size_t i = 0; i < N; ++i)
     {
@@ -48,10 +47,10 @@ protected:
   void TearDown() override
   {}
 
-  ndarray_type a_, b_, c_;
+  ndarray_type a_, b_;
 };
 ////////////
-TEST_F(ParallerDispatcherTest, Comp_test)
+TEST_F(ParallelDispatcherTest, Comp_test)
 {
   // Standard implementation
   for (std::size_t i = 0; i < M; ++i)
@@ -68,7 +67,7 @@ TEST_F(ParallerDispatcherTest, Comp_test)
   }
 }
 
-TEST_F(ParallerDispatcherTest, kernel_test)
+TEST_F(ParallelDispatcherTest, kernel_test)
 {
   for (std::size_t i = 0; i < M; ++i)
   {

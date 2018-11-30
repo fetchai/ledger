@@ -35,7 +35,7 @@ void Exponentials(array_type const &A, array_type &C)
 TEST(vectorise_approx_exp_gtest, exp_test)
 {
   std::size_t N       = std::size_t(20);
-  float       exp_val = 0.0, initial_value = 1;
+  float initial_value = 1;
   array_type  A(N), C(N);
 
   for (std::size_t j = 1; j < 12; j++)
@@ -50,9 +50,12 @@ TEST(vectorise_approx_exp_gtest, exp_test)
     Exponentials(A, C);
     for (std::size_t i = 0; i < N; ++i)
     {
-      exp_val = std::exp(A[i]);
-      std::cout << "values : Actual value = " << A[i] << "  fetch_approx_exp = " << C[i]
-                << "  std::exp =" << exp_val << " diff is =" << exp_val - C[i] << "\n";
+      double y0 = C[i];
+      double y1 = std::exp(A[i]);
+      double r  = fabs(y0 - y1) / y1 * 100;
+     
+      std::cout << "values : Actual value = " << A[i] << "  fetch_approx_exp = " << y0
+                << "  std::exp =" << y1 << " with relative diff =" << r << "\n";
     }
   }
 }

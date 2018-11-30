@@ -37,7 +37,7 @@ protected:
   void TearDown() override
   {}
 };
-TEST_P(TestClass, DISABLED_basic_Test)
+TEST_P(TestClass, basic_Test)
 {
   static fetch::random::LinearCongruentialGenerator lcg1, lcg2;
   lcg1.Reset();
@@ -53,7 +53,7 @@ TEST_P(TestClass, DISABLED_basic_Test)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    ASSERT_EQ(array[i], lcg2()) << "1: memory doesn't store what it is supposed to";
+    EXPECT_EQ(array[i], lcg2()) << "1: memory doesn't store what it is supposed to";
   }
 
   other = array;
@@ -61,7 +61,7 @@ TEST_P(TestClass, DISABLED_basic_Test)
   lcg2();
   for (std::size_t i = 0; i < N; ++i)
   {
-    ASSERT_EQ(other[i], lcg2()) << "2: memory doesn't store what it is supposed to";
+    EXPECT_EQ(other[i], lcg2()) << "2: memory doesn't store what it is supposed to";
   }
 
   array_type yao(other);
@@ -69,7 +69,7 @@ TEST_P(TestClass, DISABLED_basic_Test)
   lcg2();
   for (std::size_t i = 0; i < N; ++i)
   {
-    ASSERT_EQ(yao[i], lcg2()) << "3: memory doesn't store what it is supposed to";
+    EXPECT_EQ(yao[i], lcg2()) << "3: memory doesn't store what it is supposed to";
   }
 
   array = array;
