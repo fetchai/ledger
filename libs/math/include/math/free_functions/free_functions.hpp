@@ -63,6 +63,7 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/trigonometry/trigonometry.hpp"
 #include "math/free_functions/comparison/comparison.hpp"
+#include "math/free_functions/statistics/distributions.hpp"
 
 namespace fetch {
 namespace math {
@@ -795,36 +796,6 @@ template <typename ArrayType>
 void Erfc(ArrayType &x)
 {
   kernels::stdlib::Erfc<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Returns the gamma function of x.
- * If the magnitude of x is too large, an overflow range error occurs.
- * If too small, an underflow range error may occur.
- * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain
- * error or a pole error (or none, depending on implementation).
- * @param x
- */
-template <typename ArrayType>
-void Tgamma(ArrayType &x)
-{
-  kernels::stdlib::Tgamma<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
-
-/**
- * Returns the log of the gamma function of x.
- * If the magnitude of x is too large, an overflow range error occurs.
- * If too small, an underflow range error may occur.
- * If x is zero or a negative integer for which the function is asymptotic, it may cause a domain
- * error or a pole error (or none, depending on implementation).
- * @param x
- */
-template <typename ArrayType>
-void Lgamma(ArrayType &x)
-{
-  kernels::stdlib::Lgamma<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
