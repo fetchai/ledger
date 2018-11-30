@@ -20,8 +20,7 @@
 #include <vector>
 
 namespace fetch {
-namespace vector {
-
+namespace core {
 /**
  * vector that range checks access in debug mode
  * @tparam T
