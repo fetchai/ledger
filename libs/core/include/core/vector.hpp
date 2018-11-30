@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace fetch {
+namespace core {
 
 /**
  * vector that range checks access in debug mode
@@ -49,4 +50,5 @@ struct Vector : public std::vector<T> {
   }
 };
 
+}
 }
