@@ -18,10 +18,9 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <gtest/gtest.h>
-
 
 #include "core/byte_array/encoders.hpp"
 #include "network/tcp/tcp_client.hpp"
@@ -44,7 +43,8 @@ std::vector<message_type> globalMessagesToServer_{};
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t port, NetworkManager nmanager) : TCPServer(port, nmanager)
+  Server(uint16_t port, NetworkManager nmanager)
+    : TCPServer(port, nmanager)
   {
     Start();
   }
@@ -106,7 +106,7 @@ void TestCase0(std::string host, uint16_t port)
     nmanager.Start();
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -119,14 +119,18 @@ void TestCase1(std::string host, uint16_t port)
   {
     NetworkManager nmanager(N);
     if (index % 2)
+    {
       nmanager.Start();
+    }
     Server server(port, nmanager);
     if (index % 3)
+    {
       nmanager.Stop();
+    }
     nmanager.Start();
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -150,10 +154,12 @@ void TestCase2(std::string host, uint16_t port)
     }
     client.Send("test this");
     if (index % 3)
+    {
       nmanager.Stop();
+    }
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -191,10 +197,12 @@ void TestCase3(std::string host, uint16_t port)
     }
 
     if (index % 3)
+    {
       nmanager.Stop();
+    }
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -226,7 +234,9 @@ void TestCase4(std::string host, uint16_t port)
     }
 
     if (index % 2)
+    {
       server.reset();
+    }
 
     while (threadCount != iterations)
     {
@@ -234,10 +244,13 @@ void TestCase4(std::string host, uint16_t port)
     }
   }
 
-  std::cerr << "Success." << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
+class TCPClientServerTest : public testing::TestWithParam<std::size_t>
+{
+};
 
-TEST(tcp_client_server_stress_test , basic_test)
+TEST_P(TCPClientServerTest, basic_test)
 {
 
   std::string host       = "localhost";
@@ -245,7 +258,7 @@ TEST(tcp_client_server_stress_test , basic_test)
 
   std::cerr << "Testing communications on port: " << portNumber << std::endl;
 
-  std::size_t iterations = 1;
+  std::size_t iterations = GetParam();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
@@ -264,5 +277,7 @@ TEST(tcp_client_server_stress_test , basic_test)
     TestCase4<10>(host, portNumber);
   }
 
-  std::cerr << "finished all tests" << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
+INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_t>(4),
+                        testing::PrintToStringParamName());
