@@ -83,7 +83,7 @@ public:
         api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
         api_path.Append(query_name);
 
-        //FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+        // FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
         FETCH_LOG_INFO(LOGGING_NAME, "QUERY API HANDLER: ", api_path);
 
         Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
@@ -105,8 +105,8 @@ public:
         contract_full_name.Append(query_name);
 
         Post(api_path, [this, contract_full_name](http::ViewParameters const &params,
-                                           http::HTTPRequest const &request) {
-            return OnTransaction(params, request, &contract_full_name);
+                                                  http::HTTPRequest const &   request) {
+          return OnTransaction(params, request, &contract_full_name);
         });
       }
     }
@@ -129,15 +129,17 @@ public:
            return http::CreateJsonResponse(oss.str());
          });
 
+    // TODO(issue 414): Remove legacy/unused/legacy endpoints from public HTTP interface
     Post("/api/contract/fetch/token/submit",
          [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-        return OnTransaction(params, request);
-      });
+           return OnTransaction(params, request);
+         });
 
+    // TODO(issue 414): Remove legacy/unused/legacy endpoints from public HTTP interface
     Post("/api/contract/submit",
          [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-        return OnTransaction(params, request);
-      });
+           return OnTransaction(params, request);
+         });
   }
 
 private:
@@ -185,10 +187,12 @@ private:
     return JsonBadRequest();
   }
 
-  http::HTTPResponse OnTransaction(http::ViewParameters const &, http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr)
+  http::HTTPResponse OnTransaction(
+      http::ViewParameters const &, http::HTTPRequest const &request,
+      byte_array::ConstByteArray const *const expected_contract_name = nullptr)
   {
     std::ostringstream oss;
-    bool error_response{true};
+    bool               error_response{true};
     try
     {
       SubmitTxRetval submitted;
@@ -206,7 +210,8 @@ private:
       {
         submitted = SubmitNativeTx(request, expected_contract_name);
       }
-      else if (content_type == "application/vnd+fetch.transaction+json" || content_type == "application/json")
+      else if (content_type == "application/vnd+fetch.transaction+json" ||
+               content_type == "application/json")
       {
         submitted = SubmitJsonTx(request, expected_contract_name);
       }
@@ -227,16 +232,17 @@ private:
       {
         // format the message
         std::ostringstream error_msg;
-        error_msg << "Some transactions has not submitted due to wrong contract type." << content_type;
+        error_msg << "Some transactions has not submitted due to wrong contract type."
+                  << content_type;
 
-        oss << R"({ "submitted": false, "count": )" << submitted.first
-            << R"(, "expected_count": )" <<  submitted.second
+        oss << R"({ "submitted": false, "count": )" << submitted.first << R"(, "expected_count": )"
+            << submitted.second
             << R"(, "error": "Some transactions have NOT been submitted due to miss-matching contract name."})";
       }
       else
       {
         // success report the statistics
-        oss << R"({ "submitted": true, "count": )" << submitted.first  << " }";
+        oss << R"({ "submitted": true, "count": )" << submitted.first << " }";
         error_response = false;
       }
     }
@@ -256,8 +262,12 @@ private:
     return http::CreateJsonResponse("", http::Status::CLIENT_ERROR_BAD_REQUEST);
   }
 
-  SubmitTxRetval SubmitJsonTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr);
-  SubmitTxRetval SubmitNativeTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name=nullptr);
+  SubmitTxRetval SubmitJsonTx(
+      http::HTTPRequest const &               request,
+      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
+  SubmitTxRetval SubmitNativeTx(
+      http::HTTPRequest const &               request,
+      byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
   std::size_t transaction_index_{0};
 
@@ -265,7 +275,7 @@ private:
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_;
 
-  //static TransactionHandlerMap const transaction_handlers_;
+  // static TransactionHandlerMap const transaction_handlers_;
 };
 
 }  // namespace ledger

@@ -126,7 +126,7 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
           }
 
           // TODO(issue 413): Compliance to HTTP Standard - `value` can be structured.
-          if (key=="content-type")
+          if (key == "content-type")
           {
             auto const pos = value.Find(';', 0);
             if (pos != byte_array::ConstByteArray::NPOS)
