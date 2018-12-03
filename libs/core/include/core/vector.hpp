@@ -25,8 +25,9 @@ namespace core {
  * vector that range checks access in debug mode
  * @tparam T
  */
-template<typename T>
-struct Vector : public std::vector<T> {
+template <typename T>
+struct Vector : public std::vector<T>
+{
   using std::vector<T>::vector;
 
   T &operator[](std::size_t index)
@@ -49,5 +50,5 @@ struct Vector : public std::vector<T> {
   }
 };
 
-}
-}
+}  // namespace core
+}  // namespace fetch
