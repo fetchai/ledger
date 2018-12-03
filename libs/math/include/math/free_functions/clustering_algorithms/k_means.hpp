@@ -53,8 +53,6 @@ template <typename ArrayType>
 class KMeansImplementation
 {
 public:
-
-
   KMeansImplementation(ArrayType const &data, std::size_t const &n_clusters, ArrayType &ret,
                        std::size_t const &r_seed, std::size_t const &max_loops, InitMode init_mode,
                        std::size_t max_no_change_convergence)
@@ -174,7 +172,8 @@ public:
     {
       prev_k_assignment_.Set(l, -1);
     }
-    reassigned_k_ = fetch::core::Vector<int>(n_points_, -1);  // technically this limits us to fewer groups
+    reassigned_k_ =
+        fetch::core::Vector<int>(n_points_, -1);  // technically this limits us to fewer groups
 
     // initialise size of euclidean distance container
     k_euclids_      = fetch::core::Vector<ArrayType>(n_clusters_);
@@ -416,7 +415,7 @@ private:
     vector_size_t assigned_data_points{data_idxs_[0]};
 
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
-    std::size_t            assigned_cluster = 0;
+    std::size_t                    assigned_cluster = 0;
 
     fetch::core::Vector<typename ArrayType::Type> weights(
         n_points_);  // weight for choosing each data point
@@ -712,12 +711,12 @@ private:
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
   ArrayType temp_k_;        // a container for ease of access to using Euclidean function
 
-  ArrayType k_assignment_;         // current data to cluster assignment
-  ArrayType prev_k_assignment_;    // previous data to cluster assignment (for checkign convergence)
+  ArrayType k_assignment_;       // current data to cluster assignment
+  ArrayType prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
   fetch::core::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  vector_size_t k_count_;    // count of how many data points assigned per cluster
-  fetch::core::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
+  vector_size_t                  k_count_;    // count of how many data points assigned per cluster
+  fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
@@ -751,7 +750,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
   vector_size_t ret_array_shape{n_points, 1};
-  ArrayType                ret{ret_array_shape};
+  ArrayType     ret{ret_array_shape};
 
   if (n_points == K)  // very easy to cluster!
   {
@@ -786,9 +785,9 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType con
                  KInferenceMode const &k_inference_mode, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
-  std::size_t              n_points = data.shape()[0];
+  std::size_t   n_points = data.shape()[0];
   vector_size_t ret_array_shape{n_points, 1};
-  ArrayType                ret{ret_array_shape};
+  ArrayType     ret{ret_array_shape};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
 
@@ -812,9 +811,9 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
                  ArrayType const &prev_assignment, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
-  std::size_t              n_points = data.shape()[0];
+  std::size_t   n_points = data.shape()[0];
   vector_size_t ret_array_shape{n_points, 1};
-  ArrayType                ret{ret_array_shape};
+  ArrayType     ret{ret_array_shape};
 
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K != 1);         // why would you run k means clustering with only one cluster?
