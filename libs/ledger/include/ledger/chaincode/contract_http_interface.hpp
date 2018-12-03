@@ -44,8 +44,6 @@ class ContractHttpInterface : public http::HTTPModule
   using SubmitTxRetval = std::pair<std::size_t, std::size_t>;
 
 public:
-  //using TransactionHandlerMethod = http::HTTPResponse(ContractHttpInterface::*)(http::ViewParameters const &, http::HTTPRequest const &);
-  //using TransactionHandlerMap = std::unordered_map<byte_array::ConstByteArray, TransactionHandlerMethod>;  static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
   static constexpr char const *           LOGGING_NAME = "ContractHttpInterface";
   static byte_array::ConstByteArray const API_PATH_CONTRACT_PREFIX;
   static byte_array::ConstByteArray const CONTRACT_NAME_SEPARATOR;
@@ -94,8 +92,6 @@ public:
         });
       }
 
-      FETCH_LOG_INFO(LOGGING_NAME, "API: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-
       auto const &transaction_handlers = contract->transaction_handlers();
       for (auto const &handler : transaction_handlers)
       {
@@ -104,8 +100,6 @@ public:
         api_path.Append(query_name);
 
         FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path);
-
-        //auto const& tx_handler = transaction_handlers_.at(api_path);
 
         contract_full_name.Resize(contract_full_name_base_size, ResizeParadigm::ABSOLUTE);
         contract_full_name.Append(query_name);
@@ -144,11 +138,6 @@ public:
          [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         return OnTransaction(params, request);
       });
-
-    Post("/api/contract/balance", [this](http::ViewParameters const &,
-                                                     http::HTTPRequest const &request) {
-      return OnQuery("fetch.token", "balance", request);
-    });
   }
 
 private:
@@ -158,7 +147,9 @@ private:
   {
     try
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "OnQuery: ", request.body());
+      FETCH_LOG_INFO(LOGGING_NAME, "OnQuery");
+      FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
+
       // parse the incoming request
       json::JSONDocument doc;
       doc.Parse(request.body());

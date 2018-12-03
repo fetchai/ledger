@@ -41,12 +41,6 @@ byte_array::ConstByteArray const ContractHttpInterface::API_PATH_CONTRACT_PREFIX
 byte_array::ConstByteArray const ContractHttpInterface::CONTRACT_NAME_SEPARATOR(".");
 byte_array::ConstByteArray const ContractHttpInterface::PATH_SEPARATOR("/");
 
-//using THM = ContractHttpInterface::TransactionHandlerMap;
-//THM const ContractHttpInterface::transaction_handlers_({
-//  THM::value_type{"fetch.token.transfer", &ContractHttpInterface::OnTransfer},
-//  THM::value_type{"fetch.token.wealth", &ContractHttpInterface::OnWealth}
-//});
-
 ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitJsonTx(http::HTTPRequest const &request, byte_array::ConstByteArray const* const expected_contract_name)
 {
   std::size_t submitted{0};
@@ -55,7 +49,9 @@ ContractHttpInterface::SubmitTxRetval ContractHttpInterface::SubmitJsonTx(http::
   // parse the JSON request
   json::JSONDocument doc{request.body()};
 
-  FETCH_LOG_INFO(LOGGING_NAME, "NEW TRANSACTION RECEIVED", request.body());
+
+  FETCH_LOG_INFO(LOGGING_NAME, "NEW TRANSACTION RECEIVED");
+  FETCH_LOG_DEBUG(LOGGING_NAME, request.body());
 
   if (doc.root().IsArray())
   {

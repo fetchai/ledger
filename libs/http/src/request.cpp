@@ -125,6 +125,15 @@ bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t const &end)
             content_length_ = uint64_t(value.AsInt());
           }
 
+          // TODO(issue 413): Compliance to HTTP Standard - `value` can be structured.
+          if (key=="content-type")
+          {
+            auto const pos = value.Find(';', 0);
+            if (pos != byte_array::ConstByteArray::NPOS)
+            {
+              value = value.SubArray(0, pos);
+            }
+          }
           // update header map
           header_.Add(key, value);
         }
