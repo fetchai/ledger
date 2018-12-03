@@ -21,7 +21,6 @@
 
 namespace fetch {
 namespace core {
-
 /**
  * vector that range checks access in debug mode
  * @tparam T
