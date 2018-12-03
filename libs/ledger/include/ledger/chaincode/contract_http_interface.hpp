@@ -135,7 +135,11 @@ public:
            return http::CreateJsonResponse(oss.str());
          });
 
-    // new transaction
+    Post("/api/contract/fetch/token/submit",
+         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+        return OnTransaction(params, request);
+      });
+
     Post("/api/contract/submit",
          [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         return OnTransaction(params, request);
