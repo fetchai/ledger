@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "math/kernels/standard_functions.hpp"
 #include "math/meta/type_traits.hpp"
 #include <cassert>
