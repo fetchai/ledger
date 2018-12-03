@@ -240,7 +240,7 @@ private:
           if (!(k_assignment_.At(j, 0) < 0))  // previous unassigned data points must be assigned
                                               // with a negative cluster value
           {
-            ++k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))];
+            k_count_[static_cast<std::size_t>(k_assignment_.At(j, 0))] += 1;
           }
         }
 
