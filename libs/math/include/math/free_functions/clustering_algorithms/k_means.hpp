@@ -32,8 +32,6 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using vector_size_t = fetch::core::Vector<std::size_t>;
-
 enum class InitMode
 {
   KMeansPP = 0,  // kmeans++, a good default choice
@@ -65,7 +63,7 @@ public:
     n_points_     = data.shape()[0];
     n_dimensions_ = data.shape()[1];
 
-    vector_size_t k_assignment_shape{n_points_, 1};
+    fetch::core::Vector<std::size_t> k_assignment_shape{n_points_, 1};
     k_assignment_ = ArrayType(k_assignment_shape);
 
     KMeansSetup(data, r_seed);
@@ -165,7 +163,7 @@ public:
     InitialiseKMeans(data);
 
     // initialise assignment
-    vector_size_t k_assignment_shape{n_points_, 1};
+    fetch::core::Vector<std::size_t> k_assignment_shape{n_points_, 1};
     prev_k_assignment_ = ArrayType(
         k_assignment_shape);  // need to keep a record of previous to check for convergence
     for (std::size_t l = 0; l < prev_k_assignment_.size(); ++l)
@@ -177,7 +175,7 @@ public:
 
     // initialise size of euclidean distance container
     k_euclids_      = fetch::core::Vector<ArrayType>(n_clusters_);
-    empty_clusters_ = vector_size_t(n_clusters_);
+    empty_clusters_ = fetch::core::Vector<std::size_t>(n_clusters_);
   };
 
 private:
@@ -201,10 +199,10 @@ private:
    */
   void InitialiseKMeans(ArrayType const &data)
   {
-    data_idxs_ = vector_size_t(n_points_);
+    data_idxs_ = fetch::core::Vector<std::size_t>(n_points_);
     if (k_inference_mode_ == KInferenceMode::Off)
     {
-      k_count_ = vector_size_t(n_clusters_, 0);
+      k_count_ = fetch::core::Vector<std::size_t>(n_clusters_, 0);
 
       // shuffle the data
       std::iota(std::begin(data_idxs_), std::end(data_idxs_), 0);
@@ -213,7 +211,7 @@ private:
       if (n_clusters_ != 0)
       {
         // initialise k means
-        vector_size_t k_means_shape{n_clusters_, n_dimensions_};
+        fetch::core::Vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
         k_means_      = ArrayType(k_means_shape);
         prev_k_means_ = ArrayType::Zeroes(k_means_shape);
       }
@@ -259,7 +257,7 @@ private:
       }
 
       // initialise k means
-      vector_size_t k_means_shape{n_clusters_, n_dimensions_};
+      fetch::core::Vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
       k_means_      = ArrayType(k_means_shape);
       prev_k_means_ = ArrayType::Zeroes(k_means_shape);
 
@@ -412,7 +410,7 @@ private:
     std::size_t n_remaining_data_points = n_points_ - 1;
     std::size_t n_remaining_clusters    = n_clusters_ - 1;
 
-    vector_size_t assigned_data_points{data_idxs_[0]};
+    fetch::core::Vector<std::size_t> assigned_data_points{data_idxs_[0]};
 
     fetch::core::Vector<ArrayType> cluster_distances(n_clusters_);
     std::size_t                    assigned_cluster = 0;
@@ -704,8 +702,8 @@ private:
 
   std::default_random_engine rng_;
 
-  vector_size_t data_idxs_;       // a vector of indices to the data used for shuffling
-  vector_size_t empty_clusters_;  // a vector tracking whenever a cluster goes empty
+  fetch::core::Vector<std::size_t> data_idxs_;       // a vector of indices to the data used for shuffling
+  fetch::core::Vector<std::size_t> empty_clusters_;  // a vector tracking whenever a cluster goes empty
 
   ArrayType k_means_;       // current cluster centres
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
@@ -715,7 +713,7 @@ private:
   ArrayType prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
   fetch::core::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  vector_size_t                  k_count_;    // count of how many data points assigned per cluster
+  fetch::core::Vector<std::size_t>                  k_count_;    // count of how many data points assigned per cluster
   fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
@@ -749,7 +747,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
-  vector_size_t ret_array_shape{n_points, 1};
+  fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
   ArrayType     ret{ret_array_shape};
 
   if (n_points == K)  // very easy to cluster!
@@ -786,7 +784,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType con
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t   n_points = data.shape()[0];
-  vector_size_t ret_array_shape{n_points, 1};
+  fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
   ArrayType     ret{ret_array_shape};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
@@ -812,7 +810,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
                  std::size_t max_no_change_convergence = 10)
 {
   std::size_t   n_points = data.shape()[0];
-  vector_size_t ret_array_shape{n_points, 1};
+  fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
   ArrayType     ret{ret_array_shape};
 
   assert(K <= n_points);  // you can't have more clusters than data points
