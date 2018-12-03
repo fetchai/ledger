@@ -702,8 +702,10 @@ private:
 
   std::default_random_engine rng_;
 
-  fetch::core::Vector<std::size_t> data_idxs_;       // a vector of indices to the data used for shuffling
-  fetch::core::Vector<std::size_t> empty_clusters_;  // a vector tracking whenever a cluster goes empty
+  fetch::core::Vector<std::size_t>
+      data_idxs_;  // a vector of indices to the data used for shuffling
+  fetch::core::Vector<std::size_t>
+      empty_clusters_;  // a vector tracking whenever a cluster goes empty
 
   ArrayType k_means_;       // current cluster centres
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
@@ -713,8 +715,8 @@ private:
   ArrayType prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
   fetch::core::Vector<int> reassigned_k_;  // reassigned data to cluster assignment
 
-  fetch::core::Vector<std::size_t>                  k_count_;    // count of how many data points assigned per cluster
-  fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
+  fetch::core::Vector<std::size_t> k_count_;  // count of how many data points assigned per cluster
+  fetch::core::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
@@ -748,7 +750,7 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  ArrayType     ret{ret_array_shape};
+  ArrayType                        ret{ret_array_shape};
 
   if (n_points == K)  // very easy to cluster!
   {
@@ -783,9 +785,9 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, ArrayType con
                  KInferenceMode const &k_inference_mode, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
-  std::size_t   n_points = data.shape()[0];
+  std::size_t                      n_points = data.shape()[0];
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  ArrayType     ret{ret_array_shape};
+  ArrayType                        ret{ret_array_shape};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
 
@@ -809,9 +811,9 @@ ArrayType KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t c
                  ArrayType const &prev_assignment, std::size_t max_loops = 100,
                  std::size_t max_no_change_convergence = 10)
 {
-  std::size_t   n_points = data.shape()[0];
+  std::size_t                      n_points = data.shape()[0];
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  ArrayType     ret{ret_array_shape};
+  ArrayType                        ret{ret_array_shape};
 
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K != 1);         // why would you run k means clustering with only one cluster?
