@@ -54,7 +54,7 @@ BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, float)
   // Standard implementation
   for (auto _ : st)
   {
-    for (std::size_t j = 0; j < MAX; j += 4)
+    for (std::size_t j = 0; j < MAX_; j += 4)
     {
 
       // We write it out such that the compiler might use SSE
