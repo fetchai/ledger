@@ -489,7 +489,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              return a;
            })
       .def("l2loss", [](NDArray<T> const &a) { return a.L2Loss(); })
-      .def("sign_functionality",
+      .def("sign",
            [](NDArray<T> &a, NDArray<T> const &b) {
              a = b;
              Sign(a);
@@ -574,7 +574,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def("approx_logistic", [](NDArray<T> &a) { fetch::math::ApproxLogistic(a); })
 
       .def("relu", [](NDArray<T> &a) { fetch::math::Relu(a); })
-      .def("sign_functionality", [](NDArray<T> &a) { fetch::math::Sign(a); })
+      .def("sign", [](NDArray<T> &a) { fetch::math::Sign(a); })
 
       .def("scatter",
            [](NDArray<T> &input_array, NDArray<T> &updates, NDArray<T> &indices) {

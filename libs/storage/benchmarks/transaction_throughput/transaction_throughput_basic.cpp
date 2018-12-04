@@ -72,7 +72,7 @@ private:
     mtx.PushResource(address);
 
     /*
-    // sign_functionality the transaction
+    // sign the transaction
     crypto::ECDSASigner          signer;
     signer.GenerateKeys();
     mtx.Sign(signer.private_key()); */

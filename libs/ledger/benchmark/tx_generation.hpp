@@ -70,7 +70,7 @@ inline TransactionList GenerateTransactions(std::size_t count, bool large_packet
       mtx.set_data(std::to_string(i));
     }
 
-    // if a signature has been defined then sign_functionality the transactions
+    // if a signature has been defined then sign the transactions
     if (signer)
     {
       mtx.Sign(signer->underlying_private_key());

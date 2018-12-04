@@ -1067,7 +1067,7 @@ pybindgen.settings.error_handler = ErrorHandler()
 
         def postpone_class(cls, reason):
             ## detect the case of a class being postponed many times; that
-            ## is almost certainly an error and a sign_functionality of an infinite
+            ## is almost certainly an error and a sign of an infinite
             ## loop.
             count = getattr(cls, "_pybindgen_postpone_count", 0)
             count += 1
