@@ -362,7 +362,7 @@ private:
 
       // store the count per cluster, and map
       std::size_t cluster_count = 0;
-      for (auto &pc_label : previous_cluster_labels)
+      for (auto const &pc_label : previous_cluster_labels)
       {
         if (pc_label >= 0)  // ignore previous negative labels - these indicate unassigned clusters
         {
