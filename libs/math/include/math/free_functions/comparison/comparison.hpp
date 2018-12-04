@@ -40,7 +40,9 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreater(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
+fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreaterequal(ArrayType const &x,
+                                                                        ArrayType const &y,
+                                                                        ArrayType &      z)
 {
   kernels::stdlib::Isgreaterequal<typename ArrayType::Type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());
