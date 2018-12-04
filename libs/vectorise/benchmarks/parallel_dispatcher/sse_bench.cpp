@@ -24,13 +24,13 @@
 
 using namespace fetch::memory;
 
-using type                 = float;
-using ndarray_type         = SharedArray<type>;
-using vector_register_type = typename ndarray_type::vector_register_type;
-#define N 100000
-
-class ParallerDispatcherSSEBench : public ::benchmark::Fixture
+template <typename type, unsigned long N = 100000>
+class ParallelDispatcherSSEBench : public ::benchmark::Fixture
 {
+public:
+  using ndarray_type         = SharedArray<type>;
+  using vector_register_type = typename ndarray_type::vector_register_type;
+
 protected:
   void SetUp(const ::benchmark::State &st) override
   {
@@ -45,14 +45,16 @@ protected:
   void TearDown(const ::benchmark::State &) override
   {}
 
-  ndarray_type a_, b_;
+  ndarray_type        a_, b_;
+  const unsigned long MAX_ = N;
 };
-BENCHMARK_F(ParallerDispatcherSSEBench, Standard_implementation)(benchmark::State &st)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, float)
+(benchmark::State &st)
 {
   // Standard implementation
   for (auto _ : st)
   {
-    for (std::size_t j = 0; j < N; j += 4)
+    for (std::size_t j = 0; j < MAX; j += 4)
     {
 
       // We write it out such that the compiler might use SSE

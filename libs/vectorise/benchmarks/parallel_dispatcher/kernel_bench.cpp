@@ -24,13 +24,13 @@
 
 using namespace fetch::memory;
 
-using type                 = float;
-using ndarray_type         = SharedArray<type>;
-using vector_register_type = typename ndarray_type::vector_register_type;
-#define N 100000
-
-class ParallerDispatcherKernelBench : public ::benchmark::Fixture
+template <typename type, unsigned long N = 100000>
+class ParallelDispatcherKernelBench : public ::benchmark::Fixture
 {
+public:
+  using ndarray_type         = SharedArray<type>;
+  using vector_register_type = typename ndarray_type::vector_register_type;
+
 protected:
   void SetUp(const ::benchmark::State &st) override
   {
@@ -47,7 +47,8 @@ protected:
 
   ndarray_type a_, b_;
 };
-BENCHMARK_F(ParallerDispatcherKernelBench, kernel_implementation)(benchmark::State &st)
+BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, float)
+(benchmark::State &st)
 {
   // Standard implementation
   for (auto _ : st)
