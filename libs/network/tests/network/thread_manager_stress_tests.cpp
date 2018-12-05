@@ -18,6 +18,7 @@
 
 #include "network/management/network_manager.hpp"
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 
@@ -57,7 +58,7 @@ void TestCase1()
     tmanager.Stop();
   }
 
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -109,7 +110,7 @@ void TestCase3()
       std::cout << std::endl;
     }
   }
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -123,10 +124,10 @@ void TestCase4()
     tmanager.Start();
     tmanager.Post([&tmanager]() { tmanager.Stop(); });
   }
-  std::cout << "Success." << std::endl << std::endl;
+  SUCCEED() << "Success." << std::endl;
 }
 
-int main(int argc, char *argv[])
+TEST(thread_manager_stress_test, basic_test)
 {
 
   TestCase1<1>();
@@ -136,7 +137,4 @@ int main(int argc, char *argv[])
   TestCase1<10>();
   TestCase3<10>();
   // TestCase4<10>();
-
-  std::cerr << "finished all tests" << std::endl;
-  return 0;
 }
