@@ -51,7 +51,7 @@ public:
     , name_(std::move(thename))
     , peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
-    , muddle_(themuddle)
+    , muddle_(std::move(themuddle))
   {
     client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
                                        CHANNEL_RPC);
