@@ -168,6 +168,7 @@ public:
     }
     switch(current_state)
     {
+      default:
       case State::INITIAL:
       {
         return false;

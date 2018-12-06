@@ -257,7 +257,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   // Start up our services
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
-    services.push_back(std::make_shared<TestService>(initial_port + i, nm, i, 1));
+    services.push_back(std::make_shared<TestService>(static_cast<uint16_t>(initial_port + i), nm, i, 1));
     services.back()->Start();
   }
 
@@ -268,12 +268,12 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
     LaneController::UriSet uris;
-    auto client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port+i);
+    auto client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+i));
     for (uint16_t j = 0; j < number_of_services; ++j)
     {
       if (i != j)
       {
-        uris.insert(LaneController::Uri(Peer("localhost", initial_port+j)));
+        uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port+j))));
       }
     }
     client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
@@ -321,7 +321,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   // Now verify we can get the tx from the each client
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
-    client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port+i);
+    client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+i));
     for (auto const &tx : sent)
     {
       auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
@@ -343,15 +343,15 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
 
   // Now test new joiner case, add new joiner
   services.push_back(
-      std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm, number_of_services,1));
+      std::make_shared<TestService>(static_cast<uint16_t>(initial_port + number_of_services), nm, number_of_services,1));
   services.back()->Start();
 
 
-  client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port+number_of_services);
+  client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+number_of_services));
   LaneController::UriSet uris;
   for (uint16_t j = 0; j < number_of_services; ++j)
   {
-    uris.insert(LaneController::Uri(Peer("localhost", initial_port+j)));
+    uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port+j))));
   }
   client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
 
