@@ -56,7 +56,6 @@ public:
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
 
-  using LaneConnectivityDetails   = LaneConnectivityDetails;
   using DocumentStore             = storage::RevertibleDocumentStore;
   using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
   using TransactionStore          = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
