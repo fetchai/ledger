@@ -22,6 +22,7 @@
 #include "storage/object_store.hpp"
 
 #include <unordered_map>
+#include <map>
 
 namespace fetch {
 namespace storage {
@@ -31,37 +32,20 @@ namespace storage {
  * to be requested very soon after being written are stored in a cache. Once items are finished with
  * they can be 'confirmed', that is, written to the underlying object store.
  *
- * @tparam O The object being stored in the object store
+ * @tparam Object The type of the object being stored
  */
 template <typename Object>
 class TransientObjectStore
 {
-  using ThreadPtr = std::shared_ptr<std::thread>;
-  ThreadPtr thread_;
-
 public:
   using Callback = std::function<void(Object const &)>;
   using Archive  = ObjectStore<Object>;
 
   // Construction / Destruction
-  TransientObjectStore()
-  {
-    thread_ = std::make_shared<std::thread>([this] { ThreadLoop(); });
-  }
-
+  TransientObjectStore();
   TransientObjectStore(TransientObjectStore const &) = delete;
   TransientObjectStore(TransientObjectStore &&)      = delete;
-
-  ~TransientObjectStore()
-  {
-    if (thread_->joinable())
-    {
-      // TODO: (`HUT`) : tidy the implementation of this up
-      stop_ = true;
-      confirm_queue_.Push(ResourceAddress{"0"});
-      thread_->join();
-    }
-  }
+  ~TransientObjectStore();
 
   Archive &archive()
   {
@@ -89,44 +73,62 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
 private:
-  using Mutex = fetch::mutex::Mutex;
-  using Queue = fetch::core::SimpleQueue<ResourceID, 1 << 13>;
 
-  void ThreadLoop();
-
-  struct CacheEntry
-  {
-    Object      obj;
-    std::size_t writes{0};
-    std::size_t reads{0};
-
-    bool expired() const
-    {
-      return reads >= writes;
-    }
-
-    CacheEntry(Object const &o)
-      : obj{o}
-    {}
-  };
-
-  using Cache = std::unordered_map<ResourceID, CacheEntry>;
+  using Mutex     = fetch::mutex::Mutex;
+  using Queue     = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
+  using Cache     = std::unordered_map<ResourceID, Object>;
+  using ThreadPtr = std::shared_ptr<std::thread>;
+  using Flag      = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
   bool IsInCache(ResourceID const &rid);
   void AddToWriteQueue(ResourceID const &rid);
+  void ThreadLoop();
 
-  Callback set_callback_;
-
-  Cache   cache_;
-  Archive archive_;
-
-  mutable Mutex cache_mutex_{__LINE__, __FILE__};
-  Queue         confirm_queue_;
-  bool          stop_ = false;
+  mutable Mutex cache_mutex_{__LINE__, __FILE__}; ///< The mutex for the cache
+  Cache         cache_;                           ///< The main object cache
+  Archive       archive_;                         ///< The persistent object store
+  Queue         confirm_queue_;                   ///< The queue of elements to be stored
+  ThreadPtr     thread_;                          ///< The background worker thread
+  Callback      set_callback_;                    ///< The completion handler
+  Flag          stop_{false};                     ///< Flag to signal the stop of the worker
 };
 
+/**
+ * Construct a transient object store
+ *
+ * @tparam O The type of the object being stored
+ */
+template <typename O>
+inline TransientObjectStore<O>::TransientObjectStore()
+{
+  thread_ = std::make_shared<std::thread>([this] { ThreadLoop(); });
+}
+
+/**
+ * Destructor
+ *
+ * @tparam O The type of the object being stored
+ */
+template <typename O>
+inline TransientObjectStore<O>::~TransientObjectStore()
+{
+  if (thread_->joinable())
+  {
+    stop_ = true;
+    thread_->join();
+  }
+}
+
+/**
+ * Initialise the storage engine (from scratch) using the specified paths
+ *
+ * @tparam O The type of the object being stored
+ * @param doc_file The path to the document file
+ * @param index_file The path to the index file
+ * @param create Flag to indicate if the file should be created if it doesn't exist
+ */
 template <typename O>
 void TransientObjectStore<O>::New(std::string const &doc_file, std::string const &index_file,
                                   bool const &create)
@@ -134,6 +136,14 @@ void TransientObjectStore<O>::New(std::string const &doc_file, std::string const
   archive_.New(doc_file, index_file, create);
 }
 
+/**
+ * Initialise the storage engine from (potentially) existing data, using the specified paths
+ *
+ * @tparam O The type of the object being stored
+ * @param doc_file
+ * @param index_file
+ * @param create
+ */
 template <typename O>
 void TransientObjectStore<O>::Load(std::string const &doc_file, std::string const &index_file,
                                    bool const &create)
@@ -141,18 +151,53 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
   archive_.Load(doc_file, index_file, create);
 }
 
+/**
+ * Retrieve an object with the specified resource id
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The specified resource id to lookup
+ * @param object The reference to the output object that is to be populated
+ * @return true if the element was retrieved, otherwise false
+ */
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  return GetFromCache(rid, object) || archive_.Get(rid, object);
+  bool success = false;
+
+  if (GetFromCache(rid, object))
+  {
+    AddToWriteQueue(rid);
+
+    success = true;
+  }
+  else
+  {
+    success = archive_.Get(rid, object);
+  }
+
+  return success;
 }
 
+/**
+ * Check to see if the store has an element stored with the specified resource id
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The resource id to be queried
+ * @return true if the element exists, otherwise false
+ */
 template <typename O>
 bool TransientObjectStore<O>::Has(ResourceID const &rid)
 {
   return IsInCache(rid) || archive_.Has(rid);
 }
 
+/**
+ * Set the value of an object with the specified resource id
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The resource id (index) to be used for the lement
+ * @param object The value of the element to be stored
+ */
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object)
 {
@@ -164,48 +209,6 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object)
   {
     set_callback_(object);
   }
-}
-
-template <typename O>
-bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
-{
-  FETCH_LOCK(cache_mutex_);
-  bool success = false;
-
-  auto it = cache_.find(rid);
-  if (it != cache_.end())
-  {
-    object = it->second.obj;
-    it->second.reads++;
-    success = true;
-  }
-
-  return success;
-}
-
-template <typename O>
-void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
-{
-  FETCH_LOCK(cache_mutex_);
-  typename Cache ::iterator it;
-  bool                      inserted{false};
-
-  // attempt to insert the element into the map
-  std::tie(it, inserted) = cache_.emplace(rid, object);
-
-  // check to see if the insertion was successful
-  if (!inserted)
-  {
-    // update the entry
-    it->second = object;
-  }
-}
-
-template <typename O>
-bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
-{
-  FETCH_LOCK(cache_mutex_);
-  return cache_.find(rid) != cache_.end();
 }
 
 /**
@@ -232,6 +235,75 @@ bool TransientObjectStore<O>::Confirm(ResourceID const &rid)
   return true;
 }
 
+/**
+ * Internal: Lookup an element from the cache
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The resource id to be queried
+ * @param object The reference to the output object that is to be populated
+ * @return true if the object was found, otherwise false
+ */
+template <typename O>
+bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
+{
+  FETCH_LOCK(cache_mutex_);
+  bool success = false;
+
+  auto it = cache_.find(rid);
+  if (it != cache_.end())
+  {
+    object = it->second;
+    success = true;
+  }
+
+  return success;
+}
+
+/**
+ * Internal: Set an element into the cache
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The resource id of the element to be set
+ * @param object The reference to the object to be stored
+ */
+template <typename O>
+void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
+{
+  FETCH_LOCK(cache_mutex_);
+  typename Cache ::iterator it;
+  bool                      inserted{false};
+
+  // attempt to insert the element into the map
+  std::tie(it, inserted) = cache_.emplace(rid, object);
+
+  // check to see if the insertion was successful
+  if (!inserted)
+  {
+    // update the entry
+    it->second = object;
+  }
+}
+
+/**
+ * Internal: Check to see if an element is in the cache
+ *
+ * @tparam O The type of the object being stored
+ * @param rid The resource id of the element
+ * @return
+ */
+template <typename O>
+bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
+{
+  FETCH_LOCK(cache_mutex_);
+  return cache_.find(rid) != cache_.end();
+}
+
+/**
+ * Internal: Signal that the item ne
+ *
+ * @tparam O The type of the object being stored
+ * @param rid
+ */
 template <typename O>
 void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 {
@@ -244,28 +316,98 @@ void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
-  constexpr std::size_t   bulk_size_max = 100;
-  std::vector<ResourceID> items_to_confirm;
+  static const std::size_t BATCH_SIZE = 100;
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
+  std::vector<ResourceID> rids(BATCH_SIZE);
+  std::size_t extracted_count = 0;
+  std::size_t written_count = 0;
+
+  enum class Phase
+  {
+    Populating,
+    Writing,
+    Flushing
+  };
+
+  Phase phase = Phase::Populating;
+  O obj;
+
+  // main processing loop
   while (!stop_)
   {
-    items_to_confirm.clear();
-
-    // Take up to bulk RIDs from the queue
-    while (items_to_confirm.size() < bulk_size_max && !stop_)
+    switch (phase)
     {
-      auto rid = confirm_queue_.Pop();
-      items_to_confirm.push_back(rid);
-    }
-
-    O placeholder_obj;
-
-    // Push to underlying obj. store
-    for (auto const &rid : items_to_confirm)
-    {
-      if (GetFromCache(rid, placeholder_obj))
+      // Populating: We are filling up our batch of objects from the queue that is being posted
+      case Phase::Populating:
       {
-        archive_.Set(rid, placeholder_obj);
+        // update the state in the case where we have fully filled up the buffer
+        if (extracted_count >= BATCH_SIZE)
+        {
+          phase = Phase::Writing;
+          written_count = 0;
+        }
+        else
+        {
+          // populate our resource array
+          if (confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL))
+          {
+            ++extracted_count;
+          }
+        }
+
+        break;
+      }
+
+      // Writing: We are extracting the items from the cache and writing them to disk
+      case Phase::Writing:
+      {
+        // check if we need to transition from this state
+        if (written_count >= extracted_count)
+        {
+          phase = Phase::Flushing;
+        }
+        else
+        {
+          auto const &rid = rids[written_count];
+
+          // get the element from the cache
+
+          if (GetFromCache(rid, obj))
+          {
+            // write out the object
+            archive_.Set(rid, obj);
+
+            ++written_count;
+          }
+          else
+          {
+            // If this is the case then for some reason the RID that was added to the queue has been
+            // removed from the cache.
+            assert(false);
+          }
+        }
+
+        break;
+      }
+
+      // Flushing: In this phase we are removing the elements from the cache. This is important to
+      // ensure a bound on the memory resources. This must happen after the writing to disk,
+      // otherwise the object store will be inconsistent
+      case Phase::Flushing:
+      {
+        FETCH_LOCK(cache_mutex_);
+
+        assert(extracted_count == rids.size());
+        for (auto const &rid : rids)
+        {
+          cache_.erase(rid);
+        }
+
+        phase = Phase::Populating;
+        extracted_count = 0;
+
+        break;
       }
     }
   }
