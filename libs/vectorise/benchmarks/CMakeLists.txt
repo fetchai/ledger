@@ -1,8 +1,8 @@
 ################################################################################
-# F E T C H   H T T P   L I B R A R Y  T E S T S
+# F E T C H   V E C T O R I S E   B E N C H M A R K S
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(fetch-http-tests)
+project(fetch-vectorise)
 
 # CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -11,6 +11,8 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 #-------------------------------------------------------------------------------
-# Test Targets
+# Benchmark Targets
 #-------------------------------------------------------------------------------
-add_fetch_gtest(http_gtest fetch-http .)
+
+add_fetch_gbench(vectorise-benchmarks fetch-vectorise parallel_dispatcher)
+

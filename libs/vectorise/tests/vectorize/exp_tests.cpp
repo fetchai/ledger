@@ -20,6 +20,7 @@
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include <cmath>
+#include <gtest/gtest.h>
 #include <iostream>
 
 using type        = double;
@@ -32,29 +33,20 @@ void Exponentials(array_type const &A, array_type &C)
                         A);
 }
 
-int main(int argc, char const **argv)
+TEST(vectorise_exp_gtest, exp_test)
 {
-  if (argc != 2)
-  {
-    std::cout << std::endl;
-    std::cout << "Usage: " << argv[0] << " [array size] " << std::endl;
-    std::cout << std::endl;
-    return 0;
-  }
-
-  std::size_t N = std::size_t(atoi(argv[1]));
+  std::size_t N = std::size_t(100);
   array_type  A(N), C(N);
-
-  for (std::size_t i = 0; i < N; ++i)
+  // Exponent value not accurate outside these bounds(-5 , 5) due to being a taylor series around 0
+  A[0] = double(-5);
+  for (std::size_t i = 1; i < N; ++i)
   {
-    A[i] = double(0.1 * type(i) - type(double(N) * 0.5));
+    A[i] = A[i - 1] + 0.1;
   }
 
   Exponentials(A, C);
   for (std::size_t i = 0; i < N; ++i)
   {
-    std::cout << A[i] << " " << C[i] << " " << std::exp(A[i]) << std::endl;
+    EXPECT_NEAR(C[i], std::exp(A[i]), 0.0001);
   }
-
-  return 0;
 }

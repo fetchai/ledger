@@ -20,4 +20,6 @@ nodes/
 
 *.gz
 *.so
-.ipynb*
+
+*.DS_Store
+*.ipynb_checkpoints/
