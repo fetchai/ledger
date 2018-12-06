@@ -302,8 +302,6 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
 
   FETCH_LOG_WARN(LOGGING_NAME, "Sent txes to client 1.");
 
-  client = nullptr;
-
   // Check all peers have identical transaction stores
   // bool failed_to_sync = false;
 
@@ -317,6 +315,8 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     } while (!service->SyncIsReady());
   }
+
+  client = nullptr;
 
   FETCH_LOG_WARN(LOGGING_NAME, "Verifying peers synced");
 
