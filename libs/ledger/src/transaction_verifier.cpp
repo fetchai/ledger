@@ -95,12 +95,12 @@ void TransactionVerifier::Verifier()
         else
           {
           FETCH_LOG_WARN(LOGGING_NAME,
-                         id+" Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
+                         id_+" Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
         }
       }
     }
     catch (std::exception &e) {
-      FETCH_LOG_WARN(LOGGING_NAME, id+" Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, id_+" Exception caught: ", e.what());
     }
   }
 }
@@ -117,12 +117,12 @@ void TransactionVerifier::Dispatcher()
 
     try {
       while (txs.size() < batch_size_) {
-        std::chrono::nanoseconds waittime{1};
+        std::chrono::nanoseconds wait_time{1};
         chain::VerifiedTransaction tx;
         if (txs.size() == 0) {
-          waittime = std::chrono::nanoseconds{10000};
+          wait_time = std::chrono::nanoseconds{10000};
         }
-        if (verified_queue_.Pop(tx, waittime)) {
+        if (verified_queue_.Pop(tx, wait_time)) {
           txs.emplace_back(std::move(tx));
         }
         if (!active_) {
@@ -147,7 +147,7 @@ void TransactionVerifier::Dispatcher()
       }
     }
     catch (std::exception &e) {
-      FETCH_LOG_WARN(LOGGING_NAME, id+" Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, id_+" Exception caught: ", e.what());
     }
   }
 }

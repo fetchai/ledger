@@ -113,10 +113,6 @@ public:
     return prom;
   }
 
-  ClientPtr client_;
-  Address address_;
-  MuddlePtr muddle_;
-
   MuddleTestClient()
   {
   }
@@ -125,6 +121,11 @@ public:
   {
     muddle_->Stop();
   }
+
+private:
+  ClientPtr client_;
+  Address address_;
+  MuddlePtr muddle_;
 };
 
 

@@ -52,7 +52,7 @@ public:
       std::chrono::milliseconds thetimeout = std::chrono::milliseconds(10000))
     : peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
-    , muddle_(themuddle)
+    , muddle_(std::move(themuddle))
   {
     client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
                                        CHANNEL_RPC);

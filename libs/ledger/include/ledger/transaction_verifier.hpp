@@ -38,7 +38,7 @@ public:
   explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads, std::string name_for_logging="")
     : verifying_threads_(verifying_threads)
     , sink_(sink)
-    , id(name_for_logging)
+    , id_(std::move(name_for_logging))
   {}
   TransactionVerifier(TransactionVerifier const &) = delete;
   TransactionVerifier(TransactionVerifier &&)      = delete;
@@ -83,7 +83,7 @@ private:
   VerifiedQueue   verified_queue_;
   UnverifiedQueue unverified_queue_;
 
-  std::string id;
+  std::string id_;
 };
 
 inline void TransactionVerifier::AddTransaction(MutableTransaction const &mtx)

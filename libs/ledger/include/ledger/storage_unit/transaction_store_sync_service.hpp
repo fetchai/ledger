@@ -92,14 +92,14 @@ public:
       std::chrono::milliseconds the_timeout = std::chrono::milliseconds(5000),
       std::chrono::milliseconds promise_wait_timeout = std::chrono::milliseconds(2000),
       std::chrono::milliseconds fetch_object_wait_duration = std::chrono::milliseconds(5000))
-    : muddle_(muddle)
-    , store_(store)
+    : muddle_(std::move(muddle))
+    , store_(std::move(store))
     , verifier_(*this, verification_threads, "Lane "+std::to_string(lane_id)+": ")
-    , lane_controller_(controller_ptr)
+    , lane_controller_(std::move(controller_ptr))
     , time_duration_(the_timeout)
     , promise_wait_time_duration_(promise_wait_timeout)
     , fetch_object_wait_duration_(fetch_object_wait_duration)
-    , id(lane_id)
+    , id_(lane_id)
   {
     client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
 
@@ -117,12 +117,12 @@ public:
 
   virtual ~TransactionStoreSyncService()
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": teardown sync service");
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": teardown sync service");
     muddle_->Shutdown();
     client_ = nullptr;
     muddle_ = nullptr;
     store_  = nullptr;
-    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": sync service done!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": sync service done!");
   }
 
   void Start()
@@ -198,21 +198,21 @@ public:
         }
         if (counts.failed>0)
         {
-          FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", id, ": ", "Failed object count promises ", counts.failed);
+          FETCH_LOG_ERROR(LOGGING_NAME, "Lane ", id_, ": ", "Failed object count promises ", counts.failed);
         }
         if (counts.pending>0)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Still waiting for object counts...");
+          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Still waiting for object counts...");
           if (!promise_wait_timeout_.IsDue())
           {
             return false;
           }
           else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": ", "Still pending object count promises, but limit approached!");
+            FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Still pending object count promises, but limit approached!");
           }
         }
-        FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Expected tx size: ", max_object_count_);
+        FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
 
         // If there are objects to sync from the network, fetch N roots from each of the peers in
         // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
@@ -267,7 +267,7 @@ public:
         auto counts = pending_subtree_.Resolve();
         for(auto &result : pending_subtree_.Get(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Got ", result.promised.size(), " subtree objects!");
+          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(), " subtree objects!");
 
           for(auto &tx : result.promised)
           {
@@ -277,7 +277,7 @@ public:
         FETCH_LOCK(mutex_);
         if (counts.failed>0)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": ", "Failed subtree promises count ", counts.failed);
+          FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Failed subtree promises count ", counts.failed);
           for(auto &fail : pending_subtree_.GetFailures(MAX_SUBTREE_RESOLUTION_PER_CYCLE))
           {
             roots_to_sync_.push(promise_id_to_roots_[fail.promise.id()]);
@@ -296,7 +296,7 @@ public:
           }
           else
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": ", "Timeout for subtree promises count!", counts.pending);
+            FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Timeout for subtree promises count!", counts.pending);
             //get the pending
             auto pending = pending_subtree_.GetPending();
             for(auto &req : pending)
@@ -333,7 +333,7 @@ public:
         auto counts = pending_objects_.Resolve();
         for(auto &result : pending_objects_.Get(MAX_OBJECT_RESOLUTION_PER_CYCLE))
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Got ", result.promised.size(), " objects!");
+          FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Got ", result.promised.size(), " objects!");
           for(auto &tx : result.promised)
           {
             verifier_.AddTransaction(tx.AsMutable());
@@ -346,9 +346,9 @@ public:
           {
             return false;
           }
-          FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id, ": ", "Still pending object promises but limit approached!");
+          FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": ", "Still pending object promises but limit approached!");
         }
-        FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Failed promises: ", counts.failed);
+        FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Failed promises: ", counts.failed);
         current_state = State::TRIM_CACHE;
         return true;
       }
@@ -460,7 +460,7 @@ private:
 
   Mutex mutex_{__LINE__, __FILE__};
 
-  int id;
+  int id_;
 
   Mutex is_ready_mutex_{__LINE__, __FILE__};
   bool is_ready_ = false;

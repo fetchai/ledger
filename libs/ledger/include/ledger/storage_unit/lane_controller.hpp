@@ -65,7 +65,7 @@ public:
 
   LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle)
     : lane_identity_(std::move(identity))
-    , muddle_(muddle)
+    , muddle_(std::move(muddle))
   {
   }
 
