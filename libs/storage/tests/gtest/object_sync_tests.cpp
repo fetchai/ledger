@@ -121,6 +121,7 @@ public:
 
   ~MuddleTestClient()
   {
+    muddle_->Shutdown();
     muddle_->Stop();
   }
 
