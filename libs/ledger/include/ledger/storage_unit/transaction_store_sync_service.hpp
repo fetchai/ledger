@@ -425,7 +425,7 @@ protected:
     {
       return;
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id, ": ", "Timeout set ", time_duration_.count());
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Timeout set ", time_duration_.count());
     timeout_.Set(time_duration_);
     timeout_set_ = true;
   }
