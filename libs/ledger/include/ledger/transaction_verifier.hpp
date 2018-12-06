@@ -35,7 +35,8 @@ public:
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
   // Construction / Destruction
-  explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads, std::string name_for_logging="")
+  explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads,
+                               std::string name_for_logging = "")
     : verifying_threads_(verifying_threads)
     , sink_(sink)
     , id_(std::move(name_for_logging))

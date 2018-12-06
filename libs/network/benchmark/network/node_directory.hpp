@@ -32,7 +32,6 @@
 
 #include "core/byte_array/byte_array.hpp"
 
-
 #include "network/muddle/rpc/muddle_test_client.hpp"
 #include "network/muddle/rpc/muddle_test_server.hpp"
 
@@ -56,8 +55,7 @@ public:
   NodeDirectory operator=(NodeDirectory &&rhs) = delete;
 
   ~NodeDirectory()
-  {
-  }
+  {}
 
   // Only call this during node setup (not thread safe)
   void AddEndpoint(const Endpoint &endpoint)

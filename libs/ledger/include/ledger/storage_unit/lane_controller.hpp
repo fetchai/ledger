@@ -66,12 +66,11 @@ public:
   LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle)
     : lane_identity_(std::move(identity))
     , muddle_(std::move(muddle))
-  {
-  }
+  {}
 
   virtual ~LaneController()
   {
-   // threadpool_->Stop();
+    // threadpool_->Stop();
   }
 
   /// External controls
@@ -121,7 +120,8 @@ public:
           auto ident = lane_identity_.lock();
           if (ident)
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane ", ident->GetLaneNumber() , " : ", peer_conn.first.ToString());
+            FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane ", ident->GetLaneNumber(), " : ",
+                           peer_conn.first.ToString());
           }
           else
           {
@@ -138,7 +138,8 @@ public:
           auto ident = lane_identity_.lock();
           if (ident)
           {
-            FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber() , " : ", uri.ToString());
+            FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
+                           uri.ToString());
           }
           else
           {
@@ -154,7 +155,7 @@ public:
   {
     FETCH_LOCK(desired_connections_mutex_);
     AddressSet addresses;
-    for(auto &uri : desired_connections_)
+    for (auto &uri : desired_connections_)
     {
       Address address;
       if (muddle_->GetOutgoingConnectionAddress(uri, address))
@@ -214,7 +215,7 @@ private:
   std::unordered_map<Uri, Address> peer_connections_;
   UriSet                           desired_connections_;
 
-  MuddlePtr  muddle_;
+  MuddlePtr muddle_;
 };
 
 }  // namespace ledger

@@ -61,7 +61,6 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
   this->Expose(PULL_SUBTREE, this, &Self::PullSubtree);
 }
 
-
 void TransactionStoreSyncProtocol::TrimCache()
 {
   {
@@ -103,7 +102,6 @@ void TransactionStoreSyncProtocol::OnNewTx(VerifiedTransaction const &o)
   cache_.emplace_back(o);
 }
 
-
 uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
@@ -138,8 +136,8 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
   return ret;
 }
 
-
-TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(service::CallContext const *call_context)
+TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
+    service::CallContext const *call_context)
 {
   // Creating result
   TxList ret;
@@ -163,7 +161,6 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(s
 
   return ret;
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

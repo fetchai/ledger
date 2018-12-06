@@ -127,10 +127,10 @@ public:
   /// @{
   T Pop();
   template <typename R, typename P>
-  bool Pop(T &value, std::chrono::duration<R, P> const &duration);
-  void Push(T const &element);
-  void Push(T &&element);
-  bool empty();
+  bool        Pop(T &value, std::chrono::duration<R, P> const &duration);
+  void        Push(T const &element);
+  void        Push(T &&element);
+  bool        empty();
   std::size_t size();
   /// @}
 
@@ -202,11 +202,11 @@ bool Queue<T, N, P, C>::empty()
  * @return number of elements available for immediate read.
  */
 
-  template <typename T, std::size_t N, typename P, typename C>
-  std::size_t Queue<T, N, P, C>::size()
-  {
-    return read_count_.size();
-  }
+template <typename T, std::size_t N, typename P, typename C>
+std::size_t Queue<T, N, P, C>::size()
+{
+  return read_count_.size();
+}
 
 /**
  * Pop an element from the queue with a specified maximum wait duration

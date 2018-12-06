@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "core/random/lfg.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
-#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/peer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
@@ -45,8 +45,7 @@ using namespace fetch::service;
 using namespace fetch::ledger;
 using namespace fetch;
 
-static constexpr char const *LOGGING_NAME  = "ObjectSyncTest";
-
+static constexpr char const *LOGGING_NAME = "ObjectSyncTest";
 
 class MuddleTestClient
 {
@@ -57,13 +56,14 @@ public:
   using Client  = fetch::muddle::rpc::Client;
   using Address = Muddle::Address;  // == a crypto::Identity.identifier_
 
-  using MuddlePtr      = std::shared_ptr<Muddle>;
-  using ServerPtr      = std::shared_ptr<Server>;
-  using ClientPtr      = std::shared_ptr<Client>;
+  using MuddlePtr = std::shared_ptr<Muddle>;
+  using ServerPtr = std::shared_ptr<Server>;
+  using ClientPtr = std::shared_ptr<Client>;
 
-  static std::shared_ptr<MuddleTestClient> CreateTestClient(NetworkManager &tm, const std::string &host, uint16_t port)
+  static std::shared_ptr<MuddleTestClient> CreateTestClient(NetworkManager &   tm,
+                                                            const std::string &host, uint16_t port)
   {
-    return CreateTestClient(tm, Uri(std::string("tcp://")+host+":"+std::to_string(port)));
+    return CreateTestClient(tm, Uri(std::string("tcp://") + host + ":" + std::to_string(port)));
   }
   static std::shared_ptr<MuddleTestClient> CreateTestClient(NetworkManager &tm, const Uri &uri)
   {
@@ -72,11 +72,12 @@ public:
     tc->muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tm);
     tc->muddle_->Start({});
 
-    tc->client_ = std::make_shared<Client>(tc->muddle_->AsEndpoint(), Address(), SERVICE_LANE, CHANNEL_RPC);
+    tc->client_ =
+        std::make_shared<Client>(tc->muddle_->AsEndpoint(), Address(), SERVICE_LANE, CHANNEL_RPC);
     tc->muddle_->AddPeer(uri);
 
     int counter = 40;
-    while(1)
+    while (1)
     {
       if (!counter--)
       {
@@ -95,13 +96,15 @@ public:
   }
 
   template <typename... Args>
-  Promise Call(fetch::service::protocol_handler_type const &protocol, fetch::service::function_handler_type const &function, Args &&... args)
+  Promise Call(fetch::service::protocol_handler_type const &protocol,
+               fetch::service::function_handler_type const &function, Args &&... args)
   {
     return client_->CallSpecificAddress(address_, protocol, function, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
-  Promise CallAndWait(fetch::service::protocol_handler_type const &protocol, fetch::service::function_handler_type const &function, Args &&... args)
+  Promise CallAndWait(fetch::service::protocol_handler_type const &protocol,
+                      fetch::service::function_handler_type const &function, Args &&... args)
   {
     auto prom = Call(protocol, function, std::forward<Args>(args)...);
 
@@ -114,8 +117,7 @@ public:
   }
 
   MuddleTestClient()
-  {
-  }
+  {}
 
   ~MuddleTestClient()
   {
@@ -124,10 +126,9 @@ public:
 
 private:
   ClientPtr client_;
-  Address address_;
+  Address   address_;
   MuddlePtr muddle_;
 };
-
 
 VerifiedTransaction GetRandomTx(crypto::ECDSASigner &certificate, uint64_t seed)
 {
@@ -147,20 +148,18 @@ VerifiedTransaction GetRandomTx(crypto::ECDSASigner &certificate, uint64_t seed)
   return VerifiedTransaction::Create(tx);
 }
 
-
 class TestService : public LaneService
 {
 public:
   using Super = LaneService;
 
-  TestService(uint16_t port, NetworkManager const &tm, uint32_t lane=0, uint32_t total_lanes=1,
-      std::chrono::milliseconds timeout =  std::chrono::milliseconds(2000),
-      std::size_t verification_threads = 1)
-    : Super("test_", lane, total_lanes, port, tm, verification_threads, true, timeout,std::chrono::milliseconds(1000),std::chrono::milliseconds(1000))
-  {
-  }
+  TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
+              std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
+              std::size_t               verification_threads = 1)
+    : Super("test_", lane, total_lanes, port, tm, verification_threads, true, timeout,
+            std::chrono::milliseconds(1000), std::chrono::milliseconds(1000))
+  {}
 };
-
 
 TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1)
 {
@@ -173,17 +172,16 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   TestService test_service(initial_port, nm);
   test_service.Start();
 
-  auto client = MuddleTestClient::CreateTestClient(nm, "127.0.0.1", initial_port);
+  auto                client = MuddleTestClient::CreateTestClient(nm, "127.0.0.1", initial_port);
   crypto::ECDSASigner certificate;
-
 
   FETCH_LOG_INFO(LOGGING_NAME, "Got client, sending tx");
   for (std::size_t i = 0; i < 100; ++i)
   {
     VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    auto promise =
-        client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                       ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
@@ -192,7 +190,8 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   // Now verify we can get the tx from the store
   for (auto const &tx : sent)
   {
-    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,  ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
     uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
@@ -216,14 +215,14 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   TestService test_service(initial_port, nm);
   test_service.Start();
 
-  auto client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port);
+  auto                client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port);
   crypto::ECDSASigner certificate;
   for (std::size_t i = 0; i < 100; ++i)
   {
     VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    auto promise =
-        client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                       ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
@@ -231,7 +230,8 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   // Now verify we can get the tx from the store
   for (auto const &tx : sent)
   {
-    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
     uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
@@ -253,38 +253,39 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   uint16_t                                  initial_port       = 8080;
   uint16_t                                  number_of_services = 3;
   std::vector<std::shared_ptr<TestService>> services;
-  crypto::ECDSASigner certificate;
+  crypto::ECDSASigner                       certificate;
 
   // Start up our services
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
-    services.push_back(std::make_shared<TestService>(static_cast<uint16_t>(initial_port + i), nm, i, 1));
+    services.push_back(
+        std::make_shared<TestService>(static_cast<uint16_t>(initial_port + i), nm, i, 1));
     services.back()->Start();
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME,  "Sending peers to clients");
-
+  FETCH_LOG_WARN(LOGGING_NAME, "Sending peers to clients");
 
   // Connect our services to each other
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
     LaneController::UriSet uris;
-    auto client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+i));
+    auto                   client = MuddleTestClient::CreateTestClient(nm, "localhost",
+                                                     static_cast<uint16_t>(initial_port + i));
     for (uint16_t j = 0; j < number_of_services; ++j)
     {
       if (i != j)
       {
-        uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port+j))));
+        uris.insert(
+            LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port + j))));
       }
     }
     client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
-
   }
 
   // Now send all the TX to one of the clients
   std::vector<VerifiedTransaction> sent;
 
-  FETCH_LOG_WARN(LOGGING_NAME,  "Sending txes to clients");
+  FETCH_LOG_WARN(LOGGING_NAME, "Sending txes to clients");
 
   auto client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port);
 
@@ -292,29 +293,28 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   {
     VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    auto promise =
-        client->Call(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->Call(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
 
-  FETCH_LOG_WARN(LOGGING_NAME,  "Sent txes to client 1.");
-
+  FETCH_LOG_WARN(LOGGING_NAME, "Sent txes to client 1.");
 
   client = nullptr;
 
   // Check all peers have identical transaction stores
-  //bool failed_to_sync = false;
+  // bool failed_to_sync = false;
 
   // wait as long as is reasonable
   FETCH_LOG_WARN(LOGGING_NAME, "Waiting...");
 
-  for(auto &service : services)
+  for (auto &service : services)
   {
     do
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    } while(!service->SyncIsReady());
+    } while (!service->SyncIsReady());
   }
 
   FETCH_LOG_WARN(LOGGING_NAME, "Verifying peers synced");
@@ -322,10 +322,12 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   // Now verify we can get the tx from the each client
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
-    client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+i));
+    client = MuddleTestClient::CreateTestClient(nm, "localhost",
+                                                static_cast<uint16_t>(initial_port + i));
     for (auto const &tx : sent)
     {
-      auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+      auto promise = client->CallAndWait(
+          RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
       VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
 
@@ -343,27 +345,25 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   FETCH_LOG_INFO(LOGGING_NAME, "Test new joiner case");
 
   // Now test new joiner case, add new joiner
-  services.push_back(
-      std::make_shared<TestService>(static_cast<uint16_t>(initial_port + number_of_services), nm, number_of_services,1));
+  services.push_back(std::make_shared<TestService>(
+      static_cast<uint16_t>(initial_port + number_of_services), nm, number_of_services, 1));
   services.back()->Start();
 
-
-  client = MuddleTestClient::CreateTestClient(nm, "localhost", static_cast<uint16_t>(initial_port+number_of_services));
+  client = MuddleTestClient::CreateTestClient(
+      nm, "localhost", static_cast<uint16_t>(initial_port + number_of_services));
   LaneController::UriSet uris;
   for (uint16_t j = 0; j < number_of_services; ++j)
   {
-    uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port+j))));
+    uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port + j))));
   }
   client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
-
-
 
   // Wait until the sync is done
   FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new joiner to sync.");
   do
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-  }while(!services.back()->SyncIsReady());
+  } while (!services.back()->SyncIsReady());
 
   FETCH_LOG_INFO(LOGGING_NAME, "Verifying new joiner sync.");
 
@@ -372,7 +372,8 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   // Verify the new joiner
   for (auto const &tx : sent)
   {
-    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
     VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
 
@@ -385,7 +386,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
 
   EXPECT_EQ(failed_to_sync, false);
 
-  for(auto &service : services)
+  for (auto &service : services)
   {
     service->Stop();
   }

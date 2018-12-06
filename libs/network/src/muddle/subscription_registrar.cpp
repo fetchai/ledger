@@ -144,8 +144,6 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
   return success;
 }
 
-
-
 void SubscriptionRegistrar::Debug(std::string const &prefix)
 {
   FETCH_LOG_WARN(LOGGING_NAME, prefix,

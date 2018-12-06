@@ -55,7 +55,6 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ObjectStore";
 
-
   std::string id = "";
 
   /**

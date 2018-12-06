@@ -30,63 +30,62 @@ using namespace fetch::byte_array;
 class MuddleTestServer
 {
 public:
-    static std::shared_ptr<MuddleTestServer> CreateTestServer(uint16_t port)
-    {
-        auto ts = std::make_shared<MuddleTestServer>();
-        ts->tm.Start();
+  static std::shared_ptr<MuddleTestServer> CreateTestServer(uint16_t port)
+  {
+    auto ts = std::make_shared<MuddleTestServer>();
+    ts->tm.Start();
 
-        ts->port = port;
-        ts->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), ts->tm);
-        ts->muddle->Start({port});
+    ts->port   = port;
+    ts->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), ts->tm);
+    ts->muddle->Start({port});
 
-        ts->server = std::make_shared<Server>(ts->muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+    ts->server = std::make_shared<Server>(ts->muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
 
-        return ts;
-    }
+    return ts;
+  }
 
-    template<class X, class Y>
-    void Add(X &x, Y &y)
-    {
-        server -> Add(x,y);
-    }
+  template <class X, class Y>
+  void Add(X &x, Y &y)
+  {
+    server->Add(x, y);
+  }
 
-    template<class X, class Y>
-    void Add(X x, Y y)
-    {
-        server -> Add(x,y);
-    }
+  template <class X, class Y>
+  void Add(X x, Y y)
+  {
+    server->Add(x, y);
+  }
 
-    template<class X, class Y>
-    void Add(const X &x, Y &y)
-    {
-        server -> Add(x,y);
-    }
+  template <class X, class Y>
+  void Add(const X &x, Y &y)
+  {
+    server->Add(x, y);
+  }
 
-    bool is_alive()
-    {
-        return true;
-    }
+  bool is_alive()
+  {
+    return true;
+  }
 
-    void Stop()
-    {
-        muddle->Stop();
-        tm.Stop();
-    }
+  void Stop()
+  {
+    muddle->Stop();
+    tm.Stop();
+  }
 
-    void Start()
-    {
-        tm.Start();
-        muddle->Start({port});
-    }
+  void Start()
+  {
+    tm.Start();
+    muddle->Start({port});
+  }
 
-    ServerPtr server;
-    uint16_t port;
-    MuddlePtr muddle;
-    fetch::network::NetworkManager tm;
+  ServerPtr                      server;
+  uint16_t                       port;
+  MuddlePtr                      muddle;
+  fetch::network::NetworkManager tm;
 
-    MuddleTestServer()
-    {
-    }
+  MuddleTestServer()
+  {}
 };
 
 using TServerPtr = std::shared_ptr<MuddleTestServer>;
