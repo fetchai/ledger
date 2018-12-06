@@ -17,24 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
-#include "core/serializers/call_context.hpp"
+#include "core/assert.hpp"
+#include "network/service/call_context.hpp"
+
+#include <type_traits>
 
 namespace fetch {
-namespace service {
+  namespace serializers {
+/*
+    template <typename T>
+    inline void Serialize(T &serializer, service::CallContext* const &s)
+    {
+      serializer << s->sender_address;
+    }
 
-using serializer_type = serializers::TypedByteArrayBuffer;
-
-// using serializer_type = serializers::ByteArrayBuffer;
-
-using protocol_handler_type       = uint64_t;
-using function_handler_type       = uint64_t;
-using feed_handler_type           = uint8_t;
-using subscription_handler_type   = uint8_t;
-using service_classification_type = uint64_t;
-
-}  // namespace service
+    template <typename T>
+    inline void Deserialize(T &serializer, service::CallContext* &s)
+    {
+      serializer >> s->sender_address;
+    }
+*/
+  }  // namespace serializers
 }  // namespace fetch

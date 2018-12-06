@@ -35,9 +35,10 @@ public:
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
   // Construction / Destruction
-  explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads)
+  explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads, std::string name_for_logging="")
     : verifying_threads_(verifying_threads)
     , sink_(sink)
+    , id(name_for_logging)
   {}
   TransactionVerifier(TransactionVerifier const &) = delete;
   TransactionVerifier(TransactionVerifier &&)      = delete;
@@ -81,6 +82,8 @@ private:
   Threads         threads_;
   VerifiedQueue   verified_queue_;
   UnverifiedQueue unverified_queue_;
+
+  std::string id;
 };
 
 inline void TransactionVerifier::AddTransaction(MutableTransaction const &mtx)

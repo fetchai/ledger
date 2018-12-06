@@ -110,6 +110,12 @@ public:
     cv_.wait_for(lock, std::chrono::milliseconds(milliseconds));
   }
 
+  void Wait(std::chrono::milliseconds milliseconds)
+  {
+    Lock lock(mutex_);
+    cv_.wait_for(lock, milliseconds);
+  }
+
   void Wake()
   {
     Lock lock(mutex_);

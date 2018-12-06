@@ -68,6 +68,11 @@ public:
     thread_.reset();
   }
 
+  void ChangeWaitTime(std::chrono::milliseconds wait_time)
+  {
+    wait_time_ = wait_time;
+  }
+
 protected:
   void Run()
   {
@@ -78,7 +83,7 @@ protected:
     }
     while (!shutdown_)
     {
-      target_->Wait(100);
+      target_->Wait(wait_time_);
       if (shutdown_)
       {
         return;
@@ -95,6 +100,7 @@ protected:
   ThreadPtr    thread_;
   ShutdownFlag shutdown_{false};
   WorkFunc     workcycle_;
+  std::chrono::milliseconds wait_time_{100};
 };
 
 }  // namespace network

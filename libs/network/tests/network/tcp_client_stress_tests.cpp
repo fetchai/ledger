@@ -38,7 +38,7 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
+//static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
 static constexpr std::size_t MANY_CYCLES = 200;
 static constexpr std::size_t MID_CYCLES  = 50;
 static constexpr std::size_t FEW_CYCLES  = 10;

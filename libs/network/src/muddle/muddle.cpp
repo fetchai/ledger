@@ -126,6 +126,11 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
+void Muddle::Shutdown()
+{
+  dispatcher_.FailAllPendingPromises();
+}
+
 bool Muddle::GetOutgoingConnectionAddress(const Uri &uri, Address &address) const
 {
   PeerConnectionList::Handle handle;

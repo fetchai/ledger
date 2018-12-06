@@ -170,6 +170,7 @@ public:
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
+  void Shutdown();
   /// @}
 
   Identity const &identity() const;

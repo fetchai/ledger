@@ -57,29 +57,21 @@ public:
   using Uri        = Muddle::Uri;
   using UriSet     = std::unordered_set<Uri>;
   using Address    = Muddle::Address;
+  using AddressSet = std::unordered_set<Address>;
   using Client     = muddle::rpc::Client;
   using ClientPtr  = std::shared_ptr<Client>;
 
   static constexpr char const *LOGGING_NAME = "LaneController";
 
-  LaneController(std::weak_ptr<LaneIdentity> identity, NetworkManager const &nm)
+  LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle)
     : lane_identity_(std::move(identity))
-    , manager_(nm)
+    , muddle_(muddle)
   {
-    threadpool_ = network::MakeThreadPool(1);
-    threadpool_->Start();
-    threadpool_->PostIdle([this]() { this->WorkCycle(); });
-    threadpool_->SetIdleInterval(1000);
-
-    muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("LANE"), nm);
-    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
-                                       CHANNEL_RPC);
-    muddle_->Start({});
   }
 
   virtual ~LaneController()
   {
-    threadpool_->Stop();
+   // threadpool_->Stop();
   }
 
   /// External controls
@@ -126,7 +118,16 @@ public:
       {
         if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER: ", peer_conn.first.ToString());
+          auto ident = lane_identity_.lock();
+          if (ident)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane ", ident->GetLaneNumber() , " : ", peer_conn.first.ToString());
+          }
+          else
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane :( : ", peer_conn.first.ToString());
+          }
+          muddle_->DropPeer(peer_conn.first);
         }
       }
 
@@ -134,10 +135,34 @@ public:
       {
         if (peer_connections_.find(uri) == peer_connections_.end())
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER: ", uri.ToString());
+          auto ident = lane_identity_.lock();
+          if (ident)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber() , " : ", uri.ToString());
+          }
+          else
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane :( : ", uri.ToString());
+          }
+          muddle_->AddPeer(uri);
         }
       }
     }
+  }
+
+  AddressSet GetPeers()
+  {
+    FETCH_LOCK(desired_connections_mutex_);
+    AddressSet addresses;
+    for(auto &uri : desired_connections_)
+    {
+      Address address;
+      if (muddle_->GetOutgoingConnectionAddress(uri, address))
+      {
+        addresses.insert(address);
+      }
+    }
+    return addresses;
   }
 
   void GeneratePeerDeltas(UriSet &create, UriSet &remove)
@@ -179,7 +204,6 @@ public:
   /// @}
 private:
   std::weak_ptr<LaneIdentity> lane_identity_;
-  NetworkManager              manager_;
 
   // Most methods do not need both mutexes. If they do, they should
   // acquire them in alphabetic order
@@ -190,8 +214,6 @@ private:
   std::unordered_map<Uri, Address> peer_connections_;
   UriSet                           desired_connections_;
 
-  ThreadPool threadpool_;
-  ClientPtr  client_;
   MuddlePtr  muddle_;
 };
 

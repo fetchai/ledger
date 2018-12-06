@@ -50,7 +50,13 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
+  using Callback        = std::function<void(type const &)>;
   class Iterator;
+
+  static constexpr char const *LOGGING_NAME = "ObjectStore";
+
+
+  std::string id = "";
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -182,12 +188,21 @@ public:
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
+    if (set_callback_)
+    {
+      set_callback_(object);
+    }
     return true;
   }
 
   std::size_t size() const
   {
     return store_.size();
+  }
+
+  void SetCallback(Callback cb)
+  {
+    set_callback_ = std::move(cb);
   }
 
   /**
@@ -280,6 +295,8 @@ public:
 private:
   mutex::Mutex         mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
+
+  Callback set_callback_;
 };
 
 }  // namespace storage

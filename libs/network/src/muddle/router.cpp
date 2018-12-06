@@ -361,8 +361,14 @@ Router::RoutingTable Router::GetRoutingTable() const
  * @return The address corresponding to a handle in the table.
  */
 bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
-{
-  FETCH_LOCK(routing_table_lock_);
+  {
+    FETCH_LOCK(routing_table_lock_);
+    auto address_it = routing_table_handles_direct_addr_.find(handle);
+    if (address_it != routing_table_handles_direct_addr_.end())
+    {
+      address = address_it->second;
+      return true;
+    }
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
@@ -478,6 +484,11 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
     // an update is only valid when the connection is direct.
     bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
     bool const is_update    = (routing_data.handle && direct && is_different);
+
+    if (direct)
+    {
+      routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
+    }
 
     // update the routing table if required
     if (is_empty || is_update)
@@ -800,6 +811,32 @@ void Router::CleanEchoCache()
     }
   }
 }
+
+  void Router::Debug(std::string const &prefix)
+  {
+    FETCH_LOCK(routing_table_lock_);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "routing_table_handles_direct_addr_: --------------------------------------");
+    for (const auto &routing : routing_table_handles_direct_addr_)
+    {
+      auto output = ToBase64(routing.second);
+      FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output), " -> handle=", std::to_string(routing.first), " direct=by definition" );
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "routing_table_handles_direct_addr_: --------------------------------------");
+
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "routing_table_: --------------------------------------");
+    for (const auto &routing : routing_table_)
+    {
+      ByteArray output(routing.first.size());
+      std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+      FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)), " -> handle=", std::to_string(routing.second.handle), " direct=", routing.second.direct);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "routing_table_: --------------------------------------");
+    registrar_.Debug(prefix);
+  }
 
 }  // namespace muddle
 }  // namespace fetch

@@ -61,6 +61,8 @@ public:
 
   void Cleanup(Timepoint const &now = Clock::now());
 
+  void FailAllPendingPromises();
+
 private:
   using Counter = std::atomic<uint16_t>;
   using Mutex   = mutex::Mutex;
