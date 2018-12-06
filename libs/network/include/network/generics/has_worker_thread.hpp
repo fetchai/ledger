@@ -96,10 +96,10 @@ protected:
   using Thread       = std::thread;
   using ThreadPtr    = std::shared_ptr<Thread>;
 
-  Target *     target_{nullptr};
-  ThreadPtr    thread_;
-  ShutdownFlag shutdown_{false};
-  WorkFunc     workcycle_;
+  Target *                  target_{nullptr};
+  ThreadPtr                 thread_;
+  ShutdownFlag              shutdown_{false};
+  WorkFunc                  workcycle_;
   std::chrono::milliseconds wait_time_{100};
 };
 

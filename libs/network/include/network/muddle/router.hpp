@@ -113,12 +113,12 @@ public:
   }
 
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
-  using RawAddress = Packet::RawAddress;
+  using HandleMap           = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex               = mutex::Mutex;
+  using Clock               = std::chrono::steady_clock;
+  using Timepoint           = Clock::time_point;
+  using EchoCache           = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress          = Packet::RawAddress;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
@@ -140,7 +140,7 @@ private:
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
-  HandleDirectAddrMap routing_table_handles_direct_addr_;
+  HandleDirectAddrMap   routing_table_handles_direct_addr_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

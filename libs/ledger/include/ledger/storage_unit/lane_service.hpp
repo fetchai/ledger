@@ -30,6 +30,8 @@
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "network/details/thread_pool.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/has_worker_thread.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -38,8 +40,6 @@
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
-#include "network/generics/backgrounded_work.hpp"
-#include "network/generics/has_worker_thread.hpp"
 
 #include <iomanip>
 #include <memory>
@@ -70,12 +70,13 @@ public:
   static constexpr char const *LOGGING_NAME = "LaneService";
 
   // TODO(issue 7): Make config JSON
-  LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
-              bool refresh_storage = false,
-              std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
-              std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
-              std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))
+  LaneService(
+      std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
+      uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
+      bool                      refresh_storage              = false,
+      std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
+      std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
+      std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))
     : port_(port)
     , lane_(lane)
   {
@@ -121,7 +122,7 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    tx_store_->id = "Lane "+std::to_string(lane_);
+    tx_store_->id = "Lane " + std::to_string(lane_);
 
     tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
@@ -131,14 +132,15 @@ public:
     controller_protocol_ = std::make_unique<LaneControllerProtocol>(controller_.get());
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
-    tx_sync_protocol_  = std::make_unique<TransactionStoreSyncProtocol>(tx_store_.get(), lane_);
-    tx_sync_service_   = std::make_shared<TransactionStoreSyncService>(lane_, muddle_, tx_store_, controller_, verification_threads,
-        sync_service_timeout,sync_service_promise_timeout,sync_service_fetch_period);
+    tx_sync_protocol_ = std::make_unique<TransactionStoreSyncProtocol>(tx_store_.get(), lane_);
+    tx_sync_service_  = std::make_shared<TransactionStoreSyncService>(
+        lane_, muddle_, tx_store_, controller_, verification_threads, sync_service_timeout,
+        sync_service_promise_timeout, sync_service_fetch_period);
 
-    tx_store_->SetCallback([this](VerifiedTransaction const &tx){tx_sync_protocol_->OnNewTx(tx); });
+    tx_store_->SetCallback(
+        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
 
-    tx_sync_service_->SetTrimCacheCallback(
-        [this](){tx_sync_protocol_->TrimCache();});
+    tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
 
     // TX Sync protocol
     server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
@@ -156,7 +158,8 @@ public:
                       prefix + "state_index_deltas.db", true);
     }
 
-    state_db_protocol_ = std::make_unique<DocumentStoreProtocol>(state_db_.get(), lane, total_lanes);
+    state_db_protocol_ =
+        std::make_unique<DocumentStoreProtocol>(state_db_.get(), lane, total_lanes);
     server_->Add(RPC_STATE, state_db_protocol_.get());
 
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Initialised.");
@@ -198,7 +201,8 @@ public:
     tx_sync_service_->Start();
 
     // TX Sync service
-    workthread_ = std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
+    workthread_ =
+        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
     workthread_->ChangeWaitTime(std::chrono::milliseconds(500));
   }
 
@@ -216,7 +220,6 @@ public:
   }
 
 private:
-
   std::shared_ptr<LaneIdentity>         lane_identity_;
   std::unique_ptr<LaneIdentityProtocol> lane_identity_protocol_;
 
@@ -232,10 +235,10 @@ private:
   std::unique_ptr<TransactionStoreSyncProtocol> tx_sync_protocol_;
   std::shared_ptr<TransactionStoreSyncService>  tx_sync_service_;
 
-  ServerPtr    server_;
-  MuddlePtr    muddle_;  ///< The muddle networking service
-  //mutex::Mutex certificate_lock_{__LINE__, __FILE__};
-  uint16_t     port_;
+  ServerPtr server_;
+  MuddlePtr muddle_;  ///< The muddle networking service
+  // mutex::Mutex certificate_lock_{__LINE__, __FILE__};
+  uint16_t port_;
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;

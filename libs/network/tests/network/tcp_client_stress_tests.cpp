@@ -38,7 +38,7 @@ using namespace fetch::network;
 using namespace fetch::common;
 using namespace fetch::byte_array;
 
-//static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
+// static constexpr char const *LOGGING_NAME = "TcpClientStressTests";
 static constexpr std::size_t MANY_CYCLES = 200;
 static constexpr std::size_t MID_CYCLES  = 50;
 static constexpr std::size_t FEW_CYCLES  = 10;
@@ -202,7 +202,6 @@ std::vector<message_type> CreateTestData(size_t index)
   return sendData;
 }
 
-
 TEST(tcp_client_stress_gtest, open_echo_server_multiple_times)
 {
   std::cerr << "Info: Attempting to open the echo server multiple times" << std::endl;
@@ -230,7 +229,6 @@ TEST(tcp_client_stress_gtest, NM_dead)
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, NM_alive)
 {
@@ -275,7 +273,6 @@ TEST(tcp_client_stress_gtest, NM_jittering)
   SUCCEED() << "Success." << std::endl;
 }
 
-
 TEST(tcp_client_stress_gtest, NM_dead_existing_port)
 {
   std::cerr << "Info: Attempting to open a connection to a port that\
@@ -292,7 +289,6 @@ TEST(tcp_client_stress_gtest, NM_dead_existing_port)
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, NM_alive_existing_port)
 {
@@ -312,7 +308,6 @@ TEST(tcp_client_stress_gtest, NM_alive_existing_port)
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
 {
@@ -339,7 +334,6 @@ TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
   SUCCEED() << "Success." << std::endl;
 }
 
-
 TEST(tcp_client_stress_gtest, move_constr)
 {
   std::cerr << "Info: Attempting to open multiple\
@@ -360,7 +354,6 @@ TEST(tcp_client_stress_gtest, move_constr)
   nmanager.Stop();
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
 {
@@ -407,7 +400,6 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
   SUCCEED() << "Success." << std::endl;
 }
 
-
 TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
 {
   std::cerr << "Info: (Legacy) Usually breaks due to the NM being destroyed "
@@ -450,7 +442,6 @@ TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
   }
   SUCCEED() << "success" << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
 {
@@ -505,7 +496,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_clients)
 {
@@ -562,7 +552,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
 {
@@ -630,7 +619,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multiple_clients)
 {
@@ -714,7 +702,6 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
   }
   SUCCEED() << "Success." << std::endl;
 }
-
 
 TEST(tcp_client_stress_gtest, killing_during_transmission)
 {

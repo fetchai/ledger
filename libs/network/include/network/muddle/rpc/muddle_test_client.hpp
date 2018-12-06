@@ -30,70 +30,71 @@ using namespace fetch::byte_array;
 class MuddleTestClient
 {
 public:
-    static std::shared_ptr<MuddleTestClient> CreateTestClient(const std::string &host, uint16_t port)
+  static std::shared_ptr<MuddleTestClient> CreateTestClient(const std::string &host, uint16_t port)
+  {
+    return CreateTestClient(Uri(std::string("tcp://") + host + ":" + std::to_string(port)));
+  }
+  static std::shared_ptr<MuddleTestClient> CreateTestClient(const Uri &uri)
+  {
+    auto tc = std::make_shared<MuddleTestClient>();
+    tc->tm.Start();
+
+    tc->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tc->tm);
+    tc->muddle->Start({});
+
+    tc->client =
+        std::make_shared<Client>(tc->muddle->AsEndpoint(), Address(), SERVICE_TEST, CHANNEL_RPC);
+    tc->muddle->AddPeer(uri);
+
+    int counter = 20;
+    while (1)
     {
-        return CreateTestClient(Uri(std::string("tcp://")+host+":"+std::to_string(port)));
-    }
-    static std::shared_ptr<MuddleTestClient> CreateTestClient(const Uri &uri)
-    {
-        auto tc = std::make_shared<MuddleTestClient>();
-        tc->tm.Start();
-
-        tc->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tc->tm);
-        tc->muddle->Start({});
-
-        tc->client = std::make_shared<Client>(tc->muddle->AsEndpoint(), Address(), SERVICE_TEST, CHANNEL_RPC);
-        tc->muddle->AddPeer(uri);
-
-        int counter = 20;
-        while(1)
-        {
-            if (!counter--)
-            {
-                tc.reset();
-                return tc;
-            }
-            if (tc->muddle->GetOutgoingConnectionAddress(uri, tc->address))
-            {
-                return tc;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-
+      if (!counter--)
+      {
+        tc.reset();
         return tc;
+      }
+      if (tc->muddle->GetOutgoingConnectionAddress(uri, tc->address))
+      {
+        return tc;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    bool is_alive()
-    {
-        return true;
-    }
+    return tc;
+  }
 
-    void Stop()
-    {
-        muddle->Stop();
-        tm.Stop();
-    }
+  bool is_alive()
+  {
+    return true;
+  }
 
-    void Start()
-    {
-        tm.Start();
-        muddle->Start({});
-    }
+  void Stop()
+  {
+    muddle->Stop();
+    tm.Stop();
+  }
 
-    template <typename... Args>
-    Promise Call(fetch::service::protocol_handler_type const &protocol, fetch::service::function_handler_type const &function, Args &&... args)
-    {
-        return client->CallSpecificAddress(address, protocol, function, std::forward<Args>(args)...);
-    }
+  void Start()
+  {
+    tm.Start();
+    muddle->Start({});
+  }
 
-    ClientPtr client;
-    Address address;
-    MuddlePtr muddle;
-    fetch::network::NetworkManager tm;
+  template <typename... Args>
+  Promise Call(fetch::service::protocol_handler_type const &protocol,
+               fetch::service::function_handler_type const &function, Args &&... args)
+  {
+    return client->CallSpecificAddress(address, protocol, function, std::forward<Args>(args)...);
+  }
 
-    MuddleTestClient()
-    {
-    }
+  ClientPtr                      client;
+  Address                        address;
+  MuddlePtr                      muddle;
+  fetch::network::NetworkManager tm;
+
+  MuddleTestClient()
+  {}
 };
 
 using TClientPtr = std::shared_ptr<MuddleTestClient>;

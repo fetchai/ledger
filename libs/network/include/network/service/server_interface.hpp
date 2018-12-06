@@ -278,8 +278,7 @@ private:
       FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what(), " - ",
                       identifier);
 
-      std::string new_explanation = ex.what() + std::string(") (Identification: ") +
-                                    identifier;
+      std::string new_explanation = ex.what() + std::string(") (Identification: ") + identifier;
       throw serializers::SerializableException(0, new_explanation);
     }
   }

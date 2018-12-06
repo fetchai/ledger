@@ -93,14 +93,15 @@ void TransactionVerifier::Verifier()
           verified_queue_.Push(tx);
         }
         else
-          {
-          FETCH_LOG_WARN(LOGGING_NAME,
-                         id_+" Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, id_ + " Unable to verify transaction: ",
+                         byte_array::ToBase64(tx.digest()));
         }
       }
     }
-    catch (std::exception &e) {
-      FETCH_LOG_WARN(LOGGING_NAME, id_+" Exception caught: ", e.what());
+    catch (std::exception &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
     }
   }
 }
@@ -113,41 +114,50 @@ void TransactionVerifier::Dispatcher()
 {
   std::vector<chain::VerifiedTransaction> txs;
 
-  while (active_) {
+  while (active_)
+  {
 
-    try {
-      while (txs.size() < batch_size_) {
-        std::chrono::nanoseconds wait_time{1};
+    try
+    {
+      while (txs.size() < batch_size_)
+      {
+        std::chrono::nanoseconds   wait_time{1};
         chain::VerifiedTransaction tx;
-        if (txs.size() == 0) {
+        if (txs.size() == 0)
+        {
           wait_time = std::chrono::nanoseconds{10000};
         }
-        if (verified_queue_.Pop(tx, wait_time)) {
+        if (verified_queue_.Pop(tx, wait_time))
+        {
           txs.emplace_back(std::move(tx));
         }
-        if (!active_) {
+        if (!active_)
+        {
           break;
         }
-        if (verified_queue_.empty()) {
+        if (verified_queue_.empty())
+        {
           break;
         }
       }
 
-      switch (txs.size()) {
-        case 0:
-          break;
-        case 1:
-          sink_.OnTransaction(txs.front());
-          txs.clear();
-          break;
-        default:
-          sink_.OnTransactions(txs);
-          txs.clear();
-          break;
+      switch (txs.size())
+      {
+      case 0:
+        break;
+      case 1:
+        sink_.OnTransaction(txs.front());
+        txs.clear();
+        break;
+      default:
+        sink_.OnTransactions(txs);
+        txs.clear();
+        break;
       }
     }
-    catch (std::exception &e) {
-      FETCH_LOG_WARN(LOGGING_NAME, id_+" Exception caught: ", e.what());
+    catch (std::exception &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
     }
   }
 }

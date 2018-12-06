@@ -23,10 +23,10 @@
 #include <gmock/gmock.h>
 
 #include <network/muddle/dispatcher.hpp>
+#include <network/muddle/muddle.hpp>
 #include <network/muddle/muddle_register.hpp>
 #include <network/muddle/peer_list.hpp>
 #include <network/muddle/router.hpp>
-#include <network/muddle/muddle.hpp>
 #include <network/service/promise.hpp>
 
 namespace fetch {
@@ -73,7 +73,8 @@ protected:
 
   PeerConnectionListTests()
     : register_(dispatcher_)
-    , router_(fetch::muddle::Muddle::CreateNetworkId("Test"), Router::Address{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+    , router_(fetch::muddle::Muddle::CreateNetworkId("Test"),
+              Router::Address{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
               register_, dispatcher_)
     , peer_list_(router_)
     , peer_(Peer{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 42})

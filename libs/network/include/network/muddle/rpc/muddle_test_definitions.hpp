@@ -28,9 +28,9 @@ using Server  = fetch::muddle::rpc::Server;
 using Client  = fetch::muddle::rpc::Client;
 using Address = Muddle::Address;  // == a crypto::Identity.identifier_
 
-using MuddlePtr      = std::shared_ptr<Muddle>;
-using ServerPtr      = std::shared_ptr<Server>;
-using ClientPtr      = std::shared_ptr<Client>;
+using MuddlePtr = std::shared_ptr<Muddle>;
+using ServerPtr = std::shared_ptr<Server>;
+using ClientPtr = std::shared_ptr<Client>;
 
 const int SERVICE_TEST = 1;
 const int CHANNEL_RPC  = 1;

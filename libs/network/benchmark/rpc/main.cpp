@@ -130,9 +130,9 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     return;
   }
 
-  std::size_t                    txData       = 0;
-  std::size_t                    rpcCalls     = 0;
-  std::size_t                    setupPayload = 0;
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
 
   TClientPtr client = MuddleTestClient::CreateTestClient(IP, port);
 

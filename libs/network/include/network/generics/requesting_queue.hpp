@@ -190,7 +190,7 @@ typename RequestingQueueOf<K, R, P>::PromiseMap RequestingQueueOf<K, R, P>::GetP
   return pending;
 }
 
-  template <typename K, typename R, typename P>
+template <typename K, typename R, typename P>
 typename RequestingQueueOf<K, R, P>::Counters RequestingQueueOf<K, R, P>::Resolve()
 {
   FETCH_LOCK(mutex_);

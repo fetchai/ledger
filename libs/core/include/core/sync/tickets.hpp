@@ -71,16 +71,14 @@ inline Tickets::~Tickets()
 inline bool Tickets::IsZero()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  return count_==0;
+  return count_ == 0;
 }
 
-  inline std::size_t Tickets::size()
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return count_;
-  }
-
-
+inline std::size_t Tickets::size()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  return count_;
+}
 
 /**
  * Post / increment the internal counter

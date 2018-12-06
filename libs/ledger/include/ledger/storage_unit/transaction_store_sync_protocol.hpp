@@ -26,10 +26,10 @@
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/service/promise.hpp"
-#include "network/service/protocol.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/service/call_context.hpp"
+#include "network/service/promise.hpp"
+#include "network/service/protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
@@ -46,9 +46,9 @@ class TransactionStoreSyncProtocol : public fetch::service::Protocol
 public:
   enum
   {
-    OBJECT_COUNT  = 1,
-    PULL_OBJECTS  = 2,
-    PULL_SUBTREE  = 3
+    OBJECT_COUNT = 1,
+    PULL_OBJECTS = 2,
+    PULL_SUBTREE = 3
   };
 
   using UnverifiedTransaction = chain::UnverifiedTransaction;
@@ -68,8 +68,7 @@ public:
 
   // Operators
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol const &) = delete;
-  TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&)      = delete;
-
+  TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 private:
   static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
@@ -102,18 +101,16 @@ private:
 
   TxList PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
 
-
   // TODO(issue 7): Make cache configurable
   static constexpr uint32_t MAX_CACHE_ELEMENTS    = 2000;  // really a "max"?
   static constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
 
-  ObjectStore *       store_;  ///< The pointer to the object store
+  ObjectStore *store_;  ///< The pointer to the object store
 
   mutex::Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex protecting cache_
   Cache        cache_;
 
   int id_;
-
 };
 
 }  // namespace ledger
