@@ -175,28 +175,24 @@ void TransientStoreExpectedOperation(benchmark::State &state)
 
   VerifiedTransaction dummy;
 
-  std::size_t tx_index{0};
   for (auto _ : state)
   {
     state.PauseTiming();
     // Number of Tx to send is state arg
     TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
-    std::size_t     subset       = 10;  // one tenth of all iterations
     state.ResumeTiming();
 
     for (auto const &tx : transactions)
     {
+      ResourceID const rid{tx.digest()};
+
       // Basic pattern for a transient store is to intake X transactions into the mempool,
       // then read some subset N of them (for block verification/packing), then commit
       // those to the underlying object store.
       tx_store.Set(ResourceID{tx.digest()}, tx);
 
-      benchmark::DoNotOptimize(tx_store.Get(ResourceID{tx.digest()}, dummy));
-
-      if (tx_index % subset == 0)
-      {
-        tx_store.Confirm(ResourceID{tx.digest()});
-      }
+      // also trigger the read from the store and the subsequent right schedule
+      benchmark::DoNotOptimize(tx_store.Get(rid, dummy));
     }
   }
 }
