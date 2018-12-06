@@ -76,11 +76,10 @@ protected:
   {
     static constexpr char const *KEY_FILENAME = "p2p.key";
 
-    using Signer    = fetch::crypto::ECDSASigner;
-    using SignerPtr = std::unique_ptr<Signer>;
+    using Signer = fetch::crypto::ECDSASigner;
 
-    SignerPtr certificate        = std::unique_ptr<Signer>();
-    bool      certificate_loaded = false;
+    auto certificate        = std::make_unique<Signer>();
+    bool certificate_loaded = false;
 
     // Step 1. Attempt to load the existing key
     {
