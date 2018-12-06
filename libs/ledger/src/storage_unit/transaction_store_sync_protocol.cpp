@@ -118,15 +118,15 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
  * @return: the subtree the client is requesting as a vector (size limited)
  */
 TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
-    byte_array::ConstByteArray const &rid, uint64_t mask)
+    byte_array::ConstByteArray const &rid, uint64_t bit_count)
 {
   TxList ret;
 
   uint64_t counter = 0;
 
-  store_->WithLock([this, &ret, &counter, &rid, mask]() {
+  store_->WithLock([this, &ret, &counter, &rid, bit_count]() {
     // This is effectively saying get all objects whose ID begins rid & mask
-    auto it = store_->GetSubtree(ResourceID(rid), mask);
+    auto it = store_->GetSubtree(ResourceID(rid), bit_count);
 
     while (it != store_->end() && counter++ < PULL_LIMIT_)
     {

@@ -21,7 +21,6 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/typed_byte_array_buffer.hpp"
-#include "core/serializers/call_context.hpp"
 
 namespace fetch {
 namespace service {

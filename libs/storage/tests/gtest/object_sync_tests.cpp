@@ -250,7 +250,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   nm.Start();
 
   uint16_t                                  initial_port       = 8080;
-  uint16_t                                  number_of_services = 5;
+  uint16_t                                  number_of_services = 3;
   std::vector<std::shared_ptr<TestService>> services;
   crypto::ECDSASigner certificate;
 

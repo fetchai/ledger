@@ -70,6 +70,7 @@ public:
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
   using TxList                = std::vector<chain::UnverifiedTransaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
+  using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;
   using ResourceID            = storage::ResourceID;
   using Mutex                 = mutex::Mutex;
@@ -218,9 +219,9 @@ public:
         // where roots to sync are all objects with the key starting with those bits
         if (max_object_count_ != 0)
         {
-          root_mask_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
+          root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT_ / 2)) + 1)) + 1;
 
-          for (uint64_t i = 0, end = (1 << (root_mask_ + 1)); i < end; ++i)
+          for (uint64_t i = 0, end = (1 << (root_size_)); i < end; ++i)
           {
             roots_to_sync_.push(Reverse(static_cast<uint8_t>(i)));
           }
@@ -248,9 +249,9 @@ public:
           array.Resize(256 / 8);
           array[0] = root;
 
-          auto promise = PromiseOfTxList(client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SUBTREE, array, root_mask_));
+          auto promise = PromiseOfTxList(client_->CallSpecificAddress(connection, RPC_TX_STORE_SYNC, TransactionStoreSyncProtocol::PULL_SUBTREE, array, root_size_));
           promise_id_to_roots_[promise.id()] = root;
-          pending_subtree_.Add(connection, promise);
+          pending_subtree_.Add(root, promise);
         }
         if (!roots_to_sync_.empty())
         {
@@ -386,7 +387,7 @@ protected:
 
   void OnTransactions(TransactionList const &txs) override
   {
-    std::size_t batch_size = 50;
+    std::size_t batch_size = 30;
     std::size_t num_batches = static_cast<std::size_t>(ceil(static_cast<double>(txs.size())/static_cast<double>(batch_size)));
     for(std::size_t b=0;b<num_batches;++b)
     {
@@ -447,11 +448,11 @@ private:
   RequestingObjectCount pending_object_count_;
   uint64_t max_object_count_;
 
-  RequestingTxList pending_subtree_;
-  RequestingTxList pending_objects_;
+  RequestingSubTreeList pending_subtree_;
+  RequestingTxList      pending_objects_;
 
   std::queue<uint8_t> roots_to_sync_;
-  uint64_t            root_mask_ = 0;
+  uint64_t            root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
 
   TrimCacheCallback   trim_cache_callback_;

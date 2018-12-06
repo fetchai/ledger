@@ -271,13 +271,13 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bits The number of bits of rid we want to match against
+   * @param: bit_count The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
   {
-    auto it = store_.GetSubtree(rid, bits);
+    auto it = store_.GetSubtree(rid, bit_count);
 
     return Iterator(it);
   }
