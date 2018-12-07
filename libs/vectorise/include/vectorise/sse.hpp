@@ -236,6 +236,70 @@ private:
   mm_register_type data_;
 };
 
+
+template <>
+class VectorRegister<int, 128>
+{
+ public:
+  using type             = int;
+  using mm_register_type = __m128i;
+
+  enum
+  {
+    E_VECTOR_SIZE   = 128,
+    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
+  };
+
+  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+                "type cannot be contained in the given register size.");
+
+  VectorRegister()
+  {}
+  VectorRegister(type const *d)
+  {
+    data_ = _mm_load_si128((__m128i *)d);
+  }
+  VectorRegister(mm_register_type const &d)
+      : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+      : data_(d)
+  {}
+//  VectorRegister(type const &c)
+//  {
+//    data_ = _mm_load_pd1(&c);
+//  }
+
+  explicit operator mm_register_type()
+  {
+    return data_;
+  }
+
+  void Store(type *ptr) const
+  {
+    _mm_store_si128((__m128i *)ptr, data_);
+  }
+  void Stream(type *ptr) const
+  {
+    _mm_stream_si128((__m128i *)ptr, data_);
+  }
+
+  mm_register_type const &data() const
+  {
+    return data_;
+  }
+  mm_register_type &data()
+  {
+    return data_;
+  }
+
+ private:
+  mm_register_type data_;
+};
+
+
+
 #define FETCH_ADD_OPERATOR(zero, type, fnc)                                      \
   inline VectorRegister<type, 128> operator-(VectorRegister<type, 128> const &x) \
   {                                                                              \
@@ -410,6 +474,27 @@ inline VectorRegister<float, 128> shift_elements_right(VectorRegister<float, 128
 inline float first_element(VectorRegister<float, 128> const &x)
 {
   return _mm_cvtss_f32(x.data());
+}
+
+//////////////////////////////
+/// integer sse operations ///
+//////////////////////////////
+
+inline int first_element(VectorRegister<int, 128> const &x)
+{
+  return _mm_cvtss_i32(x.data());
+}
+
+inline VectorRegister<int, 128> shift_elements_left(VectorRegister<int, 128> const &x)
+{
+  __m128i n = _mm_bslli_si128(x.data(), 4);
+  return n;
+}
+
+inline VectorRegister<int, 128> shift_elements_right(VectorRegister<int, 128> const &x)
+{
+  __m128i n = _mm_bsrli_si128(x.data(), 4);
+  return n;
 }
 
 // TODO(unknown): Rename and move

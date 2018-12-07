@@ -1058,6 +1058,46 @@ public:
     return *this;
   }
 
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapeLessArray operator-(OtherType const &other)
+  {
+    fetch::math::Subtract(*this, other, *this);
+    return *this;
+  }
+
+
+  /**
+   * * operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapeLessArray operator*(OtherType const &other)
+  {
+    fetch::math::Multiply(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * / operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapeLessArray operator/(OtherType const &other)
+  {
+    fetch::math::Divide(*this, other, *this);
+    return *this;
+  }
+
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.
    *
