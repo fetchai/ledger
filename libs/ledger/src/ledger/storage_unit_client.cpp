@@ -259,7 +259,7 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
     auto        peer    = lane.second;
     std::string name    = peer.ToString();
 
-    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, muddle_,
+    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, GetMuddleForLane(lanenum),
                                                               std::chrono::milliseconds(timeout));
     bg_work_.Add(worker);
   }

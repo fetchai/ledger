@@ -123,7 +123,7 @@ public:
     auto muddle = GetMuddleForLane(lane);
     if (!clients_[lane])
     {
-      clients_[lane] = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+      clients_[lane] = std::make_shared<Client>(muddle->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
                                                 CHANNEL_RPC);
     }
     return clients_[lane];
@@ -408,7 +408,6 @@ private:
   LaneToIdentity            lane_to_identity_map_;
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
-  MuddlePtr                 muddle_;
   Muddles muddles_;
   Clients clients_;
 };
