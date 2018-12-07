@@ -162,9 +162,9 @@ public:
 
   static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
   {
-    std::string x = "000"+std::to_string(instance_number);
-    x = x.substr(x.length()-3);
-    x = std::string(1, prefix) + x;
+    std::string x = "000" + std::to_string(instance_number);
+    x             = x.substr(x.length() - 3);
+    x             = std::string(1, prefix) + x;
     return CreateNetworkId(x.c_str());
   }
 

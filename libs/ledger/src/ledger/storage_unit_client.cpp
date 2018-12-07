@@ -259,10 +259,10 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
     auto lanenum = lane.first;
     if (lanenum > m)
     {
-          m = lanenum;
+      m = lanenum;
     }
   }
-  m += 1; // number of lanes is the number of the last lane asked for +1
+  m += 1;  // number of lanes is the number of the last lane asked for +1
 
   if (m > muddles_.size())
   {
@@ -275,8 +275,8 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
     auto        peer    = lane.second;
     std::string name    = peer.ToString();
 
-    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, GetMuddleForLane(lanenum),
-                                                              std::chrono::milliseconds(timeout));
+    auto worker = std::make_shared<MuddleLaneConnectorWorker>(
+        lanenum, name, peer, GetMuddleForLane(lanenum), std::chrono::milliseconds(timeout));
     bg_work_.Add(worker);
   }
 }
