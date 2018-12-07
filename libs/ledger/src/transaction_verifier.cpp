@@ -23,6 +23,7 @@
 #include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
+static const std::chrono::nanoseconds  TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS{10000};
 
 namespace fetch {
 namespace ledger {
@@ -79,22 +80,29 @@ void TransactionVerifier::Verifier()
 
   while (active_)
   {
-    // wait for a mutable transaction to be available
-    if (unverified_queue_.Pop(mtx, POP_TIMEOUT))
+    try
     {
-      // convert the transaction to a verified one and enqueue
-      auto const tx = chain::VerifiedTransaction::Create(mtx, &success);
+      // wait for a mutable transaction to be available
+      if (unverified_queue_.Pop(mtx, POP_TIMEOUT))
+      {
+        // convert the transaction to a verified one and enqueue
+        auto const tx = chain::VerifiedTransaction::Create(mtx, &success);
 
-      // check the status
-      if (success)
-      {
-        verified_queue_.Push(tx);
+        // check the status
+        if (success)
+        {
+          verified_queue_.Push(tx);
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, id_ + " Unable to verify transaction: ",
+                         byte_array::ToBase64(tx.digest()));
+        }
       }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME,
-                       "Unable to verify transaction: ", byte_array::ToBase64(tx.digest()));
-      }
+    }
+    catch (std::exception &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
     }
   }
 }
@@ -109,53 +117,44 @@ void TransactionVerifier::Dispatcher()
 
   while (active_)
   {
-    chain::VerifiedTransaction tx;
 
-    bool dispatch  = false;
-    bool populated = false;
-
-    // the dispatcher works in two modes
-    if (txs.empty())
+    try
     {
-      // wait for a new element to be available
-      populated = verified_queue_.Pop(tx, POP_TIMEOUT);
-    }
-    else if (txs.size() >= batch_size_)
-    {
-      // signal the dispatch
-      dispatch = true;
-    }
-    else
-    {
-      // since we know that there is at least one tx in the our local queue
-      // attempt to create batches of the transactions up.
-      populated = verified_queue_.Pop(tx, std::chrono::nanoseconds{1});
-
-      // if we do not collect any more transactions then dispatch the batch
-      dispatch = !populated;
-    }
-
-    // update our transaction list if needed
-    if (populated)
-    {
-      txs.emplace_back(std::move(tx));
-    }
-
-    // if required dispatch all the transactions
-    if (dispatch)
-    {
-      // add the transactions to the storage engine
-      if (txs.size() == 1)
+      while (txs.size() < batch_size_ && active_)
       {
+        std::chrono::nanoseconds   wait_time{1};
+        chain::VerifiedTransaction tx;
+        if (txs.empty())
+        {
+          wait_time = TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS;
+        }
+        if (verified_queue_.Pop(tx, wait_time))
+        {
+          txs.emplace_back(std::move(tx));
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      switch (txs.size())
+      {
+      case 0:
+        break;
+      case 1:
         sink_.OnTransaction(txs.front());
-      }
-      else
-      {
+        txs.clear();
+        break;
+      default:
         sink_.OnTransactions(txs);
+        txs.clear();
+        break;
       }
-
-      // clear the transaction list
-      txs.clear();
+    }
+    catch (std::exception &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
     }
   }
 }

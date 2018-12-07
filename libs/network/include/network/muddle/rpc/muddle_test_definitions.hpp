@@ -17,26 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-enum AEACommands
-{
-  GET_INFO = 1,
-  CONNECT  = 2
-};
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/uri.hpp"
 
-enum PeerToPeerCommands
-{
-  SEND_MESSAGE = 1,
-  GET_MESSAGES = 2
-};
+using Uri     = fetch::network::Uri;
+using Muddle  = fetch::muddle::Muddle;
+using Server  = fetch::muddle::rpc::Server;
+using Client  = fetch::muddle::rpc::Client;
+using Address = Muddle::Address;  // == a crypto::Identity.identifier_
 
-enum PeerToPeerFeed
-{
-  NEW_MESSAGE = 1,
-  CONNECTING  = 2
-};
+using MuddlePtr = std::shared_ptr<Muddle>;
+using ServerPtr = std::shared_ptr<Server>;
+using ClientPtr = std::shared_ptr<Client>;
 
-enum FetchProtocols
-{
-  AEA_PROTOCOL = 1,
-  PEER_TO_PEER = 2
-};
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
