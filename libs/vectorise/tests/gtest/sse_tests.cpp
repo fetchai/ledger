@@ -16,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
 #include "vectorise/register.hpp"
+#include "vectorise/sse.hpp"
 #include <iostream>
 
-#include "core/random/lfg.hpp"
+#include <gtest/gtest.h>
 
-fetch::random::LinearCongruentialGenerator lcg;
 using namespace fetch::vectorize;
 
-void Test1()
+TEST(vectorise_sse_gtest, register_test1)
 {
   alignas(16) int a[4] = {1, 2, 3, 4};
   alignas(16) int b[4] = {2, 4, 8, 16};
@@ -37,15 +36,13 @@ void Test1()
   r3 = r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  EXPECT_EQ(c[0], 1);
+  EXPECT_EQ(c[1], 6);
+  EXPECT_EQ(c[2], 21);
+  EXPECT_EQ(c[3], 60);
 }
 
-void Test2()
+TEST(vectorise_sse_gtest, register_test2)
 {
   alignas(16) float a[4] = {1, 2, 3, 4};
   alignas(16) float b[4] = {2, 4, 8, 16};
@@ -57,15 +54,13 @@ void Test2()
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  EXPECT_EQ(c[0], 5);
+  EXPECT_EQ(c[1], 22);
+  EXPECT_EQ(c[2], 69);
+  EXPECT_EQ(c[3], 188);
 }
 
-int main()
+TEST(vectorise_sse_gtest, register_test3)
 {
   alignas(16) double a[2] = {1, 2};
   alignas(16) double b[2] = {2, 4};
@@ -77,10 +72,6 @@ int main()
   r3 = cst * r3 - r1;
   r3.Store(c);
 
-  for (std::size_t i = 0; i < 2; ++i)
-  {
-    std::cout << c[i] << " ";
-  }
-
-  std::cout << std::endl;
+  EXPECT_EQ(c[0], 5.4);
+  EXPECT_EQ(c[1], 23.6);
 }
