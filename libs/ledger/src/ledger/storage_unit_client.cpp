@@ -253,6 +253,22 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
+  LaneIndex m = 0;
+  for (auto const &lane : lanes)
+  {
+    auto lanenum = lane.first;
+    if (lanenum > m)
+    {
+          m = lanenum;
+    }
+  }
+  m += 1; // number of lanes is the number of the last lane asked for +1
+
+  if (m > muddles_.size())
+  {
+    SetNumberOfLanes(m);
+  }
+
   for (auto const &lane : lanes)
   {
     auto        lanenum = lane.first;
