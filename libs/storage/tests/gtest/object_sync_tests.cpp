@@ -23,7 +23,7 @@
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/service/server.hpp"
-#include "storage/object_store.hpp"
+#include "storage/transient_object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -166,7 +166,7 @@ class TestService : public ServiceServer<TCPServer>
 {
 public:
   using ClientRegister           = ConnectionRegister<LaneConnectivityDetails>;
-  using TransactionStore         = ObjectStore<VerifiedTransaction>;
+  using TransactionStore         = TransientObjectStore<VerifiedTransaction>;
   using TxSyncProtocol           = TransactionStoreSyncProtocol;
   using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
   using Super                    = ServiceServer<TCPServer>;
