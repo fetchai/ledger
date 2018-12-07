@@ -237,69 +237,6 @@ private:
 };
 
 
-template <>
-class VectorRegister<int, 128>
-{
- public:
-  using type             = int;
-  using mm_register_type = __m128i;
-
-  enum
-  {
-    E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
-    E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
-  };
-
-  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
-                "type cannot be contained in the given register size.");
-
-  VectorRegister()
-  {}
-  VectorRegister(type const *d)
-  {
-    data_ = _mm_load_si128((__m128i *)d);
-  }
-  VectorRegister(mm_register_type const &d)
-      : data_(d)
-  {}
-  VectorRegister(mm_register_type &&d)
-      : data_(d)
-  {}
-//  VectorRegister(type const &c)
-//  {
-//    data_ = _mm_load_pd1(&c);
-//  }
-
-  explicit operator mm_register_type()
-  {
-    return data_;
-  }
-
-  void Store(type *ptr) const
-  {
-    _mm_store_si128((__m128i *)ptr, data_);
-  }
-  void Stream(type *ptr) const
-  {
-    _mm_stream_si128((__m128i *)ptr, data_);
-  }
-
-  mm_register_type const &data() const
-  {
-    return data_;
-  }
-  mm_register_type &data()
-  {
-    return data_;
-  }
-
- private:
-  mm_register_type data_;
-};
-
-
-
 #define FETCH_ADD_OPERATOR(zero, type, fnc)                                      \
   inline VectorRegister<type, 128> operator-(VectorRegister<type, 128> const &x) \
   {                                                                              \
@@ -321,7 +258,7 @@ FETCH_ADD_OPERATOR(_mm_setzero_pd, double, _mm_sub_pd)
 
 FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
 FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
-// FETCH_ADD_OPERATOR(/, int, __m128i, _mm_div_epi32);
+//FETCH_ADD_OPERATOR(/, int, __m128i,  _mm_div_epi32);
 FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32)
 
 FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
