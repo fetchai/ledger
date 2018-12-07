@@ -80,13 +80,7 @@ public:
     : port_(port)
     , lane_(lane)
   {
-    // Setting lane certificate up
-    // TODO(issue 24): Load from somewhere
-    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
-    certificate->GenerateKeys();
-
-    std::unique_ptr<crypto::Prover> certificate_;
-    certificate_.reset(certificate);
+    std::unique_ptr<crypto::Prover> certificate_ = std::make_unique<crypto::ECDSASigner>();
 
     std::string network_id = std::string("000") + std::to_string(lane_);
     network_id             = std::string("L") + network_id.substr(network_id.length() - 3);
