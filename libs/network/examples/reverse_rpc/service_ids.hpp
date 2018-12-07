@@ -16,11 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-
-// using Logger = fetch::log::Logger;
-
-void breakpoint(void)
+struct AEAToNode
 {
-  FETCH_LOG_ERROR("breakpoint", "breakpoint function");
-}
+
+  enum
+  {
+    REGISTER = 1
+  };
+};
+
+struct NodeToAEA
+{
+
+  enum
+  {
+    SEARCH = 1
+  };
+};
+
+struct FetchProtocols
+{
+
+  enum
+  {
+    AEA_TO_NODE = 1,
+    NODE_TO_AEA = 2
+  };
+};

@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/server.hpp"
-#include "service_consts.hpp"
 
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "service_ids.hpp"
 
 using Muddle = fetch::muddle::Muddle;
 using Server = fetch::muddle::rpc::Server;
@@ -84,15 +84,16 @@ private:
 };
 
 // Next we make a protocol for the implementation
-class AEAToNodeProtocol : public ClientRegister, public Protocol
+class AEAToNodeProtocol : public Protocol
 {
 public:
   AEAToNodeProtocol()
-    : ClientRegister()
-    , Protocol()
+    : Protocol()
+  {}
+
+  void Expose(ClientRegister *target)
   {
-    this->ExposeWithClientContext(AEAToNode::REGISTER, (ClientRegister *)this,
-                                  &ClientRegister::Register);
+    this->ExposeWithClientContext(AEAToNode::REGISTER, target, &ClientRegister::Register);
   }
 
 private:
@@ -102,19 +103,23 @@ private:
 class OEFService
 {
 public:
-  OEFService(Server &server)
+  OEFService(std::shared_ptr<Muddle> &muddle)
   {
-    server.Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_);
-    aea_to_node_.register_service_instance(this);
+    auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+
+    aea_to_node_protocol_.Expose(&client_register_);
+    server->Add(FetchProtocols::AEA_TO_NODE, &aea_to_node_protocol_);
+    client_register_.register_service_instance(muddle);
   }
 
   std::vector<std::string> SearchFor(std::string const &val)
   {
-    return aea_to_node_.SearchFor(val);
+    return client_register_.SearchFor(val);
   }
 
 private:
-  AEAToNodeProtocol aea_to_node_;
+  AEAToNodeProtocol aea_to_node_protocol_;
+  ClientRegister    client_register_;
 };
 
 int main()
@@ -125,9 +130,8 @@ int main()
 
   tm.Start();
   server_muddle->Start({8080});
-  auto server = std::make_shared<Server>(muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
 
-  OEFService service(*server);
+  OEFService service(server_muddle);
 
   std::string search_for;
   std::cout << "Enter a string to search the AEAs for this string" << std::endl;
@@ -141,7 +145,7 @@ int main()
       break;
     }
 
-    auto results = serv.SearchFor(search_for);
+    auto results = service.SearchFor(search_for);
     for (auto &s : results)
     {
       std::cout << " - " << s << std::endl;

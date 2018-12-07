@@ -158,7 +158,7 @@ public:
     for (auto &uri : desired_connections_)
     {
       Address address;
-      if (muddle_->GetOutgoingConnectionAddress(uri, address))
+      if (muddle_->UriToDirectAddress(uri, address))
       {
         addresses.insert(address);
       }

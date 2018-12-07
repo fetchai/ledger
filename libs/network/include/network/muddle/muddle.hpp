@@ -179,7 +179,7 @@ public:
 
   ConnectionMap GetConnections();
 
-  bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
+  bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
   PeerConnectionList &useClients();
 
@@ -199,15 +199,6 @@ public:
   {
     router_.Debug(prefix);
     clients_.Debug(prefix);
-  }
-
-  const std::string &NetworkIdStr();
-
-  bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
-                   byte_array::ToBase64(identity_.identifier()));
-    return router_.HandleToAddress(handle, identifier);
   }
 
 private:
@@ -239,7 +230,6 @@ private:
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
-  std::string          network_id_str_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
@@ -255,7 +245,6 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 inline void Muddle::AddPeer(Uri const &peer)
 {
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "    ", this);
-  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), " to ", NetworkIdStr());
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);

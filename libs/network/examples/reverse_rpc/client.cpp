@@ -21,11 +21,11 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/service/service_client.hpp"
-#include "service_consts.hpp"
 
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "service_ids.hpp"
 
 using Muddle = fetch::muddle::Muddle;
 using Server = fetch::muddle::rpc::Server;
@@ -73,16 +73,13 @@ private:
   fetch::mutex::Mutex mutex_{__LINE__, __FILE__};
 };
 
-class AEAProtocol : public AEA, public Protocol
+class AEAProtocol : public Protocol
 {
 public:
-  AEAProtocol()
-    : AEA()
-    , Protocol()
+  AEAProtocol(AEA *aea)
+    : Protocol()
   {
-    AEA *controller = (AEA *)this;
-
-    this->Expose(NodeToAEA::SEARCH, controller, &AEA::SearchFor);
+    this->Expose(NodeToAEA::SEARCH, aea, &AEA::SearchFor);
   }
 
 private:
@@ -106,23 +103,24 @@ int main(int argc, char **argv)
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   Muddle::Address target_address;
-  if (!client_muddle->GetOutgoingConnectionAddress(peer, target_address))
+  if (!client_muddle->UriToDirectAddress(peer, target_address))
   {
     std::cout << "Can't connect" << std::endl;
     exit(1);
   }
 
-  AEAProtocol aea_prot;
+  AEA         aea;
+  AEAProtocol aea_protocol(&aea);
   for (std::size_t i = 0; i < params.arg_size(); ++i)
   {
-    aea_prot.AddString(params.GetArg(i));
+    aea.AddString(params.GetArg(i));
   }
 
   tm.Start();
   client_muddle->Start({});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  server->Add(FetchProtocols::NODE_TO_AEA, &aea_prot);
+  server->Add(FetchProtocols::NODE_TO_AEA, &aea_protocol);
 
   auto p =
       client->CallSpecificAddress(target_address, FetchProtocols::AEA_TO_NODE, AEAToNode::REGISTER);

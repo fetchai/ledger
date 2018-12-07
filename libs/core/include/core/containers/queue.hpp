@@ -178,37 +178,6 @@ T Queue<T, N, P, C>::Pop()
 }
 
 /**
- * Checks if the queue is empty.
- *
- * @tparam T The type of element to be store in the queue
- * @tparam N The max size of the queue
- * @tparam P The producer index type
- * @tparam C The consumer index type
- * @return true if the queue is empty
- */
-template <typename T, std::size_t N, typename P, typename C>
-bool Queue<T, N, P, C>::empty()
-{
-  return read_count_.IsZero();
-}
-
-/**
- * Returns the number of elements available which can be read without incurring a wait.
- *
- * @tparam T The type of element to be store in the queue
- * @tparam N The max size of the queue
- * @tparam P The producer index type
- * @tparam C The consumer index type
- * @return number of elements available for immediate read.
- */
-
-template <typename T, std::size_t N, typename P, typename C>
-std::size_t Queue<T, N, P, C>::size()
-{
-  return read_count_.size();
-}
-
-/**
  * Pop an element from the queue with a specified maximum wait duration
  *
  * @tparam T The type of element to be store in the queue

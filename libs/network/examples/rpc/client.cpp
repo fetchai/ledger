@@ -53,7 +53,7 @@ int main()
                                          SERVICE_TEST, CHANNEL_RPC);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   Muddle::Address target_address;
-  if (!client_muddle->GetOutgoingConnectionAddress(peer, target_address))
+  if (!client_muddle->UriToDirectAddress(peer, target_address))
   {
     std::cout << "Can't connect" << std::endl;
     exit(1);

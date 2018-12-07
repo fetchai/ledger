@@ -85,7 +85,7 @@ public:
         FETCH_LOG_WARN(LOGGING_NAME, "No peer, exiting..!");
         return tc;
       }
-      if (tc->muddle_->GetOutgoingConnectionAddress(uri, tc->address_))
+      if (tc->muddle_->UriToDirectAddress(uri, tc->address_))
       {
         return tc;
       }

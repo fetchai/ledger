@@ -55,7 +55,7 @@ public:
         tc.reset();
         return tc;
       }
-      if (tc->muddle->GetOutgoingConnectionAddress(uri, tc->address))
+      if (tc->muddle->UriToDirectAddress(uri, tc->address))
       {
         return tc;
       }

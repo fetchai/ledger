@@ -43,8 +43,6 @@ public:
   template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
 
-  bool IsZero();
-
   std::size_t size();
 
   // Operators
@@ -66,18 +64,6 @@ inline Tickets::~Tickets()
 {
   shutdown_ = true;
   cv_.notify_all();
-}
-
-inline bool Tickets::IsZero()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  return count_ == 0;
-}
-
-inline std::size_t Tickets::size()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  return count_;
 }
 
 /**

@@ -40,7 +40,7 @@ void LaneController::WorkCycle()
   for (auto &uri : create)
   {
     Address target_address;
-    if (muddle_->GetOutgoingConnectionAddress(uri, target_address))
+    if (muddle_->UriToDirectAddress(uri, target_address))
     {
       peer_connections_[uri] = target_address;
     }

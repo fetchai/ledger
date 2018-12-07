@@ -120,7 +120,7 @@ void TransactionVerifier::Dispatcher()
 
     try
     {
-      while (txs.size() < batch_size_)
+      while (txs.size() < batch_size_ && active_)
       {
         std::chrono::nanoseconds   wait_time{1};
         chain::VerifiedTransaction tx;
@@ -132,11 +132,7 @@ void TransactionVerifier::Dispatcher()
         {
           txs.emplace_back(std::move(tx));
         }
-        if (!active_)
-        {
-          break;
-        }
-        if (verified_queue_.empty())
+        else
         {
           break;
         }

@@ -203,7 +203,7 @@ public:
     // TX Sync service
     workthread_ =
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
-    workthread_->ChangeWaitTime(SYNC_PERIOD_MS);
+    workthread_->ChangeWaitTime(std::chrono::milliseconds{SYNC_PERIOD_MS});
   }
 
   void Stop()

@@ -47,37 +47,6 @@ public:
 
   /// External controls
   /// @{
-  crypto::Identity Hello(crypto::Identity const &iden)
-  {
-    /*
-    auto details = register_.GetDetails(client);
-
-    if (!details)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find client in client register! ", __FILE__, " ",
-                      __LINE__);
-      assert(details);
-    }
-    else
-    // TODO(issue 24): Verify identity if already exists
-    {
-      std::lock_guard<mutex::Mutex> lock(*details);
-      details->identity = iden;
-      details->is_peer  = true;
-    }
-    */
-    std::lock_guard<mutex::Mutex> lock(identity_mutex_);
-    return identity_;
-  }
-
-  void AuthenticateController()
-  {
-    //    auto details = register_.GetDetails(client);
-    //    {
-    //      std::lock_guard<mutex_type> lock(*details);
-    //      details->is_controller = true;
-    //    }
-  }
 
   crypto::Identity Identity()
   {
@@ -109,18 +78,10 @@ public:
     total_lanes_ = t;
   }
   /// @}
-  using callable_sign_message_type =
-      std::function<byte_array::ConstByteArray(byte_array::ConstByteArray const &)>;
-
-  void OnSignMessage(callable_sign_message_type const &fnc)
-  {
-    on_sign_message_ = fnc;
-  }
 
 private:
-  mutex::Mutex               identity_mutex_{__LINE__, __FILE__};
-  crypto::Identity           identity_;
-  callable_sign_message_type on_sign_message_;
+  mutex::Mutex     identity_mutex_{__LINE__, __FILE__};
+  crypto::Identity identity_;
 
   network_manager_type manager_;
 

@@ -102,7 +102,7 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
-  bool HandleToAddress(const Handle &handle, Address &address) const;
+  bool HandleToDirectAddress(const Handle &handle, Address &address) const;
 
   void Cleanup();
   void Debug(std::string const &prefix);

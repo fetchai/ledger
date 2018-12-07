@@ -360,7 +360,7 @@ Router::RoutingTable Router::GetRoutingTable() const
  *
  * @return The address corresponding to a handle in the table.
  */
-bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
+bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address &address) const
 {
   FETCH_LOCK(routing_table_lock_);
   auto address_it = direct_address_map_.find(handle);
@@ -368,18 +368,6 @@ bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &addr
   {
     address = address_it->second;
     return true;
-  }
-  for (const auto &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
-                    static_cast<std::string>(ToBase64(output)));
-    if (routing.second.handle == handle)
-    {
-      address = ToConstByteArray(routing.first);
-      return true;
-    }
   }
   return false;
 }

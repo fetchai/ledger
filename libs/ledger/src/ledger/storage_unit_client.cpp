@@ -133,7 +133,7 @@ public:
     }
     case State::CONNECTING:
     {
-      bool connected = muddle_->GetOutgoingConnectionAddress(peer_, target_address);
+      bool connected = muddle_->UriToDirectAddress(peer_, target_address);
       if (!connected)
       {
         return false;
