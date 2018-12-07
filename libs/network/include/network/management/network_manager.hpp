@@ -122,7 +122,7 @@ public:
 
   bool is_valid()
   {
-    return (!is_copy_) || bool(weak_pointer_.lock());
+    return (!is_copy_) || !weak_pointer_.expired();
   }
 
   bool is_primary()

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/uri.hpp"
 
@@ -35,7 +36,7 @@ class Router;
  * a connection failure occurs, the peer connection list will be notified and it will apply an
  * exponential backoff strategy to retrying connections.
  */
-class PeerConnectionList
+class PeerConnectionList : public generics::Blackset<network::Uri>
 {
 public:
   using Uri           = network::Uri;
@@ -85,12 +86,6 @@ public:
   std::size_t GetNumPeers() const;
   /// @}
 
-  /// @name Blacklisted connections
-  /// @{
-  void Blacklist(Uri const &peer);
-  bool IsBlacklisted(Uri const &peer) const;
-  /// @}
-
   /// @name Peer based connection information
   /// @{
   bool AddConnection(Uri const &peer, ConnectionPtr const &conn);
@@ -107,11 +102,10 @@ public:
 
   UriMap GetUriMap() const;
 
-  PeerSet GetBlacklistedPeers() const;
-
 private:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
+  using BlackSet  = std::unordered_set<Uri>;
 
   struct PeerMetadata
   {
@@ -134,10 +128,8 @@ private:
   PeerSet       persistent_peers_;
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;
-  PeerSet       blacklisted_;
 
   bool ReadyForRetry(const PeerMetadata &metadata) const;
-  bool Blacklisted(Uri const &peer) const;
 };
 
 }  // namespace muddle

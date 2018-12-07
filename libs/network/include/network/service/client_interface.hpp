@@ -106,6 +106,8 @@ public:
 
 protected:
   virtual bool DeliverRequest(network::message_type const &request) = 0;
+  virtual void Disconnect()
+  {}
 
   bool ProcessServerMessage(network::message_type const &msg);
   void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);
@@ -117,31 +119,26 @@ private:
   class Subscription
   {
   public:
-    Subscription()
-    {
-      protocol = 0;
-      feed     = 0;
-      callback = nullptr;
-    }
-    Subscription(protocol_handler_type protocol, feed_handler_type feed, AbstractCallable *callback)
-    {
-      this->protocol = protocol;
-      this->feed     = feed;
-      this->callback = callback;
-    }
+    constexpr Subscription() = default;
+    constexpr Subscription(protocol_handler_type protocol, feed_handler_type feed,
+                           AbstractCallable *callback) noexcept
+      : protocol{protocol}
+      , feed{feed}
+      , callback{callback}
+    {}
 
-    Subscription(const Subscription &) = default;
-    Subscription(Subscription &&)      = default;
-    Subscription &operator=(const Subscription &) = default;
-    Subscription &operator=(Subscription &&) = default;
+    constexpr Subscription(const Subscription &) = default;
+    constexpr Subscription(Subscription &&)      = default;
+    constexpr Subscription &operator=(const Subscription &) = default;
+    constexpr Subscription &operator=(Subscription &&) = default;
 
-    std::string summarise()
+    std::string summarise() const
     {
       char  buffer[1000];
       char *p = buffer;
       p += sprintf(p, " Subscription protocol=%d handler=%d callback=%p ", int(protocol), int(feed),
                    ((void *)(callback)));
-      return std::string(buffer);
+      return std::string(buffer, p - buffer);
     }
 
     protocol_handler_type protocol = 0;

@@ -202,7 +202,8 @@ std::string DescribePacket(Packet const &packet)
  * @param reg The connection register
  */
 Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
-  : address_(std::move(address))
+  : Blackset(routing_table_lock_)
+  , address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
@@ -445,6 +446,10 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     FETCH_LOCK(routing_table_lock_);
 
+    if (Blacklisted(handle))
+    {
+      return false;
+    }
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
 
@@ -660,6 +665,11 @@ void Router::RoutePacket(PacketPtr packet, bool external)
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
+
+  if (IsBlacklisted(handle))
+  {
+    return;
+  }
 
   if (SERVICE_MUDDLE == packet->GetService())
   {

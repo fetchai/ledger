@@ -203,6 +203,11 @@ protected:
     return false;
   }
 
+  void Disconnect() override
+  {
+    Close();
+  }
+
 private:
   std::weak_ptr<network::AbstractConnection> connection_;
 

@@ -79,25 +79,21 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
-    if (!ptr)
+    if (ptr)
     {
-      return;
+      ptr->Leave(this->handle());
     }
-
-    ptr->Leave(this->handle());
   }
 
   void Start()
   {
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
-    if (!ptr)
+    if (ptr)
     {
-      return;
+      ptr->Join(shared_from_this());
+      ReadHeader();
     }
-
-    ptr->Join(shared_from_this());
-    ReadHeader();
   }
 
   void Send(message_type const &msg) override
@@ -114,7 +110,7 @@ public:
     write_queue_.push_back(msg);
     write_mutex_.unlock();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sendin g Message");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending Message");
 
     if (!write_in_progress)
     {
@@ -210,11 +206,10 @@ private:
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Magic incorrect - closing connection.");
       auto ptr = manager_.lock();
-      if (!ptr)
+      if (ptr)
       {
-        return;
+        ptr->Leave(handle());
       }
-      ptr->Leave(this->handle());
       return;
     }
 

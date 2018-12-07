@@ -54,7 +54,7 @@ public:
    * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
-  ByteArrayBufferEx(byte_array::ByteArray const &s)
+  ByteArrayBufferEx(byte_array_type const &s)
     : data_{s.Copy()}
   {}
 
@@ -194,7 +194,7 @@ public:
   {
     return int64_t(data_.size()) - int64_t(pos_);
   }
-  byte_array::ByteArray const &data() const
+  byte_array_type const &data() const
   {
     return data_;
   }

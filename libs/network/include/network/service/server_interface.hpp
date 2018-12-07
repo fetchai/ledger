@@ -67,8 +67,17 @@ public:
 #endif
   }
 
+  virtual bool Disconnect(connection_handle_type)
+  {
+    return false;
+  }
+
 protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
+  bool         DeliverResponse(connection_handle_type connection, serializer_type const &message)
+  {
+    return DeliverResponse(connection, message.data());
+  }
 
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
   {

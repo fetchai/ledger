@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
+#include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
@@ -27,6 +28,7 @@
 
 #include <chrono>
 #include <memory>
+#include <unordered_set>
 
 namespace fetch {
 namespace muddle {
@@ -41,7 +43,8 @@ class MuddleRegister;
  * The router if the fundamental object of the muddle system an routes external and internal packets
  * to either a subscription or to another node on the network
  */
-class Router : public MuddleEndpoint
+class Router : public MuddleEndpoint,
+               public generics::Blackset<network::AbstractConnection::connection_handle_type>
 {
 public:
   using Address       = Packet::Address;  // == a crypto::Identity.identifier_
@@ -67,11 +70,9 @@ public:
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
-  // Start / Stop
   void Start();
   void Stop();
 
-  // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
 
@@ -108,6 +109,8 @@ private:
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
+  using HandleSet  = std::unordered_set<Handle>;
+  using Blackset   = generics::Blackset<Handle>;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -130,10 +133,10 @@ private:
   SubscriptionRegistrar registrar_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
-  RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
-                                 ///< routing_table_lock_)
-  HandleMap
-      routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
+  ///< Addresses to handles map (protected by routing_table_lock_)
+  RoutingTable routing_table_;
+  ///< Handles to addresses map (protected by routing_table_lock_)
+  HandleMap routing_table_handles_;
 
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
   EchoCache     echo_cache_;

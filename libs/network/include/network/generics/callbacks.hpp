@@ -46,27 +46,36 @@ public:
   }
 
   template <class... U>
-  void operator()(U &&... u)
+  void operator()(U &&... u) const
   {
-    for (auto func : callbacks_)
+    if (!callbacks_.empty())
     {
-      func(std::forward<U>(u)...);
+      using Itr = typename Funcs::const_iterator;
+      const Itr last{callbacks_.end() - 1};
+      for (Itr i{callbacks_.begin()}; i != last; ++i)
+      {
+        (*i)(u...);
+      }
+      callbacks_.back()(std::forward<U>(u)...);
     }
   }
 
-  void clear(void)
+  void clear()
   {
     callbacks_.clear();
   }
 
-  explicit Callbacks()
+  template <class... Args>
+  explicit Callbacks(Args &&... args)
+    : callbacks_(std::forward<Args>(args)...)
   {}
 
   virtual ~Callbacks()
   {}
 
 private:
-  std::vector<FUNC> callbacks_;
+  using Funcs = std::vector<FUNC>;
+  Funcs callbacks_;
 };
 
 }  // namespace generics

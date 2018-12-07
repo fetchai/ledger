@@ -209,6 +209,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   {
     return;
   }
+
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -218,6 +219,11 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto strong_conn = conn.lock();
   assert(strong_conn);
   auto conn_handle = strong_conn->handle();
+
+  if (router_.IsBlacklisted(conn_handle))
+  {
+    return;
+  }
 
   ConnectionRegPtr reg = std::static_pointer_cast<network::AbstractConnectionRegister>(register_);
 

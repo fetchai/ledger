@@ -191,8 +191,9 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
             cancelled_subscriptions_.end())
         {
-          FETCH_LOG_ERROR(LOGGING_NAME,
-                          "PubSub: We've received a subscription ID we never allocated: ", int(sub));
+          FETCH_LOG_ERROR(
+              LOGGING_NAME,
+              "PubSub: We've received a subscription ID we never allocated: ", int(sub));
           return false;
         }
         else
@@ -234,9 +235,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
     break;
   }
   case SERVICE_DISCONNECT:
-  {
+    Disconnect();
     break;
-  }
   default:
   {
     PromiseCounter id;

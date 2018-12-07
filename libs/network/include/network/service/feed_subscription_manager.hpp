@@ -33,6 +33,7 @@ class FeedSubscriptionManager;
 #include "network/service/types.hpp"
 //#include "network/service/server_interface.hpp"
 
+#include <algorithm>
 #include <condition_variable>
 #include <iterator>
 #include <vector>
@@ -113,9 +114,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    subscribe_mutex_.lock();
+    FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
-    subscribe_mutex_.unlock();
   }
 
   /* Unsubscribe client to feed.
@@ -129,22 +129,11 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    subscribe_mutex_.lock();
-    std::vector<std::size_t> ids;
-    for (std::size_t i = 0; i < subscribers_.size(); ++i)
-    {
-      if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
-      {
-        ids.push_back(i);
-      }
-    }
-
-    std::reverse(ids.begin(), ids.end());
-    for (auto &i : ids)
-    {
-      subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
-    }
-    subscribe_mutex_.unlock();
+    FETCH_LOCK(subscribe_mutex_);
+    subscribers_.erase(
+        std::remove_if(subscribers_.begin(), subscribers_.end(),
+                       [=](auto const &sub) { return sub.client == client && sub.id == id; }),
+        subscribers_.end());
   }
 
   /* Returns the feed type.

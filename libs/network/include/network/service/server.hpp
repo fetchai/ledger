@@ -49,7 +49,7 @@ public:
   using self_type  = ServiceServer<T>;
 
   using network_manager_type = typename super_type::network_manager_type;
-  using handle_type          = typename T::connection_handle_type;
+  using handle_type          = typename super_type::connection_handle_type;
 
   static constexpr char const *LOGGING_NAME = "ServiceServer";
 
@@ -132,6 +132,12 @@ public:
     }
 
     return *client_rpcs_[i];
+  }
+
+  bool Disconnect(handle_type client) override
+  {
+    LOG_STACK_TRACE_POINT;
+    return ServiceServerInterface::DeliverResponse(client, serializer_type() << SERVICE_DISCONNECT);
   }
 
 protected:
