@@ -245,7 +245,7 @@ private:
 
   uint32_t lane_;
 
-  static constexpr std::chrono::milliseconds SYNC_PERIOD_MS{500};
+  static constexpr unsigned int SYNC_PERIOD_MS = 500;
 };
 
 }  // namespace ledger

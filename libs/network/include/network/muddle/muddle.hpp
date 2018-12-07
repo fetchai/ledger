@@ -160,6 +160,14 @@ public:
            (uint32_t(p[3]));
   }
 
+  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
+  {
+    std::string x = "000"+std::to_string(instance_number);
+    x = x.substr(x.length()-3);
+    x = std::string(1, prefix) + x;
+    return CreateNetworkId(x.c_str());
+  }
+
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;

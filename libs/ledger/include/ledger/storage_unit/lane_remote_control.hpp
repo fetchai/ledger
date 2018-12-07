@@ -53,7 +53,7 @@ public:
 
   void Shutdown(LaneIndex lane) override
   {
-    auto    ptr = GetClient();
+    auto    ptr = GetClientForLane(lane);
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
@@ -74,7 +74,7 @@ public:
 
   uint32_t GetLaneNumber(LaneIndex lane) override
   {
-    auto    ptr = GetClient();
+    auto    ptr = GetClientForLane(lane);
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
@@ -97,7 +97,7 @@ public:
 
   int IncomingPeers(LaneIndex lane) override
   {
-    auto    ptr = GetClient();
+    auto    ptr = GetClientForLane(lane);
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
@@ -121,7 +121,7 @@ public:
 
   int OutgoingPeers(LaneIndex lane) override
   {
-    auto    ptr = GetClient();
+    auto    ptr = GetClientForLane(lane);
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
@@ -145,7 +145,7 @@ public:
 
   virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) override
   {
-    auto    ptr = GetClient();
+    auto    ptr = GetClientForLane(lane);
     Address address;
     if (ptr && GetAddressForLane(lane, address))
     {
@@ -171,9 +171,9 @@ public:
   }
 
 private:
-  ClientPtr GetClient() const
+  ClientPtr GetClientForLane(LaneIndex lane) const
   {
-    return storage_unit_->GetClient();
+    return storage_unit_->GetClientForLane(lane);
   }
   bool GetAddressForLane(LaneIndex lane, Address &address) const
   {
