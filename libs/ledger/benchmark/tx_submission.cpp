@@ -192,7 +192,10 @@ void TransientStoreExpectedOperation(benchmark::State &state)
       tx_store.Set(ResourceID{tx.digest()}, tx);
 
       // also trigger the read from the store and the subsequent right schedule
-      benchmark::DoNotOptimize(tx_store.Get(rid, dummy));
+      tx_store.Get(rid, dummy);
+      tx_store.Confirm(rid);
+
+      benchmark::DoNotOptimize(dummy);
     }
   }
 }

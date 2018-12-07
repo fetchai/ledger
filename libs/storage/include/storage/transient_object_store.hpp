@@ -162,20 +162,7 @@ void TransientObjectStore<O>::Load(std::string const &doc_file, std::string cons
 template <typename O>
 bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 {
-  bool success = false;
-
-  if (GetFromCache(rid, object))
-  {
-    AddToWriteQueue(rid);
-
-    success = true;
-  }
-  else
-  {
-    success = archive_.Get(rid, object);
-  }
-
-  return success;
+  return GetFromCache(rid, object) || archive_.Get(rid, object);
 }
 
 /**

@@ -98,19 +98,6 @@ private:
     {
       Set(element.key, element.value);
     }
-
-#if 0
-    if (on_set_)
-    {
-    }
-
-    obj_store_->WithLock([this, &elements]() {
-      for (Element const &element : elements)
-      {
-        obj_store_->LocklessSet(element.key, element.value);
-      }
-    });
-#endif
   }
 
   T Get(ResourceID const &rid)
@@ -121,6 +108,9 @@ private:
     {
       throw std::runtime_error("Unable to lookup element in from storage unit");
     }
+
+    // once we have retrieved a transaction from the core it is important that we persist it to disk
+    obj_store_->Confirm(rid);
 
     return ret;
   }
