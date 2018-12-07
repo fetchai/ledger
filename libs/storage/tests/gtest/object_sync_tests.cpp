@@ -77,7 +77,7 @@ public:
     tc->muddle_->AddPeer(uri);
 
     int counter = 40;
-    while (1)
+    for (;;)
     {
       if (!counter--)
       {
@@ -116,8 +116,7 @@ public:
     return prom;
   }
 
-  MuddleTestClient()
-  {}
+  MuddleTestClient() = default;
 
   ~MuddleTestClient()
   {

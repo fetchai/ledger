@@ -363,8 +363,8 @@ Router::RoutingTable Router::GetRoutingTable() const
 bool Router::HandleToAddress(const Router::Handle &handle, Router::Address &address) const
 {
   FETCH_LOCK(routing_table_lock_);
-  auto address_it = routing_table_handles_direct_addr_.find(handle);
-  if (address_it != routing_table_handles_direct_addr_.end())
+  auto address_it = direct_address_map_.find(handle);
+  if (address_it != direct_address_map_.end())
   {
     address = address_it->second;
     return true;
@@ -487,7 +487,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
     if (direct)
     {
-      routing_table_handles_direct_addr_[handle] = ToConstByteArray(address);
+      direct_address_map_[handle] = ToConstByteArray(address);
     }
 
     // update the routing table if required
@@ -816,15 +816,15 @@ void Router::Debug(std::string const &prefix)
 {
   FETCH_LOCK(routing_table_lock_);
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_handles_direct_addr_: --------------------------------------");
-  for (const auto &routing : routing_table_handles_direct_addr_)
+                 "direct_address_map_: --------------------------------------");
+  for (const auto &routing : direct_address_map_)
   {
     auto output = ToBase64(routing.second);
     FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
                    " -> handle=", std::to_string(routing.first), " direct=by definition");
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_handles_direct_addr_: --------------------------------------");
+                 "direct_address_map_: --------------------------------------");
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   for (const auto &routing : routing_table_)

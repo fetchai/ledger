@@ -58,6 +58,8 @@ namespace {
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
+static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
+
 bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
@@ -262,7 +264,7 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
 
   std::size_t const count = storage_->AddLaneConnectionsWaiting(
-      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(10000));
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), LANE_CONNECTION_TIME);
 
   // check to see if the connections where successful
   if (count != num_lanes_)

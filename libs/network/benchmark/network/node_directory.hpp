@@ -46,16 +46,14 @@ class NodeDirectory
 public:
   static constexpr char const *LOGGING_NAME = "NodeDirectory";
 
-  NodeDirectory()
-  {}
+  NodeDirectory() = default;
 
   NodeDirectory(NodeDirectory &rhs)  = delete;
   NodeDirectory(NodeDirectory &&rhs) = delete;
   NodeDirectory operator=(NodeDirectory &rhs) = delete;
   NodeDirectory operator=(NodeDirectory &&rhs) = delete;
 
-  ~NodeDirectory()
-  {}
+  ~NodeDirectory() = default;
 
   // Only call this during node setup (not thread safe)
   void AddEndpoint(const Endpoint &endpoint)

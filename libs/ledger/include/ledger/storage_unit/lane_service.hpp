@@ -203,7 +203,7 @@ public:
     // TX Sync service
     workthread_ =
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
-    workthread_->ChangeWaitTime(std::chrono::milliseconds(500));
+    workthread_->ChangeWaitTime(SYNC_PERIOD_MS);
   }
 
   void Stop()
@@ -244,6 +244,8 @@ private:
   BackgroundedWorkThreadPtr workthread_;
 
   uint32_t lane_;
+
+  static constexpr std::chrono::milliseconds SYNC_PERIOD_MS{500};
 };
 
 }  // namespace ledger

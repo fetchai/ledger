@@ -113,7 +113,7 @@ public:
    * @param: object The object
    *
    */
-  bool Set(ResourceID const &rid, type const &object)
+  void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     return LocklessSet(rid, object);
@@ -181,7 +181,7 @@ public:
    * @param: object The object
    *
    */
-  bool LocklessSet(ResourceID const &rid, type const &object)
+  void LocklessSet(ResourceID const &rid, type const &object)
   {
     serializer_type ser;
     ser << object;
@@ -191,7 +191,6 @@ public:
     {
       set_callback_(object);
     }
-    return true;
   }
 
   std::size_t size() const

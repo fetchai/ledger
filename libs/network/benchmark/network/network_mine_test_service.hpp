@@ -64,13 +64,11 @@ public:
 
   void Start()
   {
-    // TCPServer::Start();
     HTTPServer::Start(http_port_);
   }
 
   void Stop()
   {
-    // TCPServer::Stop();
     HTTPServer::Stop();
   }
 

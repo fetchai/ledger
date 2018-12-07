@@ -72,7 +72,7 @@ protected:
   virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
 
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
-                           CallContext const *context = 0)
+                           CallContext const *context = nullptr)
   {
     LOG_STACK_TRACE_POINT;
 

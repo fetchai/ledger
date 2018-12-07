@@ -21,7 +21,7 @@ target_link_libraries(fetch-network PUBLIC fetch-core fetch-crypto fetch-math ve
 add_test_target()
 
 # Example targets
-#add_subdirectory(examples)
+add_subdirectory(examples)
 
 # Benchmark targets
 add_subdirectory(benchmark)

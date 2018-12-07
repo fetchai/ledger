@@ -19,14 +19,14 @@
 
 namespace fetch {
 namespace service {
-  class CallContext;
+class CallContext;
 }
-}
+}  // namespace fetch
 
 namespace fetch {
 namespace serializers {
 
-  using OBJ = fetch::service::CallContext;
+using OBJ = fetch::service::CallContext;
 
 template <typename T>
 inline void Deserialize(T &serializer, OBJ const *(&ptr))

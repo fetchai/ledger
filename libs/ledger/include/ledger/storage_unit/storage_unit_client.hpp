@@ -105,14 +105,14 @@ public:
 
 public:
   size_t AddLaneConnectionsWaiting(
-      const std::map<LaneIndex, Uri> & lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000));
+      std::map<LaneIndex, Uri> const & lanes,
+      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(1000));
 
   void AddLaneConnections(
-      const std::map<LaneIndex, Uri> & lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(10000));
+      std::map<LaneIndex, Uri> const & lanes,
+      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(10000));
 
-  bool GetAddressForLane(LaneIndex lane, Address &address) const
+  void GetAddressForLane(LaneIndex lane, Address &address) const
   {
     FETCH_LOCK(mutex_);
 
@@ -120,9 +120,9 @@ public:
     if (iter != lane_to_identity_map_.end())
     {
       address = iter->second;
-      return true;
+      return;
     }
-    return false;
+    throw std::runtime_error("Could not get address for lane " + std::to_string(lane));
   }
 
   ClientPtr GetClient()
@@ -138,10 +138,7 @@ public:
     LaneIndex lane = res.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
-    {
-      TODO_FAIL("Could not get address for lane ", lane);
-    }
+    GetAddressForLane(lane, address);
     auto promise = client_->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET, res, tx);
     FETCH_LOG_PROMISE();
     promise->Wait();
@@ -171,10 +168,7 @@ public:
       for (auto const &list : transaction_lists)
       {
         Address address;
-        if (!GetAddressForLane(lane, address))
-        {
-          TODO_FAIL("Could not get address for lane ", lane);
-        }
+        GetAddressForLane(lane, address);
         if (!list.empty())
         {
           promises.emplace_back(
@@ -199,9 +193,14 @@ public:
     auto      res  = fetch::storage::ResourceID(digest);
     LaneIndex lane = res.lane(log2_lanes_);
     Address   address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
+      return false;
     }
 
     auto promise = client_->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
@@ -215,9 +214,16 @@ public:
     LaneIndex lane = key.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
+      Document doc;
+      doc.failed = true;
+      return doc;
     }
 
     auto promise = client_->CallSpecificAddress(
@@ -232,9 +238,16 @@ public:
     LaneIndex lane = key.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
+      Document doc;
+      doc.failed = true;
+      return doc;
     }
 
     auto promise = client_->CallSpecificAddress(
@@ -249,9 +262,14 @@ public:
     LaneIndex lane = key.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Lock, because: ", e.what());
+      return false;
     }
 
     auto promise = client_->CallSpecificAddress(
@@ -266,9 +284,14 @@ public:
     LaneIndex lane = key.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Unlock, because: ", e.what());
+      return false;
     }
 
     auto promise = client_->CallSpecificAddress(
@@ -283,9 +306,14 @@ public:
     LaneIndex lane = key.lane(log2_lanes_);
 
     Address address;
-    if (!GetAddressForLane(lane, address))
+    try
     {
-      TODO_FAIL("Could not get address for lane ", lane);
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
+      return;
     }
 
     auto promise = client_->CallSpecificAddress(
@@ -336,9 +364,15 @@ public:
   {
     // TODO(issue 33): Which lane?
     Address address;
-    if (!GetAddressForLane(0, address))
+    try
     {
-      TODO_FAIL("Lanes array empty when trying to get a hash from L0");
+      GetAddressForLane(0, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Lanes array empty when trying to get a hash from L0: ", e.what());
+      throw e;
     }
     return client_
         ->CallSpecificAddress(address, RPC_STATE,

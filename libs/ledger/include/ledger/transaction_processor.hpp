@@ -35,6 +35,8 @@ public:
 
   using TransactionList = std::vector<chain::Transaction>;
 
+  static constexpr char const *LOGGING_NAME = "TransactionProcessor";
+
   // Construction / Destruction
   TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner,
                        std::size_t num_threads);

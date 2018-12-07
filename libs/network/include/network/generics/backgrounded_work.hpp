@@ -110,10 +110,11 @@ public:
     cv_.wait_for(lock, std::chrono::milliseconds(milliseconds));
   }
 
-  void Wait(std::chrono::milliseconds milliseconds)
+  template <typename Rep, typename Per>
+  void Wait(std::chrono::duration<Rep, Per> const &timeout)
   {
     Lock lock(mutex_);
-    cv_.wait_for(lock, milliseconds);
+    cv_.wait_for(lock, timeout);
   }
 
   void Wake()

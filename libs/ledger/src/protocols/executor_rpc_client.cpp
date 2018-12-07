@@ -153,9 +153,6 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
 ExecutorInterface::Status ExecutorRpcClient::Execute(TxDigest const &hash, std::size_t slice,
                                                      LaneSet const &lanes)
 {
-  //  auto result = service_->Call(RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE, hash, slice, lanes);
-  //  return result->As<Status>();
-
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTOR, ExecutorRpcProtocol::EXECUTE,
                                              hash, slice, lanes);
   return result->As<ExecutorInterface::Status>();

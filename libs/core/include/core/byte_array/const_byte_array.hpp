@@ -117,7 +117,6 @@ public:
   void ReadBytes(container_type *const dest, std::size_t const &dest_size,
                  std::size_t const &src_offset = 0) const
   {
-    // assert(src_offset + dest_size <= size());
     if (src_offset + dest_size > size())
     {
       FETCH_LOG_WARN("ConstByteArray",

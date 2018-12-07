@@ -23,6 +23,7 @@
 #include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
+static const std::chrono::nanoseconds  TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS{10000};
 
 namespace fetch {
 namespace ledger {
@@ -123,9 +124,9 @@ void TransactionVerifier::Dispatcher()
       {
         std::chrono::nanoseconds   wait_time{1};
         chain::VerifiedTransaction tx;
-        if (txs.size() == 0)
+        if (txs.empty())
         {
-          wait_time = std::chrono::nanoseconds{10000};
+          wait_time = TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS;
         }
         if (verified_queue_.Pop(tx, wait_time))
         {

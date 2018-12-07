@@ -177,7 +177,15 @@ private:
   }
   bool GetAddressForLane(LaneIndex lane, Address &address) const
   {
-    return storage_unit_->GetAddressForLane(lane, address);
+    try
+    {
+      storage_unit_->GetAddressForLane(lane, address);
+    }
+    catch (...)
+    {
+      return false;
+    }
+    return true;
   }
 
   StorageUnitClientPtr storage_unit_;

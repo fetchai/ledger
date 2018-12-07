@@ -107,7 +107,7 @@ public:
   void Cleanup();
   void Debug(std::string const &prefix);
 
-  virtual NetworkId network_id() override
+  NetworkId network_id() override
   {
     return network_id_;
   }
@@ -140,7 +140,7 @@ private:
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
-  HandleDirectAddrMap   routing_table_handles_direct_addr_;
+  HandleDirectAddrMap   direct_address_map_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
