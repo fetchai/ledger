@@ -136,7 +136,43 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     }
   }
 
+  if (!success)
+  {
+    Debug("While dispatching");
+  }
+
   return success;
+}
+
+void SubscriptionRegistrar::Debug(std::string const &prefix)
+{
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar: --------------------------------------");
+
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(), " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(),
+                 " entries.");
+
+  for (const auto &mapping : address_dispatch_map_)
+  {
+    auto numb = std::get<0>(mapping.first);
+    auto addr = std::get<1>(mapping.first);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "SubscriptionRegistrar:address_dispatch_map_ Addr=", ToBase64(addr),
+                   "  Service=", ((numb >> 16) & 0xFFFF));
+  }
+  for (const auto &mapping : dispatch_map_)
+  {
+    auto numb = mapping.first;
+    auto serv = (numb >> 16) & 0xFFFF;
+    auto chan = numb & 0xFFFF;
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
+                   "  Chan=", chan);
+  }
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 ":ubscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle

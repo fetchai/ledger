@@ -80,19 +80,11 @@ protected:
         PORT, *network_manager_, "exec_mgr_rpc_tests_", config.executors, storage_,
         [this]() { return CreateExecutor(); });
 
-    service_->Start();
+    manager_ = std::make_unique<ExecutionManagerRpcClient>(*network_manager_);
 
+    service_->Start();
     WaitForLaneServersToStart();
 
-    // client
-    manager_ = std::make_unique<ExecutionManagerRpcClient>("127.0.0.1", PORT, *network_manager_);
-
-    // wait for the client to connect before proceeding
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connecting client to service...");
-    while (!manager_->is_alive())
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds{300});
-    }
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connecting client to service...complete");
   }
 

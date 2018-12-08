@@ -208,5 +208,16 @@ void Dispatcher::Cleanup(Timepoint const &now)
   }
 }
 
+void Dispatcher::FailAllPendingPromises()
+{
+  FETCH_LOCK(promises_lock_);
+  FETCH_LOCK(handles_lock_);
+  for (auto promise_it = promises_.begin(); promise_it != promises_.end();)
+  {
+    promise_it->second.promise->Fail();
+    promise_it = promises_.erase(promise_it);
+  }
+}
+
 }  // namespace muddle
 }  // namespace fetch

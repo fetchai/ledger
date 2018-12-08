@@ -58,9 +58,15 @@ public:
     Lock lock(mutex_);
   }
 
-  void WorkCycle()
+  bool WorkCycle()
   {
-    Lock  lock(mutex_);
+    Lock lock(mutex_);
+
+    if (workload_[PromiseState::WAITING].empty())
+    {
+      return false;
+    }
+
     auto &worklist_for_state = workload_[PromiseState::WAITING];
     auto  workitem_iter      = worklist_for_state.begin();
     while (workitem_iter != worklist_for_state.end())
@@ -95,12 +101,20 @@ public:
         }
       }
     }
+    return true;
   }
 
   void Wait(int milliseconds)
   {
     Lock lock(mutex_);
     cv_.wait_for(lock, std::chrono::milliseconds(milliseconds));
+  }
+
+  template <typename Rep, typename Per>
+  void Wait(std::chrono::duration<Rep, Per> const &timeout)
+  {
+    Lock lock(mutex_);
+    cv_.wait_for(lock, timeout);
   }
 
   void Wake()
@@ -135,6 +149,21 @@ public:
       worklist_for_state.erase(worklist_for_state.begin(), copy_end);
     }
     return results;
+  }
+
+  Results GetFailures(std::size_t limit)
+  {
+    return Get(PromiseState::FAILED, limit);
+  }
+
+  Results GetSuccesses(std::size_t limit)
+  {
+    return Get(PromiseState::SUCCESS, limit);
+  }
+
+  Results GetTimeouts(std::size_t limit)
+  {
+    return Get(PromiseState::TIMEDOUT, limit);
   }
 
   std::size_t CountPending()

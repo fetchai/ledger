@@ -33,29 +33,17 @@ if(FETCH_ENABLE_EXAMPLES)
   add_executable(example-network-rpc-client rpc/client.cpp)
   target_link_libraries(example-network-rpc-client PRIVATE fetch-network)
 
-  add_executable(example-network-authentication-protocol-client authentication_protocol/client.cpp)
-  target_link_libraries(example-network-authentication-protocol-client PRIVATE fetch-network)
-
-  add_executable(example-network-authentication-protocol-server authentication_protocol/server.cpp)
-  target_link_libraries(example-network-authentication-protocol-server PRIVATE fetch-network)
-
-  add_executable(example-network-adv-rpc-aea advanced_rpc/aea.cpp)
-  target_link_libraries(example-network-adv-rpc-aea PRIVATE fetch-network)
-
-  add_executable(example-network-adv-rpc-node advanced_rpc/node.cpp)
-  target_link_libraries(example-network-adv-rpc-node PRIVATE fetch-network)
-
-  add_executable(example-network-rrpc-client reverse_rpc/client.cpp)
-  target_link_libraries(example-network-rrpc-client PRIVATE fetch-network)
-
-  add_executable(example-network-rrpc-server reverse_rpc/server.cpp)
-  target_link_libraries(example-network-rrpc-server PRIVATE fetch-network)
-
   add_executable(example-network-mrpc-server muddle_rpc/server.cpp)
   target_link_libraries(example-network-mrpc-server PRIVATE fetch-network)
 
   add_executable(example-network-mrpc-client muddle_rpc/client.cpp)
   target_link_libraries(example-network-mrpc-client PRIVATE fetch-network)
+
+  add_executable(example-network-reverserpc-server reverse_rpc/server.cpp)
+  target_link_libraries(example-network-reverserpc-server PRIVATE fetch-network)
+
+  add_executable(example-network-reverserpc-client reverse_rpc/client.cpp)
+  target_link_libraries(example-network-reverserpc-client PRIVATE fetch-network)
 
 endif(FETCH_ENABLE_EXAMPLES)
 

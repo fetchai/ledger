@@ -38,6 +38,9 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
+#include "network/muddle/rpc/muddle_test_client.hpp"
+#include "network/muddle/rpc/muddle_test_server.hpp"
+
 using transaction_type = fetch::chain::VerifiedTransaction;
 
 std::size_t                         sizeOfTxMin = 0;  // base size of Tx
@@ -127,22 +130,11 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     return;
   }
 
-  std::size_t                    txData       = 0;
-  std::size_t                    rpcCalls     = 0;
-  std::size_t                    setupPayload = 0;
-  fetch::network::NetworkManager tm;
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
 
-  fetch::network::TCPClient connection(tm);
-  connection.Connect(IP, port);
-
-  ServiceClient client(connection, tm);
-
-  tm.Start();
-
-  while (!client.is_alive())
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  TClientPtr client = MuddleTestClient::CreateTestClient(IP, port);
 
   if (!pullTest)
   {
@@ -150,7 +142,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
   }
   else
   {
-    auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
+    auto p = client->Call(SERVICE, SETUP, payload, txPerCall, isMaster);
 
     FETCH_LOG_PROMISE();
     p->Wait();
@@ -161,7 +153,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
   {
     std::cerr << "Failed to setup for payload: " << payload << " TX/call: " << txPerCall
               << std::endl;
-    tm.Stop();
     return;
   }
 
@@ -175,7 +166,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PULL);
+      auto p1 = client->Call(SERVICE, PULL);
 
       FETCH_LOG_PROMISE();
       p1->Wait();
@@ -192,7 +183,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PUSH, TestData);
+      auto p1 = client->Call(SERVICE, PUSH, TestData);
 
       FETCH_LOG_PROMISE();
       p1->Wait();
@@ -203,7 +194,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     t1 = high_resolution_clock::now();
   }
 
-  tm.Stop();
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps    = (double(rpcCalls * setupPayload * 8) / seconds) / 1000000;
 
