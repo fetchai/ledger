@@ -55,20 +55,21 @@ TEST(combinatorics, test_num_combinations_standard_input)
 
   fetch_output = calculateNumCombinations(9, 4);
 
-  ASSERT_EQ(fetch_output,126);
+  ASSERT_EQ(fetch_output, 126);
 
-  n = (1 << 24) + 1;
+  n                        = (1 << 24) + 1;
   std::size_t matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
   EXPECT_EQ(matrixHeight, n);
 
-  if(sizeof(n) > 7) {
-	  n = (1llu << 63) - 1;
-	  matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
-	  EXPECT_EQ(matrixHeight, n);
+  if (sizeof(n) > 7)
+  {
+    n            = (1llu << 63) - 1;
+    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
+    EXPECT_EQ(matrixHeight, n);
 
-	  n = (1llu << 30) - 1;
-	  matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 2));
-	  EXPECT_EQ(matrixHeight, n * (n - 1) / 2);
+    n            = (1llu << 30) - 1;
+    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 2));
+    EXPECT_EQ(matrixHeight, n * (n - 1) / 2);
   }
 }
 

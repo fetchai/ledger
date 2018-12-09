@@ -59,10 +59,14 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
   assert(r <= n);
 
   // Base case
-  switch(r) {
-	  case 0: return 1;
-	  case 1: return n;
-	  case 2: return n % 2? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
+  switch (r)
+  {
+  case 0:
+    return 1;
+  case 1:
+    return n;
+  case 2:
+    return n % 2 ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
   }
 
   // Sometimes faster to calculate equivalent definition "n Choose n-r" than "n Choose r"
@@ -73,7 +77,7 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
 
   // Recursive implementation
   double fraction = static_cast<double>(n) / static_cast<double>(r);
-  while(--r > 1)
+  while (--r > 1)
   {
     fraction *= static_cast<double>(--n) / static_cast<double>(r);
   }
@@ -115,8 +119,8 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
         if (current_dim == r - 1)
         {
           ++current_row;
-	  current_dim = 0;
-	  break;
+          current_dim = 0;
+          break;
         }
         ++current_dim;
       }
