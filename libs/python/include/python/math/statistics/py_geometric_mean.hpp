@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/statistics/geometric_mean.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/statistics/geometric_mean.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {

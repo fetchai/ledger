@@ -185,8 +185,8 @@ std::string DescribePacket(Packet const &packet)
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
-      << " Route: " << packet.GetService() << ':' << packet.GetProtocol() << ':'
-      << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
+      << " Route: serv=" << packet.GetService() << " proto=" << packet.GetProtocol()
+      << " msgnum=" << packet.GetMessageNum() << " Type: " << (packet.IsDirect() ? 'D' : 'R')
       << (packet.IsBroadcast() ? 'B' : 'T') << (packet.IsExchange() ? 'X' : 'F')
       << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
@@ -201,12 +201,14 @@ std::string DescribePacket(Packet const &packet)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
+  , network_id_(network_id)
 {}
 
 /**
@@ -354,6 +356,23 @@ Router::RoutingTable Router::GetRoutingTable() const
 }
 
 /**
+ * Lookup a routing
+ *
+ * @return The address corresponding to a handle in the table.
+ */
+bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  auto address_it = direct_address_map_.find(handle);
+  if (address_it != direct_address_map_.end())
+  {
+    address = address_it->second;
+    return true;
+  }
+  return false;
+}
+
+/**
  * Periodic call initiated from the main muddle instance used for periodic maintenance of the
  * router
  */
@@ -453,6 +472,11 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
     // an update is only valid when the connection is direct.
     bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
     bool const is_update    = (routing_data.handle && direct && is_different);
+
+    if (direct)
+    {
+      direct_address_map_[handle] = ToConstByteArray(address);
+    }
 
     // update the routing table if required
     if (is_empty || is_update)
@@ -713,12 +737,21 @@ void Router::DispatchPacket(PacketPtr packet)
 
     // If no exchange message has claimed this then attempt to dispatch it through our normal system
     // of message subscriptions.
-    if (registrar_.Dispatch(packet))
+    try
     {
+      if (registrar_.Dispatch(packet))
+      {
+        return;
+      }
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, DescribePacket(*packet));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Exception processing packet ", ex.what());
       return;
     }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to locate handler for routed message");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Unable to locate handler for routed message:", DescribePacket(*packet));
   });
 }
 
@@ -784,33 +817,31 @@ void Router::CleanEchoCache()
   }
 }
 
-void Router::Blacklist(Address const &target)
+void Router::Debug(std::string const &prefix)
 {
-  blacklist_.Add(target);
-}
-
-void Router::Whitelist(Address const &target)
-{
-  blacklist_.Remove(target);
-}
-
-bool Router::IsBlacklisted(Address const &target) const
-{
-  return blacklist_.Contains(target);
-}
-
-void Router::DropPeer(Address const &peer)
-{
-  Handle h = LookupHandle(ConvertAddress(peer));
-  if (h)
+  FETCH_LOCK(routing_table_lock_);
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "direct_address_map_: --------------------------------------");
+  for (const auto &routing : direct_address_map_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Dropping ", ToBase64(peer));
-    KillConnection(h);
+    auto output = ToBase64(routing.second);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
+                   " -> handle=", std::to_string(routing.first), " direct=by definition");
   }
-  else
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "direct_address_map_: --------------------------------------");
+
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
+  for (const auto &routing : routing_table_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Not dropping ", ToBase64(peer), " -- not connected");
+    ByteArray output(routing.first.size());
+    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
+                   " -> handle=", std::to_string(routing.second.handle),
+                   " direct=", routing.second.direct);
   }
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
+  registrar_.Debug(prefix);
 }
 
 }  // namespace muddle

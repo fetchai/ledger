@@ -33,7 +33,9 @@ void Serialize(T &serializer, std::vector<std::string> const &vec)
   serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&size), sizeof(uint64_t));
 
   for (auto const &a : vec)
+  {
     serializer << a;
+  }
 }
 
 template <typename T>
@@ -47,7 +49,9 @@ void Deserialize(T &serializer, std::vector<std::string> &vec)
   vec.resize(size);
 
   for (auto &a : vec)
+  {
     serializer >> a;
+  }
 }
 
 }  // namespace serializers

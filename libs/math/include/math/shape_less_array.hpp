@@ -30,7 +30,7 @@
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/free_functions/free_functions.hpp"
-#include "math/statistics/mean.hpp"
+#include "math/free_functions/statistics/mean.hpp"
 
 #include <algorithm>
 #include <type_traits>
@@ -82,7 +82,7 @@ public:
   static constexpr char const *LOGGING_NAME = "ShapeLessArray";
 
   /* Contructs an empty shape-less array. */
-  ShapeLessArray(std::size_t const &n)
+  explicit ShapeLessArray(std::size_t const &n)
     : data_(n)
     , size_(n)
   {}
@@ -96,7 +96,7 @@ public:
   ShapeLessArray(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray const &other) = default;
   ShapeLessArray &operator=(ShapeLessArray &&other) = default;
-  ShapeLessArray(byte_array::ConstByteArray const &c)
+  explicit ShapeLessArray(byte_array::ConstByteArray const &c)
     : data_()
     , size_(0)
   {

@@ -56,6 +56,9 @@ private:
   }
 };
 
+static constexpr uint16_t SERVICE = 10;
+static constexpr uint16_t CHANNEL = 12;
+
 class MuddleRpcStressTests : public ::testing::Test
 {
 protected:
@@ -68,8 +71,6 @@ protected:
   static constexpr char const *NETWORK_B_PRIVATE_KEY =
       "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
   static constexpr char const *LOGGING_NAME = "MuddleRpcStressTests";
-  static constexpr uint16_t    SERVICE      = 10;
-  static constexpr uint16_t    CHANNEL      = 12;
 
   using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
@@ -102,10 +103,12 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>(1);
-    networkA_ = std::make_unique<Muddle>(LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
+    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+                                         LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>(1);
-    networkB_ = std::make_unique<Muddle>(LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
+    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+                                         LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();
     managerB_->Start();
@@ -149,11 +152,11 @@ protected:
 
     // create the server
     TestProtocol protocol;
-    RpcServer    server(endpoint, SERVICE, CHANNEL);
-    server.Add(PROTOCOL, &protocol);
+    auto         server = std::make_shared<RpcServer>(endpoint, SERVICE, CHANNEL);
+    server->Add(PROTOCOL, &protocol);
 
     // create the client
-    RpcClient client{endpoint, FromBase64(target), SERVICE, CHANNEL};
+    auto client = std::make_shared<RpcClient>(endpoint, FromBase64(target), SERVICE, CHANNEL);
 
     if (NETWORK_A_PUBLIC_KEY == target)
     {
@@ -167,7 +170,7 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise = client.Call(PROTOCOL, TestProtocol::EXCHANGE, data);
+      auto promise = client->Call(endpoint.network_id(), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();

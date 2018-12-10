@@ -65,7 +65,6 @@ namespace ledger {
  */
 Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
@@ -82,6 +81,13 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   chain::Transaction tx;
   if (!resources_->GetTransaction(hash, tx))
   {
+    return Status::TX_LOOKUP_FAILURE;
+  }
+
+  // This is a failure case that appears too often
+  if (tx.contract_name().size() == 0)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
     return Status::TX_LOOKUP_FAILURE;
   }
 

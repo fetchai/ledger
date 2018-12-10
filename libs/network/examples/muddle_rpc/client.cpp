@@ -38,9 +38,10 @@ int main()
   // create and setup the muddle
   NetworkManager nm(1);
   nm.Start();
+  auto peer = fetch::network::Uri{"tcp://127.0.0.1:8080"};
 
-  Muddle muddle{CreateKey(CLIENT_PRIVATE_KEY), nm};
-  muddle.Start({9000}, {fetch::network::Uri{"tcp://127.0.0.1:8000"}});
+  Muddle muddle{Muddle::CreateNetworkId("TEST"), CreateKey(CLIENT_PRIVATE_KEY), nm};
+  muddle.Start({8080});
 
   sleep_for(milliseconds{2000});
   FETCH_LOG_INFO("RpcClientMain", "============================");

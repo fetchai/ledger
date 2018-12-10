@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -42,7 +43,8 @@ public:
     tc->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tc->tm);
     tc->muddle->Start({});
 
-    tc->client = std::make_shared<Client>(tc->muddle->AsEndpoint(), Address(), SERVICE_TEST, CHANNEL_RPC);
+    tc->client =
+        std::make_shared<Client>(tc->muddle->AsEndpoint(), Address(), SERVICE_TEST, CHANNEL_RPC);
     tc->muddle->AddPeer(uri);
 
     int counter = 20;
@@ -81,19 +83,19 @@ public:
   }
 
   template <typename... Args>
-  Promise Call(fetch::service::protocol_handler_type const &protocol, fetch::service::function_handler_type const &function, Args &&... args)
+  Promise Call(fetch::service::protocol_handler_type const &protocol,
+               fetch::service::function_handler_type const &function, Args &&... args)
   {
     return client->CallSpecificAddress(address, protocol, function, std::forward<Args>(args)...);
   }
 
-  ClientPtr client;
-  Address address;
-  MuddlePtr muddle;
+  ClientPtr                      client;
+  Address                        address;
+  MuddlePtr                      muddle;
   fetch::network::NetworkManager tm;
 
   MuddleTestClient()
-  {
-  }
+  {}
 };
 
 using TClientPtr = std::shared_ptr<MuddleTestClient>;

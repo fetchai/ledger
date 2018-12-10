@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -79,14 +80,13 @@ public:
     muddle->Start({port});
   }
 
-  ServerPtr server;
-  uint16_t port;
-  MuddlePtr muddle;
+  ServerPtr                      server;
+  uint16_t                       port;
+  MuddlePtr                      muddle;
   fetch::network::NetworkManager tm;
 
   MuddleTestServer()
-  {
-  }
+  {}
 };
 
 using TServerPtr = std::shared_ptr<MuddleTestServer>;

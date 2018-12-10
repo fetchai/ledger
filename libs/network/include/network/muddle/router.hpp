@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "crypto/identity.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
@@ -46,11 +47,13 @@ class Router : public MuddleEndpoint
 {
 public:
   using Address       = Packet::Address;  // == a crypto::Identity.identifier_
+  using Identity      = fetch::crypto::Identity;
   using PacketPtr     = std::shared_ptr<Packet>;
   using Payload       = Packet::Payload;
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
+  using NetworkId     = MuddleEndpoint::NetworkId;
 
   struct RoutingData
   {
@@ -63,7 +66,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRoute";
 
   // Construction / Destruction
-  Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -100,20 +103,24 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
-  void DropPeer(Address const &peer);
-  void Cleanup();
+  bool HandleToDirectAddress(const Handle &handle, Address &address) const;
 
-  void Blacklist(Address const &target);
-  void Whitelist(Address const &target);
-  bool IsBlacklisted(Address const &target) const;
+  void Cleanup();
+  void Debug(std::string const &prefix);
+
+  NetworkId network_id() override
+  {
+    return network_id_;
+  }
+
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
-  using RawAddress = Packet::RawAddress;
-  using BlackList  = fetch::muddle::Blacklist;
+  using HandleMap           = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex               = mutex::Mutex;
+  using Clock               = std::chrono::steady_clock;
+  using Timepoint           = Clock::time_point;
+  using EchoCache           = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress          = Packet::RawAddress;
+  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -136,6 +143,7 @@ private:
   BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
+  HandleDirectAddrMap   direct_address_map_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
@@ -147,6 +155,8 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+
+  NetworkId network_id_;
 };
 
 }  // namespace muddle
