@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "storage/slightly_better_random_access_stack.hpp"
+#include "storage/CacheLineRAS.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
@@ -36,12 +36,12 @@ public:
   }
 };
 
-TEST(slightly_better_random_access_stack, basic_functionality)
+TEST(CacheLineRAS, basic_functionality)
 {
-  constexpr uint64_t                         testSize = 10000;
-  fetch::random::LaggedFibonacciGenerator<>  lfg;
-  SlightlyBetterRandomAccessStack<TestClass> stack;
-  std::vector<TestClass>                     reference;
+  constexpr uint64_t                        testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  CacheLineRAS<TestClass>                   stack;
+  std::vector<TestClass>                    reference;
 
   stack.New("CRAS_test.db");
 
@@ -127,14 +127,14 @@ TEST(slightly_better_random_access_stack, basic_functionality)
   ASSERT_TRUE(stack.empty() == true);
 }
 
-TEST(slightly_better_random_access_stack, file_writing_and_recovery)
+TEST(CacheLineRAS, file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
+    CacheLineRAS<TestClass> stack;
 
     stack.New("CRAS_test_2.db");
 
@@ -156,7 +156,7 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Check values against loaded file
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
+    CacheLineRAS<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
@@ -180,7 +180,7 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Check we can set new elements after loading
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
+    CacheLineRAS<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
@@ -205,7 +205,7 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Verify
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
+    CacheLineRAS<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
