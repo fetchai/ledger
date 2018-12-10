@@ -323,7 +323,7 @@ FETCH_ADD_OPERATOR(_mm_setzero_pd, double, _mm_sub_pd)
 
 FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
 FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
-//FETCH_ADD_OPERATOR(/, int, __m128i,  _mm_div_epi32);
+//FETCH_ADD_OPERATOR(/, int, __m128i,  [](int x, int y){return x / y;})
 FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32)
 
 FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
