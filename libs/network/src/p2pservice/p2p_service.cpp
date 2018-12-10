@@ -30,7 +30,7 @@ namespace p2p {
   P2PService::FutureTimepoint start_mistrust;
 
   P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
-                         std::size_t max_peers, std::size_t fidgety_peers)
+                         std::size_t max_peers, std::size_t transient_peers)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -42,7 +42,7 @@ namespace p2p {
   , client_(muddle_ep_, Muddle::Address(), SERVICE_P2P, CHANNEL_RPC)
   , local_services_(lane_management_)
   , max_peers_(max_peers)
-  , fidgety_peers_(fidgety_peers)
+  , transient_peers_(transient_peers)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -229,8 +229,8 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  auto static_peers = trust_system_.GetBestPeers(max_peers_ - fidgety_peers_);
-  auto fidget_peers = trust_system_.GetBestPeers(fidgety_peers_);
+  auto static_peers = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
+  auto experimental_peers = trust_system_.GetBestPeers(transient_peers_);
 
   desired_peers_.clear();
 
@@ -238,7 +238,7 @@ void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
   {
     desired_peers_.insert(p);
   }
-  for(auto const &p : fidget_peers)
+  for(auto const &p : experimental_peers)
   {
     desired_peers_.insert(p);
   }
