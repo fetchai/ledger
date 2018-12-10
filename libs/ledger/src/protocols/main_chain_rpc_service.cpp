@@ -254,8 +254,6 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
 {
   bool newdata = false;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP: ", ToBase64(address), " replied with ", block_list.size(), " blocks");
-
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest
