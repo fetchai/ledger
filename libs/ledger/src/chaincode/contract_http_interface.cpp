@@ -45,11 +45,10 @@ http::HTTPResponse JsonBadRequest()
 
 }  // namespace
 
+constexpr char const *ContractHttpInterface::LOGGING_NAME;
 
-constexpr char const *           ContractHttpInterface::LOGGING_NAME;
-
-
-ContractHttpInterface::ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor)
+ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
+                                             TransactionProcessor &processor)
   : storage_{storage}
   , processor_{processor}
 {
@@ -112,22 +111,21 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &storage, Transact
   }
 
   // add custom debug handlers
-  Post("/api/debug/submit",
-       [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-         chain::MutableTransaction tx;
+  Post("/api/debug/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+    chain::MutableTransaction tx;
 
-         tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
-         tx.set_fee(transaction_index_);
-         tx.set_contract_name("fetch.dummy.run");
-         tx.set_data(std::to_string(transaction_index_++));
+    tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
+    tx.set_fee(transaction_index_);
+    tx.set_contract_name("fetch.dummy.run");
+    tx.set_data(std::to_string(transaction_index_++));
 
-         processor_.AddTransaction(tx);
+    processor_.AddTransaction(tx);
 
-         std::ostringstream oss;
-         oss << R"({ "submitted": true })";
+    std::ostringstream oss;
+    oss << R"({ "submitted": true })";
 
-         return http::CreateJsonResponse(oss.str());
-       });
+    return http::CreateJsonResponse(oss.str());
+  });
 
   // TODO(issue 414): Remove legacy/unused/legacy endpoints from public HTTP interface
   Post("/api/contract/fetch/token/submit",
@@ -143,8 +141,8 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &storage, Transact
 }
 
 http::HTTPResponse ContractHttpInterface::OnQuery(byte_array::ConstByteArray const &contract_name,
-                           byte_array::ConstByteArray const &query,
-                           http::HTTPRequest const &         request)
+                                                  byte_array::ConstByteArray const &query,
+                                                  http::HTTPRequest const &         request)
 {
   try
   {
@@ -234,8 +232,8 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
       error_msg << "Some transactions has not submitted due to wrong contract type."
                 << content_type;
 
-      oss << R"({ "submitted": false, "count": )" << submitted.processed << R"(, "expected_count": )"
-          << submitted.received
+      oss << R"({ "submitted": false, "count": )" << submitted.processed
+          << R"(, "expected_count": )" << submitted.received
           << R"(, "error": "Some transactions have NOT been submitted due to miss-matching contract name."})";
     }
     else
@@ -255,8 +253,6 @@ http::HTTPResponse ContractHttpInterface::OnTransaction(
                                                  ? http::Status::CLIENT_ERROR_BAD_REQUEST
                                                  : http::Status::SUCCESS_OK);
 }
-
-
 
 ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     http::HTTPRequest const &               request,
@@ -329,7 +325,6 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitNativeTx(
 
   return SubmitTxStatus{submitted, transactions.size()};
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

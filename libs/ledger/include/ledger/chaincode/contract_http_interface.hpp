@@ -42,7 +42,6 @@ namespace ledger {
 class ContractHttpInterface : public http::HTTPModule
 {
 
-
 public:
   static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
 
@@ -84,7 +83,8 @@ private:
    * @param expected_contract_name contract name each transaction in request must conform to.
    *        Transactions which do NOT conform to this contract name will NOT be accepted further
    *        processing. If the value is `nullptr` (default value) the contract name check is
-   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract name.
+   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
+   *        name.
    *
    * @return submit status, please see the `SubmitTxStatus` structure
    * @see SubmitTxStatus
@@ -106,7 +106,8 @@ private:
    * @param expected_contract_name contract name each transaction in request must conform to.
    *        Transactions which do NOT conform to this contract name will NOT be accepted further
    *        processing. If the value is `nullptr` (default value) the contract name check is
-   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract name.
+   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
+   *        name.
    *
    * @return submit status, please see the `SubmitTxStatus` structure
    * @see SubmitTxStatus
