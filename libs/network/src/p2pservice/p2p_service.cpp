@@ -30,7 +30,7 @@ namespace p2p {
   P2PService::FutureTimepoint start_mistrust;
 
   P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
-                         std::size_t max_peers, std::size_t fidgety_peers)
+                         std::size_t max_peers, std::size_t transient_peers, uint32_t process_cycle_ms)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -149,7 +149,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     //FETCH_LOG_INFO(LOGGING_NAME, "Trust update on ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name);
 
-    if (start_mistrust.IsDue())
+    /*if (start_mistrust.IsDue())
     {
       if (name[0]=='Z' || name[1]=='Z')
       {
@@ -160,7 +160,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
         trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
         trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
       }
-    }
+      }*/
 
     // update our desired
     bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
