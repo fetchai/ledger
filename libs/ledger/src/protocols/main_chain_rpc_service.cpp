@@ -280,7 +280,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
 
   if (newdata && !lied)
   {
-    trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    trust_.AddFeedback(address, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
   }
 
   if (newdata && !block_list.empty())

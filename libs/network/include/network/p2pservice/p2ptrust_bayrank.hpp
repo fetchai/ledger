@@ -59,6 +59,7 @@ protected:
     {
       score = g.mu() - 3 * g.sigma();
     }
+    bool scored;
   };
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, size_t>;
@@ -67,6 +68,7 @@ protected:
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using PeerTrust    = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
@@ -91,7 +93,7 @@ public:
     size_t pos;
     if (ranking == ranking_store_.end())
     {
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0};
+      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
       pos = trust_store_.size();
       trust_store_.push_back(new_record);
     }
@@ -188,6 +190,24 @@ public:
     {
       return ranking_it->second;
     }
+  }
+
+  std::list<PeerTrust>  GetPeersAndTrusts() const override
+  {
+    FETCH_LOCK(mutex_);
+    auto trust_list = std::list<PeerTrust>();
+
+    for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
+    {
+      PeerTrust pt;
+      pt.address = trust_store_[pos].peer_identity;
+      pt.name = std::string(byte_array::ToBase64(pt.address));
+      pt.trust = trust_store_[pos].score;
+      pt.has_transacted = trust_store_[pos].scored;
+      trust_list.push_back(pt);
+    }
+
+    return trust_list;
   }
 
   double GetTrustRatingOfPeer(IDENTITY const &peer_ident) const override
