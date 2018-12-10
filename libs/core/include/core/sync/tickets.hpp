@@ -43,6 +43,8 @@ public:
   template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
 
+  std::size_t size();
+
   // Operators
   Tickets &operator=(Tickets const &) = delete;
   Tickets &operator=(Tickets &&) = delete;

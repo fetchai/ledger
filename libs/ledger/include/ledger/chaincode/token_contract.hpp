@@ -28,6 +28,8 @@ public:
   TokenContract();
   ~TokenContract() = default;
 
+  static constexpr char const *LOGGING_NAME = "TokenContract";
+
 private:
   // transaction handlers
   Status CreateWealth(Transaction const &tx);

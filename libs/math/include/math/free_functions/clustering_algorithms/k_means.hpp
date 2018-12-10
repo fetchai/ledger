@@ -23,6 +23,8 @@
 #include "math/meta/type_traits.hpp"
 #include "random"
 
+#include <set>
+
 /**
  * assigns the absolute of x to this array
  * @param x
@@ -321,44 +323,75 @@ private:
     }
     else if (k_inference_mode_ == KInferenceMode::NClusters)
     {
-      // map previously assigned clusters numbers to counst
-      std::unordered_map<std::size_t, std::size_t> prev_cluster_count{};
+      //////////////////////////////////////////////////////////////////////////////
+      /// infer K to be equal to the number of unique clusters assigned at input ///
+      //////////////////////////////////////////////////////////////////////////////
 
-      // infer K to be equal to the number of previously assigned clusters (regardless of cluster
-      // value)
+      // get the set of existing clusters and the count of data points assigned to each cluster
+      std::unordered_map<int, std::size_t>         prev_cluster_count{};
+      std::set<int>                                previous_cluster_labels{};
+      std::unordered_map<std::size_t, std::size_t> reverse_cluster_assignment_map{};
+
+      // default value not used
+      int current_cluster_label = std::numeric_limits<int>::max();
+
+      // get the set of input labels, get the count for each label
       for (std::size_t j = 0; j < n_points_; ++j)
       {
+        // get the label and add to set if new
+        current_cluster_label = static_cast<int>(k_assignment_.At(j, 0));
+        if (previous_cluster_labels.find(current_cluster_label) == previous_cluster_labels.end())
+        {
+          previous_cluster_labels.insert(current_cluster_label);
+        }
+
         // if this data point is assigned
-        int cur_assignment = static_cast<int>(k_assignment_.At(j, 0));
-        if (cur_assignment >= 0)
+        if (current_cluster_label >= 0)
         {
           // if this cluster already exists in the map
-          if (prev_cluster_count.find(static_cast<std::size_t>(cur_assignment)) !=
-              prev_cluster_count.end())
+          if (prev_cluster_count.find(current_cluster_label) != prev_cluster_count.end())
           {
-            ++(prev_cluster_count.find(static_cast<std::size_t>(cur_assignment))->second);
+            ++(prev_cluster_count.find(current_cluster_label)->second);
           }
           else
           {
-            prev_cluster_count.insert(
-                std::pair<std::size_t, std::size_t>(static_cast<std::size_t>(cur_assignment), 1));
+            prev_cluster_count.insert(std::pair<int, std::size_t>(current_cluster_label, 1));
           }
         }
       }
 
+      // store the count per cluster, and map
       std::size_t cluster_count = 0;
-      for (auto pc : prev_cluster_count)
+      for (auto const &pc_label : previous_cluster_labels)
       {
-        // re-assign the previous assignments in order 0 - number of specified clusters in data
-        k_count_.emplace_back(pc.second);
+        if (pc_label >= 0)  // ignore previous negative labels - these indicate unassigned clusters
+        {
+          k_count_.emplace_back(prev_cluster_count.find(pc_label)->second);
 
-        // keep a map of new assignments to previous assignments
-        cluster_assignment_map_.insert(
-            std::pair<std::size_t, std::size_t>(cluster_count, pc.first));
-        ++cluster_count;
+          // keep a map of internal cluster labels to input cluster labels
+          cluster_assignment_map_.insert(std::pair<std::size_t, std::size_t>(
+              cluster_count, prev_cluster_count.find(pc_label)->first));
+          reverse_cluster_assignment_map.insert(std::pair<std::size_t, std::size_t>(
+              prev_cluster_count.find(pc_label)->first, cluster_count));
+          ++cluster_count;
+        }
       }
-
       n_clusters_ = cluster_count;
+
+      // overwrite input assignments with internal labelling scheme
+      for (std::size_t j = 0; j < n_points_; ++j)
+      {
+        current_cluster_label = static_cast<int>(k_assignment_.At(j, 0));
+
+        if (current_cluster_label >= 0)
+        {
+          k_assignment_.Set(j, 0,
+                            static_cast<typename ArrayType::Type>(
+                                reverse_cluster_assignment_map
+                                    .find(static_cast<std::size_t>(k_assignment_.At(j, 0)))
+                                    ->second));
+        }
+      }
     }
 
     // failing this assertion generally implies that there are fewer than 2 separate
@@ -719,7 +752,8 @@ private:
   fetch::core::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
-  std::unordered_map<std::size_t, std::size_t> cluster_assignment_map_{};
+  std::unordered_map<std::size_t, std::size_t>
+      cluster_assignment_map_{};  // <internal label, original label>
 
   bool reassign_;
 
