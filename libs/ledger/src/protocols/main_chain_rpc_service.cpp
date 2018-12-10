@@ -82,14 +82,11 @@ public:
       FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request to: ", ToBase64(hash_),
-                     " timeout due in: ", timeout_.Explain());
       if (timeout_.IsDue())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request still waiting for to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::SUCCESS:
       {
@@ -98,7 +95,6 @@ public:
       }
       return promise_state;
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request default still waiting for to: ", ToBase64(hash_));
     return PromiseState::WAITING;
   }
 
@@ -222,7 +218,6 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
 
 void MainChainRpcService::ServiceLooseBlocks()
 {
-  try {
   auto pending_work_count = bg_work_.CountPending();
 
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
@@ -236,8 +231,7 @@ void MainChainRpcService::ServiceLooseBlocks()
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
         Address address =  (*random_peer_list.begin());
         AddLooseBlock(hash, address);
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Asking for catchup to ",  ToBase64(hash), " from node ", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
       }
     }
     else
@@ -264,19 +258,12 @@ void MainChainRpcService::ServiceLooseBlocks()
     bg_work_.DiscardTimeouts();
     next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
   }
-
-  }
-  catch (...)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... EXCEPT");
-  }
 }
 
 void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
 {
   bool newdata = false;
   bool lied    = false;
-  FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP: ", ToBase64(address), " replied with ", block_list.size(), " blocks");
 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
