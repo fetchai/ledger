@@ -213,6 +213,7 @@ public:
     router_.Debug(prefix);
     clients_.Debug(prefix);
   }
+
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

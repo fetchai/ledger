@@ -136,11 +136,11 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto peers_trusts = trust_.GetPeersAndTrusts();
+    auto             peers_trusts = trust_.GetPeersAndTrusts();
     variant::Variant trust_list;
 
     std::size_t count = 0;
-    for(const auto &pt : peers_trusts)
+    for (const auto &pt : peers_trusts)
     {
       if (pt.has_transacted)
       {
@@ -151,22 +151,22 @@ private:
     trust_list.MakeArray(count);
 
     std::size_t pos = 0;
-    for(const auto &pt : peers_trusts)
+    for (const auto &pt : peers_trusts)
     {
       if (!pt.has_transacted)
       {
         continue;
       }
-      variant::Variant peer_data     = variant::Variant::Object();
-      peer_data["target"] = pt.name;
-      peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
-      peer_data["value"]  = pt.trust;
-      peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
-      trust_list[pos++] = peer_data;
+      variant::Variant peer_data = variant::Variant::Object();
+      peer_data["target"]        = pt.name;
+      peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
+      peer_data["value"]         = pt.trust;
+      peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
+      trust_list[pos++]          = peer_data;
     }
 
-    Variant response           = Variant::Object();
-    response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
+    Variant response   = Variant::Object();
+    response["i_am"]   = byte_array::ToBase64(muddle_.identity().identifier());
     response["trusts"] = trust_list;
     return http::CreateJsonResponse(response);
   }

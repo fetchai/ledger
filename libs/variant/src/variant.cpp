@@ -90,7 +90,6 @@ void Variant::MakeArray(std::size_t elements)
   ResizeArray(elements);
 }
 
-
 /**
  * Check for equality between to variant objects
  *

@@ -60,7 +60,10 @@ public:
     return hash == hash_;
   }
 
-  BlockHash hash() { return hash_; }
+  BlockHash hash()
+  {
+    return hash_;
+  }
 
   PromiseState Work()
   {
@@ -89,10 +92,10 @@ public:
       }
       return promise_state;
     case PromiseState::SUCCESS:
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request succeeded to: ", ToBase64(hash_));
-        prom_->As(blocks_);
-      }
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request succeeded to: ", ToBase64(hash_));
+      prom_->As(blocks_);
+    }
       return promise_state;
     }
     return PromiseState::WAITING;
@@ -227,8 +230,8 @@ void MainChainRpcService::ServiceLooseBlocks()
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
         // Get a random peer to send the req to...
-        auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        Address address =  (*random_peer_list.begin());
+        auto    random_peer_list = trust_.GetRandomPeers(1, 0.0);
+        Address address          = (*random_peer_list.begin());
         AddLooseBlock(hash, address);
       }
     }
@@ -250,7 +253,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     }
   }
 
-  if (bg_work_.CountFailures()>0 || bg_work_.CountTimeouts()>0)
+  if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();

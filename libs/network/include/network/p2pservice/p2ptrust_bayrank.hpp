@@ -68,7 +68,7 @@ protected:
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
-  using PeerTrust    = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
@@ -192,7 +192,7 @@ public:
     }
   }
 
-  std::list<PeerTrust>  GetPeersAndTrusts() const override
+  std::list<PeerTrust> GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
     auto trust_list = std::list<PeerTrust>();
@@ -200,9 +200,9 @@ public:
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {
       PeerTrust pt;
-      pt.address = trust_store_[pos].peer_identity;
-      pt.name = std::string(byte_array::ToBase64(pt.address));
-      pt.trust = trust_store_[pos].score;
+      pt.address        = trust_store_[pos].peer_identity;
+      pt.name           = std::string(byte_array::ToBase64(pt.address));
+      pt.trust          = trust_store_[pos].score;
       pt.has_transacted = trust_store_[pos].scored;
       trust_list.push_back(pt);
     }

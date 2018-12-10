@@ -42,8 +42,8 @@ using namespace std::chrono;
 using namespace fetch;
 
 #include "network/test-helpers/muddle_test_client.hpp"
-#include "network/test-helpers/muddle_test_server.hpp"
 #include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 
 using transaction_type = fetch::chain::VerifiedTransaction;
 

@@ -20,11 +20,11 @@
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
-#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <memory>
@@ -45,12 +45,12 @@ class MuddleRegister;
 class Router : public MuddleEndpoint
 {
 public:
-  using Address       = Packet::Address;  // == a crypto::Identity.identifier_
-  using PacketPtr     = std::shared_ptr<Packet>;
-  using Payload       = Packet::Payload;
-  using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
-  using Handle        = network::AbstractConnection::connection_handle_type;
-  using ThreadPool    = network::ThreadPool;
+  using Address             = Packet::Address;  // == a crypto::Identity.identifier_
+  using PacketPtr           = std::shared_ptr<Packet>;
+  using Payload             = Packet::Payload;
+  using ConnectionPtr       = std::weak_ptr<network::AbstractConnection>;
+  using Handle              = network::AbstractConnection::connection_handle_type;
+  using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   struct RoutingData
@@ -69,7 +69,10 @@ public:
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
-  NetworkId network_id() override { return network_id_; }
+  NetworkId network_id() override
+  {
+    return network_id_;
+  }
 
   // Start / Stop
   void Start();
@@ -113,6 +116,7 @@ public:
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
   bool IsConnected(Address const &target) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;

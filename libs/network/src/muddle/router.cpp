@@ -201,7 +201,8 @@ std::string DescribePacket(Packet const &packet)
  * @param address The address of the current node
  * @param reg The connection register
  */
-  Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
@@ -383,21 +384,22 @@ void Router::Debug(std::string const &prefix)
   for (const auto &routing : routing_table_handles_direct_addr_)
   {
     auto output = ToBase64(routing.second);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output), " -> handle=", std::to_string(routing.first), " direct=by definition" );
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
+                   " -> handle=", std::to_string(routing.first), " direct=by definition");
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "routing_table_handles_direct_addr_: --------------------------------------");
 
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)), " -> handle=", std::to_string(routing.second.handle), " direct=", routing.second.direct);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
+                   " -> handle=", std::to_string(routing.second.handle),
+                   " direct=", routing.second.direct);
   }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   registrar_.Debug(prefix);
 }
 
@@ -469,7 +471,7 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 bool Router::IsConnected(Address const &target) const
 {
   auto raw_address = ConvertAddress(target);
-  auto iter = routing_table_.find(raw_address);
+  auto iter        = routing_table_.find(raw_address);
   if (iter == routing_table_.end())
   {
     return false;
@@ -502,7 +504,6 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
   // sanity check
   assert(handle);
-
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
@@ -615,7 +616,7 @@ void Router::KillConnection(Handle handle)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    conn -> Close();
+    conn->Close();
   }
 }
 
@@ -749,7 +750,8 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
       if (blacklist_.Contains(packet->GetSenderRaw()))
       {
         // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting:", ToBase64(packet->GetSender()), "  killing handle=", handle);
+        FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting:", ToBase64(packet->GetSender()),
+                       "  killing handle=", handle);
         KillConnection(handle);
         return;
       }

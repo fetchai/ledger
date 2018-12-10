@@ -35,7 +35,7 @@ public:
     auto ts = std::make_shared<MuddleTestServer>();
     ts->tm.Start();
 
-    ts->port = port;
+    ts->port   = port;
     ts->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), ts->tm);
     ts->muddle->Start({port});
 
@@ -44,22 +44,22 @@ public:
     return ts;
   }
 
-  template<class X, class Y>
+  template <class X, class Y>
   void Add(X &x, Y &y)
   {
-    server -> Add(x,y);
+    server->Add(x, y);
   }
 
-  template<class X, class Y>
+  template <class X, class Y>
   void Add(X x, Y y)
   {
-    server -> Add(x,y);
+    server->Add(x, y);
   }
 
-  template<class X, class Y>
+  template <class X, class Y>
   void Add(const X &x, Y &y)
   {
-    server -> Add(x,y);
+    server->Add(x, y);
   }
 
   bool is_alive()
@@ -79,14 +79,13 @@ public:
     muddle->Start({port});
   }
 
-  ServerPtr server;
-  uint16_t port;
-  MuddlePtr muddle;
+  ServerPtr                      server;
+  uint16_t                       port;
+  MuddlePtr                      muddle;
   fetch::network::NetworkManager tm;
 
   MuddleTestServer()
-  {
-  }
+  {}
 };
 
 using TServerPtr = std::shared_ptr<MuddleTestServer>;

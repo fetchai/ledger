@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
-#include "network/uri.hpp"
 #include "network/muddle/blacklist.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
 #include <unordered_map>

@@ -100,7 +100,7 @@ protected:
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
-  using PeerTrust    = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "Trust";
 
@@ -192,8 +192,8 @@ public:
     {
       PeerTrust pt;
       pt.address = trust_store_[pos].peer_identity;
-      pt.name = std::string(byte_array::ToBase64(pt.address));
-      pt.trust = trust_store_[pos].trust;
+      pt.name    = std::string(byte_array::ToBase64(pt.address));
+      pt.trust   = trust_store_[pos].trust;
       trust_list.push_back(pt);
     }
 
@@ -306,10 +306,10 @@ protected:
   }
 
 private:
-  mutable bool          dirty_ = false;
-  mutable Mutex mutex_{__LINE__, __FILE__};
-  mutable TrustStore    trust_store_;
-  mutable RankingStore  ranking_store_;
+  mutable bool         dirty_ = false;
+  mutable Mutex        mutex_{__LINE__, __FILE__};
+  mutable TrustStore   trust_store_;
+  mutable RankingStore ranking_store_;
 };
 
 }  // namespace p2p
