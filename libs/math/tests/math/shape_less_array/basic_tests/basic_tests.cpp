@@ -29,7 +29,7 @@ template <typename T>
 ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  ShapeLessArray<T, fetch::memory::SharedArray<T>>         a1(n);
+  ShapeLessArray<T, fetch::memory::SharedArray<T>>  a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
     a1.At(i) = T(gen.AsDouble()) + adj;
@@ -44,18 +44,29 @@ ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
 template <typename T>
 void equal_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array       = RandomArray<T>(n, 0);
-  ShapeLessArray<T> result_array     = test_array;
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray<T>(n, 0);
+  ShapeLessArray<T> result_array = test_array;
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
-TEST(ndarray, int_equals_test){equal_test<int>();}
-TEST(ndarray, size_t_equals_test){equal_test<std::size_t>();}
-TEST(ndarray, float_equals_test){equal_test<float>();}
-TEST(ndarray, double_equals_test){equal_test<double>();}
-
+TEST(ndarray, int_equals_test)
+{
+  equal_test<int>();
+}
+TEST(ndarray, size_t_equals_test)
+{
+  equal_test<std::size_t>();
+}
+TEST(ndarray, float_equals_test)
+{
+  equal_test<float>();
+}
+TEST(ndarray, double_equals_test)
+{
+  equal_test<double>();
+}
 
 ////////////
 /// copy ///
@@ -64,19 +75,30 @@ TEST(ndarray, double_equals_test){equal_test<double>();}
 template <typename T>
 void copy_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array       = RandomArray<T>(n, 0);
+  std::size_t       n          = 10000;
+  ShapeLessArray<T> test_array = RandomArray<T>(n, 0);
   ShapeLessArray<T> result_array(n);
   result_array.Copy(test_array);
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
-TEST(ndarray, int_copy_test){equal_test<int>();}
-TEST(ndarray, size_t_copy_test){equal_test<std::size_t>();}
-TEST(ndarray, float_copy_test){equal_test<float>();}
-TEST(ndarray, double_copy_test){equal_test<double>();}
-
+TEST(ndarray, int_copy_test)
+{
+  equal_test<int>();
+}
+TEST(ndarray, size_t_copy_test)
+{
+  equal_test<std::size_t>();
+}
+TEST(ndarray, float_copy_test)
+{
+  equal_test<float>();
+}
+TEST(ndarray, double_copy_test)
+{
+  equal_test<double>();
+}
 
 //////////////////
 /// + operator ///
@@ -85,8 +107,8 @@ TEST(ndarray, double_copy_test){equal_test<double>();}
 template <typename T>
 void plus_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
   ShapeLessArray<T> result_array = RandomArray(n, T(0));
 
@@ -97,11 +119,19 @@ void plus_test()
   ASSERT_TRUE(result_array.AllClose(test_array + test_array_2));
 }
 
-TEST(ndarray, integer_plus_test){plus_test<int>();}
-//TEST(ndarray, size_t_plus_test){plus_test<std::size_t>();}
-TEST(ndarray, float_plus_test){plus_test<float>();}
-TEST(ndarray, double_plus_test){plus_test<double>();}
-
+TEST(ndarray, integer_plus_test)
+{
+  plus_test<int>();
+}
+// TEST(ndarray, size_t_plus_test){plus_test<std::size_t>();}
+TEST(ndarray, float_plus_test)
+{
+  plus_test<float>();
+}
+TEST(ndarray, double_plus_test)
+{
+  plus_test<double>();
+}
 
 //////////////////
 /// - operator ///
@@ -110,8 +140,8 @@ TEST(ndarray, double_plus_test){plus_test<double>();}
 template <typename T>
 void sub_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
   ShapeLessArray<T> result_array = RandomArray(n, T(0));
 
@@ -122,11 +152,19 @@ void sub_test()
   ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
 }
 
-TEST(ndarray, integer_sub_test){sub_test<int>();}
-//TEST(ndarray, size_t_sub_test){sub_test<std::size_t>();}
-TEST(ndarray, float_sub_test){sub_test<float>();}
-TEST(ndarray, double_sub_test){sub_test<double>();}
-
+TEST(ndarray, integer_sub_test)
+{
+  sub_test<int>();
+}
+// TEST(ndarray, size_t_sub_test){sub_test<std::size_t>();}
+TEST(ndarray, float_sub_test)
+{
+  sub_test<float>();
+}
+TEST(ndarray, double_sub_test)
+{
+  sub_test<double>();
+}
 
 //////////////////
 /// * operator ///
@@ -135,8 +173,8 @@ TEST(ndarray, double_sub_test){sub_test<double>();}
 template <typename T>
 void mult_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
   ShapeLessArray<T> result_array = RandomArray(n, T(0));
 
@@ -147,11 +185,19 @@ void mult_test()
   ASSERT_TRUE(result_array.AllClose(test_array * test_array_2));
 }
 
-TEST(ndarray, integer_mult_test){mult_test<int>();}
-//TEST(ndarray, size_t_mult_test){mult_test<std::size_t>();}
-TEST(ndarray, float_mult_test){mult_test<float>();}
-TEST(ndarray, double_mult_test){mult_test<double>();}
-
+TEST(ndarray, integer_mult_test)
+{
+  mult_test<int>();
+}
+// TEST(ndarray, size_t_mult_test){mult_test<std::size_t>();}
+TEST(ndarray, float_mult_test)
+{
+  mult_test<float>();
+}
+TEST(ndarray, double_mult_test)
+{
+  mult_test<double>();
+}
 
 //////////////////
 /// / operator ///
@@ -160,8 +206,8 @@ TEST(ndarray, double_mult_test){mult_test<double>();}
 template <typename T>
 void div_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
   ShapeLessArray<T> result_array = RandomArray(n, T(0));
 
@@ -172,11 +218,16 @@ void div_test()
   ASSERT_TRUE(result_array.AllClose(test_array / test_array_2));
 }
 
-//TEST(ndarray, integer_div_test){div_test<int>();}
-//TEST(ndarray, size_t_div_test){div_test<std::size_t>();}
-TEST(ndarray, float_div_test){div_test<float>();}
-TEST(ndarray, double_div_test){div_test<double>();}
-
+// TEST(ndarray, integer_div_test){div_test<int>();}
+// TEST(ndarray, size_t_div_test){div_test<std::size_t>();}
+TEST(ndarray, float_div_test)
+{
+  div_test<float>();
+}
+TEST(ndarray, double_div_test)
+{
+  div_test<double>();
+}
 
 //////////////////////////////
 ///// equals test operator ///
@@ -185,7 +236,7 @@ TEST(ndarray, double_div_test){div_test<double>();}
 template <typename T>
 void is_equal_test()
 {
-  std::size_t n = 10000;
+  std::size_t       n          = 10000;
   ShapeLessArray<T> test_array = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2(n);
   test_array_2 = test_array.Copy();
@@ -193,21 +244,31 @@ void is_equal_test()
   ASSERT_TRUE(test_array == test_array_2);
 }
 
-TEST(ndarray, integer_is_equal_test){is_equal_test<int>();}
-TEST(ndarray, size_t_is_equal_test){is_equal_test<std::size_t>();}
-TEST(ndarray, float_is_equal_test){is_equal_test<float>();}
-TEST(ndarray, double_is_equal_test){is_equal_test<double>();}
-
+TEST(ndarray, integer_is_equal_test)
+{
+  is_equal_test<int>();
+}
+TEST(ndarray, size_t_is_equal_test)
+{
+  is_equal_test<std::size_t>();
+}
+TEST(ndarray, float_is_equal_test)
+{
+  is_equal_test<float>();
+}
+TEST(ndarray, double_is_equal_test)
+{
+  is_equal_test<double>();
+}
 
 /////////////////////////////
 ///// not-equals operator ///
 /////////////////////////////
 
-
 template <typename T>
 void is_not_equal_test()
 {
-  std::size_t n = 10000;
+  std::size_t       n          = 10000;
   ShapeLessArray<T> test_array = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2(n);
 
@@ -219,22 +280,32 @@ void is_not_equal_test()
   ASSERT_TRUE(test_array != test_array_2);
 }
 
-TEST(ndarray, integer_is_not_equal_test){is_not_equal_test<int>();}
-TEST(ndarray, size_t_is_not_equal_test){is_not_equal_test<std::size_t>();}
-TEST(ndarray, float_is_not_equal_test){is_not_equal_test<float>();}
-TEST(ndarray, double_is_not_equal_test){is_not_equal_test<double>();}
-
+TEST(ndarray, integer_is_not_equal_test)
+{
+  is_not_equal_test<int>();
+}
+TEST(ndarray, size_t_is_not_equal_test)
+{
+  is_not_equal_test<std::size_t>();
+}
+TEST(ndarray, float_is_not_equal_test)
+{
+  is_not_equal_test<float>();
+}
+TEST(ndarray, double_is_not_equal_test)
+{
+  is_not_equal_test<double>();
+}
 
 /////////////////////
 ///// += operator ///
 /////////////////////
 
-
 template <typename T>
 void plus_equals_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = test_array;
   ShapeLessArray<T> result_array = test_array * T(2);
 
@@ -245,22 +316,29 @@ void plus_equals_test()
   ASSERT_TRUE(test_array_2.AllClose(result_array));
 }
 
-TEST(ndarray, integer_plus_equals_test){plus_equals_test<int>();}
-//TEST(ndarray, size_t_plus_equals_test){plus_equals_test<std::size_t>();}
-TEST(ndarray, float_plus_equals_test){plus_equals_test<float>();}
-TEST(ndarray, double_plus_equals_test){plus_equals_test<double>();}
-
+TEST(ndarray, integer_plus_equals_test)
+{
+  plus_equals_test<int>();
+}
+// TEST(ndarray, size_t_plus_equals_test){plus_equals_test<std::size_t>();}
+TEST(ndarray, float_plus_equals_test)
+{
+  plus_equals_test<float>();
+}
+TEST(ndarray, double_plus_equals_test)
+{
+  plus_equals_test<double>();
+}
 
 /////////////////////
 ///// -= operator ///
 /////////////////////
 
-
 template <typename T>
 void minus_equals_test()
 {
-  std::size_t n = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
+  std::size_t       n            = 10000;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
   ShapeLessArray<T> test_array_2 = test_array * T(2);
   ShapeLessArray<T> result_array = test_array;
 
@@ -271,9 +349,16 @@ void minus_equals_test()
   ASSERT_TRUE(test_array_2.AllClose(result_array));
 }
 
-TEST(ndarray, integer_minus_equals_test){minus_equals_test<int>();}
-//TEST(ndarray, size_t_minus_equals_test){minus_equals_test<std::size_t>();}
-TEST(ndarray, float_minus_equals_test){minus_equals_test<float>();}
-TEST(ndarray, double_minus_equals_test){minus_equals_test<double>();}
-
-
+TEST(ndarray, integer_minus_equals_test)
+{
+  minus_equals_test<int>();
+}
+// TEST(ndarray, size_t_minus_equals_test){minus_equals_test<std::size_t>();}
+TEST(ndarray, float_minus_equals_test)
+{
+  minus_equals_test<float>();
+}
+TEST(ndarray, double_minus_equals_test)
+{
+  minus_equals_test<double>();
+}

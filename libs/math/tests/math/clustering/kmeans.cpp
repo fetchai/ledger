@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <math/shape_less_array.hpp>
 #include <math/linalg/matrix.hpp>
 #include <string>
 #include <vector>
@@ -34,6 +35,8 @@ using namespace fetch::math::linalg;
 using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 using matrix_type    = Matrix<data_type, container_type>;
+
+using clusters_type = fetch::math::clustering::clustering_type;
 
 // Helper function for kmeans_test_ndimensions
 std::size_t add_cluster_to_matrix(std::size_t n_points_per_cluster, std::size_t n_dimensions,
@@ -89,7 +92,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
   }
 
   std::size_t random_seed = 123456;
-  matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
+  clusters_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
   for (std::size_t j = 0; j < 25; ++j)
@@ -158,7 +161,7 @@ TEST(clustering_test, kmeans_test_ndimensions)
   }
 
   std::size_t random_seed = 123456;
-  matrix_type clusters =
+  clusters_type clusters =
       fetch::math::clustering::KMeans(A, random_seed, static_cast<std::size_t>(n_clusters));
 
   for (std::size_t c = 0; c < static_cast<std::size_t>(n_clusters); ++c)
@@ -177,7 +180,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 
   std::size_t K = 2;
   matrix_type A{n_points, 2};
-  matrix_type prev_k{n_points, 1};
+  clusters_type prev_k{n_points};
   matrix_type ret{n_points, 1};
 
   for (std::size_t i = 0; i < 25; ++i)
@@ -193,23 +196,23 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 
   for (std::size_t i = 0; i < 5; ++i)
   {
-    prev_k.Set(i, 0, 0);
+    prev_k.Set(i, 0);
   }
   for (std::size_t i = 5; i < 25; ++i)
   {
-    prev_k.Set(i, 0, -1);
+    prev_k.Set(i, -1);
   }
   for (std::size_t i = 25; i < 30; ++i)
   {
-    prev_k.Set(i, 0, 1);
+    prev_k.Set(i, 1);
   }
   for (std::size_t i = 30; i < 50; ++i)
   {
-    prev_k.Set(i, 0, -1);
+    prev_k.Set(i, -1);
   }
 
   std::size_t random_seed = 123456;
-  matrix_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K, prev_k);
+  clusters_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K, prev_k);
 
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
   for (std::size_t j = 0; j < 25; ++j)
@@ -228,7 +231,7 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   std::size_t n_points = 50;
 
   matrix_type A{n_points, 2};
-  matrix_type prev_k{n_points, 1};
+  clusters_type prev_k{n_points};
   matrix_type ret{n_points, 1};
 
   // initialise the data to be first half negative, second half positive
@@ -246,25 +249,25 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each cluster
   for (std::size_t i = 0; i < 5; ++i)
   {
-    prev_k.Set(i, 0, 0);
+    prev_k.Set(i, 0);
   }
   for (std::size_t i = 5; i < 25; ++i)
   {
-    prev_k.Set(i, 0, -1);
+    prev_k.Set(i, -1);
   }
   for (std::size_t i = 25; i < 30; ++i)
   {
-    prev_k.Set(i, 0, 1);
+    prev_k.Set(i, 1);
   }
   for (std::size_t i = 30; i < 50; ++i)
   {
-    prev_k.Set(i, 0, -1);
+    prev_k.Set(i, -1);
   }
 
   std::size_t                             random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
-  matrix_type clusters =
+  clusters_type clusters =
       fetch::math::clustering::KMeans<matrix_type>(A, random_seed, prev_k, k_inference_mode);
 
   std::size_t group_0 = 0;
@@ -290,7 +293,7 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   int group_3  = 23;
 
   matrix_type A{n_points, 2};
-  matrix_type prev_k{n_points, 1};
+  clusters_type prev_k{n_points};
   matrix_type ret{n_points, 1};
 
   // assign data to 4 quadrants
@@ -318,42 +321,42 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   // assign previous cluster groups with some gaps
   for (std::size_t i = 0; i < 5; ++i)
   {
-    prev_k.Set(i, 0, group_0);
+    prev_k.Set(i, group_0);
   }
   for (std::size_t i = 5; i < 25; ++i)
   {
-    prev_k.Set(i, 0, no_group);
+    prev_k.Set(i, no_group);
   }
   for (std::size_t i = 25; i < 30; ++i)
   {
-    prev_k.Set(i, 0, group_1);
+    prev_k.Set(i, group_1);
   }
   for (std::size_t i = 30; i < 50; ++i)
   {
-    prev_k.Set(i, 0, no_group);
+    prev_k.Set(i, no_group);
   }
 
   for (std::size_t i = 50; i < 55; ++i)
   {
-    prev_k.Set(i, 0, group_2);
+    prev_k.Set(i, group_2);
   }
   for (std::size_t i = 55; i < 75; ++i)
   {
-    prev_k.Set(i, 0, no_group);
+    prev_k.Set(i, no_group);
   }
   for (std::size_t i = 75; i < 80; ++i)
   {
-    prev_k.Set(i, 0, group_3);
+    prev_k.Set(i, group_3);
   }
   for (std::size_t i = 80; i < 100; ++i)
   {
-    prev_k.Set(i, 0, no_group);
+    prev_k.Set(i, no_group);
   }
 
   std::size_t                             random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
-  matrix_type clusters = fetch::math::clustering::KMeans(A, random_seed, prev_k, k_inference_mode);
+  clusters_type clusters = fetch::math::clustering::KMeans(A, random_seed, prev_k, k_inference_mode);
 
   for (std::size_t j = 0; j < 25; ++j)
   {

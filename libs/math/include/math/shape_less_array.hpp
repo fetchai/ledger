@@ -1071,7 +1071,6 @@ public:
     return *this;
   }
 
-
   /**
    * * operator
    * @tparam OtherType may be a scalar or array, but must be arithmetic
