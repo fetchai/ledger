@@ -164,7 +164,6 @@ private:
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
       trust_list[pos++] = peer_data;
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
 
     Variant response           = Variant::Object();
     response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());

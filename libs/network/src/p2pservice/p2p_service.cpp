@@ -125,7 +125,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   for (auto const &element : active_connections)
   {
     auto const &address = element.first;
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update GOT CONNECTION: ", std::string(ToBase64(address)));
 
     //ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
@@ -140,21 +139,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     auto address = pt.address;
     std::string name(ToBase64(address));
 
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for: ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name);
-
-    if (start_mistrust.IsDue())
-    {
-      if (name[0]=='Z' || name[1]=='Z')
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      }
-    }
-
     // update our desired
     bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
@@ -167,11 +151,11 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     if (!trusted_peer)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: Untrusting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
+      FETCH_LOG_WARN(LOGGING_NAME, "Untrusting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
       desired_peers_.erase(address);
       if (trust_system_.GetTrustRatingOfPeer(address) < 0.0)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
+        FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
         blacklisted_peers_.insert(address);
       }
     }
@@ -242,8 +226,6 @@ void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
   {
     desired_peers_.insert(p);
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "KLL: RenewDesiredPeers. #=", desired_peers_.size());
 }
 
 void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
@@ -319,7 +301,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   }
   for (auto const &address : blacklisted_peers_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting: ", ToBase64(address));
+    FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting: ", ToBase64(address));
     muddle_.Blacklist(address);
   }
 }
