@@ -633,7 +633,7 @@ public:
     return Iterator(this, kv);
   }
 
-  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t bits)
+  self_type::Iterator GetSubtree(byte_array::ConstByteArray const &key_str, uint64_t max_bits)
   {
     if (this->empty())
     {
@@ -647,12 +647,12 @@ public:
     index_type     depth      = 0;
     key_value_pair kv;
 
-    FindNearest(key, kv, split, pos, left_right, depth, bits);
+    FindNearest(key, kv, split, pos, left_right, depth, max_bits);
 
     pos = 0;
     kv.key.Compare(key_str, pos, 0, 64);
 
-    if (uint64_t(pos) < bits)
+    if (uint64_t(pos) < max_bits)
     {
       return end();
     }

@@ -65,6 +65,7 @@ public:
     auto ptr = connection_register_.lock();
     if (ptr)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "~AbstractConnection calling Leave");
       ptr->Leave(handle_);
     }
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);

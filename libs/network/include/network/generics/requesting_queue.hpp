@@ -77,6 +77,7 @@ public:
 
   SuccessfulResults Get(std::size_t limit);
   FailedResults     GetFailures(std::size_t limit);
+  PromiseMap        GetPending();
 
   KeySet FilterOutInFlight(KeySet const &inputs);
   bool   IsInFlight(Key const &key) const;
@@ -178,6 +179,15 @@ typename RequestingQueueOf<K, R, P>::FailedResults RequestingQueueOf<K, R, P>::G
   }
 
   return results;
+}
+
+template <typename K, typename R, typename P>
+typename RequestingQueueOf<K, R, P>::PromiseMap RequestingQueueOf<K, R, P>::GetPending()
+{
+  FETCH_LOCK(mutex_);
+  PromiseMap pending = std::move(requests_);
+  requests_.clear();
+  return pending;
 }
 
 template <typename K, typename R, typename P>

@@ -37,8 +37,7 @@ using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
 using ObjectStore      = fetch::storage::ObjectStore<VerifiedTransaction>;
-using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
-using TransactionStore = fetch::ledger::LaneService::transaction_store_type;
+using TransactionStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
 using TransactionList  = std::vector<VerifiedTransaction>;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)

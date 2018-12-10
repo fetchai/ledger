@@ -127,9 +127,11 @@ public:
   /// @{
   T Pop();
   template <typename R, typename P>
-  bool Pop(T &value, std::chrono::duration<R, P> const &duration);
-  void Push(T const &element);
-  void Push(T &&element);
+  bool        Pop(T &value, std::chrono::duration<R, P> const &duration);
+  void        Push(T const &element);
+  void        Push(T &&element);
+  bool        empty();
+  std::size_t size();
   /// @}
 
   // Operators
