@@ -39,7 +39,7 @@ static const TestCase
         [] =
             {
                 // content must be rejected by parsers
-                {n_structure_open_array_object.c_str(), true, "", true},
+                {n_structure_open_array_object.c_str(), false, "", true},
                 {R"([a�])", false, "", true},
                 {R"(["": 1])", false, "", true},
                 {R"(["x"]])", false, "", true},
