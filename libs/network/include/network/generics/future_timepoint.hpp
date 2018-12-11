@@ -100,8 +100,11 @@ public:
 
   std::string Explain() const
   {
-    return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(DueIn()).count()) +
-           "ms";
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+
+    auto const due_in_ms = duration_cast<milliseconds>(DueIn()).count();
+    return std::to_string(due_in_ms) +"ms";
   }
 
 private:
