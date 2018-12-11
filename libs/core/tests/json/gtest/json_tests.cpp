@@ -18,6 +18,7 @@
 
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
+#include "./json_long_strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
@@ -33,12 +34,15 @@ struct TestCase
   bool        expect_throw;
 };
 
+
+
 static const TestCase
     TEST_CASES
         [] =
             {
 
                 // content must be rejected by parsers
+                {n_structure_open_array_object.c_str(), true, "argh", true},
                 {R"([a�])", false, "", true},
                 {R"(["": 1])", false, "", true},
                 {R"(["x"]])", false, "", true},
@@ -419,6 +423,7 @@ TEST_P(JsonTests, CheckParsing)
   EXPECT_EQ(config.expect_throw, did_throw);
   if (config.expect_output)
   {
+    std::cout << config.input_text << std::endl;
     ss << doc.root();
     EXPECT_EQ(config.output_text, ss.str());
   }
