@@ -60,7 +60,7 @@ public:
     return hash == hash_;
   }
 
-  BlockHash hash()
+  BlockHash const &hash()
   {
     return hash_;
   }
