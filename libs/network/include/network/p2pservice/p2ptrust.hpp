@@ -96,6 +96,7 @@ protected:
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, size_t>;
   using Mutex        = mutex::Mutex;
+  using PeerTrusts = P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:
   using ConstByteArray = byte_array::ConstByteArray;
