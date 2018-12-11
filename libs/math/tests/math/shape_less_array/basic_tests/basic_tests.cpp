@@ -30,9 +30,11 @@ ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapeLessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
-  T      rn;
+
+  T rn;
   for (std::size_t i = 0; i < n; ++i)
   {
     rn       = T(gen.AsDouble() * scale);
@@ -127,7 +129,10 @@ TEST(ndarray, integer_plus_test)
 {
   plus_test<int>();
 }
-// TEST(ndarray, size_t_plus_test){plus_test<uint32_t>();}
+TEST(ndarray, size_t_plus_test)
+{
+  plus_test<uint32_t>();
+}
 TEST(ndarray, float_plus_test)
 {
   plus_test<float>();
@@ -160,7 +165,10 @@ TEST(ndarray, integer_sub_test)
 {
   sub_test<int>();
 }
-// TEST(ndarray, size_t_sub_test){sub_test<uint32_t>();}
+TEST(ndarray, size_t_sub_test)
+{
+  sub_test<uint32_t>();
+}
 TEST(ndarray, float_sub_test)
 {
   sub_test<float>();
@@ -193,7 +201,10 @@ TEST(ndarray, integer_mult_test)
 {
   mult_test<int>();
 }
-// TEST(ndarray, size_t_mult_test){mult_test<uint32_t>();}
+TEST(ndarray, size_t_mult_test)
+{
+  mult_test<uint32_t>();
+}
 TEST(ndarray, float_mult_test)
 {
   mult_test<float>();
@@ -230,7 +241,10 @@ TEST(ndarray, integer_div_test)
 {
   div_test<int>();
 }
-// TEST(ndarray, size_t_div_test){div_test<uint32_t>();}
+TEST(ndarray, size_t_div_test)
+{
+  div_test<uint32_t>();
+}
 TEST(ndarray, float_div_test)
 {
   div_test<float>();
@@ -331,7 +345,10 @@ TEST(ndarray, integer_plus_equals_test)
 {
   plus_equals_test<int>();
 }
-// TEST(ndarray, size_t_plus_equals_test){plus_equals_test<uint32_t>();}
+TEST(ndarray, size_t_plus_equals_test)
+{
+  plus_equals_test<uint32_t>();
+}
 TEST(ndarray, float_plus_equals_test)
 {
   plus_equals_test<float>();
@@ -364,7 +381,10 @@ TEST(ndarray, integer_minus_equals_test)
 {
   minus_equals_test<int>();
 }
-// TEST(ndarray, size_t_minus_equals_test){minus_equals_test<uint32_t>();}
+TEST(ndarray, size_t_minus_equals_test)
+{
+  minus_equals_test<uint32_t>();
+}
 TEST(ndarray, float_minus_equals_test)
 {
   minus_equals_test<float>();
