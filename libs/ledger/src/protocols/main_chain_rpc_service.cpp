@@ -247,7 +247,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     if (successful_worker)
     {
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-      next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+    next_loose_tips_check_.SetTimedOut();
     }
   }
 
@@ -255,7 +255,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();
-    next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+    next_loose_tips_check_.SetTimedOut();
   }
 }
 
