@@ -108,13 +108,36 @@ public:
 
   bool HandleToDirectAddress(const Handle &handle, Address &address) const;
 
+  /** If this host is connected close their port.
+   * @param peer The target address to killed.
+   */
   void DropPeer(Address const &peer);
+
   void Cleanup();
+
+  /** Show debugging information about the internals of the router.
+   * @param prefix the string to put on the front of the logging lines.
+   */
   void Debug(std::string const &prefix);
 
+  /** Deny this host's connection attempts and do not attempt to connect to it.
+   * @param target The target address to be denied.
+   */
   void Blacklist(Address const &target);
+
+  /** Allow this host to be connected to and to connect to us.
+   * @param target The target address to be allowed.
+   */
   void Whitelist(Address const &target);
+
+  /** Return true if connections from this target address will be rejected.
+   * @param target The target address's status to interrogate.
+   */
   bool IsBlacklisted(Address const &target) const;
+
+  /** Return true if there is an actual TCP connection to this address at the moment.
+   * @param target The target address's status to interrogate.
+   */
   bool IsConnected(Address const &target) const;
 
 private:

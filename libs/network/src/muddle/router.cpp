@@ -253,7 +253,6 @@ void Router::Route(Handle handle, PacketPtr packet)
   else
   {
     // update the routing table if required
-    // TODO(KLL): this may not be the association we're looking for.
     AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
 
     // if this message does not belong to us we must route it along the path
@@ -472,15 +471,13 @@ bool Router::IsConnected(Address const &target) const
 {
   auto raw_address = ConvertAddress(target);
   auto iter        = routing_table_.find(raw_address);
-  if (iter == routing_table_.end())
+  bool is_connected = false;
+  if (iter != routing_table_.end())
   {
-    return false;
+    is_connected = iter->second.direct;
   }
-  if (!iter->second.direct)
-  {
-    return false;
-  }
-  return true;
+
+  return is_connected;
 }
 
 /**
@@ -699,9 +696,6 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (packet->GetSender() != address_)
     {
       DispatchPacket(packet, address_);
-    }
-    else
-    {
     }
 
     // serialize the packet to the buffer
