@@ -158,7 +158,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       }
     }
   }
-
 }
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)

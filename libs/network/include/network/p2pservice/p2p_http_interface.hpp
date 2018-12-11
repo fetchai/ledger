@@ -136,8 +136,8 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto peers_trusts = trust_.GetPeersAndTrusts();
-    std::size_t count = 0;
+    auto        peers_trusts = trust_.GetPeersAndTrusts();
+    std::size_t count        = 0;
     for (const auto &pt : peers_trusts)
     {
       if (pt.has_transacted)
