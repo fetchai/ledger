@@ -104,7 +104,7 @@ public:
     using std::chrono::milliseconds;
 
     auto const due_in_ms = duration_cast<milliseconds>(DueIn()).count();
-    return std::to_string(due_in_ms) +"ms";
+    return std::to_string(due_in_ms) + "ms";
   }
 
 private:
