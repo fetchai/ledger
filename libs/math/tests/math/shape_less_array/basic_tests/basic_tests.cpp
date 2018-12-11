@@ -61,7 +61,7 @@ TEST(ndarray, int_equals_test)
 }
 TEST(ndarray, size_t_equals_test)
 {
-  equal_test<std::size_t>();
+  equal_test<uint32_t>();
 }
 TEST(ndarray, float_equals_test)
 {
@@ -93,7 +93,7 @@ TEST(ndarray, int_copy_test)
 }
 TEST(ndarray, size_t_copy_test)
 {
-  equal_test<std::size_t>();
+  equal_test<uint32_t>();
 }
 TEST(ndarray, float_copy_test)
 {
@@ -127,7 +127,7 @@ TEST(ndarray, integer_plus_test)
 {
   plus_test<int>();
 }
-// TEST(ndarray, size_t_plus_test){plus_test<std::size_t>();}
+// TEST(ndarray, size_t_plus_test){plus_test<uint32_t>();}
 TEST(ndarray, float_plus_test)
 {
   plus_test<float>();
@@ -160,7 +160,7 @@ TEST(ndarray, integer_sub_test)
 {
   sub_test<int>();
 }
-// TEST(ndarray, size_t_sub_test){sub_test<std::size_t>();}
+// TEST(ndarray, size_t_sub_test){sub_test<uint32_t>();}
 TEST(ndarray, float_sub_test)
 {
   sub_test<float>();
@@ -193,7 +193,7 @@ TEST(ndarray, integer_mult_test)
 {
   mult_test<int>();
 }
-// TEST(ndarray, size_t_mult_test){mult_test<std::size_t>();}
+// TEST(ndarray, size_t_mult_test){mult_test<uint32_t>();}
 TEST(ndarray, float_mult_test)
 {
   mult_test<float>();
@@ -230,7 +230,7 @@ TEST(ndarray, integer_div_test)
 {
   div_test<int>();
 }
-// TEST(ndarray, size_t_div_test){div_test<std::size_t>();}
+// TEST(ndarray, size_t_div_test){div_test<uint32_t>();}
 TEST(ndarray, float_div_test)
 {
   div_test<float>();
@@ -261,7 +261,7 @@ TEST(ndarray, integer_is_equal_test)
 }
 TEST(ndarray, size_t_is_equal_test)
 {
-  is_equal_test<std::size_t>();
+  is_equal_test<uint32_t>();
 }
 TEST(ndarray, float_is_equal_test)
 {
@@ -297,7 +297,7 @@ TEST(ndarray, integer_is_not_equal_test)
 }
 TEST(ndarray, size_t_is_not_equal_test)
 {
-  is_not_equal_test<std::size_t>();
+  is_not_equal_test<uint32_t>();
 }
 TEST(ndarray, float_is_not_equal_test)
 {
@@ -331,7 +331,7 @@ TEST(ndarray, integer_plus_equals_test)
 {
   plus_equals_test<int>();
 }
-// TEST(ndarray, size_t_plus_equals_test){plus_equals_test<std::size_t>();}
+// TEST(ndarray, size_t_plus_equals_test){plus_equals_test<uint32_t>();}
 TEST(ndarray, float_plus_equals_test)
 {
   plus_equals_test<float>();
@@ -364,7 +364,7 @@ TEST(ndarray, integer_minus_equals_test)
 {
   minus_equals_test<int>();
 }
-// TEST(ndarray, size_t_minus_equals_test){minus_equals_test<std::size_t>();}
+// TEST(ndarray, size_t_minus_equals_test){minus_equals_test<uint32_t>();}
 TEST(ndarray, float_minus_equals_test)
 {
   minus_equals_test<float>();
