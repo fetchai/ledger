@@ -160,6 +160,8 @@ private:
 
   std::size_t max_peers_;
   std::size_t transient_peers_;
+
+  static constexpr std::size_t WORK_CYCLE_INTERVAL = 2000;
 };
 
 }  // namespace p2p
