@@ -56,7 +56,7 @@ public:
     double      trust;
     bool        has_transacted;
   };
-  // using PeerTrust = fetch::p2p::PeerTrust;
+  using PeerTrusts = std::vector<PeerTrust>;
 
   using IdentitySet    = typename std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
@@ -77,8 +77,8 @@ public:
   virtual void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                            TrustSubject subject, TrustQuality quality) = 0;
 
-  virtual IdentitySet          GetBestPeers(size_t maximum) const = 0;
-  virtual std::list<PeerTrust> GetPeersAndTrusts() const          = 0;
+  virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
+  virtual PeerTrusts  GetPeersAndTrusts() const          = 0;
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 

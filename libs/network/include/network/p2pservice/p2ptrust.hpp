@@ -182,11 +182,11 @@ public:
     return result;
   }
 
-  std::list<PeerTrust> GetPeersAndTrusts() const override
+  PeerTrusts GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
 
-    auto trust_list = std::list<PeerTrust>();
+    PeerTrusts trust_list;
 
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {
