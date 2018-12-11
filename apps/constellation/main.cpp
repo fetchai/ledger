@@ -122,12 +122,14 @@ struct CommandLineArguments
   static constexpr uint16_t P2P_PORT_OFFSET     = 1;
   static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
-  static const uint32_t DEFAULT_NUM_LANES      = 4;
-  static const uint32_t DEFAULT_NUM_SLICES     = 4;
-  static const uint32_t DEFAULT_NUM_EXECUTORS  = DEFAULT_NUM_LANES;
-  static const uint16_t DEFAULT_PORT           = 8000;
-  static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
-  static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
+  static const uint32_t DEFAULT_NUM_LANES          = 4;
+  static const uint32_t DEFAULT_NUM_SLICES         = 4;
+  static const uint32_t DEFAULT_NUM_EXECUTORS      = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT               = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID         = 0x10;
+  static const uint32_t DEFAULT_BLOCK_INTERVAL     = 5000;  // milliseconds.
+  static const std::size_t DEFAULT_MAX_PEERS       = 3;
+  static const std::size_t DEFAULT_TRANSIENT_PEERS = 1;
 
   uint16_t           port{0};
   uint32_t           network_id;
@@ -147,6 +149,8 @@ struct CommandLineArguments
   ManifestPtr        manifest;
   std::size_t        processor_threads;
   std::size_t        verification_threads;
+  std::size_t        max_peers;
+  std::size_t        transient_peers;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -192,6 +196,11 @@ struct CommandLineArguments
                    std::size_t{std::thread::hardware_concurrency()});
     parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads",
                    std::size_t{std::thread::hardware_concurrency()});
+    parameters.add(args.max_peers, "max-peers", "The number of maximal peers to send to peer requests.",
+                   DEFAULT_MAX_PEERS);
+    parameters.add(args.transient_peers, "transient-peers",
+                   "The number of the peers which will be random in answer sent to peer requests.",
+                   DEFAULT_TRANSIENT_PEERS);
 
     // parse the args
     parameters.Parse(argc, argv);
@@ -495,7 +504,8 @@ int main(int argc, char **argv)
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
         args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
-        args.verification_threads, std::chrono::milliseconds(args.block_interval));
+        args.verification_threads, std::chrono::milliseconds(args.block_interval),
+        args.max_peers, args.transient_peers);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
