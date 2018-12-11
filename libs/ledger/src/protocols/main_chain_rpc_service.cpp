@@ -247,7 +247,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     if (successful_worker)
     {
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-    next_loose_tips_check_.SetTimedOut();
+      next_loose_tips_check_.SetTimedOut();
     }
   }
 
