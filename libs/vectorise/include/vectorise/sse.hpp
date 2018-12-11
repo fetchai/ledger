@@ -319,10 +319,29 @@ FETCH_ADD_OPERATOR(_mm_setzero_pd, double, _mm_sub_pd)
     return VectorRegister<type, 128>(ret);                                         \
   }
 
-FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
-FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
-// FETCH_ADD_OPERATOR(/, int, __m128i,  [](int x, int y){return x / y;})
 FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32)
+FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
+FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
+inline VectorRegister<int, 128> operator/(VectorRegister<int, 128> const &a,
+                                               VectorRegister<int, 128> const &b)
+  {
+
+    //TODO(private 440): SSE implementation required
+    int d1[4];
+    _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
+
+    int d2[4];
+    _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
+
+    int ret[4];
+
+    ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
+    ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
+    ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
+    ret[3] = d2[3] != 0 ? d1[3] / d2[3] : 0;
+
+    return VectorRegister<int, 128>(ret);
+  }
 
 FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
 // FETCH_ADD_OPERATOR(!=, int, __m128i, _mm_cmpneq_epi32)
@@ -331,10 +350,10 @@ FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
 // FETCH_ADD_OPERATOR(<=, int, __m128i, _mm_cmple_epi32)
 FETCH_ADD_OPERATOR(<, int, __m128i, _mm_cmplt_epi32)
 
-FETCH_ADD_OPERATOR(*, std::size_t, __m128, _mm_mullo_epi32)
-FETCH_ADD_OPERATOR(-, std::size_t, __m128, _mm_sub_epi32)
-// FETCH_ADD_OPERATOR(/, std::size_t, __m128, _mm_div_epi32)
-FETCH_ADD_OPERATOR(+, std::size_t, __m128, _mm_add_epi32)
+FETCH_ADD_OPERATOR(*, uint32_t, __m128, _mm_mullo_epi32)
+FETCH_ADD_OPERATOR(-, uint32_t, __m128, _mm_sub_epi32)
+// FETCH_ADD_OPERATOR(/, uint32_t, __m128, _mm_div_epi32)
+FETCH_ADD_OPERATOR(+, uint32_t, __m128, _mm_add_epi32)
 
 FETCH_ADD_OPERATOR(*, float, __m128, _mm_mul_ps)
 FETCH_ADD_OPERATOR(-, float, __m128, _mm_sub_ps)
@@ -481,10 +500,10 @@ inline float first_element(VectorRegister<float, 128> const &x)
   return _mm_cvtss_f32(x.data());
 }
 
-//
-// inline std::size_t first_element(VectorRegister<std::size_t, 128> const &x)
+
+// inline uint32_t first_element(VectorRegister<uint32_t, 128> const &x)
 //{
-//  return _mm_cvtss_u32(x.data());
+//  return x.data();
 //}
 //
 // inline VectorRegister<std::size_t, 128> shift_elements_left(VectorRegister<std::size_t, 128>

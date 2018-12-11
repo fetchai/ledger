@@ -30,9 +30,13 @@ ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapeLessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+  // because random numbers are between 0 and 1 which doesn't work for integers
+  double scale = 1000;
+  T rn;
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = T(gen.AsDouble()) + adj;
+    rn = T(gen.AsDouble() * scale);
+    a1.At(i) = rn + adj;
   }
   return a1;
 }
@@ -206,19 +210,23 @@ TEST(ndarray, double_mult_test)
 template <typename T>
 void div_test()
 {
-  std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
-  ShapeLessArray<T> result_array = RandomArray(n, T(0));
+  std::size_t       n            = 12;
+  ShapeLessArray<T> test_array   = RandomArray(n, T(1));
+  ShapeLessArray<T> test_array_2 = RandomArray(n, T(1));
+  ShapeLessArray<T> result_array = RandomArray(n, T(1));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
     result_array[j] = test_array[j] / test_array_2[j];
   }
-  ASSERT_TRUE(result_array.AllClose(test_array / test_array_2));
+
+  ShapeLessArray<T> tmp(n);
+  tmp = test_array / test_array_2;
+
+  ASSERT_TRUE(result_array.AllClose(tmp));
 }
 
-// TEST(ndarray, integer_div_test){div_test<int>();}
+ TEST(ndarray, integer_div_test){div_test<int>();}
 // TEST(ndarray, size_t_div_test){div_test<std::size_t>();}
 TEST(ndarray, float_div_test)
 {
