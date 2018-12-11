@@ -71,29 +71,27 @@ public:
     {
       prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
           address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
-
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request sent to: ", ToBase64(hash_));
     }
     auto promise_state = prom_->GetState();
 
     switch (promise_state)
     {
     case PromiseState::TIMEDOUT:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::FAILED:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request failed to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
       if (timeout_.IsDue())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+        FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
       return promise_state;
     case PromiseState::SUCCESS:
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request succeeded to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request succeeded to: ", ToBase64(hash_));
       prom_->As(blocks_);
     }
       return promise_state;
