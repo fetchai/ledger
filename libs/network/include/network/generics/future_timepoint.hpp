@@ -61,7 +61,7 @@ public:
     due_time_ = Clock::now() + dur;
   }
 
-  vois SetTimedOut()
+  void SetTimedOut()
   {
     due_time_ = Clock::now() - std::chrono::seconds(1);
   }
