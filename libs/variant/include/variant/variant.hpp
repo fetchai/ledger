@@ -85,8 +85,6 @@ public:
   explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
   explicit Variant(char const *value);
 
-  void MakeArray(std::size_t elements);
-
   /// @name Basic Type Access
   /// @{
   Type type() const

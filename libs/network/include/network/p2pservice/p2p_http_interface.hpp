@@ -136,9 +136,7 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto             peers_trusts = trust_.GetPeersAndTrusts();
-    variant::Variant trust_list;
-
+    auto peers_trusts = trust_.GetPeersAndTrusts();
     std::size_t count = 0;
     for (const auto &pt : peers_trusts)
     {
@@ -148,7 +146,7 @@ private:
       }
     }
 
-    trust_list.MakeArray(count);
+    variant::Variant trust_list = variant::Variant::Array(count);
 
     std::size_t pos = 0;
     for (const auto &pt : peers_trusts)

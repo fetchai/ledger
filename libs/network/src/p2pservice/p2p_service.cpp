@@ -159,12 +159,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
     }
   }
 
-  // for the moment we should provide the trust system with some "fake" information to ensure peers
-  // are trusted
-  // for (auto const &peer : desired_peers_)
-  //{
-  // trust_system_.AddFeedback(peer, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
-  //  }
 }
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)
@@ -182,7 +176,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   pending_peer_lists_.Resolve();
 
   // process any peer discovery updates that are returned from the queue
-  for (auto &result : pending_peer_lists_.Get(32))
+  for (auto &result : pending_peer_lists_.Get(MAX_PEERS_PER_CYCLE))
   {
     Address const &from      = result.key;
     AddressSet &   addresses = result.promised;
