@@ -33,7 +33,7 @@ class Blacklist
   using Contents   = std::set<Address>;
 
 public:
-  Blacklist() = default;
+  Blacklist()  = default;
   ~Blacklist() = default;
 
   void Add(const Address &address)

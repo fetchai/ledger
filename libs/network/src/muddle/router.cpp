@@ -254,8 +254,8 @@ void Router::Route(Handle handle, PacketPtr packet)
     else
     {
       // The connection has gone away while we were processing things so far.
-      FETCH_LOG_WARN(LOGGING_NAME, "Cannot get transmitter address for packet: ",
-                     DescribePacket(*packet));
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Cannot get transmitter address for packet: ", DescribePacket(*packet));
     }
   }
   else
@@ -477,8 +477,8 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 bool Router::IsConnected(Address const &target) const
 {
-  auto raw_address = ConvertAddress(target);
-  auto iter        = routing_table_.find(raw_address);
+  auto raw_address  = ConvertAddress(target);
+  auto iter         = routing_table_.find(raw_address);
   bool is_connected = false;
   if (iter != routing_table_.end())
   {
