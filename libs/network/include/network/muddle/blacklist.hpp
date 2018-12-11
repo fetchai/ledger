@@ -19,6 +19,8 @@
 
 #include "network/muddle/packet.hpp"
 
+#include <set>
+
 namespace fetch {
 namespace muddle {
 
@@ -28,7 +30,7 @@ class Blacklist
   using RawAddress = Packet::RawAddress;
   using Mutex      = fetch::mutex::Mutex;
   using Lock       = std::unique_lock<Mutex>;
-  using Contents   = std::unordered_set<Address>;
+  using Contents   = std::set<Address>;
 
 public:
   void Add(const Address &address)
