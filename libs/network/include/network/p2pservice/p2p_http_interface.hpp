@@ -144,7 +144,7 @@ private:
     {
       if (pt.has_transacted)
       {
-        count++;
+        ++count;
       }
     }
 
