@@ -185,7 +185,7 @@ private:
 
   ThreadPool dispatch_thread_pool_;
 
-  HandleDirectAddrMap routing_table_handles_direct_addr_;  ///< Map of handles to direct address
+  HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address
   ///< (Protected by routing_table_lock)
 };
 
