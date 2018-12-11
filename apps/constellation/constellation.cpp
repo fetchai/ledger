@@ -180,7 +180,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , http_network_manager_{4}
   , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, 3, 1}
+  , p2p_{muddle_, lane_control_, trust_}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
