@@ -33,6 +33,9 @@ class Blacklist
   using Contents   = std::set<Address>;
 
 public:
+  Blacklist() = default;
+  ~Blacklist() = default;
+
   void Add(const Address &address)
   {
     FETCH_LOCK(mutex_);
@@ -63,7 +66,7 @@ public:
   }
 
 private:
-  mutable Mutex mutex_;
+  mutable Mutex mutex_{__LINE__, __FILE__};
   Contents      contents_;
 };
 
