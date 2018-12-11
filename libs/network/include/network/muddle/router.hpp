@@ -149,6 +149,8 @@ private:
   using RawAddress = Packet::RawAddress;
   using BlackList  = fetch::muddle::Blacklist;
 
+  static constexpr NUMBER_OF_ROUTER_THREADS = 10;
+
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
