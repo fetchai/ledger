@@ -247,8 +247,16 @@ void Router::Route(Handle handle, PacketPtr packet)
     // when the message is targetted at us we must handle it
     Address transmitter;
 
-    HandleToDirectAddress(handle, transmitter);
-    DispatchPacket(packet, transmitter);
+    if (HandleToDirectAddress(handle, transmitter))
+    {
+      DispatchPacket(packet, transmitter);
+    }
+    else
+    {
+      // The connection has gone away while we were processing things so far.
+      FETCH_LOG_WARN(LOGGING_NAME, "Cannot get transmitter address for packet: ",
+                     DescribePacket(*packet));
+    }
   }
   else
   {
