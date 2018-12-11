@@ -25,6 +25,7 @@
 #include "network/p2pservice/bayrank/buffer.hpp"
 #include "network/p2pservice/bayrank/good_place.hpp"
 #include "network/p2pservice/bayrank/bad_place.hpp"
+#include "network/p2pservice/bayrank/object_cache.hpp"
 
 #include <algorithm>
 #include <array>
@@ -56,12 +57,17 @@ template <typename IDENTITY>
 class P2PTrustBayRank : public P2PTrustInterface<IDENTITY>
 {
 public:
-  using IDStore         = std::unordered_map<IDENTITY, std::size_t>;
-  using Mutex           = mutex::Mutex;
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using IdentitySet     = typename P2PTrustInterface<IDENTITY>::IdentitySet;
-  using PeerTrust       = typename P2PTrustInterface<IDENTITY>::PeerTrust;
-  using Gaussian        = typename TrustStorageInterface<IDENTITY>::Gaussian;
+  using IDStore               = std::unordered_map<IDENTITY, std::size_t>;
+  using Mutex                 = mutex::Mutex;
+  using ConstByteArray        = byte_array::ConstByteArray;
+  using TrustStorageInterface = bayrank::TrustStorageInterface<IDENTITY>;
+  using GoodPlace             = bayrank::GoodPlace<IDENTITY>;
+  using BadPlace              = bayrank::BadPlace<IDENTITY>;
+  using TrustBuffer           = bayrank::TrustBuffer<IDENTITY>;
+  using ObjectStore           = bayrank::ObjectCache<ConstByteArray, IDENTITY>;
+  using IdentitySet           = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using PeerTrust             = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using Gaussian              = typename TrustStorageInterface::Gaussian;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
@@ -81,7 +87,7 @@ public:
   void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                    TrustSubject subject, TrustQuality quality) override
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ",ToBase64(peer_ident), ", quality: ", quality);
+    FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident), ", quality: ", quality);
     FETCH_LOCK(mutex_);
 
     auto id_it = id_store_.find(peer_ident);
@@ -99,9 +105,14 @@ public:
     Gaussian const &reference_player = LookupReferencePlayer(quality);
 
     bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+
+    if (honest && object_ident.size()>0)
+    {
+      AddObject(object_ident, peer_ident);
+    }
     
     auto sp       = stores_[id_it->second];
-    auto peer_it = sp->GetPeer(peer_ident);
+    auto peer_it  = sp->GetPeer(peer_ident);
     if (peer_it==sp->end())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(peer_ident), " not found in the storage (id=", id_it->second, ")!");
@@ -118,6 +129,23 @@ public:
     {
       id_store_[peer_ident] = static_cast<std::size_t>(s_idx);
     }
+  }
+
+  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject, TrustQuality quality) override
+  {
+    object_store_.Iterate(object_ident, [this, subject, quality](IDENTITY const &identity){
+      AddFeedback(identity, subject, quality);
+    });
+  }
+
+  void AddObject(ConstByteArray const &object_ident, IDENTITY const &peer_ident) override
+  {
+    object_store_.Add(object_ident, peer_ident);
+  }
+
+  void RemoveObject(ConstByteArray const &object_ident) override
+  {
+    object_store_.Remove(object_ident);
   }
 
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
@@ -205,7 +233,7 @@ public:
         for(end=std::min(max-pos,buffer_.size()),pos=0;pos<end;++pos)
         {
           auto it = buffer_it+static_cast<long>(pos);
-          if (it->score<TrustStorageInterface<IDENTITY>::SCORE_THRESHOLD)
+          if (it->score<TrustStorageInterface::SCORE_THRESHOLD)
           {
             break;
           }
@@ -296,7 +324,7 @@ public:
     {
       if (id_it->second==0)
       {
-        return buffer_.GetPeer(peer_ident)->score>TrustStorageInterface<IDENTITY>::SCORE_THRESHOLD;
+        return buffer_.GetPeer(peer_ident)->score>TrustStorageInterface::SCORE_THRESHOLD;
       }
       return id_it->second==1;
     }
@@ -357,12 +385,13 @@ protected:
 protected:
   mutable Mutex mutex_{__LINE__, __FILE__};
 
-  mutable GoodPlace<IDENTITY>   good_place_;
-  mutable BadPlace<IDENTITY>    bad_place_;
-  mutable TrustBuffer<IDENTITY> buffer_;
-  mutable IDStore               id_store_;
+  GoodPlace   good_place_;
+  BadPlace    bad_place_;
+  TrustBuffer buffer_;
+  IDStore     id_store_;
+  ObjectStore object_store_;
   
-  std::array<TrustStorageInterface<IDENTITY>*, 3> stores_{{
+  std::array<TrustStorageInterface*, 3> stores_{{
       &buffer_, 
       &good_place_, 
       &bad_place_

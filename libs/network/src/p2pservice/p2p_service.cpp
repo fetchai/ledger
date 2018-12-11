@@ -138,20 +138,6 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 
     FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust update for: ", std::string(ToBase64(muddle_.identity().identifier())) ," for ", name, "  ----  ", element.second.ToString());
 
-    //TODO(ATTILA): We don't want this. Less logging?
-    /*if (start_mistrust.IsDue())
-    {
-      if (name[0]=='Z' || name[1]=='Z')
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: Trust (fake) negging!! ", name);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-        trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
-      }
-    }*/
-
     // update our desired
     bool const new_peer     = desired_peers_.find(address) == desired_peers_.end();
     bool const trusted_peer = trust_system_.IsPeerTrusted(address);
@@ -170,16 +156,10 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "KLL: Blacklisting ", ToBase64(address), " because trust=", trust_system_.GetTrustRatingOfPeer(address));
         blacklisted_peers_.insert(address);
+        trust_system_.AddObjectFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
       }
     }
   }
-
-  // for the moment we should provide the trust system with some "fake" information to ensure peers
-  // are trusted
-  //for (auto const &peer : desired_peers_)
-  //{
-    //trust_system_.AddFeedback(peer, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
-  //  }
 }
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)
@@ -216,6 +196,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
                          " (from: ", ToBase64(from), ")");
 
           trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
+          trust_system_.AddFeedback(from, new_address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
         }
       }
     }

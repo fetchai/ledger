@@ -26,8 +26,9 @@
 
 namespace fetch {
 namespace p2p {
+namespace bayrank {
 
-template <typename IDENTITY>
+    template <typename IDENTITY>
 class TrustBuffer  : public TrustStorageInterface<IDENTITY>
 {
 protected:
@@ -134,5 +135,6 @@ private:
   BadPlace<IDENTITY>&  bad_place_;
 };
 
+}  //namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

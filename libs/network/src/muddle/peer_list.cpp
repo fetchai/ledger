@@ -74,15 +74,12 @@ PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
 bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
 {
   FETCH_LOCK(lock_);
-  for (auto const &element : peer_connections_)
-  {
-    if (element.first == uri)
-    {
-      handle = element.second->handle();
-      return true;
-    }
+  auto it = peer_connections_.find(uri);
+  if (it==peer_connections_.end()){
+    return false;
   }
-  return false;
+  handle = it->second->handle();
+  return true;
 }
 
 PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const

@@ -17,14 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "math/free_functions/statistics/normal.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <ctime>
+#include <vector>
+#include <unordered_map>
 
 namespace fetch {
 namespace p2p {
+namespace bayrank {
 
-template <typename IDENTITY>
+    template <typename IDENTITY>
 class TrustStorageInterface
 {
 public:
@@ -90,6 +95,13 @@ public:
     auto const pos = id_store_.find(peer_ident);
     return pos==id_store_.end() ? storage_.end() : (storage_.begin()+static_cast<long>(pos->second));
   }
+
+  virtual ConstIterator GetPeer(IDENTITY const &peer_ident) const
+  {
+    FETCH_LOCK(storage_mutex_);
+    auto const pos = id_store_.find(peer_ident);
+    return pos==id_store_.end() ? storage_.end() : (storage_.begin()+static_cast<long>(pos->second));
+  }
      
   virtual ConstIterator begin() const
   {
@@ -128,6 +140,6 @@ protected:
   mutable Mutex storage_mutex_{__LINE__, __FILE__};
 };
 
-
+}  //namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

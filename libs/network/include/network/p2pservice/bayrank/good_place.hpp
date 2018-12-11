@@ -25,8 +25,9 @@
 
 namespace fetch {
 namespace p2p {
+namespace bayrank {
 
-template <typename IDENTITY>
+    template <typename IDENTITY>
 class GoodPlace : public TrustStorageInterface<IDENTITY>
 {
 protected:
@@ -102,6 +103,6 @@ private:
     std::size_t const MAX_SIZE = 1000;
 };
 
-
+}  //namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

@@ -78,6 +78,10 @@ public:
   virtual void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                            TrustSubject subject, TrustQuality quality) = 0;
 
+  virtual void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject, TrustQuality quality) = 0;
+  virtual void AddObject(ConstByteArray const &object_ident, IDENTITY const &peer_ident) = 0;
+  virtual void RemoveObject(ConstByteArray const &object_ident) = 0;
+
   virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
   virtual std::list<PeerTrust> GetPeersAndTrusts() const=0;
 
@@ -85,7 +89,7 @@ public:
 
   virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const              = 0;
   virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const       = 0;
-  virtual double      GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const = 0;
+  virtual double      GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const  = 0;
   virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const              = 0;
   virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const                = 0;
 };
