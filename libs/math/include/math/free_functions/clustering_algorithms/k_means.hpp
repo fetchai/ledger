@@ -168,7 +168,8 @@ public:
     InitialiseKMeans(data);
 
     // initialise assignment
-    prev_k_assignment_ = clustering_type(n_points_);  // need to keep a record of previous to check for convergence
+    prev_k_assignment_ =
+        clustering_type(n_points_);  // need to keep a record of previous to check for convergence
     for (std::size_t l = 0; l < prev_k_assignment_.size(); ++l)
     {
       prev_k_assignment_.Set(l, -1);
@@ -245,7 +246,7 @@ private:
         for (std::size_t j = 0; j < n_points_; ++j)
         {
           if (!(k_assignment_.At(j) < 0))  // previous unassigned data points must be assigned
-                                              // with a negative cluster value
+                                           // with a negative cluster value
           {
             k_count_[static_cast<std::size_t>(k_assignment_.At(j))] += 1;
           }
@@ -389,7 +390,10 @@ private:
 
         if (current_cluster_label >= 0)
         {
-          k_assignment_.Set(j, static_cast<int>(reverse_cluster_assignment_map.find(static_cast<std::size_t>(k_assignment_.At(j)))->second));
+          k_assignment_.Set(
+              j, static_cast<int>(reverse_cluster_assignment_map
+                                      .find(static_cast<std::size_t>(k_assignment_.At(j)))
+                                      ->second));
         }
       }
     }
@@ -713,7 +717,10 @@ private:
       assert(cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i))) !=
              cluster_assignment_map_.end());
       // overwrite every clust assignment with its equivalent previous label at input
-      k_assignment_.Set(i, static_cast<int>(cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i)))->second));
+      k_assignment_.Set(
+          i,
+          static_cast<int>(
+              cluster_assignment_map_.find(static_cast<std::size_t>(k_assignment_.At(i)))->second));
     }
   }
 
@@ -727,7 +734,7 @@ private:
       INVALID;  // max no change k_assignment before convergence
   std::size_t loop_counter_ = INVALID;
   std::size_t max_loops_    = INVALID;
-  int assigned_k_   = std::numeric_limits<int>::max();  // current cluster to assign
+  int         assigned_k_   = std::numeric_limits<int>::max();  // current cluster to assign
 
   // used to find the smallest distance out of K comparisons
   typename ArrayType::Type running_mean_ = std::numeric_limits<typename ArrayType::Type>::max();
@@ -743,12 +750,13 @@ private:
   ArrayType prev_k_means_;  // previous cluster centres (for checking convergence)
   ArrayType temp_k_;        // a container for ease of access to using Euclidean function
 
-  clustering_type k_assignment_;       // current data to cluster assignment
-  clustering_type prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
-  clustering_type reassigned_k_;  // reassigned data to cluster assignment
+  clustering_type k_assignment_;  // current data to cluster assignment
+  clustering_type
+                  prev_k_assignment_;  // previous data to cluster assignment (for checkign convergence)
+  clustering_type reassigned_k_;       // reassigned data to cluster assignment
 
-  fetch::core::Vector<int> k_count_;  // count of how many data points assigned per cluster
-  fetch::core::Vector<ArrayType>   k_euclids_;  // container for current euclid distances
+  fetch::core::Vector<int>       k_count_;    // count of how many data points assigned per cluster
+  fetch::core::Vector<ArrayType> k_euclids_;  // container for current euclid distances
 
   // map previously assigned clusters to current clusters
   std::unordered_map<std::size_t, std::size_t>
@@ -773,8 +781,8 @@ private:
  */
 template <typename ArrayType>
 clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t const &K,
-                 std::size_t max_loops = 100, InitMode init_mode = InitMode::KMeansPP,
-                 std::size_t max_no_change_convergence = 10)
+                       std::size_t max_loops = 100, InitMode init_mode = InitMode::KMeansPP,
+                       std::size_t max_no_change_convergence = 10)
 {
   std::size_t n_points = data.shape()[0];
 
@@ -783,7 +791,7 @@ clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, std::si
   assert(K > 1);          // why would you run k means clustering with only one cluster?
 
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  clustering_type ret{n_points};
+  clustering_type                  ret{n_points};
 
   if (n_points == K)  // very easy to cluster!
   {
@@ -814,13 +822,14 @@ clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, std::si
  * @return                  ArrayType of format n_data x 1 with values indicating cluster
  */
 template <typename ArrayType>
-clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, clustering_type const &prev_assignment,
-                 KInferenceMode const &k_inference_mode, std::size_t max_loops = 100,
-                 std::size_t max_no_change_convergence = 10)
+clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed,
+                       clustering_type const &prev_assignment,
+                       KInferenceMode const &k_inference_mode, std::size_t max_loops = 100,
+                       std::size_t max_no_change_convergence = 10)
 {
   std::size_t                      n_points = data.shape()[0];
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  clustering_type                        ret{n_points};
+  clustering_type                  ret{n_points};
   details::KMeansImplementation<ArrayType>(data, ret, r_seed, max_loops, prev_assignment,
                                            max_no_change_convergence, k_inference_mode);
 
@@ -842,11 +851,11 @@ clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, cluster
 template <typename ArrayType>
 clustering_type KMeans(ArrayType const &data, std::size_t const &r_seed, std::size_t const &K,
                        clustering_type const &prev_assignment, std::size_t max_loops = 100,
-                 std::size_t max_no_change_convergence = 10)
+                       std::size_t max_no_change_convergence = 10)
 {
   std::size_t                      n_points = data.shape()[0];
   fetch::core::Vector<std::size_t> ret_array_shape{n_points, 1};
-  clustering_type                        ret{n_points};
+  clustering_type                  ret{n_points};
 
   assert(K <= n_points);  // you can't have more clusters than data points
   assert(K != 1);         // why would you run k means clustering with only one cluster?

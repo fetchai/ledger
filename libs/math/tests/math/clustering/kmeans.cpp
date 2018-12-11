@@ -25,8 +25,8 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/shape_less_array.hpp>
 #include <math/linalg/matrix.hpp>
+#include <math/shape_less_array.hpp>
 #include <string>
 #include <vector>
 
@@ -91,7 +91,7 @@ TEST(clustering_test, kmeans_test_2d_4k)
     A.Set(i, 1, static_cast<data_type>(i) + 50);
   }
 
-  std::size_t random_seed = 123456;
+  std::size_t   random_seed = 123456;
   clusters_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K);
 
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
@@ -160,7 +160,7 @@ TEST(clustering_test, kmeans_test_ndimensions)
     }
   }
 
-  std::size_t random_seed = 123456;
+  std::size_t   random_seed = 123456;
   clusters_type clusters =
       fetch::math::clustering::KMeans(A, random_seed, static_cast<std::size_t>(n_clusters));
 
@@ -178,10 +178,10 @@ TEST(clustering_test, kmeans_test_previous_assignment)
 {
   std::size_t n_points = 50;
 
-  std::size_t K = 2;
-  matrix_type A{n_points, 2};
+  std::size_t   K = 2;
+  matrix_type   A{n_points, 2};
   clusters_type prev_k{n_points};
-  matrix_type ret{n_points, 1};
+  matrix_type   ret{n_points, 1};
 
   for (std::size_t i = 0; i < 25; ++i)
   {
@@ -211,7 +211,7 @@ TEST(clustering_test, kmeans_test_previous_assignment)
     prev_k.Set(i, -1);
   }
 
-  std::size_t random_seed = 123456;
+  std::size_t   random_seed = 123456;
   clusters_type clusters    = fetch::math::clustering::KMeans(A, random_seed, K, prev_k);
 
   std::size_t group_0 = static_cast<std::size_t>(clusters[0]);
@@ -230,9 +230,9 @@ TEST(clustering_test, kmeans_simple_previous_assignment_no_K)
 {
   std::size_t n_points = 50;
 
-  matrix_type A{n_points, 2};
+  matrix_type   A{n_points, 2};
   clusters_type prev_k{n_points};
-  matrix_type ret{n_points, 1};
+  matrix_type   ret{n_points, 1};
 
   // initialise the data to be first half negative, second half positive
   for (std::size_t i = 0; i < 25; ++i)
@@ -292,9 +292,9 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   int group_2  = 156;
   int group_3  = 23;
 
-  matrix_type A{n_points, 2};
+  matrix_type   A{n_points, 2};
   clusters_type prev_k{n_points};
-  matrix_type ret{n_points, 1};
+  matrix_type   ret{n_points, 1};
 
   // assign data to 4 quadrants
   for (std::size_t i = 0; i < 25; ++i)
@@ -356,7 +356,8 @@ TEST(clustering_test, kmeans_remap_previous_assignment_no_K)
   std::size_t                             random_seed = 123456;
   fetch::math::clustering::KInferenceMode k_inference_mode =
       fetch::math::clustering::KInferenceMode::NClusters;
-  clusters_type clusters = fetch::math::clustering::KMeans(A, random_seed, prev_k, k_inference_mode);
+  clusters_type clusters =
+      fetch::math::clustering::KMeans(A, random_seed, prev_k, k_inference_mode);
 
   for (std::size_t j = 0; j < 25; ++j)
   {

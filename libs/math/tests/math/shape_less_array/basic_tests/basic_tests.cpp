@@ -32,10 +32,10 @@ ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
   ShapeLessArray<T, fetch::memory::SharedArray<T>>  a1(n);
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
-  T rn;
+  T      rn;
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn = T(gen.AsDouble() * scale);
+    rn       = T(gen.AsDouble() * scale);
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -226,7 +226,10 @@ void div_test()
   ASSERT_TRUE(result_array.AllClose(tmp));
 }
 
- TEST(ndarray, integer_div_test){div_test<int>();}
+TEST(ndarray, integer_div_test)
+{
+  div_test<int>();
+}
 // TEST(ndarray, size_t_div_test){div_test<std::size_t>();}
 TEST(ndarray, float_div_test)
 {
