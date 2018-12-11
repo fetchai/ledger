@@ -96,6 +96,7 @@ protected:
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, size_t>;
   using Mutex        = mutex::Mutex;
+  using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:
   using ConstByteArray = byte_array::ConstByteArray;
@@ -182,11 +183,11 @@ public:
     return result;
   }
 
-  std::list<PeerTrust> GetPeersAndTrusts() const override
+  PeerTrusts GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
 
-    auto trust_list = std::list<PeerTrust>();
+    PeerTrusts trust_list;
 
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {

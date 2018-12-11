@@ -149,6 +149,8 @@ private:
   using RawAddress = Packet::RawAddress;
   using BlackList  = fetch::muddle::Blacklist;
 
+  static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 10;
+
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
@@ -183,7 +185,7 @@ private:
 
   ThreadPool dispatch_thread_pool_;
 
-  HandleDirectAddrMap routing_table_handles_direct_addr_;  ///< Map of handles to direct address
+  HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address
   ///< (Protected by routing_table_lock)
 };
 
