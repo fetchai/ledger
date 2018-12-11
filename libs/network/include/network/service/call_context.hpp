@@ -17,27 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "commands.hpp"
-#include "node_functionality.hpp"
-#include "vector_serialize.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
-#include "network/service/server.hpp"
+namespace fetch {
+namespace service {
 
-class NodeToNodeProtocol : public NodeToNodeFunctionality, public fetch::service::Protocol
+/* A class that defines the context specific parameters being passed to an invoked API func.
+ *
+ */
+class CallContext
 {
 public:
-  NodeToNodeProtocol(fetch::network::NetworkManager network_manager)
-    : NodeToNodeFunctionality(network_manager)
-    , fetch::service::Protocol()
-  {
+  using Address = fetch::byte_array::ConstByteArray;
 
-    using namespace fetch::service;
-    NodeToNodeFunctionality *controller = (NodeToNodeFunctionality *)this;
-    this->Expose(PeerToPeerCommands::SEND_MESSAGE, controller,
-                 &NodeToNodeFunctionality::SendMessage);
-    this->Expose(PeerToPeerCommands::GET_MESSAGES, controller, &NodeToNodeFunctionality::messages);
-
-    // Using the event feed that
-    this->RegisterFeed(PeerToPeerFeed::NEW_MESSAGE, this);
-  }
+  Address sender_address;
 };
+
+}  // namespace service
+}  // namespace fetch

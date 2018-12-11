@@ -355,7 +355,7 @@ private:
       }
       else
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Reading body failed, dying: ", ec);
+        FETCH_LOG_ERROR(LOGGING_NAME, "Reading body failed, dying: ", ec, ec.message());
         SignalLeave();
       }
     };
