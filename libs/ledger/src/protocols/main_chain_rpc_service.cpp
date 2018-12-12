@@ -60,30 +60,38 @@ public:
     return hash == hash_;
   }
 
+  BlockHash const &hash()
+  {
+    return hash_;
+  }
+
   PromiseState Work()
   {
     if (!prom_)
     {
       prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
           address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
-
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING : ", ToBase64(hash_));
     }
     auto promise_state = prom_->GetState();
 
     switch (promise_state)
     {
     case PromiseState::TIMEDOUT:
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
+      return promise_state;
     case PromiseState::FAILED:
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
       if (timeout_.IsDue())
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
       return promise_state;
     case PromiseState::SUCCESS:
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request succeeded to: ", ToBase64(hash_));
       prom_->As(blocks_);
     }
       return promise_state;
@@ -215,13 +223,14 @@ void MainChainRpcService::ServiceLooseBlocks()
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
     // At this point, ask the chain to check it has loose elments to query.
-    if (chain_.HasMissingBlocks() && last_good_address_.size())
+    if (chain_.HasMissingBlocks())
     {
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
-        // TODO(katie): When we (eventually) have a working trust
-        // system, use that to generate an address here.
-        AddLooseBlock(hash, last_good_address_);
+        // Get a random peer to send the req to...
+        auto    random_peer_list = trust_.GetRandomPeers(1, 0.0);
+        Address address          = (*random_peer_list.begin());
+        AddLooseBlock(hash, address);
       }
     }
     else
@@ -237,20 +246,20 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (successful_worker)
     {
-      last_good_address_ = successful_worker->address();
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-      next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+      next_loose_tips_check_.SetTimedOut();
     }
   }
+
   if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
   {
-    next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();
+    next_loose_tips_check_.SetTimedOut();
   }
 }
 
-void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList block_list)
+void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
 {
   bool newdata = false;
   bool lied    = false;
@@ -272,7 +281,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
 
   if (newdata && !lied)
   {
-    trust_.AddFeedback(peer, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    trust_.AddFeedback(address, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
   }
 
   if (newdata && !block_list.empty())
@@ -283,7 +292,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &peer, BlockList b
       blk.UpdateDigest();
       if (blk.loose())
       {
-        AddLooseBlock(block_list.back().hash(), peer);
+        AddLooseBlock(block_list.back().hash(), address);
       }
     }
     else

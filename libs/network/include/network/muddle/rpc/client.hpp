@@ -42,6 +42,7 @@ public:
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;
   using WeakHandler   = std::weak_ptr<Handler>;
+  using NetworkId     = MuddleEndpoint::NetworkId;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
@@ -49,13 +50,21 @@ public:
     : endpoint_(endpoint)
     , address_(std::move(address))
     , service_(service)
+    , network_id_(endpoint.network_id())
     , channel_(channel)
   {
     handler_ = std::make_shared<Handler>([this](Promise promise) {
       LOG_STACK_TRACE_POINT;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Handling an inner promise ", promise->id());
-      ProcessServerMessage(promise->value());
+      try
+      {
+        ProcessServerMessage(promise->value());
+      }
+      catch (std::exception &ex)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Client::ProcessServerMessage EX ", ex.what());
+      }
     });
 
     thread_pool_->Start();
@@ -63,10 +72,14 @@ public:
 
   ~Client() override
   {
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Client teardown...");
     // clear that handler
     handler_.reset();
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Handler reset, stopping threadpool");
     thread_pool_->Stop();
+    FETCH_LOG_WARN(LOGGING_NAME, "Threadpool stopped, client destructor end");
   }
 
   template <typename... Args>
@@ -77,7 +90,7 @@ public:
     address_ = address;
 
     // execute the call
-    return Call(protocol, function, std::forward<Args>(args)...);
+    return Call(network_id_, protocol, function, std::forward<Args>(args)...);
   }
 
 protected:
@@ -139,6 +152,7 @@ private:
   MuddleEndpoint &endpoint_;
   Address         address_;
   uint16_t const  service_;
+  NetworkId       network_id_;
   uint16_t const  channel_;
   ThreadPool      thread_pool_ = network::MakeThreadPool(10);
   SharedHandler   handler_;

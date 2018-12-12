@@ -62,6 +62,8 @@ public:
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
 
+  static constexpr char const *LOGGING_NAME = "Contract";
+
   Status DispatchQuery(ContractName const &name, Query const &query, Query &response)
   {
     Status status{Status::NOT_FOUND};
@@ -85,13 +87,21 @@ public:
     {
 
       // lock the contract resources
-      LockResources(tx.summary().resources);
+      if (!LockResources(tx.summary().resources))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
+        return Status::FAILED;
+      }
 
       // dispatch the contract
       status = it->second(tx);
 
       // unlock the contract resources
-      UnlockResources(tx.summary().resources);
+      if (!UnlockResources(tx.summary().resources))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
+        return Status::FAILED;
+      }
 
       ++transaction_counters_[name];
     }

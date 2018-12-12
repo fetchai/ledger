@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,14 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/server.hpp"
+#include "ledger/storage_unit/lane_controller.hpp"
 
 namespace fetch {
+namespace ledger {
 
-struct NodeDetails
+void LaneController::WorkCycle()
 {
-  byte_array::ByteArray public_key;
-  bool                  authenticated = false;
-};
+  UriSet remove;
+  UriSet create;
 
+  GeneratePeerDeltas(create, remove);
+
+  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:create:", create.size());
+  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:remove:", remove.size());
+
+  for (auto &uri : create)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:creating:", uri.ToString());
+    muddle_->AddPeer(Uri(uri.ToString()));
+  }
+
+  for (auto &uri : create)
+  {
+    Address target_address;
+    if (muddle_->UriToDirectAddress(uri, target_address))
+    {
+      peer_connections_[uri] = target_address;
+    }
+  }
+}
+
+}  // namespace ledger
 }  // namespace fetch
