@@ -66,7 +66,7 @@ void P2PService::Start(UriList const &initial_peer_list)
   FETCH_LOG_INFO(LOGGING_NAME, "Establishing P2P Service on tcp://127.0.0.1:", "??",
                  " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
 
-  thread_pool_->SetIdleInterval(WORK_CYCLE_INTERVAL);
+  thread_pool_->SetIdleInterval(process_cycle_ms_);
   thread_pool_->Start();
   thread_pool_->PostIdle([this]() { WorkCycle(); });
 }
@@ -165,6 +165,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 }
 
 void P2PService::PeerDiscovery(AddressSet const &active_addresses)
+{
   for (auto const &address : pending_peer_lists_.FilterOutInFlight(active_addresses))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Discover new peers from: ", ToBase64(address));

@@ -104,10 +104,6 @@ public:
 
   std::list<Handle> Debug(std::string const &prefix) const;
 
-  bool UriToHandle(const Uri &uri, Handle &handle) const;
-
-  void Debug(std::string const &prefix) const;
-
 private:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;

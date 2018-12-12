@@ -55,7 +55,7 @@ protected:
     IDENTITY peer_identity;
     Gaussian g;
     double   score;
-    bool scored;
+
     void     update_score()
     {
       score = g.mu() - 3 * g.sigma();
@@ -90,7 +90,7 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", ToBase64(peer_ident), " subj=", ToString(subject), " qual=", ToString(quality));
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", byte_array::ToBase64(peer_ident), " subj=", ToString(subject), " qual=", ToString(quality));
 
     auto ranking = ranking_store_.find(peer_ident);
 
@@ -106,7 +106,7 @@ public:
       pos = ranking->second;
     }
 
-    if (quality == TrustQuality::INTRODUCTION)
+    if (quality == TrustQuality::NEW_PEER)
     {
       trust_store_[pos].update_score();
       dirty_ = true;
@@ -176,8 +176,6 @@ public:
     {
       FETCH_LOCK(mutex_);
 
-      SortIfNeeded();
-
       for (std::size_t pos = 0, end = std::min(maximum, trust_store_.size()); pos < end; ++pos)
       {
         if (trust_store_[pos].score < threshold_)
@@ -195,7 +193,6 @@ public:
   std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const override
   {
     FETCH_LOCK(mutex_);
-    SortIfNeeded();
 
     auto const ranking_it = ranking_store_.find(peer_ident);
     if (ranking_it == ranking_store_.end())
@@ -231,7 +228,6 @@ public:
     double ranking = 0.0;
 
     FETCH_LOCK(mutex_);
-    SortIfNeeded();
 
     auto ranking_it = ranking_store_.find(peer_ident);
     if (ranking_it != ranking_store_.end())
@@ -318,26 +314,12 @@ protected:
                 return a.peer_identity < b.peer_identity;
               });
 
-      for(size_t i =0;i<trust_store_.size();i++)
-      {
-        //FETCH_LOG_WARN(LOGGING_NAME, "KLL: SortIfNeeded: trust_store_: [",i,"] ",
-        //               ToBase64(trust_store_[i].peer_identity),
-        //               ", ",
-        //               trust_store_[i].score,
-        //               " <=> ", 
-        //               threshold_);
-      }
-
     ranking_store_.clear();
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
     {
       ranking_store_[trust_store_[pos].peer_identity] = pos;
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", ToBase64(trust_store_[pos].peer_identity), " => ", pos);
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", byte_array::ToBase64(trust_store_[pos].peer_identity), " => ", pos);
     }
-//    FETCH_LOG_WARN(LOGGING_NAME, "KLL: sorting things: ",
-//                   "  trust_store_=",trust_store_.size(),
-//                   "  ranking_store_=",ranking_store_.size()
-//                   );
   }
 
 protected:

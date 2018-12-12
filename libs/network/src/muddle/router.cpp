@@ -400,14 +400,14 @@ void Router::Debug(std::string const &prefix) const
 {
   FETCH_LOCK(routing_table_lock_);
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_handles_direct_addr_: --------------------------------------");
-  for (const auto &routing : routing_table_handles_direct_addr_)
+                 "direct_address_map_: --------------------------------------");
+  for (const auto &routing : direct_address_map_)
   {
     auto output = ToBase64(routing.second);
     FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output), " -> handle=", std::to_string(routing.first), " direct=by definition" );
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_handles_direct_addr_: --------------------------------------");
+                 "direct_address_map_: --------------------------------------");
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "routing_table_: --------------------------------------");
@@ -419,33 +419,6 @@ void Router::Debug(std::string const &prefix) const
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "routing_table_: --------------------------------------");
-  registrar_.Debug(prefix);
-}
-
-void Router::Debug(std::string const &prefix)
-{
-  FETCH_LOCK(routing_table_lock_);
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_handles_direct_addr_: --------------------------------------");
-  for (const auto &routing : direct_address_map_)
-  {
-    auto output = ToBase64(routing.second);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
-                   " -> handle=", std::to_string(routing.first), " direct=by definition");
-  }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "direct_address_map_: --------------------------------------");
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
-  for (const auto &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
-                   " -> handle=", std::to_string(routing.second.handle),
-                   " direct=", routing.second.direct);
-  }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   registrar_.Debug(prefix);
 }
 

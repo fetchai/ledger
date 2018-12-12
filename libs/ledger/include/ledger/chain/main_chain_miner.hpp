@@ -85,6 +85,7 @@ public:
     on_block_complete_ = func;
   }
 
+  void SetConsensusMiner(ConsensusMinerInterface consensus_miner)
   {
     consensus_miner_ = consensus_miner;
   }

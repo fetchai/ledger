@@ -57,6 +57,7 @@ public:
     std::string name;
     double      trust;
     bool        has_transacted;
+    bool        active;
   };
   using PeerTrusts = std::vector<PeerTrust>;
 
@@ -117,8 +118,8 @@ inline char const *ToString(TrustQuality quality)
     return "Duplicate";
   case TrustQuality::NEW_INFORMATION:
     return "New Information";
-  case TrustQuality::INTRODUCTION:
-    return "Introduction";
+  case TrustQuality::NEW_PEER:
+    return "New Peer";
   default:
     return "Unknown";
   }

@@ -119,7 +119,7 @@ public:
   /** Show debugging information about the internals of the router.
    * @param prefix the string to put on the front of the logging lines.
    */
-  void Debug(std::string const &prefix);
+  void Debug(std::string const &prefix) const;
 
   /** Deny this host's connection attempts and do not attempt to connect to it.
    * @param target The target address to be denied.

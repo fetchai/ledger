@@ -105,11 +105,6 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   RunPeriodicMaintenance();
 }
 
-const std::string &Muddle::NetworkIdStr()
-{
-  return network_id_str_;
-}
-
 /**
  * Stops the muddle node and removes it from the network
  */
@@ -154,7 +149,7 @@ bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
  * Returns all the active connections.
  * @return map of connections
  */
-Muddle::ConnectionMap Muddle::GetConnections()
+Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
 
@@ -193,14 +188,7 @@ Muddle::ConnectionMap Muddle::GetConnections()
     }
   }
 
-  
-
   return connection_map;
-}
-
-void Muddle::DropPeer(Address const &peer)
-{
-  router_.DropPeer(peer);
 }
 
 void Muddle::DropPeer(Address const &peer)

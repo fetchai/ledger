@@ -29,6 +29,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <random>
 #include <sstream>
@@ -150,9 +151,8 @@ private:
       }
     }
 
-    variant::Variant trust_list = variant::Variant::Array(count);
+    std::vector<variant::Variant> peer_data_list;
 
-    std::size_t pos = 0;
     for (const auto &pt : peers_trusts)
     {
       if (!pt.has_transacted)
@@ -293,6 +293,9 @@ private:
   MainChain &  chain_;
   Muddle &     muddle_;
   P2PService & p2p_;
+
+  TrustSystem  &trust_;
+
   Miner &      miner_;
 };
 

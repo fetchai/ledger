@@ -85,10 +85,6 @@ public:
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
   {
-    muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("STOR"), tm);
-    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
-                                       CHANNEL_RPC);
-    muddle_->Start({});
   }
 
   StorageUnitClient(StorageUnitClient const &) = delete;

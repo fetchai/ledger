@@ -151,6 +151,7 @@ struct CommandLineArguments
   std::size_t        verification_threads;
   std::size_t        max_peers;
   std::size_t        transient_peers;
+  uint32_t           peers_update_cycle_ms;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)

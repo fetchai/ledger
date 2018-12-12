@@ -85,20 +85,6 @@ bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
   return false;
 }
 
-bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
-{
-  FETCH_LOCK(lock_);
-  for (auto const &element : peer_connections_)
-  {
-    if (element.first == uri)
-    {
-      handle = element.second->handle();
-      return true;
-    }
-  }
-  return false;
-}
-
 PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
 {
   UriMap map;
@@ -149,38 +135,6 @@ std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string cons
                  "PeerConnectionList: --------------------------------------");
 
   return handles;
-}
-
-void PeerConnectionList::Debug(std::string const &prefix) const
-{
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "PeerConnectionList: --------------------------------------");
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "PeerConnectionList:peer_connections_ = ", peer_connections_.size(), " entries.");
-
-  for (auto const &element : peer_connections_)
-  {
-    auto uri    = element.first;
-    auto handle = element.second->handle();
-
-    auto metadata = peer_metadata_.find(uri) != peer_metadata_.end();
-
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "PeerConnectionList:peer_connections_ Uri=", uri.ToString(), "  Handle=", handle,
-                   "  MetaData?=", metadata);
-  }
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "PeerConnectionList:persistent_peers_ = ", persistent_peers_.size(), " entries.");
-  for (auto const &uri : persistent_peers_)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "PeerConnectionList:persistent_peers__ Uri=", uri.ToString());
-  }
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "PeerConnectionList: --------------------------------------");
 }
 
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer) const
