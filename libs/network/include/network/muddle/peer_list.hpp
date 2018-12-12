@@ -82,6 +82,8 @@ public:
   /// @{
   void        AddPersistentPeer(Uri const &peer);
   void        RemovePersistentPeer(Uri const &peer);
+  void        RemovePersistentPeer(Handle &handle);
+
   std::size_t GetNumPeers() const;
   /// @}
 

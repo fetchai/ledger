@@ -48,6 +48,19 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
   persistent_peers_.erase(peer);
 }
 
+void PeerConnectionList::RemovePersistentPeer(Handle &handle)
+{
+  for (auto it = peer_connections_.begin();it!=peer_connections_.end();++it)
+  {
+    if (it->second->handle() == handle)
+    {
+      persistent_peers_.erase(it->first);
+      peer_connections_.erase(it);
+      break;
+    }
+  }
+}
+
 std::size_t PeerConnectionList::GetNumPeers() const
 {
   FETCH_LOCK(lock_);

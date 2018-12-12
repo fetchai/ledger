@@ -108,16 +108,21 @@ void P2PService::WorkCycle()
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
-  muddle_.Debug("P2PService::GetConnectionStatus,");
+  //muddle_.Debug("P2PService::GetConnectionStatus,");
 
   // get a summary of addresses and associated URIs
-  active_connections = muddle_.GetConnections(true);
+  active_connections = muddle_.GetConnections();
 
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
-  std::transform(active_connections.begin(), active_connections.end(),
-                 std::inserter(active_addresses, active_addresses.end()),
-                 [](auto const &e) { return e.first; });
+
+  for(const auto &c : active_connections)
+  {
+    if (muddle_.IsConnected(c.first))
+    {
+      active_addresses.insert(c.first);
+    }
+  }
 }
 
 
@@ -221,7 +226,10 @@ std::list<P2PService::PeerTrust>  P2PService::GetPeersAndTrusts() const
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
-  auto experimental_peers = trust_system_.GetBestPeers(transient_peers_);
+  auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
+
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL: STATIC PEERS=", static_peers.size(), " FROM ", max_peers_ - transient_peers_);
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL: TRANSIENT PEERS=", experimental_peers.size(), " FROM ", transient_peers_);
 
   desired_peers_.clear();
 

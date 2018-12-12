@@ -491,13 +491,22 @@ bool Router::IsConnected(Address const &target) const
 {
   auto raw_address  = ConvertAddress(target);
   auto iter         = routing_table_.find(raw_address);
-  bool is_connected = false;
-  if (iter != routing_table_.end())
+  if (iter == routing_table_.end())
   {
-    is_connected = iter->second.direct;
+    return false;
   }
 
-  return is_connected;
+  auto handle = iter->second.handle;
+
+  auto conn = register_.LookupConnection(handle).lock();
+  if (conn)
+  {
+    return conn -> is_alive();
+  }
+  else
+  {
+    return false;
+  }
 }
 
 /**
@@ -577,6 +586,14 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   return update_complete;
 }
 
+
+Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) const
+{
+   auto raddr = ConvertAddress(address);
+   return LookupHandle(raddr);
+}
+
+
 /**
  * Internal: Looks up the specified connection handle from a given address
  *
@@ -635,6 +652,12 @@ void Router::KillConnection(Handle handle)
   if (conn)
   {
     conn->Close();
+    direct_address_map_.erase(handle);
+    
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "No connection object available to KillConnection(", handle, ")");
   }
 }
 

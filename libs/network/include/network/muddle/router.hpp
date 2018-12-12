@@ -141,6 +141,12 @@ public:
    */
   bool IsConnected(Address const &target) const;
 
+  /** Return the handle associated with an address or zero
+   * @param target The target address's status to interrogate.
+   * @returns A handle if one is available or zero.
+   */
+  Handle LookupHandleFromAddress(Packet::Address const &address) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;

@@ -204,7 +204,10 @@ public:
   bool IsBlacklisted(Address const &target) const;
   /// @}
 
-  bool IsConnected(Address const &target) const;
+  bool IsConnected(Address const &target) const
+  {
+    return router_.IsConnected(target);
+  }
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
@@ -267,6 +270,7 @@ inline void Muddle::AddPeer(Uri const &peer)
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
+  // KLL -- this doesn't break connections at the moment.
   clients_.RemovePersistentPeer(peer);
 }
 
