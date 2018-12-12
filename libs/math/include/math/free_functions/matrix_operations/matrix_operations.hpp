@@ -42,7 +42,7 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 template <typename T, typename C>
 class NDArray;
 template <typename T, typename C>
@@ -54,7 +54,7 @@ class Matrix;
 }
 
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+T Max(ShapelessArray<T, C> const &array);
 
 /**
  * calculates bit mask on this
@@ -82,16 +82,16 @@ void BooleanMaskImplementation(ArrayType &input_array, ArrayType const &mask, Ar
 }
 }  // namespace details
 template <typename T, typename C>
-void BooleanMask(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &mask,
-                 ShapeLessArray<T, C> &ret)
+void BooleanMask(ShapelessArray<T, C> &input_array, ShapelessArray<T, C> const &mask,
+                 ShapelessArray<T, C> &ret)
 {
   details::BooleanMaskImplementation(input_array, mask, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> BooleanMask(ShapeLessArray<T, C> &      input_array,
-                                 ShapeLessArray<T, C> const &mask)
+ShapelessArray<T, C> BooleanMask(ShapelessArray<T, C> &      input_array,
+                                 ShapelessArray<T, C> const &mask)
 {
-  ShapeLessArray<T, C> ret;
+  ShapelessArray<T, C> ret;
   BooleanMask(input_array, mask, ret);
   return ret;
 }
@@ -181,8 +181,8 @@ void ScatterImplementation(ArrayType &input_array, ArrayType &updates, ArrayType
  * object
  */
 template <typename T, typename C>
-void Scatter(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &updates,
-             ShapeLessArray<T, C> const &indices)
+void Scatter(ShapelessArray<T, C> &input_array, ShapelessArray<T, C> const &updates,
+             ShapelessArray<T, C> const &indices)
 {
   details::ScatterImplementation(input_array, updates, indices);
 }
@@ -257,9 +257,9 @@ void Gather(NDArray<T, C> &input_array, NDArray<T, C> &updates, NDArray<T, C> &i
  * @return
  */
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array, T &ret)
+T Max(ShapelessArray<T, C> const &array, T &ret)
 {
-  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapelessArray<T, C>::vector_register_type;
 
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
@@ -267,7 +267,7 @@ T Max(ShapeLessArray<T, C> const &array, T &ret)
   return ret;
 }
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array)
+T Max(ShapelessArray<T, C> const &array)
 {
   T ret;
   Max(array, ret);
@@ -283,9 +283,9 @@ T Max(ShapeLessArray<T, C> const &array)
  * @return
  */
 template <typename T, typename C>
-inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
+inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
 {
-  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapelessArray<T, C>::vector_register_type;
 
   if (r.is_trivial())
   {
@@ -294,8 +294,8 @@ inline void Max(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
   }
   else
   {  // non-trivial range is not vectorised
-    typename ShapeLessArray<T, C>::Type ret =
-        -std::numeric_limits<typename ShapeLessArray<T, C>::Type>::max();
+    typename ShapelessArray<T, C>::Type ret =
+        -std::numeric_limits<typename ShapelessArray<T, C>::Type>::max();
     for (auto i : array)
     {
       ret = std::max(ret, i);
@@ -412,9 +412,9 @@ void Max(NDArray<T, C> &array, std::size_t const &axis, NDArray<T, C> &ret)
  * @return
  */
 template <typename T, typename C>
-inline void Min(ShapeLessArray<T, C> const &array, T &ret)
+inline void Min(ShapelessArray<T, C> const &array, T &ret)
 {
-  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapelessArray<T, C>::vector_register_type;
 
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
@@ -430,9 +430,9 @@ inline void Min(ShapeLessArray<T, C> const &array, T &ret)
  * @return
  */
 template <typename T, typename C>
-inline void Min(ShapeLessArray<T, C> const &array, memory::Range r, T &ret)
+inline void Min(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
 {
-  using vector_register_type = typename ShapeLessArray<T, C>::vector_register_type;
+  using vector_register_type = typename ShapelessArray<T, C>::vector_register_type;
 
   if (r.is_trivial())
   {
@@ -537,15 +537,15 @@ NDArray<T, C> Maximum(NDArray<T, C> const &array1, NDArray<T, C> const &array2)
   return ret;
 }
 template <typename T, typename C>
-void Maximum(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2,
-             ShapeLessArray<T, C> &ret)
+void Maximum(ShapelessArray<T, C> const &array1, ShapelessArray<T, C> const &array2,
+             ShapelessArray<T, C> &ret)
 {
   details::MaximumImplementation(array1, array2, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Maximum(ShapeLessArray<T, C> const &array1, ShapeLessArray<T, C> const &array2)
+ShapelessArray<T, C> Maximum(ShapelessArray<T, C> const &array1, ShapelessArray<T, C> const &array2)
 {
-  ShapeLessArray<T, C> ret(array1.size());
+  ShapelessArray<T, C> ret(array1.size());
   Maximum(array1, array2, ret);
   return ret;
 }
@@ -585,16 +585,16 @@ linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &
  * @param ret
  */
 template <typename T, typename C>
-void Product(ShapeLessArray<T, C> const &obj1, T &ret)
+void Product(ShapelessArray<T, C> const &obj1, T &ret)
 {
   ret = obj1.data().in_parallel().Reduce(
       memory::TrivialRange(0, obj1.size()),
-      [](typename ShapeLessArray<T, C>::vector_register_type const &a,
-         typename ShapeLessArray<T, C>::vector_register_type const &b) ->
-      typename ShapeLessArray<T, C>::vector_register_type { return a * b; });
+      [](typename ShapelessArray<T, C>::vector_register_type const &a,
+         typename ShapelessArray<T, C>::vector_register_type const &b) ->
+      typename ShapelessArray<T, C>::vector_register_type { return a * b; });
 }
 template <typename T, typename C>
-T Product(ShapeLessArray<T, C> const &obj1)
+T Product(ShapelessArray<T, C> const &obj1)
 {
   T ret;
   Product(obj1, ret);
@@ -627,16 +627,16 @@ T Product(std::vector<T> const &obj1)
  * @param ret
  */
 template <typename T, typename C>
-void Sum(ShapeLessArray<T, C> const &obj1, T &ret)
+void Sum(ShapelessArray<T, C> const &obj1, T &ret)
 {
   ret = obj1.data().in_parallel().Reduce(
       memory::TrivialRange(0, obj1.size()),
-      [](typename ShapeLessArray<T, C>::vector_register_type const &a,
-         typename ShapeLessArray<T, C>::vector_register_type const &b) ->
-      typename ShapeLessArray<T, C>::vector_register_type { return a + b; });
+      [](typename ShapelessArray<T, C>::vector_register_type const &a,
+         typename ShapelessArray<T, C>::vector_register_type const &b) ->
+      typename ShapelessArray<T, C>::vector_register_type { return a + b; });
 }
 template <typename T, typename C>
-T Sum(ShapeLessArray<T, C> const &obj1)
+T Sum(ShapelessArray<T, C> const &obj1)
 {
   T ret;
   Sum(obj1, ret);
@@ -651,14 +651,14 @@ T Sum(ShapeLessArray<T, C> const &obj1)
  * @param ret
  */
 template <typename T, typename C>
-void Mean(ShapeLessArray<T, C> const &obj1, T &ret)
+void Mean(ShapelessArray<T, C> const &obj1, T &ret)
 {
 
   Sum(obj1, ret);
   Divide(ret, T(obj1.size()), ret);
 }
 template <typename T, typename C>
-T Mean(ShapeLessArray<T, C> const &obj1)
+T Mean(ShapelessArray<T, C> const &obj1)
 {
   T ret;
   Mean(obj1, ret);
@@ -682,7 +682,7 @@ void PeakToPeak(ArrayType arr)
  * @return
  */
 template <typename T, typename C>
-void ArgMax(ShapeLessArray<T, C> const &array, T &ret)
+void ArgMax(ShapelessArray<T, C> const &array, T &ret)
 {
   ret          = 0;
   T cur_maxval = std::numeric_limits<T>::lowest();
@@ -697,14 +697,14 @@ void ArgMax(ShapeLessArray<T, C> const &array, T &ret)
   }
 }
 template <typename T, typename C>
-T ArgMax(ShapeLessArray<T, C> const &array)
+T ArgMax(ShapelessArray<T, C> const &array)
 {
   T ret;
   return ArgMax(array, ret);
 }
 
 template <typename T, typename C, typename S>
-void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapeLessArray<T, C> &ret)
+void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapelessArray<T, C> &ret)
 {
   assert(axis < 2);
 
@@ -1160,14 +1160,14 @@ void ConcatImplementation(std::vector<ArrayType> const &input_arrays, ArrayType 
 }
 }  // namespace details
 template <typename T, typename C>
-void Concat(ShapeLessArray<T, C> &ret, std::vector<ShapeLessArray<T, C>> const &input_arrays)
+void Concat(ShapelessArray<T, C> &ret, std::vector<ShapelessArray<T, C>> const &input_arrays)
 {
   details::ConcatImplementation(input_arrays, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Concat(std::vector<ShapeLessArray<T, C>> const &input_arrays)
+ShapelessArray<T, C> Concat(std::vector<ShapelessArray<T, C>> const &input_arrays)
 {
-  ShapeLessArray<T, C> ret;
+  ShapelessArray<T, C> ret;
   Concat(ret, input_arrays);
   return ret;
 }
@@ -1257,8 +1257,8 @@ void DynamicStitchImplementation(ArrayType &input_array, ArrayType const &indice
 }
 }  // namespace details
 template <typename T, typename C>
-void DynamicStitch(ShapeLessArray<T, C> &input_array, ShapeLessArray<T, C> const &indices,
-                   ShapeLessArray<T, C> const &data)
+void DynamicStitch(ShapelessArray<T, C> &input_array, ShapelessArray<T, C> const &indices,
+                   ShapelessArray<T, C> const &data)
 {
   details::DynamicStitchImplementation(input_array, indices, data);
 }

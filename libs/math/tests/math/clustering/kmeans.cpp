@@ -26,7 +26,7 @@
 #include <chrono>
 #include <cmath>
 #include <math/linalg/matrix.hpp>
-#include <math/shape_less_array.hpp>
+#include <math/shapeless_array.hpp>
 #include <string>
 #include <vector>
 

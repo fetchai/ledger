@@ -20,16 +20,16 @@
 #include <iostream>
 
 #include "math/kernels/sign.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include <gtest/gtest.h>
 
 using namespace fetch::math;
 
 template <typename T>
-ShapeLessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T adj)
+ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  ShapeLessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+  ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
 
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
@@ -51,8 +51,8 @@ template <typename T>
 void equal_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray<T>(n, 0);
-  ShapeLessArray<T> result_array = test_array;
+  ShapelessArray<T> test_array   = RandomArray<T>(n, 0);
+  ShapelessArray<T> result_array = test_array;
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
@@ -82,8 +82,8 @@ template <typename T>
 void copy_test()
 {
   std::size_t       n          = 10000;
-  ShapeLessArray<T> test_array = RandomArray<T>(n, 0);
-  ShapeLessArray<T> result_array(n);
+  ShapelessArray<T> test_array = RandomArray<T>(n, 0);
+  ShapelessArray<T> result_array(n);
   result_array.Copy(test_array);
 
   ASSERT_TRUE(result_array.AllClose(test_array));
@@ -114,9 +114,9 @@ template <typename T>
 void plus_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
-  ShapeLessArray<T> result_array = RandomArray(n, T(0));
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2 = RandomArray(n, T(0));
+  ShapelessArray<T> result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -150,9 +150,9 @@ template <typename T>
 void sub_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
-  ShapeLessArray<T> result_array = RandomArray(n, T(0));
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2 = RandomArray(n, T(0));
+  ShapelessArray<T> result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -186,9 +186,9 @@ template <typename T>
 void mult_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = RandomArray(n, T(0));
-  ShapeLessArray<T> result_array = RandomArray(n, T(0));
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2 = RandomArray(n, T(0));
+  ShapelessArray<T> result_array = RandomArray(n, T(0));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -222,16 +222,16 @@ template <typename T>
 void div_test()
 {
   std::size_t       n            = 12;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(1));
-  ShapeLessArray<T> test_array_2 = RandomArray(n, T(1));
-  ShapeLessArray<T> result_array = RandomArray(n, T(1));
+  ShapelessArray<T> test_array   = RandomArray(n, T(1));
+  ShapelessArray<T> test_array_2 = RandomArray(n, T(1));
+  ShapelessArray<T> result_array = RandomArray(n, T(1));
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
     result_array[j] = test_array[j] / test_array_2[j];
   }
 
-  ShapeLessArray<T> tmp(n);
+  ShapelessArray<T> tmp(n);
   tmp = test_array / test_array_2;
 
   ASSERT_TRUE(result_array.AllClose(tmp));
@@ -262,8 +262,8 @@ template <typename T>
 void is_equal_test()
 {
   std::size_t       n          = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2(n);
+  ShapelessArray<T> test_array = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2(n);
   test_array_2 = test_array.Copy();
 
   ASSERT_TRUE(test_array == test_array_2);
@@ -294,8 +294,8 @@ template <typename T>
 void is_not_equal_test()
 {
   std::size_t       n          = 10000;
-  ShapeLessArray<T> test_array = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2(n);
+  ShapelessArray<T> test_array = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2(n);
 
   for (std::size_t j = 0; j < test_array.size(); ++j)
   {
@@ -330,9 +330,9 @@ template <typename T>
 void plus_equals_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = test_array;
-  ShapeLessArray<T> result_array = test_array * T(2);
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2 = test_array;
+  ShapelessArray<T> result_array = test_array * T(2);
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
@@ -366,9 +366,9 @@ template <typename T>
 void minus_equals_test()
 {
   std::size_t       n            = 10000;
-  ShapeLessArray<T> test_array   = RandomArray(n, T(0));
-  ShapeLessArray<T> test_array_2 = test_array * T(2);
-  ShapeLessArray<T> result_array = test_array;
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
+  ShapelessArray<T> test_array_2 = test_array * T(2);
+  ShapelessArray<T> result_array = test_array;
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {

@@ -23,7 +23,7 @@
 #include "math/meta/type_traits.hpp"
 #include "random"
 
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 
 #include <set>
 
@@ -36,7 +36,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using clustering_type = ShapeLessArray<int>;
+using clustering_type = ShapelessArray<int>;
 
 enum class InitMode
 {

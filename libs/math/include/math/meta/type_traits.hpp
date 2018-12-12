@@ -26,7 +26,7 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 
 template <typename T, typename C, bool H, bool W>
 class RectangularArray;
@@ -75,7 +75,7 @@ struct IsMathLikeImpl<int, R>
   using Type = R;
 };
 template <typename R, typename T, typename C>
-struct IsMathLikeImpl<ShapeLessArray<T, C>, R>
+struct IsMathLikeImpl<ShapelessArray<T, C>, R>
 {
   using Type = R;
 };
@@ -106,7 +106,7 @@ struct IsMathArrayLikeImpl
 {
 };
 template <typename R, typename T, typename C>
-struct IsMathArrayLikeImpl<ShapeLessArray<T, C>, R>
+struct IsMathArrayLikeImpl<ShapelessArray<T, C>, R>
 {
   using Type = R;
 };
@@ -163,7 +163,7 @@ struct IsMathShapelessArrayLikeImpl
 {
 };
 template <typename R, typename T, typename C>
-struct IsMathShapelessArrayLikeImpl<ShapeLessArray<T, C>, R>
+struct IsMathShapelessArrayLikeImpl<ShapelessArray<T, C>, R>
 {
   using Type = R;
 };
@@ -179,7 +179,7 @@ struct IsBlasArrayLikeImpl
 {
 };
 template <typename R, typename T, typename C>
-struct IsBlasArrayLikeImpl<ShapeLessArray<T, C>, R>
+struct IsBlasArrayLikeImpl<ShapelessArray<T, C>, R>
 {
   using Type = R;
 };
@@ -242,7 +242,7 @@ struct IsBlasAndNoShapeArrayLikeImpl
 {
 };
 template <typename R, typename T, typename C>
-struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapeLessArray<T, C>, R>
+struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapelessArray<T, C>, R>
 {
   using Type = R;
 };

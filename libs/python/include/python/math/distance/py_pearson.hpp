@@ -46,8 +46,8 @@ inline void BuildPearsonDistance(std::string const &custom_name, pybind11::modul
       .def(custom_name.c_str(), &WrapperPearson<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperPearson<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperPearson<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperPearson<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperPearson<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperPearson<ShapelessArray<float>>);
 }
 
 }  // namespace distance

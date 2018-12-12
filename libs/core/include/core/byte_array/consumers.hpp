@@ -195,7 +195,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
   uint8_t c = str[pos];
 
-  if (!(('a' <= c && c < 'z') || ('A' <= c && c < 'Z')))
+  if (!(('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')))
   {
     return -1;
   }

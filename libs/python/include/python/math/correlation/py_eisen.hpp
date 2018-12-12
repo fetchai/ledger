@@ -47,8 +47,8 @@ inline void BuildEisenCorrelation(std::string const &custom_name, pybind11::modu
       .def(custom_name.c_str(), &WrapperEisen<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperEisen<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperEisen<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperEisen<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperEisen<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperEisen<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperEisen<ShapelessArray<float>>);
 }
 
 }  // namespace correlation
