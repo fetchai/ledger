@@ -73,6 +73,7 @@ private:
     {
       if ((!stream) || (!stream.is_open()))
       {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to write to stream in RAS");
         return false;
       }
       stream.seekg(0, stream.beg);

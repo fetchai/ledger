@@ -31,8 +31,7 @@ namespace fetch {
 namespace network_benchmark {
 
 template <typename T>
-class NetworkBenchmarkService : 
-                                public http::HTTPServer
+class NetworkBenchmarkService : public http::HTTPServer
 {
 public:
   static constexpr char const *LOGGING_NAME = "NetworkBenchmarkService";

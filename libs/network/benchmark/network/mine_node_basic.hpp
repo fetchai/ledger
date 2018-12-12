@@ -53,8 +53,8 @@ class MineNodeBasic
 public:
   static constexpr char const *LOGGING_NAME = "MineNodeBasic";
 
-  explicit MineNodeBasic(uint64_t minerNumber)
-    : minerNumber_{minerNumber}
+  explicit MineNodeBasic(uint64_t miner_number)
+    : miner_number_{miner_number}
   {}
 
   MineNodeBasic(MineNodeBasic &rhs)  = delete;
@@ -62,8 +62,7 @@ public:
   MineNodeBasic operator=(MineNodeBasic &rhs) = delete;
   MineNodeBasic operator=(MineNodeBasic &&rhs) = delete;
 
-  ~MineNodeBasic()
-  {}
+  ~MineNodeBasic() = default;
 
   ///////////////////////////////////////////////////////////
   // RPC calls
@@ -80,7 +79,7 @@ public:
     }
     else
     {
-      mainChain.AddBlock(block);
+      main_chain_.AddBlock(block);
 
       // The main chain will set whether that block was loose. If it was, try
       // and walk down until it touches the main chain
@@ -104,7 +103,7 @@ public:
 
     do
     {
-      bool success = nodeDirectory_.GetHeader(hash, walkBlock);
+      bool success = node_directory_.GetHeader(hash, walkBlock);
       if (!success)
       {
         break;
@@ -113,14 +112,14 @@ public:
       walkBlock.UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body().previous_hash;
 
-    } while (mainChain.AddBlock(walkBlock));
+    } while (main_chain_.AddBlock(walkBlock));
   }
 
   // Nodes will provide each other with headers
   std::pair<bool, BlockType> ProvideHeader(BlockHash hash)
   {
     BlockType block;
-    bool      success = mainChain.Get(hash, block);
+    bool      success = main_chain_.Get(hash, block);
 
     return std::make_pair(success, block);
   }
@@ -132,13 +131,13 @@ public:
     LOG_STACK_TRACE_POINT;
     std::lock_guard<std::mutex> mlock(mutex_);
     FETCH_LOG_INFO(LOGGING_NAME, "Adding endpoint");
-    nodeDirectory_.AddEndpoint(endpoint);
+    node_directory_.AddEndpoint(endpoint);
   }
 
   void reset()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting miner");
-    mainChain.reset();
+    main_chain_.reset();
     stopped_ = true;
   }
 
@@ -152,14 +151,14 @@ public:
       while (!stopped_)
       {
         // Get heaviest block
-        auto &block = mainChain.HeaviestBlock();
+        auto &block = main_chain_.HeaviestBlock();
 
         // Create another block sequential to previous
         BlockType nextBlock;
         body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
-        nextBody.miner_number  = minerNumber_;
+        nextBody.miner_number  = miner_number_;
 
         nextBlock.SetBody(nextBody);
         nextBlock.UpdateDigest();
@@ -174,10 +173,10 @@ public:
         }
 
         // Add the block
-        mainChain.AddBlock(nextBlock);
+        main_chain_.AddBlock(nextBlock);
 
         // Pass the block to other miners
-        nodeDirectory_.PushBlock(nextBlock);
+        node_directory_.PushBlock(nextBlock);
       }
     };
 
@@ -194,22 +193,22 @@ public:
   // HTTP functions to check that synchronisation was successful
   std::vector<BlockType> HeaviestChain()
   {
-    return mainChain.HeaviestChain();
+    return main_chain_.HeaviestChain();
   }
 
   // std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()
   //{
-  //  return mainChain.AllChain();
+  //  return main_chain_.AllChain();
   //}
 
 private:
-  network_benchmark::NodeDirectory nodeDirectory_;  // Manage connections to other nodes
+  network_benchmark::NodeDirectory node_directory_;  // Manage connections to other nodes
   fetch::mutex::Mutex              mutex_{__LINE__, __FILE__};
   bool                             stopped_{false};
   std::size_t                      target_ = 16;  // 16 = roughly one block every 0.18s
-  uint64_t                         minerNumber_{1};
+  uint64_t                         miner_number_{1};
 
-  chain::MainChain mainChain{uint32_t(minerNumber_)};
+  chain::MainChain main_chain_{uint32_t(miner_number_)};
 };
 }  // namespace network_mine_test
 }  // namespace fetch

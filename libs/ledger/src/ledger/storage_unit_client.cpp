@@ -51,7 +51,7 @@ public:
     , name_(std::move(thename))
     , peer_(std::move(thepeer))
     , timeduration_(std::move(thetimeout))
-    , muddle_(themuddle)
+    , muddle_(std::move(themuddle))
   {
     client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
                                        CHANNEL_RPC);
@@ -133,7 +133,7 @@ public:
     }
     case State::CONNECTING:
     {
-      bool connected = muddle_->GetOutgoingConnectionAddress(peer_, target_address);
+      bool connected = muddle_->UriToDirectAddress(peer_, target_address);
       if (!connected)
       {
         return false;
@@ -244,7 +244,7 @@ void StorageUnitClient::WorkCycle()
   bg_work_.DiscardTimeouts();
 }
 
-  void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
+void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lanes,
                                            const std::chrono::milliseconds &timeout)
 {
   if (!workthread_)
@@ -253,20 +253,35 @@ void StorageUnitClient::WorkCycle()
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
+  LaneIndex m = 0;
+  for (auto const &lane : lanes)
+  {
+    auto lanenum = lane.first;
+    if (lanenum > m)
+    {
+      m = lanenum;
+    }
+  }
+  m += 1;  // number of lanes is the number of the last lane asked for +1
+
+  if (m > muddles_.size())
+  {
+    SetNumberOfLanes(m);
+  }
+
   for (auto const &lane : lanes)
   {
     auto        lanenum = lane.first;
     auto        peer    = lane.second;
     std::string name    = peer.ToString();
 
-    auto worker = std::make_shared<MuddleLaneConnectorWorker>(lanenum, name, peer, muddle_,
-                                                              std::chrono::milliseconds(timeout));
+    auto worker = std::make_shared<MuddleLaneConnectorWorker>(
+        lanenum, name, peer, GetMuddleForLane(lanenum), std::chrono::milliseconds(timeout));
     bg_work_.Add(worker);
   }
 }
 
-size_t StorageUnitClient::AddLaneConnectionsWaiting(
-                                                    const std::map<LaneIndex, Uri> & lanes,
+size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Uri> & lanes,
                                                     const std::chrono::milliseconds &timeout)
 {
   AddLaneConnections(lanes, timeout);

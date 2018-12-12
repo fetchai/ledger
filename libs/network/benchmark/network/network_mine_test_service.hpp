@@ -22,6 +22,9 @@
 #include "http/server.hpp"
 #include "mine_test_http_interface.hpp"
 #include "network/service/server.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_mine_test.hpp"
 #include <memory>
@@ -33,10 +36,12 @@ template <typename T>
 class NetworkMineTestService : public http::HTTPServer
 {
 public:
-  static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
-  TServerPtr server;
+  using NetworkManager = network::NetworkManager;
 
-  NetworkMineTestService(uint16_t tcpPort, uint16_t httpPort)
+  static constexpr char const *LOGGING_NAME = "NetworkMineTestService";
+  TServerPtr                   server;
+
+  NetworkMineTestService(NetworkManager const &tm, uint16_t tcpPort, uint16_t httpPort)
     : HTTPServer(tm)
     , http_port_(httpPort)
   {
@@ -61,13 +66,11 @@ public:
 
   void Start()
   {
-    TCPServer::Start();
     HTTPServer::Start(http_port_);
   }
 
   void Stop()
   {
-    TCPServer::Stop();
     HTTPServer::Stop();
   }
 

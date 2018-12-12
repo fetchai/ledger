@@ -67,6 +67,7 @@ public:
   using ObjectStore           = bayrank::ObjectCache<ConstByteArray, IDENTITY>;
   using IdentitySet           = typename P2PTrustInterface<IDENTITY>::IdentitySet;
   using PeerTrust             = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using PeerTrusts            = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
   using Gaussian              = typename TrustStorageInterface::Gaussian;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
@@ -266,10 +267,10 @@ public:
     return good_place_.size()+buffer_.size()-1;
   }
 
-  std::list<PeerTrust>  GetPeersAndTrusts() const override
+  PeerTrusts GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
-    auto trust_list = std::list<PeerTrust>();
+    PeerTrusts trust_list;
 
     for(std::size_t store_id = 0; store_id<stores_.size();++store_id)
     {
@@ -280,6 +281,7 @@ public:
         pt.address = p->peer_identity;
         pt.name = std::string(byte_array::ToBase64(pt.address));
         pt.trust = p->score;
+        pt.has_transacted = true;
         trust_list.push_back(pt);
       }
     }
@@ -390,10 +392,10 @@ protected:
   TrustBuffer buffer_;
   IDStore     id_store_;
   ObjectStore object_store_;
-  
+
   std::array<TrustStorageInterface*, 3> stores_{{
-      &buffer_, 
-      &good_place_, 
+      &buffer_,
+      &good_place_,
       &bad_place_
   }};
 

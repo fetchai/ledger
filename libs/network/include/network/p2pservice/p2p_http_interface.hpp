@@ -29,6 +29,7 @@
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <random>
 #include <sstream>
@@ -42,16 +43,18 @@ public:
   using MainChain   = chain::MainChain;
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
+  using Miner       = miner::MinerInterface;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust)
+                   P2PService &p2p_service, TrustSystem &trust, Miner &miner)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
+    , miner_(miner)
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -68,6 +71,10 @@ public:
     Get("/api/status/trust",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetTrustStatus(params, request);
+        });
+    Get("/api/status/backlog",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return GetBacklogStatus(params, request);
         });
   }
 
@@ -93,14 +100,18 @@ private:
     Variant response     = Variant::Object();
     response["identity"] = byte_array::ToBase64(muddle_.identity().identifier());
     response["chain"]    = GenerateBlockList(include_transactions, chain_length);
-
+    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    
     return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const &params,
                                      http::HTTPRequest const &   request)
   {
-    auto const connections = muddle_.GetConnections();
+    auto const connections = muddle_.GetConnections(true);
 
     Variant response = Variant::Array(connections.size());
 
@@ -130,26 +141,59 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    auto peers_trusts = trust_.GetPeersAndTrusts();
-    variant::Variant trust_list;
-    trust_list.MakeArray(peers_trusts.size());
-
-    std::size_t pos = 0;
-    for(const auto &pt : peers_trusts)
+    auto        peers_trusts = trust_.GetPeersAndTrusts();
+    std::size_t count        = 0;
+    for (const auto &pt : peers_trusts)
     {
+      if (pt.has_transacted)
+      {
+        ++count;
+      }
+    }
+
+    std::vector<variant::Variant> peer_data_list;
+
+    for (const auto &pt : peers_trusts)
+    {
+      if (!pt.has_transacted)
+      {
+        continue;
+      }
       variant::Variant peer_data     = variant::Variant::Object();
       peer_data["target"] = pt.name;
       peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
       peer_data["value"]  = pt.trust;
+      peer_data["active"]  = pt.active;
       peer_data["source"]  = byte_array::ToBase64(muddle_.identity().identifier());
-      trust_list[pos++] = peer_data;
+      peer_data_list.push_back(peer_data);
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus returning ", peer_data_list.size(), " trusts");
+
+    variant::Variant trust_list;
+    trust_list.MakeArrayFrom(peer_data_list);
 
     Variant response           = Variant::Object();
-    response["i_am"] = byte_array::ToBase64(muddle_.identity().identifier());
+    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
     response["trusts"] = trust_list;
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done" );
     return http::CreateJsonResponse(response);
+  }
+
+  http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
+                                      http::HTTPRequest const &   request)
+  {
+    variant::Variant data = variant::Variant::Object();
+
+    data["success"] = true;
+    data["backlog"] = miner_.backlog();
+
+    std::ostringstream oss;
+
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
@@ -249,7 +293,10 @@ private:
   MainChain &  chain_;
   Muddle &     muddle_;
   P2PService & p2p_;
-  TrustSystem &trust_;
+
+  TrustSystem  &trust_;
+
+  Miner &      miner_;
 };
 
 }  // namespace p2p

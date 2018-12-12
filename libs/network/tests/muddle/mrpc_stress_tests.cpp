@@ -56,8 +56,8 @@ private:
   }
 };
 
-static constexpr uint16_t    SERVICE      = 10;
-static constexpr uint16_t    CHANNEL      = 12;
+static constexpr uint16_t SERVICE = 10;
+static constexpr uint16_t CHANNEL = 12;
 
 class MuddleRpcStressTests : public ::testing::Test
 {
@@ -103,10 +103,12 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>(1);
-    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
+    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+                                         LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>(1);
-    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
+    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+                                         LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();
     managerB_->Start();
@@ -150,8 +152,8 @@ protected:
 
     // create the server
     TestProtocol protocol;
-    auto server = std::make_shared<RpcServer>(endpoint, SERVICE, CHANNEL);
-    server -> Add(PROTOCOL, &protocol);
+    auto         server = std::make_shared<RpcServer>(endpoint, SERVICE, CHANNEL);
+    server->Add(PROTOCOL, &protocol);
 
     // create the client
     auto client = std::make_shared<RpcClient>(endpoint, FromBase64(target), SERVICE, CHANNEL);
@@ -168,7 +170,7 @@ protected:
       uint8_t const        fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
-      auto promise = client -> CallSpecificAddress(target, PROTOCOL, TestProtocol::EXCHANGE, data);
+      auto promise = client->Call(endpoint.network_id(), PROTOCOL, TestProtocol::EXCHANGE, data);
       promise->WithHandlers()
           .Then([promise, fill]() {
             auto const result = promise->As<ConstByteArray>();

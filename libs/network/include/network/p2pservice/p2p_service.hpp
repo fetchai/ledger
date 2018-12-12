@@ -71,17 +71,17 @@ public:
   using AddressSet           = std::unordered_set<Address>;
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
   using FutureTimepoint      = network::FutureTimepoint;
+  using PeerTrust            = TrustInterface::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 
   // Construction / Destruction
-  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
+  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
+             std::size_t max_peers, std::size_t transient_peers, uint32_t process_cycle_ms);
   ~P2PService() = default;
 
   void Start(UriList const &initial_peer_list);
   void Stop();
-
-  void SetPeerGoals(uint32_t min, uint32_t max);
 
   Identity const &identity() const
   {
@@ -106,6 +106,8 @@ public:
   {
     return identity_cache_;
   }
+
+    std::list<PeerTrust>  GetPeersAndTrusts() const;
 
 private:
   using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
@@ -159,8 +161,11 @@ private:
   P2PManagedLocalServices local_services_;
   ///@}
 
-  uint32_t min_peers_ = 2;
-  uint32_t max_peers_ = 3;
+  std::size_t max_peers_;
+  std::size_t transient_peers_;
+  uint32_t process_cycle_ms_;
+
+  static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };
 
 }  // namespace p2p

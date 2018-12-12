@@ -23,11 +23,14 @@
 #include "core/serializers/stl_types.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include <chrono>
 #include <random>
 #include <vector>
@@ -38,8 +41,9 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
-#include "network/muddle/rpc/muddle_test_client.hpp"
-#include "network/muddle/rpc/muddle_test_server.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 
 using transaction_type = fetch::chain::VerifiedTransaction;
 
@@ -130,9 +134,9 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     return;
   }
 
-  std::size_t                    txData       = 0;
-  std::size_t                    rpcCalls     = 0;
-  std::size_t                    setupPayload = 0;
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
 
   TClientPtr client = MuddleTestClient::CreateTestClient(IP, port);
 

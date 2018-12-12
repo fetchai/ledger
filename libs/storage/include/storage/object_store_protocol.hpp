@@ -112,7 +112,12 @@ private:
   T Get(ResourceID const &rid)
   {
     T ret;
-    obj_store_->Get(rid, ret);
+
+    if (!obj_store_->Get(rid, ret))
+    {
+      throw std::runtime_error("Unable to lookup element in from storage unit");
+    }
+
     return ret;
   }
 

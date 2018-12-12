@@ -72,7 +72,7 @@ private:
   using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 
-  void OnNewBlock(Address const &from, Block &block);
+  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
 
   bool RequestHeaviestChainFromPeer(Address const &from);
 

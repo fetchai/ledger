@@ -61,6 +61,11 @@ public:
     due_time_ = Clock::now() + dur;
   }
 
+  void SetTimedOut()
+  {
+    due_time_ = Clock::now() - std::chrono::seconds(1);
+  }
+
   void SetMilliseconds(Timepoint const &timepoint, size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
@@ -100,7 +105,11 @@ public:
 
   std::string Explain() const
   {
-    return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(DueIn()).count())+"ms";
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+
+    auto const due_in_ms = duration_cast<milliseconds>(DueIn()).count();
+    return std::to_string(due_in_ms) + "ms";
   }
 
 private:

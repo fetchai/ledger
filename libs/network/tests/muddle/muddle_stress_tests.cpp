@@ -136,7 +136,7 @@ protected:
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
     subscription->SetMessageHandler([&num_messages](Address const &from, uint16_t service,
                                                     uint16_t channel, uint16_t counter,
-                                                    Payload const &payload) {
+                                                    Payload const &payload, Address const &) {
       EXPECT_EQ(service, uint16_t{SERVICE});
       EXPECT_EQ(channel, uint16_t{CHANNEL});
       EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
@@ -170,7 +170,7 @@ protected:
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
     subscription->SetMessageHandler(
         [&num_messages, &endpoint](Address const &from, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload) {
+                                   uint16_t counter, Payload const &payload, Address const &) {
           FETCH_LOG_INFO(LOGGING_NAME, "Handling message from: ", ToBase64(from),
                          " size: ", payload.size());
 

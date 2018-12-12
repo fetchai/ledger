@@ -60,7 +60,10 @@ public:
     return hash == hash_;
   }
 
-  BlockHash hash() { return hash_; }
+  BlockHash const &hash()
+  {
+    return hash_;
+  }
 
   PromiseState Work()
   {
@@ -68,37 +71,31 @@ public:
     {
       prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
           address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
-
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request sent to: ", ToBase64(hash_));
     }
     auto promise_state = prom_->GetState();
 
     switch (promise_state)
     {
     case PromiseState::TIMEDOUT:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::FAILED:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request failed to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request to: ", ToBase64(hash_),
-                     " timeout due in: ", timeout_.Explain());
       if (timeout_.IsDue())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+        FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request still waiting for to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::SUCCESS:
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request succeeded to: ", ToBase64(hash_));
-        prom_->As(blocks_);
-      }
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request succeeded to: ", ToBase64(hash_));
+      prom_->As(blocks_);
+    }
       return promise_state;
     }
-    FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request default still waiting for to: ", ToBase64(hash_));
     return PromiseState::WAITING;
   }
 
@@ -147,7 +144,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
 
   // set the main chain
   block_subscription_->SetMessageHandler(
-      [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload) {
+                                         [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload, Address transmitter) {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
         BlockSerializer serialiser(payload);
@@ -160,7 +157,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
         block.UpdateDigest();
 
         // dispatch the event
-        OnNewBlock(from, block);
+        OnNewBlock(from, block, transmitter);
       });
 }
 
@@ -181,7 +178,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
+  void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(from), ')');
@@ -242,31 +239,21 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
 
 void MainChainRpcService::ServiceLooseBlocks()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....");
-  try {
   auto pending_work_count = bg_work_.CountPending();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1");
   if ((pending_work_count == 0) && next_loose_tips_check_.IsDue())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1a");
     // At this point, ask the chain to check it has loose elments to query.
     if (chain_.HasMissingBlocks())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1b");
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1c");
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        FETCH_LOG_INFO(LOGGING_NAME, "Got random peers: ", random_peer_list.size());
         if (random_peer_list.begin()!=random_peer_list.end())
         {
           Address address =  (*random_peer_list.begin());
           AddLooseBlock(hash, address);
-
-          FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1d");
-          FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
         }
         else
         {
@@ -278,23 +265,17 @@ void MainChainRpcService::ServiceLooseBlocks()
     {
       // we appear to be idle, throttle back the working.
       next_loose_tips_check_.Set(std::chrono::seconds(1));
-      FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....1e");
     }
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....wibble");
   bg_work_.WorkCycle();
 
   for (auto &successful_worker : bg_work_.Get(MainChainSyncWorker::PromiseState::SUCCESS, 1000))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....2");
     if (successful_worker)
     {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....3");
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....4");
-      next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....5");
+      next_loose_tips_check_.SetTimedOut();
     }
   }
 
@@ -317,15 +298,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();
-    next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks()....10");
-  }
-  FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... DONE");
-
-  }catch (...)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "ServiceLooseBlocks().... EXCEPT");
-  
+    next_loose_tips_check_.SetTimedOut();
   }
 }
 
@@ -333,7 +306,6 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
 {
   bool newdata = false;
   bool lied    = false;
-  FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP: ", ToBase64(address), " replied with ", block_list.size(), " blocks");
 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {

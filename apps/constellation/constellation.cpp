@@ -58,6 +58,8 @@ namespace {
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
+static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
+
 bool WaitForLaneServersToStart()
 {
   using InFlightCounter = AtomicInFlightCounter<AtomicCounterName::TCP_PORT_STARTUP>;
@@ -163,8 +165,11 @@ ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string                         my_network_address,
-                             std::chrono::steady_clock::duration block_interval)
+                             std::string my_network_address, std::size_t processor_threads,
+                             std::size_t                         verification_threads,
+                             std::chrono::steady_clock::duration block_interval,
+                             std::size_t max_peers, std::size_t transient_peers,
+                             uint32_t p2p_cycle_time_ms)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
@@ -175,9 +180,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{Muddle::CreateNetworkId("****"), std::move(certificate), network_manager_}
+  , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_}
+  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
@@ -192,11 +197,12 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
            block_packer_, consensus_miner_, p2p_port_, block_interval}
   // p2p_port_ fairly arbitrary
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
-  , tx_processor_{*storage_, block_packer_}
+  , tx_processor_{*storage_, block_packer_, processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
         std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_),
+        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_,
+                                                block_packer_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
   FETCH_UNUSED(num_slices_);
@@ -210,7 +216,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
 
   // configure all the lane services
-  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_);
+  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_,
+                       verification_threads);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
@@ -261,7 +268,7 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
 
   std::size_t const count = storage_->AddLaneConnectionsWaiting(
-      BuildLaneConnectionMap(manifest_, num_lanes_, true), std::chrono::milliseconds(10000));
+      BuildLaneConnectionMap(manifest_, num_lanes_, true), LANE_CONNECTION_TIME);
 
   // check to see if the connections where successful
   if (count != num_lanes_)

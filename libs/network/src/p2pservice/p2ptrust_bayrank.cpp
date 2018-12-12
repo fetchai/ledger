@@ -54,11 +54,10 @@ std::ostream& operator<<(std::ostream& o, const fetch::p2p::TrustQuality& q)
 using Gaussian = math::statistics::Gaussian<double>;
 
 const reference_players_type reference_players_ = {
-    /* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
-    /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
-    /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-    /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 16.)
-
-};
+    {/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
+     /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
+     /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
+     /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.)
+    }};
 }  // namespace p2p
 }  // namespace fetch

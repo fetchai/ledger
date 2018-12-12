@@ -172,6 +172,14 @@ public:
            (uint32_t(p[3]));
   }
 
+  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
+  {
+    std::string x = "000" + std::to_string(instance_number);
+    x             = x.substr(x.length() - 3);
+    x             = std::string(1, prefix) + x;
+    return CreateNetworkId(x.c_str());
+  }
+
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
@@ -182,15 +190,16 @@ public:
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
+  void Shutdown();
   /// @}
 
   Identity const &identity() const;
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections();
+  ConnectionMap GetConnections(bool direct_only=false);
 
-  bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
+  bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
   PeerConnectionList &useClients();
 
@@ -207,6 +216,8 @@ public:
   bool IsBlacklisted(Address const &target) const;
   /// @}
 
+  bool IsConnected(Address const &target) const;
+
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
@@ -217,14 +228,6 @@ public:
     clients_.Debug(prefix);
   }
 
-  const std::string &NetworkIdStr();
-
-  bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
-                   byte_array::ToBase64(identity_.identifier()));
-    return router_.HandleToAddress(handle, identifier);
-  }
 
   void SetUpTrust(TrustSystem *trust_system)
   {
@@ -260,7 +263,6 @@ private:
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
-  std::string          network_id_str_;
   TrustSystem *        trust_system_ = nullptr;
 };
 
@@ -276,8 +278,6 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "    ", this);
-  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), " to ", NetworkIdStr());
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);

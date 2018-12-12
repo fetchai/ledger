@@ -86,6 +86,7 @@ public:
   explicit Variant(char const *value);
 
   void MakeArray(std::size_t elements);
+  void MakeArrayFrom(const std::vector<Variant> &elements);
 
   /// @name Basic Type Access
   /// @{

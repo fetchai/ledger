@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "crypto/identity.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
@@ -47,7 +46,6 @@ class Router : public MuddleEndpoint
 {
 public:
   using Address             = Packet::Address;  // == a crypto::Identity.identifier_
-  using Identity            = fetch::crypto::Identity;
   using PacketPtr           = std::shared_ptr<Packet>;
   using Payload             = Packet::Payload;
   using ConnectionPtr       = std::weak_ptr<network::AbstractConnection>;
@@ -70,6 +68,11 @@ public:
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
+
+  NetworkId network_id() override
+  {
+    return network_id_;
+  }
 
   // Start / Stop
   void Start();
@@ -103,22 +106,39 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
-  bool HandleToAddress(const Handle &handle, Address &address) const;
+  bool HandleToDirectAddress(const Handle &handle, Address &address) const;
+
+  /** If this host is connected close their port.
+   * @param peer The target address to killed.
+   */
   void DropPeer(Address const &peer);
+
   void Cleanup();
-  void Debug(std::string const &prefix)
-  {
-    registrar_.Debug(prefix);
-  }
 
-  virtual NetworkId network_id() override
-  {
-    return network_id_;
-  }
+  /** Show debugging information about the internals of the router.
+   * @param prefix the string to put on the front of the logging lines.
+   */
+  void Debug(std::string const &prefix) const;
 
+  /** Deny this host's connection attempts and do not attempt to connect to it.
+   * @param target The target address to be denied.
+   */
   void Blacklist(Address const &target);
+
+  /** Allow this host to be connected to and to connect to us.
+   * @param target The target address to be allowed.
+   */
   void Whitelist(Address const &target);
+
+  /** Return true if connections from this target address will be rejected.
+   * @param target The target address's status to interrogate.
+   */
   bool IsBlacklisted(Address const &target) const;
+
+  /** Return true if there is an actual TCP connection to this address at the moment.
+   * @param target The target address's status to interrogate.
+   */
+  bool IsConnected(Address const &target) const;
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
@@ -128,6 +148,8 @@ private:
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
   using BlackList  = fetch::muddle::Blacklist;
+
+  static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 10;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -139,7 +161,7 @@ private:
   void DispatchDirect(Handle handle, PacketPtr packet);
   void KillConnection(Handle handle);
 
-  void DispatchPacket(PacketPtr packet);
+  void DispatchPacket(PacketPtr packet, Address transmitter);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
@@ -150,6 +172,7 @@ private:
   BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
+  NetworkId             network_id_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
@@ -157,15 +180,13 @@ private:
   HandleMap
       routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
 
-  HandleDirectAddrMap routing_table_handles_direct_addr_;  ///< Map of handles to direct address
-                                                           ///< (Protected by routing_table_lock)
-
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
 
-  NetworkId network_id_;
+  HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address
+                                            ///< (Protected by routing_table_lock)
 };
 
 }  // namespace muddle

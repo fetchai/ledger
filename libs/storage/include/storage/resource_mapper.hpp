@@ -56,6 +56,9 @@ public:
     return static_cast<std::string>(ToBase64(id_));
   }
 
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BITS  = 256;
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BYTES = RESOURCE_ID_SIZE_IN_BITS / 8;
+
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 

@@ -20,11 +20,11 @@
 #include <iostream>
 #include <memory>
 
-#include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "core/byte_array/encoders.hpp"
+using fetch::byte_array::ToBase64;
+#include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include <gtest/gtest.h>
 
-using fetch::byte_array::ToBase64;
 using namespace fetch::p2p;
 using fetch::byte_array::ConstByteArray;
 using Gaussian = fetch::math::statistics::Gaussian<double>;

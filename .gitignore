@@ -8,6 +8,7 @@ CMakeCache.txt
 *.orig
 
 nodes/
+.ipynb_checkpoints/
 
 # Legacy Editors
 \#*#
@@ -19,4 +20,6 @@ nodes/
 
 *.gz
 *.so
-.ipynb*
+
+*.DS_Store
+*.ipynb_checkpoints/

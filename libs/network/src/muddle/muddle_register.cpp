@@ -59,6 +59,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
     auto connection = elem.second.lock();
     if (connection)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: BROADCAST to: handle ",  elem.first);
       // schedule sending of the data
       connection->Send(data);
     }

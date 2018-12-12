@@ -115,7 +115,7 @@ public:
     }
     case State::CONNECTING:
     {
-      bool connected_ = muddle_.GetOutgoingConnectionAddress(peer_, target_address);
+      bool connected_ = muddle_.UriToDirectAddress(peer_, target_address);
       if (!connected_)
       {
         return false;

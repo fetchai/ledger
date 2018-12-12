@@ -249,6 +249,17 @@ struct IsBlasAndNoShapeArrayLikeImpl<fetch::math::ShapeLessArray<T, C>, R>
 template <typename A, typename R>
 using IsBlasAndNoShapeArrayLike = typename IsBlasAndNoShapeArrayLikeImpl<A, R>::Type;
 
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT CURRENTLY IMPLEMENTED
+//////////////////////////////////////////////////////////////
+
+template <typename A, typename R>
+struct IsNotImplementedImpl
+{
+};
+template <typename A, typename R>
+using IsNotImplementedLike = typename IsNotImplementedImpl<A, R>::Type;
+
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch

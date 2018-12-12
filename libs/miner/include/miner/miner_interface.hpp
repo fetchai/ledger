@@ -54,6 +54,9 @@ public:
    */
   virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
                              std::size_t num_slices) = 0;
+
+  virtual uint64_t backlog() const = 0;
+
   /// @}
 };
 

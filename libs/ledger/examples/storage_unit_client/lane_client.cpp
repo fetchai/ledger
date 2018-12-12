@@ -131,7 +131,7 @@ int main(int argc, char **argv)
   fetch::network::NetworkManager tm(8);
   MuddlePtr                      muddle_;
   ProverPtr                      p2p_key = GenerateP2PKey();
-  muddle_                                = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), std::move(p2p_key), tm);
+  muddle_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), std::move(p2p_key), tm);
   muddle_->Start({P2P_RPC_PORT});
   StorageUnitClient client(tm);
 
@@ -144,8 +144,7 @@ int main(int argc, char **argv)
     lane_data[i] = Uri((std::string("tcp://127.0.0.1:") + std::to_string(lane_port)).c_str());
   }
 
-  auto count =
-      client.AddLaneConnectionsWaiting(lane_data, std::chrono::milliseconds(30000));
+  auto count = client.AddLaneConnectionsWaiting(lane_data, std::chrono::milliseconds(30000));
   if (count != num_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Lane connections NOT established.");

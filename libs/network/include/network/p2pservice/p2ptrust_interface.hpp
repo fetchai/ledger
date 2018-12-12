@@ -21,8 +21,8 @@
 #include "variant/variant.hpp"
 
 #include <iostream>
-#include <string>
 #include <list>
+#include <string>
 #include <unordered_set>
 #include <ostream>
 
@@ -42,7 +42,7 @@ enum class TrustQuality
   BAD_CONNECTION  = 1,
   DUPLICATE       = 2,
   NEW_INFORMATION = 3,
-  NEW_PEER        = 4
+  NEW_PEER        = 4,
 };
 
 
@@ -53,12 +53,13 @@ class P2PTrustInterface
 public:
   struct PeerTrust
   {
-    IDENTITY address;
+    IDENTITY    address;
     std::string name;
-    double trust;
+    double      trust;
+    bool        has_transacted;
+    bool        active;
   };
-  //using PeerTrust = fetch::p2p::PeerTrust;
-
+  using PeerTrusts     = std::vector<PeerTrust>;
   using IdentitySet    = typename std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
 
@@ -83,7 +84,7 @@ public:
   virtual void RemoveObject(ConstByteArray const &object_ident) = 0;
 
   virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
-  virtual std::list<PeerTrust> GetPeersAndTrusts() const=0;
+  virtual PeerTrusts  GetPeersAndTrusts() const          = 0;
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 
@@ -121,6 +122,8 @@ inline char const *ToString(TrustQuality quality)
     return "Duplicate";
   case TrustQuality::NEW_INFORMATION:
     return "New Information";
+  case TrustQuality::NEW_PEER:
+    return "New Peer";
   default:
     return "Unknown";
   }
