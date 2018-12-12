@@ -280,7 +280,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  Type &operator[](std::size_t const &i) override
+  Type &operator[](std::size_t const &i)
   {
     return At(i);
   }
@@ -293,7 +293,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  Type const &operator[](std::size_t const &i) const override
+  Type const &operator[](std::size_t const &i) const
   {
     return At(i);
   }
@@ -307,7 +307,7 @@ public:
    */
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type const &operator()(S const &i,
-                                                                                 S const &j) const override
+                                                                                 S const &j) const
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
@@ -323,7 +323,7 @@ public:
    * meant for non-constant object instances.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j) override
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j)
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
@@ -336,7 +336,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  Type const &At(size_type const &i) const override
+  Type const &At(size_type const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -347,7 +347,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  Type &At(size_type const &i) override
+  Type &At(size_type const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -359,7 +359,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type const &At(size_type const &i, size_type const &j) const override
+  Type const &At(size_type const &i, size_type const &j) const
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -371,7 +371,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type &At(size_type const &i, size_type const &j) override
+  Type &At(size_type const &i, size_type const &j)
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -383,7 +383,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &n, Type const &v) override
+  Type const &Set(size_type const &n, Type const &v)
   {
     assert(n < super_type::data().size());
     super_type::data()[n] = v;
@@ -395,7 +395,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &i, size_type const &j, Type const &v) override
+  Type const &Set(size_type const &i, size_type const &j, Type const &v)
   {
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
@@ -764,6 +764,88 @@ public:
     return padded_width_ * padded_height_;
   }
 
+  /**
+   * overrides the ShapelessArray AllClose because of padding
+   * @param other array to compare to
+   * @param rtol relative tolerance
+   * @param atol absolute tolerance
+   * @param ignoreNaN flag for ignoring NaNs
+   * @return true if all values in both arrays are close enough
+   */
+  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
+                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
+  {
+    std::size_t N = this->size();
+    if (other.size() != N)
+    {
+      return false;
+    }
+    bool ret = true;
+    for (std::size_t i = 0; ret && i < N; ++i)
+    {
+      Type va = this->At(i);
+      if (ignoreNaN && std::isnan(va))
+      {
+        continue;
+      }
+      Type vb = other[i];
+      if (ignoreNaN && std::isnan(vb))
+      {
+        continue;
+      }
+      Type vA = (va - vb);
+      if (vA < 0)
+      {
+        vA = -vA;
+      }
+      if (va < 0)
+      {
+        va = -va;
+      }
+      if (vb < 0)
+      {
+        vb = -vb;
+      }
+      Type M = std::max(va, vb);
+
+      ret &= (vA < std::max(atol, M * rtol));
+    }
+    if (!ret)
+    {
+      for (std::size_t i = 0; i < N; ++i)
+      {
+        Type va = this->At(i);
+        if (ignoreNaN && std::isnan(va))
+        {
+          continue;
+        }
+        Type vb = other[i];
+        if (ignoreNaN && std::isnan(vb))
+        {
+          continue;
+        }
+        Type vA = (va - vb);
+        if (vA < 0)
+        {
+          vA = -vA;
+        }
+        if (va < 0)
+        {
+          va = -va;
+        }
+        if (vb < 0)
+        {
+          vb = -vb;
+        }
+        Type M = std::max(va, vb);
+        std::cout << this->At(i) << " " << other[i] << " "
+                  << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
+      }
+    }
+
+    return ret;
+  }
+
 private:
   size_type              height_ = 0, width_ = 0;
   std::vector<size_type> shape_{0, 0};
@@ -802,9 +884,9 @@ private:
    */
   void UpdateDimensions(std::size_t height, std::size_t width)
   {
-    height_ = height;
-    width_  = width;
-    shape_  = {height_, width_};
+    height_     = height;
+    width_      = width;
+    shape_      = {height_, width_};
     this->size_ = height_ * width_;
   }
 };

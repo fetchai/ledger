@@ -91,16 +91,16 @@ void Relu(ArrayType &x)
  * @param y_hat
  * @param ret
  */
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
+template <typename ArrayType>
+ArrayType Sigmoid(ArrayType const &A)
 {
-  linalg::Matrix<T, C, S> ret{A.shape()};
+  ArrayType ret{A.shape()};
   ret.Copy(A);
 
-  Multiply(T(-1.0), ret, ret);
+  Multiply(typename ArrayType::Type(-1.0), ret, ret);
   Exp(ret);
-  Add(ret, T(1.0), ret);
-  Divide(T(1.0), ret, ret);
+  Add(ret, typename ArrayType::Type(1.0), ret);
+  Divide(typename ArrayType::Type(1.0), ret, ret);
 
   return ret;
 }

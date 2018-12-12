@@ -412,7 +412,7 @@ public:
    * does not accidently enter the padded area of the memory.
    */
   template <typename S>
-  virtual typename std::enable_if<std::is_integral<S>::value, Type>::type const &At(S const &i) const
+  typename std::enable_if<std::is_integral<S>::value, Type>::type const &At(S const &i) const
   {
     return data_[i];
   }
@@ -561,10 +561,9 @@ public:
     return ret;
   }
 
-  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5), Type const &atol = Type(1e-8),
-                bool ignoreNaN = true) const
+  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
+                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
   {
-    std::cout << "this->size(): " << this->size() << std::endl;
     std::size_t N = this->size();
     if (other.size() != N)
     {
