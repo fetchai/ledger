@@ -22,6 +22,8 @@
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
+
+// NOLINTNEXTLINE
 #define APPLY_OPERATOR_LIST(FUNCTION) \
   FUNCTION(*)                         \
   FUNCTION(/)                         \
@@ -29,7 +31,7 @@
   FUNCTION(-)                         \
   FUNCTION(&)                         \
   FUNCTION(|)                         \
-  FUNCTION (^)
+  FUNCTION(^)
 
 namespace fetch {
 namespace vectorize {
