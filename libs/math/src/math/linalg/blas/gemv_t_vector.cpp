@@ -27,8 +27,8 @@ namespace linalg {
 template <typename S, typename MATRIX, uint64_t V>
 void Blas<S, MATRIX, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
           Computes(_y = _alpha * T(_A) * _x + _beta * _y), V>::
-     operator()(type const &alpha, MATRIX const &a, ShapeLessArray<type> const &x, int const &incx,
-           type const &beta, ShapeLessArray<type> &y, int const &incy) const
+     operator()(type const &alpha, MATRIX const &a, ShapelessArray<type> const &x, int const &incx,
+           type const &beta, ShapelessArray<type> &y, int const &incy) const
 {
   int  jy;
   type temp;

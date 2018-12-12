@@ -37,8 +37,8 @@ inline void BuildMaxStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMax<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMax<ShapeLessArray<float>>)
+  module.def(custom_name.c_str(), &WrapperMax<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperMax<ShapelessArray<float>>)
       .def(custom_name.c_str(), &WrapperMax<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperMax<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperMax<RectangularArray<double>>)

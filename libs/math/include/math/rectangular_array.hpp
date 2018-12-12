@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
@@ -45,10 +45,10 @@ namespace math {
  */
 template <typename T, typename C = fetch::memory::SharedArray<T>, bool PAD_HEIGHT = true,
           bool PAD_WIDTH = false>
-class RectangularArray : public math::ShapeLessArray<T, C>
+class RectangularArray : public math::ShapelessArray<T, C>
 {
 public:
-  using super_type     = math::ShapeLessArray<T, C>;
+  using super_type     = math::ShapelessArray<T, C>;
   using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
   using size_type      = typename super_type::size_type;
