@@ -22,6 +22,7 @@
 #include "meta/is_log2.hpp"
 
 #include <array>
+#include <deque>
 
 namespace fetch {
 namespace core {
@@ -112,6 +113,10 @@ template <typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIn
 class Queue
 {
 public:
+  static constexpr std::size_t QUEUE_LENGTH = SIZE;
+
+  using Element = T;
+
   // Construction / Destruction
   Queue()              = default;
   Queue(Queue const &) = delete;
@@ -122,9 +127,11 @@ public:
   /// @{
   T Pop();
   template <typename R, typename P>
-  bool Pop(T &value, std::chrono::duration<R, P> const &duration);
-  void Push(T const &element);
-  void Push(T &&element);
+  bool        Pop(T &value, std::chrono::duration<R, P> const &duration);
+  void        Push(T const &element);
+  void        Push(T &&element);
+  bool        empty();
+  std::size_t size();
   /// @}
 
   // Operators
@@ -166,6 +173,8 @@ T Queue<T, N, P, C>::Pop()
   T value = queue_[read_index_++];
 
   write_count_.Post();
+
+  return value;
 }
 
 /**

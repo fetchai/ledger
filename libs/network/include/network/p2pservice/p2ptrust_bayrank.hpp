@@ -20,7 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "math/statistics/normal.hpp"
+#include "math/free_functions/statistics/normal.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <algorithm>
@@ -95,15 +95,8 @@ public:
     size_t pos;
     if (ranking == ranking_store_.end())
     {
-      //FETCH_LOG_WARN(LOGGING_NAME, "KLL: NEW IDENTITY: ", ToBase64(peer_ident));
-     //for(auto &item:ranking_store_)
-      //{
-      //  FETCH_LOG_WARN(LOGGING_NAME, "KLL: WAS NOT     : ", ToBase64(item.first));
-      //}
-
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
+      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0};
       pos = trust_store_.size();
-      ranking_store_[peer_ident] = pos;
       trust_store_.push_back(new_record);
     }
     else
@@ -132,9 +125,7 @@ public:
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
   {
     FETCH_LOCK(mutex_);
-    auto r = ranking_store_.find(peer_ident) != ranking_store_.end();
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Discovered peer?: ", r, " for ", ToBase64(peer_ident));
-    return r;
+    return ranking_store_.find(peer_ident) != ranking_store_.end();
   }
 
   IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const override
@@ -247,15 +238,9 @@ public:
       {
         ranking = trust_store_[ranking_it->second].score;
       }
-      //FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", ToBase64(peer_ident), " found.. ", ranking);
-      return ranking;
-    }
-    else
-    {
-      //FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", ToBase64(peer_ident), " not-in-store.. 0");
-      return ranking;
     }
 
+    return ranking;
   }
 
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
@@ -310,7 +295,7 @@ protected:
     }
   }
 
-  void SortIfNeeded() const
+  void SortIfNeeded()
   {
     if (!dirty_)
     {
@@ -320,11 +305,11 @@ protected:
 
     std::sort(trust_store_.begin(), trust_store_.end(),
               [](const PeerTrustRating &a, const PeerTrustRating &b) {
-                if (a.score > b.score)
+                if (a.score < b.score)
                 {
                   return true;
                 }
-                if (a.score < b.score)
+                if (a.score > b.score)
                 {
                   return false;
                 }
@@ -354,10 +339,10 @@ protected:
   }
 
 protected:
-  mutable bool          dirty_ = false;
+  bool          dirty_ = false;
   mutable Mutex mutex_{__LINE__, __FILE__};
-  mutable TrustStore    trust_store_;
-  mutable RankingStore  ranking_store_;
+  TrustStore    trust_store_;
+  RankingStore  ranking_store_;
 };
 
 }  // namespace p2p

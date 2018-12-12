@@ -16,123 +16,105 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/peer_list.hpp"
-#include "network/muddle/router.hpp"
-#include "network/service/promise.hpp"
+#include <chrono>
+#include <memory>
+#include <thread>
 
 #include <gmock/gmock.h>
-#include <memory>
+
+#include <network/muddle/dispatcher.hpp>
+#include <network/muddle/muddle.hpp>
+#include <network/muddle/muddle_register.hpp>
+#include <network/muddle/peer_list.hpp>
+#include <network/muddle/router.hpp>
+#include <network/service/promise.hpp>
+
+namespace fetch {
+namespace muddle {
+
+struct DevNull : public network::AbstractConnection
+{
+  virtual void Send(network::message_type const &) override
+  {}
+
+  virtual uint16_t Type() const override
+  {
+    return 0xFFFF;
+  }
+
+  virtual void Close() override
+  {}
+
+  virtual bool Closed() override
+  {
+    return false;
+  }
+
+  virtual bool is_alive() const override
+  {
+    return true;
+  }
+};
+
+}  // namespace muddle
+}  // namespace fetch
 
 class PeerConnectionListTests : public ::testing::Test
 {
 protected:
-  using Router                = fetch::muddle::Router;
-  using RouterPtr             = std::unique_ptr<Router>;
-  using PeerConnectionList    = fetch::muddle::PeerConnectionList;
-  using PeerConnectionListPtr = std::unique_ptr<PeerConnectionList>;
+  using Dispatcher         = fetch::muddle::Dispatcher;
+  using MuddleRegister     = fetch::muddle::MuddleRegister;
+  using Router             = fetch::muddle::Router;
+  using PeerConnectionList = fetch::muddle::PeerConnectionList;
+  using ConnectionPtr      = PeerConnectionList::ConnectionPtr;
+  using ConnectionState    = PeerConnectionList::ConnectionState;
+  using Uri                = fetch::network::Uri;
+  using Peer               = fetch::network::Peer;
+
+  PeerConnectionListTests()
+    : register_(dispatcher_)
+    , router_(fetch::muddle::Muddle::CreateNetworkId("Test"),
+              Router::Address{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+              register_, dispatcher_)
+    , peer_list_(router_)
+    , peer_(Peer{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 42})
+    , connection_(::std::make_shared<fetch::muddle::DevNull>())
+  {}
 
   void SetUp() override
-  {
-    //    router_ = std::make_unique<Router>();
-    //    peer_list_ = std::make_unique<PeerConnectionList>();
-  }
+  {}
 
-  RouterPtr             router_;
-  PeerConnectionListPtr peer_list_;
+  Dispatcher         dispatcher_;
+  MuddleRegister     register_;
+  Router             router_;
+  PeerConnectionList peer_list_;
+  Uri                peer_;
+  ConnectionPtr      connection_;
 };
 
-TEST(PromiseTests, CheckNormalPromiseCycle)
+TEST_F(PeerConnectionListTests, CheckDisconnect)
 {
-  auto prom = fetch::service::MakePromise();
+  EXPECT_EQ(peer_list_.GetNumPeers(), 0);
+  EXPECT_EQ(peer_list_.GetCurrentPeers().size(), 0);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::UNKNOWN);
 
-  bool success  = false;
-  bool failure  = false;
-  bool complete = false;
+  peer_list_.AddConnection(peer_, connection_);
+  EXPECT_EQ(peer_list_.GetNumPeers(), 0);
+  EXPECT_EQ(peer_list_.GetCurrentPeers().size(), 1);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::TRYING);
 
-  prom->WithHandlers()
-      .Then([&success]() { success = true; })
-      .Catch([&failure]() { failure = true; })
-      .Finally([&complete]() { complete = true; });
+  peer_list_.OnConnectionEstablished(peer_);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::CONNECTED);
 
-  EXPECT_FALSE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_FALSE(complete);
+  peer_list_.RemoveConnection(peer_);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState(int(ConnectionState::BACKOFF) + 1));
+  {
+    using namespace std::chrono_literals;
+    ::std::this_thread::sleep_for(2s);
+  }
+  peer_list_.OnConnectionEstablished(peer_);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::CONNECTED);
 
-  prom->Fulfill(fetch::byte_array::ConstByteArray{});
-
-  EXPECT_TRUE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_TRUE(complete);
-}
-
-TEST(PromiseTests, CheckNormalFailureCycle)
-{
-  auto prom = fetch::service::MakePromise();
-
-  bool success  = false;
-  bool failure  = false;
-  bool complete = false;
-
-  prom->WithHandlers()
-      .Then([&success]() { success = true; })
-      .Catch([&failure]() { failure = true; })
-      .Finally([&complete]() { complete = true; });
-
-  EXPECT_FALSE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_FALSE(complete);
-
-  prom->Fail();
-
-  EXPECT_FALSE(success);
-  EXPECT_TRUE(failure);
-  EXPECT_TRUE(complete);
-}
-
-TEST(PromiseTests, CheckImmediateSuccess)
-{
-  auto prom = fetch::service::MakePromise();
-
-  bool success  = false;
-  bool failure  = false;
-  bool complete = false;
-
-  prom->Fulfill(fetch::byte_array::ConstByteArray{});
-
-  EXPECT_FALSE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_FALSE(complete);
-
-  prom->WithHandlers()
-      .Then([&success]() { success = true; })
-      .Catch([&failure]() { failure = true; })
-      .Finally([&complete]() { complete = true; });
-
-  EXPECT_TRUE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_TRUE(complete);
-}
-
-TEST(PromiseTests, CheckImmediateFailure)
-{
-  auto prom = fetch::service::MakePromise();
-
-  bool success  = false;
-  bool failure  = false;
-  bool complete = false;
-
-  prom->Fail();
-
-  EXPECT_FALSE(success);
-  EXPECT_FALSE(failure);
-  EXPECT_FALSE(complete);
-
-  prom->WithHandlers()
-      .Then([&success]() { success = true; })
-      .Catch([&failure]() { failure = true; })
-      .Finally([&complete]() { complete = true; });
-
-  EXPECT_FALSE(success);
-  EXPECT_TRUE(failure);
-  EXPECT_TRUE(complete);
+  peer_list_.Disconnect(peer_);
+  EXPECT_EQ(peer_list_.GetStateForPeer(peer_), ConnectionState::UNKNOWN);
 }

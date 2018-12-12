@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/statistics/mean.hpp"
 #include "math/linalg/matrix.hpp"
-#include "math/statistics/mean.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {

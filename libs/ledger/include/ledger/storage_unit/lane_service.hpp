@@ -27,8 +27,11 @@
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
+#include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
+#include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "network/details/thread_pool.hpp"
-#include "network/management/connection_register.hpp"
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/has_worker_thread.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -36,7 +39,6 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "storage/object_store_syncronisation_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
 
 #include <iomanip>
@@ -45,7 +47,7 @@
 namespace fetch {
 namespace ledger {
 
-class LaneService  //: public service::ServiceServer<fetch::network::TCPServer>
+class LaneService
 {
 public:
   using Muddle         = muddle::Muddle;
@@ -54,40 +56,31 @@ public:
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
 
-  using connectivity_details_type = LaneConnectivityDetails;
-  using document_store_type       = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocolImpl = storage::RevertibleDocumentStoreProtocol;
-  using transaction_store_type    = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
-  using transaction_store_protocol_type =
-      storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using controller_type          = LaneController;
-  using controller_protocol_type = LaneControllerProtocol;
-  using super_type               = service::ServiceServer<fetch::network::TCPServer>;
-  //  using tx_sync_protocol_type    = storage::ObjectStoreSyncronisationProtocol<
-  //    client_register_type, fetch::chain::VerifiedTransaction,
-  //    fetch::chain::UnverifiedTransaction>;
-  using thread_pool_type = network::ThreadPool;
+  using DocumentStore             = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore          = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
+  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
+  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
+  using VerifiedTransaction       = chain::VerifiedTransaction;
 
   using Identifier = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "LaneService";
 
   // TODO(issue 7): Make config JSON
-  LaneService(std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-              uint16_t port, fetch::network::NetworkManager tm, bool refresh_storage = false)
+  LaneService(
+      std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
+      uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
+      bool                      refresh_storage              = false,
+      std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
+      std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
+      std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))
+    : port_(port)
+    , lane_(lane)
   {
-
-    thread_pool_ = network::MakeThreadPool(1);
-    port_        = port;
-    lane_        = lane;
-
-    // Setting lane certificate up
-    // TODO(issue 24): Load from somewhere
-    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
-    certificate->GenerateKeys();
-
-    std::unique_ptr<crypto::Prover> certificate_;
-    certificate_.reset(certificate);
+    std::unique_ptr<crypto::Prover> certificate_ = std::make_unique<crypto::ECDSASigner>();
 
     std::string network_id = std::string("000") + std::to_string(lane_);
     network_id             = std::string("L") + network_id.substr(network_id.length() - 3);
@@ -113,7 +106,7 @@ public:
     server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
 
     // TX Store
-    tx_store_ = std::make_unique<transaction_store_type>();
+    tx_store_ = std::make_shared<TransactionStore>();
     if (refresh_storage)
     {
       tx_store_->New(prefix + "transaction.db", prefix + "transaction_index.db", true);
@@ -123,20 +116,31 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    // tx_sync_protocol_  = std::make_unique<tx_sync_protocol_type>(RPC_TX_STORE_SYNC, register_,
-    //                                                          thread_pool_, tx_store_.get());
-    tx_store_protocol_ = std::make_unique<transaction_store_protocol_type>(tx_store_.get());
-    //    tx_store_protocol_->OnSetObject(
-    //        [this](fetch::chain::VerifiedTransaction const &tx) {
-    //        tx_sync_protocol_->AddToCache(tx); });
+    tx_store_->id = "Lane " + std::to_string(lane_);
 
+    tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
-    // TX Sync
-    //    server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
+    // Controller
+    controller_          = std::make_shared<LaneController>(lane_identity_, muddle_);
+    controller_protocol_ = std::make_unique<LaneControllerProtocol>(controller_.get());
+    server_->Add(RPC_CONTROLLER, controller_protocol_.get());
+
+    tx_sync_protocol_ = std::make_unique<TransactionStoreSyncProtocol>(tx_store_.get(), lane_);
+    tx_sync_service_  = std::make_shared<TransactionStoreSyncService>(
+        lane_, muddle_, tx_store_, controller_, verification_threads, sync_service_timeout,
+        sync_service_promise_timeout, sync_service_fetch_period);
+
+    tx_store_->SetCallback(
+        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
+
+    tx_sync_service_->SetTrimCacheCallback([this]() { tx_sync_protocol_->TrimCache(); });
+
+    // TX Sync protocol
+    server_->Add(RPC_TX_STORE_SYNC, tx_sync_protocol_.get());
 
     // State DB
-    state_db_ = std::make_unique<document_store_type>();
+    state_db_ = std::make_unique<DocumentStore>();
     if (refresh_storage)
     {
       state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
@@ -149,21 +153,20 @@ public:
     }
 
     state_db_protocol_ =
-        std::make_unique<DocumentStoreProtocolImpl>(state_db_.get(), lane, total_lanes);
+        std::make_unique<DocumentStoreProtocol>(state_db_.get(), lane, total_lanes);
     server_->Add(RPC_STATE, state_db_protocol_.get());
-
-    // Controller
-    controller_          = std::make_unique<controller_type>(lane_identity_, tm);
-    controller_protocol_ = std::make_unique<controller_protocol_type>(controller_.get());
-    server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Initialised.");
   }
 
   virtual ~LaneService()
   {
+    workthread_ = nullptr;
+
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Teardown.");
-    thread_pool_->Stop();
+
+    muddle_->Shutdown();
+    tx_sync_service_ = nullptr;
 
     lane_identity_protocol_.reset();
     lane_identity_.reset();
@@ -189,40 +192,54 @@ public:
                    " ID: ", byte_array::ToBase64(lane_identity_->Identity().identifier()));
     muddle_->Start({port_});
 
-    thread_pool_->Start();
-    // tx_sync_protocol_->Start();
+    tx_sync_service_->Start();
+
+    // TX Sync service
+    workthread_ =
+        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
+    workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
   }
 
   void Stop()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, " Stopping.");
+    tx_sync_service_->Stop();
+    workthread_ = nullptr;
     muddle_->Stop();
-    thread_pool_->Stop();
-    // tx_sync_protocol_->Stop();
+  }
+
+  bool SyncIsReady()
+  {
+    return tx_sync_service_->IsReady();
   }
 
 private:
   std::shared_ptr<LaneIdentity>         lane_identity_;
   std::unique_ptr<LaneIdentityProtocol> lane_identity_protocol_;
 
-  std::unique_ptr<controller_type>          controller_;
-  std::unique_ptr<controller_protocol_type> controller_protocol_;
+  std::shared_ptr<LaneController>         controller_;
+  std::unique_ptr<LaneControllerProtocol> controller_protocol_;
 
-  std::unique_ptr<document_store_type>       state_db_;
-  std::unique_ptr<DocumentStoreProtocolImpl> state_db_protocol_;
+  std::unique_ptr<DocumentStore>         state_db_;
+  std::unique_ptr<DocumentStoreProtocol> state_db_protocol_;
 
-  std::unique_ptr<transaction_store_type>          tx_store_;
-  std::unique_ptr<transaction_store_protocol_type> tx_store_protocol_;
+  std::shared_ptr<TransactionStore>         tx_store_;
+  std::unique_ptr<TransactionStoreProtocol> tx_store_protocol_;
 
-  //  std::unique_ptr<tx_sync_protocol_type> tx_sync_protocol_;
-  thread_pool_type thread_pool_;
+  std::unique_ptr<TransactionStoreSyncProtocol> tx_sync_protocol_;
+  std::shared_ptr<TransactionStoreSyncService>  tx_sync_service_;
 
-  ServerPtr    server_;
-  MuddlePtr    muddle_;  ///< The muddle networking service
-  mutex::Mutex certificate_lock_{__LINE__, __FILE__};
-  uint16_t     port_;
+  ServerPtr server_;
+  MuddlePtr muddle_;  ///< The muddle networking service
+  // mutex::Mutex certificate_lock_{__LINE__, __FILE__};
+  uint16_t port_;
+
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
 
   uint32_t lane_;
+
+  static constexpr unsigned int SYNC_PERIOD_MS = 500;
 };
 
 }  // namespace ledger

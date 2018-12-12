@@ -48,6 +48,19 @@
 
 namespace fetch {
 
+namespace chain {
+namespace consensus {
+
+enum class ConsensusMinerType
+{
+  NO_MINER    = 0,
+  DUMMY_MINER = 1,
+  BAD_MINER   = 2
+};
+
+}  // namespace consensus
+}  // namespace chain
+
 /**
  * Top level container for all components that are required to run a ledger instance
  */
@@ -64,40 +77,37 @@ public:
   explicit Constellation(CertificatePtr &&certificate, Manifest &&manifest, uint32_t num_executors,
                          uint32_t log2_num_lanes, uint32_t num_slices,
                          std::string interface_address, std::string const &prefix,
-                         std::string                         my_network_address,
-                         std::chrono::steady_clock::duration block_interval,
-                             uint32_t max_peers,
-                         uint32_t fidgety_peers,
-                         uint32_t peers_update_cycle_ms);
+                         std::string my_network_address, std::size_t processor_threads,
+                         std::size_t                         verification_threads,
+                         std::chrono::steady_clock::duration block_interval);
 
-  void Run(UriList const &initial_peers, int mining);
+  void Run(UriList const &initial_peers, chain::consensus::ConsensusMinerType const &mining);
   void SignalStop();
 
 private:
-  using Muddle                = muddle::Muddle;
-  using NetworkManager        = network::NetworkManager;
-  using BlockPackingAlgorithm = miner::BasicMiner;
-  using ConsensusMiners =
-      std::unordered_map<int, std::shared_ptr<chain::consensus::ConsensusMinerInterface>>;
-  using Miner                  = chain::MainChainMiner;
-  using BlockCoordinator       = chain::BlockCoordinator;
-  using MainChain              = chain::MainChain;
-  using MainChainRpcService    = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
-  using LaneServices           = ledger::StorageUnitBundledService;
-  using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = StorageUnitClient::LaneIndex;
-  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
-  using Flag                   = std::atomic<bool>;
-  using ExecutionManager       = ledger::ExecutionManager;
-  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl      = ledger::LaneRemoteControl;
-  using HttpServer             = http::HTTPServer;
-  using HttpModule             = http::HTTPModule;
-  using HttpModulePtr          = std::shared_ptr<HttpModule>;
-  using HttpModules            = std::vector<HttpModulePtr>;
-  using TransactionProcessor   = ledger::TransactionProcessor;
-  using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using Muddle                  = muddle::Muddle;
+  using NetworkManager          = network::NetworkManager;
+  using BlockPackingAlgorithm   = miner::BasicMiner;
+  using Miner                   = chain::MainChainMiner;
+  using BlockCoordinator        = chain::BlockCoordinator;
+  using MainChain               = chain::MainChain;
+  using MainChainRpcService     = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
+  using LaneServices            = ledger::StorageUnitBundledService;
+  using StorageUnitClient       = ledger::StorageUnitClient;
+  using LaneIndex               = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr    = std::shared_ptr<StorageUnitClient>;
+  using Flag                    = std::atomic<bool>;
+  using ExecutionManager        = ledger::ExecutionManager;
+  using ExecutionManagerPtr     = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl       = ledger::LaneRemoteControl;
+  using HttpServer              = http::HTTPServer;
+  using HttpModule              = http::HTTPModule;
+  using HttpModulePtr           = std::shared_ptr<HttpModule>;
+  using HttpModules             = std::vector<HttpModulePtr>;
+  using TransactionProcessor    = ledger::TransactionProcessor;
+  using TrustSystem             = p2p::P2PTrustBayRank<Muddle::Address>;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
   /// @name Configuration
   /// @{
@@ -134,12 +144,11 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
-  MainChain             chain_;              ///< The main block chain component
-  BlockPackingAlgorithm block_packer_;       ///< The block packing / mining algorithm
-  BlockCoordinator      block_coordinator_;  ///< The block execution coordinator
-  ConsensusMiners
-        consensus_miners_;  ///< The consensus miners, one from the map needs to be injected to Miner
-  Miner miner_;             ///< The miner and block generation component
+  MainChain               chain_;              ///< The main block chain component
+  BlockPackingAlgorithm   block_packer_;       ///< The block packing / mining algorithm
+  BlockCoordinator        block_coordinator_;  ///< The block execution coordinator
+  ConsensusMinerInterface consensus_miner_;
+  Miner                   miner_;  ///< The miner and block generation component
   /// @}
 
   /// @name Top Level Services

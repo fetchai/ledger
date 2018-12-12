@@ -50,7 +50,12 @@ public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
   using serializer_type = serializers::TypedByteArrayBuffer;
+  using Callback        = std::function<void(type const &)>;
   class Iterator;
+
+  static constexpr char const *LOGGING_NAME = "ObjectStore";
+
+  std::string id = "";
 
   /**
    * Create a new file for the object store with the filename parameters for the
@@ -121,7 +126,8 @@ public:
    *
    * @param: f The closure
    */
-  void WithLock(std::function<void()> const &f)
+  template <typename F>
+  void WithLock(F const &f)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
     f();
@@ -179,13 +185,22 @@ public:
   {
     serializer_type ser;
     ser << object;
-    store_.Set(rid, ser.data());
-    return true;
+
+    store_.Set(rid, ser.data());  // temporarily disable disk writes
+    if (set_callback_)
+    {
+      set_callback_(object);
+    }
   }
 
   std::size_t size() const
   {
     return store_.size();
+  }
+
+  void SetCallback(Callback cb)
+  {
+    set_callback_ = std::move(cb);
   }
 
   /**
@@ -254,13 +269,13 @@ public:
    * matches the first bits of rid)
    *
    * @param: rid The key
-   * @param: bits The number of bits of rid we want to match against
+   * @param: bit_count The number of bits of rid we want to match against
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bit_count)
   {
-    auto it = store_.GetSubtree(rid, bits);
+    auto it = store_.GetSubtree(rid, bit_count);
 
     return Iterator(it);
   }
@@ -278,6 +293,8 @@ public:
 private:
   mutex::Mutex         mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
+
+  Callback set_callback_;
 };
 
 }  // namespace storage

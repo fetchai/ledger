@@ -98,7 +98,7 @@ public:
 
   BlockType const &HeaviestBlock() const
   {
-    Lock lock(main_mutex_);
+    RLock lock(main_mutex_);
 
     auto const &block = block_chain_.at(heaviest_.second);
 
@@ -119,7 +119,7 @@ public:
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
-    Lock                        lock(main_mutex_);
+    RLock                       lock(main_mutex_);
 
     std::vector<BlockType> result;
 
@@ -157,7 +157,7 @@ public:
       const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
     fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
-    Lock                        lock(main_mutex_);
+    RLock                       lock(main_mutex_);
 
     std::vector<BlockType> result;
 
@@ -188,8 +188,8 @@ public:
 
   void reset()
   {
-    Lock lock_main(main_mutex_);
-    Lock lock_loose(loose_mutex_);
+    RLock lock_main(main_mutex_);
+    RLock lock_loose(loose_mutex_);
 
     block_chain_.clear();
     tips_.clear();
@@ -218,7 +218,7 @@ public:
 
   bool Get(BlockHash hash, BlockType &block) const
   {
-    Lock lock(main_mutex_);
+    RLock lock(main_mutex_);
 
     auto it = block_chain_.find(hash);
 
@@ -247,7 +247,7 @@ public:
 
   bool HasMissingBlocks() const
   {
-    Lock lock(loose_mutex_);
+    RLock lock(loose_mutex_);
     return !loose_blocks_.empty();
   }
 
@@ -369,8 +369,8 @@ private:
   // walk through it adding the blocks, so long as we do breadth first search (!!)
   void CompleteLooseBlocks(BlockType const &block)
   {
-    Lock lock_main(main_mutex_);
-    Lock lock(loose_mutex_);
+    RLock lock_main(main_mutex_);
+    RLock lock(loose_mutex_);
 
     auto it = loose_blocks_.find(block.hash());
     if (it == loose_blocks_.end())
@@ -418,7 +418,7 @@ private:
 
   void NewLooseBlock(BlockType &block)
   {
-    Lock lock(loose_mutex_);
+    RLock lock(loose_mutex_);
     // Get vector of waiting blocks and push ours on
     auto &waitingBlocks = loose_blocks_[block.body().previous_hash];
     waitingBlocks.push_back(block.hash());
@@ -437,7 +437,7 @@ private:
 
     if (!block_store_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
-      Lock lock(main_mutex_);
+      RLock lock(main_mutex_);
       FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
       NewLooseBlock(block);
       return false;
@@ -457,7 +457,7 @@ private:
     // re-add
     FETCH_LOG_DEBUG(LOGGING_NAME, "Reviving block from file");
     {
-      Lock lock(main_mutex_);
+      RLock lock(main_mutex_);
       prev_block.totalWeight()        = total_weight;
       prev_block.loose()              = false;
       block_chain_[prev_block.hash()] = prev_block;
@@ -541,12 +541,12 @@ private:
   const uint32_t                         miner_number_;
   bool                                   saving_to_file_ = false;
 
-  mutable Mutex                                       main_mutex_;   //{__LINE__, __FILE__};
+  mutable RMutex                                      main_mutex_;   //{__LINE__, __FILE__};
   std::unordered_map<BlockHash, BlockType>            block_chain_;  ///< all recent blocks are here
   std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;         ///< Keep track of the tips
   std::pair<uint64_t, BlockHash>                      heaviest_;     ///< Heaviest block/tip
 
-  mutable Mutex                                        loose_mutex_;   //{__LINE__, __FILE__};
+  mutable RMutex                                       loose_mutex_;   //{__LINE__, __FILE__};
   std::unordered_map<PrevHash, std::vector<BlockHash>> loose_blocks_;  ///< Waiting (loose) blocks
 };
 

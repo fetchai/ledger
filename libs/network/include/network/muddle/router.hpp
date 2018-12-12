@@ -53,7 +53,7 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
-  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
+  using NetworkId     = MuddleEndpoint::NetworkId;
 
   struct RoutingData
   {
@@ -103,29 +103,24 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
-  bool HandleToAddress(const Handle &handle, Address &address) const;
+  bool HandleToDirectAddress(const Handle &handle, Address &address) const;
 
-  void DropPeer(Address const &peer);
   void Cleanup();
-  void Debug(std::string const &prefix) const;
+  void Debug(std::string const &prefix);
 
-  virtual NetworkId network_id() override
+  NetworkId network_id() override
   {
     return network_id_;
   }
 
-  void Blacklist(Address const &target);
-  void Whitelist(Address const &target);
-  bool IsBlacklisted(Address const &target) const;
-  bool IsConnected(Address const &target) const;
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
-  using RawAddress = Packet::RawAddress;
-  using BlackList  = fetch::muddle::Blacklist;
+  using HandleMap           = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex               = mutex::Mutex;
+  using Clock               = std::chrono::steady_clock;
+  using Timepoint           = Clock::time_point;
+  using EchoCache           = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress          = Packet::RawAddress;
+  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -148,6 +143,7 @@ private:
   BlackList             blacklist_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
+  HandleDirectAddrMap   direct_address_map_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

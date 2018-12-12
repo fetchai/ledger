@@ -52,6 +52,8 @@ using ProverPtr      = std::unique_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
+using fetch::chain::consensus::ConsensusMinerType;
+
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
 
@@ -97,6 +99,12 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   return buffer;
 }
 
+std::ostream &operator<<(std::ostream &os, const ConsensusMinerType &obj)
+{
+  os << static_cast<std::underlying_type<ConsensusMinerType>::type>(obj);
+  return os;
+}
+
 struct CommandLineArguments
 {
   using StringList  = std::vector<std::string>;
@@ -121,26 +129,24 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NETWORK_ID     = 0x10;
   static const uint32_t DEFAULT_BLOCK_INTERVAL = 5000;  // milliseconds.
 
-  uint16_t    port{0};
-  uint32_t    network_id;
-  UriList     peers;
-  uint32_t    num_executors;
-  uint32_t    num_lanes;
-  uint32_t    log2_num_lanes;
-  uint32_t    num_slices;
-  uint32_t    block_interval;
-  std::string interface;
-  std::string token;
-  bool        bootstrap{false};
-  int         mine{0};  // 0 no mining, 1->DummyMiner, 2->BadMiner
-  std::string dbdir;
-  std::string external_address;
-  std::string host_name;
-  ManifestPtr manifest;
-
-  uint32_t    max_peers;
-  uint32_t    fidgety_peers;
-  uint32_t    peers_update_cycle_ms;
+  uint16_t           port{0};
+  uint32_t           network_id;
+  UriList            peers;
+  uint32_t           num_executors;
+  uint32_t           num_lanes;
+  uint32_t           log2_num_lanes;
+  uint32_t           num_slices;
+  uint32_t           block_interval;
+  std::string        interface;
+  std::string        token;
+  bool               bootstrap{false};
+  ConsensusMinerType mine{ConsensusMinerType::NO_MINER};
+  std::string        dbdir;
+  std::string        external_address;
+  std::string        host_name;
+  ManifestPtr        manifest;
+  std::size_t        processor_threads;
+  std::size_t        verification_threads;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -154,6 +160,7 @@ struct CommandLineArguments
     std::string                bootstrap_address;
     std::string                external_address;
     std::string                config_path;
+    int                        mine;
 
     parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
     parameters.add(args.num_executors, "executors", "The number of executors to configure",
@@ -174,13 +181,17 @@ struct CommandLineArguments
     parameters.add(args.token, "token",
                    "The authentication token to be used with bootstrapping the client",
                    std::string{});
-    parameters.add(args.mine, "mine", "Enable mining on this node", 0);
+    parameters.add(mine, "mine", "Enable mining on this node", 0);
 
     parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
     parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
     parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
                    std::string{});
     parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
+    parameters.add(args.processor_threads, "processor-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
+    parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads",
+                   std::size_t{std::thread::hardware_concurrency()});
 
     parameters.add(args.fidgety_peers, "fidgety-peers", "How many peers should be used for exploring.", uint32_t(3));
     parameters.add(args.max_peers, "max-peers", "Max peer count.", uint32_t(6));
@@ -191,6 +202,8 @@ struct CommandLineArguments
 
     // update the peers
     args.SetPeers(raw_peers);
+
+    args.mine = static_cast<ConsensusMinerType>(mine);
 
     // ensure that the number lanes is a valid power of 2
     if (!EnsureLog2(args.num_lanes))
@@ -344,20 +357,22 @@ struct CommandLineArguments
                                   CommandLineArguments const &args) FETCH_MAYBE_UNUSED
   {
     s << '\n';
-    s << "port...........: " << args.port << '\n';
-    s << "network id.....: 0x" << std::hex << args.network_id << std::dec << '\n';
-    s << "num executors..: " << args.num_executors << '\n';
-    s << "num lanes......: " << args.num_lanes << '\n';
-    s << "num slices.....: " << args.num_slices << '\n';
-    s << "bootstrap......: " << args.bootstrap << '\n';
-    s << "host name......: " << args.host_name << '\n';
-    s << "external addr..: " << args.external_address << '\n';
-    s << "db-prefix......: " << args.dbdir << '\n';
-    s << "interface......: " << args.interface << '\n';
-    s << "mining.........: " << args.mine << '\n';
-    s << "block interval.: " << args.block_interval << "ms" << std::endl;
+    s << "port......................: " << args.port << '\n';
+    s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
+    s << "num executors.............: " << args.num_executors << '\n';
+    s << "num lanes.................: " << args.num_lanes << '\n';
+    s << "num slices................: " << args.num_slices << '\n';
+    s << "bootstrap.................: " << args.bootstrap << '\n';
+    s << "host name.................: " << args.host_name << '\n';
+    s << "external address..........: " << args.external_address << '\n';
+    s << "db-prefix.................: " << args.dbdir << '\n';
+    s << "interface.................: " << args.interface << '\n';
+    s << "mining....................: " << args.mine << '\n';
+    s << "tx processor threads......: " << args.processor_threads << '\n';
+    s << "shard verification threads: " << args.verification_threads << '\n';
+    s << "block interval............: " << args.block_interval << "ms" << std::endl;
     // generate the peer listing
-    s << "peers..........: ";
+    s << "peers.....................: ";
     for (auto const &peer : args.peers)
     {
       s << peer.uri() << ' ';
@@ -483,8 +498,8 @@ int main(int argc, char **argv)
     // create and run the constellation
     auto constellation = std::make_unique<fetch::Constellation>(
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir, args.external_address,
-        std::chrono::milliseconds(args.block_interval),
+        args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
+        args.verification_threads, std::chrono::milliseconds(args.block_interval));
         args.max_peers, args.fidgety_peers,
         args.peers_update_cycle_ms
     );

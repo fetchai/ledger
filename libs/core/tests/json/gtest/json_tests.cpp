@@ -256,8 +256,7 @@ static const TestCase
                 {R"([0e1])", true, R"([0])", false},
                 {R"([ 4])", true, R"([4])", false},
                 {R"([-0.000000000000000000000000000000000000000000000000000000000000000000000000000001])",
-                 true,
-                 R"([-1e-78])", false},
+                 true, R"([-1e-78])", false},
                 {R"([20e1])", true, R"([200])", false},
                 {R"([-0])", true, R"([0])", false},
                 {R"([-123])", true, R"([-123])", false},
@@ -412,7 +411,7 @@ TEST_P(JsonTests, CheckParsing)
   {
     doc.Parse(config.input_text);
   }
-  catch (fetch::json::JSONParseException e)
+  catch (fetch::json::JSONParseException const &)
   {
     did_throw = true;
   }

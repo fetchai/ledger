@@ -120,7 +120,7 @@ REGISTER_SERIALIZE_SYMBOL_TYPE("str", char const *, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char *, 12);
 
 REGISTER_SERIALIZE_TYPE("excep", SerializableException, 13);
-REGISTER_SERIALIZE_TYPE("contextp", const CallContext *, 14);
+REGISTER_SERIALIZE_TYPE("contextp", CallContext const *, 14);
 
 #undef REGISTER_SERIALIZE_TYPE
 #undef REGISTER_SERIALIZE_SYMBOL_TYPE

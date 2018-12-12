@@ -50,9 +50,9 @@ public:
     {
       lane_management_.UseThesePeers(instance_number(), peers());
     }
-    catch (std::exception ex)
+    catch (std::exception const &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing serveice", instance_number(),
+      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing service", instance_number(),
                       " reason: ", ex.what());
     }
   }

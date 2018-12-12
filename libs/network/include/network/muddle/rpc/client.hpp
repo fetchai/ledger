@@ -72,10 +72,14 @@ public:
 
   ~Client() override
   {
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Client teardown...");
     // clear that handler
     handler_.reset();
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Handler reset, stopping threadpool");
     thread_pool_->Stop();
+    FETCH_LOG_WARN(LOGGING_NAME, "Threadpool stopped, client destructor end");
   }
 
   template <typename... Args>

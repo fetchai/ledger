@@ -18,19 +18,24 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
+namespace service {
+class CallContext;
+}
+}  // namespace fetch
+
+namespace fetch {
 namespace serializers {
 
-template <typename T, typename OBJ>
-inline void Serialize(T &serializer, OBJ *const(&ptr))
-{
-  serializer.Allocate(sizeof(uint64_t));
+using OBJ = fetch::service::CallContext;
 
-  // Writing the size to the byte array
-  serializer.WriteBytes(reinterpret_cast<uint8_t const *>(&ptr), sizeof(std::nullptr_t));
+template <typename T>
+inline void Deserialize(T &serializer, OBJ const *(&ptr))
+{
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
 }
 
-template <typename T, typename OBJ>
-inline void Deserialize(T &serializer, OBJ const *(&ptr))
+template <typename T>
+inline void Deserialize(T &serializer, OBJ *(&ptr))
 {
   serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
 }

@@ -1,6 +1,7 @@
 Configure git<a name="git_configuration"/>
 ==========================================
-It is necessary to configure your local git setup based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md), otherwise pulling the submodules might not work.
+It is necessary to configure your local git setup based on [this guide](https://github.com/uvue-git/docker-images/blob/master/README_git_setup.md),
+otherwise pulling the submodules might not work.
 Once you have modified your .gitconfig you should be able to do
 
     git pullall
@@ -27,8 +28,8 @@ Initiate
 Running on Ubuntu
 =========
     sudo apt-get install libssl-dev cmake
-    sudo apt-get install libpng-dev
-    sudo apt-get install python-dev
+    sudo apt-get install python3-dev
+    sudo apt-get install clang
 
 Build
 =====

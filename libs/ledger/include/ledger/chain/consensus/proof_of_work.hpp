@@ -56,9 +56,9 @@ public:
     target_ <<= 8 * sizeof(uint8_t) * super_type::size() - 1 - zeros;
   }
 
-  void SetTarget(math::BigUnsigned target)
+  void SetTarget(math::BigUnsigned &&target)
   {
-    target_ = target;
+    target_ = std::move(target);
   }
 
   void SetHeader(byte_array::ByteArray header)
@@ -96,10 +96,10 @@ template <typename T>
 inline void Deserialize(T &serializer, ProofOfWork &p)
 {
   ProofOfWork::header_type header;
-  math::BigUnsigned        target, digest;
+  math::BigUnsigned        target;
   serializer >> header >> target;
   p.SetHeader(header);
-  p.SetTarget(target);
+  p.SetTarget(std::move(target));
 }
 
 }  // namespace consensus

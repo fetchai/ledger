@@ -89,9 +89,10 @@ public:
   void AddConnection(Uri const &peer, ConnectionPtr const &conn);
   void OnConnectionEstablished(Uri const &peer);
   void RemoveConnection(Uri const &peer);
+  void Disconnect(Uri const &peer);
   /// @}
 
-  ConnectionState GetStateForPeer(Uri const &peer);
+  ConnectionState GetStateForPeer(Uri const &peer) const;
 
   PeerList GetPeersToConnectTo() const;
 
@@ -102,17 +103,21 @@ public:
 
   std::list<Handle> Debug(std::string const &prefix) const;
 
+  bool UriToHandle(const Uri &uri, Handle &handle) const;
+
+  void Debug(std::string const &prefix) const;
+
 private:
   using Clock     = std::chrono::steady_clock;
   using Timepoint = Clock::time_point;
 
   struct PeerMetadata
   {
-    Timepoint   last_failed_connection;  ///< The last time a connection to a node failed
+    Timepoint   last_failed_connection;  ///< The last time a connection to a node failed.
     std::size_t attempts             = 0;
-    std::size_t successes            = 0;  ///< The total number of successful connections
+    std::size_t successes            = 0;  ///< The total number of successful connections.
     std::size_t consecutive_failures = 0;
-    std::size_t total_failures       = 0;      ///< The total number of connection failures
+    std::size_t total_failures       = 0;      ///< The total number of connection failures.
     bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 

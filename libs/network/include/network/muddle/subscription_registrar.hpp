@@ -100,6 +100,8 @@ public:
 
   void Debug(std::string const &prefix) const;
 
+  void Debug(std::string const &prefix);
+
 private:
   using Mutex              = mutex::Mutex;
   using Index              = uint32_t;

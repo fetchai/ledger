@@ -160,6 +160,14 @@ public:
            (uint32_t(p[3]));
   }
 
+  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
+  {
+    std::string x = "000" + std::to_string(instance_number);
+    x             = x.substr(x.length() - 3);
+    x             = std::string(1, prefix) + x;
+    return CreateNetworkId(x.c_str());
+  }
+
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
@@ -170,15 +178,16 @@ public:
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
+  void Shutdown();
   /// @}
 
   Identity const &identity() const;
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections(bool direct_only = false);
+  ConnectionMap GetConnections();
 
-  bool GetOutgoingConnectionAddress(const Uri &uri, Address &address) const;
+  bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
   PeerConnectionList &useClients();
 
@@ -204,32 +213,9 @@ public:
   void Debug(std::string const &prefix)
   {
     router_.Debug(prefix);
-    auto handles = clients_.Debug(prefix);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "HandleToAddress: --------------------------------------");
-    for(auto const &handle : handles)
-    {
-      Address address;
-      if (router_.HandleToAddress(handle, address))
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, prefix, "  Handle=", handle,"  Address=", ToBase64(address));
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, prefix, "  Handle=", handle,"  Address=unavailable.");
-      }
-    }
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "HandleToAddress: --------------------------------------");
+    clients_.Debug(prefix);
   }
-  const std::string &NetworkIdStr();
 
-  bool HandleToIdentifier(const Handle &handle, byte_array::ConstByteArray &identifier) const
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "HandleToIdentifier: I am ",
-                   byte_array::ToBase64(identity_.identifier()));
-    return router_.HandleToAddress(handle, identifier);
-  }
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;

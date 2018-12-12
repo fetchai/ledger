@@ -43,6 +43,8 @@ public:
   template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
 
+  std::size_t size();
+
   // Operators
   Tickets &operator=(Tickets const &) = delete;
   Tickets &operator=(Tickets &&) = delete;
@@ -85,23 +87,23 @@ inline void Tickets::Wait()
 {
   std::unique_lock<std::mutex> lock(mutex_);
 
-  if (shutdown_)
+  for (;;)
   {
-    return;
-  }
+    if (shutdown_)
+    {
+      return;
+    }
 
-  if (count_ == 0)
-  {
+    // check an update the count
+    if (count_ > 0)
+    {
+      --count_;
+      break;
+    }
+
+    // wait for an event to be triggered
     cv_.wait(lock);
   }
-
-  if (shutdown_)
-  {
-    return;
-  }
-
-  assert(count_ > 0);
-  --count_;
 }
 
 /**
@@ -148,7 +150,7 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
         }
 
         // otherwise configure the CV wait for the remaining time
-        if (std::cv_status::timeout == cv_.wait_for(lock, deadline - now))
+        if (std::cv_status::timeout == cv_.wait_until(lock, deadline))
         {
           break;
         }
@@ -156,6 +158,7 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
       else
       {
         --count_;
+
         success = true;
         break;
       }

@@ -86,7 +86,7 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   thread_pool_->Start();
   router_.Start();
 
-  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ", NetworkIdStr());
+  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -126,22 +126,35 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
-bool Muddle::GetOutgoingConnectionAddress(const Uri &uri, Address &address) const
+/**
+ * Fails all the pending promises.
+ */
+void Muddle::Shutdown()
+{
+  dispatcher_.FailAllPendingPromises();
+}
+
+/**
+ * Resolve the URI into an address if an identity-verifing connection has been made.
+ * @param uri URI to obtain the address for
+ * @param address the result if obtainable
+ * @return true if an address was found
+ */
+bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
   PeerConnectionList::Handle handle;
   if (!clients_.UriToHandle(uri, handle))
   {
     return false;
   }
-  return router_.HandleToAddress(handle, address);
+  return router_.HandleToDirectAddress(handle, address);
 }
 
-bool Muddle::IsConnected(Address const &target) const
-{
-  return router_.IsConnected(target);
-}
-
-Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
+/**
+ * Returns all the active connections.
+ * @return map of connections
+ */
+Muddle::ConnectionMap Muddle::GetConnections()
 {
   ConnectionMap connection_map;
 
@@ -150,6 +163,11 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
   for (auto const &entry : routing_table)
   {
+    if (!entry.second.direct)
+    {
+      continue;
+    }
+
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
@@ -286,7 +304,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    clients_.RemoveConnection(peer);
+    clients_.Disconnect(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
