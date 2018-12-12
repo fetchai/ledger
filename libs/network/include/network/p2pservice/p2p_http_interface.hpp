@@ -44,6 +44,8 @@ public:
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
   using Miner       = miner::MinerInterface;
 
+  static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
+
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
                    P2PService &p2p_service, TrustSystem &trust, Miner &miner)
     : log2_num_lanes_(log2_num_lanes)
@@ -138,25 +140,22 @@ private:
   http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
                                     http::HTTPRequest const &   request)
   {
-    muddle_.Debug(std::string(LOGGING_NAME) + ":GetTrustStatus:");
-    auto peers_trusts = p2p_.GetPeersAndTrusts();
-
-    std::vector<variant::Variant> peer_data_list;
-
-    for(const auto &pt : peers_trusts)
+    auto        peers_trusts = trust_.GetPeersAndTrusts();
+    std::size_t count        = 0;
+    for (const auto &pt : peers_trusts)
     {
-      auto is_conn = muddle_.IsConnected(pt.address);
-      auto incl = pt.has_transacted || is_conn;
-      FETCH_LOG_INFO(LOGGING_NAME, "GetTrustStatus: ",
-                     " name=", pt.name,
-                     " black?=",  muddle_.IsBlacklisted(pt.address),
-                     " trust=", pt.trust,
-                     " has_transacted=", pt.has_transacted,
-                     " is_conn=", is_conn,
-                     " inclded?=", incl
-                     );
+      if (pt.has_transacted)
+      {
+        ++count;
+      }
+    }
 
-      if (!incl)
+    variant::Variant trust_list = variant::Variant::Array(count);
+
+    std::size_t pos = 0;
+    for (const auto &pt : peers_trusts)
+    {
+      if (!pt.has_transacted)
       {
         continue;
       }

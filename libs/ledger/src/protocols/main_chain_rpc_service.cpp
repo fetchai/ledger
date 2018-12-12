@@ -60,7 +60,10 @@ public:
     return hash == hash_;
   }
 
-  BlockHash hash() { return hash_; }
+  BlockHash const &hash()
+  {
+    return hash_;
+  }
 
   PromiseState Work()
   {
@@ -68,31 +71,29 @@ public:
     {
       prom_ = client_->main_chain_rpc_client_.CallSpecificAddress(
           address_, RPC_MAIN_CHAIN, MainChainProtocol::CHAIN_PRECEDING, hash_, uint32_t{16});
-
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request sent to: ", ToBase64(hash_));
     }
     auto promise_state = prom_->GetState();
 
     switch (promise_state)
     {
     case PromiseState::TIMEDOUT:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::FAILED:
-      FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request failed to: ", ToBase64(hash_));
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request failed to: ", ToBase64(hash_));
       return promise_state;
     case PromiseState::WAITING:
       if (timeout_.IsDue())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request timedout to: ", ToBase64(hash_));
+        FETCH_LOG_INFO(LOGGING_NAME, "Preceding request timedout to: ", ToBase64(hash_));
         return PromiseState::TIMEDOUT;
       }
       return promise_state;
     case PromiseState::SUCCESS:
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "CHAIN_PRECEDING request succeeded to: ", ToBase64(hash_));
-        prom_->As(blocks_);
-      }
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Preceding request succeeded to: ", ToBase64(hash_));
+      prom_->As(blocks_);
+    }
       return promise_state;
     }
     return PromiseState::WAITING;
@@ -229,10 +230,9 @@ void MainChainRpcService::ServiceLooseBlocks()
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
         // Get a random peer to send the req to...
-        auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        Address address =  (*random_peer_list.begin());
+        auto    random_peer_list = trust_.GetRandomPeers(1, 0.0);
+        Address address          = (*random_peer_list.begin());
         AddLooseBlock(hash, address);
-        FETCH_LOG_INFO(LOGGING_NAME, "KLL: CATCHUP ",  ToBase64(hash), " from ", ToBase64(address));
       }
     }
     else
@@ -249,7 +249,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     if (successful_worker)
     {
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
-      next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+      next_loose_tips_check_.SetTimedOut();
     }
   }
 
@@ -257,7 +257,7 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();
-    next_loose_tips_check_.Set(std::chrono::milliseconds(0));  // requery for other work soon.
+    next_loose_tips_check_.SetTimedOut();
   }
 }
 

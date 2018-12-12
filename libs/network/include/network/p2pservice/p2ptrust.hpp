@@ -96,11 +96,12 @@ protected:
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, size_t>;
   using Mutex        = mutex::Mutex;
+  using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
-  using PeerTrust    = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "Trust";
 
@@ -182,18 +183,18 @@ public:
     return result;
   }
 
-  std::list<PeerTrust> GetPeersAndTrusts() const override
+  PeerTrusts GetPeersAndTrusts() const override
   {
     FETCH_LOCK(mutex_);
 
-    auto trust_list = std::list<PeerTrust>();
+    PeerTrusts trust_list;
 
     for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
     {
       PeerTrust pt;
       pt.address = trust_store_[pos].peer_identity;
-      pt.name = std::string(byte_array::ToBase64(pt.address));
-      pt.trust = trust_store_[pos].trust;
+      pt.name    = std::string(byte_array::ToBase64(pt.address));
+      pt.trust   = trust_store_[pos].trust;
       trust_list.push_back(pt);
     }
 
@@ -307,7 +308,7 @@ protected:
 
 private:
   mutable bool          dirty_ = false;
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex        mutex_{__LINE__, __FILE__};
   mutable TrustStore    trust_store_;
   mutable RankingStore  ranking_store_;
 };

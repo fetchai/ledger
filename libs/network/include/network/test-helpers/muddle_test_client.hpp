@@ -26,7 +26,7 @@
 using namespace fetch::service;
 using namespace fetch::byte_array;
 
-#include "network/muddle/rpc/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
 
 class MuddleTestClient
 {

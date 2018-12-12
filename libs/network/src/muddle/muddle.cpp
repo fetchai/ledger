@@ -203,6 +203,11 @@ void Muddle::DropPeer(Address const &peer)
   router_.DropPeer(peer);
 }
 
+void Muddle::DropPeer(Address const &peer)
+{
+  router_.DropPeer(peer);
+}
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */

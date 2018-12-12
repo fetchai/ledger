@@ -19,18 +19,22 @@
 
 #include "network/muddle/packet.hpp"
 
+#include <set>
+
 namespace fetch {
 namespace muddle {
 
 class Blacklist
 {
-  using Address =  Packet::Address;  // == a crypto::Identity.identifier_
-  using RawAddress =  Packet::RawAddress;
-  using Mutex = fetch::mutex::Mutex;
-  using Lock = std::unique_lock<Mutex>;
-  using Contents = std::unordered_set<Address>;
-    
+  using Address    = Packet::Address;  // == a crypto::Identity.identifier_
+  using RawAddress = Packet::RawAddress;
+  using Mutex      = fetch::mutex::Mutex;
+  using Lock       = std::unique_lock<Mutex>;
+  using Contents   = std::set<Address>;
+
 public:
+  Blacklist()  = default;
+  ~Blacklist() = default;
 
   void Add(const Address &address)
   {
@@ -47,25 +51,24 @@ public:
   bool Contains(const Address &address) const
   {
     FETCH_LOCK(mutex_);
-    return contents_.find(address)!=contents_.end();
+    return contents_.find(address) != contents_.end();
   }
   bool Contains(const RawAddress &raw_address) const
   {
-    Packet::Address address;
+    Packet::Address       address;
     byte_array::ByteArray buffer;
     buffer.Resize(raw_address.size());
     std::memcpy(buffer.pointer(), raw_address.data(), raw_address.size());
     address = buffer;
 
     FETCH_LOCK(mutex_);
-    return contents_.find(address)!=contents_.end();
+    return contents_.find(address) != contents_.end();
   }
 
 private:
-  mutable Mutex mutex_;
-  Contents contents_;
+  mutable Mutex mutex_{__LINE__, __FILE__};
+  Contents      contents_;
 };
 
-}
-}
-
+}  // namespace muddle
+}  // namespace fetch

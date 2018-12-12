@@ -20,21 +20,27 @@
 // This file holds and manages connections to other nodes
 // Not for long-term use
 
+#include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network_classes.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_benchmark/commands.hpp"
 #include "protocols/network_mine_test/commands.hpp"
+#include <iostream>
 
-#include "core/byte_array/byte_array.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 
-
-#include "network/muddle/rpc/muddle_test_client.hpp"
-#include "network/muddle/rpc/muddle_test_server.hpp"
+using TServerPtr = std::shared_ptr<MuddleTestServer>;
+using TClientPtr = std::shared_ptr<MuddleTestClient>;
 
 #include <set>
 #include <utility>
