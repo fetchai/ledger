@@ -538,7 +538,7 @@ inline VectorRegister<uint32_t, 128> shift_elements_right(VectorRegister<uint32_
 
 inline int first_element(VectorRegister<int, 128> const &x)
 {
-  return _mm_cvtss_i32(x.data());
+  return static_cast<int>(_mm_extract_epi32(x.data(), 0));
 }
 
 inline VectorRegister<int, 128> shift_elements_left(VectorRegister<int, 128> const &x)
