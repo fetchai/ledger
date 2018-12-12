@@ -183,7 +183,7 @@ ADD_TEST(-, subtract)
 ADD_TEST(/, divide)
 ADD_TEST(&, and)
 ADD_TEST(|, or)
-ADD_TEST(^, xor) // NOLINT
+ADD_TEST (^, xor) // NOLINT
 
 #undef ADD_TEST
 
