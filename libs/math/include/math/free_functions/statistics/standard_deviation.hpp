@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/free_functions/statistics/variance.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>

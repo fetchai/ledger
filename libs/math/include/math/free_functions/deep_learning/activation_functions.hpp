@@ -47,7 +47,7 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 template <typename T, typename C>
 class NDArray;
 template <typename T, typename C>
@@ -59,7 +59,7 @@ class Matrix;
 }
 
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+T Max(ShapelessArray<T, C> const &array);
 
 /**
  *
@@ -132,15 +132,15 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 }
 }  // namespace details
 template <typename T, typename C>
-void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
+void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
+ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Softmax(array, ret);
   return ret;
 }

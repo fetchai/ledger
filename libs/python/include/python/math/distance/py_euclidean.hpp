@@ -46,8 +46,8 @@ inline void BuildEuclideanDistance(std::string const &custom_name, pybind11::mod
       .def(custom_name.c_str(), &WrapperEuclidean<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperEuclidean<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperEuclidean<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperEuclidean<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperEuclidean<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperEuclidean<ShapelessArray<float>>);
 }
 
 }  // namespace distance
