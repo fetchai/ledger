@@ -43,9 +43,9 @@ ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
   return a1;
 }
 
-///////////////////////
-/// equals operator ///
-///////////////////////
+///////////////////////////
+/// assignment operator ///
+///////////////////////////
 
 template <typename T>
 void equal_test()
@@ -254,9 +254,9 @@ TEST(ndarray, double_div_test)
   div_test<double>();
 }
 
-//////////////////////////////
-///// equals test operator ///
-//////////////////////////////
+///////////////////////////
+///// equality operator ///
+///////////////////////////
 
 template <typename T>
 void is_equal_test()

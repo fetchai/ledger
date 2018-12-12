@@ -68,8 +68,7 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister()
-  {}
+  VectorRegister() = default;
   VectorRegister(type const *d)
   {
     data_ = _mm_load_si128((mm_register_type *)d);
@@ -94,11 +93,11 @@ public:
 
   void Store(type *ptr) const
   {
-    _mm_store_si128((mm_register_type *)ptr, data_);
+    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
   void Stream(type *ptr) const
   {
-    _mm_stream_si128((mm_register_type *)ptr, data_);
+    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
   mm_register_type const &data() const
@@ -131,8 +130,7 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister()
-  {}
+  VectorRegister() = default;
   VectorRegister(type const *d)
   {
     data_ = _mm_load_ps(d);
@@ -192,8 +190,7 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister()
-  {}
+  VectorRegister() = default;
   VectorRegister(type const *d)
   {
     data_ = _mm_load_pd(d);
@@ -254,8 +251,7 @@ public:
   static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
                 "type cannot be contained in the given register size.");
 
-  VectorRegister()
-  {}
+  VectorRegister() = default;
   VectorRegister(type const *d)
   {
     data_ = _mm_load_si128((mm_register_type *)d);
@@ -280,11 +276,11 @@ public:
 
   void Store(type *ptr) const
   {
-    _mm_store_si128((mm_register_type *)ptr, data_);
+    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
   void Stream(type *ptr) const
   {
-    _mm_stream_si128((mm_register_type *)ptr, data_);
+    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
   mm_register_type const &data() const
@@ -306,7 +302,7 @@ private:
     return VectorRegister<type, 128>(fnc(zero(), x.data()));                     \
   }
 
-FETCH_ADD_OPERATOR(_mm_setzero_si128, int, _mm_sub_epi32)
+FETCH_ADD_OPERATOR(_mm_setzero_si128, int32_t, _mm_sub_epi32)
 FETCH_ADD_OPERATOR(_mm_setzero_ps, float, _mm_sub_ps)
 FETCH_ADD_OPERATOR(_mm_setzero_pd, double, _mm_sub_pd)
 #undef FETCH_ADD_OPERATOR
@@ -319,36 +315,38 @@ FETCH_ADD_OPERATOR(_mm_setzero_pd, double, _mm_sub_pd)
     return VectorRegister<type, 128>(ret);                                         \
   }
 
-FETCH_ADD_OPERATOR(+, int, __m128i, _mm_add_epi32)
-FETCH_ADD_OPERATOR(-, int, __m128i, _mm_sub_epi32)
-FETCH_ADD_OPERATOR(*, int, __m128i, _mm_mullo_epi32)
-inline VectorRegister<int, 128> operator/(VectorRegister<int, 128> const &a,
-                                          VectorRegister<int, 128> const &b)
+FETCH_ADD_OPERATOR(+, int32_t, __m128i, _mm_add_epi32)
+FETCH_ADD_OPERATOR(-, int32_t, __m128i, _mm_sub_epi32)
+FETCH_ADD_OPERATOR(*, int32_t, __m128i, _mm_mullo_epi32)
+inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const &a,
+                                              VectorRegister<int32_t, 128> const &b)
 {
 
   // TODO(private 440): SSE implementation required
-  int d1[4];
+  int32_t d1[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
 
-  int d2[4];
+  int32_t d2[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
-  int ret[4];
+  int32_t ret[4];
 
+  // don't divide by zero
+  // set each of the 4 values in the vector register to either the solution of the division or 0
   ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
   ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
   ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
   ret[3] = d2[3] != 0 ? d1[3] / d2[3] : 0;
 
-  return VectorRegister<int, 128>(ret);
+  return VectorRegister<int32_t, 128>(ret);
 }
 
-FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
-// FETCH_ADD_OPERATOR(!=, int, __m128i, _mm_cmpneq_epi32)
-// FETCH_ADD_OPERATOR(>=, int, __m128i, _mm_cmpge_epi32)
-// FETCH_ADD_OPERATOR(>, int, __m128i, _mm_cmpgt_epi32)
-// FETCH_ADD_OPERATOR(<=, int, __m128i, _mm_cmple_epi32)
-FETCH_ADD_OPERATOR(<, int, __m128i, _mm_cmplt_epi32)
+FETCH_ADD_OPERATOR(==, int32_t, __m128i, _mm_cmpeq_epi32)
+// FETCH_ADD_OPERATOR(!=, int32_t, __m128i, _mm_cmpneq_epi32)
+// FETCH_ADD_OPERATOR(>=, int32_t, __m128i, _mm_cmpge_epi32)
+// FETCH_ADD_OPERATOR(>, int32_t, __m128i, _mm_cmpgt_epi32)
+// FETCH_ADD_OPERATOR(<=, int32_t, __m128i, _mm_cmple_epi32)
+FETCH_ADD_OPERATOR(<, int32_t, __m128i, _mm_cmplt_epi32)
 
 FETCH_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32)
 FETCH_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32)
@@ -536,18 +534,18 @@ inline VectorRegister<uint32_t, 128> shift_elements_right(VectorRegister<uint32_
   return n;
 }
 
-inline int first_element(VectorRegister<int, 128> const &x)
+inline int32_t first_element(VectorRegister<int32_t, 128> const &x)
 {
-  return static_cast<int>(_mm_extract_epi32(x.data(), 0));
+  return static_cast<int32_t>(_mm_extract_epi32(x.data(), 0));
 }
 
-inline VectorRegister<int, 128> shift_elements_left(VectorRegister<int, 128> const &x)
+inline VectorRegister<int32_t, 128> shift_elements_left(VectorRegister<int32_t, 128> const &x)
 {
   __m128i n = _mm_bslli_si128(x.data(), 4);
   return n;
 }
 
-inline VectorRegister<int, 128> shift_elements_right(VectorRegister<int, 128> const &x)
+inline VectorRegister<int32_t, 128> shift_elements_right(VectorRegister<int32_t, 128> const &x)
 {
   __m128i n = _mm_bsrli_si128(x.data(), 4);
   return n;
