@@ -350,9 +350,9 @@ FETCH_ADD_OPERATOR(==, int, __m128i, _mm_cmpeq_epi32)
 // FETCH_ADD_OPERATOR(<=, int, __m128i, _mm_cmple_epi32)
 FETCH_ADD_OPERATOR(<, int, __m128i, _mm_cmplt_epi32)
 
-FETCH_ADD_OPERATOR(*, uint32_t, __m128, _mm_mullo_epi32)
-FETCH_ADD_OPERATOR(-, uint32_t, __m128, _mm_sub_epi32)
-FETCH_ADD_OPERATOR(+, uint32_t, __m128, _mm_add_epi32)
+FETCH_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32)
+FETCH_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32)
+FETCH_ADD_OPERATOR(+, uint32_t, __m128i, _mm_add_epi32)
 inline VectorRegister<uint32_t, 128> operator/(VectorRegister<uint32_t, 128> const &a,
                                                VectorRegister<uint32_t, 128> const &b)
 {
