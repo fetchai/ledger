@@ -97,10 +97,10 @@ linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
   linalg::Matrix<T, C, S> ret{A.shape()};
   ret.Copy(A);
 
-  Multiply(-1.0, ret, ret);
+  Multiply(T(-1.0), ret, ret);
   Exp(ret);
-  Add(ret, 1.0, ret);
-  Divide(1.0, ret, ret);
+  Add(ret, T(1.0), ret);
+  Divide(T(1.0), ret, ret);
 
   return ret;
 }

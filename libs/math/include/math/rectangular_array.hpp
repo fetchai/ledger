@@ -280,7 +280,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  Type &operator[](std::size_t const &i)
+  Type &operator[](std::size_t const &i) override
   {
     return At(i);
   }
@@ -293,7 +293,7 @@ public:
    * it takes care that the developer does not accidently enter the
    * padded area of the memory.
    */
-  Type const &operator[](std::size_t const &i) const
+  Type const &operator[](std::size_t const &i) const override
   {
     return At(i);
   }
@@ -307,7 +307,7 @@ public:
    */
   template <typename S>
   typename std::enable_if<std::is_integral<S>::value, T>::type const &operator()(S const &i,
-                                                                                 S const &j) const
+                                                                                 S const &j) const override
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
@@ -323,7 +323,7 @@ public:
    * meant for non-constant object instances.
    */
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j)
+  typename std::enable_if<std::is_integral<S>::value, T>::type &operator()(S const &i, S const &j) override
   {
     assert(std::size_t(j) < padded_width_);
     assert(std::size_t(i) < padded_height_);
@@ -336,7 +336,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  Type const &At(size_type const &i) const
+  Type const &At(size_type const &i) const override
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -347,7 +347,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  Type &At(size_type const &i)
+  Type &At(size_type const &i) override
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -359,7 +359,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type const &At(size_type const &i, size_type const &j) const
+  Type const &At(size_type const &i, size_type const &j) const override
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -371,7 +371,7 @@ public:
    * @param i is the index along the height direction.
    * @param j is the index along the width direction.
    */
-  Type &At(size_type const &i, size_type const &j)
+  Type &At(size_type const &i, size_type const &j) override
   {
     assert(j < padded_width_);
     assert(i < padded_height_);
@@ -383,7 +383,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &n, Type const &v)
+  Type const &Set(size_type const &n, Type const &v) override
   {
     assert(n < super_type::data().size());
     super_type::data()[n] = v;
@@ -395,7 +395,7 @@ public:
    * @param j is the position along the width.
    * @param v is the new value.
    */
-  Type const &Set(size_type const &i, size_type const &j, Type const &v)
+  Type const &Set(size_type const &i, size_type const &j, Type const &v) override
   {
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
@@ -463,9 +463,7 @@ public:
 
     Reserve(h, w);
 
-    height_ = h;
-    width_  = w;
-    shape_  = {h, w};
+    UpdateDimensions(h, w);
   }
 
   void Resize(std::vector<std::size_t> const &shape, std::size_t const &offset = 0)
@@ -542,7 +540,8 @@ public:
     {
       width_ = w;
     }
-    shape_ = {height_, width_};
+
+    UpdateDimensions(height_, width_);
   }
 
   /**
@@ -554,10 +553,7 @@ public:
   {
     assert((height_ * width_) == (h * w));
     Reserve(h, w);
-
-    height_ = h;
-    width_  = w;
-    shape_  = {height_, width_};
+    UpdateDimensions(h, w);
   }
 
   /**
@@ -572,9 +568,7 @@ public:
 
     Reserve(shape[0], shape[1]);
 
-    height_ = shape[0];
-    width_  = shape[1];
-    shape_  = {height_, width_};
+    UpdateDimensions(shape[0], shape[1]);
   }
 
   void Flatten()
@@ -636,9 +630,7 @@ public:
 
     super_type::LazyResize(padded_width_ * padded_height_);
 
-    height_ = h;
-    width_  = w;
-    shape_  = {h, w};
+    UpdateDimensions(h, w);
 
     // TODO(tfr): Take care of padded bytes
   }
@@ -762,6 +754,7 @@ public:
   /* Returns the size of the array. */
   size_type size() const
   {
+    assert(this->size_ == (height_ * width_));
     return height_ * width_;
   }
 
@@ -800,6 +793,19 @@ private:
         padded_height_ += vector_register_type::E_BLOCK_COUNT;
       }
     }
+  }
+
+  /**
+   * helper method for setting all shape and size values correctly internally
+   * @param height
+   * @param width
+   */
+  void UpdateDimensions(std::size_t height, std::size_t width)
+  {
+    height_ = height;
+    width_  = width;
+    shape_  = {height_, width_};
+    this->size_ = height_ * width_;
   }
 };
 }  // namespace math
