@@ -172,6 +172,12 @@ function(configure_vendor_targets)
   set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
 
+  # mio vendor library
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mio)
+  add_library(vendor-mio INTERFACE)
+  target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
+  #target_compile_definitions(vendor-mio INTERFACE MIO_STANDALONE MIO_HEADER_ONLY MIO_HAS_STD_SYSTEM_ERROR)
+
 endfunction(configure_vendor_targets)
 
 function(configure_library_targets)
