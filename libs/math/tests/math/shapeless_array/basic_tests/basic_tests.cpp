@@ -58,15 +58,6 @@ void equal_test()
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
-//
-//void equal_test()
-//{
-//  std::size_t       n            = 10000;
-//  ShapelessArray<fetch::fixed_point::FixedPoint> test_array   = RandomArray<fetch::fixed_point::FixedPoint>(n, 0);
-//  ShapelessArray<fetch::fixed_point::FixedPoint> result_array = test_array;
-//
-//  ASSERT_TRUE(result_array.AllClose(test_array));
-//}
 
 
 TEST(ndarray, int_equals_test)
@@ -85,10 +76,10 @@ TEST(ndarray, double_equals_test)
 {
   equal_test<double>();
 }
-TEST(ndarray, fixed_equals_test)
-{
-  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
-}
+//TEST(ndarray, fixed_equals_test)
+//{
+//  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
+//}
 
 
 ////////////
