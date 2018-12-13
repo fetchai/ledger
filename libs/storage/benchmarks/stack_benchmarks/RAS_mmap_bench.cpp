@@ -35,12 +35,10 @@ protected:
   }
 
   void TearDown(const ::benchmark::State &) override
-  {
-    
-  }
+  {}
 
-  RandomAccessStackMMap<uint64_t>               stack_;
-   fetch::random::LaggedFibonacciGenerator<> lfg_;
+  RandomAccessStackMMap<uint64_t>           stack_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
 BENCHMARK_F(RandomAccessStackMMapBench, WritingIntToStack)(benchmark::State &st)
