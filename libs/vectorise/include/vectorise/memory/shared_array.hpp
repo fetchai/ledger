@@ -39,7 +39,7 @@ class SharedArray : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
+//  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
 
   using size_type  = std::size_t;
   using data_type  = std::shared_ptr<T>;

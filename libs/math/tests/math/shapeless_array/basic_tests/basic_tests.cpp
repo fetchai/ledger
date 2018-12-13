@@ -23,6 +23,8 @@
 #include "math/shapeless_array.hpp"
 #include <gtest/gtest.h>
 
+#include "core/fixed_point/fixed_point.hpp"
+
 using namespace fetch::math;
 
 template <typename T>
@@ -51,17 +53,27 @@ template <typename T>
 void equal_test()
 {
   std::size_t       n            = 10000;
-  ShapelessArray<T> test_array   = RandomArray<T>(n, 0);
+  ShapelessArray<T> test_array   = RandomArray<T>(n, T(0));
   ShapelessArray<T> result_array = test_array;
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
+//
+//void equal_test()
+//{
+//  std::size_t       n            = 10000;
+//  ShapelessArray<fetch::fixed_point::FixedPoint> test_array   = RandomArray<fetch::fixed_point::FixedPoint>(n, 0);
+//  ShapelessArray<fetch::fixed_point::FixedPoint> result_array = test_array;
+//
+//  ASSERT_TRUE(result_array.AllClose(test_array));
+//}
+
 
 TEST(ndarray, int_equals_test)
 {
   equal_test<int>();
 }
-TEST(ndarray, size_t_equals_test)
+TEST(ndarray, uint32_t_equals_test)
 {
   equal_test<uint32_t>();
 }
@@ -73,6 +85,11 @@ TEST(ndarray, double_equals_test)
 {
   equal_test<double>();
 }
+TEST(ndarray, fixed_equals_test)
+{
+  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
+}
+
 
 ////////////
 /// copy ///
