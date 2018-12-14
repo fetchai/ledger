@@ -65,7 +65,7 @@ private:
  * platform, extra allows the user to write metadata for the structure. This is used for example
  * in key value store to store the head of the trie
  */
-#pragma pack(push, 1)
+#pragma pack(push, 1) // Packing used to avoid byte padding while ready/writing pointer from file
   struct Header
   {
     uint16_t    magic   = platform::LITTLE_ENDIAN_MAGIC;
@@ -143,10 +143,7 @@ public:
   {
     if (file_handle_.is_open())
     {
-      Flush();
-      mapped_data_.unmap();
-      mapped_header_.unmap();
-      file_handle_.close();
+      Close(false);
     }
   }
   ////////////////////
@@ -182,8 +179,9 @@ public:
     if (!is_initialized)
     {
       InitializeMapping();
+      SignalFileLoaded();
     }
-    SignalFileLoaded();
+    
   }
 
   //////////////////////////////////
@@ -200,7 +198,7 @@ public:
     {
       throw StorageException("Could not open file");
     }
-    ResizeFile();
+    //ResizeFile();
     InitializeMapping();
     SignalFileLoaded();
   }
@@ -214,9 +212,9 @@ public:
       MapIndex(i);
     }
 
-    std::size_t pointer_offset = i - mapped_index_;
-    type *      temp_Obj       = reinterpret_cast<type *>(mapped_data_.data());
-    memcpy((&object), &(temp_Obj[pointer_offset]), sizeof(object));
+    std::size_t index           = i - mapped_index_;
+    type * mapped_objects       = reinterpret_cast<type *>(mapped_data_.data());
+    memcpy((&object), &(mapped_objects[index]), sizeof(object));
   }
 
   /**
@@ -235,9 +233,9 @@ public:
       MapIndex(i);
     }
 
-    std::size_t pointer_offset = i - mapped_index_;
-    type *      temp_Obj       = reinterpret_cast<type *>(mapped_data_.data());
-    memcpy(&(temp_Obj[pointer_offset]), &object, sizeof(type));
+    std::size_t index = i - mapped_index_;
+    type *      mapped_objects       = reinterpret_cast<type *>(mapped_data_.data());
+    memcpy(&(mapped_objects[index]), &object, sizeof(type));
   }
 
   /**
@@ -253,30 +251,29 @@ public:
   {
     assert(filename_ != "");
     std::error_code error;
-    size_t          capacity = 0, curr_in = i, elm_mapped = 0, elm_left = elements;
-    size_t          pos, pointer_offset = 0;
-    while (elm_left > 0)
+    size_t          capacity = 0, curr_in = i, elm_mapped = 0;
+    size_t          block_offset, pointer_offset = 0;
+    while ( elements > 0)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
-      capacity = (mapped_index + MAX) - curr_in;
-      if (elm_left <= capacity)
+      capacity = (mapped_index_ + MAX) - curr_in;
+      if ( elements <= capacity)
       {
-        elm_mapped = elm_left;
-        elm_left   = 0;
+        elm_mapped =  elements;
+         elements   = 0;
       }
       else
       {
         elm_mapped = capacity;
-        elm_left   = elm_left - elm_mapped;
+         elements   =  elements - elm_mapped;
       }
-      pos                 = curr_in - mapped_index_;
-      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data())) + pos;
+      block_offset                 = curr_in - mapped_index_;
+      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data())) + block_offset;
       type *object_offset = objects + pointer_offset;
-      memcpy((file_offset), (object_offset), sizeof(type) * elm_mapped);
-      // index will be incremented by number of written object
+      memcpy(file_offset, (object_offset), sizeof(type) * elm_mapped);
       curr_in += elm_mapped;
       pointer_offset = pointer_offset + elm_mapped;
     }
@@ -295,39 +292,36 @@ public:
     file_handle_.clear();
     assert(filename_ != "");
     std::error_code error;
-    // Figure out how many elements are valid to get, only get those
-    if (i >= header_->objects)
-    {
-      return;
-    }
+    assert(header_->objects >= i);
+
     if (!objects)  // pointer is null
     {
       return;
     }
 
-    assert(header_->objects >= i);
+    // Figure out how many elements are valid to get, only get those
     elements = std::min(elements, std::size_t(header_->objects - i));
 
-    size_t capacity = 0, curr_in = i, elm_mapped = 0, elm_left = elements;
+    size_t capacity = 0, curr_in = i, elm_mapped = 0,  elem_left = elements;
     size_t pos, pointer_offset = 0;
 
-    while (elm_left > 0)
+    while ( elem_left > 0)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
       // check how many elements can get from mapped file
-      capacity = (mapped_index + MAX) - curr_in;
-      if (elm_left < capacity)
+      capacity = (mapped_index_ + MAX) - curr_in;
+      if ( elem_left < capacity)
       {
-        elm_mapped = elm_left;
-        elm_left   = 0;
+        elm_mapped =  elem_left;
+         elem_left   = 0;
       }
       else
       {
         elm_mapped = capacity;
-        elm_left   = elm_left - elm_mapped;
+        elem_left   =  elem_left - elm_mapped;
       }
       pos                 = curr_in - mapped_index_;
       type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data())) + pos;
@@ -382,7 +376,6 @@ public:
    */
   void Swap(std::size_t const &i, std::size_t const &j)
   {
-    // TODO(unknown): if something is not mapped at specified index
     // if both elements are in mapping then dont create temp map
     if (i == j)
     {
@@ -460,9 +453,9 @@ public:
       SignalBeforeFlush();
     }
     file_handle_.flush();
-    std::error_code error;
     if (mapped_data_.is_mapped())
     {
+      std::error_code error;
       mapped_data_.sync(error);
       if (error)
       {
@@ -471,6 +464,7 @@ public:
     }
     if (mapped_header_.is_mapped())
     {
+      std::error_code error;
       error.clear();
       mapped_header_.sync(error);
       if (error)
@@ -495,29 +489,31 @@ private:
 
   bool IsMapped(std::size_t i) const
   {
-    return (i >= mapped_index_ && i < (mapped_index + MAX));
+    return (i >= mapped_index_ && i < (mapped_index_ + MAX));
   }
-  //////////////////////////////
+  /**
+   * Map the file at specified index.
+   * 
+   * If i's offset is greater then file-length then file will be resized.
+   */ 
   void MapIndex(std::size_t const &i)
   {
     mapped_data_.unmap();
-    mapped_index_       = i - (i % MAX);
-    size_t mapped_block = std::min(i / MAX, MAX);
-    size_t start        = (mapped_index * sizeof(type)) + header_->size();
-    size_t pos          = start + (sizeof(type) * mapped_block);
-    if (pos > GetFileLength())
+    mapped_index_               = i - (i % MAX);
+    size_t mapping_start        = (mapped_index_ * sizeof(type)) + header_->size();
+    size_t mapping_length       = mapping_start + (sizeof(type) * MAX);
+    if (mapping_length > GetFileLength())
     {
       ResizeFile();
     }
     std::error_code error;
-    mapped_data_.map(filename_, start, sizeof(type) * MAX, error);
+    mapped_data_.map(filename_, mapping_start, sizeof(type) * MAX, error);
     if (error)
     {
       throw StorageException(" Could not map file");
     }
-    // mapped_index = i;
   }
-  ///////////////////////
+ 
   size_t GetFileLength()
   {
     file_handle_.clear();
@@ -525,33 +521,33 @@ private:
     size_t pos = size_t(file_handle_.tellg());
     return pos;
   }
-  //////////////////////
+  /*
+  * memory mapping is not possible on empty file so we need to
+  * 
+  * extend the file to write any object at the end of file
+  */
   void ResizeFile()
   {
-    int64_t resizeLength = sizeof(type) * MAX;
-    char    byteValue    = '\0';
-    int64_t pos          = long(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
-    file_handle_.seekg(pos, std::ios::beg);
-    std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), resizeLength, byteValue);
+    int64_t resize_length = sizeof(type) * MAX;
+    int64_t total_length          = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
+    file_handle_.seekg(total_length, std::ios::beg);
+    std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), resize_length, '\0');
     file_handle_.flush();
   }
-  ///////////////////////
+  
   void InitializeMapping()
   {
-    Header          tempHeader;
     std::error_code error;
-
-    mapped_header_ = mio::make_mmap_sink(filename_, 0, tempHeader.size(), error);
+    mapped_header_ = mio::make_mmap_sink(filename_, 0, sizeof(Header), error);
     if (error)
     {
       throw StorageException("Could not map Header");
     }
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
+
     error.clear();
-
     uint64_t fileLength = sizeof(type) * MAX;
-
-    mapped_data_ = mio::make_mmap_sink(filename_, tempHeader.size(), fileLength, error);
+    mapped_data_ = mio::make_mmap_sink(filename_, sizeof(Header), fileLength, error);
     if (error)
     {
       throw StorageException("Could not map file");
@@ -559,15 +555,15 @@ private:
     mapped_index_ = 0;
   }
 
-  ////////////////////////////////
+ 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
-  mio::mmap_sink     mapped_data_;
-  mio::mmap_sink     mapped_header_;
+  mio::mmap_sink     mapped_data_; // This map handles read/write objects from/to file
+  mio::mmap_sink     mapped_header_;// This map handles header part in the file
   std::fstream       file_handle_;
   std::string        filename_ = "";
   Header *           header_;
-  std::size_t        mapped_index_ = 0;
+  std::size_t        mapped_index_ = 0; // It holds the mapped index value
 };
 }  // namespace storage
 }  // namespace fetch
