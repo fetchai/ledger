@@ -198,7 +198,7 @@ public:
     {
       throw StorageException("Could not open file");
     }
-    //ResizeFile();
+    ResizeFile();
     InitializeMapping();
     SignalFileLoaded();
   }
@@ -249,33 +249,19 @@ public:
    */
   void SetBulk(std::size_t const &i, std::size_t elements, type *objects)
   {
+    //TODO: EXCEPTION HANDLING: While writing chunks if fails in middle and file state is changed
     assert(filename_ != "");
-    std::error_code error;
-    size_t          capacity = 0, curr_in = i, elm_mapped = 0;
-    size_t          block_offset, pointer_offset = 0;
-    while ( elements > 0)
+    size_t          curr_in = i, elm_mapped = 0, src_index = 0;
+    for( ; elements>0 ; curr_in   +=  elm_mapped , src_index += elm_mapped , elements -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
-        MapIndex(curr_in);
+        MapIndex(curr_in); 
       }
-      capacity = (mapped_index_ + MAX) - curr_in;
-      if ( elements <= capacity)
-      {
-        elm_mapped =  elements;
-         elements   = 0;
-      }
-      else
-      {
-        elm_mapped = capacity;
-         elements   =  elements - elm_mapped;
-      }
-      block_offset                 = curr_in - mapped_index_;
-      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data())) + block_offset;
-      type *object_offset = objects + pointer_offset;
-      memcpy(file_offset, (object_offset), sizeof(type) * elm_mapped);
-      curr_in += elm_mapped;
-      pointer_offset = pointer_offset + elm_mapped;
+      elm_mapped = std::min((mapped_index_ + MAX) - curr_in , elements);
+      size_t block_index                 = curr_in - mapped_index_;
+      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data()));
+      memcpy(&(file_offset[block_index]), &objects[src_index], sizeof(type) * elm_mapped);
     }
     header_->objects += elements;
   }
@@ -289,47 +275,27 @@ public:
    */
   void GetBulk(std::size_t const &i, std::size_t &elements, type *objects)
   {
-    file_handle_.clear();
-    assert(filename_ != "");
-    std::error_code error;
-    assert(header_->objects >= i);
+    //file_handle_.clear();
 
-    if (!objects)  // pointer is null
-    {
-      return;
-    }
+    assert(filename_ != "");
+    assert(header_->objects > i);
+    assert(objects != NULL); // check null or NULL
+    
 
     // Figure out how many elements are valid to get, only get those
-    elements = std::min(elements, std::size_t(header_->objects - i));
+    elements = std::min(elements, std::size_t(header_->objects - i));  
 
-    size_t capacity = 0, curr_in = i, elm_mapped = 0,  elem_left = elements;
-    size_t pos, pointer_offset = 0;
-
-    while ( elem_left > 0)
+    size_t          curr_in = i, elm_mapped = 0, src_index = 0;
+    for( ; elements>0 ; curr_in   +=  elm_mapped , src_index += elm_mapped , elements -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
-        MapIndex(curr_in);
+        MapIndex(curr_in); 
       }
-      // check how many elements can get from mapped file
-      capacity = (mapped_index_ + MAX) - curr_in;
-      if ( elem_left < capacity)
-      {
-        elm_mapped =  elem_left;
-         elem_left   = 0;
-      }
-      else
-      {
-        elm_mapped = capacity;
-        elem_left   =  elem_left - elm_mapped;
-      }
-      pos                 = curr_in - mapped_index_;
-      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data())) + pos;
-      type *object_offset = objects + pointer_offset;
-      memcpy((object_offset), (file_offset), sizeof(type) * elm_mapped);
-      // index will be incremented by number of written object
-      curr_in += elm_mapped;
-      pointer_offset = pointer_offset + elm_mapped;
+      elm_mapped = std::min((mapped_index_ + MAX) - curr_in , elements);
+      size_t block_index                 = curr_in - mapped_index_;
+      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data()));
+      memcpy( &(objects[src_index]) , &(file_offset[block_index]), sizeof(type) * elm_mapped);
     }
   }
 
@@ -349,7 +315,7 @@ public:
   {
 
     Set(header_->objects, object);
-    header_->objects = header_->objects + 1;
+    header_->objects ++;
     return header_->objects;
   }
 
@@ -362,7 +328,6 @@ public:
   {
     assert(header_->objects > 0);
     type object;
-
     Get((header_->objects) - 1, object);
     return object;
   }
@@ -384,6 +349,7 @@ public:
 
     assert(filename_ != "");
 
+    // If both indexes lies in already mapped area
     if (IsMapped(i) && IsMapped(j))
     {
       type obj_i, obj_j;
@@ -392,26 +358,26 @@ public:
       Set(i, obj_j);
       Set(j, obj_i);
     }
-    else
+    else // indexes are distant and need to create a temporary mapping for one index
     {
       if (!IsMapped(i))
       {
         MapIndex(i);
       }
-      size_t          n2 = (j * sizeof(type)) + header_->size();
+      size_t          j_offset = (j * sizeof(type)) + header_->size();
       std::error_code error;
-      mio::mmap_sink  temp_data_map = mio::make_mmap_sink(filename_, n2, sizeof(type), error);
+      mio::mmap_sink  j_object_map = mio::make_mmap_sink(filename_, j_offset , sizeof(type), error);
       if (error)
       {
         throw StorageException("Could not map file");
       }
       type obj_i, obj_j;
       Get(i, obj_i);
-      memcpy(&obj_j, temp_data_map.data(), sizeof(type));  // Getting value from j index
-      memcpy(reinterpret_cast<type *>(temp_data_map.data()), &obj_i,
-             sizeof(type));  // writing value to i index
+      memcpy(&obj_j, j_object_map.data(), sizeof(type));  // Getting value from j index
+      // setting value to j index
+      memcpy(reinterpret_cast<type *>(j_object_map.data()), &obj_i, sizeof(type));  
       Set(i, obj_j);
-      temp_data_map.unmap();
+      j_object_map.unmap();
     }
   }
 
@@ -465,7 +431,6 @@ public:
     if (mapped_header_.is_mapped())
     {
       std::error_code error;
-      error.clear();
       mapped_header_.sync(error);
       if (error)
       {

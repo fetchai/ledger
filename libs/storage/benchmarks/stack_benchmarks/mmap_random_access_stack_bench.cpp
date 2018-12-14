@@ -21,7 +21,7 @@
 #include <stack>
 
 #include "core/random/lfg.hpp"
-#include "storage/RAS_mmap.hpp"
+#include "storage/mmap_random_access_stack.hpp"
 
 using fetch::storage::RandomAccessStackMMap;
 
