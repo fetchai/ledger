@@ -31,7 +31,7 @@ namespace fetch {
 namespace storage {
 
 /**
- * The CacheLineRAS owns a stack of type T (RandomAccessStack), and provides
+ * The CacheLineRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
  * caching in an invisible manner.
  *
  * It does this by maintaining a quick access structure (data_ map) that can be used without disk
@@ -43,7 +43,7 @@ namespace storage {
  *
  */
 template <typename T, typename D = uint64_t>
-class CacheLineRAS
+class CacheLineRandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
@@ -51,9 +51,9 @@ public:
   using header_extra_type  = D;
   using type               = T;
 
-  CacheLineRAS() = default;
+  CacheLineRandomAccessStack() = default;
 
-  ~CacheLineRAS()
+  ~CacheLineRandomAccessStack()
   {
     Flush(false);
   }
@@ -113,18 +113,17 @@ public:
     if (iter != data_.end())
     {
       ++((*iter).second.reads);
-      (*iter).second.use = 1;
-      object             = iter->second.elements[cache_subindex];
+      (*iter).second.usage_flag = 1;
+      object                    = iter->second.elements[cache_subindex];
     }
     else
     {
-      // std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
       // Case where item isn't found, load it into the cache, then access
       LoadCacheLine(i);
 
       data_[cache_lookup].reads++;
-      data_[cache_lookup].use = 1;
-      object                  = data_[cache_lookup].elements[cache_subindex];
+      data_[cache_lookup].usage_flag = 1;
+      object                         = data_[cache_lookup].elements[cache_subindex];
     }
   }
 
@@ -147,7 +146,7 @@ public:
     if (iter != data_.end())
     {
       ++iter->second.writes;
-      (*iter).second.use                    = 1;
+      (*iter).second.usage_flag             = 1;
       iter->second.elements[cache_subindex] = object;
     }
     else
@@ -156,7 +155,7 @@ public:
       LoadCacheLine(i);
 
       data_[cache_lookup].writes++;
-      data_[cache_lookup].use                      = 1;
+      data_[cache_lookup].usage_flag               = 1;
       data_[cache_lookup].elements[cache_subindex] = object;
     }
   }
@@ -230,9 +229,9 @@ public:
     }
 
     data_[cache_lookup_i].reads++;
-    data_[cache_lookup_i].use = 1;
+    data_[cache_lookup_i].usage_flag = 1;
     data_[cache_lookup_j].reads++;
-    data_[cache_lookup_j].use = 1;
+    data_[cache_lookup_j].usage_flag = 1;
 
     std::swap(data_[cache_lookup_i].elements[cache_subindex_i],
               data_[cache_lookup_j].elements[cache_subindex_j]);
@@ -311,15 +310,16 @@ private:
 
   struct CachedDataItem
   {
-    uint64_t                              reads  = 0;
-    uint64_t                              writes = 0;
-    int                                   use    = 0;
+    uint64_t                              reads      = 0;
+    uint64_t                              writes     = 0;
+    uint32_t                              usage_flag = 0;
     std::array<type, 1 << cache_line_ln2> elements;
   };
 
-  mutable std::map<uint64_t, CachedDataItem> data_;
-  mutable uint64_t                           last_removed_index_ = 0;
-  uint64_t                                   objects_            = 0;
+  mutable std::map<uint64_t, CachedDataItem>                    data_;
+  mutable typename std::map<uint64_t, CachedDataItem>::iterator hand                = data_.begin();
+  mutable uint64_t                                              last_removed_index_ = 0;
+  uint64_t                                                      objects_            = 0;
 
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
@@ -361,9 +361,7 @@ private:
       return false;
     }
 
-    // Find and remove next index up from the last one we removed
-    auto hand = data_.upper_bound(last_removed_index_);
-
+    // Find and remove next index up from the last one we removed whose usage_flag = 0
     for (;;)
     {
       if (hand == data_.end())
@@ -371,19 +369,19 @@ private:
         hand = data_.begin();
       }
 
-      if (hand->second.use == 0)
+      if (hand->second.usage_flag == 0)
       {
-        last_removed_index_ = hand->first;
         FlushLine(hand->first, hand->second);
+        auto next = std::next(hand);
         data_.erase(hand);
-        hand = std::next(hand);
+        hand = next;
         break;
       }
 
-      if (hand->second.use == 1)
+      if (hand->second.usage_flag == 1)
       {
-        hand->second.use = 0;
-        hand             = std::next(hand);
+        hand->second.usage_flag = 0;
+        hand                    = std::next(hand);
       }
     }
     return true;

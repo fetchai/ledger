@@ -21,15 +21,15 @@
 #include <stack>
 
 #include "core/random/lfg.hpp"
-#include "storage/CacheLineRAS.hpp"
+#include "storage/cache_line_random_access_stack.hpp"
 
-using fetch::storage::CacheLineRAS;
+using fetch::storage::CacheLineRandomAccessStack;
 
 template <class N>
-static void CacheLineRASBench_misshit(benchmark::State &st)
+static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
 {
 
-  CacheLineRAS<N>                           stack_;
+  CacheLineRandomAccessStack<N>             stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   stack_.New("RAS_bench.db");
 
@@ -52,15 +52,15 @@ static void CacheLineRASBench_misshit(benchmark::State &st)
     stack_.Set(random, dummy);
   }
 }
-BENCHMARK_TEMPLATE(CacheLineRASBench_misshit, uint64_t);
-BENCHMARK_TEMPLATE(CacheLineRASBench_misshit, double);
-BENCHMARK_TEMPLATE(CacheLineRASBench_misshit, int);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, uint64_t);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, double);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, int);
 
 template <class N>
-static void CacheLineRASBench_miss(benchmark::State &st)
+static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
 {
 
-  CacheLineRAS<N> stack_;
+  CacheLineRandomAccessStack<N> stack_;
   stack_.New("RAS_bench.db");
 
   EXPECT_TRUE(stack_.is_open());
@@ -82,15 +82,15 @@ static void CacheLineRASBench_miss(benchmark::State &st)
     stack_.Set(random, dummy);
   }
 }
-BENCHMARK_TEMPLATE(CacheLineRASBench_miss, uint64_t);
-BENCHMARK_TEMPLATE(CacheLineRASBench_miss, double);
-BENCHMARK_TEMPLATE(CacheLineRASBench_miss, int);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, uint64_t);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, double);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, int);
 
 template <class N>
-static void CacheLineRASBench_hit(benchmark::State &st)
+static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
 {
 
-  CacheLineRAS<N>                           stack_;
+  CacheLineRandomAccessStack<N>             stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   stack_.New("RAS_bench.db");
 
@@ -113,6 +113,6 @@ static void CacheLineRASBench_hit(benchmark::State &st)
     stack_.Set(random, dummy);
   }
 }
-BENCHMARK_TEMPLATE(CacheLineRASBench_hit, uint64_t);
-BENCHMARK_TEMPLATE(CacheLineRASBench_hit, double);
-BENCHMARK_TEMPLATE(CacheLineRASBench_hit, int);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_hit, uint64_t);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_hit, double);
+BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_hit, int);

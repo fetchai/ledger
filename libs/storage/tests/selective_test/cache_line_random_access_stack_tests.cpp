@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "storage/CacheLineRAS.hpp"
+#include "storage/cache_line_random_access_stack.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
@@ -36,11 +36,11 @@ public:
   }
 };
 
-TEST(CacheLineRAS, basic_functionality)
+TEST(CacheLineRandomAccessStack, basic_functionality)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
-  CacheLineRAS<TestClass>                   stack;
+  CacheLineRandomAccessStack<TestClass>     stack;
   std::vector<TestClass>                    reference;
 
   stack.New("CRAS_test.db");
@@ -127,14 +127,14 @@ TEST(CacheLineRAS, basic_functionality)
   ASSERT_TRUE(stack.empty() == true);
 }
 
-TEST(CacheLineRAS, file_writing_and_recovery)
+TEST(CacheLineRandomAccessStack, file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    CacheLineRAS<TestClass> stack;
+    CacheLineRandomAccessStack<TestClass> stack;
 
     stack.New("CRAS_test_2.db");
 
@@ -156,7 +156,7 @@ TEST(CacheLineRAS, file_writing_and_recovery)
 
   // Check values against loaded file
   {
-    CacheLineRAS<TestClass> stack;
+    CacheLineRandomAccessStack<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
@@ -180,7 +180,7 @@ TEST(CacheLineRAS, file_writing_and_recovery)
 
   // Check we can set new elements after loading
   {
-    CacheLineRAS<TestClass> stack;
+    CacheLineRandomAccessStack<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
@@ -205,7 +205,7 @@ TEST(CacheLineRAS, file_writing_and_recovery)
 
   // Verify
   {
-    CacheLineRAS<TestClass> stack;
+    CacheLineRandomAccessStack<TestClass> stack;
 
     stack.Load("CRAS_test_2.db");
 
