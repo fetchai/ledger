@@ -15,4 +15,4 @@
 	url = ../../google/benchmark.git
 [submodule "vendor/mio"]
 	path = vendor/mio
-	url = git@github.com:mandreyel/mio.git
+	url = ../../mandreyel/mio.git
