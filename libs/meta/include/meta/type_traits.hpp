@@ -97,5 +97,25 @@ using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
 template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
+
+// forward declare fixed point in the meta namespace
+template <std::size_t I, std::size_t F>
+class FixedPoint;
+
+template <typename A, typename R>
+struct IsFixedPoint
+{
+};
+template <std::size_t I, std::size_t F, typename R>
+struct IsFixedPoint<FixedPoint<I, F>, R>
+{
+  using Type = R;
+};
+
+template <typename T, typename R>
+using IfIsFixedPoint = typename IsFixedPoint<T, R>::Type;
+
+
+
 }  // namespace meta
 }  // namespace fetch

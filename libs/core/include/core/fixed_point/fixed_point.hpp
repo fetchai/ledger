@@ -43,7 +43,7 @@ template <std::size_t T>
 struct TypeFromSize
 {
   static const bool is_valid = false; // for template matches specialisation
-  using value_type = void;
+  using ValueType = void;
 };
 
 // 64 bit implementation
@@ -52,10 +52,10 @@ struct TypeFromSize<64>
 {
   static const bool           is_valid = true;
   static const std::size_t    size = 64;
-  using value_type = int64_t;
-  using unsigned_type = uint64_t;
-  using signed_type = int64_t;
-  using next_size = TypeFromSize<128>;
+  using ValueType = int64_t;
+  using UnsignedType = uint64_t;
+  using SignedType = int64_t;
+  using NextSize = TypeFromSize<128>;
 };
 
 // 32 bit implementation
@@ -64,10 +64,10 @@ struct TypeFromSize<32>
 {
   static const bool          is_valid = true;
   static const std::size_t   size = 32;
-  using value_type = int32_t;
-  using unsigned_type = uint32_t;
-  using signed_type = int32_t;
-  using next_size = TypeFromSize<64>;
+  using ValueType = int32_t;
+  using UnsignedType = uint32_t;
+  using SignedType = int32_t;
+  using NextSize = TypeFromSize<64>;
 };
 
 // 16 bit implementation
@@ -76,10 +76,10 @@ struct TypeFromSize<16>
 {
   static const bool          is_valid = true;
   static const std::size_t   size = 16;
-  using value_type = int16_t;
-  using unsigned_type = uint16_t;
-  using signed_type = int16_t;
-  using next_size = TypeFromSize<32>;
+  using ValueType = int16_t;
+  using UnsignedType = uint16_t;
+  using SignedType = int16_t;
+  using NextSize = TypeFromSize<32>;
 };
 
 // 8 bit implementation
@@ -88,10 +88,10 @@ struct TypeFromSize<8>
 {
   static const bool          is_valid = true;
   static const std::size_t   size = 8;
-  using value_type = int8_t;
-  using unsigned_type = uint8_t;
-  using signed_type = int8_t;
-  using next_size = TypeFromSize<16>;
+  using ValueType = int8_t;
+  using UnsignedType = uint8_t;
+  using SignedType = int8_t;
+  using NextSize = TypeFromSize<16>;
 };
 
 /**
@@ -161,10 +161,17 @@ std::size_t HighestSetBit(T n)
 template <typename T>
 bool CheckNoOverflow(T n, std::size_t fractional_bits, std::size_t total_bits)
 {
-  if (HighestSetBit(n) + fractional_bits <= total_bits)
+  std::size_t hsb = HighestSetBit(n);
+  if (hsb + fractional_bits <= total_bits)
   {
     return true;
   }
+  std::cout << "OVERFLOW ERROR! " << std::endl;
+  std::cout << "n: " << n << std::endl;
+  std::cout << "HighestSetBit(n): " << hsb << std::endl;
+  std::cout << "fractional_bits: " << fractional_bits << std::endl;
+  std::cout << "hsb + fractional_bits: " << hsb + fractional_bits << std::endl;
+  std::cout << "total_bits: " << total_bits << std::endl;
   return false;
 }
 
@@ -199,19 +206,19 @@ public:
 
 
 
-  using base_type_info = details::TypeFromSize<total_bits>;
+  using BaseTypeInfo = details::TypeFromSize<total_bits>;
 
-  using base_type = typename base_type_info::value_type;
-  using next_type = typename base_type_info::next_size::value_type;
-  using unsigned_type = typename base_type_info::unsigned_type;
+  using Type = typename BaseTypeInfo::ValueType;
+  using NextType = typename BaseTypeInfo::NextSize::ValueType;
+  using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  const base_type fractional_mask = unsigned_type((2^fractional_bits) - 1);
-  const base_type integer_mask    = ~fractional_mask;
+  const Type fractional_mask = UnsignedType((2^fractional_bits) - 1);
+  const Type integer_mask    = ~fractional_mask;
 
-  static const base_type one = base_type(1) << fractional_bits;
+  static const Type one = Type(1) << fractional_bits;
 
 private:
-  base_type data_; // the value to be stored
+  Type data_; // the value to be stored
 
 public:
 
@@ -228,19 +235,18 @@ public:
   #pragma GCC diagnostic ignored "-Wconversion"
 
   template <typename T>
-  explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<base_type>(n) << static_cast<base_type>(fractional_bits))
+  explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
   }
 
-  FixedPoint(float n) : data_(static_cast<base_type>(n * one)) {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
+  template <typename T>
+  explicit FixedPoint(T n, meta::IfIsFloat <T> * = nullptr) : data_(static_cast<Type>(n * one))
+  {
+//    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+//    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
   }
-  FixedPoint(double n) : data_(static_cast<base_type>(n * one))  {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
-  }
+
   FixedPoint(const FixedPoint &o) : data_(o.data_) {
   }
 
@@ -311,7 +317,8 @@ public:
 
   FixedPoint operator+(const FixedPoint &n) const
   {
-    return (data_ + n.data_);
+    assert((std::is_same<decltype(data_), decltype(n.data_)>::value));
+    return FixedPoint(data_ + n.data_);
   }
 
   template <typename T>
@@ -404,7 +411,7 @@ public:
     return static_cast<double>(data_) / FixedPoint::one;
   }
 
-  base_type ToRaw() const
+  Type ToRaw() const
   {
     return data_;
   }
@@ -426,11 +433,11 @@ private:
   // use "FixedPoint::from_base" in order to perform this.
   struct NoScale {};
 
-  FixedPoint(base_type n, const NoScale &) : data_(n) {
+  FixedPoint(Type n, const NoScale &) : data_(n) {
   }
 
 public:
-  static FixedPoint FromBase(base_type n) {
+  static FixedPoint FromBase(Type n) {
     return FixedPoint(n, NoScale());
   }
 
