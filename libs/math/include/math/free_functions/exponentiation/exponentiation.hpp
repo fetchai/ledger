@@ -21,9 +21,9 @@
 #include "math/kernels/approx_log.hpp"
 #include "math/kernels/standard_functions.hpp"
 
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
-#include "meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 /////////////////////////////////////
@@ -55,7 +55,7 @@ void SquareImpl(T const &x, T &ret)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Exp2(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Exp2(ArrayType &x)
 {
   kernels::stdlib::Exp2<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -66,7 +66,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Exp2(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Expm1(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Expm1(ArrayType &x)
 {
   kernels::stdlib::Expm1<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -77,7 +77,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Expm1(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Log10(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Log10(ArrayType &x)
 {
   kernels::stdlib::Log10<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -88,7 +88,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Log10(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Log2(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Log2(ArrayType &x)
 {
   kernels::stdlib::Log2<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -99,7 +99,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Log2(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Log1p(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Log1p(ArrayType &x)
 {
   kernels::stdlib::Log1p<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -110,7 +110,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Log1p(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Sqrt(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Sqrt(ArrayType &x)
 {
   kernels::stdlib::Sqrt<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -121,7 +121,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Sqrt(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Cbrt(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Cbrt(ArrayType &x)
 {
   kernels::stdlib::Cbrt<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -132,7 +132,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Cbrt(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Pow(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Pow(ArrayType &x)
 {
   kernels::stdlib::Pow<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -165,7 +165,7 @@ void Square(T const &x, T &ret)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> ApproxExp(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> ApproxExp(ArrayType &x)
 {
   kernels::ApproxExp<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -176,7 +176,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> ApproxExp(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> ApproxLog(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> ApproxLog(ArrayType &x)
 {
   kernels::ApproxLog<typename ArrayType::vector_register_type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

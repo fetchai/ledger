@@ -97,5 +97,16 @@ using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
 template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT YET IMPLEMENTED
+//////////////////////////////////////////////////////////////
+
+template <typename A, typename R>
+struct IsNotImplementedImpl
+{
+};
+template <typename A, typename R>
+using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
+
 }  // namespace meta
 }  // namespace fetch
