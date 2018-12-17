@@ -65,7 +65,7 @@ private:
  * platform, extra allows the user to write metadata for the structure. This is used for example
  * in key value store to store the head of the trie
  */
-#pragma pack(push, 1) // Packing used to avoid byte padding while ready/writing pointer from file
+#pragma pack(push, 1)  // Packing used to avoid byte padding while ready/writing pointer from file
   struct Header
   {
     uint16_t    magic   = platform::LITTLE_ENDIAN_MAGIC;
@@ -181,7 +181,6 @@ public:
       InitializeMapping();
       SignalFileLoaded();
     }
-    
   }
 
   //////////////////////////////////
@@ -212,8 +211,8 @@ public:
       MapIndex(i);
     }
 
-    std::size_t index           = i - mapped_index_;
-    type * mapped_objects       = reinterpret_cast<type *>(mapped_data_.data());
+    std::size_t index          = i - mapped_index_;
+    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy((&object), &(mapped_objects[index]), sizeof(object));
   }
 
@@ -233,8 +232,8 @@ public:
       MapIndex(i);
     }
 
-    std::size_t index = i - mapped_index_;
-    type *      mapped_objects       = reinterpret_cast<type *>(mapped_data_.data());
+    std::size_t index          = i - mapped_index_;
+    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy(&(mapped_objects[index]), &object, sizeof(type));
   }
 
@@ -249,18 +248,19 @@ public:
    */
   void SetBulk(std::size_t const &i, std::size_t elements, type *objects)
   {
-    //TODO: EXCEPTION HANDLING: While writing chunks if fails in middle and file state is changed
+    // TODO(unknown): EXCEPTION HANDLING: While writing chunks if fails in middle and file state is
+    // changed
     assert(filename_ != "");
-    size_t          curr_in = i, elm_mapped = 0, src_index = 0;
-    for( ; elements>0 ; curr_in   +=  elm_mapped , src_index += elm_mapped , elements -= elm_mapped)
+    size_t curr_in = i, elm_mapped = 0, src_index = 0;
+    for (; elements > 0; curr_in += elm_mapped, src_index += elm_mapped, elements -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
-        MapIndex(curr_in); 
+        MapIndex(curr_in);
       }
-      elm_mapped = std::min((mapped_index_ + MAX) - curr_in , elements);
-      size_t block_index                 = curr_in - mapped_index_;
-      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data()));
+      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elements);
+      size_t block_index = curr_in - mapped_index_;
+      type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(file_offset[block_index]), &objects[src_index], sizeof(type) * elm_mapped);
     }
     header_->objects += elements;
@@ -275,27 +275,26 @@ public:
    */
   void GetBulk(std::size_t const &i, std::size_t &elements, type *objects)
   {
-    //file_handle_.clear();
+    // file_handle_.clear();
 
     assert(filename_ != "");
     assert(header_->objects > i);
-    assert(objects != NULL); // check null or NULL
-    
+    assert(objects != NULL);  // check null or NULL
 
     // Figure out how many elements are valid to get, only get those
-    elements = std::min(elements, std::size_t(header_->objects - i));  
+    elements = std::min(elements, std::size_t(header_->objects - i));
 
-    size_t          curr_in = i, elm_mapped = 0, src_index = 0;
-    for( ; elements>0 ; curr_in   +=  elm_mapped , src_index += elm_mapped , elements -= elm_mapped)
+    size_t curr_in = i, elm_mapped = 0, src_index = 0;
+    for (; elements > 0; curr_in += elm_mapped, src_index += elm_mapped, elements -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
-        MapIndex(curr_in); 
+        MapIndex(curr_in);
       }
-      elm_mapped = std::min((mapped_index_ + MAX) - curr_in , elements);
-      size_t block_index                 = curr_in - mapped_index_;
-      type *file_offset   = (reinterpret_cast<type *>(mapped_data_.data()));
-      memcpy( &(objects[src_index]) , &(file_offset[block_index]), sizeof(type) * elm_mapped);
+      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elements);
+      size_t block_index = curr_in - mapped_index_;
+      type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
+      memcpy(&(objects[src_index]), &(file_offset[block_index]), sizeof(type) * elm_mapped);
     }
   }
 
@@ -315,7 +314,7 @@ public:
   {
 
     Set(header_->objects, object);
-    header_->objects ++;
+    header_->objects++;
     return header_->objects;
   }
 
@@ -358,7 +357,7 @@ public:
       Set(i, obj_j);
       Set(j, obj_i);
     }
-    else // indexes are distant and need to create a temporary mapping for one index
+    else  // indexes are distant and need to create a temporary mapping for one index
     {
       if (!IsMapped(i))
       {
@@ -366,7 +365,7 @@ public:
       }
       size_t          j_offset = (j * sizeof(type)) + header_->size();
       std::error_code error;
-      mio::mmap_sink  j_object_map = mio::make_mmap_sink(filename_, j_offset , sizeof(type), error);
+      mio::mmap_sink  j_object_map = mio::make_mmap_sink(filename_, j_offset, sizeof(type), error);
       if (error)
       {
         throw StorageException("Could not map file");
@@ -375,7 +374,7 @@ public:
       Get(i, obj_i);
       memcpy(&obj_j, j_object_map.data(), sizeof(type));  // Getting value from j index
       // setting value to j index
-      memcpy(reinterpret_cast<type *>(j_object_map.data()), &obj_i, sizeof(type));  
+      memcpy(reinterpret_cast<type *>(j_object_map.data()), &obj_i, sizeof(type));
       Set(i, obj_j);
       j_object_map.unmap();
     }
@@ -458,15 +457,15 @@ private:
   }
   /**
    * Map the file at specified index.
-   * 
+   *
    * If i's offset is greater then file-length then file will be resized.
-   */ 
+   */
   void MapIndex(std::size_t const &i)
   {
     mapped_data_.unmap();
-    mapped_index_               = i - (i % MAX);
-    size_t mapping_start        = (mapped_index_ * sizeof(type)) + header_->size();
-    size_t mapping_length       = mapping_start + (sizeof(type) * MAX);
+    mapped_index_         = i - (i % MAX);
+    size_t mapping_start  = (mapped_index_ * sizeof(type)) + header_->size();
+    size_t mapping_length = mapping_start + (sizeof(type) * MAX);
     if (mapping_length > GetFileLength())
     {
       ResizeFile();
@@ -478,7 +477,7 @@ private:
       throw StorageException(" Could not map file");
     }
   }
- 
+
   size_t GetFileLength()
   {
     file_handle_.clear();
@@ -487,19 +486,19 @@ private:
     return pos;
   }
   /*
-  * memory mapping is not possible on empty file so we need to
-  * 
-  * extend the file to write any object at the end of file
-  */
+   * memory mapping is not possible on empty file so we need to
+   *
+   * extend the file to write any object at the end of file
+   */
   void ResizeFile()
   {
     int64_t resize_length = sizeof(type) * MAX;
-    int64_t total_length          = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
+    int64_t total_length  = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
     file_handle_.seekg(total_length, std::ios::beg);
     std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), resize_length, '\0');
     file_handle_.flush();
   }
-  
+
   void InitializeMapping()
   {
     std::error_code error;
@@ -512,7 +511,7 @@ private:
 
     error.clear();
     uint64_t fileLength = sizeof(type) * MAX;
-    mapped_data_ = mio::make_mmap_sink(filename_, sizeof(Header), fileLength, error);
+    mapped_data_        = mio::make_mmap_sink(filename_, sizeof(Header), fileLength, error);
     if (error)
     {
       throw StorageException("Could not map file");
@@ -520,15 +519,14 @@ private:
     mapped_index_ = 0;
   }
 
- 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
-  mio::mmap_sink     mapped_data_; // This map handles read/write objects from/to file
-  mio::mmap_sink     mapped_header_;// This map handles header part in the file
+  mio::mmap_sink     mapped_data_;    // This map handles read/write objects from/to file
+  mio::mmap_sink     mapped_header_;  // This map handles header part in the file
   std::fstream       file_handle_;
   std::string        filename_ = "";
   Header *           header_;
-  std::size_t        mapped_index_ = 0; // It holds the mapped index value
+  std::size_t        mapped_index_ = 0;  // It holds the mapped index value
 };
 }  // namespace storage
 }  // namespace fetch
