@@ -48,8 +48,7 @@ Coverage quick start guide
     cd coverage_build
 
 ### Configure build in cmake (adds coverage flags)
-    cmake ..
-    ccmake .
+    ccmake ..
 * CMAKE_BUILD_TYPE - set this to Debug
 * FETCH_ENABLE_COVERAGE - set this to ON
 * 'c' to configure
@@ -68,7 +67,7 @@ Coverage quick start guide
     ls coverage_build/{part_of_lib}/coverage
 
 ### view the coverage reports in a browser outside of docker
-    {brower_name} ./coverage_build/{part_of_lib}/coverage
+    {browser_name} ./coverage_build/{part_of_lib}/coverage
 ### navigate to all_coverage/index.html to get started
 
 Test
