@@ -25,6 +25,13 @@
 #include <type_traits>
 
 namespace fetch {
+
+namespace fixed_point {
+// forward declare fixed point in the meta namespace
+template <std::size_t I, std::size_t F>
+class FixedPoint;
+}
+
 namespace meta {
 
 template <typename T>
@@ -98,16 +105,14 @@ template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
 
-// forward declare fixed point in the meta namespace
-template <std::size_t I, std::size_t F>
-class FixedPoint;
+
 
 template <typename A, typename R>
 struct IsFixedPoint
 {
 };
 template <std::size_t I, std::size_t F, typename R>
-struct IsFixedPoint<FixedPoint<I, F>, R>
+struct IsFixedPoint<fixed_point::FixedPoint<I, F>, R>
 {
   using Type = R;
 };

@@ -231,9 +231,6 @@ public:
 
   // tell compiler not to worry about loss of precision, we explicitly check
   // with assert statements
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-
   template <typename T>
   explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
   {
@@ -243,14 +240,12 @@ public:
   template <typename T>
   explicit FixedPoint(T n, meta::IfIsFloat <T> * = nullptr) : data_(static_cast<Type>(n * one))
   {
-//    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-//    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
+    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
   }
 
   FixedPoint(const FixedPoint &o) : data_(o.data_) {
   }
-
-  #pragma GCC diagnostic pop
 
   /////////////////
   /// operators ///
@@ -314,10 +309,16 @@ public:
   /// math operators ///
   //////////////////////
 
+  // casting operators
+  operator double()
+  {
+
+  }
+
+
 
   FixedPoint operator+(const FixedPoint &n) const
   {
-    assert((std::is_same<decltype(data_), decltype(n.data_)>::value));
     return FixedPoint(data_ + n.data_);
   }
 
