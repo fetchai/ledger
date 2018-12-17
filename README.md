@@ -48,6 +48,7 @@ Coverage quick start guide
     cd coverage_build
 
 ### Configure build in cmake (adds coverage flags)
+    cmake ..
     ccmake .
 * CMAKE_BUILD_TYPE - set this to Debug
 * FETCH_ENABLE_COVERAGE - set this to ON
