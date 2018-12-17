@@ -188,7 +188,7 @@ public:
   {
     filename_ = filename;
     file_handle_ =
-        std::fstream(filename_, std::fstream::in | std::fstream::out | std::fstream::binary);
+        std::fstream(filename_, std::ios::in | std::ios::out | std::ios::app | std::ios::binary);
     if (file_handle_.is_open())
     {
       Clear();
