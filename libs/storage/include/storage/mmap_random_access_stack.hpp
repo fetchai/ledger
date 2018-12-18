@@ -52,13 +52,15 @@ namespace storage {
  *
  * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
  * the user
+ * 
+ * MAX is the count of map-able Objects at one time
  */
 
 template <typename T, typename D = uint64_t, unsigned long MAX = 256>
-class RandomAccessStackMMap
+class MMapRandomAccessStack
 {
 private:
-  static constexpr char const *LOGGING_NAME = "RandomAccessStackMMap";
+  static constexpr char const *LOGGING_NAME = "MMapRandomAccessStack";
 
 /**
  * Header holding information for the structure. Magic is used to determine the endianness of the
@@ -139,7 +141,7 @@ public:
     return true;
   }
 
-  ~RandomAccessStackMMap()
+  ~MMapRandomAccessStack()
   {
     if (file_handle_.is_open())
     {
@@ -275,8 +277,6 @@ public:
    */
   void GetBulk(std::size_t const &i, std::size_t &elements, type *objects)
   {
-    // file_handle_.clear();
-
     assert(filename_ != "");
     assert(header_->objects > i);
     assert(objects != NULL);  // check null or NULL

@@ -36,11 +36,11 @@ public:
   }
 };
 
-TEST(random_access_stack_mmap, basic_functionality)
+TEST(mmap_random_access_stack, basic_functionality)
 {
   constexpr uint64_t                        testSize = 50;
   fetch::random::LaggedFibonacciGenerator<> lfg;
-  RandomAccessStackMMap<TestClass>          stack;
+  MMapRandomAccessStack<TestClass>          stack;
   std::vector<TestClass>                    reference;
 
   stack.New("test_mmap.db");
@@ -127,11 +127,11 @@ TEST(random_access_stack_mmap, basic_functionality)
   ASSERT_TRUE(stack.empty() == true);
   std::cout << "\n testing pop completed\n";
 }
-TEST(random_access_stack_mmap, get_bulk)
+TEST(mmap_random_access_stack, get_bulk)
 {
   constexpr uint64_t                        testSize = 1000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
-  RandomAccessStackMMap<TestClass>          stack;
+  MMapRandomAccessStack<TestClass>          stack;
   std::vector<TestClass>                    reference;
 
   stack.New("test_mmap.db");
@@ -155,8 +155,8 @@ TEST(random_access_stack_mmap, get_bulk)
   {
     index    = lfg() % testSize;
     elements = lfg() % testSize;
-
     TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
+
     stack.GetBulk(index, elements, objects);
     for (uint64_t j = 0; j < elements; j++)
     {
@@ -164,13 +164,15 @@ TEST(random_access_stack_mmap, get_bulk)
           << " Values does not match in GetBulk at index " << j << " " << reference[j].value1
           << "    " << objects[j].value1 << std::endl;
     }
+
+    free(objects);
   }
 }
-TEST(random_access_stack_mmap, set_bulk)
+TEST(mmap_random_access_stack, set_bulk)
 {
   constexpr uint64_t                        testSize = 1000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
-  RandomAccessStackMMap<TestClass>          stack;
+  MMapRandomAccessStack<TestClass>          stack;
   std::vector<TestClass>                    reference;
 
   stack.New("test_mmap.db");
@@ -194,10 +196,10 @@ TEST(random_access_stack_mmap, set_bulk)
   {
     index    = lfg() % testSize;
     elements = lfg() % testSize;
-
     TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
     stack.GetBulk(index, elements, objects);
     index = stack.size() - 1;
+
     stack.SetBulk(index, elements, objects);
     for (uint64_t j = 0; j < elements; j++)
     {
@@ -207,17 +209,18 @@ TEST(random_access_stack_mmap, set_bulk)
           << " Values does not match in SetBulk at index " << j << " " << obj.value1 << "    "
           << objects[j].value1 << std::endl;
     }
+
+    free(objects);
   }
-  // stack.SetBulk(index , elements , objects);
 }
-TEST(random_access_stack_mmap, file_writing_and_recovery)
+TEST(mmap_random_access_stack, file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 100;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    RandomAccessStackMMap<TestClass> stack;
+    MMapRandomAccessStack<TestClass> stack;
 
     // Testing closures
     bool file_loaded  = false;
@@ -251,7 +254,7 @@ TEST(random_access_stack_mmap, file_writing_and_recovery)
 
   // Check values against loaded file
   {
-    RandomAccessStackMMap<TestClass> stack;
+    MMapRandomAccessStack<TestClass> stack;
 
     stack.Load("test_mmap.db");
 

@@ -23,9 +23,9 @@
 #include "core/random/lfg.hpp"
 #include "storage/mmap_random_access_stack.hpp"
 
-using fetch::storage::RandomAccessStackMMap;
+using fetch::storage::MMapRandomAccessStack;
 
-class RandomAccessStackMMapBench : public ::benchmark::Fixture
+class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
   void SetUp(const ::benchmark::State &st) override
@@ -37,11 +37,11 @@ protected:
   void TearDown(const ::benchmark::State &) override
   {}
 
-  RandomAccessStackMMap<uint64_t>           stack_;
+  MMapRandomAccessStack<uint64_t>           stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(RandomAccessStackMMapBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(MMapRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
   for (auto _ : st)
   {
