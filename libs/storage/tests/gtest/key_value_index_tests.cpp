@@ -368,7 +368,6 @@ bool LoadSaveVsBulk()
   {
     kvi_type test;
     test.Load("test1.db");
-    std::cout << "Size: " << test.size() << std::endl;
     for (std::size_t j = 0; j < batch_size; ++j)
     {
       auto const &val = values[k];
