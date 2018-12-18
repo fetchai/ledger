@@ -148,6 +148,7 @@ struct KeyValuePair
 
   byte_array::ByteArray Hash() const
   {
+    // TODO(private issue 460): Hash value longer than required.
     byte_array::ByteArray ret;
     ret.Resize(N);
 
