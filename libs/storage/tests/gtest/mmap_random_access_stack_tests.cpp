@@ -153,8 +153,8 @@ TEST(mmap_random_access_stack, get_bulk)
   uint64_t index, elements;
   for (uint64_t i = 0; i < testSize; i++)
   {
-    index    = lfg() % testSize;
-    elements = lfg() % testSize;
+    index              = lfg() % testSize;
+    elements           = lfg() % testSize;
     TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
 
     stack.GetBulk(index, elements, objects);
@@ -194,8 +194,8 @@ TEST(mmap_random_access_stack, set_bulk)
   uint64_t index, elements;
   for (uint64_t i = 0; i < testSize; i++)
   {
-    index    = lfg() % testSize;
-    elements = lfg() % testSize;
+    index              = lfg() % testSize;
+    elements           = lfg() % testSize;
     TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
     stack.GetBulk(index, elements, objects);
     index = stack.size() - 1;

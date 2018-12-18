@@ -52,7 +52,7 @@ namespace storage {
  *
  * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
  * the user
- * 
+ *
  * MAX is the count of map-able Objects at one time
  */
 
