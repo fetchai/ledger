@@ -457,6 +457,11 @@ public:
 
   bookmark_type Commit(bookmark_type const &b)
   {
+    // The flush here is vitally important since we must ensure the all flush handlers successfully
+    // execute. Failure to do this results in an incorrectly ordered difference / history stack
+    // which in turn means that the state can not be reverted
+    Flush(false);
+
     history_.Push(HistoryBookmark{b}, HistoryBookmark::value);
 
     header_type h = stack_.header_extra();
