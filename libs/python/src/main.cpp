@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "python/fetch_pybind.hpp"
-#include "python/math/py_shape_less_array.hpp"
+#include "python/math/py_shapeless_array.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
 #include "python/memory/py_rectangular_array.hpp"
@@ -125,26 +125,26 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::memory::BuildRange("Range", ns_fetch_memory);
   /*
-  fetch::math::BuildShapeLessArray<int8_t>("ShapeLessArrayInt8",
+  fetch::math::BuildShapelessArray<int8_t>("ShapelessArrayInt8",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int16_t>("ShapeLessArrayInt16",
+  fetch::math::BuildShapelessArray<int16_t>("ShapelessArrayInt16",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int32_t>("ShapeLessArrayInt32",
+  fetch::math::BuildShapelessArray<int32_t>("ShapelessArrayInt32",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int64_t>("ShapeLessArrayInt64",
+  fetch::math::BuildShapelessArray<int64_t>("ShapelessArrayInt64",
   ns_fetch_memory);
 
-  fetch::math::BuildShapeLessArray<uint8_t>("ShapeLessArrayUInt8",
+  fetch::math::BuildShapelessArray<uint8_t>("ShapelessArrayUInt8",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint16_t>("ShapeLessArrayUInt16",
+  fetch::math::BuildShapelessArray<uint16_t>("ShapelessArrayUInt16",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint32_t>("ShapeLessArrayUInt32",
+  fetch::math::BuildShapelessArray<uint32_t>("ShapelessArrayUInt32",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint64_t>("ShapeLessArrayUInt64",
+  fetch::math::BuildShapelessArray<uint64_t>("ShapelessArrayUInt64",
   ns_fetch_memory);
   */
-  fetch::math::BuildShapeLessArray<float>("ShapeLessArrayFloat", ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<double>("ShapeLessArrayDouble", ns_fetch_memory);
+  fetch::math::BuildShapelessArray<float>("ShapelessArrayFloat", ns_fetch_memory);
+  fetch::math::BuildShapelessArray<double>("ShapelessArrayDouble", ns_fetch_memory);
 
   /*
   fetch::math::BuildRectangularArray<int8_t>("RectangularArrayInt8",

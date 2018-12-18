@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/pearson.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -37,8 +37,8 @@ inline typename memory::VectorSlice<T, S>::Type Pearson(memory::VectorSlice<T, S
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::Type Pearson(ShapeLessArray<T, C> const &a,
-                                                   ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Pearson(ShapelessArray<T, C> const &a,
+                                                   ShapelessArray<T, C> const &b)
 {
   return Pearson(a.data(), b.data());
 }

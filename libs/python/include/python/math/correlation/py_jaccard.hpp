@@ -46,8 +46,8 @@ inline void BuildJaccardCorrelation(std::string const &custom_name, pybind11::mo
       .def(custom_name.c_str(), &WrapperJaccard<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperJaccard<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperJaccard<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperJaccard<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperJaccard<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperJaccard<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperJaccard<ShapelessArray<float>>);
 }
 
 template <typename A>
@@ -72,8 +72,8 @@ inline void BuildGeneralisedJaccardCorrelation(std::string const &custom_name,
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapelessArray<float>>);
 }
 
 }  // namespace correlation

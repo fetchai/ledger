@@ -27,7 +27,7 @@ template <typename SHARED_TYPE, std::size_t type_size>
 class SharedArray;
 
 template <typename SHAPELESS_TYPE, typename SHAPELESS_CONTAINER>
-class ShapeLessArray;
+class ShapelessArray;
 
 template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT,
           bool PAD_WIDTH>
