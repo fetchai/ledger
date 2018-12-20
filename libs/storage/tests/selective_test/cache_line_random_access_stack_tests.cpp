@@ -36,7 +36,7 @@ public:
   }
 };
 
-TEST(CacheLineRandomAccessStack, basic_functionality)
+TEST(cache_line_random_access_stack, basic_functionality)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
@@ -127,7 +127,7 @@ TEST(CacheLineRandomAccessStack, basic_functionality)
   ASSERT_TRUE(stack.empty() == true);
 }
 
-TEST(CacheLineRandomAccessStack, file_writing_and_recovery)
+TEST(cache_line_random_access_stack, file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;

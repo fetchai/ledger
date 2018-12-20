@@ -317,9 +317,8 @@ private:
   };
 
   mutable std::map<uint64_t, CachedDataItem>                    data_;
-  mutable typename std::map<uint64_t, CachedDataItem>::iterator hand                = data_.begin();
-  mutable uint64_t                                              last_removed_index_ = 0;
-  uint64_t                                                      objects_            = 0;
+  mutable typename std::map<uint64_t, CachedDataItem>::iterator hand_    = data_.begin();
+  uint64_t                                                      objects_ = 0;
 
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
@@ -362,27 +361,21 @@ private:
     }
 
     // Find and remove next index up from the last one we removed whose usage_flag = 0
-    for (;;)
+    for (;; hand_++)
     {
-      if (hand == data_.end())
+      if (hand_ == data_.end())
       {
-        hand = data_.begin();
+        hand_ = data_.begin();
       }
 
-      if (hand->second.usage_flag == 0)
+      if (hand_->second.usage_flag == 0)
       {
-        FlushLine(hand->first, hand->second);
-        auto next = std::next(hand);
-        data_.erase(hand);
-        hand = next;
+        FlushLine(hand_->first, hand_->second);
+        data_.erase(hand_);
         break;
       }
-
-      if (hand->second.usage_flag == 1)
-      {
-        hand->second.usage_flag = 0;
-        hand                    = std::next(hand);
-      }
+      // Setting usage_flag to 0
+      hand_->second.usage_flag = 0;
     }
     return true;
   }
