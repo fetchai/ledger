@@ -25,18 +25,20 @@
 
 using fetch::storage::CacheLineRandomAccessStack;
 
+// To calculate the size of cache
+static constexpr std::size_t cache_line_size = 13;
+template <class T>
+struct CachedDataItem
+{
+  uint64_t                            reads      = 0;
+  uint64_t                            writes     = 0;
+  uint32_t                            usage_flag = 0;
+  std::array<T, 1 << cache_line_size> elements;
+};
+
 template <class N>
 static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
 {
-  // To calculate the size of cache
-  static constexpr std::size_t cache_line_size = 13;
-  struct CachedDataItem
-  {
-    uint64_t                            reads      = 0;
-    uint64_t                            writes     = 0;
-    uint32_t                            usage_flag = 0;
-    std::array<N, 1 << cache_line_size> elements;
-  };
 
   CacheLineRandomAccessStack<N>             stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
@@ -51,7 +53,7 @@ static void CacheLineRandomAccessStackBench_misshit(benchmark::State &st)
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
   {
     // Each cache line contains 8192 elements
     for (int i = 0; i < 8192; i++)
@@ -79,15 +81,6 @@ BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_misshit, int);
 template <class N>
 static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
 {
-  // To calculate the size of cache
-  static constexpr std::size_t cache_line_size = 13;
-  struct CachedDataItem
-  {
-    uint64_t                            reads      = 0;
-    uint64_t                            writes     = 0;
-    uint32_t                            usage_flag = 0;
-    std::array<N, 1 << cache_line_size> elements;
-  };
 
   CacheLineRandomAccessStack<N> stack_;
   stack_.New("RAS_bench.db");
@@ -101,7 +94,7 @@ static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
   {
     for (int i = 0; i < 8192; i++)
     {
@@ -127,15 +120,7 @@ BENCHMARK_TEMPLATE(CacheLineRandomAccessStackBench_miss, int);
 template <class N>
 static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
 {
-  // To calculate the size of cache
-  static constexpr std::size_t cache_line_size = 13;
-  struct CachedDataItem
-  {
-    uint64_t                            reads      = 0;
-    uint64_t                            writes     = 0;
-    uint32_t                            usage_flag = 0;
-    std::array<N, 1 << cache_line_size> elements;
-  };
+
   CacheLineRandomAccessStack<N>             stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   stack_.New("RAS_bench.db");
@@ -150,7 +135,7 @@ static void CacheLineRandomAccessStackBench_hit(benchmark::State &st)
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
-  while (line_count * sizeof(CachedDataItem) < std::size_t(1ULL << 22))
+  while (line_count * sizeof(CachedDataItem<N>) < std::size_t(1ULL << 22))
   {
     for (int i = 0; i < 8192; i++)
     {

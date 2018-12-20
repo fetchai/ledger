@@ -361,7 +361,7 @@ private:
     }
 
     // Find and remove next index up from the last one we removed whose usage_flag = 0
-    for (;; hand_++)
+    for (;; ++hand_)
     {
       if (hand_ == data_.end())
       {
