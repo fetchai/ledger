@@ -199,7 +199,6 @@ public:
     {
       throw StorageException("Could not open file");
     }
-    ResizeFile();
     InitializeMapping();
     SignalFileLoaded();
   }
@@ -452,6 +451,10 @@ private:
    */
   bool IsMapped(std::size_t i) const
   {
+    if (!mapped_data_.is_mapped())
+    {  // Initially nothing is mapped
+      return false;
+    }
     return (i >= mapped_index_ && i < (mapped_index_ + MAX));
   }
   /**
@@ -507,15 +510,6 @@ private:
       throw StorageException("Could not map Header");
     }
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
-
-    error.clear();
-    uint64_t fileLength = sizeof(type) * MAX;
-    mapped_data_        = mio::make_mmap_sink(filename_, sizeof(Header), fileLength, error);
-    if (error)
-    {
-      throw StorageException("Could not map file");
-    }
-    mapped_index_ = 0;
   }
 
   event_handler_type on_file_loaded_;
