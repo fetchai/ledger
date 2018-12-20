@@ -153,11 +153,13 @@ TEST(mmap_random_access_stack, get_bulk)
   uint64_t index, elements;
   for (uint64_t i = 0; i < testSize; i++)
   {
-    index              = lfg() % testSize;
-    elements           = lfg() % testSize;
-    TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
+    index    = lfg() % testSize;
+    elements = lfg() % testSize + 1;  // +1 is to ensure elements should always be >0
+    uint64_t expected_elements = std::min(elements, (stack.size() - index));
 
+    TestClass *objects = (TestClass *)(malloc(sizeof(TestClass) * elements));
     stack.GetBulk(index, elements, objects);
+    EXPECT_EQ(expected_elements, elements);
     for (uint64_t j = 0; j < elements; j++)
     {
       EXPECT_TRUE(reference[index + j] == objects[j])
@@ -250,6 +252,18 @@ TEST(mmap_random_access_stack, file_writing_and_recovery)
 
     stack.Flush();
     EXPECT_TRUE(file_flushed == true);
+  }
+
+  // Create file if not exist while loading
+  {
+    std::string filename = "test_mmap_new.db";
+    // delete if file already exist
+    remove(filename.c_str());
+    MMapRandomAccessStack<TestClass> stack;
+
+    stack.Load("test_mmap_new.db", true);
+    EXPECT_TRUE(stack.is_open());
+    stack.Close();
   }
 
   // Check values against loaded file

@@ -44,8 +44,8 @@ enum
 namespace storage {
 
 /**
- * The RandomAccessStack maintains a stack of type T, writing to disk. Since elements on the stack
- * are uniform size, they can be easily addressed using simple arithmetic.
+ * The MMapRandomAccessStack maintains a stack of type T, writing to disk. Since elements on the
+ * stack are uniform size, they can be easily addressed using simple arithmetic.
  *
  * Note that objects are required to be the same size. This means you should not store classes with
  * dynamically allocated memory.
@@ -253,14 +253,14 @@ public:
     // TODO(unknown): EXCEPTION HANDLING: While writing chunks if fails in middle and file state is
     // changed
     assert(filename_ != "");
-    size_t curr_in = i, elm_mapped = 0, src_index = 0;
-    for (; elements > 0; curr_in += elm_mapped, src_index += elm_mapped, elements -= elm_mapped)
+    size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
+    for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
-      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elements);
+      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elm_left);
       size_t block_index = curr_in - mapped_index_;
       type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(file_offset[block_index]), &objects[src_index], sizeof(type) * elm_mapped);
@@ -284,14 +284,14 @@ public:
     // Figure out how many elements are valid to get, only get those
     elements = std::min(elements, std::size_t(header_->objects - i));
 
-    size_t curr_in = i, elm_mapped = 0, src_index = 0;
-    for (; elements > 0; curr_in += elm_mapped, src_index += elm_mapped, elements -= elm_mapped)
+    size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
+    for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
       if (!IsMapped(curr_in))
       {
         MapIndex(curr_in);
       }
-      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elements);
+      elm_mapped         = std::min((mapped_index_ + MAX) - curr_in, elm_left);
       size_t block_index = curr_in - mapped_index_;
       type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(objects[src_index]), &(file_offset[block_index]), sizeof(type) * elm_mapped);
@@ -416,24 +416,24 @@ public:
     if (!lazy)
     {
       SignalBeforeFlush();
-    }
-    file_handle_.flush();
-    if (mapped_data_.is_mapped())
-    {
-      std::error_code error;
-      mapped_data_.sync(error);
-      if (error)
+      file_handle_.flush();
+      if (mapped_data_.is_mapped())
       {
-        throw StorageException("Could not Sync data map");
+        std::error_code error;
+        mapped_data_.sync(error);
+        if (error)
+        {
+          throw StorageException("Could not Sync data map");
+        }
       }
-    }
-    if (mapped_header_.is_mapped())
-    {
-      std::error_code error;
-      mapped_header_.sync(error);
-      if (error)
+      if (mapped_header_.is_mapped())
       {
-        throw StorageException("Could not Sync Header map");
+        std::error_code error;
+        mapped_header_.sync(error);
+        if (error)
+        {
+          throw StorageException("Could not Sync Header map");
+        }
       }
     }
   }
@@ -450,7 +450,6 @@ private:
    * @param: i The Ith object, indexed from 0
    *
    */
-
   bool IsMapped(std::size_t i) const
   {
     return (i >= mapped_index_ && i < (mapped_index_ + MAX));
