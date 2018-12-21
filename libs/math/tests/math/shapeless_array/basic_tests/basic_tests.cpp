@@ -76,10 +76,10 @@ TEST(ndarray, double_equals_test)
 {
   equal_test<double>();
 }
-//TEST(ndarray, fixed_equals_test)
-//{
-//  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
-//}
+TEST(ndarray, fixed_equals_test)
+{
+  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
+}
 
 
 ////////////

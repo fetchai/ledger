@@ -31,6 +31,9 @@
 
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
+#include "math/meta/type_traits.hpp"
+
+
 
 #include <algorithm>
 #include <type_traits>
@@ -67,17 +70,17 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
-  // TODO(private issue 282): This probably needs to be removed into the meta
-  template <typename Type, typename ReturnType = void>
-  using IsUnsignedLike =
-      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
-                              ReturnType>::type;
-  template <typename Type, typename ReturnType = void>
-  using IsSignedLike =
-      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
-                              ReturnType>::type;
-  template <typename Type, typename ReturnType = void>
-  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value, ReturnType>::type;
+//  // TODO(private issue 282): This probably needs to be removed into the meta
+//  template <typename Type, typename ReturnType = void>
+//  using IsUnsignedLike =
+//      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
+//                              ReturnType>::type;
+//  template <typename Type, typename ReturnType = void>
+//  using IsSignedLike =
+//      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
+//                              ReturnType>::type;
+//  template <typename Type, typename ReturnType = void>
+//  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value, ReturnType>::type;
 
   static constexpr char const *LOGGING_NAME = "ShapelessArray";
 
@@ -442,7 +445,7 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Unsigned>
-  static IsUnsignedLike<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
+  static fetch::math::meta::IfIsUnsignedInteger<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
                                                          Unsigned const &delta)
   {
     assert(delta != 0);
@@ -561,7 +564,7 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapelessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
+  bool AllClose(ShapelessArray const &other, Type const &rtol = 1e-5, Type const &atol = 1e-8,
                 bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
@@ -572,17 +575,17 @@ public:
     bool ret = true;
     for (std::size_t i = 0; ret && i < N; ++i)
     {
-      double va = this->At(i);
+      Type va = this->At(i);
       if (ignoreNaN && std::isnan(va))
       {
         continue;
       }
-      double vb = other[i];
+      Type vb = other[i];
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      double vA = (va - vb);
+      Type vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -595,7 +598,7 @@ public:
       {
         vb = -vb;
       }
-      double M = std::max(va, vb);
+      Type M = std::max(va, vb);
 
       ret &= (vA < std::max(atol, M * rtol));
     }
@@ -603,17 +606,17 @@ public:
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        double va = this->At(i);
+        Type va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        double vb = other[i];
+        Type vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        double vA = (va - vb);
+        Type vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -626,7 +629,7 @@ public:
         {
           vb = -vb;
         }
-        double M = std::max(va, vb);
+        Type M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }

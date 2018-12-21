@@ -18,13 +18,27 @@
 //------------------------------------------------------------------------------
 
 // would be nice to remove these
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
+//#include "core/byte_array/byte_array.hpp"
+//#include "core/byte_array/const_byte_array.hpp"
+// #include "core/fixed_point/fixed_point.hpp"
+
 
 #include <string>
 #include <type_traits>
 
 namespace fetch {
+
+namespace byte_array {
+class ByteArray;
+class ConstByteArray;
+} // byte_array
+
+
+namespace fixed_point {
+template <std::size_t I, std::size_t F>
+class FixedPoint;
+} // fixed_point
+
 namespace meta {
 
 template <typename T>
@@ -41,6 +55,9 @@ constexpr bool IsInteger = std::is_integral<T>::value && (!IsBoolean<T>);
 
 template <typename T>
 constexpr bool IsFloat = std::is_floating_point<T>::value;
+
+template <typename T, std::size_t I, std::size_t F>
+constexpr bool IsFixedPoint = std::is_same<T, fetch::fixed_point::FixedPoint<I, F>>::value;
 
 template <typename T>
 constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
@@ -93,6 +110,10 @@ using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 
 template <typename T, typename R = void>
 using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
+
+template <typename T, typename R = void>
+//using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value || IsFixedPoint<T>, R>;
+using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;

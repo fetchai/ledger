@@ -21,6 +21,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include <type_traits>
+#include <meta/type_traits.hpp>
 
 namespace fetch {
 namespace math {
@@ -40,6 +41,11 @@ template <typename T, typename C>
 class NDArray;
 
 namespace meta {
+
+// alias certain type traits in fetch::meta into fetch::math::meta
+template <typename T>
+using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<T>;
+
 
 ////////////////////////////////////
 /// ARITHMETIC TYPE CHECKER
