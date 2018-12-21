@@ -118,6 +118,7 @@ using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value, R>;
 template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 
+<<<<<<< HEAD
 
 
 
@@ -135,6 +136,18 @@ template <typename T, typename R>
 using IfIsFixedPoint = typename IsFixedPoint<T, R>::Type;
 
 
+=======
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT YET IMPLEMENTED
+//////////////////////////////////////////////////////////////
+
+template <typename A, typename R>
+struct IsNotImplementedImpl
+{
+};
+template <typename A, typename R>
+using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
+>>>>>>> origin/feature/math_meta_type_traits
 
 }  // namespace meta
 }  // namespace fetch

@@ -24,19 +24,16 @@
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
-#include "meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
-#include "math/meta/type_traits.hpp"
-
-
+#include "math/meta/math_type_traits.hpp"
 
 #include <algorithm>
-#include <type_traits>
 #include <vector>
 
 namespace fetch {
@@ -445,7 +442,7 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Unsigned>
-  static fetch::math::meta::IfIsUnsignedInteger<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
+  static fetch::meta::IfIsUnsignedInteger<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
                                                          Unsigned const &delta)
   {
     assert(delta != 0);
@@ -464,7 +461,7 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Signed>
-  static IsSignedLike<Signed, ShapelessArray> Arange(Signed const &from, Signed const &to,
+  static fetch::meta::IfIsSignedInteger<Signed, ShapelessArray> Arange(Signed const &from, Signed const &to,
                                                      Signed const &delta)
   {
     assert(delta != 0);
@@ -482,7 +479,7 @@ public:
    * @return a reference to this
    */
   template <typename DataType>
-  IsIntegralLike<DataType, ShapelessArray> FillArange(DataType const &from, DataType const &to)
+  fetch::meta::IfIsInteger<DataType, ShapelessArray> FillArange(DataType const &from, DataType const &to)
   {
     ShapelessArray ret;
 
@@ -564,7 +561,7 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapelessArray const &other, Type const &rtol = 1e-5, Type const &atol = 1e-8,
+  bool AllClose(ShapelessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
                 bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
@@ -580,12 +577,12 @@ public:
       {
         continue;
       }
-      Type vb = other[i];
+      double vb = static_cast<double>(other[i]);
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      Type vA = (va - vb);
+      double vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -598,7 +595,7 @@ public:
       {
         vb = -vb;
       }
-      Type M = std::max(va, vb);
+      double M = std::max(va, vb);
 
       ret &= (vA < std::max(atol, M * rtol));
     }
@@ -606,17 +603,17 @@ public:
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        Type va = this->At(i);
+        double va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        Type vb = other[i];
+        double vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        Type vA = (va - vb);
+        double vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -629,7 +626,7 @@ public:
         {
           vb = -vb;
         }
-        Type M = std::max(va, vb);
+        double M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }

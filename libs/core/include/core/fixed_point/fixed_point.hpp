@@ -19,6 +19,8 @@
 
 
 #include <iostream>
+#include <sstream>
+
 //#include <ostream>
 //#include <exception>
 //#include <cstddef>      // std::size_t
@@ -26,6 +28,7 @@
 //#include <type_traits>
 
 #include<cassert>
+#include <limits>
 #include "meta/type_traits.hpp"
 
 
@@ -45,6 +48,7 @@ struct TypeFromSize
   static const bool is_valid = false; // for template matches specialisation
   using ValueType = void;
 };
+
 
 // 64 bit implementation
 template <>
@@ -133,8 +137,10 @@ void Multiply(const FixedPoint<I,F> &lhs, const FixedPoint<I,F> &rhs, FixedPoint
  * @return
  */
 template <typename T>
-std::size_t HighestSetBit(T n)
+std::size_t HighestSetBit(T n_input)
 {
+  int n = static_cast<int>(n_input);
+
   if (n == 0)
   {
     return 0;
@@ -184,10 +190,55 @@ bool CheckNoOverflow(T n, std::size_t fractional_bits, std::size_t total_bits)
  * @return
  */
 template <typename T>
-bool CheckNoRounding(T n, std::size_t fractional_bits, std::size_t total_bits)
+bool CheckNoRounding(T n, std::size_t fractional_bits)
 {
-  // Not yet implemented
-  assert(0);
+  T original_n = n;
+
+  // sufficient bits to guarantee no rounding
+  if (std::numeric_limits<T>::max_digits10 < fractional_bits)
+  {
+//    std::cout << "std::numeric_limits<T>::max_digits10: " << std::numeric_limits<T>::max_digits10 << std::endl;
+    return true;
+  }
+//  else
+//  {
+//    std::cout << "rounding check not fully implemented: " << std::endl;
+////    assert(0);
+//
+//    std::ostringstream strs;
+//    strs << n;
+//    std::string str = strs.str();
+//
+//
+//
+//
+//
+//    // subtract integer portion
+//    int n_int = static_cast<int>(n);
+//    n -= n_int;
+//
+//    std::cout.precision(std::numeric_limits<T>::max_digits10);
+//
+//    for (std::size_t j = 0; j < fractional_bits; ++j)
+//    {
+//      std::cout << "n: " << n << std::endl;
+//      n *= 10;
+//      std::cout << "n: " << n << std::endl;
+//      n_int = static_cast<int>(n);
+//      std::cout << "static_cast<T>(n_int): " << static_cast<T>(n_int) << std::endl;
+//      n -= static_cast<T>(n_int);
+//      std::cout << "n: " << n << std::endl;
+//      if(n == 0)
+//      {
+//        return true;
+//      }
+//    }
+//  }
+
+  std::cout << "ROUNDING ERROR! " << std::endl;
+  std::cout << "n: " << original_n << std::endl;
+  std::cout << "fractional_bits: " << fractional_bits << std::endl;
+  return false;
 }
 
 
@@ -241,7 +292,7 @@ public:
   explicit FixedPoint(T n, meta::IfIsFloat <T> * = nullptr) : data_(static_cast<Type>(n * one))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
+    assert(details::CheckNoRounding(n, fractional_bits));
   }
 
   FixedPoint(const FixedPoint &o) : data_(o.data_) {

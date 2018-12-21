@@ -115,10 +115,18 @@ TEST(ndarray, double_equals_test)
 {
   equal_test<double>();
 }
-TEST(ndarray, fixed_equals_test)
+//TEST(ndarray, fixed_equals_test_16)
+//{
+//  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
+//}
+TEST(ndarray, fixed_equals_test_32)
 {
   equal_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
+//TEST(ndarray, fixed_equals_test_64)
+//{
+//  equal_test<fetch::fixed_point::FixedPoint<64, 64>>();
+//}
 
 
 ////////////
@@ -129,28 +137,36 @@ template <typename T>
 void copy_test()
 {
   std::size_t       n          = 10000;
-  ShapelessArray<T> test_array = RandomArray<T>(n, 0);
+  ShapelessArray<T> test_array = RandomArray(n, T(0));
   ShapelessArray<T> result_array(n);
   result_array.Copy(test_array);
 
-  ASSERT_TRUE(result_array.AllClose(test_array));
+  for (std::size_t j = 0; j < result_array.size(); ++j)
+  {
+    ASSERT_TRUE(test_array.At(j) == result_array.At(j));
+  }
+//  ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
 TEST(ndarray, int_copy_test)
 {
-  equal_test<int>();
+  copy_test<int>();
 }
 TEST(ndarray, size_t_copy_test)
 {
-  equal_test<uint32_t>();
+  copy_test<uint32_t>();
 }
 TEST(ndarray, float_copy_test)
 {
-  equal_test<float>();
+  copy_test<float>();
 }
 TEST(ndarray, double_copy_test)
 {
-  equal_test<double>();
+  copy_test<double>();
+}
+TEST(ndarray, fixed_copy_test_32)
+{
+  copy_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
 
 //////////////////
@@ -169,7 +185,12 @@ void plus_test()
   {
     result_array[j] = test_array[j] + test_array_2[j];
   }
-  ASSERT_TRUE(result_array.AllClose(test_array + test_array_2));
+
+  for (std::size_t j = 0; j < result_array.size(); ++j)
+  {
+    ASSERT_TRUE((test_array.At(j) + test_array_2.At(j))== result_array.At(j));
+  }
+//  ASSERT_TRUE(result_array.AllClose(test_array + test_array_2));
 }
 
 TEST(ndarray, integer_plus_test)
@@ -188,6 +209,10 @@ TEST(ndarray, double_plus_test)
 {
   plus_test<double>();
 }
+TEST(ndarray, fixed_plus_test_32)
+{
+  plus_test<fetch::fixed_point::FixedPoint<32, 32>>();
+}
 
 //////////////////
 /// - operator ///
@@ -205,7 +230,12 @@ void sub_test()
   {
     result_array[j] = test_array[j] - test_array_2[j];
   }
-  ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
+
+  for (std::size_t j = 0; j < result_array.size(); ++j)
+  {
+    ASSERT_TRUE((test_array.At(j) - test_array_2.At(j))== result_array.At(j));
+  }
+//  ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
 }
 
 TEST(ndarray, integer_sub_test)
@@ -223,6 +253,10 @@ TEST(ndarray, float_sub_test)
 TEST(ndarray, double_sub_test)
 {
   sub_test<double>();
+}
+TEST(ndarray, fixed_sub_test_32)
+{
+  sub_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
 
 //////////////////

@@ -23,8 +23,8 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
-#include "meta/type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
 #include <cassert>
@@ -41,7 +41,7 @@
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {

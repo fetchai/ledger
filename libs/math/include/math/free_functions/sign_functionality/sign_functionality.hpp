@@ -19,7 +19,7 @@
 
 #include "math/kernels/sign.hpp"
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -30,7 +30,7 @@ namespace math {
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Copysign(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Copysign(ArrayType &x)
 {
   kernels::stdlib::Copysign<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -41,7 +41,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Copysign(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Signbit(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Signbit(ArrayType &x)
 {
   kernels::stdlib::Signbit<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
