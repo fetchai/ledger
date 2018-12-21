@@ -575,7 +575,7 @@ public:
     bool ret = true;
     for (std::size_t i = 0; ret && i < N; ++i)
     {
-      Type va = this->At(i);
+      double va = static_cast<double>(this->At(i));
       if (ignoreNaN && std::isnan(va))
       {
         continue;

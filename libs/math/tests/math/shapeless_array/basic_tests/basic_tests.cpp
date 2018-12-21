@@ -24,11 +24,29 @@
 #include <gtest/gtest.h>
 
 #include "core/fixed_point/fixed_point.hpp"
+#include "meta/type_traits.hpp"
 
 using namespace fetch::math;
 
+/// template for producing a random array of FixedPoints
+template<typename T>
+fetch::meta::IfIsFixedPoint<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+{
+  static fetch::random::LinearCongruentialGenerator gen;
+  ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+
+  T rn{0};
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    rn       = T(gen.AsDouble());
+    a1.At(i) = rn + adj;
+  }
+  return a1;
+}
+
+/// template for producing a random array of integer types
 template <typename T>
-ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T adj)
+fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
@@ -36,7 +54,7 @@ ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
 
-  T rn;
+  T rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
     rn       = T(gen.AsDouble() * scale);
@@ -44,6 +62,23 @@ ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T ad
   }
   return a1;
 }
+
+/// template for producing a random array of float types
+template <typename T>
+fetch::meta::IfIsFloat <T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+{
+  static fetch::random::LinearCongruentialGenerator gen;
+  ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+
+  T rn{0};
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    rn       = T(gen.AsDouble());
+    a1.At(i) = rn + adj;
+  }
+  return a1;
+}
+
 
 ///////////////////////////
 /// assignment operator ///
@@ -53,10 +88,14 @@ template <typename T>
 void equal_test()
 {
   std::size_t       n            = 10000;
-  ShapelessArray<T> test_array   = RandomArray<T>(n, T(0));
+  ShapelessArray<T> test_array   = RandomArray(n, T(0));
   ShapelessArray<T> result_array = test_array;
 
-  ASSERT_TRUE(result_array.AllClose(test_array));
+  for (std::size_t j = 0; j < result_array.size(); ++j)
+  {
+    ASSERT_TRUE(test_array.At(j) == result_array.At(j));
+  }
+//  ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
 
@@ -78,7 +117,7 @@ TEST(ndarray, double_equals_test)
 }
 TEST(ndarray, fixed_equals_test)
 {
-  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
+  equal_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
 
 

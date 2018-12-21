@@ -161,10 +161,17 @@ std::size_t HighestSetBit(T n)
 template <typename T>
 bool CheckNoOverflow(T n, std::size_t fractional_bits, std::size_t total_bits)
 {
-  if (HighestSetBit(n) + fractional_bits <= total_bits)
+  std::size_t hsb = HighestSetBit(n);
+  if (hsb + fractional_bits <= total_bits)
   {
     return true;
   }
+  std::cout << "OVERFLOW ERROR! " << std::endl;
+  std::cout << "n: " << n << std::endl;
+  std::cout << "HighestSetBit(n): " << hsb << std::endl;
+  std::cout << "fractional_bits: " << fractional_bits << std::endl;
+  std::cout << "hsb + fractional_bits: " << hsb + fractional_bits << std::endl;
+  std::cout << "total_bits: " << total_bits << std::endl;
   return false;
 }
 
@@ -201,17 +208,17 @@ public:
 
   using BaseTypeInfo = details::TypeFromSize<total_bits>;
 
-  using BaseType = typename BaseTypeInfo::ValueType;
+  using Type = typename BaseTypeInfo::ValueType;
   using NextType = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  const BaseType fractional_mask = UnsignedType((2^fractional_bits) - 1);
-  const BaseType integer_mask    = ~fractional_mask;
+  const Type fractional_mask = UnsignedType((2^fractional_bits) - 1);
+  const Type integer_mask    = ~fractional_mask;
 
-  static const BaseType one = BaseType(1) << fractional_bits;
+  static const Type one = Type(1) << fractional_bits;
 
 private:
-  BaseType data_; // the value to be stored
+  Type data_; // the value to be stored
 
 public:
 
@@ -224,27 +231,21 @@ public:
 
   // tell compiler not to worry about loss of precision, we explicitly check
   // with assert statements
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-
   template <typename T>
-  explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<BaseType>(n) << static_cast<BaseType>(fractional_bits))
+  explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
   }
 
-  FixedPoint(float n) : data_(static_cast<BaseType>(n * one)) {
+  template <typename T>
+  explicit FixedPoint(T n, meta::IfIsFloat <T> * = nullptr) : data_(static_cast<Type>(n * one))
+  {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
     assert(details::CheckNoRounding(n, fractional_bits, total_bits));
-  }
-  FixedPoint(double n) : data_(static_cast<BaseType>(n * one))  {
-    assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits, total_bits));
-  }
-  FixedPoint(const FixedPoint &o) : data_(o.data_) {
   }
 
-  #pragma GCC diagnostic pop
+  FixedPoint(const FixedPoint &o) : data_(o.data_) {
+  }
 
   /////////////////
   /// operators ///
@@ -307,6 +308,13 @@ public:
   //////////////////////
   /// math operators ///
   //////////////////////
+
+  // casting operators
+  operator double()
+  {
+
+  }
+
 
 
   FixedPoint operator+(const FixedPoint &n) const
@@ -404,7 +412,7 @@ public:
     return static_cast<double>(data_) / FixedPoint::one;
   }
 
-  BaseType ToRaw() const
+  Type ToRaw() const
   {
     return data_;
   }
@@ -426,11 +434,11 @@ private:
   // use "FixedPoint::from_base" in order to perform this.
   struct NoScale {};
 
-  FixedPoint(BaseType n, const NoScale &) : data_(n) {
+  FixedPoint(Type n, const NoScale &) : data_(n) {
   }
 
 public:
-  static FixedPoint FromBase(BaseType n) {
+  static FixedPoint FromBase(Type n) {
     return FixedPoint(n, NoScale());
   }
 
