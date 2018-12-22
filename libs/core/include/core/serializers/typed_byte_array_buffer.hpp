@@ -22,6 +22,7 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/exception.hpp"
+#include "core/serializers/pointer_types.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
 #include <type_traits>

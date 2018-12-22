@@ -46,7 +46,16 @@ void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
   // dispatch the transaction to the storage engine
-  storage_.AddTransaction(tx);
+  try
+  {
+    storage_.AddTransaction(tx);
+  }
+  catch (std::runtime_error &e)
+  {
+    // TODO(unknown): We need to think about how we handle failures of that class.
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
+    return;
+  }
 
   FETCH_METRIC_TX_STORED(tx.digest());
 
@@ -63,7 +72,16 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
 #endif  // FETCH_ENABLE_METRICS
 
   // dispatch all the transactions to the storage engine
-  storage_.AddTransactions(txs);
+  try
+  {
+    storage_.AddTransactions(txs);
+  }
+  catch (std::runtime_error &e)
+  {
+    // TODO(unknown): We need to think about how we handle failures of that class.
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
+    return;
+  }
 
 #ifdef FETCH_ENABLE_METRICS
   auto const stored = metrics::Metrics::Clock::now();

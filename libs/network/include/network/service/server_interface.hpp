@@ -19,6 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "network/message.hpp"
+#include "network/service/call_context.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/promise.hpp"
@@ -79,7 +80,8 @@ protected:
     return DeliverResponse(connection, message.data());
   }
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg)
+  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
+                           CallContext const *context = nullptr)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -94,7 +96,7 @@ protected:
     switch (type)
     {
     case SERVICE_FUNCTION_CALL:
-      success = HandleRPCCallRequest(client, params);
+      success = HandleRPCCallRequest(client, params, context);
       break;
     case SERVICE_SUBSCRIBE:
       success = HandleSubscribeRequest(client, params);
@@ -110,7 +112,8 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params)
+  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
+                            CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
     bool            ret = true;
@@ -123,7 +126,7 @@ protected:
       params >> id;
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
-      ExecuteCall(result, client, params);
+      ExecuteCall(result, client, params, context);
     }
     catch (serializers::SerializableException const &e)
     {
@@ -215,7 +218,7 @@ protected:
 
 private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
-                   serializer_type params)
+                   serializer_type params, CallContext const *context = 0)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -246,11 +249,22 @@ private:
     // If we need to add client id to function arguments
     try
     {
+
+      CallableArgumentList extra_args;
+
       if (function->meta_data() & Callable::CLIENT_ID_ARG)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding connection_handle ID meta data to ", identifier);
-        CallableArgumentList extra_args;
         extra_args.PushArgument(&connection_handle);
+      }
+      if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
+        extra_args.PushArgument(&context);
+      }
+
+      if (!extra_args.empty())
+      {
         (*function)(result, extra_args, params);
       }
       else
@@ -272,6 +286,9 @@ private:
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what(), " - ",
                       identifier);
+
+      std::string new_explanation = ex.what() + std::string(") (Identification: ") + identifier;
+      throw serializers::SerializableException(0, new_explanation);
     }
   }
 

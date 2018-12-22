@@ -103,7 +103,19 @@ def postprocess(lines):
     empties = []
     in_long = None 
 
+    format_off = False
+
     for line in lines:
+        if format_off:
+            if line in ('// clang-format on', '/* clang-format on */'):
+                format_off = False
+            else:
+                yield line
+                continue
+        elif line in ('// clang-format off', '/* clang-format off */'):
+            format_off = True
+            yield line
+            continue
         if is_empty.match(line):
             empties.append(line)
         else:

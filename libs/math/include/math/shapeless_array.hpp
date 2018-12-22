@@ -52,7 +52,7 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
 }  // namespace details
 
 template <typename T, typename C = memory::SharedArray<T>>
-class ShapeLessArray
+class ShapelessArray
 {
 public:
   using Type                          = T;
@@ -61,7 +61,7 @@ public:
   using vector_slice_type             = typename container_type::vector_slice_type;
   using vector_register_type          = typename container_type::vector_register_type;
   using vector_register_iterator_type = typename container_type::vector_register_iterator_type;
-  using self_type                     = ShapeLessArray<T, C>;
+  using self_type                     = ShapelessArray<T, C>;
 
   /* Iterators for accessing and modifying the array */
   using iterator         = typename container_type::iterator;
@@ -79,24 +79,24 @@ public:
   template <typename Type, typename ReturnType = void>
   using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value, ReturnType>::type;
 
-  static constexpr char const *LOGGING_NAME = "ShapeLessArray";
+  static constexpr char const *LOGGING_NAME = "ShapelessArray";
 
   /* Contructs an empty shape-less array. */
-  explicit ShapeLessArray(std::size_t const &n)
+  explicit ShapelessArray(std::size_t const &n)
     : data_(n)
     , size_(n)
   {}
 
-  ShapeLessArray()
+  ShapelessArray()
     : data_()
     , size_(0)
   {}
 
-  ShapeLessArray(ShapeLessArray &&other)      = default;
-  ShapeLessArray(ShapeLessArray const &other) = default;
-  ShapeLessArray &operator=(ShapeLessArray const &other) = default;
-  ShapeLessArray &operator=(ShapeLessArray &&other) = default;
-  explicit ShapeLessArray(byte_array::ConstByteArray const &c)
+  ShapelessArray(ShapelessArray &&other)      = default;
+  ShapelessArray(ShapelessArray const &other) = default;
+  ShapelessArray &operator=(ShapelessArray const &other) = default;
+  ShapelessArray &operator=(ShapelessArray &&other) = default;
+  explicit ShapelessArray(byte_array::ConstByteArray const &c)
     : data_()
     , size_(0)
   {
@@ -141,7 +141,7 @@ public:
     }
   }
 
-  ~ShapeLessArray()
+  ~ShapelessArray()
   {}
 
   /* Set all elements to zero.
@@ -442,12 +442,12 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Unsigned>
-  static IsUnsignedLike<Unsigned, ShapeLessArray> Arange(Unsigned const &from, Unsigned const &to,
+  static IsUnsignedLike<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
                                                          Unsigned const &delta)
   {
     assert(delta != 0);
     assert(from < to);
-    ShapeLessArray ret;
+    ShapelessArray ret;
     details::ArangeImplementation(from, to, delta, ret);
     return ret;
   }
@@ -461,12 +461,12 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Signed>
-  static IsSignedLike<Signed, ShapeLessArray> Arange(Signed const &from, Signed const &to,
+  static IsSignedLike<Signed, ShapelessArray> Arange(Signed const &from, Signed const &to,
                                                      Signed const &delta)
   {
     assert(delta != 0);
     assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
-    ShapeLessArray ret;
+    ShapelessArray ret;
     details::ArangeImplementation(from, to, delta, ret);
     return ret;
   }
@@ -479,9 +479,9 @@ public:
    * @return a reference to this
    */
   template <typename DataType>
-  IsIntegralLike<DataType, ShapeLessArray> FillArange(DataType const &from, DataType const &to)
+  IsIntegralLike<DataType, ShapelessArray> FillArange(DataType const &from, DataType const &to)
   {
-    ShapeLessArray ret;
+    ShapelessArray ret;
 
     std::size_t N     = this->size();
     Type        d     = static_cast<Type>(from);
@@ -494,10 +494,10 @@ public:
     return *this;
   }
 
-  static ShapeLessArray UniformRandom(std::size_t const &N)
+  static ShapelessArray UniformRandom(std::size_t const &N)
   {
 
-    ShapeLessArray ret;
+    ShapelessArray ret;
     ret.LazyResize(N);
     ret.SetPaddedZero();
     ret.FillUniformRandom();
@@ -505,10 +505,10 @@ public:
     return ret;
   }
 
-  static ShapeLessArray UniformRandomIntegers(std::size_t const &N, int64_t const &min,
+  static ShapelessArray UniformRandomIntegers(std::size_t const &N, int64_t const &min,
                                               int64_t const &max)
   {
-    ShapeLessArray ret;
+    ShapelessArray ret;
     ret.LazyResize(N);
     ret.SetPaddedZero();
     ret.FillUniformRandomIntegers(min, max);
@@ -516,7 +516,7 @@ public:
     return ret;
   }
 
-  ShapeLessArray &FillUniformRandom()
+  ShapelessArray &FillUniformRandom()
   {
     for (std::size_t i = 0; i < this->size(); ++i)
     {
@@ -525,7 +525,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
+  ShapelessArray &FillUniformRandomIntegers(int64_t const &min, int64_t const &max)
   {
     assert(min <= max);
 
@@ -539,9 +539,9 @@ public:
     return *this;
   }
 
-  static ShapeLessArray Zeroes(std::size_t const &n)
+  static ShapelessArray Zeroes(std::size_t const &n)
   {
-    ShapeLessArray ret;
+    ShapelessArray ret;
     ret.Resize(n);
     ret.SetAllZero();
     return ret;
@@ -553,16 +553,16 @@ public:
    * @param shape : a vector representing the shape of the NDArray
    * @return NDArray with all ones
    */
-  static ShapeLessArray Ones(std::size_t const &n)
+  static ShapelessArray Ones(std::size_t const &n)
   {
-    ShapeLessArray ret;
+    ShapelessArray ret;
     ret.Resize(n);
     ret.SetAllOne();
     return ret;
   }
 
-  bool AllClose(ShapeLessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
-                bool ignoreNaN = true) const
+  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
+                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
     if (other.size() != N)
@@ -572,17 +572,17 @@ public:
     bool ret = true;
     for (std::size_t i = 0; ret && i < N; ++i)
     {
-      double va = this->At(i);
+      Type va = this->At(i);
       if (ignoreNaN && std::isnan(va))
       {
         continue;
       }
-      double vb = other[i];
+      Type vb = other[i];
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      double vA = (va - vb);
+      Type vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -595,7 +595,7 @@ public:
       {
         vb = -vb;
       }
-      double M = std::max(va, vb);
+      Type M = std::max(va, vb);
 
       ret &= (vA < std::max(atol, M * rtol));
     }
@@ -603,17 +603,17 @@ public:
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        double va = this->At(i);
+        Type va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        double vb = other[i];
+        Type vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        double vA = (va - vb);
+        Type vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -626,7 +626,7 @@ public:
         {
           vb = -vb;
         }
-        double M = std::max(va, vb);
+        Type M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
@@ -697,7 +697,7 @@ public:
 
   // TODO(TFR): deduce D from parent
   template <typename S, typename D = memory::SharedArray<S>>
-  void As(ShapeLessArray<S, D> &ret) const
+  void As(ShapelessArray<S, D> &ret) const
   {
     ret.LazyResize(size_);
     // TODO(TFR): Vectorize
@@ -757,7 +757,7 @@ public:
     return data_.padded_size();
   }
 
-  ShapeLessArray &InlineAdd(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineAdd(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
 
@@ -782,13 +782,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineAdd(ShapeLessArray const &other)
+  ShapelessArray &InlineAdd(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineAdd(other, range);
   }
 
-  ShapeLessArray &InlineAdd(Type const &scalar)
+  ShapelessArray &InlineAdd(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -799,7 +799,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineMultiply(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineMultiply(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
     if (range.is_undefined())
@@ -823,13 +823,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineMultiply(ShapeLessArray const &other)
+  ShapelessArray &InlineMultiply(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineMultiply(other, range);
   }
 
-  ShapeLessArray &InlineMultiply(Type const &scalar)
+  ShapelessArray &InlineMultiply(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -840,7 +840,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineSubtract(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineSubtract(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
 
@@ -865,13 +865,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineSubtract(ShapeLessArray const &other)
+  ShapelessArray &InlineSubtract(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineSubtract(other, range);
   }
 
-  ShapeLessArray &InlineReverseSubtract(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineReverseSubtract(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
 
@@ -896,13 +896,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineReverseSubtract(ShapeLessArray const &other)
+  ShapelessArray &InlineReverseSubtract(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineReverseSubtract(other, range);
   }
 
-  ShapeLessArray &InlineSubtract(Type const &scalar)
+  ShapelessArray &InlineSubtract(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -913,7 +913,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineDivide(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineDivide(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
 
@@ -938,13 +938,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineDivide(ShapeLessArray const &other)
+  ShapelessArray &InlineDivide(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineDivide(other, range);
   }
 
-  ShapeLessArray &InlineDivide(Type const &scalar)
+  ShapelessArray &InlineDivide(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -955,7 +955,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineReverseSubtract(Type const &scalar)
+  ShapelessArray &InlineReverseSubtract(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -966,7 +966,7 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineReverseDivide(ShapeLessArray const &other, memory::Range const &range)
+  ShapelessArray &InlineReverseDivide(ShapelessArray const &other, memory::Range const &range)
   {
     assert(other.size() == this->size());
 
@@ -991,13 +991,13 @@ public:
     return *this;
   }
 
-  ShapeLessArray &InlineReverseDivide(ShapeLessArray const &other)
+  ShapelessArray &InlineReverseDivide(ShapelessArray const &other)
   {
     memory::Range range{0, other.data().size(), 1};
     return InlineReverseDivide(other, range);
   }
 
-  ShapeLessArray &InlineReverseDivide(Type const &scalar)
+  ShapelessArray &InlineReverseDivide(Type const &scalar)
   {
     vector_register_type val(scalar);
 
@@ -1018,7 +1018,7 @@ public:
    * @param other  the array which this instance is compared against
    * @return
    */
-  bool operator==(ShapeLessArray const &other) const
+  bool operator==(ShapelessArray const &other) const
   {
     if (size() != other.size())
     {
@@ -1040,7 +1040,7 @@ public:
    * @param other the array which this instance is compared against
    * @return
    */
-  bool operator!=(ShapeLessArray const &other) const
+  bool operator!=(ShapelessArray const &other) const
   {
     return !(this->operator==(other));
   }
@@ -1052,9 +1052,48 @@ public:
    * @return
    */
   template <typename OtherType>
-  ShapeLessArray operator+(OtherType const &other)
+  ShapelessArray operator+(OtherType const &other)
   {
     fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator-(OtherType const &other)
+  {
+    fetch::math::Subtract(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * * operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator*(OtherType const &other)
+  {
+    fetch::math::Multiply(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * / operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator/(OtherType const &other)
+  {
+    fetch::math::Divide(*this, other, *this);
     return *this;
   }
 

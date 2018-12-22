@@ -22,6 +22,9 @@
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
+
+// clang-format off
+// NOLINTNEXTLINE
 #define APPLY_OPERATOR_LIST(FUNCTION) \
   FUNCTION(*)                         \
   FUNCTION(/)                         \
@@ -29,7 +32,8 @@
   FUNCTION(-)                         \
   FUNCTION(&)                         \
   FUNCTION(|)                         \
-  FUNCTION(^)
+  FUNCTION (^)
+// clang-format on
 
 namespace fetch {
 namespace vectorize {

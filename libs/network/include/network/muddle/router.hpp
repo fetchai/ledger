@@ -22,6 +22,7 @@
 #include "network/details/thread_pool.hpp"
 #include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/muddle/blacklist.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
@@ -53,6 +54,7 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
+  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
   using BlackTime     = generics::Blackset2<Handle, Address, void>::Timepoint;
 
   struct RoutingData
@@ -66,11 +68,17 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRouter";
 
   // Construction / Destruction
-  Router(Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
 
+  NetworkId network_id() const override
+  {
+    return network_id_;
+  }
+
+  // Start / Stop
   void Start();
   void Stop();
 
@@ -101,12 +109,46 @@ public:
   RoutingTable GetRoutingTable() const;
   /// @}
 
+  bool HandleToDirectAddress(const Handle &handle, Address &address) const;
+
+  /** If this host is connected close their port.
+   * @param peer The target address to killed.
+   */
+  void DropPeer(Address const &peer);
+
   void Cleanup();
 
+  /** Show debugging information about the internals of the router.
+   * @param prefix the string to put on the front of the logging lines.
+   */
+  void Debug(std::string const &prefix);
+
+  /** Deny this host's connection attempts and do not attempt to connect to it.
+   * @param address The target address to be denied.
+   */
   Router &Blacklist(Address address);
+
+  /** Temporarily blacklist an address
+   * @param until Timstamp this denial is no more effective past.
+   * @param address The target address to be denied.
+   */
   Router &Quarantine(BlackTime until, Address address);
-  bool IsBlacklisted(Address const &address) const;
-  Router &Whitelist(Address const &address);
+
+  /** Allow this host to be connected to and to connect to us.
+   * @param target The target address to be allowed.
+   */
+  Router &Whitelist(Address const &target);
+
+  /** Return true if connections from this target address will be rejected.
+   * @param target The target address's status to interrogate.
+   */
+  bool IsBlacklisted(Address const &target) const;
+
+  /** Return true if there is an actual TCP connection to this address at the moment.
+   * @param target The target address's status to interrogate.
+   */
+  bool IsConnected(Address const &target) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -119,6 +161,8 @@ private:
   using BlackOuts  = generics::Blackset2<Handle, Address>;
   using ByteArrayBuffer        = serializers::ByteArrayBuffer;
 
+  static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 10;
+
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
   Handle LookupHandle(Packet::RawAddress const &address) const;
@@ -127,8 +171,9 @@ private:
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
+  void KillConnection(Handle handle);
 
-  void DispatchPacket(PacketPtr packet);
+  void DispatchPacket(PacketPtr packet, Address transmitter);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
@@ -140,6 +185,7 @@ private:
   MuddleRegister const &register_;
   Dispatcher &          dispatcher_;
   SubscriptionRegistrar registrar_;
+  NetworkId             network_id_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   ///< Addresses to handles map (protected by routing_table_lock_)
@@ -151,8 +197,13 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+  ///< Blacklisted inputs (protected by routing_table_lock_)
   BlackIns black_ins_;
+  ///< Blacklisted outputs (protected by routing_table_lock_)
   BlackOuts black_outs_;
+
+  HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address
+  ///< (Protected by routing_table_lock)
 };
 
 }  // namespace muddle

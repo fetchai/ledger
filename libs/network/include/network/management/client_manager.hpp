@@ -115,7 +115,15 @@ public:
   void PushRequest(connection_handle_type client, message_type const &msg)
   {
     LOG_STACK_TRACE_POINT;
-    server_.PushRequest(client, msg);
+    try
+    {
+      server_.PushRequest(client, msg);
+    }
+    catch (std::exception &ex)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", client, " error: ", ex.what());
+      throw;
+    }
   }
 
   std::string GetAddress(connection_handle_type client)
