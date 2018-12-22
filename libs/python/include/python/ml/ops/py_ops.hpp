@@ -57,8 +57,8 @@ inline void BuildOps(std::string const &custom_name, pybind11::module &module)
 
   //  .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < double >> )
   //      .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < float >> )
-  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapeLessArray < double >> )
-  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapeLessArray < float >> );
+  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray < double >> )
+  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray < float >> );
 }
 
 }  // namespace ops

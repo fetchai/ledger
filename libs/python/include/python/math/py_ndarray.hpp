@@ -34,7 +34,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
   namespace py = pybind11;
   //             .def("Relu",
-  py::class_<NDArray<T>, fetch::math::ShapeLessArray<T>>(module, custom_name.c_str())
+  py::class_<NDArray<T>, fetch::math::ShapelessArray<T>>(module, custom_name.c_str())
       .def(py::init<>())
       .def(py::init<std::size_t const &>())
       .def(py::init<std::vector<std::size_t> const &>())
