@@ -280,8 +280,6 @@ public:
 
   FixedPoint() : data_(0) {}  // initialise to zero
 
-  // tell compiler not to worry about loss of precision, we explicitly check
-  // with assert statements
   template <typename T>
   explicit FixedPoint(T n, meta::IfIsInteger <T> * = nullptr) : data_(static_cast<Type>(n) << static_cast<Type>(fractional_bits))
   {
@@ -356,17 +354,39 @@ public:
     return *this;
   }
 
+//  operator sizeof() const
+//  {
+//    return total_bits;
+//  }
+
+  /////////////////////////
+  /// casting operators ///
+  /////////////////////////
+
+  // TODO(implement casting operators
+
+  operator double() const
+  {
+    return (static_cast<double>(data_) / one);
+  }
+
+  operator int() const {
+    return (data_ & integer_mask) >> fractional_bits;
+  }
+
+  operator float() const
+  {
+    return (static_cast<float>(data_) / one);
+  }
+
+//  // casting operators
+//  operator uint32_t () const {
+//    return (data_ & integer_mask) >> fractional_bits;
+//  }
+
   //////////////////////
   /// math operators ///
   //////////////////////
-
-  // casting operators
-  operator double()
-  {
-
-  }
-
-
 
   FixedPoint operator+(const FixedPoint &n) const
   {
@@ -384,7 +404,27 @@ public:
     return FixedPoint(data_ - n.data_);
   }
 
-  FixedPoint& operator+=(const FixedPoint &n)
+  template <typename T>
+  FixedPoint operator-(const T &n) const
+  {
+    return FixedPoint(T(data_) - n);
+  }
+
+  FixedPoint operator*(const FixedPoint &n) const
+  {
+    return FixedPoint(data_ * n.data_);
+  }
+
+  template <typename T>
+  FixedPoint operator*(const T &n) const
+  {
+    return FixedPoint(T(data_) * n);
+  }
+
+
+
+
+    FixedPoint& operator+=(const FixedPoint &n)
   {
     data_ += n.data_;
     return *this;
@@ -437,35 +477,6 @@ public:
   {
     data_ <<= n.to_int();
     return *this;
-  }
-
-  /////////////////////////////////
-  /// conversion to basic types ///
-  /////////////////////////////////
-
-  int ToInt() const
-  {
-    return (data_ & integer_mask) >> fractional_bits;
-  }
-
-  unsigned int ToUint() const
-  {
-    return (data_ & integer_mask) >> fractional_bits;
-  }
-
-  float ToFloat() const
-  {
-    return static_cast<float>(data_) / FixedPoint::one;
-  }
-
-  double ToDouble() const
-  {
-    return static_cast<double>(data_) / FixedPoint::one;
-  }
-
-  Type ToRaw() const
-  {
-    return data_;
   }
 
 

@@ -627,7 +627,7 @@ public:
           vb = -vb;
         }
         double M = std::max(va, vb);
-        std::cout << this->At(i) << " " << other[i] << " "
+        std::cout << static_cast<double>(this->At(i)) << " " << static_cast<double>(other[i]) << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
     }

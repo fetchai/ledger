@@ -29,16 +29,16 @@
 using namespace fetch::math;
 
 /// template for producing a random array of FixedPoints
-template<typename T>
-fetch::meta::IfIsFixedPoint<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+template<std::size_t I, std::size_t F>
+ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>> RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
+  ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>  a1(n);
 
-  T rn{0};
+  fetch::fixed_point::FixedPoint<I, F> rn{0};
   for (std::size_t i = 0; i < n; ++i)
   {
-    rn       = T(gen.AsDouble());
+    rn       = fetch::fixed_point::FixedPoint<I, F>(gen.AsDouble());
     a1.At(i) = rn + adj;
   }
   return a1;
@@ -91,11 +91,7 @@ void equal_test()
   ShapelessArray<T> test_array   = RandomArray(n, T(0));
   ShapelessArray<T> result_array = test_array;
 
-  for (std::size_t j = 0; j < result_array.size(); ++j)
-  {
-    ASSERT_TRUE(test_array.At(j) == result_array.At(j));
-  }
-//  ASSERT_TRUE(result_array.AllClose(test_array));
+  ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
 
@@ -141,11 +137,7 @@ void copy_test()
   ShapelessArray<T> result_array(n);
   result_array.Copy(test_array);
 
-  for (std::size_t j = 0; j < result_array.size(); ++j)
-  {
-    ASSERT_TRUE(test_array.At(j) == result_array.At(j));
-  }
-//  ASSERT_TRUE(result_array.AllClose(test_array));
+  ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
 TEST(ndarray, int_copy_test)
@@ -186,9 +178,10 @@ void plus_test()
     result_array[j] = test_array[j] + test_array_2[j];
   }
 
+  // TODO - implement sse for fixed point in order to permit ordinary array operations with fixed point
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
-    ASSERT_TRUE((test_array.At(j) + test_array_2.At(j))== result_array.At(j));
+    ASSERT_TRUE(result_array.At(j) == test_array[j] + test_array_2[j]);
   }
 //  ASSERT_TRUE(result_array.AllClose(test_array + test_array_2));
 }
@@ -231,11 +224,13 @@ void sub_test()
     result_array[j] = test_array[j] - test_array_2[j];
   }
 
+  // TODO - implement sse for fixed point in order to permit ordinary array operations with fixed point
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
-    ASSERT_TRUE((test_array.At(j) - test_array_2.At(j))== result_array.At(j));
+    ASSERT_TRUE(result_array.At(j) == test_array[j] - test_array_2[j]);
   }
 //  ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
+
 }
 
 TEST(ndarray, integer_sub_test)
@@ -273,9 +268,15 @@ void mult_test()
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
-    result_array[j] = test_array[j] * test_array_2[j];
+    result_array[j] = test_array.At(j) * test_array_2.At(j);
   }
-  ASSERT_TRUE(result_array.AllClose(test_array * test_array_2));
+
+  // TODO - implement sse for fixed point in order to permit ordinary array operations with fixed point
+  for (std::size_t j = 0; j < result_array.size(); ++j)
+  {
+    ASSERT_TRUE(result_array.At(j) == test_array[j] * test_array_2[j]);
+  }
+//  ASSERT_TRUE(result_array.AllClose(test_array * test_array_2));
 }
 
 TEST(ndarray, integer_mult_test)
@@ -293,6 +294,10 @@ TEST(ndarray, float_mult_test)
 TEST(ndarray, double_mult_test)
 {
   mult_test<double>();
+}
+TEST(ndarray, fixed_mult_test_32)
+{
+   mult_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
 
 //////////////////
