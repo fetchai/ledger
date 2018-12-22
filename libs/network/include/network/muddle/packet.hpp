@@ -221,11 +221,7 @@ inline Packet::Address const &Packet::GetTarget() const
 {
   if (target_.size() == 0)
   {
-    byte_array::ByteArray target;
-    target.Resize(std::size_t{ADDRESS_SIZE});
-    std::memcpy(target.pointer(), header_.target.data(), ADDRESS_SIZE);
-
-    target_ = target;
+    target_ = byte_array::ByteArray(header_.target);
   }
 
   return target_;
@@ -235,11 +231,7 @@ inline Packet::Address const &Packet::GetSender() const
 {
   if (sender_.size() == 0)
   {
-    byte_array::ByteArray sender;
-    sender.Resize(std::size_t{ADDRESS_SIZE});
-    std::memcpy(sender.pointer(), header_.sender.data(), ADDRESS_SIZE);
-
-    sender_ = sender;
+    sender_ = byte_array::ByteArray(header_.sender);
   }
 
   return sender_;

@@ -31,6 +31,8 @@
 #include <random>
 #include <sstream>
 #include <utility>
+#include <cstring>
+#include <ctime>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
@@ -75,18 +77,7 @@ std::size_t GenerateEchoId(Packet const &packet)
  */
 bool CompareAddress(uint8_t const *a, uint8_t const *b)
 {
-  bool equal = true;
-
-  for (std::size_t i = 0; i < Packet::ADDRESS_SIZE; ++i)
-  {
-    if (a[i] != b[i])
-    {
-      equal = false;
-      break;
-    }
-  }
-
-  return equal;
+  return std::memcmp(a, b, Packet::ADDRESS_SIZE) == 0;
 }
 
 /**
@@ -202,12 +193,12 @@ std::string DescribePacket(Packet const &packet)
  * @param reg The connection register
  */
 Router::Router(Router::Address address, MuddleRegister const &reg, Dispatcher &dispatcher)
-  : Blackset(routing_table_lock_)
-  , address_(std::move(address))
+  : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
   , dispatch_thread_pool_(network::MakeThreadPool(10))
+  , black_outs_(routing_table_lock_)
 {}
 
 /**
@@ -446,10 +437,6 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     FETCH_LOCK(routing_table_lock_);
 
-    if (Blacklisted(handle))
-    {
-      return false;
-    }
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
 
@@ -587,6 +574,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
 /**
  * Attempt to route the packet to the require address(es)
  *
+ * @param handle The handle to the network connection
  * @param packet The packet to be routed
  * @param external Flag to signal that this packet originated from the network
  */
@@ -640,6 +628,11 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     Handle handle = LookupHandle(packet->GetTargetRaw());
     if (handle)
     {
+      // if this receiver currently has us blacklisted
+      if(black_outs_.IsBlacklisted(handle, packet->GetTarget())) {
+    	FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+    	return;
+      }
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       return;
@@ -651,6 +644,10 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (handle)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
+      if(black_outs_.IsBlacklisted2(packet->GetTarget())) {
+    	FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+    	return;
+      }
       SendToConnection(handle, packet);
     }
   }
@@ -666,24 +663,62 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
 
-  if (IsBlacklisted(handle))
+  if (Disallowed(handle, packet))
   {
     return;
   }
 
-  if (SERVICE_MUDDLE == packet->GetService())
+  if (packet->GetService() == SERVICE_MUDDLE)
   {
-    if (CHANNEL_ROUTING == packet->GetProtocol())
-    {
-      // make the association with
-      AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+	  switch(packet->GetProtocol()) {
+		  case CHANNEL_ROUTING:
+			  // make the association with
+			  AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
-      // send back a direct response if that is required
-      if (packet->IsExchange())
-      {
-        SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
-      }
-    }
+			  // send back a direct response if that is required
+			  if (packet->IsExchange())
+			  {
+				  SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+			  }
+			  break;
+		  case CHANNEL_MAINTENANCE:
+			  {
+				  Payload const &payload(packet->GetPayload());
+				  Address const &address(packet->GetSender());
+				  if(payload.size() < sizeof(MaintTag)) {
+					  FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to even contain a type");
+					  return;
+				  }
+				  using byte_array::FromConstByteArray;
+				  auto tag = FromConstByteArray<MaintTag>(payload);
+				  switch(tag) {
+					  case MAINT_DISCONNECT: 
+						  FETCH_LOG_DEBUG(LOGGING_NAME, "Closing connection");
+						  RemoveConnection(handle);
+						  break;
+					  case MAINT_HOLD_BACK:
+						  if(payload.size() < sizeof(MaintTag) + sizeof(std::time_t)) {
+							  FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to contain a timestamp");
+							  return;
+						  }
+						  FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted temporarily on the remote");
+						  black_outs_.Quarantine(
+							  BlackOuts::Clock::from_time_t(
+								  FromConstByteArray<std::time_t>(payload, sizeof(tag)))
+							  , handle, address);
+						  break;
+					  case MAINT_MUTE:
+						  FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted on the remote");
+						  black_outs_.Blacklist(handle, address);
+						  break;
+					  case MAINT_UNMUTE:
+						  FETCH_LOG_DEBUG(LOGGING_NAME, "Whitelisted on the remote");
+						  black_outs_.Whitelist(handle, address);
+						  break;
+				  }
+			  }
+			  break;
+	  }
   }
 }
 
@@ -694,6 +729,11 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet)
 {
+  if (black_ins_.IsBlacklisted2(packet->GetSender()))
+  {
+    return;
+  }
+
   dispatch_thread_pool_->Post([this, packet]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
@@ -775,6 +815,104 @@ void Router::CleanEchoCache()
       ++it;
     }
   }
+}
+
+
+/**
+ * Permanently blacklist an address.
+ * No packets from it are dispatched until it is Whitelist()ed, or current session has ended.
+ *
+ * @param address The address to be blacklisted
+ * @return This.
+ */
+Router &Router::Blacklist(Address address)
+{
+    static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_MUTE)};
+    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+
+    FETCH_LOCK(routing_table_lock_);
+    auto address_it = routing_table_.find(ConvertAddress(address));
+    if (address_it != routing_table_.end())
+    {
+	    black_ins_.Blacklist(address_it->second.handle, std::move(address));
+    }
+    else black_ins_.Blacklist2(std::move(address));
+    return *this;
+}
+
+/**
+ * Temporarily blacklist an address.
+ * No packets will be dispatched from it until it is Whitelist()ed, or current session has ended,
+ * or its time has been served.
+ *
+ * @param until The timepoint this quarantine lasts until
+ * @param address The address to be blacklisted
+ * @return This.
+ */
+Router &Router::Quarantine(BlackTime until, Address address)
+{
+    {
+	    ByteArrayBuffer signal(sizeof(MAINT_HOLD_BACK) + sizeof(std::time_t));
+
+	    signal << MAINT_HOLD_BACK << BlackIns::Clock::to_time_t(until);
+	    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal.data());
+    }
+
+    FETCH_LOCK(routing_table_lock_);
+    auto address_it = routing_table_.find(ConvertAddress(address));
+    if (address_it != routing_table_.end())
+    {
+	    black_ins_.Quarantine(std::move(until), address_it->second.handle, std::move(address));
+    }
+    else black_ins_.Quarantine2(std::move(until), std::move(address));
+    return *this;
+}
+
+/**
+ * Check if this address is (possibly temporarily) blacklisted.
+ *
+ * @param address The address to be checked
+ * @return True iff it the address has been blacklisted or quarantined
+ */
+bool Router::IsBlacklisted(Address const &address) const {
+	FETCH_LOCK(routing_table_lock_);
+	return black_ins_.IsBlacklisted2(address);
+}
+
+/**
+ * Whitelist an address. It is henceforth dispatched normally.
+ *
+ * @param address The address to be whitelisted
+ * @return This.
+ */
+Router &Router::Whitelist(Address const &address)
+{
+    static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_UNMUTE)};
+    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+
+    FETCH_LOCK(routing_table_lock_);
+    auto address_it = routing_table_.find(ConvertAddress(address));
+    if (address_it != routing_table_.end())
+    {
+	    black_ins_.Whitelist(address_it->second.handle, address);
+    }
+    black_ins_.Whitelist2(address);
+    return *this;
+}
+
+/**
+ * Check if this handle has been blacklisted,
+ * or this packet is received from a blacklisted address.
+ *
+ * @param handle The handle that packet was received from
+ * @param packet The packet received through that handle
+ * @return This.
+ */
+bool Router::Disallowed(Handle handle, PacketPtr const &packet) const
+{
+	FETCH_LOCK(routing_table_lock_);
+
+	return black_outs_.IsBlacklisted(handle, packet->GetSender());
 }
 
 }  // namespace muddle

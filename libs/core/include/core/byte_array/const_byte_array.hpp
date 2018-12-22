@@ -24,7 +24,7 @@
 #include <cassert>
 #include <iostream>
 #include <ostream>
-#include <string.h>
+#include <cstring>
 #include <type_traits>
 
 namespace fetch {
@@ -53,7 +53,7 @@ public:
 
   ConstByteArray() = default;
 
-  explicit ConstByteArray(std::size_t const &n)
+  explicit ConstByteArray(std::size_t n)
   {
     Resize(n);
   }
@@ -62,7 +62,7 @@ public:
     : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str ? std::strlen(str) : 0}
   {}
 
-  ConstByteArray(container_type const *const data, std::size_t const &size)
+  ConstByteArray(container_type const *const data, std::size_t size)
   {
     if (size > 0)
     {
@@ -77,11 +77,15 @@ public:
   {
     Resize(l.size());
     std::size_t i = 0;
-    for (auto &a : l)
+    for (auto a : l)
     {
       data_[i++] = a;
     }
   }
+
+  template<std::size_t n> ConstByteArray(std::array<container_type, n> const &a)
+	  : ConstByteArray(a.data(), n)
+  {}
 
   ConstByteArray(std::string const &s)
     : ConstByteArray(s.c_str())
@@ -90,7 +94,7 @@ public:
   ConstByteArray(self_type &&other)      = default;
   // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
-  ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
+  ConstByteArray(self_type const &other, std::size_t start, std::size_t length)
     : data_(other.data_)
     , start_(start)
     , length_(length)
@@ -107,15 +111,15 @@ public:
     return ConstByteArray{pointer(), size()};
   }
 
-  void WriteBytes(container_type const *const src, std::size_t const &src_size,
-                  std::size_t const &dest_offset = 0)
+  void WriteBytes(container_type const *const src, std::size_t src_size,
+                  std::size_t dest_offset = 0)
   {
     assert(dest_offset + src_size <= size());
     std::memcpy(pointer() + dest_offset, src, src_size);
   }
 
-  void ReadBytes(container_type *const dest, std::size_t const &dest_size,
-                 std::size_t const &src_offset = 0) const
+  void ReadBytes(container_type *const dest, std::size_t dest_size,
+                 std::size_t src_offset = 0) const
   {
     assert(src_offset + dest_size <= size());
     std::memcpy(dest, pointer() + src_offset, dest_size);
@@ -128,7 +132,7 @@ public:
     return {char_pointer(), length_};
   }
 
-  container_type const &operator[](std::size_t const &n) const
+  container_type const &operator[](std::size_t n) const
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -137,19 +141,9 @@ public:
   bool operator<(self_type const &other) const
   {
     std::size_t n = std::min(length_, other.length_);
-    std::size_t i = 0;
-    for (; i < n; ++i)
-    {
-      if (arr_pointer_[i] != other.arr_pointer_[i])
-      {
-        break;
-      }
-    }
-    if (i < n)
-    {
-      return arr_pointer_[i] < other.arr_pointer_[i];
-    }
-    return length_ < other.length_;
+    int retVal{std::memcmp(arr_pointer_, other.arr_pointer_, n)};
+
+    return retVal < 0 || (retVal == 0 && length_ < other.length_);
   }
 
   bool operator>(self_type const &other) const
@@ -159,16 +153,7 @@ public:
 
   bool operator==(self_type const &other) const
   {
-    if (other.size() != size())
-    {
-      return false;
-    }
-    bool ret = true;
-    for (std::size_t i = 0; i < length_; ++i)
-    {
-      ret &= (arr_pointer_[i] == other.arr_pointer_[i]);
-    }
-    return ret;
+    return length_ == other.length_ && std::memcmp(arr_pointer_, other.arr_pointer_, length_) == 0;
   }
 
   bool operator!=(self_type const &other) const
@@ -184,11 +169,11 @@ public:
   bool operator==(char const *str) const
   {
     std::size_t i = 0;
-    while ((str[i] != '\0') && (i < length_) && (str[i] == arr_pointer_[i]))
+    while ((i < length_) && (str[i] != '\0') && (str[i] == arr_pointer_[i]))
     {
       ++i;
     }
-    return (str[i] == '\0') && (i == length_);
+    return (i == length_) && (str[i] == '\0');
   }
 
   bool operator==(std::string const &s) const
@@ -201,6 +186,11 @@ public:
     return !(*this == str);
   }
 
+  bool operator!=(std::string const &s) const
+  {
+    return !(*this == s);
+  }
+
 public:
   self_type SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
   {
@@ -209,12 +199,8 @@ public:
 
   bool Match(self_type const &str, std::size_t pos = 0) const
   {
-    std::size_t p = 0;
-    while ((pos < length_) && (p < str.size()) && (str[p] == arr_pointer_[pos]))
-    {
-      ++pos, ++p;
-    }
-    return (p == str.size());
+    return length_ > pos && length_ - pos >= str.length_
+	    && std::memcmp(arr_pointer_ + pos, str.arr_pointer_, str.length_) == 0;
   }
 
   bool Match(container_type const *str, std::size_t pos = 0) const
@@ -227,17 +213,13 @@ public:
     return (str[p] == '\0');
   }
 
-  std::size_t Find(char const &c, std::size_t pos) const
+  std::size_t Find(char c, std::size_t pos) const
   {
-    while ((pos < length_) && (c != arr_pointer_[pos]))
-    {
-      ++pos;
+    if(pos < length_) {
+	    auto retVal{static_cast<container_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos))};
+	    if(retVal) return retVal - arr_pointer_;
     }
-    if (pos >= length_)
-    {
-      return NPOS;
-    }
-    return pos;
+    return NPOS;
   }
 
   std::size_t const &size() const
@@ -256,9 +238,7 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    self_type ret;
-    ret.Append(*this, other);
-    return ret;
+    return self_type{}.Append(*this, other);
   }
 
   int AsInt() const
@@ -281,7 +261,7 @@ public:
   }
 
   // Non-const functions go here
-  void FromByteArray(self_type const &other, std::size_t const &start, std::size_t length)
+  void FromByteArray(self_type const &other, std::size_t start, std::size_t length)
   {
     data_        = other.data_;
     start_       = other.start_ + start;
@@ -301,14 +281,14 @@ public:
 
 protected:
   template <typename RETURN_TYPE = self_type>
-  RETURN_TYPE SubArray(std::size_t const &start, std::size_t length = std::size_t(-1)) const
+  RETURN_TYPE SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const
   {
     length = std::min(length, length_ - start);
     assert(start + length <= start_ + length_);
     return RETURN_TYPE(*this, start + start_, length);
   }
 
-  container_type &operator[](std::size_t const &n)
+  container_type &operator[](std::size_t n)
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -334,7 +314,7 @@ protected:
    * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
-  void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
+  void Resize(std::size_t const n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
     std::size_t new_length{0};
@@ -470,18 +450,12 @@ private:
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
-  for (std::size_t i = 0; i < str.size(); ++i)
-  {
-    os << arr[i];
-  }
-  return os;
+  return os.write(arr, str.size());
 }
 
 inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
 {
-  ConstByteArray s(a);
-  s = s + b;
-  return s;
+  return ConstByteArray(a) + b;
 }
 
 ConstByteArray ToBase64(ConstByteArray const &str);
@@ -489,6 +463,24 @@ ConstByteArray ToBase64(ConstByteArray const &str);
 inline std::string ConstByteArray::ToBase64() const
 {
   return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
+}
+
+template<typename T> inline ConstByteArray ToConstByteArray(T const &t)
+{
+  static_assert(std::is_same<ConstByteArray::container_type, char>::value
+		|| std::is_same<ConstByteArray::container_type, unsigned char>::value,
+		"This library requires ConstByteArray::container_type to be implemented as char or unsigned char.");
+  return ConstByteArray(reinterpret_cast<ConstByteArray::container_type const *>(&t), sizeof(T));
+}
+
+template<typename T> inline T FromConstByteArray(ConstByteArray const &str, std::size_t offset = 0)
+{
+  static_assert(std::is_same<ConstByteArray::container_type, char>::value
+		|| std::is_same<ConstByteArray::container_type, unsigned char>::value,
+		"This library requires ConstByteArray::container_type to be implemented as char or unsigned char.");
+  T retVal;
+  str.ReadBytes(reinterpret_cast<ConstByteArray::container_type *>(&retVal), sizeof(T), offset);
+  return retVal;
 }
 
 }  // namespace byte_array

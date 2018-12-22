@@ -33,14 +33,17 @@ class SizeCounter
 public:
   using self_type = SizeCounter;
 
-  void Allocate(std::size_t const &delta)
+  constexpr SizeCounter() = default;
+  constexpr SizeCounter(std::size_t value) noexcept: size_{value}, reserved_size_{value} {}
+
+  void Allocate(std::size_t delta)
   {
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t const &   size,
-              ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true)
+  void Resize(std::size_t    size,
+              ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
+              bool const     zero_reserved_space = true)
   {
     FETCH_UNUSED(zero_reserved_space);
 
@@ -62,8 +65,8 @@ public:
     };
   }
 
-  void Reserve(std::size_t const &   size,
-               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
+  void Reserve(std::size_t    size,
+               ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
                bool const            zero_reserved_space = true)
   {
     (void)zero_reserved_space;
@@ -83,12 +86,12 @@ public:
     };
   }
 
-  void WriteBytes(uint8_t const *, std::size_t const &size)
+  void WriteBytes(uint8_t const *, std::size_t size)
   {
     pos_ += size;
   }
 
-  void SkipBytes(std::size_t const &size)
+  void SkipBytes(std::size_t size)
   {
     pos_ += size;
   }

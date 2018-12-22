@@ -82,7 +82,7 @@ SizeCounter<TypedByteArrayBuffer> &SizeCounter<TypedByteArrayBuffer>::operator<<
 }
 
 template <>
-inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t const &size)
+inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t size)
 {
   if (int64_t(size) > bytes_left())
   {
@@ -99,7 +99,7 @@ inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t const &siz
 
 template <>
 inline void TypedByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b,
-                                                std::size_t const &         size)
+                                                std::size_t          size)
 {
   if (int64_t(size) > bytes_left())
   {

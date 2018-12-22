@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -40,11 +41,10 @@ class Dispatcher;
 class MuddleRegister;
 
 /**
- * The router if the fundamental object of the muddle system an routes external and internal packets
- * to either a subscription or to another node on the network
+ * The router is the fundamental object of the muddle system.
+ * It routes external and internal packets to either a subscription or to another node on the network
  */
-class Router : public MuddleEndpoint,
-               public generics::Blackset<network::AbstractConnection::connection_handle_type>
+class Router : public MuddleEndpoint
 {
 public:
   using Address       = Packet::Address;  // == a crypto::Identity.identifier_
@@ -53,6 +53,7 @@ public:
   using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using ThreadPool    = network::ThreadPool;
+  using BlackTime     = generics::Blackset2<Handle, Address, void>::Timepoint;
 
   struct RoutingData
   {
@@ -102,6 +103,10 @@ public:
 
   void Cleanup();
 
+  Router &Blacklist(Address address);
+  Router &Quarantine(BlackTime until, Address address);
+  bool IsBlacklisted(Address const &address) const;
+  Router &Whitelist(Address const &address);
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -110,7 +115,9 @@ private:
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress = Packet::RawAddress;
   using HandleSet  = std::unordered_set<Handle>;
-  using Blackset   = generics::Blackset<Handle>;
+  using BlackIns   = generics::Blackset2<Handle, Address, void>;
+  using BlackOuts  = generics::Blackset2<Handle, Address>;
+  using ByteArrayBuffer        = serializers::ByteArrayBuffer;
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
@@ -125,6 +132,8 @@ private:
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
+
+  bool Disallowed(Handle handle, PacketPtr const &packet) const;
 
   Address const         address_;
   RawAddress const      address_raw_;
@@ -142,6 +151,8 @@ private:
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
+  BlackIns black_ins_;
+  BlackOuts black_outs_;
 };
 
 }  // namespace muddle

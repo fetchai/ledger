@@ -191,7 +191,7 @@ We use C++11, but currently consider C++17 to immature for usage.
 
 
 ## Namespaces and using namespaces
-Never pollute the any namespace using `using namespace std;`. Using
+Never pollute any namespace using `using namespace std;`. Using
 namespaces can be useful in limited scopes, such as within a
 funciton. Don't
 
