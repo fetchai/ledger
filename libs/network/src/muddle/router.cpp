@@ -27,12 +27,12 @@
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <cstring>
+#include <ctime>
 #include <memory>
 #include <random>
 #include <sstream>
 #include <utility>
-#include <cstring>
-#include <ctime>
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
@@ -713,9 +713,10 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (handle)
     {
       // if this receiver currently has us blacklisted
-      if(black_outs_.IsBlacklisted(handle, packet->GetTarget())) {
-    	FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
-    	return;
+      if (black_outs_.IsBlacklisted(handle, packet->GetTarget()))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+        return;
       }
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
@@ -728,9 +729,10 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (handle)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
-      if(black_outs_.IsBlacklisted2(packet->GetTarget())) {
-    	FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
-    	return;
+      if (black_outs_.IsBlacklisted2(packet->GetTarget()))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+        return;
       }
       SendToConnection(handle, packet);
     }
@@ -754,55 +756,58 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
 
   if (packet->GetService() == SERVICE_MUDDLE)
   {
-	  switch(packet->GetProtocol()) {
-		  case CHANNEL_ROUTING:
-			  // make the association with
-			  AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
+    switch (packet->GetProtocol())
+    {
+    case CHANNEL_ROUTING:
+      // make the association with
+      AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
 
-			  // send back a direct response if that is required
-			  if (packet->IsExchange())
-			  {
-				  SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
-			  }
-			  break;
-		  case CHANNEL_MAINTENANCE:
-			  {
-				  Payload const &payload(packet->GetPayload());
-				  Address const &address(packet->GetSender());
-				  if(payload.size() < sizeof(MaintTag)) {
-					  FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to even contain a type");
-					  return;
-				  }
-				  using byte_array::FromConstByteArray;
-				  auto tag = FromConstByteArray<MaintTag>(payload);
-				  switch(tag) {
-					  case MAINT_DISCONNECT: 
-						  FETCH_LOG_DEBUG(LOGGING_NAME, "Closing connection");
-						  RemoveConnection(handle);
-						  break;
-					  case MAINT_HOLD_BACK:
-						  if(payload.size() < sizeof(MaintTag) + sizeof(std::time_t)) {
-							  FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to contain a timestamp");
-							  return;
-						  }
-						  FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted temporarily on the remote");
-						  black_outs_.Quarantine(
-							  BlackOuts::Clock::from_time_t(
-								  FromConstByteArray<std::time_t>(payload, sizeof(tag)))
-							  , handle, address);
-						  break;
-					  case MAINT_MUTE:
-						  FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted on the remote");
-						  black_outs_.Blacklist(handle, address);
-						  break;
-					  case MAINT_UNMUTE:
-						  FETCH_LOG_DEBUG(LOGGING_NAME, "Whitelisted on the remote");
-						  black_outs_.Whitelist(handle, address);
-						  break;
-				  }
-			  }
-			  break;
-	  }
+      // send back a direct response if that is required
+      if (packet->IsExchange())
+      {
+        SendToConnection(handle, FormatDirect(address_, SERVICE_MUDDLE, CHANNEL_ROUTING));
+      }
+      break;
+    case CHANNEL_MAINTENANCE:
+    {
+      Payload const &payload(packet->GetPayload());
+      Address const &address(packet->GetSender());
+      if (payload.size() < sizeof(MaintTag))
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to even contain a type");
+        return;
+      }
+      using byte_array::FromConstByteArray;
+      auto tag = FromConstByteArray<MaintTag>(payload);
+      switch (tag)
+      {
+      case MAINT_DISCONNECT:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Closing connection");
+        RemoveConnection(handle);
+        break;
+      case MAINT_HOLD_BACK:
+        if (payload.size() < sizeof(MaintTag) + sizeof(std::time_t))
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME, "Payload is too short to contain a timestamp");
+          return;
+        }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted temporarily on the remote");
+        black_outs_.Quarantine(
+            BlackOuts::Clock::from_time_t(FromConstByteArray<std::time_t>(payload, sizeof(tag))),
+            handle, address);
+        break;
+      case MAINT_MUTE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted on the remote");
+        black_outs_.Blacklist(handle, address);
+        break;
+      case MAINT_UNMUTE:
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Whitelisted on the remote");
+        black_outs_.Whitelist(handle, address);
+        break;
+      }
+    }
+    break;
+    }
   }
 }
 
@@ -910,17 +915,20 @@ void Router::CleanEchoCache()
  */
 Router &Router::Blacklist(Address address)
 {
-    static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_MUTE)};
-    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+  static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_MUTE)};
+  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
 
-    FETCH_LOCK(routing_table_lock_);
-    auto address_it = routing_table_.find(ConvertAddress(address));
-    if (address_it != routing_table_.end())
-    {
-	    black_ins_.Blacklist(address_it->second.handle, std::move(address));
-    }
-    else black_ins_.Blacklist2(std::move(address));
-    return *this;
+  FETCH_LOCK(routing_table_lock_);
+  auto address_it = routing_table_.find(ConvertAddress(address));
+  if (address_it != routing_table_.end())
+  {
+    black_ins_.Blacklist(address_it->second.handle, std::move(address));
+  }
+  else
+  {
+    black_ins_.Blacklist2(std::move(address));
+  }
+  return *this;
 }
 
 /**
@@ -934,21 +942,24 @@ Router &Router::Blacklist(Address address)
  */
 Router &Router::Quarantine(BlackTime until, Address address)
 {
-    {
-	    ByteArrayBuffer signal(sizeof(MAINT_HOLD_BACK) + sizeof(std::time_t));
+  {
+    ByteArrayBuffer signal(sizeof(MAINT_HOLD_BACK) + sizeof(std::time_t));
 
-	    signal << MAINT_HOLD_BACK << BlackIns::Clock::to_time_t(until);
-	    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal.data());
-    }
+    signal << MAINT_HOLD_BACK << BlackIns::Clock::to_time_t(until);
+    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal.data());
+  }
 
-    FETCH_LOCK(routing_table_lock_);
-    auto address_it = routing_table_.find(ConvertAddress(address));
-    if (address_it != routing_table_.end())
-    {
-	    black_ins_.Quarantine(std::move(until), address_it->second.handle, std::move(address));
-    }
-    else black_ins_.Quarantine2(std::move(until), std::move(address));
-    return *this;
+  FETCH_LOCK(routing_table_lock_);
+  auto address_it = routing_table_.find(ConvertAddress(address));
+  if (address_it != routing_table_.end())
+  {
+    black_ins_.Quarantine(std::move(until), address_it->second.handle, std::move(address));
+  }
+  else
+  {
+    black_ins_.Quarantine2(std::move(until), std::move(address));
+  }
+  return *this;
 }
 
 /**
@@ -957,9 +968,10 @@ Router &Router::Quarantine(BlackTime until, Address address)
  * @param address The address to be checked
  * @return True iff it the address has been blacklisted or quarantined
  */
-bool Router::IsBlacklisted(Address const &address) const {
-	FETCH_LOCK(routing_table_lock_);
-	return black_ins_.IsBlacklisted2(address);
+bool Router::IsBlacklisted(Address const &address) const
+{
+  FETCH_LOCK(routing_table_lock_);
+  return black_ins_.IsBlacklisted2(address);
 }
 
 /**
@@ -970,17 +982,17 @@ bool Router::IsBlacklisted(Address const &address) const {
  */
 Router &Router::Whitelist(Address const &address)
 {
-    static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_UNMUTE)};
-    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+  static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_UNMUTE)};
+  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
 
-    FETCH_LOCK(routing_table_lock_);
-    auto address_it = routing_table_.find(ConvertAddress(address));
-    if (address_it != routing_table_.end())
-    {
-	    black_ins_.Whitelist(address_it->second.handle, address);
-    }
-    black_ins_.Whitelist2(address);
-    return *this;
+  FETCH_LOCK(routing_table_lock_);
+  auto address_it = routing_table_.find(ConvertAddress(address));
+  if (address_it != routing_table_.end())
+  {
+    black_ins_.Whitelist(address_it->second.handle, address);
+  }
+  black_ins_.Whitelist2(address);
+  return *this;
 }
 
 /**
@@ -993,9 +1005,9 @@ Router &Router::Whitelist(Address const &address)
  */
 bool Router::Disallowed(Handle handle, PacketPtr const &packet) const
 {
-	FETCH_LOCK(routing_table_lock_);
+  FETCH_LOCK(routing_table_lock_);
 
-	return black_outs_.IsBlacklisted(handle, packet->GetSender());
+  return black_outs_.IsBlacklisted(handle, packet->GetSender());
 }
 
 void Router::DropPeer(Address const &peer)
