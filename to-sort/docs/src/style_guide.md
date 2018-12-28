@@ -267,8 +267,8 @@ public:
 
   ~Transaction() = default;
 
-  Transaction operator(Transaction const&) = default;
-  Transaction operator(Transaction &&) = deleted;
+  Transaction operator=(Transaction const&) = default;
+  Transaction operator=(Transaction &&) = deleted;
 }
 ```
 In this way there will be no confusion about the intended behaviour of
@@ -322,10 +322,12 @@ public:
   MyClass() = default;
   
   MyClass(std::size_t n)
-  : size_(n) {
-    pointer_ = new int[n];
-    for(std::size_t i=0; i< n; ++i)
-      pointer_[i] = 0;    
+  : size_(n)
+  {
+    if (n)
+    {
+      pointer_ = new int[n]{};
+    }
   }
   // ...
 private:
@@ -335,8 +337,9 @@ private:
 ```
 In this code, the inline initialization ensures that the default
 constructor does not produce uninitialized memory. In the second
-constructor, we manually need to initialize the `pointer_` but `size_`
-can be set using the initialization list.
+constructor, we need to manually initialize the `pointer_`
+(here just a demo, could be done in the initialization list actually)
+but `size_` can be set using the initialization list.
 
 ## Usage of `nullptr`
 The new C++11 `nullptr` keyword designates an rvalue constant that
@@ -347,7 +350,7 @@ Furhter, the new nullptr is type safe.
 
 
 ## Resource handling
-This section describes how to manage resources which lifecycle needs to be strictly controlled, such as:
+This section describes how to manage resources whose lifecycle needs to be strictly controlled, such as:
   * thread synchronisation constructs (e.g. mutex),
   * memory,
   * filesystem objects,
@@ -363,11 +366,11 @@ The most important aspect of this strong bond is that the destructor is *automat
 Bellow are a few examples of how resources should be managed in the code:
 
 
-### Exception enabled environment and it's impact on the resource handling
+### Exception enabled environment and its impact on the resource handling
 
 The most important rule is that destructor **shall NOT** throw an exception at any circumstance.
   * The reason being that a destructor for a *directly* initialised object (lifecycle of which is controlled by a scope) will be called **automatically** when any exception is thrown in that scope.
-  * Where implication is that **IF** such destructor would throw yet another exception, it would force C++ runtime to call **std::terminate** of the process(by definition of C++ standard), since the C++ runtime is already in [stack unwinding](http://en.cppreference.com/w/cpp/language/throw) process caused by the first exception.
+  * Where implication is that **IF** such destructor threw yet another exception, it would force C++ runtime to call **std::terminate** of the process(by definition of C++ standard), since the C++ runtime is already in [stack unwinding](http://en.cppreference.com/w/cpp/language/throw) process caused by the first exception.
 
 Please see more about this scenario at [cppreference.com](http://en.cppreference.com/w/cpp/language/destructor#Exceptions) and at [codingstandard.com](http://www.codingstandard.com/rule/15-2-1-do-not-throw-an-exception-from-a-destructor/).
 
@@ -383,11 +386,11 @@ Please use locking guards provided in C++ `std` namespace, such as:
 
 #### The `std::unique_lock<...>`
 The `std::unique_lock` is **superset** of the `std::lock_guard` in terms of API and capabilities.
-It offers more flexibility, which allows to do following things:
-  * constructor of this class is able take on board lockable object (e.g. mutex) in any state (locked or unlocked), so `adopting` its pre-existing lock state,
+It provides a finer control over mutex state:
+  * if has more elaborate constructor overloads, for various situations and usecases,
   * it is able to lock & unlock lockable object when desired (as many times as necessary),
   * release control of the lockable object it controls,
-  * it's destructor unlocks the lockable object **if** it is in locked state.
+  * its destructor unlocks the lockable object **if** it is in locked state.
 
 > See the example bellow:
 
@@ -445,7 +448,7 @@ auto decrement_fnc() -> void
       }
       return false;
     });
-  //* The `wait(lock)` implicitly reacquire back (locks) the mutex after it handled
+  //* The `wait(lock)` implicitly reacquires back (locks) the mutex after it handled
   //* signalled condition.
 
   //* It is *not* necessary to explicitly call `lock.unlock()` since
@@ -479,7 +482,7 @@ Constructor of this class is able take on board lockable object (e.g. mutex) in 
 std::mutex(mtx);
 
 {
-  std::unique_lock<mutex> guard(mtx);
+  std::lock_guard<mutex> guard(mtx);
 
   //* Some code desired to be executed thread safe manner.
 
@@ -495,7 +498,7 @@ Please use smart pointers from `std::` namespace dedicated to memory management.
   * `std::unique_ptr<...>`.
 
 Please note, that *default* delete policy for these types is using **default** C++ delete operator for **single** object. However, API of these types offers possibility to provide custom deleter and allocator functors in order to manage non-default allocation/deallocation policy such as for managing **array** object type.
-> Speaking of which, please see bellow a fe suggested types which guarante to manage **array** object types (continuous block of memory) by default.
+> Speaking of which, please see bellow a few suggested types which guarantee to manage **array** object types (continuous block of memory) by default.
 
 Here we can also mention other types which do memory management as side effect of their primary business logic:
   * `std::vector<...>` - guarantees to manage continuous block of memory (array) by definition
@@ -510,7 +513,8 @@ Here we can also mention other types which do memory management as side effect o
     Second of all - if you mind look up at `First of all - ...` again, and then, and only then, if you still think it is really really necessary to do this for some obscure reason, then keep in mind that:
    * this is **non**-trivial operation,
    * that `shared_ptr` type has **NOT** been designed with mind to allow this,
-   * if you are still convinced to proceed, then [here](https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr) is some guide to do such a thing.
+   * if you are still convinced to proceed, then [here](https://stackoverflow.com/questions/15337461/move-ownership-from-stdshared-ptr-to-stdunique-ptr) is some guide to do such a thing<br/>
+    And finally check many times that this `shared_ptr` you're about to revoke ownership from is **the only** referrer to its object.
 
 > Example of how to use smart pointer with **shared** ownership:
 
@@ -546,7 +550,7 @@ Here we can also mention other types which do memory management as side effect o
 }
 ```
 
-> Example of how to use smart pointer with **exclusive** ownership:\
+> Example of how to use smart pointer with **exclusive** ownership:
 
 ```cpp
 #include <memory>

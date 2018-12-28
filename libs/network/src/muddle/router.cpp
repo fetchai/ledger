@@ -1007,7 +1007,7 @@ bool Router::Disallowed(Handle handle, PacketPtr const &packet) const
 {
   FETCH_LOCK(routing_table_lock_);
 
-  return black_outs_.IsBlacklisted(handle, packet->GetSender());
+  return black_ins_.IsBlacklisted(handle, packet->GetSender());
 }
 
 void Router::DropPeer(Address const &peer)

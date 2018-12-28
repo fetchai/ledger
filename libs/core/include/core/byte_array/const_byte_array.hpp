@@ -22,9 +22,9 @@
 #include "vectorise/memory/shared_array.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <ostream>
-#include <cstring>
 #include <type_traits>
 
 namespace fetch {
@@ -83,8 +83,9 @@ public:
     }
   }
 
-  template<std::size_t n> ConstByteArray(std::array<container_type, n> const &a)
-	  : ConstByteArray(a.data(), n)
+  template <std::size_t n>
+  ConstByteArray(std::array<container_type, n> const &a)
+    : ConstByteArray(a.data(), n)
   {}
 
   ConstByteArray(std::string const &s)
@@ -147,7 +148,7 @@ public:
   bool operator<(self_type const &other) const
   {
     std::size_t n = std::min(length_, other.length_);
-    int retVal{std::memcmp(arr_pointer_, other.arr_pointer_, n)};
+    int         retVal{std::memcmp(arr_pointer_, other.arr_pointer_, n)};
 
     return retVal < 0 || (retVal == 0 && length_ < other.length_);
   }
@@ -205,8 +206,8 @@ public:
 
   bool Match(self_type const &str, std::size_t pos = 0) const
   {
-    return length_ > pos && length_ - pos >= str.length_
-	    && std::memcmp(arr_pointer_ + pos, str.arr_pointer_, str.length_) == 0;
+    return length_ > pos && length_ - pos >= str.length_ &&
+           std::memcmp(arr_pointer_ + pos, str.arr_pointer_, str.length_) == 0;
   }
 
   bool Match(container_type const *str, std::size_t pos = 0) const
@@ -221,9 +222,14 @@ public:
 
   std::size_t Find(char c, std::size_t pos) const
   {
-    if(pos < length_) {
-	    auto retVal{static_cast<container_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos))};
-	    if(retVal) return retVal - arr_pointer_;
+    if (pos < length_)
+    {
+      auto retVal{
+          static_cast<container_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos))};
+      if (retVal)
+      {
+        return retVal - arr_pointer_;
+      }
     }
     return NPOS;
   }
@@ -471,19 +477,23 @@ inline std::string ConstByteArray::ToBase64() const
   return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
-template<typename T> inline ConstByteArray ToConstByteArray(T const &t)
+template <typename T>
+inline ConstByteArray ToConstByteArray(T const &t)
 {
-  static_assert(std::is_same<ConstByteArray::container_type, char>::value
-		|| std::is_same<ConstByteArray::container_type, unsigned char>::value,
-		"This library requires ConstByteArray::container_type to be implemented as char or unsigned char.");
+  static_assert(std::is_same<ConstByteArray::container_type, char>::value ||
+                    std::is_same<ConstByteArray::container_type, unsigned char>::value,
+                "This library requires ConstByteArray::container_type to be implemented as char or "
+                "unsigned char.");
   return ConstByteArray(reinterpret_cast<ConstByteArray::container_type const *>(&t), sizeof(T));
 }
 
-template<typename T> inline T FromConstByteArray(ConstByteArray const &str, std::size_t offset = 0)
+template <typename T>
+inline T FromConstByteArray(ConstByteArray const &str, std::size_t offset = 0)
 {
-  static_assert(std::is_same<ConstByteArray::container_type, char>::value
-		|| std::is_same<ConstByteArray::container_type, unsigned char>::value,
-		"This library requires ConstByteArray::container_type to be implemented as char or unsigned char.");
+  static_assert(std::is_same<ConstByteArray::container_type, char>::value ||
+                    std::is_same<ConstByteArray::container_type, unsigned char>::value,
+                "This library requires ConstByteArray::container_type to be implemented as char or "
+                "unsigned char.");
   T retVal;
   str.ReadBytes(reinterpret_cast<ConstByteArray::container_type *>(&retVal), sizeof(T), offset);
   return retVal;

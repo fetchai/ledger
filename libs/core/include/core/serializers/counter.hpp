@@ -34,16 +34,18 @@ public:
   using self_type = SizeCounter;
 
   constexpr SizeCounter() = default;
-  constexpr SizeCounter(std::size_t value) noexcept: size_{value}, reserved_size_{value} {}
+  constexpr SizeCounter(std::size_t value) noexcept
+    : size_{value}
+    , reserved_size_{value}
+  {}
 
   void Allocate(std::size_t delta)
   {
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t    size,
-              ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const     zero_reserved_space = true)
+  void Resize(std::size_t size, ResizeParadigm resize_paradigm = ResizeParadigm::RELATIVE,
+              bool const zero_reserved_space = true)
   {
     FETCH_UNUSED(zero_reserved_space);
 
@@ -65,9 +67,8 @@ public:
     };
   }
 
-  void Reserve(std::size_t    size,
-               ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true)
+  void Reserve(std::size_t size, ResizeParadigm resize_paradigm = ResizeParadigm::RELATIVE,
+               bool const zero_reserved_space = true)
   {
     (void)zero_reserved_space;
 

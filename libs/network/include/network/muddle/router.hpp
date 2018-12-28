@@ -43,19 +43,20 @@ class MuddleRegister;
 
 /**
  * The router is the fundamental object of the muddle system.
- * It routes external and internal packets to either a subscription or to another node on the network
+ * It routes external and internal packets to either a subscription or to another node on the
+ * network
  */
 class Router : public MuddleEndpoint
 {
 public:
-  using Address       = Packet::Address;  // == a crypto::Identity.identifier_
-  using PacketPtr     = std::shared_ptr<Packet>;
-  using Payload       = Packet::Payload;
-  using ConnectionPtr = std::weak_ptr<network::AbstractConnection>;
-  using Handle        = network::AbstractConnection::connection_handle_type;
-  using ThreadPool    = network::ThreadPool;
+  using Address             = Packet::Address;  // == a crypto::Identity.identifier_
+  using PacketPtr           = std::shared_ptr<Packet>;
+  using Payload             = Packet::Payload;
+  using ConnectionPtr       = std::weak_ptr<network::AbstractConnection>;
+  using Handle              = network::AbstractConnection::connection_handle_type;
+  using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
-  using BlackTime     = generics::Blackset2<Handle, Address, void>::Timepoint;
+  using BlackTime           = generics::Blackset2<Handle, Address, void>::Timepoint;
 
   struct RoutingData
   {
@@ -150,16 +151,16 @@ public:
   bool IsConnected(Address const &target) const;
 
 private:
-  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
-  using Clock      = std::chrono::steady_clock;
-  using Timepoint  = Clock::time_point;
-  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
-  using RawAddress = Packet::RawAddress;
-  using HandleSet  = std::unordered_set<Handle>;
-  using BlackIns   = generics::Blackset2<Handle, Address, void>;
-  using BlackOuts  = generics::Blackset2<Handle, Address>;
-  using ByteArrayBuffer        = serializers::ByteArrayBuffer;
+  using HandleMap       = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex           = mutex::Mutex;
+  using Clock           = std::chrono::steady_clock;
+  using Timepoint       = Clock::time_point;
+  using EchoCache       = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress      = Packet::RawAddress;
+  using HandleSet       = std::unordered_set<Handle>;
+  using BlackIns        = generics::Blackset2<Handle, Address, void>;
+  using BlackOuts       = generics::Blackset2<Handle, Address>;
+  using ByteArrayBuffer = serializers::ByteArrayBuffer;
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 10;
 

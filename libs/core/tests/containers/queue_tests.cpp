@@ -21,10 +21,70 @@
 #include <atomic>
 #include <gtest/gtest.h>
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
 
 namespace {
+
+template <class Stream, class Array>
+Stream &printArray(Stream &cerr, Array const &a)
+{
+  static constexpr std::size_t width = 80;
+  if (!a.empty())
+  {
+    auto        rle{a.front()};
+    std::string buf{std::to_string(rle)};
+    std::size_t count{1};
+
+    for (std::size_t i{1}; i < a.size() - 1; ++i)
+    {
+      auto val{a[i]};
+      if (val != rle)
+      {
+        if (count > 1)
+        {
+          buf += " x " + std::to_string(count);
+          count = 1;
+        }
+        buf += ',';
+        if (buf.size() >= width)
+        {
+          cerr << buf << '\n';
+          buf = std::to_string(val);
+        }
+        else
+        {
+          buf += ' ' + std::to_string(val);
+        }
+        rle = val;
+      }
+      else
+      {
+        ++count;
+      }
+    }
+    if (a.size() > 1)
+    {
+      auto val{a.back()};
+      if (val != rle)
+      {
+        if (count > 1)
+        {
+          buf += " x " + std::to_string(count);
+          count = 1;
+        }
+        buf += ", " + std::to_string(val);
+      }
+      else
+      {
+        buf += " x " + std::to_string(count + 1);
+      }
+    }
+    cerr << buf << '\n';
+  }
+  return cerr;
+}
 
 class QueueTests : public ::testing::Test
 {
@@ -41,10 +101,10 @@ protected:
     using ThreadPtr  = std::unique_ptr<std::thread>;
     using ThreadList = std::vector<ThreadPtr>;
 
-    static const std::size_t NUM_LOOPS = 50;
-    static const std::size_t NUM_ELEMENTS_PER_THREAD =
+    static constexpr std::size_t NUM_LOOPS = 50;
+    static constexpr std::size_t NUM_ELEMENTS_PER_THREAD =
         (Queue::QUEUE_LENGTH * NUM_LOOPS) / NUM_THREADS;
-    static const std::size_t TOTAL_NUM_ELEMENTS = NUM_THREADS * NUM_ELEMENTS_PER_THREAD;
+    static constexpr std::size_t TOTAL_NUM_ELEMENTS = NUM_THREADS * NUM_ELEMENTS_PER_THREAD;
 
     ThreadList threads(NUM_THREADS);
 
@@ -52,7 +112,7 @@ protected:
     for (auto &thread : threads)
     {
       thread = std::make_unique<std::thread>([&queue, thread_idx]() {
-        // create the boiler plate element
+        // create the boilerplate element
         Element element;
         std::fill(element.begin(), element.end(), thread_idx);
 
@@ -85,6 +145,11 @@ protected:
       // pop the element from the queue
       ASSERT_TRUE(queue.Pop(element, std::chrono::seconds{4}));
 
+      if (element.front() != element.back())
+      {
+        printArray(std::cerr << "Corrupt array:\n", element) << '\n';
+      }
+
       // thread the thread index counter
       ASSERT_EQ(element.front(), element.back());
 
@@ -92,6 +157,10 @@ protected:
       uint16_t const thread_id = element[1];
       for (std::size_t j = 2; j < (ELEMENT_SIZE - 1); ++j)
       {
+        if (thread_id != element[j])
+        {
+          printArray(std::cerr << "Corrupt array:\n", element) << '\n';
+        }
         ASSERT_EQ(thread_id, element[j]);
       }
 

@@ -81,9 +81,8 @@ public:
     Resize(delta, ResizeParadigm::RELATIVE);
   }
 
-  void Resize(std::size_t    size,
-              ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true)
+  void Resize(std::size_t size, ResizeParadigm resize_paradigm = ResizeParadigm::RELATIVE,
+              bool const zero_reserved_space = true)
   {
     data_.Resize(size, resize_paradigm, zero_reserved_space);
 
@@ -101,9 +100,8 @@ public:
     };
   }
 
-  void Reserve(std::size_t    size,
-               ResizeParadigm resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true)
+  void Reserve(std::size_t size, ResizeParadigm resize_paradigm = ResizeParadigm::RELATIVE,
+               bool const zero_reserved_space = true)
   {
     data_.Reserve(size, resize_paradigm, zero_reserved_space);
   }

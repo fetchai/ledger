@@ -36,8 +36,13 @@ template <std::size_t SIZE>
 class SingleThreadedIndex
 {
 public:
+  static constexpr std::size_t max() noexcept
+  {
+    return MASK;
+  }
+
   // Construction / Destruction
-  explicit SingleThreadedIndex(std::size_t initial)
+  explicit constexpr SingleThreadedIndex(std::size_t initial) noexcept
     : index_(initial)
   {}
   SingleThreadedIndex(SingleThreadedIndex const &) = delete;
@@ -49,7 +54,7 @@ public:
    *
    * @return The new index value
    */
-  std::size_t operator++(int)
+  constexpr std::size_t operator++(int) noexcept
   {
     std::size_t index = index_++;
     index_ &= MASK;
@@ -58,8 +63,21 @@ public:
   }
 
   // Operators
-  SingleThreadedIndex &operator=(SingleThreadedIndex const &) = delete;
-  SingleThreadedIndex &operator=(SingleThreadedIndex &&) = delete;
+  constexpr SingleThreadedIndex &operator=(SingleThreadedIndex const &) = delete;
+  constexpr SingleThreadedIndex &operator=(SingleThreadedIndex &&) = delete;
+
+  constexpr std::size_t value() const noexcept
+  {
+    return index_;
+  }
+  template <class That>
+  constexpr std::size_t operator-(That &&that) const noexcept(noexcept(that.value()))
+  {
+    static_assert(max() == that.max(), "RHS operand should take values from the same ring");
+
+    std::size_t thatVal{that.value()};
+    return index_ > thatVal ? index_ - thatVal : index_ + SIZE - thatVal;
+  }
 
 private:
   static constexpr std::size_t MASK = SIZE - 1;
@@ -79,6 +97,11 @@ template <std::size_t SIZE>
 class MultiThreadedIndex : protected SingleThreadedIndex<SIZE>
 {
 public:
+  static constexpr std::size_t max()
+  {
+    return SingleThreadedIndex<SIZE>::max();
+  }
+
   // Construction / Destruction
   explicit MultiThreadedIndex(std::size_t initial)
     : SingleThreadedIndex<SIZE>(initial)
@@ -94,6 +117,20 @@ public:
   {
     std::lock_guard<std::mutex>       lock(lock_);
     return SingleThreadedIndex<SIZE>::operator++(1);
+  }
+
+  std::size_t value()
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    return SingleThreadedIndex<SIZE>::value();
+  }
+  template <class That>
+  std::size_t operator-(That &&that)
+  {
+    static_assert(max() == that.max(), "RHS operand should take values from the same ring");
+
+    std::lock_guard<std::mutex>       lock(lock_);
+    return SingleThreadedIndex<SIZE>::operator-(that);
   }
 
 private:
@@ -151,6 +188,8 @@ protected:
   static_assert(meta::IsLog2<SIZE>::value, "Queue size must be a valid power of 2");
   static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
   static_assert(std::is_copy_assignable<T>::value, "T must have copy assignment");
+  static_assert(ProducerIndex::max() == ConsumerIndex::max(),
+                "Indices should rotate in the same range");
 };
 
 /**
@@ -246,6 +285,18 @@ void Queue<T, N, P, C>::Push(T &&element)
   queue_[write_index_++] = std::move(element);
 
   read_count_.Post();
+}
+
+template <typename T, std::size_t N, typename P, typename C>
+bool Queue<T, N, P, C>::empty()
+{
+  return size() == 0;
+}
+
+template <typename T, std::size_t N, typename P, typename C>
+std::size_t Queue<T, N, P, C>::size()
+{
+  return write_index_ - read_index_;
 }
 
 // Helpful Typedefs

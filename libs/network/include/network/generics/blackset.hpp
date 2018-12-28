@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <initializer_list>
-#include <type_traits>
-#include <unordered_set>
-#include <unordered_map>
-#include <utility>
 #include <chrono>
+#include <initializer_list>
 #include <iostream>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #include <core/mutex.hpp>
 
@@ -31,25 +31,29 @@ namespace fetch {
 namespace generics {
 
 namespace detail_ {
-  using Clock = std::chrono::system_clock;
+using Clock = std::chrono::system_clock;
 
-  template<class Set, class Key>
-  inline typename Set::const_iterator FindQuarantined(Set &suspended, Key const &key)
+template <class Set, class Key>
+inline typename Set::const_iterator FindQuarantined(Set &suspended, Key const &key)
+{
+  auto where{suspended.find(key)};
+  if (where != suspended.cend())
   {
-    auto where{suspended.find(key)};
-    if(where != suspended.cend()) {
-  	  if(where->second > Clock::now()) return where;
-  	  suspended.erase(where);
+    if (where->second > Clock::now())
+    {
+      return where;
     }
-    return suspended.cend();
+    suspended.erase(where);
   }
-
-  template<class Set, class Key>
-  inline bool Quarantined(Set &suspended, Key const &key)
-  {
-  	return FindQuarantined(suspended, key) != suspended.cend();
-  }
+  return suspended.cend();
 }
+
+template <class Set, class Key>
+inline bool Quarantined(Set &suspended, Key const &key)
+{
+  return FindQuarantined(suspended, key) != suspended.cend();
+}
+}  // namespace detail_
 
 template <class T, class Mx = mutex::Mutex>
 class Blackset
@@ -57,11 +61,11 @@ class Blackset
 public:
   using mutex_type = Mx;
   using ValueType  = T;
-  using Clock = detail_::Clock;
+  using Clock      = detail_::Clock;
   using Timepoint  = Clock::time_point;
 
 private:
-  using Banned  = std::unordered_set<T>;
+  using Banned    = std::unordered_set<T>;
   using Suspended = std::unordered_map<T, Clock::time_point>;
 
 public:
@@ -76,16 +80,15 @@ public:
     , banned_(std::forward<Args>(args)...)
   {}
 
-
   Blackset &operator=(Blackset const &) = default;
-  Blackset &operator=(Blackset &&) noexcept(std::is_nothrow_move_assignable<Banned>::value) = default;
+  Blackset &operator=(Blackset &&) noexcept(std::is_nothrow_move_assignable<Banned>::value) =
+      default;
   template <typename U>
   Blackset &operator=(U &&u) noexcept(std::is_nothrow_assignable<Banned, U>::value)
   {
     banned_ = std::forward<U>(u);
     return *this;
   }
-
 
   template <typename... Args>
   Blackset &Blacklist(Args &&... args)
@@ -95,24 +98,23 @@ public:
     return *this;
   }
 
-
   Blackset &Quarantine(Timepoint until, ValueType t)
   {
     FETCH_LOCK(*mutex_);
     suspended_.emplace(std::move(t), std::move(until));
     return *this;
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   Blackset &Quarantine(Timepoint const &until, Begin begin, End end)
   {
     FETCH_LOCK(*mutex_);
-    while(begin != end) {
-	    suspended_.emplace(*begin, until);
-	    ++begin;
+    while (begin != end)
+    {
+      suspended_.emplace(*begin, until);
+      ++begin;
     }
     return *this;
   }
-
 
   bool IsBlacklisted(ValueType const &t) const
   {
@@ -126,10 +128,9 @@ public:
   }
   Suspended GetQuarantined() const
   {
-	  FETCH_LOCK(*mutex_);
-	  return suspended_;
+    FETCH_LOCK(*mutex_);
+    return suspended_;
   }
-
 
   Blackset &Whitelist(ValueType const &t)
   {
@@ -141,13 +142,14 @@ public:
   {
     return Whitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   Blackset &Whitelist(Begin begin, End end)
   {
     FETCH_LOCK(*mutex_);
-    while(begin != end) {
-	    banned_.erase(*begin) || suspended_.erase(*begin);
-	    ++begin;
+    while (begin != end)
+    {
+      banned_.erase(*begin) || suspended_.erase(*begin);
+      ++begin;
     }
     return *this;
   }
@@ -157,16 +159,17 @@ protected:
   {
     return banned_.find(t) != banned_.end() || Quarantined(t);
   }
+
 private:
   using ConstIterator = typename Suspended::const_iterator;
 
   bool Quarantined(ValueType const &t) const
   {
-	  return detail_::Quarantined(suspended_, t);
+    return detail_::Quarantined(suspended_, t);
   }
 
-  Mx * mutex_;
-  Banned banned_;
+  Mx *              mutex_;
+  Banned            banned_;
   mutable Suspended suspended_;
 };
 
@@ -179,15 +182,15 @@ class Blackset<T, void>
 public:
   using mutex_type = void;
   using ValueType  = T;
-  using Clock = detail_::Clock;
+  using Clock      = detail_::Clock;
   using Timepoint  = Clock::time_point;
 
 private:
-  using Banned  = std::unordered_set<T>;
+  using Banned    = std::unordered_set<T>;
   using Suspended = std::unordered_map<T, Clock::time_point>;
 
 public:
-  Blackset() = default;
+  Blackset()                 = default;
   Blackset(Blackset const &) = default;
   Blackset(Blackset &&)      = default;
   template <typename... Args>
@@ -195,16 +198,15 @@ public:
     : banned_(std::forward<Args>(args)...)
   {}
 
-
   Blackset &operator=(Blackset const &) = default;
-  Blackset &operator=(Blackset &&) noexcept(std::is_nothrow_move_assignable<Banned>::value) = default;
+  Blackset &operator=(Blackset &&) noexcept(std::is_nothrow_move_assignable<Banned>::value) =
+      default;
   template <typename U>
   Blackset &operator=(U &&u) noexcept(std::is_nothrow_assignable<Banned, U>::value)
   {
     banned_ = std::forward<U>(u);
     return *this;
   }
-
 
   template <typename... Args>
   Blackset &Blacklist(Args &&... args)
@@ -213,22 +215,21 @@ public:
     return *this;
   }
 
-
   Blackset &Quarantine(Timepoint until, ValueType t)
   {
     suspended_.emplace(std::move(t), std::move(until));
     return *this;
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   Blackset &Quarantine(Timepoint const &until, Begin begin, End end)
   {
-    while(begin != end) {
-	    suspended_.emplace(*begin, until);
-	    ++begin;
+    while (begin != end)
+    {
+      suspended_.emplace(*begin, until);
+      ++begin;
     }
     return *this;
   }
-
 
   bool IsBlacklisted(ValueType const &t) const
   {
@@ -243,7 +244,6 @@ public:
     return suspended_;
   }
 
-
   Blackset &Whitelist(ValueType const &t)
   {
     banned_.erase(t) || suspended_.erase(t);
@@ -253,12 +253,13 @@ public:
   {
     return Whitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   Blackset &Whitelist(Begin begin, End end)
   {
-    while(begin != end) {
-	    banned_.erase(*begin) || suspended_.erase(*begin);
-	    ++begin;
+    while (begin != end)
+    {
+      banned_.erase(*begin) || suspended_.erase(*begin);
+      ++begin;
     }
     return *this;
   }
@@ -272,27 +273,27 @@ protected:
 private:
   bool Quarantined(ValueType const &t) const
   {
-	  return detail_::Quarantined(suspended_, t);
+    return detail_::Quarantined(suspended_, t);
   }
 
-  Banned banned_;
+  Banned            banned_;
   mutable Suspended suspended_;
 };
 
-
 // It assumes blacklisted values are coupled, and the first one is primary.
-template <class T1, class T2, class Mx = mutex::Mutex> class Blackset2
+template <class T1, class T2, class Mx = mutex::Mutex>
+class Blackset2
 {
 public:
   using mutex_type = Mx;
   using ValueType1 = T1;
   using ValueType2 = T2;
-  using Clock = detail_::Clock;
+  using Clock      = detail_::Clock;
   using Timepoint  = Clock::time_point;
 
 private:
-  using Banned1 = std::unordered_set<T1>;
-  using Banned2 = std::unordered_set<T2>;
+  using Banned1    = std::unordered_set<T1>;
+  using Banned2    = std::unordered_set<T2>;
   using Suspended1 = std::unordered_map<T1, Clock::time_point>;
   using Suspended2 = std::unordered_map<T2, Clock::time_point>;
 
@@ -303,28 +304,30 @@ public:
   Blackset2(Blackset2 const &) = default;
   Blackset2(Blackset2 &&)      = default;
 
+  Blackset2 &operator=(Blackset2 const &)                    = default;
+  Blackset2 &operator                                        =(Blackset2 &&) noexcept(
+      std::is_nothrow_move_assignable<Banned1>::value
+          &&std::is_nothrow_move_assignable<Banned2>::value) = default;
 
-  Blackset2 &operator=(Blackset2 const &) = default;
-  Blackset2 &operator=(Blackset2 &&) noexcept(std::is_nothrow_move_assignable<Banned1>::value && std::is_nothrow_move_assignable<Banned2>::value) = default;
-
-
-  Blackset2 &Blacklist1(ValueType1 t1) {
-	  FETCH_LOCK(*mutex_);
-	  banned1_.insert(std::move(t1));
-	  return *this;
+  Blackset2 &Blacklist1(ValueType1 t1)
+  {
+    FETCH_LOCK(*mutex_);
+    banned1_.insert(std::move(t1));
+    return *this;
   }
-  Blackset2 &Blacklist2(ValueType2 t2) {
-	  FETCH_LOCK(*mutex_);
-	  banned2_.insert(std::move(t2));
-	  return *this;
+  Blackset2 &Blacklist2(ValueType2 t2)
+  {
+    FETCH_LOCK(*mutex_);
+    banned2_.insert(std::move(t2));
+    return *this;
   }
-  Blackset2 &Blacklist(ValueType1 t1, ValueType2 t2) {
-	  FETCH_LOCK(*mutex_);
-	  banned1_.insert(std::move(t1));
-	  banned2_.insert(std::move(t2));
-	  return *this;
+  Blackset2 &Blacklist(ValueType1 t1, ValueType2 t2)
+  {
+    FETCH_LOCK(*mutex_);
+    banned1_.insert(std::move(t1));
+    banned2_.insert(std::move(t2));
+    return *this;
   }
-
 
   Blackset2 &Quarantine1(Timepoint until, ValueType1 t1)
   {
@@ -346,7 +349,6 @@ public:
     return *this;
   }
 
-
   bool IsBlacklisted1(ValueType1 const &t1) const
   {
     FETCH_LOCK(*mutex_);
@@ -362,7 +364,6 @@ public:
     FETCH_LOCK(*mutex_);
     return Blacklisted(t1, t2);
   }
-
 
   Blackset2 &Whitelist1(ValueType1 const &t1)
   {
@@ -395,24 +396,30 @@ protected:
   }
   bool Blacklisted(ValueType1 const &t1, ValueType2 const &t2) const
   {
-    if(banned1_.find(t1) != banned1_.end() || detail_::Quarantined(suspended1_, t1)) return true;
-    if(banned2_.find(t2) != banned2_.end()) {
-	    banned1_.insert(t1);
-	    return true;
+    if (banned1_.find(t1) != banned1_.end() || detail_::Quarantined(suspended1_, t1))
+    {
+      return true;
+    }
+    if (banned2_.find(t2) != banned2_.end())
+    {
+      banned1_.insert(t1);
+      return true;
     }
     ConstIterator2 where{detail_::FindQuarantined(suspended2_, t2)};
-    if(where != suspended2_.end()) {
-	    suspended1_.emplace(t1, where->second);
-	    return true;
+    if (where != suspended2_.end())
+    {
+      suspended1_.emplace(t1, where->second);
+      return true;
     }
     return false;
   }
+
 private:
   using ConstIterator2 = typename Suspended2::const_iterator;
 
-  Mx * mutex_;
-  mutable Banned1 banned1_;
-  Banned2 banned2_;
+  Mx *               mutex_;
+  mutable Banned1    banned1_;
+  Banned2            banned2_;
   mutable Suspended1 suspended1_;
   mutable Suspended2 suspended2_;
 };
@@ -424,39 +431,41 @@ public:
   using mutex_type = void;
   using ValueType1 = T1;
   using ValueType2 = T2;
-  using Clock = detail_::Clock;
+  using Clock      = detail_::Clock;
   using Timepoint  = Clock::time_point;
 
 private:
-  using Banned1 = std::unordered_set<T1>;
-  using Banned2 = std::unordered_set<T2>;
-  using Suspended1 = std::unordered_map<T1, Clock::time_point>;
-  using Suspended2 = std::unordered_map<T2, Clock::time_point>;
+  using Banned1    = std::unordered_set<T1>;
+  using Banned2    = std::unordered_set<T2>;
+  using Suspended1 = std::unordered_map<ValueType1, Clock::time_point>;
+  using Suspended2 = std::unordered_map<ValueType2, Clock::time_point>;
 
 public:
-  Blackset2() = default;
+  Blackset2()                  = default;
   Blackset2(Blackset2 const &) = default;
   Blackset2(Blackset2 &&)      = default;
 
+  Blackset2 &operator=(Blackset2 const &)                    = default;
+  Blackset2 &operator                                        =(Blackset2 &&) noexcept(
+      std::is_nothrow_move_assignable<Banned1>::value
+          &&std::is_nothrow_move_assignable<Banned2>::value) = default;
 
-  Blackset2 &operator=(Blackset2 const &) = default;
-  Blackset2 &operator=(Blackset2 &&) noexcept(std::is_nothrow_move_assignable<Banned1>::value && std::is_nothrow_move_assignable<Banned2>::value) = default;
-
-
-  Blackset2 &Blacklist1(ValueType1 t1) {
-	  banned1_.insert(std::move(t1));
-	  return *this;
+  Blackset2 &Blacklist1(ValueType1 t1)
+  {
+    banned1_.insert(std::move(t1));
+    return *this;
   }
-  Blackset2 &Blacklist2(ValueType2 t2) {
-	  banned2_.insert(std::move(t2));
-	  return *this;
+  Blackset2 &Blacklist2(ValueType2 t2)
+  {
+    banned2_.insert(std::move(t2));
+    return *this;
   }
-  Blackset2 &Blacklist(ValueType1 t1, ValueType2 t2) {
-	  banned1_.insert(std::move(t1));
-	  banned2_.insert(std::move(t2));
-	  return *this;
+  Blackset2 &Blacklist(ValueType1 t1, ValueType2 t2)
+  {
+    banned1_.insert(std::move(t1));
+    banned2_.insert(std::move(t2));
+    return *this;
   }
-
 
   Blackset2 &Quarantine1(Timepoint until, ValueType1 t1)
   {
@@ -475,7 +484,6 @@ public:
     return *this;
   }
 
-
   bool IsBlacklisted1(ValueType1 const &t1) const
   {
     return Blacklisted1(t1);
@@ -488,7 +496,6 @@ public:
   {
     return Blacklisted(t1, t2);
   }
-
 
   Blackset2 &Whitelist1(ValueType1 const &t1)
   {
@@ -518,27 +525,32 @@ protected:
   }
   bool Blacklisted(ValueType1 const &t1, ValueType2 const &t2) const
   {
-    if(banned1_.find(t1) != banned1_.end() || detail_::Quarantined(suspended1_, t1)) return true;
-    if(banned2_.find(t2) != banned2_.end()) {
-	    banned1_.insert(t1);
-	    return true;
+    if (banned1_.find(t1) != banned1_.end() || detail_::Quarantined(suspended1_, t1))
+    {
+      return true;
+    }
+    if (banned2_.find(t2) != banned2_.end())
+    {
+      banned1_.insert(t1);
+      return true;
     }
     ConstIterator2 where{detail_::FindQuarantined(suspended2_, t2)};
-    if(where != suspended2_.end()) {
-	    suspended1_.insert(t1, where->second);
-	    return true;
+    if (where != suspended2_.end())
+    {
+      suspended1_.emplace(t1, where->second);
+      return true;
     }
     return false;
   }
+
 private:
   using ConstIterator2 = typename Suspended2::const_iterator;
 
-  Banned1 banned1_;
-  Banned2 banned2_;
+  mutable Banned1    banned1_;
+  Banned2            banned2_;
   mutable Suspended1 suspended1_;
   mutable Suspended2 suspended2_;
 };
-
 
 }  // namespace generics
 }  // namespace fetch

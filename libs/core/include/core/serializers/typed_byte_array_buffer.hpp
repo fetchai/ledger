@@ -99,8 +99,7 @@ inline void TypedByteArrayBuffer::ReadBytes(uint8_t *arr, std::size_t size)
 }
 
 template <>
-inline void TypedByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b,
-                                                std::size_t          size)
+inline void TypedByteArrayBuffer::ReadByteArray(byte_array::ConstByteArray &b, std::size_t size)
 {
   if (int64_t(size) > bytes_left())
   {

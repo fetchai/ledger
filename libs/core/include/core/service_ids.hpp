@@ -33,7 +33,7 @@ static constexpr uint16_t CHANNEL_RPC =
         // potential RPC interface
 
 // Muddle Service Channels
-static constexpr uint16_t CHANNEL_ROUTING = 1;
+static constexpr uint16_t CHANNEL_ROUTING     = 1;
 static constexpr uint16_t CHANNEL_MAINTENANCE = 65535;
 
 // P2P Service Channels
@@ -56,7 +56,7 @@ static constexpr uint64_t RPC_EXECUTOR          = 208;
 static constexpr uint64_t RPC_P2P_RESOLVER      = 209;
 
 // Maintenance tags
-using MaintTag = uint64_t;
+using MaintTag                             = uint64_t;
 static constexpr MaintTag MAINT_DISCONNECT = 0xD15C0;
 static constexpr MaintTag MAINT_HOLD_BACK  = 0x401DBAC;
 static constexpr MaintTag MAINT_MUTE       = 0x4D555445;
