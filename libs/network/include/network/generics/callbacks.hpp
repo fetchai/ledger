@@ -50,6 +50,12 @@ public:
   {
     if (!callbacks_.empty())
     {
+      // All but the last callbacks are called with arguments passed by lvalue refs.
+      // Then the last callback is invoked with arguments forwarded.
+      // This prevents rvalue arguments from being swallowed by the very first callback,
+      // and, in that same case, can, in theory, give us a little gain in performance.
+      // As a side note, std::invoke would naturally fit in here but we're not C++17-compliant yet.
+
       using Itr = typename Funcs::const_iterator;
       const Itr last{callbacks_.end() - 1};
       for (Itr i{callbacks_.begin()}; i != last; ++i)

@@ -189,18 +189,18 @@ private:
   NetworkId             network_id_;
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
-  ///< Addresses to handles map (protected by routing_table_lock_)
+  // Addresses-to-handles map (protected by routing_table_lock_)
   RoutingTable routing_table_;
-  ///< Handles to addresses map (protected by routing_table_lock_)
+  // Handles-to-addresses map (protected by routing_table_lock_)
   HandleMap routing_table_handles_;
 
   mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;
-  ///< Blacklisted inputs (protected by routing_table_lock_)
+  // Blacklisted inputs (protected by routing_table_lock_)
   BlackIns black_ins_;
-  ///< Blacklisted outputs (protected by routing_table_lock_)
+  // Blacklisted outputs (protected by routing_table_lock_)
   BlackOuts black_outs_;
 
   HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address

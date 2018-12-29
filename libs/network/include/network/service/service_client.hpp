@@ -203,7 +203,8 @@ protected:
     return false;
   }
 
-  void Disconnect() override
+  using fetch::service::ServiceServerInterface::Disconnect;
+  virtual void Disconnect() override
   {
     Close();
   }

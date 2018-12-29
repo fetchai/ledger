@@ -225,10 +225,11 @@ public:
     if (pos < length_)
     {
       auto retVal{
-          static_cast<container_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos))};
+          static_cast<container_type const *>(
+		  std::memchr(arr_pointer_ + pos, c, length_ - pos))};
       if (retVal)
       {
-        return retVal - arr_pointer_;
+        return static_cast<std::size_t>(retVal - arr_pointer_);
       }
     }
     return NPOS;
@@ -462,7 +463,7 @@ private:
 inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
 {
   char const *arr = reinterpret_cast<char const *>(str.pointer());
-  return os.write(arr, str.size());
+  return os.write(arr, static_cast<std::streamsize>(str.size()));
 }
 
 inline ConstByteArray operator+(char const *a, ConstByteArray const &b)

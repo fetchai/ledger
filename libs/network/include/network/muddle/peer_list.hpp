@@ -71,7 +71,7 @@ public:
 
   // Construction / Destruction
   explicit PeerConnectionList(Router &router);
-  explicit PeerConnectionList(Router &router, PeerSet blacklisted);
+  PeerConnectionList(Router &router, PeerSet blacklisted);
   PeerConnectionList(PeerConnectionList const &) = delete;
   PeerConnectionList(PeerConnectionList &&)      = delete;
   ~PeerConnectionList()                          = default;

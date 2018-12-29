@@ -138,7 +138,7 @@ private:
       char *p = buffer;
       p += sprintf(p, " Subscription protocol=%d handler=%d callback=%p ", int(protocol), int(feed),
                    ((void *)(callback)));
-      return std::string(buffer, p - buffer);
+      return std::string(buffer, static_cast<std::size_t>(p - buffer));
     }
 
     protocol_handler_type protocol = 0;
