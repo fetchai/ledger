@@ -913,10 +913,22 @@ void Router::CleanEchoCache()
  * @param address The address to be blacklisted
  * @return This.
  */
+
+void Router::SendMaintenance(Address const &address, MaintTag tag) {
+  ConstByteArray signal{byte_array::ToConstByteArray(tag)};
+  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+}
+
+template<typename T> void Router::SendMaintenance(Address const &address, MaintTag tag, T &&arg) {
+  ByteArrayBuffer signal(sizeof(MaintTag) + sizeof(std::time_t));
+
+  signal << tag << arg;
+  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal.data());
+}
+
 Router &Router::Blacklist(Address address)
 {
-  static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_MUTE)};
-  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+  SendMaintenance(address, MAINT_MUTE);
 
   FETCH_LOCK(routing_table_lock_);
   auto address_it = routing_table_.find(ConvertAddress(address));
@@ -942,12 +954,7 @@ Router &Router::Blacklist(Address address)
  */
 Router &Router::Quarantine(BlackTime until, Address address)
 {
-  {
-    ByteArrayBuffer signal(sizeof(MAINT_HOLD_BACK) + sizeof(std::time_t));
-
-    signal << MAINT_HOLD_BACK << BlackIns::Clock::to_time_t(until);
-    Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal.data());
-  }
+  SendMaintenance(address, MAINT_HOLD_BACK, BlackIns::Clock::to_time_t(until));
 
   FETCH_LOCK(routing_table_lock_);
   auto address_it = routing_table_.find(ConvertAddress(address));
@@ -982,8 +989,7 @@ bool Router::IsBlacklisted(Address const &address) const
  */
 Router &Router::Whitelist(Address const &address)
 {
-  static const ConstByteArray signal{byte_array::ToConstByteArray(MAINT_UNMUTE)};
-  Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
+  SendMaintenance(address, MAINT_UNMUTE);
 
   FETCH_LOCK(routing_table_lock_);
   auto address_it = routing_table_.find(ConvertAddress(address));
@@ -993,6 +999,27 @@ Router &Router::Whitelist(Address const &address)
   }
   black_ins_.Whitelist2(address);
   return *this;
+}
+
+/**
+ * Soft-disconnect from an address. MAINT_DISCONNECT message is sent to the peer.
+ * @param handle The address of a peer to disconnect from.
+ * @return This.
+ */
+Router &Router::Disconnect(Address const &address) {
+	SendMaintenance(address, MAINT_DISCONNECT);
+	DropPeer(address);
+	return *this;
+}
+
+/**
+ * Soft-disconnect from a handle. MAINT_DISCONNECT message is sent to the peer.
+ * @param handle The handle of a connection to disconnect from.
+ * @return This.
+ */
+Router &Router::Disconnect(Handle handle) {
+	Address address;
+	return HandleToDirectAddress(handle, address)? Disconnect(address) : *this;
 }
 
 /**

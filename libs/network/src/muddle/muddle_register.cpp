@@ -127,11 +127,7 @@ void MuddleRegister::Leave(connection_handle_type id)
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", id, " ended");
 
-    auto it = connection_map_.find(id);
-    if (it != connection_map_.end())
-    {
-      connection_map_.erase(it);
-    }
+    connection_map_.erase(id);
   }
 
   // inform the dispatcher that the connection has failed (this can clear up all of the pending

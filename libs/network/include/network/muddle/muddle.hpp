@@ -105,6 +105,7 @@ class MuddleEndpoint;
  */
 class Muddle
 {
+  using Clock      = std::chrono::system_clock;
 public:
   using CertificatePtr  = std::unique_ptr<crypto::Prover>;
   using Uri             = network::Uri;
@@ -116,6 +117,7 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
   using NetworkId       = MuddleEndpoint::NetworkId;
+  using Timepoint  = Clock::time_point;
 
   using Handle = network::AbstractConnection::connection_handle_type;
 
@@ -199,9 +201,10 @@ public:
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
 
-  void Blacklist(Address const &target);
-  void Whitelist(Address const &target);
+  void Blacklist(Address target);
+  void Quarantine(Timepoint until, Address target);
   bool IsBlacklisted(Address const &target) const;
+  void Whitelist(Address const &target);
   /// @}
 
   // Operators
@@ -222,8 +225,6 @@ private:
   using Register   = std::shared_ptr<MuddleRegister>;
   using Mutex      = mutex::Mutex;
   using Lock       = std::lock_guard<Mutex>;
-  using Clock      = std::chrono::system_clock;
-  using Timepoint  = Clock::time_point;
   using Duration   = Clock::duration;
 
   void RunPeriodicMaintenance();

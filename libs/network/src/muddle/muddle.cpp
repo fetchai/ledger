@@ -308,20 +308,24 @@ void Muddle::CreateTcpClient(Uri const &peer)
   client.Connect(tcp_peer.address(), tcp_peer.port());
 }
 
-void Muddle::Blacklist(Address const &target)
+void Muddle::Blacklist(Address target)
 {
-  DropPeer(target);
-  router_.Blacklist(target);
+  router_.Blacklist(std::move(target));
 }
 
-void Muddle::Whitelist(Address const &target)
+void Muddle::Quarantine(Timepoint until, Address target)
 {
-  router_.Whitelist(target);
+  router_.Quarantine(until, std::move(target));
 }
 
 bool Muddle::IsBlacklisted(Address const &target) const
 {
   return router_.IsBlacklisted(target);
+}
+
+void Muddle::Whitelist(Address const &target)
+{
+  router_.Whitelist(target);
 }
 
 }  // namespace muddle

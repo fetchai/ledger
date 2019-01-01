@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+//#include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/blackset.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -126,12 +127,26 @@ public:
 
   /** Deny this host's connection attempts and do not attempt to connect to it.
    * @param address The target address to be denied.
+   * @return This.
    */
   Router &Blacklist(Address address);
+
+  /** Soft-disconnect from a handle. MAINT_DISCONNECT message is sent to the peer.
+   * @param handle The handle of a peer to disconnect from.
+   * @return This.
+   */
+  Router &Disconnect(Handle handle);
+
+  /** Soft-disconnect from an address. MAINT_DISCONNECT message is sent to the peer.
+   * @param handle The address of a peer to disconnect from.
+   * @return This.
+   */
+  Router &Disconnect(Address const &address);
 
   /** Temporarily blacklist an address
    * @param until Timstamp this denial is no more effective past.
    * @param address The target address to be denied.
+   * @return This.
    */
   Router &Quarantine(BlackTime until, Address address);
 
@@ -180,6 +195,9 @@ private:
   void CleanEchoCache();
 
   bool Disallowed(Handle handle, PacketPtr const &packet) const;
+
+  void SendMaintenance(Address const &address, uint64_t tag);
+  template<typename T> void SendMaintenance(Address const &address, uint64_t tag, T &&arg);
 
   Address const         address_;
   RawAddress const      address_raw_;
