@@ -328,5 +328,10 @@ void Muddle::Whitelist(Address const &target)
   router_.Whitelist(target);
 }
 
+void Muddle::Disconnect(Address const &target)
+{
+  router_.Disconnect(target);
+}
+
 }  // namespace muddle
 }  // namespace fetch

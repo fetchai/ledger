@@ -201,6 +201,7 @@ public:
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
 
+  void Disconnect(Address const &target);
   void Blacklist(Address target);
   void Quarantine(Timepoint until, Address target);
   bool IsBlacklisted(Address const &target) const;
