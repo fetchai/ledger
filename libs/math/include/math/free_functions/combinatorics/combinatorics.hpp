@@ -54,14 +54,19 @@ std::size_t factorial(std::size_t n)
  * @param r - The size of each combination
  * @return - Number of combinations as float
  */
-float calculateNumCombinations(std::size_t n, std::size_t r)
+std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
 
   // Base case
-  if (r == 0)
+  switch (r)
   {
+  case 0:
     return 1;
+  case 1:
+    return n;
+  case 2:
+    return n % 2 ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
   }
 
   // Sometimes faster to calculate equivalent definition "n Choose n-r" than "n Choose r"
@@ -71,8 +76,12 @@ float calculateNumCombinations(std::size_t n, std::size_t r)
   }
 
   // Recursive implementation
-  float fraction = static_cast<float>(n) / static_cast<float>(r);
-  return fraction * calculateNumCombinations(n - 1, r - 1);
+  double fraction = static_cast<double>(n) / static_cast<double>(r);
+  while (--r > 1)
+  {
+    fraction *= static_cast<double>(--n) / static_cast<double>(r);
+  }
+  return static_cast<std::size_t>(fraction * static_cast<double>(--n));
 }
 
 /**
@@ -91,11 +100,11 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
     return output_array;
   }
 
-  auto        n_combinations = static_cast<std::size_t>(calculateNumCombinations(n, r));
+  std::size_t n_combinations = calculateNumCombinations(n, r);
   std::size_t current_dim    = 0;
   std::size_t current_row    = 0;
 
-  std::vector<bool> v(static_cast<unsigned long>(n));
+  std::vector<bool> v(n);
   std::fill(v.end() - static_cast<int>(r), v.end(), true);
 
   fetch::math::linalg::Matrix<double> output_array{n_combinations, r};
@@ -103,16 +112,17 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
   {
     for (std::size_t i = 0; i < n; ++i)
     {
-      if (v[static_cast<unsigned long>(i)])
+      if (v[i])
       {
         std::size_t dim = (i + 1);
         output_array.Set(current_row, current_dim, static_cast<float>(dim));
         if (current_dim == r - 1)
         {
-          current_row += 1;
+          ++current_row;
+          current_dim = 0;
+          break;
         }
-        current_dim = current_dim + 1;
-        current_dim = current_dim % r;
+        ++current_dim;
       }
     }
   } while (std::next_permutation(v.begin(), v.end()));

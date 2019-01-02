@@ -79,7 +79,7 @@ TEST_P(TestClass, basic_Test)
     std::cout << "expected array to be referenced exactly 3 times";
     std::cout << "but is referenced " << array.reference_count() <<  std::endl;
   }
-   if(testing::total_shared_objects != 1)
+  if(testing::total_shared_objects != 1)
   {
     std::cout << "expected exactly 1 object but " <<
       testing::total_shared_objects;
@@ -89,4 +89,5 @@ TEST_P(TestClass, basic_Test)
   lcg1.Seed(lcg1());
   lcg2.Seed(lcg2());
 }
+
 INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(0, 100), );
