@@ -84,29 +84,23 @@ namespace storage {
 template <std::size_t S = 256, std::size_t N = 64>
 struct KeyValuePair
 {
-  KeyValuePair()
-  {
-    memset(this, 0, sizeof(decltype(*this)));
-    parent = uint64_t(-1);
-  }
-
   using key_type = Key<S>;
 
-  key_type key;
-  uint8_t  hash[N];
+  key_type key{};
+  uint8_t  hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
-  uint16_t split;
+  uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent;
+  uint64_t parent = uint64_t(-1);
 
   union
   {
-    uint64_t value;
+    uint64_t value = 0;
     uint64_t left;
   };
-  uint64_t right;
+  uint64_t right = 0;
 
   bool operator==(KeyValuePair const &kv)
   {
