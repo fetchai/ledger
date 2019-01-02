@@ -597,7 +597,7 @@ public:
       }
       Type M = std::max(va, vb);
 
-      ret &= (vA < std::max(atol, M * rtol));
+      ret &= (vA <= std::max(atol, M * rtol));
     }
     if (!ret)
     {
