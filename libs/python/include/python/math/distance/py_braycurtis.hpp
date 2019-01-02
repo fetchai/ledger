@@ -46,8 +46,8 @@ inline void BuildBraycurtisDistance(std::string const &custom_name, pybind11::mo
       .def(custom_name.c_str(), &WrapperBraycurtis<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperBraycurtis<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperBraycurtis<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperBraycurtis<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperBraycurtis<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperBraycurtis<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperBraycurtis<ShapelessArray<float>>);
 }
 
 }  // namespace distance

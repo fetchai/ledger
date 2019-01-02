@@ -51,13 +51,13 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(identity_.identifier(), *register_, dispatcher_)
+  , router_(network_id, identity_.identifier(), *register_, dispatcher_)
   , thread_pool_(network::MakeThreadPool(1))
   , clients_(router_)
 {}
@@ -72,6 +72,8 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
+
+  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -106,6 +108,34 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
+/**
+ * Fails all the pending promises.
+ */
+void Muddle::Shutdown()
+{
+  dispatcher_.FailAllPendingPromises();
+}
+
+/**
+ * Resolve the URI into an address if an identity-verifing connection has been made.
+ * @param uri URI to obtain the address for
+ * @param address the result if obtainable
+ * @return true if an address was found
+ */
+bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
+{
+  PeerConnectionList::Handle handle;
+  if (!clients_.UriToHandle(uri, handle))
+  {
+    return false;
+  }
+  return router_.HandleToDirectAddress(handle, address);
+}
+
+/**
+ * Returns all the active connections.
+ * @return map of connections
+ */
 Muddle::ConnectionMap Muddle::GetConnections()
 {
   ConnectionMap connection_map;
@@ -138,6 +168,11 @@ Muddle::ConnectionMap Muddle::GetConnections()
   }
 
   return connection_map;
+}
+
+void Muddle::DropPeer(Address const &peer)
+{
+  router_.DropPeer(peer);
 }
 
 /**
@@ -266,6 +301,22 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.AsPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
+}
+
+void Muddle::Blacklist(Address const &target)
+{
+  DropPeer(target);
+  router_.Blacklist(target);
+}
+
+void Muddle::Whitelist(Address const &target)
+{
+  router_.Whitelist(target);
+}
+
+bool Muddle::IsBlacklisted(Address const &target) const
+{
+  return router_.IsBlacklisted(target);
 }
 
 }  // namespace muddle

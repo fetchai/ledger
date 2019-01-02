@@ -99,8 +99,8 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11
       .def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<float>>);
-  //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray< double
-  //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray<
+  //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray< double
+  //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray<
   //    float > >);
 }
 

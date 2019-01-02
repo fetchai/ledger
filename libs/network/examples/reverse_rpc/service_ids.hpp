@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,16 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace protocols {
-
-struct QuickStartProtocols
+struct AEAToNode
 {
+
   enum
   {
-    QUICK_START = 1
+    REGISTER = 1
   };
 };
 
-}  // namespace protocols
-}  // namespace fetch
+struct NodeToAEA
+{
+
+  enum
+  {
+    SEARCH = 1
+  };
+};
+
+struct FetchProtocols
+{
+
+  enum
+  {
+    AEA_TO_NODE = 1,
+    NODE_TO_AEA = 2
+  };
+};

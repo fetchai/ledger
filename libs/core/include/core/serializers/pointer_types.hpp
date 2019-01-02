@@ -17,26 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-enum AEACommands
-{
-  GET_INFO = 1,
-  CONNECT  = 2
-};
+namespace fetch {
+namespace service {
+class CallContext;
+}
+}  // namespace fetch
 
-enum PeerToPeerCommands
-{
-  SEND_MESSAGE = 1,
-  GET_MESSAGES = 2
-};
+namespace fetch {
+namespace serializers {
 
-enum PeerToPeerFeed
-{
-  NEW_MESSAGE = 1,
-  CONNECTING  = 2
-};
+using OBJ = fetch::service::CallContext;
 
-enum FetchProtocols
+template <typename T>
+inline void Deserialize(T &serializer, OBJ const *(&ptr))
 {
-  AEA_PROTOCOL = 1,
-  PEER_TO_PEER = 2
-};
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+}
+
+template <typename T>
+inline void Deserialize(T &serializer, OBJ *(&ptr))
+{
+  serializer.ReadBytes(reinterpret_cast<uint8_t *>(&ptr), sizeof(std::nullptr_t));
+}
+
+}  // namespace serializers
+}  // namespace fetch

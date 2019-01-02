@@ -17,12 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
+#include "core/service_ids.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
+#include "ledger/storage_unit/lane_controller.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
-#include "network/service/server.hpp"
+#include "network/peer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include <algorithm>
@@ -40,62 +43,94 @@ using namespace fetch::network;
 using namespace fetch::chain;
 using namespace fetch::service;
 using namespace fetch::ledger;
+using namespace fetch;
 
-template <typename... Args>
-fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
-                                 Args &&... args)
+static constexpr char const *LOGGING_NAME = "ObjectSyncTest";
+
+class MuddleTestClient
 {
-  TCPClient client(nm);
-  client.Connect(address, port);
+public:
+  using Uri     = fetch::network::Uri;
+  using Muddle  = fetch::muddle::Muddle;
+  using Server  = fetch::muddle::rpc::Server;
+  using Client  = fetch::muddle::rpc::Client;
+  using Address = Muddle::Address;  // == a crypto::Identity.identifier_
 
-  if (!client.WaitForAlive(2000))
+  using MuddlePtr = std::shared_ptr<Muddle>;
+  using ServerPtr = std::shared_ptr<Server>;
+  using ClientPtr = std::shared_ptr<Client>;
+
+  static std::shared_ptr<MuddleTestClient> CreateTestClient(NetworkManager &   tm,
+                                                            const std::string &host, uint16_t port)
   {
-    std::cout << "Failed to connect to client at " << address << " " << port << std::endl;
-    exit(1);
+    return CreateTestClient(tm, Uri(std::string("tcp://") + host + ":" + std::to_string(port)));
   }
-
-  ServiceClient s_client(client, nm);
-
-  fetch::service::Promise prom = s_client.Call(std::forward<Args>(args)...);
-
-  if (!prom->Wait(2000, true))
+  static std::shared_ptr<MuddleTestClient> CreateTestClient(NetworkManager &tm, const Uri &uri)
   {
-    std::cout << "Failed to make call to client" << std::endl;
-    exit(1);
-  }
+    auto tc = std::make_shared<MuddleTestClient>();
 
-  return prom;
-}
+    tc->muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tm);
+    tc->muddle_->Start({});
 
-void BlockUntilConnect(std::string host, uint16_t port)
-{
-  NetworkManager nm{1};
-  nm.Start();
+    tc->client_ =
+        std::make_shared<Client>(tc->muddle_->AsEndpoint(), Address(), SERVICE_LANE, CHANNEL_RPC);
+    tc->muddle_->AddPeer(uri);
 
-  while (true)
-  {
-    TCPClient client(nm);
-    client.Connect(host, port);
-
-    for (std::size_t i = 0; i < 10; ++i)
+    int counter = 40;
+    for (;;)
     {
-      if (client.is_alive())
+      if (!counter--)
       {
-        nm.Stop();
-        return;
+        tc.reset();
+        FETCH_LOG_WARN(LOGGING_NAME, "No peer, exiting..!");
+        return tc;
       }
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      if (tc->muddle_->UriToDirectAddress(uri, tc->address_))
+      {
+        return tc;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
+
+    return tc;
   }
-}
 
-void BlockUntilConnect(uint16_t port)
-{
-  BlockUntilConnect("localhost", port);
-}
+  template <typename... Args>
+  Promise Call(fetch::service::protocol_handler_type const &protocol,
+               fetch::service::function_handler_type const &function, Args &&... args)
+  {
+    return client_->CallSpecificAddress(address_, protocol, function, std::forward<Args>(args)...);
+  }
 
-VerifiedTransaction GetRandomTx(uint64_t seed)
+  template <typename... Args>
+  Promise CallAndWait(fetch::service::protocol_handler_type const &protocol,
+                      fetch::service::function_handler_type const &function, Args &&... args)
+  {
+    auto prom = Call(protocol, function, std::forward<Args>(args)...);
+
+    if (!prom->Wait(2000, true))
+    {
+      std::cout << "Failed to make call to client" << std::endl;
+      exit(1);
+    }
+    return prom;
+  }
+
+  MuddleTestClient() = default;
+
+  ~MuddleTestClient()
+  {
+    muddle_->Shutdown();
+    muddle_->Stop();
+  }
+
+private:
+  ClientPtr client_;
+  Address   address_;
+  MuddlePtr muddle_;
+};
+
+VerifiedTransaction GetRandomTx(crypto::ECDSASigner &certificate, uint64_t seed)
 {
   MutableTransaction tx;
   // Fill the body of the TX with incrementing sequence so we can see it in wireshark etc.
@@ -109,118 +144,21 @@ VerifiedTransaction GetRandomTx(uint64_t seed)
 
   tx.set_fee(seed);  // easiest way to create random tx.
   tx.set_data(marker);
+  tx.Sign(certificate.underlying_private_key());
   return VerifiedTransaction::Create(tx);
 }
 
-class ControllerProtocol : public Protocol
-{
-
-  using connectivity_details_type  = LaneConnectivityDetails;
-  using service_client_type        = fetch::service::ServiceClient;
-  using shared_service_client_type = std::shared_ptr<service_client_type>;
-  using client_register_type       = fetch::network::ConnectionRegister<connectivity_details_type>;
-  using mutex_type                 = fetch::mutex::Mutex;
-  using connection_handle_type     = client_register_type::connection_handle_type;
-  using ClientRegister             = ConnectionRegister<LaneConnectivityDetails>;
-
-public:
-  enum
-  {
-    CONNECT = 1
-  };
-
-  ControllerProtocol(ClientRegister reg, NetworkManager nm)
-    : register_{std::move(reg)}
-    , nm_{nm}
-  {
-    this->Expose(CONNECT, this, &ControllerProtocol::Connect);
-  }
-
-  void Connect(std::string const &host, uint16_t const &port)
-  {
-    std::shared_ptr<ServiceClient> client =
-        register_.CreateServiceClient<TCPClient>(nm_, host, port);
-
-    // Wait for connection to be open
-    if (!client->WaitForAlive(1000))
-    {
-      std::cout << "+++ Failed to connect client " << __LINE__ << std::endl;
-      exit(1);
-    }
-
-    {
-      std::lock_guard<mutex_type> lock_(services_mutex_);
-      services_[client->handle()] = client;
-    }
-  }
-
-private:
-  ClientRegister register_;
-  NetworkManager nm_;
-
-  mutex_type services_mutex_{__LINE__, __FILE__};
-  std::unordered_map<connection_handle_type, shared_service_client_type> services_;
-};
-
-class TestService : public ServiceServer<TCPServer>
+class TestService : public LaneService
 {
 public:
-  using ClientRegister           = ConnectionRegister<LaneConnectivityDetails>;
-  using TransactionStore         = ObjectStore<VerifiedTransaction>;
-  using TxSyncProtocol           = TransactionStoreSyncProtocol;
-  using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
-  using Super                    = ServiceServer<TCPServer>;
+  using Super = LaneService;
 
-  enum
-  {
-    TX_STORE = 1,
-    TX_STORE_SYNC,
-    CONTROLLER
-  };
-
-  TestService(uint16_t const &port, NetworkManager nm)
-    : Super(port, nm)
-  {
-    thread_pool_ = MakeThreadPool(1);
-    this->SetConnectionRegister(register_);
-
-    // Load TX store
-    std::string prefix = std::to_string(port);
-    tx_store_->New(prefix + "_tst_transaction.db", prefix + "_tst_transaction_index.db", true);
-
-    tx_sync_protocol_ =
-        std::make_unique<TxSyncProtocol>(TX_STORE_SYNC, register_, thread_pool_, *tx_store_, 1);
-
-    tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
-    tx_store_protocol_->OnSetObject(
-        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
-
-    this->Add(TX_STORE, tx_store_protocol_.get());
-    this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());
-
-    controller_protocol_ = std::make_unique<ControllerProtocol>(register_, nm);
-    this->Add(CONTROLLER, controller_protocol_.get());
-
-    thread_pool_->Start();
-    tx_sync_protocol_->Start();
-    this->Start();
-  }
-
-  ~TestService()
-  {
-    this->Stop();
-    thread_pool_->Stop();
-  }
-
-private:
-  ThreadPool     thread_pool_;
-  ClientRegister register_;
-
-  std::unique_ptr<TransactionStore>         tx_store_ = std::make_unique<TransactionStore>();
-  std::unique_ptr<TransactionStoreProtocol> tx_store_protocol_;
-  std::unique_ptr<TxSyncProtocol>           tx_sync_protocol_;
-
-  std::unique_ptr<ControllerProtocol> controller_protocol_;
+  TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
+              std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
+              std::size_t               verification_threads = 1)
+    : Super("test_", lane, total_lanes, port, tm, verification_threads, true, timeout,
+            std::chrono::milliseconds(1000), std::chrono::milliseconds(1000))
+  {}
 };
 
 TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1)
@@ -232,25 +170,28 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
+  test_service.Start();
 
-  BlockUntilConnect("localhost", initial_port);
+  auto                client = MuddleTestClient::CreateTestClient(nm, "127.0.0.1", initial_port);
+  crypto::ECDSASigner certificate;
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Got client, sending tx");
   for (std::size_t i = 0; i < 100; ++i)
   {
-    VerifiedTransaction tx = GetRandomTx(i);
+    VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    auto promise =
-        CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                       ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
+  FETCH_LOG_INFO(LOGGING_NAME, "Got client, sent all tx");
 
   // Now verify we can get the tx from the store
   for (auto const &tx : sent)
   {
-    auto promise = CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
     uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
@@ -259,7 +200,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
       EXPECT_EQ(fee, tx.summary().fee);
     }
   }
-
+  test_service.Stop();
   nm.Stop();
 }
 
@@ -272,16 +213,16 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
+  test_service.Start();
 
-  BlockUntilConnect("localhost", initial_port);
-
+  auto                client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port);
+  crypto::ECDSASigner certificate;
   for (std::size_t i = 0; i < 100; ++i)
   {
-    VerifiedTransaction tx = GetRandomTx(i);
+    VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    auto promise =
-        CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                       ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
@@ -289,8 +230,8 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   // Now verify we can get the tx from the store
   for (auto const &tx : sent)
   {
-    auto promise = CallPeer(nm, "localhost", initial_port, TestService::TX_STORE,
-                            ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
     uint64_t fee = promise->As<VerifiedTransaction>().summary().fee;
 
@@ -299,143 +240,160 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
       EXPECT_EQ(fee, tx.summary().fee);
     }
   }
-
+  test_service.Stop();
   nm.Stop();
 }
 
-TEST(storage_object_store_sync_gtest, DISABLED_transaction_store_protocol_local_threads_caching)
+TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_caching)
 {
   // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
   NetworkManager nm{50};
   nm.Start();
 
   uint16_t                                  initial_port       = 8080;
-  uint16_t                                  number_of_services = 5;
+  uint16_t                                  number_of_services = 3;
   std::vector<std::shared_ptr<TestService>> services;
+  crypto::ECDSASigner                       certificate;
 
   // Start up our services
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
-    services.push_back(std::make_shared<TestService>(initial_port + i, nm));
+    services.push_back(
+        std::make_shared<TestService>(static_cast<uint16_t>(initial_port + i), nm, i, 1));
+    services.back()->Start();
   }
 
-  // make sure they are all online
-  for (uint16_t i = 0; i < number_of_services; ++i)
-  {
-    BlockUntilConnect(uint16_t(initial_port + i));
-  }
+  FETCH_LOG_WARN(LOGGING_NAME, "Sending peers to clients");
 
   // Connect our services to each other
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
+    LaneController::UriSet uris;
+    auto                   client = MuddleTestClient::CreateTestClient(nm, "localhost",
+                                                     static_cast<uint16_t>(initial_port + i));
     for (uint16_t j = 0; j < number_of_services; ++j)
     {
       if (i != j)
       {
-        CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
-                 ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + j));
+        uris.insert(
+            LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port + j))));
       }
     }
+    client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
   }
 
   // Now send all the TX to one of the clients
   std::vector<VerifiedTransaction> sent;
 
-  std::cout << "Sending txes to clients" << std::endl;
+  FETCH_LOG_WARN(LOGGING_NAME, "Sending txes to clients");
 
-  for (std::size_t i = 0; i < 500; ++i)
+  auto client = MuddleTestClient::CreateTestClient(nm, "localhost", initial_port);
+
+  for (std::size_t i = 0; i < 200; ++i)
   {
-    VerifiedTransaction tx = GetRandomTx(i);
+    VerifiedTransaction tx = GetRandomTx(certificate, i);
 
-    CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
-             ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+    auto promise = client->Call(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::SET,
+                                ResourceID(tx.digest()), tx);
 
     sent.push_back(tx);
   }
 
+  FETCH_LOG_WARN(LOGGING_NAME, "Sent txes to client 1.");
+
   // Check all peers have identical transaction stores
-  bool failed_to_sync = false;
+  // bool failed_to_sync = false;
 
   // wait as long as is reasonable
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  FETCH_LOG_WARN(LOGGING_NAME, "Waiting...");
 
-  std::cout << "Verifying peers synced" << std::endl;
+  for (auto &service : services)
+  {
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    } while (!service->SyncIsReady());
+  }
+
+  client = nullptr;
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Verifying peers synced");
 
   // Now verify we can get the tx from the each client
   for (uint16_t i = 0; i < number_of_services; ++i)
   {
+    client = MuddleTestClient::CreateTestClient(nm, "localhost",
+                                                static_cast<uint16_t>(initial_port + i));
     for (auto const &tx : sent)
     {
-      auto promise =
-          CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::TX_STORE,
-                   ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
+      auto promise = client->CallAndWait(
+          RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET, ResourceID(tx.digest()));
 
       VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
 
       if (tx_rec.summary().fee != tx.summary().fee)
       {
-        std::cout << "Client " << i << std::endl;
-        std::cout << ToHex(tx_rec.data()) << std::endl;
+        FETCH_LOG_INFO(LOGGING_NAME, "Client ", i, " ", ToHex(tx_rec.data()));
         EXPECT_EQ(tx_rec.summary().fee, tx.summary().fee);
       }
     }
 
     EXPECT_EQ(i, i);
   }
+  client = nullptr;
 
-  std::cout << "Test new joiner case" << std::endl;
+  FETCH_LOG_INFO(LOGGING_NAME, "Test new joiner case");
 
   // Now test new joiner case, add new joiner
-  services.push_back(
-      std::make_shared<TestService>(uint16_t(initial_port + number_of_services), nm));
+  services.push_back(std::make_shared<TestService>(
+      static_cast<uint16_t>(initial_port + number_of_services), nm, number_of_services, 1));
+  services.back()->Start();
 
-  BlockUntilConnect(uint16_t(initial_port + number_of_services));
-
-  // Connect to peers
-  for (uint16_t i = 0; i < number_of_services; ++i)
+  client = MuddleTestClient::CreateTestClient(
+      nm, "localhost", static_cast<uint16_t>(initial_port + number_of_services));
+  LaneController::UriSet uris;
+  for (uint16_t j = 0; j < number_of_services; ++j)
   {
-    CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services), TestService::CONTROLLER,
-             ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i));
+    uris.insert(LaneController::Uri(Peer("localhost", static_cast<uint16_t>(initial_port + j))));
   }
+  client->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
 
   // Wait until the sync is done
-  while (true)
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new joiner to sync.");
+  do
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  } while (!services.back()->SyncIsReady());
 
-    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                            TestService::TX_STORE_SYNC, TestService::TxSyncProtocol::FINISHED_SYNC);
+  FETCH_LOG_INFO(LOGGING_NAME, "Verifying new joiner sync.");
 
-    if (promise->As<bool>())
-    {
-      break;
-    }
-
-    std::cout << "Waiting for new joiner to sync." << std::endl;
-  }
-
-  std::cout << "Verifying new joiner sync." << std::endl;
-
-  failed_to_sync = false;
+  bool failed_to_sync = false;
 
   // Verify the new joiner
   for (auto const &tx : sent)
   {
-    auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services),
-                            TestService::TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
-                            ResourceID(tx.digest()));
+    auto promise = client->CallAndWait(RPC_TX_STORE, ObjectStoreProtocol<VerifiedTransaction>::GET,
+                                       ResourceID(tx.digest()));
 
-    if (promise->As<VerifiedTransaction>().summary().fee != tx.summary().fee)
+    VerifiedTransaction tx_rec = promise->As<VerifiedTransaction>();
+
+    if (tx_rec.summary().fee != tx.summary().fee)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Client ", number_of_services, " ", ToHex(tx_rec.data()));
       failed_to_sync = true;
-      std::cout << "Expecting: " << tx.summary().fee << std::endl;
-      EXPECT_EQ(std::string("Fees are the same "), std::string("x"));
     }
   }
 
   EXPECT_EQ(failed_to_sync, false);
 
+  for (auto &service : services)
+  {
+    service->Stop();
+  }
+  services.clear();
+
   nm.Stop();
+  FETCH_LOG_WARN(LOGGING_NAME, "End of test");
 }
 
 /*

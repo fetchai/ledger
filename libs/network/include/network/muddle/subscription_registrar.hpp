@@ -96,7 +96,9 @@ public:
   SubscriptionPtr Register(uint16_t service, uint16_t channel);
   /// @}
 
-  bool Dispatch(PacketPtr packet);
+  bool Dispatch(PacketPtr packet, Address transmitter);
+
+  void Debug(std::string const &prefix);
 
 private:
   using Mutex              = mutex::Mutex;

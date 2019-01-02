@@ -16,30 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
+#include "ledger/storage_unit/lane_controller.hpp"
 
-#include "core/random/lcg.hpp"
-#include "math/free_functions/free_functions.hpp"
-#include <math/linalg/matrix.hpp>
+namespace fetch {
+namespace ledger {
 
-using namespace fetch::math::linalg;
-
-using data_type            = float;
-using container_type       = fetch::memory::SharedArray<data_type>;
-using matrix_type          = Matrix<data_type, container_type>;
-using vector_register_type = typename matrix_type::vector_register_type;
-
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
-
-TEST(free_functions, sigmoid_test)
+void LaneController::WorkCycle()
 {
-  matrix_type A;
-  fetch::math::Sigmoid(A);
-  ASSERT_TRUE(1);
+  UriSet remove;
+  UriSet create;
+
+  GeneratePeerDeltas(create, remove);
+
+  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:create:", create.size());
+  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:remove:", remove.size());
+
+  for (auto &uri : create)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:creating:", uri.ToString());
+    muddle_->AddPeer(Uri(uri.ToString()));
+  }
+
+  for (auto &uri : create)
+  {
+    Address target_address;
+    if (muddle_->UriToDirectAddress(uri, target_address))
+    {
+      peer_connections_[uri] = target_address;
+    }
+  }
 }
+
+}  // namespace ledger
+}  // namespace fetch

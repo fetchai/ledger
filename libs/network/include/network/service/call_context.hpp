@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,31 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/object_store.hpp"
-#include "core/commandline/cli_header.hpp"
-#include <iostream>
-using namespace fetch::storage;
+#include "core/byte_array/const_byte_array.hpp"
 
-int main()
+namespace fetch {
+namespace service {
+
+/* A class that defines the context specific parameters being passed to an invoked API func.
+ *
+ */
+class CallContext
 {
-  //  fetch::logger.DisableLogger();
-  ObjectStore<int> hello;
-  hello.Load("fileA.db", "indexA.db");
+public:
+  using Address = fetch::byte_array::ConstByteArray;
 
-  int x = 128312;
-  int y = 0;
-  int z = 0;
+  Address sender_address;
+};
 
-  // First run, this will fail. Second run, this will be loaded from file
-  bool success = hello.Get(ResourceID("blah"), y);
-
-  std::cout << "success: " << success << std::endl;
-  std::cout << y << std::endl;
-
-  hello.Set(ResourceID("blah"), x);
-  hello.Get(ResourceID("blah"), z);
-
-  std::cout << z << std::endl;
-
-  return 0;
-}
+}  // namespace service
+}  // namespace fetch

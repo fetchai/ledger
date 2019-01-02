@@ -27,7 +27,7 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 template <typename T, typename C>
 class NDArray;
 
