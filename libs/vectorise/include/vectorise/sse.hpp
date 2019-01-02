@@ -28,6 +28,8 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
+#include <iostream>
+
 namespace fetch {
 namespace vectorize {
 
@@ -65,26 +67,38 @@ public:
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
-  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
-                "type cannot be contained in the given register size.");
+//  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
+//                "type cannot be contained in the given register size.");
 
-  VectorRegister() = default;
+  void print_stuff()
+  {
+    std::cout << "E_BLOCK_COUNT: " << E_BLOCK_COUNT << std::endl;
+    std::cout << "sizeof(type): " << sizeof(type) << std::endl;
+    std::cout << "E_REGISTER_SIZE: " << E_REGISTER_SIZE << std::endl;
+  }
+
+//  VectorRegister() = default;
+  VectorRegister(){print_stuff();}
   VectorRegister(type const *d)
   {
+    print_stuff();
     data_ = _mm_load_si128((mm_register_type *)d);
   }
   VectorRegister(type const &c)
   {
+    print_stuff();
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
     data_ = _mm_load_si128((mm_register_type *)constant);
   }
   VectorRegister(mm_register_type const &d)
     : data_(d)
-  {}
+  {    print_stuff();
+  }
   VectorRegister(mm_register_type &&d)
     : data_(d)
-  {}
+  {    print_stuff();
+  }
 
   explicit operator mm_register_type()
   {

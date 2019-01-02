@@ -46,13 +46,20 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
   }
   else if (range.is_trivial())
   {
-    auto r = range.ToTrivialRange(ret.data().size());
+    typename ArrayType::vector_register_type x{};
 
-    ret.data().in_parallel().Apply(r,
-                                   [](typename ArrayType::vector_register_type const &x,
-                                      typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &z) { z = x + y; },
-                                   array1.data(), array2.data());
+    // TODO: problem is that sizeof(FixedPoint) is 24, and 24 doesn't go into 128
+
+    std::cout << "typeid(array1.data()).name(): " << typeid(array1.data()).name() << std::endl;
+    std::cout << "typeid(array2.data()).name(): " << typeid(array2.data()).name() << std::endl;
+    std::cout << "typeid(x).name(): " << typeid(x).name() << std::endl;
+    //    auto r = range.ToTrivialRange(ret.data().size());
+//
+//    ret.data().in_parallel().Apply(r,
+//                                   [](typename ArrayType::vector_register_type const &x,
+//                                      typename ArrayType::vector_register_type const &y,
+//                                      typename ArrayType::vector_register_type &z) { z = x + y; },
+//                                   array1.data(), array2.data());
   }
   else
   {
