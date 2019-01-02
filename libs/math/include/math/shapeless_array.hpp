@@ -560,8 +560,8 @@ public:
     return ret;
   }
 
-  bool AllClose(ShapelessArray const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
-                bool ignoreNaN = true) const
+  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
+                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
     if (other.size() != N)
@@ -571,17 +571,17 @@ public:
     bool ret = true;
     for (std::size_t i = 0; ret && i < N; ++i)
     {
-      double va = this->At(i);
+      Type va = this->At(i);
       if (ignoreNaN && std::isnan(va))
       {
         continue;
       }
-      double vb = other[i];
+      Type vb = other[i];
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      double vA = (va - vb);
+      Type vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -594,25 +594,25 @@ public:
       {
         vb = -vb;
       }
-      double M = std::max(va, vb);
+      Type M = std::max(va, vb);
 
-      ret &= (vA < std::max(atol, M * rtol));
+      ret &= (vA <= std::max(atol, M * rtol));
     }
     if (!ret)
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        double va = this->At(i);
+        Type va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        double vb = other[i];
+        Type vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        double vA = (va - vb);
+        Type vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -625,7 +625,7 @@ public:
         {
           vb = -vb;
         }
-        double M = std::max(va, vb);
+        Type M = std::max(va, vb);
         std::cout << this->At(i) << " " << other[i] << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
@@ -1054,6 +1054,45 @@ public:
   ShapelessArray operator+(OtherType const &other)
   {
     fetch::math::Add(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * + operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator-(OtherType const &other)
+  {
+    fetch::math::Subtract(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * * operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator*(OtherType const &other)
+  {
+    fetch::math::Multiply(*this, other, *this);
+    return *this;
+  }
+
+  /**
+   * / operator
+   * @tparam OtherType may be a scalar or array, but must be arithmetic
+   * @param other
+   * @return
+   */
+  template <typename OtherType>
+  ShapelessArray operator/(OtherType const &other)
+  {
+    fetch::math::Divide(*this, other, *this);
     return *this;
   }
 
