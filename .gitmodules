@@ -7,6 +7,7 @@
 [submodule "docker-images"]
 	path = docker-images
 	url = ../../uvue-git/docker-images.git
+	ignore = dirty
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = ../../google/googletest.git
