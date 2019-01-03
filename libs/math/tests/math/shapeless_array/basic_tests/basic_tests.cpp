@@ -23,6 +23,7 @@
 #include "math/shapeless_array.hpp"
 #include <gtest/gtest.h>
 
+<<<<<<< HEAD
 #include "core/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
 
@@ -47,6 +48,12 @@ ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<
 /// template for producing a random array of integer types
 template <typename T>
 fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+=======
+using namespace fetch::math;
+
+template <typename T>
+ShapelessArray<T, fetch::memory::SharedArray<T>> RandomArray(std::size_t n, T adj)
+>>>>>>> bugfix/rectangular_array_all_close
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
@@ -54,7 +61,11 @@ fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> Ra
   // because random numbers are between 0 and 1 which doesn't work for integers
   double scale = 1000;
 
+<<<<<<< HEAD
   T rn{0};
+=======
+  T rn;
+>>>>>>> bugfix/rectangular_array_all_close
   for (std::size_t i = 0; i < n; ++i)
   {
     rn       = T(gen.AsDouble() * scale);
@@ -63,6 +74,7 @@ fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> Ra
   return a1;
 }
 
+<<<<<<< HEAD
 /// template for producing a random array of float types
 template <typename T>
 fetch::meta::IfIsFloat <T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
@@ -80,6 +92,8 @@ fetch::meta::IfIsFloat <T, ShapelessArray<T, fetch::memory::SharedArray<T>>> Ran
 }
 
 
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 ///////////////////////////
 /// assignment operator ///
 ///////////////////////////
@@ -88,18 +102,29 @@ template <typename T>
 void equal_test()
 {
   std::size_t       n            = 10000;
+<<<<<<< HEAD
   ShapelessArray<T> test_array   = RandomArray(n, T(0));
+=======
+  ShapelessArray<T> test_array   = RandomArray<T>(n, 0);
+>>>>>>> bugfix/rectangular_array_all_close
   ShapelessArray<T> result_array = test_array;
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 TEST(ndarray, int_equals_test)
 {
   equal_test<int>();
 }
+<<<<<<< HEAD
 TEST(ndarray, uint32_t_equals_test)
+=======
+TEST(ndarray, size_t_equals_test)
+>>>>>>> bugfix/rectangular_array_all_close
 {
   equal_test<uint32_t>();
 }
@@ -111,6 +136,7 @@ TEST(ndarray, double_equals_test)
 {
   equal_test<double>();
 }
+<<<<<<< HEAD
 //TEST(ndarray, fixed_equals_test_16)
 //{
 //  equal_test<fetch::fixed_point::FixedPoint<16, 16>>();
@@ -124,6 +150,8 @@ TEST(ndarray, fixed_equals_test_32)
 //  equal_test<fetch::fixed_point::FixedPoint<64, 64>>();
 //}
 
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 
 ////////////
 /// copy ///
@@ -133,7 +161,11 @@ template <typename T>
 void copy_test()
 {
   std::size_t       n          = 10000;
+<<<<<<< HEAD
   ShapelessArray<T> test_array = RandomArray(n, T(0));
+=======
+  ShapelessArray<T> test_array = RandomArray<T>(n, 0);
+>>>>>>> bugfix/rectangular_array_all_close
   ShapelessArray<T> result_array(n);
   result_array.Copy(test_array);
 
@@ -142,6 +174,7 @@ void copy_test()
 
 TEST(ndarray, int_copy_test)
 {
+<<<<<<< HEAD
   copy_test<int>();
 }
 TEST(ndarray, size_t_copy_test)
@@ -159,6 +192,21 @@ TEST(ndarray, double_copy_test)
 TEST(ndarray, fixed_copy_test_32)
 {
   copy_test<fetch::fixed_point::FixedPoint<32, 32>>();
+=======
+  equal_test<int>();
+}
+TEST(ndarray, size_t_copy_test)
+{
+  equal_test<uint32_t>();
+}
+TEST(ndarray, float_copy_test)
+{
+  equal_test<float>();
+}
+TEST(ndarray, double_copy_test)
+{
+  equal_test<double>();
+>>>>>>> bugfix/rectangular_array_all_close
 }
 
 //////////////////
@@ -168,7 +216,11 @@ TEST(ndarray, fixed_copy_test_32)
 template <typename T>
 void plus_test()
 {
+<<<<<<< HEAD
   std::size_t       n            = 10;
+=======
+  std::size_t       n            = 10000;
+>>>>>>> bugfix/rectangular_array_all_close
   ShapelessArray<T> test_array   = RandomArray(n, T(0));
   ShapelessArray<T> test_array_2 = RandomArray(n, T(0));
   ShapelessArray<T> result_array = RandomArray(n, T(0));
@@ -177,12 +229,15 @@ void plus_test()
   {
     result_array[j] = test_array[j] + test_array_2[j];
   }
+<<<<<<< HEAD
 
 //  // TODO - implement sse for fixed point in order to permit ordinary array operations with fixed point
 //  for (std::size_t j = 0; j < result_array.size(); ++j)
 //  {
 //    ASSERT_TRUE(result_array.At(j) == test_array[j] + test_array_2[j]);
 //  }
+=======
+>>>>>>> bugfix/rectangular_array_all_close
   ASSERT_TRUE(result_array.AllClose(test_array + test_array_2));
 }
 
@@ -190,6 +245,7 @@ TEST(ndarray, integer_plus_test)
 {
   plus_test<int>();
 }
+<<<<<<< HEAD
 //TEST(ndarray, size_t_plus_test)
 //{
 //  plus_test<uint32_t>();
@@ -205,6 +261,19 @@ TEST(ndarray, integer_plus_test)
 TEST(ndarray, fixed_plus_test_32)
 {
   plus_test<fetch::fixed_point::FixedPoint<32, 32>>();
+=======
+TEST(ndarray, size_t_plus_test)
+{
+  plus_test<uint32_t>();
+}
+TEST(ndarray, float_plus_test)
+{
+  plus_test<float>();
+}
+TEST(ndarray, double_plus_test)
+{
+  plus_test<double>();
+>>>>>>> bugfix/rectangular_array_all_close
 }
 
 //////////////////
@@ -223,6 +292,7 @@ void sub_test()
   {
     result_array[j] = test_array[j] - test_array_2[j];
   }
+<<<<<<< HEAD
 
   // TODO - implement sse for fixed point in order to permit ordinary array operations with fixed point
   for (std::size_t j = 0; j < result_array.size(); ++j)
@@ -231,6 +301,9 @@ void sub_test()
   }
 //  ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
 
+=======
+  ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
+>>>>>>> bugfix/rectangular_array_all_close
 }
 
 TEST(ndarray, integer_sub_test)
@@ -249,10 +322,13 @@ TEST(ndarray, double_sub_test)
 {
   sub_test<double>();
 }
+<<<<<<< HEAD
 TEST(ndarray, fixed_sub_test_32)
 {
   sub_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 
 //////////////////
 /// * operator ///
@@ -268,6 +344,7 @@ void mult_test()
 
   for (std::size_t j = 0; j < result_array.size(); ++j)
   {
+<<<<<<< HEAD
     result_array[j] = test_array.At(j) * test_array_2.At(j);
   }
 
@@ -277,6 +354,11 @@ void mult_test()
     ASSERT_TRUE(result_array.At(j) == test_array[j] * test_array_2[j]);
   }
 //  ASSERT_TRUE(result_array.AllClose(test_array * test_array_2));
+=======
+    result_array[j] = test_array[j] * test_array_2[j];
+  }
+  ASSERT_TRUE(result_array.AllClose(test_array * test_array_2));
+>>>>>>> bugfix/rectangular_array_all_close
 }
 
 TEST(ndarray, integer_mult_test)
@@ -295,10 +377,13 @@ TEST(ndarray, double_mult_test)
 {
   mult_test<double>();
 }
+<<<<<<< HEAD
 TEST(ndarray, fixed_mult_test_32)
 {
    mult_test<fetch::fixed_point::FixedPoint<32, 32>>();
 }
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 
 //////////////////
 /// / operator ///
@@ -339,10 +424,13 @@ TEST(ndarray, double_div_test)
 {
   div_test<double>();
 }
+<<<<<<< HEAD
 //TEST(ndarray, fixed_div_test_32)
 //{
 //  div_test<fetch::fixed_point::FixedPoint<32, 32>>();
 //}
+=======
+>>>>>>> bugfix/rectangular_array_all_close
 
 ///////////////////////////
 ///// equality operator ///

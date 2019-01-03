@@ -70,6 +70,7 @@ public:
 //  static_assert((E_BLOCK_COUNT * sizeof(type)) == E_REGISTER_SIZE,
 //                "type cannot be contained in the given register size.");
 
+<<<<<<< HEAD
   void print_stuff()
   {
     std::cout << "E_BLOCK_COUNT: " << E_BLOCK_COUNT << std::endl;
@@ -79,6 +80,9 @@ public:
 
 //  VectorRegister() = default;
   VectorRegister(){print_stuff();}
+=======
+  VectorRegister() = default;
+>>>>>>> bugfix/rectangular_array_all_close
   VectorRegister(type const *d)
   {
     print_stuff();
@@ -335,6 +339,7 @@ FETCH_ADD_OPERATOR(*, int32_t, __m128i, _mm_mullo_epi32)
 inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const &a,
                                               VectorRegister<int32_t, 128> const &b)
 {
+<<<<<<< HEAD
 
   // TODO(private 440): SSE implementation required
   int32_t d1[4];
@@ -378,6 +383,51 @@ inline VectorRegister<uint32_t, 128> operator/(VectorRegister<uint32_t, 128> con
 
   uint32_t ret[4];
 
+=======
+
+  // TODO(private 440): SSE implementation required
+  int32_t d1[4];
+  _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
+
+  int32_t d2[4];
+  _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
+
+  int32_t ret[4];
+
+  // don't divide by zero
+  // set each of the 4 values in the vector register to either the solution of the division or 0
+  ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
+  ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
+  ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
+  ret[3] = d2[3] != 0 ? d1[3] / d2[3] : 0;
+
+  return VectorRegister<int32_t, 128>(ret);
+}
+
+FETCH_ADD_OPERATOR(==, int32_t, __m128i, _mm_cmpeq_epi32)
+// FETCH_ADD_OPERATOR(!=, int32_t, __m128i, _mm_cmpneq_epi32)
+// FETCH_ADD_OPERATOR(>=, int32_t, __m128i, _mm_cmpge_epi32)
+// FETCH_ADD_OPERATOR(>, int32_t, __m128i, _mm_cmpgt_epi32)
+// FETCH_ADD_OPERATOR(<=, int32_t, __m128i, _mm_cmple_epi32)
+FETCH_ADD_OPERATOR(<, int32_t, __m128i, _mm_cmplt_epi32)
+
+FETCH_ADD_OPERATOR(*, uint32_t, __m128i, _mm_mullo_epi32)
+FETCH_ADD_OPERATOR(-, uint32_t, __m128i, _mm_sub_epi32)
+FETCH_ADD_OPERATOR(+, uint32_t, __m128i, _mm_add_epi32)
+inline VectorRegister<uint32_t, 128> operator/(VectorRegister<uint32_t, 128> const &a,
+                                               VectorRegister<uint32_t, 128> const &b)
+{
+
+  // TODO(private 440): SSE implementation required
+  uint32_t d1[4];
+  _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
+
+  uint32_t d2[4];
+  _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
+
+  uint32_t ret[4];
+
+>>>>>>> bugfix/rectangular_array_all_close
   ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
   ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
   ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
