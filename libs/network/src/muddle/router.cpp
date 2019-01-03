@@ -89,28 +89,6 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
   return equal;
 }
 
-/**
- * Convert one address format to another
- *
- * @param address The input address
- * @return The output address
- */
-Packet::RawAddress ConvertAddress(Packet::Address const &address)
-{
-  Packet::RawAddress raw_address;
-
-  if (raw_address.size() != address.size())
-  {
-    throw std::runtime_error("Unable to convert one address to another");
-  }
-
-  for (std::size_t i = 0; i < address.size(); ++i)
-  {
-    raw_address[i] = address[i];
-  }
-
-  return raw_address;
-}
 
 /**
  * Comparison operation
@@ -194,6 +172,29 @@ std::string DescribePacket(Packet const &packet)
 }
 
 }  // namespace
+
+/**
+ * Convert one address format to another
+ *
+ * @param address The input address
+ * @return The output address
+ */
+  Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
+  {
+    Packet::RawAddress raw_address;
+
+    if (raw_address.size() != address.size())
+    {
+      throw std::runtime_error("Unable to convert one address to another: raw:"+std::to_string(raw_address.size())+ ", actual: "+std::to_string(address.size()));
+    }
+
+    for (std::size_t i = 0; i < address.size(); ++i)
+    {
+      raw_address[i] = address[i];
+    }
+
+    return raw_address;
+  }
 
 /**
  * Constructs a muddle router instance
@@ -537,10 +538,8 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     FETCH_LOCK(routing_table_lock_);
 
-    if (direct)
-    {
-      direct_address_map_[handle] = ToConstByteArray(address);
-    }
+    FETCH_LOG_WARN(LOGGING_NAME, "(AB): AssociateHandleWithAddress: handle=", handle, ", address: ", fetch::byte_array::ToBase64(ToConstByteArray(address)));
+
 
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
@@ -572,6 +571,15 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
       // signal an update was made to the table
       update_complete = true;
+
+      if (direct)
+      {
+        direct_address_map_[handle] = ToConstByteArray(address);
+        if (prev_handle)
+        {
+          direct_address_map_.erase(prev_handle);
+        }
+      }
     }
   }
 
@@ -604,6 +612,7 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
 {
   Handle handle = 0;
 
+  FETCH_LOG_WARN(LOGGING_NAME, "Lookup handle for : ");
   {
     FETCH_LOCK(routing_table_lock_);
 
@@ -615,9 +624,11 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
       handle = routing_data.handle;
     }
   }
+  FETCH_LOG_WARN(LOGGING_NAME, " handle found : ", handle);
 
   return handle;
 }
+
 
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
 {
@@ -646,20 +657,29 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
-void Router::KillConnection(Handle handle)
+void Router::KillConnection(Handle handle, Address peer)
 {
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
     conn->Close();
+    routing_table_.erase(ConvertAddress(peer));
     direct_address_map_.erase(handle);
-    
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "No connection object available to KillConnection(", handle, ")");
   }
 }
+
+void Router::KillConnection(Handle handle)
+{
+  auto address = direct_address_map_.find(handle);
+  if (address!=direct_address_map_.end()) {
+    KillConnection(handle,address->second);
+  }
+}
+
 
 /**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
@@ -914,18 +934,33 @@ bool Router::IsBlacklisted(Address const &target) const
   return blacklist_.Contains(target);
 }
 
-void Router::DropPeer(Address const &peer)
+void Router::DropPeer(Address &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
   Handle h = LookupHandle(ConvertAddress(peer));
   if (h)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Dropping ", ToBase64(peer));
-    KillConnection(h);
+    KillConnection(h, peer);
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
   }
+}
+
+void Router::DropHandle(Router::Handle handle, const Address &peer)
+{
+  Debug("AB before drop handle");
+  if (handle)
+  {
+    KillConnection(handle, peer);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "DropHandle got invalid handle: ", handle);
+  }
+  Debug("AB after drop handle");
 }
 
 }  // namespace muddle

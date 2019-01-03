@@ -122,7 +122,28 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
     {
       active_addresses.insert(c.first);
     }
+    /*else
+    {
+      if (c.second.scheme()!=Uri::Scheme::Muddle)
+      {
+        muddle_.AddPeer(c.second);
+      }
+      else
+      {
+        Uri uri;
+        if (identity_cache_.Lookup(c.first, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+        {
+          muddle_.AddPeer(uri);
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Failed to add back connection: ", ToBase64(c.first));
+        }
+      }
+
+    }*/
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Number of active connections: ", active_connections.size(), ", number of active_addresses: ", active_addresses.size());
 }
 
 
@@ -223,8 +244,14 @@ std::list<P2PService::PeerTrust>  P2PService::GetPeersAndTrusts() const
   return r;
 }
 
+bool P2PService::IsDesired(Address const &address)
+{
+  return desired_peers_.find(address)!=desired_peers_.end();
+}
+
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
+  trust_system_.Debug();
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
@@ -255,6 +282,11 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   for (auto const &d : desired_peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
+    Uri uri;
+    if (identity_cache_.Lookup(d, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+    {
+      muddle_.AddPeer(uri);
+    }
   }
   for (auto const &d : dropped_peers)
   {
@@ -269,20 +301,27 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   pending_resolutions_.Resolve();
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key), ": ", result.promised.uri());
-
-    identity_cache_.Update(result.key, result.promised);
-    muddle_.AddPeer(result.promised);
+    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ", result.promised.uri());
+    Uri uri;
+    if (result.promised.scheme()== Uri::Scheme::Tcp){
+        FETCH_LOG_INFO("Resolved: ", ToBase64(result.key.second));
+        identity_cache_.Update(result.key.second, result.promised);
+        muddle_.AddPeer(result.promised);
+    } else {
+      FETCH_LOG_INFO(LOGGING_NAME, "Discarding resolution for peer: ", ToBase64(result.key.second));
+    }
   }
 
   // process all additional peer requests
   Uri uri;
-  for (auto const &address : pending_resolutions_.FilterOutInFlight(new_peers))
+  for (auto const &address : new_peers)
   {
     bool resolve = true;
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding new peers, peer: ", ToBase64(address));
+
     // once the identity has been resolved it can be added as a peer
-    if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+    if (identity_cache_.Lookup(address, uri) && (uri.scheme() == Uri::Scheme::Tcp))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Add peer: ", ToBase64(address));
       muddle_.AddPeer(uri);
@@ -293,10 +332,14 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     if (resolve)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address));
-
-      auto prom = network::PromiseOf<Uri>(
-          client_.CallSpecificAddress(address, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
-      pending_resolutions_.Add(address, prom);
+      for(const auto& addr : active_addresses) {
+        auto key = std::make_pair(addr, address);
+        if (pending_resolutions_.IsInFlight(key)) continue;
+        auto prom = network::PromiseOf<Uri>(
+          client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address), ", promise id=", prom.id());
+        pending_resolutions_.Add(key, prom);
+      }
     }
   }
 
@@ -319,6 +362,8 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting: ", ToBase64(address));
     muddle_.Blacklist(address);
   }
+
+  muddle_.Debug("p2p");
 }
 
 void P2PService::UpdateManifests(AddressSet const &active_addresses)

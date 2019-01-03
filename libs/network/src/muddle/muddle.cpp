@@ -172,7 +172,7 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
       continue;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address), " active: ", IsConnected(address));
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -193,7 +193,18 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
 void Muddle::DropPeer(Address const &peer)
 {
-  router_.DropPeer(peer);
+  FETCH_LOG_WARN(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
+  Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
+  if (h)
+  {
+    router_.DropHandle(h, peer);
+    clients_.RemovePersistentPeer(h);
+    clients_.RemoveConnection(h);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
+  }
 }
 
 /**
@@ -202,25 +213,22 @@ void Muddle::DropPeer(Address const &peer)
 void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
-
+try {
   // connect to all the required peers
-  for (Uri const &peer : clients_.GetPeersToConnectTo())
-  {
-    switch (peer.scheme())
-    {
-    case Uri::Scheme::Tcp:
-      CreateTcpClient(peer);
-      break;
-    default:
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-      break;
+  for (Uri const &peer : clients_.GetPeersToConnectTo()) {
+    switch (peer.scheme()) {
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
     }
   }
 
   // run periodic cleanup
   Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
-  if (time_since_last_cleanup >= CLEANUP_INTERVAL)
-  {
+  if (time_since_last_cleanup >= CLEANUP_INTERVAL) {
     // clean up and pending message handlers and also trigger the timeout logic
     dispatcher_.Cleanup();
 
@@ -229,7 +237,9 @@ void Muddle::RunPeriodicMaintenance()
 
     last_cleanup_ = Clock::now();
   }
-
+} catch (...) {
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Exception caught");
+}
   // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
 }
@@ -266,6 +276,7 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Create TCP client to: ", peer.uri());
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -288,16 +299,20 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
+  strong_conn->OnConnectionSuccess([this, peer]() {
+    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connected to peer: ", peer.uri());
+    clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
+    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection failed...");
     clients_.RemoveConnection(peer);
+    //reg->Leave(strong_conn->handle());  , &reg, &strong_conn
   });
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    clients_.Disconnect(peer);
+    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection left: ", peer.uri());
+    clients_.RemovePersistentPeer(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
@@ -328,6 +343,11 @@ void Muddle::Blacklist(Address const &target)
 {
   FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
+  Handle handle = router_.LookupHandleFromAddress(target);
+  if (handle != 0)
+  {
+    clients_.RemovePersistentPeer(handle);
+  }
   router_.Blacklist(target);
 }
 

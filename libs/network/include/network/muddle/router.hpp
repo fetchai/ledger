@@ -54,6 +54,8 @@ public:
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
 
+  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+
   struct RoutingData
   {
     bool   direct = false;
@@ -112,7 +114,12 @@ public:
   /** If this host is connected close their port.
    * @param peer The target address to killed.
    */
-  void DropPeer(Address const &peer);
+  void DropPeer(Address &address);
+
+  /** Kills the connection with the handle.
+   * @param handle The handle to drop
+   */
+  void DropHandle(Handle handle, const Address &address);
 
   void Cleanup();
 
@@ -147,6 +154,8 @@ public:
    */
   Handle LookupHandleFromAddress(Packet::Address const &address) const;
 
+  Handle LookupHandle(Packet::RawAddress const &address) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -160,12 +169,12 @@ private:
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
-  Handle LookupHandle(Packet::RawAddress const &address) const;
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
+  void KillConnection(Handle handle, Address peer);
   void KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet, Address transmitter);

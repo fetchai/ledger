@@ -202,7 +202,7 @@ struct CommandLineArguments
     parameters.add(args.transient_peers, "transient-peers",
                    "The number of the peers which will be random in answer sent to peer requests.",
                    DEFAULT_TRANSIENT_PEERS);
-    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.", uint32_t(4000));
+    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.", uint32_t(2000));
     // parse the args
     parameters.Parse(argc, argv);
 

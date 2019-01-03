@@ -40,12 +40,17 @@ void PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
   persistent_peers_.emplace(peer);
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Add presistent peer: ", peer.uri());
+
 }
 
 void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Dropping presistent peer: ", peer.uri());
   persistent_peers_.erase(peer);
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Dropped presistent peer: ", peer.uri());
+
 }
 
 void PeerConnectionList::RemovePersistentPeer(Handle &handle)
@@ -55,7 +60,7 @@ void PeerConnectionList::RemovePersistentPeer(Handle &handle)
     if (it->second->handle() == handle)
     {
       persistent_peers_.erase(it->first);
-      peer_connections_.erase(it);
+      //peer_connections_.erase(it); <-- we don't need this
       break;
     }
   }
@@ -76,6 +81,7 @@ void PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &con
   ++metadata.attempts;
 
   peer_connections_[peer] = conn;
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Add connection to peerlist: ", peer.uri());
 }
 
 PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
@@ -176,6 +182,8 @@ PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri cons
 void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
 {
   Handle connection_handle = 0;
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection estabilished: ", peer.uri());
+
 
   // update the connection metadata
   {
@@ -195,11 +203,11 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
 
   // send an identity message
   if (connection_handle)
-  {
+  {  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Con established, adding handle to router: ", peer.uri(), ", handle: ", connection_handle);
     router_.AddConnection(connection_handle);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " established");
+  FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", peer.uri(), " established");
 }
 
 void PeerConnectionList::RemoveConnection(Uri const &peer)
@@ -216,8 +224,24 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   metadata.connected              = false;
   metadata.last_failed_connection = Clock::now();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " lost");
+  FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", peer.uri(), " lost");
 }
+
+void PeerConnectionList::RemoveConnection(Handle handle) {
+  FETCH_LOCK(lock_);
+
+  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it) {
+    if (it->second->handle() == handle) {
+      peer_connections_.erase(it);
+      auto &metadata = peer_metadata_[it->first];
+      metadata.connected = false;
+      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
+
+      break;
+    }
+  }
+}
+
 
 void PeerConnectionList::Disconnect(Uri const &peer)
 {
@@ -230,7 +254,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
 
   persistent_peers_.erase(peer);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+  FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", peer.uri(), " shut down");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
@@ -251,7 +275,6 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
   for (auto const &peer : persistent_peers_)
   {
     bool const inactive = peer_connections_.find(peer) == peer_connections_.end();
-
     if (inactive)
     {
       auto it = peer_metadata_.find(peer);
