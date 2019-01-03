@@ -42,8 +42,8 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name,
       .def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<float>>);
 }
 
 }  // namespace statistics
