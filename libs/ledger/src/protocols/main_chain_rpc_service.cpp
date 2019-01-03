@@ -170,13 +170,13 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(transmitter), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
   if (block.proof()())
   {
-    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
     FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
@@ -192,7 +192,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   }
   else
   {
-    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
+    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
     FETCH_LOG_INFO(LOGGING_NAME, "Peer ", ToBase64(from), " LIED!");
   }
 }

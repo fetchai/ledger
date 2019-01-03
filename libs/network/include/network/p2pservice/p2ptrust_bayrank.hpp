@@ -246,6 +246,13 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
+  virtual void Debug() const override{
+    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos) {
+      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
+                     trust_store_[pos].score);
+    }
+  }
+
   // Operators
   P2PTrustBayRank operator=(const P2PTrustBayRank &rhs) = delete;
   P2PTrustBayRank operator=(P2PTrustBayRank &&rhs) = delete;
@@ -318,9 +325,10 @@ protected:
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
     {
       ranking_store_[trust_store_[pos].peer_identity] = pos;
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", byte_array::ToBase64(trust_store_[pos].peer_identity), " => ", pos);
     }
   }
+
+
 
 protected:
   bool          dirty_ = false;

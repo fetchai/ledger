@@ -266,11 +266,21 @@ inline void Muddle::AddPeer(Uri const &peer)
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
+  //CreateTcpClient(peer);
 }
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
   // KLL -- this doesn't break connections at the moment.
+  Handle handle = 0;
+  if (clients_.UriToHandle(peer, handle))
+  {
+    Address address;
+    if (router_.HandleToDirectAddress(handle, address)) {
+      router_.DropHandle(handle, address);
+      clients_.RemoveConnection(handle);
+    }
+  }
   clients_.RemovePersistentPeer(peer);
 }
 

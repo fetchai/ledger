@@ -92,6 +92,7 @@ public:
   void AddConnection(Uri const &peer, ConnectionPtr const &conn);
   void OnConnectionEstablished(Uri const &peer);
   void RemoveConnection(Uri const &peer);
+  void RemoveConnection(Handle handle);
   void Disconnect(Uri const &peer);
   /// @}
 

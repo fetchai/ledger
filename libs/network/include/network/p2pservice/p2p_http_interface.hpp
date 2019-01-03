@@ -160,9 +160,10 @@ private:
       variant::Variant peer_data     = variant::Variant::Object();
       peer_data["target"] = pt.name;
       peer_data["blacklisted"] = muddle_.IsBlacklisted(pt.address);
-      peer_data["value"]  = pt.trust;
+      peer_data["value"] = pt.trust;
       bool act = muddle_.IsConnected(pt.address);
-      peer_data["active"]  = act;
+      peer_data["active"] = act;
+      peer_data["desired"] = p2p_.IsDesired(pt.address);
 
       if (!act)
       {
