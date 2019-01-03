@@ -84,6 +84,12 @@ namespace storage {
 template <std::size_t S = 256, std::size_t N = 64>
 struct KeyValuePair
 {
+  KeyValuePair()
+  {
+    memset(this, 0, sizeof(decltype(*this)));
+    parent = uint64_t(-1);
+  }
+
   using key_type = Key<S>;
 
   key_type key{};
