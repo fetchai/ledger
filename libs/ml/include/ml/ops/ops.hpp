@@ -21,3 +21,23 @@
 #include "ml/ops/activation_functions.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/utils.hpp"
+
+
+namespace fetch {
+  namespace ml {
+
+    template <class T>
+    class Ops
+    {
+    public:
+      using ArrayType         = T;
+      using ArrayPtrType      = std::shared_ptr<ArrayType>;
+      
+      virtual ArrayPtrType              forward(std::vector<ArrayPtrType> const & inputs) = 0;
+      virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const & inputs, ArrayPtrType error) = 0;
+
+    protected:
+      ArrayPtrType output_;
+    };
+  } // namespace ml
+} // namespace fetch
