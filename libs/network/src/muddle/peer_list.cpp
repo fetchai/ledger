@@ -232,11 +232,10 @@ void PeerConnectionList::RemoveConnection(Handle handle) {
 
   for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it) {
     if (it->second->handle() == handle) {
+      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
       peer_connections_.erase(it);
       auto &metadata = peer_metadata_[it->first];
       metadata.connected = false;
-      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
-
       break;
     }
   }
