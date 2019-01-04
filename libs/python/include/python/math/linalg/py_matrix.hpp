@@ -209,7 +209,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              {
                ret_len = a.height();
              }
-             ShapeLessArray<T> ret{ret_len};
+             ShapelessArray<T> ret{ret_len};
              ArgMax(a, axis, ret);
              return ret;
            })

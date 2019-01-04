@@ -30,7 +30,7 @@ class Matrix;
 }
 
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+T Max(ShapelessArray<T, C> const &array);
 
 /**
  * finite check

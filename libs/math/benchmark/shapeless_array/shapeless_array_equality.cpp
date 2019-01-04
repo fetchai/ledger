@@ -17,14 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "benchmark/benchmark.h"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 
 using namespace fetch::math;
 
 using Type      = double;
-using ArrayType = fetch::math::ShapeLessArray<Type>;
+using ArrayType = fetch::math::ShapelessArray<Type>;
 
-bool shape_less_array_equality_equal(std::size_t size_1, std::size_t size_2, int diff_element = -1)
+bool shapeless_array_equality_equal(std::size_t size_1, std::size_t size_2, int diff_element = -1)
 {
   ArrayType array_1 = ArrayType::Zeroes(size_1);
   ArrayType array_2 = ArrayType::Zeroes(size_2);
@@ -44,7 +44,7 @@ static void BM_shapeless_array_equality_equal_small(benchmark::State &state)
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(10, 10);
+    shapeless_array_equality_equal(10, 10);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_equal_small);
@@ -52,7 +52,7 @@ static void BM_shapeless_array_equality_equal_medium(benchmark::State &state)
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(1000, 1000);
+    shapeless_array_equality_equal(1000, 1000);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_equal_medium);
@@ -60,7 +60,7 @@ static void BM_shapeless_array_equality_equal_large(benchmark::State &state)
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(100000000, 100000000);
+    shapeless_array_equality_equal(100000000, 100000000);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_equal_large);
@@ -69,7 +69,7 @@ static void BM_shapeless_array_equality_unequal_start_small(benchmark::State &st
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(10, 10, 1);
+    shapeless_array_equality_equal(10, 10, 1);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_start_small);
@@ -77,7 +77,7 @@ static void BM_shapeless_array_equality_unequal_start_medium(benchmark::State &s
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(1000, 1000, 10);
+    shapeless_array_equality_equal(1000, 1000, 10);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_start_medium);
@@ -85,7 +85,7 @@ static void BM_shapeless_array_equality_unequal_start_large(benchmark::State &st
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(100000000, 100000000, 100);
+    shapeless_array_equality_equal(100000000, 100000000, 100);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_start_large);
@@ -94,7 +94,7 @@ static void BM_shapeless_array_equality_unequal_end_small(benchmark::State &stat
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(10, 10, 9);
+    shapeless_array_equality_equal(10, 10, 9);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_end_small);
@@ -102,7 +102,7 @@ static void BM_shapeless_array_equality_unequal_end_medium(benchmark::State &sta
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(1000, 1000, 999);
+    shapeless_array_equality_equal(1000, 1000, 999);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_end_medium);
@@ -110,7 +110,7 @@ static void BM_shapeless_array_equality_unequal_end_large(benchmark::State &stat
 {
   for (auto _ : state)
   {
-    shape_less_array_equality_equal(100000000, 100000000, 99999999);
+    shapeless_array_equality_equal(100000000, 100000000, 99999999);
   }
 }
 BENCHMARK(BM_shapeless_array_equality_unequal_end_large);

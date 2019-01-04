@@ -46,8 +46,8 @@ inline void BuildManhattanDistance(std::string const &custom_name, pybind11::mod
       .def(custom_name.c_str(), &WrapperManhattan<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperManhattan<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperManhattan<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperManhattan<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperManhattan<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperManhattan<ShapelessArray<float>>);
 }
 
 }  // namespace distance

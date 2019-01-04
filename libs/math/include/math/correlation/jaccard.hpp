@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -55,8 +55,8 @@ inline typename memory::VectorSlice<T, S>::Type Jaccard(memory::VectorSlice<T, S
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::Type Jaccard(ShapeLessArray<T, C> const &a,
-                                                   ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Jaccard(ShapelessArray<T, C> const &a,
+                                                   ShapelessArray<T, C> const &b)
 {
   return Jaccard(a.data(), b.data());
 }
@@ -81,8 +81,8 @@ inline typename memory::VectorSlice<T, S>::Type GeneralisedJaccard(
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::Type GeneralisedJaccard(ShapeLessArray<T, C> const &a,
-                                                              ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type GeneralisedJaccard(ShapelessArray<T, C> const &a,
+                                                              ShapelessArray<T, C> const &b)
 {
   return GeneralisedJaccard(a.data(), b.data());
 }
