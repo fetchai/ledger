@@ -277,9 +277,15 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       }
     }
   }
+  catch (std::exception &e)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting, because: ", e.what());
+    TODO_FAIL("ThreadPool: Should not got here!");
+  }
   catch (...)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting.");
+    TODO_FAIL("ThreadPool: Should not got here!");
     throw;
   }
 

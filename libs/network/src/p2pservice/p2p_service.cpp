@@ -122,28 +122,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
     {
       active_addresses.insert(c.first);
     }
-    /*else
-    {
-      if (c.second.scheme()!=Uri::Scheme::Muddle)
-      {
-        muddle_.AddPeer(c.second);
-      }
-      else
-      {
-        Uri uri;
-        if (identity_cache_.Lookup(c.first, uri) && (uri.scheme() != Uri::Scheme::Muddle))
-        {
-          muddle_.AddPeer(uri);
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to add back connection: ", ToBase64(c.first));
-        }
-      }
-
-    }*/
   }
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Number of active connections: ", active_connections.size(), ", number of active_addresses: ", active_addresses.size());
 }
 
 
@@ -255,9 +234,6 @@ void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: STATIC PEERS=", static_peers.size(), " FROM ", max_peers_ - transient_peers_);
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: TRANSIENT PEERS=", experimental_peers.size(), " FROM ", transient_peers_);
-
   desired_peers_.clear();
 
   for (auto const &p : static_peers)
@@ -343,18 +319,17 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     }
   }
 
+  auto num_of_active_cons = active_addresses.size();
   // dropping peers
-  for (auto const &address : dropped_peers)
-  {
-    if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
+  if (num_of_active_cons>min_peers_) {
+    for (auto const &address : dropped_peers) {
+      if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle)) {
+        FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
 
-      muddle_.DropPeer(uri);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
+        muddle_.DropPeer(uri);
+      } else {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
+      }
     }
   }
   for (auto const &address : blacklisted_peers_)

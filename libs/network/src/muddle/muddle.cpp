@@ -213,33 +213,40 @@ void Muddle::DropPeer(Address const &peer)
 void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
-try {
-  // connect to all the required peers
-  for (Uri const &peer : clients_.GetPeersToConnectTo()) {
-    switch (peer.scheme()) {
-      case Uri::Scheme::Tcp:
-        CreateTcpClient(peer);
-        break;
-      default:
-        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-        break;
+
+  try
+  {
+    // connect to all the required peers
+    for (Uri const &peer : clients_.GetPeersToConnectTo())
+    {
+      switch (peer.scheme())
+      {
+        case Uri::Scheme::Tcp:
+          CreateTcpClient(peer);
+          break;
+        default:
+          FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+          break;
+      }
+    }
+
+    // run periodic cleanup
+    Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
+    if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+    {
+      // clean up and pending message handlers and also trigger the timeout logic
+      dispatcher_.Cleanup();
+
+      // clean up echo caches and other temporary stored objects
+      router_.Cleanup();
+
+      last_cleanup_ = Clock::now();
     }
   }
-
-  // run periodic cleanup
-  Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
-  if (time_since_last_cleanup >= CLEANUP_INTERVAL) {
-    // clean up and pending message handlers and also trigger the timeout logic
-    dispatcher_.Cleanup();
-
-    // clean up echo caches and other temporary stored objects
-    router_.Cleanup();
-
-    last_cleanup_ = Clock::now();
+  catch (std::exception& e)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
-} catch (...) {
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Exception caught");
-}
   // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
 }
@@ -276,7 +283,6 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Create TCP client to: ", peer.uri());
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -300,18 +306,17 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   // debug handlers
   strong_conn->OnConnectionSuccess([this, peer]() {
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connected to peer: ", peer.uri());
-    clients_.OnConnectionEstablished(peer); });
+    clients_.OnConnectionEstablished(peer);
+  });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection failed...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
     //reg->Leave(strong_conn->handle());  , &reg, &strong_conn
   });
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection left: ", peer.uri());
     clients_.RemovePersistentPeer(peer);
   });
 
@@ -341,7 +346,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
   Handle handle = router_.LookupHandleFromAddress(target);
   if (handle != 0)

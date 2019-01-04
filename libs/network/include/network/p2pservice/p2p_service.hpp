@@ -175,6 +175,7 @@ private:
   P2PManagedLocalServices local_services_;
   ///@}
 
+  std::size_t min_peers_ = 2;
   std::size_t max_peers_;
   std::size_t transient_peers_;
   uint32_t process_cycle_ms_;
