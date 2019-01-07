@@ -112,8 +112,7 @@ public:
   ~P2PTrust() override          = default;
 
   virtual void Debug() const override
-  {
-  }
+  {}
 
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {

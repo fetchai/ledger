@@ -25,7 +25,8 @@
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
 static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS{1000};
-static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED{1};
+static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED{
+    1};
 
 namespace fetch {
 namespace ledger {
@@ -124,7 +125,8 @@ void TransactionVerifier::Dispatcher()
     {
       while (txs.size() < batch_size_ && active_)
       {
-        std::chrono::milliseconds   wait_time{TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
+        std::chrono::milliseconds wait_time{
+            TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
         chain::VerifiedTransaction tx;
         if (txs.empty())
         {

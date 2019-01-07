@@ -65,7 +65,7 @@ public:
 
   PythonWorker()
   {
-    tm_ = fetch::network::MakeThreadPool(1,"PythonWorker");
+    tm_ = fetch::network::MakeThreadPool(1, "PythonWorker");
   }
 
   virtual ~PythonWorker()

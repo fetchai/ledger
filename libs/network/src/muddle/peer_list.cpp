@@ -51,7 +51,7 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 void PeerConnectionList::RemovePersistentPeer(Handle &handle)
 {
   FETCH_LOCK(lock_);
-  for (auto it = peer_connections_.begin();it!=peer_connections_.end();++it)
+  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
   {
     if (it->second->handle() == handle)
     {
@@ -213,7 +213,6 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   ++metadata.total_failures;
   metadata.connected              = false;
   metadata.last_failed_connection = Clock::now();
-
 }
 
 void PeerConnectionList::RemoveConnection(Handle handle)

@@ -327,13 +327,18 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
 
   auto num_of_active_cons = active_addresses.size();
   // dropping peers
-  if (num_of_active_cons>min_peers_) {
-    for (auto const &address : dropped_peers) {
-      if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle)) {
+  if (num_of_active_cons > min_peers_)
+  {
+    for (auto const &address : dropped_peers)
+    {
+      if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+      {
         FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
 
         muddle_.DropPeer(uri);
-      } else {
+      }
+      else
+      {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
       }
     }

@@ -58,7 +58,7 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1, "Muddle "+std::to_string(network_id)))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + std::to_string(network_id)))
   , clients_(router_)
 {
   char tmp[5];
@@ -245,7 +245,7 @@ void Muddle::RunPeriodicMaintenance()
       last_cleanup_ = Clock::now();
     }
   }
-  catch (std::exception& e)
+  catch (std::exception &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
@@ -307,9 +307,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() {
-    clients_.OnConnectionEstablished(peer);
-  });
+  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
