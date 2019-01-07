@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2019 Fetch.AI Limited
+//   Copyright 2018 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,50 +25,55 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-  template <class T>
-  class ReluLayer : public fetch::ml::Ops<T>
+template <class T>
+class ReluLayer : public fetch::ml::Ops<T>
+{
+public:
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  ReluLayer() = default;
+
+  virtual ArrayPtrType forward(std::vector<ArrayPtrType> const &inputs)
   {
-  public:
-    using ArrayType         = T;
-    using ArrayPtrType      = std::shared_ptr<ArrayType>;
+    assert(inputs.size() == 1);
 
-    ReluLayer() = default;
-
-    virtual ArrayPtrType forward(std::vector<ArrayPtrType> const & inputs)
+    if (!zeroes_ || zeroes_->shape() != inputs[0]->shape())
     {
-      assert(inputs.size() == 1);
-
-      if (!zeroes_ || zeroes_->shape() != inputs[0]->shape())
-      	zeroes_ = std::make_shared<ArrayType>(inputs[0]->shape());
-
-      if (!this->output_ || this->output_->shape() != inputs[0]->shape())
-        this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-
-      fetch::math::Maximum(*(inputs[0]), *zeroes_, *this->output_);
-      
-      return this->output_;
+      zeroes_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
-    
-    virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const & inputs, ArrayPtrType errorSignal)
+
+    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {
-      assert(inputs.size() == 1);
-      assert(inputs[0]->shape() == errorSignal->shape());
-
-      for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-	{
-	  if ((*(inputs[0]))[i] <= 0)
-	    {
-	      errorSignal->Set(i, 0);
-	    }
-	}
-      return {errorSignal};
+      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
-    
-  private:
-    // Relu is done in a strange way, comparing input against an array of zeroes
-    // using a parrallel Maximum function 
-    ArrayPtrType zeroes_;
-  };
+
+    fetch::math::Maximum(*(inputs[0]), *zeroes_, *this->output_);
+
+    return this->output_;
+  }
+
+  virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
+  {
+    assert(inputs.size() == 1);
+    assert(inputs[0]->shape() == errorSignal->shape());
+
+    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    {
+      if ((*(inputs[0]))[i] <= 0)
+      {
+        errorSignal->Set(i, 0);
+      }
+    }
+    return {errorSignal};
+  }
+
+private:
+  // Relu is done in a strange way, comparing input against an array of zeroes
+  // using a parrallel Maximum function
+  ArrayPtrType zeroes_;
+};
 
 }  // namespace ops
 }  // namespace ml

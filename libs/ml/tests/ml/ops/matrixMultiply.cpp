@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2019 Fetch.AI Limited
+//   Copyright 2018 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
 //   You may obtain a copy of the License at
 //
-//       http =//www.apache.org/licenses/LICENSE-2.0
+//       http://www.apache.org/licenses/LICENSE-2.0
 //
 //   Unless required by applicable law or agreed to in writing, software
 //   distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,34 +16,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include "math/ndarray.hpp"
-#include "math/linalg/matrix.hpp"
 #include "ml/ops/matrixMultiply.hpp"
+#include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
+#include <gtest/gtest.h>
 
 TEST(matrixMultiply_test, forward_test)
 {
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> a  = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> b  = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> gt = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 4}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> a =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> b =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> gt =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 4}));
 
   std::vector<double> data({1, 2, -3, 4, 5});
-  std::vector<double> weights({-11, 12, 13, 14,
-			       21, 22, 23, 24,
-			       31, 32, 33, 34,
-			       41, 42, 43, 44,
-			       51, 52, 53, 54});
+  std::vector<double> weights(
+      {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
   std::vector<double> results({357, 388, 397, 406});
-  
-  for (size_t i(0) ; i < data.size() ; ++i)
-    a->Set(0, i, data[i]);
-  for (size_t i(0) ; i < 5 ; ++i)
-    for (size_t j(0) ; j < 4 ; ++j)
-      b->Set(i, j, weights[i * 4 + j]);
-  for (size_t i(0) ; i < results.size() ; ++i)
-    gt->Set(0, i, results[i]);
 
-    
+  for (size_t i(0); i < data.size(); ++i)
+  {
+    a->Set(0, i, data[i]);
+  }
+  for (size_t i(0); i < 5; ++i)
+  {
+    for (size_t j(0); j < 4; ++j)
+    {
+      b->Set(i, j, weights[i * 4 + j]);
+    }
+  }
+  for (size_t i(0); i < results.size(); ++i)
+  {
+    gt->Set(0, i, results[i]);
+  }
+
   fetch::ml::ops::MatrixMultiply<fetch::math::linalg::Matrix<double>> op;
   std::shared_ptr<fetch::math::linalg::Matrix<double>> prediction = op.forward({a, b});
 
@@ -56,42 +63,55 @@ TEST(matrixMultiply_test, forward_test)
 
 TEST(matrixMultiply_test, backward_test)
 {
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> a  = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> b  = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> e  = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 4}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> ig = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> wg = std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
-
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> a =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> b =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> e =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 4}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> ig =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> wg =
+      std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({5, 4}));
 
   std::vector<double> data({1, 2, -3, 4, 5});
-  std::vector<double> weights({-11, 12, 13, 14,
-			       21, 22, 23, 24,
-			       31, 32, 33, 34,
-			       41, 42, 43, 44,
-			       51, 52, 53, 54});
+  std::vector<double> weights(
+      {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
   std::vector<double> errorSignal({1, 2, 3, -4});
   std::vector<double> inputGrad({-4, 38, 58, 78, 98});
-  std::vector<double> weightsGrad({1, 2, 3, -4,
-				   2, 4, 6, -8,
-				   -3, -6, -9, 12,
-				   4, 8, 12, -16,
-				   5, 10, 15, -20});
+  std::vector<double> weightsGrad(
+      {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
 
-  for (size_t i(0) ; i < data.size() ; ++i)
+  for (size_t i(0); i < data.size(); ++i)
+  {
     a->Set(0, i, data[i]);
-  for (size_t i(0) ; i < 5 ; ++i)
-    for (size_t j(0) ; j < 4 ; ++j)
+  }
+  for (size_t i(0); i < 5; ++i)
+  {
+    for (size_t j(0); j < 4; ++j)
+    {
       b->Set(i, j, weights[i * 4 + j]);
-  for (size_t i(0) ; i < errorSignal.size() ; ++i)
+    }
+  }
+  for (size_t i(0); i < errorSignal.size(); ++i)
+  {
     e->Set(0, i, errorSignal[i]);
-  for (size_t i(0) ; i < inputGrad.size() ; ++i)
+  }
+  for (size_t i(0); i < inputGrad.size(); ++i)
+  {
     ig->Set(0, i, inputGrad[i]);
-  for (size_t i(0) ; i < 5 ; ++i)
-    for (size_t j(0) ; j < 4 ; ++j)
+  }
+  for (size_t i(0); i < 5; ++i)
+  {
+    for (size_t j(0); j < 4; ++j)
+    {
       wg->Set(i, j, weightsGrad[i * 4 + j]);
-  
+    }
+  }
+
   fetch::ml::ops::MatrixMultiply<fetch::math::linalg::Matrix<double>> op;
-  std::vector<std::shared_ptr<fetch::math::linalg::Matrix<double>>> backpropagatedSignals = op.backward({a, b}, e);
+  std::vector<std::shared_ptr<fetch::math::linalg::Matrix<double>>>   backpropagatedSignals =
+      op.backward({a, b}, e);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);
