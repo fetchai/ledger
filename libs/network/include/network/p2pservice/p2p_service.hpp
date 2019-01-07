@@ -112,7 +112,7 @@ public:
   bool                 IsDesired(Address const &address);
 
 private:
-  struct pairhash
+  struct PairHash
   {
   public:
     template <typename T, typename U>
@@ -125,7 +125,7 @@ private:
   using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
   using RequestingPeerlists = network::RequestingQueueOf<Address, AddressSet>;
   using RequestingUris      = network::RequestingQueueOf<std::pair<Address, Address>, Uri,
-                                                    network::PromiseOf<Uri>, pairhash>;
+                                                    network::PromiseOf<Uri>, PairHash>;
 
   /// @name Work Cycle
   /// @{
