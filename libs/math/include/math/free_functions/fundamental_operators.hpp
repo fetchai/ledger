@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -135,32 +135,32 @@ meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(T const &scalar, ArrayType 
 /////////////////////////////////////////
 
 template <typename T, typename C>
-void Add(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+void Add(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x + val; },
+      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
+            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x + val; },
       array.data());
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Add(ShapeLessArray<T, C> const &array, T const &scalar)
+ShapelessArray<T, C> Add(ShapelessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
 template <typename T, typename C>
-void Add(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+void Add(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
 {
   ret = Add(array, scalar, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Add(T const &scalar, ShapeLessArray<T, C> const &array)
+ShapelessArray<T, C> Add(T const &scalar, ShapelessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Add(scalar, array, ret);
   return ret;
 }
@@ -281,22 +281,22 @@ meta::IsMathLike<OtherType, void> operator+=(OtherType &left, OtherType const &r
  * @param ret
  */
 template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+void Subtract(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
   assert(array.data().size() == ret.data().size());
 
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - val; },
+      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
+            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x - val; },
       array.data());
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &array, T const &scalar)
+ShapelessArray<T, C> Subtract(ShapelessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Subtract(array, scalar, ret);
   return ret;
 }
@@ -309,7 +309,7 @@ ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &array, T const &scalar
  * @param ret
  */
 template <typename T, typename C>
-void Subtract(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+void Subtract(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
@@ -318,9 +318,9 @@ void Subtract(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray
   }
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(T const &scalar, ShapeLessArray<T, C> const &array)
+ShapelessArray<T, C> Subtract(T const &scalar, ShapelessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Subtract(scalar, array, ret);
   return ret;
 }
@@ -413,8 +413,8 @@ void Subtract(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> con
  * @param ret
  */
 template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              memory::Range const &range, ShapeLessArray<T, C> &ret)
+void Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+              memory::Range const &range, ShapelessArray<T, C> &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -429,9 +429,9 @@ void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x - y; },
+        [](typename ShapelessArray<T, C>::vector_register_type const &x,
+           typename ShapelessArray<T, C>::vector_register_type const &y,
+           typename ShapelessArray<T, C>::vector_register_type &      z) { z = x - y; },
         obj1.data(), obj2.data());
   }
   else
@@ -440,10 +440,10 @@ void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
   }
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
+ShapelessArray<T, C> Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
                               memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret{obj1.shape()};
+  ShapelessArray<T, C> ret{obj1.shape()};
   Subtract(obj1, obj2, range, ret);
   return ret;
 }
@@ -456,17 +456,17 @@ ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T
  * @param ret
  */
 template <typename T, typename C>
-void Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              ShapeLessArray<T, C> &ret)
+void Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+              ShapelessArray<T, C> &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Subtract(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Subtract(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
+ShapelessArray<T, C> Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2)
 {
   assert(obj1.size() == obj2.size());
-  ShapeLessArray<T, C> ret{obj1.size()};
+  ShapelessArray<T, C> ret{obj1.size()};
   Subtract(obj1, obj2, ret);
   return ret;
 }
@@ -524,32 +524,32 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
  * @param ret
  */
 template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+void Multiply(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * val; },
+      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
+            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x * val; },
       array.data());
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &array, T const &scalar)
+ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Multiply(array, scalar, ret);
   return ret;
 }
 template <typename T, typename C>
-void Multiply(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+void Multiply(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
 {
   Multiply(array, scalar, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(T const &scalar, ShapeLessArray<T, C> const &array)
+ShapelessArray<T, C> Multiply(T const &scalar, ShapelessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Multiply(scalar, array, ret);
   return ret;
 }
@@ -563,8 +563,8 @@ ShapeLessArray<T, C> Multiply(T const &scalar, ShapeLessArray<T, C> const &array
  * @param ret
  */
 template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              memory::Range const &range, ShapeLessArray<T, C> &ret)
+void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+              memory::Range const &range, ShapelessArray<T, C> &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -579,9 +579,9 @@ void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x * y; },
+        [](typename ShapelessArray<T, C>::vector_register_type const &x,
+           typename ShapelessArray<T, C>::vector_register_type const &y,
+           typename ShapelessArray<T, C>::vector_register_type &      z) { z = x * y; },
         obj1.data(), obj2.data());
   }
   else
@@ -590,10 +590,10 @@ void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2
   }
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
+ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
                               memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret{obj1.size()};
+  ShapelessArray<T, C> ret{obj1.size()};
   Multiply(obj1, obj2, range, ret);
   return ret;
 }
@@ -606,16 +606,16 @@ ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T
  * @param ret
  */
 template <typename T, typename C>
-void Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-              ShapeLessArray<T, C> &ret)
+void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+              ShapelessArray<T, C> &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
   Multiply(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Multiply(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
+ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2)
 {
-  ShapeLessArray<T, C> ret{obj1.size()};
+  ShapelessArray<T, C> ret{obj1.size()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
@@ -746,20 +746,20 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
  * @param ret
  */
 template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &array, T const &scalar, ShapeLessArray<T, C> &ret)
+void Divide(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / val; },
+      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
+            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x / val; },
       array.data());
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &array, T const &scalar)
+ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &array, T const &scalar)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Divide(array, scalar, ret);
   return ret;
 }
@@ -772,20 +772,20 @@ ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &array, T const &scalar)
  * @param ret
  */
 template <typename T, typename C>
-void Divide(T const &scalar, ShapeLessArray<T, C> const &array, ShapeLessArray<T, C> &ret)
+void Divide(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapeLessArray<T, C>::vector_register_type val(scalar);
+  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapeLessArray<T, C>::vector_register_type const &x,
-            typename ShapeLessArray<T, C>::vector_register_type &      z) { z = val / x; },
+      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
+            typename ShapelessArray<T, C>::vector_register_type &      z) { z = val / x; },
       array.data());
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Divide(T const &scalar, ShapeLessArray<T, C> const &array)
+ShapelessArray<T, C> Divide(T const &scalar, ShapelessArray<T, C> const &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Divide(scalar, array, ret);
   return ret;
 }
@@ -798,8 +798,8 @@ ShapeLessArray<T, C> Divide(T const &scalar, ShapeLessArray<T, C> const &array)
  * @param ret
  */
 template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            memory::Range const &range, ShapeLessArray<T, C> &ret)
+void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+            memory::Range const &range, ShapelessArray<T, C> &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -814,9 +814,9 @@ void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename ShapeLessArray<T, C>::vector_register_type const &x,
-           typename ShapeLessArray<T, C>::vector_register_type const &y,
-           typename ShapeLessArray<T, C>::vector_register_type &      z) { z = x / y; },
+        [](typename ShapelessArray<T, C>::vector_register_type const &x,
+           typename ShapelessArray<T, C>::vector_register_type const &y,
+           typename ShapelessArray<T, C>::vector_register_type &      z) { z = x / y; },
         obj1.data(), obj2.data());
   }
   else
@@ -825,10 +825,10 @@ void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
   }
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
+ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
                             memory::Range const &range)
 {
-  ShapeLessArray<T, C> ret{obj1.size()};
+  ShapelessArray<T, C> ret{obj1.size()};
   Divide(obj1, obj2, range, ret);
   return ret;
 }
@@ -841,16 +841,16 @@ ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, 
  * @param ret
  */
 template <typename T, typename C>
-void Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2,
-            ShapeLessArray<T, C> &ret)
+void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+            ShapelessArray<T, C> &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Divide(ShapeLessArray<T, C> const &obj1, ShapeLessArray<T, C> const &obj2)
+ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2)
 {
-  ShapeLessArray<T, C> ret{obj1.size()};
+  ShapelessArray<T, C> ret{obj1.size()};
   Divide(obj1, obj2, ret);
   return ret;
 }

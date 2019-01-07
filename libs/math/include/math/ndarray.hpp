@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "math/free_functions/free_functions.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 
@@ -32,13 +32,13 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C = memory::SharedArray<T>>
-class NDArray : public ShapeLessArray<T, C>
+class NDArray : public ShapelessArray<T, C>
 {
 public:
   using type                 = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
-  using super_type           = ShapeLessArray<T, C>;
+  using super_type           = ShapelessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
   enum MAJOR_ORDER

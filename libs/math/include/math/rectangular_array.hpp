@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
@@ -45,10 +45,10 @@ namespace math {
  */
 template <typename T, typename C = fetch::memory::SharedArray<T>, bool PAD_HEIGHT = true,
           bool PAD_WIDTH = false>
-class RectangularArray : public math::ShapeLessArray<T, C>
+class RectangularArray : public math::ShapelessArray<T, C>
 {
 public:
-  using super_type     = math::ShapeLessArray<T, C>;
+  using super_type     = math::ShapelessArray<T, C>;
   using Type           = typename super_type::Type;
   using container_type = typename super_type::container_type;
   using size_type      = typename super_type::size_type;
@@ -463,9 +463,7 @@ public:
 
     Reserve(h, w);
 
-    height_ = h;
-    width_  = w;
-    shape_  = {h, w};
+    UpdateDimensions(h, w);
   }
 
   void Resize(std::vector<std::size_t> const &shape, std::size_t const &offset = 0)
@@ -542,7 +540,8 @@ public:
     {
       width_ = w;
     }
-    shape_ = {height_, width_};
+
+    UpdateDimensions(height_, width_);
   }
 
   /**
@@ -554,10 +553,7 @@ public:
   {
     assert((height_ * width_) == (h * w));
     Reserve(h, w);
-
-    height_ = h;
-    width_  = w;
-    shape_  = {height_, width_};
+    UpdateDimensions(h, w);
   }
 
   /**
@@ -572,9 +568,7 @@ public:
 
     Reserve(shape[0], shape[1]);
 
-    height_ = shape[0];
-    width_  = shape[1];
-    shape_  = {height_, width_};
+    UpdateDimensions(shape[0], shape[1]);
   }
 
   void Flatten()
@@ -636,9 +630,7 @@ public:
 
     super_type::LazyResize(padded_width_ * padded_height_);
 
-    height_ = h;
-    width_  = w;
-    shape_  = {h, w};
+    UpdateDimensions(h, w);
 
     // TODO(tfr): Take care of padded bytes
   }
@@ -762,6 +754,7 @@ public:
   /* Returns the size of the array. */
   size_type size() const
   {
+    assert(this->size_ == (height_ * width_));
     return height_ * width_;
   }
 
@@ -769,6 +762,88 @@ public:
   size_type padded_size() const
   {
     return padded_width_ * padded_height_;
+  }
+
+  /**
+   * overrides the ShapelessArray AllClose because of padding
+   * @param other array to compare to
+   * @param rtol relative tolerance
+   * @param atol absolute tolerance
+   * @param ignoreNaN flag for ignoring NaNs
+   * @return true if all values in both arrays are close enough
+   */
+  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
+                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
+  {
+    std::size_t N = this->size();
+    if (other.size() != N)
+    {
+      return false;
+    }
+    bool ret = true;
+    for (std::size_t i = 0; ret && (i < N); ++i)
+    {
+      Type va = this->At(i);
+      if (ignoreNaN && std::isnan(va))
+      {
+        continue;
+      }
+      Type vb = other[i];
+      if (ignoreNaN && std::isnan(vb))
+      {
+        continue;
+      }
+      Type vA = (va - vb);
+      if (vA < 0)
+      {
+        vA = -vA;
+      }
+      if (va < 0)
+      {
+        va = -va;
+      }
+      if (vb < 0)
+      {
+        vb = -vb;
+      }
+      Type M = std::max(va, vb);
+
+      ret = (vA <= std::max(atol, M * rtol));
+    }
+    if (!ret)
+    {
+      for (std::size_t i = 0; i < N; ++i)
+      {
+        Type va = this->At(i);
+        if (ignoreNaN && std::isnan(va))
+        {
+          continue;
+        }
+        Type vb = other[i];
+        if (ignoreNaN && std::isnan(vb))
+        {
+          continue;
+        }
+        Type vA = (va - vb);
+        if (vA < 0)
+        {
+          vA = -vA;
+        }
+        if (va < 0)
+        {
+          va = -va;
+        }
+        if (vb < 0)
+        {
+          vb = -vb;
+        }
+        Type M = std::max(va, vb);
+        std::cout << this->At(i) << " " << other[i] << " "
+                  << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
+      }
+    }
+
+    return ret;
   }
 
 private:
@@ -800,6 +875,19 @@ private:
         padded_height_ += vector_register_type::E_BLOCK_COUNT;
       }
     }
+  }
+
+  /**
+   * helper method for setting all shape and size values correctly internally
+   * @param height
+   * @param width
+   */
+  void UpdateDimensions(std::size_t height, std::size_t width)
+  {
+    height_     = height;
+    width_      = width;
+    shape_      = {height_, width_};
+    this->size_ = height_ * width_;
   }
 };
 }  // namespace math

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ void BuildMatrix(std::string const &custom_name, pybind11::module &module)
              {
                ret_len = a.height();
              }
-             ShapeLessArray<T> ret{ret_len};
+             ShapelessArray<T> ret{ret_len};
              ArgMax(a, axis, ret);
              return ret;
            })

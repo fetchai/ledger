@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
+
+// clang-format off
+// NOLINTNEXTLINE
 #define APPLY_OPERATOR_LIST(FUNCTION) \
   FUNCTION(*)                         \
   FUNCTION(/)                         \
@@ -30,6 +33,7 @@
   FUNCTION(&)                         \
   FUNCTION(|)                         \
   FUNCTION (^)
+// clang-format on
 
 namespace fetch {
 namespace vectorize {

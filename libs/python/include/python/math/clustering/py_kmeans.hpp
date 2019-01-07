@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ namespace math {
 namespace clustering {
 
 template <typename A>
-inline A WrapperKMeans(A const &data, std::size_t const &K, std::size_t const &r_seed,
-                       std::size_t max_loops, InitMode init_mode = InitMode::KMeansPP,
-                       std::size_t max_no_change_convergence = 10)
+inline fetch::math::clustering::ClusteringType WrapperKMeans(
+    A const &data, std::size_t const &K, std::size_t const &r_seed, std::size_t max_loops,
+    InitMode init_mode = InitMode::KMeansPP, std::size_t max_no_change_convergence = 10)
 {
   if (K > data.shape()[0])
   {

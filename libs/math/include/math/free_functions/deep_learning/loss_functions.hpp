@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 template <typename T, typename C>
 class NDArray;
 template <typename T, typename C>
@@ -38,7 +38,7 @@ class Matrix;
 }
 
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+T Max(ShapelessArray<T, C> const &array);
 
 template <typename T, typename C, typename S>
 void ReduceSum(linalg::Matrix<T, C, S> const &obj1, std::size_t axis, linalg::Matrix<T, C, S> &ret)
