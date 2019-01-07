@@ -32,9 +32,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error)                     = 0;
+  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     error) = 0;
 
 protected:
   ArrayPtrType output_;

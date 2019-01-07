@@ -32,9 +32,10 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  ReluLayer() = default;
+  ReluLayer()          = default;
+  virtual ~ReluLayer() = default;
 
-  virtual ArrayPtrType forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 1);
 
@@ -53,7 +54,7 @@ public:
     return this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const &inputs,
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
     assert(inputs.size() == 1);
@@ -71,7 +72,7 @@ public:
 
 private:
   // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function
+  // using a parrallel Maximum function -- May need improvement (TODO private 469)
   ArrayPtrType zeroes_;
 };
 

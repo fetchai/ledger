@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/matrixMultiply.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include <gtest/gtest.h>
 
-TEST(matrixMultiply_test, forward_test)
+TEST(matrix_multiply_test, forward_test)
 {
   std::shared_ptr<fetch::math::linalg::Matrix<double>> a =
       std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
@@ -52,7 +52,7 @@ TEST(matrixMultiply_test, forward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<fetch::math::linalg::Matrix<double>> op;
-  std::shared_ptr<fetch::math::linalg::Matrix<double>> prediction = op.forward({a, b});
+  std::shared_ptr<fetch::math::linalg::Matrix<double>> prediction = op.Forward({a, b});
 
   // test correct values
   ASSERT_TRUE(prediction->shape().size() == 2);
@@ -61,7 +61,7 @@ TEST(matrixMultiply_test, forward_test)
   ASSERT_TRUE(prediction->AllClose(*gt));
 }
 
-TEST(matrixMultiply_test, backward_test)
+TEST(matrix_multiply_test, backward_test)
 {
   std::shared_ptr<fetch::math::linalg::Matrix<double>> a =
       std::make_shared<fetch::math::linalg::Matrix<double>>(std::vector<size_t>({1, 5}));
@@ -111,7 +111,7 @@ TEST(matrixMultiply_test, backward_test)
 
   fetch::ml::ops::MatrixMultiply<fetch::math::linalg::Matrix<double>> op;
   std::vector<std::shared_ptr<fetch::math::linalg::Matrix<double>>>   backpropagatedSignals =
-      op.backward({a, b}, e);
+      op.Backward({a, b}, e);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);

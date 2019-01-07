@@ -33,18 +33,15 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MatrixMultiply() = default;
+  MatrixMultiply()          = default;
+  virtual ~MatrixMultiply() = default;
 
-  virtual ArrayPtrType forward(std::vector<ArrayPtrType> const &inputs)
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->shape().size() == 2);
     assert(inputs[1]->shape().size() == 2);
     assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
-
-    // std::cout << "[" << inputs[0]->shape()[0] << " x " << inputs[0]->shape()[1] <<
-    // 	"] * [" << inputs[1]->shape()[0] << " x " << inputs[1]->shape()[1] << "]" <<
-    // 	" => [" << inputs[0]->shape()[0] << " x " <<  inputs[1]->shape()[1] << "]"<< std::endl;
 
     std::vector<size_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
     if (!this->output_ || this->output_->shape() != outputShape)
@@ -57,7 +54,7 @@ public:
     return this->output_;
   }
 
-  virtual std::vector<ArrayPtrType> backward(std::vector<ArrayPtrType> const &inputs,
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
     assert(inputs.size() == 2);
@@ -70,11 +67,6 @@ public:
 
     return {errorSignal1, errorSignal2};
   }
-
-private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function
-  ArrayPtrType zeroes_;
 };
 
 }  // namespace ops

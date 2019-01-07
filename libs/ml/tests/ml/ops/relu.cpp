@@ -33,7 +33,7 @@ TEST(relu_test, forward_all_positive_integer_test)
     i++;
   }
   fetch::ml::ops::ReluLayer<fetch::math::NDArray<int>> op;
-  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.forward({data});
+  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -51,7 +51,7 @@ TEST(relu_test, forward_all_negative_integer_test)
     i++;
   }
   fetch::ml::ops::ReluLayer<fetch::math::NDArray<int>> op;
-  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.forward({data});
+  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -69,7 +69,7 @@ TEST(relu_test, forward_mixed_integer_test)
     gt->Set(i, gtInput[i]);
   }
   fetch::ml::ops::ReluLayer<fetch::math::NDArray<int>> op;
-  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.forward({data});
+  std::shared_ptr<fetch::math::NDArray<int>>           prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -90,7 +90,7 @@ TEST(relu_test, backward_mixed_integer_test)
     gt->Set(i, gtInput[i]);
   }
   fetch::ml::ops::ReluLayer<fetch::math::NDArray<int>>    op;
-  std::vector<std::shared_ptr<fetch::math::NDArray<int>>> prediction = op.backward({data}, error);
+  std::vector<std::shared_ptr<fetch::math::NDArray<int>>> prediction = op.Backward({data}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0]->AllClose(*gt));
@@ -111,7 +111,7 @@ TEST(relu_test, forward_mixed_float_test)
     gt->Set(i, gtInput[i]);
   }
   fetch::ml::ops::ReluLayer<fetch::math::NDArray<float>> op;
-  std::shared_ptr<fetch::math::NDArray<float>>           prediction = op.forward({data});
+  std::shared_ptr<fetch::math::NDArray<float>>           prediction = op.Forward({data});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
