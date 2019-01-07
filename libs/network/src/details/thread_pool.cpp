@@ -42,9 +42,9 @@ ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::si
  *
  * @param threads The maximum number of threads
  */
-ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads, std::string const &name)
+ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads, std::string name)
   : max_threads_(threads)
-  , name_{name}
+  , name_(std::move(name))
 {}
 
 /**
