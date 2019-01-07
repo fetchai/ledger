@@ -132,22 +132,23 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
   // set the main chain
-  block_subscription_->SetMessageHandler(
-                                         [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload, Address transmitter) {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+                                                Packet::Payload const &payload,
+                                                Address                transmitter) {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
-        BlockSerializer serialiser(payload);
+    BlockSerializer serialiser(payload);
 
-        // deserialize the block
-        Block block;
-        serialiser >> block;
+    // deserialize the block
+    Block block;
+    serialiser >> block;
 
-        // recalculate the block hash
-        block.UpdateDigest();
+    // recalculate the block hash
+    block.UpdateDigest();
 
-        // dispatch the event
-        OnNewBlock(from, block, transmitter);
-      });
+    // dispatch the event
+    OnNewBlock(from, block, transmitter);
+  });
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
@@ -167,7 +168,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-  void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
+void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(transmitter), ')');
@@ -253,7 +254,7 @@ void MainChainRpcService::ServiceLooseBlocks()
     }
   }
 
-  if (bg_work_.CountFailures()>0 || bg_work_.CountTimeouts()>0)
+  if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();

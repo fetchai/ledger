@@ -89,7 +89,6 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
   return equal;
 }
 
-
 /**
  * Comparison operation
  *
@@ -179,22 +178,24 @@ std::string DescribePacket(Packet const &packet)
  * @param address The input address
  * @return The output address
  */
-  Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
+Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
+{
+  Packet::RawAddress raw_address;
+
+  if (raw_address.size() != address.size())
   {
-    Packet::RawAddress raw_address;
-
-    if (raw_address.size() != address.size())
-    {
-      throw std::runtime_error("Unable to convert one address to another: raw:"+std::to_string(raw_address.size())+ ", actual: "+std::to_string(address.size()));
-    }
-
-    for (std::size_t i = 0; i < address.size(); ++i)
-    {
-      raw_address[i] = address[i];
-    }
-
-    return raw_address;
+    throw std::runtime_error(
+        "Unable to convert one address to another: raw:" + std::to_string(raw_address.size()) +
+        ", actual: " + std::to_string(address.size()));
   }
+
+  for (std::size_t i = 0; i < address.size(); ++i)
+  {
+    raw_address[i] = address[i];
+  }
+
+  return raw_address;
+}
 
 /**
  * Constructs a muddle router instance
@@ -250,7 +251,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 
     if (HandleToDirectAddress(handle, transmitter))
     {
-    DispatchPacket(packet, transmitter);
+      DispatchPacket(packet, transmitter);
     }
     else
     {
@@ -405,21 +406,22 @@ void Router::Debug(std::string const &prefix) const
   for (const auto &routing : direct_address_map_)
   {
     auto output = ToBase64(routing.second);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output), " -> handle=", std::to_string(routing.first), " direct=by definition" );
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
+                   " -> handle=", std::to_string(routing.first), " direct=by definition");
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "direct_address_map_: --------------------------------------");
 
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)), " -> handle=", std::to_string(routing.second.handle), " direct=", routing.second.direct);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
+                   " -> handle=", std::to_string(routing.second.handle),
+                   " direct=", routing.second.direct);
   }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   registrar_.Debug(prefix);
 }
 
@@ -490,8 +492,8 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 bool Router::IsConnected(Address const &target) const
 {
-  auto raw_address  = ConvertAddress(target);
-  auto iter         = routing_table_.find(raw_address);
+  auto raw_address = ConvertAddress(target);
+  auto iter        = routing_table_.find(raw_address);
   if (iter == routing_table_.end())
   {
     return false;
@@ -502,7 +504,7 @@ bool Router::IsConnected(Address const &target) const
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    return conn -> is_alive();
+    return conn->is_alive();
   }
   else
   {
@@ -532,14 +534,13 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   // sanity check
   assert(handle);
 
-
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
   {
     FETCH_LOCK(routing_table_lock_);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): AssociateHandleWithAddress: handle=", handle, ", address: ", fetch::byte_array::ToBase64(ToConstByteArray(address)));
-
+    FETCH_LOG_WARN(LOGGING_NAME, "(AB): AssociateHandleWithAddress: handle=", handle,
+                   ", address: ", fetch::byte_array::ToBase64(ToConstByteArray(address)));
 
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
@@ -594,13 +595,11 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   return update_complete;
 }
 
-
 Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) const
 {
-   auto raddr = ConvertAddress(address);
-   return LookupHandle(raddr);
+  auto raddr = ConvertAddress(address);
+  return LookupHandle(raddr);
 }
-
 
 /**
  * Internal: Looks up the specified connection handle from a given address
@@ -628,7 +627,6 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
 
   return handle;
 }
-
 
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
 {
@@ -675,11 +673,11 @@ void Router::KillConnection(Handle handle, Address peer)
 void Router::KillConnection(Handle handle)
 {
   auto address = direct_address_map_.find(handle);
-  if (address!=direct_address_map_.end()) {
-    KillConnection(handle,address->second);
+  if (address != direct_address_map_.end())
+  {
+    KillConnection(handle, address->second);
   }
 }
-
 
 /**
  * Internal: Takes a given packet and sends it to the connection specified by the handle

@@ -25,7 +25,6 @@
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
-#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <memory>

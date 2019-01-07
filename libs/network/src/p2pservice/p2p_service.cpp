@@ -28,7 +28,8 @@ namespace fetch {
 namespace p2p {
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
-                       std::size_t max_peers, std::size_t transient_peers, uint32_t process_cycle_ms)
+                       std::size_t max_peers, std::size_t transient_peers,
+                       uint32_t process_cycle_ms)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -108,7 +109,7 @@ void P2PService::WorkCycle()
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
-  //muddle_.Debug("P2PService::GetConnectionStatus,");
+  // muddle_.Debug("P2PService::GetConnectionStatus,");
 
   // get a summary of addresses and associated URIs
   active_connections = muddle_.GetConnections();
@@ -116,7 +117,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
 
-  for(const auto &c : active_connections)
+  for (const auto &c : active_connections)
   {
     if (muddle_.IsConnected(c.first))
     {
@@ -143,9 +144,9 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
 
     }*/
   }
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Number of active connections: ", active_connections.size(), ", number of active_addresses: ", active_addresses.size());
+  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Number of active connections: ", active_connections.size(),
+                 ", number of active_addresses: ", active_addresses.size());
 }
-
 
 void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 {
@@ -153,7 +154,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
   {
     auto const &address = element.first;
 
-    //ensure that the trust system is informed of new addresses
+    // ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
@@ -232,21 +233,21 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   }
 }
 
-std::list<P2PService::PeerTrust>  P2PService::GetPeersAndTrusts() const
+std::list<P2PService::PeerTrust> P2PService::GetPeersAndTrusts() const
 {
-  auto peersAndTrusts = trust_system_.GetPeersAndTrusts();
+  auto                 peersAndTrusts = trust_system_.GetPeersAndTrusts();
   std::list<PeerTrust> r;
-  for(auto const &pt : peersAndTrusts)
+  for (auto const &pt : peersAndTrusts)
   {
-      r.push_back(pt);
-      r.back().active = (desired_peers_.find(pt.address) != desired_peers_.end());
+    r.push_back(pt);
+    r.back().active = (desired_peers_.find(pt.address) != desired_peers_.end());
   }
   return r;
 }
 
 bool P2PService::IsDesired(Address const &address)
 {
-  return desired_peers_.find(address)!=desired_peers_.end();
+  return desired_peers_.find(address) != desired_peers_.end();
 }
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
@@ -255,8 +256,10 @@ void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: STATIC PEERS=", static_peers.size(), " FROM ", max_peers_ - transient_peers_);
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: TRANSIENT PEERS=", experimental_peers.size(), " FROM ", transient_peers_);
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL: STATIC PEERS=", static_peers.size(), " FROM ",
+                 max_peers_ - transient_peers_);
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL: TRANSIENT PEERS=", experimental_peers.size(), " FROM ",
+                 transient_peers_);
 
   desired_peers_.clear();
 
@@ -301,13 +304,17 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   pending_resolutions_.Resolve();
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ", result.promised.uri());
+    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ",
+                   result.promised.uri());
     Uri uri;
-    if (result.promised.scheme()== Uri::Scheme::Tcp){
-        FETCH_LOG_INFO("Resolved: ", ToBase64(result.key.second));
-        identity_cache_.Update(result.key.second, result.promised);
-        muddle_.AddPeer(result.promised);
-    } else {
+    if (result.promised.scheme() == Uri::Scheme::Tcp)
+    {
+      FETCH_LOG_INFO("Resolved: ", ToBase64(result.key.second));
+      identity_cache_.Update(result.key.second, result.promised);
+      muddle_.AddPeer(result.promised);
+    }
+    else
+    {
       FETCH_LOG_INFO(LOGGING_NAME, "Discarding resolution for peer: ", ToBase64(result.key.second));
     }
   }
@@ -332,12 +339,15 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     if (resolve)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address));
-      for(const auto& addr : active_addresses) {
+      for (const auto &addr : active_addresses)
+      {
         auto key = std::make_pair(addr, address);
-        if (pending_resolutions_.IsInFlight(key)) continue;
+        if (pending_resolutions_.IsInFlight(key))
+          continue;
         auto prom = network::PromiseOf<Uri>(
-          client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
-        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address), ", promise id=", prom.id());
+            client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address),
+                       ", promise id=", prom.id());
         pending_resolutions_.Add(key, prom);
       }
     }

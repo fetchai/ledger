@@ -49,7 +49,8 @@ SubscriptionFeed::SubscriptionPtr SubscriptionFeed::Subscribe()
  * @return true if one or more successful dispatches were made, otherwise false
  */
 bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                uint16_t counter, Payload const &payload, Address const &transmitter)
+                                uint16_t counter, Payload const &payload,
+                                Address const &transmitter)
 {
   FETCH_LOCK(feed_lock_);
 

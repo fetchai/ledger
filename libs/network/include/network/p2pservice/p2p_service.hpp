@@ -19,8 +19,8 @@
 
 #include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
-#include "network/generics/requesting_queue.hpp"
 #include "network/generics/promise_of.hpp"
+#include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -108,13 +108,12 @@ public:
     return identity_cache_;
   }
 
-    std::list<PeerTrust>  GetPeersAndTrusts() const;
-  bool  IsDesired(Address const &address);
-
+  std::list<PeerTrust> GetPeersAndTrusts() const;
+  bool                 IsDesired(Address const &address);
 
 private:
-
-  struct pairhash {
+  struct pairhash
+  {
   public:
     template <typename T, typename U>
     std::size_t operator()(const std::pair<T, U> &x) const
@@ -123,10 +122,10 @@ private:
     }
   };
 
-
   using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
   using RequestingPeerlists = network::RequestingQueueOf<Address, AddressSet>;
-  using RequestingUris      = network::RequestingQueueOf<std::pair<Address,Address>, Uri, network::PromiseOf<Uri>, pairhash>;
+  using RequestingUris      = network::RequestingQueueOf<std::pair<Address, Address>, Uri,
+                                                    network::PromiseOf<Uri>, pairhash>;
 
   /// @name Work Cycle
   /// @{
@@ -177,7 +176,7 @@ private:
 
   std::size_t max_peers_;
   std::size_t transient_peers_;
-  uint32_t process_cycle_ms_;
+  uint32_t    process_cycle_ms_;
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };

@@ -185,7 +185,7 @@ public:
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections(bool direct_only=false);
+  ConnectionMap GetConnections(bool direct_only = false);
 
   bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
@@ -266,7 +266,7 @@ inline void Muddle::AddPeer(Uri const &peer)
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
-  //CreateTcpClient(peer);
+  // CreateTcpClient(peer);
 }
 
 inline void Muddle::DropPeer(Uri const &peer)
@@ -276,7 +276,8 @@ inline void Muddle::DropPeer(Uri const &peer)
   if (clients_.UriToHandle(peer, handle))
   {
     Address address;
-    if (router_.HandleToDirectAddress(handle, address)) {
+    if (router_.HandleToDirectAddress(handle, address))
+    {
       router_.DropHandle(handle, address);
       clients_.RemoveConnection(handle);
     }

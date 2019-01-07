@@ -48,7 +48,7 @@ public:
 
   SubscriptionPtr Subscribe();
   bool Dispatch(Address const &address, uint16_t service, uint16_t channel, uint16_t counter,
-                Payload const &payload,Address const &transmitter);
+                Payload const &payload, Address const &transmitter);
 
 private:
   using Mutex               = mutex::Mutex;

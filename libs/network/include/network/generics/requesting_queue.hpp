@@ -30,7 +30,7 @@
 namespace fetch {
 namespace network {
 
-template <typename K, typename R, typename P = PromiseOf<R>, typename H=std::hash<K>>
+template <typename K, typename R, typename P = PromiseOf<R>, typename H = std::hash<K>>
 class RequestingQueueOf
 {
 public:
