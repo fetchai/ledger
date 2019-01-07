@@ -344,12 +344,11 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
         auto key = std::make_pair(addr, address);
         if (pending_resolutions_.IsInFlight(key))
         {
-	  continue;
-	}
+          continue;
+        }
         auto prom = network::PromiseOf<Uri>(
-            client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
-        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address),
-                       ", promise id=", prom.id());
+          client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address), ", promise id=", prom.id());
         pending_resolutions_.Add(key, prom);
       }
     }
