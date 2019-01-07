@@ -34,7 +34,7 @@ public:
 
   virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
+                                             ArrayPtrType                     error)                     = 0;
 
 protected:
   ArrayPtrType output_;
