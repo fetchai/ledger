@@ -46,27 +46,30 @@ namespace storage {
  * this map.
  *
  */
-template <typename T, typename D = uint64_t>
+template <typename T, typename D = uint64_t, typename stack_type = RandomAccessStack<T,D>>
 class CachedRandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
-  using stack_type         = RandomAccessStack<T, D>;
   using header_extra_type  = D;
   using type               = T;
 
   CachedRandomAccessStack()
   {
-    stack_.OnFileLoaded([this]() {
-      this->objects_ = stack_.size();
+    stack_ = std::make_shared<stack_type>();
+    stack_->OnFileLoaded([this]() {
+      this->objects_ = stack_->size();
       SignalFileLoaded();
     });
-    stack_.OnBeforeFlush([this]() { SignalBeforeFlush(); });
+    stack_->OnBeforeFlush([this]() { SignalBeforeFlush(); });
   }
-
+  void SetStack(std::shared_ptr<stack_type> stack)
+  {
+    stack_ = stack;
+  }
   ~CachedRandomAccessStack()
   {
-    stack_.ClearEventHandlers();
+    stack_->ClearEventHandlers();
   }
 
   void ClearEventHandlers()
@@ -97,13 +100,13 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exists = true)
   {
-    stack_.Load(filename, create_if_not_exists);
+    stack_->Load(filename, create_if_not_exists);
     this->SignalFileLoaded();
   }
 
   void New(std::string const &filename)
   {
-    stack_.New(filename);
+    stack_->New(filename);
     Clear();
     this->SignalFileLoaded();
   }
@@ -123,7 +126,7 @@ public:
     else
     {
       // Case where item isn't found, get it from the stack and insert it into the map
-      stack_.Get(i, object);
+      stack_->Get(i, object);
       CachedDataItem itm;
       itm.data = object;
       data_.insert(std::pair<uint64_t, CachedDataItem>(i, itm));
@@ -162,17 +165,17 @@ public:
   {
     Flush();
 
-    stack_.Close(true);
+    stack_->Close(true);
   }
 
   void SetExtraHeader(header_extra_type const &he)
   {
-    stack_.SetExtraHeader(he);
+    stack_->SetExtraHeader(he);
   }
 
   header_extra_type const &header_extra() const
   {
-    return stack_.header_extra();
+    return stack_->header_extra();
   }
 
   uint64_t Push(type const &object)
@@ -224,7 +227,7 @@ public:
 
   void Clear()
   {
-    stack_.Clear();
+    stack_->Clear();
     objects_ = 0;
     data_.clear();
   }
@@ -245,20 +248,20 @@ public:
       {
         // In the case the stack size is less than the index we're trying to write this means we
         // need to push onto the stack. This is unsafe if we have non-continuous iteration of index
-        if (index >= stack_.size())
+        if (index >= stack_->size())
         {
-          assert(index == stack_.size());
-          stack_.LazyPush(cached_element.data);
+          assert(index == stack_->size());
+          stack_->LazyPush(cached_element.data);
         }
         else
         {
-          assert(index < stack_.size());
-          stack_.Set(index, cached_element.data);
+          assert(index < stack_->size());
+          stack_->Set(index, cached_element.data);
         }
       }
     }
 
-    stack_.Flush(true);
+    stack_->Flush(true);
 
     for (auto &item : data_)
     {
@@ -272,7 +275,7 @@ public:
 
   bool is_open() const
   {
-    return stack_.is_open();
+    return stack_->is_open();
   }
 
 private:
@@ -281,7 +284,7 @@ private:
   event_handler_type           on_before_flush_;
 
   // Underlying stack
-  stack_type stack_;
+  std::shared_ptr<stack_type> stack_;
 
   // Cached items
   struct CachedDataItem
