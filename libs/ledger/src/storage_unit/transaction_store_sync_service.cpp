@@ -318,10 +318,6 @@ void TransactionStoreSyncService::OnTransaction(chain::VerifiedTransaction const
   if (!store_->Has(rid))
   {
     store_->Set(rid, tx);
-
-#ifdef FETCH_ENABLE_METRICS
-    RecordNewElement(tx.digest());
-#endif  // FETCH_ENABLE_METRICS
   }
 }
 
