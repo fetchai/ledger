@@ -34,7 +34,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ToHex;
 
 using Index = fetch::storage::KeyValueIndex<>;
-using RNG = fetch::random::LaggedFibonacciGenerator<>;
+using RNG   = fetch::random::LaggedFibonacciGenerator<>;
 
 struct TestData
 {
@@ -48,12 +48,12 @@ struct TestData
 };
 
 using TestDataArray = std::vector<TestData>;
-using ReferenceMap   = std::map<ConstByteArray, uint64_t>;
+using ReferenceMap  = std::map<ConstByteArray, uint64_t>;
 
 TestDataArray GenerateTestData(RNG &rng, ReferenceMap &ref_map)
 {
-  static constexpr std::size_t NUM_ENTRIES = 5;
-  static constexpr std::size_t IDENTITY_BIT_SIZE = 256;
+  static constexpr std::size_t NUM_ENTRIES        = 5;
+  static constexpr std::size_t IDENTITY_BIT_SIZE  = 256;
   static constexpr std::size_t IDENTITY_BYTE_SIZE = IDENTITY_BIT_SIZE / 8u;
   static constexpr std::size_t IDENTITY_WORD_SIZE = IDENTITY_BYTE_SIZE / sizeof(RNG::random_type);
 
@@ -97,7 +97,7 @@ TEST(versioned_kvi_gtest, basic_test)
   Index key_value_index;
 
   TestDataArray bookmarks;
-  ReferenceMap ref_map;
+  ReferenceMap  ref_map;
 
   RNG rng;
 
@@ -116,13 +116,14 @@ TEST(versioned_kvi_gtest, basic_test)
     // with a given interval make a bookmark
     if ((i % BOOKMARK_INTERVAL) == 0)
     {
-      auto const hash = key_value_index.Hash();
+      auto const hash  = key_value_index.Hash();
       auto const index = key_value_index.Commit();
 
       // add to bookmark list
       bookmarks.emplace_back(hash, index);
 
-      ASSERT_EQ(hash, key_value_index.Hash()) << "Expected hash to be the same before and after commit";
+      ASSERT_EQ(hash, key_value_index.Hash())
+          << "Expected hash to be the same before and after commit";
     }
   }
 
@@ -148,5 +149,4 @@ TEST(versioned_kvi_gtest, basic_test)
   }
 }
 
-} // namespace
-
+}  // namespace

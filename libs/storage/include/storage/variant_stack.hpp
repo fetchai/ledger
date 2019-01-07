@@ -75,8 +75,7 @@ public:
       : type{t}
       , object_size{o}
       , previous{p}
-    {
-    }
+    {}
   };
 
   // This check is necessary to ensure structures are correctly packed
@@ -88,7 +87,7 @@ public:
   struct Header
   {
     uint64_t object_count = 0;
-    int64_t  end = 0;
+    int64_t  end          = 0;
 
     Header() = default;
     Header(uint64_t o, int64_t e)
@@ -252,7 +251,7 @@ public:
 
     Separator separator = {HEADER_OBJECT, 0, UNDEFINED_POSITION};
 
-    header_ = Header();
+    header_     = Header();
     header_.end = sizeof(Header) + sizeof(Separator);
 
     fin.write(reinterpret_cast<char const *>(&header_), sizeof(Header));

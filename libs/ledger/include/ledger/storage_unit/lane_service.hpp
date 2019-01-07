@@ -57,12 +57,12 @@ public:
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
 
-  using DocumentStore             = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
-  using TransactionStore          = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
-  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
-  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using DocumentStore            = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore         = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
+  using TransactionStoreProtocol = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
+  using BackgroundedWork         = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread   = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using VerifiedTransaction       = chain::VerifiedTransaction;
 
@@ -117,7 +117,7 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    //tx_store_->id = "Lane " + std::to_string(lane_);
+    // tx_store_->id = "Lane " + std::to_string(lane_);
 
     tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());

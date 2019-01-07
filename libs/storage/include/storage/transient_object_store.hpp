@@ -21,8 +21,8 @@
 #include "core/mutex.hpp"
 #include "storage/object_store.hpp"
 
-#include <unordered_map>
 #include <map>
+#include <unordered_map>
 
 namespace fetch {
 namespace storage {
@@ -73,7 +73,6 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
 private:
-
   using Mutex     = fetch::mutex::Mutex;
   using Queue     = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
   using Cache     = std::unordered_map<ResourceID, Object>;
@@ -86,13 +85,13 @@ private:
   void AddToWriteQueue(ResourceID const &rid);
   void ThreadLoop();
 
-  mutable Mutex cache_mutex_{__LINE__, __FILE__}; ///< The mutex for the cache
-  Cache         cache_;                           ///< The main object cache
-  Archive       archive_;                         ///< The persistent object store
-  Queue         confirm_queue_;                   ///< The queue of elements to be stored
-  ThreadPtr     thread_;                          ///< The background worker thread
-  Callback      set_callback_;                    ///< The completion handler
-  Flag          stop_{false};                     ///< Flag to signal the stop of the worker
+  mutable Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex for the cache
+  Cache         cache_;                            ///< The main object cache
+  Archive       archive_;                          ///< The persistent object store
+  Queue         confirm_queue_;                    ///< The queue of elements to be stored
+  ThreadPtr     thread_;                           ///< The background worker thread
+  Callback      set_callback_;                     ///< The completion handler
+  Flag          stop_{false};                      ///< Flag to signal the stop of the worker
 };
 
 /**
@@ -239,7 +238,7 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
   auto it = cache_.find(rid);
   if (it != cache_.end())
   {
-    object = it->second;
+    object  = it->second;
     success = true;
   }
 
@@ -303,12 +302,12 @@ void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
-  static const std::size_t BATCH_SIZE = 100;
+  static const std::size_t               BATCH_SIZE = 100;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   std::vector<ResourceID> rids(BATCH_SIZE);
-  std::size_t extracted_count = 0;
-  std::size_t written_count = 0;
+  std::size_t             extracted_count = 0;
+  std::size_t             written_count   = 0;
 
   enum class Phase
   {
@@ -318,84 +317,84 @@ void TransientObjectStore<O>::ThreadLoop()
   };
 
   Phase phase = Phase::Populating;
-  O obj;
+  O     obj;
 
   // main processing loop
   while (!stop_)
   {
     switch (phase)
     {
-      // Populating: We are filling up our batch of objects from the queue that is being posted
-      case Phase::Populating:
+    // Populating: We are filling up our batch of objects from the queue that is being posted
+    case Phase::Populating:
+    {
+      // update the state in the case where we have fully filled up the buffer
+      if (extracted_count >= BATCH_SIZE)
       {
-        // update the state in the case where we have fully filled up the buffer
-        if (extracted_count >= BATCH_SIZE)
+        phase         = Phase::Writing;
+        written_count = 0;
+      }
+      else
+      {
+        // populate our resource array
+        if (confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL))
         {
-          phase = Phase::Writing;
-          written_count = 0;
+          ++extracted_count;
+        }
+      }
+
+      break;
+    }
+
+    // Writing: We are extracting the items from the cache and writing them to disk
+    case Phase::Writing:
+    {
+      // check if we need to transition from this state
+      if (written_count >= extracted_count)
+      {
+        phase = Phase::Flushing;
+      }
+      else
+      {
+        auto const &rid = rids[written_count];
+
+        // get the element from the cache
+
+        if (GetFromCache(rid, obj))
+        {
+          // write out the object
+          archive_.Set(rid, obj);
+
+          ++written_count;
         }
         else
         {
-          // populate our resource array
-          if (confirm_queue_.Pop(rids[extracted_count], MAX_WAIT_INTERVAL))
-          {
-            ++extracted_count;
-          }
+          // If this is the case then for some reason the RID that was added to the queue has been
+          // removed from the cache.
+          assert(false);
         }
-
-        break;
       }
 
-      // Writing: We are extracting the items from the cache and writing them to disk
-      case Phase::Writing:
+      break;
+    }
+
+    // Flushing: In this phase we are removing the elements from the cache. This is important to
+    // ensure a bound on the memory resources. This must happen after the writing to disk,
+    // otherwise the object store will be inconsistent
+    case Phase::Flushing:
+    {
+      FETCH_LOCK(cache_mutex_);
+
+      assert(extracted_count == rids.size());
+      for (auto const &rid : rids)
       {
-        // check if we need to transition from this state
-        if (written_count >= extracted_count)
-        {
-          phase = Phase::Flushing;
-        }
-        else
-        {
-          auto const &rid = rids[written_count];
-
-          // get the element from the cache
-
-          if (GetFromCache(rid, obj))
-          {
-            // write out the object
-            archive_.Set(rid, obj);
-
-            ++written_count;
-          }
-          else
-          {
-            // If this is the case then for some reason the RID that was added to the queue has been
-            // removed from the cache.
-            assert(false);
-          }
-        }
-
-        break;
+        cache_.erase(rid);
       }
 
-      // Flushing: In this phase we are removing the elements from the cache. This is important to
-      // ensure a bound on the memory resources. This must happen after the writing to disk,
-      // otherwise the object store will be inconsistent
-      case Phase::Flushing:
-      {
-        FETCH_LOCK(cache_mutex_);
+      phase           = Phase::Populating;
+      extracted_count = 0;
 
-        assert(extracted_count == rids.size());
-        for (auto const &rid : rids)
-        {
-          cache_.erase(rid);
-        }
-
-        phase = Phase::Populating;
-        extracted_count = 0;
-
-        break;
-      }
+      break;
+    }
     }
   }
 }
