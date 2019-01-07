@@ -230,7 +230,6 @@ bool P2PService::IsDesired(Address const &address)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  trust_system_.Debug();
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
@@ -337,8 +336,6 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting: ", ToBase64(address));
     muddle_.Blacklist(address);
   }
-
-  muddle_.Debug("p2p");
 }
 
 void P2PService::UpdateManifests(AddressSet const &active_addresses)

@@ -31,9 +31,9 @@ using std::this_thread::sleep_for;
  * @param threads The maximum number of threads
  * @return
  */
-ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t threads)
+ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t threads, std::string const &name)
 {
-  return std::make_shared<ThreadPoolImplementation>(threads);
+  return std::make_shared<ThreadPoolImplementation>(threads, name);
 }
 
 /**
@@ -41,8 +41,9 @@ ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::si
  *
  * @param threads The maximum number of threads
  */
-ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads)
+ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads, std::string const &name)
   : max_threads_(threads)
+  , name_{name}
 {}
 
 /**
@@ -275,18 +276,21 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
       }
+      if (inactive_threads_<=0)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, name_+": Inactive thread count 0!");
+      }
     }
   }
   catch (std::exception &e)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting, because: ", e.what());
-    TODO_FAIL("ThreadPool: Should not got here!");
+    FETCH_LOG_ERROR(LOGGING_NAME, name_+": Thread_pool ProcessLoop is exiting, because: ", e.what());
+    TODO_FAIL(name_+": ThreadPool: Should not got here!");
   }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting.");
-    TODO_FAIL("ThreadPool: Should not got here!");
-    throw;
+    FETCH_LOG_ERROR(LOGGING_NAME, name_+": Thread_pool ProcessLoop is exiting.");
+    TODO_FAIL(name_+": ThreadPool: Should not got here!");
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying thread pool worker (thread: ", index, ')');

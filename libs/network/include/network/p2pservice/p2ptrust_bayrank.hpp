@@ -246,8 +246,11 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
-  virtual void Debug() const override{
-    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos) {
+  virtual void Debug() const override
+  {
+    FETCH_LOCK(mutex_);
+    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
+    {
       FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ", byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
                      trust_store_[pos].score);
     }

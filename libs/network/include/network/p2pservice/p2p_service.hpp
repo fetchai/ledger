@@ -148,7 +148,7 @@ private:
   LaneManagement &lane_management_;  ///< The lane management service
   TrustInterface &trust_system_;     ///< The trust system
 
-  ThreadPool thread_pool_ = network::MakeThreadPool(1);
+  ThreadPool thread_pool_ = network::MakeThreadPool(1, "P2P");
   RpcServer  rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
 
   // Node Information

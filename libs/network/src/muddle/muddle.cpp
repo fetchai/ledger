@@ -58,7 +58,7 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle "+std::to_string(network_id)))
   , clients_(router_)
 {
   char tmp[5];

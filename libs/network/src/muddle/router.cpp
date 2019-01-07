@@ -209,7 +209,7 @@ Router::Router(NetworkId network_id, Router::Address address, MuddleRegister con
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(network_id)
-  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS))
+  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
 /**
