@@ -56,7 +56,7 @@ protected:
     Gaussian g;
     double   score;
 
-    void     update_score()
+    void update_score()
     {
       score = g.mu() - 3 * g.sigma();
     }
@@ -90,7 +90,8 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", byte_array::ToBase64(peer_ident), " subj=", ToString(subject), " qual=", ToString(quality));
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", byte_array::ToBase64(peer_ident),
+                   " subj=", ToString(subject), " qual=", ToString(quality));
 
     auto ranking = ranking_store_.find(peer_ident);
 
@@ -111,7 +112,7 @@ public:
       trust_store_[pos].update_score();
       dirty_ = true;
       SortIfNeeded();
-      return; // we're introducing this element, not rating it.
+      return;  // we're introducing this element, not rating it.
     }
 
     Gaussian const &reference_player = LookupReferencePlayer(quality);
@@ -330,8 +331,6 @@ protected:
       ranking_store_[trust_store_[pos].peer_identity] = pos;
     }
   }
-
-
 
 protected:
   bool          dirty_ = false;

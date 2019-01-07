@@ -33,15 +33,14 @@ namespace muddle {
 class Subscription
 {
 public:
-  using Address = Packet::Address;
-  using Payload = Packet::Payload;
-  using Handle  = uint64_t;
-  using MessageCallback =
-      std::function<void(Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/,
-                         uint16_t /*counter*/, Packet::Payload const & /*payload*/,
-                         Address const & /*transmitter*/
-                         )>;
-  using Mutex = mutex::Mutex;
+  using Address         = Packet::Address;
+  using Payload         = Packet::Payload;
+  using Handle          = uint64_t;
+  using MessageCallback = std::function<void(
+      Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/, uint16_t /*counter*/,
+      Packet::Payload const & /*payload*/, Address const & /*transmitter*/
+      )>;
+  using Mutex           = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
 
@@ -95,8 +94,7 @@ inline void Subscription::SetMessageHandler(MessageCallback const &cb)
  */
 inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel,
                                    uint16_t counter, Payload const &payload,
-                                   Address const &transmitter
-                                   ) const
+                                   Address const &transmitter) const
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
 

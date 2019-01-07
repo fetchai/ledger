@@ -115,7 +115,6 @@ public:
   {
   }
 
-
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
@@ -312,10 +311,10 @@ protected:
   }
 
 private:
-  mutable bool          dirty_ = false;
+  mutable bool         dirty_ = false;
   mutable Mutex        mutex_{__LINE__, __FILE__};
-  mutable TrustStore    trust_store_;
-  mutable RankingStore  ranking_store_;
+  mutable TrustStore   trust_store_;
+  mutable RankingStore ranking_store_;
 };
 
 }  // namespace p2p

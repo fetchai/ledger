@@ -156,7 +156,7 @@ void Deserialize(T &serializer, Uri &x)
   byte_array::ConstByteArray uri;
   serializer >> uri;
 
-  if (uri.size()>0 && !x.Parse(uri))
+  if (uri.size() > 0 && !x.Parse(uri))
   {
     throw std::runtime_error("Failed to deserialize uri");
   }

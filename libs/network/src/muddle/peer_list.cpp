@@ -32,7 +32,7 @@ namespace muddle {
  *
  * @param router The reference to the router
  */
-  PeerConnectionList::PeerConnectionList(Router &router)
+PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
@@ -114,7 +114,7 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix ) const
+std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix) const
 {
   std::list<Handle> handles;
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
@@ -216,20 +216,22 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
 
 }
 
-void PeerConnectionList::RemoveConnection(Handle handle) {
+void PeerConnectionList::RemoveConnection(Handle handle)
+{
   FETCH_LOCK(lock_);
 
-  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it) {
-    if (it->second->handle() == handle) {
+  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
+  {
+    if (it->second->handle() == handle)
+    {
       FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
       peer_connections_.erase(it);
-      auto &metadata = peer_metadata_[it->first];
+      auto &metadata     = peer_metadata_[it->first];
       metadata.connected = false;
       break;
     }
   }
 }
-
 
 void PeerConnectionList::Disconnect(Uri const &peer)
 {

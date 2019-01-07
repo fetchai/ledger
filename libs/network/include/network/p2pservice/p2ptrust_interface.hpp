@@ -45,8 +45,6 @@ enum class TrustQuality
   NEW_PEER        = 4,
 };
 
-
-
 template <typename IDENTITY>
 class P2PTrustInterface
 {

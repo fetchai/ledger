@@ -84,8 +84,7 @@ public:
 
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
-  {
-  }
+  {}
 
   StorageUnitClient(StorageUnitClient const &) = delete;
 

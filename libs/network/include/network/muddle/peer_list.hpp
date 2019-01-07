@@ -21,7 +21,6 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
 #include "network/uri.hpp"
-#include "network/muddle/blacklist.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -80,9 +79,9 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void        AddPersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Handle &handle);
+  void AddPersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Handle &handle);
 
   std::size_t GetNumPeers() const;
   /// @}
@@ -103,7 +102,7 @@ public:
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
-  bool UriToHandle(const Uri &uri, Handle &handle) const;
+  bool   UriToHandle(const Uri &uri, Handle &handle) const;
 
   std::list<Handle> Debug(std::string const &prefix) const;
 

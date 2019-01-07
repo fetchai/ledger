@@ -168,11 +168,13 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
     if (direct_only && !entry.second.direct)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ", ToBase64(address));
+      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ",
+                     ToBase64(address));
       continue;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address), " active: ", IsConnected(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address),
+                   " active: ", IsConnected(address));
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -221,12 +223,12 @@ void Muddle::RunPeriodicMaintenance()
     {
       switch (peer.scheme())
       {
-        case Uri::Scheme::Tcp:
-          CreateTcpClient(peer);
-          break;
-        default:
-          FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-          break;
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
       }
     }
 
@@ -312,7 +314,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
-    //reg->Leave(strong_conn->handle());  , &reg, &strong_conn
   });
 
   strong_conn->OnLeave([this, peer]() {
@@ -359,7 +360,6 @@ void Muddle::Whitelist(Address const &target)
 {
   router_.Whitelist(target);
 }
-
 
 bool Muddle::IsBlacklisted(Address const &target) const
 {
