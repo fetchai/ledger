@@ -30,7 +30,6 @@ from concurrent.futures import ThreadPoolExecutor
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
 
-
 output_lock = threading.Lock()
 
 def find_clang_format():
@@ -92,7 +91,7 @@ def extra_line(line_text, padding):
         return line_text
 
 def postprocess(lines):
-    """ Scans an array of clang-formatted strings and tries to turn any single statement 
+    """ Scans an array of clang-formatted strings and tries to turn any single statement
     that is either a then/else clause of an if-statement or a for/while loop body
     into a braced block."""
 
@@ -101,7 +100,7 @@ def postprocess(lines):
     unbraced = []
 
     empties = []
-    in_long = None 
+    in_long = None
 
     for line in lines:
         if is_empty.match(line):

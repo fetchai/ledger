@@ -27,9 +27,7 @@ import multiprocessing
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 
-
 PROJECT_FOLDERS = ('libs', 'apps')
-
 
 def find_clang_tidy():
     name = 'clang-tidy'
@@ -66,8 +64,8 @@ def parse_commandline():
     parser.add_argument('--fix', action='store_true', help='Apply suggested fixes to files')
     parser.add_argument('-j', dest='jobs', type=int, default=multiprocessing.cpu_count(), help='The number of jobs to run in parallel')
     parser.add_argument('build_path', type=os.path.abspath, help='Path to build directory')
+    parser.add_argument('--only-these-files', nargs='+') # stack overflow 26727314
     return parser.parse_args()
-
 
 def main():
     args = parse_commandline()
@@ -92,6 +90,7 @@ def main():
         num_workers = args.jobs
 
     def analyse_file(source_path):
+
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
 
         proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -110,16 +109,18 @@ def main():
 
         return proc.wait() != 0
 
-
-    def project_source_files():
+    def project_source_files(only_these_files = None):
+        print(only_these_files)
         for folder in PROJECT_FOLDERS:
             for root, _, files in os.walk(os.path.join(project_root, folder)):
                 for path in fnmatch.filter(files, '*.cpp'):
                     source_path = os.path.join(root, path)
+                    if only_these_files is not None and source_path not in only_these_files:
+                        continue
                     yield source_path
 
     with ThreadPoolExecutor(max_workers=num_workers) as e:
-        results = e.map(analyse_file, project_source_files())
+        results = e.map(analyse_file, project_source_files(args.only_these_files))
         if any(results):
             sys.exit(1)
 
