@@ -23,7 +23,6 @@
 
 #include "math/meta/math_type_traits.hpp"
 
-#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 /////////////////////////////////////
