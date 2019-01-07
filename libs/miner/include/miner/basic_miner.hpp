@@ -50,6 +50,7 @@ public:
   /// @name Miner Interface
   /// @{
   void EnqueueTransaction(chain::TransactionSummary const &tx) override;
+  // TODO:(HUT) : bit odd that lanes + slices are passed in here, too.
   void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
                      std::size_t num_slices) override;
   /// @}

@@ -1,3 +1,6 @@
 function main()
-  Print("Hello world!");
+  Print("Hello world!!");
+  Print("Hello world!!");
+  Print("Hello world!!");
+  Print("Hello world!!!");
 endfunction

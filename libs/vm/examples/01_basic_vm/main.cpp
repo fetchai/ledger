@@ -27,11 +27,14 @@
 
 void Print(std::string const &s)
 {
+  static int times_called = 0;
+  std::cout << "calling linked print statementj,w " << times_called++ << std::endl;
   std::cout << s << std::endl;
 }
 
 std::string toString(int32_t const &a)
 {
+  std::cout << "thing is happening" << std::endl;
   return std::to_string(a);
 }
 
@@ -108,6 +111,16 @@ int main(int argc, char **argv)
   }
 
   // Setting VM up and running
+  if (!vm.Execute(script, "main"))
+  {
+    std::cout << "Runtime error on line " << vm.error_line() << ": " << vm.error() << std::endl;
+  }
+
+  if (!vm.Execute(script, "main"))
+  {
+    std::cout << "Runtime error on line " << vm.error_line() << ": " << vm.error() << std::endl;
+  }
+
   if (!vm.Execute(script, "main"))
   {
     std::cout << "Runtime error on line " << vm.error_line() << ": " << vm.error() << std::endl;

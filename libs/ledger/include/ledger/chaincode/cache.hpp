@@ -28,6 +28,7 @@
 namespace fetch {
 namespace ledger {
 
+  // TODO(HUT): ask Ed about this
 class ChainCodeCache
 {
 public:
