@@ -42,7 +42,7 @@ struct TestData
   uint64_t  value;
 
   TestData(ByteArray k, uint64_t v)
-    : key{k}
+    : key{std::move(k)}
     , value{v}
   {}
 };
