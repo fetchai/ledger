@@ -7,7 +7,7 @@
 #
 # It can be run simply with the following command:
 #
-# ./scripts/apply-style.py
+# ./scripts/apply_style.py
 #
 # By default the script will "fix" all style issues that it finds. However, if the user
 # only requires warning of the style issues then it is recommended to use the `-w` and

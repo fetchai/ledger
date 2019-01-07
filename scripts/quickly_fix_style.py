@@ -3,15 +3,15 @@
 #
 # CODE STATIC ANALYSIS AND CODE STYLE QUICK FIXER
 #
-# This script is used to run the apply-style.py and run-statis-analysis.py tools
+# This script is used to run the apply_style.py and run-statis-analysis.py tools
 # after trying to determine the files that actually need changing (NOT GUARANTEED)
 # IT WILL AUTOMATICALLY TRY TO FIX which may break the code. Commit your changes first.
 #
 # Normal usage
-# ./scripts/run-static-analysis.py
+# ./scripts/run_static_analysis.py
 #
 # Extended usage
-# ./scripts/run-static-analysis.py --build-path ./build --branch develop
+# ./scripts/run_static_analysis.py --build-path ./build --branch develop
 #
 # The script will ask git for the changes between this commit and the last common commit to [develop]
 # to determine the files that need changing.

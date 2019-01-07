@@ -9,7 +9,7 @@
 # Due to the way that the clang-tidy works. It is required that the project has been
 # completely built beforehand. After this has been completed the user can simply run
 #
-# ./scripts/run-static-analysis.py build/
+# ./scripts/run_static_analysis.py build/
 #
 # (Assuming that the users output build directory is present at `build/`)
 #
