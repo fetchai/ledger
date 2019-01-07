@@ -781,7 +781,7 @@ public:
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; ret && i < N; ++i)
+    for (std::size_t i = 0; ret && (i < N); ++i)
     {
       Type va = this->At(i);
       if (ignoreNaN && std::isnan(va))
@@ -808,7 +808,7 @@ public:
       }
       Type M = std::max(va, vb);
 
-      ret &= (vA < std::max(atol, M * rtol));
+      ret = (vA <= std::max(atol, M * rtol));
     }
     if (!ret)
     {
