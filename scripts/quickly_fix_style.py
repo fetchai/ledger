@@ -47,8 +47,10 @@ def main():
         line = line.split('\n')[0]
         changed_files.append(line)
 
+    changed_files = [x for x in changed_files if '.cpp' or '.hpp' in x]
+
     if len(changed_files) == 0:
-        print("No files appear to have changed.")
+        print("No cpp or hpp files appear to have changed.")
         sys.exit(1)
 
     changed_files_fullpath = [os.path.abspath(x) for x in changed_files]
