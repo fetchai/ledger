@@ -162,7 +162,7 @@ class ConstellationNode(object):
             shell=True,
             cwd=self.dir,
             stdout=self._logfile,
-            stderr=subprocess.STDOUT)
+            stderr=subprocess.STDOUT
         )
 
     def close(self):
