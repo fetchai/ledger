@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
 
   // update the metadata
   auto mt_it = peer_metadata_.find(peer);
-  if (mt_it==peer_metadata_.end())
+  if (mt_it == peer_metadata_.end())
   {
     return;
   }
@@ -230,7 +230,7 @@ void PeerConnectionList::RemoveConnection(Handle handle)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
       auto metadata = peer_metadata_.find(it->first);
-      if (metadata!=peer_metadata_.end())
+      if (metadata != peer_metadata_.end())
       {
         metadata->second.connected = false;
       }

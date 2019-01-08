@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -228,10 +228,9 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
     http_.AddModule(*module);
   }
 
-
   // Create an information file about this process.
 
-  auto filename = "info";
+  auto         filename = "info";
   std::fstream stream;
   stream.open(filename, std::ios_base::out);
   if (stream.good())
@@ -241,17 +240,13 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
     stream << "  \"pid\": " << getpid() << "," << std::endl;
 
     stream << "  \"identity\": "
-           << "\""
-           << fetch::byte_array::ToBase64(muddle_.identity().identifier())
-           << "\","
+           << "\"" << fetch::byte_array::ToBase64(muddle_.identity().identifier()) << "\","
            << std::endl;
 
     fetch::byte_array::ToBase64(muddle_.identity().identifier());
 
     stream << "  \"hex_identity\": "
-           << "\""
-           << fetch::byte_array::ToHex(muddle_.identity().identifier())
-           << "\""
+           << "\"" << fetch::byte_array::ToHex(muddle_.identity().identifier()) << "\""
            << std::endl;
 
     stream << "}" << std::endl;
