@@ -208,7 +208,12 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   peer_connections_.erase(peer);
 
   // update the metadata
-  auto &metadata = peer_metadata_[peer];
+  auto mt_it = peer_metadata_.find(peer);
+  if (mt_it==peer_metadata_.end())
+  {
+    return;
+  }
+  auto metadata = mt_it->second;
   ++metadata.consecutive_failures;
   ++metadata.total_failures;
   metadata.connected              = false;
@@ -224,9 +229,12 @@ void PeerConnectionList::RemoveConnection(Handle handle)
     if (it->second->handle() == handle)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
+      auto metadata = peer_metadata_.find(it->first);
+      if (metadata!=peer_metadata_.end())
+      {
+        metadata->second.connected = false;
+      }
       peer_connections_.erase(it);
-      auto &metadata     = peer_metadata_[it->first];
-      metadata.connected = false;
       break;
     }
   }
