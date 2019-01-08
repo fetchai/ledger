@@ -17,27 +17,42 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/utils.hpp"
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <class T>
-class Ops
+class MeanSquareErrorLayer
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
+  MeanSquareErrorLayer()          = default;
+  virtual ~MeanSquareErrorLayer() = default;
 
-protected:
-  ArrayPtrType output_;
+  virtual float Forward(std::vector<ArrayPtrType> const &inputs)
+  {
+    assert(inputs.size() == 2);
+    assert(inputs[0]->shape() == inputs[1]->shape());
+    ArrayType result = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
+    return result(0, 0);   
+  }
+
+  virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
+  {
+    assert(inputs.size() == 2);
+    assert(inputs[0]->shape() == inputs[1]->shape());
+    ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
+    fetch::math::Subtract(*inputs[0], *inputs[1], *ret);
+    return ret;
+  }
+
 };
+
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

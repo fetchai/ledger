@@ -58,7 +58,7 @@ public:
     {
       inputs.push_back(i->Evaluate());
     }
-    std::cout << "Evaluating node [" << name_ << "]" << std::endl;
+    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
     return this->Forward(inputs);
   }
 

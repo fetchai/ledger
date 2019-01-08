@@ -46,7 +46,7 @@ namespace ml {
     void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs)
     {
       nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName);
-      std::cout << "Creating node " << nodeName << std::endl;
+      FETCH_LOG_INFO("ML_LIB", "Creating node ", nodeName);
       for (auto const &i : inputs)
 	{
 	  nodes_[nodeName]->AddInput(nodes_[i]);
