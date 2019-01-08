@@ -17,6 +17,7 @@
 # apply the changes, the user must specify the `--fix` option.
 #
 
+import ipdb
 import os
 import re
 import sys
@@ -79,7 +80,7 @@ def main():
     cmd = [
         clang_tidy,
         '-p', args.build_path,
-        '-warnings-as-errors=*'
+        '-warnings-as-errors=*',
     ]
 
     if args.fix:
@@ -93,7 +94,9 @@ def main():
 
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
 
+        print(cmd + [source_path])
         proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         while True:
             line = proc.stdout.readline().decode()
             if line == '':
@@ -110,7 +113,7 @@ def main():
         return proc.wait() != 0
 
     def project_source_files(only_these_files = None):
-        print(only_these_files)
+
         for folder in PROJECT_FOLDERS:
             for root, _, files in os.walk(os.path.join(project_root, folder)):
                 for path in fnmatch.filter(files, '*.cpp'):

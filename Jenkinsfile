@@ -17,7 +17,7 @@ pipeline {
           stages {
             stage('License Checks') {
               steps {
-                sh './scripts/check-license-header.py'
+                sh './scripts/check_license_header.py'
               }
             }
             stage('Style check') {

@@ -26,6 +26,7 @@ import codecs
 import shutil
 import re
 from concurrent.futures import ThreadPoolExecutor
+import ipdb
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
@@ -195,6 +196,8 @@ def compare_against_original(reformatted, source_path, rel_path):
 def main():
     project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
+    print(project_root)
+
     args = parse_commandline()
 
     clang_format = find_clang_format()
@@ -213,6 +216,8 @@ def main():
 
     def apply_style_to_file(source_path):
         # apply twice to allow the changes to "settle"
+        print("applying style to: " + source_path)
+        #print(subprocess.getoutput(cmd_prefix + [source_path], cwd=project_root))
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
         subprocess.check_call(cmd_prefix + [source_path], cwd=project_root)
 
@@ -239,7 +244,9 @@ def main():
 
     # process all the files
     success = False
-    processed_files = args.filename or project_sources(project_root)
+
+    #ipdb.set_trace(context=20)
+    processed_files = iter(args.filename) or project_sources(project_root)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         result = pool.map(handler, processed_files)
