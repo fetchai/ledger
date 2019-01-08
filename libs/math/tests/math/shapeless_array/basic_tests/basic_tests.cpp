@@ -314,10 +314,10 @@ TEST(shapeless_array_tests, double_div_test)
 {
   div_test<double>();
 }
-//TEST(shapeless_array_tests, fixed_div_test_32)
-//{
-//  div_test<fetch::fixed_point::FixedPoint<32, 32>>();
-//}
+TEST(shapeless_array_tests, fixed_div_test_32)
+{
+  div_test<fetch::fixed_point::FixedPoint<32, 32>>();
+}
 
 ///////////////////////////
 ///// equality operator ///

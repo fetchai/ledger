@@ -896,58 +896,7 @@ meta::IfIsArithmetic<S, S> Multiply(S const &scalar1, S const &scalar2)
 /// DIVIDE ///
 //////////////
 
-/**
- * divide array by a scalar
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C>
-void Divide(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapelessArray<T, C>::vector_register_type val(scalar);
 
-  ret.data().in_parallel().Apply(
-      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
-            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x / val; },
-      array.data());
-}
-template <typename T, typename C>
-ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &array, T const &scalar)
-{
-  ShapelessArray<T, C> ret{array.size()};
-  Divide(array, scalar, ret);
-  return ret;
-}
-/**
- * elementwise divide scalar by array element
- * @tparam T
- * @tparam C
- * @param scalar
- * @param array
- * @param ret
- */
-template <typename T, typename C>
-void Divide(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
-{
-  assert(array.size() == ret.size());
-  typename ShapelessArray<T, C>::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
-            typename ShapelessArray<T, C>::vector_register_type &      z) { z = val / x; },
-      array.data());
-}
-template <typename T, typename C>
-ShapelessArray<T, C> Divide(T const &scalar, ShapelessArray<T, C> const &array)
-{
-  ShapelessArray<T, C> ret{array.size()};
-  Divide(scalar, array, ret);
-  return ret;
-}
 /**
  * Divide array by another array within a range
  * @tparam T
@@ -956,9 +905,9 @@ ShapelessArray<T, C> Divide(T const &scalar, ShapelessArray<T, C> const &array)
  * @param scalar
  * @param ret
  */
-template <typename T, typename C>
-void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
-            memory::Range const &range, ShapelessArray<T, C> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+            memory::Range const &range, ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -973,9 +922,9 @@ void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename ShapelessArray<T, C>::vector_register_type const &x,
-           typename ShapelessArray<T, C>::vector_register_type const &y,
-           typename ShapelessArray<T, C>::vector_register_type &      z) { z = x / y; },
+        [](typename ArrayType::vector_register_type const &x,
+           typename ArrayType::vector_register_type const &y,
+           typename ArrayType::vector_register_type &      z) { z = x / y; },
         obj1.data(), obj2.data());
   }
   else
@@ -983,14 +932,79 @@ void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
     TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2,
                             memory::Range const &range)
 {
-  ShapelessArray<T, C> ret{obj1.size()};
+  ArrayType ret{obj1.size()};
   Divide(obj1, obj2, range, ret);
   return ret;
 }
+
+
+///////////////////////////////////
+/// DIVIDE - SHAPELESS & SCALAR ///
+///////////////////////////////////
+
+/**
+ * divide array by a scalar
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  typename ArrayType::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x / val; },
+      array.data());
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.size()};
+  Divide(array, scalar, ret);
+  return ret;
+}
+/**
+ * elementwise divide scalar by array element
+ * @tparam T
+ * @tparam C
+ * @param scalar
+ * @param array
+ * @param ret
+ */
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  typename ArrayType::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = val / x; },
+      array.data());
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType const &array)
+{
+  ArrayType ret{array.size()};
+  Divide(scalar, array, ret);
+  return ret;
+}
+
+
+
+//////////////////////////////////////
+/// DIVIDE - SHAPELESS & SHAPELESS ///
+//////////////////////////////////////
+
 /**
  * subtract array from another array
  * @tparam T
@@ -999,24 +1013,29 @@ ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, 
  * @param scalar
  * @param ret
  */
-template <typename T, typename C>
-void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
-            ShapelessArray<T, C> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+            ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2)
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
-  ShapelessArray<T, C> ret{obj1.size()};
+  ArrayType ret{obj1.size()};
   Divide(obj1, obj2, ret);
   return ret;
 }
 
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-            memory::Range const &range, linalg::Matrix<T, C, S> &ret)
+//////////////////////////////
+/// DIVIDE - SHAPE & SHAPE ///
+//////////////////////////////
+
+
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+            memory::Range const &range, ArrayType &ret)
 {
   assert((obj1.size() == obj2.size()) || (obj1.shape()[0] == obj2.shape()[0]) ||
          (obj1.shape()[1] == obj2.shape()[1]));
@@ -1034,9 +1053,9 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
 
       ret.data().in_parallel().Apply(
           r,
-          [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-             typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-             typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
+          [](typename ArrayType::vector_register_type const &x,
+             typename ArrayType::vector_register_type const &y,
+             typename ArrayType::vector_register_type &      z) { z = x / y; },
           obj1.data(), obj2.data());
     }
     else
@@ -1067,40 +1086,113 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
     }
   }
 }
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-            linalg::Matrix<T, C, S> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+            ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj1.data().size()), 1};
   Divide(obj1, obj2, range, ret);
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &obj1,
-                               linalg::Matrix<T, C, S> const &obj2)
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2)
 {
-  linalg::Matrix<T, C, S> ret{obj1.shape()};
+  ArrayType ret{obj1.shape()};
 
   Divide(obj1, obj2, ret);
   return ret;
 }
-template <typename T, typename C, typename S>
-void Divide(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
+
+///////////////////////////////
+/// DIVIDE - SHAPE & SCALAR ///
+///////////////////////////////
+
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
+  assert(array.shape() == ret.shape());
+  typename ArrayType::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / val; },
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x / val; },
       array.data());
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Divide(linalg::Matrix<T, C, S> const &array, T const &scalar)
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)
 {
-  linalg::Matrix<T, C, S> ret{array.shape()};
+  ArrayType ret{array.shape()};
   Divide(array, scalar, ret);
   return ret;
 }
+
+/**
+ * elementwise divide scalar by array element
+ * @tparam T
+ * @tparam C
+ * @param scalar
+ * @param array
+ * @param ret
+ */
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  assert(array.shape() == ret.shape());
+  typename ArrayType::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = val / x; },
+      array.data());
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(T const &scalar, ArrayType const &array)
+{
+  ArrayType ret{array.size()};
+  Divide(scalar, array, ret);
+  return ret;
+}
+
+
+
+///////////////////////////////////////////////////
+/// DIVIDE - SHAPELESS & SHAPELESS - FIXED POINT///
+///////////////////////////////////////////////////
+
+/**
+ * subtract array from another array
+ * @tparam T
+ * @tparam C
+ * @param array1
+ * @param scalar
+ * @param ret
+ */
+template <typename ArrayType>
+meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType const &obj2,
+            ArrayType &ret)
+{
+  assert(obj1.size() == obj2.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] / obj2[i];
+  }
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointShapelessArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+  ArrayType ret{obj1.size()};
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] / obj2[i];
+  }
+  return ret;
+}
+
+
+
+
 /**
  * subtract array from another array with broadcasting
  * @tparam T
