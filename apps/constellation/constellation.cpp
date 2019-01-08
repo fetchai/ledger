@@ -227,6 +227,41 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   {
     http_.AddModule(*module);
   }
+
+
+  // Create an information file about this process.
+
+  auto filename = "info";
+  std::fstream stream;
+  stream.open(filename, std::ios_base::out);
+  if (stream.good())
+  {
+    stream << "{" << std::endl;
+
+    stream << "  \"pid\": " << getpid() << "," << std::endl;
+
+    stream << "  \"identity\": "
+           << "\""
+           << fetch::byte_array::ToBase64(muddle_.identity().identifier())
+           << "\","
+           << std::endl;
+
+    fetch::byte_array::ToBase64(muddle_.identity().identifier());
+
+    stream << "  \"hex_identity\": "
+           << "\""
+           << fetch::byte_array::ToHex(muddle_.identity().identifier())
+           << "\""
+           << std::endl;
+
+    stream << "}" << std::endl;
+    stream.close();
+  }
+  else
+  {
+    std::cerr << "Can't open " << filename << std::endl;
+    exit(1);
+  }
 }
 
 /**
