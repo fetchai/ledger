@@ -557,6 +557,15 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(ArrayType const &obj1, Ar
 /// SHAPELESS ARRAY - SHAPELESS ARRAY SUBTRACTION - FIXED POINT ///
 ///////////////////////////////////////////////////////////////////
 
+template <typename ArrayType>
+meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Subtract(ArrayType const &array, ArrayType const &array2, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i<ret.size(); ++i)
+  {
+    ret[i] = array[i] - array2[i];
+  }
+}
 
 
 ///////////////////////////////////////
@@ -583,67 +592,6 @@ NDArray<T, C> Subtract(NDArray<T, C> &obj1, NDArray<T, C> &obj2)
   NDArray<T, C> ret{obj1.shape()};
   Subtract(obj1, obj2, ret);
   return ret;
-}
-//template <typename ArrayType, typename T>
-//meta::IfIsMathShapeArray<ArrayType, void> Subtract(ArrayType &obj1, ArrayType &obj2, ArrayType &ret)
-//{
-//  Broadcast([](T x, T y) { return x - y; }, obj1, obj2, ret);
-//}
-//template <typename ArrayType, typename T>
-//meta::IfIsMathShapeArray<ArrayType, ArrayType> Subtract(ArrayType &obj1, ArrayType &obj2)
-//{
-//  assert(obj1.shape() == obj2.shape());
-//  ArrayType ret{obj1.shape()};
-//  Subtract(obj1, obj2, ret);
-//  return ret;
-//}
-
-
-//////////////////////////////////////////////////////
-/// SUBTRACTIONS - ARRAY & SCALAR - NO FIXED POINT ///
-//////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////
-/// SUBTRACTIONS - ARRAY & ARRAY - FIXED POINT ///
-//////////////////////////////////////////////////
-
-/**
- * subtract array from another array within a range
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename ArrayType>
-meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Subtract(ArrayType const &obj1, ArrayType const &obj2, ArrayType &ret) {
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  for (std::size_t j = 0; j < ret.size(); ++j) {
-    ret[j] = obj1[j] - obj2[j];
-  }
 }
 
 
@@ -677,6 +625,47 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
 /// Multiply ///
 ////////////////
 
+///////////////////////////////////////
+/// MULTIPLY - SHAPE ARRAY - SCALAR ///
+///////////////////////////////////////
+
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  typename ArrayType::vector_register_type val(scalar);
+
+  ret.data().in_parallel().Apply(
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x * val; },
+      array.data());
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+{
+  ArrayType ret{array.shape()};
+  Multiply(array, scalar, ret);
+  return ret;
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  Multiply(array, scalar, ret);
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(T const &scalar, ArrayType const &array)
+{
+  ArrayType ret{array.shape()};
+  Multiply(scalar, array, ret);
+  return ret;
+}
+
+
+///////////////////////////////////////////
+/// MULTIPLY - SHAPELESS ARRAY - SCALAR ///
+///////////////////////////////////////////
+
+
 /**
  * multiply a scalar by every value in the array
  * @tparam T
@@ -685,37 +674,41 @@ fetch::meta::IfIsArithmetic<S, S> Subtract(S const &scalar1, S const &scalar2)
  * @param scalar
  * @param ret
  */
-template <typename T, typename C>
-void Multiply(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, void> Multiply(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapelessArray<T, C>::vector_register_type val(scalar);
+  typename ArrayType::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
-            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x * val; },
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x * val; },
       array.data());
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &array, T const &scalar)
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
 {
-  ShapelessArray<T, C> ret{array.size()};
+  ArrayType ret{array.size()};
   Multiply(array, scalar, ret);
   return ret;
 }
-template <typename T, typename C>
-void Multiply(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, void> Multiply(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   Multiply(array, scalar, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Multiply(T const &scalar, ShapelessArray<T, C> const &array)
+template <typename ArrayType, typename T>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType>Multiply(T const &scalar, ArrayType const &array)
 {
-  ShapelessArray<T, C> ret{array.size()};
+  ArrayType ret{array.size()};
   Multiply(scalar, array, ret);
   return ret;
 }
 
+
+////////////////////////////////////////////////////
+/// MULTIPLY - SHAPELESS ARRAY - SHAPELESS ARRAY ///
+////////////////////////////////////////////////////
 /**
  * Multiply array by another array within a range
  * @tparam T
@@ -724,9 +717,9 @@ ShapelessArray<T, C> Multiply(T const &scalar, ShapelessArray<T, C> const &array
  * @param scalar
  * @param ret
  */
-template <typename T, typename C>
-void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
-              memory::Range const &range, ShapelessArray<T, C> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void>  Multiply(ArrayType const &obj1, ArrayType const &obj2,
+              memory::Range const &range, ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -741,9 +734,9 @@ void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename ShapelessArray<T, C>::vector_register_type const &x,
-           typename ShapelessArray<T, C>::vector_register_type const &y,
-           typename ShapelessArray<T, C>::vector_register_type &      z) { z = x * y; },
+        [](typename ArrayType::vector_register_type const &x,
+           typename ArrayType::vector_register_type const &y,
+           typename ArrayType::vector_register_type &      z) { z = x * y; },
         obj1.data(), obj2.data());
   }
   else
@@ -751,11 +744,11 @@ void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
     TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1, ArrayType const &obj2,
                               memory::Range const &range)
 {
-  ShapelessArray<T, C> ret{obj1.size()};
+  ArrayType ret{obj1.size()};
   Multiply(obj1, obj2, range, ret);
   return ret;
 }
@@ -767,24 +760,58 @@ ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T
  * @param scalar
  * @param ret
  */
-template <typename T, typename C>
-void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
-              ShapelessArray<T, C> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void>  Multiply(ArrayType const &obj1, ArrayType const &obj2,
+              ArrayType &ret)
 {
   memory::Range range{0, std::min(obj1.data().size(), obj2.data().size()), 1};
   Multiply(obj1, obj2, range, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2)
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1, ArrayType const &obj2)
 {
-  ShapelessArray<T, C> ret{obj1.size()};
+  ArrayType ret{obj1.size()};
   Multiply(obj1, obj2, ret);
   return ret;
 }
 
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-              memory::Range const &range, linalg::Matrix<T, C, S> &ret)
+/////////////////////////////////////////////////////////////////
+/// MULTIPLY - SHAPELESS ARRAY - SHAPELESS ARRAY - FIXED POINT///
+/////////////////////////////////////////////////////////////////
+
+template <typename ArrayType>
+meta::IfIsMathFixedPointShapelessArray<ArrayType, void>  Multiply(ArrayType const &obj1, ArrayType const &obj2,
+              ArrayType &ret)
+{
+  assert(obj1.size() == obj2.size());
+
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] * obj2[i];
+  }
+}
+
+template <typename ArrayType>
+meta::IfIsMathFixedPointShapelessArray<ArrayType, ArrayType> Multiply(ArrayType const &obj1, ArrayType const &obj2)
+{
+  assert(obj1.size() == obj2.size());
+
+  ArrayType ret{obj1.size()};
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret[i] = obj1[i] * obj2[i];
+  }
+  return ret;
+}
+
+////////////////////////////////////////////
+/// MULTIPLY - SHAPE ARRAY - SHAPE ARRAY ///
+////////////////////////////////////////////
+
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType const &obj2,
+              memory::Range const &range, ArrayType &ret)
 {
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
@@ -799,9 +826,9 @@ void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const
 
     ret.data().in_parallel().Apply(
         r,
-        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
+        [](typename ArrayType::vector_register_type const &x,
+           typename ArrayType::vector_register_type const &y,
+           typename ArrayType::vector_register_type &      z) { z = x * y; },
         obj1.data(), obj2.data());
   }
   else
@@ -809,51 +836,21 @@ void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const
     TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-              linalg::Matrix<T, C, S> &ret)
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array1, ArrayType const &array2,
+              ArrayType &ret)
 {
   memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
   Multiply(array1, array2, range, ret);
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array1,
-                                 linalg::Matrix<T, C, S> const &array2)
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array1, ArrayType const &array2)
 {
-  linalg::Matrix<T, C, S> ret{array1.shape()};
+  ArrayType ret{array1.shape()};
   Multiply(array1, array2, ret);
   return ret;
 }
-template <typename T, typename C, typename S>
-void Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar, linalg::Matrix<T, C, S> &ret)
-{
-  assert(array.size() == ret.size());
-  typename linalg::Matrix<T, C, S>::vector_register_type val(scalar);
 
-  ret.data().in_parallel().Apply(
-      [val](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * val; },
-      array.data());
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(linalg::Matrix<T, C, S> const &array, T const &scalar)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Multiply(array, scalar, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
-{
-  Multiply(array, scalar, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Multiply(T const &scalar, linalg::Matrix<T, C, S> const &array)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
-  Multiply(scalar, array, ret);
-  return ret;
-}
 
 /**
  * Multiply array by another array with broadcasting

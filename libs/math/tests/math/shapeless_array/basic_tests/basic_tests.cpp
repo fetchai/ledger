@@ -270,10 +270,10 @@ TEST(shapeless_array_tests, double_mult_test)
 {
   mult_test<double>();
 }
-//TEST(shapeless_array_tests, fixed_mult_test_32)
-//{
-//   mult_test<fetch::fixed_point::FixedPoint<32, 32>>();
-//}
+TEST(shapeless_array_tests, fixed_mult_test_32)
+{
+  mult_test<fetch::fixed_point::FixedPoint<32, 32>>();
+}
 
 //////////////////
 /// / operator ///

@@ -388,7 +388,16 @@ public:
     return FixedPoint(T(data_) * n);
   }
 
+  FixedPoint operator/(const FixedPoint &n) const
+  {
+    return FixedPoint(data_ / n.data_);
+  }
 
+  template <typename T>
+  FixedPoint operator/(const T &n) const
+  {
+    return FixedPoint(T(data_) / n);
+  }
 
 
     FixedPoint& operator+=(const FixedPoint &n)
