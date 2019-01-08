@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,3 +21,23 @@
 #include "ml/ops/activation_functions.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/utils.hpp"
+
+namespace fetch {
+namespace ml {
+
+template <class T>
+class Ops
+{
+public:
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     error)                     = 0;
+
+protected:
+  ArrayPtrType output_;
+};
+}  // namespace ml
+}  // namespace fetch
