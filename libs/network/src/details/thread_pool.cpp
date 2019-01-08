@@ -277,22 +277,18 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Exiting idle state (thread ", index, ')');
       }
-      if (inactive_threads_ <= 0)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, name_ + ": Inactive thread count 0!");
-      }
     }
   }
   catch (std::exception &e)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
                     name_ + ": Thread_pool ProcessLoop is exiting, because: ", e.what());
-    TODO_FAIL(name_ + ": ThreadPool: Should not got here!");
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
   }
   catch (...)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, name_ + ": Thread_pool ProcessLoop is exiting.");
-    TODO_FAIL(name_ + ": ThreadPool: Should not got here!");
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying thread pool worker (thread: ", index, ')');

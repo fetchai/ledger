@@ -64,9 +64,6 @@ public:
   using RMutex = std::recursive_mutex;
   using RLock  = std::unique_lock<RMutex>;
 
-  using Mutex = RMutex;
-  using Lock  = RLock;
-
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction

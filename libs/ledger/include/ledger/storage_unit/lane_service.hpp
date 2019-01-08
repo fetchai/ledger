@@ -179,7 +179,7 @@ public:
     tx_store_protocol_.reset();
     tx_store_.reset();
 
-    //    tx_sync_protocol_.reset();
+    tx_sync_protocol_.reset();
 
     // TODO(issue 24): Remove protocol
     controller_protocol_.reset();

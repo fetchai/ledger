@@ -66,7 +66,7 @@ public:
   }
 
 private:
-  uint32_t GetRandom()
+  static uint32_t GetRandom()
   {
     std::random_device                      rd;
     std::mt19937                            gen(rd());

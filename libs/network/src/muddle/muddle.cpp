@@ -58,21 +58,10 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1, "Muddle " + std::to_string(network_id)))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + PrintableNetworkId(network_id)))
   , clients_(router_)
+  , network_id_{network_id}
 {
-  char tmp[5];
-
-  tmp[4] = 0;
-  tmp[3] = char(network_id & 0xFF);
-  network_id >>= 8;
-  tmp[2] = char(network_id & 0xFF);
-  network_id >>= 8;
-  tmp[1] = char(network_id & 0xFF);
-  network_id >>= 8;
-  tmp[0] = char(network_id & 0xFF);
-
-  network_id_str_ = std::string(tmp);
 }
 
 /**
@@ -168,13 +157,8 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
     if (direct_only && !entry.second.direct)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Filtering out non-direct ",
-                     ToBase64(address));
       continue;
     }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "GetConnections:GetRoutingTable:Got ", ToBase64(address),
-                   " active: ", IsConnected(address));
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -195,7 +179,7 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
 void Muddle::DropPeer(Address const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
+  FETCH_LOG_INFO(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
   Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
   if (h)
   {
@@ -205,7 +189,7 @@ void Muddle::DropPeer(Address const &peer)
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
+    FETCH_LOG_INFO(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
   }
 }
 

@@ -168,6 +168,20 @@ public:
     return CreateNetworkId(x.c_str());
   }
 
+  static inline std::string PrintableNetworkId(uint32_t network_id)
+  {
+    char tmp[5];
+    tmp[4] = 0;
+    tmp[3] = char(network_id & 0xFF);
+    network_id >>= 8;
+    tmp[2] = char(network_id & 0xFF);
+    network_id >>= 8;
+    tmp[1] = char(network_id & 0xFF);
+    network_id >>= 8;
+    tmp[0] = char(network_id & 0xFF);
+    return tmp;
+  }
+
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
@@ -248,7 +262,6 @@ private:
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
-  std::string          network_id_str_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
@@ -270,7 +283,6 @@ inline void Muddle::AddPeer(Uri const &peer)
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
-  // KLL -- this doesn't break connections at the moment.
   Handle handle = 0;
   if (clients_.UriToHandle(peer, handle))
   {

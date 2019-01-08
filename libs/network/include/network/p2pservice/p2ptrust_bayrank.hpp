@@ -55,7 +55,6 @@ protected:
     IDENTITY peer_identity;
     Gaussian g;
     double   score;
-
     void update_score()
     {
       score = g.mu() - 3 * g.sigma();
@@ -90,9 +89,6 @@ public:
   {
     FETCH_LOCK(mutex_);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: Feedback: ", byte_array::ToBase64(peer_ident),
-                   " subj=", ToString(subject), " qual=", ToString(quality));
-
     auto ranking = ranking_store_.find(peer_ident);
 
     size_t pos;
@@ -107,6 +103,8 @@ public:
       pos = ranking->second;
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
+                   " subj=", ToString(subject), " qual=", ToString(quality));
     if (quality == TrustQuality::NEW_PEER)
     {
       trust_store_[pos].update_score();
@@ -252,7 +250,7 @@ public:
     FETCH_LOCK(mutex_);
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ",
+      FETCH_LOG_WARN(LOGGING_NAME, "trust_store_ ",
                      byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
                      trust_store_[pos].score);
     }

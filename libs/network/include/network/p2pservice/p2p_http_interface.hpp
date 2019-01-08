@@ -142,46 +142,25 @@ private:
                                     http::HTTPRequest const &   request)
   {
     auto peers_trusts = trust_.GetPeersAndTrusts();
-    //    auto const connections = muddle_.GetConnections();
-
-    //    for(auto const &c : connections)
-    //    {
-    //      FETCH_LOG_WARN(LOGGING_NAME, "KLL: ACTIVE ", fetch::byte_array::ToBase64(c.first));
-    //    }
 
     std::vector<variant::Variant> peer_data_list;
 
     for (const auto &pt : peers_trusts)
     {
-      // if (!pt.has_transacted)
-      //{
-      //  continue;
-      //}
+      if (!pt.has_transacted)
+      {
+        continue;
+      }
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"]        = pt.name;
       peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
       peer_data["value"]         = pt.trust;
-      bool act                   = muddle_.IsConnected(pt.address);
-      peer_data["active"]        = act;
+      peer_data["active"]        = muddle_.IsConnected(pt.address);
       peer_data["desired"]       = p2p_.IsDesired(pt.address);
-
-      if (!act)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "KLL: inactive ", fetch::byte_array::ToBase64(pt.address));
-      }
-
-      peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
-
-      //     FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus returning",
-      //                    " target=", pt.name,
-      //                    " value=", pt.trust,
-      //                    " active=", act,
-      //                    ""
-      //                    );
+      peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
 
       peer_data_list.push_back(peer_data);
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus returning ", peer_data_list.size(), " trusts");
 
     variant::Variant trust_list;
     trust_list.MakeArrayFrom(peer_data_list);
@@ -192,7 +171,6 @@ private:
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
     response["trusts"]    = trust_list;
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus done");
     return http::CreateJsonResponse(response);
   }
 
@@ -307,9 +285,7 @@ private:
   MainChain & chain_;
   Muddle &    muddle_;
   P2PService &p2p_;
-
   TrustSystem &trust_;
-
   Miner &miner_;
 };
 

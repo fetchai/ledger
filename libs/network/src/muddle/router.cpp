@@ -383,18 +383,6 @@ bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address
     address = address_it->second;
     return true;
   }
-  for (const auto &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
-                    static_cast<std::string>(ToBase64(output)));
-    if (routing.second.handle == handle)
-    {
-      address = ToConstByteArray(routing.first);
-      return true;
-    }
-  }
   return false;
 }
 
@@ -650,7 +638,7 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
-void Router::KillConnection(Handle handle, Address peer)
+void Router::KillConnection(Handle handle, Address const &peer)
 {
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
@@ -928,7 +916,7 @@ bool Router::IsBlacklisted(Address const &target) const
   return blacklist_.Contains(target);
 }
 
-void Router::DropPeer(Address &peer)
+void Router::DropPeer(Address const &peer)
 {
   FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
   Handle h = LookupHandle(ConvertAddress(peer));

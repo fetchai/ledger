@@ -113,10 +113,11 @@ public:
   /** If this host is connected close their port.
    * @param peer The target address to killed.
    */
-  void DropPeer(Address &address);
+  void DropPeer(Address const &address);
 
   /** Kills the connection with the handle.
    * @param handle The handle to drop
+   * @param address Supply the address to avoid an extra address lookup.
    */
   void DropHandle(Handle handle, const Address &address);
 
@@ -173,7 +174,7 @@ private:
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
-  void KillConnection(Handle handle, Address peer);
+  void KillConnection(Handle handle, Address const &peer);
   void KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet, Address transmitter);
