@@ -74,7 +74,7 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
 
-  static constexpr char const *LOGGING_NAME              = "P2PService";
+  static constexpr char const *      LOGGING_NAME        = "P2PService";
   static constexpr std::size_t const MAX_PEERS_PER_CYCLE = 32;
 
   // Construction / Destruction

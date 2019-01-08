@@ -55,7 +55,7 @@ protected:
     IDENTITY peer_identity;
     Gaussian g;
     double   score;
-    void update_score()
+    void     update_score()
     {
       score = g.mu() - 3 * g.sigma();
     }

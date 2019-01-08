@@ -61,8 +61,7 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , thread_pool_(network::MakeThreadPool(1, "Muddle " + PrintableNetworkId(network_id)))
   , clients_(router_)
   , network_id_{network_id}
-{
-}
+{}
 
 /**
  * Starts the muddle node and attaches it to the network
