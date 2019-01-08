@@ -23,9 +23,8 @@ namespace fetch {
 namespace crypto {
 
 namespace {
-constexpr std::size_t hash_size{SHA256_DIGEST_LENGTH};
 
-void reset(SHA256_CTX &context)
+void ResetContext(SHA256_CTX &context)
 {
   if (!SHA256_Init(&context))
   {
@@ -36,17 +35,12 @@ void reset(SHA256_CTX &context)
 
 SHA256::SHA256()
 {
-  reset(context_);
-}
-
-std::size_t SHA256::hashSize() const
-{
-  return hash_size;
+  ResetContext(context_);
 }
 
 void SHA256::Reset()
 {
-  reset(context_);
+  ResetContext(context_);
 }
 
 bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
@@ -60,10 +54,11 @@ bool SHA256::Update(uint8_t const *data_to_hash, std::size_t const &size)
 
 void SHA256::Final(uint8_t *hash, std::size_t const &size)
 {
-  if (size < hash_size)
+  if (size < size_in_bytes())
   {
     throw std::runtime_error("size of input buffer is smaller than hash size.");
   }
+
   if (!SHA256_Final(hash, &context_))
   {
     throw std::runtime_error("could not finalize SHA256.");
