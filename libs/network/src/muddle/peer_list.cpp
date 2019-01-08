@@ -213,7 +213,7 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   {
     return;
   }
-  auto metadata = mt_it->second;
+  auto &metadata = mt_it->second;
   ++metadata.consecutive_failures;
   ++metadata.total_failures;
   metadata.connected              = false;
