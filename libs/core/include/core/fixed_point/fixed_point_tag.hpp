@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
-
 namespace fetch {
 namespace fixed_point {
 
@@ -26,5 +24,5 @@ struct FixedPointTag
 {
 };
 
-} // fetch
-} // fixed_point
+}  // namespace fixed_point
+}  // namespace fetch

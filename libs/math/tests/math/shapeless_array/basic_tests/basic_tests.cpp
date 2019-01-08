@@ -29,11 +29,15 @@
 using namespace fetch::math;
 
 /// template for producing a random array of FixedPoints
-template<std::size_t I, std::size_t F>
-ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>> RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
+template <std::size_t I, std::size_t F>
+ShapelessArray<fetch::fixed_point::FixedPoint<I, F>,
+               fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
+RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>  a1(n);
+  ShapelessArray<fetch::fixed_point::FixedPoint<I, F>,
+                 fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
+      a1(n);
 
   fetch::fixed_point::FixedPoint<I, F> rn{0};
   for (std::size_t i = 0; i < n; ++i)
@@ -46,7 +50,8 @@ ShapelessArray<fetch::fixed_point::FixedPoint<I, F>, fetch::memory::SharedArray<
 
 /// template for producing a random array of integer types
 template <typename T>
-fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(
+    std::size_t n, T adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
@@ -65,7 +70,8 @@ fetch::meta::IfIsInteger<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> Ra
 
 /// template for producing a random array of float types
 template <typename T>
-fetch::meta::IfIsFloat <T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(std::size_t n, T adj)
+fetch::meta::IfIsFloat<T, ShapelessArray<T, fetch::memory::SharedArray<T>>> RandomArray(
+    std::size_t n, T adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<T, fetch::memory::SharedArray<T>>  a1(n);
@@ -78,7 +84,6 @@ fetch::meta::IfIsFloat <T, ShapelessArray<T, fetch::memory::SharedArray<T>>> Ran
   }
   return a1;
 }
-
 
 ///////////////////////////
 /// assignment operator ///
@@ -210,7 +215,6 @@ void sub_test()
   }
 
   ASSERT_TRUE(result_array.AllClose(test_array - test_array_2));
-
 }
 
 TEST(shapeless_array_tests, integer_sub)

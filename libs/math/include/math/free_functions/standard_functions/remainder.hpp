@@ -29,7 +29,7 @@ namespace math {
 
 template <typename ArrayType>
 fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType const &y,
-                                                          ArrayType &z)
+                                                            ArrayType &z)
 {
   free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());

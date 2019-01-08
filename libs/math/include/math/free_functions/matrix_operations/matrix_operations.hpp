@@ -939,8 +939,8 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
 }
 template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
-                                                                       ArrayType const &B,
-                                                                       bool threaded = false)
+                                                                         ArrayType const &B,
+                                                                         bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};

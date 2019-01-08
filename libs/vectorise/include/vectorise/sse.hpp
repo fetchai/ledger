@@ -366,7 +366,6 @@ inline VectorRegister<uint32_t, 128> operator/(VectorRegister<uint32_t, 128> con
 
   uint32_t ret[4];
 
-
   ret[0] = d2[0] != 0 ? d1[0] / d2[0] : 0;
   ret[1] = d2[1] != 0 ? d1[1] / d2[1] : 0;
   ret[2] = d2[2] != 0 ? d1[2] / d2[2] : 0;
