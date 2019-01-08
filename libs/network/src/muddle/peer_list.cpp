@@ -144,7 +144,6 @@ void PeerConnectionList::Debug(std::string const &prefix) const
 
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "PeerConnectionList: --------------------------------------");
-
 }
 
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer) const
@@ -195,6 +194,8 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
   {
     router_.AddConnection(connection_handle);
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " established");
 }
 
 void PeerConnectionList::RemoveConnection(Uri const &peer)
@@ -247,6 +248,8 @@ void PeerConnectionList::Disconnect(Uri const &peer)
   }
 
   persistent_peers_.erase(peer);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
@@ -267,6 +270,7 @@ PeerConnectionList::PeerList PeerConnectionList::GetPeersToConnectTo() const
   for (auto const &peer : persistent_peers_)
   {
     bool const inactive = peer_connections_.find(peer) == peer_connections_.end();
+
     if (inactive)
     {
       auto it = peer_metadata_.find(peer);

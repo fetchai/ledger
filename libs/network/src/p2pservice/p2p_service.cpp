@@ -182,7 +182,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   pending_peer_lists_.Resolve();
 
   // process any peer discovery updates that are returned from the queue
-  for (auto &result : pending_peer_lists_.Get(32))
+  for (auto &result : pending_peer_lists_.Get(MAX_PEERS_PER_CYCLE))
   {
     Address const &from      = result.key;
     AddressSet &   addresses = result.promised;
@@ -274,18 +274,17 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   pending_resolutions_.Resolve();
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ",
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ",
                    result.promised.uri());
     Uri uri;
     if (result.promised.scheme() == Uri::Scheme::Tcp)
     {
-      FETCH_LOG_INFO("Resolved: ", ToBase64(result.key.second));
       identity_cache_.Update(result.key.second, result.promised);
       muddle_.AddPeer(result.promised);
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Discarding resolution for peer: ", ToBase64(result.key.second));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Discarding resolution for peer: ", ToBase64(result.key.second));
     }
   }
 
@@ -294,8 +293,6 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   for (auto const &address : new_peers)
   {
     bool resolve = true;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding new peers, peer: ", ToBase64(address));
 
     // once the identity has been resolved it can be added as a peer
     if (identity_cache_.Lookup(address, uri) && (uri.scheme() == Uri::Scheme::Tcp))

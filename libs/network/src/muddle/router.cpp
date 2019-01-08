@@ -743,9 +743,6 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     {
       DispatchPacket(packet, address_);
     }
-    else
-    {
-    }
 
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
@@ -930,7 +927,7 @@ void Router::DropPeer(Address const &peer)
   }
 }
 
-void Router::DropHandle(Router::Handle handle, const Address &peer)
+void Router::DropHandle(Router::Handle handle, Address const &peer)
 {
   if (handle)
   {

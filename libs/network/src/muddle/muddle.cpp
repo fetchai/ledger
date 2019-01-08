@@ -300,7 +300,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    clients_.RemovePersistentPeer(peer);
+    clients_.Disconnect(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
@@ -330,11 +330,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
 void Muddle::Blacklist(Address const &target)
 {
   DropPeer(target);
-  Handle handle = router_.LookupHandleFromAddress(target);
-  if (handle != 0)
-  {
-    clients_.RemovePersistentPeer(handle);
-  }
   router_.Blacklist(target);
 }
 

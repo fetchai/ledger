@@ -147,10 +147,6 @@ private:
 
     for (const auto &pt : peers_trusts)
     {
-      if (!pt.has_transacted)
-      {
-        continue;
-      }
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"]        = pt.name;
       peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
