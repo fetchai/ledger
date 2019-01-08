@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <sstream>
+#include "fixed_point_tag.hpp"
 
 //#include <ostream>
 //#include <exception>
@@ -197,43 +198,8 @@ bool CheckNoRounding(T n, std::size_t fractional_bits)
   // sufficient bits to guarantee no rounding
   if (std::numeric_limits<T>::max_digits10 < fractional_bits)
   {
-//    std::cout << "std::numeric_limits<T>::max_digits10: " << std::numeric_limits<T>::max_digits10 << std::endl;
     return true;
   }
-//  else
-//  {
-//    std::cout << "rounding check not fully implemented: " << std::endl;
-////    assert(0);
-//
-//    std::ostringstream strs;
-//    strs << n;
-//    std::string str = strs.str();
-//
-//
-//
-//
-//
-//    // subtract integer portion
-//    int n_int = static_cast<int>(n);
-//    n -= n_int;
-//
-//    std::cout.precision(std::numeric_limits<T>::max_digits10);
-//
-//    for (std::size_t j = 0; j < fractional_bits; ++j)
-//    {
-//      std::cout << "n: " << n << std::endl;
-//      n *= 10;
-//      std::cout << "n: " << n << std::endl;
-//      n_int = static_cast<int>(n);
-//      std::cout << "static_cast<T>(n_int): " << static_cast<T>(n_int) << std::endl;
-//      n -= static_cast<T>(n_int);
-//      std::cout << "n: " << n << std::endl;
-//      if(n == 0)
-//      {
-//        return true;
-//      }
-//    }
-//  }
 
   std::cout << "ROUNDING ERROR! " << std::endl;
   std::cout << "n: " << original_n << std::endl;
@@ -255,7 +221,8 @@ public:
   static const std::size_t fractional_bits = F;
   static const std::size_t total_bits      = I + F;
 
-
+  // this tag is used for matching templates - see math_type_traits.hpp
+  FixedPointTag fixed_point_tag;
 
   using BaseTypeInfo = details::TypeFromSize<total_bits>;
 

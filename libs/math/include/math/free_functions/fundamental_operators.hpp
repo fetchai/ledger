@@ -33,7 +33,7 @@ namespace math {
 
 namespace details {
 template <typename ArrayType>
-meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                        memory::Range const &range, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
@@ -46,20 +46,13 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
   }
   else if (range.is_trivial())
   {
-    typename ArrayType::vector_register_type x{};
+    auto r = range.ToTrivialRange(ret.data().size());
 
-    // TODO: problem is that sizeof(FixedPoint) is 24, and 24 doesn't go into 128
-
-    std::cout << "typeid(array1.data()).name(): " << typeid(array1.data()).name() << std::endl;
-    std::cout << "typeid(array2.data()).name(): " << typeid(array2.data()).name() << std::endl;
-    std::cout << "typeid(x).name(): " << typeid(x).name() << std::endl;
-    //    auto r = range.ToTrivialRange(ret.data().size());
-//
-//    ret.data().in_parallel().Apply(r,
-//                                   [](typename ArrayType::vector_register_type const &x,
-//                                      typename ArrayType::vector_register_type const &y,
-//                                      typename ArrayType::vector_register_type &z) { z = x + y; },
-//                                   array1.data(), array2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x + y; },
+                                   array1.data(), array2.data());
   }
   else
   {
@@ -67,7 +60,7 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
   }
 }
 template <typename ArrayType>
-meta::IsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                             memory::Range const &range)
 {
   ArrayType ret{array1.size()};
@@ -105,7 +98,7 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
 //////////////////////////////////////
 
 template <typename T, typename ArrayType>
-meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
+meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.shape() == ret.shape());
   typename ArrayType::vector_register_type val(scalar);
@@ -116,19 +109,19 @@ meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &sca
       array.data());
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Add(array, scalar, ret);
   return ret;
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
+meta::IfIsMathShapeArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   ret = Add(array, scalar, ret);
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Add(scalar, array, ret);
@@ -139,33 +132,42 @@ meta::IsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType cons
 /// SHAPELESS ARRAY - SCALAR ADDITION ///
 /////////////////////////////////////////
 
-template <typename T, typename C>
-void Add(ShapelessArray<T, C> const &array, T const &scalar, ShapelessArray<T, C> &ret)
+template <typename T, typename ArrayType>
+meta::IfIsFixedPoint<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  typename ShapelessArray<T, C>::vector_register_type val(scalar);
+  for (std::size_t i = 0; i<ret.size(); ++i)
+  {
+    ret[i] = array[i] + scalar;
+  }
+}
+template <typename T, typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  typename ArrayType::vector_register_type val(scalar);
 
   ret.data().in_parallel().Apply(
-      [val](typename ShapelessArray<T, C>::vector_register_type const &x,
-            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x + val; },
+      [val](typename ArrayType::vector_register_type const &x,
+            typename ArrayType::vector_register_type &      z) { z = x + val; },
       array.data());
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Add(ShapelessArray<T, C> const &array, T const &scalar)
+template <typename T, typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
-  ShapelessArray<T, C> ret{array.size()};
+  ArrayType ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
-template <typename T, typename C>
-void Add(T const &scalar, ShapelessArray<T, C> const &array, ShapelessArray<T, C> &ret)
+template <typename T, typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   ret = Add(array, scalar, ret);
 }
-template <typename T, typename C>
-ShapelessArray<T, C> Add(T const &scalar, ShapelessArray<T, C> const &array)
+template <typename T, typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
-  ShapelessArray<T, C> ret{array.size()};
+  ArrayType ret{array.size()};
   Add(scalar, array, ret);
   return ret;
 }
@@ -183,7 +185,7 @@ ShapelessArray<T, C> Add(T const &scalar, ShapelessArray<T, C> const &array)
  * @param ret
  */
 template <typename ArrayType>
-meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                             ArrayType &ret)
 {
   assert(array1.shape() == array2.shape());
@@ -193,7 +195,7 @@ meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType c
   details::Add(array1, array2, range, ret);
 }
 template <typename ArrayType>
-meta::IsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
+meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
 {
   assert(array1.shape() == array2.shape());
   ArrayType ret{array1.shape()};
@@ -202,12 +204,28 @@ meta::IsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayT
   return ret;
 }
 
-////////////////////////////////////////////////////
-/// SHAPELESS ARRAY - SHAPELESS ARRAY  ADDITION  ///
-////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////
+/// SHAPELESS ARRAY - SHAPELESS ARRAY  ADDITION - FIXED POINT ///
+/////////////////////////////////////////////////////////////////
 
 template <typename ArrayType>
-meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
+meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Add(ArrayType const &array, ArrayType const &array2, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i<ret.size(); ++i)
+  {
+    ret[i] = array[i] + array2[i];
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////
+/// SHAPELESS ARRAY - SHAPELESS ARRAY  ADDITION - NO FIXED POINT ///
+////////////////////////////////////////////////////////////////////
+
+template <typename ArrayType>
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
                                                      ArrayType const &array2)
 {
   assert(array1.size() == array2.size());
@@ -216,7 +234,7 @@ meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
   return ret;
 }
 template <typename ArrayType>
-meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    array1,
+meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    array1,
                                                      ArrayType const &    array2,
                                                      memory::Range const &range)
 {
@@ -226,7 +244,7 @@ meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    array1
   return ret;
 }
 template <typename ArrayType>
-meta::IsMathShapelessArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                                 ArrayType &ret)
 {
   assert(array1.size() == array2.size());

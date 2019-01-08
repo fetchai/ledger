@@ -51,7 +51,7 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
 }
 }  // namespace details
 
-template <typename T, typename C = memory::SharedArray<T>>
+template <typename T, typename C = fetch::memory::SharedArray<T>>
 class ShapelessArray
 {
 public:
@@ -561,8 +561,8 @@ public:
     return ret;
   }
 
-  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
-                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
+  bool AllClose(self_type const &other, double const &rtol = 1e-5,
+                double const &atol = 1e-8, bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
     if (other.size() != N)
@@ -572,25 +572,17 @@ public:
     bool ret = true;
     for (std::size_t i = 0; ret && (i < N); ++i)
     {
-<<<<<<< HEAD
       double va = static_cast<double>(this->At(i));
-=======
-      Type va = this->At(i);
->>>>>>> bugfix/rectangular_array_all_close
       if (ignoreNaN && std::isnan(va))
       {
         continue;
       }
-<<<<<<< HEAD
       double vb = static_cast<double>(other[i]);
-=======
-      Type vb = other[i];
->>>>>>> bugfix/rectangular_array_all_close
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      Type vA = (va - vb);
+      double vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -603,7 +595,7 @@ public:
       {
         vb = -vb;
       }
-      Type M = std::max(va, vb);
+      double M = std::max(va, vb);
 
       ret = (vA <= std::max(atol, M * rtol));
     }
@@ -611,17 +603,17 @@ public:
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        Type va = this->At(i);
+        double va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        Type vb = other[i];
+        double vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        Type vA = (va - vb);
+        double vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -634,13 +626,8 @@ public:
         {
           vb = -vb;
         }
-<<<<<<< HEAD
         double M = std::max(va, vb);
         std::cout << static_cast<double>(this->At(i)) << " " << static_cast<double>(other[i]) << " "
-=======
-        Type M = std::max(va, vb);
-        std::cout << this->At(i) << " " << other[i] << " "
->>>>>>> bugfix/rectangular_array_all_close
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
     }
@@ -1109,6 +1096,7 @@ public:
     fetch::math::Divide(*this, other, *this);
     return *this;
   }
+
 
   /* One-dimensional reference index operator.
    * @param n is the index which is being accessed.

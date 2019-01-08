@@ -26,6 +26,8 @@
 #include <string>
 #include <type_traits>
 
+#include "core/fixed_point/fixed_point_tag.hpp"
+
 namespace fetch {
 
 namespace byte_array {
@@ -37,6 +39,9 @@ class ConstByteArray;
 namespace fixed_point {
 template <std::size_t I, std::size_t F>
 class FixedPoint;
+//{
+//    struct fixed_point_tag {};
+//}
 } // fixed_point
 
 namespace meta {
@@ -56,8 +61,15 @@ constexpr bool IsInteger = std::is_integral<T>::value && (!IsBoolean<T>);
 template <typename T>
 constexpr bool IsFloat = std::is_floating_point<T>::value;
 
-template <typename T, std::size_t I, std::size_t F>
-constexpr bool IsFixedPoint = std::is_same<T, fetch::fixed_point::FixedPoint<I, F>>::value;
+//template <typename T, std::size_t I, std::size_t F>
+//constexpr bool IsFixedPoint = std::is_same<T, fetch::fixed_point::FixedPoint<I, F>>::value;
+
+template <typename T>
+constexpr bool IsFixedPoint = std::is_same<typename T::math_tag, fetch::fixed_point::FixedPointTag>::value;
+
+template <typename T>
+constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
+
 
 template <typename T>
 constexpr bool IsConstByteArray = std::is_same<T, fetch::byte_array::ConstByteArray>::value;
@@ -108,8 +120,13 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
-template <typename T, std::size_t I, std::size_t F, typename R = void>
-using IfIsFixedPoint = EnableIf<IsFixedPoint<T, I, F>, R>;
+//template <typename T, std::size_t I, std::size_t F, typename R = void>
+//using IfIsFixedPoint = EnableIf<IsFixedPoint<T, I, F>, R>;
+template <typename T, typename R = void>
+using IfIsFixedPoint = EnableIf<IsFixedPoint<T>, R>;
+
+template <typename T, typename R = void>
+using IfIsNotFixedPoint = EnableIf<IsNotFixedPoint<T>, R>;
 
 template <typename T, typename R = void>
 using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
@@ -123,20 +140,6 @@ using IfIsPodOrFixedPoint = EnableIf<std::is_pod<T>::value, R>;
 
 template <typename T, typename R = void>
 using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
-
-
-//template <typename A, typename R>
-//struct IsFixedPoint
-//{
-//};
-//template <std::size_t I, std::size_t F, typename R>
-//struct IsFixedPoint<fixed_point::FixedPoint<I, F>, R>
-//{
-//  using Type = R;
-//};
-//
-//template <typename T, typename R>
-//using IfIsFixedPoint = typename IsFixedPoint<T, R>::Type;
 
 
 //////////////////////////////////////////////////////////////

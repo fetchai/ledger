@@ -17,29 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions/abs.hpp"
-#include "math/meta/math_type_traits.hpp"
 
-/**
- * assigns the absolute of x to this array
- * @param x
- */
 
 namespace fetch {
-namespace math {
+namespace fixed_point {
 
-template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
+struct FixedPointTag
 {
-  math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
+};
 
-template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x)
-{
-  x = std::abs(x);
-}
-
-}  // namespace math
-}  // namespace fetch
+} // fetch
+} // fixed_point
