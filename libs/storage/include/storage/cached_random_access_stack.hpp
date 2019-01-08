@@ -232,7 +232,7 @@ public:
   /**
    * Flush all of the cached elements to file if they have been updated
    */
-  void Flush()
+  void Flush(bool lazy = true)
   {
     this->SignalBeforeFlush();
 
