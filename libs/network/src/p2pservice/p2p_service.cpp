@@ -275,7 +275,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   for (auto const &result : pending_resolutions_.Get(MAX_RESOLUTIONS_PER_CYCLE))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ",
-                   result.promised.uri());
+                    result.promised.uri());
     Uri uri;
     if (result.promised.scheme() == Uri::Scheme::Tcp)
     {
@@ -284,7 +284,8 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Discarding resolution for peer: ", ToBase64(result.key.second));
+      FETCH_LOG_DEBUG(LOGGING_NAME,
+                      "Discarding resolution for peer: ", ToBase64(result.key.second));
     }
   }
 

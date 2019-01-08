@@ -124,8 +124,7 @@ void TransactionVerifier::Dispatcher()
     {
       while (txs.size() < batch_size_ && active_)
       {
-        std::chrono::milliseconds wait_time{
-            WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
+        std::chrono::milliseconds wait_time{WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
         chain::VerifiedTransaction tx;
         if (txs.empty())
         {
