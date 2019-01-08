@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
@@ -119,11 +120,12 @@ private:
 };
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
-                                         TrustSystem &trust)
+                                         TrustSystem &trust, BlockCoordinator &block_coordinator)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
+  , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , main_chain_rpc_client_(endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -178,8 +180,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   {
     trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    // add the block?
-    chain_.AddBlock(block);
+    block_coordinator_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree

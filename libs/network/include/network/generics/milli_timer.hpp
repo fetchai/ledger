@@ -50,18 +50,18 @@ public:
     }
   }
 
-  virtual ~MilliTimer()
+  ~MilliTimer()
   {
     auto const duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start_);
 
     if (duration.count() > threshold_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Too many milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_WARN(LOGGING_NAME, "Timer: ", name_, " duration: ", duration.count(), "ms");
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
     }
   }
 
