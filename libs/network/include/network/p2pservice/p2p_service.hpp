@@ -74,7 +74,7 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
 
-  static constexpr char const *LOGGING_NAME              = "P2PService";
+  static constexpr char const *LOGGING_NAME = "P2PService";
 
   // Construction / Destruction
   P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
