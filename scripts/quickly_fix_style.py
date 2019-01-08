@@ -18,6 +18,7 @@
 
 import run_static_analysis
 import apply_style
+import check_licence_header
 import subprocess
 import sys
 import os
@@ -36,6 +37,12 @@ def main():
 
     compare_branch = args.branch
     build_path     = args.build_path
+
+    # Firstly, check licence headers
+    print("Checking licence headers")
+    if not check_licence_header.main():
+        print("Failed to check header. quit.")
+        sys.exit(1)
 
     changed_files = []
     # Stack overflow 34279322
