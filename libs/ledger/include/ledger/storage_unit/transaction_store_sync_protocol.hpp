@@ -30,8 +30,8 @@
 #include "network/service/call_context.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
-#include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
+#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
 
 #include <set>
@@ -53,7 +53,7 @@ public:
 
   using UnverifiedTransaction = chain::UnverifiedTransaction;
   using VerifiedTransaction   = chain::VerifiedTransaction;
-  using ObjectStore           = storage::ObjectStore<VerifiedTransaction>;
+  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 

@@ -72,6 +72,11 @@ public:
         pending_blocks_.push_front(std::make_shared<BlockBody>(block.body()));
       }
     }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()),
+                     " Heaviest: ", ToBase64(heaviestHash));
+    }
   }
 
   void Start()
