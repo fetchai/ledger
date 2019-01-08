@@ -108,12 +108,12 @@ struct KeyValuePair
   };
   uint64_t right = 0;
 
-  bool operator==(KeyValuePair const &kv)
+  bool operator==(KeyValuePair const &kv) const
   {
     return Hash() == kv.Hash();
   }
 
-  bool operator!=(KeyValuePair const &kv)
+  bool operator!=(KeyValuePair const &kv) const
   {
     return Hash() != kv.Hash();
   }
