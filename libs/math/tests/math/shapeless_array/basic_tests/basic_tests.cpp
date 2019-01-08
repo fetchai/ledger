@@ -229,10 +229,10 @@ TEST(shapeless_array_tests, double_sub)
 {
   sub_test<double>();
 }
-//TEST(shapeless_array_tests, fp32_sub)
-//{
-//  sub_test<fetch::fixed_point::FixedPoint<32, 32>>();
-//}
+TEST(shapeless_array_tests, fp32_sub)
+{
+  sub_test<fetch::fixed_point::FixedPoint<32, 32>>();
+}
 
 //////////////////
 /// * operator ///

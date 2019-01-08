@@ -75,6 +75,7 @@ using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<T>;
 template <typename T, typename = int>
 struct HasFixedPointTag : std::false_type { };
 
+// TODO (private 490)
 template <typename T>
 struct HasFixedPointTag <T, decltype((void) T::fixed_point_tag, 0)> : std::true_type { };
 
@@ -283,11 +284,6 @@ struct IsMathFixedPointShapelessArrayImpl<ShapelessArray<T, C>, R>
 
 template <typename T, typename R = void>
 using IfIsMathFixedPointShapelessArray = IfIsFixedPoint<typename T::Type, typename IsMathFixedPointShapelessArrayImpl<T, R>::Type>;
-
-
-
-
-
 
 
 ////////////////////////////////////
