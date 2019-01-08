@@ -180,7 +180,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
   {
     trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    // add the block?
     block_coordinator_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of

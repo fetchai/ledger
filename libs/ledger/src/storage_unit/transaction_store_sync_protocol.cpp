@@ -105,6 +105,8 @@ void TransactionStoreSyncProtocol::OnNewTx(VerifiedTransaction const &o)
 uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
+
+  // TODO(private issue 502): Improve transient object store interface
   return store_->archive().size();
 }
 

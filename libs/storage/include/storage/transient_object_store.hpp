@@ -358,7 +358,6 @@ void TransientObjectStore<O>::ThreadLoop()
         auto const &rid = rids[written_count];
 
         // get the element from the cache
-
         if (GetFromCache(rid, obj))
         {
           // write out the object

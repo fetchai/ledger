@@ -117,8 +117,6 @@ public:
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
 
-    // tx_store_->id = "Lane " + std::to_string(lane_);
-
     tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
