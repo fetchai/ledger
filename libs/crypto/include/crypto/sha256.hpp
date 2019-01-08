@@ -48,7 +48,6 @@ public:
   /// @}
 
 private:
-
   SHA256_CTX context_;
 };
 
