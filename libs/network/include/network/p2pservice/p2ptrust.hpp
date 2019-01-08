@@ -112,14 +112,7 @@ public:
   ~P2PTrust() override          = default;
 
   virtual void Debug() const override
-  {
-    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
-    {
-      //  FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ",
-      //  byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
-      //               trust_store_[pos].);
-    }
-  }
+  {}
 
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {

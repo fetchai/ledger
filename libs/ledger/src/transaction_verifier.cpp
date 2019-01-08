@@ -19,11 +19,14 @@
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
 #include "metrics/metrics.hpp"
+#include "network/generics/milli_timer.hpp"
 
 #include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
-static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS{100};
+static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS{1000};
+static const std::chrono::milliseconds TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED{
+    1};
 
 namespace fetch {
 namespace ledger {
@@ -122,7 +125,8 @@ void TransactionVerifier::Dispatcher()
     {
       while (txs.size() < batch_size_ && active_)
       {
-        std::chrono::milliseconds  wait_time{1};
+        std::chrono::milliseconds wait_time{
+            TIME_TO_WAIT_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
         chain::VerifiedTransaction tx;
         if (txs.empty())
         {

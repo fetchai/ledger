@@ -249,6 +249,7 @@ public:
 
   virtual void Debug() const override
   {
+    FETCH_LOCK(mutex_);
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "KLL: trust_store_ ",

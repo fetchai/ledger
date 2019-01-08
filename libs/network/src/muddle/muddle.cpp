@@ -58,7 +58,7 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + std::to_string(network_id)))
   , clients_(router_)
 {
   char tmp[5];
@@ -215,6 +215,7 @@ void Muddle::DropPeer(Address const &peer)
 void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
+
   try
   {
     // connect to all the required peers
@@ -244,9 +245,9 @@ void Muddle::RunPeriodicMaintenance()
       last_cleanup_ = Clock::now();
     }
   }
-  catch (...)
+  catch (std::exception &e)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Exception caught");
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
   // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
@@ -284,7 +285,6 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Create TCP client to: ", peer.uri());
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -307,20 +307,15 @@ void Muddle::CreateTcpClient(Uri const &peer)
   clients_.AddConnection(peer, strong_conn);
 
   // debug handlers
-  strong_conn->OnConnectionSuccess([this, peer]() {
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connected to peer: ", peer.uri());
-    clients_.OnConnectionEstablished(peer);
-  });
+  strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection failed...");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
-    // reg->Leave(strong_conn->handle());  , &reg, &strong_conn
   });
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection left: ", peer.uri());
     clients_.RemovePersistentPeer(peer);
   });
 
@@ -350,7 +345,6 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
   Handle handle = router_.LookupHandleFromAddress(target);
   if (handle != 0)

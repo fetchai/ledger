@@ -210,7 +210,7 @@ Router::Router(NetworkId network_id, Router::Address address, MuddleRegister con
   , register_(reg)
   , dispatcher_(dispatcher)
   , network_id_(network_id)
-  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS))
+  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
 /**
@@ -539,9 +539,6 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   {
     FETCH_LOCK(routing_table_lock_);
 
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): AssociateHandleWithAddress: handle=", handle,
-                   ", address: ", fetch::byte_array::ToBase64(ToConstByteArray(address)));
-
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
 
@@ -611,7 +608,6 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
 {
   Handle handle = 0;
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Lookup handle for : ");
   {
     FETCH_LOCK(routing_table_lock_);
 
@@ -623,7 +619,6 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
       handle = routing_data.handle;
     }
   }
-  FETCH_LOG_WARN(LOGGING_NAME, " handle found : ", handle);
 
   return handle;
 }
@@ -660,6 +655,7 @@ void Router::KillConnection(Handle handle, Address peer)
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
+    FETCH_LOCK(routing_table_lock_);
     conn->Close();
     routing_table_.erase(ConvertAddress(peer));
     direct_address_map_.erase(handle);
@@ -938,7 +934,6 @@ void Router::DropPeer(Address &peer)
   Handle h = LookupHandle(ConvertAddress(peer));
   if (h)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Dropping ", ToBase64(peer));
     KillConnection(h, peer);
   }
   else
@@ -949,16 +944,15 @@ void Router::DropPeer(Address &peer)
 
 void Router::DropHandle(Router::Handle handle, const Address &peer)
 {
-  Debug("AB before drop handle");
   if (handle)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
     KillConnection(handle, peer);
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "DropHandle got invalid handle: ", handle);
   }
-  Debug("AB after drop handle");
 }
 
 }  // namespace muddle

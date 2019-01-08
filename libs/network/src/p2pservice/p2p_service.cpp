@@ -109,8 +109,6 @@ void P2PService::WorkCycle()
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
-  // muddle_.Debug("P2PService::GetConnectionStatus,");
-
   // get a summary of addresses and associated URIs
   active_connections = muddle_.GetConnections();
 
@@ -123,29 +121,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
     {
       active_addresses.insert(c.first);
     }
-    /*else
-    {
-      if (c.second.scheme()!=Uri::Scheme::Muddle)
-      {
-        muddle_.AddPeer(c.second);
-      }
-      else
-      {
-        Uri uri;
-        if (identity_cache_.Lookup(c.first, uri) && (uri.scheme() != Uri::Scheme::Muddle))
-        {
-          muddle_.AddPeer(uri);
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to add back connection: ", ToBase64(c.first));
-        }
-      }
-
-    }*/
   }
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): Number of active connections: ", active_connections.size(),
-                 ", number of active_addresses: ", active_addresses.size());
 }
 
 void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
@@ -252,14 +228,8 @@ bool P2PService::IsDesired(Address const &address)
 
 void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
 {
-  trust_system_.Debug();
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
-
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: STATIC PEERS=", static_peers.size(), " FROM ",
-                 max_peers_ - transient_peers_);
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL: TRANSIENT PEERS=", experimental_peers.size(), " FROM ",
-                 transient_peers_);
 
   desired_peers_.clear();
 
@@ -347,25 +317,30 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
           continue;
         }
         auto prom = network::PromiseOf<Uri>(
-          client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
-        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address), ", promise id=", prom.id());
+            client_.CallSpecificAddress(addr, RPC_P2P_RESOLVER, ResolverProtocol::QUERY, address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Resolve Peer: ", ToBase64(address),
+                       ", promise id=", prom.id());
         pending_resolutions_.Add(key, prom);
       }
     }
   }
 
+  auto num_of_active_cons = active_addresses.size();
   // dropping peers
-  for (auto const &address : dropped_peers)
+  if (num_of_active_cons > min_peers_)
   {
-    if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+    for (auto const &address : dropped_peers)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
+      if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
 
-      muddle_.DropPeer(uri);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
+        muddle_.DropPeer(uri);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to drop peer: ", ToBase64(address));
+      }
     }
   }
   for (auto const &address : blacklisted_peers_)
@@ -373,8 +348,6 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting: ", ToBase64(address));
     muddle_.Blacklist(address);
   }
-
-  muddle_.Debug("p2p");
 }
 
 void P2PService::UpdateManifests(AddressSet const &active_addresses)
