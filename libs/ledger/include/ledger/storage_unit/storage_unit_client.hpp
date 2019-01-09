@@ -162,7 +162,7 @@ public:
       auto      res  = fetch::storage::ResourceID(tx.digest());
       LaneIndex lane = res.lane(log2_lanes_);
 
-      transaction_lists[lane].push_back({res, tx});
+      transaction_lists.at(lane).push_back({res, tx});
     }
 
     std::vector<Promise> promises;

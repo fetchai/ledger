@@ -18,10 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
 #include "math/shapeless_array.hpp"
-#include "meta/type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <numeric>

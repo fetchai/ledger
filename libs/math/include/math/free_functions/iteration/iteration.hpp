@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -29,7 +29,7 @@ namespace math {
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nextafter(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Nextafter(ArrayType &x)
 {
   kernels::stdlib::Nextafter<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -42,7 +42,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nextafter(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Nexttoward(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Nexttoward(ArrayType &x)
 {
   kernels::stdlib::Nexttoward<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

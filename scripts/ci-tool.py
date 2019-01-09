@@ -12,6 +12,7 @@ import sys
 import argparse
 import subprocess
 import fnmatch
+import shutil
 import xml.etree.ElementTree as ET
 
 
@@ -162,7 +163,10 @@ def test_project(build_root):
             print('Removing file:', data_path)
             os.remove(data_path)
 
-    exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
+    # Python 3.7+ support need to have explicit path to application
+    ctest_executable = shutil.which('ctest')
+
+    exit_code = subprocess.call([ctest_executable, '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
 
     # load the test format
     test_tag_path = os.path.join(build_root, 'Testing', 'TAG')

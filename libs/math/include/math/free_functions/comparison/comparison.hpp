@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -29,7 +29,7 @@ namespace math {
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isgreater(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isgreater(ArrayType &x)
 {
   kernels::stdlib::Isgreater<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -51,7 +51,7 @@ void Isgreaterequal(ArrayType const &x, ArrayType const &y, ArrayType &z)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isless(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isless(ArrayType &x)
 {
   kernels::stdlib::Isless<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -62,7 +62,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isless(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessequal(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Islessequal(ArrayType &x)
 {
   kernels::stdlib::Islessequal<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -73,7 +73,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessequal(ArrayType &
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessgreater(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Islessgreater(ArrayType &x)
 {
   kernels::stdlib::Islessgreater<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -85,7 +85,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Islessgreater(ArrayType
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isunordered(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isunordered(ArrayType &x)
 {
   kernels::stdlib::Isunordered<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
