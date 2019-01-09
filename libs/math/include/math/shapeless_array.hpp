@@ -24,7 +24,7 @@
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
-#include "meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
@@ -33,7 +33,6 @@
 #include "math/free_functions/statistics/mean.hpp"
 
 #include <algorithm>
-#include <type_traits>
 #include <vector>
 
 namespace fetch {

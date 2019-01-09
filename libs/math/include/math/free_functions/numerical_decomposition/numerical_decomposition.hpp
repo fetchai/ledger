@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -30,7 +30,7 @@ namespace math {
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Frexp(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Frexp(ArrayType &x)
 {
   kernels::stdlib::Frexp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -41,7 +41,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Frexp(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ldexp(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Ldexp(ArrayType &x)
 {
   kernels::stdlib::Ldexp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -54,7 +54,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ldexp(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Modf(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Modf(ArrayType &x)
 {
   kernels::stdlib::Modf<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -65,7 +65,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Modf(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbn(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Scalbn(ArrayType &x)
 {
   kernels::stdlib::Scalbn<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -76,7 +76,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbn(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbln(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Scalbln(ArrayType &x)
 {
   kernels::stdlib::Scalbln<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -88,7 +88,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Scalbln(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ilogb(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Ilogb(ArrayType &x)
 {
   kernels::stdlib::Ilogb<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -100,7 +100,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Ilogb(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Logb(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Logb(ArrayType &x)
 {
   kernels::stdlib::Logb<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

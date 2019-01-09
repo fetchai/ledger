@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * assigns the absolute of x to this array
@@ -33,8 +33,8 @@ namespace math {
 
 namespace details {
 template <typename ArrayType>
-meta::IsMathArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
-                                           memory::Range const &range, ArrayType &ret)
+meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                       memory::Range const &range, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(array1.size() == ret.size());
@@ -60,8 +60,8 @@ meta::IsMathArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType co
   }
 }
 template <typename ArrayType>
-meta::IsMathArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
-                                                memory::Range const &range)
+meta::IsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
+                                            memory::Range const &range)
 {
   ArrayType ret{array1.size()};
   Add(array1, array2, range, ret);
@@ -98,8 +98,7 @@ meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
 //////////////////////////////////////
 
 template <typename T, typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array, T const &scalar,
-                                                ArrayType &ret)
+meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.shape() == ret.shape());
   typename ArrayType::vector_register_type val(scalar);
@@ -110,20 +109,19 @@ meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array, T const 
       array.data());
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+meta::IsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Add(array, scalar, ret);
   return ret;
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, void> Add(T const &scalar, ArrayType const &array,
-                                                ArrayType &ret)
+meta::IsMathShapeArray<ArrayType, void> Add(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   ret = Add(array, scalar, ret);
 }
 template <typename T, typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
+meta::IsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
   ArrayType ret{array.shape()};
   Add(scalar, array, ret);
@@ -178,8 +176,8 @@ ShapelessArray<T, C> Add(T const &scalar, ShapelessArray<T, C> const &array)
  * @param ret
  */
 template <typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
-                                                ArrayType &ret)
+meta::IsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                            ArrayType &ret)
 {
   assert(array1.shape() == array2.shape());
   assert(array1.shape() == ret.shape());
@@ -188,8 +186,7 @@ meta::IsMathShapeArrayLike<ArrayType, void> Add(ArrayType const &array1, ArrayTy
   details::Add(array1, array2, range, ret);
 }
 template <typename ArrayType>
-meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1,
-                                                     ArrayType const &array2)
+meta::IsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
 {
   assert(array1.shape() == array2.shape());
   ArrayType ret{array1.shape()};
@@ -203,8 +200,8 @@ meta::IsMathShapeArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1,
 ////////////////////////////////////////////////////
 
 template <typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1,
-                                                         ArrayType const &array2)
+meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
+                                                     ArrayType const &array2)
 {
   assert(array1.size() == array2.size());
   ArrayType ret{array1.size()};
@@ -212,9 +209,9 @@ meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &array1
   return ret;
 }
 template <typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &    array1,
-                                                         ArrayType const &    array2,
-                                                         memory::Range const &range)
+meta::IsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    array1,
+                                                     ArrayType const &    array2,
+                                                     memory::Range const &range)
 {
   assert(array1.size() == array2.size());
   ArrayType ret{array1.size()};
@@ -222,8 +219,8 @@ meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Add(ArrayType const &    ar
   return ret;
 }
 template <typename ArrayType>
-meta::IsMathShapelessArrayLike<ArrayType, void> Add(ArrayType const &array1,
-                                                    ArrayType const &array2, ArrayType &ret)
+meta::IsMathShapelessArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+                                                ArrayType &ret)
 {
   assert(array1.size() == array2.size());
   assert(array1.size() == ret.size());
@@ -263,7 +260,7 @@ NDArray<T, C> Add(NDArray<T, C> &array1, NDArray<T, C> &array2)
 //////////////////////////
 
 template <typename OtherType>
-meta::IsMathLike<OtherType, void> operator+=(OtherType &left, OtherType const &right)
+meta::IfIsMath<OtherType, void> operator+=(OtherType &left, OtherType const &right)
 {
   Add(left, right, left);
 }
