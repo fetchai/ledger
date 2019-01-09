@@ -106,8 +106,8 @@ def main():
     build_path     = args.build_path
 
     # Firstly, check licence headers
-    #print("Checking licence headers")
-    #check_licence_header.main()
+    print("Checking licence headers")
+    check_licence_header.main()
 
     changed_files = []
     # Stack overflow 34279322
