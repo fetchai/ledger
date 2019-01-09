@@ -81,11 +81,10 @@ TEST(random_access_stack, mocked_test_GetSet)
 {
   MockStream mocked,abc;
   EXPECT_CALL(mocked,is_open()).Times(1).WillRepeatedly(testing::Return(true));
-  EXPECT_CALL(mocked,close());
+  EXPECT_CALL(mocked,close()).Times(1);
   EXPECT_CALL(mocked,seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
   EXPECT_CALL(mocked,seekg(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
   EXPECT_CALL(mocked,read(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
-  //EXPECT_CALL(mocked, open(testing::_,testing::_)).Times(1);
   EXPECT_CALL(mocked,write(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
 
 
@@ -94,7 +93,6 @@ TEST(random_access_stack, mocked_test_GetSet)
   stack.New("abc");
   stack.Get(1,temp);
   stack.Set(1,temp);
-
 }
 
 
