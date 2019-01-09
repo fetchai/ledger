@@ -18,6 +18,13 @@
 # The script will ask git for the changes between this commit and the last common commit to [develop]
 # to determine the files that need changing.
 
+# Note: manua turning off of linting etc. can be done the following way:
+
+# // clang-format off
+# // NOLINTNEXTLINE
+# int main(int unused) {}
+# // clang-format on
+
 import run_static_analysis
 import apply_style
 import check_licence_header
