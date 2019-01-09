@@ -17,7 +17,6 @@
 # apply the changes, the user must specify the `--fix` option.
 #
 
-import ipdb
 import os
 import re
 import sys

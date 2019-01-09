@@ -107,6 +107,7 @@ def main():
 
     # Firstly, check licence headers
     print("Checking licence headers")
+    sys.argv = ['_', '--fix']
     check_licence_header.main()
 
     changed_files = []

@@ -26,7 +26,6 @@ import codecs
 import shutil
 import re
 from concurrent.futures import ThreadPoolExecutor
-import ipdb
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
