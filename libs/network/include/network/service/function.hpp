@@ -144,8 +144,8 @@ public:
 
     UnrollArguments<>::template LoopOver<Args...>::Unroll(result, this->function_, params);
   }
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -172,15 +172,15 @@ public:
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
 
     result << R(function_());
   }
 
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -206,14 +206,14 @@ public:
     function_ = value;
   }
 
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
     LOG_STACK_TRACE_POINT;
     result << 0;
     function_();
   }
-  void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                  serializer_type &params) override
+  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  serializer_type & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }

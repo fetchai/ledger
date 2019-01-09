@@ -286,7 +286,7 @@ public:
     }
   */
 
-  void ApproxSoftMax(self_type const &x)
+  void ApproxSoftMax(self_type const & /*x*/)
   {
     //    kernels::ApproxSoftMax< Type, vector_register_type > kernel;
     //    kernel( this->data_, x.data());

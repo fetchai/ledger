@@ -27,7 +27,6 @@ namespace chain {
 
 namespace {
 
-using ::testing::_;
 using namespace fetch;
 using namespace fetch::ledger;
 

@@ -36,8 +36,6 @@
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
-using fetch::network::Peer;
-using fetch::network::TCPClient;
 using fetch::network::Manifest;
 using fetch::network::ServiceType;
 using fetch::network::Uri;
@@ -165,7 +163,7 @@ ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string my_network_address, std::size_t processor_threads,
+                             std::string /*my_network_address*/, std::size_t   processor_threads,
                              std::size_t                         verification_threads,
                              std::chrono::steady_clock::duration block_interval,
                              std::size_t max_peers, std::size_t transient_peers)

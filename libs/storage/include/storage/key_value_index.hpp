@@ -299,7 +299,7 @@ public:
     schedule_update_.clear();
   }
 
-  void Delete(byte_array::ConstByteArray const &key)
+  void Delete(byte_array::ConstByteArray const & /*key*/)
   {
     throw StorageException("Not implemented");
   }

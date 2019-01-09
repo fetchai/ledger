@@ -190,7 +190,7 @@ private:
   /**
    * The main iterative loop that calculates KMeans clustering
    */
-  void ComputeKMeans(ArrayType const &data, ClusteringType &ret)
+  void ComputeKMeans(ArrayType const &data, ClusteringType & /*ret*/)
   {
     while (NotConverged())
     {
