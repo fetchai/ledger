@@ -27,6 +27,9 @@ namespace openssl {
 
 namespace {
 
+using ::testing::StrictMock;
+using ::testing::Return;
+
 class ECDCSAPrivateKeyTest : public testing::Test
 {
 protected:

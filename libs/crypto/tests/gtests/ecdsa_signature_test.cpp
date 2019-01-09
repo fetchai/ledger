@@ -27,6 +27,9 @@ namespace openssl {
 
 namespace {
 
+using ::testing::StrictMock;
+using ::testing::Return;
+
 class ECDCSASignatureTest : public testing::Test
 {
 protected:
