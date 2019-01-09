@@ -37,7 +37,7 @@ public:
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
   void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t hashSize() const override;
+  std::size_t GetSizeInBytes() const override;
 
   template <typename T = context_type>
   auto Final() -> decltype(base_type::Final<T>())

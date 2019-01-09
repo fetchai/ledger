@@ -166,7 +166,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   NetworkManager nm{1};
   nm.Start();
 
-  uint16_t                         initial_port = 8080;
+  uint16_t                         initial_port = 8000;
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
@@ -209,7 +209,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   NetworkManager nm{50};
   nm.Start();
 
-  uint16_t                         initial_port = 8080;
+  uint16_t                         initial_port = 9000;
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
@@ -250,7 +250,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   NetworkManager nm{50};
   nm.Start();
 
-  uint16_t                                  initial_port       = 8080;
+  uint16_t                                  initial_port       = 10000;
   uint16_t                                  number_of_services = 3;
   std::vector<std::shared_ptr<TestService>> services;
   crypto::ECDSASigner                       certificate;
