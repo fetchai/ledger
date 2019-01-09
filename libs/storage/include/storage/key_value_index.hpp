@@ -148,6 +148,7 @@ struct KeyValuePair
 
   byte_array::ByteArray Hash() const
   {
+    // TODO(private issue 460): Hash value longer than required.
     byte_array::ByteArray ret;
     ret.Resize(N);
 
@@ -494,9 +495,9 @@ public:
     return stack_.size();
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const

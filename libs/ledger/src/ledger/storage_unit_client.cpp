@@ -253,16 +253,8 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
         std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
   }
 
-  LaneIndex m = 0;
-  for (auto const &lane : lanes)
-  {
-    auto lanenum = lane.first;
-    if (lanenum > m)
-    {
-      m = lanenum;
-    }
-  }
-  m += 1;  // number of lanes is the number of the last lane asked for +1
+  // number of lanes is the number of the last lane asked for +1
+  LaneIndex m = lanes.empty() ? 1 : lanes.rbegin()->first + 1;
 
   if (m > muddles_.size())
   {
@@ -287,10 +279,13 @@ size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Ur
   AddLaneConnections(lanes, timeout);
   PendingConnectionCounter::Wait(FutureTimepoint(timeout));
 
-  FETCH_LOCK(mutex_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Successfully connected ", lane_to_identity_map_.size(),
-                 " lane(s).");
-  return lane_to_identity_map_.size();
+  std::size_t nLanes;
+  {
+    FETCH_LOCK(mutex_);
+    nLanes = lane_to_identity_map_.size();
+  }
+  FETCH_LOG_INFO(LOGGING_NAME, "Successfully connected ", nLanes, " lane(s).");
+  return nLanes;
 }
 
 }  // namespace ledger

@@ -62,47 +62,42 @@ public:
   static constexpr char const *LOGGING_NAME = "VariantStack";
 
   /**
-   * Seperator holding information about previous object.
+   * Separator holding information about previous object.
    */
   struct Separator
   {
-    uint64_t type;
-    uint64_t object_size;
-    int64_t  previous;
-    Separator()
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-    Separator(uint64_t const &t, uint64_t const &o, int64_t const &p)
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      type        = t;
-      object_size = o;
-      previous    = p;
-    }
+    uint64_t type{0};
+    uint64_t object_size{0};
+    int64_t  previous{0};
+
+    Separator() = default;
+    Separator(uint64_t t, uint64_t o, int64_t p)
+      : type{t}
+      , object_size{o}
+      , previous{p}
+    {}
   };
+
+  // This check is necessary to ensure structures are correctly packed
+  static_assert(sizeof(Separator) == 24, "Header structure must be packed");
 
   /**
    * Header holding information about the stack
    */
   struct Header
   {
-    uint64_t object_count;
-    int64_t  end;
+    uint64_t object_count = 0;
+    int64_t  end          = 0;
 
-    Header(uint64_t const &o, int64_t const &e)
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      object_count = o;
-      end          = e;
-    }
-
-    Header()
-    {
-      memset(this, 0, sizeof(decltype(*this)));
-      end = sizeof(decltype(*this)) + sizeof(Separator);
-    }
+    Header() = default;
+    Header(uint64_t o, int64_t e)
+      : object_count{o}
+      , end{e}
+    {}
   };
+
+  // This check is necessary to ensure structures are correctly packed
+  static_assert(sizeof(Header) == 16, "Header structure must be packed");
 
   ~VariantStack()
   {
@@ -256,7 +251,9 @@ public:
 
     Separator separator = {HEADER_OBJECT, 0, UNDEFINED_POSITION};
 
-    header_ = Header();
+    header_     = Header();
+    header_.end = sizeof(Header) + sizeof(Separator);
+
     fin.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
     fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
 
@@ -267,6 +264,7 @@ public:
   {
     return header_.object_count == 0;
   }
+
   std::size_t size() const
   {
     return std::size_t(header_.object_count);
