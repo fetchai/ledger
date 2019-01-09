@@ -327,8 +327,6 @@ public:
   /// casting operators ///
   /////////////////////////
 
-  // TODO(implement casting operators
-
   operator double() const
   {
     return (static_cast<double>(data_) / one);
