@@ -15,6 +15,6 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-auctions)
-target_link_libraries(fetch-auctions)
+target_link_libraries(fetch-auctions INTERFACE fetch-core)
 
 add_test_target()

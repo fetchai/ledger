@@ -23,6 +23,7 @@
 #include <unordered_map>
 //#include <unordered_set>
 //#include <vector>
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -38,7 +39,7 @@ enum class ErrorCode
 
 struct Item;
 using ItemIdType  = typename std::size_t;
-using BlockIdType = typename std::size_t;
+using BlockIdType = fetch::byte_array::ByteArray;
 using ValueType   = typename std::size_t;
 using AgentIdType = typename std::size_t;
 using ItemsContainerType = typename std::unordered_map<ItemIdType, Item>;
@@ -72,8 +73,8 @@ protected:
   std::size_t max_bids_  = 1;  // max bids per bidder per item
 
   // records the block id on which this auction was born and will conclude
-  BlockIdType start_block_ = std::numeric_limits<std::size_t>::max();
-  BlockIdType end_block_   = std::numeric_limits<std::size_t>::max();
+  BlockIdType start_block_ = std::numeric_limits<BlockIdType>::max();
+  BlockIdType end_block_   = std::numeric_limits<BlockIdType>::max();
 
 
   ItemsContainerType items_{};
@@ -89,12 +90,10 @@ public:
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-//  Auction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items, std::size_t initiator)
-  Auction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items)
+  Auction(BlockIdType start_block_id, BlockIdType end_block_id, std::size_t max_items)
     : max_items_(max_items)
     , start_block_(start_block_id)
     , end_block_(end_block_id)
-//    , initiator_(initiator)
   {
     // must be some items in the auction!
     assert(max_items_ > 0);

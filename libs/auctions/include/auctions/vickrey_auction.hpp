@@ -32,7 +32,7 @@ class VickreyAuction : public Auction
 {
 public:
 
-  VickreyAuction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items) :
+  VickreyAuction(BlockIdType start_block_id, BlockIdType end_block_id, std::size_t max_items) :
   Auction(start_block_id, end_block_id, max_items)
   {}
 
