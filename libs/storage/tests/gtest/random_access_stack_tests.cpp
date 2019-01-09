@@ -20,6 +20,7 @@
 #include "storage/random_access_stack.hpp"
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <stack>
 
 using namespace fetch::storage;
@@ -35,6 +36,86 @@ public:
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
 };
+
+class MockStream
+{
+  public:
+    MockStream(){}
+
+    MockStream(std::string a, std::ios_base::openmode b){}
+
+    operator bool() const
+    {
+      return true;
+    }
+    
+    MockStream& operator=(const MockStream& other)
+    {
+      return *this;
+    }
+
+    MOCK_CONST_METHOD0(is_open,bool());
+    MOCK_METHOD0(close,void());
+    MOCK_METHOD2(read,MockStream&(char*,std::streamsize));
+    MOCK_METHOD2(write,MockStream&(const char*,std::streamsize));
+    MOCK_METHOD2(seekg,MockStream&(std::streamoff,std::ios_base::seekdir));
+    MOCK_METHOD1(seekg,MockStream&(std::streampos));
+    MOCK_METHOD2(open,void(std::string,std::ios_base::openmode));
+
+    const std::ios_base::seekdir beg = std::ios_base::beg;
+};
+
+TEST(random_access_stack, mocked_test_is_open)
+{
+  MockStream  mocked;
+  EXPECT_CALL(mocked,close());
+  EXPECT_CALL(mocked,is_open()).Times(2).WillRepeatedly(testing::Return(true));
+ 
+  RandomAccessStack<TestClass,u_int64_t,MockStream>  stack(&mocked);
+  EXPECT_TRUE(stack.is_open());
+
+}
+
+
+TEST(random_access_stack, mocked_test_GetSet)
+{
+  MockStream mocked,abc;
+  EXPECT_CALL(mocked,is_open()).Times(1).WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(mocked,close());
+  EXPECT_CALL(mocked,seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
+  EXPECT_CALL(mocked,seekg(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
+  EXPECT_CALL(mocked,read(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
+  //EXPECT_CALL(mocked, open(testing::_,testing::_)).Times(1);
+  EXPECT_CALL(mocked,write(testing::_,testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
+
+
+  RandomAccessStack<TestClass,u_int64_t,MockStream> stack(&mocked);
+  TestClass temp;
+  stack.New("abc");
+  stack.Get(1,temp);
+  stack.Set(1,temp);
+
+}
+
+
+/*
+TEST(random_access_stack, mocked_test_Bulk)
+{
+  MockStream mocked,abc;
+  EXPECT_CALL(mocked,is_open()).Times(2).WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(mocked,close());
+  EXPECT_CALL(mocked,seekg(testing::_,testing::_)).Times(2).WillRepeatedly(testing::ReturnRef(abc));
+  EXPECT_CALL(mocked,write(testing::_,testing::_)).Times(4).WillRepeatedly(testing::ReturnRef(abc));
+
+  RandomAccessStack<TestClass,u_int64_t,MockStream> stack(&mocked);
+  TestClass temp[2];
+  stack.SetBulk(0,10,temp);
+
+}*/
+
+
+
+
 
 TEST(random_access_stack, basic_functionality)
 {
@@ -190,4 +271,38 @@ TEST(random_access_stack, file_writing_and_recovery)
 
     stack.Close();
   }
+}
+
+
+TEST(random_access_stack, bulk_functionality)
+{
+  constexpr uint64_t                        testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  RandomAccessStack<TestClass>              stack;
+  TestClass                   referenceSet[testSize];
+  TestClass                   referenceGet[testSize];
+
+  stack.New("RAS_test.db");
+
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected random access stack to be direct write";
+
+  for (uint64_t i = 0; i < testSize; i++)
+  {
+    uint64_t  random = lfg();
+    TestClass temp;
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
+
+    referenceSet[i]=temp;
+  }
+
+  stack.SetBulk(0,testSize,referenceSet);
+  stack.GetBulk(0,testSize,referenceGet);
+
+  for (uint64_t i = 0; i < testSize; i++)
+  {
+    EXPECT_TRUE(referenceSet[i]==referenceGet[i]);
+  }
+
 }
