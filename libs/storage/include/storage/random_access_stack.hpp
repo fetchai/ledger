@@ -82,7 +82,7 @@ private:
       return bool(stream);
     }
 
-    bool Read(std::fstream &stream)
+    bool Read(STREAM &stream)
     {
       if ((!stream) || (!stream.is_open()))
       {
@@ -153,12 +153,11 @@ public:
   {
     file_handle_ = new std::fstream();
   }
-  
-  RandomAccessStack(STREAM* handle)
+
+  RandomAccessStack(STREAM *handle)
   {
     file_handle_ = handle;
   }
-
 
   ~RandomAccessStack()
   {
@@ -179,15 +178,15 @@ public:
 
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
-    filename_    = filename;
-    (*file_handle_) = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    filename_       = filename;
+    (*file_handle_) = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     if (!file_handle_)
     {
       if (create_if_not_exist)
       {
         Clear();
-        (*file_handle_)= std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
+        (*file_handle_) = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -297,7 +296,7 @@ public:
 
     file_handle_->seekg(start, file_handle_->beg);
     file_handle_->write(reinterpret_cast<char const *>(objects),
-                       std::streamsize(sizeof(type)) * std::streamsize(elements));
+                        std::streamsize(sizeof(type)) * std::streamsize(elements));
 
     // Catch case where a set extends the underlying stack
     if ((i + elements) > header_.objects)
@@ -336,7 +335,7 @@ public:
 
     file_handle_->seekg(start, file_handle_->beg);
     file_handle_->read(reinterpret_cast<char *>(objects),
-                      std::streamsize(sizeof(type)) * std::streamsize(elements));
+                       std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)
@@ -493,11 +492,11 @@ public:
   }
 
 private:
-  event_handler_type   on_file_loaded_;
-  event_handler_type   on_before_flush_;
-  mutable STREAM* file_handle_ = NULL;
-  std::string          filename_ = "";
-  Header               header_;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  mutable STREAM *   file_handle_ = NULL;
+  std::string        filename_    = "";
+  Header             header_;
 
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one
