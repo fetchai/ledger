@@ -202,7 +202,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   }
 }
 
-void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
+void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 {
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetBestPeers(transient_peers_);

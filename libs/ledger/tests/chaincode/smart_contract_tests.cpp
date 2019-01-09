@@ -35,7 +35,6 @@
 #include <sstream>
 #include <string>
 
-using ::testing::_;
 using namespace fetch;
 using namespace fetch::ledger;
 

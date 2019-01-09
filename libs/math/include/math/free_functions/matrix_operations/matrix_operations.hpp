@@ -794,7 +794,7 @@ void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
   input_array.Reshape(new_shape);
 }
 template <typename T, typename C>
-void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
+void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
 {
   assert(perm.size() == input_array.shape().size());
 }
@@ -1231,7 +1231,7 @@ void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::si
   }
 }
 template <typename T, typename C>
-NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
+NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const & /*axis*/)
 {
   NDArray<T, C> ret;
   Concat(ret, input_arrays);
