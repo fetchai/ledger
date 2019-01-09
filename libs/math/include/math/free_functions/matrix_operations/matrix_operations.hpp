@@ -36,7 +36,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -893,7 +893,7 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
  * @return
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
+fetch::math::meta::IsMathShapeArray<ArrayType, void> DotTranspose(
     ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
     typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
@@ -925,7 +925,7 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
   }
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
+fetch::math::meta::IsMathShapeArray<ArrayType, ArrayType> DotTranspose(
     ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
     typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
@@ -938,9 +938,9 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
   return ret;
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
-                                                                           ArrayType const &B,
-                                                                           bool threaded = false)
+fetch::math::meta::IsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
+                                                                       ArrayType const &B,
+                                                                       bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
