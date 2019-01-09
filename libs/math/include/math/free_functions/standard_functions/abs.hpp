@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions/abs.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * assigns the absolute of x to this array
@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Abs(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Abs(ArrayType &x)
 {
   math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
