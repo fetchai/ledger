@@ -22,9 +22,7 @@
 
 #include <auctions/auction.hpp>
 
-
 using namespace fetch::auctions;
-
 
 class Bidder
 {
@@ -54,16 +52,15 @@ TEST(vickrey_auction, many_bid_auction)
 
   // set up auction
   std::size_t start_block = 10000;
-  std::size_t end_block = 10010;
-  Auction a = SetupAuction(start_block, end_block);
+  std::size_t end_block   = 10010;
+  Auction     a           = SetupAuction(start_block, end_block);
 
   // add item to auction
-  ItemIdType item      = 0;
-  ValueType  min_price = 7;
+  ItemIdType  item      = 0;
+  ValueType   min_price = 7;
   std::size_t seller_id = 999;
-  ErrorCode err = a.AddItem(item, seller_id, min_price);
+  ErrorCode   err       = a.AddItem(item, seller_id, min_price);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
-
 
   std::size_t n_bidders = 10;
 
@@ -80,7 +77,7 @@ TEST(vickrey_auction, many_bid_auction)
     a.AddSingleBid(bidders[j].funds, bidders[j].id, item);
   }
 
-  std::size_t cur_block = start_block;
+  std::size_t cur_block       = start_block;
   std::size_t execution_block = 0;
   for (std::size_t j = 0; j < 20; ++j)
   {

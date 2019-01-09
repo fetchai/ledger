@@ -24,7 +24,6 @@
 
 using namespace fetch::auctions;
 
-
 class Bidder
 {
 public:
@@ -40,7 +39,8 @@ private:
   Bidder() = default;
 };
 
-VickreyAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val, std::size_t max_items = 1)
+VickreyAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val,
+                            std::size_t max_items = 1)
 {
   BlockIdType start_block(start_block_val);
   BlockIdType end_block(end_block_val);
@@ -51,17 +51,16 @@ TEST(vickrey_auction, one_bid_auction)
 {
 
   // set up auction
-  std::size_t start_block = 10000;
-  std::size_t end_block = 10010;
-  VickreyAuction va = SetupAuction(start_block, end_block);
+  std::size_t    start_block = 10000;
+  std::size_t    end_block   = 10010;
+  VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  ItemIdType item      = 0;
-  ValueType  min_price = 7;
+  ItemIdType  item      = 0;
+  ValueType   min_price = 7;
   std::size_t seller_id = 999;
-  ErrorCode err = va.AddItem(item, seller_id, min_price);
+  ErrorCode   err       = va.AddItem(item, seller_id, min_price);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
-
 
   // set up bidders
   std::vector<Bidder> bidders{};
@@ -69,7 +68,7 @@ TEST(vickrey_auction, one_bid_auction)
 
   va.AddSingleBid(bidders[0].funds, bidders[0].id, item);
 
-  std::size_t cur_block_val = start_block;
+  std::size_t cur_block_val   = start_block;
   std::size_t execution_block = 0;
   for (std::size_t j = 0; j < 20; ++j)
   {
@@ -86,21 +85,19 @@ TEST(vickrey_auction, one_bid_auction)
   ASSERT_TRUE(va.Items()[0].sell_price == bidders[0].funds);
 }
 
-
 TEST(vickrey_auction, two_bid_auction)
 {
   // set up auction
-  std::size_t start_block = 10000;
-  std::size_t end_block = 10010;
-  VickreyAuction va = SetupAuction(start_block, end_block);
+  std::size_t    start_block = 10000;
+  std::size_t    end_block   = 10010;
+  VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  ItemIdType item      = 0;
-  ValueType  min_price = 7;
+  ItemIdType  item      = 0;
+  ValueType   min_price = 7;
   std::size_t seller_id = 999;
-  ErrorCode err = va.AddItem(item, seller_id, min_price);
+  ErrorCode   err       = va.AddItem(item, seller_id, min_price);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
-
 
   // set up bidders
   std::vector<Bidder> bidders{};
@@ -110,7 +107,7 @@ TEST(vickrey_auction, two_bid_auction)
   va.AddSingleBid(bidders[0].funds, bidders[0].id, item);
   va.AddSingleBid(bidders[1].funds, bidders[1].id, item);
 
-  std::size_t cur_block = start_block;
+  std::size_t cur_block       = start_block;
   std::size_t execution_block = 0;
   for (std::size_t j = 0; j < 20; ++j)
   {
@@ -118,7 +115,6 @@ TEST(vickrey_auction, two_bid_auction)
     if (success)
     {
       execution_block = cur_block;
-
     }
     cur_block++;
   }
@@ -128,24 +124,22 @@ TEST(vickrey_auction, two_bid_auction)
   ASSERT_TRUE(va.Items()[0].sell_price == bidders[1].funds);
 }
 
-
 TEST(vickrey_auction, many_bid_auction)
 {
   // set up auction
-  std::size_t start_block = 10000;
-  std::size_t end_block = 10010;
-  VickreyAuction va = SetupAuction(start_block, end_block);
+  std::size_t    start_block = 10000;
+  std::size_t    end_block   = 10010;
+  VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  ItemIdType item      = 0;
-  ValueType  min_price = 7;
+  ItemIdType  item      = 0;
+  ValueType   min_price = 7;
   std::size_t seller_id = 999;
-  ErrorCode err = va.AddItem(item, seller_id, min_price);
+  ErrorCode   err       = va.AddItem(item, seller_id, min_price);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-
   // set up bidders
-  std::size_t n_bidders = 10;
+  std::size_t         n_bidders = 10;
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
@@ -158,7 +152,7 @@ TEST(vickrey_auction, many_bid_auction)
     va.AddSingleBid(bidders[j].funds, bidders[j].id, item);
   }
 
-  std::size_t cur_block = start_block;
+  std::size_t cur_block       = start_block;
   std::size_t execution_block = 0;
   for (std::size_t j = 0; j < 20; ++j)
   {
@@ -166,7 +160,6 @@ TEST(vickrey_auction, many_bid_auction)
     if (success)
     {
       execution_block = cur_block;
-
     }
     cur_block++;
   }
@@ -179,23 +172,23 @@ TEST(vickrey_auction, many_bid_auction)
 TEST(vickrey_auction, many_bid_many_item_auction)
 {
   // set up auction
-  std::size_t start_block = 10000;
-  std::size_t end_block = 10010;
-  std::size_t n_items = 10;
-  VickreyAuction va = SetupAuction(start_block, end_block, n_items);
+  std::size_t    start_block = 10000;
+  std::size_t    end_block   = 10010;
+  std::size_t    n_items     = 10;
+  VickreyAuction va          = SetupAuction(start_block, end_block, n_items);
 
   // add item to auction
   for (std::size_t i = 0; i < n_items; ++i)
   {
-    ItemIdType item = i;
-    ValueType min_price = 100 + i;
+    ItemIdType  item      = i;
+    ValueType   min_price = 100 + i;
     std::size_t seller_id = 990 + i;
-    ErrorCode err = va.AddItem(item, seller_id, min_price);
+    ErrorCode   err       = va.AddItem(item, seller_id, min_price);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
   }
 
   // set up bidders
-  std::size_t n_bidders = 10;
+  std::size_t         n_bidders = 10;
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
@@ -211,7 +204,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
     }
   }
 
-  std::size_t cur_block = start_block;
+  std::size_t cur_block       = start_block;
   std::size_t execution_block = 0;
   for (std::size_t j = 0; j < 20; ++j)
   {
@@ -231,11 +224,11 @@ TEST(vickrey_auction, many_bid_many_item_auction)
     std::cout << "Sale price" << va.Items()[0].sell_price << std::endl;
 
     std::cout << "items[j].sell_price: " << items[j].sell_price << std::endl;
-    std::cout << "bidders[bidders.size() - 2].funds: " << bidders[bidders.size() - 2].funds / 10 << std::endl;
-    
+    std::cout << "bidders[bidders.size() - 2].funds: " << bidders[bidders.size() - 2].funds / 10
+              << std::endl;
+
     ASSERT_TRUE(execution_block == end_block);
     ASSERT_TRUE(va.Winner(j) == bidders[bidders.size() - 1].id);
-    ASSERT_TRUE(items[j].sell_price == bidders[bidders.size() - 2].funds / 10 );
+    ASSERT_TRUE(items[j].sell_price == bidders[bidders.size() - 2].funds / 10);
   }
-
 }

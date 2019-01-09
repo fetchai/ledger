@@ -38,28 +38,25 @@ enum class ErrorCode
 };
 
 struct Item;
-using ItemIdType  = typename std::size_t;
-using BlockIdType = fetch::byte_array::ByteArray;
-using ValueType   = typename std::size_t;
-using AgentIdType = typename std::size_t;
+using ItemIdType         = typename std::size_t;
+using BlockIdType        = fetch::byte_array::ByteArray;
+using ValueType          = typename std::size_t;
+using AgentIdType        = typename std::size_t;
 using ItemsContainerType = typename std::unordered_map<ItemIdType, Item>;
-
 
 struct Item
 {
 
-  ItemIdType id = 0;
-  AgentIdType seller_id = 0;
-  ValueType min_price = std::numeric_limits<ValueType>::max();
-  ValueType max_bid = std::numeric_limits<ValueType>::min();
-  ValueType sell_price = std::numeric_limits<ValueType>::min();
+  ItemIdType  id         = 0;
+  AgentIdType seller_id  = 0;
+  ValueType   min_price  = std::numeric_limits<ValueType>::max();
+  ValueType   max_bid    = std::numeric_limits<ValueType>::min();
+  ValueType   sell_price = std::numeric_limits<ValueType>::min();
 
   std::size_t bid_count = 0;
-  AgentIdType winner = 0;
+  AgentIdType winner    = 0;
 
-
-
-  std::unordered_map<AgentIdType, ValueType> bids{};
+  std::unordered_map<AgentIdType, ValueType>   bids{};
   std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
 };
 
@@ -75,7 +72,6 @@ protected:
   // records the block id on which this auction was born and will conclude
   BlockIdType start_block_ = std::numeric_limits<BlockIdType>::max();
   BlockIdType end_block_   = std::numeric_limits<BlockIdType>::max();
-
 
   ItemsContainerType items_{};
 
@@ -111,7 +107,7 @@ public:
   std::vector<Item> ShowListedItems()
   {
     std::vector<Item> ret_vec{};
-    for (auto & it : items_)
+    for (auto &it : items_)
     {
       ret_vec.push_back(it.second);
     }
@@ -125,7 +121,8 @@ public:
    * @param min_price
    * @return
    */
-  ErrorCode AddItem(ItemIdType const &item_id, AgentIdType const &seller_id, ValueType const &min_price)
+  ErrorCode AddItem(ItemIdType const &item_id, AgentIdType const &seller_id,
+                    ValueType const &min_price)
   {
 
     // check if auction full
@@ -148,7 +145,7 @@ public:
       else
       {
         Item cur_item;
-        cur_item.id = item_id;
+        cur_item.id        = item_id;
         cur_item.seller_id = seller_id;
         cur_item.min_price = min_price;
 
@@ -207,14 +204,14 @@ public:
 
   bool Execute(BlockIdType current_block)
   {
-    if((end_block_ == current_block) && auction_valid_)
+    if ((end_block_ == current_block) && auction_valid_)
     {
 
       // pick winning bids
 
       // for every item in the auction
       SelectWinners();
-      
+
       std::cout << "Winners()[0]: " << Winners()[0] << std::endl;
 
       // deduct funds from winner
@@ -225,7 +222,6 @@ public:
       auction_valid_ = false;
 
       return true;
-
     }
     return false;
   }
@@ -238,7 +234,7 @@ public:
   std::vector<AgentIdType> Winners()
   {
     std::vector<AgentIdType> winners{};
-    for (auto & item_it : items_)
+    for (auto &item_it : items_)
     {
       winners.push_back(item_it.second.winner);
     }
@@ -249,8 +245,6 @@ public:
   {
     return items_;
   }
-
-
 
 private:
   /**
@@ -330,15 +324,15 @@ private:
   virtual void SelectWinners()
   {
     // iterate through all items in auction
-    for (auto & cur_item_it : items_)
+    for (auto &cur_item_it : items_)
     {
       // find highest bid for this item and set winner
-      for (auto & cur_bid_it : cur_item_it.second.bids)
+      for (auto &cur_bid_it : cur_item_it.second.bids)
       {
         if (cur_bid_it.second > cur_item_it.second.max_bid)
         {
-          cur_item_it.second.winner = cur_bid_it.first;
-          cur_item_it.second.max_bid = cur_bid_it.second;
+          cur_item_it.second.winner     = cur_bid_it.first;
+          cur_item_it.second.max_bid    = cur_bid_it.second;
           cur_item_it.second.sell_price = cur_bid_it.second;
         }
       }
@@ -346,8 +340,8 @@ private:
   }
 };
 
-} // auctions
-} // fetch
+}  // namespace auctions
+}  // namespace fetch
 
 //
 //    def BuildGraph(self):
