@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,9 +47,9 @@ TEST(storage_versioned_file_object_gtest, hash_test)
   std::map<std::size_t, byte_array::ByteArray> expected_hashes;
   for (std::size_t j = 0; j < 100; ++j)
   {
-    std::cout << std::endl;
-    std::cout << "Round " << j << std::endl;
-    std::cout << "=========" << std::endl;
+    //    std::cout << std::endl;
+    //    std::cout << "Round " << j << std::endl;
+    //    std::cout << "=========" << std::endl;
 
     std::size_t N = j * 10;
 
@@ -59,7 +59,7 @@ TEST(storage_versioned_file_object_gtest, hash_test)
         file_object_type fobj(fs, record);
         expected_hashes[i] = fobj.Hash();
 
-        std::cout << byte_array::ToBase64(fobj.Hash()) << std::endl;
+        //        std::cout << byte_array::ToBase64(fobj.Hash()) << std::endl;
         fobj.Seek(fobj.size());
         fobj.Write("hello world");
         fobj.Seek(0);
@@ -67,32 +67,32 @@ TEST(storage_versioned_file_object_gtest, hash_test)
         byte_array::ByteArray x;
         x.Resize(fobj.size());
         fobj.Read(x);
-        std::cout << "DATA:" << x << std::endl;
+        //        std::cout << "DATA:" << x << std::endl;
       }
-      std::cout << std::endl;
-      std::cout << "Commiting " << i << std::endl;
-      std::cout << "=====================" << std::endl;
-      std::cout << "Hash: " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
+      //      std::cout << std::endl;
+      //      std::cout << "Commiting " << i << std::endl;
+      //      std::cout << "=====================" << std::endl;
+      //      std::cout << "Hash: " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
 
       fs.Commit(i + 1);
     }
 
     for (std::size_t i = (N + 9); i > (N + 5); --i)
     {
-      std::cout << std::endl;
-      std::cout << "Reverting to " << i << std::endl;
-      std::cout << "=====================" << std::endl;
-      std::cout << "Expecting " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
+      //      std::cout << std::endl;
+      //      std::cout << "Reverting to " << i << std::endl;
+      //      std::cout << "=====================" << std::endl;
+      //      std::cout << "Expecting " << byte_array::ToBase64(expected_hashes[i]) << std::endl;
       fs.Revert(i);
       {
         file_object_type fobj(fs, record);
         ASSERT_EQ(expected_hashes[i], fobj.Hash()) << "Expectation not met!";
 
-        std::cout << "Got: " << byte_array::ToBase64(fobj.Hash()) << std::endl;
+        //        std::cout << "Got: " << byte_array::ToBase64(fobj.Hash()) << std::endl;
         byte_array::ByteArray x;
         x.Resize(fobj.size());
         fobj.Read(x);
-        std::cout << "DATA:" << x << std::endl;
+        //        std::cout << "DATA:" << x << std::endl;
       }
     }
   }

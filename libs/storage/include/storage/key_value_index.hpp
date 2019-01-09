@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -92,21 +92,21 @@ struct KeyValuePair
 
   using key_type = Key<S>;
 
-  key_type key;
-  uint8_t  hash[N];
+  key_type key{};
+  uint8_t  hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
-  uint16_t split;
+  uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent;
+  uint64_t parent = uint64_t(-1);
 
   union
   {
-    uint64_t value;
+    uint64_t value = 0;
     uint64_t left;
   };
-  uint64_t right;
+  uint64_t right = 0;
 
   bool operator==(KeyValuePair const &kv)
   {
@@ -148,6 +148,7 @@ struct KeyValuePair
 
   byte_array::ByteArray Hash() const
   {
+    // TODO(private issue 460): Hash value longer than required.
     byte_array::ByteArray ret;
     ret.Resize(N);
 
@@ -494,9 +495,9 @@ public:
     return stack_.size();
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const

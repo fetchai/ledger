@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
 {
 
   namespace py = pybind11;
-  py::class_<RectangularArray<T>, ShapeLessArray<T>>(module, custom_name.c_str())
+  py::class_<RectangularArray<T>, ShapelessArray<T>>(module, custom_name.c_str())
       .def(py::init<>())
       .def(py::init<const std::size_t &>())
       .def(py::init<const std::size_t &, const std::size_t &>())

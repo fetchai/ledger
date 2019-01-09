@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public:
       auto      res  = fetch::storage::ResourceID(tx.digest());
       LaneIndex lane = res.lane(log2_lanes_);
 
-      transaction_lists[lane].push_back({res, tx});
+      transaction_lists.at(lane).push_back({res, tx});
     }
 
     std::vector<Promise> promises;

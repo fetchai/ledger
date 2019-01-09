@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/peer.hpp"
-#include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
+#include "storage/transient_object_store.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>

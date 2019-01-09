@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -75,13 +75,12 @@ public:
   static constexpr char const *LOGGING_NAME = "P2PService";
 
   // Construction / Destruction
-  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust);
+  P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
+             std::size_t max_peers, std::size_t transient_peers);
   ~P2PService() = default;
 
   void Start(UriList const &initial_peer_list);
   void Stop();
-
-  void SetPeerGoals(uint32_t min, uint32_t max);
 
   Identity const &identity() const
   {
@@ -154,13 +153,16 @@ private:
   RequestingPeerlists pending_peer_lists_;     ///< The queue of outstanding peer lists
   RequestingUris      pending_resolutions_;    ///< The queue of outstanding resolutions
   AddressSet desired_peers_;  ///< The desired set of addresses that we want to have connections to
+  AddressSet blacklisted_peers_;  ///< The set of addresses that we will not have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
-  std::size_t             work_cycle_count_ = 0;  ///< Counter to manage periodic task intervals
   ///@}
 
-  uint32_t min_peers_ = 2;
-  uint32_t max_peers_ = 3;
+  std::size_t max_peers_;
+  std::size_t transient_peers_;
+
+  static constexpr std::size_t WORK_CYCLE_INTERVAL = 2000;
+  static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };
 
 }  // namespace p2p

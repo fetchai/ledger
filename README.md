@@ -48,7 +48,7 @@ Coverage quick start guide
     cd coverage_build
 
 ### Configure build in cmake (adds coverage flags)
-    ccmake .
+    ccmake ..
 * CMAKE_BUILD_TYPE - set this to Debug
 * FETCH_ENABLE_COVERAGE - set this to ON
 * 'c' to configure
@@ -67,7 +67,7 @@ Coverage quick start guide
     ls coverage_build/{part_of_lib}/coverage
 
 ### view the coverage reports in a browser outside of docker
-    {brower_name} ./coverage_build/{part_of_lib}/coverage
+    {browser_name} ./coverage_build/{part_of_lib}/coverage
 ### navigate to all_coverage/index.html to get started
 
 Test
@@ -93,4 +93,3 @@ Note: this takes a long time, and running with the fix flag may cause clang to b
 variable names without propagating their updates). Therefore it is recommended you have a clean HEAD so as
 to identify the changes that have been made. Build the project again before pushing it as it's likely
 to be broken
-

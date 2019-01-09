@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -78,26 +78,28 @@ public:
       }
       else
       {
+        PromiseState result;
         try
         {
-          auto result = workitem->Work();
-          switch (result)
-          {
-          case PromiseState::WAITING:
-            ++workitem_iter;
-            break;
-          case PromiseState::SUCCESS:
-          case PromiseState::FAILED:
-          case PromiseState::TIMEDOUT:
-            assert(std::size_t(result) < workload_.size());
-            workload_[result].push_back(workitem);
-            workitem_iter = worklist_for_state.erase(workitem_iter);
-            break;
-          }
+          result = workitem->Work();
         }
         catch (std::exception &ex)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle threw:", ex.what());
+          result = PromiseState::FAILED;
+        }
+        switch (result)
+        {
+        case PromiseState::WAITING:
+          ++workitem_iter;
+          break;
+        case PromiseState::SUCCESS:
+        case PromiseState::FAILED:
+        case PromiseState::TIMEDOUT:
+          assert(std::size_t(result) < workload_.size());
+          workload_[result].push_back(workitem);
+          workitem_iter = worklist_for_state.erase(workitem_iter);
+          break;
         }
       }
     }

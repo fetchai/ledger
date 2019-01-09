@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -89,9 +89,9 @@ inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind
       .def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<float>>);
-  //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapeLessArray<
+  //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapelessArray<
   //    double > >) .def(custom_name.c_str(), &WrapperPairWiseDistance<
-  //    ShapeLessArray< float > >);
+  //    ShapelessArray< float > >);
 }
 
 }  // namespace distance

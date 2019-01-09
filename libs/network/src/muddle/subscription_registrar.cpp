@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t 
  * @param packet The packet
  * @return true if successfully dispatched, otherwise false
  */
-bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
+bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 {
   bool success = false;
 

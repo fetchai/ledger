@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "network/muddle/subscription_registrar.hpp"
+#include "network/uri.hpp"
 
 #include <gmock/gmock.h>
 #include <memory>
@@ -77,12 +78,12 @@ TEST_F(SubscriptionManagerTests, SingleHandler)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 1);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 }
@@ -105,12 +106,12 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 4);
 
@@ -118,7 +119,7 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   subscription2.reset();
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 5);
 }
@@ -141,12 +142,12 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 4);
 
@@ -154,7 +155,7 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   subscription2.reset();
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 5);
 }

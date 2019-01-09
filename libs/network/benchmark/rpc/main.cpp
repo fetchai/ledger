@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,11 +23,14 @@
 #include "core/serializers/stl_types.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include <chrono>
 #include <random>
 #include <vector>
@@ -38,8 +41,9 @@ using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
 
-#include "network/muddle/rpc/muddle_test_client.hpp"
-#include "network/muddle/rpc/muddle_test_server.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 
 using transaction_type = fetch::chain::VerifiedTransaction;
 

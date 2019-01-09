@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -167,7 +167,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              std::string interface_address, std::string const &db_prefix,
                              std::string my_network_address, std::size_t processor_threads,
                              std::size_t                         verification_threads,
-                             std::chrono::steady_clock::duration block_interval)
+                             std::chrono::steady_clock::duration block_interval,
+                             std::size_t max_peers, std::size_t transient_peers)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
@@ -180,7 +181,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , http_network_manager_{4}
   , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_}
+  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
@@ -194,7 +195,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
            block_packer_, consensus_miner_, p2p_port_, block_interval}
   // p2p_port_ fairly arbitrary
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
+                                                              block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, processor_threads}
   , http_{http_network_manager_}
   , http_modules_{

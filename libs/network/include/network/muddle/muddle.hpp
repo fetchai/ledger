@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -195,8 +195,13 @@ public:
   /// @{
   void            AddPeer(Uri const &peer);
   void            DropPeer(Uri const &peer);
+  void            DropPeer(Address const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
+
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
+  bool IsBlacklisted(Address const &target) const;
   /// @}
 
   // Operators

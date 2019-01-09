@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -59,14 +59,17 @@ protected:
     {
       score = g.mu() - 3 * g.sigma();
     }
+    bool scored = false;
   };
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, size_t>;
   using Mutex        = mutex::Mutex;
+  using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:
   using ConstByteArray = byte_array::ConstByteArray;
   using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
@@ -91,7 +94,7 @@ public:
     size_t pos;
     if (ranking == ranking_store_.end())
     {
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0};
+      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
       pos = trust_store_.size();
       trust_store_.push_back(new_record);
     }
@@ -188,6 +191,24 @@ public:
     {
       return ranking_it->second;
     }
+  }
+
+  PeerTrusts GetPeersAndTrusts() const override
+  {
+    FETCH_LOCK(mutex_);
+    PeerTrusts trust_list;
+
+    for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
+    {
+      PeerTrust pt;
+      pt.address        = trust_store_[pos].peer_identity;
+      pt.name           = std::string(byte_array::ToBase64(pt.address));
+      pt.trust          = trust_store_[pos].score;
+      pt.has_transacted = trust_store_[pos].scored;
+      trust_list.push_back(pt);
+    }
+
+    return trust_list;
   }
 
   double GetTrustRatingOfPeer(IDENTITY const &peer_ident) const override

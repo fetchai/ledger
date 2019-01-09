@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ inline void BuildChebyshevDistance(std::string const &custom_name, pybind11::mod
       .def(custom_name.c_str(), &WrapperChebyshev<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperChebyshev<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperChebyshev<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperChebyshev<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperChebyshev<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperChebyshev<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperChebyshev<ShapelessArray<float>>);
 }
 
 }  // namespace distance

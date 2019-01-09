@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,6 +61,11 @@ public:
     due_time_ = Clock::now() + dur;
   }
 
+  void SetTimedOut()
+  {
+    due_time_ = Clock::now() - std::chrono::seconds(1);
+  }
+
   void SetMilliseconds(Timepoint const &timepoint, size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
@@ -96,6 +101,15 @@ public:
   void WaitFor()
   {
     std::this_thread::sleep_for(DueIn());
+  }
+
+  std::string Explain() const
+  {
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+
+    auto const due_in_ms = duration_cast<milliseconds>(DueIn()).count();
+    return std::to_string(due_in_ms) + "ms";
   }
 
 private:

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@
 #include "helper_functions.hpp"
 #include "http/server.hpp"
 #include "mine_test_http_interface.hpp"
-#include "network/muddle/rpc/muddle_test_server.hpp"
 #include "network/service/server.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_mine_test.hpp"
 #include <memory>
