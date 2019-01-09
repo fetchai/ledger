@@ -21,7 +21,7 @@
 #include "core/fixed_point/fixed_point.hpp"
 
 #include "meta/type_traits.hpp"
-#include <meta/type_traits.hpp>
+
 #include <type_traits>
 
 namespace fetch {
@@ -370,34 +370,6 @@ struct IsBlasAndNoShapeArrayLike<fetch::math::ShapelessArray<T, C>, R>
 template <typename A, typename R>
 using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
 
-//
-///////////////////////////
-///// FIXED POINT ARRAY ///
-///////////////////////////
-//
-//
-// template <typename A, typename R>
-// struct IsFixedPointShapeArrayImpl
-//{
-//};
-// template <typename R, typename T, typename C, bool H, bool W>
-// struct IsFixedPointShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
-//{
-//  using Type = R;
-//};
-// template <typename R, typename T, typename C, typename S>
-// struct IsFixedPointShapeArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
-//{
-//  using Type = R;
-//};
-// template <typename R, typename T, typename C>
-// struct IsFixedPointShapeArrayImpl<NDArray<T, C>, R>
-//{
-//  using Type = R;
-//};
-// template <typename A, typename R>
-// using IfIsFixedPointShapeArray = typename IsFixedPointShapeArrayImpl<A, R>::Type &&
-// IfIsFixedPoint ;
 
 }  // namespace meta
 }  // namespace math

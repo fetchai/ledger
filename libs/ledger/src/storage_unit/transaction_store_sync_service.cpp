@@ -25,7 +25,7 @@ namespace ledger {
 const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
 
 TransactionStoreSyncService::TransactionStoreSyncService(
-    int lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
+    uint32_t lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
     std::size_t verification_threads, std::chrono::milliseconds the_timeout,
     std::chrono::milliseconds promise_wait_timeout,
     std::chrono::milliseconds fetch_object_wait_duration)
@@ -318,35 +318,6 @@ void TransactionStoreSyncService::OnTransaction(chain::VerifiedTransaction const
   if (!store_->Has(rid))
   {
     store_->Set(rid, tx);
-
-#ifdef FETCH_ENABLE_METRICS
-    RecordNewElement(tx.digest());
-#endif  // FETCH_ENABLE_METRICS
-  }
-}
-
-void TransactionStoreSyncService::OnTransactions(TransactionList const &txs)
-{
-  std::size_t num_batches = (txs.size() + (BATCH_SIZE - 1)) / BATCH_SIZE;
-  for (std::size_t b = 0; b < num_batches; ++b)
-  {
-    auto end = std::min(BATCH_SIZE, txs.size() - b * BATCH_SIZE);
-    store_->WithLock([this, &txs, &b, &end]() {
-      for (std::size_t i = 0; i < end; ++i)
-      {
-        auto const &     tx = txs[i + BATCH_SIZE * b];
-        ResourceID const rid(tx.digest());
-
-        if (!store_->LocklessHas(rid))
-        {
-          store_->LocklessSet(rid, tx);
-
-#ifdef FETCH_ENABLE_METRICS
-          RecordNewElement(tx.digest());
-#endif  // FETCH_ENABLE_METRICS
-        }
-      }
-    });
   }
 }
 
