@@ -98,8 +98,8 @@ TEST(random_access_stack, mocked_test_GetSet)
   RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
   TestClass                                           temp;
   stack.New("abc");
-  stack.Get(1, temp);
   stack.Set(1, temp);
+  stack.Get(1, temp);
 }
 
 TEST(random_access_stack, mocked_test_Load)
