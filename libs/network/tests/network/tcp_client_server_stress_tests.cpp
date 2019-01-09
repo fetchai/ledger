@@ -185,8 +185,7 @@ void TestCase3(std::string host, uint16_t port)
         auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
-      })
-          .detach();
+      }).detach();
     }
 
     server.reset();
@@ -229,8 +228,7 @@ void TestCase4(std::string host, uint16_t port)
         auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
-      })
-          .detach();
+      }).detach();
     }
 
     if (index % 2)

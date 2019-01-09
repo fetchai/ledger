@@ -27,243 +27,276 @@
 namespace fetch {
 namespace auctions {
 
-enum class ErrorCodes
+enum class ErrorCode
 {
-    Success;
-    ItemAlreadyListed;
-    AuctionFull;
-    ItemNotListed;
-    TooManyBids;
-
+  SUCCESS,
+  ITEM_ALREADY_LISTED,
+  AUCTION_FULL,
+  ITEM_NOT_LISTED,
+  TOO_MANY_BIDS
 };
 
-//template <typename A, typename V = fetch::ml::Variable<A>>
+// template <typename A, typename V = fetch::ml::Variable<A>>
 class Auction
 {
-    using ErrorCode = typename ErrorCodes;
+public:
+  using BlockIdType = typename std::size_t;
 
-    using ValueType = typename std::size_t;
+  using ValueType   = typename std::size_t;
+  using AgentIdType = typename std::size_t;
+  using ItemIdType  = typename std::size_t;
 
-    using AgentIdType = typename std::size_t;
-    using ItemIdType = typename std::size_t;
+  using ItemsContainerType = typename std::unordered_map<ItemIdType, AgentIdType>;
 
-    using ItemsContainerType = typename std::unordered_map<ItemIdType, AgentIdType>;
+  // contains multiple agents' bids
+  using BidsContainerType = typename std::unordered_map<AgentIdType, ValueType>;
 
-    // contains multiple agents' bids
-    using BidsContainerType = typename std::unordered_map<AgentIdType, ValueType>;
+  // contains information on the item id, the owner id, and all bids
+  using ItemBidsType = typename std::unordered_map<ItemIdType, BidsContainerType>;
 
-    // contains information on the item id, the owner id, and all bids
-    using ItemBidsType = typename std::unordered_map<ItemIdType, BidsContainerType>;
+  using BidCountType = typename std::unordered_map<AgentIdType, std::size_t>;
 
-    using BidCountType = typename std::unordered_map<ItemIdType, std::unordered_map<AgentIdType, std::size_t>>;
-
-
+  using ItemBidCountType = typename std::unordered_map<ItemIdType, BidCountType>;
 private:
+  // Auction parameters
 
-    // Auction parameters
+  std::size_t max_items_ = 0;  // max items in auction
+  std::size_t max_bids_  = 1;  // max bids per bidder per item
 
-    std::size_t max_items_ = 0;   // max items in auction
-    std::size_t max_bids_ = 1;    // max bids per bidder per item
+  // records the block id on which this auction was born and will conclude
+  BlockIdType start_block_ = std::numeric_limits<std::size_t>::max();
+  BlockIdType end_block_   = std::numeric_limits<std::size_t>::max();
 
-    // records the block id on which this auction was born and will conclude
-    std::size_t start_block_ = std::numeric_limits<std::size_t>::max();
-    std::size_t end_block_ = std::numeric_limits<std::size_t>::max();
+  ItemsContainerType items_{};
+  ItemBidsType       item_bids_{};
+  ItemsContainerType items_winners_{};
+  ItemBidCountType       agent_item_bid_count_{};
 
-    ItemsContainerType items_{};
-    ItemBidsType item_bids_{};
-    BidCountType agent_item_bid_count_{};
+//  // id of auction initiator
+//  AgentIdType initiator_;
 
-    // id of auction initiator
-    AgentType initiator_;
-
-    // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
-    bool auction_valid_ = false;
+  // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
+  bool auction_valid_ = false;
 
 public:
+  /**
+   * constructor for an auction
+   * @param start_block_id  defines the start time of an auction
+   * @param end_block_id    defines the close time of an auction
+   * @param item  defines the item to be sold
+   * @param initiator  the id of the agent initiating the auction
+   */
+//  Auction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items, std::size_t initiator)
+  Auction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items)
+    : max_items_(max_items)
+    , start_block_(start_block_id)
+    , end_block_(end_block_id)
+//    , initiator_(initiator)
+  {
+    // checks for auction validity go here.
 
-    /**
-     * constructor for an auction
-     * @param start_block_id  defines the start time of an auction
-     * @param end_block_id    defines the close time of an auction
-     * @param item  defines the item to be sold
-     * @param initiator  the id of the agent initiating the auction
-     */
-    Auction(std::size_t start_block_id,
-            std::size_t end_block_id,
-            std::size_t item_description,
-            std::size_t max_items,
-            std::size_t initiator) : start_block_(start_block_id),
-            end_block_(end_block_id),
-            item_description_(item_description),
-            max_items_(max_items),
-            initiator_(initiator)
+    // perhaps this should be a runtime error?
+    assert(end_block_ > start_block_);
+
+    auction_valid_ = true;
+  }
+
+  std::vector<ItemIdType> ShowListedItems()
+  {
+    std::vector<ItemIdType> ret_vec{};
+    for (auto & it : items_)
     {
-      // checks for auction validity go here.
+      ret_vec.push_back(it.first);
+    }
+    return ret_vec;
+  }
 
-      // perhaps this should be a runtime error?
-      assert(end_block_id > start_block_id);
+  /**
+   * adds an item to the auction
+   * @param item
+   * @param item_owner
+   * @param min_price
+   * @return
+   */
+  ErrorCode AddItem(ItemIdType const &item_id, AgentIdType const &seller_id, ValueType const &min_price)
+  {
 
-      auction_valid_ = true;
+    // check if auction full
+    if (items_.size() >= max_items_)
+    {
+      return ErrorCode::AUCTION_FULL;
     }
 
-    ItemType ShowItems()
+    // auction not full
+    else
     {
-    }
-
-    /**
-     * adds an item to the auction
-     * @param item
-     * @param item_owner
-     * @param min_price
-     * @return
-     */
-    ErrorCode AddItem(ItemType const &item, ValueType const &min_price)
-    {
-
-      // check if auction full
-      if (items_.size() >= max_items_)
+      // check if item already listed
+      if (items_.find(item_id) != items_.end())
       {
-        return ErrorCodes::AuctionFull;
+        return ErrorCode::ITEM_ALREADY_LISTED;  // item already listed error
+        // TODO () - update trustworthiness of agent that try to double list items
       }
 
-      // auction not full
+      // list the items
       else
       {
-        // check if item already listed
-        if (std::find(vector.begin(), vector.end(), items_[item]) != vector.end())
-        {
-          return ErrorCodes::ItemAlreadyListed; // item already listed error
-
-          // TODO () - update trustworthiness of agent that try to double list items
-        }
-
-        // list the items
-        else
-        {
-          items_ = item;
-          items_bids_[item] = BidsContainerType{};
-          return ErrorCodes::Success; // success
-        }
-
+        items_.insert(std::pair<ItemIdType, AgentIdType>(item_id, seller_id));
+        item_bids_[item_id] = BidsContainerType{};
+        return ErrorCode::SUCCESS;  // success
       }
     }
+  }
 
-    /**
-     * Agent adds a single bid for a single item
-     * @param agent_id
-     * @param bid
-     * @param item_id
-     * @return
-     */
-    ErrorCode AddSingleBid(ValueType bid, AgentIdType bidder, ItemIdType item_id)
+  /**
+   * Agent adds a single bid for a single item
+   * @param agent_id
+   * @param bid
+   * @param item_id
+   * @return
+   */
+  ErrorCode AddSingleBid(ValueType bid, AgentIdType bidder, ItemIdType item_id)
+  {
+
+    // TODO - We don't save all previous bids. should we?
+
+    // check item exists in auction
+    if (!ItemInAuction(item_id))
+    {
+      return ErrorCode::ITEM_NOT_LISTED;
+    }
+    else
     {
 
-      // TODO - We don't save all previous bids. should we?
-
-      // check item exists in auction
-      if (!ItemInAuction(item_id))
-      {
-        return ErrorCodes::ItemNotListed;
-      }
-      else
+      // count previous bid on item made by this bidder
+      std::size_t n_bids = GetBidsCount(bidder, item_id);
+      if (n_bids < max_bids_)
       {
 
-        // count previous bid on item made by this bidder
-        std::size_t n_bids = GetBidsCount(bidder, item_id);
-        if (n_bids < max_bids_)
+        // update bid
+        if (n_bids == 0)
         {
-
-          // update bid
-          if (n_bids == 0)
-          {
-            item_bids_[item_id].insert(std::pair<AgentIdType, ValueType>(bidder, bid));
-          }
-          else
-          {
-            item_bids_[item_id][bidder] = bid;
-          }
-
-          // update bid counter
-          IncrementBidCount(bidder, item_id);
-
-          return ErrorCodes::Success;
-
+          item_bids_[item_id].insert(std::pair<AgentIdType, ValueType>(bidder, bid));
         }
         else
         {
-          return ErrorCodes::TooManyBids;
+          item_bids_[item_id][bidder] = bid;
         }
 
+        // update bid counter
+        IncrementBidCount(bidder, item_id);
+
+        return ErrorCode::SUCCESS;
+      }
+      else
+      {
+        return ErrorCode::TOO_MANY_BIDS;
       }
     }
+  }
 
-
-    void ExecuteAuction()
+  void Execute(BlockIdType current_block)
+  {
+    if((end_block_ == current_block) && auction_valid_)
     {
 
+      // pick winning bids
+
+      // for every item in the auction
+      for (auto &cur_item_it : item_bids_)
+      {
+        BidsContainerType &cur_item_all_bids = cur_item_it.second;
+
+        // find highest bid for this item and set winner
+        ValueType   cur_max_bid = std::numeric_limits<ValueType>::min();
+        AgentIdType cur_winner  = std::numeric_limits<AgentIdType>::min();
+        for (auto &cur_bid_it : cur_item_all_bids)
+        {
+          if (cur_bid_it.second > cur_max_bid)
+          {
+            cur_max_bid = cur_bid_it.second;
+            cur_winner  = cur_bid_it.first;
+          }
+        }
+
+        items_winners_.insert(std::pair<ItemIdType, AgentIdType>(cur_item_it.first, cur_winner));
+      }
+
+      // deduct funds from winner
+
+      // transfer item to winner
+
+      // close auction
+      auction_valid_ = false;
     }
+  }
+
+  ItemsContainerType Winners()
+  {
+    return items_winners_;
+  }
+
+
 
 private:
-
-    /**
-     * checks whether item in the auction
-     * @param item_id
-     * @return
-     */
-    bool ItemInAuction(ItemIdType item_id)
+  /**
+   * checks whether item in the auction
+   * @param item_id
+   * @return
+   */
+  bool ItemInAuction(ItemIdType item_id)
+  {
+    ItemsContainerType::iterator item_it = items_.find(item_id);
+    if (item_it == items_.end())
     {
-      ItemType::iterator item_it = items_.find(item_id);
-      if (item_it == items_.end())
-      {
-        return false;
-      }
-      return true;
+      return false;
     }
+    return true;
+  }
 
-    /**
-     * gets the number of bids this bidder has previous placed on this item in this auction
-     * @param bidder
-     * @param item_id
-     * @return
-     */
-    std::size_t GetBidsCount(AgentIdType bidder, ItemIdType item_id)
+  /**
+   * gets the number of bids this bidder has previous placed on this item in this auction
+   * @param bidder
+   * @param item_id
+   * @return
+   */
+  std::size_t GetBidsCount(AgentIdType bidder, ItemIdType item_id)
+  {
+    BidCountType::iterator item_bid_it = agent_item_bid_count_[bidder].find(item_id);
+    if (item_bid_it == agent_item_bid_count_[bidder].end())
     {
-        ItemBidsType::iterator item_bid_it = agent_item_bid_count_[item_id].find(bidder);
-        if (item_bid_it == agent_item_bid_count_[item_id].end())
-        {
-          return 0;
-        }
-        return agent_item_bid_count_[item_id][bidder];
+      return 0;
     }
+    return agent_item_bid_count_[bidder][item_id];
+  }
 
-    /**
-     * update number of bids
-     * @param bidder
-     * @param item_id
-     */
-    void IncrementBidCount(AgentIdType bidder, ItemIdType item_id)
+  /**
+   * update number of bids
+   * @param bidder
+   * @param item_id
+   */
+  void IncrementBidCount(AgentIdType bidder, ItemIdType item_id)
+  {
+    BidCountType::iterator item_bid_it = agent_item_bid_count_[bidder].find(item_id);
+    if (item_bid_it == agent_item_bid_count_[bidder].end())
     {
-      ItemBidsType::iterator item_bid_it = agent_item_bid_count_[item_id].find(bidder);
-        if (item_bid_it == agent_item_bid_count_[item_id].end())
-        {
-          agent_item_bid_count_[item_id].insert(std::pair<AgentIdType, std::size_t>(bidder, 1));
-        }
-        else
-        {
-          ++agent_item_bid_count_[item_id][bidder];
-        }
+      agent_item_bid_count_[bidder].insert(std::pair<ItemIdType, std::size_t>(item_id, 1));
     }
+    else
+    {
+      ++agent_item_bid_count_[bidder][item_id];
+    }
+  }
+};
 
-
-
-}
-
+} // auctions
+} // fetch
 
 //
 //    def BuildGraph(self):
 //        # Building graph
 //        self.item_winner = [(-1, -1) for i in range(len(self.items))]
-//        self.active_bid = [ [False for j in range(len(self.bids[i]))] for i in range(len(self.bids))]
+//        self.active_bid = [ [False for j in range(len(self.bids[i]))] for i in
+//        range(len(self.bids))]
 //
 //    def ClearBid(self, bid):
 //        bid, n = bid

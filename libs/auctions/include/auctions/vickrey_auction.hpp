@@ -22,7 +22,7 @@
 //#include <memory>
 //#include <unordered_map>
 //#include <unordered_set>
-//#include <vector>
+#include "auctions/auction.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -31,15 +31,16 @@ namespace auctions {
 class VickreyAuction : public Auction
 {
 private:
-//  using ArrayType         = A;
-//  using VariableType      = V;
-//  using VariablePtrType   = std::shared_ptr<VariableType>;
-//  using LayerType         = layers::Layer<ArrayType>;
-//  using LayerPtrType      = std::shared_ptr<LayerType>;
-//  using FunctionSignature = typename VariableType::FunctionSignature;
 
 public:
 
+//  VickreyAuction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items, std::size_t initiator) :
+//  Auction(start_block_id, end_block_id, max_items, initiator)
+  VickreyAuction(std::size_t start_block_id, std::size_t end_block_id, std::size_t max_items) :
+  Auction(start_block_id, end_block_id, max_items)
+  {}
 
+};
 
+}
 }

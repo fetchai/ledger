@@ -48,11 +48,12 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(r,
-                                   [](typename ArrayType::vector_register_type const &x,
-                                      typename ArrayType::vector_register_type const &y,
-                                      typename ArrayType::vector_register_type &z) { z = x + y; },
-                                   array1.data(), array2.data());
+    ret.data().in_parallel().Apply(
+        r,
+        [](typename ArrayType::vector_register_type const &x,
+           typename ArrayType::vector_register_type const &y,
+           typename ArrayType::vector_register_type &      z) { z = x + y; },
+        array1.data(), array2.data());
   }
   else
   {
