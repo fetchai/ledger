@@ -79,7 +79,7 @@ def main():
     cmd = [
         clang_tidy,
         '-p', args.build_path,
-        '-warnings-as-errors=*',
+        '-warnings-as-errors=*'
     ]
 
     if args.fix:
@@ -90,10 +90,8 @@ def main():
         num_workers = args.jobs
 
     def analyse_file(source_path):
-
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
 
-        print(cmd + [source_path])
         proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         while True:
