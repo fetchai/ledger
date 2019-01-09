@@ -24,31 +24,40 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  PlaceHolder() = default;
+  Flatten()          = default;
+  virtual ~Flatten() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.empty());
-    assert(this->output_);
+    assert(inputs.size() == 1);
+    input_shape_ = inputs[0]->shape();
+    this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+    this->output_->Copy(*inputs[0]); // TODO remove useless copy and replace with lightweight view
+    size_t elementsCount(1);
+    for (size_t i : this->output_->shape())
+      {
+	elementsCount *= i;
+      }
+    this->output_->Reshape(std::vector<size_t>({1, elementsCount}));
     return this->output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
+    assert(inputs.size() == 1);
+    errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
     return {errorSignal};
   }
 
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
+private:
+  std::vector<size_t> input_shape_;
 };
 
 }  // namespace ops

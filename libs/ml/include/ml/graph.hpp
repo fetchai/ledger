@@ -55,12 +55,12 @@ namespace ml {
 
     void SetInput(std::string const &nodeName, ArrayPtrType data)
     {
-      std::shared_ptr<fetch::ml::Node<ArrayType, fetch::ml::ops::PlaceHolder<ArrayType>>> placeholder =
-	std::dynamic_pointer_cast<fetch::ml::Node<ArrayType, fetch::ml::ops::PlaceHolder<ArrayType>>>(nodes_[nodeName]);
+      std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
+	std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
       placeholder->SetData(data);
     }
 
-  private:
+  protected:
     std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
   };
   

@@ -17,38 +17,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/ops.hpp"
+#include "ml/subgraph.hpp"
+#include "ml/ops/flatten.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/weights.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class FullyConnected : public SubGraph<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  PlaceHolder() = default;
-
-  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  FullyConnected(size_t in, size_t out, std::string const & name = "FC")
   {
-    assert(inputs.empty());
-    assert(this->output_);
-    return this->output_;
+    this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {name + "_Input"});
+    this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_MatrixMultiply", {name + "_Flatten", name + "_Weights"});
+    
+    this->AddInputNodes(name + "_Input");
+    this->SetOutputNode(name + "_MatrixMultiply");
+
+    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<size_t>({in, out}));
+    
+    this->SetInput(name + "_Weights", weights);
   }
 
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     errorSignal)
-  {
-    return {errorSignal};
-  }
-
-  virtual void SetData(ArrayPtrType const &data)
-  {
-    this->output_ = data;
-  }
+  
 };
 
 }  // namespace ops
