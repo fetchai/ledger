@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public:
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
   using VerifiedTransaction   = chain::VerifiedTransaction;
-  using ObjectStore           = storage::ObjectStore<VerifiedTransaction>;
+  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
   using FutureTimepoint       = network::FutureTimepoint;
   using UnverifiedTransaction = chain::UnverifiedTransaction;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
@@ -86,7 +86,7 @@ public:
   static const std::size_t  BATCH_SIZE;
 
   TransactionStoreSyncService(
-      int lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
+      uint32_t lane_id, MuddlePtr muddle, ObjectStorePtr store, LaneControllerPtr controller_ptr,
       std::size_t               verification_threads,
       std::chrono::milliseconds the_timeout                = std::chrono::milliseconds(5000),
       std::chrono::milliseconds promise_wait_timeout       = std::chrono::milliseconds(2000),
@@ -119,8 +119,6 @@ public:
 
 protected:
   void OnTransaction(chain::VerifiedTransaction const &tx) override;
-
-  void OnTransactions(TransactionList const &txs) override;
 
   // Reverse bits in byte
   uint8_t Reverse(uint8_t c)
@@ -170,7 +168,7 @@ private:
 
   Mutex mutex_{__LINE__, __FILE__};
 
-  int id_;
+  uint32_t id_;
 
   Mutex is_ready_mutex_{__LINE__, __FILE__};
   bool  is_ready_ = false;
