@@ -42,11 +42,11 @@ namespace ml {
       return nodes_[nodeName]->Evaluate();
     }
 
-    template <class OperationType>
-    void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs)
+    template <class OperationType, typename ...Params>
+    void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
     {
-      nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName);
-      FETCH_LOG_INFO("ML_LIB", "Creating node ", nodeName);
+      nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
+      FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
       for (auto const &i : inputs)
 	{
 	  nodes_[nodeName]->AddInput(nodes_[i]);

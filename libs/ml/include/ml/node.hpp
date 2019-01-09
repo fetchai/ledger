@@ -46,8 +46,9 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Node(std::string const name)
-    : name_(std::move(name))
+  template <typename ...Params>
+  Node(std::string const name, Params... params)
+    : O(params...), name_(std::move(name))
   {}
 
   virtual ~Node() = default;

@@ -43,7 +43,7 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test) // Use the class as 
   // No way to test actual values for now as weights are randomly initialised.
 }
 
-TYPED_TEST(FullyConnectedTest, forward_test) // Use the class as an Ops
+TYPED_TEST(FullyConnectedTest, ops_forward_test) // Use the class as an Ops
 {
   fetch::ml::ops::FullyConnected<TypeParam> fc(50, 10);
   std::shared_ptr<TypeParam> inputData = std::make_shared<TypeParam>(std::vector<size_t>({5, 10}));
@@ -55,7 +55,7 @@ TYPED_TEST(FullyConnectedTest, forward_test) // Use the class as an Ops
   // No way to test actual values for now as weights are randomly initialised.
 }
 
-TYPED_TEST(FullyConnectedTest, backward_test) // Use the class as an Ops
+TYPED_TEST(FullyConnectedTest, ops_backward_test) // Use the class as an Ops
 {
   fetch::ml::ops::FullyConnected<TypeParam> fc(50, 10);
   std::shared_ptr<TypeParam> inputData = std::make_shared<TypeParam>(std::vector<size_t>({5, 10}));
@@ -68,4 +68,57 @@ TYPED_TEST(FullyConnectedTest, backward_test) // Use the class as an Ops
   ASSERT_EQ(backpropagatedErrorSignals[0]->shape()[0], 5);
   ASSERT_EQ(backpropagatedErrorSignals[0]->shape()[1], 10);
   // No way to test actual values for now as weights are randomly initialised.
+}
+
+TYPED_TEST(FullyConnectedTest, node_forward_test) // Use the class as a Node
+{
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({5, 10}));
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
+    std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  placeholder->SetData(data);  
+
+  fetch::ml::Node<TypeParam, fetch::ml::ops::FullyConnected<TypeParam>> fc("FullyConnected", 50u, 42u, "FullyConnected");
+  fc.AddInput(placeholder);
+
+  std::shared_ptr<TypeParam> prediction = fc.Evaluate();
+
+  ASSERT_EQ(prediction->shape().size(), 2);
+  ASSERT_EQ(prediction->shape()[0], 1);
+  ASSERT_EQ(prediction->shape()[1], 42);
+}
+
+TYPED_TEST(FullyConnectedTest, node_backward_test) // Use the class as a Node
+{
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({5, 10}));
+  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
+    std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
+  placeholder->SetData(data);  
+
+  fetch::ml::Node<TypeParam, fetch::ml::ops::FullyConnected<TypeParam>> fc("FullyConnected", 50u, 42u, "FullyConnected");
+  fc.AddInput(placeholder);
+  std::shared_ptr<TypeParam> prediction = fc.Evaluate();
+
+  std::shared_ptr<TypeParam> errorSignal = std::make_shared<TypeParam>(std::vector<size_t>({1, 42}));
+  auto backpropagatedErrorSignals = fc.BackPropagate(errorSignal);
+
+  ASSERT_EQ(backpropagatedErrorSignals.size(), 1);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape().size(), 2);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape()[0], 5);
+  ASSERT_EQ(backpropagatedErrorSignals[0].second->shape()[1], 10);  
+}
+
+TYPED_TEST(FullyConnectedTest, graph_forward_test) // Use the class as a Node
+{
+  fetch::ml::Graph<TypeParam> g;
+
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});  
+  g.template AddNode<fetch::ml::ops::FullyConnected<TypeParam>>("FullyConnected", {"Input"}, 50u, 42u);
+
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({5, 10}));
+  g.SetInput("Input", data);  
+
+  std::shared_ptr<TypeParam> prediction = g.Evaluate("FullyConnected");
+  ASSERT_EQ(prediction->shape().size(), 2);
+  ASSERT_EQ(prediction->shape()[0], 1);
+  ASSERT_EQ(prediction->shape()[1], 42);  
 }
