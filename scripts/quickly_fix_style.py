@@ -20,7 +20,7 @@
 
 import run_static_analysis
 import apply_style
-import check_licence_header
+import check_license_header
 import subprocess
 import sys
 import os
@@ -105,10 +105,12 @@ def main():
     compare_branch = args.branch
     build_path     = args.build_path
 
-    # Firstly, check licence headers
-    print("Checking licence headers")
+    # Firstly, check license headers
+    print("Checking license headers")
     sys.argv = ['_', '--fix']
-    check_licence_header.main()
+    check_license_header.main()
+
+    print("Next.")
 
     changed_files = []
     # Stack overflow 34279322

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "meta/is_log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
-#include "ledger/chain/main_chain.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -152,16 +152,16 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   std::size_t const num_tx = GetParam();
 
   PopulateWithTransactions(num_tx, 1);
-  MainChain chain;
+  MainChain                    chain;
   std::set<TransactionSummary> transactions_already_seen;
   std::set<TransactionSummary> transactions_within_block;
 
-  while(miner_->backlog() > 0)
+  while (miner_->backlog() > 0)
   {
     BlockBody body;
 
     auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash = heaviest_block.hash();
+    body.previous_hash   = heaviest_block.hash();
 
     miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
 
@@ -178,7 +178,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       }
     }
 
-    // check that transactions_within_block not inside transactions_already_seen (TX already in main chain)
+    // check that transactions_within_block not inside transactions_already_seen (TX already in main
+    // chain)
     for (auto const &tx : transactions_within_block)
     {
       // Guarantee each body fresh transactions
@@ -195,17 +196,17 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   }
 
   // Now, push on all of the TXs that are already in the blockchain
-  for(auto const &tx_summary : transactions_already_seen)
+  for (auto const &tx_summary : transactions_already_seen)
   {
     miner_->EnqueueTransaction(tx_summary);
   }
 
-  while(miner_->backlog() > 0)
+  while (miner_->backlog() > 0)
   {
     BlockBody body;
 
     auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash = heaviest_block.hash();
+    body.previous_hash   = heaviest_block.hash();
 
     miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
 
@@ -227,7 +228,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       }
     }
 
-    // check that transactions_within_block not inside transactions_already_seen (TX already in main chain)
+    // check that transactions_within_block not inside transactions_already_seen (TX already in main
+    // chain)
     for (auto const &tx : transactions_within_block)
     {
       // Guarantee each body fresh transactions
@@ -242,7 +244,6 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
   }
-
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10000, 20000, 30000), );

@@ -50,8 +50,8 @@ public:
   /// @name Miner Interface
   /// @{
   void EnqueueTransaction(chain::TransactionSummary const &tx) override;
-  void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                     std::size_t num_slices, chain::MainChain const &chain) override;
+  void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
+                     chain::MainChain const &chain) override;
   /// @}
 
   // Operators
@@ -84,14 +84,14 @@ private:
 
   static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
 
-  uint32_t const log2_num_lanes_;                            ///< The log2 of the number of lanes
-  uint32_t const max_num_threads_;                           ///< The configured maximum number of threads
-  ThreadPool     thread_pool_;                               ///< The thread pool used to dispatch work
-  mutable Mutex          pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue
-  TransactionList pending_;                                  ///< The pending transaction queue
-  TransactionSet  txs_seen_;                                 ///< The transactions seen so far
-  std::size_t     main_queue_size_{0};                       ///< The thread safe main queue size
-  TransactionList main_queue_;                               ///< The main transaction queue
+  uint32_t const log2_num_lanes_;                    ///< The log2 of the number of lanes
+  uint32_t const max_num_threads_;                   ///< The configured maximum number of threads
+  ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
+  mutable Mutex  pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue
+  TransactionList pending_;                          ///< The pending transaction queue
+  TransactionSet  txs_seen_;                         ///< The transactions seen so far
+  std::size_t     main_queue_size_{0};               ///< The thread safe main queue size
+  TransactionList main_queue_;                       ///< The main transaction queue
 };
 
 }  // namespace miner

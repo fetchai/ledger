@@ -88,9 +88,9 @@ void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
   FETCH_LOCK(pending_lock_);
   bool filtering_input_duplicates_ = false;
 
-  if(filtering_input_duplicates_)
+  if (filtering_input_duplicates_)
   {
-    if(txs_seen_.find(tx) == txs_seen_.end())
+    if (txs_seen_.find(tx) == txs_seen_.end())
     {
       pending_.emplace_back(tx, log2_num_lanes_);
       txs_seen_.insert(tx);
@@ -117,15 +117,15 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 
   // add the most relevant transactions of the pending queue into the main queue
   {
-    std::size_t max_block_capacity = (num_lanes * num_slices) + ((num_lanes * num_slices)/8);
+    std::size_t max_block_capacity = (num_lanes * num_slices) + ((num_lanes * num_slices) / 8);
     FETCH_LOCK(pending_lock_);
 
     // sort the pending list by fees (pending fees high -> low)
     pending_.sort(SortByFee);
 
     pending_size = pending_.size();
-    auto start = pending_.begin();
-    auto end   = start;
+    auto start   = pending_.begin();
+    auto end     = start;
     std::advance(end, static_cast<int32_t>(std::min(max_block_capacity, pending_size)));
 
     // Take as many transactions as we need from the front of the pending queue
@@ -136,9 +136,10 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
   std::size_t const main_transactions = main_queue_.size();
 
   // Before packing transactions, we must be sure they're unique
-  const_cast<chain::MainChain&>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
+  const_cast<chain::MainChain &>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions, ", main queue: ", main_queue_.size(), " pending: ",pending_.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
+                 ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
 
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads =
@@ -184,7 +185,6 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
       main_queue_.splice(main_queue_.begin(), transaction_lists[i]);
     }
   }
-
 
   std::size_t const packed_transactions    = main_transactions - main_queue_.size();
   std::size_t const remaining_transactions = num_transactions - packed_transactions;
