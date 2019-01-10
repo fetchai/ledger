@@ -228,11 +228,15 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
     http_.AddModule(*module);
   }
 
+  CreateInfoFile(db_prefix + "/info.json");
+}
+
+void Constellation::CreateInfoFile(std::string const &filename)
+{
   // Create an information file about this process.
 
-  auto         filename = "info";
   std::fstream stream;
-  stream.open(filename, std::ios_base::out);
+  stream.open(filename.c_str(), std::ios_base::out);
   if (stream.good())
   {
     stream << "{" << std::endl;
@@ -254,8 +258,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   }
   else
   {
-    std::cerr << "Can't open " << filename << std::endl;
-    exit(1);
+    throw std::invalid_argument(std::string("Can't open ")+filename);
   }
 }
 

@@ -86,6 +86,8 @@ public:
   void SignalStop();
 
 private:
+  void CreateInfoFile(std::string const &filename);
+
   using Muddle                  = muddle::Muddle;
   using NetworkManager          = network::NetworkManager;
   using BlockPackingAlgorithm   = miner::BasicMiner;

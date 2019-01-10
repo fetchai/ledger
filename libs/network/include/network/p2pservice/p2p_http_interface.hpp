@@ -158,8 +158,11 @@ private:
       peer_data_list.push_back(peer_data);
     }
 
-    variant::Variant trust_list;
-    trust_list.MakeArrayFrom(peer_data_list);
+    variant::Variant trust_list = variant::Variant::Array(peer_data_list.size());
+    for(std::size_t i = 0;i< peer_data_list.size();i++)
+    {
+      trust_list[i] = peer_data_list[i];
+    }
 
     Variant response      = Variant::Object();
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
