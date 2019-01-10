@@ -228,7 +228,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
     http_.AddModule(*module);
   }
 
-  CreateInfoFile(db_prefix + "/info.json");
+  CreateInfoFile("info.json");
 }
 
 void Constellation::CreateInfoFile(std::string const &filename)
@@ -239,21 +239,13 @@ void Constellation::CreateInfoFile(std::string const &filename)
   stream.open(filename.c_str(), std::ios_base::out);
   if (stream.good())
   {
-    stream << "{" << std::endl;
+    variant::Variant data = variant::Variant::Object();
+    data["pid"]          = getpid();
+    data["identity"]     = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    data["hex_identity"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
-    stream << "  \"pid\": " << getpid() << "," << std::endl;
+    stream << data;
 
-    stream << "  \"identity\": "
-           << "\"" << fetch::byte_array::ToBase64(muddle_.identity().identifier()) << "\","
-           << std::endl;
-
-    fetch::byte_array::ToBase64(muddle_.identity().identifier());
-
-    stream << "  \"hex_identity\": "
-           << "\"" << fetch::byte_array::ToHex(muddle_.identity().identifier()) << "\""
-           << std::endl;
-
-    stream << "}" << std::endl;
     stream.close();
   }
   else
