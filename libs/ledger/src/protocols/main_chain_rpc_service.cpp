@@ -193,7 +193,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
   else
   {
-    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
+    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
     FETCH_LOG_INFO(LOGGING_NAME, "Peer ", ToBase64(from), " LIED!");
   }
 }
@@ -232,10 +232,9 @@ void MainChainRpcService::ServiceLooseBlocks()
       {
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        if (random_peer_list.begin() != random_peer_list.end())
+        if (!random_peer_list.empty())
         {
-          Address address = (*random_peer_list.begin());
-          AddLooseBlock(hash, address);
+          AddLooseBlock(hash, *random_peer_list.begin());
         }
       }
     }
