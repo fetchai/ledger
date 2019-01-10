@@ -17,27 +17,49 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <class T>
-class Ops
+class Flatten : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
+  Flatten()          = default;
+  virtual ~Flatten() = default;
 
-protected:
-  ArrayPtrType output_;
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  {
+    assert(inputs.size() == 1);
+    input_shape_ = inputs[0]->shape();
+    this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+    this->output_->Copy(*inputs[0]); // TODO remove useless copy and replace with lightweight view
+    size_t elementsCount(1);
+    for (size_t i : this->output_->shape())
+      {
+	elementsCount *= i;
+      }
+    this->output_->Reshape(std::vector<size_t>({1, elementsCount}));
+    return this->output_;
+  }
+
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
+  {
+    assert(inputs.size() == 1);
+    errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
+    return {errorSignal};
+  }
+
+private:
+  std::vector<size_t> input_shape_;
 };
+
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

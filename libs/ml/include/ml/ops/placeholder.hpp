@@ -17,27 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
+#include "ml/ops/ops.hpp"
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <class T>
-class Ops
+class PlaceHolder : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
+  PlaceHolder() = default;
 
-protected:
-  ArrayPtrType output_;
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
+  {
+    assert(inputs.empty());
+    assert(this->output_);
+    return this->output_;
+  }
+
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
+  {
+    return {errorSignal};
+  }
+
+  virtual void SetData(ArrayPtrType const &data)
+  {
+    this->output_ = data;
+  }
 };
+
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

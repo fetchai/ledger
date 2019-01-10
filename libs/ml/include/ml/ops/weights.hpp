@@ -17,27 +17,50 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
+#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {
+namespace ops {
 
 template <class T>
-class Ops
+class Weights : public fetch::ml::ops::PlaceHolder<T>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs) = 0;
-  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-                                             ArrayPtrType                     error) = 0;
+  Weights()          = default;
+  virtual ~Weights() = default;
 
-protected:
-  ArrayPtrType output_;
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     errorSignal)
+  {
+    gradientAccumulation_->InlineAdd(*errorSignal);
+    return {};
+  }
+
+  virtual void SetData(ArrayPtrType const &data)
+  {
+    PlaceHolder<T>::SetData(data);
+    if (this->output_ && (!gradientAccumulation_ || gradientAccumulation_->shape() != this->output_->shape()))
+      {
+	gradientAccumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      }
+  }
+
+  void Step()
+  {
+    this->output_->InlineAdd(*gradientAccumulation_);
+    // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here for convenience.
+    // Remove if needed -- Pierre
+    gradientAccumulation_->SetAllZero();
+  }
+
+private:
+  ArrayPtrType gradientAccumulation_;
 };
+
+}  // namespace ops
 }  // namespace ml
 }  // namespace fetch
