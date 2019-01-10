@@ -19,6 +19,7 @@
 
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/main_chain.hpp"
 
 #include <cstddef>
 
@@ -51,10 +52,16 @@ public:
    * @param block The reference to the output block to generate
    * @param num_lanes The number of lanes for the block
    * @param num_slices The number of slices for the block
+   * @param chain The main chain
    */
   virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                             std::size_t num_slices) = 0;
+                             std::size_t num_slices, chain::MainChain const &chain) = 0;
 
+  /**
+   * How many transactions are yet to be processed (mempool size). Not guaranteed to be accurate.
+   *
+   * @return: number of transactions
+   */
   virtual uint64_t backlog() const = 0;
 
   /// @}

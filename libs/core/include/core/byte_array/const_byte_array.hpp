@@ -160,6 +160,7 @@ public:
 
   bool operator>(self_type const &other) const
   {
+    // TODO(HUT): is this right? inversion of comparison
     return other < (*this);
   }
 
