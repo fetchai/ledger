@@ -38,11 +38,11 @@ enum class ErrorCode
 };
 
 struct Item;
-using ItemIdType         = typename std::size_t;
+using ItemIdType         = std::size_t;
 using BlockIdType        = fetch::byte_array::ByteArray;
-using ValueType          = typename std::size_t;
-using AgentIdType        = typename std::size_t;
-using ItemsContainerType = typename std::unordered_map<ItemIdType, Item>;
+using ValueType          = std::size_t;
+using AgentIdType        = std::size_t;
+using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
 
 struct Item
 {
@@ -202,6 +202,11 @@ public:
     }
   }
 
+  /**
+   * Executes the auction by identifying the winners, and making appropriate transfers
+   * @param current_block
+   * @return
+   */
   bool Execute(BlockIdType current_block)
   {
     if ((end_block_ == current_block) && auction_valid_)
