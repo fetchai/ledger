@@ -121,7 +121,7 @@ protected:
     auto identity = std::make_unique<fetch::crypto::ECDSASigner>();
     identity->GenerateKeys();
 
-    return std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), std::move(identity),
+    return std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(identity),
                                     *network_manager_);
   }
 

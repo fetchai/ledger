@@ -85,11 +85,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>(4);
-    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>(4);
-    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();

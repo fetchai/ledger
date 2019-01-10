@@ -175,12 +175,12 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_(LookupLocalPort(manifest_, ServiceType::P2P))
+  , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
   , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
+  , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate), network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
   , lane_services_()

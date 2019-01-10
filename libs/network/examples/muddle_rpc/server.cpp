@@ -35,7 +35,7 @@ int main()
   NetworkManager nm(1);
   nm.Start();
 
-  Muddle muddle{Muddle::CreateNetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
+  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
   muddle.Start({8000});
 
   Sample         sample;

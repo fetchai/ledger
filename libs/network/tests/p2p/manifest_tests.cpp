@@ -59,7 +59,7 @@ static TestCase const TEST_CASES[] = {{"Fully explicit configuration",
     }
     )",
                                        {"127.0.0.1", 8000, 8000},  // HTTP
-                                       {"127.0.0.1", 8001, 8001},  // P2P
+                                       {"127.0.0.1", 8001, 8001},  // CORE
                                        {                           // LANES
                                         {"127.0.0.1", 8010, 8010},
                                         {"127.0.0.1", 8011, 8011},
@@ -79,7 +79,7 @@ static TestCase const TEST_CASES[] = {{"Fully explicit configuration",
     }
     )",
                                        {"192.168.1.54", 30000, 9000},  // HTTP
-                                       {"192.168.1.55", 30001, 9001},  // P2P
+                                       {"192.168.1.55", 30001, 9001},  // CORE
                                        {                               // LANES
                                         {"192.168.1.60", 30100, 9010},
                                         {"192.168.1.61", 30101, 9011},
@@ -99,7 +99,7 @@ static TestCase const TEST_CASES[] = {{"Fully explicit configuration",
     }
     )",
                                        {"127.0.10.1", 8000, 8000},  // HTTP
-                                       {"127.0.0.1", 8001, 8001},   // P2P
+                                       {"127.0.0.1", 8001, 8001},   // CORE
                                        {                            // LANES
                                         {"127.1.0.1", 8010, 8010},
                                         {"127.2.0.1", 8011, 8011},
@@ -129,9 +129,9 @@ TEST_P(ManifestTests, Check)
   ASSERT_TRUE(manifest_->Parse(config.text));
 
   // check the p2p service
-  ASSERT_TRUE(manifest_->HasService(ServiceIdentifier{ServiceType::P2P}));
+  ASSERT_TRUE(manifest_->HasService(ServiceIdentifier{ServiceType::CORE}));
 
-  auto const &p2p_service = manifest_->GetService(ServiceIdentifier{ServiceType::P2P});
+  auto const &p2p_service = manifest_->GetService(ServiceIdentifier{ServiceType::CORE});
   auto const &p2p_peer    = p2p_service.remote_uri.AsPeer();
 
   EXPECT_EQ(p2p_peer.address(), config.p2p.address);

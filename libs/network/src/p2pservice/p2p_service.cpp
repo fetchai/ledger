@@ -50,11 +50,11 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
 
 void P2PService::Start(UriList const &initial_peer_list)
 {
-  Uri const p2p_uri = manifest_.GetUri(ServiceIdentifier{ServiceType::P2P});
+  Uri const p2p_uri = manifest_.GetUri(ServiceIdentifier{ServiceType::CORE});
 
   resolver_.Setup(address_, p2p_uri);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "P2P URI: ", p2p_uri.uri());
+  FETCH_LOG_INFO(LOGGING_NAME, "CORE URI: ", p2p_uri.uri());
   FETCH_LOG_INFO(LOGGING_NAME, "Num Initial Peers: ", initial_peer_list.size());
   for (auto const &uri : initial_peer_list)
   {
@@ -64,12 +64,15 @@ void P2PService::Start(UriList const &initial_peer_list)
     muddle_.AddPeer(uri);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Establishing P2P Service on tcp://127.0.0.1:", "??",
+  FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
                  " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
 
   thread_pool_->SetIdleInterval(process_cycle_ms_);
   thread_pool_->Start();
-  thread_pool_->PostIdle([this]() { WorkCycle(); });
+  if (process_cycle_ms_>0)
+  {
+    thread_pool_->PostIdle([this]() { WorkCycle(); });
+  }
 }
 
 void P2PService::Stop()

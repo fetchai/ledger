@@ -22,6 +22,9 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
 
+#include "network/muddle/muddle_endpoint.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -31,6 +34,9 @@ namespace ledger {
 class StorageUnitBundledService
 {
 public:
+  using NetworkId   = muddle::MuddleEndpoint::NetworkId;
+  using ServiceType = network::ServiceType;
+
   // Construction / Destruction
   StorageUnitBundledService()                                  = default;
   StorageUnitBundledService(StorageUnitBundledService const &) = delete;
@@ -47,8 +53,9 @@ public:
   {
     for (std::size_t i = 0; i < lanes; ++i)
     {
+      auto id = network::ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)};
       lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
-                                                     uint16_t(port + i), tm, verification_threads,
+                                                     uint16_t(port + i), NetworkId(id.ToString("")), tm, verification_threads,
                                                      refresh_storage));
     }
   }

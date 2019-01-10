@@ -435,7 +435,7 @@ private:
   {
     if (!muddles_[lane])
     {
-      muddles_[lane] = Muddle::CreateMuddle(Muddle::CreateNetworkId('S', lane), network_manager_);
+      muddles_[lane] = Muddle::CreateMuddle(Muddle::NetworkId("Storage"+std::to_string(lane)), network_manager_);
       muddles_[lane]->Start({});
     }
     return muddles_[lane];

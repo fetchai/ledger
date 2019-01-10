@@ -240,7 +240,7 @@ struct CommandLineArguments
       // otherwise we default to the port specified
       if (args.manifest)
       {
-        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::P2P});
+        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::CORE});
 
         if (uri.scheme() == Uri::Scheme::Tcp)
         {
@@ -327,7 +327,7 @@ struct CommandLineArguments
 
     // register the P2P service
     peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
-    manifest->AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
+    manifest->AddService(ServiceIdentifier{ServiceType::CORE}, Manifest::Entry{Uri{peer}});
 
     // register all of the lanes (storage shards)
     for (uint32_t i = 0; i < num_lanes; ++i)

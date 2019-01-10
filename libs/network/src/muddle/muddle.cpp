@@ -58,7 +58,7 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1, "Muddle " + PrintableNetworkId(network_id)))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + static_cast<std::string>(network_id)))
   , clients_(router_)
   , network_id_{network_id}
 {}
@@ -126,7 +126,7 @@ void Muddle::Shutdown()
 bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
   PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
-  if (handle != 0)
+  if (handle == 0)
   {
     return false;
   }

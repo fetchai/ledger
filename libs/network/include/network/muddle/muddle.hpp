@@ -154,34 +154,6 @@ public:
     return std::make_shared<Muddle>(network_id, std::move(prover), tm);
   }
 
-  static inline uint32_t CreateNetworkId(const char *p)
-  {
-    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |
-           (uint32_t(p[3]));
-  }
-
-  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
-  {
-    std::string x = "000" + std::to_string(instance_number);
-    x             = x.substr(x.length() - 3);
-    x             = std::string(1, prefix) + x;
-    return CreateNetworkId(x.c_str());
-  }
-
-  static inline std::string PrintableNetworkId(uint32_t network_id)
-  {
-    char tmp[5];
-    tmp[4] = 0;
-    tmp[3] = char(network_id & 0xFF);
-    network_id >>= 8;
-    tmp[2] = char(network_id & 0xFF);
-    network_id >>= 8;
-    tmp[1] = char(network_id & 0xFF);
-    network_id >>= 8;
-    tmp[0] = char(network_id & 0xFF);
-    return tmp;
-  }
-
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;

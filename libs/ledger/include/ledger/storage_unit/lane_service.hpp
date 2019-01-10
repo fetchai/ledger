@@ -55,6 +55,7 @@ public:
   using Server         = fetch::muddle::rpc::Server;
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using NetworkId      = muddle::Muddle::NetworkId;
 
   using DocumentStore             = storage::RevertibleDocumentStore;
   using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
@@ -72,7 +73,7 @@ public:
   // TODO(issue 7): Make config JSON
   LaneService(
       std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-      uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
+      uint16_t port, NetworkId network_id, fetch::network::NetworkManager tm, std::size_t verification_threads,
       bool                      refresh_storage              = false,
       std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
       std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
@@ -82,12 +83,8 @@ public:
   {
     std::unique_ptr<crypto::Prover> certificate_ = std::make_unique<crypto::ECDSASigner>();
 
-    std::string network_id = std::string("000") + std::to_string(lane_);
-    network_id             = std::string("L") + network_id.substr(network_id.length() - 3);
-
     lane_identity_ = std::make_shared<LaneIdentity>(tm, certificate_->identity());
-    muddle_        = std::make_shared<Muddle>(Muddle::CreateNetworkId(network_id.c_str()),
-                                       std::move(certificate_), tm);
+    muddle_        = std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
     server_        = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
     // format and generate the prefix
