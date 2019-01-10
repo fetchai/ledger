@@ -41,6 +41,7 @@ enum class ErrorCode
 
 struct Item;
 using ItemIdType         = std::size_t;
+using BidIdType          = std::size_t;
 using BlockIdType        = fetch::byte_array::ByteArray;
 using ValueType          = std::size_t;
 using AgentIdType        = std::size_t;
@@ -74,9 +75,10 @@ struct Item
  */
 struct Bid
 {
+  BidIdType id;
   std::vector<Item> items{};
   ValueType price = 0;
-  std::vector<Item> excludes{};
+  std::vector<Bid> excludes{};
   AgentIdType bidder = std::numeric_limits<AgentIdType>::max();
 };
 
@@ -97,6 +99,7 @@ protected:
   BlockIdType end_block_   = std::numeric_limits<BlockIdType>::max();
 
   ItemsContainerType items_{};
+  std::vector<Bid> bids_{};
 
   // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
   bool auction_valid_ = false;
@@ -219,6 +222,7 @@ public:
     }
 
     // place bids and update counter
+    bids_.push_back(bid);
     for (std::size_t j = 0; j < bid.items.size(); ++j)
     {
       items_[bid.items[j].id].bids.push_back(bid);
