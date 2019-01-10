@@ -31,9 +31,38 @@ namespace auctions {
 class VickreyAuction : public Auction
 {
 public:
-  VickreyAuction(BlockIdType start_block_id, BlockIdType end_block_id, std::size_t max_items)
-    : Auction(start_block_id, end_block_id, max_items)
-  {}
+  VickreyAuction(BlockIdType start_block_id, BlockIdType end_block_id)
+    : Auction(start_block_id, end_block_id, false, std::numeric_limits<std::size_t>::max())
+  {
+    max_items_ = std::numeric_limits<std::size_t>::max();
+    max_bids_ = std::numeric_limits<std::size_t>::max();
+    max_items_per_bid_ = 1;
+    max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
+  }
+
+  bool Execute(BlockIdType current_block)
+  {
+    if ((end_block_ == current_block) && auction_valid_)
+    {
+      // TODO (multi-items-per-bid non-combinatorial auctions not implemented)
+      assert(max_items_per_bid_ == 1);
+
+      // pick winning bid
+      SelectWinners();
+
+      // deduct funds from winner
+
+      // transfer item to winner
+
+      // TODO (handle defaulting to next highest bid if winner cannot pay)
+
+      // close auction
+      auction_valid_ = false;
+
+      return true;
+    }
+    return false;
+  }
 
 private:
   /**
@@ -54,35 +83,35 @@ private:
         {
           if (loop_count == 0)
           {
-            cur_item_it.second.winner     = cur_bid_it.first;
-            cur_item_it.second.max_bid    = cur_bid_it.second;
-            cur_item_it.second.sell_price = cur_bid_it.second;
+            cur_item_it.second.winner     = cur_bid_it.bidder;
+            cur_item_it.second.max_bid    = cur_bid_it.price;
+            cur_item_it.second.sell_price = cur_bid_it.price;
             ++loop_count;
           }
           else if (loop_count == 1)
           {
-            if (cur_bid_it.second > cur_item_it.second.max_bid)
+            if (cur_bid_it.price > cur_item_it.second.max_bid)
             {
-              cur_item_it.second.winner  = cur_bid_it.first;
-              cur_item_it.second.max_bid = cur_bid_it.second;
+              cur_item_it.second.winner  = cur_bid_it.bidder;
+              cur_item_it.second.max_bid = cur_bid_it.price;
             }
             else
             {
-              cur_item_it.second.sell_price = cur_bid_it.second;
+              cur_item_it.second.sell_price = cur_bid_it.price;
             }
             ++loop_count;
           }
           else
           {
-            if (cur_bid_it.second > cur_item_it.second.max_bid)
+            if (cur_bid_it.price > cur_item_it.second.max_bid)
             {
-              cur_item_it.second.winner     = cur_bid_it.first;
+              cur_item_it.second.winner     = cur_bid_it.bidder;
               cur_item_it.second.sell_price = cur_item_it.second.max_bid;
-              cur_item_it.second.max_bid    = cur_bid_it.second;
+              cur_item_it.second.max_bid    = cur_bid_it.price;
             }
-            else if (cur_bid_it.second > cur_item_it.second.max_bid)
+            else if (cur_bid_it.price > cur_item_it.second.max_bid)
             {
-              cur_item_it.second.sell_price = cur_bid_it.second;
+              cur_item_it.second.sell_price = cur_bid_it.price;
             }
           }
         }
@@ -96,22 +125,20 @@ private:
           if (loop_count == 0)
           {
             // just using this to store the value for now
-            cur_item_it.second.sell_price = cur_bid_it.second;
+            cur_item_it.second.sell_price = cur_bid_it.price;
 
-            cur_item_it.second.winner = cur_bid_it.first;
+            cur_item_it.second.winner = cur_bid_it.bidder;
           }
           else if (loop_count == 1)
           {
-            if (cur_bid_it.second > cur_item_it.second.sell_price)
+            if (cur_bid_it.price > cur_item_it.second.sell_price)
             {
-              cur_item_it.second.winner  = cur_bid_it.first;
-              cur_item_it.second.max_bid = cur_bid_it.second;
+              cur_item_it.second.winner  = cur_bid_it.bidder;
+              cur_item_it.second.max_bid = cur_bid_it.price;
             }
             else
             {
-              cur_item_it.second.winner     = cur_bid_it.first;
-              cur_item_it.second.max_bid    = cur_item_it.second.sell_price;
-              cur_item_it.second.sell_price = cur_bid_it.second;
+              cur_item_it.second.sell_price = cur_bid_it.price;
             }
           }
           ++loop_count;
@@ -123,9 +150,9 @@ private:
       {
         for (auto &cur_bid_it : cur_item_it.second.bids)
         {
-          cur_item_it.second.winner     = cur_bid_it.first;
-          cur_item_it.second.sell_price = cur_bid_it.second;
-          cur_item_it.second.max_bid    = cur_bid_it.second;
+          cur_item_it.second.winner     = cur_bid_it.bidder;
+          cur_item_it.second.sell_price = cur_bid_it.price;
+          cur_item_it.second.max_bid    = cur_bid_it.price;
         }
       }
 

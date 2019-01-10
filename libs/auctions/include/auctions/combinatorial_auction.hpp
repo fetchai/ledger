@@ -28,6 +28,7 @@
 namespace fetch {
 namespace auctions {
 
+
 // template <typename A, typename V = fetch::ml::Variable<A>>
 class CombinatorialAuction : public Auction
 {
@@ -90,19 +91,41 @@ private:
   std::size_t n_items_ = items_.size();
 
   // binary matrix
-  fetch::math::linalg::
-  Matrix coupling_matrix_(n_items_ * n_items_);
+  fetch::math::linalg::Matrix<std::uint32_t> coupling_matrix_({n_items_, n_items_});
 
   // coupling strengths matrix
-  Matrix J_(n_items_ * n_items_);
+  fetch::math::linalg::Matrix<ValueType> J_({n_items_, n_items_});
 
   // bids on binary vector
-  Vector bids_on_(n_items_);
+  fetch::math::ShapelessArray<std::uint32_t> bids_on_(n_items_);
+
+  // bids on binary vector
+  fetch::math::ShapelessArray<std::uint32_t> local_field_(n_items_);
+
+
+  ValueType Total_Energy_;
+
 
   ////
   // E = Sum (J_ * coupling_matrix_[i, j]) + Sum (local_field * bids_on_);
   /////
-  double Total_Energy_;
+  void CalculateEnergy()
+  {
+    // Calculate Coupling strength sums
+    // TODO - presumably we actually only need to do half of this work since the matrix must be symmetric?
+    Total_Energy_ = 0;
+    ValueType h = 0;
+    for (std::size_t j = 0; j < items_.size(); ++j)
+    {
+      for (std::size_t k = 0; k < items_.size(); ++k)
+      {
+        Total_Energy_ += (J_.At(j, k) * coupling_matrix_.At(j, k));
+      }
+
+      // Now add the local field strength for this bid
+      Total_Energy_ += bids_on_.At(j) * local_field_.At(j);
+    }
+  }
 
 
 
@@ -115,38 +138,6 @@ private:
 
 //
 //class SmartMarket(object):
-//
-//    def __init__(self):
-//        self.items = []
-//        self.bids = []
-//        self.name_to_id = {}
-//        self.normalisation = 1
-//
-//    def AddItem(self, name, min_price):
-//        self.name_to_id[name] = len(self.items)
-//        self.items.append(min_price)
-//
-//        return self.name_to_id[name]
-//
-//    def AddSingleBid(self, items, price):
-//        all_items = []
-//        for id in items:
-//            if isinstance(id, str):
-//                id = self.name_to_id[id]
-//            all_items.append(id)
-//
-//        n = len(self.bids)
-//        self.bids.append({"items": all_items, "price": price, "excludes":[]})
-//        return n
-//
-//    def AddBids(self, bids):
-//        excludes = []
-//        for b,p in bids:
-//            n = self.AddSingleBid(b,p)
-//            excludes.append(n)
-//
-//        for i in excludes:
-//            self.bids[i]["excludes"] = copy.copy(excludes)
 //
 //    def BuildGraph(self):
 //        # Building graph|

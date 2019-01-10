@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <auctions/auction.hpp>
+#include <auctions/first_price_auction.hpp>
 
 using namespace fetch::auctions;
 
@@ -39,32 +39,30 @@ private:
   Bidder() = default;
 };
 
-Auction SetupAuction(std::size_t start_block_val, std::size_t end_block_val)
+FirstPriceAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val)
 {
   BlockIdType start_block(start_block_val);
   BlockIdType end_block(end_block_val);
-  std::size_t max_items = 1;
-  return Auction(start_block, end_block, max_items);
+  return FirstPriceAuction(start_block, end_block);
 }
 
-TEST(vickrey_auction, many_bid_auction)
+TEST(first_price_auction, one_item_many_bid_first_price_auction)
 {
 
   // set up auction
   std::size_t start_block = 10000;
   std::size_t end_block   = 10010;
-  Auction     a           = SetupAuction(start_block, end_block);
+  FirstPriceAuction     a           = SetupAuction(start_block, end_block);
 
   // add item to auction
-  ItemIdType  item      = 0;
-  ValueType   min_price = 7;
-  std::size_t seller_id = 999;
-  ErrorCode   err       = a.AddItem(item, seller_id, min_price);
+  Item item;
+  item.seller_id = 999;
+  item.min_price = 7;
+  ErrorCode err = a.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  std::size_t n_bidders = 10;
-
   // set up bidders
+  std::size_t n_bidders = 10;
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
@@ -74,7 +72,12 @@ TEST(vickrey_auction, many_bid_auction)
   // make bids
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
-    a.AddSingleBid(bidders[j].funds, bidders[j].id, item);
+    Bid cur_bid;
+    cur_bid.price = bidders[j].funds;
+    cur_bid.bidder = bidders[j].id;
+    cur_bid.items.push_back(item);
+
+    a.Bid(cur_bid);
   }
 
   std::size_t cur_block       = start_block;
@@ -89,11 +92,7 @@ TEST(vickrey_auction, many_bid_auction)
     cur_block++;
   }
 
-  std::cout << "Winner ID: " << a.Winner(item) << std::endl;
-  std::cout << "Winner bid " << bidders[bidders.size() - 1].id << std::endl;
-  std::cout << "Sale price" << a.Items()[0].sell_price << std::endl;
-
   ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(a.Winner(item) == bidders[bidders.size() - 1].id);
+  ASSERT_TRUE(a.Winner(item.id) == bidders[bidders.size() - 1].id);
   ASSERT_TRUE(a.Items()[0].sell_price == bidders[bidders.size() - 1].funds);
 }

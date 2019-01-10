@@ -34,7 +34,9 @@ enum class ErrorCode
   ITEM_ALREADY_LISTED,
   AUCTION_FULL,
   ITEM_NOT_LISTED,
-  TOO_MANY_BIDS
+  TOO_MANY_BIDS,
+  AUCTION_CLOSED,
+  TOO_MANY_ITEMS
 };
 
 struct Item;
@@ -44,6 +46,11 @@ using ValueType          = std::size_t;
 using AgentIdType        = std::size_t;
 using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
 
+struct Bid;
+
+/**
+ * An item in the auction which may be bid upon
+ */
 struct Item
 {
 
@@ -53,11 +60,24 @@ struct Item
   ValueType   max_bid    = std::numeric_limits<ValueType>::min();
   ValueType   sell_price = std::numeric_limits<ValueType>::min();
 
+  std::vector<Bid> bids{};
+
   std::size_t bid_count = 0;
   AgentIdType winner    = 0;
 
-  std::unordered_map<AgentIdType, ValueType>   bids{};
+//  std::unordered_map<AgentIdType, ValueType>   bids{};
   std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
+};
+
+/**
+ * A bid upon (potentially many) items
+ */
+struct Bid
+{
+  std::vector<Item> items{};
+  ValueType price = 0;
+  std::vector<Item> excludes{};
+  AgentIdType bidder = std::numeric_limits<AgentIdType>::max();
 };
 
 // template <typename A, typename V = fetch::ml::Variable<A>>
@@ -66,8 +86,11 @@ class Auction
 protected:
   // Auction parameters
 
-  std::size_t max_items_ = 0;  // max items in auction
-  std::size_t max_bids_  = 1;  // max bids per bidder per item
+  bool smart_market_ = false;         // is it a smart market
+  std::size_t max_items_ = 1;         // max items in auction
+  std::size_t max_bids_  = 1;         // max bids per bidder per item
+  std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max(); //
+  std::size_t max_items_per_bid_ = 1; //
 
   // records the block id on which this auction was born and will conclude
   BlockIdType start_block_ = std::numeric_limits<BlockIdType>::max();
@@ -86,16 +109,24 @@ public:
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  Auction(BlockIdType start_block_id, BlockIdType end_block_id, std::size_t max_items)
-    : max_items_(max_items)
+  Auction(BlockIdType start_block_id, BlockIdType end_block_id, bool smart_market = false, std::size_t max_bids = std::numeric_limits<std::size_t>::max())
+    : smart_market_(smart_market)
+    , max_bids_(max_bids)
     , start_block_(start_block_id)
     , end_block_(end_block_id)
   {
-    // must be some items in the auction!
-    assert(max_items_ > 0);
-
     // check on the length of the auction
     assert(end_block_ > start_block_);
+
+    if (smart_market)
+    {
+      max_items_ = std::numeric_limits<std::size_t>::max();
+      max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
+      max_items_per_bid_ = std::numeric_limits<std::size_t>::max();
+    }
+
+    // must be some items in the auction!
+    assert(max_items_ > 0);
 
     auction_valid_ = true;
   }
@@ -121,9 +152,12 @@ public:
    * @param min_price
    * @return
    */
-  ErrorCode AddItem(ItemIdType const &item_id, AgentIdType const &seller_id,
-                    ValueType const &min_price)
+  ErrorCode AddItem(Item const &item)
   {
+    if (!auction_valid_)
+    {
+      return ErrorCode::AUCTION_CLOSED;
+    }
 
     // check if auction full
     if (items_.size() >= max_items_)
@@ -135,7 +169,7 @@ public:
     else
     {
       // check if item already listed
-      if (items_.find(item_id) != items_.end())
+      if (items_.find(item.id) != items_.end())
       {
         return ErrorCode::ITEM_ALREADY_LISTED;  // item already listed error
         // TODO () - update trustworthiness of agent that try to double list items
@@ -144,62 +178,57 @@ public:
       // list the items
       else
       {
-        Item cur_item;
-        cur_item.id        = item_id;
-        cur_item.seller_id = seller_id;
-        cur_item.min_price = min_price;
-
-        items_.insert(std::pair<ItemIdType, Item>(item_id, cur_item));
+        items_.insert(std::pair<ItemIdType, Item>(item.id, item));
         return ErrorCode::SUCCESS;  // success
       }
     }
   }
 
   /**
-   * Agent adds a single bid for a single item
-   * @param agent_id
-   * @param bid
-   * @param item_id
+   * Agent adds a bid (potentially on multiple items)
+   * @param bid  a Bid object describing the items to bid on, the price, and the excluded items
    * @return
    */
-  ErrorCode AddSingleBid(ValueType bid, AgentIdType bidder, ItemIdType item_id)
+  ErrorCode Bid(Bid bid)
   {
-
-    // TODO - We don't save all previous bids. should we?
-
-    // check item exists in auction
-    if (!ItemInAuction(item_id))
+    // Check validity of bid and auction
+    if (!auction_valid_)
     {
-      return ErrorCode::ITEM_NOT_LISTED;
+      return ErrorCode::AUCTION_CLOSED;
     }
-    else
+
+    if (bid.items.size() > max_items_per_bid_)
     {
+      return ErrorCode::TOO_MANY_ITEMS;
+    }
 
-      // count previous bid on item made by this bidder
-      std::size_t n_bids = GetBidsCount(bidder, item_id);
-      if (n_bids < max_bids_)
+    for (std::size_t j = 0; j < bid.items.size(); ++j)
+    {
+      // check item listed in auction
+      if (!ItemInAuction(bid.items[j].id))
       {
-
-        // update bid
-        if (n_bids == 0)
-        {
-          items_[item_id].bids.insert(std::pair<AgentIdType, ValueType>(bidder, bid));
-        }
-        else
-        {
-          items_[item_id].bids[bidder] = bid;
-        }
-
-        // update bid counter
-        IncrementBidCount(bidder, item_id);
-
-        return ErrorCode::SUCCESS;
+        return ErrorCode::ITEM_NOT_LISTED;
       }
-      else
+
+      // check the bidder has not exceeded their allowed number of bids on this item
+      std::size_t n_bids = GetBidsCount(bid.bidder, bid.items[j].id);
+      if (n_bids >= max_bids_)
       {
         return ErrorCode::TOO_MANY_BIDS;
       }
     }
+
+    // place bids and update counter
+    for (std::size_t j = 0; j < bid.items.size(); ++j)
+    {
+      items_[bid.items[j].id].bids.push_back(bid);
+
+      // count of how many times this bidder has bid on this item
+      IncrementBidCount(bid.bidder, bid.items[j].id);
+    }
+
+    return ErrorCode::SUCCESS;
+
   }
 
   /**
@@ -207,29 +236,7 @@ public:
    * @param current_block
    * @return
    */
-  bool Execute(BlockIdType current_block)
-  {
-    if ((end_block_ == current_block) && auction_valid_)
-    {
-
-      // pick winning bids
-
-      // for every item in the auction
-      SelectWinners();
-
-      std::cout << "Winners()[0]: " << Winners()[0] << std::endl;
-
-      // deduct funds from winner
-
-      // transfer item to winner
-
-      // close auction
-      auction_valid_ = false;
-
-      return true;
-    }
-    return false;
-  }
+  virtual bool Execute(BlockIdType current_block) = 0;
 
   AgentIdType Winner(ItemIdType item_id)
   {
@@ -324,106 +331,11 @@ private:
   }
 
   /**
-   * finds the highest bid on each item
+   * finds the auction winners
    */
-  virtual void SelectWinners()
-  {
-    // iterate through all items in auction
-    for (auto &cur_item_it : items_)
-    {
-      // find highest bid for this item and set winner
-      for (auto &cur_bid_it : cur_item_it.second.bids)
-      {
-        if (cur_bid_it.second > cur_item_it.second.max_bid)
-        {
-          cur_item_it.second.winner     = cur_bid_it.first;
-          cur_item_it.second.max_bid    = cur_bid_it.second;
-          cur_item_it.second.sell_price = cur_bid_it.second;
-        }
-      }
-    }
-  }
+  virtual void SelectWinners() = 0;
+
 };
 
 }  // namespace auctions
 }  // namespace fetch
-
-//
-//    def BuildGraph(self):
-//        # Building graph
-//        self.item_winner = [(-1, -1) for i in range(len(self.items))]
-//        self.active_bid = [ [False for j in range(len(self.bids[i]))] for i in
-//        range(len(self.bids))]
-//
-//    def ClearBid(self, bid):
-//        bid, n = bid
-//
-//        if bid == -1: return
-//        if not self.active_bid[bid][n]: return
-//
-//        b = self.bids[bid][n]
-//
-//        for item, price in b:
-//            self.item_winner[item] = (-1, -1)
-//
-//        self.active_bid[bid][n] = False
-//
-//    def SelectBid(self, bid):
-//        bid, n = bid
-//        for g in range(len(self.bids[bid])):
-//            self.ClearBid( (bid,g) )
-//
-//        b = self.bids[bid][n]
-//
-//        cleared_bids = []
-//        for item, price in b:
-//            old_bid = self.item_winner[item]
-//            cleared_bids.append(old_bid)
-//
-//        for old_bid in set(cleared_bids):
-//            self.ClearBid(old_bid)
-//
-//        for item, price in b:
-//            self.item_winner[item] = (bid, n)
-//
-//        self.active_bid[bid][n] = True
-//
-//    def TotalBenefit(self):
-//        item_price = []
-//        for i,n in set(self.item_winner):
-//            if i == -1: continue
-//            assert(self.active_bid[i][n])
-//            item_price += self.bids[i][n]
-//
-//        reward = 0
-//        for item, price in item_price:
-//            name, l = self.items[item]
-//            reward += price - l
-//
-//        return reward
-//
-//    def Mine(self, hash_value, runtime):
-//        random.seed(hash_value)
-//        self.BuildGraph()
-//        beta_start = 0.01
-//        beta_end = 0.3
-//        db = (beta_end-beta_start)/runtime
-//        beta = beta_start
-//
-//        for i in range(runtime):
-//            oldstate = copy.copy(self.item_winner)
-//            oldactive = copy.deepcopy(self.active_bid)
-//            oldreward = self.TotalBenefit()
-//
-//            n = random.randint(0, len(self.bids)-1)
-//            g = random.randint(0, len(self.bids[n])-1)
-//
-//            self.SelectBid( (n,g) )
-//            newreward = self.TotalBenefit()
-//            de = oldreward - newreward
-//#            print(de,"=>",math.exp(beta*de))
-//            if random.random() < math.exp(beta*de):
-//                self.item_winner = oldstate
-//                self.active_bid = oldactive
-//
-//            beta += db
