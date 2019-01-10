@@ -256,7 +256,7 @@ inline void Muddle::AddPeer(Uri const &peer)
 inline void Muddle::DropPeer(Uri const &peer)
 {
   Handle handle = clients_.UriToHandle(peer);
-  if (handle!=0)
+  if (handle != 0)
   {
     Address address;
     if (router_.HandleToDirectAddress(handle, address))

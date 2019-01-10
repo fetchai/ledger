@@ -55,8 +55,8 @@ public:
     {
       auto id = network::ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)};
       lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
-                                                     uint16_t(port + i), NetworkId(id.ToString("")), tm, verification_threads,
-                                                     refresh_storage));
+                                                     uint16_t(port + i), NetworkId(id.ToString("")),
+                                                     tm, verification_threads, refresh_storage));
     }
   }
 

@@ -24,11 +24,11 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/message.hpp"
+#include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
 
 #include "core/serializers/counter.hpp"
 #include "network/service/error_codes.hpp"

@@ -108,7 +108,7 @@ public:
     return identity_cache_;
   }
 
-  bool                 IsDesired(Address const &address);
+  bool IsDesired(Address const &address);
 
 private:
   struct PairHash

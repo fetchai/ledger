@@ -47,7 +47,7 @@ Uri::Uri(ConstByteArray const &uri)
 
 bool Uri::Parse(ConstByteArray const &uri)
 {
-  if (uri.size()==0)
+  if (uri.size() == 0)
   {
     return false;
   }
