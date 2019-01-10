@@ -180,7 +180,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate), network_manager_}
+  , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
+            network_manager_}
   , trust_{}
   , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
   , lane_services_()
@@ -240,9 +241,9 @@ void Constellation::CreateInfoFile(std::string const &filename)
   if (stream.good())
   {
     variant::Variant data = variant::Variant::Object();
-    data["pid"]          = getpid();
-    data["identity"]     = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    data["hex_identity"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    data["pid"]           = getpid();
+    data["identity"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    data["hex_identity"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     stream << data;
 
@@ -250,7 +251,7 @@ void Constellation::CreateInfoFile(std::string const &filename)
   }
   else
   {
-    throw std::invalid_argument(std::string("Can't open ")+filename);
+    throw std::invalid_argument(std::string("Can't open ") + filename);
   }
 }
 

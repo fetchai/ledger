@@ -73,8 +73,8 @@ public:
   // TODO(issue 7): Make config JSON
   LaneService(
       std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-      uint16_t port, NetworkId network_id, fetch::network::NetworkManager tm, std::size_t verification_threads,
-      bool                      refresh_storage              = false,
+      uint16_t port, NetworkId network_id, fetch::network::NetworkManager tm,
+      std::size_t verification_threads, bool refresh_storage = false,
       std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
       std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
       std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))

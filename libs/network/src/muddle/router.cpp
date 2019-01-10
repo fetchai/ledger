@@ -688,7 +688,7 @@ void Router::KillConnection(Handle handle)
       address = it->second;
     }
   }
-  if (address.size()>0)
+  if (address.size() > 0)
   {
     KillConnection(handle, address);
   }

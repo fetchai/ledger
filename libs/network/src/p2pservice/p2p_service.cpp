@@ -69,7 +69,7 @@ void P2PService::Start(UriList const &initial_peer_list)
 
   thread_pool_->SetIdleInterval(process_cycle_ms_);
   thread_pool_->Start();
-  if (process_cycle_ms_>0)
+  if (process_cycle_ms_ > 0)
   {
     thread_pool_->PostIdle([this]() { WorkCycle(); });
   }

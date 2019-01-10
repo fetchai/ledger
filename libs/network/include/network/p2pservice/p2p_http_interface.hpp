@@ -158,7 +158,7 @@ private:
     }
 
     variant::Variant trust_list = variant::Variant::Array(peer_data_list.size());
-    for(std::size_t i = 0;i< peer_data_list.size();i++)
+    for (std::size_t i = 0; i < peer_data_list.size(); i++)
     {
       trust_list[i] = peer_data_list[i];
     }
