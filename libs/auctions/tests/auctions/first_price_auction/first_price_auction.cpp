@@ -50,19 +50,19 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
 {
 
   // set up auction
-  std::size_t start_block = 10000;
-  std::size_t end_block   = 10010;
-  FirstPriceAuction     a           = SetupAuction(start_block, end_block);
+  std::size_t       start_block = 10000;
+  std::size_t       end_block   = 10010;
+  FirstPriceAuction a           = SetupAuction(start_block, end_block);
 
   // add item to auction
   Item item;
   item.seller_id = 999;
   item.min_price = 7;
-  ErrorCode err = a.AddItem(item);
+  ErrorCode err  = a.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
-  std::size_t n_bidders = 10;
+  std::size_t         n_bidders = 10;
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
@@ -73,7 +73,7 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
     Bid cur_bid;
-    cur_bid.price = bidders[j].funds;
+    cur_bid.price  = bidders[j].funds;
     cur_bid.bidder = bidders[j].id;
     cur_bid.items.push_back(item);
 

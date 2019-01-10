@@ -58,14 +58,14 @@ TEST(vickrey_auction, one_bid_auction)
   Item item;
   item.seller_id = 999;
   item.min_price = 7;
-  ErrorCode err = va.AddItem(item);
+  ErrorCode err  = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
   std::vector<Bidder> bidders{};
   bidders.push_back(Bidder(0, 100));
   Bid cur_bid;
-  cur_bid.price = bidders[0].funds;
+  cur_bid.price  = bidders[0].funds;
   cur_bid.bidder = bidders[0].id;
   cur_bid.items.push_back(item);
   va.Bid(cur_bid);
@@ -98,7 +98,7 @@ TEST(vickrey_auction, two_bid_auction)
   Item item;
   item.seller_id = 999;
   item.min_price = 7;
-  ErrorCode err = va.AddItem(item);
+  ErrorCode err  = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
@@ -107,13 +107,13 @@ TEST(vickrey_auction, two_bid_auction)
   bidders.push_back(Bidder(1, 50));
 
   Bid bid1;
-  bid1.price = bidders[0].funds;
+  bid1.price  = bidders[0].funds;
   bid1.bidder = bidders[0].id;
   bid1.items.push_back(item);
   va.Bid(bid1);
 
   Bid bid2;
-  bid2.price = bidders[1].funds;
+  bid2.price  = bidders[1].funds;
   bid2.bidder = bidders[1].id;
   bid2.items.push_back(item);
   va.Bid(bid2);
@@ -146,7 +146,7 @@ TEST(vickrey_auction, many_bid_auction)
   Item item;
   item.seller_id = 999;
   item.min_price = 7;
-  ErrorCode err = va.AddItem(item);
+  ErrorCode err  = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
@@ -161,7 +161,7 @@ TEST(vickrey_auction, many_bid_auction)
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
     Bid cur_bid;
-    cur_bid.price = bidders[j].funds;
+    cur_bid.price  = bidders[j].funds;
     cur_bid.bidder = bidders[j].id;
     cur_bid.items.push_back(item);
     va.Bid(cur_bid);
@@ -197,7 +197,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   for (std::size_t i = 0; i < n_items; ++i)
   {
     Item item;
-    item.id = i;
+    item.id        = i;
     item.seller_id = 990 + i;
     item.min_price = 100 + i;
     items.push_back(item);
@@ -220,7 +220,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
     for (std::size_t j = 0; j < n_bidders; ++j)
     {
       Bid cur_bid;
-      cur_bid.price = bidders[j].funds / 10;
+      cur_bid.price  = bidders[j].funds / 10;
       cur_bid.bidder = bidders[j].id;
       cur_bid.items.push_back(items[i]);
       va.Bid(cur_bid);

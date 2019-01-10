@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/matrix.hpp"
-#include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "auctions/auction.hpp"
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/linalg/matrix.hpp"
 
 #include <random>
 
@@ -32,8 +32,8 @@ public:
   CombinatorialAuction(BlockIdType start_block_id, BlockIdType end_block_id)
     : Auction(start_block_id, end_block_id, true, std::numeric_limits<std::size_t>::max())
   {
-    max_items_ = std::numeric_limits<std::size_t>::max();
-    max_bids_ = std::numeric_limits<std::size_t>::max();
+    max_items_         = std::numeric_limits<std::size_t>::max();
+    max_bids_          = std::numeric_limits<std::size_t>::max();
     max_items_per_bid_ = std::numeric_limits<std::size_t>::max();
     max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
   }
@@ -45,29 +45,27 @@ public:
   {
     BuildGraph();
 
-
     // simulated annealing
     double beta_start = 0.01;
-    double beta_end = 1;
-    double db = (beta_end - beta_start) / run_time;
-    double beta = beta_start;
+    double beta_end   = 1;
+    double db         = (beta_end - beta_start) / run_time;
+    double beta       = beta_start;
     double prev_reward, new_reward, de;
 
     std::size_t rejected = 0;
 
-    std::random_device         rd{};
-    std::mt19937               gen{rd()};
+    std::random_device                         rd{};
+    std::mt19937                               gen{rd()};
     std::uniform_int_distribution<std::size_t> d(1, 3);
-    std::uniform_int_distribution<std::size_t> r_bids(0, bids_.size()-1);
-    std::uniform_real_distribution<double> zero_to_one(0.0, 1.0);
-
+    std::uniform_int_distribution<std::size_t> r_bids(0, bids_.size() - 1);
+    std::uniform_real_distribution<double>     zero_to_one(0.0, 1.0);
 
     for (std::size_t i = 0; i < run_time; ++i)
     {
       for (std::size_t j = 0; j < bids_.size(); ++j)
       {
         prev_active_ = active_;
-        prev_reward = TotalBenefit();
+        prev_reward  = TotalBenefit();
 
         auto nn = d(gen);
         for (std::size_t k = 0; k < nn; ++k)
@@ -85,7 +83,7 @@ public:
         }
 
         new_reward = TotalBenefit();
-        de = prev_reward - new_reward;
+        de         = prev_reward - new_reward;
 
         if (static_cast<double>(zero_to_one(gen)) >= std::exp(-beta * de))
         {
@@ -96,10 +94,9 @@ public:
 
       beta += db;
     }
-    
+
     std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
   }
-
 
   bool Execute(BlockIdType current_block)
   {
@@ -127,21 +124,18 @@ public:
     return active_[n];
   }
 
-
-
 private:
-
   // bids on binary vector
-  fetch::math::linalg::Matrix<double> couplings_;
-  fetch::math::ShapelessArray<double> local_fields_;
+  fetch::math::linalg::Matrix<double>        couplings_;
+  fetch::math::ShapelessArray<double>        local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
 
   void BuildGraph()
   {
-    couplings_ = fetch::math::linalg::Matrix<double>::Zeroes({items_.size(), items_.size()});
+    couplings_    = fetch::math::linalg::Matrix<double>::Zeroes({items_.size(), items_.size()});
     local_fields_ = fetch::math::ShapelessArray<double>::Zeroes({items_.size()});
-    active_ = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({items_.size()});
+    active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({items_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
@@ -149,7 +143,7 @@ private:
 
       double e = bid1.price;
 
-      for (auto & cur_item : items_)
+      for (auto &cur_item : items_)
       {
         for (std::size_t j = 0; j < bid1.items.size(); ++j)
         {
@@ -162,7 +156,7 @@ private:
 
       local_fields_[i] = e;
 
-      for (std::size_t j = i+1; j < bids_.size(); ++j)
+      for (std::size_t j = i + 1; j < bids_.size(); ++j)
       {
         struct Bid bid2 = bids_[j];
 
@@ -175,7 +169,7 @@ private:
           }
         }
 
-        for (auto & cur_item : items_)
+        for (auto &cur_item : items_)
         {
           bool in_bid1 = false;
           for (std::size_t k = 0; k < bid1.items.size(); ++k)
@@ -209,7 +203,7 @@ private:
    */
   double TotalBenefit()
   {
-    double reward = 0;
+    double        reward = 0;
     std::uint32_t a1 = 0, a2 = 0;
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
@@ -226,18 +220,13 @@ private:
     return reward;
   }
 
-
-
-
   /**
    * finds the highest bid on each item
    */
   void SelectWinners()
   {
     // TODO () can just iterate through active_ to identify selected bids
-
   }
-
 };
 
 }  // namespace auctions

@@ -34,8 +34,8 @@ public:
   VickreyAuction(BlockIdType start_block_id, BlockIdType end_block_id)
     : Auction(start_block_id, end_block_id, false, std::numeric_limits<std::size_t>::max())
   {
-    max_items_ = std::numeric_limits<std::size_t>::max();
-    max_bids_ = std::numeric_limits<std::size_t>::max();
+    max_items_         = std::numeric_limits<std::size_t>::max();
+    max_bids_          = std::numeric_limits<std::size_t>::max();
     max_items_per_bid_ = 1;
     max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
   }

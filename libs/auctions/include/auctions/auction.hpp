@@ -66,7 +66,7 @@ struct Item
   std::size_t bid_count = 0;
   AgentIdType winner    = 0;
 
-//  std::unordered_map<AgentIdType, ValueType>   bids{};
+  //  std::unordered_map<AgentIdType, ValueType>   bids{};
   std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
 };
 
@@ -75,11 +75,11 @@ struct Item
  */
 struct Bid
 {
-  BidIdType id;
+  BidIdType         id;
   std::vector<Item> items{};
-  ValueType price = 0;
-  std::vector<Bid> excludes{};
-  AgentIdType bidder = std::numeric_limits<AgentIdType>::max();
+  ValueType         price = 0;
+  std::vector<Bid>  excludes{};
+  AgentIdType       bidder = std::numeric_limits<AgentIdType>::max();
 };
 
 // template <typename A, typename V = fetch::ml::Variable<A>>
@@ -88,18 +88,18 @@ class Auction
 protected:
   // Auction parameters
 
-  bool smart_market_ = false;         // is it a smart market
-  std::size_t max_items_ = 1;         // max items in auction
-  std::size_t max_bids_  = 1;         // max bids per bidder per item
-  std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max(); //
-  std::size_t max_items_per_bid_ = 1; //
+  bool        smart_market_      = false;  // is it a smart market
+  std::size_t max_items_         = 1;      // max items in auction
+  std::size_t max_bids_          = 1;      // max bids per bidder per item
+  std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max();  //
+  std::size_t max_items_per_bid_ = 1;                                        //
 
   // records the block id on which this auction was born and will conclude
   BlockIdType start_block_ = std::numeric_limits<BlockIdType>::max();
   BlockIdType end_block_   = std::numeric_limits<BlockIdType>::max();
 
   ItemsContainerType items_{};
-  std::vector<Bid> bids_{};
+  std::vector<Bid>   bids_{};
 
   // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
   bool auction_valid_ = false;
@@ -112,7 +112,8 @@ public:
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  Auction(BlockIdType start_block_id, BlockIdType end_block_id, bool smart_market = false, std::size_t max_bids = std::numeric_limits<std::size_t>::max())
+  Auction(BlockIdType start_block_id, BlockIdType end_block_id, bool smart_market = false,
+          std::size_t max_bids = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)
     , start_block_(start_block_id)
@@ -123,7 +124,7 @@ public:
 
     if (smart_market)
     {
-      max_items_ = std::numeric_limits<std::size_t>::max();
+      max_items_         = std::numeric_limits<std::size_t>::max();
       max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
       max_items_per_bid_ = std::numeric_limits<std::size_t>::max();
     }
@@ -232,7 +233,6 @@ public:
     }
 
     return ErrorCode::SUCCESS;
-
   }
 
   /**
@@ -338,7 +338,6 @@ private:
    * finds the auction winners
    */
   virtual void SelectWinners() = 0;
-
 };
 
 }  // namespace auctions
