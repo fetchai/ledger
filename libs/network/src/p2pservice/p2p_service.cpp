@@ -209,18 +209,6 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   }
 }
 
-std::list<P2PService::PeerTrust> P2PService::GetPeersAndTrusts() const
-{
-  auto                 peersAndTrusts = trust_system_.GetPeersAndTrusts();
-  std::list<PeerTrust> r;
-  for (auto const &pt : peersAndTrusts)
-  {
-    r.push_back(pt);
-    r.back().active = (desired_peers_.find(pt.address) != desired_peers_.end());
-  }
-  return r;
-}
-
 bool P2PService::IsDesired(Address const &address)
 {
   return desired_peers_.find(address) != desired_peers_.end();
@@ -256,7 +244,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
     Uri uri;
-    if (identity_cache_.Lookup(d, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+    if (identity_cache_.Lookup(d, uri) && uri.IsDirectlyConnectable())
     {
       muddle_.AddPeer(uri);
     }
@@ -277,7 +265,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Resolve: ", ToBase64(result.key.second), ": ",
                     result.promised.uri());
     Uri uri;
-    if (result.promised.scheme() == Uri::Scheme::Tcp)
+    if (result.promised.IsDirectlyConnectable())
     {
       identity_cache_.Update(result.key.second, result.promised);
       muddle_.AddPeer(result.promised);
@@ -296,7 +284,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     bool resolve = true;
 
     // once the identity has been resolved it can be added as a peer
-    if (identity_cache_.Lookup(address, uri) && (uri.scheme() == Uri::Scheme::Tcp))
+    if (identity_cache_.Lookup(address, uri) && uri.IsDirectlyConnectable())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Add peer: ", ToBase64(address));
       muddle_.AddPeer(uri);
@@ -329,7 +317,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   {
     for (auto const &address : dropped_peers)
     {
-      if (identity_cache_.Lookup(address, uri) && (uri.scheme() != Uri::Scheme::Muddle))
+      if (identity_cache_.Lookup(address, uri) && uri.IsDirectlyConnectable())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
 

@@ -125,8 +125,8 @@ void Muddle::Shutdown()
  */
 bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
-  PeerConnectionList::Handle handle;
-  if (!clients_.UriToHandle(uri, handle))
+  PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
+  if (handle != 0)
   {
     return false;
   }
@@ -135,6 +135,7 @@ bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 
 /**
  * Returns all the active connections.
+ * @param direct_only if true only direct addresses will be returned, false by default
  * @return map of connections
  */
 Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)

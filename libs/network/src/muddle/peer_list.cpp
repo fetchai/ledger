@@ -48,7 +48,7 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
   persistent_peers_.erase(peer);
 }
 
-void PeerConnectionList::RemovePersistentPeer(Handle &handle)
+void PeerConnectionList::RemovePersistentPeer(Handle handle)
 {
   FETCH_LOCK(lock_);
   for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
@@ -84,18 +84,17 @@ PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
   return peer_connections_;
 }
 
-bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
+PeerConnectionList::Handle PeerConnectionList::UriToHandle(const Uri &uri) const
 {
   FETCH_LOCK(lock_);
   for (auto const &element : peer_connections_)
   {
     if (element.first == uri)
     {
-      handle = element.second->handle();
-      return true;
+      return element.second->handle();
     }
   }
-  return false;
+  return 0;
 }
 
 PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
@@ -207,15 +206,14 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
 
   // update the metadata
   auto mt_it = peer_metadata_.find(peer);
-  if (mt_it == peer_metadata_.end())
+  if (mt_it != peer_metadata_.end())
   {
-    return;
+    auto &metadata = mt_it->second;
+    ++metadata.consecutive_failures;
+    ++metadata.total_failures;
+    metadata.connected = false;
+    metadata.last_failed_connection = Clock::now();
   }
-  auto &metadata = mt_it->second;
-  ++metadata.consecutive_failures;
-  ++metadata.total_failures;
-  metadata.connected              = false;
-  metadata.last_failed_connection = Clock::now();
 }
 
 void PeerConnectionList::RemoveConnection(Handle handle)

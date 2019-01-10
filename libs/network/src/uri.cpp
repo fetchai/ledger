@@ -47,6 +47,10 @@ Uri::Uri(ConstByteArray const &uri)
 
 bool Uri::Parse(ConstByteArray const &uri)
 {
+  if (uri.size()==0)
+  {
+    return false;
+  }
   bool success = false;
 
   std::string const data = static_cast<std::string>(uri);

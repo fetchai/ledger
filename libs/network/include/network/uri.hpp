@@ -100,6 +100,8 @@ public:
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
 
+  bool IsDirectlyConnectable() const;
+
 private:
   ConstByteArray uri_;
   Scheme         scheme_{Scheme::Unknown};
@@ -144,6 +146,11 @@ inline bool Uri::operator!=(Uri const &other) const
   return !(*this == other);
 }
 
+inline bool Uri::IsDirectlyConnectable() const
+{
+  return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
+}
+
 template <typename T>
 void Serialize(T &serializer, Uri const &x)
 {
@@ -156,7 +163,7 @@ void Deserialize(T &serializer, Uri &x)
   byte_array::ConstByteArray uri;
   serializer >> uri;
 
-  if (uri.size() > 0 && !x.Parse(uri))
+  if (!x.Parse(uri))
   {
     throw std::runtime_error("Failed to deserialize uri");
   }

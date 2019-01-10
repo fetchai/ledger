@@ -145,7 +145,7 @@ private:
   Counter       counter_{0};                      ///< The number of jobs executed
   Counter       inactive_threads_{0};             ///< The number of threads waiting for work
 
-  std::string name_{""};
+  std::string name_{};
 };
 
 }  // namespace details

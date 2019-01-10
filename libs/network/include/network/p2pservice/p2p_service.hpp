@@ -108,7 +108,6 @@ public:
     return identity_cache_;
   }
 
-  std::list<PeerTrust> GetPeersAndTrusts() const;
   bool                 IsDesired(Address const &address);
 
 private:

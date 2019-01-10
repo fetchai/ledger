@@ -386,6 +386,10 @@ bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address
   return false;
 }
 
+/**
+ * Helper function which prints out the content of the routing table and the direct_addres_map
+ * @param prefix The prefix which will be used in the logging.
+ */
 void Router::Debug(std::string const &prefix) const
 {
   FETCH_LOCK(routing_table_lock_);
@@ -478,26 +482,25 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
   return registrar_.Register(address, service, channel);
 }
 
+/**
+ * Checks if there is an active connection with the given address.
+ * @param target The address of the peer we want to check
+ * @return true if there is an active connection
+ */
 bool Router::IsConnected(Address const &target) const
 {
   auto raw_address = ConvertAddress(target);
   auto iter        = routing_table_.find(raw_address);
-  if (iter == routing_table_.end())
+  bool connected   = false;
+  if (iter != routing_table_.end())
   {
-    return false;
+    auto conn = register_.LookupConnection(iter->second.handle).lock();
+    if (conn)
+    {
+      connected = conn->is_alive();
+    }
   }
-
-  auto handle = iter->second.handle;
-
-  auto conn = register_.LookupConnection(handle).lock();
-  if (conn)
-  {
-    return conn->is_alive();
-  }
-  else
-  {
-    return false;
-  }
+  return connected;
 }
 
 /**
@@ -580,6 +583,12 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   return update_complete;
 }
 
+/**
+ * Internal: Looks up the specified connection handle from a given address
+ *
+ * @param address The address to lookup the handle for.
+ * @return The target handle for the connection, or zero on failure.
+ */
 Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) const
 {
   auto raddr = ConvertAddress(address);
@@ -611,6 +620,11 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
   return handle;
 }
 
+/**
+ * Looks up a random handle from the routing table.
+ * @param address paremeter not used
+ * @return The random handle, or zero if the routing table is empty
+ */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
 {
   Handle handle = 0;
@@ -638,6 +652,11 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
+/**
+ * Kills active connection by closing the socket and removing the peer from the data structures.
+ * @param handle The connection handle we want to remove
+ * @param peer The address of the peer
+ */
 void Router::KillConnection(Handle handle, Address const &peer)
 {
   auto conn = register_.LookupConnection(handle).lock();
@@ -654,12 +673,28 @@ void Router::KillConnection(Handle handle, Address const &peer)
   }
 }
 
+/**
+ * Kills active connection by closing the socket and removing the peer from the data structures.
+ * @param handle The connection handle we want to remove
+ */
 void Router::KillConnection(Handle handle)
 {
-  auto address = direct_address_map_.find(handle);
-  if (address != direct_address_map_.end())
+  Address address;
   {
-    KillConnection(handle, address->second);
+    FETCH_LOCK(routing_table_lock_);
+    auto it = direct_address_map_.find(handle);
+    if (it != direct_address_map_.end())
+    {
+      address = it->second;
+    }
+  }
+  if (address.size()>0)
+  {
+    KillConnection(handle, address);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Address not found for handle ", handle);
   }
 }
 

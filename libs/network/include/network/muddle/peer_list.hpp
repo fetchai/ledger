@@ -81,7 +81,7 @@ public:
   /// @{
   void AddPersistentPeer(Uri const &peer);
   void RemovePersistentPeer(Uri const &peer);
-  void RemovePersistentPeer(Handle &handle);
+  void RemovePersistentPeer(Handle handle);
 
   std::size_t GetNumPeers() const;
   /// @}
@@ -102,7 +102,7 @@ public:
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
-  bool   UriToHandle(const Uri &uri, Handle &handle) const;
+  Handle UriToHandle(const Uri &uri) const;
 
   void Debug(std::string const &prefix) const;
 
