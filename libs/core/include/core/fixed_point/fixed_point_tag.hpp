@@ -17,22 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-
 namespace fetch {
-namespace service {
+namespace fixed_point {
 
-/* A class that defines the context specific parameters being passed to an invoked API func.
- *
- */
-class CallContext
+struct FixedPointTag
 {
-public:
-  using Address = fetch::byte_array::ConstByteArray;
-
-  Address sender_address;
-  Address transmitter_address;
 };
 
-}  // namespace service
+}  // namespace fixed_point
 }  // namespace fetch
