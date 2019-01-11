@@ -146,7 +146,7 @@ TEST_P(BasicMinerTests, Sample)
 
 TEST_P(BasicMinerTests, reject_replayed_transactions)
 {
-  std::size_t const num_tx = GetParam();
+  std::size_t num_tx = GetParam();
   // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main
   // chain
   std::size_t lanes  = 16;
