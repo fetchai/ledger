@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #include "math/kernels/standard_functions.hpp"
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_broadcast.hpp"
-#include "meta/type_traits.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
 #include <cassert>
@@ -41,13 +41,13 @@
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/matrix_operations/matrix_operations.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
 
 template <typename T, typename C>
-class ShapeLessArray;
+class ShapelessArray;
 template <typename T, typename C>
 class NDArray;
 template <typename T, typename C>
@@ -59,7 +59,7 @@ class Matrix;
 }
 
 template <typename T, typename C>
-T Max(ShapeLessArray<T, C> const &array);
+T Max(ShapelessArray<T, C> const &array);
 
 /**
  *
@@ -91,16 +91,16 @@ void Relu(ArrayType &x)
  * @param y_hat
  * @param ret
  */
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Sigmoid(linalg::Matrix<T, C, S> const &A)
+template <typename ArrayType>
+ArrayType Sigmoid(ArrayType const &A)
 {
-  linalg::Matrix<T, C, S> ret{A.shape()};
+  ArrayType ret{A.shape()};
   ret.Copy(A);
 
-  Multiply(-1.0, ret, ret);
+  Multiply(typename ArrayType::Type(-1.0), ret, ret);
   Exp(ret);
-  Add(ret, 1.0, ret);
-  Divide(1.0, ret, ret);
+  Add(ret, typename ArrayType::Type(1.0), ret);
+  Divide(typename ArrayType::Type(1.0), ret, ret);
 
   return ret;
 }
@@ -132,15 +132,15 @@ void SoftmaxImplementation(ArrayType const &array, ArrayType &ret)
 }
 }  // namespace details
 template <typename T, typename C>
-void Softmax(ShapeLessArray<T, C> &array, ShapeLessArray<T, C> &ret)
+void Softmax(ShapelessArray<T, C> &array, ShapelessArray<T, C> &ret)
 {
   assert(ret.size() == array.size());
   details::SoftmaxImplementation(array, ret);
 }
 template <typename T, typename C>
-ShapeLessArray<T, C> Softmax(ShapeLessArray<T, C> &array)
+ShapelessArray<T, C> Softmax(ShapelessArray<T, C> &array)
 {
-  ShapeLessArray<T, C> ret{array.size()};
+  ShapelessArray<T, C> ret{array.size()};
   Softmax(array, ret);
   return ret;
 }

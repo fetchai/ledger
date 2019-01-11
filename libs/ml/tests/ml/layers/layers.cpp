@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -104,6 +104,51 @@ void AssignRandomWeights_2(LayerPtrType const &y_pred)
   y_pred->weights()->data()[19] = 0.0607288;
 }
 
+// we use pre-saved random weights so as not to risk a failure to pass the test
+void AssignRandomWeights_3(LayerPtrType const &y_pred)
+{
+  y_pred->weights()->data()[0]  = 0.564778;
+  y_pred->weights()->data()[1]  = 0.255206;
+  y_pred->weights()->data()[2]  = -0.0252777;
+  y_pred->weights()->data()[3]  = 0.198224;
+  y_pred->weights()->data()[4]  = -0.114401;
+  y_pred->weights()->data()[5]  = -0.144575;
+  y_pred->weights()->data()[6]  = -0.0472394;
+  y_pred->weights()->data()[7]  = 0.129313;
+  y_pred->weights()->data()[8]  = 0.643188;
+  y_pred->weights()->data()[9]  = 0.593934;
+  y_pred->weights()->data()[10] = -0.0403538;
+  y_pred->weights()->data()[11] = 0.739467;
+  y_pred->weights()->data()[12] = 0.137544;
+  y_pred->weights()->data()[13] = 0.567428;
+  y_pred->weights()->data()[14] = 0.269416;
+  y_pred->weights()->data()[15] = 0.0254497;
+  y_pred->weights()->data()[16] = -0.203794;
+  y_pred->weights()->data()[17] = 0.793605;
+  y_pred->weights()->data()[18] = -0.156907;
+  y_pred->weights()->data()[19] = 0.0607288;
+  y_pred->weights()->data()[20] = -0.129004;
+  y_pred->weights()->data()[21] = -0.029878;
+  y_pred->weights()->data()[22] = 0.0486717;
+  y_pred->weights()->data()[23] = 0.107714;
+  y_pred->weights()->data()[24] = 0.101908;
+  y_pred->weights()->data()[25] = 0.0075688;
+  y_pred->weights()->data()[26] = 0.113346;
+  y_pred->weights()->data()[27] = -0.0462297;
+  y_pred->weights()->data()[28] = -0.0096025;
+  y_pred->weights()->data()[29] = -0.129322;
+  y_pred->weights()->data()[30] = 0.0669312;
+  y_pred->weights()->data()[31] = 0.0377292;
+  y_pred->weights()->data()[32] = 0.0587453;
+  y_pred->weights()->data()[33] = -0.0647483;
+  y_pred->weights()->data()[34] = 0.0819284;
+  y_pred->weights()->data()[35] = -0.0140851;
+  y_pred->weights()->data()[36] = 0.140995;
+  y_pred->weights()->data()[37] = -0.00720508;
+  y_pred->weights()->data()[38] = 0.251065;
+  y_pred->weights()->data()[39] = 0.0984329;
+}
+
 void SetInputXOR(ArrayType &input_data)
 {
   input_data.Set(0, 0, 0.0);
@@ -187,7 +232,7 @@ TEST(layers_test, two_layer_xor_SoftCEL)
   sess.SetInput(logits, l1->output());
   auto gt = sess.Variable(gt_shape, "GroundTruth");
   AssignRandomWeights_1(l1);
-  AssignRandomWeights_2(logits);
+  AssignRandomWeights_3(logits);
 
   SetInputXOR(input_data->data());
 

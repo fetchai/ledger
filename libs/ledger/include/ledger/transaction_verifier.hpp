@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ private:
   static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::MPSCQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::MPMCQueue<chain::MutableTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::SimpleQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
+  using UnverifiedQueue = core::SimpleQueue<chain::MutableTransaction, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
   using Sink            = VerifiedTransactionSink;

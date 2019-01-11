@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/protocol.hpp"
-#include "storage/object_store.hpp"
+#include "storage/transient_object_store.hpp"
 #include <functional>
 
 namespace fetch {
@@ -61,14 +61,14 @@ public:
     HAS
   };
 
-  ObjectStoreProtocol(ObjectStore<T> *obj_store)
+  ObjectStoreProtocol(TransientObjectStore<T> *obj_store)
     : fetch::service::Protocol()
   {
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
     this->Expose(SET_BULK, this, &self_type::SetBulk);
-    this->Expose(HAS, obj_store, &ObjectStore<T>::Has);
+    this->Expose(HAS, obj_store, &TransientObjectStore<T>::Has);
   }
 
   void OnSetObject(event_set_object_type const &f)
@@ -93,20 +93,11 @@ private:
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects in object store protocol");
 
-    if (on_set_)
+    // loop through and set all the values
+    for (Element const &element : elements)
     {
-      for (auto const &element : elements)
-      {
-        on_set_(element.value);
-      }
+      Set(element.key, element.value);
     }
-
-    obj_store_->WithLock([this, &elements]() {
-      for (Element const &element : elements)
-      {
-        obj_store_->LocklessSet(element.key, element.value);
-      }
-    });
   }
 
   T Get(ResourceID const &rid)
@@ -118,11 +109,14 @@ private:
       throw std::runtime_error("Unable to lookup element in from storage unit");
     }
 
+    // once we have retrieved a transaction from the core it is important that we persist it to disk
+    obj_store_->Confirm(rid);
+
     return ret;
   }
 
-  ObjectStore<T> *      obj_store_;
-  event_set_object_type on_set_;
+  TransientObjectStore<T> *obj_store_;
+  event_set_object_type    on_set_;
 };
 
 }  // namespace storage
