@@ -131,6 +131,10 @@ private:
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
 
+
+  /**
+   * couplings_ = Sum(Bi + Bj) + delta
+   */
   void BuildGraph()
   {
     couplings_    = fetch::math::linalg::Matrix<double>::Zeroes({items_.size(), items_.size()});
@@ -139,66 +143,71 @@ private:
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
-      struct Bid bid1 = bids_[i];
 
-      double e = bid1.price;
-
+      // set local fields according to the following equation:
+      // local_fields_ = bid_price - Sum(items.min_price)
+      // thus local_fields_ represents the release value due to a bid
+      // and only bids with positive local_fields can be accepted
+      local_fields_[i] = bids_[i].price;
       for (auto &cur_item : items_)
       {
-        for (std::size_t j = 0; j < bid1.items.size(); ++j)
+        for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
         {
-          if (bid1.items[j].id == cur_item.second.id)
+          if (bids_[i].items[j].id == cur_item.second.id)
           {
-            e -= cur_item.second.min_price;
+            local_fields_[i] -= cur_item.second.min_price;
           }
         }
       }
 
-      local_fields_[i] = e;
+      double max_local_fields_;
+      fetch::math::Max(local_fields_, max_local_fields_);
+      double exclusive_bid_penalty = 2 * max_local_fields_;
 
+      // next set couplings strengths
       for (std::size_t j = i + 1; j < bids_.size(); ++j)
       {
-        struct Bid bid2 = bids_[j];
+        couplings_.At(i, j);
 
-        double coupling = 0;
-        for (std::size_t k = 0; k < bid2.excludes.size(); ++k)
+        // penalize exclusive bid combinations
+        for (std::size_t k = 0; k < bids_[j].excludes.size(); ++k)
         {
-          if (bid2.excludes[k].id == bids_[i].id)
+          if (bids_[j].excludes[k].id == bids_[i].id)
           {
-            coupling = 10;
+            couplings_.Set(i, j, exclusive_bid_penalty);
           }
         }
 
         for (auto &cur_item : items_)
         {
           bool in_bid1 = false;
-          for (std::size_t k = 0; k < bid1.items.size(); ++k)
+          for (std::size_t k = 0; k < bids_[i].items.size(); ++k)
           {
-            if (bid1.items[k].id == cur_item.second.id)
+            if (bids_[i].items[k].id == cur_item.second.id)
             {
               in_bid1 = true;
             }
           }
           if (in_bid1)
           {
-            for (std::size_t k = 0; k < bid2.items.size(); ++k)
+            for (std::size_t k = 0; k < bids_[j].items.size(); ++k)
             {
-              if (bid2.items[k].id == cur_item.second.id)
+              if (bids_[j].items[k].id == cur_item.second.id)
               {
-                coupling += (bid1.price + bid2.price);
+                couplings_.At(i, j) += (bids_[i].price + bids_[j].price);
               }
             }
           }
         }
 
-        couplings_.At(i, j) = couplings_.At(j, i) = -coupling;
+        couplings_.At(i, j) = couplings_.At(j, i) = -1 * couplings_.At(i, j);
       }
     }
   }
 
   /**
    * total benefit calculate the same was as energy in simulated annealing, i.e. :
-   * E = Sum (J_ * coupling_matrix_[i, j]) + Sum (local_field * bids_on_)
+   * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
    * @return  returns a reward value
    */
   double TotalBenefit()

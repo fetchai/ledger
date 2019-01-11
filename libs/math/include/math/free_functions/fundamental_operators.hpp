@@ -40,11 +40,14 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
   assert(array1.size() == ret.size());
   //  ret.Reshape(array1.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
   if (range.is_undefined())
   {
     Add(array1, array2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -55,10 +58,7 @@ meta::IsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const 
            typename ArrayType::vector_register_type &      z) { z = x + y; },
         array1.data(), array2.data());
   }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
-  }
+
 }
 template <typename ArrayType>
 meta::IsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
@@ -417,11 +417,15 @@ void Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
+
   if (range.is_undefined())
   {
     Subtract(obj1, obj2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -431,10 +435,6 @@ void Subtract(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
            typename ShapelessArray<T, C>::vector_register_type const &y,
            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x - y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -567,11 +567,15 @@ void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
+
   if (range.is_undefined())
   {
     Multiply(obj1, obj2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -581,10 +585,6 @@ void Multiply(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2
            typename ShapelessArray<T, C>::vector_register_type const &y,
            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x * y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -625,11 +625,14 @@ void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
   if (range.is_undefined())
   {
     Multiply(obj1, obj2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -639,10 +642,6 @@ void Multiply(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const
            typename linalg::Matrix<T, C, S>::vector_register_type const &y,
            typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x * y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C, typename S>
@@ -802,6 +801,9 @@ void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
   if (range.is_undefined())
   {
     Divide(obj1, obj2, ret);
@@ -816,10 +818,6 @@ void Divide(ShapelessArray<T, C> const &obj1, ShapelessArray<T, C> const &obj2,
            typename ShapelessArray<T, C>::vector_register_type const &y,
            typename ShapelessArray<T, C>::vector_register_type &      z) { z = x / y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename T, typename C>
@@ -861,13 +859,16 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
          (obj1.shape()[1] == obj2.shape()[1]));
   assert(obj1.size() == ret.size());
 
+  // TODO (private 516)
+  assert(range.is_trivial() || range.is_undefined());
+
   if (obj1.size() == obj2.size())
   {
     if (range.is_undefined())
     {
       Divide(obj1, obj2, ret);
     }
-    else if (range.is_trivial())
+    else
     {
       auto r = range.ToTrivialRange(ret.data().size());
 
@@ -877,10 +878,6 @@ void Divide(linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &
              typename linalg::Matrix<T, C, S>::vector_register_type const &y,
              typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x / y; },
           obj1.data(), obj2.data());
-    }
-    else
-    {
-      TODO_FAIL_ROOT("Non-trivial ranges not implemented");
     }
   }
   else if (obj1.shape()[0] == obj2.shape()[0])
