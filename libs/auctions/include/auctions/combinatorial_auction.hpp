@@ -46,7 +46,7 @@ public:
     BuildGraph();
 
     // simulated annealing
-    double beta_start = 0.01;
+    double beta_start = 0.001;
     double beta_end   = 1;
     double db         = (beta_end - beta_start) / run_time;
     double beta       = beta_start;
@@ -56,8 +56,7 @@ public:
 
     std::random_device                         rd{};
     std::mt19937                               gen{rd()};
-    std::uniform_int_distribution<std::size_t> d(1, 3);
-    std::uniform_int_distribution<std::size_t> r_bids(0, bids_.size() - 1);
+    std::uniform_int_distribution<std::size_t> d(1, bids_.size());
     std::uniform_real_distribution<double>     zero_to_one(0.0, 1.0);
 
     for (std::size_t i = 0; i < run_time; ++i)
@@ -70,7 +69,7 @@ public:
         auto nn = d(gen);
         for (std::size_t k = 0; k < nn; ++k)
         {
-          auto n = r_bids(gen);
+          auto n = d(gen) - 1;
 
           if (active_[n] == 1)
           {
@@ -85,17 +84,33 @@ public:
         new_reward = TotalBenefit();
         de         = prev_reward - new_reward;
 
-        if (static_cast<double>(zero_to_one(gen)) >= std::exp(-beta * de))
+        std::cout << "de: " << de << std::endl;
+
+
+        double ran_val = static_cast<double>(zero_to_one(gen));
+        double threshold = std::exp(-beta * de);
+
+        if (ran_val >= threshold)
         {
           active_ = prev_active_;
           rejected += 1;
         }
+        else
+        {
+          if (beta > 0.9 && (new_reward == 8))
+          {
+            std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
+          }
+        }
+
+
       }
 
+      // annealing
       beta += db;
     }
 
-    std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
+    std::cout << "Final - TotalBenefit(): " << TotalBenefit() << std::endl;
   }
 
   bool Execute(BlockIdType current_block)
@@ -137,9 +152,9 @@ private:
    */
   void BuildGraph()
   {
-    couplings_    = fetch::math::linalg::Matrix<double>::Zeroes({items_.size(), items_.size()});
-    local_fields_ = fetch::math::ShapelessArray<double>::Zeroes({items_.size()});
-    active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({items_.size()});
+    couplings_    = fetch::math::linalg::Matrix<double>::Zeroes({bids_.size(), bids_.size()});
+    local_fields_ = fetch::math::ShapelessArray<double>::Zeroes({bids_.size()});
+    active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
@@ -234,6 +249,10 @@ private:
    */
   void SelectWinners()
   {
+    for (std::size_t i = 0; i < active_.size(); ++i)
+    {
+      std::cout << "active_[i]: " << active_[i] << std::endl;
+    }
     // TODO () can just iterate through active_ to identify selected bids
   }
 };

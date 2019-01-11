@@ -92,13 +92,15 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
 
   // make bids
   Bid bid1;
+  Bid bid2;
+  Bid bid3;
+
   bid1.id     = 0;
   bid1.price  = 1;
   bid1.bidder = bidders[0].id;
   bid1.items.push_back(items[3]);
   ca.Bid(bid1);
 
-  Bid bid2;
   bid2.id     = 1;
   bid2.price  = 30;
   bid2.bidder = bidders[0].id;
@@ -106,9 +108,9 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid2.items.push_back(items[2]);
   bid2.items.push_back(items[3]);
   bid2.excludes.push_back(bid1);
+  bid2.excludes.push_back(bid3);
   ca.Bid(bid2);
 
-  Bid bid3;
   bid3.id     = 2;
   bid3.price  = 20;
   bid3.bidder = bidders[0].id;
@@ -118,10 +120,19 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid3.excludes.push_back(bid1);
   ca.Bid(bid3);
 
+  // 0 0 0 - value 0                        - valid
+  // 0 0 1 - value 8                        - win
+  // 0 1 0 - value -12 - bid too low        - must fail
+  // 0 1 1 - exclusive                      - must fail
+  // 1 0 0 - value -1 - bid too low         - must fail
+  // 1 0 1 - exclusive                      - must fail
+  // 1 1 0 - exclusive                      - must fail
+  // 1 1 1 - exclusive                      - must fail
+
   // Mine the smart market
-  for (std::size_t i = 0; i < 100; ++i)
+  for (std::size_t i = 0; i < 1; ++i)
   {
-    ca.Mine(i, 1000);
+    ca.Mine(i, 100000);
   }
 
   // execute / terminate the auction

@@ -50,6 +50,7 @@ fetch::random::LinearCongruentialGenerator lcg;
     ASSERT_EQ(T(C), c) << T(C) << " != " << c << "for " #NAME << " using " #OP; \
   }
 
+// clang-format off
 ADD_TEST(*, multiply)
 ADD_TEST(+, add)
 ADD_TEST(-, subtract)
@@ -57,7 +58,8 @@ ADD_TEST(/, divide)
 ADD_TEST(&, and)
 ADD_TEST(|, or)
 ADD_TEST(^, xor)
-#undef ADD_TEST
+#undef ADD_TEST // NOLINT
+// clang-format on
 
 void test_registers()
 {
