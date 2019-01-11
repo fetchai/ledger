@@ -69,7 +69,7 @@ public:
   {
     auto tc = std::make_shared<MuddleTestClient>();
 
-    tc->muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tm);
+    tc->muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tm);
     tc->muddle_->Start({});
 
     tc->client_ =
@@ -156,8 +156,9 @@ public:
   TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
               std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
               std::size_t               verification_threads = 1)
-    : Super("test_", lane, total_lanes, port, tm, verification_threads, true, timeout,
-            std::chrono::milliseconds(1000), std::chrono::milliseconds(1000))
+    : Super("test_", lane, total_lanes, port, NetworkId("Lane" + std::to_string(lane)), tm,
+            verification_threads, true, timeout, std::chrono::milliseconds(1000),
+            std::chrono::milliseconds(1000))
   {}
 };
 
