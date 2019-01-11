@@ -583,10 +583,10 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const & size, // NOLINT
+  static void SetPointers(std::size_t const &offset, std::size_t const &/*size*/,
                           type const **regs, G &next)
   {
-    assert(next.size() >= offset + size);
+    //assert(next.size() >= offset + size); // Size not used
     *regs = next.pointer() + offset;
   }
 
