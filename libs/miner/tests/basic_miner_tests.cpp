@@ -113,7 +113,7 @@ TEST_P(BasicMinerTests, Sample)
   MainChain dummy;
 
   auto &heaviest_block = dummy.HeaviestBlock();
-  block.previous_hash = heaviest_block.hash();
+  block.previous_hash  = heaviest_block.hash();
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
@@ -149,15 +149,16 @@ TEST_P(BasicMinerTests, Sample)
 TEST_P(BasicMinerTests, reject_replayed_transactions)
 {
   std::size_t const num_tx = GetParam();
-  // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main chain
+  // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main
+  // chain
   std::size_t lanes  = 16;
   std::size_t slices = 16;
 
-  #if !defined(NDEBUG)
+#if !defined(NDEBUG)
   num_tx = num_tx / 16;
-  lanes  = lanes /4;
-  slices = slices /4;
-  #endif
+  lanes  = lanes / 4;
+  slices = slices / 4;
+#endif
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;

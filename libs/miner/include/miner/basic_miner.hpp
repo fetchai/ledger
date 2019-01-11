@@ -92,7 +92,8 @@ private:
   TransactionSet  txs_seen_;                         ///< The transactions seen so far
   std::size_t     main_queue_size_{0};               ///< The thread safe main queue size
   TransactionList main_queue_;                       ///< The main transaction queue
-  bool            filtering_input_duplicates_{true}; ///< Whether duplicate transactions are filtered on entry to the packer
+  bool            filtering_input_duplicates_{
+      true};  ///< Whether duplicate transactions are filtered on entry to the packer
 };
 
 }  // namespace miner

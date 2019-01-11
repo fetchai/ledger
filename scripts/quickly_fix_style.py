@@ -124,8 +124,6 @@ def main():
     sys.argv = ['_', '--fix']
     check_license_header.main()
 
-    print("Next.")
-
     changed_files = []
     # Stack overflow 34279322
     proc = subprocess.Popen(["git", "diff", "{}...".format(compare_branch), "--name-only"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
