@@ -86,7 +86,6 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
 void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
-  bool filtering_input_duplicates_ = false;
 
   if (filtering_input_duplicates_)
   {

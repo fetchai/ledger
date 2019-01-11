@@ -234,8 +234,6 @@ public:
       block.loose() = false;
     }
 
-    std::cerr << "Retrieved block: " << block.body().block_number << std::endl;
-
     return success;
   }
 
@@ -276,16 +274,11 @@ public:
     std::size_t blocks_checked = 0;
     auto        t1             = std::chrono::high_resolution_clock::now();
 
-    std::cerr << "ss" << std::endl;
-    std::cerr << starting_hash << std::endl;
-
     if (!Get(starting_hash, block) || block.loose())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
       return false;
     }
-
-    std::cerr << "Got block" << std::endl;
 
     // Need a set for quickly checking whether transactions are in our container
     std::set<TransactionSummary>    transactions_to_check;
@@ -323,7 +316,6 @@ public:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "TX uniqueness verify - found duplicate TXs!: ",
                      transactions_duplicated.size());
-      std::cerr << "Found: " << transactions_duplicated.size() << " dup" << std::endl;
 
       // Iterate our container
       auto it = container.cbegin();

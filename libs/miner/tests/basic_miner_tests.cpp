@@ -102,7 +102,6 @@ protected:
   BasicMinerPtr miner_;
 };
 
-/*
 TEST_P(BasicMinerTests, Sample)
 {
   std::cerr << "start sample" << std::endl;
@@ -145,11 +144,20 @@ TEST_P(BasicMinerTests, Sample)
     }
   }
   std::cerr << "finish sample" << std::endl;
-} */
+}
 
 TEST_P(BasicMinerTests, reject_replayed_transactions)
 {
   std::size_t const num_tx = GetParam();
+  // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main chain
+  std::size_t lanes  = 16;
+  std::size_t slices = 16;
+
+  #if !defined(NDEBUG)
+  num_tx = num_tx / 16;
+  lanes  = lanes /4;
+  slices = slices /4;
+  #endif
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;
@@ -163,7 +171,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     auto &heaviest_block = chain.HeaviestBlock();
     body.previous_hash   = heaviest_block.hash();
 
-    miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
+    miner_->GenerateBlock(body, lanes, slices, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
