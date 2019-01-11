@@ -104,7 +104,6 @@ protected:
 
 TEST_P(BasicMinerTests, Sample)
 {
-  std::cerr << "start sample" << std::endl;
   std::size_t const num_tx = GetParam();
 
   PopulateWithTransactions(num_tx);
@@ -143,7 +142,6 @@ TEST_P(BasicMinerTests, Sample)
       lanes |= resources;
     }
   }
-  std::cerr << "finish sample" << std::endl;
 }
 
 TEST_P(BasicMinerTests, reject_replayed_transactions)

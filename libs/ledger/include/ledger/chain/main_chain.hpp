@@ -258,7 +258,7 @@ public:
   }
 
   /**
-   * Strip
+   * Strip transactions in container that already exist in the blockchain
    *
    * @param: starting_hash Block to start looking downwards from
    * @tparam: container Container to remove transactions from
