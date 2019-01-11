@@ -506,11 +506,13 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(ArrayType const &obj1, Ar
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  assert(range.is_undefined() || range.is_trivial());
+
   if (range.is_undefined())
   {
     Subtract(obj1, obj2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -520,10 +522,6 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(ArrayType const &obj1, Ar
            typename ArrayType::vector_register_type const &y,
            typename ArrayType::vector_register_type &      z) { z = x - y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 
@@ -922,11 +920,13 @@ meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, Arra
   assert(obj1.size() == obj2.size());
   assert(obj1.size() == ret.size());
 
+  assert(range.is_undefined() || range.is_trivial());
+
   if (range.is_undefined())
   {
     Divide(obj1, obj2, ret);
   }
-  else if (range.is_trivial())
+  else
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
@@ -936,10 +936,6 @@ meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, Arra
            typename ArrayType::vector_register_type const &y,
            typename ArrayType::vector_register_type &      z) { z = x / y; },
         obj1.data(), obj2.data());
-  }
-  else
-  {
-    TODO_FAIL_ROOT("Non-trivial ranges not implemented");
   }
 }
 template <typename ArrayType>
