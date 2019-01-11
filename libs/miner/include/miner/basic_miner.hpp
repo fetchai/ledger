@@ -58,7 +58,11 @@ public:
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
-  uint64_t backlog() const override;
+  uint64_t  backlog() const override;
+  uint32_t &log2_num_lanes()
+  {
+    return log2_num_lanes_;
+  }
 
 private:
   using BitVector = bitmanip::BitVector;
@@ -84,7 +88,7 @@ private:
 
   static bool SortByFee(TransactionEntry const &a, TransactionEntry const &b);
 
-  uint32_t const log2_num_lanes_;                    ///< The log2 of the number of lanes
+  uint32_t       log2_num_lanes_;                    ///< The log2 of the number of lanes
   uint32_t const max_num_threads_;                   ///< The configured maximum number of threads
   ThreadPool     thread_pool_;                       ///< The thread pool used to dispatch work
   mutable Mutex  pending_lock_{__LINE__, __FILE__};  ///< The lock for the pending transaction queue

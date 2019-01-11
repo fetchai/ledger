@@ -144,6 +144,13 @@ TEST_P(BasicMinerTests, Sample)
   }
 }
 
+uint32_t ToLog2(uint32_t value)
+{
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
+                               static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
 TEST_P(BasicMinerTests, reject_replayed_transactions)
 {
   std::size_t num_tx = GetParam();
@@ -152,11 +159,14 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   std::size_t lanes  = 16;
   std::size_t slices = 16;
 
+  // Takes too long in debug mode
 #if !defined(NDEBUG)
   num_tx = num_tx / 16;
   lanes  = lanes / 4;
   slices = slices / 4;
 #endif
+
+  miner_->log2_num_lanes() = ToLog2(uint32_t(lanes));
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;
