@@ -58,7 +58,7 @@ public:
   BasicMiner &operator=(BasicMiner const &) = delete;
   BasicMiner &operator=(BasicMiner &&) = delete;
 
-  uint64_t  backlog() const override;
+  uint64_t  GetBacklog() const override;
   uint32_t &log2_num_lanes()
   {
     return log2_num_lanes_;

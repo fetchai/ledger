@@ -62,7 +62,7 @@ public:
    *
    * @return: number of transactions
    */
-  virtual uint64_t backlog() const = 0;
+  virtual uint64_t GetBacklog() const = 0;
 
   /// @}
 };

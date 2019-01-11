@@ -194,7 +194,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
   main_queue_size_ = main_queue_.size();
 }
 
-uint64_t BasicMiner::backlog() const
+uint64_t BasicMiner::GetBacklog() const
 {
   FETCH_LOCK(pending_lock_);
   return main_queue_size_ + pending_.size();
@@ -213,6 +213,9 @@ uint64_t BasicMiner::backlog() const
 void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
+  // sort by fees
+  tx.sort(SortByFee);
+
   for (std::size_t slice_idx = offset; slice_idx < block.slices.size(); slice_idx += interval)
   {
     auto &slice = block.slices[slice_idx];

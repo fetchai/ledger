@@ -22,6 +22,7 @@
 #include "meta/is_log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
+#include "vectorise/platform.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -144,13 +145,6 @@ TEST_P(BasicMinerTests, Sample)
   }
 }
 
-uint32_t ToLog2(uint32_t value)
-{
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
-  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
-                               static_cast<uint32_t>(__builtin_clz(value) + 1));
-}
-
 TEST_P(BasicMinerTests, reject_replayed_transactions)
 {
   std::size_t num_tx = GetParam();
@@ -166,7 +160,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   slices = slices / 4;
 #endif
 
-  miner_->log2_num_lanes() = ToLog2(uint32_t(lanes));
+  miner_->log2_num_lanes() = platform::Log2Ceil(uint32_t(lanes));
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;
