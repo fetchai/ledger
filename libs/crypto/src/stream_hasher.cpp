@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ bool StreamHasher::Update(byte_array::ConstByteArray const &s)
 byte_array::ByteArray StreamHasher::Final()
 {
   byte_array::ByteArray digest;
-  digest.Resize(hashSize());
+  digest.Resize(GetSizeInBytes());
   Final(digest.pointer(), digest.size());
   return digest;
 }

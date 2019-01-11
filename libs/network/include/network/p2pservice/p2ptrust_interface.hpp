@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -88,11 +88,12 @@ public:
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 
-  virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const              = 0;
-  virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const       = 0;
-  virtual double      GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const  = 0;
-  virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const              = 0;
-  virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const                = 0;
+  virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const        = 0;
+  virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;
+  virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const        = 0;
+  virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const          = 0;
+
+  virtual void Debug() const = 0;
 };
 
 inline char const *ToString(TrustSubject subject)

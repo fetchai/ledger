@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ namespace fetch {
 namespace p2p {
 
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
+using reference_players_type = std::array<math::statistics::Gaussian<double>, 5>;
 extern const reference_players_type reference_players_;
 
 inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
@@ -91,22 +91,21 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident), ", quality: ", quality);
     FETCH_LOCK(mutex_);
 
+    Gaussian const &reference_player = LookupReferencePlayer(quality);
+
     auto id_it = id_store_.find(peer_ident);
     if (id_it==id_store_.end())
     {
       id_store_[peer_ident] = 0;
-      buffer_.NewPeer(peer_ident);
+      buffer_.NewPeer(peer_ident, reference_player);
       id_it = id_store_.find(peer_ident);
     }
     if (quality == TrustQuality::NEW_PEER)
     {
       return;
     }
-    
-    Gaussian const &reference_player = LookupReferencePlayer(quality);
 
     bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
-
     if (honest && object_ident.size()>0)
     {
       AddObject(object_ident, peer_ident);
@@ -331,6 +330,20 @@ public:
       return id_it->second==1;
     }
     return false;
+  }
+
+  virtual void Debug() const override
+  {
+    FETCH_LOCK(mutex_);
+    for (auto const &id : id_store_)
+    {
+      auto store = stores_[id.second];
+      for(auto it = store->begin(); it!= store->end();++it)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "trust_store_", id.second, ": ",
+                       byte_array::ToBase64(it->peer_identity), " => ", it->score);
+      }
+    }
   }
 
   // Operators

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ int main()
   NetworkManager nm(1);
   nm.Start();
 
-  Muddle muddle{Muddle::CreateNetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
+  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
   muddle.Start({8000});
 
   Sample         sample;

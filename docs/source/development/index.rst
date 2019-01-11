@@ -35,19 +35,19 @@ The ledger project uses ``clang-format`` in order to automatically format code i
 
 .. code:: bash
 
-	$ ./scripts/apply-style
+	$ ./scripts/apply_style
 
 This might take a while to process since it is make code changes to the project. If the developer only wants to see the changes that would have been made. They can run the following command:
 
 .. code:: bash
 
-	$ ./scripts/apply-style -w -a
+	$ ./scripts/apply_style -w -a
 
 Full documentation for this script can be found by running the following command:
 
 .. code:: bash
 
-	$ ./scripts/apply-style -w -a
+	$ ./scripts/apply_style -w -a
 
 Static Analysis
 ---------------
@@ -64,7 +64,7 @@ For more information on how to build the targets please refer to the :doc:`../ge
 
 .. code:: bash
 
-	$ ./scripts/run-static-analysis.py <path to cmake build dir>
+	$ ./scripts/run_static_analysis.py <path to cmake build dir>
 
 This command will then scan through the project and warn about potential issues. It is important to note that by default this script will not apply any of the suggested fixs.
 
@@ -72,7 +72,7 @@ If the developer would like `clang-tidy` to apply all the changes then the follo
 
 .. code:: bash
 
-	$ ./scripts/run-static-analysis.py <path to cmake build dir> --fix
+	$ ./scripts/run_static_analysis.py <path to cmake build dir> --fix
 
 .. warning:: It should be noted that the automatic updates provided by ``clang-tidy`` are seldom applied 100% cleanly. To the point that the project might not compile afterwards. Developers must be aware of this and carefully check the changed generated manually.
 

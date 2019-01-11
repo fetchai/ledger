@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ protected:
     auto identity = std::make_unique<fetch::crypto::ECDSASigner>();
     identity->GenerateKeys();
 
-    return std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), std::move(identity),
+    return std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(identity),
                                     *network_manager_);
   }
 

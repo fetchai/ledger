@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ void ExecutionManagerRpcClient::WorkCycle(void)
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
   : network_manager_(network_manager)
 {
-  muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
+  muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("EXEM"), network_manager_);
   client_ =
       std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
   muddle_->Start({});

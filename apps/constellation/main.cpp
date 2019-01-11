@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -202,7 +202,8 @@ struct CommandLineArguments
     parameters.add(args.transient_peers, "transient-peers",
                    "The number of the peers which will be random in answer sent to peer requests.",
                    DEFAULT_TRANSIENT_PEERS);
-    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.", uint32_t(4000));
+    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms",
+                   "How fast to do peering changes.", uint32_t(2000));
     // parse the args
     parameters.Parse(argc, argv);
 
@@ -239,7 +240,7 @@ struct CommandLineArguments
       // otherwise we default to the port specified
       if (args.manifest)
       {
-        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::P2P});
+        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::CORE});
 
         if (uri.scheme() == Uri::Scheme::Tcp)
         {
@@ -326,7 +327,7 @@ struct CommandLineArguments
 
     // register the P2P service
     peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
-    manifest->AddService(ServiceIdentifier{ServiceType::P2P}, Manifest::Entry{Uri{peer}});
+    manifest->AddService(ServiceIdentifier{ServiceType::CORE}, Manifest::Entry{Uri{peer}});
 
     // register all of the lanes (storage shards)
     for (uint32_t i = 0; i < num_lanes; ++i)
@@ -506,8 +507,7 @@ int main(int argc, char **argv)
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
         args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
         args.verification_threads, std::chrono::milliseconds(args.block_interval), args.max_peers,
-        args.transient_peers
-		, args.peers_update_cycle_ms);
+        args.transient_peers, args.peers_update_cycle_ms);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();

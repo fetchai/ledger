@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -90,29 +90,6 @@ bool CompareAddress(uint8_t const *a, uint8_t const *b)
 }
 
 /**
- * Convert one address format to another
- *
- * @param address The input address
- * @return The output address
- */
-Packet::RawAddress ConvertAddress(Packet::Address const &address)
-{
-  Packet::RawAddress raw_address;
-
-  if (raw_address.size() != address.size())
-  {
-    throw std::runtime_error("Unable to convert one address to another");
-  }
-
-  for (std::size_t i = 0; i < address.size(); ++i)
-  {
-    raw_address[i] = address[i];
-  }
-
-  return raw_address;
-}
-
-/**
  * Comparison operation
  *
  * @param lhs Reference initial address to compare
@@ -196,6 +173,31 @@ std::string DescribePacket(Packet const &packet)
 }  // namespace
 
 /**
+ * Convert one address format to another
+ *
+ * @param address The input address
+ * @return The output address
+ */
+Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
+{
+  Packet::RawAddress raw_address;
+
+  if (raw_address.size() != address.size())
+  {
+    throw std::runtime_error(
+        "Unable to convert one address to another: raw:" + std::to_string(raw_address.size()) +
+        ", actual: " + std::to_string(address.size()));
+  }
+
+  for (std::size_t i = 0; i < address.size(); ++i)
+  {
+    raw_address[i] = address[i];
+  }
+
+  return raw_address;
+}
+
+/**
  * Constructs a muddle router instance
  *
  * @param address The address of the current node
@@ -207,8 +209,8 @@ Router::Router(NetworkId network_id, Router::Address address, MuddleRegister con
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
-  , network_id_(network_id)
-  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS))
+  , network_id_(std::move(network_id))
+  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
 {}
 
 /**
@@ -406,6 +408,10 @@ bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address
   return false;
 }
 
+/**
+ * Helper function which prints out the content of the routing table and the direct_addres_map
+ * @param prefix The prefix which will be used in the logging.
+ */
 void Router::Debug(std::string const &prefix) const
 {
   FETCH_LOCK(routing_table_lock_);
@@ -497,17 +503,25 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
   return registrar_.Register(address, service, channel);
 }
 
+/**
+ * Checks if there is an active connection with the given address.
+ * @param target The address of the peer we want to check
+ * @return true if there is an active connection
+ */
 bool Router::IsConnected(Address const &target) const
 {
-  auto raw_address  = ConvertAddress(target);
-  auto iter         = routing_table_.find(raw_address);
-  bool is_connected = false;
+  auto raw_address = ConvertAddress(target);
+  auto iter        = routing_table_.find(raw_address);
+  bool connected   = false;
   if (iter != routing_table_.end())
   {
-    is_connected = iter->second.direct;
+    auto conn = register_.LookupConnection(iter->second.handle).lock();
+    if (conn)
+    {
+      connected = conn->is_alive();
+    }
   }
-
-  return is_connected;
+  return connected;
 }
 
 /**
@@ -537,11 +551,6 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   if (address != address_raw_)
   {
     FETCH_LOCK(routing_table_lock_);
-
-    if (direct)
-    {
-      direct_address_map_[handle] = ToConstByteArray(address);
-    }
 
     // lookup (or create) the routing table entry
     auto &routing_data = routing_table_[address];
@@ -573,6 +582,15 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
       // signal an update was made to the table
       update_complete = true;
+
+      if (direct)
+      {
+        direct_address_map_[handle] = ToConstByteArray(address);
+        if (prev_handle)
+        {
+          direct_address_map_.erase(prev_handle);
+        }
+      }
     }
   }
 
@@ -585,6 +603,18 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
   }
 
   return update_complete;
+}
+
+/**
+ * Internal: Looks up the specified connection handle from a given address
+ *
+ * @param address The address to lookup the handle for.
+ * @return The target handle for the connection, or zero on failure.
+ */
+Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) const
+{
+  auto raddr = ConvertAddress(address);
+  return LookupHandle(raddr);
 }
 
 /**
@@ -612,6 +642,11 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
   return handle;
 }
 
+/**
+ * Looks up a random handle from the routing table.
+ * @param address paremeter not used
+ * @return The random handle, or zero if the routing table is empty
+ */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
 {
   Handle handle = 0;
@@ -639,12 +674,49 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) con
   return handle;
 }
 
-void Router::KillConnection(Handle handle)
+/**
+ * Kills active connection by closing the socket and removing the peer from the data structures.
+ * @param handle The connection handle we want to remove
+ * @param peer The address of the peer
+ */
+void Router::KillConnection(Handle handle, Address const &peer)
 {
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
+    FETCH_LOCK(routing_table_lock_);
     conn->Close();
+    routing_table_.erase(ConvertAddress(peer));
+    direct_address_map_.erase(handle);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "No connection object available to KillConnection(", handle, ")");
+  }
+}
+
+/**
+ * Kills active connection by closing the socket and removing the peer from the data structures.
+ * @param handle The connection handle we want to remove
+ */
+void Router::KillConnection(Handle handle)
+{
+  Address address;
+  {
+    FETCH_LOCK(routing_table_lock_);
+    auto it = direct_address_map_.find(handle);
+    if (it != direct_address_map_.end())
+    {
+      address = it->second;
+    }
+  }
+  if (address.size() > 0)
+  {
+    KillConnection(handle, address);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Address not found for handle ", handle);
   }
 }
 
@@ -903,15 +975,28 @@ bool Router::IsBlacklisted(Address const &target) const
 
 void Router::DropPeer(Address const &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
   Handle h = LookupHandle(ConvertAddress(peer));
   if (h)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Dropping ", ToBase64(peer));
-    KillConnection(h);
+    KillConnection(h, peer);
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
+  }
+}
+
+void Router::DropHandle(Router::Handle handle, Address const &peer)
+{
+  if (handle)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
+    KillConnection(handle, peer);
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "DropHandle got invalid handle: ", handle);
   }
 }
 

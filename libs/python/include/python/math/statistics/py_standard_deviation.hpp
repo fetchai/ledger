@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ inline void BuildStandardDeviationStatistics(std::string const &custom_name,
       .def(custom_name.c_str(), &WrapperStandardDeviation<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperStandardDeviation<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapeLessArray<float>>);
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperStandardDeviation<ShapelessArray<float>>);
 }
 
 }  // namespace statistics

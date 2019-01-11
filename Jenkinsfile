@@ -17,12 +17,12 @@ pipeline {
           stages {
             stage('License Checks') {
               steps {
-                sh './scripts/check-license-header.py'
+                sh './scripts/check_license_header.py'
               }
             }
             stage('Style check') {
               steps {
-                sh './scripts/apply-style.py -w -a'
+                sh './scripts/apply_style.py -w -a'
               }
             }
           }
@@ -48,7 +48,7 @@ pipeline {
             }
             stage('Static Analysis') {
               steps {
-                sh './scripts/run-static-analysis.py build-debug/'
+                sh './scripts/run_static_analysis.py build-debug/'
               }
             }
           }

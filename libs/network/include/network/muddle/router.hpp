@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ public:
   using Handle              = network::AbstractConnection::connection_handle_type;
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
+
+  static Packet::RawAddress ConvertAddress(Packet::Address const &address);
 
   struct RoutingData
   {
@@ -111,7 +113,13 @@ public:
   /** If this host is connected close their port.
    * @param peer The target address to killed.
    */
-  void DropPeer(Address const &peer);
+  void DropPeer(Address const &address);
+
+  /** Kills the connection with the handle.
+   * @param handle The handle to drop
+   * @param address Supply the address to avoid an extra address lookup.
+   */
+  void DropHandle(Handle handle, const Address &address);
 
   void Cleanup();
 
@@ -140,6 +148,14 @@ public:
    */
   bool IsConnected(Address const &target) const;
 
+  /** Return the handle associated with an address or zero
+   * @param target The target address's status to interrogate.
+   * @returns A handle if one is available or zero.
+   */
+  Handle LookupHandleFromAddress(Packet::Address const &address) const;
+
+  Handle LookupHandle(Packet::RawAddress const &address) const;
+
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
   using Mutex      = mutex::Mutex;
@@ -153,12 +169,12 @@ private:
 
   bool AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
 
-  Handle LookupHandle(Packet::RawAddress const &address) const;
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
+  void KillConnection(Handle handle, Address const &peer);
   void KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet, Address transmitter);

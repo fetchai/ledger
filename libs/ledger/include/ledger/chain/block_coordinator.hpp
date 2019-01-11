@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -71,6 +71,11 @@ public:
         std::lock_guard<mutex_type> lock(mutex_);
         pending_blocks_.push_front(std::make_shared<BlockBody>(block.body()));
       }
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()),
+                     " Heaviest: ", ToBase64(heaviestHash));
     }
   }
 

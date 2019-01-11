@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -29,7 +29,7 @@ namespace math {
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Sin(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Sin(ArrayType &x)
 {
   kernels::stdlib::Sin<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -40,7 +40,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Sin(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Cos(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Cos(ArrayType &x)
 {
   kernels::stdlib::Cos<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -51,7 +51,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Cos(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Tan(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Tan(ArrayType &x)
 {
   kernels::stdlib::Tan<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -62,7 +62,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Tan(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Asin(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Asin(ArrayType &x)
 {
   kernels::stdlib::Asin<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -73,7 +73,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Asin(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Acos(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Acos(ArrayType &x)
 {
   kernels::stdlib::Acos<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -84,7 +84,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Acos(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Atan(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Atan(ArrayType &x)
 {
   kernels::stdlib::Atan<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -96,7 +96,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Atan(ArrayType &x)
  * @param x: this value represents the proportion of the x-coordinate
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Atan2(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Atan2(ArrayType &x)
 {
   kernels::stdlib::Atan2<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -107,7 +107,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Atan2(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Sinh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Sinh(ArrayType &x)
 {
   kernels::stdlib::Sinh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -118,7 +118,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Sinh(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Cosh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Cosh(ArrayType &x)
 {
   kernels::stdlib::Cosh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -129,7 +129,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Cosh(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Tanh(ArrayType &x)
 {
   kernels::stdlib::Tanh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -141,7 +141,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Tanh(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Asinh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Asinh(ArrayType &x)
 {
   kernels::stdlib::Asinh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -153,7 +153,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Asinh(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Acosh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Acosh(ArrayType &x)
 {
   kernels::stdlib::Acosh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -165,7 +165,7 @@ fetch::math::meta::IsMathArrayLike<ArrayType, void> Acosh(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Atanh(ArrayType &x)
+fetch::math::meta::IsMathArray<ArrayType, void> Atanh(ArrayType &x)
 {
   kernels::stdlib::Atanh<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

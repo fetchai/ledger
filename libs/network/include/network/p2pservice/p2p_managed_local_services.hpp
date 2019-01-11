@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public:
         break;
       }
 
-      case ServiceType::P2P:
+      case ServiceType::CORE:
       case ServiceType::HTTP:
         this->services_[ident] = std::make_shared<P2PManagedLocalService>(uri, ident);
         break;

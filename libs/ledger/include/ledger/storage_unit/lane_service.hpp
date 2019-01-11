@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
+#include "storage/transient_object_store.hpp"
 
 #include <iomanip>
 #include <memory>
@@ -55,13 +56,14 @@ public:
   using Server         = fetch::muddle::rpc::Server;
   using ServerPtr      = std::shared_ptr<Server>;
   using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore             = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
-  using TransactionStore          = storage::ObjectStore<fetch::chain::VerifiedTransaction>;
-  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
-  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using DocumentStore            = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore         = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
+  using TransactionStoreProtocol = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
+  using BackgroundedWork         = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread   = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using VerifiedTransaction       = chain::VerifiedTransaction;
 
@@ -72,8 +74,8 @@ public:
   // TODO(issue 7): Make config JSON
   LaneService(
       std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-      uint16_t port, fetch::network::NetworkManager tm, std::size_t verification_threads,
-      bool                      refresh_storage              = false,
+      uint16_t port, NetworkId network_id, fetch::network::NetworkManager tm,
+      std::size_t verification_threads, bool refresh_storage = false,
       std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
       std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
       std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))
@@ -82,12 +84,8 @@ public:
   {
     std::unique_ptr<crypto::Prover> certificate_ = std::make_unique<crypto::ECDSASigner>();
 
-    std::string network_id = std::string("000") + std::to_string(lane_);
-    network_id             = std::string("L") + network_id.substr(network_id.length() - 3);
-
     lane_identity_ = std::make_shared<LaneIdentity>(tm, certificate_->identity());
-    muddle_        = std::make_shared<Muddle>(Muddle::CreateNetworkId(network_id.c_str()),
-                                       std::move(certificate_), tm);
+    muddle_        = std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
     server_        = std::make_shared<Server>(muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
     // format and generate the prefix
@@ -115,8 +113,6 @@ public:
     {
       tx_store_->Load(prefix + "transaction.db", prefix + "transaction_index.db", true);
     }
-
-    tx_store_->id = "Lane " + std::to_string(lane_);
 
     tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());

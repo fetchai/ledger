@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/service_ids.hpp"
+#include "ledger/chain/block_coordinator.hpp"
 #include "metrics/metrics.hpp"
 #include "network/muddle/packet.hpp"
 
@@ -130,11 +131,12 @@ private:
 };
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
-                                         TrustSystem &trust)
+                                         TrustSystem &trust, BlockCoordinator &block_coordinator)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
   , chain_(chain)
   , trust_(trust)
+  , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
   , main_chain_rpc_client_(endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
@@ -143,22 +145,23 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
   // set the main chain
-  block_subscription_->SetMessageHandler(
-                                         [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload, Address transmitter) {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+                                                Packet::Payload const &payload,
+                                                Address                transmitter) {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
-        BlockSerializer serialiser(payload);
+    BlockSerializer serialiser(payload);
 
-        // deserialize the block
-        Block block;
-        serialiser >> block;
+    // deserialize the block
+    Block block;
+    serialiser >> block;
 
-        // recalculate the block hash
-        block.UpdateDigest();
+    // recalculate the block hash
+    block.UpdateDigest();
 
-        // dispatch the event
-        OnNewBlock(from, block, transmitter);
-      });
+    // dispatch the event
+    OnNewBlock(from, block, transmitter);
+  });
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
@@ -178,10 +181,10 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-  void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
+void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(transmitter), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
@@ -190,12 +193,15 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
     // add the block?
     if (chain_.AddBlock(block))
     {
-      trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+      trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
     }
     else
     {
-      trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+      trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
     }
+    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+
+    block_coordinator_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree
@@ -250,14 +256,9 @@ void MainChainRpcService::ServiceLooseBlocks()
       {
         // Get a random peer to send the req to...
         auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        if (random_peer_list.begin()!=random_peer_list.end())
+        if (!random_peer_list.empty())
         {
-          Address address =  (*random_peer_list.begin());
-          AddLooseBlock(hash, address);
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "I didn't get a random good peer!");
+          AddLooseBlock(hash, *random_peer_list.begin());
         }
       }
     }

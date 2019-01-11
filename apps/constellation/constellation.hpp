@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -80,13 +80,14 @@ public:
                          std::string my_network_address, std::size_t processor_threads,
                          std::size_t                         verification_threads,
                          std::chrono::steady_clock::duration block_interval, std::size_t max_peers,
-                         std::size_t transient_peers,
-                         uint32_t p2p_cycle_time_ms);
+                         std::size_t transient_peers, uint32_t p2p_cycle_time_ms);
 
   void Run(UriList const &initial_peers, chain::consensus::ConsensusMinerType const &mining);
   void SignalStop();
 
 private:
+  void CreateInfoFile(std::string const &filename);
+
   using Muddle                  = muddle::Muddle;
   using NetworkManager          = network::NetworkManager;
   using BlockPackingAlgorithm   = miner::BasicMiner;

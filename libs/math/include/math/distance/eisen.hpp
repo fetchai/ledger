@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/eisen.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -37,8 +37,8 @@ inline typename memory::VectorSlice<T, S>::Type Eisen(memory::VectorSlice<T, S> 
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::Type Eisen(ShapeLessArray<T, C> const &a,
-                                                 ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Eisen(ShapelessArray<T, C> const &a,
+                                                 ShapelessArray<T, C> const &b)
 {
   return Eisen(a.data(), b.data());
 }

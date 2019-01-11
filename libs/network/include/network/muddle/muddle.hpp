@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -138,7 +138,8 @@ public:
      this to just get one now.*/
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
-                                              fetch::network::NetworkManager tm)
+                                              fetch::network::NetworkManager tm,
+                                              TrustSystem *                  trust_system=nullptr)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
@@ -146,38 +147,19 @@ public:
     std::unique_ptr<crypto::Prover> certificate_;
     certificate_.reset(certificate);
 
-    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
-  }
-
-  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
-                                              std::unique_ptr<crypto::Prover> prover,
-                                              fetch::network::NetworkManager  tm)
-  {
-    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    auto ptr = std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+    ptr->SetUpTrust(trust_system);
+    return ptr;
   }
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
                                               std::unique_ptr<crypto::Prover> prover,
                                               fetch::network::NetworkManager  tm,
-                                              TrustSystem *                   trust_system)
+                                              TrustSystem *                   trust_system=nullptr)
   {
-    auto m = std::make_shared<Muddle>(network_id, std::move(prover), tm);
-    m->SetUpTrust(trust_system);
-    return m;
-  }
-
-  static inline uint32_t CreateNetworkId(const char *p)
-  {
-    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |
-           (uint32_t(p[3]));
-  }
-
-  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
-  {
-    std::string x = "000" + std::to_string(instance_number);
-    x             = x.substr(x.length() - 3);
-    x             = std::string(1, prefix) + x;
-    return CreateNetworkId(x.c_str());
+    auto ptr = std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    ptr->SetUpTrust(trust_system);
+    return ptr;
   }
 
   // Construction / Destruction
@@ -197,7 +179,7 @@ public:
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections(bool direct_only=false);
+  ConnectionMap GetConnections(bool direct_only = false);
 
   bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
@@ -216,7 +198,10 @@ public:
   bool IsBlacklisted(Address const &target) const;
   /// @}
 
-  bool IsConnected(Address const &target) const;
+  bool IsConnected(Address const &target) const
+  {
+    return router_.IsConnected(target);
+  }
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
@@ -285,6 +270,16 @@ inline void Muddle::AddPeer(Uri const &peer)
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
+  Handle handle = clients_.UriToHandle(peer);
+  if (handle != 0)
+  {
+    Address address;
+    if (router_.HandleToDirectAddress(handle, address))
+    {
+      router_.DropHandle(handle, address);
+      clients_.RemoveConnection(handle);
+    }
+  }
   clients_.RemovePersistentPeer(peer);
 }
 

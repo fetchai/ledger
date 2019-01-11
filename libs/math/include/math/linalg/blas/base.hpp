@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ template <typename SHARED_TYPE, std::size_t type_size>
 class SharedArray;
 
 template <typename SHAPELESS_TYPE, typename SHAPELESS_CONTAINER>
-class ShapeLessArray;
+class ShapelessArray;
 
 template <typename RECTANGULAR_TYPE, typename RECTANGULAR_CONTAINER, bool PAD_HEIGHT,
           bool PAD_WIDTH>

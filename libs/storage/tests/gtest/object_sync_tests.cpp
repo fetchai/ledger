@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "network/peer.hpp"
-#include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
+#include "storage/transient_object_store.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -69,7 +69,7 @@ public:
   {
     auto tc = std::make_shared<MuddleTestClient>();
 
-    tc->muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tm);
+    tc->muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tm);
     tc->muddle_->Start({});
 
     tc->client_ =
@@ -156,8 +156,9 @@ public:
   TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
               std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
               std::size_t               verification_threads = 1)
-    : Super("test_", lane, total_lanes, port, tm, verification_threads, true, timeout,
-            std::chrono::milliseconds(1000), std::chrono::milliseconds(1000))
+    : Super("test_", lane, total_lanes, port, NetworkId("Lane" + std::to_string(lane)), tm,
+            verification_threads, true, timeout, std::chrono::milliseconds(1000),
+            std::chrono::milliseconds(1000))
   {}
 };
 
@@ -166,7 +167,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
   NetworkManager nm{1};
   nm.Start();
 
-  uint16_t                         initial_port = 8080;
+  uint16_t                         initial_port = 8000;
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
@@ -209,7 +210,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
   NetworkManager nm{50};
   nm.Start();
 
-  uint16_t                         initial_port = 8080;
+  uint16_t                         initial_port = 9000;
   std::vector<VerifiedTransaction> sent;
 
   TestService test_service(initial_port, nm);
@@ -250,7 +251,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   NetworkManager nm{50};
   nm.Start();
 
-  uint16_t                                  initial_port       = 8080;
+  uint16_t                                  initial_port       = 10000;
   uint16_t                                  number_of_services = 3;
   std::vector<std::shared_ptr<TestService>> services;
   crypto::ECDSASigner                       certificate;

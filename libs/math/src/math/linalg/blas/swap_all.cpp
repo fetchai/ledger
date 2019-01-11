@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace linalg {
 
 template <typename S, typename MATRIX, uint64_t V>
 void Blas<S, MATRIX, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y = _y, _x), V>::
-     operator()(int const &n, ShapeLessArray<type> &dx, int const &incx, ShapeLessArray<type> &dy,
+     operator()(int const &n, ShapelessArray<type> &dx, int const &incx, ShapelessArray<type> &dy,
            int const &incy) const
 {
   type dtemp;

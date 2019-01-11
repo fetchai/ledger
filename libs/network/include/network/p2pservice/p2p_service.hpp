@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
+#include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -107,12 +108,23 @@ public:
     return identity_cache_;
   }
 
-    std::list<PeerTrust>  GetPeersAndTrusts() const;
+  bool IsDesired(Address const &address);
 
 private:
+  struct PairHash
+  {
+  public:
+    template <typename T, typename U>
+    std::size_t operator()(const std::pair<T, U> &x) const
+    {
+      return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
+    }
+  };
+
   using RequestingManifests = network::RequestingQueueOf<Address, Manifest>;
   using RequestingPeerlists = network::RequestingQueueOf<Address, AddressSet>;
-  using RequestingUris      = network::RequestingQueueOf<Address, Uri>;
+  using RequestingUris      = network::RequestingQueueOf<std::pair<Address, Address>, Uri,
+                                                    network::PromiseOf<Uri>, PairHash>;
 
   /// @name Work Cycle
   /// @{
@@ -134,7 +146,7 @@ private:
   LaneManagement &lane_management_;  ///< The lane management service
   TrustInterface &trust_system_;     ///< The trust system
 
-  ThreadPool thread_pool_ = network::MakeThreadPool(1);
+  ThreadPool thread_pool_ = network::MakeThreadPool(1, "CORE");
   RpcServer  rpc_server_{muddle_.AsEndpoint(), SERVICE_P2P, CHANNEL_RPC};
 
   // Node Information
@@ -161,9 +173,10 @@ private:
   P2PManagedLocalServices local_services_;
   ///@}
 
+  std::size_t min_peers_ = 2;
   std::size_t max_peers_;
   std::size_t transient_peers_;
-  uint32_t process_cycle_ms_;
+  uint32_t    process_cycle_ms_;
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };

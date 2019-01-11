@@ -54,7 +54,7 @@ public:
   TrustBuffer &operator=(const TrustBuffer &rhs) = delete;
   TrustBuffer &operator=(TrustBuffer &&rhs)      = delete;
 
-  void NewPeer(IDENTITY const &peer_ident)
+  void NewPeer(IDENTITY const &peer_ident, Gaussian const &new_peer)
   {
     FETCH_LOCK(storage_mutex_);
     if (storage_.size()>=MAX_SIZE || id_store_.find(peer_ident)!=id_store_.end())
@@ -62,7 +62,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME, "Buffer full, can't add peer: ", ToBase64(peer_ident));
       return;
     }
-    Trust new_record{peer_ident, Gaussian::ClassicForm(mu_new_peer, sigma_new_peer), 0, GetCurrentTime()};
+    Trust new_record{peer_ident, new_peer, 0, GetCurrentTime()};
     new_record.update_score();
 
     id_store_[peer_ident] = storage_.size();
@@ -124,11 +124,7 @@ private:
     }
   }
 
-  std::size_t const MAX_SIZE    = 1000;
-
-  //new peer
-  double const mu_new_peer      = 100.;
-  double const sigma_new_peer   = 100./6.;
+  std::size_t const MAX_SIZE = 1000;
 
   //good and bad place references
   GoodPlace<IDENTITY>& good_place_;

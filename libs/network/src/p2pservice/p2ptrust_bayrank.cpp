@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ const reference_players_type reference_players_ = {
     {/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
      /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
      /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-     /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.)
+     /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.),
+     /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)
     }};
 }  // namespace p2p
 }  // namespace fetch

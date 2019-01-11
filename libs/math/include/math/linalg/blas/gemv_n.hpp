@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ public:
   using type = S;
 
   void operator()(type const &alpha, MATRIX const &a,
-                  ShapeLessArray<type, memory::SharedArray<type>> const &x, int const &incx,
-                  type const &beta, ShapeLessArray<type, memory::SharedArray<type>> &y,
+                  ShapelessArray<type, memory::SharedArray<type>> const &x, int const &incx,
+                  type const &beta, ShapelessArray<type, memory::SharedArray<type>> &y,
                   int const &incy) const;
 };
 

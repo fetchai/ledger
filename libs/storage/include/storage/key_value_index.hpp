@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -81,9 +81,12 @@ namespace storage {
  * include their children's hashes, ie. merkle tree which can be used to detect file corruption.
  *
  */
-template <std::size_t S = 256, std::size_t N = 64>
+template <std::size_t S = 256, std::size_t N = 32>
 struct KeyValuePair
 {
+  using HashFunction = crypto::SHA256;
+  static_assert(N == HashFunction::size_in_bytes(), "Hash size must match the hash function");
+
   KeyValuePair()
   {
     memset(this, 0, sizeof(decltype(*this)));
@@ -92,28 +95,28 @@ struct KeyValuePair
 
   using key_type = Key<S>;
 
-  key_type key;
-  uint8_t  hash[N];
+  key_type key{};
+  uint8_t  hash[N]{};
 
   // The location in bits of the distance down the key this node splits on
-  uint16_t split;
+  uint16_t split = 0;
 
   // Ref to parent, left and right branches
-  uint64_t parent;
+  uint64_t parent = uint64_t(-1);
 
   union
   {
-    uint64_t value;
+    uint64_t value = 0;
     uint64_t left;
   };
-  uint64_t right;
+  uint64_t right = 0;
 
-  bool operator==(KeyValuePair const &kv)
+  bool operator==(KeyValuePair const &kv) const
   {
     return Hash() == kv.Hash();
   }
 
-  bool operator!=(KeyValuePair const &kv)
+  bool operator!=(KeyValuePair const &kv) const
   {
     return Hash() != kv.Hash();
   }
@@ -125,7 +128,7 @@ struct KeyValuePair
 
   bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
     hasher.Update(data);
     hasher.Final(hash, N);
@@ -136,7 +139,7 @@ struct KeyValuePair
 
   bool UpdateNode(KeyValuePair const &left, KeyValuePair const &right)
   {
-    crypto::SHA256 hasher;
+    HashFunction hasher;
     hasher.Reset();
 
     hasher.Update(left.hash, N);
@@ -494,9 +497,9 @@ public:
     return stack_.size();
   }
 
-  void Flush()
+  void Flush(bool lazy = true)
   {
-    stack_.Flush();
+    stack_.Flush(lazy);
   }
 
   bool is_open() const
