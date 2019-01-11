@@ -28,6 +28,8 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
+#include <iostream>
+
 namespace fetch {
 namespace vectorize {
 

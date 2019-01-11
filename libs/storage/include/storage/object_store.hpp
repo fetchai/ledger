@@ -116,7 +116,7 @@ public:
   void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
+    LocklessSet(rid, object);
   }
 
   /**

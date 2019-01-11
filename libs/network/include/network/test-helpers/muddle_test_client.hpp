@@ -40,7 +40,7 @@ public:
     auto tc = std::make_shared<MuddleTestClient>();
     tc->tm.Start();
 
-    tc->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), tc->tm);
+    tc->muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tc->tm);
     tc->muddle->Start({});
 
     tc->client =

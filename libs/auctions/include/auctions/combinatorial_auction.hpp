@@ -86,8 +86,7 @@ public:
 
         std::cout << "de: " << de << std::endl;
 
-
-        double ran_val = static_cast<double>(zero_to_one(gen));
+        double ran_val   = static_cast<double>(zero_to_one(gen));
         double threshold = std::exp(-beta * de);
 
         if (ran_val >= threshold)
@@ -102,8 +101,6 @@ public:
             std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
           }
         }
-
-
       }
 
       // annealing
@@ -145,7 +142,6 @@ private:
   fetch::math::ShapelessArray<double>        local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
-
 
   /**
    * couplings_ = Sum(Bi + Bj) + delta

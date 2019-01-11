@@ -111,6 +111,9 @@ public:
   P2PTrust(P2PTrust &&rhs)      = delete;
   ~P2PTrust() override          = default;
 
+  virtual void Debug() const override
+  {}
+
   void AddFeedback(IDENTITY const &peer_ident, TrustSubject subject, TrustQuality quality) override
   {
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
