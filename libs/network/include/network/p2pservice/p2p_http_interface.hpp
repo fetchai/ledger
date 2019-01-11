@@ -175,7 +175,7 @@ private:
     variant::Variant data = variant::Variant::Object();
 
     data["success"] = true;
-    data["backlog"] = miner_.backlog();
+    data["backlog"] = miner_.GetBacklog();
 
     std::ostringstream oss;
 

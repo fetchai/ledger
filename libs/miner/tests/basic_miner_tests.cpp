@@ -160,14 +160,14 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   slices = slices / 4;
 #endif
 
-  miner_->log2_num_lanes() = platform::Log2Ceil(uint32_t(lanes));
+  miner_->log2_num_lanes() = uint32_t(fetch::platform::Log2Ceil(uint32_t(lanes)));
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;
   std::set<TransactionSummary> transactions_already_seen;
   std::set<TransactionSummary> transactions_within_block;
 
-  while (miner_->backlog() > 0)
+  while (miner_->GetBacklog() > 0)
   {
     BlockBody body;
 
@@ -212,7 +212,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     miner_->EnqueueTransaction(tx_summary);
   }
 
-  while (miner_->backlog() > 0)
+  while (miner_->GetBacklog() > 0)
   {
     BlockBody body;
 
