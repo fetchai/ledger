@@ -55,8 +55,6 @@ public:
   {
     this->size_ = n;
 
-    std::cout << "sizeof(type): " << sizeof(type) << std::endl;
-
     if (n > 0)
     {
       data_ = std::shared_ptr<T>(
