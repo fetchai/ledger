@@ -160,7 +160,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   slices = slices / 4;
 #endif
 
-  miner_->log2_num_lanes() = uint32_t(fetch::platform::Log2Ceil(uint32_t(lanes)));
+  miner_->log2_num_lanes() = fetch::platform::ToLog2(lanes);
 
   PopulateWithTransactions(num_tx, 1);
   MainChain                    chain;

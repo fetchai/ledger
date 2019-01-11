@@ -203,5 +203,12 @@ inline uint64_t Log2Ceil(uint64_t x)
   return count + 1;
 }
 
+uint32_t ToLog2(uint32_t value)
+{
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
+                               static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
 }  // namespace platform
 }  // namespace fetch
