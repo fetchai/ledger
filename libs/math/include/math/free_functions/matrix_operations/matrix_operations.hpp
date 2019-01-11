@@ -794,11 +794,10 @@ void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
   input_array.Reshape(new_shape);
 }
 
-
 template <typename T, typename C>
-void Transpose(NDArray<T, C> &/*input_array*/, NDArray<T, C> const &/*perm*/)
+void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
 {
-  //assert(perm.size() == input_array.shape().size());
+  // assert(perm.size() == input_array.shape().size());
 }
 
 /**
