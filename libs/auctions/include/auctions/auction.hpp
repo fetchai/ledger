@@ -99,7 +99,7 @@ protected:
   BlockIdType end_block_   = std::numeric_limits<BlockIdType>::max();
 
   ItemsContainerType items_{};
-  std::vector<Bid>   bids_{};
+  std::vector<fetch::auctions::Bid>   bids_{};
 
   // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
   bool auction_valid_ = false;
@@ -193,7 +193,7 @@ public:
    * @param bid  a Bid object describing the items to bid on, the price, and the excluded items
    * @return
    */
-  ErrorCode Bid(Bid bid)
+  ErrorCode Bid(fetch::auctions::Bid bid)
   {
     // Check validity of bid and auction
     if (!auction_valid_)
