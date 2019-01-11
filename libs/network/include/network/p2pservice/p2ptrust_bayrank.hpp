@@ -85,7 +85,7 @@ public:
   }
 
   void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
-                   TrustSubject /*subject*/, TrustQuality quality) override
+                   TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOCK(mutex_);
 
