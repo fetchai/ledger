@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,38 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_rpc.hpp"
+namespace fetch {
+namespace fixed_point {
 
-#include <chrono>
-#include <iostream>
-#include <thread>
-
-using std::this_thread::sleep_for;
-using std::chrono::milliseconds;
-
-using fetch::network::NetworkManager;
-using fetch::network::Peer;
-using fetch::muddle::Muddle;
-using fetch::muddle::rpc::Server;
-
-int main()
+struct FixedPointTag
 {
-  NetworkManager nm(1);
-  nm.Start();
+};
 
-  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
-  muddle.Start({8000});
-
-  Sample         sample;
-  SampleProtocol sample_protocol(sample);
-
-  Server server{muddle.AsEndpoint(), 1, 1};
-  server.Add(1, &sample_protocol);
-
-  for (;;)
-  {
-    sleep_for(milliseconds{500});
-  }
-
-  return 0;
-}
+}  // namespace fixed_point
+}  // namespace fetch

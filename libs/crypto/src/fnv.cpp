@@ -21,7 +21,7 @@
 namespace fetch {
 namespace crypto {
 
-std::size_t FNV::hashSize() const
+std::size_t FNV::GetSizeInBytes() const
 {
   return base_impl_type::size_in_bytes;
 }
