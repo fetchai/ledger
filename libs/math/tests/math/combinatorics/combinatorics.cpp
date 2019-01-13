@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,10 +48,29 @@ TEST(combinatorics, test_num_combinations_standard_input)
   std::size_t n = 5;
   std::size_t r = 2;
 
-  float fetch_output  = calculateNumCombinations(n, r);
-  float python_output = 10;
+  std::size_t fetch_output  = calculateNumCombinations(n, r);
+  std::size_t python_output = 10;
 
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_EQ(fetch_output, python_output);
+
+  fetch_output = calculateNumCombinations(9, 4);
+
+  ASSERT_EQ(fetch_output, 126);
+
+  n                        = (1 << 24) + 1;
+  std::size_t matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
+  EXPECT_EQ(matrixHeight, n);
+
+  if (sizeof(n) > 7)
+  {
+    n            = (1llu << 63) - 1;
+    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 1));
+    EXPECT_EQ(matrixHeight, n);
+
+    n            = (1llu << 30) - 1;
+    matrixHeight = static_cast<std::size_t>(calculateNumCombinations(n, 2));
+    EXPECT_EQ(matrixHeight, n * (n - 1) / 2);
+  }
 }
 
 // Combinations function - edge case - n=r
@@ -60,8 +79,8 @@ TEST(combinatorics, test_num_combinations_edge_case1)
   std::size_t n = 5;
   std::size_t r = 5;
 
-  float fetch_output  = calculateNumCombinations(n, r);
-  float python_output = 1;
+  std::size_t fetch_output  = calculateNumCombinations(n, r);
+  std::size_t python_output = 1;
 
   ASSERT_TRUE(fetch_output == python_output);
 }
@@ -72,8 +91,8 @@ TEST(combinatorics, test_num_combinations_edge_case2)
   std::size_t n = 1;
   std::size_t r = 1;
 
-  float fetch_output  = calculateNumCombinations(n, r);
-  float python_output = 1;
+  std::size_t fetch_output  = calculateNumCombinations(n, r);
+  std::size_t python_output = 1;
 
   ASSERT_TRUE(fetch_output == python_output);
 }
@@ -84,8 +103,8 @@ TEST(combinatorics, test_num_combinations_edge_case3)
   std::size_t n = 12;
   std::size_t r = 0;
 
-  float fetch_output  = calculateNumCombinations(n, r);
-  float python_output = 1;
+  std::size_t fetch_output  = calculateNumCombinations(n, r);
+  std::size_t python_output = 1;
 
   ASSERT_TRUE(fetch_output == python_output);
 }

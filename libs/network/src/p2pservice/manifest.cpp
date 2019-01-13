@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ bool Manifest::Parse(ConstByteArray const &text)
     if (doc.root().IsObject())
     {
       // attempt to extract the main section of the manifest
-      if (ExtractSection(doc["p2p"], ServiceType::P2P) &&
+      if (ExtractSection(doc["p2p"], ServiceType::CORE) &&
           ExtractSection(doc["http"], ServiceType::HTTP))
       {
         auto lanes = doc["lanes"];
@@ -125,7 +125,7 @@ bool Manifest::Parse(ConstByteArray const &text)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to parse P2P section of manifest");
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to parse CORE section of manifest");
       }
     }
   }
@@ -198,7 +198,7 @@ std::string Manifest::ToString() const
   oss << '\n';
 
   ToStream(*this, oss, ServiceType::HTTP);
-  ToStream(*this, oss, ServiceType::P2P);
+  ToStream(*this, oss, ServiceType::CORE);
 
   for (std::size_t lane_index = 0;; ++lane_index)
   {

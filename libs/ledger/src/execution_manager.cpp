@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
                                    StorageUnitPtr storage, ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
-  , thread_pool_(network::MakeThreadPool(num_executors))
+  , thread_pool_(network::MakeThreadPool(num_executors, "ExecutionManager"))
 {
   // define all the file paths for the databases
   FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");

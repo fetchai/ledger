@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
 #include "math/shapeless_array.hpp"
-#include "meta/type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <numeric>

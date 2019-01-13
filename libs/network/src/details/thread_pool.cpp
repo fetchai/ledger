@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ using std::this_thread::sleep_for;
  * @param threads The maximum number of threads
  * @return
  */
-ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t threads)
+ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t        threads,
+                                                                         std::string const &name)
 {
-  return std::make_shared<ThreadPoolImplementation>(threads);
+  return std::make_shared<ThreadPoolImplementation>(threads, name);
 }
 
 /**
@@ -41,8 +42,9 @@ ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::si
  *
  * @param threads The maximum number of threads
  */
-ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads)
+ThreadPoolImplementation::ThreadPoolImplementation(std::size_t threads, std::string name)
   : max_threads_(threads)
+  , name_(std::move(name))
 {}
 
 /**
@@ -277,10 +279,16 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
       }
     }
   }
+  catch (std::exception &e)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    name_ + ": Thread_pool ProcessLoop is exiting, because: ", e.what());
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
+  }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread_pool ProcessLoop is exiting.");
-    throw;
+    FETCH_LOG_ERROR(LOGGING_NAME, name_ + ": Thread_pool ProcessLoop is exiting.");
+    TODO_FAIL(name_ + ": ThreadPool: Should not get here!");
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Destroying thread pool worker (thread: ", index, ')');

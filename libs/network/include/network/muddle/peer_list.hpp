@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -82,8 +82,9 @@ public:
 
   /// @name Persistent connections
   /// @{
-  bool        AddPersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Uri const &peer);
+  void AddPersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Handle handle);
   std::size_t GetNumPeers() const;
   /// @}
 
@@ -92,6 +93,7 @@ public:
   bool AddConnection(Uri const &peer, ConnectionPtr const &conn);
   void OnConnectionEstablished(Uri const &peer);
   void RemoveConnection(Uri const &peer);
+  void RemoveConnection(Handle handle);
   void Disconnect(Uri const &peer);
   /// @}
 
@@ -102,8 +104,7 @@ public:
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
-
-  bool UriToHandle(const Uri &uri, Handle &handle) const;
+  Handle UriToHandle(const Uri &uri) const;
 
   void Debug(std::string const &prefix) const;
 

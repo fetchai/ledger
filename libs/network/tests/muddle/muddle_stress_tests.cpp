@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -85,11 +85,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>(4);
-    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>(4);
-    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();
@@ -136,7 +136,7 @@ protected:
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
     subscription->SetMessageHandler([&num_messages](Address const &from, uint16_t service,
                                                     uint16_t channel, uint16_t counter,
-                                                    Payload const &payload) {
+                                                    Payload const &payload, Address const &) {
       EXPECT_EQ(service, uint16_t{SERVICE});
       EXPECT_EQ(channel, uint16_t{CHANNEL});
       EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);
@@ -170,7 +170,7 @@ protected:
     auto subscription = endpoint.Subscribe(SERVICE, CHANNEL);
     subscription->SetMessageHandler(
         [&num_messages, &endpoint](Address const &from, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload) {
+                                   uint16_t counter, Payload const &payload, Address const &) {
           FETCH_LOG_INFO(LOGGING_NAME, "Handling message from: ", ToBase64(from),
                          " size: ", payload.size());
 

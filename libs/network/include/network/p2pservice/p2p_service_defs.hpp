@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ enum class ServiceType : uint16_t
 {
   INVALID = 0,
   LANE    = 1,
-  P2P     = 2,
+  CORE    = 2,
   HTTP    = 3,
 };
 
@@ -38,8 +38,8 @@ inline char const *ToString(ServiceType s)
   {
   case ServiceType::LANE:
     return "Lane";
-  case ServiceType::P2P:
-    return "P2P";
+  case ServiceType::CORE:
+    return "CORE";
   case ServiceType::HTTP:
     return "HTTP";
   case ServiceType::INVALID:
@@ -77,9 +77,9 @@ struct ServiceIdentifier
     return false;
   }
 
-  std::string ToString() const
+  std::string ToString(std::string const &divider = "/") const
   {
-    return std::string{network::ToString(service_type)} + "/" + std::to_string(instance_number);
+    return std::string{network::ToString(service_type)} + divider + std::to_string(instance_number);
   }
 
   bool operator==(ServiceIdentifier const &other) const

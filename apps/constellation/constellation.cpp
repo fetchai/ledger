@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -168,20 +168,22 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              std::string my_network_address, std::size_t processor_threads,
                              std::size_t                         verification_threads,
                              std::chrono::steady_clock::duration block_interval,
-                             std::size_t max_peers, std::size_t transient_peers)
+                             std::size_t max_peers, std::size_t transient_peers,
+                             uint32_t p2p_cycle_time_ms)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_(LookupLocalPort(manifest_, ServiceType::P2P))
+  , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
   , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
+  , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
+            network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers}
+  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
@@ -195,7 +197,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
            block_packer_, consensus_miner_, p2p_port_, block_interval}
   // p2p_port_ fairly arbitrary
-  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
+                                                              block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
@@ -225,6 +228,31 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   for (auto const &module : http_modules_)
   {
     http_.AddModule(*module);
+  }
+
+  CreateInfoFile("info.json");
+}
+
+void Constellation::CreateInfoFile(std::string const &filename)
+{
+  // Create an information file about this process.
+
+  std::fstream stream;
+  stream.open(filename.c_str(), std::ios_base::out);
+  if (stream.good())
+  {
+    variant::Variant data = variant::Variant::Object();
+    data["pid"]           = getpid();
+    data["identity"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    data["hex_identity"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+
+    stream << data;
+
+    stream.close();
+  }
+  else
+  {
+    throw std::invalid_argument(std::string("Can't open ") + filename);
   }
 }
 

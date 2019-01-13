@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,16 +24,16 @@
 #include "math/kernels/standard_deviation.hpp"
 #include "math/kernels/standard_functions.hpp"
 #include "math/kernels/variance.hpp"
-#include "meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 #include <algorithm>
-#include <type_traits>
 #include <vector>
 
 namespace fetch {
@@ -51,7 +51,7 @@ static void ArangeImplementation(DataType const &from, DataType const &to, DataT
 }
 }  // namespace details
 
-template <typename T, typename C = memory::SharedArray<T>>
+template <typename T, typename C = fetch::memory::SharedArray<T>>
 class ShapelessArray
 {
 public:
@@ -67,17 +67,18 @@ public:
   using iterator         = typename container_type::iterator;
   using reverse_iterator = typename container_type::reverse_iterator;
 
-  // TODO(private issue 282): This probably needs to be removed into the meta
-  template <typename Type, typename ReturnType = void>
-  using IsUnsignedLike =
-      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
-                              ReturnType>::type;
-  template <typename Type, typename ReturnType = void>
-  using IsSignedLike =
-      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
-                              ReturnType>::type;
-  template <typename Type, typename ReturnType = void>
-  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value, ReturnType>::type;
+  //  // TODO(private issue 282): This probably needs to be removed into the meta
+  //  template <typename Type, typename ReturnType = void>
+  //  using IsUnsignedLike =
+  //      typename std::enable_if<std::is_integral<Type>::value && std::is_unsigned<Type>::value,
+  //                              ReturnType>::type;
+  //  template <typename Type, typename ReturnType = void>
+  //  using IsSignedLike =
+  //      typename std::enable_if<std::is_integral<Type>::value && std::is_signed<Type>::value,
+  //                              ReturnType>::type;
+  //  template <typename Type, typename ReturnType = void>
+  //  using IsIntegralLike = typename std::enable_if<std::is_integral<Type>::value,
+  //  ReturnType>::type;
 
   static constexpr char const *LOGGING_NAME = "ShapelessArray";
 
@@ -442,8 +443,9 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Unsigned>
-  static IsUnsignedLike<Unsigned, ShapelessArray> Arange(Unsigned const &from, Unsigned const &to,
-                                                         Unsigned const &delta)
+  static fetch::meta::IfIsUnsignedInteger<Unsigned, ShapelessArray> Arange(Unsigned const &from,
+                                                                           Unsigned const &to,
+                                                                           Unsigned const &delta)
   {
     assert(delta != 0);
     assert(from < to);
@@ -461,8 +463,9 @@ public:
    * @return returns a shapeless array with the values in *this over the specified range
    */
   template <typename Signed>
-  static IsSignedLike<Signed, ShapelessArray> Arange(Signed const &from, Signed const &to,
-                                                     Signed const &delta)
+  static fetch::meta::IfIsSignedInteger<Signed, ShapelessArray> Arange(Signed const &from,
+                                                                       Signed const &to,
+                                                                       Signed const &delta)
   {
     assert(delta != 0);
     assert(((from < to) && delta > 0) || ((from > to) && delta < 0));
@@ -479,7 +482,8 @@ public:
    * @return a reference to this
    */
   template <typename DataType>
-  IsIntegralLike<DataType, ShapelessArray> FillArange(DataType const &from, DataType const &to)
+  fetch::meta::IfIsInteger<DataType, ShapelessArray> FillArange(DataType const &from,
+                                                                DataType const &to)
   {
     ShapelessArray ret;
 
@@ -561,8 +565,8 @@ public:
     return ret;
   }
 
-  bool AllClose(self_type const &other, Type const &rtol = Type(1e-5),
-                Type const &atol = Type(1e-8), bool ignoreNaN = true) const
+  bool AllClose(self_type const &other, double const &rtol = 1e-5, double const &atol = 1e-8,
+                bool ignoreNaN = true) const
   {
     std::size_t N = this->size();
     if (other.size() != N)
@@ -570,19 +574,19 @@ public:
       return false;
     }
     bool ret = true;
-    for (std::size_t i = 0; ret && i < N; ++i)
+    for (std::size_t i = 0; ret && (i < N); ++i)
     {
-      Type va = this->At(i);
+      double va = static_cast<double>(this->At(i));
       if (ignoreNaN && std::isnan(va))
       {
         continue;
       }
-      Type vb = other[i];
+      double vb = static_cast<double>(other[i]);
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
       }
-      Type vA = (va - vb);
+      double vA = (va - vb);
       if (vA < 0)
       {
         vA = -vA;
@@ -595,25 +599,25 @@ public:
       {
         vb = -vb;
       }
-      Type M = std::max(va, vb);
+      double M = std::max(va, vb);
 
-      ret &= (vA < std::max(atol, M * rtol));
+      ret = (vA <= std::max(atol, M * rtol));
     }
     if (!ret)
     {
       for (std::size_t i = 0; i < N; ++i)
       {
-        Type va = this->At(i);
+        double va = this->At(i);
         if (ignoreNaN && std::isnan(va))
         {
           continue;
         }
-        Type vb = other[i];
+        double vb = other[i];
         if (ignoreNaN && std::isnan(vb))
         {
           continue;
         }
-        Type vA = (va - vb);
+        double vA = (va - vb);
         if (vA < 0)
         {
           vA = -vA;
@@ -626,8 +630,8 @@ public:
         {
           vb = -vb;
         }
-        Type M = std::max(va, vb);
-        std::cout << this->At(i) << " " << other[i] << " "
+        double M = std::max(va, vb);
+        std::cout << static_cast<double>(this->At(i)) << " " << static_cast<double>(other[i]) << " "
                   << ((vA < std::max(atol, M * rtol)) ? " " : "*") << std::endl;
       }
     }
