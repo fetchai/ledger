@@ -213,7 +213,8 @@ public:
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
   }
 
-  bool Get(BlockHash hash, BlockType &block) const
+  // TODO(private issue 512): storage code blocks this being const
+  bool Get(BlockHash hash, BlockType &block)
   {
     RLock lock(main_mutex_);
 
@@ -225,7 +226,15 @@ public:
       return true;
     }
 
-    return false;
+    bool success = block_store_.Get(storage::ResourceID(hash), block);
+
+    // All blocks in block store are guaranteed not loose
+    if (success)
+    {
+      block.loose() = false;
+    }
+
+    return success;
   }
 
   std::vector<BlockHash> GetMissingBlockHashes(size_t maximum)
@@ -246,6 +255,99 @@ public:
   {
     RLock lock(loose_mutex_);
     return !loose_blocks_.empty();
+  }
+
+  /**
+   * Strip transactions in container that already exist in the blockchain
+   *
+   * @param: starting_hash Block to start looking downwards from
+   * @tparam: container Container to remove transactions from
+   *
+   * @return: bool whether the starting hash referred to a valid block on a valid chain
+   */
+  template <typename T>
+  bool StripAlreadySeenTx(BlockHash starting_hash, T &container)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting TX uniqueness verify");
+
+    BlockType   block;
+    std::size_t blocks_checked = 0;
+    auto        t1             = std::chrono::high_resolution_clock::now();
+
+    if (!Get(starting_hash, block) || block.loose())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
+      return false;
+    }
+
+    // Need a set for quickly checking whether transactions are in our container
+    std::set<TransactionSummary>    transactions_to_check;
+    std::vector<TransactionSummary> transactions_duplicated;
+
+    for (auto const &tx : container)
+    {
+      transactions_to_check.insert(tx.transaction);
+    }
+
+    do
+    {
+      blocks_checked++;
+
+      for (auto const &slice : block.body().slices)
+      {
+        for (auto const &tx : slice.transactions)
+        {
+          auto it = transactions_to_check.find(tx);
+
+          // Found a TX in the blockchiain that is in our container
+          if (it != transactions_to_check.end())
+          {
+            transactions_duplicated.push_back(tx);
+          }
+        }
+      }
+    } while (Get(block.body().previous_hash,
+                 block));  // Note we don't need to hold the lock for the whole search
+
+    std::size_t duplicated_counter = 0;
+
+    // remove duplicate transactions
+    if (transactions_duplicated.size() > 0)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "TX uniqueness verify - found duplicate TXs!: ",
+                     transactions_duplicated.size());
+
+      // Iterate our container
+      auto it = container.cbegin();
+
+      // Reomve this item from our container if is duplicate
+      while (it != container.end())
+      {
+        // We expect the number of duplicates to be low so vector search should be fine
+        if (std::find(transactions_duplicated.begin(), transactions_duplicated.end(),
+                      (*it).transaction) != transactions_duplicated.end())
+        {
+          it = container.erase(it);
+          duplicated_counter++;
+          continue;
+        }
+
+        it++;
+      }
+    }
+
+    if (duplicated_counter != transactions_duplicated.size())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Warning! Duplicated transactions might not be removed from block. Seen: ",
+                     transactions_duplicated.size(), " Removed: ", duplicated_counter);
+    }
+
+    auto   t2         = std::chrono::high_resolution_clock::now();
+    double time_taken = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify - time (s): ", time_taken,
+                   " checked blocks: ", blocks_checked);
+    return true;
   }
 
 private:
@@ -334,7 +436,6 @@ private:
 
   bool GetPrev(BlockType &block)
   {
-
     if (block.body().previous_hash == block.hash())
     {
       return false;
@@ -344,7 +445,8 @@ private:
 
     if (it == block_chain_.end())
     {
-      return false;
+      // Fallback - look in storage for block
+      return block_store_.Get(storage::ResourceID(block.body().previous_hash), block);
     }
 
     block = it->second;

@@ -30,12 +30,10 @@
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
 using fetch::chain::VerifiedTransaction;
 using fetch::chain::MutableTransaction;
-using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
 using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;

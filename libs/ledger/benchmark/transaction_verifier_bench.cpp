@@ -29,7 +29,6 @@
 #include <thread>
 
 using fetch::chain::VerifiedTransaction;
-using fetch::chain::MutableTransaction;
 using fetch::ledger::TransactionVerifier;
 using fetch::crypto::ECDSASigner;
 

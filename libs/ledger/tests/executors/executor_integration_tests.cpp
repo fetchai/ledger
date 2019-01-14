@@ -35,8 +35,6 @@
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
-using ::testing::_;
-
 class ExecutorIntegrationTests : public ::testing::Test
 {
 protected:

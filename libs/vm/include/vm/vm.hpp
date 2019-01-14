@@ -246,7 +246,7 @@ private:
     sp_ += num_locals;
   }
 
-  void ReleaseObject(Object *object, const TypeId type_id)
+  void ReleaseObject(Object *object, const TypeId /*type_id*/)
   {
     delete object;
   }
@@ -864,7 +864,7 @@ private:
   }
 
   template <typename ElementType>
-  void HandleMatrixIndexedAssignment(const TypeId type_id)
+  void HandleMatrixIndexedAssignment(const TypeId /*type_id*/)
   {
     ElementType *ptr;
     if (GetMatrixElement(ptr) == false)
@@ -879,7 +879,7 @@ private:
   }
 
   template <typename ElementType>
-  void HandlePrimitiveArrayIndexedAssignment(const TypeId type_id)
+  void HandlePrimitiveArrayIndexedAssignment(const TypeId /*type_id*/)
   {
     ElementType *ptr;
     if (GetArrayElement<ElementType>(ptr) == false)
@@ -906,7 +906,7 @@ private:
     }
   }
 
-  void HandleObjectArrayIndexedAssignment(const TypeId type_id)
+  void HandleObjectArrayIndexedAssignment(const TypeId /*type_id*/)
   {
     Object **ptr;
     if (GetArrayElement<Object *>(ptr) == false)
@@ -1520,7 +1520,7 @@ private:
   }
 
   template <typename M>
-  void MatrixMatrixMultiply(Value &lhsv, Value &rhsv, M *lhs, M *rhs)
+  void MatrixMatrixMultiply(Value &lhsv, Value & /*rhsv*/, M *lhs, M *rhs)
   {
     const size_t lhs_rows    = lhs->matrix.height();
     const size_t lhs_columns = lhs->matrix.width();
@@ -1701,11 +1701,11 @@ private:
   struct EqualOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsEqual(lhs, rhs)), TypeId::Bool);
     }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, String *lhs, String *rhs)
     {
       const uint8_t value = uint8_t(lhs->str == rhs->str);
       lhsv.SetPrimitive(value, TypeId::Bool);
@@ -1715,11 +1715,11 @@ private:
   struct NotEqualOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsNotEqual(lhs, rhs)), TypeId::Bool);
     }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, String *lhs, String *rhs)
     {
       const uint8_t value = uint8_t(lhs->str != rhs->str);
       lhsv.SetPrimitive(value, TypeId::Bool);
@@ -1729,7 +1729,7 @@ private:
   struct LessThanOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsLessThan(lhs, rhs)), TypeId::Bool);
     }
@@ -1738,7 +1738,7 @@ private:
   struct LessThanOrEqualOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsLessThanOrEqual(lhs, rhs)), TypeId::Bool);
     }
@@ -1747,7 +1747,7 @@ private:
   struct GreaterThanOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsGreaterThan(lhs, rhs)), TypeId::Bool);
     }
@@ -1756,7 +1756,7 @@ private:
   struct GreaterThanOrEqualOp
   {
     template <typename T>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value &lhsv, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhsv.SetPrimitive(uint8_t(math::IsGreaterThanOrEqual(lhs, rhs)), TypeId::Bool);
     }
@@ -1765,7 +1765,7 @@ private:
   struct AddOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhs = T(lhs + rhs);
     }
@@ -1776,16 +1776,16 @@ private:
     }
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, M *lhs, T &rhs)
     {
       vm->MatrixNumberAdd(lhsv, lhs, rhs);
     }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T & /*lhs*/, M * /*rhs*/)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, String *lhs, String *rhs)
     {
       if (lhs->count == 1)
       {
@@ -1803,7 +1803,7 @@ private:
   struct SubtractOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhs = T(lhs - rhs);
     }
@@ -1814,23 +1814,24 @@ private:
     }
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, M *lhs, T &rhs)
     {
       vm->MatrixNumberSubtract(lhsv, lhs, rhs);
     }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T & /*lhs*/, M * /*rhs*/)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, String * /*lhs*/,
+                      String * /*rhs*/)
     {}
   };
 
   struct MultiplyOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       lhs = T(lhs * rhs);
     }
@@ -1841,7 +1842,7 @@ private:
     }
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, M *lhs, T &rhs)
     {
       vm->MatrixNumberMultiply(lhsv, lhs, rhs);
     }
@@ -1852,14 +1853,15 @@ private:
     {
       vm->NumberMatrixMultiply(lhsv, rhsv, lhs, rhs);
     }
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, String * /*lhs*/,
+                      String * /*rhs*/)
     {}
   };
 
   struct DivideOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM *vm, Value & /*lhsv*/, Value & /*rhsv*/, T &lhs, T &rhs)
     {
       if (math::IsNonZero(rhs))
       {
@@ -1869,52 +1871,54 @@ private:
       vm->RuntimeError("division by zero");
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, M *lhs, T &rhs)
     {
       vm->MatrixNumberDivide(lhsv, lhs, rhs);
     }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T & /*lhs*/, M * /*rhs*/)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, String * /*lhs*/,
+                      String * /*rhs*/)
     {}
   };
 
   struct UnaryMinusOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T &lhs, T & /*rhs*/)
     {
       lhs = T(-lhs);
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, M *lhs, T &rhs)
+    static void Apply(VM *vm, Value &lhsv, Value & /*rhsv*/, M *lhs, T & /*rhs*/)
     {
       vm->MatrixUnaryMinus<M, T>(lhsv, lhs);
     }
     template <typename T, typename M,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr,
               typename std::enable_if<IsMatrix<M>::value>::type *           = nullptr>
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, T &lhs, M *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, T & /*lhs*/, M * /*rhs*/)
     {}
-    static void Apply(VM *vm, Value &lhsv, Value &rhsv, String *lhs, String *rhs)
+    static void Apply(VM * /*vm*/, Value & /*lhsv*/, Value & /*rhsv*/, String * /*lhs*/,
+                      String * /*rhs*/)
     {}
   };
 
   struct AddAssignOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = T(lhs + rhs);
     }
@@ -1934,7 +1938,7 @@ private:
   struct SubtractAssignOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = T(lhs - rhs);
     }
@@ -1954,7 +1958,7 @@ private:
   struct MultiplyAssignOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = T(lhs * rhs);
     }
@@ -1984,7 +1988,7 @@ private:
       vm->RuntimeError("division by zero");
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
@@ -1997,64 +2001,64 @@ private:
   struct PrefixIncOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = ++rhs;
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, T & /*rhs*/)
     {}
   };
 
   struct PrefixDecOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = --rhs;
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, T & /*rhs*/)
     {}
   };
 
   struct PostfixIncOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = rhs++;
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, T & /*rhs*/)
     {}
   };
 
   struct PostfixDecOp
   {
     template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, T &lhs, T &rhs)
+    static void Apply(VM * /*vm*/, T &lhs, T &rhs)
     {
       lhs = rhs--;
     }
     template <typename M, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, M *rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, M * /*rhs*/)
     {}
     template <typename M, typename T, typename std::enable_if<IsMatrix<M>::value>::type * = nullptr,
               typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    static void Apply(VM *vm, M *lhs, T &rhs)
+    static void Apply(VM * /*vm*/, M * /*lhs*/, T & /*rhs*/)
     {}
   };
 };

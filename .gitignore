@@ -17,6 +17,7 @@ nodes/
 *.swp
 .idea/
 *.osm
+tags
 
 *.gz
 *.so

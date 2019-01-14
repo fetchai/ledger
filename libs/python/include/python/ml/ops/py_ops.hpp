@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <typename ArrayType>
-inline void BuildOps(std::string const &custom_name, pybind11::module &module)
+inline void BuildOps(std::string const & /*custom_name*/, pybind11::module &module)
 {
   using SessionType     = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
   using VariableType    = fetch::ml::Variable<ArrayType>;
