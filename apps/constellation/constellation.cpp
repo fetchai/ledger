@@ -36,8 +36,6 @@
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
-using fetch::network::Peer;
-using fetch::network::TCPClient;
 using fetch::network::Manifest;
 using fetch::network::ServiceType;
 using fetch::network::Uri;
@@ -51,7 +49,8 @@ using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
 using fetch::chain::consensus::ConsensusMinerType;
 
-using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+using ConsensusMinerInterfacePtr =
+    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -129,23 +128,23 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
 /**
  * ConsensusMinerInterface factory method
  */
-ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_type)
 {
+  ConsensusMinerInterfacePtr miner;
+
   switch (miner_type)
   {
+  case ConsensusMinerType::NO_MINER:
+    break;
   case ConsensusMinerType::DUMMY_MINER:
-  {
-    return std::make_shared<DummyMiner>();
-  }
+    miner = std::make_shared<DummyMiner>();
+    break;
   case ConsensusMinerType::BAD_MINER:
-  {
-    return std::make_shared<BadMiner>();
+    miner = std::make_shared<BadMiner>();
+    break;
   }
-  default:
-  {
-    return nullptr;
-  }
-  }
+
+  return miner;
 }
 
 }  // namespace
@@ -165,7 +164,7 @@ ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string my_network_address, std::size_t processor_threads,
+                             std::string /*my_network_address*/, std::size_t   processor_threads,
                              std::size_t                         verification_threads,
                              std::chrono::steady_clock::duration block_interval,
                              std::size_t max_peers, std::size_t transient_peers,

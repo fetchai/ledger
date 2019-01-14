@@ -50,7 +50,7 @@ public:
   }
   ~Server() = default;
 
-  void PushRequest(connection_handle_type client, message_type const &msg) override
+  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
     std::cerr << "Message: " << msg << std::endl;
   }
@@ -94,7 +94,7 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase0(std::string host, uint16_t port)
+void TestCase0(std::string /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 0. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;
@@ -110,7 +110,7 @@ void TestCase0(std::string host, uint16_t port)
 }
 
 template <std::size_t N = 1>
-void TestCase1(std::string host, uint16_t port)
+void TestCase1(std::string /*host*/, uint16_t port)
 {
   std::cerr << "\nTEST CASE 1. Threads: " << N << std::endl;
   std::cerr << "Info: Attempting to open the server multiple times" << std::endl;

@@ -29,7 +29,7 @@ public:
   {
     std::cout << a << " " << b << " " << c << std::endl;
   }
-  void Blah(int n)
+  void Blah(int /*n*/)
   {}
 };
 
