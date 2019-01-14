@@ -17,11 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/layers/layers.hpp"
-//#include <iostream>
-//#include <memory>
-//#include <unordered_map>
-//#include <unordered_set>
 #include "auctions/auction.hpp"
 
 namespace fetch {

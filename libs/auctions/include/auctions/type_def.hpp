@@ -21,8 +21,8 @@
 namespace fetch {
 namespace auctions {
 
-struct Item;
-struct Bid;
+class Item;
+class Bid;
 
 using ItemIdType         = std::size_t;
 using BidIdType          = std::size_t;

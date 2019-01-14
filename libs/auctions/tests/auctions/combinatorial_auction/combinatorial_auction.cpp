@@ -99,7 +99,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid1.price  = 1;
   bid1.bidder = bidders[0].id;
   bid1.items.push_back(items[3]);
-  ca.Bid(bid1);
+  ca.PlaceBid(bid1);
 
   bid2.id     = 1;
   bid2.price  = 30;
@@ -109,7 +109,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid2.items.push_back(items[3]);
   bid2.excludes.push_back(bid1);
   bid2.excludes.push_back(bid3);
-  ca.Bid(bid2);
+  ca.PlaceBid(bid2);
 
   bid3.id     = 2;
   bid3.price  = 20;
@@ -118,7 +118,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid3.items.push_back(items[3]);
   bid3.excludes.push_back(bid2);
   bid3.excludes.push_back(bid1);
-  ca.Bid(bid3);
+  ca.PlaceBid(bid3);
 
   // 0 0 0 - value 0                        - valid
   // 0 0 1 - value 8                        - win

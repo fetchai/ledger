@@ -22,16 +22,24 @@
 namespace fetch {
 namespace auctions {
 
+constexpr BidIdType DefaultBidId = std::numeric_limits<BidIdType>::max();
+constexpr ValueType DefaultBidPrice = std::numeric_limits<AgentIdType>::min();
+constexpr AgentIdType DefaultBidBidder = std::numeric_limits<AgentIdType>::max();
+
 /**
  * A bid upon (potentially many) items
  */
-struct Bid
+class Bid
 {
-  BidIdType         id;
+public:
+
+  Bid() = default;
+
+  BidIdType         id = DefaultBidId;
   std::vector<Item> items{};
-  ValueType         price = 0;
+  ValueType         price = DefaultBidPrice;
   std::vector<Bid>  excludes{};
-  AgentIdType       bidder = std::numeric_limits<AgentIdType>::max();
+  AgentIdType       bidder = DefaultBidBidder;
 };
 
 } // auctions

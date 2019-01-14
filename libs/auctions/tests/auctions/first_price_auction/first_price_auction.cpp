@@ -77,7 +77,7 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
     cur_bid.bidder = bidders[j].id;
     cur_bid.items.push_back(item);
 
-    a.Bid(cur_bid);
+    a.PlaceBid(cur_bid);
   }
 
   std::size_t cur_block       = start_block;
