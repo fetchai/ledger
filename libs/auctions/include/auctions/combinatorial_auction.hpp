@@ -21,7 +21,8 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/linalg/matrix.hpp"
 
-#include <random>
+#include "core/random/lfg.hpp"
+#include "core/random/lcg.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -54,10 +55,8 @@ public:
 
     std::size_t rejected = 0;
 
-    std::random_device                         rd{};
-    std::mt19937                               gen{rd()};
-    std::uniform_int_distribution<std::size_t> d(1, bids_.size());
-    std::uniform_real_distribution<ValueType>  zero_to_one(0.0, 1.0);
+    fetch::random::LaggedFibonacciGenerator<> int_gen(random_seed);
+    fetch::random::LinearCongruentialGenerator real_gen;
 
     for (std::size_t i = 0; i < run_time; ++i)
     {
@@ -66,10 +65,10 @@ public:
         prev_active_ = active_;
         prev_reward  = TotalBenefit();
 
-        auto nn = d(gen);
+        std::size_t nn = static_cast<std::size_t>(1 + int_gen() % bids_.size());
         for (std::size_t k = 0; k < nn; ++k)
         {
-          auto n = d(gen) - 1;
+          std::size_t n = static_cast<std::size_t>(int_gen() % bids_.size());
 
           if (active_[n] == 1)
           {
@@ -86,7 +85,7 @@ public:
 
         std::cout << "de: " << de << std::endl;
 
-        ValueType ran_val   = static_cast<ValueType>(zero_to_one(gen));
+        ValueType ran_val   = static_cast<ValueType>(real_gen.AsDouble());
         ValueType threshold = std::exp(-beta * de);
 
         if (ran_val >= threshold)
