@@ -158,7 +158,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   {
     std::cout << "ca.active_[j]: " << ca.Active(j) << std::endl;
 
-    //    ASSERT_TRUE(execution_block == end_block);
+    ASSERT_TRUE(execution_block == end_block);
     //    ASSERT_TRUE(ca.Winner(j) == bidders[bidders.size() - 1].id);
     //    ASSERT_TRUE(ca.Items()[j].sell_price == bidders[bidders.size() - 2].funds / 10);
     //    ca.Winner(j);
