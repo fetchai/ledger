@@ -23,7 +23,7 @@
 namespace fetch {
 namespace p2p {
 
-std::ostream& operator<<(std::ostream& o, const fetch::p2p::TrustQuality& q)
+std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustQuality &q)
 {
   o << ToString(q);
   return o;
@@ -32,51 +32,30 @@ std::ostream& operator<<(std::ostream& o, const fetch::p2p::TrustQuality& q)
 using Gaussian = math::statistics::Gaussian<double>;
 
 ReferencePlayers const reference_players_{
-    {
-      TrustSubject :: BLOCK, TrustQualityArrayGaussian
-      {
-        {/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
-         /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
-         /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-         /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.),
-         /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)
-        }
-      }
-    },
-    {
-      TrustSubject :: PEER, TrustQualityArrayGaussian
-      {
-         {/* LIED             */ Gaussian::ClassicForm(0, 100 / 12.),
-          /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
-          /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-          /* NEW_INFORMATION  */ Gaussian::ClassicForm(90, 100 / 6.),
-          /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)
-         }
-      }
-    },
-    {
-      TrustSubject::TRANSACTION, TrustQualityArrayGaussian
-      {
-         {/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
-          /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
-          /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
-          /* NEW_INFORMATION  */ Gaussian::ClassicForm(90, 100 / 6.),
-          /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)
-         }
-      }
-    },
-    {
-      TrustSubject :: OBJECT, TrustQualityArrayGaussian
-      {
-        {/* LIED             */ Gaussian::ClassicForm(40, 100 / 3.),
-         /* BAD_CONNECTION   */ Gaussian::ClassicForm(65, 100 / 2.),
-         /* DUPLICATE        */ Gaussian::ClassicForm(70, 100 / 2.),
-         /* NEW_INFORMATION  */ Gaussian::ClassicForm(80, 100 / 3.),
-         /* NEW_PEER         */ Gaussian::ClassicForm(80, 100 / 2.)
-        }
-      }
-    }
-};
+    {TrustSubject ::BLOCK,
+     TrustQualityArrayGaussian{{/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
+                                /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
+                                /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
+                                /* NEW_INFORMATION  */ Gaussian::ClassicForm(100, 100 / 6.),
+                                /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)}}},
+    {TrustSubject ::PEER,
+     TrustQualityArrayGaussian{{/* LIED             */ Gaussian::ClassicForm(0, 100 / 12.),
+                                /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
+                                /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
+                                /* NEW_INFORMATION  */ Gaussian::ClassicForm(90, 100 / 6.),
+                                /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)}}},
+    {TrustSubject::TRANSACTION,
+     TrustQualityArrayGaussian{{/* LIED             */ Gaussian::ClassicForm(0, 100 / 24.),
+                                /* BAD_CONNECTION   */ Gaussian::ClassicForm(50, 100 / 2.),
+                                /* DUPLICATE        */ Gaussian::ClassicForm(80, 100 / 6.),
+                                /* NEW_INFORMATION  */ Gaussian::ClassicForm(90, 100 / 6.),
+                                /* NEW_PEER         */ Gaussian::ClassicForm(100, 100 / 6.)}}},
+    {TrustSubject ::OBJECT,
+     TrustQualityArrayGaussian{{/* LIED             */ Gaussian::ClassicForm(40, 100 / 3.),
+                                /* BAD_CONNECTION   */ Gaussian::ClassicForm(65, 100 / 2.),
+                                /* DUPLICATE        */ Gaussian::ClassicForm(70, 100 / 2.),
+                                /* NEW_INFORMATION  */ Gaussian::ClassicForm(80, 100 / 3.),
+                                /* NEW_PEER         */ Gaussian::ClassicForm(80, 100 / 2.)}}}};
 
 }  // namespace p2p
 }  // namespace fetch

@@ -200,16 +200,19 @@ void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
-  try {
+  try
+  {
     // connect to all the required peers
-    for (Uri const &peer : clients_.GetPeersToConnectTo()) {
-      switch (peer.scheme()) {
-        case Uri::Scheme::Tcp:
-          CreateTcpClient(peer);
-          break;
-        default:
-          FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-          break;
+    for (Uri const &peer : clients_.GetPeersToConnectTo())
+    {
+      switch (peer.scheme())
+      {
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
       }
     }
 
@@ -219,7 +222,8 @@ void Muddle::RunPeriodicMaintenance()
     {
       // clean up and pending message handlers and also trigger the timeout logic
       auto bad_connections = dispatcher_.Cleanup();
-      if (trust_system_ != nullptr) {
+      if (trust_system_ != nullptr)
+      {
         PeerConnectionList::UriMap uri_map;
         if (bad_connections.size() > 0)
         {
@@ -243,7 +247,8 @@ void Muddle::RunPeriodicMaintenance()
             if (status > PeerConnectionList::ConnectionState::BACKOFF &&
                 status <= PeerConnectionList::ConnectionState::BACKOFF_5)
             {
-              trust_system_->AddObjectFeedback(address, p2p::TrustSubject::PEER, p2p::TrustQuality::BAD_CONNECTION);
+              trust_system_->AddObjectFeedback(address, p2p::TrustSubject::PEER,
+                                               p2p::TrustQuality::BAD_CONNECTION);
             }
           }
         }
@@ -321,7 +326,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
-    trust_system_->AddFeedback(peer.AsIdentity(), p2p::TrustSubject::PEER, p2p::TrustQuality::BAD_CONNECTION);
+    trust_system_->AddFeedback(peer.AsIdentity(), p2p::TrustSubject::PEER,
+                               p2p::TrustQuality::BAD_CONNECTION);
   });
 
   strong_conn->OnLeave([this, peer]() {
@@ -368,7 +374,6 @@ void Muddle::Whitelist(Address const &target)
 {
   router_.Whitelist(target);
 }
-
 
 bool Muddle::IsBlacklisted(Address const &target) const
 {

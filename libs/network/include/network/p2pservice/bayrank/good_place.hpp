@@ -19,15 +19,15 @@
 
 #include "network/p2pservice/bayrank/trust_storage_interface.hpp"
 
-#include <vector>
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
 namespace bayrank {
 
-    template <typename IDENTITY>
+template <typename IDENTITY>
 class GoodPlace : public TrustStorageInterface<IDENTITY>
 {
 protected:
@@ -36,18 +36,18 @@ protected:
   using TrustStorageInterface<IDENTITY>::id_store_;
 
 public:
-  using Trust = typename TrustStorageInterface<IDENTITY>::Trust;
+  using Trust                               = typename TrustStorageInterface<IDENTITY>::Trust;
   static constexpr char const *LOGGING_NAME = "GoodPlace";
 
   GoodPlace()  = default;
   ~GoodPlace() = default;
 
-  GoodPlace(const GoodPlace &rhs)            = delete;
-  GoodPlace(GoodPlace &&rhs)                 = delete;
+  GoodPlace(const GoodPlace &rhs) = delete;
+  GoodPlace(GoodPlace &&rhs)      = delete;
   GoodPlace &operator=(const GoodPlace &rhs) = delete;
-  GoodPlace &operator=(GoodPlace &&rhs)      = delete;
+  GoodPlace &operator=(GoodPlace &&rhs) = delete;
 
-  void AddPeer(Trust &&trust)  override
+  void AddPeer(Trust &&trust) override
   {
     FETCH_LOCK(storage_mutex_);
     if (this->IsInStoreLockLess(trust, "buffer"))
@@ -55,13 +55,13 @@ public:
       return;
     }
     auto const size = storage_.size();
-    if (size>=MAX_SIZE)
+    if (size >= MAX_SIZE)
     {
-      if (storage_[size-1].score<=trust.score)
+      if (storage_[size - 1].score <= trust.score)
       {
-        id_store_[trust.peer_identity] = size-1;
-        id_store_.erase(storage_[size-1].peer_identity);
-        storage_[size-1] = std::move(trust);
+        id_store_[trust.peer_identity] = size - 1;
+        id_store_.erase(storage_[size - 1].peer_identity);
+        storage_[size - 1] = std::move(trust);
       }
     }
     else
@@ -72,11 +72,10 @@ public:
     this->Sort();
   }
 
-
 private:
-    std::size_t const MAX_SIZE = 1000;
+  std::size_t const MAX_SIZE = 1000;
 };
 
-}  //namespace bayrank
+}  // namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

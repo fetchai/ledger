@@ -242,11 +242,10 @@ void Router::Route(Handle handle, PacketPtr packet)
   if (blacklist_.Contains(packet->GetSenderRaw()))
   {
     // this is where we prevent incoming connections.
-      FETCH_LOG_WARN(LOGGING_NAME,
-                       "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
-                       "  killing handle=", handle);
-      KillConnection(handle);
-      return;
+    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
+                   "  killing handle=", handle);
+    KillConnection(handle);
+    return;
   }
 
   if (packet->IsDirect())
@@ -261,7 +260,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 
     if (HandleToDirectAddress(handle, transmitter))
     {
-    DispatchPacket(packet, transmitter);
+      DispatchPacket(packet, transmitter);
     }
     else
     {
@@ -420,21 +419,22 @@ void Router::Debug(std::string const &prefix) const
   for (const auto &routing : direct_address_map_)
   {
     auto output = ToBase64(routing.second);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output), " -> handle=", std::to_string(routing.first), " direct=by definition" );
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
+                   " -> handle=", std::to_string(routing.first), " direct=by definition");
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "direct_address_map_: --------------------------------------");
 
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   for (const auto &routing : routing_table_)
   {
     ByteArray output(routing.first.size());
     std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)), " -> handle=", std::to_string(routing.second.handle), " direct=", routing.second.direct);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
+                   " -> handle=", std::to_string(routing.second.handle),
+                   " direct=", routing.second.direct);
   }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "routing_table_: --------------------------------------");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
   registrar_.Debug(prefix);
 }
 
@@ -545,7 +545,6 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
 
   // sanity check
   assert(handle);
-
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)

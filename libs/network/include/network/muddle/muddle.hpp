@@ -26,10 +26,10 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/router.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
-#include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <chrono>
 #include <memory>
@@ -139,7 +139,7 @@ public:
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
                                               fetch::network::NetworkManager tm,
-                                              TrustSystem *                  trust_system=nullptr)
+                                              TrustSystem *                  trust_system = nullptr)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
@@ -155,7 +155,7 @@ public:
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
                                               std::unique_ptr<crypto::Prover> prover,
                                               fetch::network::NetworkManager  tm,
-                                              TrustSystem *                   trust_system=nullptr)
+                                              TrustSystem *trust_system = nullptr)
   {
     auto ptr = std::make_shared<Muddle>(network_id, std::move(prover), tm);
     ptr->SetUpTrust(trust_system);
@@ -212,7 +212,6 @@ public:
     router_.Debug(prefix);
     clients_.Debug(prefix);
   }
-
 
   void SetUpTrust(TrustSystem *trust_system)
   {

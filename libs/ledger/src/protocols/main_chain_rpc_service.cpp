@@ -218,7 +218,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 }
 
-void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address, bool same_address)
+void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address,
+                                        bool same_address)
 {
   if (!workthread_)
   {
@@ -284,18 +285,20 @@ void MainChainRpcService::ServiceLooseBlocks()
   {
     if (failed_worker->IsSamePeer())
     {
-      trust_.AddObjectFeedback(failed_worker->hash(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
+      trust_.AddObjectFeedback(failed_worker->hash(), p2p::TrustSubject::BLOCK,
+                               p2p::TrustQuality::BAD_CONNECTION);
     }
   }
   for (auto &timeouted_worker : bg_work_.GetTimeouts(1000))
   {
     if (timeouted_worker->IsSamePeer())
     {
-      trust_.AddObjectFeedback(timeouted_worker->hash(), p2p::TrustSubject::BLOCK, p2p::TrustQuality::BAD_CONNECTION);
+      trust_.AddObjectFeedback(timeouted_worker->hash(), p2p::TrustSubject::BLOCK,
+                               p2p::TrustQuality::BAD_CONNECTION);
     }
   }
 
-  if (bg_work_.CountFailures()>0 || bg_work_.CountTimeouts()>0)
+  if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)
   {
     bg_work_.DiscardFailures();
     bg_work_.DiscardTimeouts();

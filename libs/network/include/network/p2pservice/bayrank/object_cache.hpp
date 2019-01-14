@@ -19,9 +19,9 @@
 
 #include "core/mutex.hpp"
 
+#include <functional>
 #include <unordered_map>
 #include <vector>
-#include <functional>
 
 namespace fetch {
 namespace p2p {
@@ -33,7 +33,7 @@ class ObjectCache
 public:
   using IdentityStore = std::vector<IDENTITY>;
   using Store         = std::unordered_map<OBJECT_TYPE, IdentityStore>;
-  using Function      = std::function<void(IDENTITY const&)>;
+  using Function      = std::function<void(IDENTITY const &)>;
   using Mutex         = mutex::Mutex;
 
   ObjectCache()                       = default;
@@ -45,12 +45,11 @@ public:
   ObjectCache operator=(const ObjectCache &rhs) = delete;
   ObjectCache operator=(ObjectCache &&rhs) = delete;
 
-
   void Add(OBJECT_TYPE const &object, IDENTITY const &identity)
   {
     FETCH_LOCK(mutex_);
     auto it = storage_.find(object);
-    if (it!=storage_.end())
+    if (it != storage_.end())
     {
       it->second.push_back(identity);
       return;
@@ -67,11 +66,11 @@ public:
   {
     FETCH_LOCK(mutex_);
     auto it = storage_.find(object);
-    if (it==storage_.end())
+    if (it == storage_.end())
     {
       return false;
     }
-    for(auto const &identity : it->second)
+    for (auto const &identity : it->second)
     {
       function(identity);
     }
@@ -80,9 +79,9 @@ public:
 
 private:
   mutable Mutex mutex_{__LINE__, __FILE__};
-  Store storage_;
+  Store         storage_;
 };
 
-} //namespace bayrank
-} //namespace p2p
-} //namespace fetch
+}  // namespace bayrank
+}  // namespace p2p
+}  // namespace fetch

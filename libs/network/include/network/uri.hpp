@@ -163,7 +163,7 @@ void Deserialize(T &serializer, Uri &x)
   byte_array::ConstByteArray uri;
   serializer >> uri;
 
-  if (uri.size()==0)
+  if (uri.size() == 0)
   {
     return;
   }

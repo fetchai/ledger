@@ -95,7 +95,7 @@ void Variant::MakeArrayFrom(const std::vector<Variant> &elements)
   type_ = Type::ARRAY;
   ResizeArray(elements.size());
   std::size_t i = 0;
-  for(auto const &e : elements)
+  for (auto const &e : elements)
   {
     (*this)[i++] = e;
   }

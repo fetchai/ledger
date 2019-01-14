@@ -17,21 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/bayrank/trust_storage_interface.hpp"
-#include "network/p2pservice/bayrank/good_place.hpp"
-#include "network/p2pservice/bayrank/bad_place.hpp"
 #include "network/generics/future_timepoint.hpp"
+#include "network/p2pservice/bayrank/bad_place.hpp"
+#include "network/p2pservice/bayrank/good_place.hpp"
+#include "network/p2pservice/bayrank/trust_storage_interface.hpp"
 
-#include <vector>
 #include <random>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
 namespace bayrank {
 
 template <typename IDENTITY>
-class TrustBuffer  : public TrustStorageInterface<IDENTITY>
+class TrustBuffer : public TrustStorageInterface<IDENTITY>
 {
 protected:
   using TrustStorageInterface<IDENTITY>::storage_mutex_;
@@ -45,27 +45,27 @@ public:
   static constexpr char const *LOGGING_NAME = "TrustBuffer";
 
   TrustBuffer()
-   : random_engine(std::random_device()())
-  {
-  }
+    : random_engine(std::random_device()())
+  {}
   ~TrustBuffer() = default;
 
-  TrustBuffer(const TrustBuffer &rhs)            = delete;
-  TrustBuffer(TrustBuffer &&rhs)                 = delete;
+  TrustBuffer(const TrustBuffer &rhs) = delete;
+  TrustBuffer(TrustBuffer &&rhs)      = delete;
   TrustBuffer &operator=(const TrustBuffer &rhs) = delete;
-  TrustBuffer &operator=(TrustBuffer &&rhs)      = delete;
+  TrustBuffer &operator=(TrustBuffer &&rhs) = delete;
 
   void NewPeer(IDENTITY const &peer_ident, Gaussian const &new_peer)
   {
     FETCH_LOCK(storage_mutex_);
-    if (id_store_.find(peer_ident)!=id_store_.end())
+    if (id_store_.find(peer_ident) != id_store_.end())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Peer already in buffer: ", ToBase64(peer_ident));
       return;
     }
-    if (storage_.size()>=MAX_SIZE)
+    if (storage_.size() >= MAX_SIZE)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Buffer full (peer: ", ToBase64(peer_ident), "), triggering cleanup!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Buffer full (peer: ", ToBase64(peer_ident),
+                     "), triggering cleanup!");
       Cleanup();
     }
     Trust new_record{peer_ident, new_peer, 0, GetCurrentTime()};
@@ -84,13 +84,13 @@ public:
       return;
     }
     auto const size = storage_.size();
-    if (size>=MAX_SIZE)
+    if (size >= MAX_SIZE)
     {
-      if (storage_[size-1].score<=trust.score)
+      if (storage_[size - 1].score <= trust.score)
       {
-        id_store_[trust.peer_identity] = size-1;
-        id_store_.erase(storage_[size-1].peer_identity);
-        storage_[size-1] = std::move(trust);
+        id_store_[trust.peer_identity] = size - 1;
+        id_store_.erase(storage_[size - 1].peer_identity);
+        storage_[size - 1] = std::move(trust);
       }
     }
     else
@@ -110,17 +110,17 @@ private:
   void Cleanup()
   {
     std::vector<double> w(storage_.size());
-    std::size_t i = 0;
-    for(auto it = storage_.begin();it!=storage_.end();++it)
+    std::size_t         i = 0;
+    for (auto it = storage_.begin(); it != storage_.end(); ++it)
     {
-      //this is extra safety, not possible
-      if (it->score<=0)
+      // this is extra safety, not possible
+      if (it->score <= 0)
       {
         id_store_.erase(it->peer_identity);
         storage_.erase(it);
         return;
       }
-      w[i] = sqrt((GetCurrentTime()-it->last_modified)/60./it->score);
+      w[i] = sqrt((GetCurrentTime() - it->last_modified) / 60. / it->score);
     }
     std::discrete_distribution<std::size_t> dist(w.begin(), w.end());
     auto r_it = storage_.begin() + static_cast<long>(dist(random_engine));
@@ -129,9 +129,9 @@ private:
   }
 
   std::size_t const MAX_SIZE = 1000;
-  std::mt19937 random_engine;
+  std::mt19937      random_engine;
 };
 
-}  //namespace bayrank
+}  // namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

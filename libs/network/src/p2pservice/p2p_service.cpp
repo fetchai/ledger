@@ -89,7 +89,7 @@ void P2PService::WorkCycle()
   GetConnectionStatus(active_connections, active_addresses);
 
   FETCH_LOG_WARN(LOGGING_NAME, "(AB): active connections: ");
-  for(auto& aa : active_addresses)
+  for (auto &aa : active_addresses)
   {
     FETCH_LOG_INFO(LOGGING_NAME, ToBase64(aa));
   }
@@ -134,14 +134,13 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
   }
 }
 
-
 void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
 {
   for (auto const &element : active_connections)
   {
     auto const &address = element.first;
 
-    //ensure that the trust system is informed of new addresses
+    // ensure that the trust system is informed of new addresses
     if (!trust_system_.IsPeerKnown(address))
     {
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
@@ -213,7 +212,8 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
                          " (from: ", ToBase64(from), ")");
 
           trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
-          trust_system_.AddFeedback(from, new_address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+          trust_system_.AddFeedback(from, new_address, TrustSubject::PEER,
+                                    TrustQuality::NEW_INFORMATION);
         }
       }
     }
@@ -418,7 +418,8 @@ P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
-  AddressSet const result = trust_system_.GetRandomPeers(20, 0.0); //TODO(ATTILA): Why is 20 hardcoded?
+  AddressSet const result =
+      trust_system_.GetRandomPeers(20, 0.0);  // TODO(ATTILA): Why is 20 hardcoded?
 
   FETCH_LOG_INFO(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 

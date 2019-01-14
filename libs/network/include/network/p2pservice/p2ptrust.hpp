@@ -155,17 +155,15 @@ public:
     SortIfNeeded();
   }
 
-  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject, TrustQuality quality) override
-  {
-  }
+  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject,
+                         TrustQuality quality) override
+  {}
 
   void AddObject(ConstByteArray const &object_ident, IDENTITY const &peer_ident) override
-  {
-  }
+  {}
 
   void RemoveObject(ConstByteArray const &object_ident) override
-  {
-  }
+  {}
 
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
   {
@@ -327,10 +325,10 @@ protected:
   }
 
 private:
-  mutable bool          dirty_ = false;
+  mutable bool         dirty_ = false;
   mutable Mutex        mutex_{__LINE__, __FILE__};
-  mutable TrustStore    trust_store_;
-  mutable RankingStore  ranking_store_;
+  mutable TrustStore   trust_store_;
+  mutable RankingStore ranking_store_;
 };
 
 }  // namespace p2p

@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-
-
+#include "network/p2pservice/bayrank/bad_place.hpp"
 #include "network/p2pservice/bayrank/buffer.hpp"
 #include "network/p2pservice/bayrank/good_place.hpp"
-#include "network/p2pservice/bayrank/bad_place.hpp"
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
@@ -34,7 +32,8 @@ template <typename IDENTITY>
 class TheTrain
 {
 public:
-  enum PLACE {
+  enum PLACE
+  {
     BUFFER = 0,
     GOOD,
     BAD,
@@ -46,42 +45,42 @@ public:
 
   static constexpr char const *LOGGING_NAME = "TheTrain";
 
-  TheTrain(TrustBuffer<IDENTITY> &buffer, GoodPlace <IDENTITY> &good_place, BadPlace <IDENTITY> &bad_place)
-      : buffer_(buffer)
-      , good_place_(good_place)
-      , bad_place_(bad_place)
-  {
-  }
+  TheTrain(TrustBuffer<IDENTITY> &buffer, GoodPlace<IDENTITY> &good_place,
+           BadPlace<IDENTITY> &bad_place)
+    : buffer_(buffer)
+    , good_place_(good_place)
+    , bad_place_(bad_place)
+  {}
 
   PLACE MoveIfPossible(PLACE place, IDENTITY const &peer_ident)
   {
-    switch(place)
+    switch (place)
     {
-      case PLACE::BUFFER:
-      {
-        return MoveFromBuffer(peer_ident);
-      }
-      case PLACE::GOOD:
-      {
-        return MoveFromGoodPlace(peer_ident);
-      }
-      case PLACE::BAD:
-      {
-        return MoveFromBadPlace(peer_ident);
-      }
-      case PLACE::UNKNOWN:
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Got unknown PLACE!");
-        return PLACE::UNKNOWN;
-      }
+    case PLACE::BUFFER:
+    {
+      return MoveFromBuffer(peer_ident);
+    }
+    case PLACE::GOOD:
+    {
+      return MoveFromGoodPlace(peer_ident);
+    }
+    case PLACE::BAD:
+    {
+      return MoveFromBadPlace(peer_ident);
+    }
+    case PLACE::UNKNOWN:
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Got unknown PLACE!");
+      return PLACE::UNKNOWN;
+    }
     }
   }
 
 private:
   PLACE MoveFromBuffer(IDENTITY const &peer_ident)
   {
-    PLACE place  = PLACE::UNKNOWN;
-    auto peer_it = buffer_.GetPeer(peer_ident);
+    PLACE place   = PLACE::UNKNOWN;
+    auto  peer_it = buffer_.GetPeer(peer_ident);
     if (peer_it != buffer_.end())
     {
       place     = PLACE::BUFFER;
@@ -107,13 +106,13 @@ private:
 
   PLACE MoveFromGoodPlace(IDENTITY const &peer_ident)
   {
-    PLACE place  = PLACE::UNKNOWN;
-    auto peer_it = good_place_.GetPeer(peer_ident);
+    PLACE place   = PLACE::UNKNOWN;
+    auto  peer_it = good_place_.GetPeer(peer_ident);
     if (peer_it != good_place_.end())
     {
       place     = PLACE::GOOD;
       auto peer = *peer_it;
-      if (peer.g.sigma()>=SIGMA_THRESHOLD || peer.score<SCORE_THRESHOLD)
+      if (peer.g.sigma() >= SIGMA_THRESHOLD || peer.score < SCORE_THRESHOLD)
       {
         buffer_.AddPeer(std::move(peer));
         good_place_.Remove(peer_ident);
@@ -125,13 +124,13 @@ private:
 
   PLACE MoveFromBadPlace(IDENTITY const &peer_ident)
   {
-    PLACE place  = PLACE::UNKNOWN;
-    auto peer_it = bad_place_.GetPeer(peer_ident);
+    PLACE place   = PLACE::UNKNOWN;
+    auto  peer_it = bad_place_.GetPeer(peer_ident);
     if (peer_it != bad_place_.end())
     {
       place     = PLACE::BAD;
       auto peer = *peer_it;
-      if (peer.g.sigma()>=SIGMA_THRESHOLD || peer.score>SCORE_THRESHOLD)
+      if (peer.g.sigma() >= SIGMA_THRESHOLD || peer.score > SCORE_THRESHOLD)
       {
         buffer_.AddPeer(std::move(peer));
         bad_place_.Remove(peer_ident);
@@ -143,9 +142,9 @@ private:
 
 private:
   TrustBuffer<IDENTITY> &buffer_;
-  GoodPlace  <IDENTITY> &good_place_;
-  BadPlace   <IDENTITY> &bad_place_;
+  GoodPlace<IDENTITY> &  good_place_;
+  BadPlace<IDENTITY> &   bad_place_;
 };
-} // bayrank
-} // p2p
-} // fetch
+}  // namespace bayrank
+}  // namespace p2p
+}  // namespace fetch

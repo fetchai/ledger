@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "math/free_functions/statistics/normal.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 
 #include <ctime>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
@@ -36,14 +36,14 @@ public:
   using Gaussian = math::statistics::Gaussian<double>;
   struct Trust
   {
-    IDENTITY peer_identity;
-    Gaussian g;
-    double   score;
+    IDENTITY    peer_identity;
+    Gaussian    g;
+    double      score;
     std::time_t last_modified = -1;
-    
+
     void update_score()
     {
-      score = g.mu() - 3*g.sigma();
+      score = g.mu() - 3 * g.sigma();
     }
 
     bool operator>(Trust const &b) const
@@ -76,14 +76,14 @@ public:
   TrustStorageInterface()          = default;
   virtual ~TrustStorageInterface() = default;
 
-  TrustStorageInterface(const TrustStorageInterface &rhs)                   = delete;
-  TrustStorageInterface(TrustStorageInterface &&rhs)                        = delete;
-  TrustStorageInterface &operator=(const TrustStorageInterface &rhs)        = delete;
+  TrustStorageInterface(const TrustStorageInterface &rhs) = delete;
+  TrustStorageInterface(TrustStorageInterface &&rhs)      = delete;
+  TrustStorageInterface &operator=(const TrustStorageInterface &rhs) = delete;
   TrustStorageInterface &operator=(TrustStorageInterface &&rhs)             = delete;
   bool                   operator==(const TrustStorageInterface &rhs) const = delete;
-  bool                   operator<(const TrustStorageInterface &rhs)  const = delete;
+  bool                   operator<(const TrustStorageInterface &rhs) const  = delete;
 
-  virtual void AddPeer(Trust &&trust)                        = 0;
+  virtual void AddPeer(Trust &&trust) = 0;
 
   virtual void Update()
   {
@@ -93,14 +93,15 @@ public:
   virtual bool IsPeerKnown(IDENTITY const &peer_ident) const
   {
     FETCH_LOCK(storage_mutex_);
-    return id_store_.find(peer_ident)!=id_store_.end();
+    return id_store_.find(peer_ident) != id_store_.end();
   }
 
   virtual Iterator GetPeer(IDENTITY const &peer_ident)
   {
     FETCH_LOCK(storage_mutex_);
     auto const pos = id_store_.find(peer_ident);
-    return pos==id_store_.end() ? storage_.end() : (storage_.begin()+static_cast<long>(pos->second));
+    return pos == id_store_.end() ? storage_.end()
+                                  : (storage_.begin() + static_cast<long>(pos->second));
   }
 
   virtual void Remove(IDENTITY const &peer_ident)
@@ -109,7 +110,7 @@ public:
     auto const pos = id_store_.find(peer_ident);
     if (pos != id_store_.end())
     {
-      storage_.erase(storage_.begin()+static_cast<long>(pos->second));
+      storage_.erase(storage_.begin() + static_cast<long>(pos->second));
       id_store_.clear();
       for (std::size_t i = 0; i < storage_.size(); ++i)
       {
@@ -122,9 +123,10 @@ public:
   {
     FETCH_LOCK(storage_mutex_);
     auto const pos = id_store_.find(peer_ident);
-    return pos==id_store_.end() ? storage_.end() : (storage_.begin()+static_cast<long>(pos->second));
+    return pos == id_store_.end() ? storage_.end()
+                                  : (storage_.begin() + static_cast<long>(pos->second));
   }
-     
+
   virtual ConstIterator begin() const
   {
     FETCH_LOCK(storage_mutex_);
@@ -147,10 +149,10 @@ public:
   {
     FETCH_LOCK(storage_mutex_);
     auto it = id_store_.find(peer_ident);
-    if (it==id_store_.end())
+    if (it == id_store_.end())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Peer ", peer_ident, " not found in the store!");
-      return storage_.size()+1;
+      return storage_.size() + 1;
     }
     return it->second;
   }
@@ -170,13 +172,14 @@ protected:
   {
     bool result = false;
     auto it     = id_store_.find(trust.peer_identity);
-    if (it!=id_store_.end())
+    if (it != id_store_.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(trust.peer_identity), " already in the ", store, " store!");
-      Trust& current = storage_[it->second];
-      if (current.last_modified<trust.last_modified)
+      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(trust.peer_identity), " already in the ",
+                     store, " store!");
+      Trust &current = storage_[it->second];
+      if (current.last_modified < trust.last_modified)
       {
-        current.g = trust.g;
+        current.g             = trust.g;
         current.last_modified = trust.last_modified;
         current.update_score();
       }
@@ -192,6 +195,6 @@ protected:
   mutable Mutex storage_mutex_{__LINE__, __FILE__};
 };
 
-}  //namespace bayrank
+}  // namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

@@ -32,7 +32,7 @@ namespace muddle {
  *
  * @param router The reference to the router
  */
-  PeerConnectionList::PeerConnectionList(Router &router)
+PeerConnectionList::PeerConnectionList(Router &router)
   : router_(router)
 {}
 
@@ -88,7 +88,7 @@ PeerConnectionList::Handle PeerConnectionList::UriToHandle(const Uri &uri) const
 {
   FETCH_LOCK(lock_);
   Handle handle = 0;
-  auto it = peer_connections_.find(uri);
+  auto   it     = peer_connections_.find(uri);
   if (it != peer_connections_.end())
   {
     handle = it->second->handle();
@@ -112,8 +112,7 @@ PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
   return map;
 }
 
-
-std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix ) const
+std::list<PeerConnectionList::Handle> PeerConnectionList::Debug(std::string const &prefix) const
 {
   std::list<Handle> handles;
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
