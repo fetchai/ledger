@@ -49,7 +49,8 @@ using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
 using fetch::chain::consensus::ConsensusMinerType;
 
-using ConsensusMinerInterfacePtr = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+using ConsensusMinerInterfacePtr =
+    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -134,7 +135,7 @@ ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_typ
   switch (miner_type)
   {
   case ConsensusMinerType::NO_MINER:
-      break;
+    break;
   case ConsensusMinerType::DUMMY_MINER:
     miner = std::make_shared<DummyMiner>();
     break;

@@ -97,7 +97,7 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
       FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path, " : ", canonical_contract_name);
 
       Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
-                                                http::HTTPRequest const &   request) {
+                                                     http::HTTPRequest const &   request) {
         return OnTransaction(params, request, &canonical_contract_name);
       });
     }
