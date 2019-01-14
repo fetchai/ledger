@@ -161,10 +161,6 @@ private:
     {
       trust_list[i] = peer_data_list[i];
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL: GetP2PStatus returning ", peer_data_list.size(), " trusts");
-
-    variant::Variant trust_list;
-    trust_list.MakeArrayFrom(peer_data_list);
 
     Variant response      = Variant::Object();
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());

@@ -26,6 +26,7 @@
 #include "network/p2pservice/bayrank/good_place.hpp"
 #include "network/p2pservice/bayrank/bad_place.hpp"
 #include "network/p2pservice/bayrank/object_cache.hpp"
+#include "network/p2pservice/bayrank/the_train.hpp"
 
 #include <algorithm>
 #include <array>
@@ -64,16 +65,18 @@ public:
   using GoodPlace             = bayrank::GoodPlace<IDENTITY>;
   using BadPlace              = bayrank::BadPlace<IDENTITY>;
   using TrustBuffer           = bayrank::TrustBuffer<IDENTITY>;
+  using TheTrain              = bayrank::TheTrain<IDENTITY>;
   using ObjectStore           = bayrank::ObjectCache<ConstByteArray, IDENTITY>;
   using IdentitySet           = typename P2PTrustInterface<IDENTITY>::IdentitySet;
   using PeerTrust             = typename P2PTrustInterface<IDENTITY>::PeerTrust;
   using PeerTrusts            = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
   using Gaussian              = typename TrustStorageInterface::Gaussian;
+  using PlaceEnum             = typename bayrank::TheTrain<IDENTITY>::PLACE;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
   // Construction / Destruction
-  P2PTrustBayRank() : buffer_(good_place_, bad_place_)
+  P2PTrustBayRank()
   {
   }
   P2PTrustBayRank(const P2PTrustBayRank &rhs) = delete;
@@ -97,7 +100,10 @@ public:
     if (id_it==id_store_.end())
     {
       id_store_[peer_ident] = 0;
-      buffer_.NewPeer(peer_ident, reference_player);
+      auto g = quality == TrustQuality :: NEW_PEER
+                ? reference_player
+                : LookupReferencePlayer(TrustQuality::NEW_PEER);
+      buffer_.NewPeer(peer_ident, g);
       id_it = id_store_.find(peer_ident);
     }
     if (quality == TrustQuality::NEW_PEER)
@@ -122,10 +128,12 @@ public:
     updateGaussian(honest, peer_it->g, reference_player);
     peer_it->update_score();
     peer_it->last_modified = GetCurrentTime();
+    sp->Update();
     FETCH_LOG_WARN(LOGGING_NAME,  "(AB): ",  ToBase64(peer_ident), " updated: score=", peer_it->score);
 
-    auto s_idx = buffer_.MovePeerIfEligible(peer_ident);
-    if (s_idx>-1)
+    auto place = the_train_.MoveIfPossible(ToPlaceEnum(id_it->second), peer_ident);
+    auto s_idx = FromPlaceEnum(place);
+    if (place != PlaceEnum::UNKNOWN && s_idx != -1)
     {
       id_store_[peer_ident] = static_cast<std::size_t>(s_idx);
     }
@@ -233,7 +241,7 @@ public:
         for(end=std::min(max-pos,buffer_.size()),pos=0;pos<end;++pos)
         {
           auto it = buffer_it+static_cast<long>(pos);
-          if (it->score<TrustStorageInterface::SCORE_THRESHOLD)
+          if (it->score<TheTrain::SCORE_THRESHOLD)
           {
             break;
           }
@@ -325,7 +333,7 @@ public:
     {
       if (id_it->second==0)
       {
-        return buffer_.GetPeer(peer_ident)->score>TrustStorageInterface::SCORE_THRESHOLD;
+        return buffer_.GetPeer(peer_ident)->score>TheTrain::SCORE_THRESHOLD;
       }
       return id_it->second==1;
     }
@@ -405,12 +413,53 @@ protected:
   TrustBuffer buffer_;
   IDStore     id_store_;
   ObjectStore object_store_;
+  TheTrain    the_train_{buffer_, good_place_, bad_place_};
 
   std::array<TrustStorageInterface*, 3> stores_{{
       &buffer_,
       &good_place_,
       &bad_place_
   }};
+
+  static inline PlaceEnum ToPlaceEnum(std::size_t i)
+  {
+    PlaceEnum r;
+    if (i==0)
+    {
+      r = PlaceEnum::BUFFER;
+    }
+    else if (i==1)
+    {
+      r = PlaceEnum::GOOD;
+    }
+    else if (i==2)
+    {
+      r = PlaceEnum::BAD;
+    }
+    else
+    {
+      r = PlaceEnum::UNKNOWN;
+    }
+    return r;
+  }
+
+  static inline int FromPlaceEnum(PlaceEnum p)
+  {
+     int idx = -1;
+     if (p==PlaceEnum::BUFFER)
+     {
+       idx = 0;
+     }
+     else if (p==PlaceEnum::GOOD)
+     {
+       idx = 1;
+     }
+     else if (p==PlaceEnum::BAD)
+     {
+       idx = 2;
+     }
+     return idx;
+  }
 
 
   /**

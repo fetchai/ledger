@@ -34,8 +34,6 @@ protected:
   using TrustStorageInterface<IDENTITY>::storage_mutex_;
   using TrustStorageInterface<IDENTITY>::storage_;
   using TrustStorageInterface<IDENTITY>::id_store_;
-  using TrustStorageInterface<IDENTITY>::SCORE_THRESHOLD;
-  using TrustStorageInterface<IDENTITY>::SIGMA_THRESHOLD;
 
 public:
   using Trust = typename TrustStorageInterface<IDENTITY>::Trust;
@@ -49,17 +47,12 @@ public:
   GoodPlace &operator=(const GoodPlace &rhs) = delete;
   GoodPlace &operator=(GoodPlace &&rhs)      = delete;
 
-  bool AddPeer(Trust &&trust)  override
+  void AddPeer(Trust &&trust)  override
   {
-    if (CheckCriteria(trust))
-    {
-      return false;
-    }
     FETCH_LOCK(storage_mutex_);
-    if (id_store_.find(trust.peer_identity)!=id_store_.end())
+    if (this->IsInStoreLockLess(trust, "buffer"))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(trust.peer_identity), " already in the store!");
-      return false;
+      return;
     }
     auto const size = storage_.size();
     if (size>=MAX_SIZE)
@@ -70,34 +63,15 @@ public:
         id_store_.erase(storage_[size-1].peer_identity);
         storage_[size-1] = std::move(trust);
       }
-      else
-      {
-        return false;
-      }
     }
     else
     {
       id_store_[trust.peer_identity] = storage_.size();
       storage_.push_back(std::move(trust));
     }
-    Sort();
-    return true;
+    this->Sort();
   }
 
-private:
-  inline bool CheckCriteria(Trust const &trust)
-  {
-    return trust.g.sigma()>SIGMA_THRESHOLD || trust.score<SCORE_THRESHOLD;
-  }
-  
-  void Sort()
-  {
-    std::sort(storage_.begin(), storage_.end(), std::greater<Trust>());
-    for (std::size_t pos = 0; pos < storage_.size(); ++pos)
-    {
-      id_store_[storage_[pos].peer_identity] = pos;
-    }
-  }
 
 private:
     std::size_t const MAX_SIZE = 1000;

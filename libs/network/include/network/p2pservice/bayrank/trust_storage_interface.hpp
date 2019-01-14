@@ -29,7 +29,7 @@ namespace fetch {
 namespace p2p {
 namespace bayrank {
 
-    template <typename IDENTITY>
+template <typename IDENTITY>
 class TrustStorageInterface
 {
 public:
@@ -39,7 +39,7 @@ public:
     IDENTITY peer_identity;
     Gaussian g;
     double   score;
-    std::time_t last_modified;
+    std::time_t last_modified = -1;
     
     void update_score()
     {
@@ -58,6 +58,11 @@ public:
       }
       return peer_identity < b.peer_identity;
     }
+
+    bool empty()
+    {
+      return last_modified == -1;
+    }
   };
 
   using TrustStore    = std::vector<Trust>;
@@ -67,9 +72,6 @@ public:
   using Mutex         = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "TrustStorageInterface";
-
-  static constexpr double SCORE_THRESHOLD = 20.;
-  static constexpr double SIGMA_THRESHOLD = 13.;
 
   TrustStorageInterface()          = default;
   virtual ~TrustStorageInterface() = default;
@@ -81,7 +83,12 @@ public:
   bool                   operator==(const TrustStorageInterface &rhs) const = delete;
   bool                   operator<(const TrustStorageInterface &rhs)  const = delete;
 
-  virtual bool AddPeer(Trust &&trust)                        = 0;
+  virtual void AddPeer(Trust &&trust)                        = 0;
+
+  virtual void Update()
+  {
+    this->Sort();
+  }
 
   virtual bool IsPeerKnown(IDENTITY const &peer_ident) const
   {
@@ -94,6 +101,21 @@ public:
     FETCH_LOCK(storage_mutex_);
     auto const pos = id_store_.find(peer_ident);
     return pos==id_store_.end() ? storage_.end() : (storage_.begin()+static_cast<long>(pos->second));
+  }
+
+  virtual void Remove(IDENTITY const &peer_ident)
+  {
+    FETCH_LOCK(storage_mutex_);
+    auto const pos = id_store_.find(peer_ident);
+    if (pos != id_store_.end())
+    {
+      storage_.erase(storage_.begin()+static_cast<long>(pos->second));
+      id_store_.clear();
+      for (std::size_t i = 0; i < storage_.size(); ++i)
+      {
+        id_store_[storage_[i].peer_identity] = i;
+      }
+    }
   }
 
   virtual ConstIterator GetPeer(IDENTITY const &peer_ident) const
@@ -131,6 +153,36 @@ public:
       return storage_.size()+1;
     }
     return it->second;
+  }
+
+protected:
+  virtual void Sort()
+  {
+    std::sort(storage_.begin(), storage_.end(), std::greater<Trust>());
+    id_store_.clear();
+    for (std::size_t pos = 0; pos < storage_.size(); ++pos)
+    {
+      id_store_[storage_[pos].peer_identity] = pos;
+    }
+  }
+
+  inline bool IsInStoreLockLess(Trust const &trust, std::string store)
+  {
+    bool result = false;
+    auto it     = id_store_.find(trust.peer_identity);
+    if (it!=id_store_.end())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(trust.peer_identity), " already in the ", store, " store!");
+      Trust& current = storage_[it->second];
+      if (current.last_modified<trust.last_modified)
+      {
+        current.g = trust.g;
+        current.last_modified = trust.last_modified;
+        current.update_score();
+      }
+      result = true;
+    }
+    return result;
   }
 
 protected:
