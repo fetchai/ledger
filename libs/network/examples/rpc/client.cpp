@@ -44,7 +44,7 @@ int main()
   fetch::network::NetworkManager tm(2);
 
   tm.Start();
-  auto client_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
+  auto client_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
 
   client_muddle->Start({});
   auto peer = fetch::network::Uri("tcp://127.0.0.1:8080");

@@ -28,7 +28,7 @@ using fetch::storage::VersionedRandomAccessStack;
 class VersionedRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(const ::benchmark::State & /*st*/) override
   {
     stack_.New("VRAS_bench.db", "VRAS_diff_bench.db");
 

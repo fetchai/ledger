@@ -72,7 +72,7 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_}
@@ -233,8 +233,8 @@ void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, st
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice,
-                               std::size_t slice_index, std::size_t num_lanes)
+void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice & slice,
+                               std::size_t /*slice_index*/, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};
 
