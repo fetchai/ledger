@@ -301,7 +301,7 @@ void Router::AddConnection(Handle handle)
   SendToConnection(handle, packet);
 }
 
-void Router::RemoveConnection(Handle handle)
+void Router::RemoveConnection(Handle /*handle*/)
 {
   // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
   // alternative routing
@@ -647,7 +647,7 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
  * @param address paremeter not used
  * @return The random handle, or zero if the routing table is empty
  */
-Router::Handle Router::LookupRandomHandle(Packet::RawAddress const &address) const
+Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
   Handle handle = 0;
 

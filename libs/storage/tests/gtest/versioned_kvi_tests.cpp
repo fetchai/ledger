@@ -31,7 +31,6 @@ namespace {
 
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToHex;
 
 using Index = fetch::storage::KeyValueIndex<>;
 using RNG   = fetch::random::LaggedFibonacciGenerator<>;

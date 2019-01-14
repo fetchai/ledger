@@ -25,9 +25,6 @@ namespace crypto {
 
 namespace {
 
-using ::testing::StrictMock;
-using ::testing::Return;
-
 class ECDSASignerVerifierTest : public testing::Test
 {
 protected:

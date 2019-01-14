@@ -88,9 +88,10 @@ def update_source_file(path):
 
     contents = read_file(path)
 
+
     # do not bother processing files which have the license
     if FULL_LICENSE in contents:
-        return
+        return True
 
     # determine if the license is present already in the source code
     existing_license_present = bool(re.search(RE_LICENSE, contents, re.MULTILINE))

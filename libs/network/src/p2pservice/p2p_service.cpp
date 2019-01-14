@@ -225,7 +225,7 @@ bool P2PService::IsDesired(Address const &address)
   return desired_peers_.find(address) != desired_peers_.end();
 }
 
-void P2PService::RenewDesiredPeers(AddressSet const &active_addresses)
+void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 {
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
