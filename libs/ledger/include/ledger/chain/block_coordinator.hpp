@@ -60,7 +60,6 @@ public:
 
     // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
     // does not fire all of the time.
-    // TODO:(HUT) : pretty sure this is buggy in that the mainchain can advance more than one block here, skipping execution
     auto heaviestHash = chain_.HeaviestBlock().hash();
 
     if (block.hash() == heaviestHash)
@@ -132,7 +131,6 @@ public:
           FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(block->hash));
 
           // execute the block
-          // TODO(HUT): is there only execution and no rollback?
           status_type const status = execution_manager_.Execute(*block);
 
           if (status == status_type::COMPLETE)

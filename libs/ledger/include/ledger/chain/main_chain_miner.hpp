@@ -109,7 +109,6 @@ private:
 
     bool searching_for_hash = false;
 
-
     while (!stop_)
     {
       // determine the heaviest block
@@ -135,7 +134,6 @@ private:
           blockCoordinator_.AddBlock(next_block);
 
           // TODO(EJF): Feels like this needs to be reworked into the block coordinator
-          // TODO:(HUT) : agreed.
           if (on_block_complete_)
           {
             on_block_complete_(next_block);

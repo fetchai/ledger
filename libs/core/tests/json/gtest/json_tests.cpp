@@ -425,5 +425,4 @@ TEST_P(JsonTests, CheckParsing)
   }
 }
 
-
 INSTANTIATE_TEST_CASE_P(ParamBased, JsonTests, testing::ValuesIn(TEST_CASES), );
