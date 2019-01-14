@@ -72,6 +72,9 @@
 #include "python/ml/py_session.hpp"
 #include "python/ml/py_variable.hpp"
 
+
+#include "python/auctions/py_combinatorial_auction.hpp"
+
 // !!!!
 namespace py = pybind11;
 
@@ -96,6 +99,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_memory           = module.def_submodule("memory");
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
+  py::module ns_fetch_auctions         = module.def_submodule("auctions");
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -268,4 +272,15 @@ PYBIND11_MODULE(fetch, module)
   fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
+
+
+
+
+  /////////////
+
+
+
+  fetch::auctions::BuildCombinatorialAuction("CombinatorialAuction", ns_fetch_auctions);
+
+
 }
