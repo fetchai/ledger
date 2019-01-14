@@ -575,7 +575,7 @@ public:
       {
         continue;
       }
-      Type vb = other[i];
+      Type vb = other.At(i);
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
