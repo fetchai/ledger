@@ -28,6 +28,23 @@ pipeline {
           }
         } // basic checks
 
+        stage('Static Analysis') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          stages {
+            stage('Static Analysis') {
+              steps {
+                sh 'mkdir build && cd build && cmake ../'
+                sh './scripts/run_static_analysis.py build/'
+              }
+            }
+          }
+        } // basic checks
+
         stage('Clang 6 Debug') {
           agent {
             docker {
@@ -46,11 +63,7 @@ pipeline {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
-            stage('Static Analysis') {
-              steps {
-                sh './scripts/run_static_analysis.py build-debug/'
-              }
-            }
+
           }
         } // clang 6 debug
 
