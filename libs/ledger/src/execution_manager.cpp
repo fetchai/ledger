@@ -37,6 +37,7 @@ static constexpr std::size_t STARTUP_ITERATION_TIME_MS = 100;
 
 namespace {
 
+// TODO(HUT): consider moving/refactoring this
 struct FilePaths
 {
   std::string data_path;

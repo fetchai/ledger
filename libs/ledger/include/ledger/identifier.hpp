@@ -31,6 +31,7 @@ namespace ledger {
  *
  *   `foo.bar` & `foo.baz` are in the same logic `foo` group
  */
+  // TODO(HUT): chat to Ed
 class Identifier
 {
 public:
