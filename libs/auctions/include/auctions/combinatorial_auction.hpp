@@ -21,8 +21,8 @@
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/linalg/matrix.hpp"
 
-#include "core/random/lfg.hpp"
 #include "core/random/lcg.hpp"
+#include "core/random/lfg.hpp"
 
 namespace fetch {
 namespace auctions {
@@ -55,7 +55,7 @@ public:
 
     std::size_t rejected = 0;
 
-    fetch::random::LaggedFibonacciGenerator<> int_gen(random_seed);
+    fetch::random::LaggedFibonacciGenerator<>  int_gen(random_seed);
     fetch::random::LinearCongruentialGenerator real_gen;
 
     for (std::size_t i = 0; i < run_time; ++i)
