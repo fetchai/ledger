@@ -74,6 +74,7 @@ public:
       return PLACE::UNKNOWN;
     }
     }
+    return PLACE::UNKNOWN;
   }
 
 private:

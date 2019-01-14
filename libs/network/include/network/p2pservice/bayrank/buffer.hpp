@@ -120,7 +120,7 @@ private:
         storage_.erase(it);
         return;
       }
-      w[i] = sqrt((GetCurrentTime() - it->last_modified) / 60. / it->score);
+      w[i] = sqrt(static_cast<double>(GetCurrentTime() - it->last_modified) / 60. / it->score);
     }
     std::discrete_distribution<std::size_t> dist(w.begin(), w.end());
     auto r_it = storage_.begin() + static_cast<long>(dist(random_engine));
