@@ -109,6 +109,7 @@ private:
 
     bool searching_for_hash = false;
 
+
     while (!stop_)
     {
       // determine the heaviest block

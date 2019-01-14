@@ -286,9 +286,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.90509668"
-     inkscape:cx="322.98482"
-     inkscape:cy="250.66694"
+     inkscape:zoom="7.2407734"
+     inkscape:cx="444.41914"
+     inkscape:cy="227.72819"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -345,16 +345,21 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:6.46529722px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
-       x="28.288563"
-       y="36.600773"
+       x="27.591234"
+       y="32.418861"
        id="explainbox"
        inkscape:label="#text4809"
-       transform="scale(0.99561939,1.0043999)"><tspan
+       transform="scale(0.99561938,1.0043999)"><tspan
          sodipodi:role="line"
-         x="28.288563"
-         y="36.600773"
-         id="tspan4807"
-         style="stroke-width:0.16163243">Info on mouse over</tspan></text>
+         x="27.591234"
+         y="32.418861"
+         id="tspan_top"
+         style="stroke-width:0.16163243">Info on mouse over</tspan><tspan
+         sodipodi:role="line"
+         x="27.591234"
+         y="40.500484"
+         style="stroke-width:0.16163243"
+         id="tspan_bottom"></tspan></text>
     <rect
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4631"
@@ -391,9 +396,9 @@
          x="36.935043"
          y="-77.876801"
          id="text4698"
-         onmouseover=""
+         onmouseover="var a = 'Used to configure a node on startup';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+         onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
          onclick=""
-         onmouseout=""
          transform="scale(0.99561938,1.0043999)"><tspan
            sodipodi:role="line"
            id="tspan4696"
@@ -415,9 +420,9 @@
        x="156.57187"
        y="-64.676582"
        id="text4598"
-       onmouseover="var a = &quot;The P2P networking service&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The P2P networking service';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
        transform="scale(0.99561938,1.0043999)"><tspan
          sodipodi:role="line"
          id="tspan4596"
@@ -431,9 +436,9 @@
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The main controlling node';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text1137"
        y="-69.945076"
        x="156.57187"
@@ -447,9 +452,9 @@
          sodipodi:role="line">Constellation</tspan></text>
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text1147"
        y="-60.725227"
        x="156.57187"
@@ -488,9 +493,9 @@
        x="192.52313"
        y="-72.876633"
        id="text3015"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The http pages exposed to clients';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan3013"
          x="192.52313"
@@ -551,8 +556,8 @@
        y="-73.472855"
        id="text3985"
        transform="scale(1.0608564,0.94263464)"
-       onmouseover="var a = &quot;HTTP interface allows account creation (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
-       onmouseout="var a = &quot;&quot;;document.getElementById('explainbox').innerHTML = a;"><tspan
+       onmouseover="var a = 'HTTP interface allows account creation (debug)';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onmouseout="var a = '';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "><tspan
          sodipodi:role="line"
          id="tspan3983"
          x="180.90475"
@@ -579,9 +584,9 @@
        id="path3993"
        inkscape:connector-curvature="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;Scripts call http endpoints to create accounts and transactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Scripts call http endpoints to create accounts and transactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text3997"
        y="-87.200066"
        x="204.27068"
@@ -605,42 +610,27 @@
        x="201.93047"
        y="-58.045212"
        id="text4135"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Contracts are created in wallet_http_interface (debug)';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='transaction.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan4133"
          x="201.93047"
          y="-58.045212"
          style="font-size:1.41111112px;stroke-width:0.16163243">Transaction created</tspan></text>
     <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
-       x="156.57185"
-       y="-56.773865"
-       id="text4155"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
-       onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
-       transform="scale(0.99561938,1.0043999)"><tspan
-         sodipodi:role="line"
-         id="tspan4153"
-         x="156.57185"
-         y="-56.773865"
-         style="font-size:3.23264861px;stroke-width:0.16163243">Execution man</tspan></text>
-    <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Manages connections to lanes, which might be on another server';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text4159"
-       y="-52.822498"
-       x="156.57185"
+       y="-56.760002"
+       x="156.6351"
        style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
        xml:space="preserve"><tspan
          style="font-size:3.23264861px;stroke-width:0.16163243"
-         y="-52.822498"
-         x="156.57185"
+         y="-56.760002"
+         x="156.6351"
          id="tspan4157"
          sodipodi:role="line">Lane remote ctrl</tspan></text>
     <rect
@@ -660,9 +650,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.18311316;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Verifies transactions' signatures and dispatches them';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text4175"
        y="-53.054356"
        x="192.31203"
@@ -676,9 +666,9 @@
          sodipodi:role="line">TX processor</tspan></text>
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Verifies that transactions are valid';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text4179"
        y="-47.554016"
        x="191.40862"
@@ -696,11 +686,11 @@
        style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7069)" />
     <rect
        id="rect4373"
-       width="35.266239"
-       height="14.292481"
-       x="131.22798"
-       y="-30.332375"
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21828012;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       width="35.289749"
+       height="17.218004"
+       x="131.21623"
+       y="-30.34413"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.23966052;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <rect
        ry="0"
@@ -717,9 +707,9 @@
        x="133.99203"
        y="-31.711353"
        id="text4379"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Given a stream of transactions, packs them efficiently and'; var b = 'executes POW to create a valid block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan4377"
          x="133.99203"
@@ -742,9 +732,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.2373758;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Provides an abstract interface to the storage';var b = 'which is sharded across lanes'; document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        id="text4391"
        y="-33.19809"
        x="192.41621"
@@ -800,9 +790,9 @@
        x="134.12778"
        y="-25.364267"
        id="text6163"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Given a block, executes POW on it';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        transform="scale(0.99561938,1.0043999)"><tspan
          sodipodi:role="line"
          id="tspan6161"
@@ -865,23 +855,23 @@
        x="69.266586"
        y="-13.111662"
        id="text6291"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Lanes each have their own sharded set of storage elements, at least';var b = 'a state store and a transactions store';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan6289"
          x="69.266586"
          y="-13.111662"
          style="font-size:3.23264861px;stroke-width:0.16163243">Storage unit interfaces</tspan></text>
     <path
-       style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.11666654, 0.26458332;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 203.6917,-26.550605 v 14.552084"
+       style="fill:none;stroke:#000000;stroke-width:0.29757044;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.3805634, 0.29757043;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 203.6917,-26.550605 V -8.1437409"
        id="path6313"
        inkscape:connector-curvature="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='transaction.html';"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = '';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text6317"
        y="-18.551548"
        x="205.77818"
@@ -916,18 +906,18 @@
        x="29.528992"
        y="-9.2121153"
        id="text6325"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Persistent store of transactions, usually sharded';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan6323"
          x="29.528992"
          y="-9.2121153"
          style="font-size:3.23264861px;stroke-width:0.16163243">Transaction store</tspan></text>
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Generic map that writes to disk for persistent storage and caching efficiency';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text6329"
        y="-3.8112166"
        x="29.751541"
@@ -995,9 +985,9 @@
        d="M 68.771418,7.8975296 H 108.98046"
        style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Transaction sync protocol aims to rapidly sync transactions across';var b = 'the network to reduce latencies in block verification';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        id="text6615"
        y="6.6713934"
        x="70.382248"
@@ -1031,18 +1021,18 @@
        x="116.89722"
        y="10.612503"
        id="text6643"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Valid transactions are synchronised over the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='transaction.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan6641"
          x="116.89722"
          y="10.612503"
          style="font-size:1.41111112px;stroke-width:0.16163243">P2P network</tspan></text>
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='transaction.html';"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Blocks are gossiped to and from the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text6647"
        y="-30.145723"
        x="68.371414"
@@ -1060,9 +1050,9 @@
        x="70.595337"
        y="11.295175"
        id="text6651"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        transform="scale(0.99561938,1.0043999)"><tspan
          sodipodi:role="line"
          id="tspan6649"
@@ -1071,9 +1061,9 @@
          style="font-size:3.23264861px;stroke-width:0.16163243">Identity</tspan></text>
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The trust model that is ranks peers by behaviour';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text6655"
        y="15.246539"
        x="70.595337"
@@ -1101,9 +1091,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21885373;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Coordinates with the execution manager and main chain to execute';var b =  'new blocks as they arrive, and if necessary switch forks';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        id="text8691"
        y="-62.49646"
        x="80.183098"
@@ -1143,9 +1133,9 @@
        x="73.637688"
        y="-86.339973"
        id="text9095"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Orchestrates the execution of a block by delegating to executors';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan9093"
          x="73.637688"
@@ -1168,9 +1158,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.17751008;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The main chain stores and manages blocks, keeping track of the';var b = 'heaviest block/valid chain';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        id="text9105"
        y="-81.672806"
        x="131.18037"
@@ -1199,9 +1189,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.19874421;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Block synchronisation protocol aims to get valid blocks quickly';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text11385"
        y="-32.313187"
        x="81.392944"
@@ -1220,9 +1210,9 @@
        x="98.334152"
        y="-46.725998"
        id="text11391"
-       onmouseover="var a = &quot;Blocks can be added from the P2P network or the miner&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Blocks can be added from the P2P network or the miner';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='transaction.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan11389"
          x="98.334152"
@@ -1265,9 +1255,9 @@
        inkscape:connector-curvature="0" />
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Packs transactions into a MxN block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12537"
        y="-19.85726"
        x="133.99203"
@@ -1285,9 +1275,9 @@
        x="180.81511"
        y="-39.568306"
        id="text12545"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Transaction metadata is passed around internally for efficiency';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='transaction.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan12543"
          x="180.81511"
@@ -1299,9 +1289,9 @@
        id="path12547"
        inkscape:connector-curvature="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='transaction.html';"
-       onmouseover="var a = &quot;Blocks can be added from the P2P network or the miner&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Blocks will be broadcast to the network after POW';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12551"
        y="-21.148588"
        x="112.79015"
@@ -1323,36 +1313,6 @@
        d="M 123.13741,-75.461153 H 105.9397"
        id="path12594"
        inkscape:connector-curvature="0" />
-    <text
-       transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
-       onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
-       id="text12598"
-       y="-80.511055"
-       x="74.19886"
-       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
-       xml:space="preserve"><tspan
-         style="font-size:3.23264861px;stroke-width:0.16163243"
-         y="-80.511055"
-         x="74.19886"
-         id="tspan12596"
-         sodipodi:role="line">POW miner</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
-       x="74.19886"
-       y="-76.559692"
-       id="text12602"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
-       onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
-       transform="scale(0.99561938,1.0043999)"><tspan
-         sodipodi:role="line"
-         id="tspan12600"
-         x="74.19886"
-         y="-76.559692"
-         style="font-size:3.23264861px;stroke-width:0.16163243">Block packer</tspan></text>
     <rect
        y="-66.822113"
        x="28.007826"
@@ -1409,9 +1369,9 @@
        x="29.462202"
        y="-62.809978"
        id="text12624"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Executors synchronise, schedule and execute transactions in a block';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan12622"
          x="29.462202"
@@ -1423,8 +1383,8 @@
        id="path12640"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:2.11666654,0.26458332;stroke-dashoffset:0"
-       d="M 203.83553,-11.961155 H 111.23136"
+       style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.11666654, 0.26458332;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 203.88581,-8.0114492 H 111.28164"
        id="path12646"
        inkscape:connector-curvature="0" />
     <path
@@ -1439,9 +1399,9 @@
        inkscape:connector-curvature="0" />
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Executors need a reference to the storage so as to query and make'; var b ='changes to the world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        id="text12654"
        y="-57.116188"
        x="30.350527"
@@ -1451,7 +1411,7 @@
          y="-57.116188"
          x="30.350527"
          id="tspan12652"
-         sodipodi:role="line">Storage unit ptr</tspan></text>
+         sodipodi:role="line">Storage unit interface ptr</tspan></text>
     <rect
        ry="0"
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.12336619;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -1469,9 +1429,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.21676156;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Allows access to the current world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12668"
        y="4.9032226"
        x="28.934978"
@@ -1491,9 +1451,9 @@
        x="29.157536"
        y="10.304121"
        id="text12672"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The world state is managed by this. It effectively allows advances'; var b = 'and roll-backs of the world state';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        onclick="window.location='../';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan12670"
          x="29.157536"
@@ -1512,9 +1472,9 @@
        x="26.737783"
        y="-19.531363" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Lanes shard lane-specific state and transactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12806"
        y="-21.306793"
        x="26.193106"
@@ -1543,9 +1503,9 @@
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.22915269;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        ry="0" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../';"
-       onmouseover="var a = &quot;The main controlling node&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Routes RPC to the network generally, or an identity';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12814"
        y="3.9570353"
        x="159.49396"
@@ -1559,9 +1519,9 @@
          sodipodi:role="line">Muddle</tspan></text>
     <text
        transform="scale(0.99561938,1.0043999)"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='../network/index.html';"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The public/private key pair used for network interactions';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12826"
        y="10.304121"
        x="159.89156"
@@ -1578,9 +1538,9 @@
        x="159.89156"
        y="14.255486"
        id="text12830"
-       onmouseover="var a = &quot;The public/private key pair used for network interactions&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'The trust model that is ranks peers by behaviour';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        onclick="window.location='../network/index.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        transform="scale(0.99561938,1.0043999)"><tspan
          sodipodi:role="line"
          id="tspan12828"
@@ -1593,9 +1553,9 @@
        d="M 209.12721,11.851345 H 191.92929"
        style="fill:none;stroke:#000000;stroke-width:0.30167139;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.41337114, 0.30167139;stroke-dashoffset:0;stroke-opacity:1" />
     <text
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
        onclick="window.location='transaction.html';"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Muddle interfaces with the P2P network';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
        id="text12836"
        y="10.462327"
        x="196.62148"
@@ -1619,9 +1579,9 @@
        x="144.46576"
        y="10.330617"
        id="text12842"
-       onmouseover="var a = &quot;Contracts are created in wallet_http_interface (debug)&quot;;document.getElementById('explainbox').innerHTML = a;"
+       onmouseover="var a = 'Calls are made to the muddle instance'; var b = 'which routes them appropriately';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = b; "
        onclick="window.location='transaction.html';"
-       onmouseout="document.getElementById('explainbox').innerHTML = &quot;&quot;;"><tspan
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"><tspan
          sodipodi:role="line"
          id="tspan12840"
          x="144.46576"
@@ -1637,5 +1597,20 @@
        d="m 91.504381,-66.462196 -0.103354,-7.95817"
        id="path13290"
        inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.23264861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16163243"
+       x="134.02873"
+       y="-14.618709"
+       id="text14497"
+       onmouseover="var a = 'Required to determine the heaviest block to build on';document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = a; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = ''; "
+       onclick="window.location='../network/index.html';"
+       onmouseout="document.getElementById('explainbox').getElementsByTagName('tspan')[0].textContent = ''; document.getElementById('explainbox').getElementsByTagName('tspan')[1].textContent = '';"
+       transform="scale(0.99561938,1.0043999)"><tspan
+         sodipodi:role="line"
+         id="tspan14495"
+         x="134.02873"
+         y="-14.618709"
+         style="font-size:3.23264861px;stroke-width:0.16163243">Main chain ptr</tspan></text>
   </g>
 </svg>

@@ -23,17 +23,57 @@ the ``Contract`` class and expose the functions that we want available in the co
 the following we will describe an implementation of the the Fetch token. In order to create
 a new contract code, we define the body of the contract as below:
 
-.. literalinclude:: ../../../libs/ledger/include/ledger/chaincode/token_contract.hpp
-   :language: c++
-   :lines: 25-38
+.. highlight:: cpp
+
+
+::
+
+   class TokenContract : public Contract
+   {
+   public:
+     TokenContract();
+     ~TokenContract() = default;
+
+     static constexpr char const *LOGGING_NAME = "TokenContract";
+
+   private:
+     // transaction handlers
+     Status CreateWealth(Transaction const &tx);
+     Status Transfer(Transaction const &tx);
+
+     // queries
+     Status Balance(Query const &query, Query &response);
+   };
+
+.. highlight:: none
 
 The header file above clearly defines the contract calls and the queries that you can make.
 The constructor of the contract subclass exposes these methods to make the ledger aware of their
 existence. This is done as shown below:
 
-.. literalinclude:: ../../../libs/ledger/src/chaincode/token_contract.cpp
-   :language: c++
-   :lines: 50-56
+.. highlight:: cpp
+
+
+::
+
+   class TokenContract : public Contract
+   {
+   public:
+     TokenContract();
+     ~TokenContract() = default;
+
+     static constexpr char const *LOGGING_NAME = "TokenContract";
+
+   private:
+     // transaction handlers
+     Status CreateWealth(Transaction const &tx);
+     Status Transfer(Transaction const &tx);
+
+     // queries
+     Status Balance(Query const &query, Query &response);
+   };
+
+.. highlight:: none
 
 The remaining bits of this contract consists of implementing the business logic governing the
 contract functions above.
