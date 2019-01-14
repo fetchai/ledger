@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "auctions/item.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -38,8 +37,6 @@ void BuildItem(std::string const &custom_name, pybind11::module &module)
       .def_readwrite("bid_count", &Item::bid_count)
       .def_readwrite("winner", &Item::winner)
       .def_readwrite("agent_bid_count", &Item::agent_bid_count);
-
-
 }
 
 }  // namespace auctions

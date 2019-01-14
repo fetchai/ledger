@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "auctions/bid.hpp"
 #include "python/fetch_pybind.hpp"
 

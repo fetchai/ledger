@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 namespace fetch {
 namespace auctions {
 
@@ -38,5 +37,5 @@ enum class ErrorCode
   BID_BIDDER_ID
 };
 
-} // auctions
-} // fetch
+}  // namespace auctions
+}  // namespace fetch

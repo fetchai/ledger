@@ -19,22 +19,22 @@
 
 #include "core/byte_array/byte_array.hpp"
 
-#include "auctions/combinatorial_auction.hpp"
 #include "auctions/error_codes.hpp"
+#include "auctions/vickrey_auction.hpp"
 
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
 namespace auctions {
 
-void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module &module)
+void BuildVickreyAuction(std::string const &custom_name, pybind11::module &module)
 {
 
   namespace py = pybind11;
-  py::class_<CombinatorialAuction>(module, custom_name.c_str())
+  py::class_<VickreyAuction>(module, custom_name.c_str())
       .def(py::init<BlockIdType, BlockIdType>())
       .def("AddItem",
-           [](CombinatorialAuction &ca, Item const &item) {
+           [](VickreyAuction &ca, Item const &item) {
              ErrorCode ec;
              ec = ca.AddItem(item);
 
@@ -47,10 +47,10 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
                return 1;
              }
            })
-      .def("ShowListedItems", [](CombinatorialAuction const &ca) { return ca.ShowListedItems(); })
-      .def("ShowBids", [](CombinatorialAuction const &ca) { return ca.ShowBids(); })
+      .def("ShowListedItems", [](VickreyAuction const &ca) { return ca.ShowListedItems(); })
+      .def("ShowBids", [](VickreyAuction const &ca) { return ca.ShowBids(); })
       .def("PlaceBid",
-           [](CombinatorialAuction &ca, fetch::auctions::Bid bid) {
+           [](VickreyAuction &ca, fetch::auctions::Bid bid) {
              ErrorCode ec;
              ec = ca.PlaceBid(bid);
 
@@ -63,10 +63,8 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
                return 1;
              }
            })
-      .def("Mine", [](CombinatorialAuction &ca, std::size_t seed,
-                      std::size_t run_len) { ca.Mine(seed, run_len); })
       .def("Execute",
-           [](CombinatorialAuction &ca, BlockIdType block_id) { return ca.Execute(block_id); });
+           [](VickreyAuction &ca, BlockIdType block_id) { return ca.Execute(block_id); });
 }
 
 }  // namespace auctions

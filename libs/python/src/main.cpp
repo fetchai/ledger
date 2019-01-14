@@ -72,10 +72,9 @@
 #include "python/ml/py_session.hpp"
 #include "python/ml/py_variable.hpp"
 
-
 #include "python/auctions/py_bid.hpp"
-#include "python/auctions/py_item.hpp"
 #include "python/auctions/py_combinatorial_auction.hpp"
+#include "python/auctions/py_item.hpp"
 
 // !!!!
 namespace py = pybind11;
@@ -275,16 +274,9 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 
-
-
-
   /////////////
-
-
 
   fetch::auctions::BuildCombinatorialAuction("CombinatorialAuction", ns_fetch_auctions);
   fetch::auctions::BuildItem("Item", ns_fetch_auctions);
   fetch::auctions::BuildBid("Bid", ns_fetch_auctions);
-
-
 }

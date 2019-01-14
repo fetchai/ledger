@@ -22,14 +22,13 @@
 namespace fetch {
 namespace auctions {
 
-constexpr ItemIdType DefaultItemId = std::numeric_limits<ItemIdType>::max();
-constexpr AgentIdType DefaultItemAgentId = std::numeric_limits<AgentIdType>::max();
-constexpr ValueType DefaultItemMinPrice = std::numeric_limits<AgentIdType>::max();
-constexpr ValueType DefaultItemMaxBid = std::numeric_limits<ValueType>::min();
-constexpr ValueType DefaultItemSellPrice = std::numeric_limits<ValueType>::min();
+constexpr ItemIdType  DefaultItemId        = std::numeric_limits<ItemIdType>::max();
+constexpr AgentIdType DefaultItemAgentId   = std::numeric_limits<AgentIdType>::max();
+constexpr ValueType   DefaultItemMinPrice  = std::numeric_limits<AgentIdType>::max();
+constexpr ValueType   DefaultItemMaxBid    = std::numeric_limits<ValueType>::min();
+constexpr ValueType   DefaultItemSellPrice = std::numeric_limits<ValueType>::min();
 
-constexpr AgentIdType DefaultItemWinner = std::numeric_limits<ValueType>::max();
-
+constexpr AgentIdType DefaultItemWinner = std::numeric_limits<AgentIdType>::max();
 
 /**
  * An item in the auction which may be bid upon
@@ -37,8 +36,6 @@ constexpr AgentIdType DefaultItemWinner = std::numeric_limits<ValueType>::max();
 class Item
 {
 public:
-
-
   Item() = default;
 
   ItemIdType  id         = DefaultItemId;
@@ -50,11 +47,11 @@ public:
   std::vector<Bid> bids{};
 
   std::uint32_t bid_count = 0;
-  AgentIdType winner    = DefaultItemWinner;
+  AgentIdType   winner    = DefaultItemWinner;
 
   //  std::unordered_map<AgentIdType, ValueType>   bids{};
   std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
 };
 
-} // auctions
-} // fetch
+}  // namespace auctions
+}  // namespace fetch

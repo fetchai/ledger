@@ -46,18 +46,18 @@ public:
     BuildGraph();
 
     // simulated annealing
-    double beta_start = 0.001;
-    double beta_end   = 1;
-    double db         = (beta_end - beta_start) / run_time;
-    double beta       = beta_start;
-    double prev_reward, new_reward, de;
+    ValueType beta_start = 0.001;
+    ValueType beta_end   = 1;
+    ValueType db         = (beta_end - beta_start) / static_cast<ValueType>(run_time);
+    ValueType beta       = beta_start;
+    ValueType prev_reward, new_reward, de;
 
     std::size_t rejected = 0;
 
     std::random_device                         rd{};
     std::mt19937                               gen{rd()};
     std::uniform_int_distribution<std::size_t> d(1, bids_.size());
-    std::uniform_real_distribution<double>     zero_to_one(0.0, 1.0);
+    std::uniform_real_distribution<ValueType>  zero_to_one(0.0, 1.0);
 
     for (std::size_t i = 0; i < run_time; ++i)
     {
@@ -86,8 +86,8 @@ public:
 
         std::cout << "de: " << de << std::endl;
 
-        double ran_val   = static_cast<double>(zero_to_one(gen));
-        double threshold = std::exp(-beta * de);
+        ValueType ran_val   = static_cast<ValueType>(zero_to_one(gen));
+        ValueType threshold = std::exp(-beta * de);
 
         if (ran_val >= threshold)
         {
@@ -138,8 +138,8 @@ public:
 
 private:
   // bids on binary vector
-  fetch::math::linalg::Matrix<double>        couplings_;
-  fetch::math::ShapelessArray<double>        local_fields_;
+  fetch::math::linalg::Matrix<ValueType>     couplings_;
+  fetch::math::ShapelessArray<ValueType>     local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
 
@@ -148,8 +148,8 @@ private:
    */
   void BuildGraph()
   {
-    couplings_    = fetch::math::linalg::Matrix<double>::Zeroes({bids_.size(), bids_.size()});
-    local_fields_ = fetch::math::ShapelessArray<double>::Zeroes({bids_.size()});
+    couplings_    = fetch::math::linalg::Matrix<ValueType>::Zeroes({bids_.size(), bids_.size()});
+    local_fields_ = fetch::math::ShapelessArray<ValueType>::Zeroes({bids_.size()});
     active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
@@ -159,7 +159,7 @@ private:
       // local_fields_ = bid_price - Sum(items.min_price)
       // thus local_fields_ represents the release value due to a bid
       // and only bids with positive local_fields can be accepted
-      local_fields_[i] = bids_[i].price;
+      local_fields_[i] = static_cast<ValueType>(bids_[i].price);
       for (auto &cur_item : items_)
       {
         for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
@@ -171,9 +171,9 @@ private:
         }
       }
 
-      double max_local_fields_;
+      ValueType max_local_fields_;
       fetch::math::Max(local_fields_, max_local_fields_);
-      double exclusive_bid_penalty = 2 * max_local_fields_;
+      ValueType exclusive_bid_penalty = 2 * max_local_fields_;
 
       // next set couplings strengths
       for (std::size_t j = i + 1; j < bids_.size(); ++j)
@@ -221,9 +221,9 @@ private:
    * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
    * @return  returns a reward value
    */
-  double TotalBenefit()
+  ValueType TotalBenefit()
   {
-    double        reward = 0;
+    ValueType     reward = 0;
     std::uint32_t a1 = 0, a2 = 0;
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {

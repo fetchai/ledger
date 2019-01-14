@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 namespace fetch {
 namespace auctions {
 
@@ -27,11 +26,9 @@ class Bid;
 using ItemIdType         = std::size_t;
 using BidIdType          = std::size_t;
 using BlockIdType        = fetch::byte_array::ByteArray;
-using ValueType          = std::size_t;
+using ValueType          = double;
 using AgentIdType        = std::size_t;
 using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
 
-
-} // auctions
-} // fetch
-
+}  // namespace auctions
+}  // namespace fetch
