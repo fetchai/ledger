@@ -48,6 +48,9 @@ CombinatorialAuction SetupAuction(std::size_t start_block_val, std::size_t end_b
 
 TEST(combinatorial_auction, many_bid_many_item_auction)
 {
+
+  ErrorCode err;
+
   // set up auction
   std::size_t          start_block = 10000;
   std::size_t          end_block   = 10010;
@@ -82,7 +85,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
 
   for (std::size_t k = 0; k < items.size(); ++k)
   {
-    ErrorCode err = ca.AddItem(items[k]);
+    err = ca.AddItem(items[k]);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
   }
 
@@ -99,7 +102,8 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid1.price  = 1;
   bid1.bidder = bidders[0].id;
   bid1.items.push_back(items[3]);
-  ca.PlaceBid(bid1);
+  err = ca.PlaceBid(bid1);
+  ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   bid2.id     = 1;
   bid2.price  = 30;
@@ -109,7 +113,8 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid2.items.push_back(items[3]);
   bid2.excludes.push_back(bid1);
   bid2.excludes.push_back(bid3);
-  ca.PlaceBid(bid2);
+  err = ca.PlaceBid(bid2);
+  ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   bid3.id     = 2;
   bid3.price  = 20;
@@ -118,7 +123,8 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid3.items.push_back(items[3]);
   bid3.excludes.push_back(bid2);
   bid3.excludes.push_back(bid1);
-  ca.PlaceBid(bid3);
+  err = ca.PlaceBid(bid3);
+  ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // 0 0 0 - value 0                        - valid
   // 0 0 1 - value 8                        - win
