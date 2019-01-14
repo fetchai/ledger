@@ -18,23 +18,20 @@
 //------------------------------------------------------------------------------
 
 
-#include "auctions/bid.hpp"
-#include "python/fetch_pybind.hpp"
-
 namespace fetch {
 namespace auctions {
 
-void BuildBid(std::string const &custom_name, pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<>())
-      .def_readwrite("id", &Bid::id)
-      .def_readwrite("items", &Bid::items)
-      .def_readwrite("price", &Bid::price)
-      .def_readwrite("excludes", &Bid::excludes)
-      .def_readwrite("bidder", &Bid::bidder);
-}
+struct Item;
+struct Bid;
 
-}  // namespace auctions
-}  // namespace fetch
+using ItemIdType         = std::size_t;
+using BidIdType          = std::size_t;
+using BlockIdType        = fetch::byte_array::ByteArray;
+using ValueType          = std::size_t;
+using AgentIdType        = std::size_t;
+using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
+
+
+} // auctions
+} // fetch
+

@@ -17,70 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "ml/layers/layers.hpp"
 #include <iostream>
-//#include <memory>
 #include <unordered_map>
-//#include <unordered_set>
-//#include <vector>
 #include "core/byte_array/byte_array.hpp"
+
+#include "auctions/type_def.hpp"
+#include "auctions/error_codes.hpp"
+#include "auctions/item.hpp"
+#include "auctions/bid.hpp"
 
 namespace fetch {
 namespace auctions {
-
-enum class ErrorCode
-{
-  SUCCESS,
-  ITEM_ALREADY_LISTED,
-  AUCTION_FULL,
-  ITEM_NOT_LISTED,
-  TOO_MANY_BIDS,
-  AUCTION_CLOSED,
-  TOO_MANY_ITEMS
-};
-
-struct Item;
-using ItemIdType         = std::size_t;
-using BidIdType          = std::size_t;
-using BlockIdType        = fetch::byte_array::ByteArray;
-using ValueType          = std::size_t;
-using AgentIdType        = std::size_t;
-using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
-
-struct Bid;
-
-/**
- * An item in the auction which may be bid upon
- */
-struct Item
-{
-
-  ItemIdType  id         = 0;
-  AgentIdType seller_id  = 0;
-  ValueType   min_price  = std::numeric_limits<ValueType>::max();
-  ValueType   max_bid    = std::numeric_limits<ValueType>::min();
-  ValueType   sell_price = std::numeric_limits<ValueType>::min();
-
-  std::vector<Bid> bids{};
-
-  std::size_t bid_count = 0;
-  AgentIdType winner    = 0;
-
-  //  std::unordered_map<AgentIdType, ValueType>   bids{};
-  std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
-};
-
-/**
- * A bid upon (potentially many) items
- */
-struct Bid
-{
-  BidIdType         id;
-  std::vector<Item> items{};
-  ValueType         price = 0;
-  std::vector<Bid>  excludes{};
-  AgentIdType       bidder = std::numeric_limits<AgentIdType>::max();
-};
 
 // template <typename A, typename V = fetch::ml::Variable<A>>
 class Auction

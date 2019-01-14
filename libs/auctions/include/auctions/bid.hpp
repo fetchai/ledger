@@ -17,24 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-
-#include "auctions/bid.hpp"
-#include "python/fetch_pybind.hpp"
+#include "auctions/type_def.hpp"
 
 namespace fetch {
 namespace auctions {
 
-void BuildBid(std::string const &custom_name, pybind11::module &module)
+/**
+ * A bid upon (potentially many) items
+ */
+struct Bid
 {
-  namespace py = pybind11;
-  py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<>())
-      .def_readwrite("id", &Bid::id)
-      .def_readwrite("items", &Bid::items)
-      .def_readwrite("price", &Bid::price)
-      .def_readwrite("excludes", &Bid::excludes)
-      .def_readwrite("bidder", &Bid::bidder);
-}
+  BidIdType         id;
+  std::vector<Item> items{};
+  ValueType         price = 0;
+  std::vector<Bid>  excludes{};
+  AgentIdType       bidder = std::numeric_limits<AgentIdType>::max();
+};
 
-}  // namespace auctions
-}  // namespace fetch
+} // auctions
+} // fetch

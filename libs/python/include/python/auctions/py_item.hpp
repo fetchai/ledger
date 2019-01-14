@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 
-#include "auctions/auction.hpp"
+#include "auctions/item.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -28,7 +28,19 @@ void BuildItem(std::string const &custom_name, pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<Item>(module, custom_name.c_str())
+      .def(py::init<>())
+      .def_readwrite("id", &Item::id)
+      .def_readwrite("seller_id", &Item::seller_id)
+      .def_readwrite("min_price", &Item::min_price)
+      .def_readwrite("max_bid", &Item::max_bid)
+      .def_readwrite("sell_price", &Item::sell_price)
+      .def_readwrite("bids", &Item::bids)
+      .def_readwrite("bid_count", &Item::bid_count)
+      .def_readwrite("winner", &Item::winner)
+      .def_readwrite("agent_bid_count", &Item::agent_bid_count);
+
+
 }
 
-}  // namespace math
+}  // namespace auctions
 }  // namespace fetch

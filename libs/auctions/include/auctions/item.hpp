@@ -17,24 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-
-#include "auctions/bid.hpp"
-#include "python/fetch_pybind.hpp"
+#include "auctions/type_def.hpp"
 
 namespace fetch {
 namespace auctions {
-
-void BuildBid(std::string const &custom_name, pybind11::module &module)
+/**
+ * An item in the auction which may be bid upon
+ */
+class Item
 {
-  namespace py = pybind11;
-  py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<>())
-      .def_readwrite("id", &Bid::id)
-      .def_readwrite("items", &Bid::items)
-      .def_readwrite("price", &Bid::price)
-      .def_readwrite("excludes", &Bid::excludes)
-      .def_readwrite("bidder", &Bid::bidder);
-}
 
-}  // namespace auctions
-}  // namespace fetch
+  ItemIdType  id         = 0;
+  AgentIdType seller_id  = 0;
+  ValueType   min_price  = std::numeric_limits<ValueType>::max();
+  ValueType   max_bid    = std::numeric_limits<ValueType>::min();
+  ValueType   sell_price = std::numeric_limits<ValueType>::min();
+
+  std::vector<Bid> bids{};
+
+  std::size_t bid_count = 0;
+  AgentIdType winner    = 0;
+
+  //  std::unordered_map<AgentIdType, ValueType>   bids{};
+  std::unordered_map<AgentIdType, std::size_t> agent_bid_count{};
+};
+
+} // auctions
+} // fetch

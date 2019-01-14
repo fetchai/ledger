@@ -18,23 +18,19 @@
 //------------------------------------------------------------------------------
 
 
-#include "auctions/bid.hpp"
-#include "python/fetch_pybind.hpp"
-
 namespace fetch {
 namespace auctions {
 
-void BuildBid(std::string const &custom_name, pybind11::module &module)
+enum class ErrorCode
 {
-  namespace py = pybind11;
-  py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<>())
-      .def_readwrite("id", &Bid::id)
-      .def_readwrite("items", &Bid::items)
-      .def_readwrite("price", &Bid::price)
-      .def_readwrite("excludes", &Bid::excludes)
-      .def_readwrite("bidder", &Bid::bidder);
-}
+  SUCCESS,
+  ITEM_ALREADY_LISTED,
+  AUCTION_FULL,
+  ITEM_NOT_LISTED,
+  TOO_MANY_BIDS,
+  AUCTION_CLOSED,
+  TOO_MANY_ITEMS
+};
 
-}  // namespace auctions
-}  // namespace fetch
+} // auctions
+} // fetch

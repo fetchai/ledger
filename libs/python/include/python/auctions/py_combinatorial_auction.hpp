@@ -39,10 +39,15 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
 //             ShapelessArray<T> a;
 //             return a.Copy();
 //           })
-      .def("AddItem", [](CombinatorialAuction & ca, fetch::auctions::Item const &item)
-      {
-        return ca.AddItem(item);
-      })
+
+      .def("AddItem", [](CombinatorialAuction &ca, Item const &item)
+       {
+          return ca.AddItem(item);
+       })
+//      .def("AddItem", [](CombinatorialAuction const& ca, fetch::auctions::Item const &item)
+//      {
+//        return ca.AddItem(item);
+//      })
       .def("Bid", [](CombinatorialAuction & ca, fetch::auctions::Bid bid)
       {
         return ca.Bid(bid);
