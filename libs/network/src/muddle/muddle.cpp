@@ -58,8 +58,9 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1))
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + static_cast<std::string>(network_id)))
   , clients_(router_)
+  , network_id_{network_id}
 {}
 
 /**
@@ -124,8 +125,8 @@ void Muddle::Shutdown()
  */
 bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
-  PeerConnectionList::Handle handle;
-  if (!clients_.UriToHandle(uri, handle))
+  PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
+  if (handle == 0)
   {
     return false;
   }
@@ -134,9 +135,10 @@ bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 
 /**
  * Returns all the active connections.
+ * @param direct_only if true only direct addresses will be returned, false by default
  * @return map of connections
  */
-Muddle::ConnectionMap Muddle::GetConnections()
+Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
 
@@ -152,6 +154,11 @@ Muddle::ConnectionMap Muddle::GetConnections()
 
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
+
+    if (direct_only && !entry.second.direct)
+    {
+      continue;
+    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -172,7 +179,18 @@ Muddle::ConnectionMap Muddle::GetConnections()
 
 void Muddle::DropPeer(Address const &peer)
 {
-  router_.DropPeer(peer);
+  FETCH_LOG_INFO(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
+  Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
+  if (h)
+  {
+    router_.DropHandle(h, peer);
+    clients_.RemovePersistentPeer(h);
+    clients_.RemoveConnection(h);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
+  }
 }
 
 /**
@@ -182,33 +200,39 @@ void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
-  // connect to all the required peers
-  for (Uri const &peer : clients_.GetPeersToConnectTo())
+  try
   {
-    switch (peer.scheme())
+    // connect to all the required peers
+    for (Uri const &peer : clients_.GetPeersToConnectTo())
     {
-    case Uri::Scheme::Tcp:
-      CreateTcpClient(peer);
-      break;
-    default:
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-      break;
+      switch (peer.scheme())
+      {
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
+      }
+    }
+
+    // run periodic cleanup
+    Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
+    if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+    {
+      // clean up and pending message handlers and also trigger the timeout logic
+      dispatcher_.Cleanup();
+
+      // clean up echo caches and other temporary stored objects
+      router_.Cleanup();
+
+      last_cleanup_ = Clock::now();
     }
   }
-
-  // run periodic cleanup
-  Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
-  if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+  catch (std::exception &e)
   {
-    // clean up and pending message handlers and also trigger the timeout logic
-    dispatcher_.Cleanup();
-
-    // clean up echo caches and other temporary stored objects
-    router_.Cleanup();
-
-    last_cleanup_ = Clock::now();
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
-
   // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
 }

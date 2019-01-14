@@ -98,7 +98,7 @@ public:
     f_fn_(ptr);
   }
 
-  void Backward(SelfPtrType ptr, typename ArrayType::Type lambda = 0.0)
+  void Backward(SelfPtrType ptr, typename ArrayType::Type /*lambda*/ = 0.0)
   {
     assert(initialised);
     assert(b_fn_);

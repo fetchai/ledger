@@ -28,14 +28,14 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType const &y,
-                                                          ArrayType &z)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType const &y,
+                                                            ArrayType &z)
 {
   free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType &y)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType &y)
 {
   free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
   y.data().in_parallel().Apply(kernel, x.data(), y.data());

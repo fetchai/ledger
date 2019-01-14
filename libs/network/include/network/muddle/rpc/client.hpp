@@ -154,7 +154,7 @@ private:
   uint16_t const  service_;
   NetworkId       network_id_;
   uint16_t const  channel_;
-  ThreadPool      thread_pool_ = network::MakeThreadPool(10);
+  ThreadPool      thread_pool_ = network::MakeThreadPool(10, "rpc::Client");
   SharedHandler   handler_;
 };
 

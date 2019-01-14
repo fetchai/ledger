@@ -36,7 +36,7 @@ struct InvokeStaticOrFreeFunction
 template <typename FunctionPointer, int RESULT_POSITION, typename... UsedArgs>
 struct InvokeStaticOrFreeFunction<FunctionPointer, void, RESULT_POSITION, UsedArgs...>
 {
-  static void StaticOrFreeFunction(VM *vm, FunctionPointer &m, UsedArgs &... args)
+  static void StaticOrFreeFunction(VM * /*vm*/, FunctionPointer &m, UsedArgs &... args)
   {
     (*m)(args...);
   };

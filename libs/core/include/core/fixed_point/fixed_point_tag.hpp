@@ -17,36 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
-
-#include <random>
-
 namespace fetch {
-namespace chain {
-namespace consensus {
+namespace fixed_point {
 
-class BadMiner : public ConsensusMinerInterface
+struct FixedPointTag
 {
-
-public:
-  BadMiner()  = default;
-  ~BadMiner() = default;
-
-  // Blocking mine
-  void Mine(BlockType &block) override
-  {
-    block.body().nonce = 0;
-    block.UpdateDigest();
-  }
-
-  // Mine for set number of iterations
-  bool Mine(BlockType &block, uint64_t /*iterations*/) override
-  {
-    block.body().nonce = 0;
-    block.UpdateDigest();
-    return true;
-  }
 };
-}  // namespace consensus
-}  // namespace chain
+
+}  // namespace fixed_point
 }  // namespace fetch

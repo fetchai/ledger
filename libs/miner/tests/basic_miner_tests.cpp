@@ -30,7 +30,6 @@
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
-using fetch::byte_array::ToBase64;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
