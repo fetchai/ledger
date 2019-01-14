@@ -88,7 +88,7 @@ public:
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
   }
 
-  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
+  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                    TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident), ", quality: ", quality);
