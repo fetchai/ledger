@@ -49,7 +49,8 @@ using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
 using fetch::chain::consensus::ConsensusMinerType;
 
-using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+using ConsensusMinerInterfacePtr =
+    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -127,23 +128,23 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
 /**
  * ConsensusMinerInterface factory method
  */
-ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_type)
 {
+  ConsensusMinerInterfacePtr miner;
+
   switch (miner_type)
   {
+  case ConsensusMinerType::NO_MINER:
+    break;
   case ConsensusMinerType::DUMMY_MINER:
-  {
-    return std::make_shared<DummyMiner>();
-  }
+    miner = std::make_shared<DummyMiner>();
+    break;
   case ConsensusMinerType::BAD_MINER:
-  {
-    return std::make_shared<BadMiner>();
+    miner = std::make_shared<BadMiner>();
+    break;
   }
-  default:
-  {
-    return nullptr;
-  }
-  }
+
+  return miner;
 }
 
 }  // namespace
