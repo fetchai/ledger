@@ -361,7 +361,7 @@ private:
     }
 
     // Find and remove next index up from the last one we removed whose usage_flag = 0
-    for (;; ++hand_)
+    for (;;)
     {
       if (hand_ == data_.end())
       {
@@ -370,12 +370,15 @@ private:
 
       if (hand_->second.usage_flag == 0)
       {
-        FlushLine(hand_->first, hand_->second);
-        data_.erase(hand_);
+        auto temp = hand_;
+        ++hand_;
+        FlushLine(temp->first << cache_line_ln2, temp->second);
+        data_.erase(temp);
         break;
       }
       // Setting usage_flag to 0
       hand_->second.usage_flag = 0;
+      ++hand_;
     }
     return true;
   }
