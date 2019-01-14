@@ -27,14 +27,17 @@ class MatrixMultiplyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
+using MyTypes = ::testing::Types<fetch::math::linalg::Matrix<float>,
+                                 fetch::math::linalg::Matrix<double>  //,
+                                                                      // fetch::math::Tensor<float>
+                                                                      // fetch::math::NDArray<float>
+                                 >;
 TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
-
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
-  std::shared_ptr<TypeParam> a =  std::make_shared<TypeParam>(std::vector<size_t>({1, 5}));
-  std::shared_ptr<TypeParam> b =  std::make_shared<TypeParam>(std::vector<size_t>({5, 4}));
+  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<size_t>({1, 5}));
+  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<size_t>({5, 4}));
   std::shared_ptr<TypeParam> gt = std::make_shared<TypeParam>(std::vector<size_t>({1, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
@@ -59,7 +62,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::shared_ptr<TypeParam> prediction = op.Forward({a, b});
+  std::shared_ptr<TypeParam>                prediction = op.Forward({a, b});
 
   // // test correct values
   ASSERT_TRUE(prediction->shape().size() == 2);
@@ -77,41 +80,43 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   std::shared_ptr<TypeParam> wg = std::make_shared<TypeParam>(std::vector<size_t>({5, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
-  std::vector<int> weights({-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
+  std::vector<int> weights(
+      {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
   std::vector<int> errorSignal({1, 2, 3, -4});
   std::vector<int> inputGrad({-4, 38, 58, 78, 98});
-  std::vector<int> weightsGrad({1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
+  std::vector<int> weightsGrad(
+      {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
 
   for (size_t i(0); i < data.size(); ++i)
   {
-    a->Set(0, i, typename TypeParam::Type(data[i]));
+    a->Set(i, typename TypeParam::Type(data[i]));
   }
   for (size_t i(0); i < 5; ++i)
   {
     for (size_t j(0); j < 4; ++j)
     {
-      b->Set(i, j, typename TypeParam::Type(weights[i * 4 + j]));
+      b->Set(i * 4 + j, typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
   for (size_t i(0); i < errorSignal.size(); ++i)
   {
-    e->Set(0, i, typename TypeParam::Type(errorSignal[i]));
+    e->Set(i, typename TypeParam::Type(errorSignal[i]));
   }
   for (size_t i(0); i < inputGrad.size(); ++i)
   {
-    ig->Set(0, i, typename TypeParam::Type(inputGrad[i]));
+    ig->Set(i, typename TypeParam::Type(inputGrad[i]));
   }
   for (size_t i(0); i < 5; ++i)
   {
     for (size_t j(0); j < 4; ++j)
     {
-      wg->Set(i, j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      wg->Set(i * 4 + j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
   std::vector<std::shared_ptr<TypeParam>>   backpropagatedSignals =
-    op.Backward(std::vector<std::shared_ptr<TypeParam>>({a, b}), e);
+      op.Backward(std::vector<std::shared_ptr<TypeParam>>({a, b}), e);
 
   // test correct shapes
   ASSERT_EQ(backpropagatedSignals.size(), 2);

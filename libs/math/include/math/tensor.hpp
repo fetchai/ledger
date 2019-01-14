@@ -108,7 +108,8 @@ public:
     return DimensionSize(0) * shape_[0] + padding_[0];
   }
 
-  size_t size() const  // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
+  size_t size()
+      const  // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
   {
     return NumberOfElements();
   }

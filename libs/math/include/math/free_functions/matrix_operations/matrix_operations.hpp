@@ -897,7 +897,7 @@ fetch::math::meta::IsMathShapeArray<ArrayType, void> DotTranspose(
     ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
     typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
-  ret.Resize(A.shape()[0], B.shape()[0]);
+  ret.Reshape(std::vector<size_t>({A.shape()[0], B.shape()[0]}));
 
   if (threaded)
   {

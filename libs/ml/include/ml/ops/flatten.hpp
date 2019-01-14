@@ -38,7 +38,8 @@ public:
     assert(inputs.size() == 1);
     input_shape_  = inputs[0]->shape();
     this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    this->output_->Copy(*inputs[0]);  // TODO(private, 521) remove useless copy and replace with lightweight view
+    this->output_->Copy(
+        *inputs[0]);  // TODO(private, 521) remove useless copy and replace with lightweight view
     size_t elementsCount(1);
     for (size_t i : this->output_->shape())
     {
