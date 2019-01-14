@@ -23,7 +23,7 @@ namespace fetch {
 namespace auctions {
 
 constexpr BidIdType DefaultBidId = std::numeric_limits<BidIdType>::max();
-constexpr ValueType DefaultBidPrice = std::numeric_limits<AgentIdType>::min();
+constexpr ValueType DefaultBidPrice = std::numeric_limits<ValueType>::max();
 constexpr AgentIdType DefaultBidBidder = std::numeric_limits<AgentIdType>::max();
 
 /**
