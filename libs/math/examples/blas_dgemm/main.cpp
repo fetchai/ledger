@@ -24,7 +24,7 @@
 using namespace fetch;
 using namespace fetch::math::linalg;
 
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
 
   Blas<double,

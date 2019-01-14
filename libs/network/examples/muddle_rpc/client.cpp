@@ -26,7 +26,6 @@ using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
 using fetch::network::NetworkManager;
-using fetch::network::Peer;
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;

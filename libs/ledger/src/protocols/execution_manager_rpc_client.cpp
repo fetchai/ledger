@@ -24,10 +24,6 @@
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 
-using fetch::service::ServiceClient;
-using fetch::byte_array::ConstByteArray;
-using fetch::network::NetworkManager;
-
 namespace fetch {
 namespace ledger {
 

@@ -81,8 +81,8 @@ public:
 private:
   using Variant = variant::Variant;
 
-  http::HTTPResponse GetChainStatus(http::ViewParameters const &params,
-                                    http::HTTPRequest const &   request)
+  http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
+                                    http::HTTPRequest const &request)
   {
     std::size_t chain_length         = 20;
     bool        include_transactions = false;
@@ -107,8 +107,8 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-  http::HTTPResponse GetMuddleStatus(http::ViewParameters const &params,
-                                     http::HTTPRequest const &   request)
+  http::HTTPResponse GetMuddleStatus(http::ViewParameters const & /*params*/,
+                                     http::HTTPRequest const & /*request*/)
   {
     auto const connections = muddle_.GetConnections(true);
 
@@ -128,8 +128,8 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-  http::HTTPResponse GetP2PStatus(http::ViewParameters const &params,
-                                  http::HTTPRequest const &   request)
+  http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
+                                  http::HTTPRequest const & /*request*/)
   {
     Variant response           = Variant::Object();
     response["identity_cache"] = GenerateIdentityCache();
@@ -137,8 +137,8 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-  http::HTTPResponse GetTrustStatus(http::ViewParameters const &params,
-                                    http::HTTPRequest const &   request)
+  http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
+                                    http::HTTPRequest const & /*request*/)
   {
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
@@ -172,8 +172,8 @@ private:
     return http::CreateJsonResponse(response);
   }
 
-  http::HTTPResponse GetBacklogStatus(http::ViewParameters const &params,
-                                      http::HTTPRequest const &   request)
+  http::HTTPResponse GetBacklogStatus(http::ViewParameters const & /*params*/,
+                                      http::HTTPRequest const & /*request*/)
   {
     variant::Variant data = variant::Variant::Object();
 

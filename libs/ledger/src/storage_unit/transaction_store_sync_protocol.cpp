@@ -21,8 +21,6 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceID;
-using fetch::metrics::MetricHandler;
-using fetch::metrics::Metrics;
 
 #ifdef FETCH_ENABLE_METRICS
 static void RecordNewElement(ConstByteArray const &identifier)
