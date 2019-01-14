@@ -34,7 +34,7 @@ public:
   MeanSquareErrorLayer()          = default;
   virtual ~MeanSquareErrorLayer() = default;
 
-  virtual float Forward(std::vector<ArrayPtrType> const &inputs)
+  virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());

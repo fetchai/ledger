@@ -41,8 +41,8 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
   size_t                     i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
-    data->Set(i, e);
-    gt->Set(i, e);
+    data->Set(i, typename TypeParam::Type(e));
+    gt->Set(i, typename TypeParam::Type(e));
     i++;
   }
   fetch::ml::ops::ReluLayer<TypeParam> op;
@@ -59,8 +59,8 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
   size_t                     i(0);
   for (int e : {-1, -2, -3, -4, -5, -6, -7, -8})
   {
-    data->Set(i, e);
-    gt->Set(i, 0);
+    data->Set(i, typename TypeParam::Type(e));
+    gt->Set(i, typename TypeParam::Type(0));
     i++;
   }
   fetch::ml::ops::ReluLayer<TypeParam> op;
@@ -78,8 +78,8 @@ TYPED_TEST(ReluTest, forward_mixed_test)
   std::vector<int>           gtInput({1, 0, 3, 0, 5, 0, 7, 0});
   for (size_t i(0); i < 8; ++i)
   {
-    data->Set(i, dataInput[i]);
-    gt->Set(i, gtInput[i]);
+    data->Set(i, typename TypeParam::Type(dataInput[i]));
+    gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::ReluLayer<TypeParam> op;
   std::shared_ptr<TypeParam>           prediction = op.Forward({data});
@@ -98,9 +98,9 @@ TYPED_TEST(ReluTest, backward_mixed_test)
   std::vector<int>           gtInput({-1, 0, 3, 0, -8, 0, -21, 0});
   for (size_t i(0); i < 8; ++i)
   {
-    data->Set(i, dataInput[i]);
-    error->Set(i, errorInput[i]);
-    gt->Set(i, gtInput[i]);
+    data->Set(i, typename TypeParam::Type(dataInput[i]));
+    error->Set(i, typename TypeParam::Type(errorInput[i]));
+    gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
   fetch::ml::ops::ReluLayer<TypeParam>    op;
   std::vector<std::shared_ptr<TypeParam>> prediction = op.Backward({data}, error);

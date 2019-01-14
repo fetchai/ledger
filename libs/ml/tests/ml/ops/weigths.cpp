@@ -47,9 +47,9 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   std::vector<int>           gtInput({0, 0, 6, -9, -3, 7, -14, -42});
   for (size_t i(0); i < 8; ++i)
   {
-    data->Set(i, dataInput[i]);
-    error->Set(i, errorInput[i]);
-    gt->Set(i, gtInput[i]);
+    data->Set(i, typename TypeParam::Type(dataInput[i]));
+    error->Set(i, typename TypeParam::Type(errorInput[i]));
+    gt->Set(i, typename TypeParam::Type(gtInput[i]));
   }
 
   fetch::ml::ops::Weights<TypeParam> w;
