@@ -33,7 +33,8 @@ enum class TrustSubject
 {
   BLOCK       = 0,
   TRANSACTION = 1,
-  PEER        = 2
+  PEER        = 2,
+  OBJECT      = 3
 };
 
 enum class TrustQuality
@@ -107,6 +108,8 @@ inline char const *ToString(TrustSubject subject)
     return "Transaction";
   case TrustSubject::PEER:
     return "Peer";
+  case TrustSubject::OBJECT:
+    return "Object";
   default:
     return "Unknown";
   }

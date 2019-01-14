@@ -61,7 +61,7 @@ TEST(TrustTests, BayNewInfo)
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
                     fetch::p2p::TrustQuality::NEW_INFORMATION);
   auto g  = trust.GetGaussianOfPeer("peer1");
-  auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
+  auto rg = LookupReferencePlayer(TrustSubject ::BLOCK, TrustQuality::NEW_INFORMATION);
   EXPECT_EQ(g.mu() > rg.mu(), true);
   EXPECT_EQ(g.sigma() < rg.sigma(), true);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
@@ -73,7 +73,7 @@ TEST(TrustTests, BayBadInfo)
 
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, fetch::p2p::TrustQuality::LIED);
 
-  auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
+  auto rg = LookupReferencePlayer(TrustSubject ::BLOCK, TrustQuality::NEW_INFORMATION);
   auto g  = trust.GetGaussianOfPeer("peer1");
   EXPECT_EQ(g.mu() < rg.mu(), true);
   EXPECT_EQ(g.sigma() < rg.sigma(), true);

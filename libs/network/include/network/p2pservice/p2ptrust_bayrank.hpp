@@ -43,13 +43,18 @@
 namespace fetch {
 namespace p2p {
 
+using TrustQualityArrayGaussian = std::array<math::statistics::Gaussian<double>, 5>;
+using ReferencePlayers          = std::unordered_map<TrustSubject, TrustQualityArrayGaussian >;
+extern ReferencePlayers const reference_players_;
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 5>;
-extern const reference_players_type reference_players_;
-
-inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
+inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustSubject subject, TrustQuality quality)
 {
-  return reference_players_.at(static_cast<std::size_t>(quality));
+  auto it = reference_players_.find(subject);
+  if (it!=reference_players_.end())
+  {
+    return it->second.at(static_cast<std::size_t>(quality));
+  }
+  throw std::runtime_error("Trust subject not in the reference players map:  "+std::string(ToString(subject)));
 }
 
 std::ostream& operator<<(std::ostream& o, const fetch::p2p::TrustQuality& q);
@@ -94,55 +99,63 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident), ", quality: ", quality);
     FETCH_LOCK(mutex_);
 
-    Gaussian const &reference_player = LookupReferencePlayer(quality);
+    try
+    {
+      Gaussian const &reference_player = LookupReferencePlayer(subject, quality);
 
-    auto id_it = id_store_.find(peer_ident);
-    if (id_it==id_store_.end())
-    {
-      id_store_[peer_ident] = 0;
-      auto g = quality == TrustQuality :: NEW_PEER
-                ? reference_player
-                : LookupReferencePlayer(TrustQuality::NEW_PEER);
-      buffer_.NewPeer(peer_ident, g);
-      id_it = id_store_.find(peer_ident);
-    }
-    if (quality == TrustQuality::NEW_PEER)
-    {
-      return;
-    }
+      auto id_it = id_store_.find(peer_ident);
+      if (id_it == id_store_.end())
+      {
+        id_store_[peer_ident] = 0;
+        auto g = quality == TrustQuality::NEW_PEER
+                 ? reference_player
+                 : LookupReferencePlayer(subject, TrustQuality::NEW_PEER);
+        buffer_.NewPeer(peer_ident, g);
+        id_it = id_store_.find(peer_ident);
+      }
+      if (quality == TrustQuality::NEW_PEER)
+      {
+        return;
+      }
 
-    bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
-    if (honest && object_ident.size()>0)
-    {
-      AddObject(object_ident, peer_ident);
-    }
-    
-    auto sp       = stores_[id_it->second];
-    auto peer_it  = sp->GetPeer(peer_ident);
-    if (peer_it==sp->end())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(peer_ident), " not found in the storage (id=", id_it->second, ")!");
-      return;
-    }
-    
-    updateGaussian(honest, peer_it->g, reference_player);
-    peer_it->update_score();
-    peer_it->last_modified = GetCurrentTime();
-    sp->Update();
-    FETCH_LOG_WARN(LOGGING_NAME,  "(AB): ",  ToBase64(peer_ident), " updated: score=", peer_it->score);
+      bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+      if (honest && object_ident.size() > 0)
+      {
+        AddObject(object_ident, peer_ident);
+      }
 
-    auto place = the_train_.MoveIfPossible(ToPlaceEnum(id_it->second), peer_ident);
-    auto s_idx = FromPlaceEnum(place);
-    if (place != PlaceEnum::UNKNOWN && s_idx != -1)
+      auto sp = stores_[id_it->second];
+      auto peer_it = sp->GetPeer(peer_ident);
+      if (peer_it == sp->end())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(peer_ident), " not found in the storage (id=", id_it->second,
+                       ")!");
+        return;
+      }
+
+      updateGaussian(honest, peer_it->g, reference_player);
+      peer_it->update_score();
+      peer_it->last_modified = GetCurrentTime();
+      sp->Update();
+      FETCH_LOG_WARN(LOGGING_NAME, "(AB): ", ToBase64(peer_ident), " updated: score=", peer_it->score);
+
+      auto place = the_train_.MoveIfPossible(ToPlaceEnum(id_it->second), peer_ident);
+      auto s_idx = FromPlaceEnum(place);
+      if (place != PlaceEnum::UNKNOWN && s_idx != -1)
+      {
+        id_store_[peer_ident] = static_cast<std::size_t>(s_idx);
+      }
+    }
+    catch (std::exception &e)
     {
-      id_store_[peer_ident] = static_cast<std::size_t>(s_idx);
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception in AddFeedback: ", e.what());
     }
   }
 
   void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject, TrustQuality quality) override
   {
-    object_store_.Iterate(object_ident, [this, subject, quality](IDENTITY const &identity){
-      AddFeedback(identity, subject, quality);
+    object_store_.Iterate(object_ident, [this, quality](IDENTITY const &identity){
+      AddFeedback(identity, TrustSubject :: OBJECT, quality);
     });
   }
 
