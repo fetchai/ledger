@@ -17,52 +17,52 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/node.hpp"
+#include "ml/ops/placeholder.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
-#include "ml/node.hpp"
-#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {
 
-  
-  template <class T>
-  class Graph
+template <class T>
+class Graph
+{
+public:
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  Graph()
+  {}
+
+  ArrayPtrType Evaluate(std::string const &nodeName)
   {
-  public:
-    using ArrayType    = T;
-    using ArrayPtrType = std::shared_ptr<ArrayType>;
+    return nodes_[nodeName]->Evaluate();
+  }
 
-    Graph()
-    {}
-
-    ArrayPtrType Evaluate(std::string const &nodeName)
+  template <class OperationType, typename... Params>
+  void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs,
+               Params... params)
+  {
+    nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
+    FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
+    for (auto const &i : inputs)
     {
-      return nodes_[nodeName]->Evaluate();
+      nodes_[nodeName]->AddInput(nodes_[i]);
     }
+  }
 
-    template <class OperationType, typename ...Params>
-    void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
-    {
-      nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
-      FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
-      for (auto const &i : inputs)
-	{
-	  nodes_[nodeName]->AddInput(nodes_[i]);
-	}
-    }
+  void SetInput(std::string const &nodeName, ArrayPtrType data)
+  {
+    std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
+        std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+    placeholder->SetData(data);
+  }
 
-    void SetInput(std::string const &nodeName, ArrayPtrType data)
-    {
-      std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
-	std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
-      placeholder->SetData(data);
-    }
+protected:
+  std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
+};
 
-  protected:
-    std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
-  };
-  
 }  // namespace ml
 }  // namespace fetch

@@ -17,22 +17,27 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/flatten.hpp"
-#include "math/ndarray.hpp"
 #include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
-class FlattenTest : public ::testing::Test {};
+class FlattenTest : public ::testing::Test
+{
+};
 
-// TODO Adapt for NDArray
-using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>, fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
+// TODO(private, 520) Adapt for NDArray
+using MyTypes =
+    ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
+                     fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
+                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
 TYPED_TEST_CASE(FlattenTest, MyTypes);
-  
+
 TYPED_TEST(FlattenTest, forward_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  std::shared_ptr<TypeParam>           prediction = op.Forward({data});
+  std::shared_ptr<TypeParam>         prediction = op.Forward({data});
 
   // test correct values
   ASSERT_EQ(prediction->shape().size(), 2);
@@ -44,8 +49,8 @@ TYPED_TEST(FlattenTest, backward_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
-  std::shared_ptr<TypeParam> prediction = op.Forward({data});
-  std::shared_ptr<TypeParam> errorSignal = std::make_shared<TypeParam>(prediction->shape());
+  std::shared_ptr<TypeParam>         prediction  = op.Forward({data});
+  std::shared_ptr<TypeParam>         errorSignal = std::make_shared<TypeParam>(prediction->shape());
   std::vector<std::shared_ptr<TypeParam>> gradients = op.Backward({data}, errorSignal);
 
   ASSERT_EQ(gradients.size(), 1);

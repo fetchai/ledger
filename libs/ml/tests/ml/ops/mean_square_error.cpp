@@ -23,9 +23,11 @@
 
 TEST(mean_square_error_test, perfect_match_forward_matrix_test)
 {
-  std::shared_ptr<fetch::math::linalg::Matrix<int>> data1 = std::make_shared<fetch::math::linalg::Matrix<int>>(8);
-  std::shared_ptr<fetch::math::linalg::Matrix<int>> data2  = std::make_shared<fetch::math::linalg::Matrix<int>>(8);
-  size_t                                     i(0);
+  std::shared_ptr<fetch::math::linalg::Matrix<int>> data1 =
+      std::make_shared<fetch::math::linalg::Matrix<int>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<int>> data2 =
+      std::make_shared<fetch::math::linalg::Matrix<int>>(8);
+  size_t i(0);
   for (int e : {1, -2, 3, -4, 5, -6, 7, -8})
   {
     data1->Set(i, e);
@@ -35,13 +37,12 @@ TEST(mean_square_error_test, perfect_match_forward_matrix_test)
 
   fetch::ml::ops::MeanSquareErrorLayer<fetch::math::linalg::Matrix<int>> op;
   EXPECT_EQ(op.Forward({data1, data2}), 0.0f);
-
 }
 
 TEST(mean_square_error_test, perfect_match_forward_ndarray_test)
 {
   std::shared_ptr<fetch::math::NDArray<int>> data1 = std::make_shared<fetch::math::NDArray<int>>(8);
-  std::shared_ptr<fetch::math::NDArray<int>> data2  = std::make_shared<fetch::math::NDArray<int>>(8);
+  std::shared_ptr<fetch::math::NDArray<int>> data2 = std::make_shared<fetch::math::NDArray<int>>(8);
   size_t                                     i(0);
   for (int e : {1, -2, 3, -4, 5, -6, 7, -8})
   {
@@ -57,8 +58,10 @@ TEST(mean_square_error_test, perfect_match_forward_ndarray_test)
 
 TEST(mean_square_error_test, one_dimensional_forward_matrix_test)
 {
-  std::shared_ptr<fetch::math::linalg::Matrix<float>> data1 = std::make_shared<fetch::math::linalg::Matrix<float>>(8);
-  std::shared_ptr<fetch::math::linalg::Matrix<float>> data2  = std::make_shared<fetch::math::linalg::Matrix<float>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<float>> data1 =
+      std::make_shared<fetch::math::linalg::Matrix<float>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<float>> data2 =
+      std::make_shared<fetch::math::linalg::Matrix<float>>(8);
   size_t i(0);
   for (float e : {1.1f, -2.2f, 3.3f, -4.4f, 5.5f, -6.6f, 7.7f, -8.8f})
   {
@@ -80,9 +83,12 @@ TEST(mean_square_error_test, one_dimensional_forward_matrix_test)
 
 TEST(mean_square_error_test, one_dimensional_backward_matrix_test)
 {
-  std::shared_ptr<fetch::math::linalg::Matrix<float>> data1 = std::make_shared<fetch::math::linalg::Matrix<float>>(8);
-  std::shared_ptr<fetch::math::linalg::Matrix<float>> data2  = std::make_shared<fetch::math::linalg::Matrix<float>>(8);
-  std::shared_ptr<fetch::math::linalg::Matrix<float>> gt  = std::make_shared<fetch::math::linalg::Matrix<float>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<float>> data1 =
+      std::make_shared<fetch::math::linalg::Matrix<float>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<float>> data2 =
+      std::make_shared<fetch::math::linalg::Matrix<float>>(8);
+  std::shared_ptr<fetch::math::linalg::Matrix<float>> gt =
+      std::make_shared<fetch::math::linalg::Matrix<float>>(8);
   size_t i(0);
   for (float e : {1.1f, -2.2f, 3.3f, -4.4f, 5.5f, -6.6f, 7.7f, -8.8f})
   {
@@ -101,7 +107,6 @@ TEST(mean_square_error_test, one_dimensional_backward_matrix_test)
     gt->Set(i, e);
     i++;
   }
-
 
   fetch::ml::ops::MeanSquareErrorLayer<fetch::math::linalg::Matrix<float>> op;
   EXPECT_TRUE(op.Backward({data1, data2})->AllClose(*gt));

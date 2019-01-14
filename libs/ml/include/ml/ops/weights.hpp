@@ -43,17 +43,18 @@ public:
   virtual void SetData(ArrayPtrType const &data)
   {
     PlaceHolder<T>::SetData(data);
-    if (this->output_ && (!gradientAccumulation_ || gradientAccumulation_->shape() != this->output_->shape()))
-      {
-	gradientAccumulation_ = std::make_shared<ArrayType>(this->output_->shape());
-      }
+    if (this->output_ &&
+        (!gradientAccumulation_ || gradientAccumulation_->shape() != this->output_->shape()))
+    {
+      gradientAccumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+    }
   }
 
   void Step()
   {
     this->output_->InlineAdd(*gradientAccumulation_);
-    // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here for convenience.
-    // Remove if needed -- Pierre
+    // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
+    // for convenience. Remove if needed -- Pierre
     gradientAccumulation_->SetAllZero();
   }
 

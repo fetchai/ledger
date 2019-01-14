@@ -39,7 +39,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());
     ArrayType result = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
-    return result(0, 0);   
+    return result(0, 0);
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
@@ -50,7 +50,6 @@ public:
     fetch::math::Subtract(*inputs[0], *inputs[1], *ret);
     return ret;
   }
-
 };
 
 }  // namespace ops

@@ -17,73 +17,72 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/graph.hpp"
 #include <iostream>
 #include <memory>
-#include "ml/graph.hpp"
 
 namespace fetch {
 namespace ml {
 
-  template <class T>
-  class SubGraph : public Graph<T>, public Ops<T>
+template <class T>
+class SubGraph : public Graph<T>, public Ops<T>
+{
+public:
+  using ArrayType    = T;
+  using ArrayPtrType = std::shared_ptr<ArrayType>;
+
+  virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-  public:
-    using ArrayType    = T;
-    using ArrayPtrType = std::shared_ptr<ArrayType>;
-    
-    virtual ArrayPtrType              Forward(std::vector<ArrayPtrType> const &inputs)
+    assert(inputs.size() == this->inputs_nodes_.size());
+    for (size_t i(0); i < inputs.size(); ++i)
     {
-      assert(inputs.size() == this->inputs_nodes_.size());
-      for (size_t i(0) ; i < inputs.size() ; ++i)
-	{
-	  this->SetInput(inputs_nodes_[i], inputs[i]);
-	}
-      this->output_ = output_node_->Evaluate();
-      return this->output_;
+      this->SetInput(inputs_nodes_[i], inputs[i]);
     }
+    this->output_ = output_node_->Evaluate();
+    return this->output_;
+  }
 
-    virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
-					       ArrayPtrType error)
+  virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
+                                             ArrayPtrType                     error)
+  {
+    assert(inputs.size() == this->inputs_nodes_.size());
+    std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals =
+        this->output_node_->BackPropagate(error);
+    std::vector<ArrayPtrType> backpropagatedErrorSignals;
+
+    for (std::string const &s : inputs_nodes_)
     {
-      assert(inputs.size() == this->inputs_nodes_.size());
-      std::vector<std::pair<NodeInterface<T>*, ArrayPtrType>> nonBackpropagatedErrorSignals =
-		  this->output_node_->BackPropagate(error);
-      std::vector<ArrayPtrType> backpropagatedErrorSignals;
-
-      for (std::string const &s : inputs_nodes_)
-      	{
-      	  std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
-	  for (auto const &grad : nonBackpropagatedErrorSignals)
-	    {
-	      if (grad.first == node.get())
-		{
-		  backpropagatedErrorSignals.push_back(grad.second);
-		}
-	    }       	  
-      	}
-      return backpropagatedErrorSignals;
+      std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
+      for (auto const &grad : nonBackpropagatedErrorSignals)
+      {
+        if (grad.first == node.get())
+        {
+          backpropagatedErrorSignals.push_back(grad.second);
+        }
+      }
     }
+    return backpropagatedErrorSignals;
+  }
 
+protected:
+  void AddInputNodes(std::string const &nodeName)
+  {
+    inputs_nodes_.push_back(nodeName);
+  }
 
-  protected:
-    void AddInputNodes(std::string const &nodeName)
-    {
-      inputs_nodes_.push_back(nodeName);
-    }
-    
-    void SetOutputNode(std::string const &nodeName)
-    {
-      output_node_ = this->nodes_[nodeName];
-    }
+  void SetOutputNode(std::string const &nodeName)
+  {
+    output_node_ = this->nodes_[nodeName];
+  }
 
-  protected:
-    SubGraph()
-    {}
-    
-  private:
-    std::vector<std::string> inputs_nodes_;
-    std::shared_ptr<NodeInterface<T>> output_node_;
-  };
-  
+protected:
+  SubGraph()
+  {}
+
+private:
+  std::vector<std::string>          inputs_nodes_;
+  std::shared_ptr<NodeInterface<T>> output_node_;
+};
+
 }  // namespace ml
 }  // namespace fetch

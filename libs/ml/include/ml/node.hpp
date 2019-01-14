@@ -34,9 +34,10 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  virtual ArrayPtrType Evaluate() = 0;
-  virtual void AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
-  virtual std::vector<std::pair<NodeInterface<T>*, ArrayPtrType>> BackPropagate(ArrayPtrType errorSignal) = 0;
+  virtual ArrayPtrType Evaluate()                                           = 0;
+  virtual void         AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
+      ArrayPtrType errorSignal) = 0;
 };
 
 template <class T, class O>
@@ -46,9 +47,10 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  template <typename ...Params>
+  template <typename... Params>
   Node(std::string const name, Params... params)
-    : O(params...), name_(std::move(name))
+    : O(params...)
+    , name_(std::move(name))
   {}
 
   virtual ~Node() = default;
@@ -62,7 +64,7 @@ public:
     }
     return inputs;
   }
-  
+
   virtual ArrayPtrType Evaluate()
   {
     std::vector<ArrayPtrType> inputs = GatherInputs();
@@ -70,29 +72,31 @@ public:
     return this->Forward(inputs);
   }
 
-  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(ArrayPtrType errorSignal)
+  virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
+      ArrayPtrType errorSignal)
   {
     FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
-    std::vector<ArrayPtrType> inputs = GatherInputs();
+    std::vector<ArrayPtrType> inputs                     = GatherInputs();
     std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
     std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;
     assert(backpropagatedErrorSignals.size() == inputs.size() || inputs.empty());
-    for (size_t i(0) ; i < inputs_.size() ; ++i)
-      {
-	auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
-	nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(), ret.end());
-      }
+    for (size_t i(0); i < inputs_.size(); ++i)
+    {
+      auto ret = inputs_[i]->BackPropagate(backpropagatedErrorSignals[i]);
+      nonBackpropagatedErrorSignals.insert(nonBackpropagatedErrorSignals.end(), ret.begin(),
+                                           ret.end());
+    }
     // If no input to backprop to, return gradient to caller
     // This is used to propagate outside of a SubGraph
     // The SubGraph has no knowledge of the rest of the network,
     // so it sens its unpropagated gradient to its wrapper node that will forward them out
     if (inputs_.empty())
+    {
+      for (auto g : backpropagatedErrorSignals)
       {
-	for (auto g : backpropagatedErrorSignals)
-	  {
-	    nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
-	  }
+        nonBackpropagatedErrorSignals.push_back(std::make_pair(this, g));
       }
+    }
     return nonBackpropagatedErrorSignals;
   }
 

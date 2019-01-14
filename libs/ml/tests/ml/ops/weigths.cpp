@@ -16,17 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/weights.hpp"
-#include "math/ndarray.hpp"
 #include "math/linalg/matrix.hpp"
+#include "math/ndarray.hpp"
+#include "ml/ops/weights.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
-class WeightsTest : public ::testing::Test {};
+class WeightsTest : public ::testing::Test
+{
+};
 
-using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>, fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
+using MyTypes =
+    ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
+                     fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
+                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
 TYPED_TEST_CASE(WeightsTest, MyTypes);
-  
+
 TYPED_TEST(WeightsTest, allocation_test)
 {
   fetch::ml::ops::Weights<TypeParam> w;
@@ -37,9 +42,9 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   std::shared_ptr<TypeParam> data  = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> error = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt    = std::make_shared<TypeParam>(8);
-  std::vector<int>                           dataInput( { 1, -2, 3, -4,  5, -6,   7, -8});
-  std::vector<int>                           errorInput({-1,  2, 3, -5, -8, 13, -21, -34});
-  std::vector<int>                           gtInput(   { 0,  0, 6, -9, -3,  7, -14,  -42});
+  std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int>           errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
+  std::vector<int>           gtInput({0, 0, 6, -9, -3, 7, -14, -42});
   for (size_t i(0); i < 8; ++i)
   {
     data->Set(i, dataInput[i]);
@@ -49,10 +54,9 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 
   fetch::ml::ops::Weights<TypeParam> w;
   w.SetData(data);
-  ASSERT_TRUE(w.Forward({}) == data); // Test pointed address, should still be the same
+  ASSERT_TRUE(w.Forward({}) == data);  // Test pointed address, should still be the same
   std::vector<std::shared_ptr<TypeParam>> errorSignal = w.Backward({}, error);
   w.Step();
-  ASSERT_TRUE(w.Forward({}) == data); // Test pointed address, should still be the same
-  ASSERT_TRUE(w.Forward({})->AllClose(*gt)); // whit new values
+  ASSERT_TRUE(w.Forward({}) == data);         // Test pointed address, should still be the same
+  ASSERT_TRUE(w.Forward({})->AllClose(*gt));  // whit new values
 }
-

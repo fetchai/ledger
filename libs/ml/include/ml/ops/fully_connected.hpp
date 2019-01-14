@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/subgraph.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/ops/matrix_multiply.hpp"
+#include "ml/subgraph.hpp"
 
 namespace fetch {
 namespace ml {
@@ -34,22 +34,22 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  FullyConnected(size_t in, size_t out, std::string const & name = "FC")
+  FullyConnected(size_t in, size_t out, std::string const &name = "FC")
   {
     this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {name + "_Input"});
+    this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten",
+                                                               {name + "_Input"});
     this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
-    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(name + "_MatrixMultiply", {name + "_Flatten", name + "_Weights"});
-    
+    this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        name + "_MatrixMultiply", {name + "_Flatten", name + "_Weights"});
+
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_MatrixMultiply");
 
     ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<size_t>({in, out}));
-    
+
     this->SetInput(name + "_Weights", weights);
   }
-
-  
 };
 
 }  // namespace ops
