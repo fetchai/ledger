@@ -4,74 +4,139 @@
 #include <memory>
 #include <vector>
 
-template <class T>
-class Tensor // Using name Tensor to not clash with current NDArray
+namespace fetch {
+namespace math {
+
+template <typename T>
+class Tensor  // Using name Tensor to not clash with current NDArray
 {
 public:
-  Tensor(std::vector<size_t> const &shape = std::vector<size_t>(), std::vector<size_t> const &strides = std::vector<size_t>(), std::vector<size_t> const &padding = std::vector<size_t>())
-    :shape_(shape), padding_(padding), strides_(strides)
+  using Type = T;
+
+public:
+  Tensor(std::vector<size_t> const &shape   = std::vector<size_t>(),
+         std::vector<size_t> const &strides = std::vector<size_t>(),
+         std::vector<size_t> const &padding = std::vector<size_t>())
+    : shape_(shape)
+    , padding_(padding)
+    , strides_(strides)
   {
     assert(padding.empty() || padding.size() == shape.size());
     assert(strides.empty() || strides.size() == shape.size());
+    Init(shape_, strides_, padding_);
+  }
+
+  Tensor(size_t size)
+    : shape_({size})
+  {
+    Init(shape_, strides_, padding_);
+  }
+
+  void Init(std::vector<size_t> const &shape   = std::vector<size_t>(),
+            std::vector<size_t> const &strides = std::vector<size_t>(),
+            std::vector<size_t> const &padding = std::vector<size_t>())
+  {
     if (!shape_.empty())
+    {
+      if (strides.empty())
       {
-	if (strides.empty())
-	  {
-	    strides_ = std::vector<size_t>(shape_.size(), 1);
-	  }
-	if (padding.empty())
-	  {
-	    padding_ = std::vector<size_t>(shape_.size(), 0);
-	    padding_.back() = 8 - ((strides_.back() * shape_.back()) % 8); // Let's align everything on 8
-	  }
-	storage_ = std::make_shared<std::vector<T>>(Size());
+        strides_ = std::vector<size_t>(shape_.size(), 1);
       }
+      if (padding.empty())
+      {
+        padding_ = std::vector<size_t>(shape_.size(), 0);
+        padding_.back() =
+            8 - ((strides_.back() * shape_.back()) % 8);  // Let's align everything on 8
+      }
+      storage_ = std::make_shared<std::vector<T>>(Capacity());
+    }
+  }
+
+  std::vector<size_t> const &shape()
+      const  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
+  {
+    return shape_;
   }
 
   size_t NumberOfElements() const
   {
     if (shape_.empty())
-      {
-        return 0;
-      }
+    {
+      return 0;
+    }
     size_t n(1);
     for (size_t d : shape_)
-      {
-        n *= d;
-      }
+    {
+      n *= d;
+    }
     return n;
   }
- 
+
   size_t DimensionSize(size_t dim) const
-  {    
+  {
     if (!shape_.empty() && dim >= 0 && dim < shape_.size())
-      {
-	return DimensionSizeImplementation(dim);
-      }
+    {
+      return DimensionSizeImplementation(dim);
+    }
     return 0;
   }
- 
-  size_t Size() const
+
+  size_t Capacity() const
   {
     if (shape_.empty())
-      {
-	return 0;
-      }
+    {
+      return 0;
+    }
     return DimensionSize(0) * shape_[0] + padding_[0];
   }
 
+  size_t size() const  // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
+  {
+    return NumberOfElements();
+  }
+
+  /**
+   * Return the coordinates of the nth element in N dimensions
+   * @param element     ordinal position of the element we want
+   * @return            coordinate of said element in the tensor
+   */
+  std::vector<size_t> IndicesOfElement(size_t element) const
+  {
+    assert(element < NumberOfElements());
+    std::vector<size_t> results(shape_.size());
+    results.back() = element;
+    for (size_t i(shape_.size() - 1); i > 0; --i)
+    {
+      results[i - 1] = results[i] / shape_[i];
+      results[i] %= shape_[i];
+    }
+    return results;
+  }
+
+  /**
+   * Return the offset of element at specified coordinates in the low level memory array
+   * @param indices     coordinate of requested element in the tensor
+   * @return            offset in low level memory array
+   */
   size_t OffsetOfElement(std::vector<size_t> const &indices) const
   {
     size_t index(0);
-    for (size_t i(0) ; i < indices.size() ; ++i)
-      {
-        assert(indices[i] < shape_[i]);
-        index += indices[i] * DimensionSize(i);
-      }
+    for (size_t i(0); i < indices.size(); ++i)
+    {
+      assert(indices[i] < shape_[i]);
+      index += indices[i] * DimensionSize(i);
+    }
     return index;
   }
 
-  
+  void Fill(T const &value)
+  {
+    for (size_t i(0); i < NumberOfElements(); ++i)
+    {
+      this->operator[](i) = value;
+    }
+  }
+
   T Get(std::vector<size_t> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
@@ -82,24 +147,54 @@ public:
     (*storage_)[OffsetOfElement(indices)] = value;
   }
 
+  void Set(size_t i, T value)
+  {
+    (*storage_)[OffsetOfElement(IndicesOfElement(i))] = value;
+  }
+
+  T &operator[](size_t i)
+  {
+    return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
+  }
+
   std::shared_ptr<const std::vector<T>> Storage() const
   {
     return storage_;
   }
-  
+
+  bool AllClose(Tensor<T> const &o, T const &tolerance = T(0.01))
+  {
+    // Only enforcing number of elements
+    // we allow for different shapes as long as element are in same order
+    assert(o.NumberOfElements() == NumberOfElements());
+    for (size_t i(0); i < NumberOfElements(); ++i)
+    {
+      T e1 = Get(IndicesOfElement(i));
+      T e2 = o.Get(o.IndicesOfElement(i));
+      if (abs(e1 - e2) > tolerance)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
 private:
   size_t DimensionSizeImplementation(size_t dim) const
   {
     if (dim == shape_.size() - 1)
-      {
-	return strides_[dim];
-      }
-    return (DimensionSizeImplementation(dim + 1) * shape_[dim + 1]  + padding_[dim + 1]) * strides_[dim];
+    {
+      return strides_[dim];
+    }
+    return (DimensionSizeImplementation(dim + 1) * shape_[dim + 1] + padding_[dim + 1]) *
+           strides_[dim];
   }
-  
+
 private:
   std::shared_ptr<std::vector<T>> storage_;
-  std::vector<size_t> shape_;
-  std::vector<size_t> padding_;
-  std::vector<size_t> strides_;
+  std::vector<size_t>             shape_;
+  std::vector<size_t>             padding_;
+  std::vector<size_t>             strides_;
 };
+}  // namespace math
+}  // namespace fetch

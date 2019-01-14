@@ -94,7 +94,7 @@ public:
   RectangularArray &operator=(RectangularArray const &other) = default;
   RectangularArray &operator=(RectangularArray &&other) = default;
 
-  ~RectangularArray()
+  virtual ~RectangularArray()
   {}
 
   void Sort()
@@ -336,7 +336,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  Type const &At(size_type const &i) const
+  virtual Type const &At(size_type const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -347,7 +347,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  Type &At(size_type const &i)
+  virtual Type &At(size_type const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -385,9 +385,9 @@ public:
    */
   Type const &Set(size_type const &n, Type const &v)
   {
-    assert(n < super_type::data().size());
-    super_type::data()[n] = v;
-    return v;
+    // Compiler won't let us jump from linalg::Matrix (which is a subclass of Rectangular array)
+    // to ShapelessArray::Set without redefining here
+    return super_type::Set(n, v);
   }
 
   /* Sets an element using two coordinates.
@@ -400,6 +400,12 @@ public:
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
     return v;
+  }
+
+  void Set(std::vector<size_t> const &indices, Type v)
+  {
+    assert(indices.size() == 2);
+    Set(indices[1], indices[0], v);
   }
 
   void SetRange(std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s)
