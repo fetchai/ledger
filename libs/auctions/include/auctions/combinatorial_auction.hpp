@@ -40,11 +40,38 @@ public:
   }
 
   /**
+   * adding new items automatically sets graph built back to false. This is useful if items and bids are added,
+   * some mining takes place, and then more items are added later
+   * @param item
+   * @return
+   */
+  ErrorCode AddItem(Item const &item)
+  {
+    graph_built_ = false;
+    return Auction::AddItem(item);
+  }
+
+  /**
+   * adding new items automatically sets graph built back to false. This is useful if items and bids are added,
+   * some mining takes place, and then more bids are added later
+   * @param item
+   * @return
+   */
+  ErrorCode PlaceBid(Bid const &bid)
+  {
+    graph_built_ = false;
+    return Auction::PlaceBid(bid);
+  }
+
+  /**
    * mining function for finding better solutions
    */
   void Mine(std::size_t random_seed, std::size_t run_time)
   {
-    BuildGraph();
+//    if (!graph_built_)
+//    {
+    BuildGraph(random_seed);
+//    }
 
     // simulated annealing
     ValueType beta_start = 0.01;
@@ -83,7 +110,10 @@ public:
 
         new_reward = TotalBenefit();
         de         = prev_reward - new_reward;
-//        std::cout << "de: " << de << std::endl;
+
+        std::cout << "prev_reward: " << prev_reward << std::endl;
+        std::cout << "new_reward: " << new_reward << std::endl;
+        std::cout << "de: " << de << std::endl;
 
         ValueType ran_val   = static_cast<ValueType>(random_number_generator.AsDouble());
         ValueType threshold = std::exp(-beta * de); // TODO(tfr): use exponential approximation
@@ -111,18 +141,34 @@ public:
     //std::cout << "Final - TotalBenefit(): " << TotalBenefit() << std::endl;
   }
 
+//  void SelectBid(BidIdType const& bid_id)
+//  {
+//    for (std::size_t j = 0; j < bids_.size(); ++j)
+//    {
+//      if (couplings_[bid][j] != 0)
+//      {
+//        active_[j] = 0;
+//      }
+//    }
+//
+//    active_[bid] = 1;
+//  }
+
   std::uint32_t Active(std::size_t n)
   {
+    assert(graph_built_);
     return active_[n];
   }
 
   ValueType local_field(std::size_t n)
   {
+    assert(graph_built_);
     return local_fields_[std::move(n)];
   }
 
   ValueType coupling(std::size_t i, std::size_t j)
   {
+    assert(graph_built_);
     return couplings_(std::move(i), std::move(j));
   }  
 
@@ -132,23 +178,43 @@ public:
      // the auction
     return false;
    }
-  
-private:
-  // bids on binary vector
-  fetch::math::linalg::Matrix<ValueType>     couplings_;
-  fetch::math::ShapelessArray<ValueType>     local_fields_;
-  fetch::math::ShapelessArray<std::uint32_t> active_;
-  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+
+  /**
+   * total benefit calculate the same was as energy in simulated annealing, i.e. :
+   * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
+   * @return  returns a reward value
+   */
+  ValueType TotalBenefit()
+  {
+    assert(graph_built_);
+
+    ValueType     reward = 0;
+    std::uint32_t a1 = 0, a2 = 0;
+    for (std::size_t i = 0; i < bids_.size(); ++i)
+    {
+      a1 = active_[i];
+      reward += a1 * local_fields_[i];
+
+      for (std::size_t j = 0; j < bids_.size(); ++j)
+      {
+        a2 = active_[j];
+        reward += a1 * a2 * couplings_.At(i, j);
+      }
+    }
+
+    return reward;
+  }
 
   /**
    * couplings_ = Sum(Bi + Bj) + delta
    */
-  void BuildGraph()
+  void BuildGraph(std::size_t random_seed)
   {
     couplings_    = fetch::math::linalg::Matrix<ValueType>::Zeroes({bids_.size(), bids_.size()});
     local_fields_ = fetch::math::ShapelessArray<ValueType>::Zeroes({bids_.size()});
 
-    // TODO(tfr): Randomize in mine based on seed
+    // TODO(tfr / kb) : randomly initialise from seed
     active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
@@ -212,35 +278,22 @@ private:
           }
         }
 
-        couplings_.At(i, j) = couplings_.At(j, i) = coupling;
-      }
-    }
-  }
-
-  /**
-   * total benefit calculate the same was as energy in simulated annealing, i.e. :
-   * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
-   * @return  returns a reward value
-   */
-  ValueType TotalBenefit()
-  {
-    ValueType     reward = 0;
-    std::uint32_t a1 = 0, a2 = 0;
-    for (std::size_t i = 0; i < bids_.size(); ++i)
-    {
-      a1 = active_[i];
-      reward += a1 * local_fields_[i];
-
-      for (std::size_t j = 0; j < bids_.size(); ++j)
-      {
-        a2 = active_[j];
-        reward += a1 * a2 * couplings_.At(i, j);
+        couplings_.At(i, j) = couplings_.At(j, i) = -coupling;
+        std::cout << "couplings_.At(i, j): " << couplings_.At(i, j) << std::endl;
       }
     }
 
-    return reward;
+    graph_built_ = true;
   }
 
+private:
+  // bids on binary vector
+  fetch::math::linalg::Matrix<ValueType>     couplings_;
+  fetch::math::ShapelessArray<ValueType>     local_fields_;
+  fetch::math::ShapelessArray<std::uint32_t> active_;
+  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+  bool graph_built_ = false;
 
   /**
    * finds the highest bid on each item
