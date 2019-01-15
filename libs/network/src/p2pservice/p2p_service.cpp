@@ -252,11 +252,6 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   for (auto const &d : desired_peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
-    Uri uri;
-    if (identity_cache_.Lookup(d, uri) && uri.IsDirectlyConnectable())
-    {
-      muddle_.AddPeer(uri);
-    }
   }
   for (auto const &d : dropped_peers)
   {
