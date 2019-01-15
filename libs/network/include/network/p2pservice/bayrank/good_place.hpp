@@ -73,7 +73,7 @@ public:
   }
 
 private:
-  std::size_t const MAX_SIZE = 1000;
+  static constexpr std::size_t const MAX_SIZE = 1000;
 };
 
 }  // namespace bayrank

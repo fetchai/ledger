@@ -45,7 +45,7 @@ public:
   static constexpr char const *LOGGING_NAME = "TrustBuffer";
 
   TrustBuffer()
-    : random_engine(std::random_device()())
+    : random_engine_(std::random_device()())
   {}
   ~TrustBuffer() = default;
 
@@ -123,13 +123,13 @@ private:
       w[i] = sqrt(static_cast<double>(GetCurrentTime() - it->last_modified) / 60. / it->score);
     }
     std::discrete_distribution<std::size_t> dist(w.begin(), w.end());
-    auto r_it = storage_.begin() + static_cast<long>(dist(random_engine));
+    auto r_it = storage_.begin() + static_cast<long>(dist(random_engine_));
     id_store_.erase(r_it->peer_identity);
     storage_.erase(r_it);
   }
 
-  std::size_t const MAX_SIZE = 1000;
-  std::mt19937      random_engine;
+  static constexpr std::size_t const MAX_SIZE = 1000;
+  std::mt19937      random_engine_;
 };
 
 }  // namespace bayrank

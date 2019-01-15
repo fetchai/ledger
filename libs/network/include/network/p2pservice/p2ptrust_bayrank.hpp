@@ -154,7 +154,7 @@ public:
     }
   }
 
-  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject,
+  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject /*subject*/,
                          TrustQuality quality) override
   {
     object_store_.Iterate(object_ident, [this, quality](IDENTITY const &identity) {
@@ -377,11 +377,11 @@ public:
   P2PTrustBayRank operator=(P2PTrustBayRank &&rhs) = delete;
 
 protected:
-  Gaussian truncate(Gaussian const &g, double beta, double eps)
+  Gaussian truncate(Gaussian const &g, double BETA, double EPS)
   {
     // Calculate approximated truncated Gaussian
     double m =
-        std::sqrt(2) * beta * math::statistics::normal::quantile<double>(0, 1, (eps + 1.) / 2.);
+        std::sqrt(2) * BETA * math::statistics::normal::quantile<double>(0, 1, (EPS + 1.) / 2.);
     double k = sqrt(g.pi());
     double r = g.tau() / k - m * k;
     double v = math::statistics::normal::pdf<double>(0, 1, r) /
@@ -398,23 +398,23 @@ protected:
   void updateGaussian(bool honest, Gaussian &s, Gaussian const &ref)
   {
     // Calculate new distribution for g1 assuming that g1 won with g2.
-    // beta corresponds to a measure of how difficult the game is to master.
-    // drift corresponds to a natural drift of your score between "games".
-    // eps is a draw margin by which you must be "better" to beat your opponent.
-    s *= drift;
-    Gaussian s_ref = ref * drift;
-    Gaussian h     = s * beta;
-    Gaussian h_ref = s_ref * beta;
+    // BETA corresponds to a measure of how difficult the game is to master.
+    // DRIFT corresponds to a natural DRIFT of your score between "games".
+    // EPS is a draw margin by which you must be "better" to beat your opponent.
+    s *= DRIFT;
+    Gaussian s_ref = ref * DRIFT;
+    Gaussian h     = s * BETA;
+    Gaussian h_ref = s_ref * BETA;
 
     if (honest)
     {
-      Gaussian u = truncate(h - h_ref, beta, eps);
-      s *= (u + h_ref) * beta;
+      Gaussian u = truncate(h - h_ref, BETA, EPS);
+      s *= (u + h_ref) * BETA;
     }
     else
     {
-      Gaussian u = truncate(h_ref - h, beta, eps);
-      s *= (-u + h_ref) * beta;
+      Gaussian u = truncate(h_ref - h, BETA, EPS);
+      s *= (-u + h_ref) * BETA;
     }
   }
 
@@ -478,9 +478,9 @@ protected:
   /**
    * Constants
    */
-  double const beta  = 100 / 12.;
-  double const drift = 1 / 6.;
-  double const eps   = 0.2;
+  static constexpr double const BETA  = 100 / 12.;
+  static constexpr double const DRIFT = 1 / 6.;
+  static constexpr double const EPS   = 0.2;
 };
 
 }  // namespace p2p
