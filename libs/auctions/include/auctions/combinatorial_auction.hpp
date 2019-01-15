@@ -99,10 +99,10 @@ public:
         prev_active_ = active_;
         prev_reward  = TotalBenefit();
 
-        RandomInt nn = 1 + rng() % max_flips_;
+        RandomInt nn = 1 + ( (rng()>>17) % max_flips_ );
         for (RandomInt k = 0; k < nn; ++k)
         {
-          RandomInt n = rng() % bids_.size();
+          RandomInt n = (rng() >> 17) % bids_.size();
 
           if (active_[n] == 1)
           {
@@ -274,7 +274,7 @@ private:
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
 
-  std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
+  std::uint32_t max_flips_ = 3;
 
   bool graph_built_ = false;
 
