@@ -29,6 +29,12 @@ std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustQuality &q)
   return o;
 }
 
+std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustSubject &q)
+{
+  o << ToString(q);
+  return o;
+}
+
 using Gaussian = math::statistics::Gaussian<double>;
 
 ReferencePlayers const reference_players_{

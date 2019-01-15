@@ -59,6 +59,7 @@ inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustSubj
 }
 
 std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustQuality &q);
+std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustSubject &q);
 
 template <typename IDENTITY>
 class P2PTrustBayRank : public P2PTrustInterface<IDENTITY>
@@ -97,7 +98,7 @@ public:
                    TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident),
-                   ", quality: ", quality);
+                   ", subject: ", subject, ", quality: ", quality);
     FETCH_LOCK(mutex_);
 
     try

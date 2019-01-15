@@ -183,10 +183,18 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     if (chain_.AddBlock(block))
     {
       trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+      if (transmitter!=from)
+      {
+        trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+      }
     }
     else
     {
       trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+      if (transmitter!=from)
+      {
+        trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+      }
     }
     FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
