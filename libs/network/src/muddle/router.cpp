@@ -392,18 +392,6 @@ bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address
     address = address_it->second;
     return true;
   }
-  for (const auto &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_DEBUG(LOGGING_NAME, "HandleToAddress: [ ", std::to_string(routing.second.handle), "/",
-                    static_cast<std::string>(ToBase64(output)));
-    if (routing.second.handle == handle && routing.second.direct)
-    {
-      address = ToConstByteArray(routing.first);
-      return true;
-    }
-  }
   return false;
 }
 

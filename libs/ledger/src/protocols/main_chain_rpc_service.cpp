@@ -310,7 +310,6 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
 {
   bool newdata = false;
   bool lied    = false;
-
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest
