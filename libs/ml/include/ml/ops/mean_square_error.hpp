@@ -29,6 +29,7 @@ class MeanSquareErrorLayer
 {
 public:
   using ArrayType    = T;
+  using Datatype     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   MeanSquareErrorLayer()          = default;
@@ -44,8 +45,8 @@ public:
     {
       sum += (inputs[0]->At(i) - inputs[1]->At(i)) * (inputs[0]->At(i) - inputs[1]->At(i));
     }
-    sum /= inputs[0]->shape()[0];
-    sum /= 2;  // TODO(private 343)
+    sum /= Datatype(inputs[0]->shape()[0]);
+    sum /= Datatype(2);  // TODO(private 343)
     return sum;
   }
 

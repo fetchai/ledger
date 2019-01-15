@@ -49,8 +49,20 @@ public:
       this->output_ = std::make_shared<ArrayType>(outputShape);
     }
 
-    fetch::math::Dot(*(inputs[0]), *(inputs[1]), *(this->output_));
-
+    for (size_t i(0); i < inputs[0]->shape()[0]; ++i)
+    {
+      for (size_t j(0); j < inputs[1]->shape()[1]; ++j)
+      {
+        for (size_t k(0); k < inputs[0]->shape()[1]; ++k)
+        {
+          std::cout << i << " | " << j << " | " << k << std::endl;
+          this->output_->Get(std::vector<size_t>({i, j})) +=
+              inputs[0]->Get(std::vector<size_t>({i, k})) *
+              inputs[1]->Get(std::vector<size_t>({k, j}));
+        }
+      }
+    }
+    //    fetch::math::Dot(*(inputs[0]), *(inputs[1]), *(this->output_));
     return this->output_;
   }
 

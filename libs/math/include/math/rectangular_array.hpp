@@ -378,6 +378,13 @@ public:
     return super_type::data()[(j * padded_height_ + i)];
   }
 
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> &Get(std::vector<S> const &indices)
+  {
+    assert(indices.size() == shape_.size());
+    return this->At(indices[0], indices[1]);
+  }
+
   /* Sets an element using one coordinatea.
    * @param i is the position along the height.
    * @param j is the position along the width.
