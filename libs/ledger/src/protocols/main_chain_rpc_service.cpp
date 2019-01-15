@@ -110,16 +110,6 @@ public:
     return address_;
   }
 
-  void SetSamePeer()
-  {
-    same_peer_ = true;
-  }
-
-  bool IsSamePeer()
-  {
-    return same_peer_;
-  }
-
 private:
   Promise                              prom_;
   BlockHash                            hash_;
@@ -127,7 +117,6 @@ private:
   std::shared_ptr<MainChainRpcService> client_;
   FutureTimepoint                      timeout_;
   BlockList                            blocks_;
-  bool                                 same_peer_ = false;
 };
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
@@ -207,7 +196,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     // the block tree
     if (block.loose())
     {
-      AddLooseBlock(block.hash(), from, true);
+      AddLooseBlock(block.hash(), from);
       trust_.AddObject(block.hash(), from);
     }
   }
@@ -218,8 +207,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 }
 
-void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address,
-                                        bool same_address)
+void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &address)
 {
   if (!workthread_)
   {
@@ -232,10 +220,6 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Block is loose, requesting longest chain from counter part: ", ToBase64(hash));
     auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
-    if (same_address)
-    {
-      worker->SetSamePeer();
-    }
     bg_work_.Add(worker);
   }
   else
@@ -283,19 +267,13 @@ void MainChainRpcService::ServiceLooseBlocks()
 
   for (auto &failed_worker : bg_work_.GetFailures(1000))
   {
-    if (failed_worker->IsSamePeer())
-    {
-      trust_.AddObjectFeedback(failed_worker->hash(), p2p::TrustSubject::BLOCK,
-                               p2p::TrustQuality::BAD_CONNECTION);
-    }
+    trust_.AddObjectFeedback(failed_worker->hash(), p2p::TrustSubject::BLOCK,
+                             p2p::TrustQuality::BAD_CONNECTION);
   }
   for (auto &timeouted_worker : bg_work_.GetTimeouts(1000))
   {
-    if (timeouted_worker->IsSamePeer())
-    {
-      trust_.AddObjectFeedback(timeouted_worker->hash(), p2p::TrustSubject::BLOCK,
-                               p2p::TrustQuality::BAD_CONNECTION);
-    }
+    trust_.AddObjectFeedback(timeouted_worker->hash(), p2p::TrustSubject::BLOCK,
+                             p2p::TrustQuality::BAD_CONNECTION);
   }
 
   if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)

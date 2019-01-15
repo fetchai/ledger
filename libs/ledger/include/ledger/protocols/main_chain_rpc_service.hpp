@@ -79,7 +79,7 @@ private:
 
   bool RequestHeaviestChainFromPeer(Address const &from);
 
-  void AddLooseBlock(const BlockHash &hash, const Address &address, bool same_address = false);
+  void AddLooseBlock(const BlockHash &hash, const Address &address);
   void ServiceLooseBlocks();
   void RequestedChainArrived(Address const &peer, BlockList block_list);
 
