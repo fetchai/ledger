@@ -55,21 +55,18 @@ TEST(vickrey_auction, one_bid_auction)
   VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  Item item;
-  item.id        = 0;
-  item.seller_id = 999;
-  item.min_price = 7;
-  ErrorCode err  = va.AddItem(item);
+  ItemIdType  item_id   = 0;
+  AgentIdType seller_id = 999;
+  ValueType   min_price = 7;
+  Item        item(item_id, seller_id, min_price);
+  ErrorCode   err = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
   std::vector<Bidder> bidders{};
   bidders.push_back(Bidder(0, 100));
-  Bid cur_bid;
-  cur_bid.id     = 0;
-  cur_bid.price  = bidders[0].funds;
-  cur_bid.bidder = bidders[0].id;
-  cur_bid.items.push_back(item);
+  BidIdType bid_id = 0;
+  Bid       cur_bid(bid_id, {item}, bidders[0].funds, bidders[0].id);
   err = va.PlaceBid(cur_bid);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
@@ -86,8 +83,8 @@ TEST(vickrey_auction, one_bid_auction)
   }
 
   ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[0].id);
-  ASSERT_TRUE(va.Items()[0].sell_price == bidders[0].funds);
+  ASSERT_TRUE(va.Winner(item.Id()) == bidders[0].id);
+  ASSERT_TRUE(va.Items()[0].SellPrice() == bidders[0].funds);
 }
 
 TEST(vickrey_auction, two_bid_auction)
@@ -98,11 +95,11 @@ TEST(vickrey_auction, two_bid_auction)
   VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  Item item;
-  item.id        = 0;
-  item.seller_id = 999;
-  item.min_price = 7;
-  ErrorCode err  = va.AddItem(item);
+  ItemIdType  item_id   = 0;
+  AgentIdType seller_id = 999;
+  ValueType   min_price = 7;
+  Item        item(item_id, seller_id, min_price);
+  ErrorCode   err = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
@@ -110,20 +107,15 @@ TEST(vickrey_auction, two_bid_auction)
   bidders.push_back(Bidder(0, 100));
   bidders.push_back(Bidder(1, 50));
 
-  Bid bid1;
-  bid1.id     = 0;
-  bid1.price  = bidders[0].funds;
-  bid1.bidder = bidders[0].id;
-  bid1.items.push_back(item);
+  BidIdType bid_id = 0;
+  Bid       bid1(bid_id, {item}, bidders[0].funds, bidders[0].id);
   err = va.PlaceBid(bid1);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  Bid bid2;
-  bid2.id     = 1;
-  bid2.price  = bidders[1].funds;
-  bid2.bidder = bidders[1].id;
-  bid2.items.push_back(item);
-  va.PlaceBid(bid2);
+  bid_id = 1;
+  Bid bid2(bid_id, {item}, bidders[1].funds, bidders[1].id);
+  err = va.PlaceBid(bid2);
+  ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   std::size_t cur_block       = start_block;
   std::size_t execution_block = 0;
@@ -138,8 +130,8 @@ TEST(vickrey_auction, two_bid_auction)
   }
 
   ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[0].id);
-  ASSERT_TRUE(va.Items()[0].sell_price == bidders[1].funds);
+  ASSERT_TRUE(va.Winner(item.Id()) == bidders[0].id);
+  ASSERT_TRUE(va.Items()[0].SellPrice() == bidders[1].funds);
 }
 
 TEST(vickrey_auction, many_bid_auction)
@@ -150,11 +142,11 @@ TEST(vickrey_auction, many_bid_auction)
   VickreyAuction va          = SetupAuction(start_block, end_block);
 
   // add item to auction
-  Item item;
-  item.id        = 0;
-  item.seller_id = 999;
-  item.min_price = 7;
-  ErrorCode err  = va.AddItem(item);
+  ItemIdType  item_id   = 0;
+  AgentIdType seller_id = 999;
+  ValueType   min_price = 7;
+  Item        item(item_id, seller_id, min_price);
+  ErrorCode   err = va.AddItem(item);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   // set up bidders
@@ -166,13 +158,11 @@ TEST(vickrey_auction, many_bid_auction)
   }
 
   // make bids
+  BidIdType bid_id;
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
-    Bid cur_bid;
-    cur_bid.id     = j;
-    cur_bid.price  = bidders[j].funds;
-    cur_bid.bidder = bidders[j].id;
-    cur_bid.items.push_back(item);
+    bid_id = j;
+    Bid cur_bid(bid_id, {item}, bidders[j].funds, bidders[j].id);
     err = va.PlaceBid(cur_bid);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
   }
@@ -190,8 +180,8 @@ TEST(vickrey_auction, many_bid_auction)
   }
 
   ASSERT_TRUE(execution_block == end_block);
-  ASSERT_TRUE(va.Winner(item.id) == bidders[bidders.size() - 1].id);
-  ASSERT_TRUE(va.Items()[0].sell_price == bidders[bidders.size() - 2].funds);
+  ASSERT_TRUE(va.Winner(item.Id()) == bidders[bidders.size() - 1].id);
+  ASSERT_TRUE(va.Items()[0].SellPrice() == bidders[bidders.size() - 2].funds);
 }
 
 TEST(vickrey_auction, many_bid_many_item_auction)
@@ -206,14 +196,16 @@ TEST(vickrey_auction, many_bid_many_item_auction)
 
   // add item to auction
   std::vector<Item> items{};
+  ItemIdType        item_id;
+  AgentIdType       seller_id;
+  ValueType         min_price;
   for (std::size_t i = 0; i < n_items; ++i)
   {
-    Item item;
-    item.id        = i;
-    item.seller_id = 990 + i;
-    item.min_price = 100 + i;
-    items.push_back(item);
-
+    item_id   = i;
+    seller_id = 990 + i;
+    min_price = 100 + i;
+    Item item(item_id, seller_id, min_price);
+    items.emplace_back(item);
     err = va.AddItem(item);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
   }
@@ -228,15 +220,13 @@ TEST(vickrey_auction, many_bid_many_item_auction)
 
   // make bids
   std::size_t bid_count = 0;
+  BidIdType   bid_id;
   for (std::size_t i = 0; i < n_items; ++i)
   {
     for (std::size_t j = 0; j < n_bidders; ++j)
     {
-      Bid cur_bid;
-      cur_bid.id     = bid_count;
-      cur_bid.price  = bidders[j].funds / 10;
-      cur_bid.bidder = bidders[j].id;
-      cur_bid.items.push_back(items[i]);
+      bid_id = bid_count;
+      Bid cur_bid(bid_id, {items[i]}, bidders[j].funds / 10, bidders[j].id);
       err = va.PlaceBid(cur_bid);
       ASSERT_TRUE(err == ErrorCode::SUCCESS);
       bid_count += 1;
@@ -259,6 +249,6 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   {
     ASSERT_TRUE(execution_block == end_block);
     ASSERT_TRUE(va.Winner(j) == bidders[bidders.size() - 1].id);
-    ASSERT_TRUE(va.Items()[j].sell_price == bidders[bidders.size() - 2].funds / 10);
+    ASSERT_TRUE(va.Items()[j].SellPrice() == bidders[bidders.size() - 2].funds / 10);
   }
 }

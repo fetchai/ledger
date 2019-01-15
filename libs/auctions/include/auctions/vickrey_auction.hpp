@@ -72,68 +72,68 @@ private:
       std::size_t loop_count = 0;
 
       // iterate through bids on this item
-      if (cur_item_it.second.bids.size() > 2)
+      if (cur_item_it.second.Bids().size() > 2)
       {
-        for (auto &cur_bid_it : cur_item_it.second.bids)
+        for (auto &cur_bid_it : cur_item_it.second.Bids())
         {
           if (loop_count == 0)
           {
-            cur_item_it.second.winner     = cur_bid_it.bidder;
-            cur_item_it.second.max_bid    = cur_bid_it.price;
-            cur_item_it.second.sell_price = cur_bid_it.price;
+            cur_item_it.second.Winner()    = cur_bid_it.Bidder();
+            cur_item_it.second.MaxBid()    = cur_bid_it.Price();
+            cur_item_it.second.SellPrice() = cur_bid_it.Price();
             ++loop_count;
           }
           else if (loop_count == 1)
           {
-            if (cur_bid_it.price > cur_item_it.second.max_bid)
+            if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.winner  = cur_bid_it.bidder;
-              cur_item_it.second.max_bid = cur_bid_it.price;
+              cur_item_it.second.Winner() = cur_bid_it.Bidder();
+              cur_item_it.second.MaxBid() = cur_bid_it.Price();
             }
             else
             {
-              cur_item_it.second.sell_price = cur_bid_it.price;
+              cur_item_it.second.SellPrice() = cur_bid_it.Price();
             }
             ++loop_count;
           }
           else
           {
-            if (cur_bid_it.price > cur_item_it.second.max_bid)
+            if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.winner     = cur_bid_it.bidder;
-              cur_item_it.second.sell_price = cur_item_it.second.max_bid;
-              cur_item_it.second.max_bid    = cur_bid_it.price;
+              cur_item_it.second.Winner()    = cur_bid_it.Bidder();
+              cur_item_it.second.SellPrice() = cur_item_it.second.MaxBid();
+              cur_item_it.second.MaxBid()    = cur_bid_it.Price();
             }
-            else if (cur_bid_it.price > cur_item_it.second.max_bid)
+            else if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.sell_price = cur_bid_it.price;
+              cur_item_it.second.SellPrice() = cur_bid_it.Price();
             }
           }
         }
       }
 
       // only 2 bids
-      else if (cur_item_it.second.bids.size() == 2)
+      else if (cur_item_it.second.Bids().size() == 2)
       {
-        for (auto &cur_bid_it : cur_item_it.second.bids)
+        for (auto &cur_bid_it : cur_item_it.second.Bids())
         {
           if (loop_count == 0)
           {
             // just using this to store the value for now
-            cur_item_it.second.sell_price = cur_bid_it.price;
+            cur_item_it.second.SellPrice() = cur_bid_it.Price();
 
-            cur_item_it.second.winner = cur_bid_it.bidder;
+            cur_item_it.second.Winner() = cur_bid_it.Bidder();
           }
           else if (loop_count == 1)
           {
-            if (cur_bid_it.price > cur_item_it.second.sell_price)
+            if (cur_bid_it.Price() > cur_item_it.second.SellPrice())
             {
-              cur_item_it.second.winner  = cur_bid_it.bidder;
-              cur_item_it.second.max_bid = cur_bid_it.price;
+              cur_item_it.second.Winner() = cur_bid_it.Bidder();
+              cur_item_it.second.MaxBid() = cur_bid_it.Price();
             }
             else
             {
-              cur_item_it.second.sell_price = cur_bid_it.price;
+              cur_item_it.second.SellPrice() = cur_bid_it.Price();
             }
           }
           ++loop_count;
@@ -141,13 +141,13 @@ private:
       }
 
       // only 1 bid
-      else if (cur_item_it.second.bids.size() == 1)
+      else if (cur_item_it.second.Bids().size() == 1)
       {
-        for (auto &cur_bid_it : cur_item_it.second.bids)
+        for (auto &cur_bid_it : cur_item_it.second.Bids())
         {
-          cur_item_it.second.winner     = cur_bid_it.bidder;
-          cur_item_it.second.sell_price = cur_bid_it.price;
-          cur_item_it.second.max_bid    = cur_bid_it.price;
+          cur_item_it.second.Winner()    = cur_bid_it.Bidder();
+          cur_item_it.second.SellPrice() = cur_bid_it.Price();
+          cur_item_it.second.MaxBid()    = cur_bid_it.Price();
         }
       }
 

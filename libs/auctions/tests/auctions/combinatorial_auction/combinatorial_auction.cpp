@@ -59,28 +59,20 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   // add items to auction
   std::vector<Item> items{};
 
-  Item item1; // e.g. car
-  item1.id        = 0;
-  item1.seller_id = 990;
-  item1.min_price = 0;
+  AgentIdType seller_id = 990;
+  ValueType   min_price = 0;
+  ItemIdType  item_id   = 0;
+
+  Item item1(item_id, seller_id, min_price);  // e.g. car
   items.push_back(item1);
 
-  Item item2;
-  item2.id        = 1;
-  item2.seller_id = 990;
-  item2.min_price = 0;
+  Item item2(item_id + 1, seller_id, min_price);
   items.push_back(item2);
 
-  Item item3;
-  item3.id        = 2;
-  item3.seller_id = 990;
-  item3.min_price = 0;
+  Item item3(item_id + 2, seller_id, min_price);
   items.push_back(item3);
 
-  Item item4;
-  item4.id        = 3;
-  item4.seller_id = 990;
-  item4.min_price = 0;
+  Item item4(item_id + 3, seller_id, min_price);
   items.push_back(item4);
 
   for (std::size_t k = 0; k < items.size(); ++k)
@@ -94,93 +86,59 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bidders.push_back(Bidder(0, 500));
 
   // make bids
-  Bid bid1;
-  Bid bid2;
-  Bid bid3;
-  Bid bid4;
-  Bid bid5;
-  Bid bid6;
-  Bid bid7;
 
-
-  // market.AddSingleBid(["car"], 10)
-  bid1.id     = 0;
-  bid1.price  = 10;
-  bid1.bidder = bidders[0].id;
-  bid1.items.push_back(items[0]);
+  BidIdType bid_id    = 0;
+  ValueType bid_price = 10;
+  Bid       bid1(bid_id, {items[0]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid1);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  // market.AddSingleBid(["hotel"],8)
-  bid2.id     = 1;
-  bid2.price  = 8;
-  bid2.bidder = bidders[0].id;
-  bid2.items.push_back(items[1]);
+  bid_id    = 1;
+  bid_price = 8;
+  Bid bid2(bid_id, {items[1]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid2);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  // market.AddSingleBid(["cinema"],5)
-  bid3.id     = 2;
-  bid3.price  = 5;
-  bid3.bidder = bidders[0].id;
-  bid3.items.push_back(items[2]);
+  bid_id    = 2;
+  bid_price = 5;
+  Bid bid3(bid_id, {items[2]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid3);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  // market.AddSingleBid([ "hotel", "car","cinema"], 29)
-  bid4.id     = 3;
-  bid4.price  = 29;
-  bid4.bidder = bidders[0].id;
-  bid4.items.push_back(items[0]);
-  bid4.items.push_back(items[1]);
-  bid4.items.push_back(items[2]);
+  bid_id    = 3;
+  bid_price = 29;
+  Bid bid4(bid_id, {items[0], items[1], items[2]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid4);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  // market.AddBids([ ([ "hotel", "car","cinema"], 20), ([ "hotel", "car","opera"], 30) ])
-  bid5.id     = 4;
-  bid5.price  = 20;
-  bid5.bidder = bidders[0].id;
-  bid5.items.push_back(items[0]);
-  bid5.items.push_back(items[1]);
-  bid5.items.push_back(items[2]);
-  bid5.excludes.push_back(bid6);
+  bid_id    = 4;
+  bid_price = 20;
+  Bid bid5(bid_id, {items[0], items[1], items[2]}, bid_price, bidders[0].id);
+
+  bid_id    = 5;
+  bid_price = 30;
+  Bid bid6(bid_id, {items[0], items[1], items[3]}, bid_price, bidders[0].id);
+
+  bid5.Excludes({bid6});
+  bid6.Excludes({bid5});
+
   err = ca.PlaceBid(bid5);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
-  bid6.id     = 5;
-  bid6.price  = 30;
-  bid6.bidder = bidders[0].id;
-  bid6.items.push_back(items[0]);
-  bid6.items.push_back(items[1]);
-  bid6.items.push_back(items[3]);
-  bid6.excludes.push_back(bid5);
   err = ca.PlaceBid(bid6);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  // market.AddSingleBid(["opera"],7)
-  bid7.id     = 6;
-  bid7.price  = 7;
-  bid7.bidder = bidders[0].id;
-  bid7.items.push_back(items[3]);
+  bid_id    = 6;
+  bid_price = 7;
+  Bid bid7(bid_id, {items[3]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid7);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  ca.BuildGraph(0);
-  std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
-
   for (std::size_t j = 0; j < 1; ++j)
   {
-    ca.Mine(23 * j, 1);
+    ca.Mine(23 * j, 100);
     std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
   }
 
-//  for (std::size_t j = 0; j < 3; ++j)
-//  {
-//    std::cout << "ca.active_[j]: " << ca.Active(j) << std::endl;
-//
-////    ASSERT_TRUE(execution_block == end_block);
-//    //    ASSERT_TRUE(ca.Winner(j) == bidders[bidders.size() - 1].id);
-//    //    ASSERT_TRUE(ca.Items()[j].sell_price == bidders[bidders.size() - 2].funds / 10);
-//    //    ca.Winner(j);
-//  }
+  // should accept one but not both of these bids since they're exclusive
+  ASSERT_TRUE(ca.Active(4) != ca.Active(5));
 }

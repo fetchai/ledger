@@ -32,18 +32,132 @@ constexpr AgentIdType DefaultBidBidder = std::numeric_limits<AgentIdType>::max()
 class Bid
 {
 public:
-  Bid() = default;
-  Bid(Bid const& other) = default; 
-  Bid(Bid && other) = default; 
+  Bid(BidIdType id, std::vector<Item> items, ValueType price, AgentIdType bidder,
+      std::vector<Bid> excludes = {})
+    : id_(id)
+    , items_(items)
+    , price_(price)
+    , bidder_(bidder)
+    , excludes_(excludes)
+  {
+    assert(items.size() > 0);
+  }
 
-  Bid& operator=(Bid const& other) = default; 
-  Bid& operator=(Bid && other) = default;   
+  /**
+   * ID accessor
+   * @return
+   */
+  BidIdType Id() const
+  {
+    return id_;
+  }
+  BidIdType &Id()
+  {
+    return id_;
+  }
 
-  BidIdType         id = DefaultBidId;
-  std::vector<Item> items{};
-  ValueType         price = DefaultBidPrice;
-  std::vector<Bid>  excludes{};
-  AgentIdType       bidder = DefaultBidBidder;
+  /**
+   * ID setter
+   */
+  void Id(BidIdType &id)
+  {
+    id_ = id;
+  }
+
+  /**
+   * items accessor
+   * @return
+   */
+  std::vector<Item> Items() const
+  {
+    return items_;
+  }
+  std::vector<Item> &Items()
+  {
+    return items_;
+  }
+
+  /**
+   * Items setter
+   * @param items
+   */
+  void Items(std::vector<Item> const &items)
+  {
+    items_ = items;
+  }
+
+  /**
+   * price accessor
+   * @return
+   */
+  ValueType Price() const
+  {
+    return price_;
+  }
+  ValueType &Price()
+  {
+    return price_;
+  }
+
+  /**
+   * price setter
+   * @param price
+   */
+  void Price(ValueType price)
+  {
+    price_ = price;
+  }
+
+  /**
+   * bidder accessor
+   * @return
+   */
+  AgentIdType Bidder() const
+  {
+    return bidder_;
+  }
+  AgentIdType &Bidder()
+  {
+    return bidder_;
+  }
+
+  /**
+   * bidder setter
+   * @param price
+   */
+  void Bidder(AgentIdType bidder)
+  {
+    bidder_ = bidder;
+  }
+
+  /**
+   * excludes accessor
+   * @return
+   */
+  std::vector<Bid> Excludes() const
+  {
+    return excludes_;
+  }
+  std::vector<Bid> &Excludes()
+  {
+    return excludes_;
+  }
+
+  /**
+   * excludes setter
+   * @param price
+   */
+  void Excludes(std::vector<Bid> excludes)
+  {
+    excludes_ = excludes;
+  }
+
+private:
+  BidIdType         id_ = DefaultBidId;
+  std::vector<Item> items_{};
+  ValueType         price_  = DefaultBidPrice;
+  AgentIdType       bidder_ = DefaultBidBidder;
+  std::vector<Bid>  excludes_{};
 };
 
 }  // namespace auctions

@@ -68,6 +68,8 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
       .def("couplings", &CombinatorialAuction::couplings)
       .def("local_fields", &CombinatorialAuction::local_fields)
       .def("TotalBenefit", &CombinatorialAuction::TotalBenefit)      
+      .def("SelectBid", &CombinatorialAuction::SelectBid)         
+      .def("BuildGraph", &CombinatorialAuction::BuildGraph)      
       .def("Execute", &CombinatorialAuction::Execute);            
 }
 
