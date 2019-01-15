@@ -155,14 +155,14 @@ public:
     SortIfNeeded();
   }
 
-  void AddObjectFeedback(ConstByteArray const &/*object_ident*/, TrustSubject /*subject*/,
+  void AddObjectFeedback(ConstByteArray const & /*object_ident*/, TrustSubject /*subject*/,
                          TrustQuality /*quality*/) override
   {}
 
-  void AddObject(ConstByteArray const &/*object_ident*/, IDENTITY const &/*peer_ident*/) override
+  void AddObject(ConstByteArray const & /*object_ident*/, IDENTITY const & /*peer_ident*/) override
   {}
 
-  void RemoveObject(ConstByteArray const &/*object_ident*/) override
+  void RemoveObject(ConstByteArray const & /*object_ident*/) override
   {}
 
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
@@ -269,7 +269,7 @@ public:
     return ranking;
   }
 
-  double GetTrustUncertaintyOfPeer(IDENTITY const &/*peer_ident*/) const override
+  double GetTrustUncertaintyOfPeer(IDENTITY const & /*peer_ident*/) const override
   {
     return 0.0;
   }

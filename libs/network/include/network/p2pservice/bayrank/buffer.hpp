@@ -129,7 +129,7 @@ private:
   }
 
   static constexpr std::size_t const MAX_SIZE = 1000;
-  std::mt19937      random_engine_;
+  std::mt19937                       random_engine_;
 };
 
 }  // namespace bayrank

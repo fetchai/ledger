@@ -19,16 +19,16 @@
 
 #include "network/p2pservice/bayrank/trust_storage_interface.hpp"
 
-#include <vector>
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace p2p {
 namespace bayrank {
 
 template <typename IDENTITY>
-class BadPlace  : public TrustStorageInterface<IDENTITY>
+class BadPlace : public TrustStorageInterface<IDENTITY>
 {
 protected:
   using TrustStorageInterface<IDENTITY>::storage_mutex_;
@@ -43,16 +43,15 @@ public:
   BadPlace()  = default;
   ~BadPlace() = default;
 
-  BadPlace(const BadPlace &rhs)            = delete;
-  BadPlace(BadPlace &&rhs)                 = delete;
+  BadPlace(const BadPlace &rhs) = delete;
+  BadPlace(BadPlace &&rhs)      = delete;
   BadPlace &operator=(const BadPlace &rhs) = delete;
-  BadPlace &operator=(BadPlace &&rhs)      = delete;
+  BadPlace &operator=(BadPlace &&rhs) = delete;
 
   virtual void Update() override
-  {
-  }
+  {}
 
-  void AddPeer(Trust &&trust)  override
+  void AddPeer(Trust &&trust) override
   {
     FETCH_LOCK(storage_mutex_);
     if (this->IsInStoreLockLess(trust, "buffer"))
@@ -60,13 +59,13 @@ public:
       return;
     }
     auto const size = storage_.size();
-    if (size>=MAX_SIZE)
+    if (size >= MAX_SIZE)
     {
       std::time_t oldest     = storage_[0].last_modified;
       std::size_t oldest_pos = 0;
-      for(std::size_t i=1;i<size;++i)
+      for (std::size_t i = 1; i < size; ++i)
       {
-        if (oldest>storage_[i].last_modified)
+        if (oldest > storage_[i].last_modified)
         {
           oldest     = storage_[i].last_modified;
           oldest_pos = i;
@@ -86,13 +85,13 @@ public:
 protected:
   virtual void Sort() override
   {
-    //we don't need to sort the storage
+    // we don't need to sort the storage
   }
 
 private:
-    static constexpr std::size_t const MAX_SIZE = 1000;
+  static constexpr std::size_t const MAX_SIZE = 1000;
 };
 
-}  //namespace bayrank
+}  // namespace bayrank
 }  // namespace p2p
 }  // namespace fetch

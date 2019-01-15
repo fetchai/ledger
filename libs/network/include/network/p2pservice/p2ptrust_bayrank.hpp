@@ -155,7 +155,7 @@ public:
   }
 
   void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject /*subject*/,
-                         TrustQuality quality) override
+                         TrustQuality          quality) override
   {
     object_store_.Iterate(object_ident, [this, quality](IDENTITY const &identity) {
       AddFeedback(identity, TrustSubject ::OBJECT, quality);
