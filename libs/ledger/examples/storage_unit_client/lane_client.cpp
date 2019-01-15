@@ -131,7 +131,7 @@ int main(int argc, char **argv)
   fetch::network::NetworkManager tm(8);
   MuddlePtr                      muddle_;
   ProverPtr                      p2p_key = GenerateP2PKey();
-  muddle_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"), std::move(p2p_key), tm);
+  muddle_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(p2p_key), tm);
   muddle_->Start({P2P_RPC_PORT});
   StorageUnitClient client(tm);
 

@@ -24,7 +24,7 @@
 using namespace fetch;
 using namespace fetch::subscribe;
 
-int main(int argc, char const **argv)
+int main(int /*argc*/, char const ** /*argv*/)
 {
   // Networking needs this
   fetch::network::NetworkManager tm(5);

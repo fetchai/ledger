@@ -64,7 +64,8 @@ public:
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
-  void New(std::string const &doc_file, std::string const &index_file, bool const &create = true)
+  void New(std::string const &doc_file, std::string const &index_file,
+           bool const & /*create*/ = true)
   {
     store_.New(doc_file, index_file);
   }
@@ -116,7 +117,7 @@ public:
   void Set(ResourceID const &rid, type const &object)
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    return LocklessSet(rid, object);
+    LocklessSet(rid, object);
   }
 
   /**

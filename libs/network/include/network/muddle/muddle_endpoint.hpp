@@ -35,7 +35,7 @@ public:
   using Payload         = Packet::Payload;
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using NetworkId       = uint32_t;
+  using NetworkId       = byte_array::ConstByteArray;
 
   // Construction / Destruction
   MuddleEndpoint()          = default;

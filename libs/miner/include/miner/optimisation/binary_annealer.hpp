@@ -153,7 +153,7 @@ public:
     return FindMinimum(ret);
   }
 
-  cost_type FindMinimum(state_type &state, bool binary = true)
+  cost_type FindMinimum(state_type &state, bool /*binary*/ = true)
   {
     Anneal();
     cost_type ret = Energy();
@@ -192,7 +192,7 @@ public:
     return cost_type(ret * 0.5 * normalisation_constant_);
   }
 
-  void Resize(std::size_t const &n, std::size_t const &m = std::size_t(-1))
+  void Resize(std::size_t const &n, std::size_t const & /*m*/ = std::size_t(-1))
   {
     sites_.resize(n);
     for (std::size_t i = 0; i < n; ++i)
