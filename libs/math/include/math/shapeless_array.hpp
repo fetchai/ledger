@@ -580,7 +580,7 @@ public:
       {
         continue;
       }
-      Type vb = static_cast<double>(other.At(i));
+      double vb = static_cast<double>(other.At(i));
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
