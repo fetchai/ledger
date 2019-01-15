@@ -24,7 +24,7 @@ namespace auctions {
 
 constexpr ItemIdType  DefaultItemId        = std::numeric_limits<ItemIdType>::max();
 constexpr AgentIdType DefaultItemAgentId   = std::numeric_limits<AgentIdType>::max();
-constexpr ValueType   DefaultItemMinPrice  = std::numeric_limits<ValueType>::max();
+constexpr ValueType   DefaultItemMinPrice  = std::numeric_limits<AgentIdType>::max();
 constexpr ValueType   DefaultItemMaxBid    = std::numeric_limits<ValueType>::min();
 constexpr ValueType   DefaultItemSellPrice = std::numeric_limits<ValueType>::min();
 

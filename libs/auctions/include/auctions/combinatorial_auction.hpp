@@ -29,9 +29,14 @@ namespace auctions {
 
 class CombinatorialAuction : public Auction
 {
+
+  using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
+
 public:
-  CombinatorialAuction(BlockIdType start_block_id, BlockIdType end_block_id)
+  CombinatorialAuction(BlockIdType start_block_id, BlockIdType end_block_id,
+                       std::uint32_t max_flips = 3)
     : Auction(start_block_id, end_block_id, true, std::numeric_limits<std::size_t>::max())
+    , max_flips_(max_flips)
   {
     max_items_         = std::numeric_limits<std::size_t>::max();
     max_bids_          = std::numeric_limits<std::size_t>::max();
@@ -40,8 +45,8 @@ public:
   }
 
   /**
-   * adding new items automatically sets graph built back to false. This is useful if items and bids are added,
-   * some mining takes place, and then more items are added later
+   * adding new items automatically sets graph built back to false. This is useful if items and bids
+   * are added, some mining takes place, and then more items are added later
    * @param item
    * @return
    */
@@ -52,8 +57,8 @@ public:
   }
 
   /**
-   * adding new items automatically sets graph built back to false. This is useful if items and bids are added,
-   * some mining takes place, and then more bids are added later
+   * adding new items automatically sets graph built back to false. This is useful if items and bids
+   * are added, some mining takes place, and then more bids are added later
    * @param item
    * @return
    */
@@ -68,10 +73,9 @@ public:
    */
   void Mine(std::size_t random_seed, std::size_t run_time)
   {
-//    if (!graph_built_)
-//    {
-    BuildGraph(random_seed);
-//    }
+    std::cout << "mining...: " << std::endl;
+    fetch::random::LaggedFibonacciGenerator<> rng(random_seed);
+    BuildGraph(rng);
 
     // simulated annealing
     ValueType beta_start = 0.01;
@@ -82,9 +86,6 @@ public:
 
     std::size_t rejected = 0;
 
-    using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
-    fetch::random::LinearCongruentialGenerator random_number_generator(random_seed);
-
     for (std::size_t i = 0; i < run_time; ++i)
     {
       for (std::size_t j = 0; j < bids_.size(); ++j)
@@ -93,10 +94,10 @@ public:
         prev_reward  = TotalBenefit();
 
         // TODO(tfr): make 3 a parameter
-        RandomInt nn = 1 + random_number_generator() % 3;
+        RandomInt nn = 1 + rng() % max_flips_;
         for (RandomInt k = 0; k < nn; ++k)
         {
-          RandomInt n = random_number_generator() % bids_.size();
+          RandomInt n = rng() % bids_.size();
 
           if (active_[n] == 1)
           {
@@ -111,48 +112,22 @@ public:
         new_reward = TotalBenefit();
         de         = prev_reward - new_reward;
 
-        std::cout << "prev_reward: " << prev_reward << std::endl;
-        std::cout << "new_reward: " << new_reward << std::endl;
-        std::cout << "de: " << de << std::endl;
-
-        ValueType ran_val   = static_cast<ValueType>(random_number_generator.AsDouble());
-        ValueType threshold = std::exp(-beta * de); // TODO(tfr): use exponential approximation
+        ValueType ran_val   = static_cast<ValueType>(rng.AsDouble());
+        ValueType threshold = std::exp(-beta * de);  // TODO(tfr): use exponential approximation
 
         if (ran_val >= threshold)
         {
           active_ = prev_active_;
           rejected += 1;
         }
-        /*
-        else
-        {
-          if (beta > 0.9 && (new_reward == 8))
-          {
-            std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
-          }
-        }
-        */
       }
 
       // annealing
       beta += db;
+
+      std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
     }
-
-    //std::cout << "Final - TotalBenefit(): " << TotalBenefit() << std::endl;
   }
-
-//  void SelectBid(BidIdType const& bid_id)
-//  {
-//    for (std::size_t j = 0; j < bids_.size(); ++j)
-//    {
-//      if (couplings_[bid][j] != 0)
-//      {
-//        active_[j] = 0;
-//      }
-//    }
-//
-//    active_[bid] = 1;
-//  }
 
   std::uint32_t Active(std::size_t n)
   {
@@ -170,15 +145,14 @@ public:
   {
     assert(graph_built_);
     return couplings_(std::move(i), std::move(j));
-  }  
+  }
 
-   bool Execute(BlockIdType current_block) override 
-   {
-     // TODO(tfr): Get rid of execute in auction as it is not native to
-     // the auction
+  bool Execute(BlockIdType current_block) override
+  {
+    // TODO(tfr): Get rid of execute in auction as it is not native to
+    // the auction
     return false;
-   }
-
+  }
 
   /**
    * total benefit calculate the same was as energy in simulated annealing, i.e. :
@@ -206,16 +180,32 @@ public:
     return reward;
   }
 
+private:
+  // bids on binary vector
+  fetch::math::linalg::Matrix<ValueType>     couplings_;
+  fetch::math::ShapelessArray<ValueType>     local_fields_;
+  fetch::math::ShapelessArray<std::uint32_t> active_;
+  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+  std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
+
+  bool graph_built_ = false;
+
   /**
    * couplings_ = Sum(Bi + Bj) + delta
    */
-  void BuildGraph(std::size_t random_seed)
+  void BuildGraph(fetch::random::LaggedFibonacciGenerator<> &rng)
   {
     couplings_    = fetch::math::linalg::Matrix<ValueType>::Zeroes({bids_.size(), bids_.size()});
     local_fields_ = fetch::math::ShapelessArray<ValueType>::Zeroes({bids_.size()});
 
     // TODO(tfr / kb) : randomly initialise from seed
-    active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
+    active_ = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
+    for (std::size_t j = 0; j < active_.size(); ++j)
+    {
+      RandomInt val = rng() % 2;
+      active_[j]    = static_cast<std::uint32_t>(val) - 1;
+    }
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
@@ -225,7 +215,7 @@ public:
       // thus local_fields_ represents the release value due to a bid
       // and only bids with positive local_fields can be accepted
       local_fields_[i] = static_cast<ValueType>(bids_[i].price);
-      couplings_.Set(i,i, 0);
+      couplings_.Set(i, i, 0);
       for (auto &cur_item : items_)
       {
         for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
@@ -238,7 +228,7 @@ public:
       }
 
       ValueType max_local_fields_;
-      max_local_fields_ = fetch::math::Max(local_fields_);
+      max_local_fields_               = fetch::math::Max(local_fields_);
       ValueType exclusive_bid_penalty = 2 * max_local_fields_;
 
       // next set couplings strengths
@@ -279,21 +269,11 @@ public:
         }
 
         couplings_.At(i, j) = couplings_.At(j, i) = -coupling;
-        std::cout << "couplings_.At(i, j): " << couplings_.At(i, j) << std::endl;
       }
     }
 
     graph_built_ = true;
   }
-
-private:
-  // bids on binary vector
-  fetch::math::linalg::Matrix<ValueType>     couplings_;
-  fetch::math::ShapelessArray<ValueType>     local_fields_;
-  fetch::math::ShapelessArray<std::uint32_t> active_;
-  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
-
-  bool graph_built_ = false;
 
   /**
    * finds the highest bid on each item

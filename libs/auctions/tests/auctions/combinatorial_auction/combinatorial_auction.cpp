@@ -59,7 +59,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   // add items to auction
   std::vector<Item> items{};
 
-  Item item1; // e.g. car
+  Item item1;  // e.g. car
   item1.id        = 0;
   item1.seller_id = 990;
   item1.min_price = 0;
@@ -101,7 +101,6 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   Bid bid5;
   Bid bid6;
   Bid bid7;
-
 
   // market.AddSingleBid(["car"], 10)
   bid1.id     = 0;
@@ -165,22 +164,12 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   err = ca.PlaceBid(bid7);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  ca.BuildGraph(0);
-  std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
-
   for (std::size_t j = 0; j < 1; ++j)
   {
-    ca.Mine(23 * j, 1);
+    ca.Mine(23 * j, 100);
     std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
   }
 
-//  for (std::size_t j = 0; j < 3; ++j)
-//  {
-//    std::cout << "ca.active_[j]: " << ca.Active(j) << std::endl;
-//
-////    ASSERT_TRUE(execution_block == end_block);
-//    //    ASSERT_TRUE(ca.Winner(j) == bidders[bidders.size() - 1].id);
-//    //    ASSERT_TRUE(ca.Items()[j].sell_price == bidders[bidders.size() - 2].funds / 10);
-//    //    ca.Winner(j);
-//  }
+  // should accept one but not both of these bids since they're exclusive
+  ASSERT_TRUE(ca.Active(4) != ca.Active(5));
 }
