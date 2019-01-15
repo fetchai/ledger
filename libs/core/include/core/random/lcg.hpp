@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <utility>
 
 namespace fetch {
 namespace random {
