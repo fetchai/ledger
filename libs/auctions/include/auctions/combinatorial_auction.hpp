@@ -116,14 +116,14 @@ public:
     return active_[n];
   }
 
-  ValueType local_field(std::size_t n)
+  fetch::math::ShapelessArray<ValueType> local_fields()
   {
-    return local_fields_[std::move(n)];
+    return local_fields_;
   }
 
-  ValueType coupling(std::size_t i, std::size_t j)
+  fetch::math::linalg::Matrix<ValueType> couplings()
   {
-    return couplings_(std::move(i), std::move(j));
+    return couplings_;
   }  
 
    bool Execute(BlockIdType current_block) override 
@@ -132,7 +132,30 @@ public:
      // the auction
     return false;
    }
-  
+
+ /**
+   * total benefit calculate the same was as energy in simulated annealing, i.e. :
+   * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
+   * @return  returns a reward value
+   */
+  ValueType TotalBenefit()
+  {
+    ValueType     reward = 0;
+    std::uint32_t a1 = 0, a2 = 0;
+    for (std::size_t i = 0; i < bids_.size(); ++i)
+    {
+      a1 = active_[i];
+      reward += a1 * local_fields_[i];
+
+      for (std::size_t j = 0; j < bids_.size(); ++j)
+      {
+        a2 = active_[j];
+        reward += a1 * a2 * couplings_.At(i, j);
+      }
+    }
+
+    return reward;
+  }
 private:
   // bids on binary vector
   fetch::math::linalg::Matrix<ValueType>     couplings_;
@@ -217,29 +240,7 @@ private:
     }
   }
 
-  /**
-   * total benefit calculate the same was as energy in simulated annealing, i.e. :
-   * E = Sum(couplings_ * a1 * a2) + Sum(local_fields_ * a1)
-   * @return  returns a reward value
-   */
-  ValueType TotalBenefit()
-  {
-    ValueType     reward = 0;
-    std::uint32_t a1 = 0, a2 = 0;
-    for (std::size_t i = 0; i < bids_.size(); ++i)
-    {
-      a1 = active_[i];
-      reward += a1 * local_fields_[i];
-
-      for (std::size_t j = 0; j < bids_.size(); ++j)
-      {
-        a2 = active_[j];
-        reward += a1 * a2 * couplings_.At(i, j);
-      }
-    }
-
-    return reward;
-  }
+ 
 
 
   /**
