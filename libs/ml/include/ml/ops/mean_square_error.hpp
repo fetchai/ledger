@@ -38,8 +38,15 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());
-    ArrayType result = fetch::math::MeanSquareError(*inputs[0], *inputs[1]);
-    return result(0, 0);
+
+    typename ArrayType::Type sum(0);
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      sum += (inputs[0]->At(i) - inputs[1]->At(i)) * (inputs[0]->At(i) - inputs[1]->At(i));
+    }
+    sum /= inputs[0]->shape()[0];
+    sum /= 2;  // TODO(private 343)
+    return sum;
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
@@ -47,7 +54,10 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
-    fetch::math::Subtract(*inputs[0], *inputs[1], *ret);
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i));
+    }
     return ret;
   }
 };
