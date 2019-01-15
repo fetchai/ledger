@@ -214,15 +214,15 @@ private:
       // local_fields_ = bid_price - Sum(items.min_price)
       // thus local_fields_ represents the release value due to a bid
       // and only bids with positive local_fields can be accepted
-      local_fields_[i] = static_cast<ValueType>(bids_[i].price);
+      local_fields_[i] = static_cast<ValueType>(bids_[i].Price());
       couplings_.Set(i, i, 0);
       for (auto &cur_item : items_)
       {
-        for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
+        for (std::size_t j = 0; j < bids_[i].Items().size(); ++j)
         {
-          if (bids_[i].items[j].id == cur_item.second.id)
+          if (bids_[i].Items()[j].Id() == cur_item.second.Id())
           {
-            local_fields_[i] -= cur_item.second.min_price;
+            local_fields_[i] -= cur_item.second.MinPrice();
           }
         }
       }
@@ -237,9 +237,9 @@ private:
         ValueType coupling = 0;
 
         // penalize exclusive bid combinations
-        for (std::size_t k = 0; k < bids_[j].excludes.size(); ++k)
+        for (std::size_t k = 0; k < bids_[j].Excludes().size(); ++k)
         {
-          if (bids_[j].excludes[k].id == bids_[i].id)
+          if (bids_[j].Excludes()[k].Id() == bids_[i].Id())
           {
             coupling += exclusive_bid_penalty;
           }
@@ -248,9 +248,9 @@ private:
         for (auto &cur_item : items_)
         {
           bool in_bid1 = false;
-          for (std::size_t k = 0; k < bids_[i].items.size(); ++k)
+          for (std::size_t k = 0; k < bids_[i].Items().size(); ++k)
           {
-            if (bids_[i].items[k].id == cur_item.second.id)
+            if (bids_[i].Items()[k].Id() == cur_item.second.Id())
             {
               in_bid1 = true;
               break;
@@ -258,11 +258,11 @@ private:
           }
           if (in_bid1)
           {
-            for (std::size_t k = 0; k < bids_[j].items.size(); ++k)
+            for (std::size_t k = 0; k < bids_[j].Items().size(); ++k)
             {
-              if (bids_[j].items[k].id == cur_item.second.id)
+              if (bids_[j].Items()[k].Id() == cur_item.second.Id())
               {
-                coupling += (bids_[i].price + bids_[j].price);
+                coupling += (bids_[i].Price() + bids_[j].Price());
               }
             }
           }

@@ -20,10 +20,10 @@ n_items = 10
 items = []
 count = 0
 for cur_item in range(n_items):
-	items.append(fetch.auctions.Item())
-	items[-1].id = item_id_offset + count
-	items[-1].seller_id = seller_id_offset + count
-	items[-1].min_price = min_price_offset + count
+	id = item_id_offset + count
+	seller_id = seller_id_offset + count
+	min_price = min_price_offset + count
+	items.append(fetch.auctions.Item(id, seller_id, min_price))
 	count += 1
 
 # generate some bids on those items
@@ -31,10 +31,10 @@ n_bids = 100
 bids = []
 count = 0
 for cur_bid in range(n_bids):
-	bids.append(fetch.auctions.Bid())
-	bids[-1].id = bid_id_offset + count
-	bids[-1].price = bid_price_offset + count
-	bids[-1].bidder = bid_bidder_offset + count
+	id = bid_id_offset + count
+	price = bid_price_offset + count
+	bidder = bid_bidder_offset + count
+	bids.append(fetch.auctions.Bid(id, [items[-1]], price, bidder))
 	count += 1
 
 # add item
@@ -45,7 +45,7 @@ for cur_item in items:
 # sanity check - print item ids
 li = ca.ShowListedItems()
 for item in li:
-	print(item.id)
+	print(item.Id())
 
 # add bid
 for cur_bid in bids:
@@ -55,7 +55,7 @@ for cur_bid in bids:
 # sanity check - print bid ids
 bi = ca.ShowBids()
 for bid in bi:
-	print(bid.id)
+	print(bid.Id())
 
 # mining
 print("beginning mining")
