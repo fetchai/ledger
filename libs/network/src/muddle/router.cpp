@@ -510,6 +510,7 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
  */
 bool Router::IsConnected(Address const &target) const
 {
+  FETCH_LOCK(routing_table_lock_);
   auto raw_address = ConvertAddress(target);
   auto iter        = routing_table_.find(raw_address);
   bool connected   = false;

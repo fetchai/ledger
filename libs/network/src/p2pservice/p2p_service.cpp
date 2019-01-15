@@ -146,7 +146,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
     }
   }
-
+  FETCH_LOCK(desired_peers_mutex_);
   for (auto const &pt : trust_system_.GetPeersAndTrusts())
   {
     auto        address = pt.address;
@@ -222,11 +222,13 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 bool P2PService::IsDesired(Address const &address)
 {
+  FETCH_LOCK(desired_peers_mutex_);
   return desired_peers_.find(address) != desired_peers_.end();
 }
 
 void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 {
+  FETCH_LOCK(desired_peers_mutex_);
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
@@ -247,6 +249,8 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
   static constexpr std::size_t MAX_RESOLUTIONS_PER_CYCLE = 20;
 
   AddressSet const outgoing_peers = identity_cache_.FilterOutUnresolved(active_addresses);
+
+  FETCH_LOCK(desired_peers_mutex_);
 
   AddressSet const new_peers     = desired_peers_ - active_addresses;
   AddressSet const dropped_peers = outgoing_peers - desired_peers_;

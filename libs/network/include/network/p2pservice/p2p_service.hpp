@@ -73,6 +73,7 @@ public:
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
   using FutureTimepoint      = network::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
+  using Mutex                = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 
@@ -177,6 +178,8 @@ private:
   std::size_t max_peers_;
   std::size_t transient_peers_;
   uint32_t    process_cycle_ms_;
+
+  Mutex desired_peers_mutex_{__LINE__, __FILE__};
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };
