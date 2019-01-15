@@ -42,6 +42,7 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
+    assert(inputs.empty());
     return {errorSignal};
   }
 

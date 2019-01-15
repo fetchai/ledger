@@ -41,17 +41,16 @@ public:
   {
     assert(padding.empty() || padding.size() == shape.size());
     assert(strides.empty() || strides.size() == shape.size());
-    Init(shape_, strides_, padding_);
+    Init(strides_, padding_);
   }
 
   Tensor(size_t size)
     : shape_({size})
   {
-    Init(shape_, strides_, padding_);
+    Init(strides_, padding_);
   }
 
-  void Init(std::vector<size_t> const &shape   = std::vector<size_t>(),
-            std::vector<size_t> const &strides = std::vector<size_t>(),
+  void Init(std::vector<size_t> const &strides = std::vector<size_t>(),
             std::vector<size_t> const &padding = std::vector<size_t>())
   {
     if (!shape_.empty())
@@ -196,7 +195,8 @@ public:
     {
       T e1 = Get(IndicesOfElement(i));
       T e2 = o.Get(o.IndicesOfElement(i));
-      if (abs(e1 - e2) > absolute_tolerance)
+      T tolerance = std::max(absolute_tolerance, std::max(abs(e1), abs(e2)) * relative_tolerance);
+      if (abs(e1 - e2) > tolerance)
       {
         std::cout << "AllClose[" << i << "] - " << e1 << " != " << e2 << std::endl;
         return false;
