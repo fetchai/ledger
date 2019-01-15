@@ -1,11 +1,13 @@
-Core Data Stuctures and Algorithms
+Core Data Structures and Algorithms
 ==================================
 
 Transaction structure
 -------------------------
+(TODO)
 
 Block structure
 -------------------------
+(TODO)
 
 Main chain
 -------------------------

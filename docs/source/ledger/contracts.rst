@@ -23,10 +23,8 @@ the ``Contract`` class and expose the functions that we want available in the co
 the following we will describe an implementation of the the Fetch token. In order to create
 a new contract code, we define the body of the contract as below:
 
-.. highlight:: cpp
-
-
-::
+.. code-block:: cpp
+   :linenos:
 
    class TokenContract : public Contract
    {
@@ -44,17 +42,13 @@ a new contract code, we define the body of the contract as below:
      // queries
      Status Balance(Query const &query, Query &response);
    };
-
-.. highlight:: none
 
 The header file above clearly defines the contract calls and the queries that you can make.
 The constructor of the contract subclass exposes these methods to make the ledger aware of their
 existence. This is done as shown below:
 
-.. highlight:: cpp
-
-
-::
+.. code-block:: cpp
+   :linenos:
 
    class TokenContract : public Contract
    {
@@ -72,8 +66,6 @@ existence. This is done as shown below:
      // queries
      Status Balance(Query const &query, Query &response);
    };
-
-.. highlight:: none
 
 The remaining bits of this contract consists of implementing the business logic governing the
 contract functions above.
