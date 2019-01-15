@@ -156,6 +156,11 @@ public:
     }
   }
 
+  T &At(size_t i)
+  {
+    return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
+  }
+
   T Get(std::vector<size_t> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
@@ -173,7 +178,7 @@ public:
 
   T &operator[](size_t i)
   {
-    return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
+    return At(i);
   }
 
   std::shared_ptr<const std::vector<T>> Storage() const
@@ -181,7 +186,7 @@ public:
     return storage_;
   }
 
-  bool AllClose(Tensor<T> const &o, T const &tolerance = T(0.01))
+  bool AllClose(Tensor<T> const &o, T const &relative_tolerance = T(1e-5), T const &absolute_tolerance = T(1e-8))
   {
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
@@ -190,7 +195,7 @@ public:
     {
       T e1 = Get(IndicesOfElement(i));
       T e2 = o.Get(o.IndicesOfElement(i));
-      if (abs(e1 - e2) > tolerance)
+      if (abs(e1 - e2) > absolute_tolerance)
       {
         return false;
       }
