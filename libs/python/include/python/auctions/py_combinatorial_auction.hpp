@@ -65,8 +65,8 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
            })
       .def("Mine", [](CombinatorialAuction &ca, std::size_t seed,
                       std::size_t run_len) { ca.Mine(seed, run_len); })
-      .def("Execute",
-           [](CombinatorialAuction &ca, BlockIdType block_id) { return ca.Execute(block_id); });
+      .def("coupling", &CombinatorialAuction::coupling)
+      .def("local_field", &CombinatorialAuction::local_field);      
 }
 
 }  // namespace auctions

@@ -28,6 +28,11 @@ class LinearCongruentialGenerator
 public:
   using random_type = uint64_t;
 
+  LinearCongruentialGenerator(random_type seed = 42)
+  {
+    Seed(std::move(seed));
+  }
+
   random_type Seed() const
   {
     return seed_;

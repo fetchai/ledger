@@ -47,7 +47,7 @@ public:
     BuildGraph();
 
     // simulated annealing
-    ValueType beta_start = 0.001;
+    ValueType beta_start = 0.01;
     ValueType beta_end   = 1;
     ValueType db         = (beta_end - beta_start) / static_cast<ValueType>(run_time);
     ValueType beta       = beta_start;
@@ -55,8 +55,8 @@ public:
 
     std::size_t rejected = 0;
 
-    fetch::random::LaggedFibonacciGenerator<>  int_gen(random_seed);
-    fetch::random::LinearCongruentialGenerator real_gen;
+    using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
+    fetch::random::LinearCongruentialGenerator random_number_generator(random_seed);
 
     for (std::size_t i = 0; i < run_time; ++i)
     {
@@ -65,10 +65,11 @@ public:
         prev_active_ = active_;
         prev_reward  = TotalBenefit();
 
-        std::size_t nn = static_cast<std::size_t>(1 + int_gen() % bids_.size());
-        for (std::size_t k = 0; k < nn; ++k)
+        // TODO(tfr): make 3 a parameter
+        RandomInt nn = 1 + random_number_generator() % 3;
+        for (RandomInt k = 0; k < nn; ++k)
         {
-          std::size_t n = static_cast<std::size_t>(int_gen() % bids_.size());
+          RandomInt n = random_number_generator() % bids_.size();
 
           if (active_[n] == 1)
           {
@@ -82,17 +83,17 @@ public:
 
         new_reward = TotalBenefit();
         de         = prev_reward - new_reward;
+//        std::cout << "de: " << de << std::endl;
 
-        std::cout << "de: " << de << std::endl;
-
-        ValueType ran_val   = static_cast<ValueType>(real_gen.AsDouble());
-        ValueType threshold = std::exp(-beta * de);
+        ValueType ran_val   = static_cast<ValueType>(random_number_generator.AsDouble());
+        ValueType threshold = std::exp(-beta * de); // TODO(tfr): use exponential approximation
 
         if (ran_val >= threshold)
         {
           active_ = prev_active_;
           rejected += 1;
         }
+        /*
         else
         {
           if (beta > 0.9 && (new_reward == 8))
@@ -100,34 +101,14 @@ public:
             std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
           }
         }
+        */
       }
 
       // annealing
       beta += db;
     }
 
-    std::cout << "Final - TotalBenefit(): " << TotalBenefit() << std::endl;
-  }
-
-  bool Execute(BlockIdType current_block)
-  {
-    if ((end_block_ == current_block) && auction_valid_)
-    {
-      // pick winning bid
-      SelectWinners();
-
-      // deduct funds from winner
-
-      // transfer item to winner
-
-      // TODO (handle defaulting to next highest bid if winner cannot pay)
-
-      // close auction
-      auction_valid_ = false;
-
-      return true;
-    }
-    return false;
+    //std::cout << "Final - TotalBenefit(): " << TotalBenefit() << std::endl;
   }
 
   std::uint32_t Active(std::size_t n)
@@ -135,6 +116,23 @@ public:
     return active_[n];
   }
 
+  ValueType local_field(std::size_t n)
+  {
+    return local_fields_[std::move(n)];
+  }
+
+  ValueType coupling(std::size_t i, std::size_t j)
+  {
+    return couplings_(std::move(i), std::move(j));
+  }  
+
+   bool Execute(BlockIdType current_block) override 
+   {
+     // TODO(tfr): Get rid of execute in auction as it is not native to
+     // the auction
+    return false;
+   }
+  
 private:
   // bids on binary vector
   fetch::math::linalg::Matrix<ValueType>     couplings_;
@@ -149,6 +147,8 @@ private:
   {
     couplings_    = fetch::math::linalg::Matrix<ValueType>::Zeroes({bids_.size(), bids_.size()});
     local_fields_ = fetch::math::ShapelessArray<ValueType>::Zeroes({bids_.size()});
+
+    // TODO(tfr): Randomize in mine based on seed
     active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
@@ -159,6 +159,7 @@ private:
       // thus local_fields_ represents the release value due to a bid
       // and only bids with positive local_fields can be accepted
       local_fields_[i] = static_cast<ValueType>(bids_[i].price);
+      couplings_.Set(i,i, 0);
       for (auto &cur_item : items_)
       {
         for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
@@ -171,20 +172,20 @@ private:
       }
 
       ValueType max_local_fields_;
-      fetch::math::Max(local_fields_, max_local_fields_);
+      max_local_fields_ = fetch::math::Max(local_fields_);
       ValueType exclusive_bid_penalty = 2 * max_local_fields_;
 
       // next set couplings strengths
       for (std::size_t j = i + 1; j < bids_.size(); ++j)
       {
-        couplings_.At(i, j);
+        ValueType coupling = 0;
 
         // penalize exclusive bid combinations
         for (std::size_t k = 0; k < bids_[j].excludes.size(); ++k)
         {
           if (bids_[j].excludes[k].id == bids_[i].id)
           {
-            couplings_.Set(i, j, exclusive_bid_penalty);
+            coupling += exclusive_bid_penalty;
           }
         }
 
@@ -196,6 +197,7 @@ private:
             if (bids_[i].items[k].id == cur_item.second.id)
             {
               in_bid1 = true;
+              break;
             }
           }
           if (in_bid1)
@@ -204,13 +206,13 @@ private:
             {
               if (bids_[j].items[k].id == cur_item.second.id)
               {
-                couplings_.At(i, j) += (bids_[i].price + bids_[j].price);
+                coupling += (bids_[i].price + bids_[j].price);
               }
             }
           }
         }
 
-        couplings_.At(i, j) = couplings_.At(j, i) = -1 * couplings_.At(i, j);
+        couplings_.At(i, j) = couplings_.At(j, i) = coupling;
       }
     }
   }
@@ -239,10 +241,11 @@ private:
     return reward;
   }
 
+
   /**
    * finds the highest bid on each item
    */
-  void SelectWinners()
+  void SelectWinners() override
   {
     for (std::size_t i = 0; i < active_.size(); ++i)
     {
