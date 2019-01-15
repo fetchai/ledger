@@ -586,7 +586,7 @@ public:
   {
     super_type::Fill(value);
   }
-  void Fill(Type const &value, memory::Range const &rows, memory::Range const &cols)
+  void Fill(Type const & /*value*/, memory::Range const &rows, memory::Range const &cols)
   {
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
@@ -594,7 +594,8 @@ public:
     // TODO(tfr): Implement
   }
 
-  void Fill(Type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
+  void Fill(Type const & /*value*/, memory::TrivialRange const &rows,
+            memory::TrivialRange const &cols)
   {
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());

@@ -110,7 +110,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {
@@ -127,7 +127,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {
@@ -144,7 +144,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
   return success;
 }
 
-void SubscriptionRegistrar::Debug(std::string const &prefix)
+void SubscriptionRegistrar::Debug(std::string const &prefix) const
 {
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
                  "SubscriptionRegistrar: --------------------------------------");
@@ -172,7 +172,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix)
                    "  Chan=", chan);
   }
   FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 ":ubscriptionRegistrar: --------------------------------------");
+                 ":subscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle

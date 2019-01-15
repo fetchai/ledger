@@ -88,7 +88,7 @@ public:
     volatile std::vector<transaction_type> hold = std::move(data);
   }
 
-  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
+  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool /*isMaster*/)
   {
     return MakeTransactionVector(TestData, payload, txPerCall);
   }

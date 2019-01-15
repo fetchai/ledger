@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArray<ArrayType, void> Abs(ArrayType &x)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
 {
   math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

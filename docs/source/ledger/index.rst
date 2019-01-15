@@ -3,11 +3,26 @@ Fetch ledger architechture
 
 Introduction
 ------------
-This document gives a overview of the Fetch ledger architecture.
+This document gives a overview of the Fetch ledger architecture for developers. The developer should be comfortable with the high level concepts that underpin blockchain technology,
+such as public key cryptography, consensus, blockchain and smart contracts.
+
+A central feature of fetch-ledger is the lanes/slices concept. For a thorough understanding, reading Fetch's whitepaper is advised. In summary however, the solution to the scalability problem is tackled by sharding the 'world state'
+so that transactions that guarantee they only use certain resources (memory locations) can execute in parallel.
+
+This means that the 'size' of a block can be varied by increasing or decreasing the number of shards the world state is represented as, thus allowing the network to balance block sizes against economic incentives etc. The consequence of
+this is that the world state is best sharded across multiple machines to scale access and locking of resources. 'Constellation', is the name of the main controlling node, and the sharded elements are 'lanes'.
+
+The following block diagram gives a high level overview of the components that make up a constellation application (work in progress).
+
+.. This svg has onclick etc. which allows mouse events to change the svg itself, or redirect the page. Edited in inkscape.
+
+.. raw:: html
+    :file: overview1.svg
+
 
 Constellation application
 -------------------------
-The constellation application is one of many possible manifestations of a Fetch ledger node. It combines all the individual components into a single executable that is ready to connect to the rest of the network. The application is a commandline executable that can be used to start a node and start interacting with the network. The interaction can be carried out through the application's HTTP interface.
+The constellation application is one of many possible manifestations of a Fetch ledger node. It combines all the individual components into a single executable that is ready to connect to the rest of the network. The application is a command line executable that can be used to start a node and start interacting with the network. The interaction can be carried out through the application's HTTP interface.
 
 In order to get started with the constellation application, go to the Fetch source directory and type following:
 
@@ -53,15 +68,3 @@ The ``P2PService`` fulfills two purposes: firstly, it discovers other Fetch node
 
 The ``P2PService`` is built using a number of RPC interfaces. The first interface is responsible for ``IDENTITY`` exchange and allows another ``P2PService`` instances to ``PING``, say ``HELLO``, ``UPDATE_DETAILS``, ``EXCHANGE_ADDRESS`` and ``AUTHENTICATE`` itself. The ``PING`` function is used to test whether a peer is still alive. The function ``HELLO`` constitutes a mutual exchange of identities which are stored in the class ``PeerDetails``. Any call to ``HELLO`` expects its first argument to be a ``PeerDetails`` class and will always return a ``PeerDetails`` instance as well. This class contains information about the ``P2PService`` instance's public key, what the addresses of the mainchain and its lanes are. The function ``UPDATE_DETAILS`` can be used by a ``P2PService`` to inform its peers about changes to its configuration such as newly added lanes or changes of IP addresses. With ``EXCHANGE_ADDRESS`` a connecting peer can request its *external* (or as seen by the other peer) IP address. This functionality is used for a ``P2PService`` instance to maintain accurate details of its identity including endpoints. 
 
-
-
-Mainchain
----------
-Yet to be written
-
-Storage unit
-------------
-Yet to be written
-
-Lanes
-+++++

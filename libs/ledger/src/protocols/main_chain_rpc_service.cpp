@@ -134,22 +134,23 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
 
   // set the main chain
-  block_subscription_->SetMessageHandler(
-      [this](Address const &from, uint16_t, uint16_t, uint16_t, Packet::Payload const &payload) {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
+  block_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+                                                Packet::Payload const &payload,
+                                                Address                transmitter) {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Triggering new block handler");
 
-        BlockSerializer serialiser(payload);
+    BlockSerializer serialiser(payload);
 
-        // deserialize the block
-        Block block;
-        serialiser >> block;
+    // deserialize the block
+    Block block;
+    serialiser >> block;
 
-        // recalculate the block hash
-        block.UpdateDigest();
+    // recalculate the block hash
+    block.UpdateDigest();
 
-        // dispatch the event
-        OnNewBlock(from, block);
-      });
+    // dispatch the event
+    OnNewBlock(from, block, transmitter);
+  });
 }
 
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
@@ -169,16 +170,18 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-void MainChainRpcService::OnNewBlock(Address const &from, Block &block)
+void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
-                 " (from peer: ", ToBase64(from), ')');
+                 " (from peer: ", ToBase64(transmitter), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
   if (block.proof()())
   {
-    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+
+    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
     block_coordinator_.AddBlock(block);
 
@@ -229,9 +232,11 @@ void MainChainRpcService::ServiceLooseBlocks()
       for (auto const &hash : chain_.GetMissingBlockHashes(BLOCK_CATCHUP_STEP_SIZE))
       {
         // Get a random peer to send the req to...
-        auto    random_peer_list = trust_.GetRandomPeers(1, 0.0);
-        Address address          = (*random_peer_list.begin());
-        AddLooseBlock(hash, address);
+        auto random_peer_list = trust_.GetRandomPeers(1, 0.0);
+        if (!random_peer_list.empty())
+        {
+          AddLooseBlock(hash, *random_peer_list.begin());
+        }
       }
     }
     else
