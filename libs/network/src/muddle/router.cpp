@@ -242,8 +242,6 @@ void Router::Route(Handle handle, PacketPtr packet)
   if (blacklist_.Contains(packet->GetSenderRaw()))
   {
     // this is where we prevent incoming connections.
-    FETCH_LOG_WARN(LOGGING_NAME, "KLL:Oh yikes, am blacklisting:", ToBase64(packet->GetSender()),
-                   "  killing handle=", handle);
     KillConnection(handle);
     return;
   }
@@ -788,9 +786,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     {
       DispatchPacket(packet, address_);
     }
-    else
-    {
-    }
+
 
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;

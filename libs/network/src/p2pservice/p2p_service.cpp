@@ -88,11 +88,7 @@ void P2PService::WorkCycle()
   AddressSet    active_addresses;
   GetConnectionStatus(active_connections, active_addresses);
 
-  FETCH_LOG_WARN(LOGGING_NAME, "(AB): active connections: ");
-  for (auto &aa : active_addresses)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, ToBase64(aa));
-  }
+
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
 
@@ -117,10 +113,8 @@ void P2PService::WorkCycle()
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
-  muddle_.Debug("P2PService::GetConnectionStatus,");
-
   // get a summary of addresses and associated URIs
-  active_connections = muddle_.GetConnections(true);
+  active_connections = muddle_.GetConnections();
 
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
@@ -193,7 +187,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   pending_peer_lists_.Resolve();
 
   // process any peer discovery updates that are returned from the queue
-  for (auto &result : pending_peer_lists_.Get(32))
+  for (auto &result : pending_peer_lists_.Get(MAX_PEERS_PER_CYCLE))
   {
     Address const &from      = result.key;
     AddressSet &   addresses = result.promised;
@@ -425,7 +419,7 @@ P2PService::AddressSet P2PService::GetRandomGoodPeers()
   AddressSet const result =
       trust_system_.GetRandomPeers(20, 0.0);  // TODO(ATTILA): Why is 20 hardcoded?
 
-  FETCH_LOG_INFO(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 
   return result;
 }

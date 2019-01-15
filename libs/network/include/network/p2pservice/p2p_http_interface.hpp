@@ -103,6 +103,7 @@ private:
     response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+
     return http::CreateJsonResponse(response);
   }
 
@@ -284,7 +285,6 @@ private:
   P2PService &p2p_;
 
   TrustSystem &trust_;
-
   Miner &miner_;
 };
 

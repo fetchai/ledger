@@ -104,7 +104,7 @@ public:
   UriMap GetUriMap() const;
   Handle UriToHandle(const Uri &uri) const;
 
-  std::list<Handle> Debug(std::string const &prefix) const;
+  void Debug(std::string const &prefix) const;
 
 private:
   using Clock     = std::chrono::steady_clock;
