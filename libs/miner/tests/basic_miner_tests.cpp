@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "meta/is_log2.hpp"
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
+#include "vectorise/platform.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -51,6 +53,9 @@ protected:
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using BitVector           = fetch::bitmanip::BitVector;
+  using TransactionSummary  = fetch::chain::TransactionSummary;
+  using MainChain           = fetch::chain::MainChain;
+  using Block               = fetch::chain::MainChain::BlockType;
 
   void SetUp() override
   {
@@ -63,7 +68,7 @@ protected:
     miner_.reset();
   }
 
-  void PopulateWithTransactions(std::size_t num_transactions)
+  void PopulateWithTransactions(std::size_t num_transactions, size_t duplicates = 1)
   {
     std::poisson_distribution<uint32_t> dist(5.0);
 
@@ -75,6 +80,9 @@ protected:
       transaction.set_fee(rng_() & 0x3f);
       transaction.set_contract_name("ai.fetch.dummy");
 
+      // Guarantee all TXs unique
+      transaction.PushResource("Unique: " + std::to_string(i));
+
       for (std::size_t j = 0; j < num_resources; ++j)
       {
         transaction.PushResource("Resource: " + std::to_string(rng_()));
@@ -82,7 +90,11 @@ protected:
 
       // convert the transaction to a valid transaction
       auto tx = VerifiedTransaction::Create(std::move(transaction));
-      miner_->EnqueueTransaction(tx.summary());
+
+      for (std::size_t i = 0; i < duplicates; ++i)
+      {
+        miner_->EnqueueTransaction(tx.summary());
+      }
     }
   }
 
@@ -97,7 +109,12 @@ TEST_P(BasicMinerTests, Sample)
   PopulateWithTransactions(num_tx);
 
   BlockBody block;
-  miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES);
+  MainChain dummy;
+
+  auto &heaviest_block = dummy.HeaviestBlock();
+  block.previous_hash  = heaviest_block.hash();
+
+  miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
   for (auto const &slice : block.slices)
   {
@@ -124,6 +141,118 @@ TEST_P(BasicMinerTests, Sample)
 
       lanes |= resources;
     }
+  }
+}
+
+TEST_P(BasicMinerTests, reject_replayed_transactions)
+{
+  std::size_t num_tx = GetParam();
+  // choose manual lanes + slices as we want to generate a lot of blocks to thoroughly test the main
+  // chain
+  std::size_t lanes  = 16;
+  std::size_t slices = 16;
+
+  // Takes too long in debug mode
+#if !defined(NDEBUG)
+  num_tx = num_tx / 16;
+  lanes  = lanes / 4;
+  slices = slices / 4;
+#endif
+
+  miner_->log2_num_lanes() = uint32_t(fetch::platform::ToLog2(uint32_t(lanes)));
+
+  PopulateWithTransactions(num_tx, 1);
+  MainChain                    chain;
+  std::set<TransactionSummary> transactions_already_seen;
+  std::set<TransactionSummary> transactions_within_block;
+
+  while (miner_->GetBacklog() > 0)
+  {
+    BlockBody body;
+
+    auto &heaviest_block = chain.HeaviestBlock();
+    body.previous_hash   = heaviest_block.hash();
+
+    miner_->GenerateBlock(body, lanes, slices, chain);
+
+    // Check no duplicate transactions within a block
+    transactions_within_block.clear();
+    for (auto const &slice : body.slices)
+    {
+      for (auto const &tx : slice.transactions)
+      {
+        // Guarantee each body fresh transactions
+        bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
+        EXPECT_EQ(not_found, true);
+        transactions_within_block.insert(tx);
+      }
+    }
+
+    // check that transactions_within_block not inside transactions_already_seen (TX already in main
+    // chain)
+    for (auto const &tx : transactions_within_block)
+    {
+      // Guarantee each body fresh transactions
+      bool not_found = transactions_already_seen.find(tx) == transactions_already_seen.end();
+      EXPECT_EQ(not_found, true);
+      transactions_already_seen.insert(tx);
+    }
+
+    Block block;
+    block.SetBody(body);
+    block.UpdateDigest();
+    /* Note no mining needed here - main chain doesn't care */
+    chain.AddBlock(block);
+  }
+
+  // Now, push on all of the TXs that are already in the blockchain
+  for (auto const &tx_summary : transactions_already_seen)
+  {
+    miner_->EnqueueTransaction(tx_summary);
+  }
+
+  while (miner_->GetBacklog() > 0)
+  {
+    BlockBody body;
+
+    auto &heaviest_block = chain.HeaviestBlock();
+    body.previous_hash   = heaviest_block.hash();
+
+    miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
+
+    for (auto const &slice : body.slices)
+    {
+      EXPECT_EQ(slice.transactions.size(), 0);
+    }
+
+    // Check no duplicate transactions within a block
+    transactions_within_block.clear();
+    for (auto const &slice : body.slices)
+    {
+      for (auto const &tx : slice.transactions)
+      {
+        // Guarantee each body fresh transactions
+        bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
+        EXPECT_EQ(not_found, true);
+        transactions_within_block.insert(tx);
+      }
+    }
+
+    // check that transactions_within_block not inside transactions_already_seen (TX already in main
+    // chain)
+    for (auto const &tx : transactions_within_block)
+    {
+      // Guarantee each body fresh transactions
+      bool not_found = transactions_already_seen.find(tx) == transactions_already_seen.end();
+      EXPECT_EQ(not_found, true);
+      transactions_already_seen.insert(tx);
+    }
+
+    Block block;
+    block.SetBody(body);
+    block.UpdateDigest();
+    /* Note no mining needed here - main chain doesn't care */
+    chain.AddBlock(block);
   }
 }
 

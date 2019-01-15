@@ -118,7 +118,6 @@ private:
       http::HTTPRequest const &               request,
       byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
-  std::size_t           transaction_index_{0};
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_;

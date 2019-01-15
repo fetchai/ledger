@@ -52,11 +52,11 @@ public:
                      std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
-    , mainChain_{mainChain}
+    , main_chain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
     , consensus_miner_{consensus_miner}
-    , minerNumber_{minerNumber}
+    , miner_number_{minerNumber}
     , block_interval_{block_interval}
   {}
 
@@ -112,7 +112,7 @@ private:
     while (!stop_)
     {
       // determine the heaviest block
-      auto &block = mainChain_.HeaviestBlock();
+      auto &block = main_chain_.HeaviestBlock();
 
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
@@ -151,7 +151,7 @@ private:
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
-        next_block_body.miner_number  = minerNumber_;
+        next_block_body.miner_number  = miner_number_;
 
         // Reset previous state
         next_block_body.slices.clear();
@@ -159,7 +159,7 @@ private:
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
         // Pack the block with transactions
-        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
+        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_, main_chain_);
         next_block.SetBody(next_block_body);
         next_block.UpdateDigest();
 
@@ -189,12 +189,12 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &                  mainChain_;
+  chain::MainChain &                  main_chain_;
   chain::BlockCoordinator &           blockCoordinator_;
   MinerInterface &                    miner_;
   ConsensusMinerInterface             consensus_miner_;
   std::thread                         thread_;
-  uint64_t                            minerNumber_{0};
+  uint64_t                            miner_number_{0};
   BlockCompleteCallback               on_block_complete_;
   std::chrono::steady_clock::duration block_interval_;
 };
