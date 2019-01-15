@@ -33,6 +33,11 @@ class Bid
 {
 public:
   Bid() = default;
+  Bid(Bid const& other) = default; 
+  Bid(Bid && other) = default; 
+
+  Bid& operator=(Bid const& other) = default; 
+  Bid& operator=(Bid && other) = default;   
 
   BidIdType         id = DefaultBidId;
   std::vector<Item> items{};
