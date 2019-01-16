@@ -204,6 +204,7 @@ private:
       block["previousHash"] = byte_array::ToBase64(b.prev());
       block["currentHash"]  = byte_array::ToBase64(b.hash());
       block["proof"]        = byte_array::ToBase64(b.proof().header());
+      block["miner"]        = byte_array::ToBase64(b.body().miner);
       block["blockNumber"]  = b.body().block_number;
 
       if (include_transactions)
