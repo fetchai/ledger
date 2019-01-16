@@ -72,6 +72,8 @@ public:
   }
   /// @}
 
+  virtual std::vector<chain::TransactionSummary> PollRecentTx(uint32_t) = 0;
+
   /// @name Revertible Document Store Interface
   /// @{
   virtual hash_type Hash()                                = 0;

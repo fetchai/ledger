@@ -47,7 +47,7 @@ namespace ledger {
 
 class MuddleLaneConnectorWorker;
 
-class StorageUnitClient : public StorageUnitInterface
+class StorageUnitClient final : public StorageUnitInterface
 {
 public:
   struct ClientDetails
@@ -61,7 +61,7 @@ public:
   using MuddleEp  = muddle::MuddleEndpoint;
   using Muddle    = muddle::Muddle;
   using MuddlePtr = std::shared_ptr<Muddle>;
-  using Address   = Muddle::Address;  // == a crypto::Identity.identifier_
+  using Address   = Muddle::Address;
   using Uri       = Muddle::Uri;
   using Peer      = fetch::network::Peer;
 
@@ -102,7 +102,6 @@ public:
     assert(count == (1u << log2_lanes_));
   }
 
-public:
   size_t AddLaneConnectionsWaiting(
       std::map<LaneIndex, Uri> const & lanes,
       std::chrono::milliseconds const &timeout = std::chrono::milliseconds(1000));
@@ -191,6 +190,37 @@ public:
     {
       promise->Wait();
     }
+  }
+
+  std::vector<chain::TransactionSummary> PollRecentTx(uint32_t max_to_poll) override
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    std::vector<service::Promise>          promises;
+    std::vector<chain::TransactionSummary> new_txs;
+
+    // Assume that the lanes are roughly balanced in terms of new TXs
+    for(auto const &lane_index : lane_to_identity_map_)
+    {
+      auto lane = lane_index.first;
+      Address address;
+      GetAddressForLane(lane, address);
+      auto client  = GetClientForLane(lane);
+      auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET_RECENT, uint32_t(max_to_poll / lane_to_identity_map_.size() ));
+      FETCH_LOG_PROMISE();
+      promises.push_back(promise);
+    }
+
+    for(auto const &promise : promises)
+    {
+      auto txs = promise->As<std::vector<chain::TransactionSummary>>();
+
+      new_txs.insert(
+          new_txs.end(),
+          std::make_move_iterator(txs.begin()),
+          std::make_move_iterator(txs.end()));
+    }
+
+    return new_txs;
   }
 
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override

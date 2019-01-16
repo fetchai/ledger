@@ -321,7 +321,7 @@ public:
         // extract the value from the queue
         value = queue_.front();
         queue_.pop_front();
-        // triggerr all pending threads
+        // trigger all pending threads
         condition_.notify_all();
         break;
       }

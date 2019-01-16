@@ -59,8 +59,9 @@ public:
   /// @{
   bool Get(ResourceID const &rid, Object &object);
   bool Has(ResourceID const &rid);
-  void Set(ResourceID const &rid, Object const &object);
+  void Set(ResourceID const &rid, Object const &object, bool newly_seen);
   bool Confirm(ResourceID const &rid);
+  std::vector<chain::TransactionSummary> GetRecent(uint32_t max_to_poll);
   /// @}
 
   void SetCallback(Callback cb)
@@ -73,11 +74,12 @@ public:
   TransientObjectStore &operator=(TransientObjectStore &&) = delete;
 
 private:
-  using Mutex     = fetch::mutex::Mutex;
-  using Queue     = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
-  using Cache     = std::unordered_map<ResourceID, Object>;
-  using ThreadPtr = std::shared_ptr<std::thread>;
-  using Flag      = std::atomic<bool>;
+  using Mutex       = fetch::mutex::Mutex;
+  using Queue       = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
+  using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
+  using Cache       = std::unordered_map<ResourceID, Object>;
+  using ThreadPtr   = std::shared_ptr<std::thread>;
+  using Flag        = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
   void SetInCache(ResourceID const &rid, Object const &object);
@@ -89,6 +91,7 @@ private:
   Cache         cache_;                            ///< The main object cache
   Archive       archive_;                          ///< The persistent object store
   Queue         confirm_queue_;                    ///< The queue of elements to be stored
+  RecentQueue         most_recent_seen_;           ///< The queue of elements to be stored
   ThreadPtr     thread_;                           ///< The background worker thread
   Callback      set_callback_;                     ///< The completion handler
   Flag          stop_{false};                      ///< Flag to signal the stop of the worker
@@ -165,6 +168,23 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 }
 
 /**
+ * xxx
+ *
+ * @tparam O 
+ * @param rid 
+ * @param object 
+ * @return true 
+ */
+template <typename O>
+std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
+{
+
+  most_recent_seen_.Push(object.summary());
+
+  return std::vector<chain::TransactionSummary>();
+}
+
+/**
  * Check to see if the store has an element stored with the specified resource id
  *
  * @tparam O The type of the object being stored
@@ -181,14 +201,20 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
  * Set the value of an object with the specified resource id
  *
  * @tparam O The type of the object being stored
- * @param rid The resource id (index) to be used for the lement
+ * @param rid The resource id (index) to be used for the element
  * @param object The value of the element to be stored
  */
 template <typename O>
-void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object)
+void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
   // add the element into the cache
   SetInCache(rid, object);
+
+  if(newly_seen)
+  {
+    // TODO(HUT): let this fail out
+    most_recent_seen_.Push(object.summary());
+  }
 
   // dispatch the callback if necessary
   if (set_callback_)
@@ -285,10 +311,10 @@ bool TransientObjectStore<O>::IsInCache(ResourceID const &rid)
 }
 
 /**
- * Internal: Signal that the item ne
+ * Internal: Signal that the item needs to be stored permanently
  *
  * @tparam O The type of the object being stored
- * @param rid
+ * @param rid the resource identifier to be put in the queue
  */
 template <typename O>
 void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)

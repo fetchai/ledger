@@ -35,9 +35,14 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
   , verifier_{*this, num_threads}
 {}
 
+TransactionProcessor::~TransactionProcessor()
+{
+  running_ = false;
+}
+
 void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
 {
-  // submit the transaction to the verifier
+  // submit the transaction to the verifier - it will call back this::OnTransaction(verified) or this::OnTransactions(verified)
   verifier_.AddTransaction(tx.AsMutable());
 }
 
@@ -104,6 +109,17 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   }
 #endif  // FETCH_ENABLE_METRICS
 }
+
+void TransactionProcessor::ThreadEntryPoint()
+{
+  std::vector<chain::TransactionSummary> new_txs;
+  while (running_)
+  {
+    new_txs.clear();
+    new_txs = storage_.PollRecentTx(10000);
+  }
+}
+
 
 }  // namespace ledger
 }  // namespace fetch

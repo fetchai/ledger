@@ -21,7 +21,7 @@
 
 #include <gmock/gmock.h>
 
-class MockStorageUnit : public fetch::ledger::StorageUnitInterface
+class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   MockStorageUnit()
@@ -55,6 +55,12 @@ public:
   MOCK_METHOD1(AddTransaction, void(fetch::chain::Transaction const &));
   MOCK_METHOD2(GetTransaction,
                bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
+
+  // Does nothing
+  std::vector<fetch::chain::TransactionSummary> PollRecentTx(uint32_t) override
+  {
+    return std::vector<fetch::chain::TransactionSummary>();
+  }
 
   FakeStorageUnit &GetFake()
   {
