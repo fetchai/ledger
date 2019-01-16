@@ -72,39 +72,39 @@ public:
 TEST(random_access_stack, mocked_test_is_open)
 {
   MockStream mocked;
-  EXPECT_CALL(mocked, close());
+  EXPECT_CALL(mocked, close()).Times(1);
   EXPECT_CALL(mocked, is_open()).Times(2).WillRepeatedly(testing::Return(true));
 
   RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
   EXPECT_TRUE(stack.is_open());
 }
 
-TEST(random_access_stack, mocked_test_GetSet)
+TEST(random_access_stack, mocked_test_get_set)
 {
-  MockStream mocked, abc;
+  MockStream mocked, dummy;
   EXPECT_CALL(mocked, is_open()).Times(1).WillRepeatedly(testing::Return(true));
   EXPECT_CALL(mocked, close()).Times(1);
-  EXPECT_CALL(mocked, seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(abc));
+  EXPECT_CALL(mocked, seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(dummy));
   EXPECT_CALL(mocked, seekg(testing::_, testing::_))
       .Times(1)
-      .WillRepeatedly(testing::ReturnRef(abc));
+      .WillRepeatedly(testing::ReturnRef(dummy));
   EXPECT_CALL(mocked, read(testing::_, testing::_))
       .Times(1)
-      .WillRepeatedly(testing::ReturnRef(abc));
+      .WillRepeatedly(testing::ReturnRef(dummy));
   EXPECT_CALL(mocked, write(testing::_, testing::_))
       .Times(1)
-      .WillRepeatedly(testing::ReturnRef(abc));
+      .WillRepeatedly(testing::ReturnRef(dummy));
 
   RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
   TestClass                                           temp;
   stack.New("abc");
-  stack.Set(1, temp);
-  stack.Get(1, temp);
+  stack.Set(0, temp);
+  stack.Get(0, temp);
 }
 
-TEST(random_access_stack, mocked_test_Load)
+TEST(random_access_stack, mocked_test_load)
 {
-  MockStream mocked, abc;
+  MockStream mocked, dummy;
   EXPECT_CALL(mocked, is_open())
       .Times(2)
       .WillOnce(testing::Return(false))
@@ -112,7 +112,7 @@ TEST(random_access_stack, mocked_test_Load)
   EXPECT_CALL(mocked, close()).Times(1);
   EXPECT_CALL(mocked, seekg(testing::_, testing::_))
       .Times(2)
-      .WillRepeatedly(testing::ReturnRef(abc));
+      .WillRepeatedly(testing::ReturnRef(dummy));
   EXPECT_CALL(mocked, tellg()).Times(1).WillRepeatedly(testing::Return(10));
 
   RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);

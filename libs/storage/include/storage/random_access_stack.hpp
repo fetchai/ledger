@@ -151,10 +151,11 @@ public:
 
   RandomAccessStack()
   {
-    file_handle_ = new std::fstream();
+    file_handle_ = std::make_unique<STREAM>();
   }
 
-  RandomAccessStack(STREAM *handle)
+  // This constructor is only for unit testing
+  RandomAccessStack(std::unique_ptr<STREAM> handle)
   {
     file_handle_ = handle;
   }
@@ -494,7 +495,7 @@ public:
 private:
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
-  mutable STREAM *   file_handle_ = NULL;
+  mutable std::unique_ptr<STREAM>   file_handle_ = nullptr;
   std::string        filename_    = "";
   Header             header_;
 
