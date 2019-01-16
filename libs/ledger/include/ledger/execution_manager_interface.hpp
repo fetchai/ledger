@@ -26,7 +26,7 @@ class ExecutionManagerInterface
 {
 public:
   using Block     = chain::BlockBody;
-  using BlockHash = Block::Digest;
+  using BlockHash = Block::digest_type;
 
   enum class ScheduleStatus
   {
@@ -92,7 +92,6 @@ void Deserialize(T &serializer, ExecutionManagerInterface::State &status)
   serializer >> raw;
   status = static_cast<ExecutionManagerInterface::State>(raw);
 }
-
 
 }  // namespace ledger
 }  // namespace fetch
