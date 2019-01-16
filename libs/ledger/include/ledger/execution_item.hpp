@@ -24,6 +24,7 @@
 #include <future>
 #include <memory>
 #include <utility>
+#include <atomic>
 
 namespace fetch {
 namespace ledger {
@@ -34,6 +35,9 @@ public:
   using LaneIndex = uint32_t;
   using TxDigest  = chain::Transaction::TxDigest;
   using LaneSet   = std::unordered_set<LaneIndex>;
+  using Status    = ExecutorInterface::Status;
+
+  static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
   ExecutionItem(TxDigest hash, std::size_t slice)
     : hash_(std::move(hash))
@@ -46,9 +50,20 @@ public:
     , slice_(slice)
   {}
 
-  ExecutorInterface::Status Execute(ExecutorInterface &executor)
+  Status status() const { return status_; }
+
+  void Execute(ExecutorInterface &executor)
   {
-    return executor.Execute(hash_, slice_, lanes_);
+    try
+    {
+      status_ = executor.Execute(hash_, slice_, lanes_);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown be executing transaction: ", ex.what());
+
+      status_ = Status::RESOURCE_FAILURE;
+    }
   }
 
   void AddLane(LaneIndex lane)
@@ -57,9 +72,12 @@ public:
   }
 
 private:
-  TxDigest    hash_;
-  LaneSet     lanes_;
-  std::size_t slice_;
+  using AtomicStatus = std::atomic<Status>;
+
+  TxDigest     hash_;
+  LaneSet      lanes_;
+  std::size_t  slice_;
+  AtomicStatus status_{Status::NOT_RUN};
 };
 
 }  // namespace ledger

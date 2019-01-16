@@ -101,21 +101,19 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::Status ExecutionManager::Execute(Block const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
 {
-
   // if the execution manager is not running then no further transactions
   // should be scheduled
   if (!running_)
   {
-    return Status::NOT_STARTED;
+    return ScheduleStatus::NOT_STARTED;
   }
 
-  // if a block is currently being processed we should not allow another block
-  // to be processed
-  if (IsActive())
+  // cache the current state
+  if (State::ACTIVE == state_)
   {
-    return Status::ALREADY_RUNNING;
+    return ScheduleStatus::ALREADY_RUNNING;
   }
 
   // if we have seen the transactions for this block simply revert to the known
@@ -123,7 +121,7 @@ ExecutionManager::Status ExecutionManager::Execute(Block const &block)
   if (AttemptRestoreToBlock(block.hash))
   {
     last_block_hash_ = block.hash;
-    return Status::COMPLETE;
+    return ScheduleStatus::RESTORED;
   }
 
   // determine if the current block doesn't follow on from the previous block
@@ -131,7 +129,7 @@ ExecutionManager::Status ExecutionManager::Execute(Block const &block)
   {
     if (!AttemptRestoreToBlock(block.previous_hash))
     {
-      return Status::NO_PARENT_BLOCK;
+      return ScheduleStatus::NO_PARENT_BLOCK;
     }
   }
 
@@ -140,7 +138,7 @@ ExecutionManager::Status ExecutionManager::Execute(Block const &block)
   // plan the execution for this block
   if (!PlanExecution(block))
   {
-    return Status::UNABLE_TO_PLAN;
+    return ScheduleStatus::UNABLE_TO_PLAN;
   }
 
   // update the last block hash
@@ -153,7 +151,7 @@ ExecutionManager::Status ExecutionManager::Execute(Block const &block)
     monitor_wake_.notify_one();
   }
 
-  return Status::SCHEDULED;
+  return ScheduleStatus::SCHEDULED;
 }
 
 /**
@@ -242,11 +240,10 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
 
   if (executor)
   {
-
     ++active_count_;
-    auto status = item.Execute(*executor);
-    (void)status;
-    // TODO(issue 33):  Should check the status of the execution
+
+    // execute the item
+    item.Execute(*executor);
 
     --active_count_;
     --remaining_executions_;
@@ -321,18 +318,14 @@ ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
   return last_block_hash_;
 }
 
-bool ExecutionManager::IsActive()
+ExecutionManager::State ExecutionManager::GetState()
 {
-  return active_;
-}
-
-bool ExecutionManager::IsIdle()
-{
-  return !active_;
+  return state_;
 }
 
 bool ExecutionManager::Abort()
 {
+  // TODO(private issue 533): Implement user execution abort
   return false;
 }
 
@@ -340,15 +333,18 @@ void ExecutionManager::MonitorThreadEntrypoint()
 {
   enum class MonitorState
   {
+    FAILED,
+    STALLED,
+    COMPLETED,
     IDLE,
     SCHEDULE_NEXT_SLICE,
     RUNNING,
     BOOKMARKING_STATE
   };
 
-  MonitorState state = MonitorState::IDLE;
+  MonitorState monitor_state = MonitorState::COMPLETED;
 
-  std::size_t next_slice = 0;
+  std::size_t current_slice = 0;
 
   BlockHash current_block;
 
@@ -356,11 +352,26 @@ void ExecutionManager::MonitorThreadEntrypoint()
   {
     monitor_ready_ = true;
 
-    switch (state)
+    switch (monitor_state)
     {
+    case MonitorState::FAILED:
+      state_ = State::EXECUTION_FAILED;
+      monitor_state = MonitorState::IDLE;
+      break;
+
+    case MonitorState::STALLED:
+      state_ = State::TRANSACTIONS_UNAVAILABLE;
+      monitor_state = MonitorState::IDLE;
+      break;
+
+    case MonitorState::COMPLETED:
+      state_ = State::IDLE;
+      monitor_state = MonitorState::IDLE;
+      break;
+
     case MonitorState::IDLE:
     {
-      active_ = false;
+      state_ = State::IDLE;
 
       // enter the idle state where we wait for the next block to be posted
       {
@@ -368,14 +379,14 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      active_       = true;
+      state_ = State::ACTIVE;
       current_block = last_block_hash_;
 
       // schedule the next slice if we have been triggered
       if (running_)
       {
-        state      = MonitorState::SCHEDULE_NEXT_SLICE;
-        next_slice = 0;
+        monitor_state         = MonitorState::SCHEDULE_NEXT_SLICE;
+        current_slice = 0;
       }
 
       break;
@@ -387,12 +398,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       if (execution_plan_.empty())
       {
-        state = MonitorState::BOOKMARKING_STATE;
+        monitor_state = MonitorState::BOOKMARKING_STATE;
       }
       else
       {
-
-        auto const &slice_plan = execution_plan_[next_slice];
+        auto const &slice_plan = execution_plan_[current_slice];
 
         // determine the target number of executions being expected (must be
         // done before the thread pool dispatch)
@@ -405,8 +415,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           thread_pool_->Post([self, &item]() { self->DispatchExecution(*item); });
         }
 
-        state = MonitorState::RUNNING;
-        ++next_slice;
+        monitor_state = MonitorState::RUNNING;
       }
 
       break;
@@ -425,8 +434,60 @@ void ExecutionManager::MonitorThreadEntrypoint()
       // determine the next state (provided we have complete
       if (remaining_executions_ == 0)
       {
-        state = (num_slices_ > next_slice) ? MonitorState::SCHEDULE_NEXT_SLICE
-                                           : MonitorState::BOOKMARKING_STATE;
+        // evaluate the status of the executions
+        std::size_t num_complete{0};
+        std::size_t num_stalls{0};
+        std::size_t num_errors{0};
+
+        // look through all execution items and determine if it was successful
+        for (auto const &item : execution_plan_[current_slice])
+        {
+          assert(item);
+
+          switch (item->status())
+          {
+          case ExecutionItem::Status::SUCCESS:
+            ++num_complete;
+            break;
+          case ExecutionItem::Status::TX_LOOKUP_FAILURE:
+            ++num_stalls;
+            break;
+          case ExecutionItem::Status::NOT_RUN:
+          case ExecutionItem::Status::RESOURCE_FAILURE:
+          case ExecutionItem::Status::CHAIN_CODE_LOOKUP_FAILURE:
+          case ExecutionItem::Status::CHAIN_CODE_EXEC_FAILURE:
+            ++num_errors;
+            break;
+          }
+        }
+
+        // only provide debug if required
+        if (num_complete + num_stalls + num_errors)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice, " Execution Status - Complete: ",
+                         num_complete, " Stalls: ", num_stalls, " Errors: ", num_errors);
+        }
+
+        // increment the slice counter
+        ++current_slice;
+
+        // decide the next monitor state based on the status of the slice execution
+        if (num_errors)
+        {
+          monitor_state = MonitorState::FAILED;
+        }
+        else if (num_stalls)
+        {
+          monitor_state = MonitorState::STALLED;
+        }
+        else if (num_slices_ > current_slice)
+        {
+          monitor_state = MonitorState::SCHEDULE_NEXT_SLICE;
+        }
+        else
+        {
+          monitor_state = MonitorState::BOOKMARKING_STATE;
+        }
       }
 
       break;
@@ -481,7 +542,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
       }
 
       // finished processing the block
-      state = MonitorState::IDLE;
+      monitor_state = MonitorState::IDLE;
 
       break;
     }
