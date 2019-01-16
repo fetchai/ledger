@@ -24,7 +24,7 @@ namespace fetch {
 namespace memory {
 
 template <typename T>
-void BuildArray(std::string const &custom_name, pybind11::module &module)
+void BuildArray(std::string const & /*custom_name*/, pybind11::module & /*module*/)
 {
 
   namespace py = pybind11;

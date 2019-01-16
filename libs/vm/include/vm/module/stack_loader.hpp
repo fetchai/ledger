@@ -54,7 +54,7 @@ struct Resetter
 template <>
 struct Resetter<0>
 {
-  static void Reset(VM *vm)
+  static void Reset(VM * /*vm*/)
   {}
 };
 
@@ -62,7 +62,7 @@ struct Resetter<0>
 template <>
 struct Resetter<-1>
 {
-  static void Reset(VM *vm)
+  static void Reset(VM * /*vm*/)
   {}
 };
 

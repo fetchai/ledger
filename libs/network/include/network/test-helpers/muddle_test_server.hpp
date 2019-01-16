@@ -37,7 +37,7 @@ public:
     ts->tm.Start();
 
     ts->port   = port;
-    ts->muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("Test"), ts->tm);
+    ts->muddle = Muddle::CreateMuddle(Muddle::NetworkId("Test"), ts->tm);
     ts->muddle->Start({port});
 
     ts->server = std::make_shared<Server>(ts->muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include <cassert>
 
 namespace fetch {
@@ -71,7 +71,7 @@ void Isnan(ArrayType &x)
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Fpclassify(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Fpclassify(ArrayType &x)
 {
   kernels::stdlib::Fpclassify<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -83,7 +83,7 @@ fetch::math::meta::IsNotImplementedLike<ArrayType, void> Fpclassify(ArrayType &x
  * @param x
  */
 template <typename ArrayType>
-fetch::math::meta::IsNotImplementedLike<ArrayType, void> Isnormal(ArrayType &x)
+fetch::math::meta::IfIsNotImplemented<ArrayType, void> Isnormal(ArrayType &x)
 {
   kernels::stdlib::Isnormal<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

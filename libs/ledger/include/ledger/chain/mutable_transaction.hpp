@@ -78,6 +78,21 @@ struct TransactionSummary
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   ContractName contract_name;
+
+  bool operator==(TransactionSummary const &rhs) const
+  {
+    return transaction_hash == rhs.transaction_hash;
+  }
+
+  bool operator<(TransactionSummary const &rhs) const
+  {
+    return transaction_hash < rhs.transaction_hash;
+  }
+
+  bool operator>(TransactionSummary const &rhs) const
+  {
+    return !(*this < rhs);
+  }
 };
 
 template <typename T>
@@ -415,6 +430,16 @@ public:
   void set_resources(TransactionSummary::ResourceSet resources)
   {
     summary_.resources = std::move(resources);
+  }
+
+  bool operator==(MutableTransaction const &rhs) const
+  {
+    return summary_.transaction_hash == rhs.summary().transaction_hash;
+  }
+
+  bool operator>(MutableTransaction const &rhs) const
+  {
+    return summary_.transaction_hash > rhs.summary().transaction_hash;
   }
 
 private:

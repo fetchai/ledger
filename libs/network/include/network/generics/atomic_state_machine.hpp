@@ -140,7 +140,7 @@ public:
 
   /* Return a new state or 0 for no change.
    */
-  virtual bool PossibleNewState(STATE &currentstate)
+  virtual bool PossibleNewState(STATE & /*currentstate*/)
   {
     return false;
   }

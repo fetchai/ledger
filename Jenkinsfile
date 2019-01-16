@@ -17,12 +17,29 @@ pipeline {
           stages {
             stage('License Checks') {
               steps {
-                sh './scripts/check-license-header.py'
+                sh './scripts/check_license_header.py'
               }
             }
             stage('Style check') {
               steps {
-                sh './scripts/apply-style.py -w -a'
+                sh './scripts/apply_style.py -w -a'
+              }
+            }
+          }
+        } // basic checks
+
+        stage('Static Analysis') {
+          agent {
+            docker {
+              image "gcr.io/organic-storm-201412/fetch-ledger-develop:latest"
+            }
+          }
+
+          stages {
+            stage('Static Analysis') {
+              steps {
+                sh 'mkdir build && cd build && cmake ../'
+                sh './scripts/run_static_analysis.py build/'
               }
             }
           }
@@ -46,11 +63,7 @@ pipeline {
                 sh './scripts/ci-tool.py -T Debug'
               }
             }
-            stage('Static Analysis') {
-              steps {
-                sh './scripts/run-static-analysis.py build-debug/'
-              }
-            }
+
           }
         } // clang 6 debug
 

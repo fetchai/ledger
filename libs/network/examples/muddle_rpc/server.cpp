@@ -26,7 +26,6 @@ using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
 using fetch::network::NetworkManager;
-using fetch::network::Peer;
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Server;
 
@@ -35,7 +34,7 @@ int main()
   NetworkManager nm(1);
   nm.Start();
 
-  Muddle muddle{Muddle::CreateNetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
+  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};
   muddle.Start({8000});
 
   Sample         sample;

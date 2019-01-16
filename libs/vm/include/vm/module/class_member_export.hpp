@@ -36,7 +36,8 @@ template <typename ClassType, typename MemberFunctionPointer, int RESULT_TYPE,
           typename... used_args>
 struct InvokeClassMemberFunction<ClassType, MemberFunctionPointer, void, RESULT_TYPE, used_args...>
 {
-  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m, used_args &... args)
+  static void MemberFunction(VM * /*vm*/, ClassType &cls, MemberFunctionPointer &m,
+                             used_args &... args)
   {
     (cls.*m)(args...);
   };
