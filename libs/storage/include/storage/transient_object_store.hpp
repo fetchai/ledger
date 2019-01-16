@@ -40,6 +40,7 @@ class TransientObjectStore
 public:
   using Callback = std::function<void(Object const &)>;
   using Archive  = ObjectStore<Object>;
+  static constexpr std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   // Construction / Destruction
   TransientObjectStore();
@@ -178,10 +179,18 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 template <typename O>
 std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
 {
+  std::vector<chain::TransactionSummary> ret;
+  chain::TransactionSummary              summary;
 
-  most_recent_seen_.Push(object.summary());
+  for (std::size_t i = 0; i < max_to_poll; ++i)
+  {
+    if(most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
+    {
+      ret.push_back(summary);
+    }
+  }
 
-  return std::vector<chain::TransactionSummary>();
+  return ret;
 }
 
 /**
@@ -212,8 +221,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   if (newly_seen)
   {
-    // TODO(HUT): let this fail out
-    most_recent_seen_.Push(object.summary());
+    most_recent_seen_.TryPush(object.summary());
   }
 
   // dispatch the callback if necessary
@@ -329,7 +337,6 @@ template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t               BATCH_SIZE = 100;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   std::vector<ResourceID> rids(BATCH_SIZE);
   std::size_t             extracted_count = 0;
