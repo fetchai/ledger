@@ -179,7 +179,7 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, shared_request_type req)
+  void HandleError(std::error_code const &ec, shared_request_type /*req*/)
   {
     LOG_STACK_TRACE_POINT;
 

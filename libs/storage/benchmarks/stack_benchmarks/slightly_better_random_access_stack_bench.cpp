@@ -28,7 +28,7 @@ using fetch::storage::SlightlyBetterRandomAccessStack;
 class SlightlyBetterRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(const ::benchmark::State & /*st*/) override
   {
     stack_.New("RAS_bench.db");
 

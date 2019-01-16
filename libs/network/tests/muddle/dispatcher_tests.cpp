@@ -37,7 +37,7 @@ protected:
   }
 
   PacketPtr CreatePacket(uint16_t service, uint16_t channel, uint16_t counter,
-                         Payload const &payload)
+                         Payload const & /*payload*/)
   {
     PacketPtr packet = std::make_shared<Packet>();
     packet->SetService(service);

@@ -20,7 +20,7 @@
 
 import run_static_analysis
 import apply_style
-import check_licence_header
+import check_license_header
 import subprocess
 import sys
 import os
@@ -40,8 +40,17 @@ def print_warning(warning):
 # Example depend.make format:
 # libs/metrics/CMakeFiles/fetch-metrics.dir/src/metrics.cpp.o: ../libs/vectorise/include/vectorise/math/exp.hpp
 def convert_to_dependencies(changed_files_fullpath : set, build_path, verbose = False):
-    # TODO(HUT): libs and APPS
+
+    targets_to_substitute = 0
+    for filename in changed_files_fullpath:
+        if '.hpp' in filename:
+            targets_to_substitute = targets_to_substitute + 1
+
+    if targets_to_substitute == 0:
+        return changed_files_fullpath
+
     globbed_files = glob.glob(build_path+'/libs/**/depend.make', recursive=True)
+    globbed_files.extend(glob.glob(build_path+'/apps/**/depend.make', recursive=True))
 
     # files with no content have this as their first line
     globbed_files = [x for x in globbed_files if 'Empty dependencies file' not in open(x).readline()]
@@ -56,10 +65,11 @@ def convert_to_dependencies(changed_files_fullpath : set, build_path, verbose = 
         for line in open(filename):
 
             dependency_file = "{}{}{}".format(build_path, '/' , line.split(' ')[-1])
-            dependency_file = os.path.abspath(dependency_file).rstrip()
 
             if '.hpp' not in dependency_file:
                 continue
+
+            dependency_file = os.path.abspath(dependency_file).rstrip()
 
             target_cpp_file = line.split('.o:')[0]
             target_cpp_file = re.sub('CMakeFiles.*\.dir','**', target_cpp_file.rstrip())
@@ -79,6 +89,10 @@ def convert_to_dependencies(changed_files_fullpath : set, build_path, verbose = 
 
                 changed_files_fullpath.add(target_cpp_file)
                 changed_files_fullpath.remove(dependency_file)
+
+                targets_to_substitute = targets_to_substitute - 1
+                if targets_to_substitute == 0:
+                    return changed_files_fullpath
 
     filenames_to_remove = []
     for filename in changed_files_fullpath:
@@ -105,10 +119,10 @@ def main():
     compare_branch = args.branch
     build_path     = args.build_path
 
-    # Firstly, check licence headers
-    print("Checking licence headers")
+    # Firstly, check license headers
+    print("Checking license headers")
     sys.argv = ['_', '--fix']
-    check_licence_header.main()
+    check_license_header.main()
 
     changed_files = []
     # Stack overflow 34279322
@@ -140,10 +154,9 @@ def main():
         print(sys.argv)
     apply_style.main()
 
+    print("Running static analysis")
     # static analysis uses cpp files only
     changed_files_fullpath_cpp_only = convert_to_dependencies(changed_files_fullpath, build_path)
-
-    print("Running static analysis")
     sys.argv = ['_', build_path, '--fix', '--only-these-files']
     sys.argv.extend(changed_files_fullpath_cpp_only)
     if args.verbose:
