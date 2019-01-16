@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -34,15 +35,15 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.empty());
-    assert(this->output_);
+    ASSERT(inputs.empty());
+    ASSERT(this->output_);
     return this->output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    assert(inputs.empty());
+    ASSERT(inputs.empty());
     return {errorSignal};
   }
 

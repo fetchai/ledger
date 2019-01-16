@@ -35,7 +35,7 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     input_shape_  = inputs[0]->shape();
     this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     this->output_->Copy(
@@ -52,7 +52,7 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    assert(inputs.size() == 1);
+    ASSERT(inputs.size() == 1);
     errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
     return {errorSignal};
   }

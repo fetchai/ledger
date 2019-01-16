@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
 #include <iostream>
 #include <memory>
 #include <vector>
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace math {
@@ -32,15 +32,15 @@ public:
   using Type = T;
 
 public:
-  Tensor(std::vector<size_t> const &shape   = std::vector<size_t>(),
-         std::vector<size_t> const &strides = std::vector<size_t>(),
-         std::vector<size_t> const &padding = std::vector<size_t>())
-    : shape_(shape)
-    , padding_(padding)
-    , strides_(strides)
+  Tensor(std::vector<size_t> shape   = std::vector<size_t>(),
+         std::vector<size_t> strides = std::vector<size_t>(),
+         std::vector<size_t> padding = std::vector<size_t>())
+    : shape_(std::move(shape))
+    , padding_(std::move(padding))
+    , strides_(std::move(strides))
   {
-    assert(padding.empty() || padding.size() == shape.size());
-    assert(strides.empty() || strides.size() == shape.size());
+    ASSERT(padding.empty() || padding.size() == shape.size());
+    ASSERT(strides.empty() || strides.size() == shape.size());
     Init(strides_, padding_);
   }
 
@@ -120,7 +120,7 @@ public:
    */
   std::vector<size_t> IndicesOfElement(size_t element) const
   {
-    assert(element < NumberOfElements());
+    ASSERT(element < NumberOfElements());
     std::vector<size_t> results(shape_.size());
     results.back() = element;
     for (size_t i(shape_.size() - 1); i > 0; --i)
@@ -141,7 +141,7 @@ public:
     size_t index(0);
     for (size_t i(0); i < indices.size(); ++i)
     {
-      assert(indices[i] < shape_[i]);
+      ASSERT(indices[i] < shape_[i]);
       index += indices[i] * DimensionSize(i);
     }
     return index;
@@ -190,11 +190,11 @@ public:
   {
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
-    assert(o.NumberOfElements() == NumberOfElements());
+    ASSERT(o.NumberOfElements() == NumberOfElements());
     for (size_t i(0); i < NumberOfElements(); ++i)
     {
-      T e1 = Get(IndicesOfElement(i));
-      T e2 = o.Get(o.IndicesOfElement(i));
+      T e1        = Get(IndicesOfElement(i));
+      T e2        = o.Get(o.IndicesOfElement(i));
       T tolerance = std::max(absolute_tolerance, std::max(abs(e1), abs(e2)) * relative_tolerance);
       if (abs(e1 - e2) > tolerance)
       {

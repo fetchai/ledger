@@ -33,7 +33,7 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == this->inputs_nodes_.size());
+    ASSERT(inputs.size() == this->inputs_nodes_.size());
     for (size_t i(0); i < inputs.size(); ++i)
     {
       this->SetInput(inputs_nodes_[i], inputs[i]);
@@ -45,7 +45,7 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     error)
   {
-    assert(inputs.size() == this->inputs_nodes_.size());
+    ASSERT(inputs.size() == this->inputs_nodes_.size());
     std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals =
         this->output_node_->BackPropagate(error);
     std::vector<ArrayPtrType> backpropagatedErrorSignals;
