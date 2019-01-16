@@ -194,8 +194,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , block_coordinator_{chain_, *execution_manager_}
   , consensus_miner_{GetConsensusMiner(ConsensusMinerType::NO_MINER)}
   , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
-           block_packer_, consensus_miner_, p2p_port_, block_interval}
-  // p2p_port_ fairly arbitrary
+           block_packer_, consensus_miner_, muddle_.identity().identifier(), block_interval}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, processor_threads}
