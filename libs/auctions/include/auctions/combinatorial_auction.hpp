@@ -78,10 +78,9 @@ public:
 
     for (std::size_t j = 0; j < active_.size(); ++j)
     {
-      RandomInt val = (rng()>>17) & 1;
+      RandomInt val = (rng() >> 17) & 1;
       active_[j]    = static_cast<std::uint32_t>(val);
     }
-
 
     // simulated annealing
     ValueType beta_start = 0.01;
@@ -99,7 +98,7 @@ public:
         prev_active_ = active_;
         prev_reward  = TotalBenefit();
 
-        RandomInt nn = 1 + ( (rng()>>17) % max_flips_ );
+        RandomInt nn = 1 + ((rng() >> 17) % max_flips_);
         for (RandomInt k = 0; k < nn; ++k)
         {
           RandomInt n = (rng() >> 17) % bids_.size();
@@ -148,7 +147,7 @@ public:
   fetch::math::linalg::Matrix<ValueType> couplings()
   {
     return couplings_;
-  }  
+  }
 
   bool Execute(BlockIdType current_block) override
   {
@@ -185,14 +184,14 @@ public:
 
   void SelectBid(std::size_t const &bid)
   {
-    if(active_.size() != bids_.size())
+    if (active_.size() != bids_.size())
     {
       active_.Resize(bids_.size());
     }
 
-    for(std::size_t j=0; j < bids_.size(); ++j)
+    for (std::size_t j = 0; j < bids_.size(); ++j)
     {
-      if(couplings_(bid,j) != 0)
+      if (couplings_(bid, j) != 0)
       {
         active_[j] = 0;
       }
@@ -201,7 +200,6 @@ public:
     active_[bid] = 1;
   }
 
-
   /**
    * couplings_ = Sum(Bi + Bj) + delta
    */
@@ -209,7 +207,7 @@ public:
   {
     couplings_    = fetch::math::linalg::Matrix<ValueType>::Zeroes({bids_.size(), bids_.size()});
     local_fields_ = fetch::math::ShapelessArray<ValueType>::Zeroes({bids_.size()});
-    active_ = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
+    active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
     for (std::size_t i = 0; i < bids_.size(); ++i)
     {
@@ -249,12 +247,11 @@ public:
           }
         }
 
-
-        for(auto const &itm1: bids_[i].Items())
+        for (auto const &itm1 : bids_[i].Items())
         {
-          for(auto const &itm2: bids_[j].Items())
+          for (auto const &itm2 : bids_[j].Items())
           {
-            if(itm1.Id() == itm2.Id())
+            if (itm1.Id() == itm2.Id())
             {
               coupling += (bids_[i].Price() + bids_[j].Price());
             }
@@ -267,6 +264,7 @@ public:
 
     graph_built_ = true;
   }
+
 private:
   // bids on binary vector
   fetch::math::linalg::Matrix<ValueType>     couplings_;

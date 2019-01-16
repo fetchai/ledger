@@ -67,10 +67,10 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
                       std::size_t run_len) { ca.Mine(seed, run_len); })
       .def("couplings", &CombinatorialAuction::couplings)
       .def("local_fields", &CombinatorialAuction::local_fields)
-      .def("TotalBenefit", &CombinatorialAuction::TotalBenefit)      
-      .def("SelectBid", &CombinatorialAuction::SelectBid)         
-      .def("BuildGraph", &CombinatorialAuction::BuildGraph)      
-      .def("Execute", &CombinatorialAuction::Execute);            
+      .def("TotalBenefit", &CombinatorialAuction::TotalBenefit)
+      .def("SelectBid", &CombinatorialAuction::SelectBid)
+      .def("BuildGraph", &CombinatorialAuction::BuildGraph)
+      .def("Execute", &CombinatorialAuction::Execute);
 }
 
 }  // namespace auctions

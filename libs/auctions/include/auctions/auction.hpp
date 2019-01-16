@@ -66,9 +66,6 @@ public:
     , start_block_(start_block_id)
     , end_block_(end_block_id)
   {
-    // check on the length of the auction
-    assert(end_block_ > start_block_);
-
     if (smart_market)
     {
       max_items_         = std::numeric_limits<std::size_t>::max();
