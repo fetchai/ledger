@@ -91,7 +91,7 @@ private:
   Cache         cache_;                            ///< The main object cache
   Archive       archive_;                          ///< The persistent object store
   Queue         confirm_queue_;                    ///< The queue of elements to be stored
-  RecentQueue         most_recent_seen_;           ///< The queue of elements to be stored
+  RecentQueue   most_recent_seen_;                 ///< The queue of elements to be stored
   ThreadPtr     thread_;                           ///< The background worker thread
   Callback      set_callback_;                     ///< The completion handler
   Flag          stop_{false};                      ///< Flag to signal the stop of the worker
@@ -170,10 +170,10 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 /**
  * xxx
  *
- * @tparam O 
- * @param rid 
- * @param object 
- * @return true 
+ * @tparam O
+ * @param rid
+ * @param object
+ * @return true
  */
 template <typename O>
 std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
@@ -210,7 +210,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
   // add the element into the cache
   SetInCache(rid, object);
 
-  if(newly_seen)
+  if (newly_seen)
   {
     // TODO(HUT): let this fail out
     most_recent_seen_.Push(object.summary());

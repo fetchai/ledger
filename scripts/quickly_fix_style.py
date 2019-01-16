@@ -143,6 +143,7 @@ def main():
         sys.exit(1)
 
     changed_files_fullpath = set([os.path.abspath(x) for x in changed_files])
+    changed_files_fullpath = set([x for x in changed_files_fullpath if os.path.exists(x)])
     if args.verbose:
         print("Changed files:")
         print(changed_files_fullpath)

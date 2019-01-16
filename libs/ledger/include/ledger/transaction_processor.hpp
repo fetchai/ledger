@@ -73,11 +73,11 @@ protected:
   /// @}
 
 private:
-  StorageUnitInterface  &storage_;
+  StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
   TransactionVerifier    verifier_;
   ThreadPtr              poll_new_tx_thread_;
-  bool running_{false};
+  bool                   running_{false};
 
   void ThreadEntryPoint();
 };
@@ -88,8 +88,9 @@ private:
 inline void TransactionProcessor::Start()
 {
   verifier_.Start();
-  running_            = true;
-  poll_new_tx_thread_ = std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
 }
 
 /**

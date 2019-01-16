@@ -199,25 +199,25 @@ public:
     std::vector<chain::TransactionSummary> new_txs;
 
     // Assume that the lanes are roughly balanced in terms of new TXs
-    for(auto const &lane_index : lane_to_identity_map_)
+    for (auto const &lane_index : lane_to_identity_map_)
     {
-      auto lane = lane_index.first;
+      auto    lane = lane_index.first;
       Address address;
       GetAddressForLane(lane, address);
-      auto client  = GetClientForLane(lane);
-      auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET_RECENT, uint32_t(max_to_poll / lane_to_identity_map_.size() ));
+      auto client = GetClientForLane(lane);
+      auto promise =
+          client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET_RECENT,
+                                      uint32_t(max_to_poll / lane_to_identity_map_.size()));
       FETCH_LOG_PROMISE();
       promises.push_back(promise);
     }
 
-    for(auto const &promise : promises)
+    for (auto const &promise : promises)
     {
       auto txs = promise->As<std::vector<chain::TransactionSummary>>();
 
-      new_txs.insert(
-          new_txs.end(),
-          std::make_move_iterator(txs.begin()),
-          std::make_move_iterator(txs.end()));
+      new_txs.insert(new_txs.end(), std::make_move_iterator(txs.begin()),
+                     std::make_move_iterator(txs.end()));
     }
 
     return new_txs;
