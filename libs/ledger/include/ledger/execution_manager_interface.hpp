@@ -30,26 +30,28 @@ public:
 
   enum class ScheduleStatus
   {
-    RESTORED = 0,             ///< The block state restored from previously executed block
-    SCHEDULED,                ///< The block has been successfully scheduled
+    RESTORED = 0,  ///< The block state restored from previously executed block
+    SCHEDULED,     ///< The block has been successfully scheduled
 
     // Errors
-    NOT_STARTED,              ///< The executor has not been started
-    ALREADY_RUNNING,          ///< The executor is already running another block
-    NO_PARENT_BLOCK,          ///< The executor has not processed the
-    UNABLE_TO_PLAN            ///< The execution manager is unable to plan execution,
-                              ///< typically because resources issues
+    NOT_STARTED,      ///< The executor has not been started
+    ALREADY_RUNNING,  ///< The executor is already running another block
+    NO_PARENT_BLOCK,  ///< The executor has not processed the
+    UNABLE_TO_PLAN    ///< The execution manager is unable to plan execution,
+                      ///< typically because resources issues
   };
 
   enum class State
   {
-    IDLE = 0,                 ///< The execution manager is waiting for new blocks to execute
-    ACTIVE,                   ///< The execution manager is in the process of executing a block
+    IDLE = 0,  ///< The execution manager is waiting for new blocks to execute
+    ACTIVE,    ///< The execution manager is in the process of executing a block
 
     // Stalled states
-    TRANSACTIONS_UNAVAILABLE, ///< The execution manager has stalled because transactions are unavailable
-    EXECUTION_ABORTED,        ///< Execution has been stopped on user request
-    EXECUTION_FAILED          ///< Execution has failed for a fundamental reason, the block can be considered as bad
+    TRANSACTIONS_UNAVAILABLE,  ///< The execution manager has stalled because transactions are
+                               ///< unavailable
+    EXECUTION_ABORTED,         ///< Execution has been stopped on user request
+    EXECUTION_FAILED           ///< Execution has failed for a fundamental reason, the block can be
+                               ///< considered as bad
   };
 
   // Construction / Destruction

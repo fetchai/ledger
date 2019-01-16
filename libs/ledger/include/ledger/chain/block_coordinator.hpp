@@ -31,7 +31,7 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using BlockType      = chain::MainChain::BlockType;
+  using BlockType = chain::MainChain::BlockType;
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
@@ -48,7 +48,6 @@ public:
   void AddBlock(BlockType &block);
 
 private:
-
   enum class State
   {
     QUERY_EXECUTION_STATUS,
@@ -56,11 +55,11 @@ private:
     EXECUTE_BLOCK,
   };
 
-  using Mutex          = fetch::mutex::Mutex;
-  using BlockBodyPtr   = std::shared_ptr<BlockBody>;
-  using PendingBlocks  = std::deque<BlockBodyPtr>;
-  using PendingStack   = std::vector<BlockBodyPtr>;
-  using Flag           = std::atomic<bool>;
+  using Mutex         = fetch::mutex::Mutex;
+  using BlockBodyPtr  = std::shared_ptr<BlockBody>;
+  using PendingBlocks = std::deque<BlockBodyPtr>;
+  using PendingStack  = std::vector<BlockBodyPtr>;
+  using Flag          = std::atomic<bool>;
 
   /// @name Monitor State
   /// @{
@@ -82,14 +81,14 @@ private:
   /// @name Pending Block Queue
   /// @{
   Mutex         pending_blocks_mutex_{__LINE__, __FILE__};
-  PendingBlocks pending_blocks_{};                      /// The pending blocks weighting to be executed
+  PendingBlocks pending_blocks_{};  /// The pending blocks weighting to be executed
   /// @}
 
   /// @name Monitor State
   /// @{
-  State         state_{State::QUERY_EXECUTION_STATUS};  ///< The current state of the monitor
-  BlockBodyPtr  current_block_;                         ///< The pointer to the current block
-  PendingStack  pending_stack_;                         ///< The stack of pending blocks to be executed
+  State        state_{State::QUERY_EXECUTION_STATUS};  ///< The current state of the monitor
+  BlockBodyPtr current_block_;                         ///< The pointer to the current block
+  PendingStack pending_stack_;  ///< The stack of pending blocks to be executed
   /// @}
 };
 

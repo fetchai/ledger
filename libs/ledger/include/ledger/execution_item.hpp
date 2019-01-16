@@ -20,11 +20,11 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor_interface.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <future>
 #include <memory>
 #include <utility>
-#include <atomic>
 
 namespace fetch {
 namespace ledger {
@@ -50,7 +50,10 @@ public:
     , slice_(slice)
   {}
 
-  Status status() const { return status_; }
+  Status status() const
+  {
+    return status_;
+  }
 
   void Execute(ExecutorInterface &executor)
   {

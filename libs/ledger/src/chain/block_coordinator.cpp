@@ -38,24 +38,24 @@ static char const *ToString(ScheduleStatus status)
   char const *reason = "Unknown";
   switch (status)
   {
-    case ScheduleStatus::RESTORED:
-      reason = "Restored";
-      break;
-    case ScheduleStatus::SCHEDULED:
-      reason = "Scheduled";
-      break;
-    case ScheduleStatus::NOT_STARTED:
-      reason = "Not Started";
-      break;
-    case ScheduleStatus::ALREADY_RUNNING:
-      reason = "Already Running";
-      break;
-    case ScheduleStatus::NO_PARENT_BLOCK:
-      reason = "No Parent Block";
-      break;
-    case ScheduleStatus::UNABLE_TO_PLAN:
-      reason = "Unable to Plan";
-      break;
+  case ScheduleStatus::RESTORED:
+    reason = "Restored";
+    break;
+  case ScheduleStatus::SCHEDULED:
+    reason = "Scheduled";
+    break;
+  case ScheduleStatus::NOT_STARTED:
+    reason = "Not Started";
+    break;
+  case ScheduleStatus::ALREADY_RUNNING:
+    reason = "Already Running";
+    break;
+  case ScheduleStatus::NO_PARENT_BLOCK:
+    reason = "No Parent Block";
+    break;
+  case ScheduleStatus::UNABLE_TO_PLAN:
+    reason = "Unable to Plan";
+    break;
   }
 
   return reason;
@@ -70,9 +70,10 @@ namespace chain {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(chain::MainChain &chain,
+BlockCoordinator::BlockCoordinator(chain::MainChain &                 chain,
                                    ledger::ExecutionManagerInterface &execution_manager)
-  : chain_{chain}, execution_manager_{execution_manager}
+  : chain_{chain}
+  , execution_manager_{execution_manager}
 {}
 
 /**
@@ -95,7 +96,7 @@ void BlockCoordinator::AddBlock(BlockType &block)
 
   // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
   //                          does not fire all of the time.
-  auto const  heaviestHash = chain_.HeaviestBlock().hash();
+  auto const heaviestHash = chain_.HeaviestBlock().hash();
 
   if (block.hash() == heaviestHash)
   {
@@ -193,15 +194,15 @@ void BlockCoordinator::Monitor()
     // execute the correct state handler
     switch (state_)
     {
-      case State::QUERY_EXECUTION_STATUS:
-        OnQueryExecutionStatus();
-        break;
-      case State::GET_NEXT_BLOCK:
-        OnGetNextBlock();
-        break;
-      case State::EXECUTE_BLOCK:
-        OnExecuteBlock();
-        break;
+    case State::QUERY_EXECUTION_STATUS:
+      OnQueryExecutionStatus();
+      break;
+    case State::GET_NEXT_BLOCK:
+      OnGetNextBlock();
+      break;
+    case State::EXECUTE_BLOCK:
+      OnExecuteBlock();
+      break;
     }
 
     // allow fast exit/shutdown
@@ -222,28 +223,28 @@ void BlockCoordinator::OnQueryExecutionStatus()
   // based on the state of the execution manager determine
   switch (execution_manager_.GetState())
   {
-    case ExecutionState::IDLE:
-      next_state = State::GET_NEXT_BLOCK;
-      current_block_.reset(); // this is mostly for debug
-      break;
+  case ExecutionState::IDLE:
+    next_state = State::GET_NEXT_BLOCK;
+    current_block_.reset();  // this is mostly for debug
+    break;
 
-    case ExecutionState::ACTIVE:
-      // simple wait for this not to be the case
-      break;
+  case ExecutionState::ACTIVE:
+    // simple wait for this not to be the case
+    break;
 
-    case ExecutionState::TRANSACTIONS_UNAVAILABLE:
+  case ExecutionState::TRANSACTIONS_UNAVAILABLE:
 
-      // TODO(private issue 540): Possibly endless stalling waiting for transaction
-      sleep_for(STALL_INTERVAL);
+    // TODO(private issue 540): Possibly endless stalling waiting for transaction
+    sleep_for(STALL_INTERVAL);
 
-      // schedule the execution of the block again (hopefully the transactions would have arrived)
-      next_state = State::EXECUTE_BLOCK;
-      break;
+    // schedule the execution of the block again (hopefully the transactions would have arrived)
+    next_state = State::EXECUTE_BLOCK;
+    break;
 
-    case ExecutionState::EXECUTION_ABORTED:
-    case ExecutionState::EXECUTION_FAILED:
-      /// ????
-      break;
+  case ExecutionState::EXECUTION_ABORTED:
+  case ExecutionState::EXECUTION_FAILED:
+    /// ????
+    break;
   }
 
   // update the state
@@ -347,7 +348,8 @@ void BlockCoordinator::OnExecuteBlock()
 
     case ScheduleStatus::NOT_STARTED:
     case ScheduleStatus::UNABLE_TO_PLAN:
-      FETCH_LOG_ERROR(LOGGING_NAME, "Execution engine stalled. State: ", ToString(execution_status));
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Execution engine stalled. State: ", ToString(execution_status));
       break;
     }
   }
@@ -356,5 +358,5 @@ void BlockCoordinator::OnExecuteBlock()
   state_ = next_state;
 }
 
-} // namespace chain
-} // namespace ledger
+}  // namespace chain
+}  // namespace fetch

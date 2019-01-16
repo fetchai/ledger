@@ -355,17 +355,17 @@ void ExecutionManager::MonitorThreadEntrypoint()
     switch (monitor_state)
     {
     case MonitorState::FAILED:
-      state_ = State::EXECUTION_FAILED;
+      state_        = State::EXECUTION_FAILED;
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::STALLED:
-      state_ = State::TRANSACTIONS_UNAVAILABLE;
+      state_        = State::TRANSACTIONS_UNAVAILABLE;
       monitor_state = MonitorState::IDLE;
       break;
 
     case MonitorState::COMPLETED:
-      state_ = State::IDLE;
+      state_        = State::IDLE;
       monitor_state = MonitorState::IDLE;
       break;
 
@@ -379,13 +379,13 @@ void ExecutionManager::MonitorThreadEntrypoint()
         monitor_wake_.wait(lock);
       }
 
-      state_ = State::ACTIVE;
+      state_        = State::ACTIVE;
       current_block = last_block_hash_;
 
       // schedule the next slice if we have been triggered
       if (running_)
       {
-        monitor_state         = MonitorState::SCHEDULE_NEXT_SLICE;
+        monitor_state = MonitorState::SCHEDULE_NEXT_SLICE;
         current_slice = 0;
       }
 
@@ -464,8 +464,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
         // only provide debug if required
         if (num_complete + num_stalls + num_errors)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice, " Execution Status - Complete: ",
-                         num_complete, " Stalls: ", num_stalls, " Errors: ", num_errors);
+          FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
+                         " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
+                         " Errors: ", num_errors);
         }
 
         // increment the slice counter
