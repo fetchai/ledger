@@ -38,24 +38,15 @@ void BM_tensorIterator(benchmark::State &state)
 }
 
 BENCHMARK_TEMPLATE(BM_tensorIterator, int, 3, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, float, 3, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, double, 3, 256, 256)->Unit(benchmark::kMillisecond);
-;
 
 BENCHMARK_TEMPLATE(BM_tensorIterator, int, 128, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, float, 128, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, double, 128, 256, 256)->Unit(benchmark::kMillisecond);
-;
 
 BENCHMARK_TEMPLATE(BM_tensorIterator, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
-;
 BENCHMARK_TEMPLATE(BM_tensorIterator, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
-;
 
 BENCHMARK_MAIN();
