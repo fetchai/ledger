@@ -116,8 +116,20 @@ void TransactionProcessor::ThreadEntryPoint()
   std::vector<chain::TransactionSummary> new_txs;
   while (running_)
   {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     new_txs.clear();
     new_txs = storage_.PollRecentTx(10000);
+
+    for (auto const &summary : new_txs)
+    {
+      // TODO(HUT): Note: metric for TX stored will not fire this way
+      // dispatch the summary to the miner
+      miner_.EnqueueTransaction(summary);
+
+      assert(summary.WellFormed());
+
+      FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
+    }
   }
 }
 

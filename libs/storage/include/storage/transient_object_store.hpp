@@ -184,7 +184,7 @@ std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
-    if(most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
+    if (most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
     {
       ret.push_back(summary);
     }
@@ -336,7 +336,7 @@ void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
-  static const std::size_t               BATCH_SIZE = 100;
+  static const std::size_t BATCH_SIZE = 100;
 
   std::vector<ResourceID> rids(BATCH_SIZE);
   std::size_t             extracted_count = 0;

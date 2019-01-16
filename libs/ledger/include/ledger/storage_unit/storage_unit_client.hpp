@@ -198,6 +198,8 @@ public:
     std::vector<service::Promise>          promises;
     std::vector<chain::TransactionSummary> new_txs;
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
+
     // Assume that the lanes are roughly balanced in terms of new TXs
     for (auto const &lane_index : lane_to_identity_map_)
     {
@@ -220,6 +222,7 @@ public:
                      std::make_move_iterator(txs.end()));
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Found: ", new_txs.size(), " newly seen TXs from lanes");
     return new_txs;
   }
 
