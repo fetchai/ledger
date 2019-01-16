@@ -296,3 +296,37 @@ TYPED_TEST(TensorTest, three_dimentional_tensor_test)
                              20, 21, 22, 23, 24, 0, 0, 0, 25, 26, 27, 28, 29, 0, 0, 0});
   ASSERT_EQ(*(t.Storage()), gt);
 }
+
+/*
+ * Cool trick playing with stride.
+ * If you need an array that will store the same value for all elements,
+ * Set the strides to zeroes and all element will point to the same memory offset
+ * You can now store an arbitrary large tensor in an underlying storage of size 1
+ * Will be useful for broadcasting
+ */
+TYPED_TEST(TensorTest, zero_stride_tensor_test)
+{
+  fetch::math::Tensor<TypeParam> t({2, 3, 5}, {0, 0, 0}, {0, 0, 0});
+
+  ASSERT_EQ(t.NumberOfElements(), 30);
+  ASSERT_EQ(t.Capacity(), 1);
+
+  for (size_t i(0); i < 30; ++i)
+  {
+    ASSERT_EQ(t.OffsetOfElement(t.IndicesOfElement(i)), 0);
+    ASSERT_EQ(t.At(i), 0);
+  }
+
+  t.Set({1, 1, 1}, TypeParam(42));  // Setting single element
+  for (size_t i(0); i < 2; i++)
+  {
+    for (size_t j(0); j < 3; j++)
+    {
+      for (size_t k(0); k < 5; k++)
+      {
+        // All element are now that value since they all point at the same memory offset
+        ASSERT_EQ(t.Get({i, j, k}), TypeParam(42));
+      }
+    }
+  }
+}

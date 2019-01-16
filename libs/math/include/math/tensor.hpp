@@ -104,7 +104,7 @@ public:
     {
       return 0;
     }
-    return DimensionSize(0) * shape_[0] + padding_[0];
+    return std::max(1ul, DimensionSize(0) * shape_[0] + padding_[0]);
   }
 
   size_t size()
