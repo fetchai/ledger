@@ -34,9 +34,9 @@ inline static constexpr const char *DefaultAttributes()
 {
 #ifdef FETCH_DISABLE_COLOUR_LOG_OUTPUT
   return "";
-#else // !FETCH_DISABLE_COLOUR_LOG_OUTPUT
+#else   // !FETCH_DISABLE_COLOUR_LOG_OUTPUT
   return "\33[0m";
-#endif // FETCH_DISABLE_COLOUR_LOG_OUTPUT
+#endif  // FETCH_DISABLE_COLOUR_LOG_OUTPUT
 }
 inline static constexpr const char *ClearScreen()
 {
