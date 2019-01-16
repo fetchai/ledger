@@ -13,6 +13,7 @@ import argparse
 import subprocess
 import fnmatch
 import shutil
+import multiprocessing
 import xml.etree.ElementTree as ET
 
 
@@ -143,7 +144,11 @@ def build_project(project_root, build_root, options):
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
     else:
-        cmd = ['make', '-j']
+        # manually specifying the number of cores is required because make automatic dectection is
+        # flakey inside docker. Python appears to be more useful.
+        cmd = ['make', '-j', str(multiprocessing.cpu_count())]
+
+    output('Building project with command: {}'.format(' '.join(cmd)))
     exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
@@ -220,3 +225,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
