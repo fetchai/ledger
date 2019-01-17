@@ -30,7 +30,7 @@ public:
   std::size_t id    = 0;
   ValueType funds = 0;
 
-  Bidder(std::size_t id, std::size_t funds)
+  Bidder(std::size_t id, ValueType funds)
     : id(id)
     , funds(funds)
   {}
