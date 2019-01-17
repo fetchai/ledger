@@ -103,6 +103,6 @@ TYPED_TEST(TensorOperationsTest, sum_test)
     t2.Set(i, TypeParam(t2Input[i]));
   }
 
-  EXPECT_EQ(t1.Sum(), TypeParam(-1));
+  EXPECT_EQ(t1.Sum(), TypeParam(-4));
   EXPECT_EQ(t2.Sum(), TypeParam(-21));
 }

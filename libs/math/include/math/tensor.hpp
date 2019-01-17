@@ -252,7 +252,7 @@ public:
     T sum(0);
     for (size_t i(0); i < NumberOfElements(); ++i)
     {
-      sum = sum + o.At(i);
+      sum = sum + At(i);
     }
     return sum;
   }
