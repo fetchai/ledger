@@ -232,7 +232,7 @@ public:
     assert(NumberOfElements() == o.NumberOfElements());
     for (size_t i(0); i < NumberOfElements(); ++i)
     {
-      At(i) += o.At(i);
+      At(i) = At(i) + o.At(i);
     }
     return *this;
   }
@@ -242,9 +242,19 @@ public:
     assert(NumberOfElements() == o.NumberOfElements());
     for (size_t i(0); i < NumberOfElements(); ++i)
     {
-      At(i) *= o.At(i);
+      At(i) = At(i) * o.At(i);
     }
     return *this;
+  }
+
+  T Sum() const
+  {
+    T sum(0);
+    for (size_t i(0); i < NumberOfElements(); ++i)
+    {
+      sum = sum + o.At(i);
+    }
+    return sum;
   }
 
 private:
