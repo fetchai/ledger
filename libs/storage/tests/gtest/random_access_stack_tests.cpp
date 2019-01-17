@@ -71,31 +71,32 @@ public:
 
 TEST(random_access_stack, mocked_test_is_open)
 {
-  MockStream mocked;
-  EXPECT_CALL(mocked, close()).Times(1);
-  EXPECT_CALL(mocked, is_open()).Times(2).WillRepeatedly(testing::Return(true));
+  std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
+  EXPECT_CALL(*mocked, close()).Times(1);
+  EXPECT_CALL(*mocked, is_open()).Times(2).WillRepeatedly(testing::Return(true));
 
-  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
+  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(mocked);
   EXPECT_TRUE(stack.is_open());
 }
 
 TEST(random_access_stack, mocked_test_get_set)
 {
-  MockStream mocked, dummy;
-  EXPECT_CALL(mocked, is_open()).Times(1).WillRepeatedly(testing::Return(true));
-  EXPECT_CALL(mocked, close()).Times(1);
-  EXPECT_CALL(mocked, seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(dummy));
-  EXPECT_CALL(mocked, seekg(testing::_, testing::_))
+  std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
+  MockStream dummy;
+  EXPECT_CALL(*mocked, is_open()).Times(1).WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(*mocked, close()).Times(1);
+  EXPECT_CALL(*mocked, seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(dummy));
+  EXPECT_CALL(*mocked, seekg(testing::_, testing::_))
       .Times(1)
       .WillRepeatedly(testing::ReturnRef(dummy));
-  EXPECT_CALL(mocked, read(testing::_, testing::_))
+  EXPECT_CALL(*mocked, read(testing::_, testing::_))
       .Times(1)
       .WillRepeatedly(testing::ReturnRef(dummy));
-  EXPECT_CALL(mocked, write(testing::_, testing::_))
+  EXPECT_CALL(*mocked, write(testing::_, testing::_))
       .Times(1)
       .WillRepeatedly(testing::ReturnRef(dummy));
 
-  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
+  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(mocked);
   TestClass                                           temp;
   stack.New("abc");
   stack.Set(0, temp);
@@ -104,18 +105,19 @@ TEST(random_access_stack, mocked_test_get_set)
 
 TEST(random_access_stack, mocked_test_load)
 {
-  MockStream mocked, dummy;
-  EXPECT_CALL(mocked, is_open())
+  std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
+  MockStream dummy;
+  EXPECT_CALL(*mocked, is_open())
       .Times(2)
       .WillOnce(testing::Return(false))
       .WillOnce(testing::Return(true));
-  EXPECT_CALL(mocked, close()).Times(1);
-  EXPECT_CALL(mocked, seekg(testing::_, testing::_))
+  EXPECT_CALL(*mocked, close()).Times(1);
+  EXPECT_CALL(*mocked, seekg(testing::_, testing::_))
       .Times(2)
       .WillRepeatedly(testing::ReturnRef(dummy));
-  EXPECT_CALL(mocked, tellg()).Times(1).WillRepeatedly(testing::Return(10));
+  EXPECT_CALL(*mocked, tellg()).Times(1).WillRepeatedly(testing::Return(10));
 
-  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(&mocked);
+  RandomAccessStack<TestClass, u_int64_t, MockStream> stack(mocked);
   stack.Load("abc");
 }
 
