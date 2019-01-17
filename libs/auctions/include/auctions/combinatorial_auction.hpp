@@ -96,7 +96,7 @@ public:
       for (std::size_t j = 0; j < bids_.size(); ++j)
       {
         prev_active_.Copy(active_);
-        prev_reward  = TotalBenefit();
+        prev_reward = TotalBenefit();
 
         RandomInt nn = 1 + ((rng() >> 17) % max_flips_);
         for (RandomInt k = 0; k < nn; ++k)

@@ -28,7 +28,7 @@ class Bidder
 {
 public:
   std::size_t id    = 0;
-  ValueType funds = 0;
+  ValueType   funds = 0;
 
   Bidder(std::size_t id, ValueType funds)
     : id(id)
