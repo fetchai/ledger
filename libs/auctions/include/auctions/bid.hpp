@@ -40,7 +40,7 @@ public:
     , bidder_(bidder)
     , excludes_(std::move(excludes))
   {
-    assert(items.size() > 0);
+    assert(items_.size() > 0);
   }
 
   /**
