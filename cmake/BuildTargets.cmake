@@ -110,6 +110,11 @@ macro(setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
 
+  # allow disabling of colour log file
+  if (FETCH_DISABLE_COLOUR_LOG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DISABLE_COLOUR_LOG_OUTPUT")
+  endif (FETCH_DISABLE_COLOUR_LOG)
+
   # needed for configuration files etc
   include_directories(${FETCH_ROOT_BINARY_DIR})
 

@@ -26,7 +26,7 @@ class ExecutionManagerInterface
 {
 public:
   using Block     = chain::BlockBody;
-  using BlockHash = Block::digest_type;
+  using BlockHash = Block::Digest;
 
   enum class ScheduleStatus
   {
