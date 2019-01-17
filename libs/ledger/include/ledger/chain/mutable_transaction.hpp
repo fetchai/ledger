@@ -99,7 +99,8 @@ struct TransactionSummary
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
       return true;
-    } else
+    }
+    else
     {
       return false;
     }
