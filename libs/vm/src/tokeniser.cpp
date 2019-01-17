@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -692,11 +692,17 @@ static int input(yyscan_t yyscanner);
     int    c = '*';                                                        \
     size_t n;                                                              \
     for (n = 0; n < max_size && (c = getc(yyin)) != EOF && c != '\n'; ++n) \
+    {                                                                      \
       buf[n] = (char)c;                                                    \
+    }                                                                      \
     if (c == '\n')                                                         \
+    {                                                                      \
       buf[n++] = (char)c;                                                  \
+    }                                                                      \
     if (c == EOF && ferror(yyin))                                          \
+    {                                                                      \
       YY_FATAL_ERROR("input in flex scanner failed");                      \
+    }                                                                      \
     result = n;                                                            \
   }                                                                        \
   else                                                                     \
@@ -2561,7 +2567,9 @@ static void yy_flex_strncpy(char *s1, yyconst char *s2, int n, yyscan_t yyscanne
 
   int i;
   for (i = 0; i < n; ++i)
+  {
     s1[i] = s2[i];
+  }
 }
 #endif
 
@@ -2570,7 +2578,9 @@ static int yy_flex_strlen(yyconst char *s, yyscan_t yyscanner)
 {
   int n;
   for (n = 0; s[n]; ++n)
+  {
     ;
+  }
 
   return n;
 }

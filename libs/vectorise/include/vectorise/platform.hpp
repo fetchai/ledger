@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -201,6 +201,13 @@ inline uint64_t Log2Ceil(uint64_t x)
   }
 
   return count + 1;
+}
+
+inline uint32_t ToLog2(uint32_t value)
+{
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
+                               static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
 }  // namespace platform

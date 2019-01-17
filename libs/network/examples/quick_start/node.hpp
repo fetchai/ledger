@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,7 +54,9 @@ public:
     for (std::size_t i = 0;; ++i)
     {
       if (client.is_alive())
+      {
         break;
+      }
       std::cout << "Waiting for client to connect..." << std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 

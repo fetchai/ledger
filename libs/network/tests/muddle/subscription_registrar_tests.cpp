@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "network/muddle/subscription_registrar.hpp"
+#include "network/uri.hpp"
 
 #include <gmock/gmock.h>
 #include <memory>
@@ -69,7 +70,8 @@ TEST_F(SubscriptionManagerTests, SingleHandler)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription->SetMessageHandler([&dispatches](Address const &, uint16_t, uint16_t, uint16_t,
-                                                Packet::Payload const &) { ++dispatches; });
+                                                Packet::Payload const &,
+                                                Address const &) { ++dispatches; });
 
   // create the packet
   auto packet = CreatePacket(1, 2);
@@ -77,12 +79,12 @@ TEST_F(SubscriptionManagerTests, SingleHandler)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 1);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 }
@@ -95,9 +97,11 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription1->SetMessageHandler([&dispatches](Address const &, uint16_t, uint16_t, uint16_t,
-                                                 Packet::Payload const &) { ++dispatches; });
+                                                 Packet::Payload const &,
+                                                 Address const &) { ++dispatches; });
   subscription2->SetMessageHandler([&dispatches](Address const &, uint16_t, uint16_t, uint16_t,
-                                                 Packet::Payload const &) { ++dispatches; });
+                                                 Packet::Payload const &,
+                                                 Address const &) { ++dispatches; });
 
   // create the packet
   auto packet = CreatePacket(1, 2);
@@ -105,12 +109,12 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 4);
 
@@ -118,7 +122,7 @@ TEST_F(SubscriptionManagerTests, MultipleHandlers)
   subscription2.reset();
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 5);
 }
@@ -131,9 +135,11 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   // register the message handler for the subscription
   uint32_t dispatches = 0;
   subscription1->SetMessageHandler([&dispatches](Address const &, uint16_t, uint16_t, uint16_t,
-                                                 Packet::Payload const &) { ++dispatches; });
+                                                 Packet::Payload const &,
+                                                 Address const &) { ++dispatches; });
   subscription2->SetMessageHandler([&dispatches](Address const &, uint16_t, uint16_t, uint16_t,
-                                                 Packet::Payload const &) { ++dispatches; });
+                                                 Packet::Payload const &,
+                                                 Address const &) { ++dispatches; });
 
   // create the packet
   auto packet = CreatePacket(1, 2, SAMPLE_ADDRESS);
@@ -141,12 +147,12 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   EXPECT_EQ(dispatches, 0);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 2);
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 4);
 
@@ -154,7 +160,7 @@ TEST_F(SubscriptionManagerTests, MultipleDifferentHandlers)
   subscription2.reset();
 
   // dispatch the packet to the registrar
-  registrar_->Dispatch(packet);
+  registrar_->Dispatch(packet, Address());
 
   EXPECT_EQ(dispatches, 5);
 }

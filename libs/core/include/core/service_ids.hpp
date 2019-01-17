@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@
 namespace fetch {
 
 static constexpr uint16_t SERVICE_MUDDLE     = 0;  // reserved
-static constexpr uint16_t SERVICE_P2P        = 1;
-static constexpr uint16_t SERVICE_MAIN_CHAIN = 2;
+static constexpr uint16_t SERVICE_P2P        = 1001;
+static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
+static constexpr uint16_t SERVICE_LANE       = 3003;
+static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC =

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,18 +26,35 @@ namespace crypto {
 
 class SHA256 : public StreamHasher
 {
-  SHA256_CTX context_;
-
 public:
   using StreamHasher::Update;
   using StreamHasher::Final;
 
+  // Construction / Destruction
   SHA256();
+  ~SHA256() override = default;
+
+  static constexpr std::size_t size_in_bytes()
+  {
+    return SHA256_DIGEST_LENGTH;
+  }
+
+  /// @name Stream Hasher Interface
+  /// @{
   void        Reset() override;
   bool        Update(uint8_t const *data_to_hash, std::size_t const &size) override;
   void        Final(uint8_t *hash, std::size_t const &size) override;
-  std::size_t hashSize() const override;
+  std::size_t GetSizeInBytes() const override;
+  /// @}
+
+private:
+  SHA256_CTX context_;
 };
+
+inline std::size_t SHA256::GetSizeInBytes() const
+{
+  return size_in_bytes();
+}
 
 }  // namespace crypto
 }  // namespace fetch

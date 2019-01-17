@@ -11,18 +11,9 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-core)
-target_link_libraries(fetch-core PUBLIC fetch-vectorise)
+target_link_libraries(fetch-core PUBLIC fetch-vectorise fetch-variant)
 
 add_test_target()
 
 add_subdirectory(benchmark)
 add_subdirectory(examples)
-
-#if(FETCH_CLANG_TIDY_CFG)
-#  message(STATUS "Whoop whoop")
-#
-#  set_target_properties(
-#    fetch-core PROPERTIES
-#    CXX_CLANG_TIDY "${FETCH_CLANG_TIDY_CFG}"
-#  )
-#endif(FETCH_CLANG_TIDY_CFG)

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace fetch {
 namespace memory {
 
 template <typename T>
-void BuildArray(std::string const &custom_name, pybind11::module &module)
+void BuildArray(std::string const & /*custom_name*/, pybind11::module & /*module*/)
 {
 
   namespace py = pybind11;

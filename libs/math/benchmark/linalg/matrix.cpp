@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,8 +35,12 @@ Matrix<data_type, container_type> RandomMatrix(std::size_t n, std::size_t m)
   static fetch::random::LinearCongruentialGenerator gen;
   Matrix<data_type, container_type>                 m1(n, m);
   for (std::size_t i = 0; i < n; ++i)
+  {
     for (std::size_t j = 0; j < m; ++j)
+    {
       m1(i, j) = gen.AsDouble();
+    }
+  }
   return m1;
 }
 

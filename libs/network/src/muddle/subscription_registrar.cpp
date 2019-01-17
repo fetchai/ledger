@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t 
  * @param packet The packet
  * @return true if successfully dispatched, otherwise false
  */
-bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
+bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 {
   bool success = false;
 
@@ -110,7 +110,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {
@@ -127,7 +127,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
       // dispatch the packet to the subscription feed
       success =
           it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload());
+                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
 
       if (!success)
       {
@@ -136,7 +136,43 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet)
     }
   }
 
+  if (!success)
+  {
+    Debug("While dispatching");
+  }
+
   return success;
+}
+
+void SubscriptionRegistrar::Debug(std::string const &prefix) const
+{
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar: --------------------------------------");
+
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(), " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 "SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(),
+                 " entries.");
+
+  for (const auto &mapping : address_dispatch_map_)
+  {
+    auto numb = std::get<0>(mapping.first);
+    auto addr = std::get<1>(mapping.first);
+    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                   "SubscriptionRegistrar:address_dispatch_map_ Addr=", ToBase64(addr),
+                   "  Service=", ((numb >> 16) & 0xFFFF));
+  }
+  for (const auto &mapping : dispatch_map_)
+  {
+    auto numb = mapping.first;
+    auto serv = (numb >> 16) & 0xFFFF;
+    auto chan = numb & 0xFFFF;
+    FETCH_LOG_WARN(LOGGING_NAME, prefix, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
+                   "  Chan=", chan);
+  }
+  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+                 ":subscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle

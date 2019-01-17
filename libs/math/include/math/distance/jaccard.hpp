@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/jaccard.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -29,32 +29,32 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Jaccard(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Jaccard(memory::VectorSlice<T, S> const &a,
                                                         memory::VectorSlice<T, S> const &b)
 {
-  using type = typename memory::VectorSlice<T, S>::type;
+  using Type = typename memory::VectorSlice<T, S>::Type;
 
-  return type(1) - correlation::Jaccard(a, b);
+  return Type(1) - correlation::Jaccard(a, b);
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Jaccard(ShapeLessArray<T, C> const &a,
-                                                   ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Jaccard(ShapelessArray<T, C> const &a,
+                                                   ShapelessArray<T, C> const &b)
 {
   return Jaccard(a.data(), b.data());
 }
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type GeneralisedJaccard(
+inline typename memory::VectorSlice<T, S>::Type GeneralisedJaccard(
     memory::VectorSlice<T, S> const &a, memory::VectorSlice<T, S> const &b)
 {
-  using type = typename memory::VectorSlice<T, S>::type;
-  return type(1) - correlation::GeneralisedJaccard(a, b);
+  using Type = typename memory::VectorSlice<T, S>::Type;
+  return Type(1) - correlation::GeneralisedJaccard(a, b);
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type GeneralisedJaccard(ShapeLessArray<T, C> const &a,
-                                                              ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type GeneralisedJaccard(ShapelessArray<T, C> const &a,
+                                                              ShapelessArray<T, C> const &b)
 {
   return GeneralisedJaccard(a.data(), b.data());
 }

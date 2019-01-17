@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -117,7 +117,13 @@ public:
   void ReadBytes(container_type *const dest, std::size_t const &dest_size,
                  std::size_t const &src_offset = 0) const
   {
-    assert(src_offset + dest_size <= size());
+    if (src_offset + dest_size > size())
+    {
+      FETCH_LOG_WARN("ConstByteArray",
+                     "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
+                     " src_offset=", src_offset, " size=", size());
+      throw std::range_error("ReadBytes target array is too big");
+    }
     std::memcpy(dest, pointer() + src_offset, dest_size);
   }
 
@@ -263,12 +269,14 @@ public:
 
   int AsInt() const
   {
-    return atoi(reinterpret_cast<char const *>(arr_pointer_));
+    std::string const value = static_cast<std::string>(*this);
+    return atoi(value.c_str());
   }
 
   double AsFloat() const
   {
-    return atof(reinterpret_cast<char const *>(arr_pointer_));
+    std::string const value = static_cast<std::string>(*this);
+    return atof(value.c_str());
   }
 
   std::string ToBase64() const;
@@ -335,7 +343,7 @@ protected:
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
               bool const zero_reserved_space = true)
   {
-    std::size_t new_length;
+    std::size_t new_length{0};
 
     switch (resize_paradigm)
     {
@@ -377,7 +385,7 @@ protected:
                ResizeParadigm const resize_paradigm     = ResizeParadigm::ABSOLUTE,
                bool const           zero_reserved_space = true)
   {
-    std::size_t new_capacity_for_reserve;
+    std::size_t new_capacity_for_reserve{0};
 
     switch (resize_paradigm)
     {

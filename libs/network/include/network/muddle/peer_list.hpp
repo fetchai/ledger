@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/muddle/blacklist.hpp"
 #include "network/uri.hpp"
 
 #include <chrono>
@@ -78,8 +79,10 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void        AddPersistentPeer(Uri const &peer);
-  void        RemovePersistentPeer(Uri const &peer);
+  void AddPersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Uri const &peer);
+  void RemovePersistentPeer(Handle handle);
+
   std::size_t GetNumPeers() const;
   /// @}
 
@@ -88,15 +91,20 @@ public:
   void AddConnection(Uri const &peer, ConnectionPtr const &conn);
   void OnConnectionEstablished(Uri const &peer);
   void RemoveConnection(Uri const &peer);
+  void RemoveConnection(Handle handle);
+  void Disconnect(Uri const &peer);
   /// @}
 
-  ConnectionState GetStateForPeer(Uri const &peer);
+  ConnectionState GetStateForPeer(Uri const &peer) const;
 
   PeerList GetPeersToConnectTo() const;
 
   PeerMap GetCurrentPeers() const;
 
   UriMap GetUriMap() const;
+  Handle UriToHandle(const Uri &uri) const;
+
+  void Debug(std::string const &prefix) const;
 
 private:
   using Clock     = std::chrono::steady_clock;
@@ -104,11 +112,11 @@ private:
 
   struct PeerMetadata
   {
-    Timepoint   last_failed_connection;  ///< The last time a connection to a node failed
+    Timepoint   last_failed_connection;  ///< The last time a connection to a node failed.
     std::size_t attempts             = 0;
-    std::size_t successes            = 0;  ///< The total number of successful connections
+    std::size_t successes            = 0;  ///< The total number of successful connections.
     std::size_t consecutive_failures = 0;
-    std::size_t total_failures       = 0;      ///< The total number of connection failures
+    std::size_t total_failures       = 0;      ///< The total number of connection failures.
     bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 

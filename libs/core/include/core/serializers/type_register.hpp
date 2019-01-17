@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@
 #include <typeinfo>
 namespace fetch {
 namespace serializers {
+
+class CallContext;
 
 template <typename T>
 struct TypeRegister
@@ -118,6 +120,7 @@ REGISTER_SERIALIZE_SYMBOL_TYPE("str", char const *, 12);
 REGISTER_SERIALIZE_SYMBOL_TYPE("str", char *, 12);
 
 REGISTER_SERIALIZE_TYPE("excep", SerializableException, 13);
+REGISTER_SERIALIZE_TYPE("contextp", CallContext const *, 14);
 
 #undef REGISTER_SERIALIZE_TYPE
 #undef REGISTER_SERIALIZE_SYMBOL_TYPE

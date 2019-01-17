@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ TEST(ndarray, 2d_view_full)
   for (std::size_t i = 0; i < new_array.data().size(); ++i)
   {
     ASSERT_TRUE(test_array[i] == new_array[i]);
-    ASSERT_TRUE(compare_vals[i] == new_array[i]);
+    ASSERT_TRUE(compare_vals[i] == static_cast<std::size_t>(new_array[i]));
   }
 }
 
@@ -295,7 +295,7 @@ TEST(ndarray, 2d_big_step)
   std::vector<std::size_t> true_output{0, 2, 8, 10};
   for (std::size_t i = 0; i < new_array.data().size(); ++i)
   {
-    ASSERT_TRUE(true_output[i] == new_array[i]);
+    ASSERT_TRUE(true_output[i] == static_cast<std::size_t>(new_array[i]));
   }
 }
 
@@ -327,6 +327,6 @@ TEST(ndarray, 2d_subset_view)
   std::vector<std::size_t> true_output{0, 1, 4, 5};
   for (std::size_t i = 0; i < new_array.data().size(); ++i)
   {
-    ASSERT_TRUE(true_output[i] == new_array[i]);
+    ASSERT_TRUE(true_output[i] == static_cast<std::size_t>(new_array[i]));
   }
 }

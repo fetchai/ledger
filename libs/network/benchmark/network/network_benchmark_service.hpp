@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,27 +31,29 @@ namespace fetch {
 namespace network_benchmark {
 
 template <typename T>
-class NetworkBenchmarkService : public service::ServiceServer<fetch::network::TCPServer>,
-                                public http::HTTPServer
+class NetworkBenchmarkService : public http::HTTPServer
 {
 public:
   static constexpr char const *LOGGING_NAME = "NetworkBenchmarkService";
 
+  TServerPtr server;
+
   NetworkBenchmarkService(fetch::network::NetworkManager const &tm, uint16_t tcpPort,
                           uint16_t httpPort)
-    : ServiceServer(tcpPort, tm)
-    , HTTPServer(tm)
+    : HTTPServer(tm)
     , http_port_{httpPort}
   {
     LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort,
                     " and HTTP port: ", httpPort);
-    node_ = std::make_shared<T>(tm);
+    node_ = std::make_shared<T>();
+
+    server = MuddleTestServer::CreateTestServer(tcpPort);
 
     httpInterface_            = std::make_shared<network_benchmark::HttpInterface<T>>(node_);
     networkBenchmarkProtocol_ = std::make_unique<protocols::NetworkBenchmarkProtocol<T>>(node_);
 
-    this->Add(protocols::FetchProtocols::NETWORK_BENCHMARK, networkBenchmarkProtocol_.get());
+    server->Add(protocols::FetchProtocols::NETWORK_BENCHMARK, networkBenchmarkProtocol_.get());
 
     // Add middleware to the HTTP server - allow requests from any address,
     // and print requests to the terminal in colour
@@ -62,13 +64,11 @@ public:
 
   void Start()
   {
-    TCPServer::Start();
     HTTPServer::Start(http_port_);
   }
 
   void Stop()
   {
-    TCPServer::Stop();
     HTTPServer::Stop();
   }
 

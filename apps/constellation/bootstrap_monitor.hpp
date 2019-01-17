@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ public:
   using Identity = crypto::Identity;
 
   // Construction / Destruction
-  BootstrapMonitor(Identity const &identity, uint16_t port, uint32_t network_id, std::string token,
-                   std::string host_name)
+  BootstrapMonitor(Identity const &identity, uint16_t p2p_port, uint32_t network_id,
+                   std::string token, std::string host_name)
     : network_id_(network_id)
-    , port_(port)
+    , port_(p2p_port)
     , identity_(identity)
     , token_(std::move(token))
     , host_name_(std::move(host_name))

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block_coordinator.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
 
 #include <chrono>
@@ -34,24 +35,29 @@ namespace chain {
 class MainChainMiner
 {
 public:
-  using BlockType             = chain::MainChain::BlockType;
-  using BlockHash             = chain::MainChain::BlockHash;
-  using BodyType              = chain::MainChain::BlockType::body_type;
-  using Miner                 = fetch::chain::consensus::DummyMiner;
-  using MinerInterface        = fetch::miner::MinerInterface;
-  using BlockCompleteCallback = std::function<void(BlockType const &)>;
+  using BlockType               = chain::MainChain::BlockType;
+  using BlockHash               = chain::MainChain::BlockHash;
+  using BodyType                = chain::MainChain::BlockType::body_type;
+  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+  using MinerInterface          = fetch::miner::MinerInterface;
+  using BlockCompleteCallback   = std::function<void(BlockType const &)>;
 
-  static constexpr char const *LOGGING_NAME = "MainChainMiner";
+  static constexpr char const *LOGGING_NAME    = "MainChainMiner";
+  static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
                  chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 uint64_t minerNumber)
+                 ConsensusMinerInterface &consensus_miner, uint64_t minerNumber,
+                 std::chrono::steady_clock::duration block_interval =
+                     std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
-    , mainChain_{mainChain}
+    , main_chain_{mainChain}
     , blockCoordinator_{blockCoordinator}
     , miner_{miner}
-    , minerNumber_{minerNumber}
+    , consensus_miner_{consensus_miner}
+    , miner_number_{minerNumber}
+    , block_interval_{block_interval}
   {}
 
   ~MainChainMiner()
@@ -79,29 +85,22 @@ public:
     on_block_complete_ = func;
   }
 
-private:
-  static constexpr uint32_t MAX_BLOCK_JITTER_US = 8000;
-  static constexpr uint32_t BLOCK_PERIOD_MS     = 15000;
-
-  using Clock     = std::chrono::high_resolution_clock;
-  using Timestamp = Clock::time_point;
-
-  template <typename T>
-  Timestamp CalculateNextBlockTime(T &rng)
+  void SetConsensusMiner(ConsensusMinerInterface consensus_miner)
   {
-    Timestamp block_time = Clock::now() + std::chrono::milliseconds{uint32_t{BLOCK_PERIOD_MS}};
-    block_time += std::chrono::microseconds{rng() % MAX_BLOCK_JITTER_US};
-
-    return block_time;
+    consensus_miner_ = consensus_miner;
   }
+
+private:
+  using Clock        = std::chrono::high_resolution_clock;
+  using Timestamp    = Clock::time_point;
+  using Milliseconds = std::chrono::milliseconds;
+
+  std::function<void(const BlockType)> onBlockComplete_;
 
   void MinerThreadEntrypoint()
   {
-    std::random_device rd;
-    std::mt19937       rng(rd());
-
     // schedule the next block time
-    Timestamp next_block_time = CalculateNextBlockTime(rng);
+    Timestamp next_block_time = Clock::now() + block_interval_;
 
     BlockHash previous_heaviest;
 
@@ -113,7 +112,7 @@ private:
     while (!stop_)
     {
       // determine the heaviest block
-      auto &block = mainChain_.HeaviestBlock();
+      auto &block = main_chain_.HeaviestBlock();
 
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
@@ -122,14 +121,14 @@ private:
                        " from: ", byte_array::ToBase64(block.prev()));
 
         // new heaviest has been detected
-        next_block_time    = CalculateNextBlockTime(rng);
+        next_block_time    = Clock::now() + block_interval_;
         previous_heaviest  = block.hash().Copy();
         searching_for_hash = false;
       }
 
       if (searching_for_hash)
       {
-        if (Miner::Mine(next_block, 100))
+        if (consensus_miner_->Mine(next_block, 100))
         {
           // Add the block
           blockCoordinator_.AddBlock(next_block);
@@ -138,10 +137,12 @@ private:
           if (on_block_complete_)
           {
             on_block_complete_(next_block);
+
+            FETCH_METRIC_BLOCK_GENERATED(next_block.hash());
           }
 
           // stop searching for the hash and schedule the next time to generate a block
-          next_block_time    = CalculateNextBlockTime(rng);
+          next_block_time    = Clock::now() + block_interval_;
           searching_for_hash = false;
         }
       }
@@ -150,7 +151,7 @@ private:
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
-        next_block_body.miner_number  = minerNumber_;
+        next_block_body.miner_number  = miner_number_;
 
         // Reset previous state
         next_block_body.slices.clear();
@@ -158,9 +159,21 @@ private:
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
         // Pack the block with transactions
-        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
+        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_, main_chain_);
         next_block.SetBody(next_block_body);
         next_block.UpdateDigest();
+
+#ifdef FETCH_ENABLE_METRICS
+        metrics::Metrics::Timestamp const now = metrics::Metrics::Clock::now();
+
+        for (auto const &slice : next_block_body.slices)
+        {
+          for (auto const &tx : slice.transactions)
+          {
+            FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
+          }
+        }
+#endif  // FETCH_ENABLE_METRICS
 
         // Mine the block
         next_block.proof().SetTarget(target_);
@@ -176,12 +189,14 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &       mainChain_;
-  chain::BlockCoordinator &blockCoordinator_;
-  MinerInterface &         miner_;
-  std::thread              thread_;
-  uint64_t                 minerNumber_{0};
-  BlockCompleteCallback    on_block_complete_;
+  chain::MainChain &                  main_chain_;
+  chain::BlockCoordinator &           blockCoordinator_;
+  MinerInterface &                    miner_;
+  ConsensusMinerInterface             consensus_miner_;
+  std::thread                         thread_;
+  uint64_t                            miner_number_{0};
+  BlockCompleteCallback               on_block_complete_;
+  std::chrono::steady_clock::duration block_interval_;
 };
 
 }  // namespace chain

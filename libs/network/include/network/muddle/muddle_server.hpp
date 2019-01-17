@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -85,18 +85,27 @@ private:
   {
     try
     {
+      LOG_STACK_TRACE_POINT;
       // un-marshall the data
       ByteArrayBuffer buffer(msg);
 
       auto packet = std::make_shared<Packet>();
-      buffer >> *packet;
+
+      {
+        LOG_STACK_TRACE_POINT;
+        buffer >> *packet;
+      }
 
       // dispatch the message to router
       router_.Route(client, packet);
     }
     catch (std::exception &ex)
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "port = ", this->port());
+      FETCH_LOG_WARN(LOGGING_NAME, "byte array size = ", msg.size());
+      FETCH_LOG_WARN(LOGGING_NAME, "byte array = ", byte_array::ToHex(msg));
       FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", client, " error: ", ex.what());
+      throw;
     }
   }
 

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -58,11 +58,24 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
       }
+
       return false;
     }
 
     // poll period
+#ifdef FETCH_PROMISE_CV
+    {
+      std::unique_lock<std::mutex> lock(notify_lock_);
+
+      // double check the state
+      if (state_ == State::WAITING)
+      {
+        notify_.wait(lock);
+      }
+    }
+#else   // !FETCH_PROMISE_CV
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
+#endif  // FETCH_PROMISE_CV
   }
 
   if (IsWaiting())
@@ -88,12 +101,35 @@ void PromiseImplementation::UpdateState(State state)
 {
   LOG_STACK_TRACE_POINT;
 
+#ifdef FETCH_PROMISE_CV
+
+  bool dispatch = false;
+
+  {
+    FETCH_LOCK(notify_lock_);
+    if (state_ == State::WAITING)
+    {
+      state_   = state;
+      dispatch = true;
+
+      // wake up all the pending threads
+      notify_.notify_all();
+    }
+  }
+
+  if (dispatch)
+  {
+    DispatchCallbacks();
+  }
+
+#else
   if (state_.exchange(state) == State::WAITING)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Promise ", id_, " set from Waiting to ", ToString(state));
 
     DispatchCallbacks();
   }
+#endif
 }
 
 void PromiseImplementation::DispatchCallbacks()
@@ -165,6 +201,14 @@ char const *ToString(PromiseState state)
   }
 
   return name;
+}
+
+static const std::array<PromiseState, 4> promise_states{
+    {PromiseState::WAITING, PromiseState::SUCCESS, PromiseState::FAILED, PromiseState::TIMEDOUT}};
+
+const std::array<PromiseState, 4> &GetAllPromiseStates()
+{
+  return promise_states;
 }
 
 }  // namespace service

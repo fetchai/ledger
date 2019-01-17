@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -93,7 +93,6 @@ public:
   // Meta: Update hash
   void UpdateDigest()
   {
-
     serializers::ByteArrayBuffer buf;
     buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
         << body_.miner_number;

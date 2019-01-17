@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public:
   using Payload         = Packet::Payload;
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
+  using NetworkId       = byte_array::ConstByteArray;
 
   // Construction / Destruction
   MuddleEndpoint()          = default;
@@ -101,6 +102,8 @@ public:
    * @return A valid pointer if the successful, otherwise an invalid pointer
    */
   virtual SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) = 0;
+
+  virtual NetworkId network_id() = 0;
 };
 
 }  // namespace muddle

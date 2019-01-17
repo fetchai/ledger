@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 
   namespace py = pybind11;
   //             .def("Relu",
-  py::class_<NDArray<T>, fetch::math::ShapeLessArray<T>>(module, custom_name.c_str())
+  py::class_<NDArray<T>, fetch::math::ShapelessArray<T>>(module, custom_name.c_str())
       .def(py::init<>())
       .def(py::init<std::size_t const &>())
       .def(py::init<std::vector<std::size_t> const &>())
@@ -435,17 +435,9 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              }
              s[idx] = val;
            })
-      .def("__setitem__",
-           [](NDArray<T> &s, std::size_t idx, T val) {
-             if (idx >= s.size())
-             {
-               throw py::index_error();
-             }
-             s[idx] = val;
-           })
       .def("max",
            [](NDArray<T> &a) {
-             typename NDArray<T>::type ret = -std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = -std::numeric_limits<typename NDArray<T>::Type>::max();
              Max(a, ret);
              return a;
            })
@@ -471,7 +463,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
            })
       .def("min",
            [](NDArray<T> const &a) {
-             typename NDArray<T>::type ret = std::numeric_limits<typename NDArray<T>::type>::max();
+             typename NDArray<T>::Type ret = std::numeric_limits<typename NDArray<T>::Type>::max();
              Min(a, ret);
              return a;
            })
@@ -609,11 +601,11 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
              fetch::math::ExpandDimensions(input_array, axis);
              return input_array;
            })
-      .def("softmax",
-           [](NDArray<T> const &array, NDArray<T> &ret) {
-             Softmax(array, ret);
-             return ret;
-           })
+      //      .def("softmax",
+      //           [](NDArray<T> &array, NDArray<T> &ret) {
+      //             Softmax(array, ret);
+      //             return ret;
+      //           })
       .def("major_order_flip", [](NDArray<T> &array) { array.MajorOrderFlip(); })
       .def("major_order",
            [](NDArray<T> &array) {

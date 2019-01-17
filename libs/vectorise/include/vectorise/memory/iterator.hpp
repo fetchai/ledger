@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include <cassert>
+#include <iterator>
 
 namespace fetch {
 namespace memory {
 
 template <typename T>
-class ForwardIterator
+class ForwardIterator : public std::iterator<std::forward_iterator_tag, T>
 {
 public:
   ForwardIterator() = delete;
@@ -69,7 +70,7 @@ private:
 };
 
 template <typename T>
-class BackwardIterator
+class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
 {
 public:
   BackwardIterator() = delete;
@@ -113,5 +114,30 @@ private:
   T *pos_   = nullptr;
   T *begin_ = nullptr;
 };
+
 }  // namespace memory
 }  // namespace fetch
+
+namespace std {
+
+template <typename T>
+struct iterator_traits<fetch::memory::ForwardIterator<T>>
+{
+  using difference_type   = std::ptrdiff_t;
+  using value_type        = std::remove_cv_t<T>;
+  using pointer           = T *;
+  using reference         = T &;
+  using iterator_category = std::forward_iterator_tag;
+};
+
+template <typename T>
+struct iterator_traits<fetch::memory::BackwardIterator<T>>
+{
+  using difference_type   = std::ptrdiff_t;
+  using value_type        = std::remove_cv_t<T>;
+  using pointer           = T *;
+  using reference         = T &;
+  using iterator_category = std::forward_iterator_tag;
+};
+
+}  // namespace std

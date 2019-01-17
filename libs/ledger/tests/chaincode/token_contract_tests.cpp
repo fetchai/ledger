@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,13 +36,15 @@ using ::testing::_;
 using namespace fetch;
 using namespace fetch::ledger;
 
+using fetch::variant::Variant;
+
 class TokenContractTests : public ::testing::Test
 {
 protected:
-  using query_type    = Contract::query_type;
-  using contract_type = std::unique_ptr<TokenContract>;
-  using storage_type  = std::unique_ptr<MockStorageUnit>;
-  using address_type  = fetch::byte_array::ConstByteArray;
+  using Query              = Contract::Query;
+  using TokenContractPtr   = std::unique_ptr<TokenContract>;
+  using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
+  using Address            = fetch::byte_array::ConstByteArray;
 
   enum
   {
@@ -57,7 +59,7 @@ protected:
     contract_->Attach(*storage_);
   }
 
-  bool CreateWealth(address_type const &address, uint64_t amount)
+  bool CreateWealth(Address const &address, uint64_t amount)
   {
 
     EXPECT_CALL(*storage_, Get(_)).Times(0);
@@ -92,7 +94,7 @@ protected:
     return (Contract::Status::OK == status);
   }
 
-  bool Transfer(address_type const &from, address_type const &to, uint64_t amount)
+  bool Transfer(Address const &from, Address const &to, uint64_t amount)
   {
 
     EXPECT_CALL(*storage_, Get(_)).Times(1);
@@ -128,7 +130,7 @@ protected:
     return (Contract::Status::OK == status);
   }
 
-  bool GetBalance(address_type const &address, uint64_t &balance)
+  bool GetBalance(Address const &address, uint64_t &balance)
   {
 
     EXPECT_CALL(*storage_, Get(_)).Times(1);
@@ -145,11 +147,10 @@ protected:
     bool success = false;
 
     // formulate the query
-    query_type query;
-    query.MakeObject();
+    Query query      = Variant::Object();
     query["address"] = byte_array::ToBase64(address);
 
-    query_type response;
+    Query response;
     if (Contract::Status::OK == contract_->DispatchQuery("balance", query, response))
     {
       balance = response["balance"].As<uint64_t>();
@@ -159,7 +160,7 @@ protected:
     return success;
   }
 
-  address_type GenerateAddress()
+  Address GenerateAddress()
   {
     fetch::byte_array::ByteArray buffer;
     buffer.Resize(IDENTITY_SIZE);
@@ -172,8 +173,8 @@ protected:
     return buffer;
   }
 
-  contract_type contract_;
-  storage_type  storage_;
+  TokenContractPtr   contract_;
+  MockStorageUnitPtr storage_;
 };
 
 TEST_F(TokenContractTests, CheckWealthCreation)

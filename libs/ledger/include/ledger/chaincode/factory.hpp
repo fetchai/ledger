@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ namespace ledger {
 class ChainCodeFactory
 {
 public:
-  using contract_id_type      = byte_array::ConstByteArray;
-  using chain_code_type       = std::shared_ptr<Contract>;
-  using factory_callable_type = std::function<chain_code_type()>;
-  using factory_registry_type = std::unordered_map<contract_id_type, factory_callable_type>;
-  using contract_set_type     = std::unordered_set<contract_id_type>;
+  using ContractName    = byte_array::ConstByteArray;
+  using ContractPtr     = std::shared_ptr<Contract>;
+  using FactoryCallable = std::function<ContractPtr()>;
+  using FactoryRegistry = std::unordered_map<ContractName, FactoryCallable>;
+  using ContractNameSet = std::unordered_set<ContractName>;
 
-  chain_code_type          Create(contract_id_type const &name) const;
-  contract_set_type const &GetContracts() const;
+  ContractPtr            Create(ContractName const &name) const;
+  ContractNameSet const &GetContracts() const;
 };
 
 }  // namespace ledger

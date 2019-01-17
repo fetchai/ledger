@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, shared_request_type req)
+  void HandleError(std::error_code const &ec, shared_request_type /*req*/)
   {
     LOG_STACK_TRACE_POINT;
 

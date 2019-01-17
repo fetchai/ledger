@@ -1,7 +1,7 @@
 #pragma once
 ///------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace examples {
 namespace common {
 
 template <typename T>
-void ToBase64(T &stream, chain::Transaction::signatures_type::value_type const &signature)
+void ToBase64(T &stream, chain::Signatory const &signature)
 {
   stream << "signature: " << byte_array::ToBase64(signature.second.signature_data)
          << ", sig.type: " << byte_array::ToBase64(signature.second.type)
@@ -34,7 +34,7 @@ void ToBase64(T &stream, chain::Transaction::signatures_type::value_type const &
 }
 
 template <typename T>
-void ToBase64(T &stream, chain::Transaction::signatures_type const &signatures)
+void ToBase64(T &stream, chain::Signatories const &signatures)
 {
   for (auto const &sig : signatures)
   {

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ public:
   using Promise              = service::Promise;
   using StorageUnitClientPtr = std::shared_ptr<StorageUnitClient>;
 
+  using Client    = StorageUnitClient::Client;
+  using ClientPtr = StorageUnitClient::ClientPtr;
+  using Address   = StorageUnitClient::Address;
+
   explicit LaneRemoteControl(StorageUnitClientPtr storage_unit)
     : storage_unit_(std::move(storage_unit))
   {}
@@ -49,12 +53,14 @@ public:
 
   void Shutdown(LaneIndex lane) override
   {
-    auto ptr = LookupLane(lane);
-    if (ptr)
+    auto    ptr = GetClientForLane(lane);
+    Address address;
+    if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
+        auto p =
+            ptr->CallSpecificAddress(address, RPC_CONTROLLER, LaneControllerProtocol::SHUTDOWN);
         FETCH_LOG_PROMISE();
         p->Wait();
       }
@@ -68,12 +74,14 @@ public:
 
   uint32_t GetLaneNumber(LaneIndex lane) override
   {
-    auto ptr = LookupLane(lane);
-    if (ptr)
+    auto    ptr = GetClientForLane(lane);
+    Address address;
+    if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->Call(RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
+        auto p =
+            ptr->CallSpecificAddress(address, RPC_IDENTITY, LaneIdentityProtocol::GET_LANE_NUMBER);
         return p->As<uint32_t>();
       }
       catch (...)
@@ -89,12 +97,14 @@ public:
 
   int IncomingPeers(LaneIndex lane) override
   {
-    auto ptr = LookupLane(lane);
-    if (ptr)
+    auto    ptr = GetClientForLane(lane);
+    Address address;
+    if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::INCOMING_PEERS);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::INCOMING_PEERS);
         return p->As<int>();
       }
       catch (...)
@@ -111,13 +121,14 @@ public:
 
   int OutgoingPeers(LaneIndex lane) override
   {
-    auto ptr = LookupLane(lane);
-
-    if (ptr)
+    auto    ptr = GetClientForLane(lane);
+    Address address;
+    if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        auto p = ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::OUTGOING_PEERS);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::OUTGOING_PEERS);
         return p->As<int>();
       }
       catch (...)
@@ -134,13 +145,14 @@ public:
 
   virtual void UseThesePeers(LaneIndex lane, const std::unordered_set<Uri> &uris) override
   {
-    auto ptr = LookupLane(lane);
-
-    if (ptr)
+    auto    ptr = GetClientForLane(lane);
+    Address address;
+    if (ptr && GetAddressForLane(lane, address))
     {
       try
       {
-        ptr->Call(RPC_CONTROLLER, LaneControllerProtocol::USE_THESE_PEERS, uris);
+        auto p = ptr->CallSpecificAddress(address, RPC_CONTROLLER,
+                                          LaneControllerProtocol::USE_THESE_PEERS, uris);
         return;
       }
       catch (...)
@@ -154,17 +166,26 @@ public:
 
   bool IsAlive(LaneIndex lane) override
   {
-    return static_cast<bool>(LookupLane(lane));
+    Address address;
+    return GetAddressForLane(lane, address);
   }
 
 private:
-  SharedService LookupLane(LaneIndex lane) const
+  ClientPtr GetClientForLane(LaneIndex lane) const
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "LookupLane ", lane, " in ", clients_.size());
-
-    FETCH_LOCK(mutex_);
-
     return storage_unit_->GetClientForLane(lane);
+  }
+  bool GetAddressForLane(LaneIndex lane, Address &address) const
+  {
+    try
+    {
+      storage_unit_->GetAddressForLane(lane, address);
+    }
+    catch (...)
+    {
+      return false;
+    }
+    return true;
   }
 
   StorageUnitClientPtr storage_unit_;

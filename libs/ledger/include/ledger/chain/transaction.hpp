@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@ class UnverifiedTransaction : private MutableTransaction
 public:
   using super_type = MutableTransaction;
   using super_type::VERSION;
-  using super_type::hasher_type;
-  using super_type::digest_type;
-  using super_type::resource_set_type;
-  using super_type::signatures_type;
+  using super_type::Hasher;
+  using super_type::TxDigest;
+  using super_type::ResourceSet;
   using super_type::resources;
   using super_type::summary;
   using super_type::data;
@@ -43,6 +42,11 @@ public:
   bool operator<(UnverifiedTransaction const &other) const
   {
     return digest() < other.digest();
+  }
+
+  MutableTransaction const &AsMutable() const
+  {
+    return static_cast<MutableTransaction const &>(*this);
   }
 
   MutableTransaction GetMutable() const
@@ -70,21 +74,27 @@ class VerifiedTransaction : public UnverifiedTransaction
 {
 public:
   using super_type = UnverifiedTransaction;
-  using super_type::hasher_type;
-  using super_type::digest_type;
-  using super_type::resource_set_type;
-  using super_type::signatures_type;
+  using super_type::Hasher;
+  using super_type::TxDigest;
+  using super_type::ResourceSet;
 
   static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
   {
     return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans)
+  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans,
+                                    bool *                                  status = nullptr)
   {
     VerifiedTransaction ret;
+
     // TODO(private issue #189)
-    ret.Finalise(trans);
+    bool const success = ret.Finalise(trans);
+    if (status)
+    {
+      *status = success;
+    }
+
     return ret;
   }
 

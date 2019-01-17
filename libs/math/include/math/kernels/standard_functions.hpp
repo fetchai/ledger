@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,33 +22,6 @@
 namespace fetch {
 namespace kernels {
 namespace stdlib {
-
-template <typename type>
-struct Abs
-{
-  void operator()(type const &x, type &y) const
-  {
-    y = std::abs(x);
-  }
-};
-
-template <typename type>
-struct Fmod
-{
-  void operator()(type const &x, type &y) const
-  {
-    y = std::fmod(x);
-  }
-};
-
-template <typename type>
-struct Remainder
-{
-  void operator()(type const &x, type &y) const
-  {
-    y = std::remainder(x);
-  }
-};
 
 template <typename type>
 struct Remquo
@@ -119,15 +92,6 @@ struct Nanl
   void operator()(type const &x, type &y) const
   {
     y = std::nanl(x);
-  }
-};
-
-template <typename type>
-struct Exp
-{
-  void operator()(type const &x, type &y) const
-  {
-    y = std::exp(x);
   }
 };
 
@@ -620,9 +584,9 @@ struct Isgreater
 template <typename type>
 struct Isgreaterequal
 {
-  void operator()(type const &x, type &y) const
+  void operator()(type const &x, type const &y, type &z) const
   {
-    y = std::isgreaterequal(x);
+    z = std::isgreaterequal(x, y);
   }
 };
 

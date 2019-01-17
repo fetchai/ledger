@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,37 +17,102 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/metrics/metrics.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
+#include "ledger/transaction_verifier.hpp"
 #include "miner/miner_interface.hpp"
+
+#include <atomic>
+#include <thread>
 
 namespace fetch {
 namespace ledger {
 
-class TransactionProcessor
+class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner)
-    : storage_{storage}
-    , miner_{miner}
-  {}
+  using MutableTransaction = chain::MutableTransaction;
 
-  void AddTransaction(chain::Transaction const &tx)
-  {
-    FETCH_METRIC_TX_SUBMITTED(tx.digest());
+  using TransactionList = std::vector<chain::Transaction>;
 
-    // tell the node about the transaction
-    storage_.AddTransaction(tx);
+  static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
-    // tell the miner about the transaction
-    miner_.EnqueueTransaction(tx.summary());
-  }
+  // Construction / Destruction
+  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner,
+                       std::size_t num_threads);
+  TransactionProcessor(TransactionProcessor const &) = delete;
+  TransactionProcessor(TransactionProcessor &&)      = delete;
+  ~TransactionProcessor() override                   = default;
+
+  /// @name Processor Controls
+  /// @{
+  void Start();
+  void Stop();
+  /// @}
+
+  /// @name Transaction Processing
+  /// @{
+  void AddTransaction(MutableTransaction const &mtx);
+  void AddTransaction(MutableTransaction &&mtx);
+  /// @}
+
+  // Operators
+  TransactionProcessor &operator=(TransactionProcessor const &) = delete;
+  TransactionProcessor &operator=(TransactionProcessor &&) = delete;
+
+protected:
+  /// @name Unverified Transaction Sink
+  /// @{
+  void OnTransaction(chain::UnverifiedTransaction const &tx) override;
+  /// @}
+
+  /// @name Transaction Handlers
+  /// @{
+  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransactions(TransactionList const &txs) override;
+  /// @}
 
 private:
   StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
+  TransactionVerifier    verifier_;
 };
+
+/**
+ * Start the transaction processor
+ */
+inline void TransactionProcessor::Start()
+{
+  verifier_.Start();
+}
+
+/**
+ * Stop the transactions processor
+ */
+inline void TransactionProcessor::Stop()
+{
+  verifier_.Stop();
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction const &mtx)
+{
+  verifier_.AddTransaction(mtx);
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+inline void TransactionProcessor::AddTransaction(MutableTransaction &&mtx)
+{
+  verifier_.AddTransaction(std::move(mtx));
+}
 
 }  // namespace ledger
 }  // namespace fetch

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/connection_register.hpp"
@@ -114,6 +115,9 @@ public:
   using Identity        = crypto::Identity;
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
+  using NetworkId       = MuddleEndpoint::NetworkId;
+
+  using Handle = network::AbstractConnection::connection_handle_type;
 
   struct ConnectionData
   {
@@ -127,8 +131,31 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Muddle";
 
+  /* Utility instance creation function. In a real application, create
+     the muddle using loaded certificates and keys. In tests, call
+     this to just get one now.*/
+
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
+                                              fetch::network::NetworkManager tm)
+  {
+    crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
+    certificate->GenerateKeys();
+
+    std::unique_ptr<crypto::Prover> certificate_;
+    certificate_.reset(certificate);
+
+    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+  }
+
+  static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
+                                              std::unique_ptr<crypto::Prover> prover,
+                                              fetch::network::NetworkManager  tm)
+  {
+    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+  }
+
   // Construction / Destruction
-  Muddle(CertificatePtr &&certificate, NetworkManager const &nm);
+  Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle()              = default;
@@ -137,13 +164,16 @@ public:
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
+  void Shutdown();
   /// @}
 
   Identity const &identity() const;
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections();
+  ConnectionMap GetConnections(bool direct_only = false);
+
+  bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
   PeerConnectionList &useClients();
 
@@ -151,13 +181,29 @@ public:
   /// @{
   void            AddPeer(Uri const &peer);
   void            DropPeer(Uri const &peer);
+  void            DropPeer(Address const &peer);
   std::size_t     NumPeers() const;
   ConnectionState GetPeerState(Uri const &uri);
+
+  void Blacklist(Address const &target);
+  void Whitelist(Address const &target);
+  bool IsBlacklisted(Address const &target) const;
   /// @}
+
+  bool IsConnected(Address const &target) const
+  {
+    return router_.IsConnected(target);
+  }
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
+
+  void Debug(std::string const &prefix)
+  {
+    router_.Debug(prefix);
+    clients_.Debug(prefix);
+  }
 
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
@@ -187,6 +233,7 @@ private:
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
+  NetworkId            network_id_;
 };
 
 inline Muddle::Identity const &Muddle::identity() const
@@ -201,11 +248,23 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
+                 byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
 }
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
+  Handle handle = clients_.UriToHandle(peer);
+  if (handle != 0)
+  {
+    Address address;
+    if (router_.HandleToDirectAddress(handle, address))
+    {
+      router_.DropHandle(handle, address);
+      clients_.RemoveConnection(handle);
+    }
+  }
   clients_.RemovePersistentPeer(peer);
 }
 

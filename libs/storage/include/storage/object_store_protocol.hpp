@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/protocol.hpp"
-#include "storage/object_store.hpp"
+#include "storage/transient_object_store.hpp"
 #include <functional>
 
 namespace fetch {
@@ -33,20 +33,42 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
+  struct Element
+  {
+    ResourceID key;
+    T          value;
+
+    template <typename S>
+    friend void Serialize(S &s, Element const &e)
+    {
+      s << e.key << e.value;
+    }
+
+    template <typename S>
+    friend void Deserialize(S &s, Element &e)
+    {
+      s >> e.key >> e.value;
+    }
+  };
+
+  using ElementList = std::vector<Element>;
+
   enum
   {
     GET = 0,
     SET,
+    SET_BULK,
     HAS
   };
 
-  ObjectStoreProtocol(ObjectStore<T> *obj_store)
+  ObjectStoreProtocol(TransientObjectStore<T> *obj_store)
     : fetch::service::Protocol()
   {
     obj_store_ = obj_store;
     this->Expose(GET, this, &self_type::Get);
     this->Expose(SET, this, &self_type::Set);
-    this->Expose(HAS, obj_store, &ObjectStore<T>::Has);
+    this->Expose(SET_BULK, this, &self_type::SetBulk);
+    this->Expose(HAS, obj_store, &TransientObjectStore<T>::Has);
   }
 
   void OnSetObject(event_set_object_type const &f)
@@ -57,7 +79,7 @@ public:
 private:
   void Set(ResourceID const &rid, T const &object)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Setting object in object store protocol");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting object in object store protocol");
 
     if (on_set_)
     {
@@ -67,15 +89,34 @@ private:
     obj_store_->Set(rid, object);
   }
 
+  void SetBulk(ElementList const &elements)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Setting multiple objects in object store protocol");
+
+    // loop through and set all the values
+    for (Element const &element : elements)
+    {
+      Set(element.key, element.value);
+    }
+  }
+
   T Get(ResourceID const &rid)
   {
     T ret;
-    obj_store_->Get(rid, ret);
+
+    if (!obj_store_->Get(rid, ret))
+    {
+      throw std::runtime_error("Unable to lookup element in from storage unit");
+    }
+
+    // once we have retrieved a transaction from the core it is important that we persist it to disk
+    obj_store_->Confirm(rid);
+
     return ret;
   }
 
-  ObjectStore<T> *      obj_store_;
-  event_set_object_type on_set_;
+  TransientObjectStore<T> *obj_store_;
+  event_set_object_type    on_set_;
 };
 
 }  // namespace storage

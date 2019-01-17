@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,6 +48,16 @@ public:
   byte_array::ConstByteArray id() const;
   Group                      resource_group() const;
   Group                      lane(std::size_t log2_num_lanes) const;
+
+  bool operator==(ResourceID const &other) const;
+
+  std::string ToString() const
+  {
+    return static_cast<std::string>(ToBase64(id_));
+  }
+
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BITS  = 256;
+  static constexpr std::size_t RESOURCE_ID_SIZE_IN_BYTES = RESOURCE_ID_SIZE_IN_BITS / 8;
 
 private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
@@ -104,6 +114,11 @@ inline ResourceID::Group ResourceID::lane(std::size_t log2_num_lanes) const
   Group const group_mask = (1u << log2_num_lanes) - 1u;
 
   return resource_group() & group_mask;
+}
+
+inline bool ResourceID::operator==(ResourceID const &other) const
+{
+  return id_ == other.id_;
 }
 
 /**
@@ -172,3 +187,20 @@ private:
 
 }  // namespace storage
 }  // namespace fetch
+
+namespace std {
+
+template <>
+struct hash<fetch::storage::ResourceID>
+{
+  std::size_t operator()(fetch::storage::ResourceID const &rid) const
+  {
+    auto const &id = rid.id();
+    assert(id.size() >= sizeof(std::size_t));
+
+    // this is generally fine because the resource ID is in fact a SHA256
+    return *reinterpret_cast<std::size_t const *>(id.pointer());
+  }
+};
+
+}  // namespace std

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -96,7 +96,8 @@ private:
   LinearCongruentialGenerator lcg_;
 
   random_type             buffer_[Q];
-  static constexpr double inv_double_max_ = 1. / std::numeric_limits<random_type>::max();
+  static constexpr double inv_double_max_ =
+      1. / static_cast<double>(std::numeric_limits<random_type>::max());
 };
 }  // namespace random
 }  // namespace fetch

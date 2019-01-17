@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,9 +50,9 @@ public:
     {
       lane_management_.UseThesePeers(instance_number(), peers());
     }
-    catch (std::exception ex)
+    catch (std::exception const &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing serveice", instance_number(),
+      FETCH_LOG_ERROR(LOGGING_NAME, "Refresh ", "Error refreshing service", instance_number(),
                       " reason: ", ex.what());
     }
   }

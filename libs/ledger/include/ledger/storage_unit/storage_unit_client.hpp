@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -41,7 +45,7 @@
 namespace fetch {
 namespace ledger {
 
-class LaneConnectorWorker;
+class MuddleLaneConnectorWorker;
 
 class StorageUnitClient : public StorageUnitInterface
 {
@@ -52,11 +56,21 @@ public:
     std::atomic<uint32_t> lane{0};
   };
 
+  using Client    = muddle::rpc::Client;
+  using ClientPtr = std::shared_ptr<Client>;
+  using MuddleEp  = muddle::MuddleEndpoint;
+  using Muddle    = muddle::Muddle;
+  using MuddlePtr = std::shared_ptr<Muddle>;
+  using Address   = Muddle::Address;  // == a crypto::Identity.identifier_
+  using Uri       = Muddle::Uri;
+  using Peer      = fetch::network::Peer;
+
   using LaneIndex            = LaneIdentity::lane_type;
   using ServiceClient        = service::ServiceClient;
   using SharedServiceClient  = std::shared_ptr<ServiceClient>;
   using WeakServiceClient    = std::weak_ptr<ServiceClient>;
   using SharedServiceClients = std::map<LaneIndex, SharedServiceClient>;
+  using LaneToIdentity       = std::map<LaneIndex, Address>;
   using ClientRegister       = fetch::network::ConnectionRegister<ClientDetails>;
   using Handle               = ClientRegister::connection_handle_type;
   using NetworkManager       = fetch::network::NetworkManager;
@@ -65,7 +79,6 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using Mutex                = fetch::mutex::Mutex;
   using LockT                = std::lock_guard<Mutex>;
-  using Peer                 = fetch::network::Peer;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -74,81 +87,131 @@ public:
   {}
 
   StorageUnitClient(StorageUnitClient const &) = delete;
-  StorageUnitClient(StorageUnitClient &&)      = delete;
+
+  StorageUnitClient(StorageUnitClient &&) = delete;
 
   StorageUnitClient &operator=(StorageUnitClient const &) = delete;
+
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
   void SetNumberOfLanes(LaneIndex count)
   {
     SetLaneLog2(count);
+    muddles_.resize(count);
+    clients_.resize(count);
     assert(count == (1u << log2_lanes_));
   }
 
 public:
-  template <typename T>
   size_t AddLaneConnectionsWaiting(
-      const std::map<LaneIndex, Peer> &lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
-  {
-    AddLaneConnections<T>(lanes, timeout);
-    for (;;)
-    {
-      {
-        FETCH_LOCK(mutex_);
-        if (bg_work_.CountPending() < 1)
-        {
-          break;
-        }
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+      std::map<LaneIndex, Uri> const & lanes,
+      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(1000));
 
-    bg_work_.DiscardFailures();
-    bg_work_.DiscardTimeouts();
+  void AddLaneConnections(
+      std::map<LaneIndex, Uri> const & lanes,
+      std::chrono::milliseconds const &timeout = std::chrono::milliseconds(10000));
 
-    FETCH_LOCK(mutex_);
-    return lanes_.size();
-  }
-
-  bool ClientForLaneConnected(LaneIndex lane)
+  void GetAddressForLane(LaneIndex lane, Address &address) const
   {
     FETCH_LOCK(mutex_);
-    auto iter = lanes_.find(lane);
-    return (iter != lanes_.end());
+
+    auto iter = lane_to_identity_map_.find(lane);
+    if (iter != lane_to_identity_map_.end())
+    {
+      address = iter->second;
+      return;
+    }
+    throw std::runtime_error("Could not get address for lane " + std::to_string(lane));
   }
 
-  SharedServiceClient GetClientForLane(LaneIndex lane)
+  ClientPtr GetClientForLane(LaneIndex lane)
   {
-    LockT lock(mutex_);
-    auto  iter = lanes_.find(lane);
-    if (iter != lanes_.end())
+    auto muddle = GetMuddleForLane(lane);
+    if (!clients_[lane])
     {
-      return iter->second;
+      clients_[lane] = std::make_shared<Client>(muddle->AsEndpoint(), Muddle::Address(),
+                                                SERVICE_LANE, CHANNEL_RPC);
     }
-    return SharedServiceClient();
+    return clients_[lane];
   }
 
   void AddTransaction(chain::VerifiedTransaction const &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
-    auto      res     = fetch::storage::ResourceID(tx.digest());
-    LaneIndex lane    = res.lane(log2_lanes_);
-    auto      promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::SET, res, tx);
+    auto      res  = fetch::storage::ResourceID(tx.digest());
+    LaneIndex lane = res.lane(log2_lanes_);
 
+    Address address;
+    GetAddressForLane(lane, address);
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET, res, tx);
     FETCH_LOG_PROMISE();
     promise->Wait();
+  }
+
+  void AddTransactions(TransactionList const &txs) override
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+
+    std::vector<protocol::ElementList> transaction_lists(1 << log2_lanes_);
+
+    for (auto const &tx : txs)
+    {
+      // determine the lane for this given transaction
+      auto      res  = fetch::storage::ResourceID(tx.digest());
+      LaneIndex lane = res.lane(log2_lanes_);
+
+      transaction_lists.at(lane).push_back({res, tx});
+    }
+
+    std::vector<Promise> promises;
+    promises.reserve(1 << log2_lanes_);
+
+    // dispatch all the set requests off
+    {
+      LaneIndex lane{0};
+      for (auto const &list : transaction_lists)
+      {
+        Address address;
+        GetAddressForLane(lane, address);
+        auto client = GetClientForLane(lane);
+        if (!list.empty())
+        {
+          promises.emplace_back(
+              client->CallSpecificAddress(address, RPC_TX_STORE, protocol::SET_BULK, list));
+        }
+
+        ++lane;
+      }
+    }
+
+    // wait for all the requests to complete
+    for (auto &promise : promises)
+    {
+      promise->Wait();
+    }
   }
 
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
 
-    auto      res     = fetch::storage::ResourceID(digest);
-    LaneIndex lane    = res.lane(log2_lanes_);
-    auto      promise = lanes_[lane]->Call(RPC_TX_STORE, protocol::GET, res);
-    tx                = promise->As<chain::VerifiedTransaction>();
+    auto      res  = fetch::storage::ResourceID(digest);
+    LaneIndex lane = res.lane(log2_lanes_);
+    Address   address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
+      return false;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
+    tx           = promise->As<chain::VerifiedTransaction>();
 
     return true;
   }
@@ -157,8 +220,21 @@ public:
   {
     LaneIndex lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get or create document, because: ", e.what());
+      Document doc;
+      doc.failed = true;
+      return doc;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET_OR_CREATE,
         key.as_resource_id());
 
     return promise->As<storage::Document>();
@@ -168,8 +244,23 @@ public:
   {
     LaneIndex lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::GET, key.as_resource_id());
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to get document, because: ", e.what());
+      Document doc;
+      doc.failed = true;
+      return doc;
+    }
+
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(address, RPC_STATE,
+                                               fetch::storage::RevertibleDocumentStoreProtocol::GET,
+                                               key.as_resource_id());
 
     return promise->As<storage::Document>();
   }
@@ -178,8 +269,20 @@ public:
   {
     LaneIndex lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::LOCK, key.as_resource_id());
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Lock, because: ", e.what());
+      return false;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::LOCK,
+        key.as_resource_id());
 
     return promise->As<bool>();
   }
@@ -188,8 +291,20 @@ public:
   {
     LaneIndex lane = key.lane(log2_lanes_);
 
-    auto promise = lanes_[lane]->Call(
-        RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK, key.as_resource_id());
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call Unlock, because: ", e.what());
+      return false;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::UNLOCK,
+        key.as_resource_id());
 
     return promise->As<bool>();
   }
@@ -198,9 +313,20 @@ public:
   {
     LaneIndex lane = key.lane(log2_lanes_);
 
-    auto promise =
-        lanes_[lane]->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::SET,
-                           key.as_resource_id(), value);
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
+      return;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(address, RPC_STATE,
+                                               fetch::storage::RevertibleDocumentStoreProtocol::SET,
+                                               key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
     promise->Wait();
@@ -209,11 +335,12 @@ public:
   void Commit(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (auto const &lanedata : lanes_)
+    for (auto const &lanedata : lane_to_identity_map_)
     {
-      auto const &client  = lanedata.second;
-      auto        promise = client->Call(
-          RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
+      auto const &address = lanedata.second;
+      auto        client  = GetClientForLane(lanedata.first);
+      auto        promise = client->CallSpecificAddress(
+          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
       promises.push_back(promise);
     }
 
@@ -227,11 +354,12 @@ public:
   void Revert(bookmark_type const &bookmark) override
   {
     std::vector<service::Promise> promises;
-    for (auto const &lanedata : lanes_)
+    for (auto const &lanedata : lane_to_identity_map_)
     {
-      auto const &client  = lanedata.second;
-      auto        promise = client->Call(
-          RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
+      auto const &address = lanedata.second;
+      auto        client  = GetClientForLane(lanedata.first);
+      auto        promise = client->CallSpecificAddress(
+          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
       promises.push_back(promise);
     }
 
@@ -245,90 +373,73 @@ public:
   byte_array::ConstByteArray Hash() override
   {
     // TODO(issue 33): Which lane?
-
-    if (lanes_.empty())
+    Address address;
+    try
     {
-      TODO_FAIL("Lanes array empty when trying to get a hash from L0");
+      GetAddressForLane(0, address);
     }
-    if (!lanes_[0])
+    catch (std::runtime_error &e)
     {
-      TODO_FAIL("L0 null when trying to get a hash from L0");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Lanes array empty when trying to get a hash from L0: ", e.what());
+      throw e;
     }
-
-    return lanes_[0]
-        ->Call(RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH)
+    auto client = GetClientForLane(0);
+    return client
+        ->CallSpecificAddress(address, RPC_STATE,
+                              fetch::storage::RevertibleDocumentStoreProtocol::HASH)
         ->As<byte_array::ByteArray>();
   }
 
   std::size_t lanes() const
   {
-    return lanes_.size();
+    return lane_to_identity_map_.size();
   }
 
   bool IsAlive() const
   {
-    bool alive = true;
-    for (auto const &lanedata : lanes_)
-    {
-      auto const &client = lanedata.second;
-      if (!client->is_alive())
-      {
-        alive = false;
-        break;
-      }
-    }
-    return alive;
+    return true;
   }
 
 private:
 private:
-  friend class LaneConnectorWorker;  // this will do work for us, it's
-                                     // easier if it has access to our
-                                     // types.
+  friend class LaneConnectorWorkerInterface;
+
+  friend class MuddleLaneConnectorWorker;
+
+  friend class LaneConnectorWorker;  // these will do work for us, it's
+  // easier if it has access to our
+  // types.
   enum class State
   {
     INITIAL = 0,
     CONNECTING,
     QUERYING,
-    PINGING,
     SNOOZING,
-    DONE,
+    SUCCESS,
     TIMEDOUT,
     FAILED,
   };
 
-  using Worker                  = LaneConnectorWorker;
-  using WorkerP                 = std::shared_ptr<Worker>;
-  using BackgroundedWork        = network::BackgroundedWork<LaneConnectorWorker>;
-  using BackgroundedWorkThread  = network::HasWorkerThread<BackgroundedWork>;
-  using BackgroundedWorkThreadP = std::shared_ptr<BackgroundedWorkThread>;
+  using Worker                    = MuddleLaneConnectorWorker;
+  using WorkerPtr                 = std::shared_ptr<Worker>;
+  using BackgroundedWork          = network::BackgroundedWork<Worker>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
+  using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
+  using Muddles                   = std::vector<MuddlePtr>;
+  using Clients                   = std::vector<ClientPtr>;
 
   void WorkCycle();
 
-  std::shared_ptr<LaneConnectorWorker> MakeWorker(LaneIndex lane, SharedServiceClient client,
-                                                  std::string               name,
-                                                  std::chrono::milliseconds timeout);
-  template <typename T>
-  void AddLaneConnections(
-      const std::map<LaneIndex, Peer> &lanes,
-      const std::chrono::milliseconds &timeout = std::chrono::milliseconds(1000))
+  std::shared_ptr<Muddle> GetMuddleForLane(LaneIndex lane)
   {
-    if (!workthread_)
+    if (!muddles_[lane])
     {
-      workthread_ =
-          std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+      muddles_[lane] = Muddle::CreateMuddle(Muddle::NetworkId("Storage" + std::to_string(lane)),
+                                            network_manager_);
+      muddles_[lane]->Start({});
     }
-
-    for (auto const &lane : lanes)
-    {
-      auto                lanenum = lane.first;
-      auto                target  = lane.second;
-      SharedServiceClient client  = register_.template CreateServiceClient<T>(
-          network_manager_, target.address(), target.port());
-      std::string name   = target.ToString();
-      auto        worker = MakeWorker(lanenum, client, name, std::chrono::milliseconds(timeout));
-      bg_work_.Add(worker);
-    }
+    return muddles_[lane];
   }
 
   void SetLaneLog2(LaneIndex count)
@@ -336,13 +447,14 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
-  NetworkManager          network_manager_;
-  uint32_t                log2_lanes_ = 0;
-  ClientRegister          register_;
-  Mutex                   mutex_{__LINE__, __FILE__};
-  SharedServiceClients    lanes_;
-  BackgroundedWork        bg_work_;
-  BackgroundedWorkThreadP workthread_;
+  NetworkManager            network_manager_;
+  uint32_t                  log2_lanes_ = 0;
+  mutable Mutex             mutex_{__LINE__, __FILE__};
+  LaneToIdentity            lane_to_identity_map_;
+  BackgroundedWork          bg_work_;
+  BackgroundedWorkThreadPtr workthread_;
+  Muddles                   muddles_;
+  Clients                   clients_;
 };
 
 }  // namespace ledger

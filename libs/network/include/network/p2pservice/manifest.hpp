@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
+#include "variant/variant.hpp"
 
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace fetch {
@@ -32,200 +35,170 @@ namespace network {
 class Manifest
 {
 public:
-  using Uri               = network::Uri;
+  using Uri = network::Uri;
+
+  struct Entry
+  {
+    Uri      remote_uri;     ///< The URI to connect to
+    uint16_t local_port{0};  ///< The local port to bind to
+
+    Entry() = default;
+    Entry(Uri const uri);
+    Entry(Uri const uri, uint16_t port);
+  };
+
+  using Variant           = variant::Variant;
+  using ConstByteArray    = byte_array::ConstByteArray;
   using ServiceType       = network::ServiceType;
   using ServiceIdentifier = network::ServiceIdentifier;
+  using ServiceMap        = std::unordered_map<ServiceIdentifier, Entry>;
+
+  using const_iterator = ServiceMap::const_iterator;
 
   static constexpr char const *LOGGING_NAME = "Manifest";
 
-  static Manifest FromText(const std::string &inputlines)
-  {
-    std::map<ServiceIdentifier, Uri> temp;
-
-    std::vector<std::string> strings;
-    std::istringstream       f(inputlines);
-    std::string              s;
-    int                      linenum = 0;
-    while (getline(f, s, '\n'))
-    {
-      linenum++;
-      if (s.length() > 0)
-      {
-        if (s[0] != '#')
-        {
-          try
-          {
-            auto r = ParseLine(s);
-
-            ServiceIdentifier id{std::get<0>(r), std::get<1>(r)};
-            temp[id] = Uri{std::get<2>(r)};
-          }
-          catch (std::exception &ex)
-          {
-            throw std::invalid_argument(std::string(ex.what()) + " at line " +
-                                        std::to_string(linenum));
-          }
-        }
-      }
-    }
-    return FromMap(temp);
-  }
-
-  static Manifest FromMap(std::map<ServiceIdentifier, Uri> manifestData)
-  {
-    Manifest m;
-    for (auto &item : manifestData)
-    {
-      m.data_[item.first] = item.second;
-    }
-    return m;
-  }
-
-  const std::map<ServiceIdentifier, Uri> &GetData()
-  {
-    return data_;
-  }
-
-  network::Uri GetUri(ServiceIdentifier service_id)
-  {
-    network::Uri uri;
-
-    auto res = data_.find(service_id);
-    if (res != data_.end())
-    {
-      uri = res->second;
-    }
-
-    return uri;
-  }
-
-  bool ContainsService(ServiceIdentifier service_id)
-  {
-    auto res = data_.find(service_id);
-    return (res != data_.end());
-  }
-
+  // Construction / Destruction
   Manifest()                      = default;
   Manifest(Manifest const &other) = default;
   Manifest(Manifest &&other)      = default;
   ~Manifest()                     = default;
 
+  // Map iteration
+  size_t         size() const;
+  const_iterator begin() const;
+  const_iterator end() const;
+  const_iterator cbegin() const;
+  const_iterator cend() const;
+
+  bool Parse(ConstByteArray const &text);
+
+  void AddService(ServiceIdentifier service_id, Entry &&entry)
+  {
+    service_map_.emplace(service_id, std::move(entry));
+  }
+
+  void ForEach(std::function<void(ServiceIdentifier const &, Uri const &)> cb) const
+  {
+    for (auto &i : service_map_)
+    {
+      cb(i.first, i.second.remote_uri);
+    }
+  }
+
+#if 0
+  const std::map<ServiceIdentifier, Uri> &GetData()
+  {
+    return data_;
+  }
+#endif
+
+  bool HasService(ServiceIdentifier service_id) const
+  {
+    auto res = service_map_.find(service_id);
+    return (res != service_map_.end());
+  }
+
+  Entry const &GetService(ServiceIdentifier service_id) const
+  {
+    auto res = service_map_.find(service_id);
+    if (res == service_map_.end())
+    {
+      throw std::runtime_error("Unable to lookup requested service id");
+    }
+
+    return res->second;
+    ;
+  }
+
+  network::Uri const &GetUri(ServiceIdentifier service_id) const
+  {
+    auto res = service_map_.find(service_id);
+    if (res == service_map_.end())
+    {
+      throw std::runtime_error("Unable to lookup requested service id");
+    }
+
+    return res->second.remote_uri;
+    ;
+  }
+
+  uint16_t GetLocalPort(ServiceIdentifier service_id) const
+  {
+    auto res = service_map_.find(service_id);
+    if (res == service_map_.end())
+    {
+      throw std::runtime_error("Unable to lookup requested service id");
+    }
+
+    return res->second.local_port;
+    ;
+  }
+
+  std::string ToString() const;
+
+  template <typename T>
+  friend void Serialize(T &serializer, Manifest const &x);
+
+  template <typename T>
+  friend void Deserialize(T &serializer, Manifest &x);
+
   Manifest &operator=(Manifest &&other) = default;
   Manifest &operator=(Manifest const &other) = default;
 
-  size_t size() const
-  {
-    return data_.size();
-  }
-
-  std::map<ServiceIdentifier, Uri>::const_iterator begin() const
-  {
-    return data_.begin();
-  }
-  std::map<ServiceIdentifier, Uri>::const_iterator end() const
-  {
-    return data_.end();
-  }
-
-  void ForEach(std::function<void(const ServiceIdentifier &, const Uri &)> cb) const
-  {
-    for (auto &i : data_)
-    {
-      cb(i.first, i.second);
-    }
-  }
-
-  std::string ToString() const
-  {
-    std::string result;
-    for (auto &data : data_)
-    {
-      std::string line = std::string(service_type_names[data.first.service_type]) + "  " +
-                         std::to_string(data.first.instance_number) + "  " +
-                         static_cast<std::string>(data.second.uri()) + "\n";
-      result += line;
-    }
-    return result;
-  }
-
 private:
-  std::map<ServiceIdentifier, Uri> data_;
+  bool ExtractSection(Variant const &obj, ServiceType service, std::size_t instance = 0);
 
-  static const char *service_type_names[];
-
-  static std::tuple<ServiceType, uint32_t, std::string> ParseLine(const std::string &str)
-  {
-    std::vector<std::string> store;
-    store.push_back("");
-    store.push_back("");
-    store.push_back("");
-
-    int  part   = -1;
-    bool inword = false;
-    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
-    {
-
-      if (part < 2)
-      {
-        if (*it == ' ' || *it == '\t')
-        {
-          inword = false;
-          continue;
-        }
-      }
-      if (!inword)
-      {
-        part++;
-        FETCH_LOG_DEBUG(LOGGING_NAME, "PART=", part);
-        inword = true;
-      }
-      store[uint32_t(part)] += *it;
-    }
-
-    auto        uri = store[2];
-    ServiceType service_type;
-    uint32_t    instance;
-
-    if (store[0] == "MAINCHAIN")
-    {
-      service_type = ServiceType::MAINCHAIN;
-      instance     = 0;
-    }
-    else if (store[0] == "P2P")
-    {
-      service_type = ServiceType::P2P;
-      instance     = 0;
-    }
-    else if (store[0] == "HTTP")
-    {
-      service_type = ServiceType::HTTP;
-      instance     = 0;
-    }
-    else if (store[0] == "LANE")
-    {
-      service_type = ServiceType::LANE;
-      instance     = uint32_t(std::stoi(store[1].c_str()));
-    }
-    else
-    {
-      throw std::invalid_argument("'" + store[0] + "'");
-    }
-
-    return std::tuple<ServiceType, uint32_t, std::string>(service_type, instance, uri);
-  }
-
-  template <typename T>
-  friend void Serialize(T &serializer, Manifest const &x)
-  {
-    serializer << x.data_;
-  }
-
-  template <typename T>
-  friend void Deserialize(T &serializer, Manifest &x)
-  {
-    serializer >> x.data_;
-  }
+  ServiceMap service_map_;  ///< The underlying service map
 };
+
+inline size_t Manifest::size() const
+{
+  return service_map_.size();
+}
+
+inline Manifest::const_iterator Manifest::begin() const
+{
+  return service_map_.begin();
+}
+
+inline Manifest::const_iterator Manifest::end() const
+{
+  return service_map_.end();
+}
+
+inline Manifest::const_iterator Manifest::cbegin() const
+{
+  return service_map_.begin();
+}
+
+inline Manifest::const_iterator Manifest::cend() const
+{
+  return service_map_.end();
+}
+
+template <typename T>
+void Serialize(T &serializer, Manifest const &x)
+{
+  serializer << x.service_map_;
+}
+
+template <typename T>
+void Serialize(T &serializer, Manifest::Entry const &x)
+{
+  serializer << x.remote_uri << x.local_port;
+}
+
+template <typename T>
+void Deserialize(T &serializer, Manifest &x)
+{
+  serializer >> x.service_map_;
+}
+
+template <typename T>
+void Deserialize(T &serializer, Manifest::Entry &x)
+{
+  serializer >> x.remote_uri >> x.local_port;
+}
 
 }  // namespace network
 }  // namespace fetch

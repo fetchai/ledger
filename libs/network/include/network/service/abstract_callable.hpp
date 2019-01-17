@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -214,7 +214,8 @@ void PackArgs(S &serializer)
 
 enum Callable
 {
-  CLIENT_ID_ARG = 1ull
+  CLIENT_ID_ARG      = 1ull,
+  CLIENT_CONTEXT_ARG = 2ull,
 };
 
 struct CallableArgumentType

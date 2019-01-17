@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_}
@@ -86,32 +86,59 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t num_slices)
 void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
-  pending_.emplace_back(tx, log2_num_lanes_);
+
+  if (filtering_input_duplicates_)
+  {
+    if (txs_seen_.find(tx) == txs_seen_.end())
+    {
+      pending_.emplace_back(tx, log2_num_lanes_);
+      txs_seen_.insert(tx);
+    }
+  }
+  else
+  {
+    pending_.emplace_back(tx, log2_num_lanes_);
+  }
 }
 
 /**
- * Generate a new block based on the current queue of transactions
+ * Generate a new block based on the current queue of transactions. Not thread safe.
  *
  * @param block The reference to the output block to generate
  * @param num_lanes The number of lanes for the block
  * @param num_slices The number of slices for the block
  */
 void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                               std::size_t num_slices)
+                               std::size_t num_slices, chain::MainChain const &chain)
 {
   assert(num_lanes == (1u << log2_num_lanes_));
+  std::size_t pending_size = 0;
 
-  FETCH_LOCK(main_queue_lock_);
-
-  // add the entire contents of the pending queue into the main queue
+  // add the most relevant transactions of the pending queue into the main queue
   {
+    std::size_t max_block_capacity = (num_lanes * num_slices) + ((num_lanes * num_slices) / 8);
     FETCH_LOCK(pending_lock_);
-    main_queue_.splice(main_queue_.end(), pending_);
+
+    // sort the pending list by fees (pending fees high -> low)
+    pending_.sort(SortByFee);
+
+    pending_size = pending_.size();
+    auto start   = pending_.begin();
+    auto end     = start;
+    std::advance(end, static_cast<int32_t>(std::min(max_block_capacity, pending_size)));
+
+    // Take as many transactions as we need from the front of the pending queue
+    main_queue_.splice(main_queue_.end(), pending_, start, end);
   }
 
-  std::size_t const num_transactions = main_queue_.size();
+  std::size_t const num_transactions  = main_queue_.size() + pending_size;
+  std::size_t const main_transactions = main_queue_.size();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
+  // Before packing transactions, we must be sure they're unique
+  const_cast<chain::MainChain &>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
+                 ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
 
   // determine how many of the threads should be used in this block generation
   std::size_t const num_threads =
@@ -158,10 +185,19 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
     }
   }
 
-  std::size_t const packed_transactions = num_transactions - main_queue_.size();
+  std::size_t const packed_transactions    = main_transactions - main_queue_.size();
+  std::size_t const remaining_transactions = num_transactions - packed_transactions;
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
-                 " remaining: ", main_queue_.size(), ")");
+                 " remaining: ", remaining_transactions, ")");
+
+  main_queue_size_ = main_queue_.size();
+}
+
+uint64_t BasicMiner::GetBacklog() const
+{
+  FETCH_LOCK(pending_lock_);
+  return main_queue_size_ + pending_.size();
 }
 
 /**
@@ -177,7 +213,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
 void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
-  // sort the transaction list by fees
+  // sort by fees
   tx.sort(SortByFee);
 
   for (std::size_t slice_idx = offset; slice_idx < block.slices.size(); slice_idx += interval)
@@ -197,8 +233,8 @@ void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, st
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice &slice,
-                               std::size_t slice_index, std::size_t num_lanes)
+void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice & slice,
+                               std::size_t /*slice_index*/, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};
 

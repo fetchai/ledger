@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -34,39 +34,39 @@ inline A WrapperPairWiseDistance(A const &a, std::string const &method = "euclud
   ret.Resize(1, a.height() * (a.height() - 1) / 2);
   if (method == "euclidean")
   {
-    PairWiseDistance(ret, a, Euclidean<typename A::type>);
+    PairWiseDistance(ret, a, Euclidean<typename A::Type>);
   }
   else if (method == "hamming")
   {
-    PairWiseDistance(ret, a, Hamming<typename A::type>);
+    PairWiseDistance(ret, a, Hamming<typename A::Type>);
   }
   else if (method == "manhattan")
   {
-    PairWiseDistance(ret, a, Manhattan<typename A::type>);
+    PairWiseDistance(ret, a, Manhattan<typename A::Type>);
   }
   else if (method == "pearson")
   {
-    PairWiseDistance(ret, a, Pearson<typename A::type>);
+    PairWiseDistance(ret, a, Pearson<typename A::Type>);
   }
   else if (method == "eisen")
   {
-    PairWiseDistance(ret, a, Eisen<typename A::type>);
+    PairWiseDistance(ret, a, Eisen<typename A::Type>);
   }
   else if (method == "cosine")
   {
-    PairWiseDistance(ret, a, Eisen<typename A::type>);
+    PairWiseDistance(ret, a, Eisen<typename A::Type>);
   }
   else if (method == "jaccard")
   {
-    PairWiseDistance(ret, a, Jaccard<typename A::type>);
+    PairWiseDistance(ret, a, Jaccard<typename A::Type>);
   }
   else if (method == "genelralised jaccard")
   {
-    PairWiseDistance(ret, a, GeneralisedJaccard<typename A::type>);
+    PairWiseDistance(ret, a, GeneralisedJaccard<typename A::Type>);
   }
   else if (method == "braycurtis")
   {
-    PairWiseDistance(ret, a, Braycurtis<typename A::type>);
+    PairWiseDistance(ret, a, Braycurtis<typename A::Type>);
   }
   else
   {
@@ -89,9 +89,9 @@ inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind
       .def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<float>>);
-  //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapeLessArray<
+  //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapelessArray<
   //    double > >) .def(custom_name.c_str(), &WrapperPairWiseDistance<
-  //    ShapeLessArray< float > >);
+  //    ShapelessArray< float > >);
 }
 
 }  // namespace distance

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,8 +19,20 @@
 #include "network/service/server.hpp"
 #include "service_consts.hpp"
 #include <iostream>
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
 using namespace fetch::service;
 using namespace fetch::byte_array;
+
+using Muddle = fetch::muddle::Muddle;
+using Server = fetch::muddle::rpc::Server;
+using Client = fetch::muddle::rpc::Client;
+
+const int SERVICE_TEST = 1;
+const int CHANNEL_RPC  = 1;
 
 // First we make a service implementation
 class Implementation
@@ -60,28 +72,20 @@ private:
   Implementation impl_;
 };
 
-// And finanly we build the service
-class MyCoolService : public ServiceServer<fetch::network::TCPServer>
-{
-public:
-  MyCoolService(uint16_t port, fetch::network::NetworkManager tm)
-    : ServiceServer(port, tm)
-  {
-    this->Add(MYPROTO, new ServiceProtocol());
-  }
-};
-
 int main()
 {
   fetch::network::NetworkManager tm(8);
-  MyCoolService                  serv(8080, tm);
+  auto server_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
   tm.Start();
+  auto server = std::make_shared<Server>(server_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
+  server_muddle->Start({8080});
 
   std::string dummy;
   std::cout << "Press ENTER to quit" << std::endl;
   std::cin >> dummy;
 
   tm.Stop();
+  server->Add(MYPROTO, new ServiceProtocol());
 
   return 0;
 }

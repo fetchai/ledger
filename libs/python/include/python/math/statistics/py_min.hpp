@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ namespace fetch {
 namespace math {
 
 template <typename A>
-inline void WrapperMin(A const &a, typename A::type &ret)
+inline void WrapperMin(A const &a, typename A::Type &ret)
 {
-  Min<typename A::type, typename A::container_type>(a, ret);
+  Min<typename A::Type, typename A::container_type>(a, ret);
 }
 
 inline void BuildMinStatistics(std::string const &custom_name, pybind11::module &module)
@@ -37,8 +37,8 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMin<ShapeLessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMin<ShapeLessArray<float>>)
+  module.def(custom_name.c_str(), &WrapperMin<ShapelessArray<double>>)
+      .def(custom_name.c_str(), &WrapperMin<ShapelessArray<float>>)
       .def(custom_name.c_str(), &WrapperMin<Matrix<double>>)
       .def(custom_name.c_str(), &WrapperMin<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)

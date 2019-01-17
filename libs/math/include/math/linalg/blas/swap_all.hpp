@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ class Blas<S, MATRIX, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y =
 public:
   using type = S;
 
-  void operator()(int const &n, ShapeLessArray<type, memory::SharedArray<type>> &dx,
-                  int const &incx, ShapeLessArray<type, memory::SharedArray<type>> &dy,
+  void operator()(int const &n, ShapelessArray<type, memory::SharedArray<type>> &dx,
+                  int const &incx, ShapelessArray<type, memory::SharedArray<type>> &dy,
                   int const &incy) const;
 };
 

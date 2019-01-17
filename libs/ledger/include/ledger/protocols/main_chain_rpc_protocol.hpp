@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,16 +30,19 @@ class MainChainProtocol : public service::Protocol
 public:
   using Block     = chain::MainChain::BlockType;
   using BlockList = std::vector<Block>;
+  using BlockHash = chain::MainChain::BlockHash;
 
   enum
   {
-    HEAVIEST_CHAIN = 1,
+    HEAVIEST_CHAIN  = 1,
+    CHAIN_PRECEDING = 2,
   };
 
   explicit MainChainProtocol(chain::MainChain &chain)
     : chain_(chain)
   {
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
+    Expose(CHAIN_PRECEDING, this, &MainChainProtocol::GetChainPreceding);
   }
 
 private:
@@ -47,6 +50,11 @@ private:
   {
     LOG_STACK_TRACE_POINT;
     return chain_.HeaviestChain(maxsize);
+  }
+  std::vector<Block> GetChainPreceding(const BlockHash &at, uint32_t const &maxsize)
+  {
+    LOG_STACK_TRACE_POINT;
+    return chain_.ChainPreceding(at, maxsize);
   }
 
   chain::MainChain &chain_;

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 namespace fetch {
 namespace ledger {
 
-bool Contract::ParseAsJson(transaction_type const &tx, script::Variant &output)
+bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
 {
   bool success = false;
 
@@ -41,7 +41,7 @@ bool Contract::ParseAsJson(transaction_type const &tx, script::Variant &output)
 
   if (success)
   {
-    output = document.root();
+    output = std::move(document.root());
   }
 
   return success;

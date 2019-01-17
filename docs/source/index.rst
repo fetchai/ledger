@@ -21,11 +21,3 @@ Welcome to Fetch Ledger's developers guide!
    vectorise/index.rst
    vm/index.rst
    development/index.rst
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

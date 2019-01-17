@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -57,9 +57,7 @@ public:
   };
 
   explicit HTTPServer(network_manager_type const &network_manager)
-    : eval_mutex_(__LINE__, __FILE__)
-    , networkManager_(network_manager)
-    , request_mutex_(__LINE__, __FILE__)
+    : networkManager_(network_manager)
   {
     LOG_STACK_TRACE_POINT;
   }
@@ -181,7 +179,7 @@ public:
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
+        FETCH_LOG_WARN(LOGGING_NAME, "HTTP server terminated with ec: ", ec.message());
         return;
       }
 
@@ -221,7 +219,8 @@ public:
   }
 
 private:
-  fetch::mutex::Mutex eval_mutex_;
+  // TODO(unknown): (HUT) : investigate why this times out in debug mode
+  std::mutex eval_mutex_;
 
   std::vector<request_middleware_type>  pre_view_middleware_;
   std::vector<MountedView>              views_;
@@ -229,7 +228,6 @@ private:
 
   network_manager_type          networkManager_;
   std::deque<HTTPRequest>       requests_;
-  fetch::mutex::Mutex           request_mutex_;
   std::weak_ptr<acceptor_type>  acceptor_;
   std::weak_ptr<socket_type>    socket_;
   std::shared_ptr<manager_type> manager_{std::make_shared<manager_type>(*this)};

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public:
     assigners_[name]        = [name_local, &assignee, deflt_local, this](
                            const std::set<std::string> &args,
                            std::list<std::string> &     errs) mutable {
-      assignee = this->paramsParser_.GetParam<TYPE>(name_local, deflt_local);
+      assignee = this->paramsParser_.GetParam(name_local, deflt_local);
     };
 
     helpTexts_.push_back(help_text_type{name, help});
@@ -127,7 +127,7 @@ public:
         errs.push_back("Missing required argument: " + name_local);
         return;
       }
-      assignee = this->paramsParser_.GetParam<TYPE>(name_local, TYPE());
+      assignee = this->paramsParser_.GetParam(name_local, TYPE());
     };
 
     helpTexts_.push_back(help_text_type{name, help});

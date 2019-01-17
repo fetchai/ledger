@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,11 +23,14 @@
 #include "core/serializers/stl_types.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
 #include <chrono>
 #include <random>
 #include <vector>
@@ -37,6 +40,10 @@ using namespace fetch::service;
 using namespace fetch::common;
 using namespace std::chrono;
 using namespace fetch;
+
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 
 using transaction_type = fetch::chain::VerifiedTransaction;
 
@@ -81,7 +88,7 @@ public:
     volatile std::vector<transaction_type> hold = std::move(data);
   }
 
-  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
+  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool /*isMaster*/)
   {
     return MakeTransactionVector(TestData, payload, txPerCall);
   }
@@ -127,22 +134,11 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     return;
   }
 
-  std::size_t                    txData       = 0;
-  std::size_t                    rpcCalls     = 0;
-  std::size_t                    setupPayload = 0;
-  fetch::network::NetworkManager tm;
+  std::size_t txData       = 0;
+  std::size_t rpcCalls     = 0;
+  std::size_t setupPayload = 0;
 
-  fetch::network::TCPClient connection(tm);
-  connection.Connect(IP, port);
-
-  ServiceClient client(connection, tm);
-
-  tm.Start();
-
-  while (!client.is_alive())
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  TClientPtr client = MuddleTestClient::CreateTestClient(IP, port);
 
   if (!pullTest)
   {
@@ -150,7 +146,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
   }
   else
   {
-    auto p = client.Call(SERVICE, SETUP, payload, txPerCall, isMaster);
+    auto p = client->Call(SERVICE, SETUP, payload, txPerCall, isMaster);
 
     FETCH_LOG_PROMISE();
     p->Wait();
@@ -161,7 +157,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
   {
     std::cerr << "Failed to setup for payload: " << payload << " TX/call: " << txPerCall
               << std::endl;
-    tm.Stop();
     return;
   }
 
@@ -175,7 +170,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PULL);
+      auto p1 = client->Call(SERVICE, PULL);
 
       FETCH_LOG_PROMISE();
       p1->Wait();
@@ -192,7 +187,7 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
 
     while (payload * rpcCalls < stopCondition)
     {
-      auto p1 = client.Call(SERVICE, PUSH, TestData);
+      auto p1 = client->Call(SERVICE, PUSH, TestData);
 
       FETCH_LOG_PROMISE();
       p1->Wait();
@@ -203,7 +198,6 @@ void RunTest(std::size_t payload, std::size_t txPerCall, const std::string &IP, 
     t1 = high_resolution_clock::now();
   }
 
-  tm.Stop();
   double seconds = duration_cast<duration<double>>(t1 - t0).count();
   double mbps    = (double(rpcCalls * setupPayload * 8) / seconds) / 1000000;
 

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -138,7 +138,24 @@ public:
     members_[n] = fnc;
   }
 
-  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  template <typename C, typename R, typename... Args>
+  void ExposeWithClientContext(function_handler_type const &n, C *instance,
+                               R (C::*function)(Args...))
+  {
+    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                       instance, function));
+
+    auto iter = members_.find(n);
+    if (iter != members_.end())
+    {
+      throw serializers::SerializableException(
+          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+    }
+
+    members_[n] = fnc;
+  }
+
+  virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
   {}
 
   /* Registers a feed from an implementation.

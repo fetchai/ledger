@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "network/service/protocol.hpp"
 
@@ -38,9 +39,8 @@ public:
   explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
     : manager_(manager)
   {
-
     // define the RPC endpoints
-    Expose(EXECUTE, &manager_, &ExecutionManagerInterface::Execute);
+    Expose(EXECUTE, this, &ExecutionManagerRpcProtocol::Execute);
     Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
     Expose(IS_ACTIVE, &manager_, &ExecutionManagerInterface::IsActive);
     Expose(IS_IDLE, &manager_, &ExecutionManagerInterface::IsIdle);
@@ -48,6 +48,20 @@ public:
   }
 
 private:
+  using Status    = ExecutionManagerInterface::Status;
+  using Block     = ExecutionManagerInterface::Block;
+  using FullBlock = chain::MainChain::BlockType;
+
+  Status Execute(Block const &block)
+  {
+    // since the hash is not serialised we need to recalculate it
+    FullBlock full_block{};
+    full_block.SetBody(block);
+    full_block.UpdateDigest();
+
+    return manager_.Execute(full_block.body());
+  }
+
   ExecutionManagerInterface &manager_;
 };
 

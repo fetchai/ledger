@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,19 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+
 #include <random>
 
 namespace fetch {
 namespace chain {
 namespace consensus {
 
-class DummyMiner
+class DummyMiner : public ConsensusMinerInterface
 {
 
 public:
+  DummyMiner()  = default;
+  ~DummyMiner() = default;
+
   // Blocking mine
-  template <typename block_type>
-  static void Mine(block_type &block)
+  void Mine(BlockType &block) override
   {
     uint64_t initNonce = GetRandom();
     block.body().nonce = initNonce;
@@ -44,8 +48,7 @@ public:
   }
 
   // Mine for set number of iterations
-  template <typename block_type>
-  static bool Mine(block_type &block, uint64_t iterations)
+  bool Mine(BlockType &block, uint64_t iterations) override
   {
     uint32_t initNonce = GetRandom();
     block.body().nonce = initNonce;
@@ -65,9 +68,9 @@ public:
 private:
   static uint32_t GetRandom()
   {
-    static std::random_device                      rd;
-    static std::mt19937                            gen(rd());
-    static std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
+    std::random_device                      rd;
+    std::mt19937                            gen(rd());
+    std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
     return dis(gen);
   }
 };

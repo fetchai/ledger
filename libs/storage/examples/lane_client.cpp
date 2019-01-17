@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -240,7 +240,9 @@ int main(int argc, char const **argv)
       for (auto &t : tokenizer)
       {
         if (t.type() != TOKEN_CATCH_ALL)
+        {
           command.push_back(t);
+        }
       }
 
       if (command.size() > 0)

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
-#include "core/script/variant.hpp"
 #include "fetch_version.hpp"
+#include "variant/variant.hpp"
+#include "variant/variant_utils.hpp"
 
 #include <chrono>
 #include <sstream>
@@ -26,7 +27,9 @@
 namespace fetch {
 namespace {
 
-using script::Variant;
+using variant::Variant;
+using variant::Extract;
+using network::Uri;
 using http::JsonHttpClient;
 
 const char *               BOOTSTRAP_HOST = "bootstrap.economicagents.com";
@@ -92,7 +95,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   {
     auto const &ip_address = response["ip"];
 
-    if (ip_address.is_string())
+    if (ip_address.Is<std::string>())
     {
       external_address_ = ip_address.As<std::string>();
       FETCH_LOG_INFO(LOGGING_NAME, "Detected external address as: ", external_address_);
@@ -120,11 +123,10 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
 
   JsonHttpClient client{BOOTSTRAP_HOST, BOOTSTRAP_PORT};
 
-  Variant request;
-  request.MakeObject();
+  Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
   request["host"]       = external_address_;
-  request["port"]       = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]       = port_;
 
   JsonHttpClient::Headers headers;
   headers["Authorization"] = "Token " + token_;
@@ -133,7 +135,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
   if (client.Post(oss.str(), headers, request, response))
   {
     // check the formatting
-    if (!response.is_array())
+    if (!response.IsArray())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Incorrect peer-list formatting (array)");
       return false;
@@ -144,7 +146,7 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
     {
       auto const &peer_object = response[i];
 
-      if (!peer_object.is_object())
+      if (!peer_object.IsObject())
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Incorrect peer-list formatting (object)");
         return false;
@@ -153,10 +155,10 @@ bool BootstrapMonitor::RequestPeerList(UriList &peers)
       // extract all the required fields
       std::string host;
       uint16_t    port = 0;
-      if (script::Extract(peer_object, "host", host) && script::Extract(peer_object, "port", port))
+      if (Extract(peer_object, "host", host) && Extract(peer_object, "port", port))
       {
         std::string const uri = "tcp://" + host + ':' + std::to_string(port);
-        peers.emplace_back(uri);
+        peers.emplace_back(Uri{ConstByteArray{uri}});
       }
       else
       {
@@ -173,12 +175,11 @@ bool BootstrapMonitor::RegisterNode()
 {
   bool success = false;
 
-  Variant request;
-  request.MakeObject();
+  Variant request           = Variant::Object();
   request["public_key"]     = byte_array::ToBase64(identity_.identifier());
   request["network"]        = network_id_;
   request["host"]           = external_address_;
-  request["port"]           = port_ + fetch::Constellation::P2P_PORT_OFFSET;
+  request["port"]           = port_;
   request["client_name"]    = "constellation";
   request["client_version"] = fetch::version::FULL;
   request["host_name"]      = host_name_;
@@ -204,8 +205,7 @@ bool BootstrapMonitor::NotifyNode()
 {
   bool success = false;
 
-  Variant request;
-  request.MakeObject();
+  Variant request       = Variant::Object();
   request["public_key"] = byte_array::ToBase64(identity_.identifier());
 
   Variant                 response;

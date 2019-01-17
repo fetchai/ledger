@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -61,6 +61,9 @@ public:
   using PrevHash  = fetch::byte_array::ByteArray;
   using ProofType = BlockType::proof_type;
 
+  using RMutex = std::recursive_mutex;
+  using RLock  = std::unique_lock<RMutex>;
+
   static constexpr char const *LOGGING_NAME = "MainChain";
 
   // Hard code genesis on construction
@@ -88,88 +91,11 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
-  bool AddBlock(BlockType &block, bool recursive_iteration = false)
-  {
-    assert(block.body().previous_hash.size() > 0);
-
-    fetch::generics::MilliTimer           myTimer("MainChain::AddBlock");
-    std::unique_lock<fetch::mutex::Mutex> lock(main_mutex_);
-
-    if (block.hash().size() == 0)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Erk! You called AddBlock with no UpdateDigest");
-    }
-
-    BlockType prev_block;
-
-    if (!recursive_iteration)
-    {
-      // First check if block already exists (not checking in object store)
-      if (block_chain_.find(block.hash()) != block_chain_.end())
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Attempting to add already seen block");
-        return false;
-      }
-
-      // Look for the prev block to this one
-      auto it_prev = block_chain_.find(block.body().previous_hash);
-
-      if (it_prev == block_chain_.end())
-      {
-        // Note: think about rolling back into FS
-        FETCH_LOG_INFO(LOGGING_NAME,
-                       "Block prev not found: ", byte_array::ToBase64(block.body().previous_hash));
-
-        // We can't find the prev, this is probably a loose block.
-        lock.unlock();
-        return CheckDiskForBlock(block);
-      }
-
-      prev_block = (*it_prev).second;
-
-      // Also a loose block if it points to a loose block
-      if (prev_block.loose() == true)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Block connects to loose block");
-        NewLooseBlock(block);
-        return true;
-      }
-    }
-    else
-    {
-      auto it = block_chain_.find(block.body().previous_hash);
-      assert(it != block_chain_.end());
-
-      prev_block = it->second;
-    }
-
-    // At this point we have a new block with a prev that's known and not loose. Update tips
-    block.loose()         = false;
-    bool heaviestAdvanced = UpdateTips(block, prev_block);
-
-    // Add block
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block.hash()));
-    block_chain_[block.hash()] = block;
-
-    if (heaviestAdvanced)
-    {
-      WriteToFile();
-    }
-
-    // Now we're done, it's possible this added block completed some loose blocks.
-    main_mutex_.unlock();
-
-    if (!recursive_iteration)
-    {
-      CompleteLooseBlocks(block);
-    }
-
-    return true;
-  }
+  bool AddBlock(BlockType &block, bool recursive_iteration = false);
 
   BlockType const &HeaviestBlock() const
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+    RLock lock(main_mutex_);
 
     auto const &block = block_chain_.at(heaviest_.second);
 
@@ -189,14 +115,20 @@ public:
   std::vector<BlockType> HeaviestChain(
       uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
   {
-    fetch::generics::MilliTimer          myTimer("MainChain::HeaviestChain");
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+    fetch::generics::MilliTimer myTimer("MainChain::HeaviestChain");
+    RLock                       lock(main_mutex_);
 
     std::vector<BlockType> result;
 
     auto topBlock = block_chain_.at(heaviest_.second);
 
-    while ((topBlock.body().block_number != 0) && (result.size() < limit))
+    std::size_t additional_blocks = 0;
+    if (limit > 1)
+    {
+      additional_blocks = static_cast<std::size_t>(limit - 1);
+    }
+
+    while ((topBlock.body().block_number != 0) && (result.size() < additional_blocks))
     {
       result.push_back(topBlock);
       auto hash = topBlock.body().previous_hash;
@@ -211,17 +143,50 @@ public:
         break;
       }
 
-      topBlock = (*it).second;
+      topBlock = it->second;
     }
 
     result.push_back(topBlock);  // this should be genesis
     return result;
   }
 
+  std::vector<BlockType> ChainPreceding(
+      const BlockHash &at, uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const
+  {
+    fetch::generics::MilliTimer myTimer("MainChain::ChainPreceding");
+    RLock                       lock(main_mutex_);
+
+    std::vector<BlockType> result;
+
+    auto topBlock = block_chain_.at(at);
+
+    while (result.size() < limit)
+    {
+      result.push_back(topBlock);
+      if (topBlock.body().block_number == 0)
+      {
+        break;
+      }
+      auto hash = topBlock.body().previous_hash;
+      // Walk down
+      auto it = block_chain_.find(hash);
+      if (it == block_chain_.end())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Mainchain: Failed while walking down\
+            from ",
+                       byte_array::ToBase64(at), " to find genesis!");
+        break;
+      }
+      topBlock = it->second;
+    }
+    return result;
+  }
+
   void reset()
   {
-    std::lock_guard<fetch::mutex::Mutex> lock_main(main_mutex_);
-    std::lock_guard<fetch::mutex::Mutex> lock_loose(loose_mutex_);
+    RLock lock_main(main_mutex_);
+    RLock lock_loose(loose_mutex_);
 
     block_chain_.clear();
     tips_.clear();
@@ -248,19 +213,141 @@ public:
     heaviest_             = std::make_pair(genesis.weight(), genesis.hash());
   }
 
-  bool Get(BlockHash hash, BlockType &block) const
+  // TODO(private issue 512): storage code blocks this being const
+  bool Get(BlockHash hash, BlockType &block)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+    RLock lock(main_mutex_);
 
     auto it = block_chain_.find(hash);
 
     if (it != block_chain_.end())
     {
-      block = (*it).second;
+      block = it->second;
       return true;
     }
 
-    return false;
+    bool success = block_store_.Get(storage::ResourceID(hash), block);
+
+    // All blocks in block store are guaranteed not loose
+    if (success)
+    {
+      block.loose() = false;
+    }
+
+    return success;
+  }
+
+  std::vector<BlockHash> GetMissingBlockHashes(size_t maximum)
+  {
+    std::vector<BlockHash> results;
+    for (auto const &loose_block : loose_blocks_)
+    {
+      if (maximum <= results.size())
+      {
+        break;
+      }
+      results.push_back(loose_block.first);
+    }
+    return results;
+  }
+
+  bool HasMissingBlocks() const
+  {
+    RLock lock(loose_mutex_);
+    return !loose_blocks_.empty();
+  }
+
+  /**
+   * Strip transactions in container that already exist in the blockchain
+   *
+   * @param: starting_hash Block to start looking downwards from
+   * @tparam: container Container to remove transactions from
+   *
+   * @return: bool whether the starting hash referred to a valid block on a valid chain
+   */
+  template <typename T>
+  bool StripAlreadySeenTx(BlockHash starting_hash, T &container)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting TX uniqueness verify");
+
+    BlockType   block;
+    std::size_t blocks_checked = 0;
+    auto        t1             = std::chrono::high_resolution_clock::now();
+
+    if (!Get(starting_hash, block) || block.loose())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
+      return false;
+    }
+
+    // Need a set for quickly checking whether transactions are in our container
+    std::set<TransactionSummary>    transactions_to_check;
+    std::vector<TransactionSummary> transactions_duplicated;
+
+    for (auto const &tx : container)
+    {
+      transactions_to_check.insert(tx.transaction);
+    }
+
+    do
+    {
+      blocks_checked++;
+
+      for (auto const &slice : block.body().slices)
+      {
+        for (auto const &tx : slice.transactions)
+        {
+          auto it = transactions_to_check.find(tx);
+
+          // Found a TX in the blockchiain that is in our container
+          if (it != transactions_to_check.end())
+          {
+            transactions_duplicated.push_back(tx);
+          }
+        }
+      }
+    } while (Get(block.body().previous_hash,
+                 block));  // Note we don't need to hold the lock for the whole search
+
+    std::size_t duplicated_counter = 0;
+
+    // remove duplicate transactions
+    if (transactions_duplicated.size() > 0)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "TX uniqueness verify - found duplicate TXs!: ",
+                     transactions_duplicated.size());
+
+      // Iterate our container
+      auto it = container.cbegin();
+
+      // Reomve this item from our container if is duplicate
+      while (it != container.end())
+      {
+        // We expect the number of duplicates to be low so vector search should be fine
+        if (std::find(transactions_duplicated.begin(), transactions_duplicated.end(),
+                      (*it).transaction) != transactions_duplicated.end())
+        {
+          it = container.erase(it);
+          duplicated_counter++;
+          continue;
+        }
+
+        it++;
+      }
+    }
+
+    if (duplicated_counter != transactions_duplicated.size())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Warning! Duplicated transactions might not be removed from block. Seen: ",
+                     transactions_duplicated.size(), " Removed: ", duplicated_counter);
+    }
+
+    auto   t2         = std::chrono::high_resolution_clock::now();
+    double time_taken = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify - time (s): ", time_taken,
+                   " checked blocks: ", blocks_checked);
+    return true;
   }
 
 private:
@@ -349,7 +436,6 @@ private:
 
   bool GetPrev(BlockType &block)
   {
-
     if (block.body().previous_hash == block.hash())
     {
       return false;
@@ -359,10 +445,11 @@ private:
 
     if (it == block_chain_.end())
     {
-      return false;
+      // Fallback - look in storage for block
+      return block_store_.Get(storage::ResourceID(block.body().previous_hash), block);
     }
 
-    block = (*it).second;
+    block = it->second;
 
     return true;
   }
@@ -381,7 +468,8 @@ private:
   // walk through it adding the blocks, so long as we do breadth first search (!!)
   void CompleteLooseBlocks(BlockType const &block)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
+    RLock lock_main(main_mutex_);
+    RLock lock(loose_mutex_);
 
     auto it = loose_blocks_.find(block.hash());
     if (it == loose_blocks_.end())
@@ -389,7 +477,7 @@ private:
       return;
     }
 
-    std::vector<BlockHash> blocks_to_add = (*it).second;
+    std::vector<BlockHash> blocks_to_add = it->second;
     loose_blocks_.erase(it);
 
     FETCH_LOG_DEBUG(LOGGING_NAME,
@@ -413,7 +501,7 @@ private:
         auto it = loose_blocks_.find(addBlock.hash());
         if (it != loose_blocks_.end())
         {
-          std::vector<BlockHash> const &next_blocks = (*it).second;
+          std::vector<BlockHash> const &next_blocks = it->second;
 
           for (auto const &block_hash : next_blocks)
           {
@@ -429,7 +517,7 @@ private:
 
   void NewLooseBlock(BlockType &block)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(loose_mutex_);
+    RLock lock(loose_mutex_);
     // Get vector of waiting blocks and push ours on
     auto &waitingBlocks = loose_blocks_[block.body().previous_hash];
     waitingBlocks.push_back(block.hash());
@@ -448,7 +536,7 @@ private:
 
     if (!block_store_.Get(storage::ResourceID(block.body().previous_hash), prev_block))
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+      RLock lock(main_mutex_);
       FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
       NewLooseBlock(block);
       return false;
@@ -468,7 +556,7 @@ private:
     // re-add
     FETCH_LOG_DEBUG(LOGGING_NAME, "Reviving block from file");
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(main_mutex_);
+      RLock lock(main_mutex_);
       prev_block.totalWeight()        = total_weight;
       prev_block.loose()              = false;
       block_chain_[prev_block.hash()] = prev_block;
@@ -552,12 +640,12 @@ private:
   const uint32_t                         miner_number_;
   bool                                   saving_to_file_ = false;
 
-  mutable fetch::mutex::Mutex                         main_mutex_{__LINE__, __FILE__};
+  mutable RMutex                                      main_mutex_;   //{__LINE__, __FILE__};
   std::unordered_map<BlockHash, BlockType>            block_chain_;  ///< all recent blocks are here
   std::unordered_map<BlockHash, std::shared_ptr<Tip>> tips_;         ///< Keep track of the tips
   std::pair<uint64_t, BlockHash>                      heaviest_;     ///< Heaviest block/tip
 
-  mutable fetch::mutex::Mutex                          loose_mutex_{__LINE__, __FILE__};
+  mutable RMutex                                       loose_mutex_;   //{__LINE__, __FILE__};
   std::unordered_map<PrevHash, std::vector<BlockHash>> loose_blocks_;  ///< Waiting (loose) blocks
 };
 

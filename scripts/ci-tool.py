@@ -11,10 +11,16 @@ import re
 import sys
 import argparse
 import subprocess
+import fnmatch
+import shutil
+import multiprocessing
 import xml.etree.ElementTree as ET
 
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+MAX_CPUS = 7 # as defined by CI workflow
+AVAILABLE_CPUS = multiprocessing.cpu_count()
+CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
 
 def output(*args):
@@ -113,6 +119,7 @@ def parse_commandline():
     parser.add_argument('-B', '--build', action='store_true', help='Build the project')
     parser.add_argument('-T', '--test', action='store_true', help='Test the project')
     parser.add_argument('-f', '--force-build-folder', help='Specify the folder directly that should be used for the build / test')
+    parser.add_argument('-m', '--metrics', action='store_true', help='Store the metrics.')
     return parser.parse_args()
 
 
@@ -140,7 +147,11 @@ def build_project(project_root, build_root, options):
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
     else:
-        cmd = ['make', '-j']
+        # manually specifying the number of cores is required because make automatic dectection is
+        # flakey inside docker.
+        cmd = ['make', '-j', str(CONCURRENCY)]
+
+    output('Building project with command: {} (detected cpus: {})'.format(' '.join(cmd), AVAILABLE_CPUS))
     exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
@@ -153,7 +164,17 @@ def test_project(build_root):
     if not os.path.isdir(build_root):
         raise RuntimeError('Build Root doesn\'t exist, unable to test project')
 
-    exit_code = subprocess.call(['ctest', '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
+    # clear all the data files which might be hanging around
+    for root, _, files in os.walk(build_root):
+        for path in fnmatch.filter(files, '*.db'):
+            data_path = os.path.join(root, path)
+            print('Removing file:', data_path)
+            os.remove(data_path)
+
+    # Python 3.7+ support need to have explicit path to application
+    ctest_executable = shutil.which('ctest')
+
+    exit_code = subprocess.call([ctest_executable, '--no-compress-output', '-T', TEST_NAME], cwd=build_root, env={"CTEST_OUTPUT_ON_FAILURE":"1"})
 
     # load the test format
     test_tag_path = os.path.join(build_root, 'Testing', 'TAG')
@@ -195,6 +216,8 @@ def main():
     options = {
         'CMAKE_BUILD_TYPE': args.build_type
     }
+    if args.metrics:
+        options['FETCH_ENABLE_METRICS'] = 1
 
     if args.build:
         build_project(project_root, build_root, options)
@@ -205,3 +228,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

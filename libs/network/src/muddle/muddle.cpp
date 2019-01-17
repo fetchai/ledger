@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -51,15 +51,16 @@ static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
  *
  * @param certificate The certificate/identity of this node
  */
-Muddle::Muddle(Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
+Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, NetworkManager const &nm)
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
-  , router_(identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1))
+  , router_(network_id, identity_.identifier(), *register_, dispatcher_)
+  , thread_pool_(network::MakeThreadPool(1, "Muddle " + static_cast<std::string>(network_id)))
   , clients_(router_)
+  , network_id_{network_id}
 {}
 
 /**
@@ -72,6 +73,8 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
+
+  FETCH_LOG_WARN(LOGGING_NAME, "MUDDLE START ");
 
   // create all the muddle servers
   for (uint16_t port : ports)
@@ -106,7 +109,36 @@ void Muddle::Stop()
   // clients_.clear();
 }
 
-Muddle::ConnectionMap Muddle::GetConnections()
+/**
+ * Fails all the pending promises.
+ */
+void Muddle::Shutdown()
+{
+  dispatcher_.FailAllPendingPromises();
+}
+
+/**
+ * Resolve the URI into an address if an identity-verifing connection has been made.
+ * @param uri URI to obtain the address for
+ * @param address the result if obtainable
+ * @return true if an address was found
+ */
+bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
+{
+  PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
+  if (handle == 0)
+  {
+    return false;
+  }
+  return router_.HandleToDirectAddress(handle, address);
+}
+
+/**
+ * Returns all the active connections.
+ * @param direct_only if true only direct addresses will be returned, false by default
+ * @return map of connections
+ */
+Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
 
@@ -115,8 +147,18 @@ Muddle::ConnectionMap Muddle::GetConnections()
 
   for (auto const &entry : routing_table)
   {
+    if (!entry.second.direct)
+    {
+      continue;
+    }
+
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
+
+    if (direct_only && !entry.second.direct)
+    {
+      continue;
+    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
@@ -135,6 +177,22 @@ Muddle::ConnectionMap Muddle::GetConnections()
   return connection_map;
 }
 
+void Muddle::DropPeer(Address const &peer)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
+  Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
+  if (h)
+  {
+    router_.DropHandle(h, peer);
+    clients_.RemovePersistentPeer(h);
+    clients_.RemoveConnection(h);
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
+  }
+}
+
 /**
  * Called periodically internally in order to co-ordinate network connections and clean up
  */
@@ -142,33 +200,39 @@ void Muddle::RunPeriodicMaintenance()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
-  // connect to all the required peers
-  for (Uri const &peer : clients_.GetPeersToConnectTo())
+  try
   {
-    switch (peer.scheme())
+    // connect to all the required peers
+    for (Uri const &peer : clients_.GetPeersToConnectTo())
     {
-    case Uri::Scheme::Tcp:
-      CreateTcpClient(peer);
-      break;
-    default:
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
-      break;
+      switch (peer.scheme())
+      {
+      case Uri::Scheme::Tcp:
+        CreateTcpClient(peer);
+        break;
+      default:
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        break;
+      }
+    }
+
+    // run periodic cleanup
+    Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
+    if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+    {
+      // clean up and pending message handlers and also trigger the timeout logic
+      dispatcher_.Cleanup();
+
+      // clean up echo caches and other temporary stored objects
+      router_.Cleanup();
+
+      last_cleanup_ = Clock::now();
     }
   }
-
-  // run periodic cleanup
-  Duration const time_since_last_cleanup = Clock::now() - last_cleanup_;
-  if (time_since_last_cleanup >= CLEANUP_INTERVAL)
+  catch (std::exception &e)
   {
-    // clean up and pending message handlers and also trigger the timeout logic
-    dispatcher_.Cleanup();
-
-    // clean up echo caches and other temporary stored objects
-    router_.Cleanup();
-
-    last_cleanup_ = Clock::now();
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
   }
-
   // schedule ourselves again a short time in the future
   thread_pool_->Post([this]() { RunPeriodicMaintenance(); }, MAINTENANCE_INTERVAL_MS);
 }
@@ -236,7 +300,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    clients_.RemoveConnection(peer);
+    clients_.Disconnect(peer);
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
@@ -261,6 +325,22 @@ void Muddle::CreateTcpClient(Uri const &peer)
   auto const &tcp_peer = peer.AsPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
+}
+
+void Muddle::Blacklist(Address const &target)
+{
+  DropPeer(target);
+  router_.Blacklist(target);
+}
+
+void Muddle::Whitelist(Address const &target)
+{
+  router_.Whitelist(target);
+}
+
+bool Muddle::IsBlacklisted(Address const &target) const
+{
+  return router_.IsBlacklisted(target);
 }
 
 }  // namespace muddle

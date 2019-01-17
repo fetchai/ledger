@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/meta/type_traits.hpp"
 #include "math/free_functions/free_functions.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <numeric>
@@ -32,13 +32,13 @@ namespace fetch {
 namespace math {
 
 template <typename T, typename C = memory::SharedArray<T>>
-class NDArray : public ShapeLessArray<T, C>
+class NDArray : public ShapelessArray<T, C>
 {
 public:
   using type                 = T;
   using container_type       = C;
   using vector_register_type = typename container_type::vector_register_type;
-  using super_type           = ShapeLessArray<T, C>;
+  using super_type           = ShapelessArray<T, C>;
   using self_type            = NDArray<T, C>;
 
   enum MAJOR_ORDER
@@ -229,13 +229,13 @@ public:
    */
   // TODO(private issue 123)
   template <typename S>
-  meta::IfIsUnsignedLike<S, void> Set(std::vector<S> const &indices, type const &val)
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(std::vector<S> const &indices, type const &val)
   {
     assert(indices.size() == shape_.size());               // dimensionality check not in parent
     this->super_type::Set(ComputeColIndex(indices), val);  // call parent
   }
   template <typename S>
-  meta::IfIsUnsignedLike<S, void> Set(S const &index, type const &val)
+  fetch::meta::IfIsUnsignedInteger<S, void> Set(S const &index, type const &val)
   {
     assert(index < this->size());       // dimensionality check not in parent
     this->super_type::Set(index, val);  // call parent
@@ -246,7 +246,7 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  meta::IfIsUnsignedLike<S, T> Get(std::vector<S> const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, T> Get(std::vector<S> const &indices) const
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
@@ -495,8 +495,8 @@ public:
    * Copies data from a row major numpy array into the current column major array
    * @param new_array
    */
-  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
-                     std::vector<std::size_t> &index)
+  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> & /*stride*/,
+                     std::vector<std::size_t> & /*index*/)
   {
     std::size_t total_size = NDArray<T>::SizeFromShape(shape);
 
@@ -563,6 +563,36 @@ public:
   MAJOR_ORDER MajorOrder()
   {
     return major_order_;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = A.T(B)
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &DotTranspose(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::DotTranspose(A, B, *this, alpha, beta);
+
+    return *this;
+  }
+
+  /**
+   * Efficient vectorised and threaded routine for C = T(A).B
+   * @param A
+   * @param B
+   * @return
+   */
+  NDArray<T> &TransposeDot(NDArray<T> const &A, NDArray<T> const &B, type alpha = 1.0,
+                           type beta = 0.0)
+  {
+    assert(this->shape().size() == 2);
+    fetch::math::TransposeDot(A, B, *this, alpha, beta);
+
+    return *this;
   }
 
 private:

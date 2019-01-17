@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/prototype.hpp"
-#include "vectorise/threading/pool.hpp"
+#include "vectorise/threading/singleton_pool.hpp"
 
 namespace fetch {
 namespace math {
@@ -36,7 +36,7 @@ public:
   void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta, MATRIX &c);
 
 private:
-  threading::Pool pool_;
+  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
 };
 
 }  // namespace linalg

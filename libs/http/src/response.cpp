@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 
   std::ostream stream(&buffer);
 
-  stream << "HTTP/1.1 " << static_cast<uint16_t>(status_) << NEW_LINE;
+  stream << "HTTP/1.1 " << ToString(status_) << NEW_LINE;
 
   for (auto &field : header_)
   {

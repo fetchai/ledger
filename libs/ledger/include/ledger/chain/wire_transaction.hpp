@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,11 +20,15 @@
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
+namespace variant {
+class Variant;
+}
 namespace chain {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx,
                                         bool const                add_metadata = false);
 MutableTransaction    FromWireTransaction(byte_array::ConstByteArray const &transaction);
+MutableTransaction    FromWireTransaction(variant::Variant const &transaction);
 
 }  // namespace chain
 }  // namespace fetch

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ namespace chain {
 
 namespace {
 
-using ::testing::_;
 using namespace fetch;
 using namespace fetch::ledger;
 
@@ -52,7 +51,7 @@ TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
     crypto::openssl::ECDSAPrivateKey<> key;
 
     tx.Sign(key.KeyAsBin(), txdfs);
-    MutableTransaction::signatures_type::value_type const &sig = *tx.signatures().begin();
+    chain::Signatory const &sig = *tx.signatures().begin();
     EXPECT_TRUE(txdfs.Verify(sig));
     EXPECT_TRUE(tx.Verify());
   }

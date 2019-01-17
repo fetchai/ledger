@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -39,46 +39,45 @@ using ::testing::_;
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
-  using underlying_executor_type          = FakeExecutor;
-  using shared_executor_type              = std::shared_ptr<underlying_executor_type>;
-  using executor_list_type                = std::vector<shared_executor_type>;
-  using underlying_execution_manager_type = fetch::ledger::ExecutionManager;
-  using executor_factory_type   = underlying_execution_manager_type::executor_factory_type;
-  using block_digest_type       = underlying_execution_manager_type::block_digest_type;
-  using execution_manager_type  = std::shared_ptr<underlying_execution_manager_type>;
-  using underlying_storage_type = MockStorageUnit;
-  using storage_type            = std::shared_ptr<underlying_storage_type>;
-  using clock_type              = std::chrono::high_resolution_clock;
+  using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
+  using FakeExecutorList    = std::vector<FakeExecutorPtr>;
+  using ExecutionManager    = fetch::ledger::ExecutionManager;
+  using ExecutorFactory     = ExecutionManager::ExecutorFactory;
+  using BlockHash           = ExecutionManager::BlockHash;
+  using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
+  using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
+  using Clock               = std::chrono::high_resolution_clock;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
   void SetUp() override
   {
-    auto const &config = GetParam();
+    BlockConfig const &config = GetParam();
 
-    storage_.reset(new underlying_storage_type);
+    mock_storage_.reset(new MockStorageUnit);
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<underlying_execution_manager_type>(
-        config.executors, storage_, [this]() { return CreateExecutor(); });
+    manager_ = std::make_shared<ExecutionManager>("exec_mgr_tests", config.executors, mock_storage_,
+                                                  [this]() { return CreateExecutor(); });
   }
 
   void TearDown() override
   {
     manager_.reset();
     executors_.clear();
-    storage_.reset();
+    mock_storage_.reset();
   }
 
-  shared_executor_type CreateExecutor()
+  FakeExecutorPtr CreateExecutor()
   {
-    shared_executor_type executor = std::make_shared<underlying_executor_type>();
+    FakeExecutorPtr executor = std::make_shared<FakeExecutor>();
     executors_.push_back(executor);
     return executor;
   }
 
-  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 120)
+  // One day, this test will become more reliable. Until then, timeout at 60 seconds.
+  bool WaitUntilExecutionComplete(std::size_t num_executions, std::size_t iterations = 600)
   {
     bool success = false;
 
@@ -112,13 +111,13 @@ protected:
 
   bool CheckForExecutionOrder()
   {
-    using HistoryElement     = underlying_executor_type::HistoryElement;
-    using history_cache_type = underlying_executor_type::history_cache_type;
+    using HistoryElement      = FakeExecutor::HistoryElement;
+    using HistoryElementCache = FakeExecutor::HistoryElementCache;
 
     bool success = false;
 
     // Step 1. Collect all the data from each of the executors
-    history_cache_type history;
+    HistoryElementCache history;
     history.reserve(GetNumExecutedTransaction());
     for (auto &exec : executors_)
     {
@@ -160,9 +159,9 @@ protected:
     return success;
   }
 
-  storage_type           storage_;
-  execution_manager_type manager_;
-  executor_list_type     executors_;
+  MockStorageUnitPtr  mock_storage_;
+  ExecutionManagerPtr manager_;
+  FakeExecutorList    executors_;
 };
 
 TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
@@ -178,13 +177,13 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   // start the execution manager
   manager_->Start();
 
-  EXPECT_CALL(*storage_, Hash()).Times(1);
-  EXPECT_CALL(*storage_, Commit(_)).Times(1);
+  EXPECT_CALL(*mock_storage_, Hash()).Times(1);
+  EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
 
   fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block), underlying_execution_manager_type::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::Status::SCHEDULED);
 
   // wait for the manager to become idle again
   ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));

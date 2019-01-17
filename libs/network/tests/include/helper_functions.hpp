@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ T NextTransaction(std::size_t bytesToAdd = 0)
 
   trans.PushResource(GetRandomByteArray(64));
 
-  chain::signatures_type signatures;
+  chain::Signatories signatures;
   signatures[fetch::crypto::Identity{"identity_params", "identity"}] =
       fetch::chain::Signature{"sig_data", "sig_type"};
   byte_array::ByteArray contract_name, data;

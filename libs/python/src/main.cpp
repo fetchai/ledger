@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "python/fetch_pybind.hpp"
-#include "python/math/py_shape_less_array.hpp"
+#include "python/math/py_shapeless_array.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
-#include "python/memory/py_shared_array.hpp"
-//#include "python/memory/py_ndarray.hpp"
 #include "python/memory/py_rectangular_array.hpp"
+#include "python/memory/py_shared_array.hpp"
 
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
@@ -34,6 +33,9 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
+
+#include "python/math/clustering/py_kmeans.hpp"
+
 #include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
@@ -65,6 +67,11 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
+#include "python/ml/layers/py_layer.hpp"
+#include "python/ml/ops/py_ops.hpp"
+#include "python/ml/py_session.hpp"
+#include "python/ml/py_variable.hpp"
+
 // !!!!
 namespace py = pybind11;
 
@@ -80,8 +87,10 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_image            = module.def_submodule("image");
   py::module ns_fetch_image_colors     = ns_fetch_image.def_submodule("colors");
   py::module ns_fetch_math             = module.def_submodule("math");
+  py::module ns_fetch_ml               = module.def_submodule("ml");
   py::module ns_fetch_math_correlation = ns_fetch_math.def_submodule("correlation");
   py::module ns_fetch_math_distance    = ns_fetch_math.def_submodule("distance");
+  py::module ns_fetch_math_clustering  = ns_fetch_math.def_submodule("clustering");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
   py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
   py::module ns_fetch_memory           = module.def_submodule("memory");
@@ -116,26 +125,26 @@ PYBIND11_MODULE(fetch, module)
 
   fetch::memory::BuildRange("Range", ns_fetch_memory);
   /*
-  fetch::math::BuildShapeLessArray<int8_t>("ShapeLessArrayInt8",
+  fetch::math::BuildShapelessArray<int8_t>("ShapelessArrayInt8",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int16_t>("ShapeLessArrayInt16",
+  fetch::math::BuildShapelessArray<int16_t>("ShapelessArrayInt16",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int32_t>("ShapeLessArrayInt32",
+  fetch::math::BuildShapelessArray<int32_t>("ShapelessArrayInt32",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<int64_t>("ShapeLessArrayInt64",
+  fetch::math::BuildShapelessArray<int64_t>("ShapelessArrayInt64",
   ns_fetch_memory);
 
-  fetch::math::BuildShapeLessArray<uint8_t>("ShapeLessArrayUInt8",
+  fetch::math::BuildShapelessArray<uint8_t>("ShapelessArrayUInt8",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint16_t>("ShapeLessArrayUInt16",
+  fetch::math::BuildShapelessArray<uint16_t>("ShapelessArrayUInt16",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint32_t>("ShapeLessArrayUInt32",
+  fetch::math::BuildShapelessArray<uint32_t>("ShapelessArrayUInt32",
   ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<uint64_t>("ShapeLessArrayUInt64",
+  fetch::math::BuildShapelessArray<uint64_t>("ShapelessArrayUInt64",
   ns_fetch_memory);
   */
-  fetch::math::BuildShapeLessArray<float>("ShapeLessArrayFloat", ns_fetch_memory);
-  fetch::math::BuildShapeLessArray<double>("ShapeLessArrayDouble", ns_fetch_memory);
+  fetch::math::BuildShapelessArray<float>("ShapelessArrayFloat", ns_fetch_memory);
+  fetch::math::BuildShapelessArray<double>("ShapelessArrayDouble", ns_fetch_memory);
 
   /*
   fetch::math::BuildRectangularArray<int8_t>("RectangularArrayInt8",
@@ -224,6 +233,10 @@ PYBIND11_MODULE(fetch, module)
 
   ////////////
 
+  fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
+
+  ////////////
+
   fetch::math::BuildExpStatistics("Exp", ns_fetch_math_statistics);
   fetch::math::BuildLogStatistics("Log", ns_fetch_math_statistics);
 
@@ -245,4 +258,14 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+
+  // Machine Learning
+
+  using ArrayType = fetch::math::linalg::Matrix<double>;
+  fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
+  using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
+  fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
+  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
+
+  fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 }

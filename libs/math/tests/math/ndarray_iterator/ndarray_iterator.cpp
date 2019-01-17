@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ TEST(ndarray, simple_iterator_permute_test)
 {
 
   // set up an initial array
-  NDArray<double> array{NDArray<double>::Arange(0, 77, 1)};
+  NDArray<double> array{NDArray<double>::Arange(0u, 77u, 1u)};
   array.Reshape({7, 11});
 
   NDArray<double> ret;
@@ -76,7 +76,7 @@ TEST(ndarray, iterator_4dim_copy_test)
 {
 
   // set up an initial array
-  NDArray<double> array{NDArray<double>::Arange(0, 1008, 1)};
+  NDArray<double> array{NDArray<double>::Arange(0u, 1008u, 1u)};
   array.Reshape({4, 6, 7, 6});
   NDArray<double> ret = array.Copy();
 
@@ -116,7 +116,7 @@ TEST(ndarray, iterator_4dim_permute_test)
 {
 
   // set up an initial array
-  NDArray<double> array{NDArray<double>::Arange(0, 1008, 1)};
+  NDArray<double> array{NDArray<double>::Arange(0u, 1008u, 1u)};
   array.Reshape({4, 6, 7, 6});
   NDArray<double> ret = array.Copy();
 
@@ -167,14 +167,16 @@ TEST(ndarray, simple_iterator_transpose_test)
   std::size_t arr_size = fetch::math::Product(original_shape);
 
   // set up an initial array
-  NDArray<double> array = NDArray<double>::Arange(0, arr_size, 1);
+  NDArray<double> array =
+      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
   array.Reshape(original_shape);
 
-  NDArray<double> ret = NDArray<double>::Arange(0, arr_size, 1);
+  NDArray<double> ret =
+      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
   ret.Reshape(original_shape);
 
   NDArray<double> test_array{original_shape};
-  test_array.FillArange(0, arr_size);
+  test_array.FillArange(static_cast<std::size_t>(0u), arr_size);
 
   ASSERT_TRUE(ret.size() == array.size());
   ASSERT_TRUE(ret.shape() == array.shape());

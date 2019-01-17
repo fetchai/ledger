@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -62,8 +62,9 @@ public:
 
   // Construction / Destruction
   Uri() = default;
+  explicit Uri(Peer const &peer);
   Uri(ConstByteArray const &uri);
-  Uri(Uri const &) = default;  //
+  Uri(Uri const &) = default;
   Uri(Uri &&)      = default;
   ~Uri()           = default;
 
@@ -98,6 +99,8 @@ public:
 
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
+
+  bool IsDirectlyConnectable() const;
 
 private:
   ConstByteArray uri_;
@@ -141,6 +144,11 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Uri::IsDirectlyConnectable() const
+{
+  return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
 }
 
 template <typename T>

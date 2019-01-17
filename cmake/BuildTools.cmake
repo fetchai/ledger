@@ -118,7 +118,7 @@ function(add_fetch_test name library file)
       target_link_libraries(${name} PRIVATE ${library} fetch-testing)
 
       add_test(${name} ${name} ${ARGV})
-      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
+      set_tests_properties(${name} PROPERTIES TIMEOUT 300)
 
     endif()
 
@@ -159,18 +159,65 @@ function(add_fetch_gtest name library directory)
 
       # define the test
       add_test(${name} ${name} ${ARGV})
-      set_tests_properties(${name} PROPERTIES TIMEOUT 120)
+      set_tests_properties(${name} PROPERTIES TIMEOUT 300)
 
     endif()
 
   endif(FETCH_ENABLE_TESTS)
 endfunction()
 
+function(add_fetch_gbench name library directory)
+  if(FETCH_ENABLE_BENCHMARKS)
+
+    # remove all the arguments
+    list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
+    list(REMOVE_AT ARGV 0)
+
+    # detect if the "DISABLED" flag has been passed to this test
+    set(is_disabled FALSE)
+    foreach(arg ${ARGV})
+      if(arg STREQUAL "DISABLED")
+        set(is_disabled TRUE)
+      endif()
+    endforeach()
+
+    if(is_disabled)
+      fetch_warning("Disabled benchmark: ${name} - ${file}")
+    else()
+
+      # locate the headers for the benchmark
+      file(GLOB_RECURSE headers ${directory}/*.hpp)
+      file(GLOB_RECURSE srcs ${directory}/*.cpp)
+
+      # define the target
+      add_executable(${name} ${headers} ${srcs})
+
+      target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
+      target_link_libraries(${name} PRIVATE ${library} benchmark)
+
+      #Google bench requires google test
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+
+      target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
+
+    endif()
+
+  endif(FETCH_ENABLE_BENCHMARKS)
+endfunction()
 
 macro(add_test_target)
   if (FETCH_ENABLE_TESTS)
     enable_testing()
     add_subdirectory(tests)
   endif (FETCH_ENABLE_TESTS)
+endMacro()
+
+macro(add_benchmark_target)
+  if (FETCH_ENABLE_BENCHMARKS)
+    enable_testing()
+    add_subdirectory(benchmarks)
+  endif (FETCH_ENABLE_BENCHMARKS)
 endMacro()
 

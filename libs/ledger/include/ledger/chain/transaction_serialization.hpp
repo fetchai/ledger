@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ inline void Deserialize(T &serializer, UnverifiedTransaction &b)
   TransactionSummary    summary;
   std::string           contract_name;
   byte_array::ByteArray data;
-  signatures_type       signatures;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);
@@ -86,7 +86,7 @@ inline void Deserialize(T &serializer, VerifiedTransaction &b)
   TransactionSummary    summary;
   std::string           contract_name;
   byte_array::ByteArray data;
-  signatures_type       signatures;
+  Signatories           signatures;
 
   serializer >> summary;
   b.set_summary(summary);

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -44,39 +44,39 @@ inline A WrapperDistanceMatrix(A const &a, A const &b, std::string const &method
   ret.Resize(a.height(), b.height());
   if (method == "euclidean")
   {
-    DistanceMatrix(ret, a, b, Euclidean<typename A::type>);
+    DistanceMatrix(ret, a, b, Euclidean<typename A::Type>);
   }
   else if (method == "hamming")
   {
-    DistanceMatrix(ret, a, b, Hamming<typename A::type>);
+    DistanceMatrix(ret, a, b, Hamming<typename A::Type>);
   }
   else if (method == "manhattan")
   {
-    DistanceMatrix(ret, a, b, Manhattan<typename A::type>);
+    DistanceMatrix(ret, a, b, Manhattan<typename A::Type>);
   }
   else if (method == "pearson")
   {
-    DistanceMatrix(ret, a, b, Pearson<typename A::type>);
+    DistanceMatrix(ret, a, b, Pearson<typename A::Type>);
   }
   else if (method == "eisen")
   {
-    DistanceMatrix(ret, a, b, Eisen<typename A::type>);
+    DistanceMatrix(ret, a, b, Eisen<typename A::Type>);
   }
   else if (method == "cosine")
   {
-    DistanceMatrix(ret, a, b, Eisen<typename A::type>);
+    DistanceMatrix(ret, a, b, Eisen<typename A::Type>);
   }
   else if (method == "jaccard")
   {
-    DistanceMatrix(ret, a, b, Jaccard<typename A::type>);
+    DistanceMatrix(ret, a, b, Jaccard<typename A::Type>);
   }
   else if (method == "genelralised jaccard")
   {
-    DistanceMatrix(ret, a, b, GeneralisedJaccard<typename A::type>);
+    DistanceMatrix(ret, a, b, GeneralisedJaccard<typename A::Type>);
   }
   else if (method == "braycurtis")
   {
-    DistanceMatrix(ret, a, b, Braycurtis<typename A::type>);
+    DistanceMatrix(ret, a, b, Braycurtis<typename A::Type>);
   }
   else
   {
@@ -99,8 +99,8 @@ inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11
       .def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<float>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<float>>);
-  //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray< double
-  //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapeLessArray<
+  //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray< double
+  //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray<
   //    float > >);
 }
 

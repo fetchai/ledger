@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
-#include "storage/object_store_syncronisation_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
 #include <iostream>
 
@@ -54,7 +53,7 @@ int main(int argc, char **argv)
   tm.Start();
 
   StorageUnitBundledService service;
-  service.Setup(dbdir, lane_count, port, tm);
+  service.Setup(dbdir, lane_count, port, tm, 1);
 
   // Running until enter
   std::cout << "Press ENTER to quit" << std::endl;

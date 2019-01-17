@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -68,6 +68,11 @@ public:
     thread_.reset();
   }
 
+  void ChangeWaitTime(std::chrono::milliseconds wait_time)
+  {
+    wait_time_ = wait_time;
+  }
+
 protected:
   void Run()
   {
@@ -78,7 +83,7 @@ protected:
     }
     while (!shutdown_)
     {
-      target_->Wait(100);
+      target_->Wait(wait_time_);
       if (shutdown_)
       {
         return;
@@ -89,12 +94,13 @@ protected:
 
   using ShutdownFlag = std::atomic<bool>;
   using Thread       = std::thread;
-  using ThreadP      = std::shared_ptr<Thread>;
+  using ThreadPtr    = std::shared_ptr<Thread>;
 
-  Target *     target_{nullptr};
-  ThreadP      thread_;
-  ShutdownFlag shutdown_{false};
-  WorkFunc     workcycle_;
+  Target *                  target_{nullptr};
+  ThreadPtr                 thread_;
+  ShutdownFlag              shutdown_{false};
+  WorkFunc                  workcycle_;
+  std::chrono::milliseconds wait_time_{100};
 };
 
 }  // namespace network

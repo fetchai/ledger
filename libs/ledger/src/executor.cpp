@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
-#include "ledger/metrics/metrics.hpp"
+#include "metrics/metrics.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -61,10 +61,8 @@ namespace ledger {
  * @param lanes The affected lanes for the transaction
  * @return The status code for the operation
  */
-Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice,
-                                   lane_set_type const &lanes)
+Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
@@ -81,6 +79,13 @@ Executor::Status Executor::Execute(tx_digest_type const &hash, std::size_t slice
   chain::Transaction tx;
   if (!resources_->GetTransaction(hash, tx))
   {
+    return Status::TX_LOOKUP_FAILURE;
+  }
+
+  // This is a failure case that appears too often
+  if (tx.contract_name().size() == 0)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to do full retrieve of TX: ", byte_array::ToBase64(hash));
     return Status::TX_LOOKUP_FAILURE;
   }
 

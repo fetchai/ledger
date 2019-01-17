@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public:
   ~SmartContract() = default;
 
 private:
-  Status InvokeContract(transaction_type const &tx);
+  Status InvokeContract(Transaction const &tx);
 
   vm::Script                  script_;
   std::unique_ptr<vm::Module> module_;

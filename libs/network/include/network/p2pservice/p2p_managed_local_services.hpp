@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,17 +50,21 @@ public:
     manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri) {
       switch (ident.service_type)
       {
-      case network::LANE:
+      case ServiceType::LANE:
       {
         std::shared_ptr<P2PManagedLocalService> foo(
             new P2PManagedLocalLaneService(uri, ident, lane_management_));
         this->services_[ident] = foo;
         break;
       }
-      case network::MAINCHAIN:
-      case network::P2P:
-      case network::HTTP:
+
+      case ServiceType::CORE:
+      case ServiceType::HTTP:
         this->services_[ident] = std::make_shared<P2PManagedLocalService>(uri, ident);
+        break;
+
+      case ServiceType::INVALID:
+      default:
         break;
       }
     });

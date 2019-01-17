@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/pearson.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -29,16 +29,16 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Pearson(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Pearson(memory::VectorSlice<T, S> const &a,
                                                         memory::VectorSlice<T, S> const &b)
 {
-  using type = typename memory::VectorSlice<T, S>::type;
-  return type(1) - correlation::Pearson(a, b);
+  using Type = typename memory::VectorSlice<T, S>::Type;
+  return Type(1) - correlation::Pearson(a, b);
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Pearson(ShapeLessArray<T, C> const &a,
-                                                   ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Pearson(ShapelessArray<T, C> const &a,
+                                                   ShapelessArray<T, C> const &b)
 {
   return Pearson(a.data(), b.data());
 }

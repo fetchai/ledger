@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -42,14 +42,14 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    IP_ = std::string(jsonDoc["IP"].as_byte_array());
+    IP_ = jsonDoc["IP"].As<std::string>();
 
     // TODO(issue 24): fix after this parsing works
-    if (jsonDoc["TCPPort"].is_int())
+    if (jsonDoc["TCPPort"].Is<uint16_t>())
     {
       TCPPort_ = jsonDoc["TCPPort"].As<uint16_t>();
     }
-    else if (jsonDoc["TCPPort"].is_float())
+    else if (jsonDoc["TCPPort"].Is<float>())
     {
       float value = jsonDoc["TCPPort"].As<float>();
       TCPPort_    = uint16_t(value);
@@ -72,12 +72,12 @@ public:
     return (TCPPort_ == rhs.TCPPort()) && (IP_ == rhs.IP());
   }
 
-  script::Variant variant() const
+  variant::Variant variant() const
   {
     LOG_STACK_TRACE_POINT;
-    script::Variant result = script::Variant::Object();
-    result["IP"]           = IP_;
-    result["TCPPort"]      = TCPPort_;
+    variant::Variant result = variant::Variant::Object();
+    result["IP"]            = IP_;
+    result["TCPPort"]       = TCPPort_;
     std::cout << "variant: " << IP_ << ":" << TCPPort_ << std::endl;
     return result;
   }

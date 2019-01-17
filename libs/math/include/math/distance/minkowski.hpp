@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/shape_less_array.hpp"
+#include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
 #include <cmath>
@@ -28,14 +28,14 @@ namespace math {
 namespace distance {
 
 template <typename T, std::size_t S = memory::VectorSlice<T>::E_TYPE_SIZE>
-inline typename memory::VectorSlice<T, S>::type Minkowski(memory::VectorSlice<T, S> const &a,
+inline typename memory::VectorSlice<T, S>::Type Minkowski(memory::VectorSlice<T, S> const &a,
                                                           memory::VectorSlice<T, S> const &b)
 {
   detailed_assert(a.size() == b.size());
-  using type                 = typename memory::VectorSlice<T, S>::type;
+  using Type                 = typename memory::VectorSlice<T, S>::Type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
-  type dist = a.data().in_parallel().SumReduce(
+  Type dist = a.data().in_parallel().SumReduce(
       memory::TrivialRange(0, a.size()),
       [n](vector_register_type const &x, vector_register_type const &y) {
         return pow(max(x, y) - min(x, y), n);
@@ -46,8 +46,8 @@ inline typename memory::VectorSlice<T, S>::type Minkowski(memory::VectorSlice<T,
 }
 
 template <typename T, typename C>
-inline typename ShapeLessArray<T, C>::type Minkowski(ShapeLessArray<T, C> const &a,
-                                                     ShapeLessArray<T, C> const &b)
+inline typename ShapelessArray<T, C>::Type Minkowski(ShapelessArray<T, C> const &a,
+                                                     ShapelessArray<T, C> const &b)
 {
   return Minkowski(a.data(), b.data());
 }

@@ -66,35 +66,42 @@ macro(setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
   endif()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if(FETCH_WARNINGS_AS_ERRORS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-unused-parameter")
   endif(FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
+  set(_is_clang_compiler FALSE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(_is_clang_compiler TRUE)
+  endif()
+
+  if(FETCH_ENABLE_COVERAGE)
+    if (_is_clang_compiler)
+      set(CMAKE_CXX_FLAGS_DEBUG "-g -fprofile-instr-generate -fcoverage-mapping -O0")
+    else()
+      message(SEND_ERROR "Coverage flag enabled but clang compiler not found, CMake will exit.")
+    endif()
+  endif(FETCH_ENABLE_COVERAGE)
 
   # debug sanitizer configuration
   string(LENGTH "${FETCH_DEBUG_SANITIZER}" _debug_sanitizer_parameter_length)
   if(${_debug_sanitizer_parameter_length} GREATER 0)
-    string(REGEX MATCH "(thread|address|undefined)" _debug_sanitizer_valid "${FETCH_DEBUG_SANITIZER}")
-    string(LENGTH "${_debug_sanitizer_valid}" _debug_sanitizer_match_length)
+    if (_is_clang_compiler)
+      string(REGEX MATCH "(thread|address|undefined)" _debug_sanitizer_valid "${FETCH_DEBUG_SANITIZER}")
+      string(LENGTH "${_debug_sanitizer_valid}" _debug_sanitizer_match_length)
 
-    if(${_debug_sanitizer_match_length} GREATER 0)
-      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -ggdb -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
-      set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+      if(${_debug_sanitizer_match_length} GREATER 0)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=${FETCH_DEBUG_SANITIZER}")
+      else()
+        message(SEND_ERROR "Incorrect sanitizer configuration: ${FETCH_DEBUG_SANITIZER} Valid choices are thread, address or undefined")
+      endif()
     else()
-      message(SEND_ERROR "Incorrect sanitizer configuration: ${FETCH_DEBUG_SANITIZER} Valid choices are thread, address or undefined")
-    endif()
-  endif()
-
-  if(FETCH_ENABLE_COVERAGE)
-
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fprofile-instr-generate -fcoverage-mapping -O0")
-    else()
-      message(FATAL_ERROR "Coverage flag enabled but clang compiler not found, CMake will exit.")
+      message(SEND_ERROR "Debug sanitizers are only available for clang based compilers")
     endif()
   endif()
 
@@ -159,6 +166,11 @@ function(configure_vendor_targets)
 
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
+
+  # Google Benchmark
+  # Do not build the google benchmark library tests
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
 
 endfunction(configure_vendor_targets)
 

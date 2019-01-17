@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -121,7 +121,8 @@ protected:
     auto identity = std::make_unique<fetch::crypto::ECDSASigner>();
     identity->GenerateKeys();
 
-    return std::make_unique<Muddle>(std::move(identity), *network_manager_);
+    return std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(identity),
+                                    *network_manager_);
   }
 
   NetworkManagerPtr network_manager_;
@@ -147,14 +148,14 @@ TEST_F(RouterTests, CheckExchange)
   // register the receive for node A
   auto subA = endpointA.Subscribe(SERVICE, CHANNEL);
   subA->SetMessageHandler([&messagesA](Address const &from, uint16_t service, uint16_t channel,
-                                       uint16_t counter, Payload const &payload) {
+                                       uint16_t counter, Payload const &payload, Address const &) {
     messagesA.Add(Message{from, service, channel, counter, payload});
   });
 
   // register the receive for node B
   auto subB = endpointB.Subscribe(SERVICE, CHANNEL);
   subB->SetMessageHandler([&messagesB](Address const &from, uint16_t service, uint16_t channel,
-                                       uint16_t counter, Payload const &payload) {
+                                       uint16_t counter, Payload const &payload, Address const &) {
     messagesB.Add(Message{from, service, channel, counter, payload});
   });
 

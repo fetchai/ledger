@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
+#include "variant/variant_utils.hpp"
 
 #include "miner/resource_mapper.hpp"
 
@@ -66,7 +67,7 @@ public:
         uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
 
     // load permanent key store (or create it if files do not exist)
-    key_store_.Load("key_store_main.dat", "key_store_index.dat", true);
+    key_store_.Load("key_store_main.db", "key_store_index.db", true);
 
     // register all the routes
     Post("/api/wallet/register",
@@ -90,6 +91,8 @@ public:
          });
   }
 
+  ~WalletHttpInterface() = default;
+
 private:
   /**
    * Create address(es) with some amount of wealth and submit it to the network
@@ -103,15 +106,20 @@ private:
     // Determine number of locations to create
     uint64_t count = 1;
 
+    try
     {
-      json::JSONDocument doc;
-      doc = request.JSON();
+      json::JSONDocument doc = request.JSON();
 
-      auto const &count_v{doc["count"]};
-      if (count_v.is_int())
+      auto const &count_v = doc["count"];
+      if (count_v.Is<uint64_t>())
       {
         count = count_v.As<uint64_t>();
       }
+    }
+    catch (json::JSONParseException &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Json Parse failure: ", ex.what());
+      return BadJsonResponse(ErrorCode::PARSE_FAILURE);
     }
 
     // Avoid locations = 0 corner case
@@ -135,10 +143,9 @@ private:
 
       // construct the wealth generation transaction
       {
-        script::Variant wealth_data;
-        wealth_data.MakeObject();
-        wealth_data["address"] = byte_array::ToBase64(address);
-        wealth_data["amount"]  = 1001;
+        variant::Variant wealth_data = variant::Variant::Object();
+        wealth_data["address"]       = byte_array::ToBase64(address);
+        wealth_data["amount"]        = 1001;
 
         std::ostringstream oss;
         oss << wealth_data;
@@ -161,47 +168,41 @@ private:
         FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
 
         // dispatch the transaction
-        processor_.AddTransaction(chain::VerifiedTransaction::Create(std::move(mtx)));
+        processor_.AddTransaction(std::move(mtx));
       }
 
       storage::ResourceID set_id = storage::ResourceAddress{address};
       key_store_.Set(set_id, signer.private_key());
     }
 
-    script::Variant    data;
+    variant::Variant   data;
     std::ostringstream oss;
 
     // Return old data format as a fall back (when size is 1)
     if (return_info.size() == 1)
     {
-      data.MakeObject();
+      data = variant::Variant::Object();
 
       data["address"] = std::get<0>(return_info[0]);
       data["success"] = true;
     }
     else
     {
-      data.MakeObject();
+      data            = variant::Variant::Object();
       data["success"] = true;
 
-      script::Variant results_array;
-      results_array.MakeArray(return_info.size());
+      variant::Variant &results_array = data["addresses"];
+      results_array                   = variant::Variant::Array(return_info.size());
 
-      std::size_t index = 0;
-
+      std::size_t index{0};
       for (auto const &info : return_info)
       {
-        script::Variant tmp_variant;
-        tmp_variant.MakeObject();
+        variant::Variant &metadata = results_array[index++];
+        metadata                   = variant::Variant::Object();
 
-        tmp_variant["address"] = std::get<0>(info);
-        tmp_variant["lane"]    = std::get<1>(info);
-
-        results_array[index] = tmp_variant;
-        index++;
+        metadata["address"] = std::get<0>(info);
+        metadata["lane"]    = std::get<1>(info);
       }
-
-      data["addresses"] = results_array;
     }
 
     oss << data;
@@ -216,7 +217,7 @@ private:
       json::JSONDocument doc;
       doc.Parse(request.body());
 
-      script::Variant response;
+      variant::Variant response;
       contract_.Attach(state_);
       contract_.DispatchQuery("balance", doc.root(), response);
       contract_.Detach();
@@ -242,20 +243,19 @@ private:
       json::JSONDocument doc;
       doc.Parse(request.body());
 
-      byte_array::ByteArray from;
-      byte_array::ByteArray to;
-      uint64_t              amount = 0;
+      byte_array::ConstByteArray from;
+      byte_array::ConstByteArray to;
+      uint64_t                   amount = 0;
 
       // extract all the request parameters
-      if (script::Extract(doc.root(), "from", from) && script::Extract(doc.root(), "to", to) &&
-          script::Extract(doc.root(), "amount", amount))
+      if (variant::Extract(doc.root(), "from", from) && variant::Extract(doc.root(), "to", to) &&
+          variant::Extract(doc.root(), "amount", amount))
       {
 
-        script::Variant data;
-        data.MakeObject();
-        data["from"]   = from;
-        data["to"]     = to;
-        data["amount"] = amount;
+        variant::Variant data = variant::Variant::Object();
+        data["from"]          = from;
+        data["to"]            = to;
+        data["amount"]        = amount;
 
         // convert the data into json
         std::ostringstream oss;
@@ -284,11 +284,8 @@ private:
 
         mtx.Sign(priv_key, tx_sign_adapter);
 
-        // create the final / sealed transaction
-        chain::VerifiedTransaction tx = chain::VerifiedTransaction::Create(std::move(mtx));
-
         // dispatch to the wider system
-        processor_.AddTransaction(tx);
+        processor_.AddTransaction(std::move(mtx));
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
@@ -301,7 +298,7 @@ private:
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
 
-  http::HTTPResponse OnTransactions(http::HTTPRequest const &request)
+  http::HTTPResponse OnTransactions(http::HTTPRequest const & /*request*/)
   {
     return BadJsonResponse(ErrorCode::NOT_IMPLEMENTED);
   }

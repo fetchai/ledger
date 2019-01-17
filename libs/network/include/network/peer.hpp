@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ class Peer
 public:
   // Construction / Destruction
   Peer() = default;
-  Peer(char const *address)
+  explicit Peer(char const *address)
     : Peer(std::string{address})
   {}
-  Peer(std::string const &address);
-  Peer(std::string address, uint16_t port)
+  explicit Peer(std::string const &address);
+  explicit Peer(std::string address, uint16_t port)
     : address_{std::move(address)}
     , port_{port}
   {}
@@ -43,6 +43,7 @@ public:
   ~Peer()            = default;
 
   bool Parse(std::string const &address);
+
   void Update(std::string address, uint16_t port)
   {
     address_ = std::move(address);
@@ -53,6 +54,7 @@ public:
   {
     return address_;
   }
+
   uint16_t port() const
   {
     return port_;
@@ -64,7 +66,7 @@ public:
   Peer &operator=(Peer const &) = default;
   Peer &operator=(Peer &&) = default;
 
-  bool operator==(Peer const &other) const;
+  bool operator==(Peer const &other) const noexcept;
   bool operator<(Peer const &other) const;
 
   template <typename T>
@@ -94,7 +96,7 @@ inline std::string Peer::ToUri() const
   return "tcp://" + address_ + ':' + std::to_string(port_);
 }
 
-inline bool Peer::operator==(Peer const &other) const
+inline bool Peer::operator==(Peer const &other) const noexcept
 {
   return ((address_ == other.address_) && (port_ == other.port_));
 }
