@@ -97,10 +97,10 @@ private:
       include_transactions = true;
     }
 
-    Variant response      = Variant::Object();
-    response["chain"]     = GenerateBlockList(include_transactions, chain_length);
-    response["identity"]  = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    Variant response     = Variant::Object();
+    response["chain"]    = GenerateBlockList(include_transactions, chain_length);
+    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"]    = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
 
     // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
@@ -169,9 +169,9 @@ private:
       trust_list[i] = peer_data_list[i];
     }
 
-    Variant response      = Variant::Object();
-    response["identity"]  = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"]    = trust_list;
+    Variant response     = Variant::Object();
+    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["trusts"]   = trust_list;
 
     // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
@@ -186,7 +186,7 @@ private:
                                       http::HTTPRequest const & /*request*/)
   {
     variant::Variant data = variant::Variant::Object();
-    data["backlog"] = miner_.GetBacklog();
+    data["backlog"]       = miner_.GetBacklog();
 
     return http::CreateJsonResponse(data);
   }
@@ -205,7 +205,7 @@ private:
     for (auto &b : blocks)
     {
       // format the block number
-      auto block            = Variant::Object();
+      auto block = Variant::Object();
 
       block["hash"]         = byte_array::ToBase64(b.hash());
       block["previousHash"] = byte_array::ToBase64(b.prev());
@@ -214,7 +214,7 @@ private:
       block["blockNumber"]  = b.body().block_number;
 
       // TODO(private issue 532): Remove legacy API
-      block["currentHash"]  = byte_array::ToBase64(b.hash());
+      block["currentHash"] = byte_array::ToBase64(b.hash());
 
       if (include_transactions)
       {
