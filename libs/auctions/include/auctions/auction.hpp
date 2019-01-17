@@ -63,8 +63,8 @@ public:
           std::size_t max_bids = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)
-    , start_block_(start_block_id)
-    , end_block_(end_block_id)
+    , start_block_(std::move(start_block_id))
+    , end_block_(std::move(end_block_id))
   {
     if (smart_market)
     {

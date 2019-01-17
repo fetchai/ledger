@@ -191,11 +191,11 @@ public:
    * winner accessor
    * @return
    */
-  AgentIdType Winner() const
+  BidIdType Winner() const
   {
     return winner_;
   }
-  AgentIdType &Winner()
+  BidIdType &Winner()
   {
     return winner_;
   }
@@ -203,7 +203,7 @@ public:
   /**
    * winner setter
    */
-  void Winner(AgentIdType &winner)
+  void Winner(BidIdType &winner)
   {
     winner_ = winner;
   }
@@ -239,7 +239,7 @@ private:
   std::vector<Bid> bids_{};
 
   std::uint32_t bid_count_ = 0;
-  AgentIdType   winner_    = DefaultItemWinner;
+  BidIdType     winner_    = DefaultItemWinner;
 
   //  std::unordered_map<AgentIdType, ValueType>   bids{};
   std::unordered_map<AgentIdType, std::size_t> agent_bid_count_{};

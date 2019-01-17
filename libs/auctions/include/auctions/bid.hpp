@@ -35,10 +35,10 @@ public:
   Bid(BidIdType id, std::vector<Item> items, ValueType price, AgentIdType bidder,
       std::vector<Bid> excludes = {})
     : id_(id)
-    , items_(items)
+    , items_(std::move(items))
     , price_(price)
     , bidder_(bidder)
-    , excludes_(excludes)
+    , excludes_(std::move(excludes))
   {
     assert(items.size() > 0);
   }

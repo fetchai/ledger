@@ -78,21 +78,21 @@ private:
         {
           if (loop_count == 0)
           {
-            cur_item_it.second.Winner()    = cur_bid_it.Bidder();
-            cur_item_it.second.MaxBid()    = cur_bid_it.Price();
-            cur_item_it.second.SellPrice() = cur_bid_it.Price();
+            cur_item_it.second.Winner(cur_bid_it.Bidder());
+            cur_item_it.second.MaxBid(cur_bid_it.Price());
+            cur_item_it.second.SellPrice(cur_bid_it.Price());
             ++loop_count;
           }
           else if (loop_count == 1)
           {
             if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.Winner() = cur_bid_it.Bidder();
-              cur_item_it.second.MaxBid() = cur_bid_it.Price();
+              cur_item_it.second.Winner(cur_bid_it.Bidder());
+              cur_item_it.second.MaxBid(cur_bid_it.Price());
             }
             else
             {
-              cur_item_it.second.SellPrice() = cur_bid_it.Price();
+              cur_item_it.second.SellPrice(cur_bid_it.Price());
             }
             ++loop_count;
           }
@@ -100,13 +100,13 @@ private:
           {
             if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.Winner()    = cur_bid_it.Bidder();
-              cur_item_it.second.SellPrice() = cur_item_it.second.MaxBid();
-              cur_item_it.second.MaxBid()    = cur_bid_it.Price();
+              cur_item_it.second.Winner(cur_bid_it.Bidder());
+              cur_item_it.second.SellPrice(cur_item_it.second.MaxBid());
+              cur_item_it.second.MaxBid(cur_bid_it.Price());
             }
             else if (cur_bid_it.Price() > cur_item_it.second.MaxBid())
             {
-              cur_item_it.second.SellPrice() = cur_bid_it.Price();
+              cur_item_it.second.SellPrice(cur_bid_it.Price());
             }
           }
         }
@@ -120,20 +120,20 @@ private:
           if (loop_count == 0)
           {
             // just using this to store the value for now
-            cur_item_it.second.SellPrice() = cur_bid_it.Price();
+            cur_item_it.second.SellPrice(cur_bid_it.Price());
 
-            cur_item_it.second.Winner() = cur_bid_it.Bidder();
+            cur_item_it.second.Winner(cur_bid_it.Bidder());
           }
           else if (loop_count == 1)
           {
             if (cur_bid_it.Price() > cur_item_it.second.SellPrice())
             {
-              cur_item_it.second.Winner() = cur_bid_it.Bidder();
-              cur_item_it.second.MaxBid() = cur_bid_it.Price();
+              cur_item_it.second.Winner(cur_bid_it.Bidder());
+              cur_item_it.second.MaxBid(cur_bid_it.Price());
             }
             else
             {
-              cur_item_it.second.SellPrice() = cur_bid_it.Price();
+              cur_item_it.second.SellPrice(cur_bid_it.Price());
             }
           }
           ++loop_count;
@@ -145,9 +145,9 @@ private:
       {
         for (auto &cur_bid_it : cur_item_it.second.Bids())
         {
-          cur_item_it.second.Winner()    = cur_bid_it.Bidder();
-          cur_item_it.second.SellPrice() = cur_bid_it.Price();
-          cur_item_it.second.MaxBid()    = cur_bid_it.Price();
+          cur_item_it.second.Winner(cur_bid_it.Bidder());
+          cur_item_it.second.SellPrice(cur_bid_it.Price());
+          cur_item_it.second.MaxBid(cur_bid_it.Price());
         }
       }
 

@@ -149,8 +149,12 @@ public:
 
   bool Execute(BlockIdType current_block) override
   {
-    // TODO(tfr): Get rid of execute in auction as it is not native to
-    // the auction
+    if ((end_block_ == current_block) && auction_valid_)
+    {
+      SelectWinners();
+      auction_valid_ = false;
+      return true;
+    }
     return false;
   }
 
@@ -288,11 +292,18 @@ private:
    */
   void SelectWinners() override
   {
-    for (std::size_t i = 0; i < active_.size(); ++i)
+    // assign all item winners according to active bids
+    std::vector<BidIdType> ret{};
+    for (std::size_t j = 0; j < active_.size(); ++j)
     {
-      std::cout << "active_[i]: " << active_[i] << std::endl;
+      if (active_[j] == 1)
+      {
+        for (auto &item : bids_[j].Items())
+        {
+          item.Winner(bids_[j].Id());
+        }
+      }
     }
-    // TODO () can just iterate through active_ to identify selected bids
   }
 };
 
