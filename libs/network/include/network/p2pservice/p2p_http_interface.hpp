@@ -97,10 +97,13 @@ private:
       include_transactions = true;
     }
 
-    Variant response      = Variant::Object();
-    response["chain"]     = GenerateBlockList(include_transactions, chain_length);
+    Variant response     = Variant::Object();
+    response["chain"]    = GenerateBlockList(include_transactions, chain_length);
+    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"]    = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+
+    // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
@@ -131,7 +134,10 @@ private:
   http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
                                   http::HTTPRequest const & /*request*/)
   {
-    Variant response           = Variant::Object();
+    Variant response          = Variant::Object();
+    response["identityCache"] = GenerateIdentityCache();
+
+    // TODO(private issue 532): Remove legacy API
     response["identity_cache"] = GenerateIdentityCache();
 
     return http::CreateJsonResponse(response);
@@ -163,12 +169,16 @@ private:
       trust_list[i] = peer_data_list[i];
     }
 
-    Variant response      = Variant::Object();
+    Variant response     = Variant::Object();
+    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["trusts"]   = trust_list;
+
+    // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
-    response["trusts"]    = trust_list;
+
     return http::CreateJsonResponse(response);
   }
 
@@ -176,14 +186,9 @@ private:
                                       http::HTTPRequest const & /*request*/)
   {
     variant::Variant data = variant::Variant::Object();
+    data["backlog"]       = miner_.GetBacklog();
 
-    data["success"] = true;
-    data["backlog"] = miner_.GetBacklog();
-
-    std::ostringstream oss;
-
-    oss << data;
-    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
+    return http::CreateJsonResponse(data);
   }
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)
@@ -200,11 +205,17 @@ private:
     for (auto &b : blocks)
     {
       // format the block number
-      auto block            = Variant::Object();
+      auto block = Variant::Object();
+
+      block["hash"]         = byte_array::ToBase64(b.hash());
       block["previousHash"] = byte_array::ToBase64(b.prev());
-      block["currentHash"]  = byte_array::ToBase64(b.hash());
+      block["merkleHash"]   = byte_array::ToBase64(b.body().merkle_hash);
       block["proof"]        = byte_array::ToBase64(b.proof().header());
+      block["miner"]        = byte_array::ToBase64(b.body().miner);
       block["blockNumber"]  = b.body().block_number;
+
+      // TODO(private issue 532): Remove legacy API
+      block["currentHash"] = byte_array::ToBase64(b.hash());
 
       if (include_transactions)
       {

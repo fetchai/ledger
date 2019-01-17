@@ -158,7 +158,6 @@ public:
         body_type nextBody;
         nextBody.block_number  = block.body().block_number + 1;
         nextBody.previous_hash = block.hash();
-        nextBody.miner_number  = miner_number_;
 
         nextBlock.SetBody(nextBody);
         nextBlock.UpdateDigest();

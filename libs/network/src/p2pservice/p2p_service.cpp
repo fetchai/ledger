@@ -368,6 +368,7 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
   {
     desired_peers_.insert(p);
   }
+
   for (auto const &p : experimental_peers)
   {
     desired_peers_.insert(p);

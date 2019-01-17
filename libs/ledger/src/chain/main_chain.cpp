@@ -30,7 +30,8 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
 
   if (block.hash().size() == 0)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Erk! You called AddBlock with no UpdateDigest");
+    FETCH_LOG_INFO(LOGGING_NAME, "MainChain: AddBlock called with no digest");
+    return false;
   }
 
   BlockType prev_block;
@@ -94,7 +95,6 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
   }
 
   // Now we're done, it's possible this added block completed some loose blocks.
-
   if (!recursive_iteration)
   {
     CompleteLooseBlocks(block);

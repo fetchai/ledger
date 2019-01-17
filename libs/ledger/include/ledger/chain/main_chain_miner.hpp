@@ -35,6 +35,7 @@ namespace chain {
 class MainChainMiner
 {
 public:
+  using ConstByteArray          = byte_array::ConstByteArray;
   using BlockType               = chain::MainChain::BlockType;
   using BlockHash               = chain::MainChain::BlockHash;
   using BodyType                = chain::MainChain::BlockType::body_type;
@@ -46,17 +47,17 @@ public:
   static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
-                 chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 ConsensusMinerInterface &consensus_miner, uint64_t minerNumber,
+                 chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
+                 ConsensusMinerInterface &consensus_miner, ConstByteArray miner_identity,
                  std::chrono::steady_clock::duration block_interval =
                      std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
     , main_chain_{mainChain}
-    , blockCoordinator_{blockCoordinator}
+    , blockCoordinator_{block_coordinator}
     , miner_{miner}
     , consensus_miner_{consensus_miner}
-    , miner_number_{minerNumber}
+    , miner_identity_{std::move(miner_identity)}
     , block_interval_{block_interval}
   {}
 
@@ -157,7 +158,7 @@ private:
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
-        next_block_body.miner_number  = miner_number_;
+        next_block_body.miner         = miner_identity_;
 
         // Reset previous state
         next_block_body.slices.clear();
@@ -200,7 +201,7 @@ private:
   MinerInterface &                    miner_;
   ConsensusMinerInterface             consensus_miner_;
   std::thread                         thread_;
-  uint64_t                            miner_number_{0};
+  ConstByteArray                      miner_identity_;
   BlockCompleteCallback               on_block_complete_;
   std::chrono::steady_clock::duration block_interval_;
 };

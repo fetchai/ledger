@@ -49,7 +49,8 @@ using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
 using fetch::chain::consensus::ConsensusMinerType;
 
-using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+using ConsensusMinerInterfacePtr =
+    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -127,23 +128,23 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
 /**
  * ConsensusMinerInterface factory method
  */
-ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_type)
 {
+  ConsensusMinerInterfacePtr miner;
+
   switch (miner_type)
   {
+  case ConsensusMinerType::NO_MINER:
+    break;
   case ConsensusMinerType::DUMMY_MINER:
-  {
-    return std::make_shared<DummyMiner>();
-  }
+    miner = std::make_shared<DummyMiner>();
+    break;
   case ConsensusMinerType::BAD_MINER:
-  {
-    return std::make_shared<BadMiner>();
+    miner = std::make_shared<BadMiner>();
+    break;
   }
-  default:
-  {
-    return nullptr;
-  }
-  }
+
+  return miner;
 }
 
 }  // namespace
@@ -192,9 +193,14 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
   , consensus_miner_{GetConsensusMiner(ConsensusMinerType::NO_MINER)}
-  , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
-           block_packer_, consensus_miner_, p2p_port_, block_interval}
-  // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_,
+           num_slices,
+           chain_,
+           block_coordinator_,
+           block_packer_,
+           consensus_miner_,
+           muddle_.identity().identifier(),
+           block_interval}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, processor_threads}
