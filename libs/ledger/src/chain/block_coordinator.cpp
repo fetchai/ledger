@@ -189,7 +189,9 @@ void BlockCoordinator::Monitor()
   for (;;)
   {
     if (stop_)
+    {
       break;
+    }
 
     // execute the correct state handler
     switch (state_)
@@ -207,7 +209,9 @@ void BlockCoordinator::Monitor()
 
     // allow fast exit/shutdown
     if (stop_)
+    {
       break;
+    }
 
     sleep_for(std::chrono::milliseconds(10));
   }
