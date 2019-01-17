@@ -16,8 +16,9 @@ option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"         ON)
 option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output"       OFF)
 option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
-option(FETCH_ENABLE_COVERAGE        "Enable coverage generation"  OFF)
+option(FETCH_ENABLE_COVERAGE        "Enable coverage generation"        OFF)
 option(FETCH_ENABLE_METRICS         "Enable the collection of metrics"  OFF)
+option(FETCH_DISABLE_COLOUR_LOG     "Disable the colour logging"        OFF)
 
 # custom string options
 set(FETCH_DEBUG_SANITIZER "" CACHE STRING "The clang based sanitizer to be enabled")
@@ -30,6 +31,9 @@ option(FETCH_ARCH_SSE42 "Architecture maximally supports SSE4.2"  ON)
 option(FETCH_ARCH_AVX   "Architecture maximally supports AVX"     OFF)
 option(FETCH_ARCH_FMA   "Architecture maximally supports FMA"     OFF)
 option(FETCH_ARCH_AVX2  "Architecture maximally supports AVX2"    OFF)
+
+# advanced options
+mark_as_advanced(FETCH_DISABLE_COLOUR_LOG)
 
 #-------------------------------------------------------------------------------
 # Top Level Setup
