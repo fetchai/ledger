@@ -77,6 +77,7 @@ public:
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
   using FutureTimepoint      = network::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
+  using PeerTrusts           = TrustInterface::PeerTrusts;
   using Mutex                = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
@@ -113,7 +114,8 @@ public:
     return identity_cache_;
   }
 
-  bool IsDesired(Address const &address);
+  bool IsDesired(Address const &address) const;
+  bool IsExperimental(Address const &address) const;
 
   void AddMainChainRpcService(std::shared_ptr<ledger::MainChainRpcService> ptr);
 private:
@@ -173,7 +175,10 @@ private:
   RequestingManifests outstanding_manifests_;  ///< The queue of outstanding promises for manifests
   RequestingPeerlists pending_peer_lists_;     ///< The queue of outstanding peer lists
   RequestingUris      pending_resolutions_;    ///< The queue of outstanding resolutions
+
   AddressSet desired_peers_;  ///< The desired set of addresses that we want to have connections to
+  AddressSet experimental_peers_;  ///< The set we're only trying out.
+
   AddressSet blacklisted_peers_;  ///< The set of addresses that we will not have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
@@ -189,7 +194,7 @@ private:
 
   std::shared_ptr<BlockCatchUpService> latest_block_sync_;
 
-  Mutex desired_peers_mutex_{__LINE__, __FILE__};
+  mutable Mutex desired_peers_mutex_{__LINE__, __FILE__};
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };
