@@ -18,6 +18,9 @@ import xml.etree.ElementTree as ET
 
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+MAX_CPUS = 7 # as defined by CI workflow
+AVAILABLE_CPUS = multiprocessing.cpu_count()
+CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
 
 def output(*args):
@@ -145,10 +148,10 @@ def build_project(project_root, build_root, options):
         cmd = ["ninja"]
     else:
         # manually specifying the number of cores is required because make automatic dectection is
-        # flakey inside docker. Python appears to be more useful.
-        cmd = ['make', '-j', str(multiprocessing.cpu_count())]
+        # flakey inside docker.
+        cmd = ['make', '-j', str(CONCURRENCY)]
 
-    output('Building project with command: {}'.format(' '.join(cmd)))
+    output('Building project with command: {} (detected cpus: {})'.format(' '.join(cmd), AVAILABLE_CPUS))
     exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
