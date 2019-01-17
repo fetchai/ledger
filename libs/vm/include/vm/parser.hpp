@@ -25,13 +25,12 @@ namespace vm {
 class Parser
 {
 public:
-  Parser()
-  {}
-  ~Parser()
-  {}
-  BlockNodePtr Parse(const std::string &source, std::vector<std::string> &errors);
+  Parser();
+  ~Parser() = default;
+  BlockNodePtr Parse(std::string const & source, Strings & errors);
 
 private:
+
   enum class State
   {
     // [group opener, prefix op or operand] is required
@@ -69,10 +68,11 @@ private:
     int               count;
   };
 
+  Strings                  template_names_;
   std::vector<Token>       tokens_;
   int                      index_;
   Token *                  token_;
-  std::vector<std::string> errors_;
+  Strings                  errors_;
   std::vector<Node::Kind>  blocks_;
   State                    state_;
   bool                     found_expression_terminator_;
@@ -81,8 +81,8 @@ private:
   std::vector<Expr>        rpn_;
   std::vector<Expr>        infix_stack_;
 
-  void              Tokenise(const std::string &source);
-  bool              ParseBlock(BlockNode &node);
+  void              Tokenise(std::string const & source);
+  bool              ParseBlock(BlockNode & node);
   BlockNodePtr      ParseFunctionDefinition();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
@@ -94,27 +94,30 @@ private:
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
   void              SkipFunctionDefinition();
+  bool              IsTemplateName(std::string const & name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
-  ExpressionNodePtr ParseExpression(const bool is_conditional_expression = false);
+  ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
-  bool              ParseExpressionIdentifier(std::string &name);
-  bool              HandleLiteral(const Node::Kind kind);
+  bool              ParseExpressionIdentifier(std::string & name);
+  bool              HandleLiteral(Node::Kind kind);
   void              HandlePlus();
   void              HandleMinus();
-  bool              HandleBinaryOp(const Node::Kind kind, const OpInfo &op_info);
+  bool              HandleBinaryOp(Node::Kind kind, OpInfo const & op_info);
   void              HandleNot();
-  void              HandleIncDec(const Node::Kind prefix_kind, const OpInfo &prefix_op_info,
-                                 const Node::Kind postfix_kind, const OpInfo &postfix_op_info);
+  void              HandleIncDec(Node::Kind     prefix_kind,
+                                 OpInfo const & prefix_op_info,
+                                 Node::Kind     postfix_kind,
+                                 OpInfo const & postfix_op_info);
   bool              HandleDot();
-  void              HandleOpener(const Node::Kind prefix_kind, const Node::Kind postfix_kind);
-  bool              HandleCloser(const bool is_conditional_expression);
+  void              HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind);
+  bool              HandleCloser(bool is_conditional_expression);
   bool              HandleComma();
-  void              HandleOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddGroup(const Node::Kind kind, const int initial_arity);
-  void              AddOp(const Node::Kind kind, const OpInfo &op_info);
-  void              AddOperand(const Node::Kind kind);
-  void              AddError(const std::string &message);
+  void              HandleOp(Node::Kind kind, OpInfo const & op_info);
+  void              AddGroup(Node::Kind kind, int initial_arity);
+  void              AddOp(Node::Kind kind, OpInfo const & op_info);
+  void              AddOperand(Node::Kind kind);
+  void              AddError(std::string const & message);
 
   void IncrementNodeCount()
   {
@@ -146,5 +149,5 @@ private:
   }
 };
 
-}  // namespace vm
-}  // namespace fetch
+} // namespace vm
+} // namespace fetch

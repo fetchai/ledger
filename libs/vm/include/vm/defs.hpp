@@ -17,40 +17,340 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/opcodes.hpp"
-#include "vm/typeids.hpp"
+#include "vm/common.hpp"
 #include <cmath>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace fetch {
 namespace vm {
 
+// Forward declarations
+class Object;
+template <typename T> class Ptr;
+struct Variant;
 class VM;
-struct Object
+
+template <typename T, typename = void>
+struct is_primitive : std::false_type
+{};
+template <typename T>
+struct is_primitive<T, typename std::enable_if_t<
+  std::is_same<T, void>::value     ||
+  std::is_same<T, bool>::value     ||
+  std::is_same<T, int8_t>::value   ||
+  std::is_same<T, uint8_t>::value  ||
+  std::is_same<T, int16_t>::value  ||
+  std::is_same<T, uint16_t>::value ||
+  std::is_same<T, int32_t>::value  ||
+  std::is_same<T, uint32_t>::value ||
+  std::is_same<T, int64_t>::value  ||
+  std::is_same<T, uint64_t>::value ||
+  std::is_same<T, float>::value    ||
+  std::is_same<T, double>::value>> : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_object : std::false_type
+{};
+template <typename T>
+struct is_object<T, typename std::enable_if_t<std::is_base_of<Object, T>::value>>
+  : std::true_type
+{};
+
+template <typename T>
+struct is_ptr : std::false_type
+{};
+template <typename T>
+struct is_ptr<Ptr<T>> : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_variant : std::false_type
+{};
+template <typename T>
+struct is_variant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>>
+  : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_nonconst_ref : std::false_type
+{};
+template <typename T>
+struct is_nonconst_ref<T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type &>::value>>
+  : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_const_ref : std::false_type
+{};
+template <typename T>
+struct is_const_ref<T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type const &>::value>>
+  : std::true_type
+{};
+
+template <typename T>
+struct ptr_managed_type;
+template <typename T>
+struct ptr_managed_type<Ptr<T>>
 {
-  Object()
-  {}
-  Object(TypeId const &type_id__, VM *vm__)
-  {
-    count   = 1;
-    type_id = type_id__;
-    vm      = vm__;
-  }
-  virtual ~Object()
-  {}
-  void AddRef()
-  {
-    ++count;
-  }
-  void     Release();
-  uint32_t count;
-  TypeId   type_id;
-  VM *     vm;
+  using type = T;
 };
 
-union Variant
+template <typename T, typename = void>
+struct is_primitive_parameter : std::false_type
+{};
+template <typename T>
+struct is_primitive_parameter<T, typename std::enable_if_t<
+  !is_nonconst_ref<T>::value && is_primitive<typename std::decay<T>::type>::value>> : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_ptr_parameter : std::false_type
+{};
+template <typename T>
+struct is_ptr_parameter<T, typename std::enable_if_t<
+  is_const_ref<T>::value && is_ptr<typename std::decay<T>::type>::value>> : std::true_type
+{};
+
+template <typename T, typename = void>
+struct is_variant_parameter : std::false_type
+{};
+template <typename T>
+struct is_variant_parameter<T, typename std::enable_if_t<
+  is_const_ref<T>::value && is_variant<typename std::decay<T>::type>::value>> : std::true_type
+{};
+
+
+class Object
+{
+public:
+  Object() = delete;
+  Object(VM *vm, TypeId type_id)
+  {
+    vm_        = vm;
+    type_id_   = type_id;
+    ref_count_ = 1;
+  }
+  virtual ~Object() = default;
+  virtual bool   Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const;
+  virtual size_t GetHashCode() const;
+  virtual void   UnaryMinusOp(Ptr<Object> & object);
+  virtual void   AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   LeftAddOp(Variant & lhsv, Variant & rhsv);
+  virtual void   RightAddOp(Variant & lhsv, Variant & rhsv);
+  virtual void   AddAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   RightAddAssignOp(Ptr<Object> & lhso, Variant & rhsv);
+  virtual void   SubtractOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   LeftSubtractOp(Variant & lhsv, Variant & rhsv);
+  virtual void   RightSubtractOp(Variant & lhsv, Variant & rhsv);
+  virtual void   SubtractAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   RightSubtractAssignOp(Ptr<Object> & lhso, Variant & rhsv);
+  virtual void   MultiplyOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   LeftMultiplyOp(Variant & lhsv, Variant & rhsv);
+  virtual void   RightMultiplyOp(Variant & lhsv, Variant & rhsv);
+  virtual void   MultiplyAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   RightMultiplyAssignOp(Ptr<Object> & lhso, Variant & rhsv);
+  virtual void   DivideOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   LeftDivideOp(Variant & lhsv, Variant & rhsv);
+  virtual void   RightDivideOp(Variant & lhsv, Variant & rhsv);
+  virtual void   DivideAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
+  virtual void   RightDivideAssignOp(Ptr<Object> & lhso, Variant & rhsv);
+  virtual void * FindElement();
+  virtual void   PushElement(TypeId element_type_id);
+  virtual void   PopToElement();
+
+protected:
+
+  Variant &        Push();
+  Variant &        Pop();
+  Variant &        Top();
+  void             RuntimeError(std::string const & message);
+  TypeInfo const & GetTypeInfo(TypeId type_id);
+  bool             GetInteger(Variant const & v, size_t & index);
+
+  VM *    vm_;
+  TypeId  type_id_;
+  size_t  ref_count_;
+
+private:
+
+  void AddRef()
+  {
+    ++ref_count_;
+  }
+
+  void Release()
+  {
+    if (--ref_count_ == 0)
+    {
+      delete this;
+    }
+  }
+
+  template <typename T> friend class Ptr;
+};
+
+template <typename T>
+class Ptr
+{
+public:
+  Ptr()
+  {
+    ptr_ = nullptr;
+  }
+
+  Ptr(T *other)
+  {
+    ptr_ = other;
+  }
+
+  Ptr(Ptr const & other)
+  {
+    ptr_ = other.ptr_;
+    AddRef();
+  }
+
+  Ptr(Ptr && other)
+  {
+    ptr_       = other.ptr_;
+    other.ptr_ = nullptr;
+  }
+
+  template <typename U>
+  Ptr(Ptr<U> const & other)
+  {
+    ptr_ = static_cast<T*>(other.ptr_);
+    AddRef();
+  }
+
+  template <typename U>
+  Ptr(Ptr<U> && other)
+  {
+    ptr_       = static_cast<T*>(other.ptr_);
+    other.ptr_ = nullptr;
+  }
+
+  Ptr &operator=(Ptr const & other)
+  {
+    if (ptr_ != other.ptr_)
+    {
+      Release();
+      ptr_ = other.ptr_;
+      AddRef();
+    }
+    return *this;
+  }
+
+  Ptr &operator=(Ptr && other)
+  {
+    if (ptr_ != other.ptr_)
+    {
+      Release();
+      ptr_       = other.ptr_;
+      other.ptr_ = nullptr;
+    }
+    return *this;
+  }
+
+  template <typename U>
+  Ptr &operator=(Ptr<U> const & other)
+  {
+    if (ptr_ != other.ptr_)
+    {
+      Release();
+      ptr_ = static_cast<T*>(other.ptr_);
+      AddRef();
+    }
+    return *this;
+  }
+
+  template <typename U>
+  Ptr &operator=(Ptr<U> && other)
+  {
+    if (ptr_ != other.ptr_)
+    {
+      Release();
+      ptr_       = static_cast<T*>(other.ptr_);
+      other.ptr_ = nullptr;
+    }
+    return *this;
+  }
+
+  ~Ptr()
+  {
+     Release();
+  }
+
+  void Reset()
+  {
+    if (ptr_)
+    {
+      ptr_->Release();
+      ptr_ = nullptr;
+    }
+  }
+
+  explicit operator bool() const
+  {
+    return ptr_ != nullptr;
+  }
+
+  T *operator->() const
+  {
+    return ptr_;
+  }
+
+  T &operator*() const
+  {
+    return *ptr_;
+  }
+
+  size_t RefCount() const
+  {
+    return ptr_->ref_count_;
+  }
+
+private:
+
+  T *ptr_;
+
+  void AddRef()
+  {
+    if (ptr_)
+    {
+      ptr_->AddRef();
+    }
+  }
+
+  void Release()
+  {
+    if (ptr_)
+    {
+      ptr_->Release();
+    }
+  }
+
+  template <typename U> friend class Ptr;
+
+  template <typename L, typename R>
+  friend bool operator==(Ptr<L> const & lhs, Ptr<R> const & rhs);
+
+  template <typename L, typename R>
+  friend bool operator!=(Ptr<L> const & lhs, Ptr<R> const & rhs);
+};
+
+template <typename L, typename R>
+inline bool operator==(Ptr<L> const & lhs, Ptr<R> const & rhs)
+{
+  return lhs.ptr_ == static_cast<L*>(rhs.ptr_);
+}
+
+template <typename L, typename R>
+inline bool operator!=(Ptr<L> const & lhs, Ptr<R> const & rhs)
+{
+  return lhs.ptr_ != static_cast<L*>(rhs.ptr_);
+}
+
+union Primitive
 {
   int8_t   i8;
   uint8_t  ui8;
@@ -62,294 +362,476 @@ union Variant
   uint64_t ui64;
   float    f32;
   double   f64;
-  Object * object;
 
   void Zero()
   {
     ui64 = 0;
   }
 
-  void Get(int8_t &value)
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, bool>::value, T> Get() const
   {
-    value = i8;
+      return bool(ui8);
   }
-  void Get(uint8_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, int8_t>::value, T> Get() const
   {
-    value = ui8;
+      return i8;
   }
-  void Get(int16_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, uint8_t>::value, T> Get() const
   {
-    value = i16;
+      return ui8;
   }
-  void Get(uint16_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, int16_t>::value, T> Get() const
   {
-    value = ui16;
+      return i16;
   }
-  void Get(int32_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, uint16_t>::value, T> Get() const
   {
-    value = i32;
+      return ui16;
   }
-  void Get(uint32_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, int32_t>::value, T> Get() const
   {
-    value = ui32;
+      return i32;
   }
-  void Get(int64_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, uint32_t>::value, T> Get() const
   {
-    value = i64;
+      return ui32;
   }
-  void Get(uint64_t &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, int64_t>::value, T> Get() const
   {
-    value = ui64;
+      return i64;
   }
-  void Get(float &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, uint64_t>::value, T> Get() const
   {
-    value = f32;
+      return ui64;
   }
-  void Get(double &value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, float>::value, T> Get() const
   {
-    value = f64;
+      return f32;
   }
-  void Get(Object *&value)
+
+  template <typename T>
+  typename std::enable_if_t<std::is_same<T, double>::value, T> Get() const
   {
-    value = object;
+      return f64;
+  }
+
+  void Set(bool value)
+  {
+    ui8 = uint8_t(value);
   }
 
   void Set(int8_t value)
   {
     i8 = value;
   }
+
   void Set(uint8_t value)
   {
     ui8 = value;
   }
+
   void Set(int16_t value)
   {
     i16 = value;
   }
+
   void Set(uint16_t value)
   {
     ui16 = value;
   }
+
   void Set(int32_t value)
   {
     i32 = value;
   }
+
   void Set(uint32_t value)
   {
     ui32 = value;
   }
+
   void Set(int64_t value)
   {
     i64 = value;
   }
+
   void Set(uint64_t value)
   {
     ui64 = value;
   }
+
   void Set(float value)
   {
     f32 = value;
   }
+
   void Set(double value)
   {
     f64 = value;
   }
-  void Set(Object *value)
-  {
-    object = value;
-  }
 };
 
-struct Value
+struct Variant
 {
-  Value()
+  union
   {
-    type_id = TypeId::Unknown;
-    variant.Zero();
+    Primitive   primitive;
+    Ptr<Object> object;
+  };
+  TypeId        type_id;
+
+  Variant()
+  {
+    Construct();
   }
 
-  ~Value()
+  Variant(Variant const & other)
   {
-    if (IsObject())
-    {
-      Release();
-    }
+    Construct(other);
   }
 
-  Value(Value const &other)
+  Variant(Variant && other)
+  {
+    Construct(std::move(other));
+  }
+
+  template <typename T, typename std::enable_if_t<is_primitive<T>::value> * = nullptr>
+  Variant(T other, TypeId other_type_id)
+  {
+    Construct(other, other_type_id);
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  Variant(T const & other, TypeId other_type_id)
+  {
+    Construct(other, other_type_id);
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  Variant(T && other, TypeId other_type_id)
+  {
+    Construct(std::move(other), other_type_id);
+  }
+
+  Variant(Primitive other, TypeId other_type_id)
+  {
+    Construct(other, other_type_id);
+  }
+
+  void Construct()
+  {
+    type_id = TypeIds::Unknown;
+  }
+
+  void Construct(Variant const & other)
   {
     type_id = other.type_id;
-    variant = other.variant;
     if (IsObject())
     {
-      AddRef();
+      new (&object) Ptr<Object>(other.object);
+    }
+    else
+    {
+      primitive = other.primitive;
     }
   }
 
-  Value &operator=(Value const &other)
+  void Construct(Variant && other)
   {
-    const bool is_object       = IsObject();
-    const bool other_is_object = other.IsObject();
-    if (is_object && other_is_object)
+    type_id = other.type_id;
+    if (IsObject())
     {
-      if (variant.object != other.variant.object)
-      {
-        Release();
-        variant.object = other.variant.object;
-        AddRef();
-      }
-      type_id = other.type_id;
-      return *this;
+      new (&object) Ptr<Object>(std::move(other.object));
     }
+    else
+    {
+      primitive = other.primitive;
+    }
+    other.type_id = TypeIds::Unknown;
+  }
+
+  template <typename T, typename std::enable_if_t<is_primitive<T>::value> * = nullptr>
+  void Construct(T other, TypeId other_type_id)
+  {
+    primitive.Set(other);
+    type_id = other_type_id;
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  void Construct(T const & other, TypeId other_type_id)
+  {
+    new (&object) Ptr<Object>(other);
+    type_id = other_type_id;
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  void Construct(T && other, TypeId other_type_id)
+  {
+    new (&object) Ptr<Object>(std::move(other));
+    type_id = other_type_id;
+  }
+
+  void Construct(Primitive other, TypeId other_type_id)
+  {
+    primitive = other;
+    type_id   = other_type_id;
+  }
+
+  Variant &operator=(Variant const & other)
+  {
+    bool const is_object       = IsObject();
+    bool const other_is_object = other.IsObject();
+    type_id                    = other.type_id;
     if (is_object)
     {
-      Release();
-    }
-    type_id = other.type_id;
-    variant = other.variant;
-    if (other_is_object)
-    {
-      AddRef();
-    }
-    return *this;
-  }
-
-  Value(Value &&other)
-  {
-    type_id       = other.type_id;
-    variant       = other.variant;
-    other.type_id = TypeId::Unknown;
-    other.variant.Zero();
-  }
-
-  Value &operator=(Value &&other)
-  {
-    const bool is_object       = IsObject();
-    const bool other_is_object = other.IsObject();
-    if (is_object && other_is_object)
-    {
-      if (variant.object != other.variant.object)
+      if (other_is_object)
       {
-        Release();
-        type_id       = other.type_id;
-        variant       = other.variant;
-        other.type_id = TypeId::Unknown;
-        other.variant.Zero();
+        // Copy object to current object
+        object = other.object;
+        return *this;
       }
-      return *this;
+      else
+      {
+        // Copy primitive to current object
+        object.Reset();
+        primitive = other.primitive;
+        return *this;
+      }
     }
+    else
+    {
+      if (other_is_object)
+      {
+        // Copy object to current primitive
+        new (&object) Ptr<Object>(other.object);
+        return *this;
+      }
+      else
+      {
+        // Copy primitive to current primitive
+        primitive = other.primitive;
+        return *this;
+      }
+    }
+  }
+
+  Variant &operator=(Variant && other)
+  {
+    bool const is_object       = IsObject();
+    bool const other_is_object = other.IsObject();
+    type_id                    = other.type_id;
+    other.type_id              = TypeIds::Unknown;
     if (is_object)
     {
-      Release();
+      if (other_is_object)
+      {
+        // Move object to current object
+        object = std::move(other.object);
+        return *this;
+      }
+      else
+      {
+        // Move primitive to current object
+        object.Reset();
+        primitive = other.primitive;
+        return *this;
+      }
     }
-    type_id       = other.type_id;
-    variant       = other.variant;
-    other.type_id = TypeId::Unknown;
-    other.variant.Zero();
-    return *this;
+    else
+    {
+      if (other_is_object)
+      {
+        // Move object to current primitive
+        new (&object) Ptr<Object>(std::move(other.object));
+        return *this;
+      }
+      else
+      {
+        // Move primitive to current primitive
+        primitive = other.primitive;
+        return *this;
+      }
+    }
   }
 
-  void Copy(Value const &other)
+  template <typename T, typename std::enable_if_t<is_primitive<T>::value> * = nullptr>
+  void Assign(T other, TypeId other_type_id)
   {
-    type_id = other.type_id;
-    variant = other.variant;
     if (IsObject())
     {
-      AddRef();
+       object.Reset();
     }
+    primitive.Set(other);
+    type_id = other_type_id;
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  void Assign(T const & other, TypeId other_type_id)
+  {
+    if (IsObject())
+    {
+      object  = other;
+      type_id = other_type_id;
+    }
+    else
+    {
+      Construct(other, other_type_id);
+    }
+  }
+
+  template <typename T, typename std::enable_if_t<is_ptr<T>::value> * = nullptr>
+  void Assign(T && other, TypeId other_type_id)
+  {
+    if (IsObject())
+    {
+      object        = std::move(other);
+      type_id       = other_type_id;
+    }
+    else
+    {
+      Construct(std::move(other), other_type_id);
+    }
+  }
+  template <typename T>
+  typename std::enable_if_t<is_primitive<T>::value, T> Copy()
+  {
+    return primitive.Get<T>();
+  }
+
+  template <typename T>
+  typename std::enable_if_t<is_ptr<T>::value, T> Copy()
+  {
+    return object;
+  }
+
+  template <typename T>
+  typename std::enable_if_t<is_variant<T>::value, T> Copy()
+  {
+    T variant;
+    variant.type_id = type_id;
+    if (IsObject())
+    {
+      new (&variant.object) Ptr<Object>(object);
+    }
+    else
+    {
+      variant.primitive = primitive;
+    }
+    return variant;
+  }
+
+  template <typename T>
+  typename std::enable_if_t<is_primitive<T>::value, T> Move()
+  {
+    type_id = TypeIds::Unknown;
+    return primitive.Get<T>();
+  }
+
+  template <typename T>
+  typename std::enable_if_t<is_ptr<T>::value, T> Move()
+  {
+    type_id = TypeIds::Unknown;
+    return std::move(object);
+  }
+
+  template <typename T>
+  typename std::enable_if_t<is_variant<T>::value, T> Move()
+  {
+    T variant;
+    variant.type_id = type_id;
+    if (IsObject())
+    {
+      new (&variant.object) Ptr<Object>(std::move(object));
+    }
+    else
+    {
+      variant.primitive = primitive;
+    }
+    type_id = TypeIds::Unknown;
+    return variant;
+  }
+
+  ~Variant()
+  {
+    Reset();
+  }
+
+  bool IsObject() const
+  {
+    return type_id >= TypeIds::ObjectMinId;
   }
 
   void Reset()
   {
     if (IsObject())
     {
-      Release();
+       object.Reset();
     }
-    type_id = TypeId::Unknown;
-    variant.Zero();
+    type_id = TypeIds::Unknown;
   }
-
-  void PrimitiveReset()
-  {
-    type_id = TypeId::Unknown;
-    variant.Zero();
-  }
-
-  void AddRef()
-  {
-    if (variant.object)
-    {
-      variant.object->AddRef();
-    }
-  }
-
-  void Release()
-  {
-    if (variant.object)
-    {
-      variant.object->Release();
-    }
-  }
-
-  template <typename T>
-  void SetPrimitive(T const &primitive, TypeId const &type_id__)
-  {
-    if (IsObject())
-    {
-      Release();
-    }
-    type_id = type_id__;
-    variant.Set(primitive);
-  }
-
-  void SetObject(Object *object, TypeId const &type_id__)
-  {
-    if (IsObject())
-    {
-      Release();
-    }
-    type_id        = type_id__;
-    variant.object = object;
-  }
-
-  bool IsObject() const
-  {
-    return type_id > TypeId::PrimitivesObjectsDivider;
-  }
-  TypeId  type_id;
-  Variant variant;
 };
+
+
+struct T : public Variant
+{};
+
+struct MapKey : public Variant
+{};
+
+struct MapValue : public Variant
+{};
+
 
 struct Script
 {
-  Script()
-  {}
-  Script(const std::string &name__)
+  Script() = default;
+  Script(std::string const & name__, TypeInfoTable const & type_info_table__)
   {
-    name = name__;
+    name            = name__;
+    type_info_table = type_info_table__;
   }
+
   struct Instruction
   {
-    Instruction(Opcode const &opcode__, uint16_t const &line__)
+    Instruction(Opcode opcode__, uint16_t line__)
     {
       opcode  = opcode__;
       line    = line__;
       index   = 0;
-      type_id = TypeId::Unknown;
-      variant.Zero();
+      type_id = TypeIds::Unknown;
+      data.Zero();
     }
-    Opcode   opcode;
-    uint16_t line;
-    Index    index;  // index of variable, or index into instructions (pc)
-    TypeId   type_id;
-    Variant  variant;
+    Opcode    opcode;
+    uint16_t  line;
+    Index     index;  // index of variable, or index into instructions (pc)
+    TypeId    type_id;
+    Primitive data;
   };
 
   using Instructions = std::vector<Instruction>;
 
   struct Variable
   {
-    Variable(std::string const &name__, TypeId const &type_id__)
+    Variable(std::string const & name__, TypeId type_id__)
     {
       name    = name__;
       type_id = type_id__;
@@ -360,46 +842,50 @@ struct Script
 
   struct Function
   {
-    Function(std::string const &name__, int const &num_parameters__)
+    Function(std::string const & name__, int num_parameters__, TypeId return_type_id__)
     {
       name           = name__;
       num_variables  = 0;
       num_parameters = num_parameters__;
+      return_type_id = return_type_id__;
     }
-    Index AddVariable(std::string const &name, TypeId const &type_id)
+    Index AddVariable(std::string const & name, TypeId type_id)
     {
-      const Index index = (Index)num_variables++;
+      Index const index = (Index)num_variables++;
       variables.push_back(Variable(name, type_id));
       return index;
     }
-    Index AddInstruction(Instruction &instruction)
+    Index AddInstruction(Instruction & instruction)
     {
-      const Index pc = (Index)instructions.size();
+      Index const pc = (Index)instructions.size();
       instructions.push_back(std::move(instruction));
       return pc;
     }
     std::string           name;
     int                   num_variables;  // parameters + locals
     int                   num_parameters;
-    std::vector<Variable> variables;  // parameters + locals
+    TypeId                return_type_id;
+    std::vector<Variable> variables;      // parameters + locals
     Instructions          instructions;
   };
 
   using Functions = std::vector<Function>;
+
   std::string                            name;
-  std::vector<std::string>               strings;
+  TypeInfoTable                          type_info_table;
+  Strings                                strings;
   Functions                              functions;
   std::unordered_map<std::string, Index> map;
 
-  Index AddFunction(Function &function)
+  Index AddFunction(Function & function)
   {
-    const Index index  = (Index)functions.size();
+    Index const index  = (Index)functions.size();
     map[function.name] = index;
     functions.push_back(std::move(function));
     return index;
   }
 
-  Function const *FindFunction(std::string const &name) const
+  Function const *FindFunction(std::string const & name) const
   {
     auto it = map.find(name);
     if (it != map.end())
@@ -410,5 +896,5 @@ struct Script
   }
 };
 
-}  // namespace vm
-}  // namespace fetch
+} // namespace vm
+} // namespace fetch

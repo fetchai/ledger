@@ -22,9 +22,12 @@
 namespace fetch {
 namespace vm {
 
-void Generator::Generate(BlockNodePtr const &root, std::string const &name, Script &script)
+void Generator::Generate(BlockNodePtr const &  root,
+                         TypeInfoTable const & type_info_table,
+                         std::string const &   name,
+                         Script &              script)
 {
-  script_ = Script(name);
+  script_ = Script(name, type_info_table);
   scopes_.clear();
   loops_.clear();
   strings_map_.clear();
@@ -40,9 +43,9 @@ void Generator::Generate(BlockNodePtr const &root, std::string const &name, Scri
   scopes_.clear();
 }
 
-void Generator::CreateFunctions(BlockNodePtr const &root)
+void Generator::CreateFunctions(BlockNodePtr const & root)
 {
-  for (const NodePtr &child : root->block_children)
+  for (NodePtr const & child : root->block_children)
   {
     switch (child->kind)
     {
@@ -52,31 +55,30 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
       ExpressionNodePtr identifier_node =
           ConvertToExpressionNodePtr(function_definition_node->children[0]);
 
-      FunctionPtr        f              = identifier_node->function;
-      const std::string &name           = f->name;
-      const int          num_parameters = (int)f->parameter_variables.size();
-
-      Script::Function function(name, num_parameters);
-
-      for (const VariablePtr &v : f->parameter_variables)
+      FunctionPtr         f              = identifier_node->function;
+      std::string const & name           = f->name;
+      int const           num_parameters = (int)f->parameter_variables.size();
+      TypeId const        return_type_id = f->return_type->id;
+      Script::Function function(name, num_parameters, return_type_id);
+      for (VariablePtr const & v : f->parameter_variables)
       {
         v->index = function.AddVariable(v->name, v->type->id);
       }
-
       f->index = script_.AddFunction(function);
       break;
     }
     default:
+    {
       break;
     }
+    } // switch
   }
 }
 
-void Generator::HandleBlock(BlockNodePtr const &block)
+void Generator::HandleBlock(BlockNodePtr const & block)
 {
-  for (NodePtr const &child : block->block_children)
+  for (NodePtr const & child : block->block_children)
   {
-
     switch (child->kind)
     {
     case Node::Kind::FunctionDefinitionStatement:
@@ -134,21 +136,21 @@ void Generator::HandleBlock(BlockNodePtr const &block)
     {
       ExpressionNodePtr expression = ConvertToExpressionNodePtr(child);
       HandleExpression(expression);
-      if (expression->type->id != TypeId::Void)
+      if (expression->type->id != TypeIds::Void)
       {
         // The result of the expression is not consumed, so issue an
         // instruction that will pop it and throw it away
-        Script::Instruction instruction(Opcode::Discard, expression->token.line);
+        Script::Instruction instruction(Opcodes::Discard, expression->token.line);
         instruction.type_id = expression->type->id;
         function_->AddInstruction(instruction);
       }
       break;
     }
-    }  // end switch
+    }  // switch
   }
 }
 
-void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
+void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const & node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   FunctionPtr       f               = identifier_node->function;
@@ -158,19 +160,19 @@ void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
   HandleBlock(node);
   ScopeLeave(node);
 
-  if (f->return_type->id == TypeId::Void)
+  if (f->return_type->id == TypeIds::Void)
   {
     // 0 is not correct line number, it should be the line number of the endfunction token
-    Script::Instruction instruction(Opcode::Return, 0);
-    instruction.type_id     = TypeId::Void;
-    instruction.variant.i32 = 0;  // scope number
+    Script::Instruction instruction(Opcodes::Return, 0);
+    instruction.type_id  = TypeIds::Void;
+    instruction.data.i32 = 0;  // scope number
     function_->AddInstruction(instruction);
   }
 
   function_ = nullptr;
 }
 
-void Generator::HandleWhileStatement(BlockNodePtr const &node)
+void Generator::HandleWhileStatement(BlockNodePtr const & node)
 {
   Index const       continue_pc = (Index)function_->instructions.size();
   ExpressionNodePtr condition   = ConvertToExpressionNodePtr(node->children[0]);
@@ -178,7 +180,7 @@ void Generator::HandleWhileStatement(BlockNodePtr const &node)
   HandleExpression(condition);
 
   Index const         jf_pc = (Index)function_->instructions.size();
-  Script::Instruction jf_instruction(Opcode::JumpIfFalse, node->token.line);
+  Script::Instruction jf_instruction(Opcodes::JumpIfFalse, node->token.line);
   jf_instruction.index = 0;  // pc placeholder
 
   function_->AddInstruction(jf_instruction);
@@ -193,21 +195,21 @@ void Generator::HandleWhileStatement(BlockNodePtr const &node)
   ScopeLeave(node);
 
   // 0 is not correct line number, it should be the line number of the endwhile token
-  Script::Instruction jump_instruction(Opcode::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, 0);
 
   jump_instruction.index = continue_pc;
   function_->AddInstruction(jump_instruction);
 
   Index const endwhile_pc              = (Index)function_->instructions.size();
   function_->instructions[jf_pc].index = endwhile_pc;
-  Loop &loop                           = loops_.back();
+  Loop & loop                          = loops_.back();
 
-  for (auto const &jump_pc : loop.continue_pcs)
+  for (auto const & jump_pc : loop.continue_pcs)
   {
     function_->instructions[jump_pc].index = continue_pc;
   }
 
-  for (auto const &jump_pc : loop.break_pcs)
+  for (auto const & jump_pc : loop.break_pcs)
   {
     function_->instructions[jump_pc].index = endwhile_pc;
   }
@@ -215,7 +217,7 @@ void Generator::HandleWhileStatement(BlockNodePtr const &node)
   loops_.pop_back();
 }
 
-void Generator::HandleForStatement(BlockNodePtr const &node)
+void Generator::HandleForStatement(BlockNodePtr const & node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
@@ -229,15 +231,15 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   // Add the for-loop variable
   v->index = function_->AddVariable(v->name, v->type->id);
 
-  Script::Instruction init_instruction(Opcode::ForRangeInit, node->token.line);
-  init_instruction.index       = v->index;  // frame-relative index of the for-loop variable
-  init_instruction.type_id     = v->type->id;
-  init_instruction.variant.i32 = arity;  // 2 or 3 range elements
+  Script::Instruction init_instruction(Opcodes::ForRangeInit, node->token.line);
+  init_instruction.index    = v->index;  // frame-relative index of the for-loop variable
+  init_instruction.type_id  = v->type->id;
+  init_instruction.data.i32 = arity;  // 2 or 3 range elements
 
   function_->AddInstruction(init_instruction);
-  Script::Instruction iterate_instruction(Opcode::ForRangeIterate, node->token.line);
-  iterate_instruction.index       = 0;      // pc placeholder
-  iterate_instruction.variant.i32 = arity;  // 2 or 3 range elements
+  Script::Instruction iterate_instruction(Opcodes::ForRangeIterate, node->token.line);
+  iterate_instruction.index    = 0;      // pc placeholder
+  iterate_instruction.data.i32 = arity;  // 2 or 3 range elements
 
   Index const iterate_pc = function_->AddInstruction(iterate_instruction);
 
@@ -252,12 +254,12 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   ScopeLeave(node);
 
   // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction jump_instruction(Opcode::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, 0);
   jump_instruction.index = iterate_pc;
   function_->AddInstruction(jump_instruction);
 
   // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction terminate_instruction(Opcode::ForRangeTerminate, 0);
+  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate, 0);
 
   terminate_instruction.index   = v->index;
   terminate_instruction.type_id = v->type->id;
@@ -279,7 +281,7 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   loops_.pop_back();
 }
 
-void Generator::HandleIfStatement(NodePtr const &node)
+void Generator::HandleIfStatement(NodePtr const & node)
 {
   Index              jf_pc = Index(-1);
   std::vector<Index> jump_pcs;
@@ -302,7 +304,7 @@ void Generator::HandleIfStatement(NodePtr const &node)
       ExpressionNodePtr condition_expression = ConvertToExpressionNodePtr(block->children[0]);
       HandleExpression(condition_expression);
 
-      Script::Instruction jf_instruction(Opcode::JumpIfFalse, condition_expression->token.line);
+      Script::Instruction jf_instruction(Opcodes::JumpIfFalse, condition_expression->token.line);
       jf_instruction.index = 0;  // pc placeholder
       jf_pc                = function_->AddInstruction(jf_instruction);
 
@@ -314,7 +316,7 @@ void Generator::HandleIfStatement(NodePtr const &node)
       {
         // Only arrange jump to the endif if not the last block
         // 0 is not correct line number!
-        Script::Instruction jump_instruction(Opcode::Jump, 0);
+        Script::Instruction jump_instruction(Opcodes::Jump, 0);
         jump_instruction.index = 0;  // pc placeholder
         Index const jump_pc    = function_->AddInstruction(jump_instruction);
         jump_pcs.push_back(jump_pc);
@@ -347,18 +349,18 @@ void Generator::HandleIfStatement(NodePtr const &node)
   }
 }
 
-void Generator::HandleVarStatement(const NodePtr &node)
+void Generator::HandleVarStatement(NodePtr const & node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
   v->index                          = function_->AddVariable(v->name, v->type->id);
-  bool const is_object              = v->type->IsPrimitiveType() == false;
+  bool const is_object              = v->type->category != TypeCategory::Primitive;
   int        scope_number;
 
   if (is_object)
   {
-    scope_number = static_cast<int>(scopes_.size()) - 1;
-    Scope &scope = scopes_[std::size_t(scope_number)];
+    scope_number  = static_cast<int>(scopes_.size()) - 1;
+    Scope & scope = scopes_[std::size_t(scope_number)];
     scope.objects.push_back(v->index);
   }
   else
@@ -369,10 +371,10 @@ void Generator::HandleVarStatement(const NodePtr &node)
 
   if (node->kind == Node::Kind::VarDeclarationStatement)
   {
-    Script::Instruction instruction(Opcode::VarDeclare, node->token.line);
-    instruction.index       = v->index;
-    instruction.variant.i32 = scope_number;
-    instruction.type_id     = v->type->id;
+    Script::Instruction instruction(Opcodes::VarDeclare, node->token.line);
+    instruction.index    = v->index;
+    instruction.type_id  = v->type->id;
+    instruction.data.i32 = scope_number;
     function_->AddInstruction(instruction);
   }
   else
@@ -388,23 +390,21 @@ void Generator::HandleVarStatement(const NodePtr &node)
     }
 
     HandleExpression(rhs);
-    Script::Instruction instruction(Opcode::VarDeclareAssign, node->token.line);
-
-    instruction.index       = v->index;
-    instruction.variant.i32 = scope_number;
-    instruction.type_id     = v->type->id;
-
+    Script::Instruction instruction(Opcodes::VarDeclareAssign, node->token.line);
+    instruction.index    = v->index;
+    instruction.type_id  = v->type->id;
+    instruction.data.i32 = scope_number;
     function_->AddInstruction(instruction);
   }
 }
 
-void Generator::HandleReturnStatement(NodePtr const &node)
+void Generator::HandleReturnStatement(NodePtr const & node)
 {
   if (node->children.size() == 0)
   {
-    Script::Instruction instruction(Opcode::Return, node->token.line);
-    instruction.type_id     = TypeId::Void;
-    instruction.variant.i32 = 0;  // scope number
+    Script::Instruction instruction(Opcodes::Return, node->token.line);
+    instruction.type_id  = TypeIds::Void;
+    instruction.data.i32 = 0;  // scope number
     function_->AddInstruction(instruction);
     return;
   }
@@ -412,214 +412,214 @@ void Generator::HandleReturnStatement(NodePtr const &node)
   ExpressionNodePtr expression = ConvertToExpressionNodePtr(node->children[0]);
   HandleExpression(expression);
 
-  Script::Instruction instruction(Opcode::ReturnValue, node->token.line);
-  instruction.type_id     = expression->type->id;
-  instruction.variant.i32 = 0;  // scope number
+  Script::Instruction instruction(Opcodes::ReturnValue, node->token.line);
+  instruction.type_id  = expression->type->id;
+  instruction.data.i32 = 0;  // scope number
 
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleBreakStatement(NodePtr const &node)
+void Generator::HandleBreakStatement(NodePtr const & node)
 {
-  Loop &loop = loops_.back();
+  Loop & loop = loops_.back();
 
-  Script::Instruction instruction(Opcode::Break, node->token.line);
-  instruction.index       = 0;  // pc placeholder
-  instruction.variant.i32 = loop.scope_number;
-  Index const break_pc    = function_->AddInstruction(instruction);
-
+  Script::Instruction instruction(Opcodes::Break, node->token.line);
+  instruction.index    = 0;  // pc placeholder
+  instruction.data.i32 = loop.scope_number;
+  Index const break_pc = function_->AddInstruction(instruction);
   loop.break_pcs.push_back(break_pc);
 }
 
-void Generator::HandleContinueStatement(NodePtr const &node)
+void Generator::HandleContinueStatement(NodePtr const & node)
 {
   Loop &              loop = loops_.back();
-  Script::Instruction instruction(Opcode::Continue, node->token.line);
-  instruction.index       = 0;  // pc placeholder
-  instruction.variant.i32 = loop.scope_number;
+  Script::Instruction instruction(Opcodes::Continue, node->token.line);
+  instruction.index    = 0;  // pc placeholder
+  instruction.data.i32 = loop.scope_number;
   Index const continue_pc = function_->AddInstruction(instruction);
-
   loop.continue_pcs.push_back(continue_pc);
 }
 
-void Generator::HandleAssignmentStatement(ExpressionNodePtr const &node)
+Opcode Generator::GetArithmeticAssignmentOpcode(bool   assigning_to_variable,
+                                                bool   lhs_is_primitive,
+                                                bool   rhs_is_primitive,
+                                                Opcode opcode1,
+                                                Opcode opcode2,
+                                                Opcode opcode3,
+                                                Opcode opcode4,
+                                                Opcode opcode5,
+                                                Opcode opcode6)
+{
+  Opcode opcode;
+  if (assigning_to_variable)
+  {
+    if (lhs_is_primitive)
+    {
+      opcode = opcode1;
+    }
+    else if (rhs_is_primitive)
+    {
+      opcode = opcode2;
+    }
+    else
+    {
+      opcode = opcode3;
+    }
+  }
+  else // assigning to element
+  {
+    if (lhs_is_primitive)
+    {
+      opcode = opcode4;
+    }
+    else if (rhs_is_primitive)
+    {
+      opcode = opcode5;
+    }
+    else
+    {
+      opcode = opcode6;
+    }
+  }
+  return opcode;
+}
+
+void Generator::HandleAssignmentStatement(ExpressionNodePtr const & node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  HandleExpression(rhs);
+  bool const assigning_to_variable = lhs->category == ExpressionNode::Category::Variable;
+  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
+  Opcode opcode = Opcodes::Unknown;
+  bool const lhs_is_primitive = lhs->type->category == TypeCategory::Primitive;
+  bool const rhs_is_primitive = rhs->type->category == TypeCategory::Primitive;
 
-  bool const assigning_to_variable      = lhs->category == ExpressionNode::Category::Variable;
-  bool const assigning_to_indexed_value = lhs->kind == Node::Kind::IndexOp;
-  bool const is_compound_assignment     = node->kind != Node::Kind::AssignOp;
+  switch (node->kind)
+  {
+  case Node::Kind::AssignOp:
+  {
+    if (assigning_to_variable)
+    {
+      opcode = Opcodes::PopToVariable;
+    }
+    else // assigning_to_element
+    {
+      opcode = Opcodes::PopToElement;
+    }
+    break;
+  }
+  case Node::Kind::AddAssignOp:
+  {
+    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
+                                           lhs_is_primitive,
+                                           rhs_is_primitive,
+                                           Opcodes::VariablePrimitiveAddAssign,
+                                           Opcodes::VariableRightAddAssign,
+                                           Opcodes::VariableObjectAddAssign,
+                                           Opcodes::ElementPrimitiveAddAssign,
+                                           Opcodes::ElementRightAddAssign,
+                                           Opcodes::ElementObjectAddAssign);
+    break;
+  }
+  case Node::Kind::SubtractAssignOp:
+  {
+    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
+                                           lhs_is_primitive,
+                                           rhs_is_primitive,
+                                           Opcodes::VariablePrimitiveSubtractAssign,
+                                           Opcodes::VariableRightSubtractAssign,
+                                           Opcodes::VariableObjectSubtractAssign,
+                                           Opcodes::ElementPrimitiveSubtractAssign,
+                                           Opcodes::ElementRightSubtractAssign,
+                                           Opcodes::ElementObjectSubtractAssign);
+    break;
+  }
+  case Node::Kind::MultiplyAssignOp:
+  {
+    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
+                                           lhs_is_primitive,
+                                           rhs_is_primitive,
+                                           Opcodes::VariablePrimitiveMultiplyAssign,
+                                           Opcodes::VariableRightMultiplyAssign,
+                                           Opcodes::VariableObjectMultiplyAssign,
+                                           Opcodes::ElementPrimitiveMultiplyAssign,
+                                           Opcodes::ElementRightMultiplyAssign,
+                                           Opcodes::ElementObjectMultiplyAssign);
+    break;
+  }
+  case Node::Kind::DivideAssignOp:
+  {
+    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
+                                           lhs_is_primitive,
+                                           rhs_is_primitive,
+                                           Opcodes::VariablePrimitiveDivideAssign,
+                                           Opcodes::VariableRightDivideAssign,
+                                           Opcodes::VariableObjectDivideAssign,
+                                           Opcodes::ElementPrimitiveDivideAssign,
+                                           Opcodes::ElementRightDivideAssign,
+                                           Opcodes::ElementObjectDivideAssign);
+    break;
+  }
+  default:
+  {
+    break;
+  }
+  } // switch
+  HandleAssignment(lhs, opcode, rhs);
+}
 
-  Opcode opcode_override = Opcode::Unknown;
-
+void Generator::HandleAssignment(ExpressionNodePtr const & lhs,
+                                 Opcode                    opcode,
+                                 ExpressionNodePtr const & rhs)
+{
+  bool const assigning_to_variable = lhs->category == ExpressionNode::Category::Variable;
+  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
   if (assigning_to_variable)
   {
-
-    if (is_compound_assignment == false)
-    {
-      opcode_override = Opcode::Assign;
-    }
-    else
-    {
-      switch (node->kind)
-      {
-      case Node::Kind::AddAssignOp:
-      {
-        opcode_override = Opcode::AddAssignOp;
-        break;
-      }
-      case Node::Kind::SubtractAssignOp:
-      {
-        opcode_override = Opcode::SubtractAssignOp;
-        break;
-      }
-      case Node::Kind::MultiplyAssignOp:
-      {
-        opcode_override = Opcode::MultiplyAssignOp;
-        break;
-      }
-      case Node::Kind::DivideAssignOp:
-      {
-        opcode_override = Opcode::DivideAssignOp;
-        break;
-      }
-      default:
-        break;
-      }
-    }
-
-    HandleLHSExpression(lhs, opcode_override, rhs);
-  }
-  else if (assigning_to_indexed_value)
-  {
-    if (is_compound_assignment == false)
-    {
-      opcode_override = Opcode::IndexedAssign;
-    }
-    else
-    {
-      switch (node->kind)
-      {
-      case Node::Kind::AddAssignOp:
-      {
-        opcode_override = Opcode::IndexedAddAssignOp;
-        break;
-      }
-      case Node::Kind::SubtractAssignOp:
-      {
-        opcode_override = Opcode::IndexedSubtractAssignOp;
-        break;
-      }
-      case Node::Kind::MultiplyAssignOp:
-      {
-        opcode_override = Opcode::IndexedMultiplyAssignOp;
-        break;
-      }
-      case Node::Kind::DivideAssignOp:
-      {
-        opcode_override = Opcode::IndexedDivideAssignOp;
-        break;
-      }
-      default:
-        break;
-      }
-    }
-
-    HandleLHSExpression(lhs, opcode_override, rhs);
-  }
-}
-
-void Generator::HandleLHSExpression(ExpressionNodePtr const &lhs, Opcode const &override_opcode,
-                                    ExpressionNodePtr const &rhs)
-{
-  if (lhs->category == ExpressionNode::Category::Variable)
-  {
     VariablePtr v = lhs->variable;
-    Opcode      opcode;
-    TypeId      type_id;
-
-    if (override_opcode == Opcode::Unknown)
+    if (opcode == Opcodes::PopToVariable)
     {
-      opcode  = Opcode::PushVariable;
-      type_id = v->type->id;
+      HandleExpression(rhs);
+      Script::Instruction instruction(opcode, lhs->token.line);
+      instruction.index   = v->index;
+      instruction.type_id = v->type->id;
+      function_->AddInstruction(instruction);
     }
     else
     {
-      opcode  = override_opcode;
-      type_id = v->type->id;
-      if (IsMatrixType(lhs->type->id))
+      if (rhs)
       {
-        // Handle cases where the RHS type is not the same as the LHS type
-        // e.g. matrix *= 100.0
-        if (rhs->type->id == TypeId::Float32)
-        {
-          type_id = TypeId::Matrix_Float32__Float32;
-        }
-        else if (rhs->type->id == TypeId::Float64)
-        {
-          type_id = TypeId::Matrix_Float64__Float64;
-        }
+        HandleExpression(rhs);
       }
+      Script::Instruction instruction(opcode, lhs->token.line);
+      instruction.index   = v->index;
+      instruction.type_id = v->type->id;
+      function_->AddInstruction(instruction);
     }
-
-    Script::Instruction instruction(opcode, lhs->token.line);
-    instruction.index   = v->index;
-    instruction.type_id = type_id;
-
-    function_->AddInstruction(instruction);
   }
-  else  // if (lhs->kind == Node::Kind::IndexOp)
+  else // assigning to element
   {
-    int const         num_rhs_operands = (int)lhs->children.size() - 1;
-    ExpressionNodePtr indexed_node     = ConvertToExpressionNodePtr(lhs->children[0]);
-
-    HandleLHSExpression(indexed_node, Opcode::Unknown, nullptr);
-
-    for (int i = 1; i <= num_rhs_operands; ++i)
+    if (rhs)
     {
-      HandleExpression(ConvertToExpressionNodePtr(lhs->children[std::size_t(i)]));
+       HandleExpression(rhs);
     }
-
-    Opcode opcode;
-    TypeId type_id;
-    if (override_opcode == Opcode::Unknown)
+    size_t const num_indices = lhs->children.size() - 1;
+    TypeId element_type_id = lhs->type->id;
+    // Arrange for the indices to be pushed on to the stack
+    for (size_t i = 1; i <= num_indices; ++i)
     {
-      opcode = Opcode::IndexOp;
-      // This is the type of the matrix or array being indexed
-      type_id = indexed_node->type->id;
+      HandleExpression(ConvertToExpressionNodePtr(lhs->children[i]));
     }
-    else
-    {
-      opcode = override_opcode;
-      // This is the type of the matrix or array being indexed
-      type_id = indexed_node->type->id;
-      if (IsMatrixType(lhs->type->id))
-      {
-        // Handle cases where the RHS type is not the same as the element
-        // type of the array being indexed e.g.
-        // arrayofmatrices[index] *= 100.0
-        if (rhs->type->id == TypeId::Float32)
-        {
-          type_id = TypeId::Array_Matrix_Float32__Float32;
-        }
-        else if (rhs->type->id == TypeId::Float64)
-        {
-          type_id = TypeId::Array_Matrix_Float64__Float64;
-        }
-      }
-    }
-
+    ExpressionNodePtr container_node = ConvertToExpressionNodePtr(lhs->children[0]);
+    // Arrange for the container object to be pushed on to the stack
+    HandleExpression(container_node);
     Script::Instruction instruction(opcode, lhs->token.line);
-    instruction.type_id     = type_id;
-    instruction.variant.i32 = num_rhs_operands;
-
+    instruction.type_id = element_type_id;
     function_->AddInstruction(instruction);
   }
 }
 
-void Generator::HandleExpression(ExpressionNodePtr const &node)
+void Generator::HandleExpression(ExpressionNodePtr const & node)
 {
   switch (node->kind)
   {
@@ -686,97 +686,113 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleIncDecOp(node);
     break;
   }
-
+  case Node::Kind::AddOp:
+  case Node::Kind::SubtractOp:
+  case Node::Kind::MultiplyOp:
+  case Node::Kind::DivideOp:
+  case Node::Kind::EqualOp:
+  case Node::Kind::NotEqualOp:
+  case Node::Kind::LessThanOp:
+  case Node::Kind::LessThanOrEqualOp:
+  case Node::Kind::GreaterThanOp:
+  case Node::Kind::GreaterThanOrEqualOp:
+  case Node::Kind::AndOp:
+  case Node::Kind::OrOp:
+  {
+    HandleBinaryOp(node);
+    break;
+  }
+  case Node::Kind::UnaryMinusOp:
+  case Node::Kind::NotOp:
+  {
+    HandleUnaryOp(node);
+    break;
+  }
   case Node::Kind::SquareBracketGroup:
   {
     // ???
     break;
   }
-
   case Node::Kind::IndexOp:
   {
     HandleIndexOp(node);
     break;
   }
-
   case Node::Kind::DotOp:
   {
     HandleDotOp(node);
     break;
   }
-
   case Node::Kind::InvokeOp:
   {
     HandleInvokeOp(node);
     break;
   }
-
   default:
   {
-    HandleOp(node);
     break;
   }
-  }
+  } // switch
 }
 
-void Generator::HandleIdentifier(ExpressionNodePtr const &node)
+void Generator::HandleIdentifier(ExpressionNodePtr const & node)
 {
   VariablePtr         v = node->variable;
-  Script::Instruction instruction(Opcode::PushVariable, node->token.line);
+  Script::Instruction instruction(Opcodes::PushVariable, node->token.line);
   instruction.index   = v->index;
   instruction.type_id = v->type->id;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger32(ExpressionNodePtr const &node)
+void Generator::HandleInteger32(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Int32;
-  instruction.variant.i32 = atoi(node->token.text.c_str());
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Int32;
+  instruction.data.i32 = atoi(node->token.text.c_str());
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger32(ExpressionNodePtr const &node)
+void Generator::HandleUnsignedInteger32(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id      = TypeId::UInt32;
-  instruction.variant.ui32 = uint32_t(atoi(node->token.text.c_str()));
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id   = TypeIds::UInt32;
+  instruction.data.ui32 = uint32_t(atoi(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger64(ExpressionNodePtr const &node)
+void Generator::HandleInteger64(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Int64;
-  instruction.variant.i64 = atol(node->token.text.c_str());
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Int64;
+  instruction.data.i64 = atol(node->token.text.c_str());
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
+void Generator::HandleUnsignedInteger64(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id      = TypeId::UInt64;
-  instruction.variant.ui64 = uint64_t(atol(node->token.text.c_str()));
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id   = TypeIds::UInt64;
+  instruction.data.ui64 = uint64_t(atol(node->token.text.c_str()));
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Float32;
-  instruction.variant.f32 = (float)atof(node->token.text.c_str());
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Float32;
+  instruction.data.f32 = (float)atof(node->token.text.c_str());
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Float64;
-  instruction.variant.f64 = atof(node->token.text.c_str());
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Float64;
+  instruction.data.f64 = atof(node->token.text.c_str());
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleString(ExpressionNodePtr const &node)
+void Generator::HandleString(ExpressionNodePtr const & node)
 {
   std::string s = node->token.text.substr(1, node->token.text.size() - 2);
   Index       index;
@@ -792,241 +808,310 @@ void Generator::HandleString(ExpressionNodePtr const &node)
     strings_map_[s] = index;
   }
 
-  Script::Instruction instruction(Opcode::PushString, node->token.line);
+  Script::Instruction instruction(Opcodes::PushString, node->token.line);
   instruction.index   = index;
-  instruction.type_id = TypeId::String;
-
+  instruction.type_id = TypeIds::String;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleTrue(ExpressionNodePtr const &node)
+void Generator::HandleTrue(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Bool;
-  instruction.variant.ui8 = 1;
-
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Bool;
+  instruction.data.ui8 = 1;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleFalse(ExpressionNodePtr const &node)
+void Generator::HandleFalse(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id     = TypeId::Bool;
-  instruction.variant.ui8 = 0;
-
+  Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+  instruction.type_id  = TypeIds::Bool;
+  instruction.data.ui8 = 0;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleNull(ExpressionNodePtr const &node)
+void Generator::HandleNull(ExpressionNodePtr const & node)
 {
-  Script::Instruction instruction(Opcode::PushConstant, node->token.line);
-  instruction.type_id = node->type->id;
-
-  if (node->type->id == TypeId::Null)
+  if (node->type->id != TypeIds::Null)
   {
-    // Unresolved null type...
-    // This is to cover the case where there was no possibility of inferring
-    // the expected type of the expression involving nulls, e.g. the
-    // expression "null == null" -- turn any unconverted nulls into an integral zero
-    instruction.type_id = TypeId::UInt64;
+    Script::Instruction instruction(Opcodes::PushNull, node->token.line);
+    instruction.type_id = node->type->id;
+    function_->AddInstruction(instruction);
   }
-
-  instruction.variant.Zero();
-  function_->AddInstruction(instruction);
+  else
+  {
+    // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
+    Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
+    instruction.type_id = TypeIds::UInt64;
+    instruction.data.Zero();
+    function_->AddInstruction(instruction);
+  }
 }
 
-void Generator::HandleIncDecOp(const ExpressionNodePtr &node)
+void Generator::HandleIncDecOp(ExpressionNodePtr const & node)
 {
-  ExpressionNodePtr operand               = ConvertToExpressionNodePtr(node->children[0]);
-  const bool        assigning_to_variable = operand->category == ExpressionNode::Category::Variable;
-  // const bool assigning_to_indexed_value = operand->kind == Node::Kind::IndexOp;
-  Opcode opcode_override = Opcode::Unknown;
-
+  ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
+  bool const assigning_to_variable = operand->category == ExpressionNode::Category::Variable;
+  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
+  Opcode opcode = Opcodes::Unknown;
   if (node->kind == Node::Kind::PrefixIncOp)
   {
-    opcode_override = assigning_to_variable ? Opcode::PrefixIncOp : Opcode::IndexedPrefixIncOp;
+    opcode = assigning_to_variable ? Opcodes::VariablePrefixInc : Opcodes::ElementPrefixInc;
   }
   else if (node->kind == Node::Kind::PrefixDecOp)
   {
-    opcode_override = assigning_to_variable ? Opcode::PrefixDecOp : Opcode::IndexedPrefixDecOp;
+    opcode = assigning_to_variable ? Opcodes::VariablePrefixDec : Opcodes::ElementPrefixDec;
   }
   else if (node->kind == Node::Kind::PostfixIncOp)
   {
-    opcode_override = assigning_to_variable ? Opcode::PostfixIncOp : Opcode::IndexedPostfixIncOp;
+    opcode = assigning_to_variable ? Opcodes::VariablePostfixInc : Opcodes::ElementPostfixInc;
   }
   else if (node->kind == Node::Kind::PostfixDecOp)
   {
-    opcode_override = assigning_to_variable ? Opcode::PostfixDecOp : Opcode::IndexedPostfixDecOp;
+    opcode = assigning_to_variable ? Opcodes::VariablePostfixDec : Opcodes::ElementPostfixDec;
   }
-
-  HandleLHSExpression(operand, opcode_override, nullptr);
+  HandleAssignment(operand, opcode, nullptr);
 }
 
-void Generator::HandleOp(ExpressionNodePtr const &node)
+Opcode Generator::GetArithmeticOpcode(bool   lhs_is_primitive,
+                                      bool   rhs_is_primitive,
+                                      Opcode opcode1,
+                                      Opcode opcode2,
+                                      Opcode opcode3,
+                                      Opcode opcode4)
 {
-  ExpressionNodePtr lhs     = ConvertToExpressionNodePtr(node->children[0]);
-  Opcode            opcode  = Opcode::Unknown;
-  TypeId            type_id = TypeId::Unknown;
+  Opcode opcode;
+  if (lhs_is_primitive)
+  {
+    if (rhs_is_primitive)
+    {
+      // primitive op primitive
+      opcode = opcode1;
+    }
+    else
+    {
+      // primitive op object
+      opcode = opcode2;
+    }
+  }
+  else
+  {
+    if (rhs_is_primitive)
+    {
+      // object op primitive
+      opcode = opcode3;
+    }
+    else
+    {
+      // object op object
+      opcode = opcode4;
+    }
+  }
+  return opcode;
+}
+
+void Generator::HandleBinaryOp(ExpressionNodePtr const & node)
+{
+  ExpressionNodePtr lhs       = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs       = ConvertToExpressionNodePtr(node->children[1]);
+  Opcode            opcode    = Opcodes::Unknown;
+  TypeId            type_id   = TypeIds::Unknown;
+  bool const lhs_is_primitive = lhs->type->category == TypeCategory::Primitive;
+  bool const rhs_is_primitive = rhs->type->category == TypeCategory::Primitive;
 
   switch (node->kind)
   {
   case Node::Kind::AddOp:
   {
-    opcode  = Opcode::AddOp;
-    type_id = TestArithmeticTypes(node);
+    opcode  = GetArithmeticOpcode(lhs_is_primitive,
+                                  rhs_is_primitive,
+                                  Opcodes::PrimitiveAdd,
+                                  Opcodes::LeftAdd,
+                                  Opcodes::RightAdd,
+                                  Opcodes::ObjectAdd);
+    type_id = node->type->id;
     break;
   }
   case Node::Kind::SubtractOp:
   {
-    opcode  = Opcode::SubtractOp;
-    type_id = TestArithmeticTypes(node);
+    opcode  = GetArithmeticOpcode(lhs_is_primitive,
+                                  rhs_is_primitive,
+                                  Opcodes::PrimitiveSubtract,
+                                  Opcodes::LeftSubtract,
+                                  Opcodes::RightSubtract,
+                                  Opcodes::ObjectSubtract);
+    type_id = node->type->id;
     break;
   }
   case Node::Kind::MultiplyOp:
   {
-    opcode  = Opcode::MultiplyOp;
-    type_id = TestArithmeticTypes(node);
+    opcode  = GetArithmeticOpcode(lhs_is_primitive,
+                                  rhs_is_primitive,
+                                  Opcodes::PrimitiveMultiply,
+                                  Opcodes::LeftMultiply,
+                                  Opcodes::RightMultiply,
+                                  Opcodes::ObjectMultiply);
+    type_id = node->type->id;
     break;
   }
   case Node::Kind::DivideOp:
   {
-    opcode  = Opcode::DivideOp;
-    type_id = TestArithmeticTypes(node);
-    break;
-  }
-  case Node::Kind::UnaryMinusOp:
-  {
-    opcode  = Opcode::UnaryMinusOp;
-    type_id = lhs->type->id;
+    opcode  = GetArithmeticOpcode(lhs_is_primitive,
+                                  rhs_is_primitive,
+                                  Opcodes::PrimitiveDivide,
+                                  Opcodes::LeftDivide,
+                                  Opcodes::RightDivide,
+                                  Opcodes::ObjectDivide);
+    type_id = node->type->id;
     break;
   }
   case Node::Kind::EqualOp:
   {
-    opcode  = Opcode::EqualOp;
-    type_id = lhs->type->id;
+    if (lhs_is_primitive)
+    {
+      opcode = Opcodes::PrimitiveEqual;
+    }
+    else
+    {
+      opcode = Opcodes::ObjectEqual;
+    }
+    if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
+    {
+      // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
+      type_id = TypeIds::UInt64;
+    }
+    else
+    {
+      type_id = lhs->type->id;
+    }
     break;
   }
   case Node::Kind::NotEqualOp:
   {
-    opcode  = Opcode::NotEqualOp;
-    type_id = lhs->type->id;
+    if (lhs_is_primitive)
+    {
+      opcode = Opcodes::PrimitiveNotEqual;
+    }
+    else
+    {
+      opcode = Opcodes::ObjectNotEqual;
+    }
+    if ((lhs->type->id == TypeIds::Null) && (rhs->type->id == TypeIds::Null))
+    {
+      // Type-uninferable nulls (e.g. in "null == null") are transformed to integral zero
+      type_id = TypeIds::UInt64;
+    }
+    else
+    {
+      type_id = lhs->type->id;
+    }
     break;
   }
   case Node::Kind::LessThanOp:
   {
-    opcode  = Opcode::LessThanOp;
+    opcode  = Opcodes::PrimitiveLessThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::LessThanOrEqualOp:
   {
-    opcode  = Opcode::LessThanOrEqualOp;
+    opcode  = Opcodes::PrimitiveLessThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOp:
   {
-    opcode  = Opcode::GreaterThanOp;
+    opcode  = Opcodes::PrimitiveGreaterThan;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::GreaterThanOrEqualOp:
   {
-    opcode  = Opcode::GreaterThanOrEqualOp;
+    opcode  = Opcodes::PrimitiveGreaterThanOrEqual;
     type_id = lhs->type->id;
     break;
   }
   case Node::Kind::AndOp:
   {
-    opcode = Opcode::AndOp;
+    opcode = Opcodes::And;
     // This will be TypeId::Bool
     type_id = node->type->id;
     break;
   }
   case Node::Kind::OrOp:
   {
-    opcode = Opcode::OrOp;
-    // This will be TypeId::Bool
-    type_id = node->type->id;
-    break;
-  }
-  case Node::Kind::NotOp:
-  {
-    opcode = Opcode::NotOp;
+    opcode = Opcodes::Or;
     // This will be TypeId::Bool
     type_id = node->type->id;
     break;
   }
   default:
+  {
     break;
   }
+  } // switch
 
-  for (int i = 0; i < (int)node->children.size(); ++i)
+  for (size_t i = 0; i < node->children.size(); ++i)
   {
-    HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+    HandleExpression(ConvertToExpressionNodePtr(node->children[i]));
   }
-
   Script::Instruction instruction(opcode, node->token.line);
   instruction.type_id = type_id;
-
   function_->AddInstruction(instruction);
 }
 
-TypeId Generator::TestArithmeticTypes(ExpressionNodePtr const &node)
+void Generator::HandleUnaryOp(ExpressionNodePtr const & node)
 {
-  ExpressionNodePtr lhs         = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr rhs         = ConvertToExpressionNodePtr(node->children[1]);
-  bool const        lhs_numeric = IsNumericType(lhs->type->id);
-  bool const        rhs_numeric = IsNumericType(rhs->type->id);
-  bool const        lhs_matrix  = IsMatrixType(lhs->type->id);
-  bool const        rhs_matrix  = IsMatrixType(rhs->type->id);
+  ExpressionNodePtr operand      = ConvertToExpressionNodePtr(node->children[0]);
+  Opcode            opcode       = Opcodes::Unknown;
+  TypeId            type_id      = TypeIds::Unknown;
+  bool const        is_primitive = operand->type->category == TypeCategory::Primitive;
 
-  if (lhs_numeric && rhs_matrix)
+  switch (node->kind)
   {
-    // Handle e.g. 100.0 * matrix
-    if (lhs->type->id == TypeId::Float32)
-    {
-      return TypeId::Float32__Matrix_Float32;
-    }
-    else
-    {
-      return TypeId::Float64__Matrix_Float64;
-    }
-  }
-  else if (lhs_matrix && rhs_numeric)
+  case Node::Kind::UnaryMinusOp:
   {
-    // Handle e.g. matrix * 100.0
-    if (rhs->type->id == TypeId::Float32)
-    {
-      return TypeId::Matrix_Float32__Float32;
-    }
-    else
-    {
-      return TypeId::Matrix_Float64__Float64;
-    }
+    opcode  = is_primitive ? Opcodes::PrimitiveUnaryMinus : Opcodes::ObjectUnaryMinus;
+    type_id = node->type->id;
+    break;
   }
-  else
+  case Node::Kind::NotOp:
   {
-    return node->type->id;
+    opcode = Opcodes::Not;
+    // This will be TypeId::Bool
+    type_id = node->type->id;
+    break;
   }
-}
+  default:
+  {
+    break;
+  }
+  } // switch
 
-void Generator::HandleIndexOp(const ExpressionNodePtr &node)
-{
-  const int num_rhs_operands = (int)node->children.size() - 1;
-  for (int i = 0; i <= num_rhs_operands; ++i)
-  {
-    HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
-  }
-  Script::Instruction instruction(Opcode::IndexOp, node->token.line);
-  ExpressionNodePtr   indexed_node = ConvertToExpressionNodePtr(node->children[0]);
-  // This is the type of the matrix or array being indexed
-  instruction.type_id     = indexed_node->type->id;
-  instruction.variant.i32 = num_rhs_operands;
+  HandleExpression(operand);
+  Script::Instruction instruction(opcode, node->token.line);
+  instruction.type_id = type_id;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDotOp(const ExpressionNodePtr &node)
+void Generator::HandleIndexOp(ExpressionNodePtr const & node)
+{
+  size_t const num_indices = node->children.size() - 1;
+  // Arrange for the indices to be pushed on to the stack
+  for (size_t i = 1; i <= num_indices; ++i)
+  {
+    HandleExpression(ConvertToExpressionNodePtr(node->children[i]));
+  }
+  ExpressionNodePtr container_node = ConvertToExpressionNodePtr(node->children[0]);
+  // Arrange for the container object to be pushed on to the stack
+  HandleExpression(container_node);
+  Script::Instruction instruction(Opcodes::PushElement, node->token.line);
+  TypeId element_type_id = node->type->id;
+  instruction.type_id = element_type_id;
+  function_->AddInstruction(instruction);
+}
+
+void Generator::HandleDotOp(ExpressionNodePtr const & node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   if ((lhs->category == ExpressionNode::Category::Variable) ||
@@ -1038,40 +1123,45 @@ void Generator::HandleDotOp(const ExpressionNodePtr &node)
   }
 }
 
-void Generator::HandleInvokeOp(const ExpressionNodePtr &node)
+void Generator::HandleInvokeOp(ExpressionNodePtr const & node)
 {
   ExpressionNodePtr lhs            = ConvertToExpressionNodePtr(node->children[0]);
   FunctionPtr       f              = node->function;
-  const int         num_parameters = (int)f->parameter_types.size();
-
   if (f->kind == Function::Kind::OpcodeInstanceFunction)
   {
     // Arrange for the instance object to be pushed on to the stack
     HandleExpression(ConvertToExpressionNodePtr(lhs));
   }
-
-  for (int i = 1; i < (int)node->children.size(); ++i)
+  // Arrange for the function parameters to be pushed on to the stack
+  for (size_t i = 1; i < node->children.size(); ++i)
   {
-    HandleExpression(ConvertToExpressionNodePtr(node->children[std::size_t(i)]));
+    HandleExpression(ConvertToExpressionNodePtr(node->children[i]));
   }
-
-  if (f->kind == Function::Kind::UserFunction)
+  if (f->kind == Function::Kind::UserFreeFunction)
   {
-    Script::Instruction instruction(Opcode::InvokeUserFunction, node->token.line);
-    instruction.index       = f->index;
-    instruction.variant.i32 = num_parameters;
-    instruction.type_id     = node->type->id;
+    Script::Instruction instruction(Opcodes::InvokeUserFunction, node->token.line);
+    instruction.index    = f->index;
+    instruction.type_id  = node->type->id;
     function_->AddInstruction(instruction);
   }
   else
   {
-    // Opcode-based free function
-    // Opcode-based type constructor
-    // Opcode-based type function
-    // Opcode-based instance function
+    // Opcode-invoked free function
+    // Opcode-invoked type constructor
+    // Opcode-invoked type function
+    // Opcode-invoked instance function
     Script::Instruction instruction(f->opcode, node->token.line);
-    instruction.variant.i32 = num_parameters;
-    instruction.type_id     = node->type->id;
+    // Store the type id of the return type
+    instruction.type_id  = node->type->id;
+    if (lhs->type)
+    {
+      // Store the type id of the invoking type
+      instruction.data.ui16 = lhs->type->id;
+    }
+    else
+    {
+      instruction.data.ui16 = TypeIds::Unknown;
+    }
     function_->AddInstruction(instruction);
   }
 }
@@ -1083,7 +1173,7 @@ void Generator::ScopeEnter()
 
 void Generator::ScopeLeave(BlockNodePtr block_node)
 {
-  const int scope_number = (int)scopes_.size() - 1;
+  int const scope_number = (int)scopes_.size() - 1;
   Scope &   scope        = scopes_[std::size_t(scope_number)];
   if (scope.objects.size() > 0)
   {
@@ -1093,14 +1183,14 @@ void Generator::ScopeLeave(BlockNodePtr block_node)
     if (block_node->kind != Node::Kind::FunctionDefinitionStatement)
     {
       // 0 is not correct line number, should be end of block!
-      Script::Instruction instruction(Opcode::Destruct, 0);
+      Script::Instruction instruction(Opcodes::Destruct, 0);
       // Arrange for all live objects with scope >= scope_number to be destucted
-      instruction.variant.i32 = scope_number;
+      instruction.data.i32 = scope_number;
       function_->AddInstruction(instruction);
     }
   }
   scopes_.pop_back();
 }
 
-}  // namespace vm
-}  // namespace fetch
+} // namespace vm
+} // namespace fetch

@@ -17,45 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
+#include "vm/typeids.hpp"
+#include "vm/opcodes.hpp"
+#include <utility>
 
 namespace fetch {
 namespace vm {
 
-namespace details {
+using Index   = uint16_t;
+using Strings = std::vector<std::string>;
 
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
-  }
-};
-
-template <typename T>
-struct ArgumentsToList<T>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-  }
-};
-
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> &list)
-  {}
-};
-
-}  // namespace details
-}  // namespace vm
-}  // namespace fetch
+} // namespace vm
+} // namespace fetch

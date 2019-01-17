@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include <cstdint>
-#include <functional>
 #include <string>
 
 namespace fetch {
@@ -86,14 +85,6 @@ struct Token
     Dec,
     Unknown
   };
-  class Hasher
-  {
-  public:
-    size_t operator()(const Kind &key) const
-    {
-      return std::hash<uint16_t>{}((uint16_t)key);
-    }
-  };
   Kind        kind;
   uint32_t    offset;
   uint16_t    line;
@@ -112,5 +103,5 @@ struct Location
   uint16_t line;
 };
 
-}  // namespace vm
-}  // namespace fetch
+} // namespace vm
+} // namespace fetch

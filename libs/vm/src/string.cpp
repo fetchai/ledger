@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -17,21 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/string.hpp"
+
 namespace fetch {
 namespace vm {
 
-template <typename T>
-struct WrapperClass : public Object
+bool String::Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const
 {
-  using Object::Object;
-  WrapperClass(TypeId type_id, VM *vm, T &&o)
-    : Object(std::move(type_id), vm)
-    , object(std::move(o))
-  {}
-  T object;
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str == rhs->str;
+}
 
-  virtual ~WrapperClass() = default;
-};
+size_t String::GetHashCode() const
+{
+  return std::hash<std::string>()(str);
+}
 
-}  // namespace vm
-}  // namespace fetch
+void String::AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso)
+{
+  bool const  lhs_is_modifiable = lhso.RefCount() == 1;
+  Ptr<String> lhs               = lhso;
+  Ptr<String> rhs               = rhso;
+  if (lhs_is_modifiable)
+  {
+    lhs->str += rhs->str;
+  }
+  else
+  {
+    Ptr<String> s(new String(vm_, lhs->str + rhs->str));
+    lhso = std::move(s);
+  }
+}
+
+} // namespace vm
+} // namespace fetch

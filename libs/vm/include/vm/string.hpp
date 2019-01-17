@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018 Fetch.AI Limited
@@ -16,49 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
+#include "vm/defs.hpp"
 
 namespace fetch {
 namespace vm {
 
-Compiler::Compiler(Module *module)
+struct String : public Object
 {
-  analyser_.Initialise();
-  module->CompilerSetup(this);
-}
-
-Compiler::~Compiler()
-{
-  analyser_.UnInitialise();
-}
-
-bool Compiler::Compile(std::string const & source,
-                       std::string const & name,
-                       Script &            script,
-                       Strings &           errors)
-{
-  BlockNodePtr root = parser_.Parse(source, errors);
-  if (root == nullptr)
-  {
-    return false;
-  }
-
-  TypeInfoTable type_info_table;
-  bool analysed = analyser_.Analyse(root, type_info_table, errors);
-  if (analysed == false)
-  {
-    root->Reset();
-    root = nullptr;
-    return false;
-  }
-
-  generator_.Generate(root, type_info_table, name, script);
-
-  root->Reset();
-  root = nullptr;
-  return true;
-}
+  String() = delete;
+  String(VM *vm, std::string str__, bool is_literal__ = false)
+    : Object(vm, TypeIds::String)
+    , str(std::move(str__))
+    , is_literal(is_literal__)
+  {}
+  virtual ~String() = default;
+  virtual bool   Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const override;
+  virtual size_t GetHashCode() const override;
+  virtual void   AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso) override;
+  std::string str;
+  bool        is_literal;
+};
 
 } // namespace vm
 } // namespace fetch
