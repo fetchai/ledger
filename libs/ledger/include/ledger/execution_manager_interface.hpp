@@ -108,24 +108,24 @@ inline char const *ToString(ExecutionManagerInterface::ScheduleStatus status)
   char const *reason = "Unknown";
   switch (status)
   {
-    case ScheduleStatus::RESTORED:
-      reason = "Restored";
-      break;
-    case ScheduleStatus::SCHEDULED:
-      reason = "Scheduled";
-      break;
-    case ScheduleStatus::NOT_STARTED:
-      reason = "Not Started";
-      break;
-    case ScheduleStatus::ALREADY_RUNNING:
-      reason = "Already Running";
-      break;
-    case ScheduleStatus::NO_PARENT_BLOCK:
-      reason = "No Parent Block";
-      break;
-    case ScheduleStatus::UNABLE_TO_PLAN:
-      reason = "Unable to Plan";
-      break;
+  case ScheduleStatus::RESTORED:
+    reason = "Restored";
+    break;
+  case ScheduleStatus::SCHEDULED:
+    reason = "Scheduled";
+    break;
+  case ScheduleStatus::NOT_STARTED:
+    reason = "Not Started";
+    break;
+  case ScheduleStatus::ALREADY_RUNNING:
+    reason = "Already Running";
+    break;
+  case ScheduleStatus::NO_PARENT_BLOCK:
+    reason = "No Parent Block";
+    break;
+  case ScheduleStatus::UNABLE_TO_PLAN:
+    reason = "Unable to Plan";
+    break;
   }
 
   return reason;

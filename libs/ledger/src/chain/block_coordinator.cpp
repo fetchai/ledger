@@ -28,7 +28,6 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
 static const std::chrono::milliseconds STALL_INTERVAL{250};
 
-
 namespace fetch {
 namespace chain {
 
