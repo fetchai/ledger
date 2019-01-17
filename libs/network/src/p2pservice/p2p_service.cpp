@@ -49,7 +49,7 @@ public:
    : muddle_(muddle)
    , trust_(trust)
    , random_engine_(std::random_device()())
-   , distribution_(0., 1.)
+   , distribution_()
    {
     next.Set(std::chrono::milliseconds(0));
   }
@@ -350,28 +350,80 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
   }
 }
 
-bool P2PService::IsDesired(Address const &address)
+bool P2PService::IsDesired(Address const &address) const
 {
   FETCH_LOCK(desired_peers_mutex_);
   return desired_peers_.find(address) != desired_peers_.end();
 }
 
+bool P2PService::IsExperimental(Address const &address) const
+{
+  FETCH_LOCK(desired_peers_mutex_);
+  return experimental_peers_.find(address) != experimental_peers_.end();
+}
+
 void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 {
   FETCH_LOCK(desired_peers_mutex_);
-  auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
-  auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
-  desired_peers_.clear();
+  PeerTrusts peerTrusts = trust_system_.GetPeersAndTrusts();
 
-  for (auto const &p : static_peers)
+  auto erase_untrusted_peers = std::remove_if(
+      peerTrusts.begin(), peerTrusts.end(),
+      [](PeerTrust const &x) {
+        return x.trust <= 0.0;
+      });
+  peerTrusts.erase(erase_untrusted_peers, peerTrusts.end());
+
+  for (auto const &p : peerTrusts)
   {
-    desired_peers_.insert(p);
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Stage 1: ", ToBase64(p.address));
   }
 
-  for (auto const &p : experimental_peers)
+  auto erase_unknown_peers = std::remove_if(
+      peerTrusts.begin(), peerTrusts.end(),
+      [this](PeerTrust const &x) {
+        Uri uri;
+        return !(identity_cache_.Lookup(x.address, uri) && uri.IsDirectlyConnectable());
+      });
+  peerTrusts.erase(erase_unknown_peers, peerTrusts.end());
+
+  for (auto const &p : peerTrusts)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Stage 2: ", ToBase64(p.address));
+  }
+
+  std::sort(
+      peerTrusts.begin(), peerTrusts.end(),
+      [](PeerTrust const &a,PeerTrust const &b)
+      {
+        return a.trust < b.trust;
+      });
+
+  desired_peers_.clear();
+  experimental_peers_.clear();
+
+  while(
+        !peerTrusts.empty()
+        &&
+        desired_peers_.size() < max_peers_ - transient_peers_
+        )
+  {
+    auto p = peerTrusts.back().address;
+    peerTrusts.pop_back();
     desired_peers_.insert(p);
+    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Desired: ", ToBase64(p));
+  }
+
+  auto new_experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
+  for (auto const &p : new_experimental_peers)
+  {
+    if (desired_peers_.find(p) == desired_peers_.end())
+    {
+      desired_peers_.insert(p);
+      experimental_peers_.insert(p);
+      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Experimental: ", ToBase64(p));
+    }
   }
 }
 

@@ -115,22 +115,29 @@ private:
   {
     auto const connections = muddle_.GetConnections(true);
 
-    Variant response = Variant::Array(connections.size());
+    std::vector<variant::Variant> connections_output_list;
 
-    std::size_t index = 0;
     for (auto const &entry : connections)
     {
-      Variant object = Variant::Object();
+      if (muddle_.IsConnected(entry.first))
+      {
+        continue;
+      }
 
+      Variant object = Variant::Object();
       object["identity"] = byte_array::ToBase64(entry.first);
       object["uri"]      = entry.second.uri();
-
-      response[index++] = object;
+      connections_output_list.push_back(object);
     }
 
+    variant::Variant response = variant::Variant::Array(connections_output_list.size());
+    for (std::size_t i = 0; i < connections_output_list.size(); i++)
+    {
+      response[i] = connections_output_list[i];
+    }
     return http::CreateJsonResponse(response);
   }
-
+  
   http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
                                   http::HTTPRequest const & /*request*/)
   {
@@ -158,6 +165,7 @@ private:
       peer_data["value"]         = pt.trust;
       peer_data["active"]        = muddle_.IsConnected(pt.address);
       peer_data["desired"]       = p2p_.IsDesired(pt.address);
+      peer_data["experimental"]  = p2p_.IsExperimental(pt.address);
       peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
 
       peer_data_list.push_back(peer_data);
