@@ -161,7 +161,7 @@ TEST(vickrey_auction, many_bid_auction)
   BidIdType bid_id;
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
-    bid_id = j;
+    bid_id = static_cast<BidIdType>(j);
     Bid cur_bid(bid_id, {item}, bidders[j].funds, bidders[j].id);
     err = va.PlaceBid(cur_bid);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
@@ -225,7 +225,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   {
     for (std::size_t j = 0; j < n_bidders; ++j)
     {
-      bid_id = bid_count;
+      bid_id = static_cast<BidIdType>(bid_count);
       Bid cur_bid(bid_id, {items[i]}, bidders[j].funds / 10, bidders[j].id);
       err = va.PlaceBid(cur_bid);
       ASSERT_TRUE(err == ErrorCode::SUCCESS);
