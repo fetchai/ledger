@@ -31,7 +31,7 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using BlockType = chain::MainChain::BlockType;
+  using Block = chain::MainChain::BlockType;
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
@@ -45,7 +45,7 @@ public:
   void Stop();
   /// @}
 
-  void AddBlock(BlockType &block);
+  void AddBlock(Block &block);
 
 private:
   enum class State

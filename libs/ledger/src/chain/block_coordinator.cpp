@@ -28,39 +28,6 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
 static const std::chrono::milliseconds STALL_INTERVAL{250};
 
-/**
- * Convert schedule status into a string
- *
- * @param status The status to convert
- * @return The string representation of the status
- */
-static char const *ToString(ScheduleStatus status)
-{
-  char const *reason = "Unknown";
-  switch (status)
-  {
-  case ScheduleStatus::RESTORED:
-    reason = "Restored";
-    break;
-  case ScheduleStatus::SCHEDULED:
-    reason = "Scheduled";
-    break;
-  case ScheduleStatus::NOT_STARTED:
-    reason = "Not Started";
-    break;
-  case ScheduleStatus::ALREADY_RUNNING:
-    reason = "Already Running";
-    break;
-  case ScheduleStatus::NO_PARENT_BLOCK:
-    reason = "No Parent Block";
-    break;
-  case ScheduleStatus::UNABLE_TO_PLAN:
-    reason = "Unable to Plan";
-    break;
-  }
-
-  return reason;
-}
 
 namespace fetch {
 namespace chain {
@@ -86,11 +53,11 @@ BlockCoordinator::~BlockCoordinator()
 }
 
 /**
- * Called whenever a new block has been generated from the miner
+ * Called whenever a new block has been generated from the network
  *
  * @param block Reference to the new block
  */
-void BlockCoordinator::AddBlock(BlockType &block)
+void BlockCoordinator::AddBlock(Block &block)
 {
   // add the block to the chain data structure
   chain_.AddBlock(block);
@@ -144,7 +111,11 @@ void BlockCoordinator::Stop()
 /**
  * Monitor the state of the execution manager
  *
- * The Monitor is used to execute blocks from the.
+ * The role of the monitor to periodically access the status of the execution engine. Depending on
+ * its state it will attempt to schedule the next block to be executed. In the case that no new
+ * blocks are present it will idle.
+ *
+ * This monitor is implemented as a state machine which is illustrated in the following diagram:
  *
  * ┌───────────────────────────────┐
  * │                               │
@@ -183,6 +154,8 @@ void BlockCoordinator::Stop()
  * │                       │
  * └───────────────────────┘
  *
+ * It should be noted that the failed state is not currently handled and will be handles as part
+ * of a more comprehensive update to block scheduling as described in #540, #537, #536 and #534.
  */
 void BlockCoordinator::Monitor()
 {
@@ -226,7 +199,9 @@ void BlockCoordinator::OnQueryExecutionStatus()
   State next_state{State::QUERY_EXECUTION_STATUS};
 
   // based on the state of the execution manager determine
-  switch (execution_manager_.GetState())
+  auto const execution_state = execution_manager_.GetState();
+
+  switch (execution_state)
   {
   case ExecutionState::IDLE:
     next_state = State::GET_NEXT_BLOCK;
@@ -248,7 +223,10 @@ void BlockCoordinator::OnQueryExecutionStatus()
 
   case ExecutionState::EXECUTION_ABORTED:
   case ExecutionState::EXECUTION_FAILED:
-    /// ????
+    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
+
+    // TODO(private issue 540): Possibly endless stalling in the error case
+    sleep_for(STALL_INTERVAL);
     break;
   }
 
@@ -324,7 +302,7 @@ void BlockCoordinator::OnExecuteBlock()
 
     case ScheduleStatus::NO_PARENT_BLOCK:
     {
-      BlockType parent_block;
+      Block parent_block;
       if (chain_.Get(current_block_->previous_hash, parent_block))
       {
         // add the current block to the stack

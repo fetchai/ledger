@@ -95,5 +95,74 @@ void Deserialize(T &serializer, ExecutionManagerInterface::State &status)
   status = static_cast<ExecutionManagerInterface::State>(raw);
 }
 
+/**
+ * Convert schedule status into a string
+ *
+ * @param status The status to convert
+ * @return The string representation of the status
+ */
+inline char const *ToString(ExecutionManagerInterface::ScheduleStatus status)
+{
+  using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
+
+  char const *reason = "Unknown";
+  switch (status)
+  {
+    case ScheduleStatus::RESTORED:
+      reason = "Restored";
+      break;
+    case ScheduleStatus::SCHEDULED:
+      reason = "Scheduled";
+      break;
+    case ScheduleStatus::NOT_STARTED:
+      reason = "Not Started";
+      break;
+    case ScheduleStatus::ALREADY_RUNNING:
+      reason = "Already Running";
+      break;
+    case ScheduleStatus::NO_PARENT_BLOCK:
+      reason = "No Parent Block";
+      break;
+    case ScheduleStatus::UNABLE_TO_PLAN:
+      reason = "Unable to Plan";
+      break;
+  }
+
+  return reason;
+}
+
+/**
+ * Convert the Execution Manager state into a string
+ *
+ * @param state The state to be converted
+ * @return The string representation of the state
+ */
+inline char const *ToString(ExecutionManagerInterface::State state)
+{
+  using State = ExecutionManagerInterface::State;
+
+  char const *text = "Unknown";
+  switch (state)
+  {
+  case State::IDLE:
+    text = "Idle";
+    break;
+  case State::ACTIVE:
+    text = "Active";
+    break;
+  case State::TRANSACTIONS_UNAVAILABLE:
+    text = "Transaction(s) Unavailable";
+    break;
+  case State::EXECUTION_ABORTED:
+    text = "Execution Aborted";
+    break;
+  case State::EXECUTION_FAILED:
+    text = "Execution Failed";
+    break;
+  }
+
+  return text;
+}
+
 }  // namespace ledger
 }  // namespace fetch
