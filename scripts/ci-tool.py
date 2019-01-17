@@ -13,10 +13,14 @@ import argparse
 import subprocess
 import fnmatch
 import shutil
+import multiprocessing
 import xml.etree.ElementTree as ET
 
 
 BUILD_TYPES = ('Debug', 'Release', 'RelWithDebInfo', 'MinSizeRel')
+MAX_CPUS = 7 # as defined by CI workflow
+AVAILABLE_CPUS = multiprocessing.cpu_count()
+CONCURRENCY = min(MAX_CPUS, AVAILABLE_CPUS)
 
 
 def output(*args):
@@ -143,7 +147,11 @@ def build_project(project_root, build_root, options):
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
     else:
-        cmd = ['make', '-j']
+        # manually specifying the number of cores is required because make automatic dectection is
+        # flakey inside docker.
+        cmd = ['make', '-j', str(CONCURRENCY)]
+
+    output('Building project with command: {} (detected cpus: {})'.format(' '.join(cmd), AVAILABLE_CPUS))
     exit_code = subprocess.call(cmd, cwd=build_root)
     if exit_code != 0:
         output('Failed to make the project')
@@ -220,3 +228,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
