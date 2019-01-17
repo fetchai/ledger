@@ -28,7 +28,7 @@ class Bidder
 {
 public:
   std::size_t id    = 0;
-  std::size_t funds = 0;
+  ValueType funds = 0;
 
   Bidder(std::size_t id, std::size_t funds)
     : id(id)
@@ -75,7 +75,7 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
   BidIdType bid_id;
   for (std::size_t j = 0; j < n_bidders; ++j)
   {
-    bid_id = j;
+    bid_id = static_cast<BidIdType>(j);
     Bid cur_bid(bid_id, {item}, bidders[j].funds, bidders[j].id);
     err = a.PlaceBid(cur_bid);
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
