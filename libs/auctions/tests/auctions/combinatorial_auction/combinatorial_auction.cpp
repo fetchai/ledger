@@ -139,6 +139,11 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
     std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
   }
 
+  for (std::size_t j = 0; j < 7; ++j)
+  {
+    std::cout << "ca.Active(j): " << ca.Active(j) << std::endl;
+  }
+
   // should accept one but not both of these bids since they're exclusive
   ASSERT_TRUE(ca.Active(4) != ca.Active(5));
 }

@@ -114,14 +114,13 @@ void Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
       auto                 slice_c_j = c.data().slice(c.padded_height() * j, c.height());
       auto                 slice_a_l = a.data().slice(a.padded_height() * l, c.height());
       memory::TrivialRange range(0, c.height());
-      ret_slice.in_parallel().Apply(
-          range,
-          [vec_temp](typename MATRIX::vector_register_type const &vr_c_j,
-                     typename MATRIX::vector_register_type const &vr_a_l,
-                     typename MATRIX::vector_register_type &      vw_c_j) {
-            vw_c_j = vr_c_j + vec_temp * vr_a_l;
-          },
-          slice_c_j, slice_a_l);
+      ret_slice.in_parallel().Apply(range,
+                                    [vec_temp](typename MATRIX::vector_register_type const &vr_c_j,
+                                               typename MATRIX::vector_register_type const &vr_a_l,
+                                               typename MATRIX::vector_register_type &vw_c_j) {
+                                      vw_c_j = vr_c_j + vec_temp * vr_a_l;
+                                    },
+                                    slice_c_j, slice_a_l);
     }
   }
   return;
