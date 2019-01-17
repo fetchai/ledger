@@ -95,7 +95,7 @@ public:
     {
       for (std::size_t j = 0; j < bids_.size(); ++j)
       {
-        prev_active_ = active_;
+        prev_active_.Copy(active_);
         prev_reward  = TotalBenefit();
 
         RandomInt nn = 1 + ((rng() >> 17) % max_flips_);
@@ -121,15 +121,13 @@ public:
 
         if (ran_val >= threshold)
         {
-          active_ = prev_active_;
+          active_.Copy(prev_active_);
           rejected += 1;
         }
       }
 
       // annealing
       beta += db;
-
-      std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
     }
   }
 
@@ -228,6 +226,10 @@ public:
           }
         }
       }
+    }
+
+    for (std::size_t i = 0; i < bids_.size(); ++i)
+    {
 
       ValueType max_local_fields_;
       max_local_fields_               = fetch::math::Max(local_fields_);
@@ -243,17 +245,22 @@ public:
         {
           if (bids_[j].Excludes()[k].Id() == bids_[i].Id())
           {
-            coupling += exclusive_bid_penalty;
+            coupling = exclusive_bid_penalty;
           }
         }
 
-        for (auto const &itm1 : bids_[i].Items())
+        for (std::size_t k = 0; k < items_.size(); ++k)
         {
-          for (auto const &itm2 : bids_[j].Items())
+          ItemIdType cur_id = items_[k].Id();
+
+          for (auto const &itm1 : bids_[i].Items())
           {
-            if (itm1.Id() == itm2.Id())
+            for (auto const &itm2 : bids_[j].Items())
             {
-              coupling += (bids_[i].Price() + bids_[j].Price());
+              if ((cur_id == itm1.Id()) && (cur_id == itm2.Id()))
+              {
+                coupling += (bids_[i].Price() + bids_[j].Price());
+              }
             }
           }
         }

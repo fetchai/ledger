@@ -100,7 +100,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
   bid_id    = 2;
-  bid_price = 5;
+  bid_price = 7;
   Bid bid3(bid_id, {items[2]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid3);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
@@ -133,7 +133,7 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   err = ca.PlaceBid(bid7);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  for (std::size_t j = 0; j < 1; ++j)
+  for (std::size_t j = 0; j < 10; ++j)
   {
     ca.Mine(23 * j, 100);
     std::cout << "ca.TotalBenefit(): " << ca.TotalBenefit() << std::endl;
