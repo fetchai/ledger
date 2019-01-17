@@ -25,6 +25,12 @@
 #include <fstream>
 #include <sstream>
 
+int main()
+{
+  return 0;
+}
+
+/*
 struct IntPair
 {
   IntPair(int const &i, int const &j)
@@ -113,3 +119,4 @@ int main(int argc, char **argv)
   delete compiler;
   return 0;
 }
+*/

@@ -25,6 +25,12 @@
 #include <fstream>
 #include <sstream>
 
+int main() 
+{
+  return 0;
+}
+
+/*
 void Print(std::string const &s)
 {
   std::cout << s << std::endl;
@@ -115,3 +121,5 @@ int main(int argc, char **argv)
   delete compiler;
   return 0;
 }
+
+*/

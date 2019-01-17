@@ -38,6 +38,7 @@
 using namespace fetch;
 using namespace fetch::ledger;
 
+/*
 class SmartContractTests : public ::testing::Test
 {
 protected:
@@ -133,3 +134,4 @@ endfunction
   //  EXPECT_TRUE(GetBalance(address, balance));
   //  EXPECT_EQ(balance, 1000);
 }
+*/

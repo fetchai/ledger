@@ -29,27 +29,28 @@ namespace ledger {
 
 SmartContract::SmartContract(vm::Script const &script)
   : Contract(script.name)
-  , script_(script)
+//  , script_(script)
 {
+  /*
   for (auto &fnc : script.functions)
   {
     OnTransaction(fnc.name, this, &SmartContract::InvokeContract);
   }
-
-  module_ = CreateVMDefinition(this);
-  vm_     = std::make_unique<vm::VM>(module_.get());
+  */
+//  module_ = CreateVMDefinition(this);
+//  vm_     = std::make_unique<vm::VM>(module_.get());
 }
 
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
   Identifier identifier;
   identifier.Parse(static_cast<std::string>(tx.contract_name()));
-
+/*
   if (!vm_->Execute(script_, static_cast<std::string>(identifier.name())))
   {
     return Status::FAILED;
   }
-
+*/
   return Status::OK;
 }
 
