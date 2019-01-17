@@ -154,7 +154,7 @@ TEST(vickrey_auction, many_bid_auction)
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
-    bidders.push_back(Bidder(i, i));
+    bidders.push_back(Bidder(i, static_cast<ValueType>(i)));
   }
 
   // make bids
@@ -215,7 +215,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
-    bidders.push_back(Bidder(i, 500 + (i * 10)));
+    bidders.push_back(Bidder(i, static_cast<ValueType>(500 + (i * 10))));
   }
 
   // make bids
