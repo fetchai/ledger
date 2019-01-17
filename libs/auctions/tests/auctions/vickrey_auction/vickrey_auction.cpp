@@ -28,9 +28,9 @@ class Bidder
 {
 public:
   std::size_t id    = 0;
-  std::size_t funds = 0;
+  ValueType funds = 0;
 
-  Bidder(std::size_t id, std::size_t funds)
+  Bidder(std::size_t id, ValueType funds)
     : id(id)
     , funds(funds)
   {}
@@ -203,7 +203,7 @@ TEST(vickrey_auction, many_bid_many_item_auction)
   {
     item_id   = i;
     seller_id = 990 + i;
-    min_price = 100 + i;
+    min_price = static_cast<ValueType>(100 + i);
     Item item(item_id, seller_id, min_price);
     items.emplace_back(item);
     err = va.AddItem(item);

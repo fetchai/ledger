@@ -68,7 +68,7 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
   std::vector<Bidder> bidders{};
   for (std::size_t i = 0; i < n_bidders; ++i)
   {
-    bidders.push_back(Bidder(i, i));
+    bidders.push_back(Bidder(i, static_cast<ValueType>(i)));
   }
 
   // make bids
