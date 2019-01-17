@@ -32,12 +32,15 @@ public:
   using Type = T;
 
 public:
-  Tensor(std::vector<size_t> shape   = std::vector<size_t>(),
-         std::vector<size_t> strides = std::vector<size_t>(),
-         std::vector<size_t> padding = std::vector<size_t>())
+  Tensor(std::vector<size_t>             shape   = std::vector<size_t>(),
+         std::vector<size_t>             strides = std::vector<size_t>(),
+         std::vector<size_t>             padding = std::vector<size_t>(),
+         std::shared_ptr<std::vector<T>> storage = nullptr, size_t offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
     , strides_(std::move(strides))
+    , storage_(storage)
+    , offset_(offset)
   {
     ASSERT(padding.empty() || padding.size() == shape.size());
     ASSERT(strides.empty() || strides.size() == shape.size());
@@ -65,7 +68,15 @@ public:
         padding_.back() =
             8 - ((strides_.back() * shape_.back()) % 8);  // Let's align everything on 8
       }
-      storage_ = std::make_shared<std::vector<T>>(Capacity());
+      if (!storage_)
+      {
+        offset_ = 0;
+        if (!shape_.empty())
+        {
+          storage_ = std::make_shared<std::vector<T>>(
+              std::max(1ul, DimensionSize(0) * shape_[0] + padding_[0]));
+        }
+      }
     }
   }
 
@@ -100,11 +111,7 @@ public:
 
   size_t Capacity() const
   {
-    if (shape_.empty())
-    {
-      return 0;
-    }
-    return std::max(1ul, DimensionSize(0) * shape_[0] + padding_[0]);
+    return storage_ ? storage_->size() : 0;
   }
 
   size_t size()
@@ -138,7 +145,7 @@ public:
    */
   size_t OffsetOfElement(std::vector<size_t> const &indices) const
   {
-    size_t index(0);
+    size_t index(offset_);
     for (size_t i(0); i < indices.size(); ++i)
     {
       ASSERT(indices[i] < shape_[i]);
@@ -151,7 +158,7 @@ public:
   {
     for (size_t i(0); i < NumberOfElements(); ++i)
     {
-      this->operator[](i) = value;
+      At(i) = value;
     }
   }
 
@@ -178,6 +185,16 @@ public:
   T &operator[](size_t i)
   {
     return At(i);
+  }
+
+  Tensor<T> slice(size_t i)
+  {
+    assert(shape_.size() > 1 && i >= 0 && i < shape_[0]);
+    Tensor<T> ret(std::vector<size_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
+                  std::vector<size_t>(std::next(strides_.begin()), strides_.end()), /* stride */
+                  std::vector<size_t>(std::next(padding_.begin()), padding_.end()), /* padding */
+                  storage_, offset_ + i * DimensionSize(0));
+    return ret;
   }
 
   std::shared_ptr<const std::vector<T>> Storage() const
@@ -217,10 +234,11 @@ private:
   }
 
 private:
-  std::shared_ptr<std::vector<T>> storage_;
   std::vector<size_t>             shape_;
   std::vector<size_t>             padding_;
   std::vector<size_t>             strides_;
+  std::shared_ptr<std::vector<T>> storage_;
+  size_t                          offset_;
 };
 }  // namespace math
 }  // namespace fetch

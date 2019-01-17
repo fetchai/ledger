@@ -330,3 +330,159 @@ TYPED_TEST(TensorTest, zero_stride_tensor_test)
     }
   }
 }
+
+TYPED_TEST(TensorTest, two_dimentional_tensor_slicing_test)
+{
+  fetch::math::Tensor<TypeParam> t({3, 5});
+  for (size_t i(0); i < 3; ++i)
+  {
+    for (size_t j(0); j < 5; ++j)
+    {
+      t.Set({i, j}, TypeParam(i));
+    }
+  }
+  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  fetch::math::Tensor<TypeParam> t2 = t.slice(2);
+
+  EXPECT_EQ(t0.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t1.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t2.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t.Storage().use_count(), 5);  // t, t0, t1, t2, temporary return
+
+  for (size_t j(0); j < 5; ++j)
+  {
+    EXPECT_EQ(t0.At(j), TypeParam(0));
+    t0.At(j) = TypeParam(77 + j);
+    EXPECT_EQ(t1.At(j), TypeParam(1));
+    t1.At(j) = TypeParam(88 + j);
+    EXPECT_EQ(t2.At(j), TypeParam(2));
+    t2.At(j) = TypeParam(99 + j);
+  }
+
+  EXPECT_EQ(t.At(0), TypeParam(77));
+  EXPECT_EQ(t.At(1), TypeParam(78));
+  EXPECT_EQ(t.At(2), TypeParam(79));
+  EXPECT_EQ(t.At(3), TypeParam(80));
+  EXPECT_EQ(t.At(4), TypeParam(81));
+  EXPECT_EQ(t.At(5), TypeParam(88));
+  EXPECT_EQ(t.At(6), TypeParam(89));
+  EXPECT_EQ(t.At(7), TypeParam(90));
+  EXPECT_EQ(t.At(8), TypeParam(91));
+  EXPECT_EQ(t.At(9), TypeParam(92));
+  EXPECT_EQ(t.At(10), TypeParam(99));
+  EXPECT_EQ(t.At(11), TypeParam(100));
+  EXPECT_EQ(t.At(12), TypeParam(101));
+  EXPECT_EQ(t.At(13), TypeParam(102));
+  EXPECT_EQ(t.At(14), TypeParam(103));
+}
+
+/*
+ * Should yield exactly the same results as non strided test
+ */
+TYPED_TEST(TensorTest, two_dimentional_tensor_with_stride_slicing_test)
+{
+  fetch::math::Tensor<TypeParam> t({3, 5}, {2, 3});
+  for (size_t i(0); i < 3; ++i)
+  {
+    for (size_t j(0); j < 5; ++j)
+    {
+      t.Set({i, j}, TypeParam(i));
+    }
+  }
+  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  fetch::math::Tensor<TypeParam> t2 = t.slice(2);
+
+  EXPECT_EQ(t0.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t1.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t2.shape(), std::vector<size_t>({5}));
+  EXPECT_EQ(t.Storage().use_count(), 5);  // t, t0, t1, t2, temporary return
+
+  for (size_t j(0); j < 5; ++j)
+  {
+    EXPECT_EQ(t0.At(j), TypeParam(0));
+    t0.At(j) = TypeParam(77 + j);
+    EXPECT_EQ(t1.At(j), TypeParam(1));
+    t1.At(j) = TypeParam(88 + j);
+    EXPECT_EQ(t2.At(j), TypeParam(2));
+    t2.At(j) = TypeParam(99 + j);
+  }
+
+  EXPECT_EQ(t.At(0), TypeParam(77));
+  EXPECT_EQ(t.At(1), TypeParam(78));
+  EXPECT_EQ(t.At(2), TypeParam(79));
+  EXPECT_EQ(t.At(3), TypeParam(80));
+  EXPECT_EQ(t.At(4), TypeParam(81));
+  EXPECT_EQ(t.At(5), TypeParam(88));
+  EXPECT_EQ(t.At(6), TypeParam(89));
+  EXPECT_EQ(t.At(7), TypeParam(90));
+  EXPECT_EQ(t.At(8), TypeParam(91));
+  EXPECT_EQ(t.At(9), TypeParam(92));
+  EXPECT_EQ(t.At(10), TypeParam(99));
+  EXPECT_EQ(t.At(11), TypeParam(100));
+  EXPECT_EQ(t.At(12), TypeParam(101));
+  EXPECT_EQ(t.At(13), TypeParam(102));
+  EXPECT_EQ(t.At(14), TypeParam(103));
+}
+
+TYPED_TEST(TensorTest, three_dimentional_tensor_slicing_test)
+{
+  fetch::math::Tensor<TypeParam> t({2, 3, 5});
+
+  TypeParam v(0);
+  for (size_t i(0); i < 2; ++i)
+  {
+    for (size_t j(0); j < 3; ++j)
+    {
+      for (size_t k(0); k < 5; ++k)
+      {
+        t.Set(std::vector<size_t>({i, j, k}), v);
+        v += TypeParam(1);
+      }
+    }
+  }
+
+  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  EXPECT_EQ(t0.shape(), std::vector<size_t>({3, 5}));
+  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
+
+  for (size_t j(0); j < 3; ++j)
+  {
+    for (size_t k(0); k < 5; ++k)
+    {
+      EXPECT_EQ(t0.Get(std::vector<size_t>({j, k})), TypeParam(j * 5 + k));
+      EXPECT_EQ(t1.Get(std::vector<size_t>({j, k})), TypeParam(j * 5 + k + 15));
+    }
+  }
+}
+
+TYPED_TEST(TensorTest, double_slicing_test)
+{
+  fetch::math::Tensor<TypeParam> t({2, 3, 5});
+
+  TypeParam v(0);
+  for (size_t i(0); i < 2; ++i)
+  {
+    for (size_t j(0); j < 3; ++j)
+    {
+      for (size_t k(0); k < 5; ++k)
+      {
+        t.Set(std::vector<size_t>({i, j, k}), v);
+        v += TypeParam(1);
+      }
+    }
+  }
+
+  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
+  fetch::math::Tensor<TypeParam> t1_1 = t1.slice(1);
+  EXPECT_EQ(t1_1.shape(), std::vector<size_t>({5}));
+
+  EXPECT_EQ(t1_1.At(0), TypeParam(20));
+  EXPECT_EQ(t1_1.At(1), TypeParam(21));
+  EXPECT_EQ(t1_1.At(2), TypeParam(22));
+  EXPECT_EQ(t1_1.At(3), TypeParam(23));
+  EXPECT_EQ(t1_1.At(4), TypeParam(24));
+}

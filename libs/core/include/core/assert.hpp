@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
