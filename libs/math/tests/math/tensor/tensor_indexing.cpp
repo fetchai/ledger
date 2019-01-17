@@ -20,15 +20,15 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-class TensorTest : public ::testing::Test
+class TensorIndexingTest : public ::testing::Test
 {
 };
 
 using MyTypes =
     ::testing::Types<char, unsigned char, int, unsigned int, long, unsigned long, float, double>;
-TYPED_TEST_CASE(TensorTest, MyTypes);
+TYPED_TEST_CASE(TensorIndexingTest, MyTypes);
 
-TYPED_TEST(TensorTest, empty_tensor_test)
+TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t;
 
@@ -45,7 +45,7 @@ TYPED_TEST(TensorTest, empty_tensor_test)
   ASSERT_EQ(t.DimensionSize(3), 0);
 }
 
-TYPED_TEST(TensorTest, one_dimentional_tensor_test)
+TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({5});
 
@@ -70,7 +70,7 @@ TYPED_TEST(TensorTest, one_dimentional_tensor_test)
   ASSERT_EQ(t.DimensionSize(3), 0);
 }
 
-TYPED_TEST(TensorTest, one_dimentional_tensor_with_stride_test)
+TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t({5}, {2});
 
@@ -95,7 +95,7 @@ TYPED_TEST(TensorTest, one_dimentional_tensor_with_stride_test)
   ASSERT_EQ(t.DimensionSize(3), 0);
 }
 
-TYPED_TEST(TensorTest, two_dimentional_tensor_test)
+TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5});
 
@@ -144,7 +144,7 @@ TYPED_TEST(TensorTest, two_dimentional_tensor_test)
   ASSERT_EQ(t.DimensionSize(3), 0);
 }
 
-TYPED_TEST(TensorTest, two_dimentional_tensor_with_stride_test)
+TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5}, {2, 3});
 
@@ -193,7 +193,7 @@ TYPED_TEST(TensorTest, two_dimentional_tensor_with_stride_test)
   ASSERT_EQ(t.DimensionSize(3), 0);
 }
 
-TYPED_TEST(TensorTest, three_dimentional_tensor_test)
+TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -304,7 +304,7 @@ TYPED_TEST(TensorTest, three_dimentional_tensor_test)
  * You can now store an arbitrary large tensor in an underlying storage of size 1
  * Will be useful for broadcasting
  */
-TYPED_TEST(TensorTest, zero_stride_tensor_test)
+TYPED_TEST(TensorIndexingTest, zero_stride_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5}, {0, 0, 0}, {0, 0, 0});
 
@@ -331,7 +331,7 @@ TYPED_TEST(TensorTest, zero_stride_tensor_test)
   }
 }
 
-TYPED_TEST(TensorTest, two_dimentional_tensor_slicing_test)
+TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_slicing_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5});
   for (size_t i(0); i < 3; ++i)
@@ -380,7 +380,7 @@ TYPED_TEST(TensorTest, two_dimentional_tensor_slicing_test)
 /*
  * Should yield exactly the same results as non strided test
  */
-TYPED_TEST(TensorTest, two_dimentional_tensor_with_stride_slicing_test)
+TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_with_stride_slicing_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5}, {2, 3});
   for (size_t i(0); i < 3; ++i)
@@ -426,7 +426,7 @@ TYPED_TEST(TensorTest, two_dimentional_tensor_with_stride_slicing_test)
   EXPECT_EQ(t.At(14), TypeParam(103));
 }
 
-TYPED_TEST(TensorTest, three_dimentional_tensor_slicing_test)
+TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_slicing_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -458,7 +458,7 @@ TYPED_TEST(TensorTest, three_dimentional_tensor_slicing_test)
   }
 }
 
-TYPED_TEST(TensorTest, double_slicing_test)
+TYPED_TEST(TensorIndexingTest, double_slicing_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
@@ -470,7 +470,7 @@ TYPED_TEST(TensorTest, double_slicing_test)
       for (size_t k(0); k < 5; ++k)
       {
         t.Set(std::vector<size_t>({i, j, k}), v);
-        v += TypeParam(1);
+        v = v + TypeParam(1);
       }
     }
   }

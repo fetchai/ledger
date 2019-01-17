@@ -39,7 +39,7 @@ public:
     : shape_(std::move(shape))
     , padding_(std::move(padding))
     , strides_(std::move(strides))
-    , storage_(storage)
+    , storage_(std::move(storage))
     , offset_(offset)
   {
     ASSERT(padding.empty() || padding.size() == shape.size());
@@ -167,6 +167,11 @@ public:
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
   }
 
+  T const &At(size_t i) const
+  {
+    return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
+  }
+
   T Get(std::vector<size_t> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
@@ -220,6 +225,26 @@ public:
       }
     }
     return true;
+  }
+
+  Tensor<T> &Add_(Tensor<T> const &o)
+  {
+    assert(NumberOfElements() == o.NumberOfElements());
+    for (size_t i(0); i < NumberOfElements(); ++i)
+    {
+      At(i) += o.At(i);
+    }
+    return *this;
+  }
+
+  Tensor<T> &Mul_(Tensor<T> const &o)
+  {
+    assert(NumberOfElements() == o.NumberOfElements());
+    for (size_t i(0); i < NumberOfElements(); ++i)
+    {
+      At(i) *= o.At(i);
+    }
+    return *this;
   }
 
 private:
