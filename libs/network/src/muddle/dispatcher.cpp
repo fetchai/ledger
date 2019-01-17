@@ -156,12 +156,13 @@ void Dispatcher::NotifyConnectionFailure(Handle handle)
  *
  * @param now The reference time out (by default the current time)
  */
-void Dispatcher::Cleanup(Timepoint const &now)
+Dispatcher::BadConnections Dispatcher::Cleanup(Timepoint const &now)
 {
   FETCH_LOCK(promises_lock_);
   FETCH_LOCK(handles_lock_);
 
-  PromiseSet dead_promises{};
+  PromiseSet                 dead_promises{};
+  Dispatcher::BadConnections bad_connections{};
 
   // Step 1. Determine which of the promises is now deemed to be dead
   auto promise_it = promises_.begin();
@@ -192,6 +193,11 @@ void Dispatcher::Cleanup(Timepoint const &now)
     {
       auto &promise_set = handle_it->second;
 
+      if (promise_set.find(id) != promise_set.end())
+      {
+        bad_connections.insert(handle_it->first);
+      }
+
       // ensure the affected promise is removed from the set
       promise_set.erase(id);
 
@@ -206,6 +212,8 @@ void Dispatcher::Cleanup(Timepoint const &now)
       }
     }
   }
+
+  return bad_connections;
 }
 
 void Dispatcher::FailAllPendingPromises()

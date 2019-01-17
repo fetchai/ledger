@@ -170,6 +170,19 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
+MainChainRpcService::BlocksPromise MainChainRpcService::GetLatestBlockFromAddress(Address const &address)
+{
+  return BlocksPromise(main_chain_rpc_client_.CallSpecificAddress(address, RPC_MAIN_CHAIN,
+      MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1}));
+}
+
+void MainChainRpcService::OnNewLatestBlock(Address const &from, Block &block)
+{
+  block.UpdateDigest();
+  OnNewBlock(from, block, from);
+}
+
+
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
@@ -179,8 +192,23 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (block.proof()())
   {
-    trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-
+    // add the block?
+    if (chain_.AddBlock(block))
+    {
+      trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+      if (transmitter!=from)
+      {
+        trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
+      }
+    }
+    else
+    {
+      trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+      if (transmitter!=from)
+      {
+        trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
+      }
+    }
     FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
     block_coordinator_.AddBlock(block);
@@ -190,6 +218,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
     if (block.loose())
     {
       AddLooseBlock(block.hash(), from);
+      trust_.AddObject(block.hash(), from);
     }
   }
   else
@@ -255,6 +284,17 @@ void MainChainRpcService::ServiceLooseBlocks()
       RequestedChainArrived(successful_worker->address(), successful_worker->blocks());
       next_loose_tips_check_.SetTimedOut();
     }
+  }
+
+  for (auto &failed_worker : bg_work_.GetFailures(1000))
+  {
+    trust_.AddObjectFeedback(failed_worker->hash(), p2p::TrustSubject::BLOCK,
+                             p2p::TrustQuality::BAD_CONNECTION);
+  }
+  for (auto &timeouted_worker : bg_work_.GetTimeouts(1000))
+  {
+    trust_.AddObjectFeedback(timeouted_worker->hash(), p2p::TrustSubject::BLOCK,
+                             p2p::TrustQuality::BAD_CONNECTION);
   }
 
   if (bg_work_.CountFailures() > 0 || bg_work_.CountTimeouts() > 0)

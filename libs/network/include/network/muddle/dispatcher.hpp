@@ -19,6 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/muddle/router.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/service/promise.hpp"
 
 #include <atomic>
@@ -33,11 +35,12 @@ namespace muddle {
 class Dispatcher
 {
 public:
-  using Promise   = service::Promise;
-  using PacketPtr = std::shared_ptr<Packet>;
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-  using Handle    = uint64_t;
+  using Promise        = service::Promise;
+  using PacketPtr      = std::shared_ptr<Packet>;
+  using Clock          = std::chrono::steady_clock;
+  using Timepoint      = Clock::time_point;
+  using Handle         = uint64_t;
+  using BadConnections = std::unordered_set<Handle>;
 
   static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
@@ -59,7 +62,7 @@ public:
   void NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter);
   void NotifyConnectionFailure(Handle handle);
 
-  void Cleanup(Timepoint const &now = Clock::now());
+  BadConnections Cleanup(Timepoint const &now = Clock::now());
 
   void FailAllPendingPromises();
 

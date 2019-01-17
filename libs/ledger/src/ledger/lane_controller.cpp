@@ -45,6 +45,10 @@ void LaneController::WorkCycle()
       peer_connections_[uri] = target_address;
     }
   }
+  for (auto &uri : remove)
+  {
+    muddle_->DropPeer(uri);
+  }
 }
 
 }  // namespace ledger

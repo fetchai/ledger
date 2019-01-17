@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/muddle/muddle.hpp"
 #include "variant/variant.hpp"
 
 #include <iostream>
 #include <list>
+#include <ostream>
 #include <string>
 #include <unordered_set>
 
@@ -33,7 +33,8 @@ enum class TrustSubject
 {
   BLOCK       = 0,
   TRANSACTION = 1,
-  PEER        = 2
+  PEER        = 2,
+  OBJECT      = 3
 };
 
 enum class TrustQuality
@@ -57,8 +58,7 @@ public:
     bool        has_transacted;
     bool        active;
   };
-  using PeerTrusts = std::vector<PeerTrust>;
-
+  using PeerTrusts     = std::vector<PeerTrust>;
   using IdentitySet    = typename std::unordered_set<IDENTITY>;
   using ConstByteArray = byte_array::ConstByteArray;
 
@@ -78,15 +78,21 @@ public:
   virtual void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                            TrustSubject subject, TrustQuality quality) = 0;
 
+  virtual void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject subject,
+                                 TrustQuality quality)                                   = 0;
+  virtual void AddObject(ConstByteArray const &object_ident, IDENTITY const &peer_ident) = 0;
+  virtual void RemoveObject(ConstByteArray const &object_ident)                          = 0;
+
   virtual IdentitySet GetBestPeers(size_t maximum) const = 0;
   virtual PeerTrusts  GetPeersAndTrusts() const          = 0;
 
   virtual IdentitySet GetRandomPeers(size_t maximum_count, double minimum_trust) const = 0;
 
-  virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const        = 0;
-  virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;
-  virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const        = 0;
-  virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const          = 0;
+  virtual std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const             = 0;
+  virtual double      GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const = 0;
+  virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const      = 0;
+  virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const             = 0;
+  virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const               = 0;
 
   virtual void Debug() const = 0;
 };
@@ -101,6 +107,8 @@ inline char const *ToString(TrustSubject subject)
     return "Transaction";
   case TrustSubject::PEER:
     return "Peer";
+  case TrustSubject::OBJECT:
+    return "Object";
   default:
     return "Unknown";
   }

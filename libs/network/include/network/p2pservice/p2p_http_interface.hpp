@@ -279,12 +279,13 @@ private:
     return cache;
   }
 
-  uint32_t     log2_num_lanes_;
-  MainChain &  chain_;
-  Muddle &     muddle_;
-  P2PService & p2p_;
+  uint32_t    log2_num_lanes_;
+  MainChain & chain_;
+  Muddle &    muddle_;
+  P2PService &p2p_;
+
   TrustSystem &trust_;
-  Miner &      miner_;
+  Miner &miner_;
 };
 
 }  // namespace p2p

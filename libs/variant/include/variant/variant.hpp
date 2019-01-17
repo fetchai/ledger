@@ -85,6 +85,7 @@ public:
   explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
   explicit Variant(char const *value);
 
+
   /// @name Basic Type Access
   /// @{
   Type type() const

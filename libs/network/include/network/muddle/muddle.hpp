@@ -26,6 +26,7 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/router.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
@@ -116,6 +117,7 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
   using NetworkId       = MuddleEndpoint::NetworkId;
+  using TrustSystem     = p2p::P2PTrustInterface<Muddle::Address>;
 
   using Handle = network::AbstractConnection::connection_handle_type;
 
@@ -136,7 +138,8 @@ public:
      this to just get one now.*/
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                      network_id,
-                                              fetch::network::NetworkManager tm)
+                                              fetch::network::NetworkManager tm,
+                                              TrustSystem *                  trust_system = nullptr)
   {
     crypto::ECDSASigner *certificate = new crypto::ECDSASigner();
     certificate->GenerateKeys();
@@ -144,14 +147,19 @@ public:
     std::unique_ptr<crypto::Prover> certificate_;
     certificate_.reset(certificate);
 
-    return std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+    auto ptr = std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
+    ptr->SetUpTrust(trust_system);
+    return ptr;
   }
 
   static std::shared_ptr<Muddle> CreateMuddle(NetworkId                       network_id,
                                               std::unique_ptr<crypto::Prover> prover,
-                                              fetch::network::NetworkManager  tm)
+                                              fetch::network::NetworkManager  tm,
+                                              TrustSystem *trust_system = nullptr)
   {
-    return std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    auto ptr = std::make_shared<Muddle>(network_id, std::move(prover), tm);
+    ptr->SetUpTrust(trust_system);
+    return ptr;
   }
 
   // Construction / Destruction
@@ -205,6 +213,11 @@ public:
     clients_.Debug(prefix);
   }
 
+  void SetUpTrust(TrustSystem *trust_system)
+  {
+    trust_system_ = trust_system;
+  }
+
 private:
   using Server     = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList = std::vector<Server>;
@@ -234,6 +247,7 @@ private:
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();
   NetworkId            network_id_;
+  TrustSystem *        trust_system_ = nullptr;
 };
 
 inline Muddle::Identity const &Muddle::identity() const

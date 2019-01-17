@@ -221,8 +221,38 @@ void Muddle::RunPeriodicMaintenance()
     if (time_since_last_cleanup >= CLEANUP_INTERVAL)
     {
       // clean up and pending message handlers and also trigger the timeout logic
-      dispatcher_.Cleanup();
-
+      auto bad_connections = dispatcher_.Cleanup();
+      if (trust_system_ != nullptr)
+      {
+        PeerConnectionList::UriMap uri_map;
+        if (bad_connections.size() > 0)
+        {
+          uri_map = clients_.GetUriMap();
+        }
+        for (auto &handle : bad_connections)
+        {
+          Packet::Address address;
+          if (!router_.HandleToDirectAddress(handle, address))
+          {
+            continue;
+          }
+          FETCH_LOG_INFO(LOGGING_NAME,
+                         "Adding BAD_CONNECTION feedback for peer: ", ToBase64(address));
+          trust_system_->AddFeedback(address, p2p::TrustSubject::PEER,
+                                     p2p::TrustQuality::BAD_CONNECTION);
+          auto uri_it = uri_map.find(handle);
+          if (uri_it != uri_map.end())
+          {
+            auto status = clients_.GetStateForPeer(uri_it->second);
+            if (status > PeerConnectionList::ConnectionState::BACKOFF &&
+                status <= PeerConnectionList::ConnectionState::BACKOFF_5)
+            {
+              trust_system_->AddObjectFeedback(address, p2p::TrustSubject::PEER,
+                                               p2p::TrustQuality::BAD_CONNECTION);
+            }
+          }
+        }
+      }
       // clean up echo caches and other temporary stored objects
       router_.Cleanup();
 
@@ -296,6 +326,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionFailed([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection failed...");
     clients_.RemoveConnection(peer);
+    trust_system_->AddFeedback(peer.AsIdentity(), p2p::TrustSubject::PEER,
+                               p2p::TrustQuality::BAD_CONNECTION);
   });
 
   strong_conn->OnLeave([this, peer]() {
@@ -329,7 +361,12 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
   DropPeer(target);
+  if (trust_system_ != nullptr && trust_system_->GetTrustUncertaintyOfPeer(target) > 10.)
+  {
+    return;
+  }
   router_.Blacklist(target);
 }
 

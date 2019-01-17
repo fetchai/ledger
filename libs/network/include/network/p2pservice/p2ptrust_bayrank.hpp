@@ -21,6 +21,11 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "math/free_functions/statistics/normal.hpp"
+#include "network/p2pservice/bayrank/bad_place.hpp"
+#include "network/p2pservice/bayrank/buffer.hpp"
+#include "network/p2pservice/bayrank/good_place.hpp"
+#include "network/p2pservice/bayrank/object_cache.hpp"
+#include "network/p2pservice/bayrank/the_train.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 
 #include <algorithm>
@@ -29,6 +34,7 @@
 #include <ctime>
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <random>
 #include <string>
 #include <vector>
@@ -36,45 +42,49 @@
 namespace fetch {
 namespace p2p {
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
-extern const reference_players_type reference_players_;
+using TrustQualityArrayGaussian = std::array<math::statistics::Gaussian<double>, 5>;
+using ReferencePlayers          = std::unordered_map<TrustSubject, TrustQualityArrayGaussian>;
+extern ReferencePlayers const reference_players_;
 
-inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
+inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustSubject subject,
+                                                                       TrustQuality quality)
 {
-  return reference_players_.at(static_cast<std::size_t>(quality));
+  auto it = reference_players_.find(subject);
+  if (it != reference_players_.end())
+  {
+    return it->second.at(static_cast<std::size_t>(quality));
+  }
+  throw std::runtime_error("Trust subject not in the reference players map:  " +
+                           std::string(ToString(subject)));
 }
+
+std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustQuality &q);
+std::ostream &operator<<(std::ostream &o, const fetch::p2p::TrustSubject &q);
 
 template <typename IDENTITY>
 class P2PTrustBayRank : public P2PTrustInterface<IDENTITY>
 {
-protected:
-  const double threshold_ = 20.0;
-  using Gaussian          = math::statistics::Gaussian<double>;
-  struct PeerTrustRating
-  {
-    IDENTITY peer_identity;
-    Gaussian g;
-    double   score;
-    void     update_score()
-    {
-      score = g.mu() - 3 * g.sigma();
-    }
-    bool scored = false;
-  };
-  using TrustStore   = std::vector<PeerTrustRating>;
-  using RankingStore = std::unordered_map<IDENTITY, size_t>;
-  using Mutex        = mutex::Mutex;
-  using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
-
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using IdentitySet    = typename P2PTrustInterface<IDENTITY>::IdentitySet;
-  using PeerTrust      = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using IDStore               = std::unordered_map<IDENTITY, std::size_t>;
+  using Mutex                 = mutex::Mutex;
+  using ConstByteArray        = byte_array::ConstByteArray;
+  using TrustStorageInterface = bayrank::TrustStorageInterface<IDENTITY>;
+  using GoodPlace             = bayrank::GoodPlace<IDENTITY>;
+  using BadPlace              = bayrank::BadPlace<IDENTITY>;
+  using TrustBuffer           = bayrank::TrustBuffer<IDENTITY>;
+  using TheTrain              = bayrank::TheTrain<IDENTITY>;
+  using ObjectStore           = bayrank::ObjectCache<ConstByteArray, IDENTITY>;
+  using IdentitySet           = typename P2PTrustInterface<IDENTITY>::IdentitySet;
+  using PeerTrust             = typename P2PTrustInterface<IDENTITY>::PeerTrust;
+  using PeerTrusts            = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
+  using Gaussian              = typename TrustStorageInterface::Gaussian;
+  using PlaceEnum             = typename bayrank::TheTrain<IDENTITY>::PLACE;
 
   static constexpr char const *LOGGING_NAME = "TrustBayRank";
 
   // Construction / Destruction
-  P2PTrustBayRank()                           = default;
+  P2PTrustBayRank()
+  {}
   P2PTrustBayRank(const P2PTrustBayRank &rhs) = delete;
   P2PTrustBayRank(P2PTrustBayRank &&rhs)      = delete;
   ~P2PTrustBayRank() override                 = default;
@@ -84,54 +94,96 @@ public:
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
   }
 
-  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
+  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
                    TrustSubject subject, TrustQuality quality) override
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "AddFeedback: peer: ", ToBase64(peer_ident),
+                   ", subject: ", subject, ", quality: ", quality);
     FETCH_LOCK(mutex_);
 
-    auto ranking = ranking_store_.find(peer_ident);
-
-    size_t pos;
-    if (ranking == ranking_store_.end())
+    try
     {
-      PeerTrustRating new_record{peer_ident, Gaussian::ClassicForm(100., 100 / 6.), 0, false};
-      pos = trust_store_.size();
-      trust_store_.push_back(new_record);
+      Gaussian const &reference_player = LookupReferencePlayer(subject, quality);
+
+      auto id_it = id_store_.find(peer_ident);
+      if (id_it == id_store_.end())
+      {
+        id_store_[peer_ident] = 0;
+        auto g                = quality == TrustQuality::NEW_PEER
+                     ? reference_player
+                     : LookupReferencePlayer(subject, TrustQuality::NEW_PEER);
+        buffer_.NewPeer(peer_ident, g);
+        id_it = id_store_.find(peer_ident);
+      }
+      if (quality == TrustQuality::NEW_PEER)
+      {
+        return;
+      }
+
+      bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+      if (honest && object_ident.size() > 0)
+      {
+        AddObject(object_ident, peer_ident);
+      }
+
+      auto sp      = stores_[id_it->second];
+      auto peer_it = sp->GetPeer(peer_ident);
+      if (peer_it == sp->end())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Peer ", ToBase64(peer_ident),
+                       " not found in the storage (id=", id_it->second, ")!");
+        return;
+      }
+
+      updateGaussian(honest, peer_it->g, reference_player);
+      peer_it->update_score();
+      peer_it->last_modified = GetCurrentTime();
+      sp->Update();
+      FETCH_LOG_WARN(LOGGING_NAME, "(AB): ", ToBase64(peer_ident),
+                     " updated: score=", peer_it->score);
+
+      auto place = the_train_.MoveIfPossible(ToPlaceEnum(id_it->second), peer_ident);
+      auto s_idx = FromPlaceEnum(place);
+      if (place != PlaceEnum::UNKNOWN && s_idx != -1)
+      {
+        id_store_[peer_ident] = static_cast<std::size_t>(s_idx);
+      }
     }
-    else
+    catch (std::exception &e)
     {
-      pos = ranking->second;
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception in AddFeedback: ", e.what());
     }
+  }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
-                   " subj=", ToString(subject), " qual=", ToString(quality));
-    if (quality == TrustQuality::NEW_PEER)
-    {
-      trust_store_[pos].update_score();
-      dirty_ = true;
-      SortIfNeeded();
-      return;  // we're introducing this element, not rating it.
-    }
+  void AddObjectFeedback(ConstByteArray const &object_ident, TrustSubject /*subject*/,
+                         TrustQuality          quality) override
+  {
+    object_store_.Iterate(object_ident, [this, quality](IDENTITY const &identity) {
+      AddFeedback(identity, TrustSubject ::OBJECT, quality);
+    });
+  }
 
-    Gaussian const &reference_player = LookupReferencePlayer(quality);
-    bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
-    trust_store_[pos].scored = true;
-    updateGaussian(honest, trust_store_[pos].g, reference_player, 100 / 12., 1 / 6., 0.2);
-    trust_store_[pos].update_score();
+  void AddObject(ConstByteArray const &object_ident, IDENTITY const &peer_ident) override
+  {
+    object_store_.Add(object_ident, peer_ident);
+  }
 
-    dirty_ = true;
-    SortIfNeeded();
+  void RemoveObject(ConstByteArray const &object_ident) override
+  {
+    object_store_.Remove(object_ident);
   }
 
   bool IsPeerKnown(IDENTITY const &peer_ident) const override
   {
     FETCH_LOCK(mutex_);
-    return ranking_store_.find(peer_ident) != ranking_store_.end();
+    return id_store_.find(peer_ident) != id_store_.end();
   }
 
   IdentitySet GetRandomPeers(std::size_t maximum_count, double minimum_trust) const override
   {
-    if (maximum_count > trust_store_.size())
+    auto gps                  = good_place_.size();
+    auto good_and_buffer_size = gps + buffer_.size();
+    if (maximum_count > good_and_buffer_size)
     {
       return GetBestPeers(maximum_count);
     }
@@ -139,23 +191,36 @@ public:
     IdentitySet result;
     result.reserve(maximum_count);
 
-    size_t                                max_trial = maximum_count * 1000;
-    std::random_device                    rd;
-    std::mt19937                          g(rd());
-    std::uniform_int_distribution<size_t> distribution(0, trust_store_.size() - 1);
+    size_t                                     max_trial = maximum_count * 1000;
+    std::random_device                         rd;
+    std::mt19937                               g(rd());
+    std::uniform_int_distribution<std::size_t> distribution(0, good_and_buffer_size - 1);
 
     {
       FETCH_LOCK(mutex_);
 
       for (std::size_t i = 0, pos = 0, inserted_element_counter = 0; i < max_trial; ++i)
       {
-        pos = distribution(g);
-        if (trust_store_[pos].score < minimum_trust)
+        pos     = distribution(g);
+        auto it = good_place_.begin();
+        if (pos < gps)
         {
-          continue;
+          it = it + static_cast<long>(pos);
+          if (it == good_place_.end() || it->score < minimum_trust)
+          {
+            continue;
+          }
+        }
+        else
+        {
+          it = buffer_.begin() + static_cast<long>(pos - gps);
+          if (it == buffer_.end() || it->score < minimum_trust)
+          {
+            continue;
+          }
         }
 
-        result.insert(trust_store_[pos].peer_identity);
+        result.insert(it->peer_identity);
         inserted_element_counter += 1;
         if (inserted_element_counter >= maximum_count)
         {
@@ -170,19 +235,35 @@ public:
   IdentitySet GetBestPeers(std::size_t maximum) const override
   {
     IdentitySet result;
-    result.reserve(maximum);
+
+    auto max = std::min(maximum, buffer_.size() + good_place_.size());
+    if (max < 1)
+    {
+      return result;
+    }
+    result.reserve(max);
 
     {
       FETCH_LOCK(mutex_);
 
-      for (std::size_t pos = 0, end = std::min(maximum, trust_store_.size()); pos < end; ++pos)
+      std::size_t pos = 0, end = 0;
+      auto        good_it = good_place_.begin();
+      for (end = std::min(max, good_place_.size()); pos < end; ++pos)
       {
-        if (trust_store_[pos].score < threshold_)
+        result.insert((good_it + static_cast<long>(pos))->peer_identity);
+      }
+      if (pos < max)
+      {
+        auto buffer_it = buffer_.begin();
+        for (end = std::min(max - pos, buffer_.size()), pos = 0; pos < end; ++pos)
         {
-          break;
+          auto it = buffer_it + static_cast<long>(pos);
+          if (it->score < TheTrain::SCORE_THRESHOLD)
+          {
+            break;
+          }
+          result.insert(it->peer_identity);
         }
-
-        result.insert(trust_store_[pos].peer_identity);
       }
     }
 
@@ -192,16 +273,24 @@ public:
   std::size_t GetRankOfPeer(IDENTITY const &peer_ident) const override
   {
     FETCH_LOCK(mutex_);
-
-    auto const ranking_it = ranking_store_.find(peer_ident);
-    if (ranking_it == ranking_store_.end())
+    auto const id_it = id_store_.find(peer_ident);
+    if (id_it == id_store_.end())
     {
-      return trust_store_.size() + 1;
+      FETCH_LOG_WARN(LOGGING_NAME, "Peer ", peer_ident, " not in the trust system!");
+      return good_place_.size() + buffer_.size() - 1;
     }
-    else
+    if (id_it->second == 1)
     {
-      return ranking_it->second;
+      return good_place_.index(peer_ident);
     }
+    if (id_it->second == 0)
+    {
+      return good_place_.size() + buffer_.index(peer_ident);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Peer ", peer_ident,
+                   " not in good place or in buffer! Ranking of someone from the bad place doesn't "
+                   "make sense!");
+    return good_place_.size() + buffer_.size() - 1;
   }
 
   PeerTrusts GetPeersAndTrusts() const override
@@ -209,16 +298,19 @@ public:
     FETCH_LOCK(mutex_);
     PeerTrusts trust_list;
 
-    for (std::size_t pos = 0, end = trust_store_.size(); pos < end; ++pos)
+    for (std::size_t store_id = 0; store_id < stores_.size(); ++store_id)
     {
-      PeerTrust pt;
-      pt.address        = trust_store_[pos].peer_identity;
-      pt.name           = std::string(byte_array::ToBase64(pt.address));
-      pt.trust          = trust_store_[pos].score;
-      pt.has_transacted = trust_store_[pos].scored;
-      trust_list.push_back(pt);
+      for (std::size_t pos = 0, end = stores_[store_id]->size(); pos < end; ++pos)
+      {
+        PeerTrust   pt;
+        auto const &p     = stores_[store_id]->begin() + static_cast<long>(pos);
+        pt.address        = p->peer_identity;
+        pt.name           = std::string(byte_array::ToBase64(pt.address));
+        pt.trust          = p->score;
+        pt.has_transacted = true;
+        trust_list.push_back(pt);
+      }
     }
-
     return trust_list;
   }
 
@@ -228,31 +320,56 @@ public:
 
     FETCH_LOCK(mutex_);
 
-    auto ranking_it = ranking_store_.find(peer_ident);
-    if (ranking_it != ranking_store_.end())
+    auto id_it = id_store_.find(peer_ident);
+    if (id_it != id_store_.end())
     {
-      if (ranking_it->second < trust_store_.size())
-      {
-        ranking = trust_store_[ranking_it->second].score;
-      }
+      ranking = stores_[id_it->second]->GetPeer(peer_ident)->score;
+    }
+    return ranking;
+  }
+
+  double GetTrustUncertaintyOfPeer(IDENTITY const &peer_ident) const override
+  {
+    double sigma = 0.0;
+
+    FETCH_LOCK(mutex_);
+
+    auto id_it = id_store_.find(peer_ident);
+    if (id_it != id_store_.end())
+    {
+      sigma = stores_[id_it->second]->GetPeer(peer_ident)->g.sigma();
     }
 
-    return ranking;
+    return sigma;
   }
 
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
   {
-    return GetTrustRatingOfPeer(peer_ident) > threshold_;
+    FETCH_LOCK(mutex_);
+
+    auto id_it = id_store_.find(peer_ident);
+    if (id_it != id_store_.end())
+    {
+      if (id_it->second == 0)
+      {
+        return buffer_.GetPeer(peer_ident)->score > TheTrain::SCORE_THRESHOLD;
+      }
+      return id_it->second == 1;
+    }
+    return false;
   }
 
   virtual void Debug() const override
   {
     FETCH_LOCK(mutex_);
-    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
+    for (auto const &id : id_store_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "trust_store_ ",
-                     byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
-                     trust_store_[pos].score);
+      auto store = stores_[id.second];
+      for (auto it = store->begin(); it != store->end(); ++it)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "trust_store_", id.second, ": ",
+                       byte_array::ToBase64(it->peer_identity), " => ", it->score);
+      }
     }
   }
 
@@ -261,11 +378,11 @@ public:
   P2PTrustBayRank operator=(P2PTrustBayRank &&rhs) = delete;
 
 protected:
-  Gaussian truncate(Gaussian const &g, double beta, double eps)
+  Gaussian truncate(Gaussian const &g, double BETA, double EPS)
   {
     // Calculate approximated truncated Gaussian
     double m =
-        std::sqrt(2) * beta * math::statistics::normal::quantile<double>(0, 1, (eps + 1.) / 2.);
+        std::sqrt(2) * BETA * math::statistics::normal::quantile<double>(0, 1, (EPS + 1.) / 2.);
     double k = sqrt(g.pi());
     double r = g.tau() / k - m * k;
     double v = math::statistics::normal::pdf<double>(0, 1, r) /
@@ -279,63 +396,92 @@ protected:
     return t / g;
   }
 
-  void updateGaussian(bool honest, Gaussian &s, Gaussian const &ref, double beta, double drift,
-                      double eps)
+  void updateGaussian(bool honest, Gaussian &s, Gaussian const &ref)
   {
     // Calculate new distribution for g1 assuming that g1 won with g2.
-    // beta corresponds to a measure of how difficult the game is to master.
-    // drift corresponds to a natural drift of your score between "games".
-    // eps is a draw margin by which you must be "better" to beat your opponent.
-    s *= drift;
-    Gaussian s_ref = ref * drift;
-    Gaussian h     = s * beta;
-    Gaussian h_ref = s_ref * beta;
+    // BETA corresponds to a measure of how difficult the game is to master.
+    // DRIFT corresponds to a natural DRIFT of your score between "games".
+    // EPS is a draw margin by which you must be "better" to beat your opponent.
+    s *= DRIFT;
+    Gaussian s_ref = ref * DRIFT;
+    Gaussian h     = s * BETA;
+    Gaussian h_ref = s_ref * BETA;
 
     if (honest)
     {
-      Gaussian u = truncate(h - h_ref, beta, eps);
-      s *= (u + h_ref) * beta;
+      Gaussian u = truncate(h - h_ref, BETA, EPS);
+      s *= (u + h_ref) * BETA;
     }
     else
     {
-      Gaussian u = truncate(h_ref - h, beta, eps);
-      s *= (-u + h_ref) * beta;
+      Gaussian u = truncate(h_ref - h, BETA, EPS);
+      s *= (-u + h_ref) * BETA;
     }
   }
 
-  void SortIfNeeded()
+  static inline time_t GetCurrentTime()
   {
-    if (!dirty_)
-    {
-      return;
-    }
-    dirty_ = false;
-
-    std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
-                if (a.score < b.score)
-                {
-                  return true;
-                }
-                if (a.score > b.score)
-                {
-                  return false;
-                }
-                return a.peer_identity < b.peer_identity;
-              });
-
-    ranking_store_.clear();
-    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
-    {
-      ranking_store_[trust_store_[pos].peer_identity] = pos;
-    }
+    return std::time(nullptr);
   }
 
 protected:
-  bool          dirty_ = false;
   mutable Mutex mutex_{__LINE__, __FILE__};
-  TrustStore    trust_store_;
-  RankingStore  ranking_store_;
+
+  GoodPlace   good_place_;
+  BadPlace    bad_place_;
+  TrustBuffer buffer_;
+  IDStore     id_store_;
+  ObjectStore object_store_;
+  TheTrain    the_train_{buffer_, good_place_, bad_place_};
+
+  std::array<TrustStorageInterface *, 3> stores_{{&buffer_, &good_place_, &bad_place_}};
+
+  static inline PlaceEnum ToPlaceEnum(std::size_t i)
+  {
+    PlaceEnum r;
+    if (i == 0)
+    {
+      r = PlaceEnum::BUFFER;
+    }
+    else if (i == 1)
+    {
+      r = PlaceEnum::GOOD;
+    }
+    else if (i == 2)
+    {
+      r = PlaceEnum::BAD;
+    }
+    else
+    {
+      r = PlaceEnum::UNKNOWN;
+    }
+    return r;
+  }
+
+  static inline int FromPlaceEnum(PlaceEnum p)
+  {
+    int idx = -1;
+    if (p == PlaceEnum::BUFFER)
+    {
+      idx = 0;
+    }
+    else if (p == PlaceEnum::GOOD)
+    {
+      idx = 1;
+    }
+    else if (p == PlaceEnum::BAD)
+    {
+      idx = 2;
+    }
+    return idx;
+  }
+
+  /**
+   * Constants
+   */
+  static constexpr double const BETA  = 100 / 12.;
+  static constexpr double const DRIFT = 1 / 6.;
+  static constexpr double const EPS   = 0.2;
 };
 
 }  // namespace p2p

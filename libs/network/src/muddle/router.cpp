@@ -239,12 +239,37 @@ void Router::Route(Handle handle, PacketPtr packet)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
+  if (blacklist_.Contains(packet->GetSenderRaw()))
+  {
+    // this is where we prevent incoming connections.
+    KillConnection(handle);
+    return;
+  }
+
   if (packet->IsDirect())
   {
     // when it is a direct message we must handle this
     DispatchDirect(handle, packet);
+    return;
   }
-  else if (packet->GetTargetRaw() == address_)
+
+  PacketRoutingDecisionResult r = PacketRoutingDecisionResult :: PACKET_UNKNOWN;
+
+  if (packet->GetTargetRaw() == address_)
+  {
+    r = PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH;
+  }
+  else
+  {
+    // update the routing table if required
+    // TODO(KLL): this may not be the association we're looking for.
+    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
+
+    // if this message does not belong to us we must route it along the path
+    r = RoutePacket(packet);
+  }
+
+  if (r==PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH)
   {
     // when the message is targetted at us we must handle it
     Address transmitter;
@@ -259,15 +284,6 @@ void Router::Route(Handle handle, PacketPtr packet)
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Cannot get transmitter address for packet: ", DescribePacket(*packet));
     }
-  }
-  else
-  {
-    // update the routing table if required
-    // TODO(KLL): this may not be the association we're looking for.
-    AssociateHandleWithAddress(handle, packet->GetSenderRaw(), false);
-
-    // if this message does not belong to us we must route it along the path
-    RoutePacket(packet);
   }
 }
 
@@ -489,6 +505,7 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
  */
 bool Router::IsConnected(Address const &target) const
 {
+  FETCH_LOCK(routing_table_lock_);
   auto raw_address = ConvertAddress(target);
   auto iter        = routing_table_.find(raw_address);
   bool connected   = false;
@@ -742,7 +759,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  * @param packet The packet to be routed
  * @param external Flag to signal that this packet originated from the network
  */
-void Router::RoutePacket(PacketPtr packet, bool external)
+Router::PacketRoutingDecisionResult Router::RoutePacket(PacketPtr packet, bool external)
 {
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
@@ -759,13 +776,13 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (message_time_expired)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
-      return;
+      return PacketRoutingDecisionResult :: PACKET_DISCARD;
     }
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
     {
-      return;
+      return PacketRoutingDecisionResult :: PACKET_DISCARD;
     }
   }
 
@@ -774,17 +791,17 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   // broadcast packet
   if (packet->IsBroadcast())
   {
-    if (packet->GetSender() != address_)
-    {
-      DispatchPacket(packet, address_);
-    }
-
     // serialize the packet to the buffer
     serializers::ByteArrayBuffer buffer;
     buffer << *packet;
 
     // broadcast the data across the network
     register_.Broadcast(buffer.data());
+
+    if (packet->GetSender() != address_)
+    {
+      return PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH;
+    }
   }
   else
   {
@@ -794,7 +811,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
-      return;
+      return PacketRoutingDecisionResult :: PACKET_SENT_ONWARDS;
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme
@@ -804,8 +821,10 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
       SendToConnection(handle, packet);
+      return PacketRoutingDecisionResult :: PACKET_SENT_ONWARDS;
     }
   }
+  return PacketRoutingDecisionResult :: PACKET_UNKNOWN;
 }
 
 /**

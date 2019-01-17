@@ -20,6 +20,8 @@
 #include <iostream>
 #include <memory>
 
+#include "core/byte_array/encoders.hpp"
+using fetch::byte_array::ToBase64;
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include <gtest/gtest.h>
 
@@ -44,13 +46,10 @@ public:
   Gaussian GetGaussianOfPeer(IDENTITY const &peer_ident)
   {
     FETCH_LOCK(this->mutex_);
-    auto ranking_it = this->ranking_store_.find(peer_ident);
-    if (ranking_it != this->ranking_store_.end())
+    auto id_it = this->id_store_.find(peer_ident);
+    if (id_it != this->id_store_.end())
     {
-      if (ranking_it->second < this->trust_store_.size())
-      {
-        return this->trust_store_[ranking_it->second].g;
-      }
+      return this->stores_[id_it->second]->GetPeer(peer_ident)->g;
     }
     return Gaussian();
   }
@@ -62,7 +61,7 @@ TEST(TrustTests, BayNewInfo)
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK,
                     fetch::p2p::TrustQuality::NEW_INFORMATION);
   auto g  = trust.GetGaussianOfPeer("peer1");
-  auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
+  auto rg = LookupReferencePlayer(TrustSubject ::BLOCK, TrustQuality::NEW_INFORMATION);
   EXPECT_EQ(g.mu() > rg.mu(), true);
   EXPECT_EQ(g.sigma() < rg.sigma(), true);
   EXPECT_EQ(trust.IsPeerTrusted("peer1"), true);
@@ -74,7 +73,7 @@ TEST(TrustTests, BayBadInfo)
 
   trust.AddFeedback("peer1", ConstByteArray{}, TrustSubject::BLOCK, fetch::p2p::TrustQuality::LIED);
 
-  auto rg = LookupReferencePlayer(TrustQuality::NEW_INFORMATION);
+  auto rg = LookupReferencePlayer(TrustSubject ::BLOCK, TrustQuality::NEW_INFORMATION);
   auto g  = trust.GetGaussianOfPeer("peer1");
   EXPECT_EQ(g.mu() < rg.mu(), true);
   EXPECT_EQ(g.sigma() < rg.sigma(), true);

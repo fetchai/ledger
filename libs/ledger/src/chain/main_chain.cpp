@@ -39,9 +39,11 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
   if (!recursive_iteration)
   {
     // First check if block already exists (not checking in object store)
-    if (block_chain_.find(block.hash()) != block_chain_.end())
+    auto res = block_chain_.find(block.hash());
+    if (res != block_chain_.end())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Attempting to add already seen block");
+      block.loose() = res->second.loose();
       return false;
     }
 

@@ -35,6 +35,8 @@
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/peer.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+
 
 #include <unordered_map>
 
@@ -43,6 +45,8 @@ namespace ledger {
 class LaneRemoteControl;
 }
 namespace p2p {
+
+class BlockCatchUpService;
 
 class P2PService
 {
@@ -73,6 +77,7 @@ public:
   using ConnectionMap        = muddle::Muddle::ConnectionMap;
   using FutureTimepoint      = network::FutureTimepoint;
   using PeerTrust            = TrustInterface::PeerTrust;
+  using Mutex                = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "P2PService";
 
@@ -110,6 +115,7 @@ public:
 
   bool IsDesired(Address const &address);
 
+  void AddMainChainRpcService(std::shared_ptr<ledger::MainChainRpcService> ptr);
 private:
   struct PairHash
   {
@@ -177,6 +183,13 @@ private:
   std::size_t max_peers_;
   std::size_t transient_peers_;
   uint32_t    process_cycle_ms_;
+  std::chrono::milliseconds  peer_update_cycle_ms_;
+
+  FutureTimepoint process_future_timepoint_;
+
+  std::shared_ptr<BlockCatchUpService> latest_block_sync_;
+
+  Mutex desired_peers_mutex_{__LINE__, __FILE__};
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };

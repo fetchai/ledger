@@ -171,8 +171,15 @@ private:
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
+  enum PacketRoutingDecisionResult {
+    PACKET_DISCARD,
+    PACKET_NEEDS_DISPATCH,
+    PACKET_SENT_ONWARDS,
+    PACKET_UNKNOWN
+  };
+
   void SendToConnection(Handle handle, PacketPtr packet);
-  void RoutePacket(PacketPtr packet, bool external = true);
+  PacketRoutingDecisionResult RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
   void KillConnection(Handle handle, Address const &peer);
   void KillConnection(Handle handle);
@@ -202,7 +209,7 @@ private:
   ThreadPool dispatch_thread_pool_;
 
   HandleDirectAddrMap direct_address_map_;  ///< Map of handles to direct address
-  ///< (Protected by routing_table_lock)
+                                            ///< (Protected by routing_table_lock)
 };
 
 }  // namespace muddle

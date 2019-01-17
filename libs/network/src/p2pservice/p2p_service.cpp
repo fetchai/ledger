@@ -27,6 +27,99 @@
 namespace fetch {
 namespace p2p {
 
+class BlockCatchUpService
+{
+public:
+  using PromiseState    = fetch::service::PromiseState;
+  using Promise         = service::Promise;
+  using Muddle          = muddle::Muddle;
+  using Address         = Resolver::Address;
+  using AddressSet      = std::unordered_set<Address>;
+  using Client          = muddle::rpc::Client;
+  using Mutex           = mutex::Mutex;
+  using ChainRpcPtr     = std::weak_ptr<ledger::MainChainRpcService>;
+  using Block           = chain::MainChain::BlockType;
+  using BlockQueue      = network::RequestingQueueOf<Address, std::vector<Block>>;
+  using Uri             = network::Uri;
+  using UriSet          = std::unordered_set<Uri>;
+
+
+  BlockCatchUpService(Muddle &muddle)
+   : muddle_(muddle)
+  {
+    next.Set(std::chrono::milliseconds(0));
+  }
+
+  void AddChainRpc(ChainRpcPtr&& chain_rpc)
+  {
+    chain_rpc_ = std::move(chain_rpc);
+  }
+
+  void WorkCycle()
+  {
+    AddressSet callable_peers;
+    if (next.IsDue()) {
+      {
+        FETCH_LOCK(mutex_);
+        for (auto it = new_peers_.begin(); it != new_peers_.end(); ++it) {
+          Address address;
+          if (muddle_.UriToDirectAddress(*it, address) && muddle_.IsConnected(address)) {
+            callable_peers.insert(address);
+            //new_peers_.erase(it);
+          }
+        }
+      }
+      next.Set(TIMEOUT);
+    }
+    auto chain_rpc_ptr = chain_rpc_.lock();
+    if (chain_rpc_ptr!=nullptr)
+    {
+      for(auto &address : block_promises_.FilterOutInFlight(callable_peers))
+      {
+        auto prom = chain_rpc_ptr->GetLatestBlockFromAddress(address);
+        block_promises_.Add(address, prom);
+        FETCH_LOG_WARN("BlockCatchUpService", "Sending GetLatestBlock request to address: ", ToBase64(address));
+      }
+      block_promises_.Resolve();
+      for(auto &res : block_promises_.Get(MAX_RESOLUTIONS_PER_CYCLE))
+      {
+        if (res.promised.size()>0)
+        {
+          auto block = res.promised[0];
+          block.UpdateDigest();
+          if (block.hash()!=last_hash_)
+          {
+            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key), ", block hash: ", ToBase64(block.hash()), ", size=", res.promised.size());
+            last_hash_ = block.hash();
+            chain_rpc_ptr->OnNewLatestBlock(res.key, block);
+          }
+        }
+      }
+    }
+  }
+
+  void AddUri(Uri const &uri)
+  {
+    FETCH_LOCK(mutex_);
+    new_peers_.insert(uri);
+  }
+  void RemoveUri(Uri const &uri)
+  {
+    FETCH_LOCK(mutex_);
+    new_peers_.erase(uri);
+  }
+private:
+  Muddle &muddle_;
+  ChainRpcPtr chain_rpc_;
+  UriSet new_peers_;
+  BlockQueue block_promises_;
+  byte_array::ConstByteArray last_hash_;
+  network::FutureTimepoint next;
+  std::chrono::milliseconds const TIMEOUT{1000};
+  static constexpr std::size_t const MAX_RESOLUTIONS_PER_CYCLE = 32;
+  Mutex mutex_{__LINE__, __FILE__};
+};
+
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
                        std::size_t max_peers, std::size_t transient_peers,
                        uint32_t process_cycle_ms)
@@ -42,10 +135,18 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
-  , process_cycle_ms_(process_cycle_ms)
+  , process_cycle_ms_(1000)
+  , peer_update_cycle_ms_(process_cycle_ms)
+  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_)}
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
+  process_future_timepoint_.Set(std::chrono::milliseconds(0));
+}
+
+void P2PService::AddMainChainRpcService(std::shared_ptr<ledger::MainChainRpcService> ptr)
+{
+  latest_block_sync_->AddChainRpc(std::weak_ptr<ledger::MainChainRpcService>(ptr));
 }
 
 void P2PService::Start(UriList const &initial_peer_list)
@@ -62,6 +163,7 @@ void P2PService::Start(UriList const &initial_peer_list)
 
     // trust this peer
     muddle_.AddPeer(uri);
+    latest_block_sync_->AddUri(uri);
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
@@ -83,10 +185,16 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
+
+  latest_block_sync_->WorkCycle();
+  if (process_future_timepoint_.IsDue())
+  {
+  process_future_timepoint_.Set(peer_update_cycle_ms_);
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
   GetConnectionStatus(active_connections, active_addresses);
+
 
   // update our identity cache (address -> uri mapping)
   identity_cache_.Update(active_connections);
@@ -107,6 +215,7 @@ void P2PService::WorkCycle()
   UpdateManifests(active_addresses);
 
   // increment the work cycle counter (used for scheduling of periodic events)
+  }
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
@@ -139,7 +248,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
       trust_system_.AddFeedback(address, TrustSubject::PEER, TrustQuality::NEW_PEER);
     }
   }
-
+  FETCH_LOCK(desired_peers_mutex_);
   for (auto const &pt : trust_system_.GetPeersAndTrusts())
   {
     auto        address = pt.address;
@@ -165,6 +274,7 @@ void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
         FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting ", ToBase64(address),
                        " because trust=", trust_system_.GetTrustRatingOfPeer(address));
         blacklisted_peers_.insert(address);
+        trust_system_.AddObjectFeedback(address, TrustSubject::PEER, TrustQuality::LIED);
       }
     }
   }
@@ -204,8 +314,8 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
                          " (from: ", ToBase64(from), ")");
 
           trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
-
-          trust_system_.AddFeedback(from, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
+          trust_system_.AddFeedback(from, new_address, TrustSubject::PEER,
+                                    TrustQuality::NEW_INFORMATION);
         }
       }
     }
@@ -214,11 +324,13 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
 
 bool P2PService::IsDesired(Address const &address)
 {
+  FETCH_LOCK(desired_peers_mutex_);
   return desired_peers_.find(address) != desired_peers_.end();
 }
 
 void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 {
+  FETCH_LOCK(desired_peers_mutex_);
   auto static_peers       = trust_system_.GetBestPeers(max_peers_ - transient_peers_);
   auto experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
 
@@ -241,17 +353,14 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
 
   AddressSet const outgoing_peers = identity_cache_.FilterOutUnresolved(active_addresses);
 
+  FETCH_LOCK(desired_peers_mutex_);
+
   AddressSet const new_peers     = desired_peers_ - active_addresses;
   AddressSet const dropped_peers = outgoing_peers - desired_peers_;
 
   for (auto const &d : desired_peers_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Muddle Update: KEEP: ", ToBase64(d));
-    Uri uri;
-    if (identity_cache_.Lookup(d, uri) && uri.IsDirectlyConnectable())
-    {
-      muddle_.AddPeer(uri);
-    }
   }
   for (auto const &d : dropped_peers)
   {
@@ -273,6 +382,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     {
       identity_cache_.Update(result.key.second, result.promised);
       muddle_.AddPeer(result.promised);
+      latest_block_sync_->AddUri(uri);
     }
     else
     {
@@ -292,6 +402,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Add peer: ", ToBase64(address));
       muddle_.AddPeer(uri);
+      latest_block_sync_->AddUri(uri);
       resolve = false;
     }
 
@@ -326,6 +437,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
         FETCH_LOG_INFO(LOGGING_NAME, "Drop peer: ", ToBase64(address), " -> ", uri.uri());
 
         muddle_.DropPeer(uri);
+        latest_block_sync_->RemoveUri(uri);
       }
       else
       {
@@ -411,7 +523,8 @@ P2PService::AddressSet P2PService::GetRandomGoodPeers()
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...");
 
-  AddressSet const result = trust_system_.GetRandomPeers(20, 0.0);
+  AddressSet const result =
+      trust_system_.GetRandomPeers(20, 0.0);  // TODO(ATTILA): Why is 20 hardcoded?
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "GetRandomGoodPeers...num: ", result.size());
 

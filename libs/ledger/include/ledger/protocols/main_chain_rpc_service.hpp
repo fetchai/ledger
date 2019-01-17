@@ -28,6 +28,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "network/generics/promise_of.hpp"
 
 #include <memory>
 
@@ -54,6 +55,7 @@ public:
   using Block            = chain::MainChain::BlockType;
   using BlockHash        = chain::MainChain::BlockHash;
   using Promise          = service::Promise;
+  using BlocksPromise    = network::PromiseOf<std::vector<Block>>;
   using RpcClient        = muddle::rpc::Client;
   using TrustSystem      = p2p::P2PTrustInterface<Address>;
   using FutureTimepoint  = network::FutureTimepoint;
@@ -68,6 +70,9 @@ public:
                       BlockCoordinator &block_coordinator);
 
   void BroadcastBlock(Block const &block);
+
+  BlocksPromise GetLatestBlockFromAddress(Address const &address);
+  void OnNewLatestBlock(Address const &from, Block &block);
 
 private:
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;

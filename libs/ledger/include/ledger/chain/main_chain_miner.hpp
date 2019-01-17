@@ -109,6 +109,12 @@ private:
 
     bool searching_for_hash = false;
 
+    if (consensus_miner_ == nullptr)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "No consensus miner set! Mining not possible!");
+      return;
+    }
+
     while (!stop_)
     {
       // determine the heaviest block
