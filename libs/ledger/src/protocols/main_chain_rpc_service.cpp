@@ -170,6 +170,19 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
+MainChainRpcService::BlocksPromise MainChainRpcService::GetLatestBlockFromAddress(Address const &address)
+{
+  return BlocksPromise(main_chain_rpc_client_.CallSpecificAddress(address, RPC_MAIN_CHAIN,
+      MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1}));
+}
+
+void MainChainRpcService::OnNewLatestBlock(Address const &from, Block &block)
+{
+  block.UpdateDigest();
+  OnNewBlock(from, block, from);
+}
+
+
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),

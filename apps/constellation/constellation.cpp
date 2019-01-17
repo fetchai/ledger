@@ -229,6 +229,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   }
 
   muddle_.SetUpTrust(&trust_);
+  p2p_.AddMainChainRpcService(main_chain_service_);
   CreateInfoFile("info.json");
 }
 
