@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <iterator>
 #include <unordered_set>
+#include <random>
 
 namespace fetch {
 namespace p2p {
@@ -42,11 +43,14 @@ public:
   using BlockQueue      = network::RequestingQueueOf<Address, std::vector<Block>>;
   using Uri             = network::Uri;
   using UriSet          = std::unordered_set<Uri>;
+  using TrustInterface  = P2PTrustInterface<Address>;
 
-
-  BlockCatchUpService(Muddle &muddle)
+  BlockCatchUpService(Muddle &muddle, TrustInterface &trust)
    : muddle_(muddle)
-  {
+   , trust_(trust)
+   , random_engine_(std::random_device()())
+   , distribution_(0., 1.)
+   {
     next.Set(std::chrono::milliseconds(0));
   }
 
@@ -58,17 +62,33 @@ public:
   void WorkCycle()
   {
     AddressSet callable_peers;
-    if (next.IsDue()) {
-      {
+    if (next.IsDue())
+    {
+      FETCH_LOG_WARN("BlockCatchUpService", "New_peers_.size=", new_peers_.size());
         FETCH_LOCK(mutex_);
+        std::vector<double> ws;
+        std::vector<UriSet::iterator> its;
+        double sum_w = 0.;
         for (auto it = new_peers_.begin(); it != new_peers_.end(); ++it) {
           Address address;
-          if (muddle_.UriToDirectAddress(*it, address) && muddle_.IsConnected(address)) {
+          if (muddle_.UriToDirectAddress(*it, address)) {
             callable_peers.insert(address);
-            //new_peers_.erase(it);
+            auto w = trust_.GetPeerUsefulness(address);
+            ws.push_back(w);
+            its.push_back(it);
+            sum_w += w;
+            FETCH_LOG_INFO("BlockCatchUpService", "Adding connected address: ", ToBase64(address));
           }
         }
-      }
+        if (new_peers_.size()>KEEP_PEERS) {
+          for(std::size_t i = 0; i<ws.size();++i)
+          {
+            if (distribution_(random_engine_)>ws[i]/sum_w)
+            {
+              new_peers_.erase(its[i]);
+            }
+          }
+        }
       next.Set(TIMEOUT);
     }
     auto chain_rpc_ptr = chain_rpc_.lock();
@@ -89,12 +109,16 @@ public:
           block.UpdateDigest();
           if (block.hash()!=last_hash_)
           {
-            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key), ", block hash: ", ToBase64(block.hash()), ", size=", res.promised.size());
+            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key), ", block hash: ", ToBase64(block.hash()));
             last_hash_ = block.hash();
             chain_rpc_ptr->OnNewLatestBlock(res.key, block);
           }
         }
       }
+    }
+    else
+    {
+      FETCH_LOG_ERROR("BlockCatchUpService", "No chain_rpc_pointer!");
     }
   }
 
@@ -110,12 +134,16 @@ public:
   }
 private:
   Muddle &muddle_;
+  TrustInterface &trust_;
   ChainRpcPtr chain_rpc_;
   UriSet new_peers_;
   BlockQueue block_promises_;
   byte_array::ConstByteArray last_hash_;
   network::FutureTimepoint next;
   std::chrono::milliseconds const TIMEOUT{1000};
+  std::mt19937 random_engine_;
+  std::exponential_distribution<double> distribution_;
+  static constexpr std::size_t const KEEP_PEERS = 3;
   static constexpr std::size_t const MAX_RESOLUTIONS_PER_CYCLE = 32;
   Mutex mutex_{__LINE__, __FILE__};
 };
@@ -137,7 +165,7 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , transient_peers_(transient_peers)
   , process_cycle_ms_(1000)
   , peer_update_cycle_ms_(process_cycle_ms)
-  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_)}
+  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_, trust_system_)}
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);

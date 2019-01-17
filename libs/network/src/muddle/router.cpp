@@ -331,7 +331,11 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, message);
   packet->SetTarget(address);
 
-  RoutePacket(packet, false);
+  auto res = RoutePacket(packet, false);
+  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Send");
+  }
 }
 
 /**
@@ -353,7 +357,11 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
                   channel, '-', message_num, ")");
 
-  RoutePacket(packet, false);
+  auto res = RoutePacket(packet, false);
+  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Send 2");
+  }
 }
 
 /**
@@ -371,7 +379,11 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
-  RoutePacket(packet, false);
+  auto res  = RoutePacket(packet, false);
+  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Broadcast");
+  }
 }
 
 /**
@@ -466,7 +478,11 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, request);
   packet->SetTarget(address);
   packet->SetExchange();
-  RoutePacket(packet, false);
+  auto res = RoutePacket(packet, false);
+  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Broadcast");
+  }
 
   // return the response
   return Response(std::move(promise));

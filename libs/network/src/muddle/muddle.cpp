@@ -147,7 +147,7 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
   for (auto const &entry : routing_table)
   {
-    if (!entry.second.direct)
+    if (direct_only && !entry.second.direct)
     {
       continue;
     }
@@ -155,10 +155,6 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
-    if (direct_only && !entry.second.direct)
-    {
-      continue;
-    }
 
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);

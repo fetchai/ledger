@@ -359,6 +359,20 @@ public:
     return false;
   }
 
+
+  double GetPeerUsefulness(IDENTITY const &peer_ident) const override
+  {
+    FETCH_LOCK(mutex_);
+    auto id_it = id_store_.find(peer_ident);
+    double w = 0.01;
+    if (id_it != id_store_.end())
+    {
+      auto peer = stores_[id_it->second]->GetPeer(peer_ident);
+      w = sqrt(peer->score / static_cast<double>(GetCurrentTime() - peer->last_modified) / 60.);
+    }
+    return w;
+  }
+
   virtual void Debug() const override
   {
     FETCH_LOCK(mutex_);

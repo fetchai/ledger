@@ -93,6 +93,7 @@ public:
   virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const      = 0;
   virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const             = 0;
   virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const               = 0;
+  virtual double      GetPeerUsefulness(IDENTITY const &peer_ident) const         = 0;
 
   virtual void Debug() const = 0;
 };

@@ -279,6 +279,11 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > 0.0;
   }
 
+  double GetPeerUsefulness(IDENTITY const &peer_ident) const override
+  {
+    return 1.0;
+  }
+
   // Operators
   P2PTrust operator=(const P2PTrust &rhs) = delete;
   P2PTrust operator=(P2PTrust &&rhs) = delete;
