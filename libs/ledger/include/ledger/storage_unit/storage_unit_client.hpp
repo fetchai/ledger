@@ -233,18 +233,20 @@ public:
     auto      res  = fetch::storage::ResourceID(digest);
     LaneIndex lane = res.lane(log2_lanes_);
     Address   address;
+
     try
     {
       GetAddressForLane(lane, address);
+
+      auto client  = GetClientForLane(lane);
+      auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
+      tx           = promise->As<chain::VerifiedTransaction>();
     }
-    catch (std::runtime_error &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
       return false;
     }
-    auto client  = GetClientForLane(lane);
-    auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
-    tx           = promise->As<chain::VerifiedTransaction>();
 
     return true;
   }

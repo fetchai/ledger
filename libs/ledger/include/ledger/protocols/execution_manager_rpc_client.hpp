@@ -57,14 +57,13 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  Status    Execute(Block const &block) override;
-  BlockHash LastProcessedBlock() override;
-  bool      IsActive() override;
-  bool      IsIdle() override;
-  bool      Abort() override;
+  ScheduleStatus Execute(Block const &block) override;
+  BlockHash      LastProcessedBlock() override;
+  State          GetState() override;
+  bool           Abort() override;
   /// @}
 
-  void WorkCycle(void);
+  void WorkCycle();
 
   std::size_t connections() const
   {
