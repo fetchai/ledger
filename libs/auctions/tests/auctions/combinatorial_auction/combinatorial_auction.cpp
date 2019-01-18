@@ -145,5 +145,5 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   }
 
   // should accept one but not both of these bids since they're exclusive
-  ASSERT_TRUE(ca.Active(4) != ca.Active(5));
+  ASSERT_TRUE(((ca.Active(4) == 0) && (ca.Active(5) == 0)) || (ca.Active(4) != ca.Active(5)));
 }
