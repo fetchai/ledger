@@ -240,7 +240,7 @@ public:
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
     {
-      At(i) = At(i) + o.At(i);
+      At(i) = T(At(i) + o.At(i));
     }
     return *this;
   }
@@ -250,7 +250,7 @@ public:
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
     {
-      At(i) = At(i) * o.At(i);
+      At(i) = T(At(i) * o.At(i));
     }
     return *this;
   }
@@ -260,7 +260,7 @@ public:
     T sum(0);
     for (size_t i(0); i < size(); ++i)
     {
-      sum = sum + At(i);
+      sum = T(sum + At(i));
     }
     return sum;
   }
