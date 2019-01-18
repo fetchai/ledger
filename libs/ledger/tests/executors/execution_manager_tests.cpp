@@ -47,6 +47,8 @@ protected:
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
+  using ScheduleStatus      = ExecutionManager::ScheduleStatus;
+  using State               = ExecutionManager::State;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerTests";
 
@@ -69,6 +71,11 @@ protected:
     mock_storage_.reset();
   }
 
+  bool IsManagerIdle() const
+  {
+    return (State::IDLE == manager_->GetState());
+  }
+
   FakeExecutorPtr CreateExecutor()
   {
     FakeExecutorPtr executor = std::make_shared<FakeExecutor>();
@@ -85,7 +92,7 @@ protected:
     {
 
       // the manager must be idle and have completed the required executions
-      if (manager_->IsIdle() && (manager_->completed_executions() >= num_executions))
+      if (IsManagerIdle() && (manager_->completed_executions() >= num_executions))
       {
         success = true;
         break;
@@ -183,7 +190,7 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   fetch::byte_array::ConstByteArray prev_hash;
 
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::ScheduleStatus::SCHEDULED);
 
   // wait for the manager to become idle again
   ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));
