@@ -32,7 +32,7 @@ TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t;
 
-  ASSERT_EQ(t.NumberOfElements(), 0);
+  ASSERT_EQ(t.size(), 0);
   ASSERT_EQ(t.Capacity(), 0);
 
   // ASSERT_EQ(t.OffsetOfElement({0}), 0);
@@ -49,7 +49,7 @@ TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({5});
 
-  ASSERT_EQ(t.NumberOfElements(), 5);
+  ASSERT_EQ(t.size(), 5);
   ASSERT_EQ(t.Capacity(), 8);
 
   ASSERT_EQ(t.OffsetOfElement({0}), 0);
@@ -74,7 +74,7 @@ TYPED_TEST(TensorIndexingTest, one_dimentional_tensor_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t({5}, {2});
 
-  ASSERT_EQ(t.NumberOfElements(), 5);
+  ASSERT_EQ(t.size(), 5);
   ASSERT_EQ(t.Capacity(), 16);
 
   ASSERT_EQ(t.OffsetOfElement({0}), 0);
@@ -99,7 +99,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5});
 
-  ASSERT_EQ(t.NumberOfElements(), 15);
+  ASSERT_EQ(t.size(), 15);
   ASSERT_EQ(t.Capacity(), 24);
 
   ASSERT_EQ(t.OffsetOfElement({0, 0}), 0);
@@ -148,7 +148,7 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_with_stride_test)
 {
   fetch::math::Tensor<TypeParam> t({3, 5}, {2, 3});
 
-  ASSERT_EQ(t.NumberOfElements(), 15);
+  ASSERT_EQ(t.size(), 15);
   ASSERT_EQ(t.Capacity(), 96);
 
   ASSERT_EQ(t.OffsetOfElement({0, 0}), 0);
@@ -197,7 +197,7 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5});
 
-  ASSERT_EQ(t.NumberOfElements(), 30);
+  ASSERT_EQ(t.size(), 30);
   ASSERT_EQ(t.Capacity(), 48);
 
   ASSERT_EQ(t.OffsetOfElement({0, 0, 0}), 0);
@@ -308,7 +308,7 @@ TYPED_TEST(TensorIndexingTest, zero_stride_tensor_test)
 {
   fetch::math::Tensor<TypeParam> t({2, 3, 5}, {0, 0, 0}, {0, 0, 0});
 
-  ASSERT_EQ(t.NumberOfElements(), 30);
+  ASSERT_EQ(t.size(), 30);
   ASSERT_EQ(t.Capacity(), 1);
 
   for (size_t i(0); i < 30; ++i)

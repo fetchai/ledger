@@ -29,7 +29,8 @@ template <typename T>
 class Tensor  // Using name Tensor to not clash with current NDArray
 {
 public:
-  using Type = T;
+  using Type                           = T;
+  static const size_t DefaultAlignment = 8;  // Arbitrary picked
 
 public:
   Tensor(std::vector<size_t>             shape   = std::vector<size_t>(),
@@ -64,9 +65,8 @@ public:
       }
       if (padding.empty())
       {
-        padding_ = std::vector<size_t>(shape_.size(), 0);
-        padding_.back() =
-            8 - ((strides_.back() * shape_.back()) % 8);  // Let's align everything on 8
+        padding_        = std::vector<size_t>(shape_.size(), 0);
+        padding_.back() = DefaultAlignment - ((strides_.back() * shape_.back()) % DefaultAlignment);
       }
       size_t dim = 1;
       for (size_t i(shape_.size()); i-- > 0;)
@@ -94,7 +94,22 @@ public:
     return shape_;
   }
 
-  size_t NumberOfElements() const
+  size_t DimensionSize(size_t dim) const
+  {
+    if (!shape_.empty() && dim < shape_.size())
+    {
+      return strides_[dim];
+    }
+    return 0;
+  }
+
+  size_t Capacity() const
+  {
+    return storage_ ? storage_->size() : 0;
+  }
+
+  // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
+  size_t size() const
   {
     if (shape_.empty())
     {
@@ -108,26 +123,6 @@ public:
     return n;
   }
 
-  size_t DimensionSize(size_t dim) const
-  {
-    if (!shape_.empty() && dim >= 0 && dim < shape_.size())
-    {
-      return strides_[dim];
-    }
-    return 0;
-  }
-
-  size_t Capacity() const
-  {
-    return storage_ ? storage_->size() : 0;
-  }
-
-  size_t size()
-      const  // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
-  {
-    return NumberOfElements();
-  }
-
   /**
    * Return the coordinates of the nth element in N dimensions
    * @param element     ordinal position of the element we want
@@ -135,7 +130,7 @@ public:
    */
   std::vector<size_t> IndicesOfElement(size_t element) const
   {
-    ASSERT(element < NumberOfElements());
+    ASSERT(element < size());
     std::vector<size_t> results(shape_.size());
     results.back() = element;
     for (size_t i(shape_.size() - 1); i > 0; --i)
@@ -164,7 +159,7 @@ public:
 
   void Fill(T const &value)
   {
-    for (size_t i(0); i < NumberOfElements(); ++i)
+    for (size_t i(0); i < size(); ++i)
     {
       At(i) = value;
     }
@@ -200,9 +195,12 @@ public:
     return At(i);
   }
 
+  /*
+   * return a slice of the tensor along the first dimension
+   */
   Tensor<T> Slice(size_t i)
   {
-    assert(shape_.size() > 1 && i >= 0 && i < shape_[0]);
+    assert(shape_.size() > 1 && i < shape_[0]);
     Tensor<T> ret(std::vector<size_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
                   std::vector<size_t>(std::next(strides_.begin()), strides_.end()), /* stride */
                   std::vector<size_t>(std::next(padding_.begin()), padding_.end()), /* padding */
@@ -222,8 +220,8 @@ public:
   {
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
-    ASSERT(o.NumberOfElements() == NumberOfElements());
-    for (size_t i(0); i < NumberOfElements(); ++i)
+    ASSERT(o.size() == size());
+    for (size_t i(0); i < size(); ++i)
     {
       T e1        = Get(IndicesOfElement(i));
       T e2        = o.Get(o.IndicesOfElement(i));
@@ -239,8 +237,8 @@ public:
 
   Tensor<T> &Add_inplace(Tensor<T> const &o)
   {
-    assert(NumberOfElements() == o.NumberOfElements());
-    for (size_t i(0); i < NumberOfElements(); ++i)
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
     {
       At(i) = At(i) + o.At(i);
     }
@@ -249,8 +247,8 @@ public:
 
   Tensor<T> &Mul_inplace(Tensor<T> const &o)
   {
-    assert(NumberOfElements() == o.NumberOfElements());
-    for (size_t i(0); i < NumberOfElements(); ++i)
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
     {
       At(i) = At(i) * o.At(i);
     }
@@ -260,7 +258,7 @@ public:
   T Sum() const
   {
     T sum(0);
-    for (size_t i(0); i < NumberOfElements(); ++i)
+    for (size_t i(0); i < size(); ++i)
     {
       sum = sum + At(i);
     }
@@ -283,16 +281,16 @@ public:
   {
     std::stringstream ss;
     if (shape_.size() == 2)
+    {
+      for (size_t i(0); i < shape_[0]; ++i)
       {
-	for (size_t i(0) ; i < shape_[0] ; ++i)
-	  {
-	    for (size_t j(0) ; j < shape_[1] ; ++j)
-	      {
-		ss << Get({i, j}) << "\t";
-	      }
-	    ss << "\n";
-	  }
+        for (size_t j(0); j < shape_[1]; ++j)
+        {
+          ss << Get({i, j}) << "\t";
+        }
+        ss << "\n";
       }
+    }
     return ss.str();
   }
 

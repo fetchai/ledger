@@ -94,8 +94,7 @@ public:
   RectangularArray &operator=(RectangularArray const &other) = default;
   RectangularArray &operator=(RectangularArray &&other) = default;
 
-  virtual ~RectangularArray()
-  {}
+  virtual ~RectangularArray() = default;
 
   void Sort()
   {
