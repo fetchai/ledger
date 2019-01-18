@@ -24,7 +24,7 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<char, int, long, float, double>;
+using MyTypes = ::testing::Types<int, long, float, double>;
 TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)

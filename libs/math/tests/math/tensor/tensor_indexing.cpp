@@ -25,7 +25,7 @@ class TensorIndexingTest : public ::testing::Test
 };
 
 using MyTypes =
-    ::testing::Types<char, unsigned char, int, unsigned int, long, unsigned long, float, double>;
+    ::testing::Types<int, unsigned int, long, unsigned long, float, double>;
 TYPED_TEST_CASE(TensorIndexingTest, MyTypes);
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
