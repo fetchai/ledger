@@ -45,9 +45,8 @@ class Server : public TCPServer
 public:
   Server(uint16_t port, NetworkManager nmanager)
     : TCPServer(port, nmanager)
-  {
-    Start();
-  }
+  {} // note for debug purposes, server does not Start() automatically
+
   ~Server() override = default;
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
@@ -76,6 +75,7 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 {
   static NetworkManager nmanager(1);
   nmanager.Start();
+  int attempts = 0;
 
   while (true)
   {
@@ -88,7 +88,17 @@ void waitUntilConnected(std::string const &host, uint16_t port)
         return;
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    if(attempts++ % 100 == 0)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for client to connect to: ", port);
+    }
+
+    if(attempts == 500)
+    {
+      throw std::runtime_error("Failed to connect test client to port");
     }
   }
 }
@@ -102,8 +112,13 @@ void TestCase0(std::string /*host*/, uint16_t port)
   for (std::size_t index = 0; index < 20; ++index)
   {
     NetworkManager nmanager(N);
+
+    // Delay network manager starting arbitrarily
+    auto cb = [&] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); nmanager.Start(); };
+    auto dummy = std::async(std::launch::async, cb); // dummy is important to force async execution
+
     Server         server(port, nmanager);
-    nmanager.Start();
+    server.Start();
   }
 
   SUCCEED() << "Success." << std::endl;
@@ -128,6 +143,7 @@ void TestCase1(std::string /*host*/, uint16_t port)
       nmanager.Stop();
     }
     nmanager.Start();
+    server.Start();
   }
 
   SUCCEED() << "Success." << std::endl;
@@ -143,14 +159,23 @@ void TestCase2(std::string host, uint16_t port)
   {
     NetworkManager nmanager(N);
     nmanager.Start();
+
     Server server(port, nmanager);
+
+    auto cb = [&] { server.Start(); };
+    auto dummy = std::async(std::launch::async, cb); // dummy is important to force async execution
+
+    std::cerr << "here" << std::endl;
     waitUntilConnected(host, port);
+    std::cerr << "here2" << std::endl;
 
     Client client(host, port, nmanager);
+    std::cerr << "here2" << std::endl;
 
     while (!client.is_alive())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for client to connect");
     }
     client.Send("test this");
     if (index % 3)
@@ -173,6 +198,7 @@ void TestCase3(std::string host, uint16_t port)
     NetworkManager nmanager(N);
     nmanager.Start();
     std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
+    server->Start();
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};
@@ -217,6 +243,7 @@ void TestCase4(std::string host, uint16_t port)
   for (std::size_t index = 0; index < 3; ++index)
   {
     std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
+    server->Start();
 
     waitUntilConnected(host, port);
     std::atomic<std::size_t> threadCount{0};
@@ -262,6 +289,19 @@ TEST_P(TCPClientServerTest, basic_test)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
+  for (std::size_t i = 0; i < 1; ++i)
+  {
+  TestCase2<1>(host, portNumber);
+  TestCase2<2>(host, portNumber);
+  TestCase2<3>(host, portNumber);
+  TestCase2<4>(host, portNumber);
+  TestCase2<10>(host, portNumber);
+  TestCase2<10>(host, portNumber);
+  TestCase2<10>(host, portNumber);
+  TestCase2<10>(host, portNumber);
+  }
+
+  /*
   for (std::size_t i = 0; i < iterations; ++i)
   {
     TestCase0<1>(host, portNumber);
@@ -276,6 +316,7 @@ TEST_P(TCPClientServerTest, basic_test)
     TestCase3<10>(host, portNumber);
     TestCase4<10>(host, portNumber);
   }
+  */
 
   SUCCEED() << "Success." << std::endl;
 }

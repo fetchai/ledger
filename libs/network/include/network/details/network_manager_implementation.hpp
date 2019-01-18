@@ -77,7 +77,7 @@ private:
   std::thread::id                           owning_thread_;
   std::size_t                               number_of_threads_ = 1;
   std::vector<std::shared_ptr<std::thread>> threads_;
-  bool running_{false};
+  bool                                      running_{false};
 
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 
