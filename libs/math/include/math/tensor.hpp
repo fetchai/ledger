@@ -68,6 +68,14 @@ public:
         padding_.back() =
             8 - ((strides_.back() * shape_.back()) % 8);  // Let's align everything on 8
       }
+      size_t dim = 1;
+      for (size_t i(shape_.size()); i-- > 0;)
+      {
+        dim *= strides_[i];
+        strides_[i] = dim;
+        dim *= shape_[i];
+        dim += padding_[i];
+      }
       if (!storage_)
       {
         offset_ = 0;
@@ -104,7 +112,7 @@ public:
   {
     if (!shape_.empty() && dim >= 0 && dim < shape_.size())
     {
-      return DimensionSizeImplementation(dim);
+      return strides_[dim];
     }
     return 0;
   }
@@ -192,13 +200,15 @@ public:
     return At(i);
   }
 
-  Tensor<T> slice(size_t i)
+  Tensor<T> Slice(size_t i)
   {
     assert(shape_.size() > 1 && i >= 0 && i < shape_[0]);
     Tensor<T> ret(std::vector<size_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
                   std::vector<size_t>(std::next(strides_.begin()), strides_.end()), /* stride */
                   std::vector<size_t>(std::next(padding_.begin()), padding_.end()), /* padding */
                   storage_, offset_ + i * DimensionSize(0));
+    ret.strides_ = std::vector<size_t>(std::next(strides_.begin()), strides_.end());
+    ret.padding_ = std::vector<size_t>(std::next(padding_.begin()), padding_.end());
     return ret;
   }
 
@@ -227,7 +237,7 @@ public:
     return true;
   }
 
-  Tensor<T> &Add_(Tensor<T> const &o)
+  Tensor<T> &Add_inplace(Tensor<T> const &o)
   {
     assert(NumberOfElements() == o.NumberOfElements());
     for (size_t i(0); i < NumberOfElements(); ++i)
@@ -237,7 +247,7 @@ public:
     return *this;
   }
 
-  Tensor<T> &Mul_(Tensor<T> const &o)
+  Tensor<T> &Mul_inplace(Tensor<T> const &o)
   {
     assert(NumberOfElements() == o.NumberOfElements());
     for (size_t i(0); i < NumberOfElements(); ++i)
@@ -257,15 +267,33 @@ public:
     return sum;
   }
 
-private:
-  size_t DimensionSizeImplementation(size_t dim) const
+  Tensor<T> Transpose() const
   {
-    if (dim == shape_.size() - 1)
-    {
-      return strides_[dim];
-    }
-    return (DimensionSizeImplementation(dim + 1) * shape_[dim + 1] + padding_[dim + 1]) *
-           strides_[dim];
+    assert(shape_.size() == 2);
+    Tensor<T> ret(std::vector<size_t>({shape_[1], shape_[0]}), /* shape */
+                  std::vector<size_t>(),                       /* stride */
+                  std::vector<size_t>(),                       /* padding */
+                  storage_, offset_);
+    ret.strides_ = std::vector<size_t>(strides_.rbegin(), strides_.rend());
+    ret.padding_ = std::vector<size_t>(padding_.rbegin(), padding_.rend());
+    return ret;
+  }
+
+  std::string ToString() const
+  {
+    std::stringstream ss;
+    if (shape_.size() == 2)
+      {
+	for (size_t i(0) ; i < shape_[0] ; ++i)
+	  {
+	    for (size_t j(0) ; j < shape_[1] ; ++j)
+	      {
+		ss << Get({i, j}) << "\t";
+	      }
+	    ss << "\n";
+	  }
+      }
+    return ss.str();
   }
 
 private:

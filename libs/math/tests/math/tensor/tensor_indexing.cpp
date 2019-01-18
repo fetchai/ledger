@@ -341,9 +341,9 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_slicing_test)
       t.Set({i, j}, TypeParam(i));
     }
   }
-  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
-  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
-  fetch::math::Tensor<TypeParam> t2 = t.slice(2);
+  fetch::math::Tensor<TypeParam> t0 = t.Slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.Slice(1);
+  fetch::math::Tensor<TypeParam> t2 = t.Slice(2);
 
   EXPECT_EQ(t0.shape(), std::vector<size_t>({5}));
   EXPECT_EQ(t1.shape(), std::vector<size_t>({5}));
@@ -390,9 +390,9 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_with_stride_slicing_test)
       t.Set({i, j}, TypeParam(i));
     }
   }
-  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
-  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
-  fetch::math::Tensor<TypeParam> t2 = t.slice(2);
+  fetch::math::Tensor<TypeParam> t0 = t.Slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.Slice(1);
+  fetch::math::Tensor<TypeParam> t2 = t.Slice(2);
 
   EXPECT_EQ(t0.shape(), std::vector<size_t>({5}));
   EXPECT_EQ(t1.shape(), std::vector<size_t>({5}));
@@ -443,8 +443,8 @@ TYPED_TEST(TensorIndexingTest, three_dimentional_tensor_slicing_test)
     }
   }
 
-  fetch::math::Tensor<TypeParam> t0 = t.slice(0);
-  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  fetch::math::Tensor<TypeParam> t0 = t.Slice(0);
+  fetch::math::Tensor<TypeParam> t1 = t.Slice(1);
   EXPECT_EQ(t0.shape(), std::vector<size_t>({3, 5}));
   EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
 
@@ -475,9 +475,9 @@ TYPED_TEST(TensorIndexingTest, double_slicing_test)
     }
   }
 
-  fetch::math::Tensor<TypeParam> t1 = t.slice(1);
+  fetch::math::Tensor<TypeParam> t1 = t.Slice(1);
   EXPECT_EQ(t1.shape(), std::vector<size_t>({3, 5}));
-  fetch::math::Tensor<TypeParam> t1_1 = t1.slice(1);
+  fetch::math::Tensor<TypeParam> t1_1 = t1.Slice(1);
   EXPECT_EQ(t1_1.shape(), std::vector<size_t>({5}));
 
   EXPECT_EQ(t1_1.At(0), TypeParam(20));
