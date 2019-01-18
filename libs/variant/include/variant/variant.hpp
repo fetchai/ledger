@@ -188,6 +188,14 @@ public:
   bool operator!=(Variant const &other) const;
   /// @}
 
+  /// @name Iteration
+  /// @{
+  template <typename Function>
+  void IterateObject(Function const &function);
+  template <typename Function>
+  void IterateObject(Function const &function) const;
+  /// @}
+
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
 private:
@@ -837,6 +845,44 @@ inline void Variant::ResizeArray(std::size_t length)
 inline bool Variant::operator!=(Variant const &other) const
 {
   return !(*this == other);
+}
+
+template <typename Function>
+void Variant::IterateObject(Function const &function)
+{
+  if (IsObject())
+  {
+    for (auto &variant : object_)
+    {
+      if (!function(variant.first, *variant.second))
+      {
+        break;
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("Variant type mismatch, expected `object` type.");
+  }
+}
+
+template <typename Function>
+void Variant::IterateObject(Function const &function) const
+{
+  if (IsObject())
+  {
+    for (auto const &item : object_)
+    {
+      if (!function(item.first, *item.second))
+      {
+        break;
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("Variant type mismatch, expected `object` type.");
+  }
 }
 
 }  // namespace variant
