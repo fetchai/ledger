@@ -57,7 +57,7 @@ public:
   };
 
   TCPServer(uint16_t const &port, network_manager_type const &network_manager);
-  virtual ~TCPServer() override;
+  ~TCPServer() override;
 
   // Start will block until the server has started
   virtual void Start();

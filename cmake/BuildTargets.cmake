@@ -169,8 +169,8 @@ function(configure_vendor_targets)
 
   # Google Benchmark
   # Do not build the google benchmark library tests
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
   if(FETCH_ENABLE_BENCHMARKS)
+      set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
       add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
   endif(FETCH_ENABLE_BENCHMARKS)
 

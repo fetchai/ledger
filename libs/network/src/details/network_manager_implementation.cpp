@@ -83,7 +83,6 @@ void NetworkManagerImplementation::Stop()
 
 bool NetworkManagerImplementation::Running()
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
   return running_;
 }
 
