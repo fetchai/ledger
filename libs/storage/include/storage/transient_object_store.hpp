@@ -336,7 +336,7 @@ void TransientObjectStore<O>::AddToWriteQueue(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
-  static const std::size_t BATCH_SIZE = 100;
+  static const std::size_t               BATCH_SIZE = 100;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   std::vector<ResourceID> rids(BATCH_SIZE);
