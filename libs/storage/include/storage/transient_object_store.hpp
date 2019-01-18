@@ -40,7 +40,6 @@ class TransientObjectStore
 public:
   using Callback = std::function<void(Object const &)>;
   using Archive  = ObjectStore<Object>;
-  static constexpr std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   // Construction / Destruction
   TransientObjectStore();
@@ -181,6 +180,7 @@ std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32
 {
   std::vector<chain::TransactionSummary> ret;
   chain::TransactionSummary              summary;
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{20};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
@@ -337,6 +337,7 @@ template <typename O>
 void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t BATCH_SIZE = 100;
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
 
   std::vector<ResourceID> rids(BATCH_SIZE);
   std::size_t             extracted_count = 0;
