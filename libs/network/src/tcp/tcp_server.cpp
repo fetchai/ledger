@@ -70,7 +70,6 @@ void TCPServer::Start()
 
   {
     auto closure = [this, closure_alive] {
-
       volatile std::shared_ptr<int> closure_alive_copy = closure_alive;
 
       std::shared_ptr<acceptor_type> acceptor;
@@ -109,12 +108,14 @@ void TCPServer::Start()
     }
 
     network_manager_.Post(closure);
-  } // end of scope for closure which would hold closure_alive.use_count() at 2
+  }  // end of scope for closure which would hold closure_alive.use_count() at 2
 
   // Guarantee posted closure has either executed or will never execute
   while (closure_alive.use_count() != 1)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "TCP server is waiting to open. Use count: ", closure_alive.use_count(), " NM running: ", network_manager_.Running());
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "TCP server is waiting to open. Use count: ", closure_alive.use_count(),
+                   " NM running: ", network_manager_.Running());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }

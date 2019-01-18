@@ -45,7 +45,7 @@ class Server : public TCPServer
 public:
   Server(uint16_t port, NetworkManager nmanager)
     : TCPServer(port, nmanager)
-  {} // note for debug purposes, server does not Start() automatically
+  {}  // note for debug purposes, server does not Start() automatically
 
   ~Server() override = default;
 
@@ -91,12 +91,12 @@ void waitUntilConnected(std::string const &host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    if(attempts++ % 100 == 0)
+    if (attempts++ % 100 == 0)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for client to connect to: ", port);
     }
 
-    if(attempts == 500)
+    if (attempts == 500)
     {
       throw std::runtime_error("Failed to connect test client to port");
     }
@@ -114,10 +114,13 @@ void TestCase0(std::string /*host*/, uint16_t port)
     NetworkManager nmanager(N);
 
     // Delay network manager starting arbitrarily
-    auto cb = [&] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); nmanager.Start(); };
-    auto dummy = std::async(std::launch::async, cb); // dummy is important to force async execution
+    auto cb = [&] {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      nmanager.Start();
+    };
+    auto dummy = std::async(std::launch::async, cb);  // dummy is important to force async execution
 
-    Server         server(port, nmanager);
+    Server server(port, nmanager);
     server.Start();
   }
 
@@ -162,8 +165,8 @@ void TestCase2(std::string host, uint16_t port)
 
     Server server(port, nmanager);
 
-    auto cb = [&] { server.Start(); };
-    auto dummy = std::async(std::launch::async, cb); // dummy is important to force async execution
+    auto cb    = [&] { server.Start(); };
+    auto dummy = std::async(std::launch::async, cb);  // dummy is important to force async execution
 
     waitUntilConnected(host, port);
 
