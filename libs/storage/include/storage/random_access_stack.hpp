@@ -493,11 +493,11 @@ public:
   }
 
 private:
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
-  mutable std::shared_ptr<STREAM>   file_handle_ = nullptr;
-  std::string        filename_    = "";
-  Header             header_;
+  event_handler_type              on_file_loaded_;
+  event_handler_type              on_before_flush_;
+  mutable std::shared_ptr<STREAM> file_handle_ = nullptr;
+  std::string                     filename_    = "";
+  Header                          header_;
 
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one

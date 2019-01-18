@@ -82,7 +82,7 @@ TEST(random_access_stack, mocked_test_is_open)
 TEST(random_access_stack, mocked_test_get_set)
 {
   std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
-  MockStream dummy;
+  MockStream                  dummy;
   EXPECT_CALL(*mocked, is_open()).Times(1).WillRepeatedly(testing::Return(true));
   EXPECT_CALL(*mocked, close()).Times(1);
   EXPECT_CALL(*mocked, seekg(testing::_)).Times(1).WillRepeatedly(testing::ReturnRef(dummy));
@@ -106,7 +106,7 @@ TEST(random_access_stack, mocked_test_get_set)
 TEST(random_access_stack, mocked_test_load)
 {
   std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
-  MockStream dummy;
+  MockStream                  dummy;
   EXPECT_CALL(*mocked, is_open())
       .Times(2)
       .WillOnce(testing::Return(false))
