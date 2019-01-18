@@ -222,7 +222,10 @@ public:
                      std::make_move_iterator(txs.end()));
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Found: ", new_txs.size(), " newly seen TXs from lanes");
+    if(new_txs.size() > 0)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Found: ", new_txs.size(), " newly seen TXs from lanes");
+    }
     return new_txs;
   }
 

@@ -180,13 +180,17 @@ std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32
 {
   std::vector<chain::TransactionSummary> ret;
   chain::TransactionSummary              summary;
-  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{20};
+  static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
   {
     if (most_recent_seen_.Pop(summary, MAX_WAIT_INTERVAL))
     {
       ret.push_back(summary);
+    }
+    else
+    {
+      break;
     }
   }
 
