@@ -48,7 +48,7 @@ public:
   {
     Start();
   }
-  ~Server() = default;
+  ~Server() override = default;
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
