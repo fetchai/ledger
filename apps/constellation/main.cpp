@@ -381,7 +381,10 @@ struct CommandLineArguments
     s << "mining....................: " << args.mine << '\n';
     s << "tx processor threads......: " << args.processor_threads << '\n';
     s << "shard verification threads: " << args.verification_threads << '\n';
-    s << "block interval............: " << args.block_interval << "ms" << std::endl;
+    s << "block interval............: " << args.block_interval << "ms" << '\n';
+    s << "max peers.................: " << args.max_peers << '\n';
+    s << "peers update cycle........: " << args.peers_update_cycle_ms << "ms\n";
+
     // generate the peer listing
     s << "peers.....................: ";
     for (auto const &peer : args.peers)

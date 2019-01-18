@@ -246,11 +246,19 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, T> Get(std::vector<S> const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, T> &Get(std::vector<S> const &indices)
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
   }
+
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> const &Get(std::vector<S> const &indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->operator[](ComputeColIndex(indices));
+  }
+
   /**
    * extract data from NDArray based on the NDArrayView
    * @param array_view

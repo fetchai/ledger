@@ -142,7 +142,7 @@ public:
     }
   }
 
-  ~ShapelessArray()
+  virtual ~ShapelessArray()
   {}
 
   /* Set all elements to zero.
@@ -412,8 +412,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &At(S const &i) const
+  virtual Type const &At(size_t const &i) const
   {
     return data_[i];
   }
@@ -421,8 +420,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &At(S const &i)
+  virtual Type &At(size_t const &i)
   {
     return data_[i];
   }
@@ -431,7 +429,8 @@ public:
   typename std::enable_if<std::is_integral<S>::value, Type>::type const &Set(S const &   i,
                                                                              Type const &t)
   {
-    return data_[i] = t;
+    At(i) = t;
+    return t;
   }
 
   /**
@@ -581,7 +580,7 @@ public:
       {
         continue;
       }
-      double vb = static_cast<double>(other[i]);
+      double vb = static_cast<double>(other.At(i));
       if (ignoreNaN && std::isnan(vb))
       {
         continue;
@@ -726,9 +725,11 @@ public:
     this->size_ = x.size_;
   }
 
-  void Set(std::size_t const &idx, Type const &val)
+  Type const &Set(std::size_t const &idx, Type const &val)
   {
-    data_[idx] = val;
+    Type &e = At(idx);
+    e       = val;
+    return e;
   }
 
   template <typename S>
