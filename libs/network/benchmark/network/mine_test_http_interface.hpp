@@ -132,7 +132,6 @@ public:
     {
 
       variant::Variant temp = variant::Variant::Object();
-      temp["minerNumber"]   = i.body().miner_number;
       temp["blockNumber"]   = i.body().block_number;
       temp["hashcurrent"]   = ToHex(i.hash());
       temp["hashprev"]      = ToHex(i.body().previous_hash);
