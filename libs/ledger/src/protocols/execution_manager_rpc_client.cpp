@@ -132,11 +132,11 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
   bg_work_.Add(worker);
 }
 
-ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block const &block)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::EXECUTE, block);
-  return result->As<Status>();
+  return result->As<ScheduleStatus>();
 }
 
 ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
@@ -146,18 +146,11 @@ ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlo
   return result->As<BlockHash>();
 }
 
-bool ExecutionManagerRpcClient::IsActive()
+ExecutionManagerRpcClient::State ExecutionManagerRpcClient::GetState()
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
-                                             ExecutionManagerRpcProtocol::IS_ACTIVE);
-  return result->As<bool>();
-}
-
-bool ExecutionManagerRpcClient::IsIdle()
-{
-  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
-                                             ExecutionManagerRpcProtocol::IS_IDLE);
-  return result->As<bool>();
+                                             ExecutionManagerRpcProtocol::GET_STATE);
+  return result->As<State>();
 }
 
 bool ExecutionManagerRpcClient::Abort()

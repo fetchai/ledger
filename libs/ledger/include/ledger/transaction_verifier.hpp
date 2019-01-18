@@ -62,7 +62,7 @@ public:
   TransactionVerifier &operator=(TransactionVerifier &&) = delete;
 
 private:
-  static constexpr std::size_t QUEUE_SIZE         = 1u << 20u;  // 1,048,576
+  static constexpr std::size_t QUEUE_SIZE         = 1u << 16u;  // 65K
   static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
 
   using Flag            = std::atomic<bool>;
