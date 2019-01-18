@@ -165,12 +165,9 @@ void TestCase2(std::string host, uint16_t port)
     auto cb = [&] { server.Start(); };
     auto dummy = std::async(std::launch::async, cb); // dummy is important to force async execution
 
-    std::cerr << "here" << std::endl;
     waitUntilConnected(host, port);
-    std::cerr << "here2" << std::endl;
 
     Client client(host, port, nmanager);
-    std::cerr << "here2" << std::endl;
 
     while (!client.is_alive())
     {
@@ -289,19 +286,6 @@ TEST_P(TCPClientServerTest, basic_test)
 
   FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
 
-  for (std::size_t i = 0; i < 1; ++i)
-  {
-  TestCase2<1>(host, portNumber);
-  TestCase2<2>(host, portNumber);
-  TestCase2<3>(host, portNumber);
-  TestCase2<4>(host, portNumber);
-  TestCase2<10>(host, portNumber);
-  TestCase2<10>(host, portNumber);
-  TestCase2<10>(host, portNumber);
-  TestCase2<10>(host, portNumber);
-  }
-
-  /*
   for (std::size_t i = 0; i < iterations; ++i)
   {
     TestCase0<1>(host, portNumber);
@@ -316,7 +300,6 @@ TEST_P(TCPClientServerTest, basic_test)
     TestCase3<10>(host, portNumber);
     TestCase4<10>(host, portNumber);
   }
-  */
 
   SUCCEED() << "Success." << std::endl;
 }
