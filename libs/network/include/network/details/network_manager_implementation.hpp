@@ -39,8 +39,9 @@ class NetworkManagerImplementation
 public:
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
-  NetworkManagerImplementation(std::size_t threads = 1), running_{false}
+  NetworkManagerImplementation(std::size_t threads = 1)
     : number_of_threads_(threads)
+    , running_{false}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
