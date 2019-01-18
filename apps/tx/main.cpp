@@ -52,7 +52,9 @@ template <typename STREAM>
 void PrintSeparator(STREAM &stream, std::string const &desc = std::string{})
 {
   static std::string const line_separ(
-      "================================================================================");
+      "========================================"
+      "======================================="
+      "=");
   stream << line_separ << std::endl;
   if (!desc.empty())
   {
@@ -83,17 +85,22 @@ struct CommandLineArguments
 
     fetch::commandline::Params parameters;
     parameters.add(args.input_json_tx_filename, "f",
-                   "file name for json input TX data. The json string can be provided directly as "
+                   "file name for json input TX data. The json string can be provided "
+                   "directly as "
                    "value of this argument on command-line instead of filename.",
                    std::string{});
-    parameters.add(
-        args.priv_keys_filename, "p",
-        "file name for private keys in json format {\"private_keys\":[\"base64_priv_key_0\"]}. Two "
-        "private keys will be generated *IF* this option is *NOT* provided. The json string can be "
-        "provided directly as value of this argument on command-line instead of filename. IF it is "
-        "desired to disable signing (just generate Tx in wire format with NO signatures), then "
-        "provide json {\"private_keys\":[]} with NO private keys as value for this parameter.",
-        std::string{});
+    parameters.add(args.priv_keys_filename, "p",
+                   "file name for private keys in json format "
+                   "{\"private_keys\":[\"base64_priv_key_0\"]}. Two "
+                   "private keys will be generated *IF* this option is *NOT* "
+                   "provided. The json string can be "
+                   "provided directly as value of this argument on "
+                   "command-line instead of filename. IF it is "
+                   "desired to disable signing (just generate Tx in wire "
+                   "format with NO signatures), then "
+                   "provide json {\"private_keys\":[]} with NO private keys as "
+                   "value for this parameter.",
+                   std::string{});
     parameters.add(args.is_verbose, "v", "enables verbose output printing out details", false);
 
     // parse the args
@@ -179,7 +186,8 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant
   }
   else
   {
-    std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type."
+    std::cerr << "WARNING: the `resources` attribute has been ignored due to "
+                 "its unexpected type."
               << std::endl;
   }
 
@@ -241,11 +249,13 @@ void HandleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
     }
     else
     {
-      std::cerr << "FAILURE: Input json structure does not contain neither `data` nor `metadata` "
+      std::cerr << "FAILURE: Input json structure does not contain neither "
+                   "`data` nor `metadata` "
                    "attributes."
                 << std::endl;
       throw std::runtime_error(
-          "FAILURE: Input json structure does not contain neither `data` nor `metadata` "
+          "FAILURE: Input json structure does not contain "
+          "neither `data` nor `metadata` "
           "attributes.");
     }
   }
@@ -290,7 +300,8 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
     }
     else
     {
-      std::cerr << "WARNING: the `resources` attribute has been ignored due to its unexpected type."
+      std::cerr << "WARNING: the `resources` attribute has been ignored due to "
+                   "its unexpected type."
                 << std::endl;
     }
   }
@@ -306,48 +317,68 @@ PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
  *        used very well for production purposes.
  *
  * @details The app can be used in different modes:
- *    1. To **generate and sign**  random transaction (see bellow the command-line). It creates
- * random Tx data, 2 private keys, signs the transaction with them, and prints that signed
+ *    1. To **generate and sign**  random transaction (see bellow the
+ * command-line). It creates
+ * random Tx data, 2 private keys, signs the transaction with them, and prints
+ * that signed
  * transaction in wire format to stdout:
  *      @code{.sh}
  *      tx-generator
  *      @endcode
  *
- *    2. To **SIGN** transaction data (`contract_name`, `fee`, `resources`, `data`). Where the
- * essential Tx data are provided in `json` format as value to command-line parameter '-f', either
- * as file-name of json file or directly as json string(if param value starts with `{` character).
- * The private keys (non mandatory) can be provided in `json` format as value to command-line
+ *    2. To **SIGN** transaction data (`contract_name`, `fee`, `resources`,
+ * `data`). Where the
+ * essential Tx data are provided in `json` format as value to command-line
+ * parameter '-f', either
+ * as file-name of json file or directly as json string(if param value starts
+ * with `{` character).
+ * The private keys (non mandatory) can be provided in `json` format as value to
+ * command-line
  * parameter
- * '-p', either as file-name of json file or directly as json string(if param value starts with `{`
- * character). If `-p` parameter is **not** provided, 2 private keys are generated automatically and
- * used for signing. If desired, **signing can be disabled** by providing empty list of private
+ * '-p', either as file-name of json file or directly as json string(if param
+ * value starts with `{`
+ * character). If `-p` parameter is **not** provided, 2 private keys are
+ * generated automatically and
+ * used for signing. If desired, **signing can be disabled** by providing empty
+ * list of private
  * keys. Bellow are examples of usage:
  *      @code{.sh}
- *      #1. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs
- * it #    using priv. keys provided in `private_keys.json` file: tx-generator -f tx_input_data.json
+ *      #1. creates wire tx from essential tx data provided in
+ * `tx_input_data.json` file and signs
+ * it #    using priv. keys provided in `private_keys.json` file: tx-generator
+ * -f tx_input_data.json
  * -p private_keys.json
  *
- *      #2. creates wire tx from essential tx data provided as json string on command-line,
- *      #    and signs it using priv. keys provided as json string at command-line:
+ *      #2. creates wire tx from essential tx data provided as json string on
+ * command-line,
+ *      #    and signs it using priv. keys provided as json string at
+ * command-line:
  *      tx-generator -f tx_input_data.json -p
  * '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
  *
- *      #3. creates wire tx from essential tx data provided as json string on command-line,
- *      #    and signs it using priv. keys provided as json string at command-line:
+ *      #3. creates wire tx from essential tx data provided as json string on
+ * command-line,
+ *      #    and signs it using priv. keys provided as json string at
+ * command-line:
  *      tx-generator -f '{"metadata": { "fee":1, "data":"YWJjZA==",
  * "resources":["aGVsbG8AACBraXR0eSwgAAAAaG93IGFyZSAAAAB5b3UwAAo=",
  * "R29vZAAAIGJ5ZSAAa2l0dHkAAAAhCg=="], "contract_name": "fetch.wealth" }}' -p
  * '{"private_keys":["7fDTiiCsCKG43Z8YlNelveKGwir6EpCHUhrcHDbFBgg="]}'
  *
- *      #4. creates wire tx from essential tx data provided in `tx_input_data.json` file and signs
- * it #    using 2 internally generated priv. keys: tx generator -f tx_input_data.json
+ *      #4. creates wire tx from essential tx data provided in
+ * `tx_input_data.json` file and signs
+ * it #    using 2 internally generated priv. keys: tx generator -f
+ * tx_input_data.json
  *
- *      #5. creates UNSIGNED wire tx from essential tx data provided as json string on command-line
+ *      #5. creates UNSIGNED wire tx from essential tx data provided as json
+ * string on command-line
  * : tx-generator -f tx_input_data.json -p '{"private_keys":[]}'
  *      @endcode
  *
- *    3. To **VERIFY** provided transaction in wire transaction (the input transaction json content
- * must be signed WIRE  Transaction, what means it MUST contain `data` element on ROOT level of the
+ *    3. To **VERIFY** provided transaction in wire transaction (the input
+ * transaction json content
+ * must be signed WIRE  Transaction, what means it MUST contain `data` element
+ * on ROOT level of the
  * json document):
  *      @code{.sh}
  *    tx-generator -f signed_wire_tx.json

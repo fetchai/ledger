@@ -22,10 +22,8 @@
 namespace fetch {
 namespace vm {
 
-void Generator::Generate(BlockNodePtr const &  root,
-                         TypeInfoTable const & type_info_table,
-                         std::string const &   name,
-                         Script &              script)
+void Generator::Generate(BlockNodePtr const &root, TypeInfoTable const &type_info_table,
+                         std::string const &name, Script &script)
 {
   script_ = Script(name, type_info_table);
   scopes_.clear();
@@ -43,9 +41,9 @@ void Generator::Generate(BlockNodePtr const &  root,
   scopes_.clear();
 }
 
-void Generator::CreateFunctions(BlockNodePtr const & root)
+void Generator::CreateFunctions(BlockNodePtr const &root)
 {
-  for (NodePtr const & child : root->block_children)
+  for (NodePtr const &child : root->block_children)
   {
     switch (child->kind)
     {
@@ -55,12 +53,12 @@ void Generator::CreateFunctions(BlockNodePtr const & root)
       ExpressionNodePtr identifier_node =
           ConvertToExpressionNodePtr(function_definition_node->children[0]);
 
-      FunctionPtr         f              = identifier_node->function;
-      std::string const & name           = f->name;
-      int const           num_parameters = (int)f->parameter_variables.size();
-      TypeId const        return_type_id = f->return_type->id;
-      Script::Function function(name, num_parameters, return_type_id);
-      for (VariablePtr const & v : f->parameter_variables)
+      FunctionPtr        f              = identifier_node->function;
+      std::string const &name           = f->name;
+      int const          num_parameters = (int)f->parameter_variables.size();
+      TypeId const       return_type_id = f->return_type->id;
+      Script::Function   function(name, num_parameters, return_type_id);
+      for (VariablePtr const &v : f->parameter_variables)
       {
         v->index = function.AddVariable(v->name, v->type->id);
       }
@@ -71,13 +69,13 @@ void Generator::CreateFunctions(BlockNodePtr const & root)
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 }
 
-void Generator::HandleBlock(BlockNodePtr const & block)
+void Generator::HandleBlock(BlockNodePtr const &block)
 {
-  for (NodePtr const & child : block->block_children)
+  for (NodePtr const &child : block->block_children)
   {
     switch (child->kind)
     {
@@ -150,7 +148,7 @@ void Generator::HandleBlock(BlockNodePtr const & block)
   }
 }
 
-void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const & node)
+void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   FunctionPtr       f               = identifier_node->function;
@@ -172,7 +170,7 @@ void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const & node)
   function_ = nullptr;
 }
 
-void Generator::HandleWhileStatement(BlockNodePtr const & node)
+void Generator::HandleWhileStatement(BlockNodePtr const &node)
 {
   Index const       continue_pc = (Index)function_->instructions.size();
   ExpressionNodePtr condition   = ConvertToExpressionNodePtr(node->children[0]);
@@ -202,14 +200,14 @@ void Generator::HandleWhileStatement(BlockNodePtr const & node)
 
   Index const endwhile_pc              = (Index)function_->instructions.size();
   function_->instructions[jf_pc].index = endwhile_pc;
-  Loop & loop                          = loops_.back();
+  Loop &loop                           = loops_.back();
 
-  for (auto const & jump_pc : loop.continue_pcs)
+  for (auto const &jump_pc : loop.continue_pcs)
   {
     function_->instructions[jump_pc].index = continue_pc;
   }
 
-  for (auto const & jump_pc : loop.break_pcs)
+  for (auto const &jump_pc : loop.break_pcs)
   {
     function_->instructions[jump_pc].index = endwhile_pc;
   }
@@ -217,7 +215,7 @@ void Generator::HandleWhileStatement(BlockNodePtr const & node)
   loops_.pop_back();
 }
 
-void Generator::HandleForStatement(BlockNodePtr const & node)
+void Generator::HandleForStatement(BlockNodePtr const &node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
@@ -281,7 +279,7 @@ void Generator::HandleForStatement(BlockNodePtr const & node)
   loops_.pop_back();
 }
 
-void Generator::HandleIfStatement(NodePtr const & node)
+void Generator::HandleIfStatement(NodePtr const &node)
 {
   Index              jf_pc = Index(-1);
   std::vector<Index> jump_pcs;
@@ -349,7 +347,7 @@ void Generator::HandleIfStatement(NodePtr const & node)
   }
 }
 
-void Generator::HandleVarStatement(NodePtr const & node)
+void Generator::HandleVarStatement(NodePtr const &node)
 {
   ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
   VariablePtr       v               = identifier_node->variable;
@@ -359,8 +357,8 @@ void Generator::HandleVarStatement(NodePtr const & node)
 
   if (is_object)
   {
-    scope_number  = static_cast<int>(scopes_.size()) - 1;
-    Scope & scope = scopes_[std::size_t(scope_number)];
+    scope_number = static_cast<int>(scopes_.size()) - 1;
+    Scope &scope = scopes_[std::size_t(scope_number)];
     scope.objects.push_back(v->index);
   }
   else
@@ -398,7 +396,7 @@ void Generator::HandleVarStatement(NodePtr const & node)
   }
 }
 
-void Generator::HandleReturnStatement(NodePtr const & node)
+void Generator::HandleReturnStatement(NodePtr const &node)
 {
   if (node->children.size() == 0)
   {
@@ -419,9 +417,9 @@ void Generator::HandleReturnStatement(NodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleBreakStatement(NodePtr const & node)
+void Generator::HandleBreakStatement(NodePtr const &node)
 {
-  Loop & loop = loops_.back();
+  Loop &loop = loops_.back();
 
   Script::Instruction instruction(Opcodes::Break, node->token.line);
   instruction.index    = 0;  // pc placeholder
@@ -430,25 +428,20 @@ void Generator::HandleBreakStatement(NodePtr const & node)
   loop.break_pcs.push_back(break_pc);
 }
 
-void Generator::HandleContinueStatement(NodePtr const & node)
+void Generator::HandleContinueStatement(NodePtr const &node)
 {
   Loop &              loop = loops_.back();
   Script::Instruction instruction(Opcodes::Continue, node->token.line);
-  instruction.index    = 0;  // pc placeholder
-  instruction.data.i32 = loop.scope_number;
+  instruction.index       = 0;  // pc placeholder
+  instruction.data.i32    = loop.scope_number;
   Index const continue_pc = function_->AddInstruction(instruction);
   loop.continue_pcs.push_back(continue_pc);
 }
 
-Opcode Generator::GetArithmeticAssignmentOpcode(bool   assigning_to_variable,
-                                                bool   lhs_is_primitive,
-                                                bool   rhs_is_primitive,
-                                                Opcode opcode1,
-                                                Opcode opcode2,
-                                                Opcode opcode3,
-                                                Opcode opcode4,
-                                                Opcode opcode5,
-                                                Opcode opcode6)
+Opcode Generator::GetArithmeticAssignmentOpcode(bool assigning_to_variable, bool lhs_is_primitive,
+                                                bool rhs_is_primitive, Opcode opcode1,
+                                                Opcode opcode2, Opcode opcode3, Opcode opcode4,
+                                                Opcode opcode5, Opcode opcode6)
 {
   Opcode opcode;
   if (assigning_to_variable)
@@ -466,7 +459,7 @@ Opcode Generator::GetArithmeticAssignmentOpcode(bool   assigning_to_variable,
       opcode = opcode3;
     }
   }
-  else // assigning to element
+  else  // assigning to element
   {
     if (lhs_is_primitive)
     {
@@ -484,13 +477,13 @@ Opcode Generator::GetArithmeticAssignmentOpcode(bool   assigning_to_variable,
   return opcode;
 }
 
-void Generator::HandleAssignmentStatement(ExpressionNodePtr const & node)
+void Generator::HandleAssignmentStatement(ExpressionNodePtr const &node)
 {
-  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
-  bool const assigning_to_variable = lhs->category == ExpressionNode::Category::Variable;
-  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
-  Opcode opcode = Opcodes::Unknown;
+  ExpressionNodePtr lhs                   = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs                   = ConvertToExpressionNodePtr(node->children[1]);
+  bool const        assigning_to_variable = lhs->category == ExpressionNode::Category::Variable;
+  // bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
+  Opcode     opcode           = Opcodes::Unknown;
   bool const lhs_is_primitive = lhs->type->category == TypeCategory::Primitive;
   bool const rhs_is_primitive = rhs->type->category == TypeCategory::Primitive;
 
@@ -502,7 +495,7 @@ void Generator::HandleAssignmentStatement(ExpressionNodePtr const & node)
     {
       opcode = Opcodes::PopToVariable;
     }
-    else // assigning_to_element
+    else  // assigning_to_element
     {
       opcode = Opcodes::PopToElement;
     }
@@ -510,70 +503,53 @@ void Generator::HandleAssignmentStatement(ExpressionNodePtr const & node)
   }
   case Node::Kind::AddAssignOp:
   {
-    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
-                                           lhs_is_primitive,
-                                           rhs_is_primitive,
-                                           Opcodes::VariablePrimitiveAddAssign,
-                                           Opcodes::VariableRightAddAssign,
-                                           Opcodes::VariableObjectAddAssign,
-                                           Opcodes::ElementPrimitiveAddAssign,
-                                           Opcodes::ElementRightAddAssign,
-                                           Opcodes::ElementObjectAddAssign);
+    opcode = GetArithmeticAssignmentOpcode(
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
+        Opcodes::VariablePrimitiveAddAssign, Opcodes::VariableRightAddAssign,
+        Opcodes::VariableObjectAddAssign, Opcodes::ElementPrimitiveAddAssign,
+        Opcodes::ElementRightAddAssign, Opcodes::ElementObjectAddAssign);
     break;
   }
   case Node::Kind::SubtractAssignOp:
   {
-    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
-                                           lhs_is_primitive,
-                                           rhs_is_primitive,
-                                           Opcodes::VariablePrimitiveSubtractAssign,
-                                           Opcodes::VariableRightSubtractAssign,
-                                           Opcodes::VariableObjectSubtractAssign,
-                                           Opcodes::ElementPrimitiveSubtractAssign,
-                                           Opcodes::ElementRightSubtractAssign,
-                                           Opcodes::ElementObjectSubtractAssign);
+    opcode = GetArithmeticAssignmentOpcode(
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
+        Opcodes::VariablePrimitiveSubtractAssign, Opcodes::VariableRightSubtractAssign,
+        Opcodes::VariableObjectSubtractAssign, Opcodes::ElementPrimitiveSubtractAssign,
+        Opcodes::ElementRightSubtractAssign, Opcodes::ElementObjectSubtractAssign);
     break;
   }
   case Node::Kind::MultiplyAssignOp:
   {
-    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
-                                           lhs_is_primitive,
-                                           rhs_is_primitive,
-                                           Opcodes::VariablePrimitiveMultiplyAssign,
-                                           Opcodes::VariableRightMultiplyAssign,
-                                           Opcodes::VariableObjectMultiplyAssign,
-                                           Opcodes::ElementPrimitiveMultiplyAssign,
-                                           Opcodes::ElementRightMultiplyAssign,
-                                           Opcodes::ElementObjectMultiplyAssign);
+    opcode = GetArithmeticAssignmentOpcode(
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
+        Opcodes::VariablePrimitiveMultiplyAssign, Opcodes::VariableRightMultiplyAssign,
+        Opcodes::VariableObjectMultiplyAssign, Opcodes::ElementPrimitiveMultiplyAssign,
+        Opcodes::ElementRightMultiplyAssign, Opcodes::ElementObjectMultiplyAssign);
     break;
   }
   case Node::Kind::DivideAssignOp:
   {
-    opcode = GetArithmeticAssignmentOpcode(assigning_to_variable,
-                                           lhs_is_primitive,
-                                           rhs_is_primitive,
-                                           Opcodes::VariablePrimitiveDivideAssign,
-                                           Opcodes::VariableRightDivideAssign,
-                                           Opcodes::VariableObjectDivideAssign,
-                                           Opcodes::ElementPrimitiveDivideAssign,
-                                           Opcodes::ElementRightDivideAssign,
-                                           Opcodes::ElementObjectDivideAssign);
+    opcode = GetArithmeticAssignmentOpcode(
+        assigning_to_variable, lhs_is_primitive, rhs_is_primitive,
+        Opcodes::VariablePrimitiveDivideAssign, Opcodes::VariableRightDivideAssign,
+        Opcodes::VariableObjectDivideAssign, Opcodes::ElementPrimitiveDivideAssign,
+        Opcodes::ElementRightDivideAssign, Opcodes::ElementObjectDivideAssign);
     break;
   }
   default:
   {
     break;
   }
-  } // switch
+  }  // switch
   HandleAssignment(lhs, opcode, rhs);
 }
 
-void Generator::HandleAssignment(ExpressionNodePtr const & lhs,
-                                 Opcode                    opcode,
-                                 ExpressionNodePtr const & rhs)
+void Generator::HandleAssignment(ExpressionNodePtr const &lhs, Opcode opcode,
+                                 ExpressionNodePtr const &rhs)
 {
   bool const assigning_to_variable = lhs->category == ExpressionNode::Category::Variable;
-  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
+  // bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
   if (assigning_to_variable)
   {
     VariablePtr v = lhs->variable;
@@ -597,14 +573,14 @@ void Generator::HandleAssignment(ExpressionNodePtr const & lhs,
       function_->AddInstruction(instruction);
     }
   }
-  else // assigning to element
+  else  // assigning to element
   {
     if (rhs)
     {
-       HandleExpression(rhs);
+      HandleExpression(rhs);
     }
-    size_t const num_indices = lhs->children.size() - 1;
-    TypeId element_type_id = lhs->type->id;
+    size_t const num_indices     = lhs->children.size() - 1;
+    TypeId       element_type_id = lhs->type->id;
     // Arrange for the indices to be pushed on to the stack
     for (size_t i = 1; i <= num_indices; ++i)
     {
@@ -619,7 +595,7 @@ void Generator::HandleAssignment(ExpressionNodePtr const & lhs,
   }
 }
 
-void Generator::HandleExpression(ExpressionNodePtr const & node)
+void Generator::HandleExpression(ExpressionNodePtr const &node)
 {
   switch (node->kind)
   {
@@ -732,10 +708,10 @@ void Generator::HandleExpression(ExpressionNodePtr const & node)
   {
     break;
   }
-  } // switch
+  }  // switch
 }
 
-void Generator::HandleIdentifier(ExpressionNodePtr const & node)
+void Generator::HandleIdentifier(ExpressionNodePtr const &node)
 {
   VariablePtr         v = node->variable;
   Script::Instruction instruction(Opcodes::PushVariable, node->token.line);
@@ -744,7 +720,7 @@ void Generator::HandleIdentifier(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger32(ExpressionNodePtr const & node)
+void Generator::HandleInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Int32;
@@ -752,7 +728,7 @@ void Generator::HandleInteger32(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger32(ExpressionNodePtr const & node)
+void Generator::HandleUnsignedInteger32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id   = TypeIds::UInt32;
@@ -760,7 +736,7 @@ void Generator::HandleUnsignedInteger32(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleInteger64(ExpressionNodePtr const & node)
+void Generator::HandleInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Int64;
@@ -768,7 +744,7 @@ void Generator::HandleInteger64(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnsignedInteger64(ExpressionNodePtr const & node)
+void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id   = TypeIds::UInt64;
@@ -776,7 +752,7 @@ void Generator::HandleUnsignedInteger64(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const & node)
+void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float32;
@@ -784,7 +760,7 @@ void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const & node)
+void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float64;
@@ -792,7 +768,7 @@ void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleString(ExpressionNodePtr const & node)
+void Generator::HandleString(ExpressionNodePtr const &node)
 {
   std::string s = node->token.text.substr(1, node->token.text.size() - 2);
   Index       index;
@@ -814,7 +790,7 @@ void Generator::HandleString(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleTrue(ExpressionNodePtr const & node)
+void Generator::HandleTrue(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Bool;
@@ -822,7 +798,7 @@ void Generator::HandleTrue(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleFalse(ExpressionNodePtr const & node)
+void Generator::HandleFalse(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Bool;
@@ -830,7 +806,7 @@ void Generator::HandleFalse(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleNull(ExpressionNodePtr const & node)
+void Generator::HandleNull(ExpressionNodePtr const &node)
 {
   if (node->type->id != TypeIds::Null)
   {
@@ -848,11 +824,11 @@ void Generator::HandleNull(ExpressionNodePtr const & node)
   }
 }
 
-void Generator::HandleIncDecOp(ExpressionNodePtr const & node)
+void Generator::HandleIncDecOp(ExpressionNodePtr const &node)
 {
-  ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
-  bool const assigning_to_variable = operand->category == ExpressionNode::Category::Variable;
-  //bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
+  ExpressionNodePtr operand               = ConvertToExpressionNodePtr(node->children[0]);
+  bool const        assigning_to_variable = operand->category == ExpressionNode::Category::Variable;
+  // bool const assigning_to_element = lhs->kind == Node::Kind::IndexOp;
   Opcode opcode = Opcodes::Unknown;
   if (node->kind == Node::Kind::PrefixIncOp)
   {
@@ -873,12 +849,8 @@ void Generator::HandleIncDecOp(ExpressionNodePtr const & node)
   HandleAssignment(operand, opcode, nullptr);
 }
 
-Opcode Generator::GetArithmeticOpcode(bool   lhs_is_primitive,
-                                      bool   rhs_is_primitive,
-                                      Opcode opcode1,
-                                      Opcode opcode2,
-                                      Opcode opcode3,
-                                      Opcode opcode4)
+Opcode Generator::GetArithmeticOpcode(bool lhs_is_primitive, bool rhs_is_primitive, Opcode opcode1,
+                                      Opcode opcode2, Opcode opcode3, Opcode opcode4)
 {
   Opcode opcode;
   if (lhs_is_primitive)
@@ -910,58 +882,44 @@ Opcode Generator::GetArithmeticOpcode(bool   lhs_is_primitive,
   return opcode;
 }
 
-void Generator::HandleBinaryOp(ExpressionNodePtr const & node)
+void Generator::HandleBinaryOp(ExpressionNodePtr const &node)
 {
-  ExpressionNodePtr lhs       = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr rhs       = ConvertToExpressionNodePtr(node->children[1]);
-  Opcode            opcode    = Opcodes::Unknown;
-  TypeId            type_id   = TypeIds::Unknown;
-  bool const lhs_is_primitive = lhs->type->category == TypeCategory::Primitive;
-  bool const rhs_is_primitive = rhs->type->category == TypeCategory::Primitive;
+  ExpressionNodePtr lhs              = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs              = ConvertToExpressionNodePtr(node->children[1]);
+  Opcode            opcode           = Opcodes::Unknown;
+  TypeId            type_id          = TypeIds::Unknown;
+  bool const        lhs_is_primitive = lhs->type->category == TypeCategory::Primitive;
+  bool const        rhs_is_primitive = rhs->type->category == TypeCategory::Primitive;
 
   switch (node->kind)
   {
   case Node::Kind::AddOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive,
-                                  rhs_is_primitive,
-                                  Opcodes::PrimitiveAdd,
-                                  Opcodes::LeftAdd,
-                                  Opcodes::RightAdd,
-                                  Opcodes::ObjectAdd);
+    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveAdd,
+                                 Opcodes::LeftAdd, Opcodes::RightAdd, Opcodes::ObjectAdd);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::SubtractOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive,
-                                  rhs_is_primitive,
-                                  Opcodes::PrimitiveSubtract,
-                                  Opcodes::LeftSubtract,
-                                  Opcodes::RightSubtract,
-                                  Opcodes::ObjectSubtract);
+    opcode =
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveSubtract,
+                            Opcodes::LeftSubtract, Opcodes::RightSubtract, Opcodes::ObjectSubtract);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::MultiplyOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive,
-                                  rhs_is_primitive,
-                                  Opcodes::PrimitiveMultiply,
-                                  Opcodes::LeftMultiply,
-                                  Opcodes::RightMultiply,
-                                  Opcodes::ObjectMultiply);
+    opcode =
+        GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveMultiply,
+                            Opcodes::LeftMultiply, Opcodes::RightMultiply, Opcodes::ObjectMultiply);
     type_id = node->type->id;
     break;
   }
   case Node::Kind::DivideOp:
   {
-    opcode  = GetArithmeticOpcode(lhs_is_primitive,
-                                  rhs_is_primitive,
-                                  Opcodes::PrimitiveDivide,
-                                  Opcodes::LeftDivide,
-                                  Opcodes::RightDivide,
-                                  Opcodes::ObjectDivide);
+    opcode  = GetArithmeticOpcode(lhs_is_primitive, rhs_is_primitive, Opcodes::PrimitiveDivide,
+                                 Opcodes::LeftDivide, Opcodes::RightDivide, Opcodes::ObjectDivide);
     type_id = node->type->id;
     break;
   }
@@ -1049,7 +1007,7 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const & node)
   {
     break;
   }
-  } // switch
+  }  // switch
 
   for (size_t i = 0; i < node->children.size(); ++i)
   {
@@ -1060,7 +1018,7 @@ void Generator::HandleBinaryOp(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleUnaryOp(ExpressionNodePtr const & node)
+void Generator::HandleUnaryOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand      = ConvertToExpressionNodePtr(node->children[0]);
   Opcode            opcode       = Opcodes::Unknown;
@@ -1086,7 +1044,7 @@ void Generator::HandleUnaryOp(ExpressionNodePtr const & node)
   {
     break;
   }
-  } // switch
+  }  // switch
 
   HandleExpression(operand);
   Script::Instruction instruction(opcode, node->token.line);
@@ -1094,7 +1052,7 @@ void Generator::HandleUnaryOp(ExpressionNodePtr const & node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleIndexOp(ExpressionNodePtr const & node)
+void Generator::HandleIndexOp(ExpressionNodePtr const &node)
 {
   size_t const num_indices = node->children.size() - 1;
   // Arrange for the indices to be pushed on to the stack
@@ -1106,12 +1064,12 @@ void Generator::HandleIndexOp(ExpressionNodePtr const & node)
   // Arrange for the container object to be pushed on to the stack
   HandleExpression(container_node);
   Script::Instruction instruction(Opcodes::PushElement, node->token.line);
-  TypeId element_type_id = node->type->id;
-  instruction.type_id = element_type_id;
+  TypeId              element_type_id = node->type->id;
+  instruction.type_id                 = element_type_id;
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDotOp(ExpressionNodePtr const & node)
+void Generator::HandleDotOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   if ((lhs->category == ExpressionNode::Category::Variable) ||
@@ -1123,10 +1081,10 @@ void Generator::HandleDotOp(ExpressionNodePtr const & node)
   }
 }
 
-void Generator::HandleInvokeOp(ExpressionNodePtr const & node)
+void Generator::HandleInvokeOp(ExpressionNodePtr const &node)
 {
-  ExpressionNodePtr lhs            = ConvertToExpressionNodePtr(node->children[0]);
-  FunctionPtr       f              = node->function;
+  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
+  FunctionPtr       f   = node->function;
   if (f->kind == Function::Kind::OpcodeInstanceFunction)
   {
     // Arrange for the instance object to be pushed on to the stack
@@ -1140,8 +1098,8 @@ void Generator::HandleInvokeOp(ExpressionNodePtr const & node)
   if (f->kind == Function::Kind::UserFreeFunction)
   {
     Script::Instruction instruction(Opcodes::InvokeUserFunction, node->token.line);
-    instruction.index    = f->index;
-    instruction.type_id  = node->type->id;
+    instruction.index   = f->index;
+    instruction.type_id = node->type->id;
     function_->AddInstruction(instruction);
   }
   else
@@ -1152,7 +1110,7 @@ void Generator::HandleInvokeOp(ExpressionNodePtr const & node)
     // Opcode-invoked instance function
     Script::Instruction instruction(f->opcode, node->token.line);
     // Store the type id of the return type
-    instruction.type_id  = node->type->id;
+    instruction.type_id = node->type->id;
     if (lhs->type)
     {
       // Store the type id of the invoking type
@@ -1192,5 +1150,5 @@ void Generator::ScopeLeave(BlockNodePtr block_node)
   scopes_.pop_back();
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

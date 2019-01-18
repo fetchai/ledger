@@ -52,7 +52,8 @@ void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
   }
   catch (std::runtime_error &e)
   {
-    // TODO(unknown): We need to think about how we handle failures of that class.
+    // TODO(unknown): We need to think about how we handle failures of that
+    // class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
     return;
   }
@@ -78,7 +79,8 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   }
   catch (std::runtime_error &e)
   {
-    // TODO(unknown): We need to think about how we handle failures of that class.
+    // TODO(unknown): We need to think about how we handle failures of that
+    // class.
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to add transaction to storage: ", e.what());
     return;
   }

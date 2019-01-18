@@ -109,7 +109,8 @@ uint64_t TransactionStoreSyncProtocol::ObjectCount()
 }
 
 /**
- * Allow peers to pull large sections of your subtree for synchronisation on entry to the network
+ * Allow peers to pull large sections of your subtree for synchronisation on
+ * entry to the network
  *
  * @param: client_handle Handle referencing client making the request
  *

@@ -56,15 +56,21 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
       .def("InlineAdd",
            (ShapelessArray<T> & (ShapelessArray<T>::*)(T const &)) & ShapelessArray<T>::InlineAdd)
       //      .def("Add", (ShapelessArray<T> &
-      //                   (ShapelessArray<T>::*)(ShapelessArray<T> const &, ShapelessArray<T> const
+      //                   (ShapelessArray<T>::*)(ShapelessArray<T> const &,
+      //                   ShapelessArray<T> const
       //                   &)) &
       //                      ShapelessArray<T>::Add)
-      //      .def("Add", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &,
-      //                                                              ShapelessArray<T> const &,
-      //                                                              memory::Range const &)) &
+      //      .def("Add", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const &,
+      //                                                              ShapelessArray<T>
+      //                                                              const &,
+      //                                                              memory::Range
+      //                                                              const &))
+      //                                                              &
       //                      ShapelessArray<T>::Add)
       //      .def("Add",
-      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &, T const
+      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T>
+      //           const &, T const
       //           &)) &
       //               ShapelessArray<T>::Add)
 
@@ -76,19 +82,26 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
                ShapelessArray<T>::InlineSubtract)
       .def("InlineSubtract", (ShapelessArray<T> & (ShapelessArray<T>::*)(T const &)) &
                                  ShapelessArray<T>::InlineSubtract)
-      //      .def("Subtract", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const
+      //      .def("Subtract", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const
       //      &,
-      //                                                                   ShapelessArray<T> const
-      //                                                                   &, memory::Range const
+      //                                                                   ShapelessArray<T>
+      //                                                                   const
+      //                                                                   &,
+      //                                                                   memory::Range
+      //                                                                   const
       //                                                                   &)) &
       //                           ShapelessArray<T>::Subtract)
-      //      .def("Subtract", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const
+      //      .def("Subtract", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const
       //      &,
-      //                                                                   ShapelessArray<T> const
+      //                                                                   ShapelessArray<T>
+      //                                                                   const
       //                                                                   &)) &
       //                           ShapelessArray<T>::Subtract)
       //      .def("Subtract",
-      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &, T const
+      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T>
+      //           const &, T const
       //           &)) &
       //               ShapelessArray<T>::Subtract)
 
@@ -100,19 +113,26 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
                ShapelessArray<T>::InlineMultiply)
       .def("InlineMultiply", (ShapelessArray<T> & (ShapelessArray<T>::*)(T const &)) &
                                  ShapelessArray<T>::InlineMultiply)
-      //      .def("Multiply", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const
+      //      .def("Multiply", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const
       //      &,
-      //                                                                   ShapelessArray<T> const
-      //                                                                   &, memory::Range const
+      //                                                                   ShapelessArray<T>
+      //                                                                   const
+      //                                                                   &,
+      //                                                                   memory::Range
+      //                                                                   const
       //                                                                   &)) &
       //                           ShapelessArray<T>::Multiply)
-      //      .def("Multiply", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const
+      //      .def("Multiply", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const
       //      &,
-      //                                                                   ShapelessArray<T> const
+      //                                                                   ShapelessArray<T>
+      //                                                                   const
       //                                                                   &)) &
       //                           ShapelessArray<T>::Multiply)
       //      .def("Multiply",
-      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &, T const
+      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T>
+      //           const &, T const
       //           &)) &
       //               ShapelessArray<T>::Multiply)
 
@@ -123,16 +143,25 @@ void BuildShapelessArray(std::string const &custom_name, pybind11::module &modul
                                ShapelessArray<T>::InlineDivide)
       .def("InlineDivide", (ShapelessArray<T> & (ShapelessArray<T>::*)(T const &)) &
                                ShapelessArray<T>::InlineDivide)
-      //      .def("Divide", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &,
-      //                                                                 ShapelessArray<T> const &,
-      //                                                                 memory::Range const &)) &
+      //      .def("Divide", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const &,
+      //                                                                 ShapelessArray<T>
+      //                                                                 const
+      //                                                                 &,
+      //                                                                 memory::Range
+      //                                                                 const
+      //                                                                 &)) &
       //                         ShapelessArray<T>::Divide)
-      //      .def("Divide", (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &,
-      //                                                                 ShapelessArray<T> const &))
+      //      .def("Divide", (ShapelessArray<T> &
+      //      (ShapelessArray<T>::*)(ShapelessArray<T> const &,
+      //                                                                 ShapelessArray<T>
+      //                                                                 const
+      //                                                                 &))
       //                                                                 &
       //                         ShapelessArray<T>::Divide)
       //      .def("Divide",
-      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T> const &, T const
+      //           (ShapelessArray<T> & (ShapelessArray<T>::*)(ShapelessArray<T>
+      //           const &, T const
       //           &)) &
       //               ShapelessArray<T>::Divide)
 

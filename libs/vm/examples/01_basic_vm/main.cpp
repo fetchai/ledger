@@ -25,7 +25,7 @@
 #include <fstream>
 #include <sstream>
 
-int main() 
+int main()
 {
   return 0;
 }

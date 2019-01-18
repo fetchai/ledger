@@ -88,7 +88,8 @@ public:
   {}
   ConstByteArray(self_type const &other) = default;
   ConstByteArray(self_type &&other)      = default;
-  // TODO(pbukva): (private issue #229: confusion what method does without analysing implementation
+  // TODO(pbukva): (private issue #229: confusion what method does without
+  // analysing implementation
   // details - absolute vs relative[against `other.start_`] size)
   ConstByteArray(self_type const &other, std::size_t const &start, std::size_t const &length)
     : data_(other.data_)
@@ -321,23 +322,32 @@ protected:
   }
 
   /**
-   * Resizes the array and allocates ammount of memory necessary to contain the requested size.
+   * Resizes the array and allocates ammount of memory necessary to contain the
+   * requested size.
    * Memory allocation is handled by the @ref Reserve() method.
    *
-   * Please be NOTE, that this method operates in SIZE space, which is always RELATIVE
-   * against the @ref start_ offset (as contrary to CAPACITY space - see the @ref Reserve() method)
-   * Also, this method can operate in two modes - absolute(default) and relative, please see
+   * Please be NOTE, that this method operates in SIZE space, which is always
+   * RELATIVE
+   * against the @ref start_ offset (as contrary to CAPACITY space - see the
+   * @ref Reserve() method)
+   * Also, this method can operate in two modes - absolute(default) and
+   * relative, please see
    * description for @ref resize_paradigm parameter for more details
    *
-   * @param n Requested size, is relative or absolute depending on the @ref resize_paradigm
+   * @param n Requested size, is relative or absolute depending on the @ref
+   * resize_paradigm
    * parameter
    *
-   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, array size
-   * is going to be se to @ref n value. When set to RELATIVE value, array SIZE is going to be se to
-   * original_size + n. Where new resulting SIZE is internally still relative to the internal start_
+   * @param resize_paradigm Defines mode of resize operation. When set to
+   * ABSOLUTE value, array size
+   * is going to be se to @ref n value. When set to RELATIVE value, array SIZE
+   * is going to be se to
+   * original_size + n. Where new resulting SIZE is internally still relative to
+   * the internal start_
    * offset in BOTH cases (relative and absolute).
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the ammount of new memory
+   * reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Resize(std::size_t const &n, ResizeParadigm const resize_paradigm = ResizeParadigm::ABSOLUTE,
@@ -363,22 +373,31 @@ protected:
   }
 
   /**
-   * Reserves (allocates) requested ammount of memory IF it is more than already allocated.
+   * Reserves (allocates) requested ammount of memory IF it is more than already
+   * allocated.
    *
-   * Please be NOTE, that this method operates in CAPACITY space, which is defined by WHOLE
+   * Please be NOTE, that this method operates in CAPACITY space, which is
+   * defined by WHOLE
    * allocated size of underlying data buffer.
    *
-   * @param n Requested capacity, is relative or absolute depending on the @ref resize_paradigm
+   * @param n Requested capacity, is relative or absolute depending on the @ref
+   * resize_paradigm
    * parameter
    *
-   * @param resize_paradigm Defines mode of resize operation. When set to ABSOLUTE value, then
-   * CAPACITY of WHOLE underlying array (allocated memory) is going to be set to @ref n value IF
-   * requested @ref n value is bigger than current CAPACITY of the the array. When set to RELATIVE
-   * value, then capacity of of WHOLE underlying array (allocated memory) is going to be set to
-   * current_capacity + n, what ALWAYS resuts to re-allocation since the requested CAPACITY is
+   * @param resize_paradigm Defines mode of resize operation. When set to
+   * ABSOLUTE value, then
+   * CAPACITY of WHOLE underlying array (allocated memory) is going to be set to
+   * @ref n value IF
+   * requested @ref n value is bigger than current CAPACITY of the the array.
+   * When set to RELATIVE
+   * value, then capacity of of WHOLE underlying array (allocated memory) is
+   * going to be set to
+   * current_capacity + n, what ALWAYS resuts to re-allocation since the
+   * requested CAPACITY is
    * always bigger then the current one.
    *
-   * @zero_reserved_space If true then the ammount of new memory reserved/allocated (if any) ABOVE
+   * @zero_reserved_space If true then the ammount of new memory
+   * reserved/allocated (if any) ABOVE
    * of already allocated will be zeroed byte by byte.
    */
   void Reserve(std::size_t const &  n,

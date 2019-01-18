@@ -55,10 +55,14 @@ inline void BuildOps(std::string const & /*custom_name*/, pybind11::module &modu
         return fetch::ml::ops::CrossEntropyLoss(left, right, sess);
       });
 
-  //  .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < double >> )
-  //      .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray < float >> )
-  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray < double >> )
-  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray < float >> );
+  //  .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray <
+  //  double >> )
+  //      .def(custom_name.c_str(), &WrapperStandardDeviation < RectangularArray
+  //      < float >> )
+  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray <
+  //      double >> )
+  //      .def(custom_name.c_str(), &WrapperStandardDeviation < ShapelessArray <
+  //      float >> );
 }
 
 }  // namespace ops
@@ -68,17 +72,21 @@ inline void BuildOps(std::string const & /*custom_name*/, pybind11::module &modu
 // template <typename ArrayType>
 // void BuildLayers(std::string const &custom_name, pybind11::module &module)
 //{
-//  using SessionType = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
+//  using SessionType = fetch::ml::SessionManager<ArrayType,
+//  fetch::ml::Variable<ArrayType>>;
 //  using SelfType    = fetch::ml::layers::Layer<ArrayType>;
 //  using VariableType = fetch::ml::Variable<ArrayType>;
 //
 //  namespace py = pybind11;
 //  py::class_<SelfType>(module, custom_name.c_str())
-//      .def(py::init<SessionType &, std::size_t const &, std::size_t const &>())
+//      .def(py::init<SessionType &, std::size_t const &, std::size_t const
+//      &>())
 //  .def(py::init<SessionType &, std::vector<std::size_t> const &>())
 //
-//  .def("Forward", [](SelfType &a, VariableType &activations) { return a.Forward(activations); })
-//      .def("Step", [](SelfType &a, typename ArrayType::::Type &lr) { return a.Step(lr); })
+//  .def("Forward", [](SelfType &a, VariableType &activations) { return
+//  a.Forward(activations); })
+//      .def("Step", [](SelfType &a, typename ArrayType::::Type &lr) { return
+//      a.Step(lr); })
 //      .def("Weights", [](SelfType &a) { return a.weights(); })
 //      .def("InputSize", [](SelfType &a) { return a.InputSize(); })
 //      .def("OutputSize", [](SelfType &a) { return a.OutputSize(); });

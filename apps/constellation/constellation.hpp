@@ -62,7 +62,8 @@ enum class ConsensusMinerType
 }  // namespace chain
 
 /**
- * Top level container for all components that are required to run a ledger instance
+ * Top level container for all components that are required to run a ledger
+ * instance
  */
 class Constellation
 {
@@ -126,11 +127,12 @@ private:
 
   /// @name Network Orchestration
   /// @{
-  NetworkManager   network_manager_;       ///< Top level network coordinator
-  NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
-  Muddle           muddle_;                ///< The muddle networking service
-  TrustSystem      trust_;                 ///< The trust subsystem
-  Peer2PeerService p2p_;                   ///< The main p2p networking stack
+  NetworkManager network_manager_;       ///< Top level network coordinator
+  NetworkManager http_network_manager_;  ///< A separate net. coordinator for the
+                                         /// http service(s)
+  Muddle           muddle_;              ///< The muddle networking service
+  TrustSystem      trust_;               ///< The trust subsystem
+  Peer2PeerService p2p_;                 ///< The main p2p networking stack
   /// @}
 
   /// @name Transaction and State Database shards

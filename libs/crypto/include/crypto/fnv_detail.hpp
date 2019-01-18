@@ -34,7 +34,8 @@ template <typename NUMBER_TYPE, std::size_t SIZE_IN_BYTES = sizeof(NUMBER_TYPE),
 struct FNVConfig
 {
   static_assert(std::is_integral<NUMBER_TYPE>::value && sizeof(NUMBER_TYPE) >= SIZE_IN_BYTES,
-                "Provided SIZE_IN_BYTES parameter value must be smaller or equal to `sizeof(...)` "
+                "Provided SIZE_IN_BYTES parameter value must be smaller or "
+                "equal to `sizeof(...)` "
                 "of provided integral type NUMBER_TYPE type parameter.");
 
   static_assert(std::is_same<FNVConfigInvalid, FROM>::value || FROM::size_in_bytes == SIZE_IN_BYTES,

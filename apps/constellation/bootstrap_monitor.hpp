@@ -34,11 +34,14 @@
 namespace fetch {
 
 /**
- * The bootstrap monitor is a simple placeholder implementation for a client to the bootstrap
+ * The bootstrap monitor is a simple placeholder implementation for a client to
+ * the bootstrap
  * server. It has two main functions namely:
  *
- * - The collection of an initial set of peers to attempt to connect to initially
- * - A periodic phone home in order to update the cached set of peer connections.
+ * - The collection of an initial set of peers to attempt to connect to
+ * initially
+ * - A periodic phone home in order to update the cached set of peer
+ * connections.
  */
 class BootstrapMonitor
 {

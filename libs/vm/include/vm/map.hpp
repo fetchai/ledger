@@ -37,7 +37,7 @@ struct H;
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  size_t operator()(Variant const & v) const
+  size_t operator()(Variant const &v) const
   {
     return std::hash<T>()(v.primitive.Get<T>());
   }
@@ -45,7 +45,7 @@ struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 template <typename T>
 struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  size_t operator()(Variant const & v) const
+  size_t operator()(Variant const &v) const
   {
     return v.object->GetHashCode();
   }
@@ -56,7 +56,7 @@ struct E;
 template <typename T>
 struct E<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
-  bool operator()(Variant const & lhsv, Variant const & rhsv) const
+  bool operator()(Variant const &lhsv, Variant const &rhsv) const
   {
     return lhsv.primitive.Get<T>() == rhsv.primitive.Get<T>();
   }
@@ -64,12 +64,11 @@ struct E<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 template <typename T>
 struct E<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
-  bool operator()(Variant const & lhsv, Variant const & rhsv) const
+  bool operator()(Variant const &lhsv, Variant const &rhsv) const
   {
     return lhsv.object->Equals(lhsv.object, rhsv.object);
   }
 };
-
 
 template <typename Key, typename Value>
 struct Map : public IMap
@@ -82,30 +81,30 @@ struct Map : public IMap
   {}
   virtual ~Map() = default;
 
-  Value *Find(Variant & keyv)
+  Value *Find(Variant &keyv)
   {
     auto it = map.find(keyv);
     if (it != map.end())
     {
       keyv.Reset();
       void *ptr = &(it->second);
-      return static_cast<Value*>(ptr);
+      return static_cast<Value *>(ptr);
     }
     RuntimeError("map key does not exist");
     return nullptr;
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPrimitive<U>::value, Value*> Find()
+  typename std::enable_if_t<IsPrimitive<U>::value, Value *> Find()
   {
-    Variant & keyv = Pop();
+    Variant &keyv = Pop();
     return Find(keyv);
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPtr<U>::value, Value*> Find()
+  typename std::enable_if_t<IsPtr<U>::value, Value *> Find()
   {
-    Variant & keyv = Pop();
+    Variant &keyv = Pop();
     if (keyv.object)
     {
       return Find(keyv);
@@ -124,19 +123,19 @@ struct Map : public IMap
     Value *ptr = Find<Key>();
     if (ptr)
     {
-      Variant & top = Push();
+      Variant &top = Push();
       top.Construct(*ptr, element_type_id);
     }
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPrimitive<U>::value, void> Store(Variant & keyv, Variant & valuev)
+  typename std::enable_if_t<IsPrimitive<U>::value, void> Store(Variant &keyv, Variant &valuev)
   {
     map.insert(Pair(keyv, valuev));
   }
 
   template <typename U>
-  typename std::enable_if_t<IsPtr<U>::value, void> Store(Variant & keyv, Variant & valuev)
+  typename std::enable_if_t<IsPtr<U>::value, void> Store(Variant &keyv, Variant &valuev)
   {
     if (keyv.object)
     {
@@ -148,8 +147,8 @@ struct Map : public IMap
 
   virtual void PopToElement() override
   {
-    Variant & keyv   = Pop();
-    Variant & valuev = Pop();
+    Variant &keyv   = Pop();
+    Variant &valuev = Pop();
     Store<Key>(keyv, valuev);
     valuev.Reset();
     keyv.Reset();
@@ -157,7 +156,6 @@ struct Map : public IMap
 
   std::unordered_map<Variant, Variant, H<Key>, E<Key>> map;
 };
-
 
 template <typename Key>
 inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
@@ -212,9 +210,8 @@ inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
   {
     return Ptr<IMap>(new Map<Key, Ptr<Object>>(vm, type_id));
   }
-  } // switch
+  }  // switch
 }
-
 
 inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
 {
@@ -268,16 +265,16 @@ inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId 
   {
     return inner<Ptr<Object>>(value_type_id, vm, type_id);
   }
-  } // switch
+  }  // switch
 }
 
 inline Ptr<IMap> IMap::Constructor(VM *vm, TypeId type_id)
 {
-  TypeInfo const & type_info     = vm->GetTypeInfo(type_id);
-  TypeId const     key_type_id   = type_info.parameter_type_ids[0];
-  TypeId const     value_type_id = type_info.parameter_type_ids[1];
+  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+  TypeId const    key_type_id   = type_info.parameter_type_ids[0];
+  TypeId const    value_type_id = type_info.parameter_type_ids[1];
   return outer(key_type_id, value_type_id, vm, type_id);
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

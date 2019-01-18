@@ -22,32 +22,32 @@
 namespace fetch {
 namespace vm {
 
-Variant & Object::Push()
+Variant &Object::Push()
 {
   return vm_->Push();
 }
 
-Variant & Object::Pop()
+Variant &Object::Pop()
 {
   return vm_->Pop();
 }
 
-Variant & Object::Top()
+Variant &Object::Top()
 {
   return vm_->Top();
 }
 
-void Object::RuntimeError(std::string const & message)
+void Object::RuntimeError(std::string const &message)
 {
   vm_->RuntimeError(message);
 }
 
-TypeInfo const & Object::GetTypeInfo(TypeId type_id)
+TypeInfo const &Object::GetTypeInfo(TypeId type_id)
 {
   return vm_->GetTypeInfo(type_id);
 }
 
-bool Object::GetInteger(Variant const & v, size_t & index)
+bool Object::GetInteger(Variant const &v, size_t &index)
 {
   bool ok = true;
   switch (v.type_id)
@@ -101,11 +101,11 @@ bool Object::GetInteger(Variant const & v, size_t & index)
     ok = false;
     break;
   }
-  } // switch
+  }  // switch
   return ok;
 }
 
-bool Object::Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const
+bool Object::Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
 {
   return lhso == rhso;
 }
@@ -236,5 +236,5 @@ void Object::PopToElement()
   RuntimeError("operator not implemented");
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

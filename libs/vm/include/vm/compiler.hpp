@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/parser.hpp"
 #include "vm/analyser.hpp"
 #include "vm/generator.hpp"
+#include "vm/parser.hpp"
 
 namespace fetch {
 namespace vm {
@@ -32,56 +32,43 @@ class Compiler
 public:
   Compiler(Module *module);
   ~Compiler();
-  bool Compile(std::string const & source,
-               std::string const & name,
-               Script &            script,
-               Strings &           errors);
+  bool Compile(std::string const &source, std::string const &name, Script &script, Strings &errors);
 
 private:
-
-  void CreateClassType(std::string const & name, TypeId id)
+  void CreateClassType(std::string const &name, TypeId id)
   {
     analyser_.CreateClassType(name, id);
   }
 
-  void CreateTemplateInstantiationType(TypeId              id,
-                                       TypeId              template_type_id,
-                                       TypeIdArray const & parameter_type_ids)
+  void CreateTemplateInstantiationType(TypeId id, TypeId template_type_id,
+                                       TypeIdArray const &parameter_type_ids)
   {
     analyser_.CreateTemplateInstantiationType(id, template_type_id, parameter_type_ids);
   }
 
-  void CreateOpcodeFreeFunction(std::string const & name,
-                                Opcode              opcode,
-                                TypeIdArray const & parameter_type_ids,
-                                TypeId              return_type_id)
+  void CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
+                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
   {
     analyser_.CreateOpcodeFreeFunction(name, opcode, parameter_type_ids, return_type_id);
   }
 
-  void CreateOpcodeTypeConstructor(TypeId               type_id,
-                                   Opcode               opcode,
-                                   TypeIdArray const  & parameter_type_ids)
+  void CreateOpcodeTypeConstructor(TypeId type_id, Opcode opcode,
+                                   TypeIdArray const &parameter_type_ids)
   {
     analyser_.CreateOpcodeTypeConstructor(type_id, opcode, parameter_type_ids);
   }
 
-  void CreateOpcodeTypeFunction(TypeId              type_id,
-                                std::string const & name,
-                                Opcode              opcode,
-                                TypeIdArray const & parameter_type_ids,
-                                TypeId              return_type_id)
+  void CreateOpcodeTypeFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
   {
     analyser_.CreateOpcodeTypeFunction(type_id, name, opcode, parameter_type_ids, return_type_id);
   }
 
-  void CreateOpcodeInstanceFunction(TypeId              type_id,
-                                    std::string const & name,
-                                    Opcode              opcode,
-                                    TypeIdArray const & parameter_type_ids,
-                                    TypeId              return_type_id)
+  void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                    TypeIdArray const &parameter_type_ids, TypeId return_type_id)
   {
-    analyser_.CreateOpcodeInstanceFunction(type_id, name, opcode, parameter_type_ids, return_type_id);
+    analyser_.CreateOpcodeInstanceFunction(type_id, name, opcode, parameter_type_ids,
+                                           return_type_id);
   }
 
   Parser    parser_;
@@ -91,5 +78,5 @@ private:
   friend class Module;
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

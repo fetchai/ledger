@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include <cstdint>
-#include <vector>
 #include <string>
-#include <unordered_map>
 #include <type_traits>
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace vm {
@@ -33,42 +33,41 @@ using TypeIdArray    = std::vector<TypeId>;
 using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
-namespace TypeIds
-{
-  static TypeId const Unknown               = 0;
+namespace TypeIds {
+static TypeId const Unknown = 0;
 
-  static TypeId const Any                   = 1;
-  static TypeId const Parameter1            = 2;
-  static TypeId const Parameter2            = 3;
+static TypeId const Any        = 1;
+static TypeId const Parameter1 = 2;
+static TypeId const Parameter2 = 3;
 
-  static TypeId const Void                  = 20;
-  static TypeId const Null                  = 21;
-  static TypeId const Bool                  = 22;
-  static TypeId const Int8                  = 23;
-  static TypeId const Byte                  = 24;
-  static TypeId const Int16                 = 25;
-  static TypeId const UInt16                = 26;
-  static TypeId const Int32                 = 27;
-  static TypeId const UInt32                = 28;
-  static TypeId const Int64                 = 29;
-  static TypeId const UInt64                = 30;
-  static TypeId const Float32               = 31;
-  static TypeId const Float64               = 32;
+static TypeId const Void    = 20;
+static TypeId const Null    = 21;
+static TypeId const Bool    = 22;
+static TypeId const Int8    = 23;
+static TypeId const Byte    = 24;
+static TypeId const Int16   = 25;
+static TypeId const UInt16  = 26;
+static TypeId const Int32   = 27;
+static TypeId const UInt32  = 28;
+static TypeId const Int64   = 29;
+static TypeId const UInt64  = 30;
+static TypeId const Float32 = 31;
+static TypeId const Float64 = 32;
 
-  static TypeId const IntegerVariant        = 50;
-  static TypeId const RealVariant           = 51;
-  static TypeId const NumberVariant         = 52;
-  static TypeId const CastVariant           = 53;
+static TypeId const IntegerVariant = 50;
+static TypeId const RealVariant    = 51;
+static TypeId const NumberVariant  = 52;
+static TypeId const CastVariant    = 53;
 
-  static TypeId const ObjectMinId           = 70;
-  static TypeId const IMatrix               = 70;
-  static TypeId const IArray                = 71;
-  static TypeId const IMap                  = 72;
+static TypeId const ObjectMinId = 70;
+static TypeId const IMatrix     = 70;
+static TypeId const IArray      = 71;
+static TypeId const IMap        = 72;
 
-  static TypeId const String                = 90;
+static TypeId const String = 90;
 
-  static TypeId const NumReserved           = 500;
-}
+static TypeId const NumReserved = 500;
+}  // namespace TypeIds
 
 enum class TypeCategory : uint16_t
 {
@@ -96,6 +95,7 @@ public:
     }
     return TypeIds::Unknown;
   }
+
 private:
   std::unordered_map<TypeIndex, TypeId> map_;
 };
@@ -106,10 +106,8 @@ struct TypeInfo
   {
     id = TypeIds::Unknown;
   }
-  TypeInfo(std::string const & name__,
-           TypeId              id__,
-           TypeCategory        category__,
-           TypeIdArray const & parameter_type_ids__)
+  TypeInfo(std::string const &name__, TypeId id__, TypeCategory category__,
+           TypeIdArray const &parameter_type_ids__)
   {
     name               = name__;
     id                 = id__;
@@ -123,5 +121,5 @@ struct TypeInfo
 };
 using TypeInfoTable = std::unordered_map<TypeId, TypeInfo>;
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

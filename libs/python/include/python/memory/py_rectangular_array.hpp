@@ -292,7 +292,8 @@ void BuildRectangularArray(std::string const &custom_name, pybind11::module &mod
            [](RectangularArray<T> &ret, std::vector<std::vector<std::size_t>> const &idxs,
               RectangularArray<T> const &s) { ret.SetRange(idxs, s); })
       //      .def("__eq__", [](RectangularArray<T> &      s,
-      //                        py::array_t<double> const &arr) { std::cout << "WAS HERE" <<
+      //                        py::array_t<double> const &arr) { std::cout <<
+      //                        "WAS HERE" <<
       //                        std::endl; })
       .def("FromNumpy",
            [](RectangularArray<T> &s, py::array_t<T> arr) {

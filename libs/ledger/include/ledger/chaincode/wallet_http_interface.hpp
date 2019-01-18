@@ -97,7 +97,8 @@ private:
   /**
    * Create address(es) with some amount of wealth and submit it to the network
    *
-   * @param: request The http request, optionally used to create more than one address
+   * @param: request The http request, optionally used to create more than one
+   * address
    *
    * @return: The address(es) of the new wealth wrapped as a HTTP response
    */

@@ -27,10 +27,9 @@ class Parser
 public:
   Parser();
   ~Parser() = default;
-  BlockNodePtr Parse(std::string const & source, Strings & errors);
+  BlockNodePtr Parse(std::string const &source, Strings &errors);
 
 private:
-
   enum class State
   {
     // [group opener, prefix op or operand] is required
@@ -68,21 +67,21 @@ private:
     int               count;
   };
 
-  Strings                  template_names_;
-  std::vector<Token>       tokens_;
-  int                      index_;
-  Token *                  token_;
-  Strings                  errors_;
-  std::vector<Node::Kind>  blocks_;
-  State                    state_;
-  bool                     found_expression_terminator_;
-  std::vector<int>         groups_;
-  std::vector<Expr>        operators_;
-  std::vector<Expr>        rpn_;
-  std::vector<Expr>        infix_stack_;
+  Strings                 template_names_;
+  std::vector<Token>      tokens_;
+  int                     index_;
+  Token *                 token_;
+  Strings                 errors_;
+  std::vector<Node::Kind> blocks_;
+  State                   state_;
+  bool                    found_expression_terminator_;
+  std::vector<int>        groups_;
+  std::vector<Expr>       operators_;
+  std::vector<Expr>       rpn_;
+  std::vector<Expr>       infix_stack_;
 
-  void              Tokenise(std::string const & source);
-  bool              ParseBlock(BlockNode & node);
+  void              Tokenise(std::string const &source);
+  bool              ParseBlock(BlockNode &node);
   BlockNodePtr      ParseFunctionDefinition();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
@@ -94,30 +93,28 @@ private:
   ExpressionNodePtr ParseExpressionStatement();
   void              GoToNextStatement();
   void              SkipFunctionDefinition();
-  bool              IsTemplateName(std::string const & name) const;
+  bool              IsTemplateName(std::string const &name) const;
   ExpressionNodePtr ParseType();
   ExpressionNodePtr ParseConditionalExpression();
   ExpressionNodePtr ParseExpression(bool is_conditional_expression = false);
   bool              HandleIdentifier();
-  bool              ParseExpressionIdentifier(std::string & name);
+  bool              ParseExpressionIdentifier(std::string &name);
   bool              HandleLiteral(Node::Kind kind);
   void              HandlePlus();
   void              HandleMinus();
-  bool              HandleBinaryOp(Node::Kind kind, OpInfo const & op_info);
+  bool              HandleBinaryOp(Node::Kind kind, OpInfo const &op_info);
   void              HandleNot();
-  void              HandleIncDec(Node::Kind     prefix_kind,
-                                 OpInfo const & prefix_op_info,
-                                 Node::Kind     postfix_kind,
-                                 OpInfo const & postfix_op_info);
-  bool              HandleDot();
-  void              HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind);
-  bool              HandleCloser(bool is_conditional_expression);
-  bool              HandleComma();
-  void              HandleOp(Node::Kind kind, OpInfo const & op_info);
-  void              AddGroup(Node::Kind kind, int initial_arity);
-  void              AddOp(Node::Kind kind, OpInfo const & op_info);
-  void              AddOperand(Node::Kind kind);
-  void              AddError(std::string const & message);
+  void HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info, Node::Kind postfix_kind,
+                    OpInfo const &postfix_op_info);
+  bool HandleDot();
+  void HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind);
+  bool HandleCloser(bool is_conditional_expression);
+  bool HandleComma();
+  void HandleOp(Node::Kind kind, OpInfo const &op_info);
+  void AddGroup(Node::Kind kind, int initial_arity);
+  void AddOp(Node::Kind kind, OpInfo const &op_info);
+  void AddOperand(Node::Kind kind);
+  void AddError(std::string const &message);
 
   void IncrementNodeCount()
   {
@@ -149,5 +146,5 @@ private:
   }
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

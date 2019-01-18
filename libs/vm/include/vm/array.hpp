@@ -32,7 +32,6 @@ struct IArray : public Object
   static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
 };
 
-
 template <typename T>
 struct Array : public IArray
 {
@@ -56,8 +55,8 @@ struct Array : public IArray
   }
   T *Find()
   {
-    Variant & positionv = Pop();
-    size_t    position;
+    Variant &positionv = Pop();
+    size_t   position;
     if (GetInteger(positionv, position) == false)
     {
       RuntimeError("negative index");
@@ -82,7 +81,7 @@ struct Array : public IArray
     T *ptr = Find();
     if (ptr)
     {
-      Variant & top = Push();
+      Variant &top = Push();
       top.Construct(*ptr, element_type_id);
     }
   }
@@ -92,19 +91,18 @@ struct Array : public IArray
     T *ptr = Find();
     if (ptr)
     {
-      Variant & top = Pop();
-      *ptr = top.Move<T>();
+      Variant &top = Pop();
+      *ptr         = top.Move<T>();
     }
   }
 
   std::vector<T> elements;
 };
 
-
 inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
 {
-  TypeInfo const & type_info       = vm->GetTypeInfo(type_id);
-  TypeId const     element_type_id = type_info.parameter_type_ids[0];
+  TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
+  TypeId const    element_type_id = type_info.parameter_type_ids[0];
   if (size < 0)
   {
     vm->RuntimeError("negative size");
@@ -160,8 +158,8 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   {
     return Ptr<IArray>(new Array<Ptr<Object>>(vm, type_id, size));
   }
-  } // switch
+  }  // switch
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

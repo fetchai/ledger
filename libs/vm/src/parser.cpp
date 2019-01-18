@@ -20,7 +20,7 @@
 #include <sstream>
 
 // Must define YYSTYPE and YY_EXTRA_TYPE *before* including the flex-generated header
-#define YYSTYPE       fetch::vm::Token
+#define YYSTYPE fetch::vm::Token
 #define YY_EXTRA_TYPE fetch::vm::Location *
 #include "vm/tokeniser.hpp"
 
@@ -32,7 +32,7 @@ Parser::Parser()
   template_names_ = {"Matrix", "Array", "Map"};
 }
 
-BlockNodePtr Parser::Parse(std::string const & source, Strings & errors)
+BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
 {
   Tokenise(source);
 
@@ -68,7 +68,7 @@ BlockNodePtr Parser::Parse(std::string const & source, Strings & errors)
   }
 }
 
-void Parser::Tokenise(std::string const & source)
+void Parser::Tokenise(std::string const &source)
 {
   tokens_.clear();
   Location location;
@@ -87,7 +87,7 @@ void Parser::Tokenise(std::string const & source)
   yylex_destroy(scanner);
 }
 
-bool Parser::ParseBlock(BlockNode & node)
+bool Parser::ParseBlock(BlockNode &node)
 {
   blocks_.push_back(node.kind);
   do
@@ -215,7 +215,7 @@ bool Parser::ParseBlock(BlockNode & node)
       child = ParseExpressionStatement();
       break;
     }
-    } // switch
+    }  // switch
     if (quit)
     {
       blocks_.pop_back();
@@ -747,9 +747,9 @@ void Parser::SkipFunctionDefinition()
   }
 }
 
-bool Parser::IsTemplateName(std::string const & name) const
+bool Parser::IsTemplateName(std::string const &name) const
 {
-  for (size_t i=0; i<template_names_.size(); ++i)
+  for (size_t i = 0; i < template_names_.size(); ++i)
   {
     if (name == template_names_[i])
     {
@@ -1077,7 +1077,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       found_expression_terminator_ = true;
       break;
     }
-    } // switch
+    }  // switch
   } while (found_expression_terminator_ == false);
 
   if (groups_.size())
@@ -1091,7 +1091,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 
   while (operators_.size())
   {
-    Expr & topop = operators_.back();
+    Expr &topop = operators_.back();
     rpn_.push_back(std::move(topop));
     operators_.pop_back();
   }
@@ -1101,7 +1101,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 
   for (std::size_t i = 0; i < rpn_.size(); ++i)
   {
-    Expr & expr = rpn_[i];
+    Expr &expr = rpn_[i];
     if ((expr.node->kind == Node::Kind::RoundBracketGroup) ||
         (expr.node->kind == Node::Kind::UnaryPlusOp))
     {
@@ -1114,7 +1114,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       std::size_t const size  = infix_stack_.size();
       for (std::size_t j = size - arity; j < size; ++j)
       {
-        Expr & operand = infix_stack_[j];
+        Expr &operand = infix_stack_[j];
         expr.node->children.push_back(std::move(operand.node));
       }
       for (std::size_t j = 0; j < arity; ++j)
@@ -1148,7 +1148,7 @@ bool Parser::HandleIdentifier()
   return true;
 }
 
-bool Parser::ParseExpressionIdentifier(std::string & name)
+bool Parser::ParseExpressionIdentifier(std::string &name)
 {
   AddOperand(Node::Kind::Identifier);
   name = token_->text;
@@ -1182,15 +1182,15 @@ bool Parser::ParseExpressionIdentifier(std::string & name)
     if (token_->kind == Token::Kind::Comma)
     {
       name += ", ";
-      Expr & groupop = operators_.back();
+      Expr &groupop = operators_.back();
       (groupop.op_info.arity)++;
       continue;
     }
     if (token_->kind == Token::Kind::GreaterThan)
     {
       name += ">";
-      Expr & groupop            = operators_.back();
-      groupop.node->token.text  = name;
+      Expr &groupop            = operators_.back();
+      groupop.node->token.text = name;
       (groupop.op_info.arity)++;
       groups_.pop_back();
       rpn_.push_back(std::move(groupop));
@@ -1240,7 +1240,7 @@ void Parser::HandleMinus()
   }
 }
 
-bool Parser::HandleBinaryOp(Node::Kind kind, OpInfo const & op_info)
+bool Parser::HandleBinaryOp(Node::Kind kind, OpInfo const &op_info)
 {
   if (state_ == State::PreOperand)
   {
@@ -1264,10 +1264,8 @@ void Parser::HandleNot()
   }
 }
 
-void Parser::HandleIncDec(Node::Kind     prefix_kind,
-                          OpInfo const & prefix_op_info,
-                          Node::Kind     postfix_kind,
-                          OpInfo const & postfix_op_info)
+void Parser::HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info,
+                          Node::Kind postfix_kind, OpInfo const &postfix_op_info)
 {
   if (state_ == State::PreOperand)
   {
@@ -1360,7 +1358,7 @@ bool Parser::HandleCloser(bool is_conditional_expression)
   }
   while (operators_.size())
   {
-    Expr & topop = operators_.back();
+    Expr &topop = operators_.back();
     if (topop.node->kind != group_kind)
     {
       rpn_.push_back(std::move(topop));
@@ -1432,7 +1430,7 @@ bool Parser::HandleComma()
 
   while (operators_.size())
   {
-    Expr & topop = operators_.back();
+    Expr &topop = operators_.back();
     if (topop.node->kind == group_kind)
     {
       (topop.op_info.arity)++;
@@ -1445,19 +1443,19 @@ bool Parser::HandleComma()
   return true;
 }
 
-void Parser::HandleOp(Node::Kind kind, OpInfo const & op_info)
+void Parser::HandleOp(Node::Kind kind, OpInfo const &op_info)
 {
   Node::Kind group_kind;
   bool       check_if_group_opener = false;
   if (groups_.size())
   {
-    Expr const & groupop   = operators_[std::size_t(groups_.back())];
-    group_kind             = groupop.node->kind;
+    Expr const &groupop   = operators_[std::size_t(groups_.back())];
+    group_kind            = groupop.node->kind;
     check_if_group_opener = true;
   }
   while (operators_.size())
   {
-    Expr & topop = operators_.back();
+    Expr &topop = operators_.back();
     if ((check_if_group_opener) && (topop.node->kind == group_kind))
     {
       break;
@@ -1491,7 +1489,7 @@ void Parser::AddGroup(Node::Kind kind, int initial_arity)
   operators_.push_back(std::move(expr));
 }
 
-void Parser::AddOp(Node::Kind kind, OpInfo const & op_info)
+void Parser::AddOp(Node::Kind kind, OpInfo const &op_info)
 {
   IncrementNodeCount();
   Expr expr;
@@ -1512,7 +1510,7 @@ void Parser::AddOperand(Node::Kind kind)
   rpn_.push_back(std::move(expr));
 }
 
-void Parser::AddError(std::string const & message)
+void Parser::AddError(std::string const &message)
 {
   std::stringstream stream;
   stream << "line " << token_->line << ": ";
@@ -1531,5 +1529,5 @@ void Parser::AddError(std::string const & message)
   errors_.push_back(stream.str());
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

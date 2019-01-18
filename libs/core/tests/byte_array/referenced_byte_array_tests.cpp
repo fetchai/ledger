@@ -77,7 +77,8 @@ TEST(reference_byte_array_gtest, testing_that_ConstByteArray_r_value_moved_if_un
   EXPECT_EQ(expected_to_be_moved.UseCount(), 1);
 
   ByteArray copy{std::move(expected_to_be_moved)};
-  EXPECT_EQ(expected_to_be_moved.UseCount(), 0);  // NOLINT(bugprone-use-after-move)
+  EXPECT_EQ(expected_to_be_moved.UseCount(),
+            0);  // NOLINT(bugprone-use-after-move)
 
   copy[0] = 'k';
   copy[1] = 'i';
@@ -96,7 +97,8 @@ TEST(reference_byte_array_gtest, testing_that_ConstByteArray_r_value_not_moved_i
   EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(), expected_to_remain_unchanged.UseCount());
 
   ByteArray copy{std::move(expected_to_remain_unchanged_2)};
-  EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(), 2);  // NOLINT(bugprone-use-after-move)
+  EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(),
+            2);  // NOLINT(bugprone-use-after-move)
 
   copy[0] = 'k';
   copy[1] = 'i';
@@ -106,7 +108,8 @@ TEST(reference_byte_array_gtest, testing_that_ConstByteArray_r_value_not_moved_i
 
   EXPECT_EQ(copy, "kitty world");
   EXPECT_EQ(expected_to_remain_unchanged, base);
-  EXPECT_EQ(expected_to_remain_unchanged_2, base);  // NOLINT(bugprone-use-after-move)
+  EXPECT_EQ(expected_to_remain_unchanged_2,
+            base);  // NOLINT(bugprone-use-after-move)
 }
 
 TEST(reference_byte_array_gtest,

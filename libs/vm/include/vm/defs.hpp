@@ -25,67 +25,75 @@ namespace vm {
 
 // Forward declarations
 class Object;
-template <typename T> class Ptr;
+template <typename T>
+class Ptr;
 struct Variant;
 class VM;
 
 template <typename T, typename = void>
 struct IsPrimitive : std::false_type
-{};
+{
+};
 template <typename T>
 struct IsPrimitive<T, typename std::enable_if_t<
-  std::is_same<T, void>::value     ||
-  std::is_same<T, bool>::value     ||
-  std::is_same<T, int8_t>::value   ||
-  std::is_same<T, uint8_t>::value  ||
-  std::is_same<T, int16_t>::value  ||
-  std::is_same<T, uint16_t>::value ||
-  std::is_same<T, int32_t>::value  ||
-  std::is_same<T, uint32_t>::value ||
-  std::is_same<T, int64_t>::value  ||
-  std::is_same<T, uint64_t>::value ||
-  std::is_same<T, float>::value    ||
-  std::is_same<T, double>::value>> : std::true_type
-{};
+                          std::is_same<T, void>::value || std::is_same<T, bool>::value ||
+                          std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value ||
+                          std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value ||
+                          std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value ||
+                          std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value ||
+                          std::is_same<T, float>::value || std::is_same<T, double>::value>>
+  : std::true_type
+{
+};
 
 template <typename T, typename = void>
 struct IsObject : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsObject<T, typename std::enable_if_t<std::is_base_of<Object, T>::value>>
-  : std::true_type
-{};
+struct IsObject<T, typename std::enable_if_t<std::is_base_of<Object, T>::value>> : std::true_type
+{
+};
 
 template <typename T>
 struct IsPtr : std::false_type
-{};
+{
+};
 template <typename T>
 struct IsPtr<Ptr<T>> : std::true_type
-{};
+{
+};
 
 template <typename T, typename = void>
 struct IsVariant : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsVariant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>>
-  : std::true_type
-{};
+struct IsVariant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>> : std::true_type
+{
+};
 
 template <typename T, typename = void>
 struct IsNonconstRef : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsNonconstRef<T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type &>::value>>
+struct IsNonconstRef<
+    T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type &>::value>>
   : std::true_type
-{};
+{
+};
 
 template <typename T, typename = void>
 struct IsConstRef : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsConstRef<T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type const &>::value>>
+struct IsConstRef<
+    T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type const &>::value>>
   : std::true_type
-{};
+{
+};
 
 template <typename T>
 struct ptr_managed_type;
@@ -97,28 +105,37 @@ struct ptr_managed_type<Ptr<T>>
 
 template <typename T, typename = void>
 struct IsPrimitiveParameter : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsPrimitiveParameter<T, typename std::enable_if_t<
-  !IsNonconstRef<T>::value && IsPrimitive<typename std::decay<T>::type>::value>> : std::true_type
-{};
+struct IsPrimitiveParameter<
+    T, typename std::enable_if_t<!IsNonconstRef<T>::value &&
+                                 IsPrimitive<typename std::decay<T>::type>::value>> : std::true_type
+{
+};
 
 template <typename T, typename = void>
 struct IsPtrParameter : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsPtrParameter<T, typename std::enable_if_t<
-  IsConstRef<T>::value && IsPtr<typename std::decay<T>::type>::value>> : std::true_type
-{};
+struct IsPtrParameter<T, typename std::enable_if_t<IsConstRef<T>::value &&
+                                                   IsPtr<typename std::decay<T>::type>::value>>
+  : std::true_type
+{
+};
 
 template <typename T, typename = void>
 struct IsVariantParameter : std::false_type
-{};
+{
+};
 template <typename T>
-struct IsVariantParameter<T, typename std::enable_if_t<
-  IsConstRef<T>::value && IsVariant<typename std::decay<T>::type>::value>> : std::true_type
-{};
-
+struct IsVariantParameter<T,
+                          typename std::enable_if_t<IsConstRef<T>::value &&
+                                                    IsVariant<typename std::decay<T>::type>::value>>
+  : std::true_type
+{
+};
 
 class Object
 {
@@ -131,48 +148,46 @@ public:
     ref_count_ = 1;
   }
   virtual ~Object() = default;
-  virtual bool   Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const;
+  virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const;
   virtual size_t GetHashCode() const;
-  virtual void   UnaryMinusOp(Ptr<Object> & object);
-  virtual void   AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   LeftAddOp(Variant & lhsv, Variant & rhsv);
-  virtual void   RightAddOp(Variant & lhsv, Variant & rhsv);
-  virtual void   AddAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   RightAddAssignOp(Ptr<Object> & lhso, Variant & rhsv);
-  virtual void   SubtractOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   LeftSubtractOp(Variant & lhsv, Variant & rhsv);
-  virtual void   RightSubtractOp(Variant & lhsv, Variant & rhsv);
-  virtual void   SubtractAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   RightSubtractAssignOp(Ptr<Object> & lhso, Variant & rhsv);
-  virtual void   MultiplyOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   LeftMultiplyOp(Variant & lhsv, Variant & rhsv);
-  virtual void   RightMultiplyOp(Variant & lhsv, Variant & rhsv);
-  virtual void   MultiplyAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   RightMultiplyAssignOp(Ptr<Object> & lhso, Variant & rhsv);
-  virtual void   DivideOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   LeftDivideOp(Variant & lhsv, Variant & rhsv);
-  virtual void   RightDivideOp(Variant & lhsv, Variant & rhsv);
-  virtual void   DivideAssignOp(Ptr<Object> & lhso, Ptr<Object> & rhso);
-  virtual void   RightDivideAssignOp(Ptr<Object> & lhso, Variant & rhsv);
+  virtual void   UnaryMinusOp(Ptr<Object> &object);
+  virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftAddOp(Variant &lhsv, Variant &rhsv);
+  virtual void   RightAddOp(Variant &lhsv, Variant &rhsv);
+  virtual void   AddAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightAddAssignOp(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   SubtractOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftSubtractOp(Variant &lhsv, Variant &rhsv);
+  virtual void   RightSubtractOp(Variant &lhsv, Variant &rhsv);
+  virtual void   SubtractAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightSubtractAssignOp(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   MultiplyOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftMultiplyOp(Variant &lhsv, Variant &rhsv);
+  virtual void   RightMultiplyOp(Variant &lhsv, Variant &rhsv);
+  virtual void   MultiplyAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightMultiplyAssignOp(Ptr<Object> &lhso, Variant &rhsv);
+  virtual void   DivideOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   LeftDivideOp(Variant &lhsv, Variant &rhsv);
+  virtual void   RightDivideOp(Variant &lhsv, Variant &rhsv);
+  virtual void   DivideAssignOp(Ptr<Object> &lhso, Ptr<Object> &rhso);
+  virtual void   RightDivideAssignOp(Ptr<Object> &lhso, Variant &rhsv);
   virtual void * FindElement();
   virtual void   PushElement(TypeId element_type_id);
   virtual void   PopToElement();
 
 protected:
+  Variant &       Push();
+  Variant &       Pop();
+  Variant &       Top();
+  void            RuntimeError(std::string const &message);
+  TypeInfo const &GetTypeInfo(TypeId type_id);
+  bool            GetInteger(Variant const &v, size_t &index);
 
-  Variant &        Push();
-  Variant &        Pop();
-  Variant &        Top();
-  void             RuntimeError(std::string const & message);
-  TypeInfo const & GetTypeInfo(TypeId type_id);
-  bool             GetInteger(Variant const & v, size_t & index);
-
-  VM *    vm_;
-  TypeId  type_id_;
-  size_t  ref_count_;
+  VM *   vm_;
+  TypeId type_id_;
+  size_t ref_count_;
 
 private:
-
   void AddRef()
   {
     ++ref_count_;
@@ -186,7 +201,8 @@ private:
     }
   }
 
-  template <typename T> friend class Ptr;
+  template <typename T>
+  friend class Ptr;
 };
 
 template <typename T>
@@ -203,33 +219,33 @@ public:
     ptr_ = other;
   }
 
-  Ptr(Ptr const & other)
+  Ptr(Ptr const &other)
   {
     ptr_ = other.ptr_;
     AddRef();
   }
 
-  Ptr(Ptr && other)
+  Ptr(Ptr &&other)
   {
     ptr_       = other.ptr_;
     other.ptr_ = nullptr;
   }
 
   template <typename U>
-  Ptr(Ptr<U> const & other)
+  Ptr(Ptr<U> const &other)
   {
-    ptr_ = static_cast<T*>(other.ptr_);
+    ptr_ = static_cast<T *>(other.ptr_);
     AddRef();
   }
 
   template <typename U>
-  Ptr(Ptr<U> && other)
+  Ptr(Ptr<U> &&other)
   {
-    ptr_       = static_cast<T*>(other.ptr_);
+    ptr_       = static_cast<T *>(other.ptr_);
     other.ptr_ = nullptr;
   }
 
-  Ptr &operator=(Ptr const & other)
+  Ptr &operator=(Ptr const &other)
   {
     if (ptr_ != other.ptr_)
     {
@@ -240,7 +256,7 @@ public:
     return *this;
   }
 
-  Ptr &operator=(Ptr && other)
+  Ptr &operator=(Ptr &&other)
   {
     if (ptr_ != other.ptr_)
     {
@@ -252,24 +268,24 @@ public:
   }
 
   template <typename U>
-  Ptr &operator=(Ptr<U> const & other)
+  Ptr &operator=(Ptr<U> const &other)
   {
     if (ptr_ != other.ptr_)
     {
       Release();
-      ptr_ = static_cast<T*>(other.ptr_);
+      ptr_ = static_cast<T *>(other.ptr_);
       AddRef();
     }
     return *this;
   }
 
   template <typename U>
-  Ptr &operator=(Ptr<U> && other)
+  Ptr &operator=(Ptr<U> &&other)
   {
     if (ptr_ != other.ptr_)
     {
       Release();
-      ptr_       = static_cast<T*>(other.ptr_);
+      ptr_       = static_cast<T *>(other.ptr_);
       other.ptr_ = nullptr;
     }
     return *this;
@@ -277,7 +293,7 @@ public:
 
   ~Ptr()
   {
-     Release();
+    Release();
   }
 
   void Reset()
@@ -310,7 +326,6 @@ public:
   }
 
 private:
-
   T *ptr_;
 
   void AddRef()
@@ -329,25 +344,26 @@ private:
     }
   }
 
-  template <typename U> friend class Ptr;
+  template <typename U>
+  friend class Ptr;
 
   template <typename L, typename R>
-  friend bool operator==(Ptr<L> const & lhs, Ptr<R> const & rhs);
+  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs);
 
   template <typename L, typename R>
-  friend bool operator!=(Ptr<L> const & lhs, Ptr<R> const & rhs);
+  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs);
 };
 
 template <typename L, typename R>
-inline bool operator==(Ptr<L> const & lhs, Ptr<R> const & rhs)
+inline bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ == static_cast<L*>(rhs.ptr_);
+  return lhs.ptr_ == static_cast<L *>(rhs.ptr_);
 }
 
 template <typename L, typename R>
-inline bool operator!=(Ptr<L> const & lhs, Ptr<R> const & rhs)
+inline bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
-  return lhs.ptr_ != static_cast<L*>(rhs.ptr_);
+  return lhs.ptr_ != static_cast<L *>(rhs.ptr_);
 }
 
 union Primitive
@@ -371,67 +387,67 @@ union Primitive
   template <typename T>
   typename std::enable_if_t<std::is_same<T, bool>::value, T> Get() const
   {
-      return bool(ui8);
+    return bool(ui8);
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, int8_t>::value, T> Get() const
   {
-      return i8;
+    return i8;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, uint8_t>::value, T> Get() const
   {
-      return ui8;
+    return ui8;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, int16_t>::value, T> Get() const
   {
-      return i16;
+    return i16;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, uint16_t>::value, T> Get() const
   {
-      return ui16;
+    return ui16;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, int32_t>::value, T> Get() const
   {
-      return i32;
+    return i32;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, uint32_t>::value, T> Get() const
   {
-      return ui32;
+    return ui32;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, int64_t>::value, T> Get() const
   {
-      return i64;
+    return i64;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, uint64_t>::value, T> Get() const
   {
-      return ui64;
+    return ui64;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, float>::value, T> Get() const
   {
-      return f32;
+    return f32;
   }
 
   template <typename T>
   typename std::enable_if_t<std::is_same<T, double>::value, T> Get() const
   {
-      return f64;
+    return f64;
   }
 
   void Set(bool value)
@@ -497,19 +513,19 @@ struct Variant
     Primitive   primitive;
     Ptr<Object> object;
   };
-  TypeId        type_id;
+  TypeId type_id;
 
   Variant()
   {
     Construct();
   }
 
-  Variant(Variant const & other)
+  Variant(Variant const &other)
   {
     Construct(other);
   }
 
-  Variant(Variant && other)
+  Variant(Variant &&other)
   {
     Construct(std::move(other));
   }
@@ -521,13 +537,13 @@ struct Variant
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  Variant(T const & other, TypeId other_type_id)
+  Variant(T const &other, TypeId other_type_id)
   {
     Construct(other, other_type_id);
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  Variant(T && other, TypeId other_type_id)
+  Variant(T &&other, TypeId other_type_id)
   {
     Construct(std::forward<T>(other), other_type_id);
   }
@@ -542,7 +558,7 @@ struct Variant
     type_id = TypeIds::Unknown;
   }
 
-  void Construct(Variant const & other)
+  void Construct(Variant const &other)
   {
     type_id = other.type_id;
     if (IsObject())
@@ -555,7 +571,7 @@ struct Variant
     }
   }
 
-  void Construct(Variant && other)
+  void Construct(Variant &&other)
   {
     type_id = other.type_id;
     if (IsObject())
@@ -577,14 +593,14 @@ struct Variant
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Construct(T const & other, TypeId other_type_id)
+  void Construct(T const &other, TypeId other_type_id)
   {
     new (&object) Ptr<Object>(other);
     type_id = other_type_id;
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Construct(T && other, TypeId other_type_id)
+  void Construct(T &&other, TypeId other_type_id)
   {
     new (&object) Ptr<Object>(std::forward<T>(other));
     type_id = other_type_id;
@@ -596,7 +612,7 @@ struct Variant
     type_id   = other_type_id;
   }
 
-  Variant &operator=(Variant const & other)
+  Variant &operator=(Variant const &other)
   {
     bool const is_object       = IsObject();
     bool const other_is_object = other.IsObject();
@@ -634,7 +650,7 @@ struct Variant
     }
   }
 
-  Variant &operator=(Variant && other)
+  Variant &operator=(Variant &&other)
   {
     bool const is_object       = IsObject();
     bool const other_is_object = other.IsObject();
@@ -678,14 +694,14 @@ struct Variant
   {
     if (IsObject())
     {
-       object.Reset();
+      object.Reset();
     }
     primitive.Set(other);
     type_id = other_type_id;
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Assign(T const & other, TypeId other_type_id)
+  void Assign(T const &other, TypeId other_type_id)
   {
     if (IsObject())
     {
@@ -699,12 +715,12 @@ struct Variant
   }
 
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Assign(T && other, TypeId other_type_id)
+  void Assign(T &&other, TypeId other_type_id)
   {
     if (IsObject())
     {
-      object        = std::forward<T>(other);
-      type_id       = other_type_id;
+      object  = std::forward<T>(other);
+      type_id = other_type_id;
     }
     else
     {
@@ -784,27 +800,28 @@ struct Variant
   {
     if (IsObject())
     {
-       object.Reset();
+      object.Reset();
     }
     type_id = TypeIds::Unknown;
   }
 };
 
-
 struct T : public Variant
-{};
+{
+};
 
 struct MapKey : public Variant
-{};
+{
+};
 
 struct MapValue : public Variant
-{};
-
+{
+};
 
 struct Script
 {
   Script() = default;
-  Script(std::string const & name__, TypeInfoTable const & type_info_table__)
+  Script(std::string const &name__, TypeInfoTable const &type_info_table__)
   {
     name            = name__;
     type_info_table = type_info_table__;
@@ -831,7 +848,7 @@ struct Script
 
   struct Variable
   {
-    Variable(std::string const & name__, TypeId type_id__)
+    Variable(std::string const &name__, TypeId type_id__)
     {
       name    = name__;
       type_id = type_id__;
@@ -842,20 +859,20 @@ struct Script
 
   struct Function
   {
-    Function(std::string const & name__, int num_parameters__, TypeId return_type_id__)
+    Function(std::string const &name__, int num_parameters__, TypeId return_type_id__)
     {
       name           = name__;
       num_variables  = 0;
       num_parameters = num_parameters__;
       return_type_id = return_type_id__;
     }
-    Index AddVariable(std::string const & name, TypeId type_id)
+    Index AddVariable(std::string const &name, TypeId type_id)
     {
       Index const index = (Index)num_variables++;
       variables.push_back(Variable(name, type_id));
       return index;
     }
-    Index AddInstruction(Instruction & instruction)
+    Index AddInstruction(Instruction &instruction)
     {
       Index const pc = (Index)instructions.size();
       instructions.push_back(std::move(instruction));
@@ -865,7 +882,7 @@ struct Script
     int                   num_variables;  // parameters + locals
     int                   num_parameters;
     TypeId                return_type_id;
-    std::vector<Variable> variables;      // parameters + locals
+    std::vector<Variable> variables;  // parameters + locals
     Instructions          instructions;
   };
 
@@ -877,7 +894,7 @@ struct Script
   Functions                              functions;
   std::unordered_map<std::string, Index> map;
 
-  Index AddFunction(Function & function)
+  Index AddFunction(Function &function)
   {
     Index const index  = (Index)functions.size();
     map[function.name] = index;
@@ -885,7 +902,7 @@ struct Script
     return index;
   }
 
-  Function const *FindFunction(std::string const & name) const
+  Function const *FindFunction(std::string const &name) const
   {
     auto it = map.find(name);
     if (it != map.end())
@@ -896,5 +913,5 @@ struct Script
   }
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

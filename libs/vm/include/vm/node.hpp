@@ -32,7 +32,7 @@ struct Symbol
     Variable,
     FunctionGroup
   };
-  Symbol(std::string const & name__, Kind kind__)
+  Symbol(std::string const &name__, Kind kind__)
   {
     name = name__;
     kind = kind__;
@@ -59,11 +59,11 @@ using SymbolPtr = std::shared_ptr<Symbol>;
 
 struct SymbolTable
 {
-  void Add(std::string const & name, SymbolPtr const & symbol)
+  void Add(std::string const &name, SymbolPtr const &symbol)
   {
     map.insert(std::pair<std::string, SymbolPtr>(name, symbol));
   }
-  SymbolPtr Find(std::string const & name)
+  SymbolPtr Find(std::string const &name)
   {
     auto it = map.find(name);
     if (it != map.end())
@@ -74,7 +74,7 @@ struct SymbolTable
   }
   void Reset()
   {
-    for (auto & it : map)
+    for (auto &it : map)
     {
       it.second->Reset();
     }
@@ -93,7 +93,7 @@ using TypePtr      = std::shared_ptr<Type>;
 using TypePtrArray = std::vector<TypePtr>;
 struct Type : public Symbol
 {
-  Type(std::string const & name, TypeId id__, TypeCategory category__)
+  Type(std::string const &name, TypeId id__, TypeCategory category__)
     : Symbol(name, Kind::Type)
   {
     id       = id__;
@@ -111,20 +111,20 @@ struct Type : public Symbol
     index_input_types.clear();
     index_output_type = nullptr;
   }
-  TypeId                    id;
-  TypeCategory              category;
-  SymbolTablePtr            symbol_table;
-  TypePtr                   template_type;
-  TypePtrArray              types;
-  TypePtrArray              index_input_types;
-  TypePtr                   index_output_type;
+  TypeId         id;
+  TypeCategory   category;
+  SymbolTablePtr symbol_table;
+  TypePtr        template_type;
+  TypePtrArray   types;
+  TypePtrArray   index_input_types;
+  TypePtr        index_output_type;
 };
 
-inline TypePtr CreateType(std::string const & name, TypeId id, TypeCategory category)
+inline TypePtr CreateType(std::string const &name, TypeId id, TypeCategory category)
 {
   return std::make_shared<Type>(Type(name, id, category));
 }
-inline TypePtr ConvertToTypePtr(SymbolPtr const & symbol)
+inline TypePtr ConvertToTypePtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<Type>(symbol);
 }
@@ -137,7 +137,7 @@ struct Variable : public Symbol
     For,
     Local
   };
-  Variable(std::string const & name, Category category__)
+  Variable(std::string const &name, Category category__)
     : Symbol(name, Kind::Variable)
   {
     category = category__;
@@ -155,11 +155,11 @@ struct Variable : public Symbol
 using VariablePtr      = std::shared_ptr<Variable>;
 using VariablePtrArray = std::vector<VariablePtr>;
 
-inline VariablePtr CreateVariable(std::string const & name, Variable::Category category)
+inline VariablePtr CreateVariable(std::string const &name, Variable::Category category)
 {
   return std::make_shared<Variable>(Variable(name, category));
 }
-inline VariablePtr ConvertToVariablePtr(SymbolPtr const & symbol)
+inline VariablePtr ConvertToVariablePtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<Variable>(symbol);
 }
@@ -173,7 +173,7 @@ struct Function
     OpcodeTypeFunction,
     OpcodeInstanceFunction
   };
-  Function(std::string const & name__, Kind kind__)
+  Function(std::string const &name__, Kind kind__)
   {
     name   = name__;
     kind   = kind__;
@@ -186,31 +186,31 @@ struct Function
     parameter_variables.clear();
     return_type = nullptr;
   }
-  std::string               name;
-  Kind                      kind;
-  Opcode                    opcode;
-  Index                     index;
-  TypePtrArray              parameter_types;
-  VariablePtrArray          parameter_variables;
-  TypePtr                   return_type;
+  std::string      name;
+  Kind             kind;
+  Opcode           opcode;
+  Index            index;
+  TypePtrArray     parameter_types;
+  VariablePtrArray parameter_variables;
+  TypePtr          return_type;
 };
 using FunctionPtr      = std::shared_ptr<Function>;
 using FunctionPtrArray = std::vector<FunctionPtr>;
 
-inline FunctionPtr CreateFunction(std::string const & name, Function::Kind kind)
+inline FunctionPtr CreateFunction(std::string const &name, Function::Kind kind)
 {
   return std::make_shared<Function>(Function(name, kind));
 }
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(std::string const & name)
+  FunctionGroup(std::string const &name)
     : Symbol(name, Kind::FunctionGroup)
   {}
   virtual ~FunctionGroup() = default;
   virtual void Reset() override
   {
-    for (auto & function : functions)
+    for (auto &function : functions)
     {
       function->Reset();
     }
@@ -220,11 +220,11 @@ struct FunctionGroup : public Symbol
 using FunctionGroupPtr      = std::shared_ptr<FunctionGroup>;
 using FunctionGroupPtrArray = std::vector<FunctionGroupPtr>;
 
-inline FunctionGroupPtr CreateFunctionGroup(std::string const & name)
+inline FunctionGroupPtr CreateFunctionGroup(std::string const &name)
 {
   return std::make_shared<FunctionGroup>(FunctionGroup(name));
 }
-inline FunctionGroupPtr ConvertToFunctionGroupPtr(SymbolPtr const & symbol)
+inline FunctionGroupPtr ConvertToFunctionGroupPtr(SymbolPtr const &symbol)
 {
   return std::static_pointer_cast<FunctionGroup>(symbol);
 }
@@ -300,7 +300,7 @@ struct Node
   virtual ~Node() = default;
   virtual void Reset()
   {
-    for (auto& child : children)
+    for (auto &child : children)
     {
       child->Reset();
     }
@@ -319,7 +319,7 @@ struct BlockNode : public Node
   virtual void Reset() override
   {
     Node::Reset();
-    for (auto & block : block_children)
+    for (auto &block : block_children)
     {
       block->Reset();
     }
@@ -367,17 +367,17 @@ struct ExpressionNode : public Node
   bool             function_invoked_on_instance;
   FunctionPtr      function;
 };
-using ExpressionNodePtr      = std::shared_ptr<ExpressionNode>;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
-inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const & node)
+inline BlockNodePtr ConvertToBlockNodePtr(NodePtr const &node)
 {
   return std::static_pointer_cast<BlockNode>(node);
 }
 
-inline ExpressionNodePtr ConvertToExpressionNodePtr(NodePtr const & node)
+inline ExpressionNodePtr ConvertToExpressionNodePtr(NodePtr const &node)
 {
   return std::static_pointer_cast<ExpressionNode>(node);
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

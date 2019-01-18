@@ -62,15 +62,18 @@ protected:
 
   bool CompileContract(std::string const &contract)
   {
-    return true;  // TODO(private issue 236): Work in progress on smart contracts
+    return true;  // TODO(private issue 236): Work in progress on smart
+contracts
 
     // create the transaction
     std::unique_ptr<vm::Module> module   = CreateVMDefinition<SmartContract>();
-    fetch::vm::Compiler *       compiler = new fetch::vm::Compiler(module.get());
+    fetch::vm::Compiler *       compiler = new
+fetch::vm::Compiler(module.get());
 
     fetch::vm::Script        script;
     std::vector<std::string> errors;
-    bool compiled = compiler->Compile(contract, "ai.fetch.testcontract", script, errors);
+    bool compiled = compiler->Compile(contract, "ai.fetch.testcontract", script,
+errors);
 
     if (!compiled)
     {
@@ -95,7 +98,8 @@ protected:
 
     // dispatch the transaction
     auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(),
+chain::VerifiedTransaction::Create(tx));
 
     tx.set_contract_name("ai.fetch.testcontract.EdsFunction");
     //    tx.set_data(oss.str());
@@ -105,7 +109,8 @@ protected:
 
     // dispatch the transaction
     status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(),
+chain::VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }

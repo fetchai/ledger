@@ -33,10 +33,8 @@ Compiler::~Compiler()
   analyser_.UnInitialise();
 }
 
-bool Compiler::Compile(std::string const & source,
-                       std::string const & name,
-                       Script &            script,
-                       Strings &           errors)
+bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
+                       Strings &errors)
 {
   BlockNodePtr root = parser_.Parse(source, errors);
   if (root == nullptr)
@@ -45,7 +43,7 @@ bool Compiler::Compile(std::string const & source,
   }
 
   TypeInfoTable type_info_table;
-  bool analysed = analyser_.Analyse(root, type_info_table, errors);
+  bool          analysed = analyser_.Analyse(root, type_info_table, errors);
   if (analysed == false)
   {
     root->Reset();
@@ -60,5 +58,5 @@ bool Compiler::Compile(std::string const & source,
   return true;
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

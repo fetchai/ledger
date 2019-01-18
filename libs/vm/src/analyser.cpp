@@ -47,17 +47,20 @@ void Analyser::Initialise()
   CreatePrimitiveType("Float32", TypeIds::Float32, true, float32_type_);
   CreatePrimitiveType("Float64", TypeIds::Float64, true, float64_type_);
 
-  CreateVariantType("IntegerVariant", TypeIds::IntegerVariant, {int8_type_, byte_type_,
-                    int16_type_, uint16_type_, int32_type_, uint32_type_, int64_type_,
-                    uint64_type_}, integer_variant_type_);
+  CreateVariantType("IntegerVariant", TypeIds::IntegerVariant,
+                    {int8_type_, byte_type_, int16_type_, uint16_type_, int32_type_, uint32_type_,
+                     int64_type_, uint64_type_},
+                    integer_variant_type_);
   CreateVariantType("RealVariant", TypeIds::RealVariant, {float32_type_, float64_type_},
                     real_variant_type_);
-  CreateVariantType("NumberVariant", TypeIds::NumberVariant, {int8_type_, byte_type_,
-                    int16_type_, uint16_type_, int32_type_, uint32_type_, int64_type_,
-                    uint64_type_, float32_type_, float64_type_}, number_variant_type_);
-  CreateVariantType("CastVariant", TypeIds::CastVariant, {bool_type_, int8_type_, byte_type_,
-                    int16_type_, uint16_type_, int32_type_, uint32_type_, int64_type_,
-                    uint64_type_, float32_type_, float64_type_}, cast_variant_type_);
+  CreateVariantType("NumberVariant", TypeIds::NumberVariant,
+                    {int8_type_, byte_type_, int16_type_, uint16_type_, int32_type_, uint32_type_,
+                     int64_type_, uint64_type_, float32_type_, float64_type_},
+                    number_variant_type_);
+  CreateVariantType("CastVariant", TypeIds::CastVariant,
+                    {bool_type_, int8_type_, byte_type_, int16_type_, uint16_type_, int32_type_,
+                     uint32_type_, int64_type_, uint64_type_, float32_type_, float64_type_},
+                    cast_variant_type_);
 
   CreateTemplateType("Matrix", TypeIds::IMatrix, {real_variant_type_}, matrix_type_);
   EnableIndexOperator(matrix_type_, {integer_variant_type_, integer_variant_type_},
@@ -66,15 +69,15 @@ void Analyser::Initialise()
   EnableOp(matrix_type_, Node::Kind::AddOp);
   EnableOp(matrix_type_, Node::Kind::SubtractOp);
   EnableOp(matrix_type_, Node::Kind::MultiplyOp);
-  //EnableOp(matrix_type_, Node::Kind::DivideOp);
+  // EnableOp(matrix_type_, Node::Kind::DivideOp);
   EnableOp(matrix_type_, Node::Kind::AddAssignOp);
   EnableOp(matrix_type_, Node::Kind::SubtractAssignOp);
   EnableOp(matrix_type_, Node::Kind::MultiplyAssignOp);
-  //EnableOp(matrix_type_, Node::Kind::DivideAssignOp);
-  //EnableLeftOp(matrix_type_, Node::Kind::AddOp);
-  //EnableLeftOp(matrix_type_, Node::Kind::SubtractOp);
+  // EnableOp(matrix_type_, Node::Kind::DivideAssignOp);
+  // EnableLeftOp(matrix_type_, Node::Kind::AddOp);
+  // EnableLeftOp(matrix_type_, Node::Kind::SubtractOp);
   EnableLeftOp(matrix_type_, Node::Kind::MultiplyOp);
-  //EnableLeftOp(matrix_type_, Node::Kind::DivideOp);
+  // EnableLeftOp(matrix_type_, Node::Kind::DivideOp);
   EnableRightOp(matrix_type_, Node::Kind::AddOp);
   EnableRightOp(matrix_type_, Node::Kind::SubtractOp);
   EnableRightOp(matrix_type_, Node::Kind::MultiplyOp);
@@ -107,7 +110,7 @@ void Analyser::Initialise()
 
 void Analyser::UnInitialise()
 {
-  for (auto const & type : types_)
+  for (auto const &type : types_)
   {
     type->Reset();
   }
@@ -119,92 +122,80 @@ void Analyser::UnInitialise()
     global_symbol_table_->Reset();
     global_symbol_table_ = nullptr;
   }
-  any_type_                 = nullptr;
-  parameter1_type_          = nullptr;
-  parameter2_type_          = nullptr;
-  void_type_                = nullptr;
-  null_type_                = nullptr;
-  bool_type_                = nullptr;
-  int8_type_                = nullptr;
-  byte_type_                = nullptr;
-  int16_type_               = nullptr;
-  uint16_type_              = nullptr;
-  int32_type_               = nullptr;
-  uint32_type_              = nullptr;
-  int64_type_               = nullptr;
-  uint64_type_              = nullptr;
-  float32_type_             = nullptr;
-  float64_type_             = nullptr;
-  integer_variant_type_     = nullptr;
-  real_variant_type_        = nullptr;
-  number_variant_type_      = nullptr;
-  cast_variant_type_        = nullptr;
-  matrix_type_              = nullptr;
-  array_type_               = nullptr;
-  map_type_                 = nullptr;
-  string_type_              = nullptr;
+  any_type_             = nullptr;
+  parameter1_type_      = nullptr;
+  parameter2_type_      = nullptr;
+  void_type_            = nullptr;
+  null_type_            = nullptr;
+  bool_type_            = nullptr;
+  int8_type_            = nullptr;
+  byte_type_            = nullptr;
+  int16_type_           = nullptr;
+  uint16_type_          = nullptr;
+  int32_type_           = nullptr;
+  uint32_type_          = nullptr;
+  int64_type_           = nullptr;
+  uint64_type_          = nullptr;
+  float32_type_         = nullptr;
+  float64_type_         = nullptr;
+  integer_variant_type_ = nullptr;
+  real_variant_type_    = nullptr;
+  number_variant_type_  = nullptr;
+  cast_variant_type_    = nullptr;
+  matrix_type_          = nullptr;
+  array_type_           = nullptr;
+  map_type_             = nullptr;
+  string_type_          = nullptr;
   op_table_.clear();
   left_op_table_.clear();
   right_op_table_.clear();
 }
 
-void Analyser::CreateClassType(std::string const & name, TypeId id)
+void Analyser::CreateClassType(std::string const &name, TypeId id)
 {
   TypePtr type;
   CreateClassType(name, id, type);
 }
 
-void Analyser::CreateTemplateInstantiationType(TypeId              id,
-                                               TypeId              template_type_id,
-                                               TypeIdArray const & parameter_type_ids)
+void Analyser::CreateTemplateInstantiationType(TypeId id, TypeId template_type_id,
+                                               TypeIdArray const &parameter_type_ids)
 {
   TypePtr type;
-  InternalCreateTemplateInstantiationType(id,
-                                          GetTypePtr(template_type_id),
-                                          GetTypePtrs(parameter_type_ids),
-                                          parameter_type_ids, type);
+  InternalCreateTemplateInstantiationType(
+      id, GetTypePtr(template_type_id), GetTypePtrs(parameter_type_ids), parameter_type_ids, type);
 }
 
-void Analyser::CreateOpcodeFreeFunction(std::string const & name,
-                                        Opcode              opcode,
-                                        TypeIdArray const & parameter_type_ids,
-                                        TypeId              return_type_id)
+void Analyser::CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
+                                        TypeIdArray const &parameter_type_ids,
+                                        TypeId             return_type_id)
 {
   CreateOpcodeFreeFunction(name, opcode, GetTypePtrs(parameter_type_ids),
                            GetTypePtr(return_type_id));
 }
 
-void Analyser::CreateOpcodeTypeConstructor(TypeId              type_id,
-                                           Opcode              opcode,
-                                           TypeIdArray const & parameter_type_ids)
+void Analyser::CreateOpcodeTypeConstructor(TypeId type_id, Opcode opcode,
+                                           TypeIdArray const &parameter_type_ids)
 {
   CreateOpcodeTypeConstructor(GetTypePtr(type_id), opcode, GetTypePtrs(parameter_type_ids));
 }
 
-void Analyser::CreateOpcodeTypeFunction(TypeId              type_id,
-                                        std::string const & name,
-                                        Opcode              opcode,
-                                        TypeIdArray const & parameter_type_ids,
-                                        TypeId              return_type_id)
+void Analyser::CreateOpcodeTypeFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                        TypeIdArray const &parameter_type_ids,
+                                        TypeId             return_type_id)
 {
   CreateOpcodeTypeFunction(GetTypePtr(type_id), name, opcode, GetTypePtrs(parameter_type_ids),
                            GetTypePtr(return_type_id));
 }
 
-void Analyser::CreateOpcodeInstanceFunction(TypeId              type_id,
-                                            std::string const & name,
-                                            Opcode              opcode,
-                                            TypeIdArray const & parameter_type_ids,
-                                            TypeId              return_type_id)
+void Analyser::CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                            TypeIdArray const &parameter_type_ids,
+                                            TypeId             return_type_id)
 {
-  CreateOpcodeInstanceFunction(GetTypePtr(type_id), name, opcode,
-                               GetTypePtrs(parameter_type_ids),
+  CreateOpcodeInstanceFunction(GetTypePtr(type_id), name, opcode, GetTypePtrs(parameter_type_ids),
                                GetTypePtr(return_type_id));
 }
 
-bool Analyser::Analyse(BlockNodePtr const & root,
-                       TypeInfoTable &      type_info_table,
-                       Strings &            errors)
+bool Analyser::Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors)
 {
   root_ = root;
   blocks_.clear();
@@ -250,7 +241,7 @@ bool Analyser::Analyse(BlockNodePtr const & root,
   return true;
 }
 
-void Analyser::AddError(Token const & token, std::string const & message)
+void Analyser::AddError(Token const &token, std::string const &message)
 {
   std::stringstream stream;
   stream << "line " << token.line << ": "
@@ -258,9 +249,9 @@ void Analyser::AddError(Token const & token, std::string const & message)
   errors_.push_back(stream.str());
 }
 
-void Analyser::BuildBlock(BlockNodePtr const & block_node)
+void Analyser::BuildBlock(BlockNodePtr const &block_node)
 {
-  for (NodePtr const & child : block_node->block_children)
+  for (NodePtr const &child : block_node->block_children)
   {
     switch (child->kind)
     {
@@ -288,28 +279,28 @@ void Analyser::BuildBlock(BlockNodePtr const & block_node)
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 }
 
-void Analyser::BuildFunctionDefinition(BlockNodePtr const & parent_block_node,
-                                       BlockNodePtr const & function_definition_node)
+void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
+                                       BlockNodePtr const &function_definition_node)
 {
   function_definition_node->symbol_table = CreateSymbolTable();
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[0]);
-  std::string const & name  = identifier_node->token.text;
-  int const           count = (int)function_definition_node->children.size();
-  VariablePtrArray    parameter_variables;
-  TypePtrArray        parameter_types;
-  int const           num_parameters = int((count - 1) / 2);
-  int                 problems       = 0;
+  std::string const &name  = identifier_node->token.text;
+  int const          count = (int)function_definition_node->children.size();
+  VariablePtrArray   parameter_variables;
+  TypePtrArray       parameter_types;
+  int const          num_parameters = int((count - 1) / 2);
+  int                problems       = 0;
   for (int i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
         ConvertToExpressionNodePtr(function_definition_node->children[size_t(1 + i * 2)]);
-    std::string const & parameter_name = parameter_node->token.text;
-    SymbolPtr           symbol         = function_definition_node->symbol_table->Find(parameter_name);
+    std::string const &parameter_name = parameter_node->token.text;
+    SymbolPtr          symbol = function_definition_node->symbol_table->Find(parameter_name);
     if (symbol)
     {
       std::stringstream stream;
@@ -381,21 +372,21 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const & parent_block_node,
   BuildBlock(function_definition_node);
 }
 
-void Analyser::BuildWhileStatement(BlockNodePtr const & while_statement_node)
+void Analyser::BuildWhileStatement(BlockNodePtr const &while_statement_node)
 {
   while_statement_node->symbol_table = CreateSymbolTable();
   BuildBlock(while_statement_node);
 }
 
-void Analyser::BuildForStatement(BlockNodePtr const & for_statement_node)
+void Analyser::BuildForStatement(BlockNodePtr const &for_statement_node)
 {
   for_statement_node->symbol_table = CreateSymbolTable();
   BuildBlock(for_statement_node);
 }
 
-void Analyser::BuildIfStatement(NodePtr const & if_statement_node)
+void Analyser::BuildIfStatement(NodePtr const &if_statement_node)
 {
-  for (NodePtr const & child : if_statement_node->children)
+  for (NodePtr const &child : if_statement_node->children)
   {
     BlockNodePtr block_node  = ConvertToBlockNodePtr(child);
     block_node->symbol_table = CreateSymbolTable();
@@ -403,7 +394,7 @@ void Analyser::BuildIfStatement(NodePtr const & if_statement_node)
   }
 }
 
-void Analyser::AnnotateBlock(BlockNodePtr const & block_node)
+void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 {
   blocks_.push_back(block_node);
   bool const is_loop = ((block_node->kind == Node::Kind::WhileStatement) ||
@@ -412,7 +403,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const & block_node)
   {
     loops_.push_back(block_node);
   }
-  for (NodePtr const & child : block_node->block_children)
+  for (NodePtr const &child : block_node->block_children)
   {
     switch (child->kind)
     {
@@ -482,7 +473,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const & block_node)
       AnnotateExpression(ConvertToExpressionNodePtr(child));
       break;
     }
-    } // switch
+    }  // switch
   }
   if (is_loop)
   {
@@ -491,7 +482,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const & block_node)
   blocks_.pop_back();
 }
 
-void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const & function_definition_node)
+void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node)
 {
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[0]);
@@ -511,20 +502,20 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const & function
   function_ = nullptr;
 }
 
-void Analyser::AnnotateWhileStatement(BlockNodePtr const & while_statement_node)
+void Analyser::AnnotateWhileStatement(BlockNodePtr const &while_statement_node)
 {
   AnnotateConditionalBlock(while_statement_node);
 }
 
-void Analyser::AnnotateForStatement(BlockNodePtr const & for_statement_node)
+void Analyser::AnnotateForStatement(BlockNodePtr const &for_statement_node)
 {
-  ExpressionNodePtr   identifier_node = ConvertToExpressionNodePtr(for_statement_node->children[0]);
-  std::string const & name            = identifier_node->token.text;
+  ExpressionNodePtr  identifier_node = ConvertToExpressionNodePtr(for_statement_node->children[0]);
+  std::string const &name            = identifier_node->token.text;
   // Note: variable is created with no type
   VariablePtr variable = CreateVariable(name, Variable::Category::For);
   for_statement_node->symbol_table->Add(name, variable);
   identifier_node->variable            = variable;
-  size_t const count                   = for_statement_node->children.size() - 1;
+  size_t const                   count = for_statement_node->children.size() - 1;
   std::vector<ExpressionNodePtr> nodes;
   int                            problems = 0;
   for (size_t i = 1; i <= count; ++i)
@@ -568,9 +559,9 @@ void Analyser::AnnotateForStatement(BlockNodePtr const & for_statement_node)
   AnnotateBlock(for_statement_node);
 }
 
-void Analyser::AnnotateIfStatement(NodePtr const & if_statement_node)
+void Analyser::AnnotateIfStatement(NodePtr const &if_statement_node)
 {
-  for (NodePtr const & child : if_statement_node->children)
+  for (NodePtr const &child : if_statement_node->children)
   {
     BlockNodePtr child_block_node = ConvertToBlockNodePtr(child);
     if (child_block_node->kind != Node::Kind::Else)
@@ -584,12 +575,12 @@ void Analyser::AnnotateIfStatement(NodePtr const & if_statement_node)
   }
 }
 
-void Analyser::AnnotateVarStatement(BlockNodePtr const & parent_block_node,
-                                    NodePtr const &      var_statement_node)
+void Analyser::AnnotateVarStatement(BlockNodePtr const &parent_block_node,
+                                    NodePtr const &     var_statement_node)
 {
-  ExpressionNodePtr   identifier_node = ConvertToExpressionNodePtr(var_statement_node->children[0]);
-  std::string const & name            = identifier_node->token.text;
-  SymbolPtr           symbol          = parent_block_node->symbol_table->Find(name);
+  ExpressionNodePtr  identifier_node = ConvertToExpressionNodePtr(var_statement_node->children[0]);
+  std::string const &name            = identifier_node->token.text;
+  SymbolPtr          symbol          = parent_block_node->symbol_table->Find(name);
   if (symbol)
   {
     AddError(identifier_node->token, "variable '" + name + "' is already defined");
@@ -658,7 +649,7 @@ void Analyser::AnnotateVarStatement(BlockNodePtr const & parent_block_node,
   }
 }
 
-void Analyser::AnnotateReturnStatement(NodePtr const & return_statement_node)
+void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
 {
   if (return_statement_node->children.size() == 1)
   {
@@ -699,7 +690,7 @@ void Analyser::AnnotateReturnStatement(NodePtr const & return_statement_node)
   }
 }
 
-void Analyser::AnnotateConditionalBlock(BlockNodePtr const & conditional_node)
+void Analyser::AnnotateConditionalBlock(BlockNodePtr const &conditional_node)
 {
   ExpressionNodePtr expression_node = ConvertToExpressionNodePtr(conditional_node->children[0]);
   if (AnnotateExpression(expression_node))
@@ -712,7 +703,7 @@ void Analyser::AnnotateConditionalBlock(BlockNodePtr const & conditional_node)
   AnnotateBlock(conditional_node);
 }
 
-bool Analyser::AnnotateTypeExpression(ExpressionNodePtr const & node)
+bool Analyser::AnnotateTypeExpression(ExpressionNodePtr const &node)
 {
   TypePtr type = FindType(node);
   if (type == nullptr)
@@ -724,9 +715,9 @@ bool Analyser::AnnotateTypeExpression(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateAssignOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -768,9 +759,9 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateArithmeticAssignOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateArithmeticAssignOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -792,7 +783,7 @@ bool Analyser::AnnotateArithmeticAssignOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateExpression(ExpressionNodePtr const & node)
+bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
 {
   switch (node->kind)
   {
@@ -963,13 +954,13 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const & node)
     AddError(node->token, "internal error at '" + node->token.text + "'");
     return false;
   }
-  } // switch
+  }  // switch
   return true;
 }
 
-bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -1029,9 +1020,9 @@ bool Analyser::AnnotateEqualityOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -1054,9 +1045,9 @@ bool Analyser::AnnotateRelationalOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -1074,7 +1065,7 @@ bool Analyser::AnnotateBinaryLogicalOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
   if (AnnotateExpression(operand) == false)
@@ -1090,7 +1081,7 @@ bool Analyser::AnnotateUnaryLogicalOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateIncDecOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateIncDecOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
   if (AnnotateExpression(operand) == false)
@@ -1110,7 +1101,7 @@ bool Analyser::AnnotateIncDecOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateUnaryMinusOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateUnaryMinusOp(ExpressionNodePtr const &node)
 {
   Node::Kind const  op      = node->kind;
   ExpressionNodePtr operand = ConvertToExpressionNodePtr(node->children[0]);
@@ -1127,9 +1118,9 @@ bool Analyser::AnnotateUnaryMinusOp(ExpressionNodePtr const & node)
   return false;
 }
 
-bool Analyser::AnnotateArithmeticOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateArithmeticOp(ExpressionNodePtr const &node)
 {
-  for (NodePtr const & child : node->children)
+  for (NodePtr const &child : node->children)
   {
     if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
     {
@@ -1147,7 +1138,7 @@ bool Analyser::AnnotateArithmeticOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateIndexOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   if ((lhs->kind == Node::Kind::Identifier) || (lhs->kind == Node::Kind::Template))
@@ -1206,8 +1197,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const & node)
   size_t const num_supplied_indexes = node->children.size() - 1;
   if (num_supplied_indexes != num_expected_indexes)
   {
-     AddError(lhs->token, "incorrect number of operands for index operator");
-     return false;
+    AddError(lhs->token, "incorrect number of operands for index operator");
+    return false;
   }
 
   TypePtrArray supplied_index_types;
@@ -1223,8 +1214,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const & node)
   }
 
   TypePtrArray actual_index_types;
-  bool const match = MatchTypes(lhs->type, supplied_index_types, type->index_input_types,
-                                actual_index_types);
+  bool const   match =
+      MatchTypes(lhs->type, supplied_index_types, type->index_input_types, actual_index_types);
   if (match == false)
   {
     AddError(lhs->token, "incorrect operands for index operator");
@@ -1243,11 +1234,11 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const & node)
   return true;
 }
 
-bool Analyser::AnnotateDotOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateDotOp(ExpressionNodePtr const &node)
 {
-  ExpressionNodePtr   lhs         = ConvertToExpressionNodePtr(node->children[0]);
-  ExpressionNodePtr   rhs         = ConvertToExpressionNodePtr(node->children[1]);
-  std::string const & member_name = rhs->token.text;
+  ExpressionNodePtr  lhs         = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr  rhs         = ConvertToExpressionNodePtr(node->children[1]);
+  std::string const &member_name = rhs->token.text;
   if ((lhs->kind == Node::Kind::Identifier) || (lhs->kind == Node::Kind::Template))
   {
     SymbolPtr symbol = FindSymbol(lhs);
@@ -1339,7 +1330,7 @@ bool Analyser::AnnotateDotOp(ExpressionNodePtr const & node)
   }
 }
 
-bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const & node)
+bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
 {
   ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
   if ((lhs->kind == Node::Kind::Identifier) || (lhs->kind == Node::Kind::Template))
@@ -1396,8 +1387,8 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const & node)
     // opcode-invoked type function
     // opcode-invoked instance function
     TypePtrArray actual_parameter_types;
-    FunctionPtr  f = FindFunction(lhs->type, lhs->fg, supplied_parameter_types,
-                                  actual_parameter_types);
+    FunctionPtr  f =
+        FindFunction(lhs->type, lhs->fg, supplied_parameter_types, actual_parameter_types);
     if (f == nullptr)
     {
       // No matching function, or ambiguous
@@ -1461,8 +1452,7 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const & node)
     }
     FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
     TypePtrArray     actual_parameter_types;
-    FunctionPtr      f = FindFunction(lhs->type, fg, supplied_parameter_types,
-                                      actual_parameter_types);
+    FunctionPtr f = FindFunction(lhs->type, fg, supplied_parameter_types, actual_parameter_types);
     if (f == nullptr)
     {
       // No matching constructor, or ambiguous
@@ -1493,9 +1483,9 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const & node)
 }
 
 // Returns true if control is able to reach the end of the block
-bool Analyser::TestBlock(BlockNodePtr const & block_node)
+bool Analyser::TestBlock(BlockNodePtr const &block_node)
 {
-  for (NodePtr const & child : block_node->block_children)
+  for (NodePtr const &child : block_node->block_children)
   {
     switch (child->kind)
     {
@@ -1511,7 +1501,7 @@ bool Analyser::TestBlock(BlockNodePtr const & block_node)
       if (got_else)
       {
         bool able_to_reach_end_of_if_statement = false;
-        for (NodePtr const & nodeptr : child->children)
+        for (NodePtr const &nodeptr : child->children)
         {
           BlockNodePtr node                             = ConvertToBlockNodePtr(nodeptr);
           bool const   able_to_reach_reach_end_of_block = TestBlock(node);
@@ -1534,13 +1524,13 @@ bool Analyser::TestBlock(BlockNodePtr const & block_node)
     {
       break;
     }
-    } // switch
+    }  // switch
   }
   // No child returned false, so we are indeed able to reach the end of the block
   return true;
 }
 
-bool Analyser::IsWriteable(ExpressionNodePtr const & lhs)
+bool Analyser::IsWriteable(ExpressionNodePtr const &lhs)
 {
   if ((lhs->category != ExpressionNode::Category::Variable) &&
       (lhs->category != ExpressionNode::Category::LV))
@@ -1560,9 +1550,8 @@ bool Analyser::IsWriteable(ExpressionNodePtr const & lhs)
   return true;
 }
 
-TypePtr Analyser::IsCompatible(ExpressionNodePtr const & node,
-                               ExpressionNodePtr const & lhs,
-                               ExpressionNodePtr const & rhs)
+TypePtr Analyser::IsCompatible(ExpressionNodePtr const &node, ExpressionNodePtr const &lhs,
+                               ExpressionNodePtr const &rhs)
 {
   Node::Kind const op = node->kind;
   if ((lhs->type->id == TypeIds::Void) || (lhs->type->id == TypeIds::Null))
@@ -1594,7 +1583,7 @@ TypePtr Analyser::IsCompatible(ExpressionNodePtr const & node,
       // primitive op object
       if (rhs_is_instantiation && IsLeftOpEnabled(rhs->type, op))
       {
-        TypePtr const & rhs_type = rhs->type->types[0];
+        TypePtr const &rhs_type = rhs->type->types[0];
         if (lhs->type == rhs_type)
         {
           return rhs->type;
@@ -1609,7 +1598,7 @@ TypePtr Analyser::IsCompatible(ExpressionNodePtr const & node,
       // object op primitive
       if (lhs_is_instantiation && IsRightOpEnabled(lhs->type, op))
       {
-        TypePtr const & lhs_type = lhs->type->types[0];
+        TypePtr const &lhs_type = lhs->type->types[0];
         if (lhs_type == rhs->type)
         {
           return lhs->type;
@@ -1629,7 +1618,7 @@ TypePtr Analyser::IsCompatible(ExpressionNodePtr const & node,
   return nullptr;
 }
 
-TypePtr Analyser::ConvertType(TypePtr const & type, TypePtr const & instantiated_template_type)
+TypePtr Analyser::ConvertType(TypePtr const &type, TypePtr const &instantiated_template_type)
 {
   TypePtr converted_type;
   if (type->category == TypeCategory::Template)
@@ -1651,11 +1640,11 @@ TypePtr Analyser::ConvertType(TypePtr const & type, TypePtr const & instantiated
   return converted_type;
 }
 
-bool Analyser::MatchType(TypePtr const & supplied_type, TypePtr const & expected_type) const
+bool Analyser::MatchType(TypePtr const &supplied_type, TypePtr const &expected_type) const
 {
   if (expected_type->category == TypeCategory::Variant)
   {
-    for (auto const & possible_type : expected_type->types)
+    for (auto const &possible_type : expected_type->types)
     {
       if (supplied_type == possible_type)
       {
@@ -1670,10 +1659,8 @@ bool Analyser::MatchType(TypePtr const & supplied_type, TypePtr const & expected
   return false;
 }
 
-bool Analyser::MatchTypes(TypePtr const &      type,
-                          TypePtrArray const & supplied_types,
-                          TypePtrArray const & expected_types,
-                          TypePtrArray &       actual_types)
+bool Analyser::MatchTypes(TypePtr const &type, TypePtrArray const &supplied_types,
+                          TypePtrArray const &expected_types, TypePtrArray &actual_types)
 {
   actual_types.clear();
   size_t const num_types = expected_types.size();
@@ -1684,7 +1671,7 @@ bool Analyser::MatchTypes(TypePtr const &      type,
   }
   for (size_t i = 0; i < num_types; ++i)
   {
-    TypePtr const & supplied_type = supplied_types[i];
+    TypePtr const &supplied_type = supplied_types[i];
     if (supplied_type->id == TypeIds::Void)
     {
       // Not a match
@@ -1714,15 +1701,13 @@ bool Analyser::MatchTypes(TypePtr const &      type,
   return true;
 }
 
-FunctionPtr Analyser::FindFunction(TypePtr const &          type,
-                                   FunctionGroupPtr const & fg,
-                                   TypePtrArray const    &  supplied_types,
-                                   TypePtrArray &           actual_types)
+FunctionPtr Analyser::FindFunction(TypePtr const &type, FunctionGroupPtr const &fg,
+                                   TypePtrArray const &supplied_types, TypePtrArray &actual_types)
 {
   // type is nullptr if fg is a user function or is an opcode-invoked free function
   FunctionPtrArray          functions;
   std::vector<TypePtrArray> array;
-  for (FunctionPtr const & function : fg->functions)
+  for (FunctionPtr const &function : fg->functions)
   {
     TypePtrArray temp_actual_types;
     if (MatchTypes(type, supplied_types, function->parameter_types, temp_actual_types))
@@ -1740,7 +1725,7 @@ FunctionPtr Analyser::FindFunction(TypePtr const &          type,
   return nullptr;
 }
 
-TypePtr Analyser::FindType(ExpressionNodePtr const & node)
+TypePtr Analyser::FindType(ExpressionNodePtr const &node)
 {
   SymbolPtr symbol = FindSymbol(node);
   if (symbol == nullptr)
@@ -1754,7 +1739,7 @@ TypePtr Analyser::FindType(ExpressionNodePtr const & node)
   return ConvertToTypePtr(symbol);
 }
 
-SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const & node)
+SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const &node)
 {
   SymbolPtr symbol;
   if (node->kind == Node::Kind::Template)
@@ -1765,15 +1750,15 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const & node)
       // Template instantiation already exists
       return ConvertToTypePtr(symbol);
     }
-    ExpressionNodePtr   identifier_node = ConvertToExpressionNodePtr(node->children[0]);
-    std::string const & name            = identifier_node->token.text;
-    symbol                              = SearchSymbolTables(name);
+    ExpressionNodePtr  identifier_node = ConvertToExpressionNodePtr(node->children[0]);
+    std::string const &name            = identifier_node->token.text;
+    symbol                             = SearchSymbolTables(name);
     if (symbol == nullptr)
     {
       // Template type doesn't exist
       return nullptr;
     }
-    TypePtr template_type = ConvertToTypePtr(symbol);
+    TypePtr      template_type                = ConvertToTypePtr(symbol);
     size_t const num_supplied_parameter_types = node->children.size() - 1;
     size_t const num_expected_parameter_types = template_type->types.size();
     TypePtrArray parameter_types;
@@ -1781,15 +1766,15 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const & node)
     {
       return nullptr;
     }
-    for (size_t i=1; i<=num_expected_parameter_types; ++i)
+    for (size_t i = 1; i <= num_expected_parameter_types; ++i)
     {
       ExpressionNodePtr parameter_type_node = ConvertToExpressionNodePtr(node->children[i]);
-      TypePtr           parameter_type = FindType(parameter_type_node);
+      TypePtr           parameter_type      = FindType(parameter_type_node);
       if (parameter_type == nullptr)
       {
         return nullptr;
       }
-      TypePtr const & expected_parameter_type = template_type->types[i-1];
+      TypePtr const &expected_parameter_type = template_type->types[i - 1];
       if (expected_parameter_type->id != TypeIds::Any)
       {
         if (MatchType(parameter_type, expected_parameter_type) == false)
@@ -1800,14 +1785,14 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const & node)
       parameter_types.push_back(parameter_type);
     }
     TypePtr type;
-    CreateTemplateInstantiationType(next_instantiation_type_id_++, template_type,
-                                    parameter_types, type);
+    CreateTemplateInstantiationType(next_instantiation_type_id_++, template_type, parameter_types,
+                                    type);
     return type;
   }
   else  // (node->kind == Node::Kind::Identifier)
   {
-    std::string const & name = node->token.text;
-    symbol                   = SearchSymbolTables(name);
+    std::string const &name = node->token.text;
+    symbol                  = SearchSymbolTables(name);
     if (symbol)
     {
       return symbol;
@@ -1816,7 +1801,7 @@ SymbolPtr Analyser::FindSymbol(ExpressionNodePtr const & node)
   }
 }
 
-SymbolPtr Analyser::SearchSymbolTables(std::string const & name)
+SymbolPtr Analyser::SearchSymbolTables(std::string const &name)
 {
   SymbolPtr symbol = global_symbol_table_->Find(name);
   if (symbol)
@@ -1827,8 +1812,8 @@ SymbolPtr Analyser::SearchSymbolTables(std::string const & name)
   auto end = blocks_.rend();
   while (it != end)
   {
-    BlockNodePtr const & block_node = *it;
-    symbol                          = block_node->symbol_table->Find(name);
+    BlockNodePtr const &block_node = *it;
+    symbol                         = block_node->symbol_table->Find(name);
     if (symbol)
     {
       return symbol;
@@ -1839,7 +1824,7 @@ SymbolPtr Analyser::SearchSymbolTables(std::string const & name)
   return nullptr;
 }
 
-void Analyser::SetVariable(ExpressionNodePtr const & node, VariablePtr const & variable)
+void Analyser::SetVariable(ExpressionNodePtr const &node, VariablePtr const &variable)
 {
   node->category = ExpressionNode::Category::Variable;
   node->variable = variable;
@@ -1848,7 +1833,7 @@ void Analyser::SetVariable(ExpressionNodePtr const & node, VariablePtr const & v
   node->function = nullptr;
 }
 
-void Analyser::SetLV(ExpressionNodePtr const & node, TypePtr const & type)
+void Analyser::SetLV(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->category = ExpressionNode::Category::LV;
   node->variable = nullptr;
@@ -1857,7 +1842,7 @@ void Analyser::SetLV(ExpressionNodePtr const & node, TypePtr const & type)
   node->function = nullptr;
 }
 
-void Analyser::SetRV(ExpressionNodePtr const & node, TypePtr const & type)
+void Analyser::SetRV(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->category = ExpressionNode::Category::RV;
   node->variable = nullptr;
@@ -1866,7 +1851,7 @@ void Analyser::SetRV(ExpressionNodePtr const & node, TypePtr const & type)
   node->function = nullptr;
 }
 
-void Analyser::SetType(ExpressionNodePtr const & node, TypePtr const & type)
+void Analyser::SetType(ExpressionNodePtr const &node, TypePtr const &type)
 {
   node->category = ExpressionNode::Category::Type;
   node->variable = nullptr;
@@ -1875,10 +1860,8 @@ void Analyser::SetType(ExpressionNodePtr const & node, TypePtr const & type)
   node->function = nullptr;
 }
 
-void Analyser::SetFunction(ExpressionNodePtr const & node,
-                           FunctionGroupPtr const &  fg,
-                           TypePtr const &           fg_owner,
-                           bool                      function_invoked_on_instance)
+void Analyser::SetFunction(ExpressionNodePtr const &node, FunctionGroupPtr const &fg,
+                           TypePtr const &fg_owner, bool function_invoked_on_instance)
 {
   node->category                     = ExpressionNode::Category::Function;
   node->variable                     = nullptr;
@@ -1888,16 +1871,14 @@ void Analyser::SetFunction(ExpressionNodePtr const & node,
   node->function                     = nullptr;
 }
 
-void Analyser::CreateMetaType(std::string const & name, TypeId id, TypePtr & type)
+void Analyser::CreateMetaType(std::string const &name, TypeId id, TypePtr &type)
 {
   type = CreateType(name, id, TypeCategory::Meta);
   AddType(id, type, TypeInfo(name, id, TypeCategory::Meta, {}));
 }
 
-void Analyser::CreatePrimitiveType(std::string const & name,
-                                  TypeId               id,
-                                  bool                 add_to_global_symbol_table,
-                                  TypePtr &            type)
+void Analyser::CreatePrimitiveType(std::string const &name, TypeId id,
+                                   bool add_to_global_symbol_table, TypePtr &type)
 {
   type = CreateType(name, id, TypeCategory::Primitive);
   AddType(id, type, TypeInfo(name, id, TypeCategory::Primitive, {}));
@@ -1907,7 +1888,7 @@ void Analyser::CreatePrimitiveType(std::string const & name,
   }
 }
 
-void Analyser::CreateClassType(std::string const & name, TypeId id, TypePtr & type)
+void Analyser::CreateClassType(std::string const &name, TypeId id, TypePtr &type)
 {
   type = CreateType(name, id, TypeCategory::Class);
   AddType(id, type, TypeInfo(name, id, TypeCategory::Class, {}));
@@ -1915,10 +1896,8 @@ void Analyser::CreateClassType(std::string const & name, TypeId id, TypePtr & ty
   global_symbol_table_->Add(name, type);
 }
 
-void Analyser::CreateTemplateType(std::string const & name,
-                                 TypeId               id,
-                                 TypePtrArray const & allowed_types,
-                                 TypePtr &            type)
+void Analyser::CreateTemplateType(std::string const &name, TypeId id,
+                                  TypePtrArray const &allowed_types, TypePtr &type)
 {
   type = CreateType(name, id, TypeCategory::Template);
   AddType(id, type, TypeInfo(name, id, TypeCategory::Template, {}));
@@ -1927,40 +1906,35 @@ void Analyser::CreateTemplateType(std::string const & name,
   global_symbol_table_->Add(name, type);
 }
 
-void Analyser::CreateTemplateInstantiationType(TypeId               id,
-                                               TypePtr const &      template_type,
-                                               TypePtrArray const & parameter_types,
-                                               TypePtr &            type)
+void Analyser::CreateTemplateInstantiationType(TypeId id, TypePtr const &template_type,
+                                               TypePtrArray const &parameter_types, TypePtr &type)
 {
   TypeIdArray parameter_type_ids;
-  for (TypePtr const & parameter_type : parameter_types)
+  for (TypePtr const &parameter_type : parameter_types)
   {
     parameter_type_ids.push_back(parameter_type->id);
   }
-  InternalCreateTemplateInstantiationType(id, template_type, parameter_types,
-                                          parameter_type_ids, type);
+  InternalCreateTemplateInstantiationType(id, template_type, parameter_types, parameter_type_ids,
+                                          type);
 }
 
-void Analyser::CreateVariantType(std::string const &  name,
-                                 TypeId               id,
-                                 TypePtrArray const & allowed_types,
-                                 TypePtr &            type)
+void Analyser::CreateVariantType(std::string const &name, TypeId id,
+                                 TypePtrArray const &allowed_types, TypePtr &type)
 {
   type = CreateType(name, id, TypeCategory::Variant);
   AddType(id, type, TypeInfo(name, id, TypeCategory::Variant, {}));
   type->types = allowed_types;
 }
 
-void Analyser::InternalCreateTemplateInstantiationType(TypeId               id,
-                                                       TypePtr const &      template_type,
-                                                       TypePtrArray const & parameter_types,
-                                                       TypeIdArray const &  parameter_type_ids,
-                                                       TypePtr &            type)
+void Analyser::InternalCreateTemplateInstantiationType(TypeId id, TypePtr const &template_type,
+                                                       TypePtrArray const &parameter_types,
+                                                       TypeIdArray const & parameter_type_ids,
+                                                       TypePtr &           type)
 {
   std::stringstream stream;
   stream << template_type->name + "<";
   size_t const last = parameter_types.size() - 1;
-  for (size_t i=0; i<=last; ++i)
+  for (size_t i = 0; i <= last; ++i)
   {
     stream << parameter_types[i]->name;
     if (i < last)
@@ -1977,51 +1951,45 @@ void Analyser::InternalCreateTemplateInstantiationType(TypeId               id,
   global_symbol_table_->Add(name, type);
 }
 
-void Analyser::CreateOpcodeFreeFunction(std::string const &  name,
-                                        Opcode               opcode,
-                                        TypePtrArray const & parameter_types,
-                                        TypePtr const &      return_type)
+void Analyser::CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
+                                        TypePtrArray const &parameter_types,
+                                        TypePtr const &     return_type)
 {
-  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeFreeFunction,
-                                       opcode, parameter_types, return_type);
+  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeFreeFunction, opcode,
+                                       parameter_types, return_type);
   AddFunction(global_symbol_table_, f);
 }
 
-void Analyser::CreateOpcodeTypeConstructor(TypePtr const &      type,
-                                           Opcode               opcode,
-                                           TypePtrArray const & parameter_types)
+void Analyser::CreateOpcodeTypeConstructor(TypePtr const &type, Opcode opcode,
+                                           TypePtrArray const &parameter_types)
 {
-  FunctionPtr f = CreateOpcodeFunction(CONSTRUCTOR, Function::Kind::OpcodeTypeFunction,
-                                       opcode, parameter_types, type);
+  FunctionPtr f = CreateOpcodeFunction(CONSTRUCTOR, Function::Kind::OpcodeTypeFunction, opcode,
+                                       parameter_types, type);
   AddFunction(type->symbol_table, f);
 }
 
-void Analyser::CreateOpcodeTypeFunction(TypePtr const &      type,
-                                        std::string const &  name,
-                                        Opcode               opcode,
-                                        TypePtrArray const & parameter_types,
-                                        TypePtr const &      return_type)
+void Analyser::CreateOpcodeTypeFunction(TypePtr const &type, std::string const &name, Opcode opcode,
+                                        TypePtrArray const &parameter_types,
+                                        TypePtr const &     return_type)
 {
-  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeTypeFunction,
-                                       opcode, parameter_types, return_type);
+  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeTypeFunction, opcode,
+                                       parameter_types, return_type);
   AddFunction(type->symbol_table, f);
 }
 
-void Analyser::CreateOpcodeInstanceFunction(TypePtr const &      type,
-                                            std::string const &  name,
-                                            Opcode               opcode,
-                                            TypePtrArray const & parameter_types,
-                                            TypePtr const &      return_type)
+void Analyser::CreateOpcodeInstanceFunction(TypePtr const &type, std::string const &name,
+                                            Opcode opcode, TypePtrArray const &parameter_types,
+                                            TypePtr const &return_type)
 {
-  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeInstanceFunction,
-                                       opcode, parameter_types, return_type);
+  FunctionPtr f = CreateOpcodeFunction(name, Function::Kind::OpcodeInstanceFunction, opcode,
+                                       parameter_types, return_type);
   AddFunction(type->symbol_table, f);
 }
 
-FunctionPtr Analyser::CreateUserFunction(std::string const &      name,
-                                         TypePtrArray const &     parameter_types,
-                                         VariablePtrArray const & parameter_variables,
-                                         TypePtr const &          return_type)
+FunctionPtr Analyser::CreateUserFunction(std::string const &     name,
+                                         TypePtrArray const &    parameter_types,
+                                         VariablePtrArray const &parameter_variables,
+                                         TypePtr const &         return_type)
 {
   FunctionPtr function          = CreateFunction(name, Function::Kind::UserFreeFunction);
   function->opcode              = Opcodes::Unknown;
@@ -2032,11 +2000,9 @@ FunctionPtr Analyser::CreateUserFunction(std::string const &      name,
   return function;
 }
 
-FunctionPtr Analyser::CreateOpcodeFunction(std::string const &  name,
-                                           Function::Kind       kind,
-                                           Opcode               opcode,
-                                           TypePtrArray const & parameter_types,
-                                           TypePtr const &      return_type)
+FunctionPtr Analyser::CreateOpcodeFunction(std::string const &name, Function::Kind kind,
+                                           Opcode opcode, TypePtrArray const &parameter_types,
+                                           TypePtr const &return_type)
 {
   FunctionPtr function      = CreateFunction(name, kind);
   function->opcode          = opcode;
@@ -2046,7 +2012,7 @@ FunctionPtr Analyser::CreateOpcodeFunction(std::string const &  name,
   return function;
 }
 
-void Analyser::AddFunction(SymbolTablePtr const & symbol_table, FunctionPtr const & function)
+void Analyser::AddFunction(SymbolTablePtr const &symbol_table, FunctionPtr const &function)
 {
   FunctionGroupPtr fg;
   SymbolPtr        symbol = symbol_table->Find(function->name);
@@ -2065,5 +2031,5 @@ void Analyser::AddFunction(SymbolTablePtr const & symbol_table, FunctionPtr cons
   fg->functions.push_back(function);
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

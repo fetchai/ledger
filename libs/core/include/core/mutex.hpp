@@ -42,7 +42,8 @@ public:
 };
 
 /**
- * The debug mutex acts like a normal mutex but also contains several other checks. This code is
+ * The debug mutex acts like a normal mutex but also contains several other
+ * checks. This code is
  * intended to be only used in software development.
  */
 class DebugMutex : public AbstractMutex

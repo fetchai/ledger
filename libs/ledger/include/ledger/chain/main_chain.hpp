@@ -263,7 +263,8 @@ public:
    * @param: starting_hash Block to start looking downwards from
    * @tparam: container Container to remove transactions from
    *
-   * @return: bool whether the starting hash referred to a valid block on a valid chain
+   * @return: bool whether the starting hash referred to a valid block on a
+   * valid chain
    */
   template <typename T>
   bool StripAlreadySeenTx(BlockHash starting_hash, T &container)
@@ -323,7 +324,8 @@ public:
       // Reomve this item from our container if is duplicate
       while (it != container.end())
       {
-        // We expect the number of duplicates to be low so vector search should be fine
+        // We expect the number of duplicates to be low so vector search should
+        // be fine
         if (std::find(transactions_duplicated.begin(), transactions_duplicated.end(),
                       (*it).transaction) != transactions_duplicated.end())
         {
@@ -339,7 +341,8 @@ public:
     if (duplicated_counter != transactions_duplicated.size())
     {
       FETCH_LOG_WARN(LOGGING_NAME,
-                     "Warning! Duplicated transactions might not be removed from block. Seen: ",
+                     "Warning! Duplicated transactions might not "
+                     "be removed from block. Seen: ",
                      transactions_duplicated.size(), " Removed: ", duplicated_counter);
     }
 
@@ -464,8 +467,10 @@ private:
     return block_store_.Get(storage::ResourceID(block.body().previous_hash), block);
   }
 
-  // We have added a non-loose block. It is then safe to lock the loose blocks map and
-  // walk through it adding the blocks, so long as we do breadth first search (!!)
+  // We have added a non-loose block. It is then safe to lock the loose blocks
+  // map and
+  // walk through it adding the blocks, so long as we do breadth first search
+  // (!!)
   void CompleteLooseBlocks(BlockType const &block)
   {
     RLock lock_main(main_mutex_);
@@ -487,7 +492,8 @@ private:
     {
       std::vector<BlockHash> next_blocks_to_add;
 
-      // This is the breadth search, for each block to add, add it, next_blocks_to_add will
+      // This is the breadth search, for each block to add, add it,
+      // next_blocks_to_add will
       // get pushed with the next layer of blocks
       for (auto const &hash : blocks_to_add)
       {
@@ -525,11 +531,13 @@ private:
     block_chain_[block.hash()] = block;
   }
 
-  // Case where the block prev isn't found, need to check back in history, and add the prev to
+  // Case where the block prev isn't found, need to check back in history, and
+  // add the prev to
   // our cache. This might be expensive due to disk reads and hashing.
   bool CheckDiskForBlock(BlockType &block)
   {
-    // Only guaranteed way to calculate the weight of the block is to walk back to genesis
+    // Only guaranteed way to calculate the weight of the block is to walk back
+    // to genesis
     // is by walking backwards from one of our tips
     BlockType walk_block;
     BlockType prev_block;
@@ -542,7 +550,8 @@ private:
       return false;
     }
 
-    // The previous block is in our object store but we don't know its weight, need to recalculate
+    // The previous block is in our object store but we don't know its weight,
+    // need to recalculate
     walk_block            = prev_block;
     uint64_t total_weight = walk_block.totalWeight();
 
@@ -552,7 +561,8 @@ private:
       total_weight += walk_block.weight();
     }
 
-    // We should now have an up to date prev block from file, put it in our cached blockchain and
+    // We should now have an up to date prev block from file, put it in our
+    // cached blockchain and
     // re-add
     FETCH_LOG_DEBUG(LOGGING_NAME, "Reviving block from file");
     {

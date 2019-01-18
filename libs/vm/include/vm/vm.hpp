@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/defs.hpp"
-#include "vm/string.hpp"
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
+#include "vm/defs.hpp"
+#include "vm/string.hpp"
 
 namespace fetch {
 namespace vm {
@@ -45,22 +45,22 @@ struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
   }
 };
 
-template <int POSITION, typename ...Ts>
+template <int POSITION, typename... Ts>
 struct AssignParameters;
-template <int POSITION, typename T, typename ...Ts>
+template <int POSITION, typename T, typename... Ts>
 struct AssignParameters<POSITION, T, Ts...>
 {
   // Invoked on non-final parameter
-  static void Assign(Variant *stack, RegisteredTypes & types, T const & parameter,
-                     Ts const & ... parameters)
+  static void Assign(Variant *stack, RegisteredTypes &types, T const &parameter,
+                     Ts const &... parameters)
   {
     TypeIndex type_index = Getter<T>::GetTypeIndex();
     TypeId    type_id    = types.GetTypeId(type_index);
     if (type_id != TypeIds::Unknown)
     {
-      Variant & v          = stack[POSITION];
+      Variant &v = stack[POSITION];
       v.Assign(parameter, type_id);
-      AssignParameters<POSITION+1, Ts...>::Assign(stack, types, parameters...);
+      AssignParameters<POSITION + 1, Ts...>::Assign(stack, types, parameters...);
     }
   }
 };
@@ -68,13 +68,13 @@ template <int POSITION, typename T>
 struct AssignParameters<POSITION, T>
 {
   // Invoked on final parameter
-  static void Assign(Variant *stack, RegisteredTypes & types, T const & parameter)
+  static void Assign(Variant *stack, RegisteredTypes &types, T const &parameter)
   {
     TypeIndex type_index = Getter<T>::GetTypeIndex();
     TypeId    type_id    = types.GetTypeId(type_index);
     if (type_id != TypeIds::Unknown)
     {
-      Variant & v          = stack[POSITION];
+      Variant &v = stack[POSITION];
       v.Assign(parameter, type_id);
     }
   }
@@ -87,7 +87,6 @@ struct AssignParameters<POSITION>
   {}
 };
 
-
 // Forward declarations
 class Module;
 
@@ -97,12 +96,9 @@ public:
   VM(Module *module);
   ~VM() = default;
 
-  template <typename ...Ts>
-  bool Execute(Script const &      script,
-               std::string const & name,
-               std::string &       error,
-               Variant &           output,
-               Ts const & ...      parameters)
+  template <typename... Ts>
+  bool Execute(Script const &script, std::string const &name, std::string &error, Variant &output,
+               Ts const &... parameters)
   {
     Script::Function const *f = script.FindFunction(name);
     if (f == nullptr)
@@ -135,7 +131,6 @@ public:
   }
 
 private:
-
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
@@ -143,9 +138,9 @@ private:
 
   struct Frame
   {
-    Script::Function const * function;
-    int                      bsp;
-    int                      pc;
+    Script::Function const *function;
+    int                     bsp;
+    int                     pc;
   };
 
   struct ForRangeLoop
@@ -163,67 +158,76 @@ private:
     int   scope_number;
   };
 
-  std::vector<OpcodeHandler>  opcode_handlers_;
-  RegisteredTypes             registered_types_;
-  Script::Function const *    function_;
-  std::vector<Ptr<String>>    strings_;
-  Frame                       frame_stack_[FRAME_STACK_SIZE];
-  int                         frame_sp_;
-  int                         bsp_;
+  std::vector<OpcodeHandler> opcode_handlers_;
+  RegisteredTypes            registered_types_;
+  Script::Function const *   function_;
+  std::vector<Ptr<String>>   strings_;
+  Frame                      frame_stack_[FRAME_STACK_SIZE];
+  int                        frame_sp_;
+  int                        bsp_;
 
-  template <typename T> friend struct StackGetter;
-  template <typename T> friend struct StackSetter;
-  template <typename T, typename S> friend struct TypeGetter;
-  template <typename T, typename S> friend struct ParameterTypeGetter;
-  template <typename ReturnType, typename FreeFunction, typename ...Ts> friend struct FreeFunctionInvokerHelper;
-  template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename ...Ts> friend struct InstanceFunctionInvokerHelper;
-  template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename ...Ts> friend struct TypeConstructorInvokerHelper;
-  template <typename ReturnType, typename TypeFunction, typename ...Ts> friend struct TypeFunctionInvokerHelper;
+  template <typename T>
+  friend struct StackGetter;
+  template <typename T>
+  friend struct StackSetter;
+  template <typename T, typename S>
+  friend struct TypeGetter;
+  template <typename T, typename S>
+  friend struct ParameterTypeGetter;
+  template <typename ReturnType, typename FreeFunction, typename... Ts>
+  friend struct FreeFunctionInvokerHelper;
+  template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename... Ts>
+  friend struct InstanceFunctionInvokerHelper;
+  template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename... Ts>
+  friend struct TypeConstructorInvokerHelper;
+  template <typename ReturnType, typename TypeFunction, typename... Ts>
+  friend struct TypeFunctionInvokerHelper;
+
 private:
-  Script const *              script_;
-  Variant                     stack_[STACK_SIZE];
-  int                         sp_;
+  Script const *script_;
+  Variant       stack_[STACK_SIZE];
+  int           sp_;
 
+  ForRangeLoop               range_loop_stack_[MAX_RANGE_LOOPS];
+  int                        range_loop_sp_;
+  LiveObjectInfo             live_object_stack_[MAX_LIVE_OBJECTS];
+  int                        live_object_sp_;
+  int                        pc_;
+  Script::Instruction const *instruction_;
+  bool                       stop_;
+  std::string                error_;
 
-  ForRangeLoop                range_loop_stack_[MAX_RANGE_LOOPS];
-  int                         range_loop_sp_;
-  LiveObjectInfo              live_object_stack_[MAX_LIVE_OBJECTS];
-  int                         live_object_sp_;
-  int                         pc_;
-  Script::Instruction const * instruction_;
-  bool                        stop_;
-  std::string                 error_;
-
-  bool Execute(std::string & error, Variant & output);
+  bool Execute(std::string &error, Variant &output);
   void Destruct(int scope_number);
 
-  Variant & Push()
+  Variant &Push()
   {
     return stack_[++sp_];
   }
 
-  Variant & Pop()
+  Variant &Pop()
   {
     return stack_[sp_--];
   }
 
-  Variant & Top()
+  Variant &Top()
   {
     return stack_[sp_];
   }
 
   // fix these -- should be private
 public:
-  void RuntimeError(std::string const & message);
-  TypeInfo const & GetTypeInfo(TypeId type_id)
+  void            RuntimeError(std::string const &message);
+  TypeInfo const &GetTypeInfo(TypeId type_id)
   {
     auto it = script_->type_info_table.find(type_id);
     return it->second;
   }
+
 private:
   // fix these
 
-  void AddOpcodeHandler(OpcodeHandlerInfo const & info)
+  void AddOpcodeHandler(OpcodeHandlerInfo const &info)
   {
     if (info.opcode >= opcode_handlers_.size())
     {
@@ -232,24 +236,24 @@ private:
     opcode_handlers_[info.opcode] = info.handler;
   }
 
-  void SetRegisteredTypes(RegisteredTypes const & registered_types)
+  void SetRegisteredTypes(RegisteredTypes const &registered_types)
   {
     registered_types_ = registered_types;
   }
 
-  Variant & GetVariable(Index variable_index)
+  Variant &GetVariable(Index variable_index)
   {
     return stack_[bsp_ + variable_index];
   }
 
   template <typename From, typename To>
-  void PerformCast(From const & from, To & to)
+  void PerformCast(From const &from, To &to)
   {
     to = static_cast<To>(from);
   }
 
   template <typename To>
-  void Cast(Variant & v, TypeId to_type_id, To & to)
+  void Cast(Variant &v, TypeId to_type_id, To &to)
   {
     TypeId from_type_id = v.type_id;
     v.type_id           = to_type_id;
@@ -314,13 +318,13 @@ private:
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 
   struct PrimitiveEqualOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -329,7 +333,7 @@ private:
   struct PrimitiveNotEqualOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsNotEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -338,7 +342,7 @@ private:
   struct PrimitiveLessThanOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsLessThan(lhs, rhs), TypeIds::Bool);
     }
@@ -347,7 +351,7 @@ private:
   struct PrimitiveLessThanOrEqualOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsLessThanOrEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -356,7 +360,7 @@ private:
   struct PrimitiveGreaterThanOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsGreaterThan(lhs, rhs), TypeIds::Bool);
     }
@@ -365,7 +369,7 @@ private:
   struct PrimitiveGreaterThanOrEqualOp
   {
     template <typename T>
-    static void Apply(Variant & lhsv, T & lhs, T & rhs)
+    static void Apply(Variant &lhsv, T &lhs, T &rhs)
     {
       lhsv.Assign(math::IsGreaterThanOrEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -374,7 +378,7 @@ private:
   struct PrefixIncOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       rhs = ++lhs;
     }
@@ -383,7 +387,7 @@ private:
   struct PrefixDecOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       rhs = --lhs;
     }
@@ -392,7 +396,7 @@ private:
   struct PostfixIncOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       rhs = lhs++;
     }
@@ -401,7 +405,7 @@ private:
   struct PostfixDecOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       rhs = lhs--;
     }
@@ -410,7 +414,7 @@ private:
   struct PrimitiveUnaryMinusOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & /* rhs */)
+    static void Apply(VM * /* vm */, T &lhs, T & /* rhs */)
     {
       lhs = T(-lhs);
     }
@@ -419,7 +423,7 @@ private:
   struct PrimitiveAddOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs + rhs);
     }
@@ -427,7 +431,7 @@ private:
 
   struct ObjectAddOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->AddOp(lhso, rhso);
     }
@@ -435,7 +439,7 @@ private:
 
   struct LeftAddOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftAddOp(lhsv, rhsv);
     }
@@ -443,7 +447,7 @@ private:
 
   struct RightAddOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.object->RightAddOp(lhsv, rhsv);
     }
@@ -451,7 +455,7 @@ private:
 
   struct ObjectAddAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->AddAssignOp(lhso, rhso);
     }
@@ -459,7 +463,7 @@ private:
 
   struct RightAddAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Variant & rhsv)
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->RightAddAssignOp(lhso, rhsv);
     }
@@ -468,7 +472,7 @@ private:
   struct PrimitiveSubtractOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs - rhs);
     }
@@ -476,7 +480,7 @@ private:
 
   struct ObjectSubtractOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->SubtractOp(lhso, rhso);
     }
@@ -484,7 +488,7 @@ private:
 
   struct LeftSubtractOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftSubtractOp(lhsv, rhsv);
     }
@@ -492,7 +496,7 @@ private:
 
   struct RightSubtractOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.object->RightSubtractOp(lhsv, rhsv);
     }
@@ -500,7 +504,7 @@ private:
 
   struct ObjectSubtractAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->SubtractAssignOp(lhso, rhso);
     }
@@ -508,7 +512,7 @@ private:
 
   struct RightSubtractAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Variant & rhsv)
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->RightSubtractAssignOp(lhso, rhsv);
     }
@@ -517,7 +521,7 @@ private:
   struct PrimitiveMultiplyOp
   {
     template <typename T>
-    static void Apply(VM * /* vm */, T & lhs, T & rhs)
+    static void Apply(VM * /* vm */, T &lhs, T &rhs)
     {
       lhs = T(lhs * rhs);
     }
@@ -525,7 +529,7 @@ private:
 
   struct ObjectMultiplyOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->MultiplyOp(lhso, rhso);
     }
@@ -533,7 +537,7 @@ private:
 
   struct LeftMultiplyOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftMultiplyOp(lhsv, rhsv);
     }
@@ -541,7 +545,7 @@ private:
 
   struct RightMultiplyOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.object->RightMultiplyOp(lhsv, rhsv);
     }
@@ -549,7 +553,7 @@ private:
 
   struct ObjectMultiplyAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->MultiplyAssignOp(lhso, rhso);
     }
@@ -557,7 +561,7 @@ private:
 
   struct RightMultiplyAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Variant & rhsv)
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->RightMultiplyAssignOp(lhso, rhsv);
     }
@@ -566,7 +570,7 @@ private:
   struct PrimitiveDivideOp
   {
     template <typename T>
-    static void Apply(VM *vm, T & lhs, T & rhs)
+    static void Apply(VM *vm, T &lhs, T &rhs)
     {
       if (math::IsNonZero(rhs))
       {
@@ -579,7 +583,7 @@ private:
 
   struct ObjectDivideOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->DivideOp(lhso, rhso);
     }
@@ -587,7 +591,7 @@ private:
 
   struct LeftDivideOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       rhsv.object->LeftDivideOp(lhsv, rhsv);
     }
@@ -595,7 +599,7 @@ private:
 
   struct RightDivideOp
   {
-    static void Apply(Variant & lhsv, Variant & rhsv)
+    static void Apply(Variant &lhsv, Variant &rhsv)
     {
       lhsv.object->RightDivideOp(lhsv, rhsv);
     }
@@ -603,7 +607,7 @@ private:
 
   struct ObjectDivideAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Ptr<Object> & rhso)
+    static void Apply(Ptr<Object> &lhso, Ptr<Object> &rhso)
     {
       lhso->DivideAssignOp(lhso, rhso);
     }
@@ -611,14 +615,14 @@ private:
 
   struct RightDivideAssignOp
   {
-    static void Apply(Ptr<Object> & lhso, Variant & rhsv)
+    static void Apply(Ptr<Object> &lhso, Variant &rhsv)
     {
       lhso->RightDivideAssignOp(lhso, rhsv);
     }
   };
 
   template <typename Op>
-  void ExecutePrimitiveLogicalOp(TypeId type_id, Variant & lhsv, Variant & rhsv)
+  void ExecutePrimitiveLogicalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -681,11 +685,11 @@ private:
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 
   template <typename Op>
-  void ExecutePrimitiveOp(TypeId type_id, Variant & lhsv, Variant & rhsv)
+  void ExecutePrimitiveOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     switch (type_id)
     {
@@ -743,76 +747,76 @@ private:
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 
   template <typename Op>
-  void ExecutePrimitiveAssignOp(TypeId type_id, void *lhs, Variant & rhsv)
+  void ExecutePrimitiveAssignOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
     switch (type_id)
     {
     case TypeIds::Int8:
     {
-      Op::Apply(this, *static_cast<int8_t*>(lhs), rhsv.primitive.i8);
+      Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
       break;
     }
     case TypeIds::Byte:
     {
-      Op::Apply(this, *static_cast<uint8_t*>(lhs), rhsv.primitive.ui8);
+      Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
       break;
     }
     case TypeIds::Int16:
     {
-      Op::Apply(this, *static_cast<int16_t*>(lhs), rhsv.primitive.i16);
+      Op::Apply(this, *static_cast<int16_t *>(lhs), rhsv.primitive.i16);
       break;
     }
     case TypeIds::UInt16:
     {
-      Op::Apply(this, *static_cast<uint16_t*>(lhs), rhsv.primitive.ui16);
+      Op::Apply(this, *static_cast<uint16_t *>(lhs), rhsv.primitive.ui16);
       break;
     }
     case TypeIds::Int32:
     {
-      Op::Apply(this, *static_cast<int32_t*>(lhs), rhsv.primitive.i32);
+      Op::Apply(this, *static_cast<int32_t *>(lhs), rhsv.primitive.i32);
       break;
     }
     case TypeIds::UInt32:
     {
-      Op::Apply(this, *static_cast<uint32_t*>(lhs), rhsv.primitive.ui32);
+      Op::Apply(this, *static_cast<uint32_t *>(lhs), rhsv.primitive.ui32);
       break;
     }
     case TypeIds::Int64:
     {
-      Op::Apply(this, *static_cast<int64_t*>(lhs), rhsv.primitive.i64);
+      Op::Apply(this, *static_cast<int64_t *>(lhs), rhsv.primitive.i64);
       break;
     }
     case TypeIds::UInt64:
     {
-      Op::Apply(this, *static_cast<uint64_t*>(lhs), rhsv.primitive.ui64);
+      Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
       break;
     }
     case TypeIds::Float32:
     {
-      Op::Apply(this, *static_cast<float*>(lhs), rhsv.primitive.f32);
+      Op::Apply(this, *static_cast<float *>(lhs), rhsv.primitive.f32);
       break;
     }
     case TypeIds::Float64:
     {
-      Op::Apply(this, *static_cast<double*>(lhs), rhsv.primitive.f64);
+      Op::Apply(this, *static_cast<double *>(lhs), rhsv.primitive.f64);
       break;
     }
     default:
     {
       break;
     }
-    } // switch
+    }  // switch
   }
 
   template <typename Op>
   void DoPrimitiveLogicalOp()
   {
-    Variant & rhsv = Pop();
-    Variant & lhsv = Top();
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
     ExecutePrimitiveLogicalOp<Op>(instruction_->type_id, lhsv, rhsv);
     rhsv.Reset();
   }
@@ -820,7 +824,7 @@ private:
   template <typename Op>
   void DoIncDecOp(TypeId type_id, void *lhs)
   {
-    Variant & rhsv = Push();
+    Variant &rhsv = Push();
     ExecutePrimitiveAssignOp<Op>(type_id, lhs, rhsv);
     rhsv.type_id = instruction_->type_id;
   }
@@ -828,14 +832,14 @@ private:
   template <typename Op>
   void DoVariableIncDecOp()
   {
-    Variant & variable = GetVariable(instruction_->index);
+    Variant &variable = GetVariable(instruction_->index);
     DoIncDecOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
   void DoElementIncDecOp()
   {
-    Variant & container = Pop();
+    Variant &container = Pop();
     if (container.object)
     {
       void *element = container.object->FindElement();
@@ -852,8 +856,8 @@ private:
   template <typename Op>
   void DoPrimitiveOp()
   {
-    Variant & rhsv = Pop();
-    Variant & lhsv = Top();
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
     ExecutePrimitiveOp<Op>(instruction_->type_id, lhsv, rhsv);
     rhsv.Reset();
   }
@@ -861,8 +865,8 @@ private:
   template <typename Op>
   void DoLeftOp()
   {
-    Variant & rhsv = Pop();
-    Variant & lhsv = Top();
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
     if (rhsv.object)
     {
       Op::Apply(lhsv, rhsv);
@@ -875,8 +879,8 @@ private:
   template <typename Op>
   void DoRightOp()
   {
-    Variant & rhsv = Pop();
-    Variant & lhsv = Top();
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
     if (lhsv.object)
     {
       Op::Apply(lhsv, rhsv);
@@ -889,8 +893,8 @@ private:
   template <typename Op>
   void DoObjectOp()
   {
-    Variant & rhsv = Pop();
-    Variant & lhsv = Top();
+    Variant &rhsv = Pop();
+    Variant &lhsv = Top();
     if (lhsv.object && rhsv.object)
     {
       Op::Apply(lhsv.object, rhsv.object);
@@ -903,15 +907,15 @@ private:
   template <typename Op>
   void DoPrimitiveAssignOp(TypeId type_id, void *lhs)
   {
-    Variant & rhsv = Pop();
+    Variant &rhsv = Pop();
     ExecutePrimitiveAssignOp<Op>(type_id, lhs, rhsv);
     rhsv.Reset();
   }
 
   template <typename Op>
-  void DoRightAssignOp(Ptr<Object> & lhso)
+  void DoRightAssignOp(Ptr<Object> &lhso)
   {
-    Variant & rhsv = Pop();
+    Variant &rhsv = Pop();
     if (lhso)
     {
       Op::Apply(lhso, rhsv);
@@ -922,9 +926,9 @@ private:
   }
 
   template <typename Op>
-  void DoObjectAssignOp(Ptr<Object> & lhso)
+  void DoObjectAssignOp(Ptr<Object> &lhso)
   {
-    Variant & rhsv = Pop();
+    Variant &rhsv = Pop();
     if (lhso && rhsv.object)
     {
       Op::Apply(lhso, rhsv.object);
@@ -937,28 +941,28 @@ private:
   template <typename Op>
   void DoVariablePrimitiveAssignOp()
   {
-    Variant & variable = GetVariable(instruction_->index);
+    Variant &variable = GetVariable(instruction_->index);
     DoPrimitiveAssignOp<Op>(instruction_->type_id, &variable.primitive);
   }
 
   template <typename Op>
   void DoVariableRightAssignOp()
   {
-    Variant & variable = GetVariable(instruction_->index);
+    Variant &variable = GetVariable(instruction_->index);
     DoRightAssignOp<Op>(variable.object);
   }
 
   template <typename Op>
   void DoVariableObjectAssignOp()
   {
-    Variant & variable = GetVariable(instruction_->index);
+    Variant &variable = GetVariable(instruction_->index);
     DoObjectAssignOp<Op>(variable.object);
   }
 
   template <typename Op>
   void DoElementPrimitiveAssignOp()
   {
-    Variant & container = Pop();
+    Variant &container = Pop();
     if (container.object)
     {
       void *element = container.object->FindElement();
@@ -975,10 +979,10 @@ private:
   template <typename Op>
   void DoElementRightAssignOp()
   {
-    Variant & container = Pop();
+    Variant &container = Pop();
     if (container.object)
     {
-      Ptr<Object> *element = static_cast<Ptr<Object>*>(container.object->FindElement());
+      Ptr<Object> *element = static_cast<Ptr<Object> *>(container.object->FindElement());
       if (element)
       {
         DoRightAssignOp<Op>(*element);
@@ -992,10 +996,10 @@ private:
   template <typename Op>
   void DoElementObjectAssignOp()
   {
-    Variant & container = Pop();
+    Variant &container = Pop();
     if (container.object)
     {
-      Ptr<Object> *element = static_cast<Ptr<Object>*>(container.object->FindElement());
+      Ptr<Object> *element = static_cast<Ptr<Object> *>(container.object->FindElement());
       if (element)
       {
         DoObjectAssignOp<Op>(*element);
@@ -1006,7 +1010,7 @@ private:
     RuntimeError("null reference");
   }
 
-  bool IsEqual(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const
+  bool IsEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
   {
     if (lhso)
     {
@@ -1120,5 +1124,5 @@ private:
   friend class Module;
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

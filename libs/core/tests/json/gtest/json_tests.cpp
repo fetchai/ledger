@@ -278,8 +278,8 @@ static const TestCase
                 {R"({})", true, R"({})", false},
                 {R"({"":0})", true, R"({"": 0})", false},
                 {R"({"foo\u0000bar": 42})", true, R"({"foo\\u0000bar": 42})", false},
-                {R"({ "min": -1.0e+28, "max": 1.0e+28 })", true, R"({"max": 1e+28, "min": -1e+28})",
-                 false},
+                {R"({ "min": -1.0e+28, "max": 1.0e+28 })", true,
+                 R"({"max": 1e+28, "min": -1e+28})", false},
                 {R"({"x":[{"id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}], "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})",
                  true,
                  R"({"id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "x": [{"id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}]})",
@@ -295,8 +295,8 @@ static const TestCase
                  true, R"({"a": "b"})", false},
                 {R"(["\u0060\u012a\u12AB"])", true, R"(["\\u0060\\u012a\\u12AB"])", false},
                 {R"(["\uD801\udc37"])", true, R"(["\\uD801\\udc37"])", false},
-                {R"(["\ud83d\ude39\ud83d\udc8d"])", true, R"(["\\ud83d\\ude39\\ud83d\\udc8d"])",
-                 false},
+                {R"(["\ud83d\ude39\ud83d\udc8d"])", true,
+                 R"(["\\ud83d\\ude39\\ud83d\\udc8d"])", false},
                 {R"(["\"\\\/\b\f\n\r\t"])", true, R"(["\\\"\\\\\\/\\b\\f\\n\\r\\t"])", false},
                 {R"(["\u0000"])", true, R"(["\\u0000"])", false},
                 {R"(["\""])", true, R"(["\\\""])", false},
@@ -324,8 +324,8 @@ static const TestCase
                  true, R"(["\\00,
 "])",
                  false},
-                {R"(["\u0061\u30af\u30EA\u30b9"])", true, R"(["\\u0061\\u30af\\u30EA\\u30b9"])",
-                 false},
+                {R"(["\u0061\u30af\u30EA\u30b9"])", true,
+                 R"(["\\u0061\\u30af\\u30EA\\u30b9"])", false},
                 {R"(["new\u000Aline"])", true, R"(["new\\u000Aline"])", false},
                 {R"([""])", true, R"([""])", false},
                 {R"(["\uA66D"])", true, R"(["\\uA66D"])", false},
@@ -344,7 +344,8 @@ static const TestCase
                 {R"([true])", true, R"([true])", false},
                 {R"([])", true, R"([])", false},
                 {R"([null, 1,"1", {}])", true, R"([null, 1, "1", {}])", false},
-                //{R"([123.456789])", true, R"([123.456789])", false},    //Parsers returns 123.457
+                //{R"([123.456789])", true, R"([123.456789])", false},    //Parsers returns
+                // 123.457
                 //{R"(null)", true, R"(null)", false},    //Doesn't parse
                 //{R"(true)", true, R"(true)", false},    //Doesn't parse
                 //{R"(false)", true, R"(false)", false},    //Doesn't parse

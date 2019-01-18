@@ -65,7 +65,8 @@
 //  static constexpr std::size_t TX_SIZE      = 2048;
 //  static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
 //
-//  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of
+//  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a
+//  multiple of
 //  64bits");
 //
 //  LinearCongruentialGenerator rng;
@@ -106,9 +107,10 @@
 //  using service_client_type        = fetch::service::ServiceClient;
 //  using shared_service_client_type = std::shared_ptr<service_client_type>;
 //  using client_register_type       =
-//  fetch::network::ConnectionRegister<connectivity_details_type>; using mutex_type =
+//  fetch::network::ConnectionRegister<connectivity_details_type>; using
+//  mutex_type =
 //  fetch::mutex::Mutex; using connection_handle_type     =
-//  client_register_type::connection_handle_type; using ClientRegister             =
+//  client_register_type::connection_handle_type; using ClientRegister =
 //  ConnectionRegister<LaneConnectivityDetails>;
 //
 // public:
@@ -147,7 +149,8 @@
 //  NetworkManager nm_;
 //
 //  mutex_type services_mutex_{__LINE__, __FILE__};
-//  std::unordered_map<connection_handle_type, shared_service_client_type> services_;
+//  std::unordered_map<connection_handle_type, shared_service_client_type>
+//  services_;
 //};
 //
 //// Convienience function to check a port is open
@@ -181,7 +184,8 @@
 //
 //// Convenience function to call peer
 // template <typename... Args>
-// fetch::service::Promise CallPeer(NetworkManager nm, std::string address, uint16_t port,
+// fetch::service::Promise CallPeer(NetworkManager nm, std::string address,
+// uint16_t port,
 //                                 Args &&... args)
 //{
 //  TCPClient client(nm);
@@ -189,7 +193,8 @@
 //
 //  if (!client.WaitForAlive(2000))
 //  {
-//    std::cout << "Failed to connect to client at " << address << " " << port << std::endl;
+//    std::cout << "Failed to connect to client at " << address << " " << port
+//    << std::endl;
 //    exit(1);
 //  }
 //
@@ -211,7 +216,8 @@
 // public:
 //  using ClientRegister   = ConnectionRegister<LaneConnectivityDetails>;
 //  using TransactionStore = ObjectStore<VerifiedTransaction>;
-//  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister, VerifiedTransaction>;
+//  using TxSyncProtocol   = ObjectStoreSyncronisationProtocol<ClientRegister,
+//  VerifiedTransaction>;
 //  using TransactionStoreProtocol = ObjectStoreProtocol<VerifiedTransaction>;
 //  using Super                    = ServiceServer<TCPServer>;
 //
@@ -230,19 +236,24 @@
 //
 //    // Load/create TX store
 //    std::string prefix = std::to_string(port);
-//    tx_store_->New(prefix + "_tst_transaction.db", prefix + "_tst_transaction_index.db", true);
+//    tx_store_->New(prefix + "_tst_transaction.db", prefix +
+//    "_tst_transaction_index.db", true);
 //
 //    tx_sync_protocol_ =
-//        std::make_unique<TxSyncProtocol>(TX_STORE_SYNC, register_, thread_pool_, tx_store_.get());
+//        std::make_unique<TxSyncProtocol>(TX_STORE_SYNC, register_,
+//        thread_pool_, tx_store_.get());
 //
-//    tx_store_protocol_ = std::make_unique<TransactionStoreProtocol>(tx_store_.get());
+//    tx_store_protocol_ =
+//    std::make_unique<TransactionStoreProtocol>(tx_store_.get());
 //    tx_store_protocol_->OnSetObject(
-//        [this](VerifiedTransaction const &tx) { tx_sync_protocol_->AddToCache(tx); });
+//        [this](VerifiedTransaction const &tx) {
+//        tx_sync_protocol_->AddToCache(tx); });
 //
 //    this->Add(TX_STORE, tx_store_protocol_.get());
 //    this->Add(TX_STORE_SYNC, tx_sync_protocol_.get());
 //
-//    controller_protocol_ = std::make_unique<ControllerProtocol>(register_, nm);
+//    controller_protocol_ = std::make_unique<ControllerProtocol>(register_,
+//    nm);
 //    this->Add(CONTROLLER, controller_protocol_.get());
 //
 //    thread_pool_->Start();
@@ -260,7 +271,8 @@
 //  ThreadPool     thread_pool_;
 //  ClientRegister register_;
 //
-//  std::unique_ptr<TransactionStore>         tx_store_ = std::make_unique<TransactionStore>();
+//  std::unique_ptr<TransactionStore>         tx_store_ =
+//  std::make_unique<TransactionStore>();
 //  std::unique_ptr<TransactionStoreProtocol> tx_store_protocol_;
 //  std::unique_ptr<TxSyncProtocol>           tx_sync_protocol_;
 //
@@ -286,7 +298,8 @@
 //      // Start up our services
 //      for (uint16_t i = 0; i < number_of_services; ++i)
 //      {
-//        services.push_back(std::make_shared<TestService>(initial_port + i, nm));
+//        services.push_back(std::make_shared<TestService>(initial_port + i,
+//        nm));
 //      }
 //
 //      // make sure they are all online
@@ -298,27 +311,33 @@
 //      // Connect our services to each other (chain config)
 //      for (uint16_t i = 1; i < number_of_services; ++i)
 //      {
-//        CallPeer(nm, "localhost", uint16_t(initial_port + i), TestService::CONTROLLER,
-//                 ControllerProtocol::CONNECT, ByteArray{"localhost"}, uint16_t(initial_port + i -
+//        CallPeer(nm, "localhost", uint16_t(initial_port + i),
+//        TestService::CONTROLLER,
+//                 ControllerProtocol::CONNECT, ByteArray{"localhost"},
+//                 uint16_t(initial_port + i -
 //                 1));
 //      }
 //
 //      // Now send all the TX to one of the clients
-//      auto transactions = GenerateTransactions(std::size_t(state.range(0)), true);
+//      auto transactions = GenerateTransactions(std::size_t(state.range(0)),
+//      true);
 //
 //      /*               resume timing              */
 //      state.ResumeTiming();
 //
 //      for(auto const &tx : transactions)
 //      {
-//        CallPeer(nm, "localhost", uint16_t(initial_port), TestService::TX_STORE,
-//                 ObjectStoreProtocol<VerifiedTransaction>::SET, ResourceID(tx.digest()), tx);
+//        CallPeer(nm, "localhost", uint16_t(initial_port),
+//        TestService::TX_STORE,
+//                 ObjectStoreProtocol<VerifiedTransaction>::SET,
+//                 ResourceID(tx.digest()), tx);
 //      }
 //
 //      for (std::size_t i = 0; i < 10000; ++i)
 //      {
 //        // Check last node in chain until they have seen all TXs
-//        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port + number_of_services -1),
+//        auto promise = CallPeer(nm, "localhost", uint16_t(initial_port +
+//        number_of_services -1),
 //                                TestService::TX_STORE_SYNC,
 //                                TestService::TxSyncProtocol::SYNCED_COUNT);
 //

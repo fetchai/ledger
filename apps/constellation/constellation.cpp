@@ -158,7 +158,8 @@ ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_typ
  * @param num_executors The number of executors
  * @param num_lanes The configured number of lanes
  * @param num_slices The configured number of slices
- * @param interface_address The current interface address TODO(EJF): This should be more integrated
+ * @param interface_address The current interface address TODO(EJF): This should
+ * be more integrated
  * @param db_prefix The database file(s) prefix
  */
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,

@@ -27,14 +27,14 @@ namespace vm {
 
 void VM::VarDeclare()
 {
-  Variant & variable = GetVariable(instruction_->index);
+  Variant &variable = GetVariable(instruction_->index);
   if (instruction_->data.i32 != -1)
   {
     variable.Construct(Ptr<Object>(), instruction_->type_id);
-    LiveObjectInfo & info = live_object_stack_[++live_object_sp_];
-    info.frame_sp         = frame_sp_;
-    info.variable_index   = instruction_->index;
-    info.scope_number     = instruction_->data.i32;
+    LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
+    info.frame_sp        = frame_sp_;
+    info.variable_index  = instruction_->index;
+    info.scope_number    = instruction_->data.i32;
   }
   else
   {
@@ -46,45 +46,45 @@ void VM::VarDeclare()
 
 void VM::VarDeclareAssign()
 {
-  Variant & variable = GetVariable(instruction_->index);
-  variable           = std::move(Pop());
+  Variant &variable = GetVariable(instruction_->index);
+  variable          = std::move(Pop());
   if (instruction_->data.i32 != -1)
   {
-    LiveObjectInfo & info = live_object_stack_[++live_object_sp_];
-    info.frame_sp         = frame_sp_;
-    info.variable_index   = instruction_->index;
-    info.scope_number     = instruction_->data.i32;
+    LiveObjectInfo &info = live_object_stack_[++live_object_sp_];
+    info.frame_sp        = frame_sp_;
+    info.variable_index  = instruction_->index;
+    info.scope_number    = instruction_->data.i32;
   }
 }
 
 void VM::PushConstant()
 {
-  Variant & top  = Push();
+  Variant &top = Push();
   top.Construct(instruction_->data, instruction_->type_id);
 }
 
 void VM::PushString()
 {
-  Variant & top = Push();
+  Variant &top = Push();
   top.Construct(strings_[instruction_->index], TypeIds::String);
 }
 
 void VM::PushNull()
 {
-  Variant & top = Push();
+  Variant &top = Push();
   top.Construct(Ptr<Object>(), instruction_->type_id);
 }
 
 void VM::PushVariable()
 {
-  Variant const & variable = GetVariable(instruction_->index);
-  Variant &       top      = Push();
+  Variant const &variable = GetVariable(instruction_->index);
+  Variant &      top      = Push();
   top.Construct(variable);
 }
 
 void VM::PushElement()
 {
-  Variant & container = Pop();
+  Variant &container = Pop();
   if (container.object)
   {
     container.object->PushElement(instruction_->type_id);
@@ -96,13 +96,13 @@ void VM::PushElement()
 
 void VM::PopToVariable()
 {
-  Variant & variable = GetVariable(instruction_->index);
-  variable           = std::move(Pop());
+  Variant &variable = GetVariable(instruction_->index);
+  variable          = std::move(Pop());
 }
 
 void VM::PopToElement()
 {
-  Variant & container = Pop();
+  Variant &container = Pop();
   if (container.object)
   {
     container.object->PopToElement();
@@ -141,7 +141,7 @@ void VM::Jump()
 
 void VM::JumpIfFalse()
 {
-  Variant & v = Pop();
+  Variant &v = Pop();
   if (v.primitive.ui8 == 0)
   {
     pc_ = instruction_->index;
@@ -151,7 +151,7 @@ void VM::JumpIfFalse()
 
 void VM::JumpIfTrue()
 {
-  Variant & v = Pop();
+  Variant &v = Pop();
   if (v.primitive.ui8 != 0)
   {
     pc_ = instruction_->index;
@@ -186,10 +186,10 @@ void VM::Return()
   if (frame_sp_ != -1)
   {
     // We've finished executing an inner function
-    Frame const & frame = frame_stack_[frame_sp_];
-    function_           = frame.function;
-    bsp_                = frame.bsp;
-    pc_                 = frame.pc;
+    Frame const &frame = frame_stack_[frame_sp_];
+    function_          = frame.function;
+    bsp_               = frame.bsp;
+    pc_                = frame.pc;
     --frame_sp_;
   }
   else
@@ -201,61 +201,61 @@ void VM::Return()
 
 void VM::ToInt8()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.i8);
 }
 
 void VM::ToByte()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.ui8);
 }
 
 void VM::ToInt16()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.i16);
 }
 
 void VM::ToUInt16()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.ui16);
 }
 
 void VM::ToInt32()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.i32);
 }
 
 void VM::ToUInt32()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.ui32);
 }
 
 void VM::ToInt64()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.i64);
 }
 
 void VM::ToUInt64()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.ui64);
 }
 
 void VM::ToFloat32()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.f32);
 }
 
 void VM::ToFloat64()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   Cast(top, instruction_->type_id, top.primitive.f64);
 }
 
@@ -263,25 +263,25 @@ void VM::ForRangeInit()
 {
   ForRangeLoop loop;
   loop.variable_index = instruction_->index;
-  Variant & variable  = GetVariable(loop.variable_index);
+  Variant &variable   = GetVariable(loop.variable_index);
   variable.type_id    = instruction_->type_id;
   if (instruction_->data.i32 == 2)
   {
-    Variant & targetv = Pop();
-    Variant & startv  = Pop();
-    loop.current      = startv.primitive;
-    loop.target       = targetv.primitive;
+    Variant &targetv = Pop();
+    Variant &startv  = Pop();
+    loop.current     = startv.primitive;
+    loop.target      = targetv.primitive;
     targetv.Reset();
     startv.Reset();
   }
   else
   {
-    Variant & deltav  = Pop();
-    Variant & targetv = Pop();
-    Variant & startv  = Pop();
-    loop.current      = startv.primitive;
-    loop.target       = targetv.primitive;
-    loop.delta        = deltav.primitive;
+    Variant &deltav  = Pop();
+    Variant &targetv = Pop();
+    Variant &startv  = Pop();
+    loop.current     = startv.primitive;
+    loop.target      = targetv.primitive;
+    loop.delta       = deltav.primitive;
     deltav.Reset();
     targetv.Reset();
     startv.Reset();
@@ -289,12 +289,11 @@ void VM::ForRangeInit()
   range_loop_stack_[++range_loop_sp_] = loop;
 }
 
-
 void VM::ForRangeIterate()
 {
-  ForRangeLoop & loop     = range_loop_stack_[range_loop_sp_];
-  Variant &      variable = GetVariable(loop.variable_index);
-  bool           finished = true;
+  ForRangeLoop &loop     = range_loop_stack_[range_loop_sp_];
+  Variant &     variable = GetVariable(loop.variable_index);
+  bool          finished = true;
   if (instruction_->data.i32 == 2)
   {
     switch (variable.type_id)
@@ -351,7 +350,7 @@ void VM::ForRangeIterate()
     {
       break;
     }
-    } // switch
+    }  // switch
   }
   else
   {
@@ -376,7 +375,7 @@ void VM::ForRangeIterate()
     {
       variable.primitive.i16 = loop.current.i16;
       loop.current.i16       = int16_t(loop.current.i16 + loop.delta.i16);
-      finished                = (loop.delta.i16 >= 0) ? variable.primitive.i16 > loop.target.i16
+      finished               = (loop.delta.i16 >= 0) ? variable.primitive.i16 > loop.target.i16
                                        : variable.primitive.i16 < loop.target.i16;
       break;
     }
@@ -422,7 +421,7 @@ void VM::ForRangeIterate()
     {
       break;
     }
-    } // switch
+    }  // switch
   }
   if (finished)
   {
@@ -464,9 +463,9 @@ void VM::PrimitiveEqual()
 
 void VM::ObjectEqual()
 {
-  Variant & rhsv = Pop();
-  Variant & lhsv = Top();
-  bool equal = IsEqual(lhsv.object, rhsv.object);
+  Variant &rhsv  = Pop();
+  Variant &lhsv  = Top();
+  bool     equal = IsEqual(lhsv.object, rhsv.object);
   lhsv.Assign(equal, TypeIds::Bool);
   rhsv.Reset();
 }
@@ -478,9 +477,9 @@ void VM::PrimitiveNotEqual()
 
 void VM::ObjectNotEqual()
 {
-  Variant & rhsv = Pop();
-  Variant & lhsv = Top();
-  bool equal = IsEqual(lhsv.object, rhsv.object);
+  Variant &rhsv  = Pop();
+  Variant &lhsv  = Top();
+  bool     equal = IsEqual(lhsv.object, rhsv.object);
   lhsv.Assign(!equal, TypeIds::Bool);
   rhsv.Reset();
 }
@@ -507,23 +506,23 @@ void VM::PrimitiveGreaterThanOrEqual()
 
 void VM::And()
 {
-  Variant & rhsv = Pop();
-  Variant & lhsv = Top();
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
   lhsv.primitive.ui8 &= rhsv.primitive.ui8;
   rhsv.Reset();
 }
 
 void VM::Or()
 {
-  Variant & rhsv = Pop();
-  Variant & lhsv = Top();
+  Variant &rhsv = Pop();
+  Variant &lhsv = Top();
   lhsv.primitive.ui8 |= rhsv.primitive.ui8;
   rhsv.Reset();
 }
 
 void VM::Not()
 {
-  Variant & top     = Top();
+  Variant &top      = Top();
   top.primitive.ui8 = top.primitive.ui8 == 0 ? 1 : 0;
 }
 
@@ -569,13 +568,13 @@ void VM::ElementPostfixDec()
 
 void VM::PrimitiveUnaryMinus()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   ExecutePrimitiveOp<PrimitiveUnaryMinusOp>(instruction_->type_id, top, top);
 }
 
 void VM::ObjectUnaryMinus()
 {
-  Variant & top = Top();
+  Variant &top = Top();
   if (top.object)
   {
     top.object->UnaryMinusOp(top.object);
@@ -784,5 +783,5 @@ void VM::ElementObjectDivideAssign()
   DoElementObjectAssignOp<ObjectDivideAssignOp>();
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

@@ -103,5 +103,5 @@ struct Location
   uint16_t line;
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

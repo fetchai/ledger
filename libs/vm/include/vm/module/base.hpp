@@ -36,7 +36,7 @@ struct StackGetter
 {
   static T Get(VM *vm, int sp_offset)
   {
-    Variant & v = vm->stack_[vm->sp_ - sp_offset];
+    Variant &v = vm->stack_[vm->sp_ - sp_offset];
     return v.Move<T>();
   }
 };
@@ -44,9 +44,9 @@ struct StackGetter
 template <typename T>
 struct StackSetter
 {
-  static void Set(VM *vm, int sp_offset, T && result, TypeId type_id)
+  static void Set(VM *vm, int sp_offset, T &&result, TypeId type_id)
   {
-    Variant & v = vm->stack_[vm->sp_ - sp_offset];
+    Variant &v = vm->stack_[vm->sp_ - sp_offset];
     v.Assign(std::move(result), type_id);
   }
 };
@@ -54,9 +54,7 @@ struct StackSetter
 template <typename T, typename = void>
 struct TypeGetter;
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<
-  IsPrimitive<T>::value ||
-  IsVariant<T>::value>>
+struct TypeGetter<T, typename std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -76,9 +74,8 @@ struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
 template <typename T, typename = void>
 struct ParameterTypeGetter;
 template <typename T>
-struct ParameterTypeGetter<T, typename std::enable_if_t<
-  IsPrimitiveParameter<T>::value ||
-  IsVariantParameter<T>::value>>
+struct ParameterTypeGetter<
+    T, typename std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -95,13 +92,13 @@ struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value
   }
 };
 
-template <typename ...Ts>
+template <typename... Ts>
 struct UnrollTypes;
-template <typename T, typename ...Ts>
+template <typename T, typename... Ts>
 struct UnrollTypes<T, Ts...>
 {
   // Invoked on non-final type
-  static void Unroll(TypeIndexArray & array)
+  static void Unroll(TypeIndexArray &array)
   {
     TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
     array.push_back(type_index);
@@ -112,7 +109,7 @@ template <typename T>
 struct UnrollTypes<T>
 {
   // Invoked on final type
-  static void Unroll(TypeIndexArray & array)
+  static void Unroll(TypeIndexArray &array)
   {
     TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
     array.push_back(type_index);
@@ -126,13 +123,13 @@ struct UnrollTypes<>
   {}
 };
 
-template <typename ...Ts>
+template <typename... Ts>
 struct UnrollParameterTypes;
-template <typename T, typename ...Ts>
+template <typename T, typename... Ts>
 struct UnrollParameterTypes<T, Ts...>
 {
   // Invoked on non-final type
-  static void Unroll(TypeIndexArray & array)
+  static void Unroll(TypeIndexArray &array)
   {
     TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
     array.push_back(type_index);
@@ -143,7 +140,7 @@ template <typename T>
 struct UnrollParameterTypes<T>
 {
   // Invoked on final type
-  static void Unroll(TypeIndexArray & array)
+  static void Unroll(TypeIndexArray &array)
   {
     TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
     array.push_back(type_index);
@@ -157,5 +154,5 @@ struct UnrollParameterTypes<>
   {}
 };
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

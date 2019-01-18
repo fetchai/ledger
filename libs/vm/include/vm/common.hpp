@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/typeids.hpp"
 #include "vm/opcodes.hpp"
+#include "vm/typeids.hpp"
 #include <utility>
 
 namespace fetch {
@@ -27,5 +27,5 @@ namespace vm {
 using Index   = uint16_t;
 using Strings = std::vector<std::string>;
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

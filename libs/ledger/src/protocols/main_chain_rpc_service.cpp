@@ -185,7 +185,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
     block_coordinator_.AddBlock(block);
 
-    // if we got a block and it is loose then it it probably means that we need to sync the rest of
+    // if we got a block and it is loose then it it probably means that we need
+    // to sync the rest of
     // the block tree
     if (block.loose())
     {

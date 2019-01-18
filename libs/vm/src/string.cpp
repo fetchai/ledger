@@ -21,7 +21,7 @@
 namespace fetch {
 namespace vm {
 
-bool String::Equals(Ptr<Object> const & lhso, Ptr<Object> const & rhso) const
+bool String::Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
 {
   Ptr<String> lhs = lhso;
   Ptr<String> rhs = rhso;
@@ -33,7 +33,7 @@ size_t String::GetHashCode() const
   return std::hash<std::string>()(str);
 }
 
-void String::AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso)
+void String::AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso)
 {
   bool const  lhs_is_modifiable = lhso.RefCount() == 1;
   Ptr<String> lhs               = lhso;
@@ -49,5 +49,5 @@ void String::AddOp(Ptr<Object> & lhso, Ptr<Object> & rhso)
   }
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

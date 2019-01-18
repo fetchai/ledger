@@ -20,11 +20,10 @@
 namespace fetch {
 namespace vm {
 
-template <typename ObjectType, typename ReturnType, typename TypeConstructor,
-          typename ...Ts>
+template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename... Ts>
 struct TypeConstructorInvokerHelper
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId type_id, Ts const & ...parameters)
+  static void Invoke(VM *vm, int sp_offset, TypeId type_id, Ts const &... parameters)
   {
     ReturnType result = ObjectType::Constructor(vm, type_id, parameters...);
     StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), type_id);
@@ -32,24 +31,22 @@ struct TypeConstructorInvokerHelper
   };
 };
 
-template <typename ObjectType, typename ReturnType, typename TypeConstructor,
-          typename ...Used>
+template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename... Used>
 struct TypeConstructorInvoker
 {
-  template <int parameter_offset, typename ...Ts>
+  template <int parameter_offset, typename... Ts>
   struct Invoker;
-  template <int parameter_offset, typename T, typename ...Ts>
+  template <int parameter_offset, typename T, typename... Ts>
   struct Invoker<parameter_offset, T, Ts...>
   {
     // Invoked on non-final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId type_id, Used const & ...used)
+    static void Invoke(VM *vm, int sp_offset, TypeId type_id, Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, parameter_offset));
-      using Type = typename TypeConstructorInvoker<ObjectType, ReturnType, TypeConstructor,
-                                                   Used..., T>
-                                                   ::template Invoker<parameter_offset - 1,
-                                                   Ts...>;
+      using Type =
+          typename TypeConstructorInvoker<ObjectType, ReturnType, TypeConstructor, Used...,
+                                          T>::template Invoker<parameter_offset - 1, Ts...>;
       Type::Invoke(vm, sp_offset, type_id, used..., parameter);
     }
   };
@@ -57,12 +54,12 @@ struct TypeConstructorInvoker
   struct Invoker<parameter_offset, T>
   {
     // Invoked on final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId type_id, Used const & ...used)
+    static void Invoke(VM *vm, int sp_offset, TypeId type_id, Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, parameter_offset));
-      using Type = TypeConstructorInvokerHelper<ObjectType, ReturnType, TypeConstructor,
-                                                Used..., T>;
+      using Type =
+          TypeConstructorInvokerHelper<ObjectType, ReturnType, TypeConstructor, Used..., T>;
       Type::Invoke(vm, sp_offset, type_id, used..., parameter);
     }
   };
@@ -78,7 +75,7 @@ struct TypeConstructorInvoker
   };
 };
 
-template <typename ObjectType, typename ...Ts>
+template <typename ObjectType, typename... Ts>
 void InvokeTypeConstructor(VM *vm, TypeId type_id)
 {
   constexpr int num_parameters         = int(sizeof...(Ts));
@@ -86,10 +83,10 @@ void InvokeTypeConstructor(VM *vm, TypeId type_id)
   constexpr int sp_offset              = first_parameter_offset;
   using ReturnType                     = Ptr<ObjectType>;
   using TypeConstructor                = ReturnType (*)(VM *, TypeId, Ts...);
-  using TypeConstructorInvoker         = typename TypeConstructorInvoker<ObjectType, ReturnType,
-      TypeConstructor>::template Invoker<first_parameter_offset, Ts...>;
+  using TypeConstructorInvoker         = typename TypeConstructorInvoker<
+      ObjectType, ReturnType, TypeConstructor>::template Invoker<first_parameter_offset, Ts...>;
   TypeConstructorInvoker::Invoke(vm, sp_offset, type_id);
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch

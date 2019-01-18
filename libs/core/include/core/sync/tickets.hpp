@@ -130,8 +130,10 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
   {
     std::unique_lock<std::mutex> lock(mutex_);
 
-    // loop required since it is possible because we are emulating the semaphore behaviour that
-    // even though we were triggered by the CV another worker might have take our place.
+    // loop required since it is possible because we are emulating the semaphore
+    // behaviour that
+    // even though we were triggered by the CV another worker might have take
+    // our place.
     for (;;)
     {
       if (shutdown_)

@@ -20,12 +20,11 @@
 namespace fetch {
 namespace vm {
 
-template <typename ObjectType, typename ReturnType, typename InstanceFunction,
-          typename ...Ts>
+template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename... Ts>
 struct InstanceFunctionInvokerHelper
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId return_type_id,
-                     InstanceFunction f, Ts const & ...parameters)
+  static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, InstanceFunction f,
+                     Ts const &... parameters)
   {
     Variant &       v      = vm->stack_[vm->sp_ - sp_offset];
     Ptr<ObjectType> object = v.object;
@@ -40,11 +39,11 @@ struct InstanceFunctionInvokerHelper
   };
 };
 
-template <typename ObjectType, typename InstanceFunction, typename ...Ts>
+template <typename ObjectType, typename InstanceFunction, typename... Ts>
 struct InstanceFunctionInvokerHelper<ObjectType, void, InstanceFunction, Ts...>
 {
-  static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */,
-                     InstanceFunction f, Ts const & ...parameters)
+  static void Invoke(VM *vm, int sp_offset, TypeId /* return_type_id */, InstanceFunction f,
+                     Ts const &... parameters)
   {
     Variant &       v      = vm->stack_[vm->sp_ - sp_offset];
     Ptr<ObjectType> object = v.object;
@@ -59,23 +58,23 @@ struct InstanceFunctionInvokerHelper<ObjectType, void, InstanceFunction, Ts...>
   }
 };
 
-template <typename ObjectType, typename ReturnType, typename InstanceFunction,
-          typename ...Used>
+template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename... Used>
 struct InstanceFunctionInvoker
 {
-  template <int parameter_offset, typename ...Ts>
+  template <int parameter_offset, typename... Ts>
   struct Invoker;
-  template <int parameter_offset, typename T, typename ...Ts>
+  template <int parameter_offset, typename T, typename... Ts>
   struct Invoker<parameter_offset, T, Ts...>
   {
     // Invoked on non-final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id,
-        InstanceFunction f, Used const & ...used)
+    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, InstanceFunction f,
+                       Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, parameter_offset));
-      using Type = typename InstanceFunctionInvoker<ObjectType, ReturnType, InstanceFunction,
-        Used..., T>::template Invoker<parameter_offset - 1, Ts...>;
+      using Type =
+          typename InstanceFunctionInvoker<ObjectType, ReturnType, InstanceFunction, Used...,
+                                           T>::template Invoker<parameter_offset - 1, Ts...>;
       Type::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
     }
   };
@@ -83,13 +82,13 @@ struct InstanceFunctionInvoker
   struct Invoker<parameter_offset, T>
   {
     // Invoked on final parameter
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id,
-                       InstanceFunction f, Used const & ...used)
+    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, InstanceFunction f,
+                       Used const &... used)
     {
       using P = std::decay_t<T>;
       P parameter(StackGetter<P>::Get(vm, parameter_offset));
-      using Type = InstanceFunctionInvokerHelper<ObjectType, ReturnType, InstanceFunction,
-                                                 Used..., T>;
+      using Type =
+          InstanceFunctionInvokerHelper<ObjectType, ReturnType, InstanceFunction, Used..., T>;
       Type::Invoke(vm, sp_offset, return_type_id, f, used..., parameter);
     }
   };
@@ -97,8 +96,7 @@ struct InstanceFunctionInvoker
   struct Invoker<parameter_offset>
   {
     // Invoked on no parameters
-    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id,
-                       InstanceFunction f)
+    static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, InstanceFunction f)
     {
       using Type = InstanceFunctionInvokerHelper<ObjectType, ReturnType, InstanceFunction>;
       Type::Invoke(vm, sp_offset, return_type_id, f);
@@ -106,18 +104,17 @@ struct InstanceFunctionInvoker
   };
 };
 
-template <typename ObjectType, typename ReturnType, typename ...Ts>
+template <typename ObjectType, typename ReturnType, typename... Ts>
 void InvokeInstanceFunction(VM *vm, TypeId return_type_id, ReturnType (ObjectType::*f)(Ts...))
 {
   constexpr int num_parameters         = int(sizeof...(Ts));
   constexpr int first_parameter_offset = num_parameters - 1;
   constexpr int sp_offset              = num_parameters;
   using InstanceFunction               = ReturnType (ObjectType::*)(Ts...);
-  using InstanceFunctionInvoker        = typename
-    InstanceFunctionInvoker<ObjectType, ReturnType, InstanceFunction>
-    ::template Invoker<first_parameter_offset, Ts...>;
+  using InstanceFunctionInvoker        = typename InstanceFunctionInvoker<
+      ObjectType, ReturnType, InstanceFunction>::template Invoker<first_parameter_offset, Ts...>;
   InstanceFunctionInvoker::Invoke(vm, sp_offset, return_type_id, f);
 }
 
-} // namespace vm
-} // namespace fetch
+}  // namespace vm
+}  // namespace fetch
