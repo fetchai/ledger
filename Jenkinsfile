@@ -38,8 +38,8 @@ pipeline {
           stages {
             stage('Static Analysis') {
               steps {
-                sh 'mkdir build && cd build && cmake ../'
-                sh './scripts/run_static_analysis.py build/'
+                sh 'mkdir -p build-analysis && cd build-analysis && cmake ../'
+                sh './scripts/run_static_analysis.py build-analysis/'
               }
             }
           }
