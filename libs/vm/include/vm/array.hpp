@@ -44,12 +44,12 @@ struct Array : public IArray
   }
   virtual ~Array() = default;
 
-  template <typename U, typename std::enable_if_t<is_primitive<U>::value> * = nullptr>
+  template <typename U, typename std::enable_if_t<IsPrimitive<U>::value> * = nullptr>
   void Init(size_t size)
   {
     elements = std::vector<T>(size, 0);
   }
-  template <typename U, typename std::enable_if_t<is_ptr<U>::value> * = nullptr>
+  template <typename U, typename std::enable_if_t<IsPtr<U>::value> * = nullptr>
   void Init(size_t size)
   {
     elements = std::vector<T>(size);

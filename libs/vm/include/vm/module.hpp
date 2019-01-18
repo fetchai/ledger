@@ -40,34 +40,34 @@ public:
   template <typename ObjectType>
   struct ClassInterface
   {
-    Module *module_;
-    TypeId  type_id_;
+    Module *module;
+    TypeId  type_id;
 
     ClassInterface(Module *module__, TypeId type_id__)
     {
-      module_  = module__;
-      type_id_ = type_id__;
+      module  = module__;
+      type_id = type_id__;
     }
 
     template <typename ...Ts>
     ClassInterface & CreateTypeConstuctor()
     {
-      TypeId type_id = type_id_;
-      Opcode opcode  = module_->GetNextOpcode();
+      TypeId type_id__ = type_id;
+      Opcode opcode  = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array           = module_->GetTypeIds(type_index_array);
-      auto        compiler_setup_function = [type_id, opcode, type_id_array]
+      TypeIdArray type_id_array           = module->GetTypeIds(type_index_array);
+      auto        compiler_setup_function = [type_id__, opcode, type_id_array]
                                             (Compiler *compiler)
       {
-        compiler->CreateOpcodeTypeConstructor(type_id, opcode, type_id_array);
+        compiler->CreateOpcodeTypeConstructor(type_id__, opcode, type_id_array);
       };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
+      module->AddCompilerSetupFunction(compiler_setup_function);
       OpcodeHandler handler = [](VM *vm)
       {
         InvokeTypeConstructor<ObjectType, Ts...>(vm, vm->instruction_->type_id);
       };
-      module_->AddOpcodeHandler(opcode, handler);
+      module->AddOpcodeHandler(opcode, handler);
       return *this;
     }
 
@@ -75,23 +75,23 @@ public:
     ClassInterface & CreateTypeFunction(std::string const & name,
                                         ReturnType (*f)(VM *, TypeId, Ts...))
     {
-      TypeId type_id = type_id_;
-      Opcode opcode  = module_->GetNextOpcode();
+      TypeId type_id = type_id;
+      Opcode opcode  = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array           = module_->GetTypeIds(type_index_array);
-      TypeId      return_type_id          = module_->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
+      TypeIdArray type_id_array           = module->GetTypeIds(type_index_array);
+      TypeId      return_type_id          = module->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
       auto        compiler_setup_function = [type_id, name, opcode, type_id_array, return_type_id]
                                             (Compiler *compiler)
       {
         compiler->CreateOpcodeTypeFunction(type_id, name, opcode, type_id_array, return_type_id);
       };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
+      module->AddCompilerSetupFunction(compiler_setup_function);
       OpcodeHandler handler = [f](VM *vm)
       {
         InvokeTypeFunction(vm, vm->instruction_->data.ui16, vm->instruction_->type_id, f);
       };
-      module_->AddOpcodeHandler(opcode, handler);
+      module->AddOpcodeHandler(opcode, handler);
       return *this;
     }
 
@@ -99,23 +99,23 @@ public:
     ClassInterface & CreateInstanceFunction(std::string const & name,
                                             ReturnType (ObjectType::*f)(Ts...))
     {
-      TypeId type_id = type_id_;
-      Opcode opcode  = module_->GetNextOpcode();
+      TypeId type_id = type_id;
+      Opcode opcode  = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
-      TypeIdArray type_id_array           = module_->GetTypeIds(type_index_array);
-      TypeId      return_type_id          = module_->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
+      TypeIdArray type_id_array           = module->GetTypeIds(type_index_array);
+      TypeId      return_type_id          = module->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
       auto        compiler_setup_function = [type_id, name, opcode, type_id_array, return_type_id]
                                             (Compiler *compiler)
       {
         compiler->CreateOpcodeInstanceFunction(type_id, name, opcode, type_id_array, return_type_id);
       };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
+      module->AddCompilerSetupFunction(compiler_setup_function);
       OpcodeHandler handler = [f](VM *vm)
       {
         InvokeInstanceFunction(vm, vm->instruction_->type_id, f);
       };
-      module_->AddOpcodeHandler(opcode, handler);
+      module->AddOpcodeHandler(opcode, handler);
       return *this;
     }
   };

@@ -85,19 +85,19 @@ class RegisteredTypes
 public:
   void RegisterType(TypeIndex type_index, TypeId type_id)
   {
-    map.insert(std::pair<TypeIndex, TypeId>(type_index, type_id));
+    map_.insert(std::pair<TypeIndex, TypeId>(type_index, type_id));
   }
   TypeId GetTypeId(TypeIndex type_index) const
   {
-    auto it = map.find(type_index);
-    if (it != map.end())
+    auto it = map_.find(type_index);
+    if (it != map_.end())
     {
       return it->second;
     }
     return TypeIds::Unknown;
   }
 private:
-  std::unordered_map<TypeIndex, TypeId> map;
+  std::unordered_map<TypeIndex, TypeId> map_;
 };
 
 struct TypeInfo

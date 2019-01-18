@@ -28,7 +28,7 @@ namespace vm {
 template <typename T, typename = void>
 struct Getter;
 template <typename T>
-struct Getter<T, typename std::enable_if_t<is_primitive<std::decay_t<T>>::value>>
+struct Getter<T, typename std::enable_if_t<IsPrimitive<std::decay_t<T>>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -36,7 +36,7 @@ struct Getter<T, typename std::enable_if_t<is_primitive<std::decay_t<T>>::value>
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<is_ptr<std::decay_t<T>>::value>>
+struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -171,13 +171,19 @@ private:
   int                         frame_sp_;
   int                         bsp_;
 
-  // fix these -- should be private
-public:
+  template <typename T> friend struct StackGetter;
+  template <typename T> friend struct StackSetter;
+  template <typename T, typename S> friend struct TypeGetter;
+  template <typename T, typename S> friend struct ParameterTypeGetter;
+  template <typename ReturnType, typename FreeFunction, typename ...Ts> friend struct FreeFunctionInvokerHelper;
+  template <typename ObjectType, typename ReturnType, typename InstanceFunction, typename ...Ts> friend struct InstanceFunctionInvokerHelper;
+  template <typename ObjectType, typename ReturnType, typename TypeConstructor, typename ...Ts> friend struct TypeConstructorInvokerHelper;
+  template <typename ReturnType, typename TypeFunction, typename ...Ts> friend struct TypeFunctionInvokerHelper;
+private:
   Script const *              script_;
   Variant                     stack_[STACK_SIZE];
   int                         sp_;
-private:
- // fix these
+
 
   ForRangeLoop                range_loop_stack_[MAX_RANGE_LOOPS];
   int                         range_loop_sp_;

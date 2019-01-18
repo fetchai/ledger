@@ -35,7 +35,7 @@ struct IMap : public Object
 template <typename T, typename = void>
 struct H;
 template <typename T>
-struct H<T, typename std::enable_if_t<is_primitive<T>::value>>
+struct H<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
   size_t operator()(Variant const & v) const
   {
@@ -43,7 +43,7 @@ struct H<T, typename std::enable_if_t<is_primitive<T>::value>>
   }
 };
 template <typename T>
-struct H<T, typename std::enable_if_t<is_ptr<T>::value>>
+struct H<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   size_t operator()(Variant const & v) const
   {
@@ -54,7 +54,7 @@ struct H<T, typename std::enable_if_t<is_ptr<T>::value>>
 template <typename T, typename = void>
 struct E;
 template <typename T>
-struct E<T, typename std::enable_if_t<is_primitive<T>::value>>
+struct E<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
   bool operator()(Variant const & lhsv, Variant const & rhsv) const
   {
@@ -62,7 +62,7 @@ struct E<T, typename std::enable_if_t<is_primitive<T>::value>>
   }
 };
 template <typename T>
-struct E<T, typename std::enable_if_t<is_ptr<T>::value>>
+struct E<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   bool operator()(Variant const & lhsv, Variant const & rhsv) const
   {
@@ -96,14 +96,14 @@ struct Map : public IMap
   }
 
   template <typename U>
-  typename std::enable_if_t<is_primitive<U>::value, Value*> Find()
+  typename std::enable_if_t<IsPrimitive<U>::value, Value*> Find()
   {
     Variant & keyv = Pop();
     return Find(keyv);
   }
 
   template <typename U>
-  typename std::enable_if_t<is_ptr<U>::value, Value*> Find()
+  typename std::enable_if_t<IsPtr<U>::value, Value*> Find()
   {
     Variant & keyv = Pop();
     if (keyv.object)
@@ -130,13 +130,13 @@ struct Map : public IMap
   }
 
   template <typename U>
-  typename std::enable_if_t<is_primitive<U>::value, void> Store(Variant & keyv, Variant & valuev)
+  typename std::enable_if_t<IsPrimitive<U>::value, void> Store(Variant & keyv, Variant & valuev)
   {
     map.insert(Pair(keyv, valuev));
   }
 
   template <typename U>
-  typename std::enable_if_t<is_ptr<U>::value, void> Store(Variant & keyv, Variant & valuev)
+  typename std::enable_if_t<IsPtr<U>::value, void> Store(Variant & keyv, Variant & valuev)
   {
     if (keyv.object)
     {
