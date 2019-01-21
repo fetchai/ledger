@@ -235,7 +235,7 @@ public:
     return true;
   }
 
-  Tensor<T> &Add_inplace(Tensor<T> const &o)
+  Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
@@ -245,7 +245,7 @@ public:
     return *this;
   }
 
-  Tensor<T> &Mul_inplace(Tensor<T> const &o)
+  Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
