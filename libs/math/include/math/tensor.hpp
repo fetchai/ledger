@@ -151,6 +151,17 @@ public:
     size_t index(offset_);
     for (size_t i(0); i < indices.size(); ++i)
     {
+      if (indices[i] >= shape_[i])
+	{
+	  std::cerr << "Trying to index tensor with shape [";
+	    for (size_t s : shape_)
+	      std::cerr << s << " ";
+	  std::cerr << "] using indices [";
+	  for (size_t s : indices)
+	    std::cerr << s << " ";
+	  std::cerr << "]" << std::endl;
+
+	}
       ASSERT(indices[i] < shape_[i]);
       index += indices[i] * DimensionSize(i);
     }
@@ -175,7 +186,12 @@ public:
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
   }
 
-  T Get(std::vector<size_t> const &indices) const
+  T const &Get(std::vector<size_t> const &indices) const
+  {
+    return (*storage_)[OffsetOfElement(indices)];
+  }
+
+  T &Get(std::vector<size_t> const &indices)
   {
     return (*storage_)[OffsetOfElement(indices)];
   }

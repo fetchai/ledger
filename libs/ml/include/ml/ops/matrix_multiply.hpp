@@ -61,7 +61,6 @@ public:
         }
       }
     }
-    //    fetch::math::Dot(*(inputs[0]), *(inputs[1]), *(this->output_));
     return this->output_;
   }
 

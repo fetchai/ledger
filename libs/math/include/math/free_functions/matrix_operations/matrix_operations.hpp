@@ -926,6 +926,36 @@ fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspos
     gemm_nt_vector(alpha, A, B, beta, ret);
   }
 }
+
+template<class ArrayType>
+fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
+    ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
+    typename ArrayType::Type beta = 0.0, bool threaded = false)
+{
+
+
+  std::cout << "Calling naive DotTranspose with" << std::endl;
+  std::cout << "A : " << A.shape()[0] << " x " << A.shape()[1] << std::endl;
+  std::cout << "B : " << B.shape()[0] << " x " << B.shape()[1] << std::endl;
+  std::cout << "C : " << ret.shape()[0] << " x " << ret.shape()[1] << std::endl;
+
+  assert(A.shape()[1] == B.shape()[1]);
+
+  for (size_t i(0); i < A.shape()[0]; ++i)
+    {
+      for (size_t j(0); j < B.shape()[0]; ++j)
+	{
+	  for (size_t k(0); k < A.shape()[1]; ++k)
+	    {
+	      ret.Get(std::vector<size_t>({i, j})) +=
+	      	A.Get(std::vector<size_t>({i, k})) *
+	      	B.Get(std::vector<size_t>({j, k}));
+	    }
+	}
+    }  
+}
+
+
 template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
     ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
