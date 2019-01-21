@@ -58,7 +58,7 @@ public:
         break;
       }
 
-      case ServiceType::P2P:
+      case ServiceType::CORE:
       case ServiceType::HTTP:
         this->services_[ident] = std::make_shared<P2PManagedLocalService>(uri, ident);
         break;

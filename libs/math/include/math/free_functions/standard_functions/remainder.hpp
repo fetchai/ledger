@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions/remainder.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * Computes the IEEE remainder of the floating point division operation x/y
@@ -28,14 +28,14 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Remainder(ArrayType const &x,
-                                                              ArrayType const &y, ArrayType &z)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType const &y,
+                                                            ArrayType &z)
 {
   free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Remainder(ArrayType const &x, ArrayType &y)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Remainder(ArrayType const &x, ArrayType &y)
 {
   free_functions::kernels::Remainder<typename ArrayType::Type> kernel;
   y.data().in_parallel().Apply(kernel, x.data(), y.data());

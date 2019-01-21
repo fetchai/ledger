@@ -298,7 +298,7 @@ private:
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
 
-  http::HTTPResponse OnTransactions(http::HTTPRequest const &request)
+  http::HTTPResponse OnTransactions(http::HTTPRequest const & /*request*/)
   {
     return BadJsonResponse(ErrorCode::NOT_IMPLEMENTED);
   }

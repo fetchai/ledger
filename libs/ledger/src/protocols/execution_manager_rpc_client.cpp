@@ -24,10 +24,6 @@
 #include "ledger/protocols/execution_manager_rpc_client.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 
-using fetch::service::ServiceClient;
-using fetch::byte_array::ConstByteArray;
-using fetch::network::NetworkManager;
-
 namespace fetch {
 namespace ledger {
 
@@ -116,7 +112,7 @@ void ExecutionManagerRpcClient::WorkCycle(void)
 ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &network_manager)
   : network_manager_(network_manager)
 {
-  muddle_ = Muddle::CreateMuddle(Muddle::CreateNetworkId("EXEM"), network_manager_);
+  muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("EXEM"), network_manager_);
   client_ =
       std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
   muddle_->Start({});
@@ -136,11 +132,11 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
   bg_work_.Add(worker);
 }
 
-ExecutionManagerRpcClient::Status ExecutionManagerRpcClient::Execute(Block const &block)
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block const &block)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::EXECUTE, block);
-  return result->As<Status>();
+  return result->As<ScheduleStatus>();
 }
 
 ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlock()
@@ -150,18 +146,11 @@ ExecutionManagerInterface::BlockHash ExecutionManagerRpcClient::LastProcessedBlo
   return result->As<BlockHash>();
 }
 
-bool ExecutionManagerRpcClient::IsActive()
+ExecutionManagerRpcClient::State ExecutionManagerRpcClient::GetState()
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
-                                             ExecutionManagerRpcProtocol::IS_ACTIVE);
-  return result->As<bool>();
-}
-
-bool ExecutionManagerRpcClient::IsIdle()
-{
-  auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
-                                             ExecutionManagerRpcProtocol::IS_IDLE);
-  return result->As<bool>();
+                                             ExecutionManagerRpcProtocol::GET_STATE);
+  return result->As<State>();
 }
 
 bool ExecutionManagerRpcClient::Abort()

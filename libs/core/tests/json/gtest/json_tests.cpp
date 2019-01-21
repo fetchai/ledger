@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "./json_long_strings.hpp"
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
 #include <gtest/gtest.h>
@@ -37,8 +38,8 @@ static const TestCase
     TEST_CASES
         [] =
             {
-
                 // content must be rejected by parsers
+                {n_structure_open_array_object.c_str(), false, "", true},
                 {R"([a�])", false, "", true},
                 {R"(["": 1])", false, "", true},
                 {R"(["x"]])", false, "", true},

@@ -34,7 +34,7 @@ float InnerProduct(array_type const &A, array_type const &B)
   return ret;
 }
 
-int main(int argc, char **argv)
+int main(int /*argc*/, char ** /*argv*/)
 {
   std::vector<float> A, B;
 

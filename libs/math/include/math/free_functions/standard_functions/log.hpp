@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions/log.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * natural logarithm of x
@@ -29,13 +29,13 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> Log(ArrayType &x)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, void> Log(ArrayType &x)
 {
   fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   ArrayType ret{x.shape()};
   ret.Copy(x);
@@ -43,7 +43,7 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> Log(ArrayType cons
   return ret;
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapelessArrayLike<ArrayType, ArrayType> Log(ArrayType const &x)
+fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   ArrayType ret{x.size()};
   ret.Copy(x);

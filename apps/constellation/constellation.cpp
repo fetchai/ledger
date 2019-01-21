@@ -36,8 +36,6 @@
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
-using fetch::network::Peer;
-using fetch::network::TCPClient;
 using fetch::network::Manifest;
 using fetch::network::ServiceType;
 using fetch::network::Uri;
@@ -51,7 +49,8 @@ using fetch::chain::consensus::DummyMiner;
 using fetch::chain::consensus::BadMiner;
 using fetch::chain::consensus::ConsensusMinerType;
 
-using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+using ConsensusMinerInterfacePtr =
+    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -129,23 +128,23 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
 /**
  * ConsensusMinerInterface factory method
  */
-ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
+ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_type)
 {
+  ConsensusMinerInterfacePtr miner;
+
   switch (miner_type)
   {
+  case ConsensusMinerType::NO_MINER:
+    break;
   case ConsensusMinerType::DUMMY_MINER:
-  {
-    return std::make_shared<DummyMiner>();
-  }
+    miner = std::make_shared<DummyMiner>();
+    break;
   case ConsensusMinerType::BAD_MINER:
-  {
-    return std::make_shared<BadMiner>();
+    miner = std::make_shared<BadMiner>();
+    break;
   }
-  default:
-  {
-    return nullptr;
-  }
-  }
+
+  return miner;
 }
 
 }  // namespace
@@ -165,23 +164,25 @@ ConsensusMinerInterface GetConsensusMiner(ConsensusMinerType const &miner_type)
 Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
                              std::string interface_address, std::string const &db_prefix,
-                             std::string my_network_address, std::size_t processor_threads,
+                             std::string /*my_network_address*/, std::size_t   processor_threads,
                              std::size_t                         verification_threads,
                              std::chrono::steady_clock::duration block_interval,
-                             std::size_t max_peers, std::size_t transient_peers)
+                             std::size_t max_peers, std::size_t transient_peers,
+                             uint32_t p2p_cycle_time_ms)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
   , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
   , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_(LookupLocalPort(manifest_, ServiceType::P2P))
+  , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
   , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
   , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
   , http_network_manager_{4}
-  , muddle_{Muddle::CreateNetworkId("CORE"), std::move(certificate), network_manager_}
+  , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
+            network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers}
+  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
@@ -192,9 +193,14 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
   , consensus_miner_{GetConsensusMiner(ConsensusMinerType::NO_MINER)}
-  , miner_{num_lanes_,    num_slices,       chain_,    block_coordinator_,
-           block_packer_, consensus_miner_, p2p_port_, block_interval}
-  // p2p_port_ fairly arbitrary
+  , miner_{num_lanes_,
+           num_slices,
+           chain_,
+           block_coordinator_,
+           block_packer_,
+           consensus_miner_,
+           muddle_.identity().identifier(),
+           block_interval}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, processor_threads}
@@ -226,6 +232,31 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   for (auto const &module : http_modules_)
   {
     http_.AddModule(*module);
+  }
+
+  CreateInfoFile("info.json");
+}
+
+void Constellation::CreateInfoFile(std::string const &filename)
+{
+  // Create an information file about this process.
+
+  std::fstream stream;
+  stream.open(filename.c_str(), std::ios_base::out);
+  if (stream.good())
+  {
+    variant::Variant data = variant::Variant::Object();
+    data["pid"]           = getpid();
+    data["identity"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    data["hex_identity"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+
+    stream << data;
+
+    stream.close();
+  }
+  else
+  {
+    throw std::invalid_argument(std::string("Can't open ") + filename);
   }
 }
 

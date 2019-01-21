@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions/fmod.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * Computes the floating-point remainder of the division operation x / y
@@ -27,14 +27,14 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Fmod(ArrayType const &x, ArrayType const &y,
-                                                         ArrayType &z)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &x, ArrayType const &y,
+                                                       ArrayType &z)
 {
   free_functions::kernels::Fmod<typename ArrayType::Type> kernel;
   z.data().in_parallel().Apply(kernel, x.data(), y.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Fmod(ArrayType const &x, ArrayType &y)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Fmod(ArrayType const &x, ArrayType &y)
 {
   free_functions::kernels::Fmod<typename ArrayType::Type> kernel;
   y.data().in_parallel().Apply(kernel, x.data(), y.data());

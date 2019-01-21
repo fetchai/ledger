@@ -32,7 +32,7 @@ public:
   using vector_register_type = typename ndarray_type::vector_register_type;
 
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(const ::benchmark::State & /*st*/) override
   {
     a_ = ndarray_type(N);
     b_ = ndarray_type(N);

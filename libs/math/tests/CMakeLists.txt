@@ -35,3 +35,5 @@ add_fetch_gtest(distances_gtest fetch-math math/distance/gtest)
 add_fetch_gtest(clustering_gtest fetch-math math/clustering)
 
 add_fetch_gtest(math_gtest fetch-math math/gtest)
+
+add_fetch_gtest(tensor_gtest fetch-math math/tensor)

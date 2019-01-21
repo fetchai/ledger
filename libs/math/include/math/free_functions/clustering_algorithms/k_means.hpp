@@ -20,7 +20,7 @@
 #include "core/vector.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/metrics/metrics.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "random"
 
 #include "math/shapeless_array.hpp"
@@ -190,7 +190,7 @@ private:
   /**
    * The main iterative loop that calculates KMeans clustering
    */
-  void ComputeKMeans(ArrayType const &data, ClusteringType &ret)
+  void ComputeKMeans(ArrayType const &data, ClusteringType & /*ret*/)
   {
     while (NotConverged())
     {
