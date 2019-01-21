@@ -31,7 +31,7 @@ namespace fetch {
 namespace storage {
 
 /**
- * The CacheLineRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
+ * The CacheLineLRURandomAccessStack owns a stack of type T (RandomAccessStack), and provides
  * caching in an invisible manner.
  *
  * It does this by maintaining a quick access structure (data_ map) that can be used without disk
@@ -43,7 +43,7 @@ namespace storage {
  *
  */
 template <typename T, typename D = uint64_t>
-class CacheLineRandomAccessStack
+class CacheLineLRURandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
@@ -51,9 +51,9 @@ public:
   using header_extra_type  = D;
   using type               = T;
 
-  CacheLineRandomAccessStack() = default;
+  CacheLineLRURandomAccessStack() = default;
 
-  ~CacheLineRandomAccessStack()
+  ~CacheLineLRURandomAccessStack()
   {
     Flush(false);
   }
@@ -113,16 +113,17 @@ public:
     if (iter != data_.end())
     {
       ++((*iter).second.reads);
-      object = iter->second.elements[cache_subindex];
+      (*iter).second.usage_flag = 1;
+      object                    = iter->second.elements[cache_subindex];
     }
     else
     {
-      // std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
       // Case where item isn't found, load it into the cache, then access
       LoadCacheLine(i);
 
       data_[cache_lookup].reads++;
-      object = data_[cache_lookup].elements[cache_subindex];
+      data_[cache_lookup].usage_flag = 1;
+      object                         = data_[cache_lookup].elements[cache_subindex];
     }
   }
 
@@ -145,6 +146,7 @@ public:
     if (iter != data_.end())
     {
       ++iter->second.writes;
+      (*iter).second.usage_flag             = 1;
       iter->second.elements[cache_subindex] = object;
     }
     else
@@ -153,6 +155,7 @@ public:
       LoadCacheLine(i);
 
       data_[cache_lookup].writes++;
+      data_[cache_lookup].usage_flag               = 1;
       data_[cache_lookup].elements[cache_subindex] = object;
     }
   }
@@ -226,7 +229,9 @@ public:
     }
 
     data_[cache_lookup_i].reads++;
+    data_[cache_lookup_i].usage_flag = 1;
     data_[cache_lookup_j].reads++;
+    data_[cache_lookup_j].usage_flag = 1;
 
     std::swap(data_[cache_lookup_i].elements[cache_subindex_i],
               data_[cache_lookup_j].elements[cache_subindex_j]);
@@ -305,14 +310,15 @@ private:
 
   struct CachedDataItem
   {
-    uint64_t                              reads  = 0;
-    uint64_t                              writes = 0;
+    uint64_t                              reads      = 0;
+    uint64_t                              writes     = 0;
+    uint32_t                              usage_flag = 0;
     std::array<type, 1 << cache_line_ln2> elements;
   };
 
-  mutable std::map<uint64_t, CachedDataItem> data_;
-  mutable uint64_t                           last_removed_index_ = 0;
-  uint64_t                                   objects_            = 0;
+  mutable std::map<uint64_t, CachedDataItem>                    data_;
+  mutable typename std::map<uint64_t, CachedDataItem>::iterator hand_    = data_.begin();
+  uint64_t                                                      objects_ = 0;
 
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
@@ -341,7 +347,12 @@ private:
 
   bool ManageMemory() const
   {
-    // Lazy policy: remove items FILO style
+    /**
+     * Clock replacment policy: On page fault, the clock hand starts to sweep clock-wise. If it
+     * encounters a use bit that is set to 1, it sets it to 0 and moves on. If the use bit is 0, the
+     * page is chosen for replacement. In the worst case all use bits might be set and the pointer
+     * cycles through all the frames, giving each page a second chance.
+     */
     using MapElement = typename decltype(data_)::value_type;
 
     if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
@@ -349,23 +360,26 @@ private:
       return false;
     }
 
-    // Find and remove next index up from the last one we removed
-    auto next_to_remove = data_.upper_bound(last_removed_index_);
-
-    if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
+    // Find and remove next index up from the last one we removed whose usage_flag = 0
+    for (;;)
     {
-      last_removed_index_ = next_to_remove->first;
-      FlushLine(next_to_remove->first, next_to_remove->second);
-      data_.erase(next_to_remove);
-    }
-    else
-    {
-      next_to_remove = data_.begin();  // Get min element
-      FlushLine(next_to_remove->first, next_to_remove->second);
-      last_removed_index_ = next_to_remove->first;
-      data_.erase(next_to_remove);
-    }
+      if (hand_ == data_.end())
+      {
+        hand_ = data_.begin();
+      }
 
+      if (hand_->second.usage_flag == 0)
+      {
+        auto temp = hand_;
+        ++hand_;
+        FlushLine(temp->first << cache_line_ln2, temp->second);
+        data_.erase(temp);
+        break;
+      }
+      // Setting usage_flag to 0
+      hand_->second.usage_flag = 0;
+      ++hand_;
+    }
     return true;
   }
 
