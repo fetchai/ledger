@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public:
   using Transaction     = chain::Transaction;
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
+  using TxSummaries     = std::vector<fetch::chain::TransactionSummary>;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;
@@ -71,6 +72,8 @@ public:
     }
   }
   /// @}
+
+  virtual TxSummaries PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{

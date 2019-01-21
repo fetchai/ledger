@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -52,16 +52,10 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
   : storage_{storage}
   , processor_{processor}
 {
-  byte_array::ByteArray contract_full_name;
-
   // create all the contracts
   auto const &contracts = contract_cache_.factory().GetContracts();
   for (auto const &contract_name : contracts)
   {
-    contract_full_name.Resize(0, ResizeParadigm::ABSOLUTE);
-    contract_full_name.Append(contract_name, CONTRACT_NAME_SEPARATOR);
-    std::size_t const contract_full_name_base_size = contract_full_name.size();
-
     // create the contract
     auto contract = contract_cache_.factory().Create(contract_name);
 
@@ -69,20 +63,16 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     contract_path.Replace(static_cast<char const &>(CONTRACT_NAME_SEPARATOR[0]),
                           static_cast<char const &>(PATH_SEPARATOR[0]));
 
-    byte_array::ByteArray api_path;
-    //* ByteArry from `contract_name` performs deep copy due to const -> non-const
-    api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR);
-    std::size_t const api_path_base_size = api_path.size();
-
     // enumerate all of the contract query handlers
     auto const &query_handlers = contract->query_handlers();
     for (auto const &handler : query_handlers)
     {
       byte_array::ConstByteArray const &query_name = handler.first;
-      api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
-      api_path.Append(query_name);
 
-      // FETCH_LOG_INFO(LOGGING_NAME, "API: ", api_path);
+      // build up the API path
+      byte_array::ByteArray api_path;
+      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR, query_name);
+
       FETCH_LOG_INFO(LOGGING_NAME, "QUERY API HANDLER: ", api_path);
 
       Post(api_path, [this, contract_name, query_name](http::ViewParameters const &,
@@ -94,46 +84,25 @@ ContractHttpInterface::ContractHttpInterface(StorageInterface &    storage,
     auto const &transaction_handlers = contract->transaction_handlers();
     for (auto const &handler : transaction_handlers)
     {
-      byte_array::ConstByteArray const &query_name = handler.first;
-      api_path.Resize(api_path_base_size, ResizeParadigm::ABSOLUTE);
-      api_path.Append(query_name);
+      byte_array::ConstByteArray const &transaction_name = handler.first;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path);
+      // build up the API path
+      byte_array::ByteArray api_path;
+      api_path.Append(API_PATH_CONTRACT_PREFIX, contract_path, PATH_SEPARATOR, transaction_name);
 
-      contract_full_name.Resize(contract_full_name_base_size, ResizeParadigm::ABSOLUTE);
-      contract_full_name.Append(query_name);
+      // build up the canonical contract name
+      byte_array::ByteArray canonical_contract_name;
+      canonical_contract_name.Append(contract_name, CONTRACT_NAME_SEPARATOR, transaction_name);
 
-      Post(api_path, [this, contract_full_name](http::ViewParameters const &params,
-                                                http::HTTPRequest const &   request) {
-        return OnTransaction(params, request, &contract_full_name);
+      FETCH_LOG_INFO(LOGGING_NAME, "TX API HANDLER: ", api_path, " : ", canonical_contract_name);
+
+      Post(api_path, [this, canonical_contract_name](http::ViewParameters const &params,
+                                                     http::HTTPRequest const &   request) {
+        return OnTransaction(params, request, &canonical_contract_name);
       });
     }
   }
 
-  // add custom debug handlers
-  Post("/api/debug/submit", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-    chain::MutableTransaction tx;
-
-    tx.PushResource("foo.bar.baz" + std::to_string(transaction_index_));
-    tx.set_fee(transaction_index_);
-    tx.set_contract_name("fetch.dummy.run");
-    tx.set_data(std::to_string(transaction_index_++));
-
-    processor_.AddTransaction(tx);
-
-    std::ostringstream oss;
-    oss << R"({ "submitted": true })";
-
-    return http::CreateJsonResponse(oss.str());
-  });
-
-  // TODO(issue 414): Remove legacy/unused/legacy endpoints from public HTTP interface
-  Post("/api/contract/fetch/token/submit",
-       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-         return OnTransaction(params, request);
-       });
-
-  // TODO(issue 414): Remove legacy/unused/legacy endpoints from public HTTP interface
   Post("/api/contract/submit",
        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
          return OnTransaction(params, request);

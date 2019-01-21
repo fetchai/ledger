@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ public:
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
-  using Status              = ExecutionManager::Status;
+  using ScheduleStatus      = ExecutionManager::ScheduleStatus;
+  using State               = ExecutionManager::State;
 
 protected:
   void SetUp() override
@@ -70,6 +71,11 @@ protected:
     return executor;
   }
 
+  bool IsManagerIdle() const
+  {
+    return (State::IDLE == manager_->GetState());
+  }
+
   bool WaitUntilManagerIsIdle(std::size_t num_executions, std::size_t num_iterations = 200)
   {
     bool success = false;
@@ -77,7 +83,7 @@ protected:
     for (std::size_t i = 0; i < num_iterations; ++i)
     {
       // exit condition
-      if ((manager_->completed_executions() == num_executions) && manager_->IsIdle())
+      if ((manager_->completed_executions() == num_executions) && IsManagerIdle())
       {
         success = true;
         break;
@@ -102,13 +108,13 @@ protected:
     return total;
   }
 
-  void ExecuteBlock(TestBlock &block, Status expected_status = Status::SCHEDULED)
+  void ExecuteBlock(TestBlock &block, ScheduleStatus expected_status = ScheduleStatus::SCHEDULED)
   {
-    ASSERT_TRUE(manager_->IsIdle());
+    ASSERT_TRUE(IsManagerIdle());
 
     // determine the number of transactions that is expected from this execution
     std::size_t expected_completions = manager_->completed_executions();
-    if (expected_status == Status::SCHEDULED)
+    if (expected_status == ScheduleStatus::SCHEDULED)
     {
       expected_completions += static_cast<std::size_t>(block.num_transactions);
     }
@@ -133,28 +139,28 @@ protected:
   FakeExecutorList    executors_;
 };
 
-std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::Status status)
+std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::ScheduleStatus status)
 {
   using fetch::ledger::ExecutionManager;
 
   switch (status)
   {
-  case ExecutionManager::Status::COMPLETE:
-    s << "Status::COMPLETE";
+  case ExecutionManager::ScheduleStatus::RESTORED:
+    s << "Status::RESTORED";
     break;
-  case ExecutionManager::Status::SCHEDULED:
+  case ExecutionManager::ScheduleStatus::SCHEDULED:
     s << "Status::SCHEDULED";
     break;
-  case ExecutionManager::Status::NOT_STARTED:
-    s << "Status::NOT_STARTED";
+  case ExecutionManager::ScheduleStatus::NOT_STARTED:
+    s << "Status::ScheduleStatus";
     break;
-  case ExecutionManager::Status::ALREADY_RUNNING:
+  case ExecutionManager::ScheduleStatus::ALREADY_RUNNING:
     s << "Status::ALREADY_RUNNING";
     break;
-  case ExecutionManager::Status::NO_PARENT_BLOCK:
+  case ExecutionManager::ScheduleStatus::NO_PARENT_BLOCK:
     s << "Status::NO_PARENT_BLOCK";
     break;
-  case ExecutionManager::Status::UNABLE_TO_PLAN:
+  case ExecutionManager::ScheduleStatus::UNABLE_TO_PLAN:
     s << "Status::UNABLE_TO_PLAN";
     break;
   default:
@@ -220,7 +226,7 @@ TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
     EXPECT_CALL(*mock_storage_, Commit(_)).Times(0);
     EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
 
-    ExecuteBlock(block2, Status::COMPLETE);
+    ExecuteBlock(block2, ScheduleStatus::RESTORED);
   }
 
   auto const reapply_hash = mock_storage_->GetFake().Hash();

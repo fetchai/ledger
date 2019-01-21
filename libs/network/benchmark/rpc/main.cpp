@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public:
     volatile std::vector<transaction_type> hold = std::move(data);
   }
 
-  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool isMaster)
+  std::size_t Setup(std::size_t payload, std::size_t txPerCall, bool /*isMaster*/)
   {
     return MakeTransactionVector(TestData, payload, txPerCall);
   }

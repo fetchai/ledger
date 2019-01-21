@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ public:
   enum class Status
   {
     SUCCESS = 0,
+
+    // Errors
+    NOT_RUN,
     TX_LOOKUP_FAILURE,
     RESOURCE_FAILURE,
     CHAIN_CODE_LOOKUP_FAILURE,
@@ -43,8 +46,7 @@ public:
   virtual Status Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes) = 0;
   /// @}
 
-  virtual ~ExecutorInterface()
-  {}
+  virtual ~ExecutorInterface() = default;
 };
 
 template <typename T>

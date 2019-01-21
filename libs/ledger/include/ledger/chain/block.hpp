@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -47,32 +47,33 @@ void Deserialize(T &serializer, BlockSlice &slice)
 
 struct BlockBody
 {
-  using digest_type       = byte_array::ConstByteArray;
-  using block_slices_type = std::vector<BlockSlice>;
+  using Identity       = byte_array::ConstByteArray;
+  using Digest         = byte_array::ConstByteArray;
+  using BlockSliceList = std::vector<BlockSlice>;
 
-  digest_type hash;
-  digest_type previous_hash;
-  digest_type merkle_hash;
-  // digest_type       state_hash;
-  uint64_t          block_number{0};
-  uint64_t          miner_number{0};
-  uint64_t          nonce{0};
-  uint32_t          log2_num_lanes{0};
-  block_slices_type slices;
+  // TODO(private issue 496): Populate the state hash
+  Digest         hash;
+  Digest         previous_hash;
+  Digest         merkle_hash;
+  uint64_t       nonce{0};
+  uint64_t       block_number{0};
+  Identity       miner;
+  uint32_t       log2_num_lanes{0};
+  BlockSliceList slices;
 };
 
 template <typename T>
 void Serialize(T &serializer, BlockBody const &body)
 {
   serializer << body.previous_hash << body.merkle_hash << body.nonce << body.block_number
-             << body.miner_number << body.log2_num_lanes << body.slices;
+             << body.miner << body.log2_num_lanes << body.slices;
 }
 
 template <typename T>
 void Deserialize(T &serializer, BlockBody &body)
 {
   serializer >> body.previous_hash >> body.merkle_hash >> body.nonce >> body.block_number >>
-      body.miner_number >> body.log2_num_lanes >> body.slices;
+      body.miner >> body.log2_num_lanes >> body.slices;
 }
 
 template <typename P, typename H>
@@ -95,7 +96,7 @@ public:
   {
     serializers::ByteArrayBuffer buf;
     buf << body_.previous_hash << body_.merkle_hash << body_.block_number << body_.nonce
-        << body_.miner_number;
+        << body_.miner;
 
     hasher_type hash;
     hash.Reset();

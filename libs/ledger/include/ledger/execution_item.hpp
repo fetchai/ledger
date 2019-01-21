@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor_interface.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <future>
 #include <memory>
@@ -34,6 +35,9 @@ public:
   using LaneIndex = uint32_t;
   using TxDigest  = chain::Transaction::TxDigest;
   using LaneSet   = std::unordered_set<LaneIndex>;
+  using Status    = ExecutorInterface::Status;
+
+  static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
   ExecutionItem(TxDigest hash, std::size_t slice)
     : hash_(std::move(hash))
@@ -46,9 +50,23 @@ public:
     , slice_(slice)
   {}
 
-  ExecutorInterface::Status Execute(ExecutorInterface &executor)
+  Status status() const
   {
-    return executor.Execute(hash_, slice_, lanes_);
+    return status_;
+  }
+
+  void Execute(ExecutorInterface &executor)
+  {
+    try
+    {
+      status_ = executor.Execute(hash_, slice_, lanes_);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown be executing transaction: ", ex.what());
+
+      status_ = Status::RESOURCE_FAILURE;
+    }
   }
 
   void AddLane(LaneIndex lane)
@@ -57,9 +75,12 @@ public:
   }
 
 private:
-  TxDigest    hash_;
-  LaneSet     lanes_;
-  std::size_t slice_;
+  using AtomicStatus = std::atomic<Status>;
+
+  TxDigest     hash_;
+  LaneSet      lanes_;
+  std::size_t  slice_;
+  AtomicStatus status_{Status::NOT_RUN};
 };
 
 }  // namespace ledger

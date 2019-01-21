@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -50,18 +50,18 @@ public:
     }
   }
 
-  virtual ~MilliTimer()
+  ~MilliTimer()
   {
     auto const duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start_);
 
     if (duration.count() > threshold_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Too many milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_WARN(LOGGING_NAME, "Timer: ", name_, " duration: ", duration.count(), "ms");
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Consumed milliseconds: ", duration.count(), " at ", name_);
     }
   }
 

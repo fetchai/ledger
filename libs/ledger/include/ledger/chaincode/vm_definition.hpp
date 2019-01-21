@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace fetch {
 namespace ledger {
 
 template <typename S>
-std::unique_ptr<vm::Module> CreateVMDefinition(S *smart_contract_instance = nullptr)
+std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ = nullptr)
 {
   using SmartContract = S;
 

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
 using fetch::network::NetworkManager;
-using fetch::network::Peer;
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
+using NetworkId = fetch::muddle::Muddle::NetworkId;
 
 int main()
 {
@@ -40,7 +40,7 @@ int main()
   nm.Start();
   auto peer = fetch::network::Uri{"tcp://127.0.0.1:8080"};
 
-  Muddle muddle{Muddle::CreateNetworkId("TEST"), CreateKey(CLIENT_PRIVATE_KEY), nm};
+  Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(CLIENT_PRIVATE_KEY), nm};
   muddle.Start({8080});
 
   sleep_for(milliseconds{2000});
@@ -59,7 +59,7 @@ int main()
 
   for (uint64_t i = 0; i < 5000; ++i)
   {
-    promises.push_back(client->Call(1, 1, i, i));
+    promises.push_back(client->Call(NetworkId("1"), 1, i, i));
   }
 
   for (auto &prom : promises)

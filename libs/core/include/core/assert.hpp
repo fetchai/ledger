@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include "core/logger.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
@@ -75,3 +76,14 @@ struct Printer
     std::cout << "Failed :" << #cond << " in " << __FILE__ << " line " << __LINE__ << std::endl; \
     throw std::runtime_error("Assertion failed");                                                \
   }
+
+/*
+ * Replace ASSERT(param) with (void)(param) in release mode
+ * This is to avoid error due to misc-unused-parameters,-warnings-as-errors
+ * when the only place you use a named parameter is in an assert
+ */
+#ifdef DEBUG
+#define ASSERT assert
+#else
+#define ASSERT(...) (void)(__VA_ARGS__)
+#endif

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 
 #include <cstddef>
@@ -51,11 +52,17 @@ public:
    * @param block The reference to the output block to generate
    * @param num_lanes The number of lanes for the block
    * @param num_slices The number of slices for the block
+   * @param chain The main chain
    */
-  virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                             std::size_t num_slices) = 0;
+  virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
+                             chain::MainChain const &chain) = 0;
 
-  virtual uint64_t backlog() const = 0;
+  /**
+   * How many transactions are yet to be processed (mempool size). Not guaranteed to be accurate.
+   *
+   * @return: number of transactions
+   */
+  virtual uint64_t GetBacklog() const = 0;
 
   /// @}
 };

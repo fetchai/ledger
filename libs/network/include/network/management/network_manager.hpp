@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -123,6 +123,16 @@ public:
   bool is_valid()
   {
     return (!is_copy_) || bool(weak_pointer_.lock());
+  }
+
+  bool Running()
+  {
+    auto ptr = lock();
+    if (ptr)
+    {
+      return ptr->Running();
+    }
+    return false;
   }
 
   bool is_primary()

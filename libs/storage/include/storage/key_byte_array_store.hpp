@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "storage/cache_line_random_access_stack.hpp"
 #include "storage/document_store.hpp"
-#include "storage/slightly_better_random_access_stack.hpp"
 
 namespace fetch {
 namespace storage {
@@ -29,12 +29,12 @@ template <std::size_t BLOCK_SIZE = 2048>
 struct ByteArrayMapConfigurator
 {
   using kvi_pair_type  = KeyValuePair<>;
-  using kvi_stack_type = SlightlyBetterRandomAccessStack<kvi_pair_type, uint64_t>;
+  using kvi_stack_type = CacheLineRandomAccessStack<kvi_pair_type, uint64_t>;
 
   using kvi_store_type = KeyValueIndex<kvi_pair_type, kvi_stack_type>;
 
   using file_block_type     = FileBlockType<BLOCK_SIZE>;
-  using document_stack_type = SlightlyBetterRandomAccessStack<file_block_type>;
+  using document_stack_type = CacheLineRandomAccessStack<file_block_type>;
   using file_object_type    = FileObject<document_stack_type>;
 
   using type = DocumentStore<BLOCK_SIZE, file_block_type, kvi_store_type, document_stack_type,

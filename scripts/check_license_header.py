@@ -4,10 +4,32 @@ import fnmatch
 import os
 import re
 import sys
+import time
+
+CURRENT_YEAR = int(time.localtime().tm_year)
+
+RE_LICENSE = """//------------------------------------------------------------------------------
+//
+//   Copyright 2018(-\\d+)? Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 \\(the "License"\\);
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------([\\s\\n]*)
+"""
 
 LICENSE = """//------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-{} Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,12 +44,8 @@ LICENSE = """//-----------------------------------------------------------------
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-"""
 
-LICENSE_SEPARATOR = """
-"""
-
-FULL_LICENSE = LICENSE + LICENSE_SEPARATOR
+""".format(CURRENT_YEAR)
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 APP_FOLDERS = ('apps', 'libs')
@@ -58,7 +76,7 @@ def read_file(path):
 def check_source_file(path):
     contents = read_file(path)
 
-    if FULL_LICENSE not in contents:
+    if LICENSE not in contents:
         print('License missing from:', os.path.relpath(path, PROJECT_ROOT))
         return False
 
@@ -69,31 +87,37 @@ def update_source_file(path):
 
     contents = read_file(path)
 
-    # do not bother processing files which have the license
-    if FULL_LICENSE in contents:
-        return
 
-    # update the contents of the file
-    if path.endswith('.cpp'):
-        if LICENSE in contents:
-            contents = contents.replace(LICENSE, FULL_LICENSE)
-        else:
-            contents = FULL_LICENSE + contents
+    # do not bother processing files which have the license
+    if LICENSE in contents:
+        return True
+
+    # determine if the license is present already in the source code
+    existing_license_present = bool(re.search(RE_LICENSE, contents, re.MULTILINE))
+
+    if existing_license_present:
+
+        # replace the contents of the license
+        contents = re.sub(RE_LICENSE, LICENSE, contents)
+
+    elif path.endswith('.cpp'):
+
+        # add license to the top of the file
+        contents = LICENSE + contents
 
     elif path.endswith('.hpp'):
-        if LICENSE in contents:
-            contents = re.sub(r'#pragma once\s+' + LICENSE, '#pragma once\n' + FULL_LICENSE, contents)
-        else:
-            contents = re.sub(r'#pragma once\s+', '#pragma once\n' + FULL_LICENSE, contents)
 
-        #contents = contents.replace('#pragma once\n', '#pragma once\n' + LICENSE)
+        # add the license after the header guard
+        contents = re.sub(r'#pragma once\s+', '#pragma once\n' + LICENSE, contents)
 
     else:
         print('Unable to update file: ', os.path.relpath(path, PROJECT_ROOT))
         return False
 
-    if FULL_LICENSE not in contents:
+    # final top level sanity check
+    if LICENSE not in contents:
         print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
+        return False
 
     # update the contents of the file
     with open(path, 'w', encoding='utf-8') as output_file:
@@ -110,10 +134,15 @@ def main():
     else:
         routine = check_source_file
 
-    results = list(map(routine, project_source_files()))
+    # create the source file generator
+    source_files = project_source_files()
+
+    # apply the update routine to the generator
+    results = list(map(routine, source_files))
 
     if not all(results):
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

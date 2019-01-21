@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public:
    * Clears all gradients in the computational graph
    * @param loss_var
    */
-  void ClearGradients(VariablePtrType loss_var)
+  void ClearGradients(VariablePtrType /*loss_var*/)
   {
     // clear all gradients
     for (auto &cur_var : all_variables)
@@ -231,7 +231,7 @@ private:
   bool top_sort_complete_ =
       false;  // we track whether we need to redo the topological sort or not as we go
 
-  void Forward(VariablePtrType in_var, VariablePtrType out_var)
+  void Forward(VariablePtrType /*in_var*/, VariablePtrType out_var)
   {
     // figure out the path through the graph
     if (!top_sort_complete_)

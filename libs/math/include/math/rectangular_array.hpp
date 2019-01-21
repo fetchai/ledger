@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
 
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -94,8 +94,7 @@ public:
   RectangularArray &operator=(RectangularArray const &other) = default;
   RectangularArray &operator=(RectangularArray &&other) = default;
 
-  ~RectangularArray()
-  {}
+  virtual ~RectangularArray() = default;
 
   void Sort()
   {
@@ -336,7 +335,7 @@ public:
    * Note this accessor is "slow" as it takes care that the developer
    * does not accidently enter the padded area of the memory.
    */
-  Type const &At(size_type const &i) const
+  virtual Type const &At(size_type const &i) const
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -347,7 +346,7 @@ public:
   /* One-dimensional reference access function.
    * @param i is the index which is being accessed.
    */
-  Type &At(size_type const &i)
+  virtual Type &At(size_type const &i)
   {
     std::size_t p = i / width_;
     std::size_t q = i % width_;
@@ -378,6 +377,13 @@ public:
     return super_type::data()[(j * padded_height_ + i)];
   }
 
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> &Get(std::vector<S> const &indices)
+  {
+    assert(indices.size() == shape_.size());
+    return this->At(indices[0], indices[1]);
+  }
+
   /* Sets an element using one coordinatea.
    * @param i is the position along the height.
    * @param j is the position along the width.
@@ -385,9 +391,9 @@ public:
    */
   Type const &Set(size_type const &n, Type const &v)
   {
-    assert(n < super_type::data().size());
-    super_type::data()[n] = v;
-    return v;
+    // Compiler won't let us jump from linalg::Matrix (which is a subclass of Rectangular array)
+    // to ShapelessArray::Set without redefining here
+    return super_type::Set(n, v);
   }
 
   /* Sets an element using two coordinates.
@@ -400,6 +406,12 @@ public:
     assert((j * padded_height_ + i) < super_type::data().size());
     super_type::data()[(j * padded_height_ + i)] = v;
     return v;
+  }
+
+  void Set(std::vector<size_t> const &indices, Type v)
+  {
+    assert(indices.size() == 2);
+    Set(indices[1], indices[0], v);
   }
 
   void SetRange(std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s)
@@ -580,7 +592,7 @@ public:
   {
     super_type::Fill(value);
   }
-  void Fill(Type const &value, memory::Range const &rows, memory::Range const &cols)
+  void Fill(Type const & /*value*/, memory::Range const &rows, memory::Range const &cols)
   {
     std::size_t height = (rows.to() - rows.from()) / rows.step();
     std::size_t width  = (cols.to() - cols.from()) / cols.step();
@@ -588,7 +600,8 @@ public:
     // TODO(tfr): Implement
   }
 
-  void Fill(Type const &value, memory::TrivialRange const &rows, memory::TrivialRange const &cols)
+  void Fill(Type const & /*value*/, memory::TrivialRange const &rows,
+            memory::TrivialRange const &cols)
   {
     std::size_t height = (rows.to() - rows.from());
     std::size_t width  = (cols.to() - cols.from());

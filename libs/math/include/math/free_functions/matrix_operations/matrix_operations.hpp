@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {
@@ -793,10 +793,11 @@ void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
   }
   input_array.Reshape(new_shape);
 }
+
 template <typename T, typename C>
-void Transpose(NDArray<T, C> &input_array, NDArray<T, C> const &perm)
+void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
 {
-  assert(perm.size() == input_array.shape().size());
+  // assert(perm.size() == input_array.shape().size());
 }
 
 /**
@@ -893,11 +894,11 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
  * @return
  */
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
+fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
     ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
     typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
-  ret.Resize(A.shape()[0], B.shape()[0]);
+  ret.Reshape(std::vector<size_t>({A.shape()[0], B.shape()[0]}));
 
   if (threaded)
   {
@@ -925,7 +926,7 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, void> DotTranspose(
   }
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
     ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
     typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
@@ -938,9 +939,9 @@ fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(
   return ret;
 }
 template <typename ArrayType>
-fetch::math::meta::IsMathShapeArrayLike<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
-                                                                           ArrayType const &B,
-                                                                           bool threaded = false)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
+                                                                         ArrayType const &B,
+                                                                         bool threaded = false)
 {
 
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
@@ -1231,7 +1232,7 @@ void Concat(NDArray<T, C> &ret, std::vector<NDArray<T, C>> input_arrays, std::si
   }
 }
 template <typename T, typename C>
-NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const &axis)
+NDArray<T, C> Concat(std::vector<NDArray<T, C>> input_arrays, std::size_t const & /*axis*/)
 {
   NDArray<T, C> ret;
   Concat(ret, input_arrays);

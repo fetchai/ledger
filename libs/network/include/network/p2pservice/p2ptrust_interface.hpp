@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public:
     std::string name;
     double      trust;
     bool        has_transacted;
+    bool        active;
   };
   using PeerTrusts = std::vector<PeerTrust>;
 
@@ -86,6 +87,8 @@ public:
   virtual double      GetTrustRatingOfPeer(IDENTITY const &peer_ident) const = 0;
   virtual bool        IsPeerTrusted(IDENTITY const &peer_ident) const        = 0;
   virtual bool        IsPeerKnown(IDENTITY const &peer_ident) const          = 0;
+
+  virtual void Debug() const = 0;
 };
 
 inline char const *ToString(TrustSubject subject)
@@ -115,6 +118,8 @@ inline char const *ToString(TrustQuality quality)
     return "Duplicate";
   case TrustQuality::NEW_INFORMATION:
     return "New Information";
+  case TrustQuality::NEW_PEER:
+    return "New Peer";
   default:
     return "Unknown";
   }

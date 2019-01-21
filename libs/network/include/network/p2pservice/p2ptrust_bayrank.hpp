@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public:
     AddFeedback(peer_ident, ConstByteArray{}, subject, quality);
   }
 
-  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const &object_ident,
+  void AddFeedback(IDENTITY const &peer_ident, ConstByteArray const & /*object_ident*/,
                    TrustSubject subject, TrustQuality quality) override
   {
     FETCH_LOCK(mutex_);
@@ -103,8 +103,19 @@ public:
       pos = ranking->second;
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Feedback: ", byte_array::ToBase64(peer_ident),
+                   " subj=", ToString(subject), " qual=", ToString(quality));
+    if (quality == TrustQuality::NEW_PEER)
+    {
+      trust_store_[pos].update_score();
+      dirty_ = true;
+      SortIfNeeded();
+      return;  // we're introducing this element, not rating it.
+    }
+
     Gaussian const &reference_player = LookupReferencePlayer(quality);
     bool honest = quality == TrustQuality::NEW_INFORMATION || quality == TrustQuality::DUPLICATE;
+    trust_store_[pos].scored = true;
     updateGaussian(honest, trust_store_[pos].g, reference_player, 100 / 12., 1 / 6., 0.2);
     trust_store_[pos].update_score();
 
@@ -232,6 +243,17 @@ public:
   bool IsPeerTrusted(IDENTITY const &peer_ident) const override
   {
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
+  }
+
+  virtual void Debug() const override
+  {
+    FETCH_LOCK(mutex_);
+    for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "trust_store_ ",
+                     byte_array::ToBase64(trust_store_[pos].peer_identity), " => ",
+                     trust_store_[pos].score);
+    }
   }
 
   // Operators

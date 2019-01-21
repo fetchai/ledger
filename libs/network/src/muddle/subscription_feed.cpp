@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ SubscriptionFeed::SubscriptionPtr SubscriptionFeed::Subscribe()
  * @return true if one or more successful dispatches were made, otherwise false
  */
 bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                uint16_t counter, Payload const &payload)
+                                uint16_t counter, Payload const &payload,
+                                Address const &transmitter)
 {
   FETCH_LOCK(feed_lock_);
 
@@ -64,7 +65,7 @@ bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16
     if (subscription)
     {
       // dispatch the message to the handler
-      subscription->Dispatch(address, service, channel, counter, payload);
+      subscription->Dispatch(address, service, channel, counter, payload, transmitter);
 
       success = true;
       ++it;

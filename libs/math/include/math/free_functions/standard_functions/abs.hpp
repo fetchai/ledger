@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/kernels/standard_functions/abs.hpp"
-#include "math/meta/type_traits.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 /**
  * assigns the absolute of x to this array
@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsMathArrayLike<ArrayType, void> Abs(ArrayType &x)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
 {
   math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());

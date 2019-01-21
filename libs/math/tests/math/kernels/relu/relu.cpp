@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ using namespace fetch::math;
 using data_type      = double;
 using container_type = fetch::memory::SharedArray<data_type>;
 
-ShapelessArray<data_type, container_type> RandomArrayNegative(std::size_t n, std::size_t m)
+ShapelessArray<data_type, container_type> RandomArrayNegative(std::size_t n, std::size_t /*m*/)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<data_type, container_type>         a1(n);
@@ -39,7 +39,7 @@ ShapelessArray<data_type, container_type> RandomArrayNegative(std::size_t n, std
   return a1;
 }
 
-ShapelessArray<data_type, container_type> RandomArrayPositive(std::size_t n, std::size_t m)
+ShapelessArray<data_type, container_type> RandomArrayPositive(std::size_t n, std::size_t /*m*/)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   ShapelessArray<data_type, container_type>         a1(n);

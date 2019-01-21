@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -567,8 +567,9 @@ protected:
     (*iters) = vector_register_iterator_type(next.pointer() + offset, size);
   }
 
-  static void InitializeVectorIterators(std::size_t const &offset, std::size_t const &size,
-                                        vector_register_iterator_type *iters)
+  static void InitializeVectorIterators(std::size_t const & /*offset*/,
+                                        std::size_t const & /*size*/,
+                                        vector_register_iterator_type * /*iters*/)
   {}
 
   template <typename G, typename... Args>
@@ -582,15 +583,15 @@ protected:
   }
 
   template <typename G>
-  static void SetPointers(std::size_t const &offset, std::size_t const &size, type const **regs,
-                          G &next)
+  static void SetPointers(std::size_t const &offset, std::size_t const & /*size*/,
+                          type const **regs, G &next)
   {
-    assert(next.size() >= offset + size);
+    // assert(next.size() >= offset + size); // Size not used
     *regs = next.pointer() + offset;
   }
 
-  static void SetPointers(std::size_t const &offset, std::size_t const &size,
-                          vector_register_iterator_type *iters)
+  static void SetPointers(std::size_t const & /*offset*/, std::size_t const & /*size*/,
+                          vector_register_iterator_type * /*iters*/)
   {}
 };
 

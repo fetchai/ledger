@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ protected:
   using ExecutionManagerRpcClientPtr  = std::unique_ptr<ExecutionManagerRpcClient>;
   using ExecutionManagerRpcServicePtr = std::unique_ptr<ExecutionManagerRpcService>;
   using FakeStorageUnitPtr            = std::shared_ptr<FakeStorageUnit>;
+  using ScheduleStatus                = ExecutionManager::ScheduleStatus;
+  using State                         = ExecutionManager::State;
 
   static constexpr char const *LOGGING_NAME = "ExecutionManagerRpcTests";
 
@@ -98,6 +100,11 @@ protected:
     network_manager_.reset();
   }
 
+  bool IsManagerIdle() const
+  {
+    return (State::IDLE == manager_->GetState());
+  }
+
   FakeExecutorPtr CreateExecutor()
   {
     FakeExecutorPtr executor = std::make_shared<FakeExecutor>();
@@ -113,7 +120,7 @@ protected:
     {
 
       // the manager must be idle and have completed the required executions
-      if (manager_->IsIdle() && (service_->completed_executions() >= num_executions))
+      if (IsManagerIdle() && (service_->completed_executions() >= num_executions))
       {
         success = true;
         break;
@@ -202,7 +209,7 @@ TEST_P(ExecutionManagerRpcTests, DISABLED_BlockExecution)
   auto block = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
 
   // execute the block
-  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::Status::SCHEDULED);
+  ASSERT_EQ(manager_->Execute(block.block), ExecutionManager::ScheduleStatus::SCHEDULED);
 
   // wait for the manager to become idle again
   ASSERT_TRUE(WaitUntilExecutionComplete(static_cast<std::size_t>(block.num_transactions)));

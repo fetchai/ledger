@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -118,7 +118,6 @@ private:
       http::HTTPRequest const &               request,
       byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
-  std::size_t           transaction_index_{0};
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_;

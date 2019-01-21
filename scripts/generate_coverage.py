@@ -79,7 +79,10 @@ def get_coverage_reports(targets : map):
         print(val)
 
         # Execute the binary target, this will generate a default.profraw
-        subprocess.check_call(val, cwd=build_directory, stdout=subprocess.PIPE)
+        try:
+            subprocess.check_call(val, cwd=build_directory, stdout=subprocess.PIPE, timeout=1*60)
+        except subprocess.TimeoutExpired:
+            print("\nWARNING: Timed out. this may not provide an accurate coverage report")
 
         raw_file_name        = key +".profraw"
         indexed_file_name    = key +".profdata"

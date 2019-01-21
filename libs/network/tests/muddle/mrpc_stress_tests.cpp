@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -103,11 +103,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>(1);
-    networkA_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>(1);
-    networkB_ = std::make_unique<Muddle>(Muddle::CreateNetworkId("Test"),
+    networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
     managerA_->Start();

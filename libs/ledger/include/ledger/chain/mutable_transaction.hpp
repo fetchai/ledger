@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -78,6 +78,33 @@ struct TransactionSummary
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
   ContractName contract_name;
+
+  bool operator==(TransactionSummary const &rhs) const
+  {
+    return transaction_hash == rhs.transaction_hash;
+  }
+
+  bool operator<(TransactionSummary const &rhs) const
+  {
+    return transaction_hash < rhs.transaction_hash;
+  }
+
+  bool operator>(TransactionSummary const &rhs) const
+  {
+    return !(*this < rhs);
+  }
+
+  bool IsWellFormed() const
+  {
+    if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 };
 
 template <typename T>
@@ -415,6 +442,16 @@ public:
   void set_resources(TransactionSummary::ResourceSet resources)
   {
     summary_.resources = std::move(resources);
+  }
+
+  bool operator==(MutableTransaction const &rhs) const
+  {
+    return summary_.transaction_hash == rhs.summary().transaction_hash;
+  }
+
+  bool operator>(MutableTransaction const &rhs) const
+  {
+    return summary_.transaction_hash > rhs.summary().transaction_hash;
   }
 
 private:

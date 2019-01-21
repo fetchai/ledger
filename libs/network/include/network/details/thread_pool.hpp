@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -82,9 +82,9 @@ public:
   using ThreadPoolPtr = std::shared_ptr<ThreadPoolImplementation>;
   using WorkItem      = std::function<void()>;
 
-  static ThreadPoolPtr Create(std::size_t threads);
+  static ThreadPoolPtr Create(std::size_t threads, std::string const &name = "");
 
-  explicit ThreadPoolImplementation(std::size_t threads);
+  explicit ThreadPoolImplementation(std::size_t threads, std::string name = "");
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
   ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
   ~ThreadPoolImplementation();
@@ -144,15 +144,17 @@ private:
   Flag          shutdown_{false};                 ///< Flag to signal the pool should stop
   Counter       counter_{0};                      ///< The number of jobs executed
   Counter       inactive_threads_{0};             ///< The number of threads waiting for work
+
+  std::string name_{};
 };
 
 }  // namespace details
 
 using ThreadPool = typename std::shared_ptr<details::ThreadPoolImplementation>;
 
-inline ThreadPool MakeThreadPool(std::size_t threads = 1)
+inline ThreadPool MakeThreadPool(std::size_t threads = 1, std::string const &name = "")
 {
-  return details::ThreadPoolImplementation::Create(threads);
+  return details::ThreadPoolImplementation::Create(threads, name);
 }
 
 }  // namespace network

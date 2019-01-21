@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ protected:
 
   PeerConnectionListTests()
     : register_(dispatcher_)
-    , router_(fetch::muddle::Muddle::CreateNetworkId("Test"),
+    , router_(fetch::muddle::Muddle::NetworkId("Test"),
               Router::Address{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
               register_, dispatcher_)
     , peer_list_(router_)

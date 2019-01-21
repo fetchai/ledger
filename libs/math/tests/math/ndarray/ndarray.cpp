@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ using container_type       = fetch::memory::SharedArray<data_type>;
 using vector_register_type = typename container_type::vector_register_type;
 #define N 200
 
-NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
+NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t /*m*/)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   NDArray<data_type, container_type>                array1(n);

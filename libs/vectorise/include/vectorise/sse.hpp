@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
+#include <iostream>
+
 namespace fetch {
 namespace vectorize {
 
@@ -45,7 +47,7 @@ struct UnrollSet
 template <typename T>
 struct UnrollSet<T, 0>
 {
-  static void Set(T *ptr, T const &c)
+  static void Set(T * /*ptr*/, T const & /*c*/)
   {}
 };
 }  // namespace details

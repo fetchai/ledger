@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -60,11 +60,10 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  Status    Execute(Block const &block) override;
-  BlockHash LastProcessedBlock() override;
-  bool      IsActive() override;
-  bool      IsIdle() override;
-  bool      Abort() override;
+  ScheduleStatus Execute(Block const &block) override;
+  BlockHash      LastProcessedBlock() override;
+  State          GetState() override;
+  bool           Abort() override;
   /// @}
 
   // general control of the operation of the module
@@ -93,10 +92,11 @@ private:
   using BlockSliceList    = std::vector<chain::BlockSlice>;
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
+  using AtomicState       = std::atomic<State>;
 
-  Flag running_{false};
-  Flag active_{false};
-  Flag monitor_ready_{false};
+  Flag        running_{false};
+  Flag        monitor_ready_{false};
+  AtomicState state_{State::IDLE};
 
   ChainCodeCache contracts_;
   StorageUnitPtr storage_;

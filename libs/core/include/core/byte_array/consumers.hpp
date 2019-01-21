@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
+
+#include <cctype>
 
 #include <emmintrin.h>
 namespace fetch {
@@ -195,7 +197,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
   uint8_t c = str[pos];
 
-  if (!(('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')))
+  if (!(std::isalpha(c)))
   {
     return -1;
   }
@@ -205,7 +207,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
     return TOKEN;
   }
   c = str[pos];
-  while (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+  while (std::isalnum(c))
   {
     ++pos;
     if (pos >= str.size())
@@ -218,7 +220,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 }
 
 template <int CATCH_ALL>
-int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)
+int AnyChar(byte_array::ConstByteArray const & /*str*/, uint64_t &pos)
 {
   ++pos;
   return CATCH_ALL;

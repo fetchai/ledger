@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@ private:
     {
       if ((!stream) || (!stream.is_open()))
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to write to stream in RAS");
         return false;
       }
       stream.seekg(0, stream.beg);
@@ -364,6 +363,7 @@ public:
    */
   void Pop()
   {
+    assert(header_.objects > 0);
     --header_.objects;
     StoreHeader();
   }

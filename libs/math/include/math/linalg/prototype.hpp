@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -66,31 +66,31 @@ struct Prototype
                 uint64_t(S1) | (uint64_t(O::Stack) << P) | (uint64_t(OP) << (P + O::StackSize))>;
 
   template <typename O>
-  two_op_return_type<O, ADD> constexpr operator+(O const &other) const
+  two_op_return_type<O, ADD> constexpr operator+(O const & /*other*/) const
   {
     return two_op_return_type<O, ADD>();
   }
 
   template <typename O>
-  two_op_return_type<O, MULT> constexpr operator*(O const &other) const
+  two_op_return_type<O, MULT> constexpr operator*(O const & /*other*/) const
   {
     return two_op_return_type<O, MULT>();
   }
 
   template <typename O>
-  two_op_return_type<O, RET> constexpr operator<=(O const &other) const
+  two_op_return_type<O, RET> constexpr operator<=(O const & /*other*/) const
   {
     return two_op_return_type<O, RET>();
   }
 
   template <typename O>
-  two_op_return_type<O, CONCAT> constexpr operator,(O const &other) const
+  two_op_return_type<O, CONCAT> constexpr operator,(O const & /*other*/) const
   {
     return two_op_return_type<O, CONCAT>();
   }
 
   template <typename O>
-  two_op_return_type<O, EQ> constexpr operator=(O const &other) const
+  two_op_return_type<O, EQ> constexpr operator=(O const & /*other*/) const
   {
     return two_op_return_type<O, EQ>();
   }

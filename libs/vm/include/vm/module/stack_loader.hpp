@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ struct Resetter
 template <>
 struct Resetter<0>
 {
-  static void Reset(VM *vm)
+  static void Reset(VM * /*vm*/)
   {}
 };
 
@@ -62,7 +62,7 @@ struct Resetter<0>
 template <>
 struct Resetter<-1>
 {
-  static void Reset(VM *vm)
+  static void Reset(VM * /*vm*/)
   {}
 };
 

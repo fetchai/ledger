@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <typename ArrayType>
-inline void BuildOps(std::string const &custom_name, pybind11::module &module)
+inline void BuildOps(std::string const & /*custom_name*/, pybind11::module &module)
 {
   using SessionType     = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
   using VariableType    = fetch::ml::Variable<ArrayType>;

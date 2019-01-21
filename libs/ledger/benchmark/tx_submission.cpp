@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -23,20 +23,20 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "storage/transient_object_store.hpp"
 
 #include <benchmark/benchmark.h>
 #include <vector>
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
 using fetch::chain::VerifiedTransaction;
 using fetch::chain::MutableTransaction;
-using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
+using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
 using TransactionStore = fetch::ledger::LaneService::TransactionStore;
 using TransactionList  = std::vector<VerifiedTransaction>;
 
@@ -47,7 +47,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 
   static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
 
-  LinearCongruentialGenerator rng;
+  static LinearCongruentialGenerator rng;
 
   TransactionList list;
   list.reserve(count);
@@ -91,7 +91,7 @@ void TxSubmitFixedLarge(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
     }
   }
 }
@@ -109,7 +109,7 @@ void TxSubmitFixedSmall(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
     }
   }
 }
@@ -127,7 +127,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
   }
 }
 
@@ -144,12 +144,64 @@ void TxSubmitSingleSmall(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
+  }
+}
+
+void TxSubmitSingleSmallAlt(benchmark::State &state)
+{
+  // create the transaction store
+  TransientStore tx_store;
+  tx_store.New("transaction.db", "transaction_index.db", true);
+
+  // create a whole series of transaction
+  TransactionList transactions = GenerateTransactions(state.max_iterations, false);
+
+  std::size_t tx_index{0};
+  for (auto _ : state)
+  {
+    auto const &tx = transactions.at(tx_index++);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
+  }
+}
+
+void TransientStoreExpectedOperation(benchmark::State &state)
+{
+  // create the transient store
+  TransientStore tx_store;
+  tx_store.New("transaction.db", "transaction_index.db", true);
+
+  VerifiedTransaction dummy;
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    // Number of Tx to send is state arg
+    TransactionList transactions = GenerateTransactions(size_t(state.range(0)), true);
+    state.ResumeTiming();
+
+    for (auto const &tx : transactions)
+    {
+      ResourceID const rid{tx.digest()};
+
+      // Basic pattern for a transient store is to intake X transactions into the mempool,
+      // then read some subset N of them (for block verification/packing), then commit
+      // those to the underlying object store.
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
+
+      // also trigger the read from the store and the subsequent right schedule
+      tx_store.Get(rid, dummy);
+      tx_store.Confirm(rid);
+
+      benchmark::DoNotOptimize(dummy);
+    }
   }
 }
 
 }  // namespace
 
+BENCHMARK(TransientStoreExpectedOperation)->Range(10, 1000000);
+BENCHMARK(TxSubmitSingleSmallAlt);
 BENCHMARK(TxSubmitFixedLarge);
 BENCHMARK(TxSubmitFixedSmall);
 BENCHMARK(TxSubmitSingleLarge);

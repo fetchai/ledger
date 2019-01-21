@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -368,7 +368,6 @@ bool LoadSaveVsBulk()
   {
     kvi_type test;
     test.Load("test1.db");
-    std::cout << "Size: " << test.size() << std::endl;
     for (std::size_t j = 0; j < batch_size; ++j)
     {
       auto const &val = values[k];

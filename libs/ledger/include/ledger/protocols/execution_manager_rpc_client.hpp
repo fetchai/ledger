@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -57,14 +57,13 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  Status    Execute(Block const &block) override;
-  BlockHash LastProcessedBlock() override;
-  bool      IsActive() override;
-  bool      IsIdle() override;
-  bool      Abort() override;
+  ScheduleStatus Execute(Block const &block) override;
+  BlockHash      LastProcessedBlock() override;
+  State          GetState() override;
+  bool           Abort() override;
   /// @}
 
-  void WorkCycle(void);
+  void WorkCycle();
 
   std::size_t connections() const
   {

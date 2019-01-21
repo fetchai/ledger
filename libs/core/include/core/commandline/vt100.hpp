@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ std::string GetColor(std::string const &f, std::string const &b);
 
 inline static constexpr const char *DefaultAttributes()
 {
+#ifdef FETCH_DISABLE_COLOUR_LOG_OUTPUT
+  return "";
+#else   // !FETCH_DISABLE_COLOUR_LOG_OUTPUT
   return "\33[0m";
+#endif  // FETCH_DISABLE_COLOUR_LOG_OUTPUT
 }
 inline static constexpr const char *ClearScreen()
 {

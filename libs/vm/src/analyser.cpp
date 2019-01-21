@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -323,22 +323,22 @@ void Analyser::BuildFunctionDefinition(const BlockNodePtr &parent_block_node,
   BuildBlock(function_definition_node);
 }
 
-void Analyser::BuildWhileStatement(const BlockNodePtr &parent_block_node,
+void Analyser::BuildWhileStatement(const BlockNodePtr & /*parent_block_node*/,
                                    const BlockNodePtr &while_statement_node)
 {
   while_statement_node->symbols = CreateSymbolTable();
   BuildBlock(while_statement_node);
 }
 
-void Analyser::BuildForStatement(const BlockNodePtr &parent_block_node,
+void Analyser::BuildForStatement(const BlockNodePtr & /*parent_block_node*/,
                                  const BlockNodePtr &for_statement_node)
 {
   for_statement_node->symbols = CreateSymbolTable();
   BuildBlock(for_statement_node);
 }
 
-void Analyser::BuildIfStatement(const BlockNodePtr &parent_block_node,
-                                const NodePtr &     if_statement_node)
+void Analyser::BuildIfStatement(const BlockNodePtr & /*parent_block_node*/,
+                                const NodePtr &if_statement_node)
 {
   for (const NodePtr &child : if_statement_node->children)
   {

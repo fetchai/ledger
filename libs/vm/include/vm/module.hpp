@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public:
   }
 
   template <typename C, typename R, typename... Args>
-  Module &ExportFunction(std::string name, C function, R (C::*pointer)(Args...) const)
+  Module &ExportFunction(std::string name, C function, R (C::* /*pointer*/)(Args...) const)
   {
     return ExportFunctioImplementation<R, Args...>(name, function);
   }
@@ -212,7 +212,7 @@ template <typename T>
 class ClassInterface : public BaseClassInterface
 {
 public:
-  ClassInterface(std::string name, Module &module)
+  ClassInterface(std::string /*name*/, Module &module)
     : module_(module)
     , type_(module.next_type_id())
   {}
@@ -287,7 +287,8 @@ public:
   }
 
   template <typename C, typename R, typename... Args>
-  ClassInterface &ExportStaticFunction(std::string name, C function, R (C::*pointer)(Args...) const)
+  ClassInterface &ExportStaticFunction(std::string name, C function,
+                                       R (C::* /*pointer*/)(Args...) const)
   {
     return ExportStaticFunctionImplementation<R, Args...>(name, function);
   }

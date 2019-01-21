@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -48,6 +48,19 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
   persistent_peers_.erase(peer);
 }
 
+void PeerConnectionList::RemovePersistentPeer(Handle handle)
+{
+  FETCH_LOCK(lock_);
+  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
+  {
+    if (it->second->handle() == handle)
+    {
+      persistent_peers_.erase(it->first);
+      break;
+    }
+  }
+}
+
 std::size_t PeerConnectionList::GetNumPeers() const
 {
   FETCH_LOCK(lock_);
@@ -71,18 +84,17 @@ PeerConnectionList::PeerMap PeerConnectionList::GetCurrentPeers() const
   return peer_connections_;
 }
 
-bool PeerConnectionList::UriToHandle(const Uri &uri, Handle &handle) const
+PeerConnectionList::Handle PeerConnectionList::UriToHandle(const Uri &uri) const
 {
   FETCH_LOCK(lock_);
   for (auto const &element : peer_connections_)
   {
     if (element.first == uri)
     {
-      handle = element.second->handle();
-      return true;
+      return element.second->handle();
     }
   }
-  return false;
+  return 0;
 }
 
 PeerConnectionList::UriMap PeerConnectionList::GetUriMap() const
@@ -193,13 +205,35 @@ void PeerConnectionList::RemoveConnection(Uri const &peer)
   peer_connections_.erase(peer);
 
   // update the metadata
-  auto &metadata = peer_metadata_[peer];
-  ++metadata.consecutive_failures;
-  ++metadata.total_failures;
-  metadata.connected              = false;
-  metadata.last_failed_connection = Clock::now();
+  auto mt_it = peer_metadata_.find(peer);
+  if (mt_it != peer_metadata_.end())
+  {
+    auto &metadata = mt_it->second;
+    ++metadata.consecutive_failures;
+    ++metadata.total_failures;
+    metadata.connected              = false;
+    metadata.last_failed_connection = Clock::now();
+  }
+}
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " lost");
+void PeerConnectionList::RemoveConnection(Handle handle)
+{
+  FETCH_LOCK(lock_);
+
+  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
+  {
+    if (it->second->handle() == handle)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
+      auto metadata = peer_metadata_.find(it->first);
+      if (metadata != peer_metadata_.end())
+      {
+        metadata->second.connected = false;
+      }
+      peer_connections_.erase(it);
+      break;
+    }
+  }
 }
 
 void PeerConnectionList::Disconnect(Uri const &peer)

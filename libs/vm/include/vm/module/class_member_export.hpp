@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ template <typename ClassType, typename MemberFunctionPointer, int RESULT_TYPE,
           typename... used_args>
 struct InvokeClassMemberFunction<ClassType, MemberFunctionPointer, void, RESULT_TYPE, used_args...>
 {
-  static void MemberFunction(VM *vm, ClassType &cls, MemberFunctionPointer &m, used_args &... args)
+  static void MemberFunction(VM * /*vm*/, ClassType &cls, MemberFunctionPointer &m,
+                             used_args &... args)
   {
     (cls.*m)(args...);
   };

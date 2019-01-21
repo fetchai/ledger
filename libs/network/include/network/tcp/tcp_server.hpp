@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public:
   TCPServer(uint16_t const &port, network_manager_type const &network_manager);
   ~TCPServer() override;
 
+  // Start will block until the server has started
   virtual void Start();
   virtual void Stop();
 
@@ -99,13 +100,10 @@ private:
   uint16_t                                  port_;
   std::deque<Request>                       requests_;
   mutex_type                                request_mutex_;
-  std::shared_ptr<int>                      destruct_guard_ = std::make_shared<int>(0);
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;
-  std::mutex                                startMutex_;
-  bool                                      stopping_ = false;
-  bool                                      running_  = false;
+  std::mutex                                start_mutex_;
 
   // Use this class to keep track of whether we are ready to accept connections
   InFlightCounter counter_;

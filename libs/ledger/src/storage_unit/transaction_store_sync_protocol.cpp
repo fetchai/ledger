@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceID;
-using fetch::metrics::MetricHandler;
-using fetch::metrics::Metrics;
 
 #ifdef FETCH_ENABLE_METRICS
 static void RecordNewElement(ConstByteArray const &identifier)
@@ -64,7 +62,7 @@ TransactionStoreSyncProtocol::TransactionStoreSyncProtocol(ObjectStore *store, i
 void TransactionStoreSyncProtocol::TrimCache()
 {
   {
-    generics::MilliTimer timer("ObjectSync:TrimCache", 10);
+    generics::MilliTimer timer("ObjectSync:TrimCache", 500);
     FETCH_LOCK(cache_mutex_);
 
     // reserve the space for the next cache
@@ -105,7 +103,9 @@ void TransactionStoreSyncProtocol::OnNewTx(VerifiedTransaction const &o)
 uint64_t TransactionStoreSyncProtocol::ObjectCount()
 {
   FETCH_LOCK(cache_mutex_);
-  return store_->size();
+
+  // TODO(private issue 502): Improve transient object store interface
+  return store_->archive().size();
 }
 
 /**
@@ -122,11 +122,13 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullSubtree(
 
   uint64_t counter = 0;
 
-  store_->WithLock([this, &ret, &counter, &rid, bit_count]() {
-    // This is effectively saying get all objects whose ID begins rid & mask
-    auto it = store_->GetSubtree(ResourceID(rid), bit_count);
+  auto &archive = store_->archive();
 
-    while (it != store_->end() && counter++ < PULL_LIMIT_)
+  archive.WithLock([&archive, &ret, &counter, &rid, bit_count]() {
+    // This is effectively saying get all objects whose ID begins rid & mask
+    auto it = archive.GetSubtree(ResourceID(rid), bit_count);
+
+    while ((it != archive.end()) && (counter++ < PULL_LIMIT_))
     {
       ret.push_back(*it);
       ++it;
@@ -143,7 +145,7 @@ TransactionStoreSyncProtocol::TxList TransactionStoreSyncProtocol::PullObjects(
   TxList ret;
 
   {
-    generics::MilliTimer timer("ObjectSync:PullObjects");
+    generics::MilliTimer timer("ObjectSync:PullObjects", 500);
     FETCH_LOCK(cache_mutex_);
 
     if (!cache_.empty())

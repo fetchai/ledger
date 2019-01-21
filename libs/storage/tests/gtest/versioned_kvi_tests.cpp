@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -27,79 +27,125 @@
 #include <iomanip>
 #include <iostream>
 
-using namespace fetch;
-using namespace fetch::storage;
+namespace {
 
-using kvi_type = KeyValueIndex<>;
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
-kvi_type key_Index;
+using Index = fetch::storage::KeyValueIndex<>;
+using RNG   = fetch::random::LaggedFibonacciGenerator<>;
 
 struct TestData
 {
-  byte_array::ByteArray key;
-  uint64_t              value;
+  ByteArray key;
+  uint64_t  value;
+
+  TestData(ByteArray k, uint64_t v)
+    : key{std::move(k)}
+    , value{v}
+  {}
 };
 
-std::map<byte_array::ConstByteArray, uint64_t> reference1;
-fetch::random::LaggedFibonacciGenerator<>      lfgen;
+using TestDataArray = std::vector<TestData>;
+using ReferenceMap  = std::map<ConstByteArray, uint64_t>;
 
-TEST(versioned_kvi_gtest, basic_test)
+TestDataArray GenerateTestData(RNG &rng, ReferenceMap &ref_map)
 {
-  std::vector<TestData> bookmarks;
+  static constexpr std::size_t NUM_ENTRIES        = 5;
+  static constexpr std::size_t IDENTITY_BIT_SIZE  = 256;
+  static constexpr std::size_t IDENTITY_BYTE_SIZE = IDENTITY_BIT_SIZE / 8u;
+  static constexpr std::size_t IDENTITY_WORD_SIZE = IDENTITY_BYTE_SIZE / sizeof(RNG::random_type);
 
-  std::vector<TestData> values;
-  for (std::size_t i = 0; i < 5; ++i)
+  TestDataArray values;
+
+  for (std::size_t i = 0; i < NUM_ENTRIES; ++i)
   {
-    byte_array::ByteArray key;
-    key.Resize(256 / 8);
-    for (std::size_t j = 0; j < key.size(); ++j)
+    ByteArray key;
+    key.Resize(IDENTITY_BYTE_SIZE);
+
+    // generate a random key
+    auto *key_raw = reinterpret_cast<RNG::random_type *>(key.pointer());
+    for (std::size_t j = 0; j < IDENTITY_WORD_SIZE; ++j)
     {
-      key[j] = uint8_t(lfgen() >> 9);
+      key_raw[j] = rng();
     }
 
-    if (reference1.find(key) != reference1.end())
+    // ensure the key that has been generated is actually unique
+    if (ref_map.find(key) != ref_map.end())
     {
       continue;
     }
 
-    reference1[key] = lfgen();
-    values.push_back({key, reference1[key]});
+    // generate a random value
+    uint64_t const value = rng();
+
+    // update the reference map and the output data array
+    ref_map[key] = value;
+    values.emplace_back(key, value);
   }
 
-  // Insterting data
-  key_Index.New("test1.db", "diff.db");
+  return values;
+}
+
+using KV = fetch::storage::KeyValuePair<>;
+
+TEST(versioned_kvi_gtest, basic_test)
+{
+  static constexpr std::size_t BOOKMARK_INTERVAL = 2;
+
+  Index key_value_index;
+
+  TestDataArray bookmarks;
+  ReferenceMap  ref_map;
+
+  RNG rng;
+
+  // Generate a series of test data with unique key values
+  TestDataArray values = GenerateTestData(rng, ref_map);
+
+  // Insert the generate values into the index
+  key_value_index.New("test1.db", "diff.db");
   for (std::size_t i = 0; i < values.size(); ++i)
   {
     auto const &val = values[i];
-    key_Index.Set(val.key, val.value, val.key);
-    if ((i % 2) == 0)
+
+    // update the index with the key and the value
+    key_value_index.Set(val.key, val.value, val.key);
+
+    // with a given interval make a bookmark
+    if ((i % BOOKMARK_INTERVAL) == 0)
     {
-      byte_array::ByteArray h1 = key_Index.Hash();
-      TestData              book;
-      book.key   = h1;
-      book.value = key_Index.Commit();
-      bookmarks.push_back(book);
-      ASSERT_EQ(h1, key_Index.Hash()) << "Expected hash to be the same before and after commit";
+      auto const hash  = key_value_index.Hash();
+      auto const index = key_value_index.Commit();
+
+      // add to bookmark list
+      bookmarks.emplace_back(hash, index);
+
+      ASSERT_EQ(hash, key_value_index.Hash())
+          << "Expected hash to be the same before and after commit";
     }
   }
 
   // Checking values
-  bool ok = true;
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &value : values)
   {
-    auto const &val  = values[i];
-    uint64_t    data = key_Index.Get(val.key);
-    ASSERT_EQ(data, val.value);
-    ok &= (data == val.value);
+    // lookup the value from the index
+    uint64_t const stored_value = key_value_index.Get(value.key);
+
+    // check that it is as expected
+    ASSERT_EQ(stored_value, value.value);
   }
 
   // Reverting
   std::reverse(bookmarks.begin(), bookmarks.end());
   for (auto &b : bookmarks)
   {
-    key_Index.Revert(b.value);
-    std::cout << "Reverting: " << b.value << " " << byte_array::ToBase64(b.key) << " "
-              << byte_array::ToBase64(key_Index.Hash()) << std::endl;
-    ASSERT_EQ(b.key, key_Index.Hash());
+    key_value_index.Revert(b.value);
+
+    auto const restored_hash = key_value_index.Hash();
+
+    ASSERT_EQ(b.key, restored_hash);
   }
 }
+
+}  // namespace

@@ -7,7 +7,7 @@
 #
 # It can be run simply with the following command:
 #
-# ./scripts/apply-style.py
+# ./scripts/apply_style.py
 #
 # By default the script will "fix" all style issues that it finds. However, if the user
 # only requires warning of the style issues then it is recommended to use the `-w` and
@@ -29,7 +29,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 SOURCE_FOLDERS = ('apps', 'libs')
 SOURCE_EXT = ('*.cpp', '*.hpp')
-
 
 output_lock = threading.Lock()
 
@@ -92,7 +91,7 @@ def extra_line(line_text, padding):
         return line_text
 
 def postprocess(lines):
-    """ Scans an array of clang-formatted strings and tries to turn any single statement 
+    """ Scans an array of clang-formatted strings and tries to turn any single statement
     that is either a then/else clause of an if-statement or a for/while loop body
     into a braced block."""
 
@@ -101,7 +100,7 @@ def postprocess(lines):
     unbraced = []
 
     empties = []
-    in_long = None 
+    in_long = None
 
     for line in lines:
         if is_empty.match(line):
@@ -240,6 +239,7 @@ def main():
 
     # process all the files
     success = False
+
     processed_files = args.filename or project_sources(project_root)
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:

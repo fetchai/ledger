@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,200 +16,110 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/random/lcg.hpp"
+#include "crypto/ecdsa.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/storage_unit/lane_service.hpp"
+#include "storage/transient_object_store.hpp"
+
 #include <benchmark/benchmark.h>
-#include <gtest/gtest.h>
+#include <vector>
 
-#include "core/random/lfg.hpp"
-#include "storage/object_store.hpp"
+using fetch::byte_array::ByteArray;
+using fetch::storage::ResourceID;
+using fetch::chain::VerifiedTransaction;
+using fetch::chain::MutableTransaction;
+using fetch::random::LinearCongruentialGenerator;
 
-#include "ledger/chaincode/wallet_http_interface.hpp"
+using ObjectStore      = fetch::storage::ObjectStore<VerifiedTransaction>;
+using TransactionStore = fetch::storage::TransientObjectStore<VerifiedTransaction>;
+using TransactionList  = std::vector<VerifiedTransaction>;
 
-using namespace fetch;
-using namespace fetch::storage;
-using namespace fetch::chain;
-
-class ObjectStoreBench : public ::benchmark::Fixture
+TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {
-protected:
-  void SetUp(const ::benchmark::State &st) override
-  {
-    store_.New("obj_store_bench.db", "obj_store_bench_index.db");
+  static constexpr std::size_t TX_SIZE      = 2048;
+  static constexpr std::size_t TX_WORD_SIZE = TX_SIZE / sizeof(uint64_t);
 
-    for (std::size_t i = 0; i < 100000; ++i)
+  static_assert((TX_SIZE % sizeof(uint64_t)) == 0, "The transaction must be a multiple of 64bits");
+
+  static LinearCongruentialGenerator rng;
+
+  TransactionList list;
+  list.reserve(count);
+
+  for (std::size_t i = 0; i < count; ++i)
+  {
+    MutableTransaction mtx;
+    mtx.set_contract_name("fetch.dummy");
+
+    if (large_packets)
     {
-      CreateNextTransaction();
+      ByteArray tx_data(TX_SIZE);
+      uint64_t *tx_data_raw = reinterpret_cast<uint64_t *>(tx_data.pointer());
+
+      for (std::size_t j = 0; j < TX_WORD_SIZE; ++j)
+      {
+        *tx_data_raw++ = rng();
+      }
     }
+    else
+    {
+      mtx.set_data(std::to_string(i));
+    }
+
+    list.emplace_back(VerifiedTransaction::Create(std::move(mtx)));
   }
 
-  void TearDown(const ::benchmark::State &) override
-  {}
+  return list;
+}
 
-  std::vector<Transaction>                  precreated_tx_;
-  std::vector<ResourceID>                   precreated_rid_;
-  ObjectStore<Transaction>                  store_;
-  fetch::random::LaggedFibonacciGenerator<> lfg_;
+void TxSubmitWrites(benchmark::State &state)
+{
+  // create the store
+  ObjectStore store;
+  store.New("transaction.db", "transaction_index.db", true);
 
-private:
-  // Create dummy transactions for testing
-  void CreateNextTransaction()
+  bool small_tx = state.range(0) == 0;
+
+  std::string number_of_tx;
   {
-    static int  amount = 0;
-    std::string address =
-        "nve3rfRigBZ+YX9lFKVNDA05fQ6V8MfEmx63+bKT0IQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-
-    variant::Variant wealth_data = variant::Variant::Object();
-    wealth_data["address"]       = address;
-    wealth_data["amount"]        = amount++;
-
     std::ostringstream oss;
-    oss << wealth_data;
-
-    chain::MutableTransaction mtx;
-
-    mtx.set_contract_name("fetch.token.wealth");
-    mtx.set_data(oss.str());
-    mtx.set_fee(lfg_() & 0x1FF);
-    mtx.PushResource(address);
-
-    /*
-    // sign the transaction
-    crypto::ECDSASigner          signer;
-    signer.GenerateKeys();
-    mtx.Sign(signer.private_key()); */
-
-    precreated_tx_.push_back(chain::VerifiedTransaction::Create(std::move(mtx)));
-    // precreated_rid_.push_back(ResourceAddress{signer.public_key()});
-    precreated_rid_.push_back(ResourceAddress{std::to_string(amount)});
+    oss << std::setprecision(3) << std::scientific << float(state.range(1)) << " Tx,";
+    number_of_tx = oss.str();
   }
-};
 
-BENCHMARK_F(ObjectStoreBench, WritingTxToStore_1)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
+  if (small_tx)
   {
-    std::size_t mod_counter = counter % precreated_tx_.size();
-    store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-    counter++;
+    number_of_tx += " small_tx";
+    state.SetLabel(number_of_tx);
+  }
+  else
+  {
+    number_of_tx += " large_tx";
+    state.SetLabel(number_of_tx);
+  }
+
+  for (auto _ : state)
+  {
+    // create X new unique transactions to write per test
+    state.PauseTiming();
+    TransactionList transactions = GenerateTransactions(std::size_t(state.range(1)), small_tx);
+    state.ResumeTiming();
+
+    for (auto const &tx : transactions)
+    {
+      store.Set(ResourceID{tx.digest()}, tx);
+    }
+
+    // For a fair test must force flush to disk after writes - note this makes the results for small
+    // tx writes very poor
+    store.Flush(false);
   }
 }
 
-BENCHMARK_F(ObjectStoreBench, WritingTxToStore_10)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 10; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-  }
-}
+BENCHMARK(TxSubmitWrites)->Ranges({{0, 1}, {1, 1000000}});
 
-BENCHMARK_F(ObjectStoreBench, WritingTxToStore_1k)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 1000; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-  }
-}
-
-BENCHMARK_F(ObjectStoreBench, WritingTxToStore_10k)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 10000; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-  }
-}
-
-BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_10k)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 10000; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-
-    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
-    counter = 0;
-
-    for (std::size_t i = 0; i < 10000; ++i)
-    {
-      Transaction dummy;
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
-      counter++;
-    }
-  }
-}
-
-BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_30k)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 30000; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-
-    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
-    counter = 0;
-
-    for (std::size_t i = 0; i < 30000; ++i)
-    {
-      Transaction dummy;
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
-      counter++;
-    }
-  }
-}
-
-BENCHMARK_F(ObjectStoreBench, RdWrTxToStore_100k)(benchmark::State &st)
-{
-  std::size_t counter = 0;
-  for (auto _ : st)
-  {
-    for (std::size_t i = 0; i < 100000; ++i)
-    {
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      store_.Set(precreated_rid_[mod_counter], precreated_tx_[mod_counter]);
-      counter++;
-    }
-
-    std::random_shuffle(precreated_rid_.begin(), precreated_rid_.end());
-    counter = 0;
-
-    for (std::size_t i = 0; i < 100000; ++i)
-    {
-      Transaction dummy;
-      std::size_t mod_counter = counter % precreated_tx_.size();
-      benchmark::DoNotOptimize(store_.Get(precreated_rid_[mod_counter], dummy));
-      counter++;
-    }
-  }
-}
-
-// Macro required for all benchmarks
 BENCHMARK_MAIN();

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include <gmock/gmock.h>
 
-class MockStorageUnit : public fetch::ledger::StorageUnitInterface
+class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   MockStorageUnit()
@@ -41,6 +41,7 @@ public:
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::AddTransaction));
     ON_CALL(*this, GetTransaction(_, _))
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::GetTransaction));
+    ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::PollRecentTx));
   }
 
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
@@ -55,6 +56,8 @@ public:
   MOCK_METHOD1(AddTransaction, void(fetch::chain::Transaction const &));
   MOCK_METHOD2(GetTransaction,
                bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
+
+  MOCK_METHOD1(PollRecentTx, std::vector<fetch::chain::TransactionSummary>(uint32_t));
 
   FakeStorageUnit &GetFake()
   {

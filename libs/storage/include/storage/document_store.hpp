@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -293,6 +293,13 @@ public:
   std::size_t size() const
   {
     return file_store_.size();
+  }
+
+  void Flush(bool lazy = true)
+  {
+    std::lock_guard<mutex::Mutex> lock(mutex_);
+    file_store_.Flush(lazy);
+    key_index_.Flush(lazy);
   }
 
   /**

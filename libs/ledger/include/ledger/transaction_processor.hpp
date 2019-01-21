@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTr
 {
 public:
   using MutableTransaction = chain::MutableTransaction;
-
-  using TransactionList = std::vector<chain::Transaction>;
+  using ThreadPtr          = std::unique_ptr<std::thread>;
+  using TransactionList    = std::vector<chain::Transaction>;
 
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
@@ -42,7 +42,7 @@ public:
                        std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
-  ~TransactionProcessor() override                   = default;
+  ~TransactionProcessor() override;
 
   /// @name Processor Controls
   /// @{
@@ -76,6 +76,10 @@ private:
   StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
   TransactionVerifier    verifier_;
+  ThreadPtr              poll_new_tx_thread_;
+  bool                   running_;
+
+  void ThreadEntryPoint();
 };
 
 /**
@@ -84,6 +88,9 @@ private:
 inline void TransactionProcessor::Start()
 {
   verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
 }
 
 /**
@@ -92,6 +99,7 @@ inline void TransactionProcessor::Start()
 inline void TransactionProcessor::Stop()
 {
   verifier_.Stop();
+  running_ = false;
 }
 
 /**

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ struct InvokeStaticOrFreeFunction
 template <typename FunctionPointer, int RESULT_POSITION, typename... UsedArgs>
 struct InvokeStaticOrFreeFunction<FunctionPointer, void, RESULT_POSITION, UsedArgs...>
 {
-  static void StaticOrFreeFunction(VM *vm, FunctionPointer &m, UsedArgs &... args)
+  static void StaticOrFreeFunction(VM * /*vm*/, FunctionPointer &m, UsedArgs &... args)
   {
     (*m)(args...);
   };

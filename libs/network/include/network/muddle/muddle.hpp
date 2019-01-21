@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -154,20 +154,6 @@ public:
     return std::make_shared<Muddle>(network_id, std::move(prover), tm);
   }
 
-  static inline uint32_t CreateNetworkId(const char *p)
-  {
-    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) |
-           (uint32_t(p[3]));
-  }
-
-  static inline uint32_t CreateNetworkId(const char prefix, std::size_t instance_number)
-  {
-    std::string x = "000" + std::to_string(instance_number);
-    x             = x.substr(x.length() - 3);
-    x             = std::string(1, prefix) + x;
-    return CreateNetworkId(x.c_str());
-  }
-
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr &&certificate, NetworkManager const &nm);
   Muddle(Muddle const &) = delete;
@@ -185,7 +171,7 @@ public:
 
   MuddleEndpoint &AsEndpoint();
 
-  ConnectionMap GetConnections();
+  ConnectionMap GetConnections(bool direct_only = false);
 
   bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
@@ -203,6 +189,11 @@ public:
   void Whitelist(Address const &target);
   bool IsBlacklisted(Address const &target) const;
   /// @}
+
+  bool IsConnected(Address const &target) const
+  {
+    return router_.IsConnected(target);
+  }
 
   // Operators
   Muddle &operator=(Muddle const &) = delete;
@@ -257,7 +248,6 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "    ", this);
   FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
@@ -265,6 +255,16 @@ inline void Muddle::AddPeer(Uri const &peer)
 
 inline void Muddle::DropPeer(Uri const &peer)
 {
+  Handle handle = clients_.UriToHandle(peer);
+  if (handle != 0)
+  {
+    Address address;
+    if (router_.HandleToDirectAddress(handle, address))
+    {
+      router_.DropHandle(handle, address);
+      clients_.RemoveConnection(handle);
+    }
+  }
   clients_.RemovePersistentPeer(peer);
 }
 
