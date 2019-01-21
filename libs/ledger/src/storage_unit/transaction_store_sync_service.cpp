@@ -317,7 +317,7 @@ void TransactionStoreSyncService::OnTransaction(chain::VerifiedTransaction const
 
   if (!store_->Has(rid))
   {
-    store_->Set(rid, tx);
+    store_->Set(rid, tx, true);
   }
 }
 
