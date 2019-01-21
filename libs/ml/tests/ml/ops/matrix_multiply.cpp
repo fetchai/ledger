@@ -28,12 +28,9 @@ class MatrixMultiplyTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<  // fetch::math::linalg::Matrix<int>,
-    fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>  // ,
-    //				 fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-    // fetch::math::Tensor<double>,
-    //                              fetch::math::NDArray<int>, fetch::math::NDArray<float>,
-    //                              fetch::math::NDArray<double>
-    >;
+    fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>,
+  fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+  fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>>;
 TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
@@ -55,7 +52,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
   {
     for (size_t j(0); j < 4; ++j)
     {
-      b->Set(i * 4 + j, typename TypeParam::Type(weights[i * 4 + j]));
+      b->Set(std::vector<size_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
   for (size_t i(0); i < results.size(); ++i)
@@ -97,7 +94,7 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   {
     for (size_t j(0); j < 4; ++j)
     {
-      b->Set(i * 4 + j, typename TypeParam::Type(weights[i * 4 + j]));
+      b->Set(std::vector<size_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
   for (size_t i(0); i < errorSignal.size(); ++i)
@@ -112,7 +109,7 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   {
     for (size_t j(0); j < 4; ++j)
     {
-      wg->Set(i * 4 + j, typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      wg->Set(std::vector<size_t>({i, j}), typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 
