@@ -32,7 +32,7 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
 
   namespace py = pybind11;
   py::class_<CombinatorialAuction>(module, custom_name.c_str())
-      .def(py::init<BlockIdType, BlockIdType>())
+      .def(py::init<BlockId, BlockId>())
       .def("AddItem",
            [](CombinatorialAuction &ca, Item const &item) {
              ErrorCode ec;
@@ -65,8 +65,8 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
            })
       .def("Mine", [](CombinatorialAuction &ca, std::size_t seed,
                       std::size_t run_len) { ca.Mine(seed, run_len); })
-      .def("couplings", &CombinatorialAuction::couplings)
-      .def("local_fields", &CombinatorialAuction::local_fields)
+      .def("Couplings", &CombinatorialAuction::Couplings)
+      .def("LocalFields", &CombinatorialAuction::LocalFields)
       .def("TotalBenefit", &CombinatorialAuction::TotalBenefit)
       .def("SelectBid", &CombinatorialAuction::SelectBid)
       .def("BuildGraph", &CombinatorialAuction::BuildGraph)

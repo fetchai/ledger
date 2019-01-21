@@ -22,13 +22,15 @@
 namespace fetch {
 namespace auctions {
 
-constexpr ItemIdType  DefaultItemId        = std::numeric_limits<ItemIdType>::max();
-constexpr AgentIdType DefaultItemAgentId   = std::numeric_limits<AgentIdType>::max();
-constexpr ValueType   DefaultItemMinPrice  = std::numeric_limits<ValueType>::max();
-constexpr ValueType   DefaultItemMaxBid    = std::numeric_limits<ValueType>::min();
-constexpr ValueType   DefaultItemSellPrice = std::numeric_limits<ValueType>::min();
+class Bid;
 
-constexpr AgentIdType DefaultItemWinner = std::numeric_limits<AgentIdType>::max();
+constexpr ItemId  DefaultItemId        = std::numeric_limits<ItemId>::max();
+constexpr AgentId DefaultItemAgentId   = std::numeric_limits<AgentId>::max();
+constexpr Value   DefaultItemMinPrice  = std::numeric_limits<Value>::max();
+constexpr Value   DefaultItemMaxBid    = std::numeric_limits<Value>::min();
+constexpr Value   DefaultItemSellPrice = std::numeric_limits<Value>::min();
+
+constexpr AgentId DefaultItemWinner = std::numeric_limits<AgentId>::max();
 
 /**
  * An item in the auction which may be bid upon
@@ -37,212 +39,25 @@ class Item
 {
 public:
   Item() = default;
-  Item(ItemIdType id, AgentIdType seller_id, ValueType min_price)
-    : id_(id)
-    , seller_id_(seller_id)
-    , min_price_(min_price)
+  Item(ItemId id, AgentId seller_id, Value min_price)
+    : id(id)
+    , seller_id(seller_id)
+    , min_price(min_price)
   {}
 
-  /**
-   * ID accessor
-   * @return
-   */
-  ItemIdType Id() const
-  {
-    return id_;
-  }
-  ItemIdType &Id()
-  {
-    return id_;
-  }
+  ItemId  id        = DefaultItemId;
+  AgentId seller_id = DefaultItemAgentId;
+  Value   min_price = DefaultItemMinPrice;
 
-  /**
-   * ID setter
-   */
-  void Id(ItemIdType &id)
-  {
-    id_ = id;
-  }
+  Value max_bid    = DefaultItemMaxBid;
+  Value sell_price = DefaultItemSellPrice;
 
-  /**
-   * seller_id accessor
-   * @return
-   */
-  AgentIdType SellerId() const
-  {
-    return id_;
-  }
-  AgentIdType &SellerId()
-  {
-    return id_;
-  }
+  std::vector<Bid> bids{};
 
-  /**
-   * seller_id setter
-   */
-  void SellerId(AgentIdType &seller_id)
-  {
-    seller_id_ = seller_id;
-  }
+  std::uint32_t bid_count = 0;
+  BidId         winner    = DefaultItemWinner;
 
-  /**
-   * min_price accessor
-   * @return
-   */
-  ValueType MinPrice() const
-  {
-    return min_price_;
-  }
-  ValueType &MinPrice()
-  {
-    return min_price_;
-  }
-
-  /**
-   * min_price setter
-   */
-  void MinPrice(ValueType &min_price)
-  {
-    min_price_ = min_price;
-  }
-
-  /**
-   * MaxBid accessor
-   * @return
-   */
-  ValueType MaxBid() const
-  {
-    return max_bid_;
-  }
-  ValueType &MaxBid()
-  {
-    return max_bid_;
-  }
-
-  /**
-   * MaxBid setter
-   */
-  void MaxBid(ValueType &max_bid)
-  {
-    max_bid_ = max_bid;
-  }
-  /**
-   * SellPrice accessor
-   * @return
-   */
-  ValueType SellPrice() const
-  {
-    return sell_price_;
-  }
-  ValueType &SellPrice()
-  {
-    return sell_price_;
-  }
-
-  /**
-   * SellPrice setter
-   */
-  void SellPrice(ValueType &sell_price)
-  {
-    sell_price_ = sell_price;
-  }
-  /**
-   * bids accessor
-   * @return
-   */
-  std::vector<Bid> Bids() const
-  {
-    return bids_;
-  }
-  std::vector<Bid> &Bids()
-  {
-    return bids_;
-  }
-
-  /**
-   * bids setter
-   */
-  void Bids(std::vector<Bid> &bids)
-  {
-    bids_ = bids;
-  }
-
-  /**
-   * BidCount accessor
-   * @return
-   */
-  std::uint32_t BidCount() const
-  {
-    return bid_count_;
-  }
-  std::uint32_t &BidCount()
-  {
-    return bid_count_;
-  }
-
-  /**
-   * BidCount setter
-   */
-  void BidCount(std::uint32_t &bid_count)
-  {
-    bid_count_ = bid_count;
-  }
-  /**
-   * winner accessor
-   * @return
-   */
-  BidIdType Winner() const
-  {
-    return winner_;
-  }
-  BidIdType &Winner()
-  {
-    return winner_;
-  }
-
-  /**
-   * winner setter
-   */
-  void Winner(BidIdType &winner)
-  {
-    winner_ = winner;
-  }
-  /**
-   * ID accessor
-   * @return
-   */
-  std::unordered_map<AgentIdType, std::size_t> AgentBidCount() const
-  {
-    return agent_bid_count_;
-  }
-  std::unordered_map<AgentIdType, std::size_t> &AgentBidCount()
-  {
-    return agent_bid_count_;
-  }
-
-  /**
-   * ID setter
-   */
-  void AgentBidCount(std::unordered_map<AgentIdType, std::size_t> &agent_bid_count)
-  {
-    agent_bid_count_ = agent_bid_count;
-  }
-
-private:
-  ItemIdType  id_        = DefaultItemId;
-  AgentIdType seller_id_ = DefaultItemAgentId;
-  ValueType   min_price_ = DefaultItemMinPrice;
-
-  ValueType max_bid_    = DefaultItemMaxBid;
-  ValueType sell_price_ = DefaultItemSellPrice;
-
-  std::vector<Bid> bids_{};
-
-  std::uint32_t bid_count_ = 0;
-  BidIdType     winner_    = DefaultItemWinner;
-
-  //  std::unordered_map<AgentIdType, ValueType>   bids{};
-  std::unordered_map<AgentIdType, std::size_t> agent_bid_count_{};
+  std::unordered_map<AgentId, std::size_t> agent_bid_count{};
 };
 
 }  // namespace auctions

@@ -16,20 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/loopback_server.hpp"
-#include <iostream>
+#include "auctions/vickrey_auction.hpp"
 
-int main(int /*argc*/, char * /*argv*/[])
-{
-  {
-    std::cerr << "Starting loopback server" << std::endl;
-    fetch::network::LoopbackServer echo(8080);
+namespace fetch {
+namespace auctions {
 
-    char dummy;
-    std::cout << "press any key to quit" << std::endl;
-    std::cin >> dummy;
-  }
-
-  std::cout << "Finished" << std::endl;
-  return 0;
-}
+}  // namespace auctions
+}  // namespace fetch

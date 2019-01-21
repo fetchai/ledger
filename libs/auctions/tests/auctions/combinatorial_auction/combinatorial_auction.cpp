@@ -41,8 +41,8 @@ private:
 
 CombinatorialAuction SetupAuction(std::size_t start_block_val, std::size_t end_block_val)
 {
-  BlockIdType start_block(start_block_val);
-  BlockIdType end_block(end_block_val);
+  BlockId start_block(start_block_val);
+  BlockId end_block(end_block_val);
   return CombinatorialAuction(start_block, end_block);
 }
 
@@ -59,9 +59,9 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   // add items to auction
   std::vector<Item> items{};
 
-  AgentIdType seller_id = 990;
-  ValueType   min_price = 0;
-  ItemIdType  item_id   = 0;
+  AgentId seller_id = 990;
+  Value   min_price = 0;
+  ItemId  item_id   = 0;
 
   Item item1(item_id, seller_id, min_price);  // e.g. car
   items.push_back(item1);
@@ -87,9 +87,9 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
 
   // make bids
 
-  BidIdType bid_id    = 0;
-  ValueType bid_price = 10;
-  Bid       bid1(bid_id, {items[0]}, bid_price, bidders[0].id);
+  BidId bid_id    = 0;
+  Value bid_price = 10;
+  Bid   bid1(bid_id, {items[0]}, bid_price, bidders[0].id);
   err = ca.PlaceBid(bid1);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
@@ -119,8 +119,8 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid_price = 30;
   Bid bid6(bid_id, {items[0], items[1], items[3]}, bid_price, bidders[0].id);
 
-  bid5.Excludes({bid6});
-  bid6.Excludes({bid5});
+  bid5.excludes = {bid6};
+  bid6.excludes = {bid5};
 
   err = ca.PlaceBid(bid5);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);

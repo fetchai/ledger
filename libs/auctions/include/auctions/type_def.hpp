@@ -17,18 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include <cstddef>
+#include <unordered_map>
+
 namespace fetch {
 namespace auctions {
 
 class Item;
 class Bid;
 
-using ItemIdType         = std::size_t;
-using BidIdType          = std::size_t;
-using BlockIdType        = fetch::byte_array::ByteArray;
-using ValueType          = double;
-using AgentIdType        = std::size_t;
-using ItemsContainerType = std::unordered_map<ItemIdType, Item>;
+using ItemId        = std::size_t;
+using BidId         = std::size_t;
+using BlockId       = fetch::byte_array::ByteArray;
+using Value         = double;
+using AgentId       = std::size_t;
+using ItemContainer = std::unordered_map<ItemId, Item>;
 
 }  // namespace auctions
 }  // namespace fetch
