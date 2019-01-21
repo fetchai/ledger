@@ -889,21 +889,22 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
 
 /**
  * Efficient vectorised and threaded routine for C = A.T(B)
+ * Specialised for linalg::Matrix
  * @param A
  * @param B
  * @return
  */
-template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
-    ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
-    typename ArrayType::Type beta = 0.0, bool threaded = false)
+template<typename T, class C, class S>
+fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspose(
+    linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B, linalg::Matrix<T, C, S> &ret, typename linalg::Matrix<T, C, S>::Type alpha = 1.0,
+    typename linalg::Matrix<T, C, S>::Type beta = 0.0, bool threaded = false)
 {
   ret.Reshape(std::vector<size_t>({A.shape()[0], B.shape()[0]}));
 
   if (threaded)
   {
     linalg::Blas<
-        typename ArrayType::Type, ArrayType,
+        typename linalg::Matrix<T, C, S>::Type, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                               linalg::_beta * linalg::_C),
@@ -915,7 +916,7 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
   else
   {
     linalg::Blas<
-        typename ArrayType::Type, ArrayType,
+        typename linalg::Matrix<T, C, S>::Type, linalg::Matrix<T, C, S>,
         Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
         Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
                               linalg::_beta * linalg::_C),
