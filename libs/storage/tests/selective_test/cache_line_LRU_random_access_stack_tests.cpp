@@ -24,7 +24,6 @@
 
 using namespace fetch::storage;
 
-/*
 class TestClass
 {
 public:
@@ -41,7 +40,7 @@ TEST(cache_line_LRU_random_access_stack, basic_functionality)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
-  CacheLineLRURandomAccessStack<TestClass>     stack;
+  CacheLineLRURandomAccessStack<TestClass>  stack;
   std::vector<TestClass>                    reference;
 
   stack.New("CRAS_test.db");
@@ -114,7 +113,8 @@ TEST(cache_line_LRU_random_access_stack, basic_functionality)
       TestClass d;
       stack.Get(pos2, d);
 
-      ASSERT_TRUE(d == a) << "Stack swap test failed, iteration " << i << " pos1: " << pos1 << " pos2: " << pos2;
+      ASSERT_TRUE(d == a) << "Stack swap test failed, iteration " << i << " pos1: " << pos1
+                          << " pos2: " << pos2;
     }
   }
 
@@ -223,4 +223,4 @@ TEST(cache_line_LRU_random_access_stack, file_writing_and_recovery)
 
     stack.Close();
   }
-} */
+}
