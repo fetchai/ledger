@@ -44,7 +44,7 @@ class MockStack
 public:
   MockStack()
   {}
-  MockStack(const MockStack &mock_obj)
+  MockStack(const MockStack & /*mock_obj*/)
   {}
   ~MockStack()
   {}
@@ -90,18 +90,21 @@ TEST(mocked_cached_random_access_stack, file_writing_and_closing)
 {
   using MockStackCurrent = testing::NiceMock<MockStack<TestClass>>;
 
-  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent>     cached_stack;
-  fetch::random::LaggedFibonacciGenerator<>                          lfg;
-  constexpr uint64_t                                                 testSize = 10000;
-  uint64_t                                                           temp_val = 0;
+  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent> cached_stack;
+  fetch::random::LaggedFibonacciGenerator<>                      lfg;
+  constexpr uint64_t                                             testSize = 10000;
+  uint64_t                                                       temp_val = 0;
 
   bool file_flushed = false;
 
   cached_stack.OnBeforeFlush([&file_flushed] { file_flushed = true; });
 
-  EXPECT_CALL(cached_stack.underlying_stack(), SetExtraHeader(0x00deadbeefcafe00)).WillOnce(testing::Return());
-  EXPECT_CALL(cached_stack.underlying_stack(), LazyPush(testing::_)).WillRepeatedly(testing::Return(temp_val));
-  /* EXPECT_CALL(cached_stack.underlying_stack(), Set(testing::_, testing::_)).Times(1).WillRepeatedly(testing::Return()); */
+  EXPECT_CALL(cached_stack.underlying_stack(), SetExtraHeader(0x00deadbeefcafe00))
+      .WillOnce(testing::Return());
+  EXPECT_CALL(cached_stack.underlying_stack(), LazyPush(testing::_))
+      .WillRepeatedly(testing::Return(temp_val));
+  /* EXPECT_CALL(cached_stack.underlying_stack(), Set(testing::_,
+   * testing::_)).Times(1).WillRepeatedly(testing::Return()); */
 
   /* EXPECT_CALL(cached_stack.underlying_stack(), Flush(true)).Times(2); */
   /* EXPECT_CALL(cached_stack.underlying_stack(), Close(true)).Times(1); */
@@ -129,8 +132,8 @@ TEST(mocked_cached_random_access_stack, push_top_pop_elements)
 {
   using MockStackCurrent = testing::NiceMock<MockStack<TestClass>>;
 
-  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent>     cached_stack;
-  fetch::random::LaggedFibonacciGenerator<>                          lfg;
+  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent> cached_stack;
+  fetch::random::LaggedFibonacciGenerator<>                      lfg;
 
   // never does get since its caching
   /* EXPECT_CALL(cached_stack.underlying_stack(), Get(testing::_, testing::_)); */
@@ -166,8 +169,8 @@ TEST(mocked_cached_random_access_stack, get_set_swap_elements)
 {
   using MockStackCurrent = testing::NiceMock<MockStack<TestClass>>;
 
-  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent>     cached_stack;
-  fetch::random::LaggedFibonacciGenerator<>                          lfg;
+  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent> cached_stack;
+  fetch::random::LaggedFibonacciGenerator<>                      lfg;
 
   cached_stack.New("abcnewest");
 
@@ -195,8 +198,8 @@ TEST(mocked_cached_random_access_stack, file_loading_and_closing)
 {
   using MockStackCurrent = testing::NiceMock<MockStack<TestClass>>;
 
-  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent>     cached_stack;
-  fetch::random::LaggedFibonacciGenerator<>                          lfg;
+  CachedRandomAccessStack<TestClass, uint64_t, MockStackCurrent> cached_stack;
+  fetch::random::LaggedFibonacciGenerator<>                      lfg;
 
   std::string file_name{"abcthing"};
 
