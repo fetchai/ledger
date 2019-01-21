@@ -70,7 +70,7 @@ void TCPServer::Start()
 
   {
     auto closure = [this, closure_alive] {
-      volatile std::shared_ptr<int> closure_alive_copy = closure_alive;
+      std::shared_ptr<int> closure_alive_copy = closure_alive;
 
       std::shared_ptr<acceptor_type> acceptor;
       FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
