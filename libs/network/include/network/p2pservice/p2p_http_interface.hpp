@@ -87,6 +87,8 @@ private:
   http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const &request)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetChainStatus");
+
     std::size_t chain_length         = 20;
     bool        include_transactions = false;
 
@@ -128,12 +130,15 @@ private:
     }
     response["history"] = history;
 
-    return http::CreateJsonResponse(response);
+    auto result = http::CreateJsonResponse(response);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetChainStatus");
+    return result;
   }
 
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const & /*params*/,
                                      http::HTTPRequest const & /*request*/)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetMuddleStatus");
     auto const connections = muddle_.GetConnections(true);
 
     std::vector<variant::Variant> connections_output_list;
@@ -156,24 +161,30 @@ private:
     {
       response[i] = connections_output_list[i];
     }
-    return http::CreateJsonResponse(response);
+    auto result = http::CreateJsonResponse(response);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetMuddleStatus");
+    return result;
   }
-  
+
   http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
                                   http::HTTPRequest const & /*request*/)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetP2PStatus");
+
     Variant response          = Variant::Object();
     response["identityCache"] = GenerateIdentityCache();
 
     // TODO(private issue 532): Remove legacy API
     response["identity_cache"] = GenerateIdentityCache();
-
-    return http::CreateJsonResponse(response);
+    auto result = http::CreateJsonResponse(response);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetP2PStatus");
+    return result;
   }
 
   http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const & /*request*/)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus");
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
     std::vector<variant::Variant> peer_data_list;
@@ -208,16 +219,20 @@ private:
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
-    return http::CreateJsonResponse(response);
+    auto result = http::CreateJsonResponse(response);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetTrustStatus");
+    return result;
   }
 
   http::HTTPResponse GetBacklogStatus(http::ViewParameters const & /*params*/,
                                       http::HTTPRequest const & /*request*/)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetBacklogStatus");
     variant::Variant data = variant::Variant::Object();
     data["backlog"]       = miner_.GetBacklog();
-
-    return http::CreateJsonResponse(data);
+    auto result = http::CreateJsonResponse(data);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetBacklogStatus");
+    return result;
   }
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)

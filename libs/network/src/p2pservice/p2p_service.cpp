@@ -90,6 +90,8 @@ public:
           }
         }
       next.Set(TIMEOUT);
+      FETCH_LOG_WARN("BlockCatchUpService", "End of promise creation");
+
     }
     auto chain_rpc_ptr = chain_rpc_.lock();
     if (chain_rpc_ptr!=nullptr)
@@ -220,28 +222,46 @@ void P2PService::WorkCycle()
   // get the summary of all the current connections
   ConnectionMap active_connections;
   AddressSet    active_addresses;
+  FETCH_LOG_WARN(LOGGING_NAME, "Before GetConnectionStatus");
   GetConnectionStatus(active_connections, active_addresses);
+  FETCH_LOG_WARN(LOGGING_NAME, "End GetConnectionStatus");
 
 
   // update our identity cache (address -> uri mapping)
-  identity_cache_.Update(active_connections);
+    FETCH_LOG_WARN(LOGGING_NAME, "Before identity_cache_.Update");
+    identity_cache_.Update(active_connections);
+    FETCH_LOG_WARN(LOGGING_NAME, "End identity_cache_.Update");
 
-  // update the trust system with current connection information
-  UpdateTrustStatus(active_connections);
 
-  // discover new good peers on the network
-  PeerDiscovery(active_addresses);
+    // update the trust system with current connection information
+    FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateTrustStatus");
+    UpdateTrustStatus(active_connections);
+    FETCH_LOG_WARN(LOGGING_NAME, "End UpdateTrustStatus");
 
-  // make the decisions about which peers are desired and which ones we now need to drop
-  RenewDesiredPeers(active_addresses);
+    // discover new good peers on the network
+    FETCH_LOG_WARN(LOGGING_NAME, "Before PeerDiscovery");
+    PeerDiscovery(active_addresses);
+    FETCH_LOG_WARN(LOGGING_NAME, "End PeerDiscovery");
 
-  // perform connections updates and drops based on previous step
-  UpdateMuddlePeers(active_addresses);
 
-  // collect up manifests from connected peers
-  UpdateManifests(active_addresses);
+    // make the decisions about which peers are desired and which ones we now need to drop
+    FETCH_LOG_WARN(LOGGING_NAME, "Before RenewDesiredPeers");
+    RenewDesiredPeers(active_addresses);
+    FETCH_LOG_WARN(LOGGING_NAME, "End RenewDesiredPeers");
 
-  // increment the work cycle counter (used for scheduling of periodic events)
+
+    // perform connections updates and drops based on previous step
+    FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateMuddlePeers");
+    UpdateMuddlePeers(active_addresses);
+    FETCH_LOG_WARN(LOGGING_NAME, "End UpdateMuddlePeers");
+
+
+    // collect up manifests from connected peers
+    FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateManifests");
+    UpdateManifests(active_addresses);
+    FETCH_LOG_WARN(LOGGING_NAME, "End UpdateManifests");
+
+    // increment the work cycle counter (used for scheduling of periodic events)
   }
 }
 
