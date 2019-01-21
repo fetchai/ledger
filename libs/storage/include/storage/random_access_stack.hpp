@@ -69,7 +69,7 @@ private:
     uint64_t objects = 0;
     D        extra;
 
-    bool Write(std::fstream &stream) const
+    bool Write(STREAM &stream) const
     {
       if ((!stream) || (!stream.is_open()))
       {
@@ -149,22 +149,11 @@ public:
     return true;
   }
 
-  RandomAccessStack()
-  {
-    file_handle_ = std::make_shared<STREAM>();
-  }
-
-  // This constructor is only for unit testing
-  RandomAccessStack(std::shared_ptr<STREAM> handle)
-  {
-    file_handle_ = handle;
-  }
-
   ~RandomAccessStack()
   {
-    if (file_handle_->is_open())
+    if (file_handle_.is_open())
     {
-      file_handle_->close();
+      file_handle_.close();
     }
   }
 
@@ -174,20 +163,20 @@ public:
     {
       Flush();
     }
-    file_handle_->close();
+    file_handle_.close();
   }
 
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
-    filename_       = filename;
-    (*file_handle_) = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    filename_    = filename;
+    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     if (!file_handle_)
     {
       if (create_if_not_exist)
       {
         Clear();
-        (*file_handle_) = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+        file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -196,12 +185,12 @@ public:
     }
 
     // Get length of file
-    file_handle_->seekg(0, file_handle_->end);
-    int64_t length = file_handle_->tellg();
+    file_handle_.seekg(0, file_handle_.end);
+    int64_t length = file_handle_.tellg();
 
     // Read the beginning of the file into our header
-    file_handle_->seekg(0, file_handle_->beg);
-    header_.Read((*file_handle_));
+    file_handle_.seekg(0, file_handle_.beg);
+    header_.Read(file_handle_);
 
     int64_t capacity = (length - int64_t(header_.size())) / int64_t(sizeof(type));
     assert(capacity >= 0);
@@ -220,7 +209,7 @@ public:
   {
     filename_ = filename;
     Clear();
-    (*file_handle_) = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     SignalFileLoaded();
   }
@@ -240,8 +229,8 @@ public:
 
     int64_t n = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_->seekg(n);
-    file_handle_->read(reinterpret_cast<char *>(&object), sizeof(type));
+    file_handle_.seekg(n);
+    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
   }
 
   /**
@@ -257,8 +246,8 @@ public:
     assert(i < size());
     int64_t start = int64_t(i * sizeof(type) + header_.size());
 
-    file_handle_->seekg(start, file_handle_->beg);
-    file_handle_->write(reinterpret_cast<char const *>(&object), sizeof(type));
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
   }
 
   /**
@@ -295,9 +284,9 @@ public:
 
     int64_t start = int64_t((i * sizeof(type)) + header_.size());
 
-    file_handle_->seekg(start, file_handle_->beg);
-    file_handle_->write(reinterpret_cast<char const *>(objects),
-                        std::streamsize(sizeof(type)) * std::streamsize(elements));
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(objects),
+                       std::streamsize(sizeof(type)) * std::streamsize(elements));
 
     // Catch case where a set extends the underlying stack
     if ((i + elements) > header_.objects)
@@ -334,9 +323,9 @@ public:
     // i is valid location, elements are 1 or more at this point
     elements = std::min(elements, std::size_t(header_.objects - i));
 
-    file_handle_->seekg(start, file_handle_->beg);
-    file_handle_->read(reinterpret_cast<char *>(objects),
-                       std::streamsize(sizeof(type)) * std::streamsize(elements));
+    file_handle_.seekg(start, file_handle_.beg);
+    file_handle_.read(reinterpret_cast<char *>(objects),
+                      std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
   void SetExtraHeader(header_extra_type const &he)
@@ -390,9 +379,9 @@ public:
 
     int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
 
-    file_handle_->seekg(n, file_handle_->beg);
+    file_handle_.seekg(n, file_handle_.beg);
     type object;
-    file_handle_->read(reinterpret_cast<char *>(&object), sizeof(type));
+    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
 
     return object;
   }
@@ -416,15 +405,15 @@ public:
     int64_t n1 = int64_t(i * sizeof(type) + header_.size());
     int64_t n2 = int64_t(j * sizeof(type) + header_.size());
 
-    file_handle_->seekg(n1);
-    file_handle_->read(reinterpret_cast<char *>(&a), sizeof(type));
-    file_handle_->seekg(n2);
-    file_handle_->read(reinterpret_cast<char *>(&b), sizeof(type));
+    file_handle_.seekg(n1);
+    file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
+    file_handle_.seekg(n2);
+    file_handle_.read(reinterpret_cast<char *>(&b), sizeof(type));
 
-    file_handle_->seekg(n1);
-    file_handle_->write(reinterpret_cast<char const *>(&b), sizeof(type));
-    file_handle_->seekg(n2);
-    file_handle_->write(reinterpret_cast<char const *>(&a), sizeof(type));
+    file_handle_.seekg(n1);
+    file_handle_.write(reinterpret_cast<char const *>(&b), sizeof(type));
+    file_handle_.seekg(n2);
+    file_handle_.write(reinterpret_cast<char const *>(&a), sizeof(type));
   }
 
   std::size_t size() const
@@ -443,7 +432,7 @@ public:
   void Clear()
   {
     assert(filename_ != "");
-    std::fstream fin(filename_, std::ios::out | std::ios::binary);
+    STREAM fin(filename_, std::ios::out | std::ios::binary);
     header_ = Header();
 
     if (!header_.Write(fin))
@@ -467,12 +456,12 @@ public:
       SignalBeforeFlush();
     }
     StoreHeader();
-    file_handle_->flush();
+    file_handle_.flush();
   }
 
   bool is_open() const
   {
-    return bool(file_handle_) && (file_handle_->is_open());
+    return bool(file_handle_) && (file_handle_.is_open());
   }
 
   /**
@@ -486,19 +475,24 @@ public:
     uint64_t ret = header_.objects;
     int64_t  n   = int64_t(ret * sizeof(type) + header_.size());
 
-    file_handle_->seekg(n, file_handle_->beg);
-    file_handle_->write(reinterpret_cast<char const *>(&object), sizeof(type));
+    file_handle_.seekg(n, file_handle_.beg);
+    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
     ++header_.objects;
 
     return ret;
   }
 
+  STREAM &underlying_stream()
+  {
+    return file_handle_;
+  }
+
 private:
-  event_handler_type              on_file_loaded_;
-  event_handler_type              on_before_flush_;
-  mutable std::shared_ptr<STREAM> file_handle_ = nullptr;
-  std::string                     filename_    = "";
-  Header                          header_;
+  event_handler_type on_file_loaded_;
+  event_handler_type on_before_flush_;
+  mutable STREAM     file_handle_;
+  std::string        filename_ = "";
+  Header             header_;
 
   /**
    * Write the header to disk. Not usually necessary since we can just refer to our local one
@@ -511,7 +505,7 @@ private:
   {
     assert(filename_ != "");
 
-    if (!header_.Write((*file_handle_)))
+    if (!header_.Write(file_handle_))
     {
       throw StorageException("Error could not write header");
     }
