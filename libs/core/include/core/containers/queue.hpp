@@ -368,7 +368,7 @@ public:
   template <typename S>
   bool TryPush(S &&element)
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (queue_.size() >= SIZE)
     {
       return false;

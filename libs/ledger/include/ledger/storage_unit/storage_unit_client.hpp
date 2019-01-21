@@ -192,11 +192,11 @@ public:
     }
   }
 
-  std::vector<chain::TransactionSummary> PollRecentTx(uint32_t max_to_poll) override
+  TxSummaries PollRecentTx(uint32_t max_to_poll) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
     std::vector<service::Promise>          promises;
-    std::vector<chain::TransactionSummary> new_txs;
+    TxSummaries new_txs;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
 
@@ -216,7 +216,7 @@ public:
 
     for (auto const &promise : promises)
     {
-      auto txs = promise->As<std::vector<chain::TransactionSummary>>();
+      auto txs = promise->As<TxSummaries>();
 
       new_txs.insert(new_txs.end(), std::make_move_iterator(txs.begin()),
                      std::make_move_iterator(txs.end()));
@@ -440,14 +440,14 @@ public:
   }
 
 private:
-private:
-  friend class LaneConnectorWorkerInterface;
 
-  friend class MuddleLaneConnectorWorker;
-
-  friend class LaneConnectorWorker;  // these will do work for us, it's
+  // these will do work for us, it's
   // easier if it has access to our
   // types.
+  friend class LaneConnectorWorkerInterface;
+  friend class MuddleLaneConnectorWorker;
+  friend class LaneConnectorWorker;
+
   enum class State
   {
     INITIAL = 0,
@@ -466,6 +466,7 @@ private:
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using Muddles                   = std::vector<MuddlePtr>;
   using Clients                   = std::vector<ClientPtr>;
+  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
 
   void WorkCycle();
 

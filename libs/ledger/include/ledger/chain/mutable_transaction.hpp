@@ -94,7 +94,7 @@ struct TransactionSummary
     return !(*this < rhs);
   }
 
-  bool WellFormed() const
+  bool IsWellFormed() const
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {

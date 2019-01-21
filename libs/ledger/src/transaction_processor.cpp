@@ -125,9 +125,8 @@ void TransactionProcessor::ThreadEntryPoint()
     {
       // Note: metric for TX stored will not fire this way
       // dispatch the summary to the miner
+      assert(summary.IsWellFormed());
       miner_.EnqueueTransaction(summary);
-
-      assert(summary.WellFormed());
 
       FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
     }

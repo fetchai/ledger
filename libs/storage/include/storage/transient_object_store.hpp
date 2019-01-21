@@ -61,7 +61,7 @@ public:
   bool Has(ResourceID const &rid);
   void Set(ResourceID const &rid, Object const &object, bool newly_seen);
   bool Confirm(ResourceID const &rid);
-  std::vector<chain::TransactionSummary> GetRecent(uint32_t max_to_poll);
+  TxSummaries GetRecent(uint32_t max_to_poll);
   /// @}
 
   void SetCallback(Callback cb)
@@ -79,6 +79,7 @@ private:
   using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
+  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
   using Flag        = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
@@ -168,17 +169,16 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
 }
 
 /**
- * xxx
+ * Get the recent transactions seen at the store (recently seen to the node/lane).
  *
- * @tparam O
- * @param rid
- * @param object
- * @return true
+ * @tparam O The type of the object being stored
+ * @param max_to_poll the maximum number we want to return
+ * @return a vector of the tx summaries
  */
 template <typename O>
-std::vector<chain::TransactionSummary> TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
+TxSummaries TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
 {
-  std::vector<chain::TransactionSummary> ret;
+  TxSummaries ret;
   chain::TransactionSummary              summary;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 

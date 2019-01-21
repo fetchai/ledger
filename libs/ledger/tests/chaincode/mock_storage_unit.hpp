@@ -57,9 +57,9 @@ public:
                bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
 
   // Does nothing
-  std::vector<fetch::chain::TransactionSummary> PollRecentTx(uint32_t) override
+  TxSummaries PollRecentTx(uint32_t) override
   {
-    return std::vector<fetch::chain::TransactionSummary>();
+    return {};
   }
 
   FakeStorageUnit &GetFake()
