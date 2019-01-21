@@ -213,7 +213,6 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
-
   latest_block_sync_->WorkCycle();
   if (process_future_timepoint_.IsDue())
   {

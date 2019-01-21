@@ -30,6 +30,7 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 
 #include <random>
 #include <sstream>
@@ -44,17 +45,19 @@ public:
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
   using Miner       = miner::MinerInterface;
+  using MainChainService = std::shared_ptr<ledger::MainChainRpcService>;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, Miner &miner)
+                   P2PService &p2p_service, TrustSystem &trust, Miner &miner, MainChainService main_chain_service)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
     , miner_(miner)
+    , main_chain_service_(std::move(main_chain_service))
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -106,6 +109,24 @@ private:
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+
+    Variant history = Variant::Object();
+    for(auto &d : main_chain_service_->block_arrival_)
+    {
+      Variant details = Variant::Array(d.second.size());
+      for(std::size_t i=0; i< d.second.size(); ++i)
+      {
+        Variant e        = Variant::Object();
+        e["from"]        = d.second[i].from;
+        e["transmitter"] = d.second[i].transmitter;
+        e["time"]        = d.second[i].time;
+        e["type"]        = d.second[i].type;
+        e["first"]       = d.second[i].first;
+        details[i]       = e;
+      }
+      history[d.first] = details;
+    }
+    response["history"] = history;
 
     return http::CreateJsonResponse(response);
   }
@@ -305,6 +326,7 @@ private:
 
   TrustSystem &trust_;
   Miner &miner_;
+  MainChainService main_chain_service_;
 };
 
 }  // namespace p2p

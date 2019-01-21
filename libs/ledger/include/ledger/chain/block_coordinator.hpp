@@ -35,6 +35,7 @@ public:
   using mutex_type      = fetch::mutex::Mutex;
   using block_body_type = std::shared_ptr<BlockBody>;
   using status_type     = ledger::ExecutionManagerInterface::Status;
+  using NewBlockCallBack = std::function<void(BlockType&)>;
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
@@ -48,15 +49,25 @@ public:
     Stop();
   }
 
+  void SetCallback(NewBlockCallBack fun)
+  {
+    callback_ = fun;
+  }
+
   /**
    * Called whenever a new block has been generated from the miner
    *
    * @param block Reference to the new block
    */
-  void AddBlock(BlockType &block)
+  void AddBlock(BlockType &block, bool from_miner=true)
   {
     // add the block to the chain data structure
     chain_.AddBlock(block);
+
+    if (from_miner && callback_)
+    {
+      callback_(block);
+    }
 
     // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
     // does not fire all of the time.
@@ -225,6 +236,7 @@ private:
   mutex_type                         mutex_{__LINE__, __FILE__};
   bool                               stop_ = false;
   std::thread                        thread_;
+  NewBlockCallBack callback_;
 };
 
 }  // namespace chain

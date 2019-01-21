@@ -66,6 +66,59 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
+//#ifdef BLOCK_EXTRA_DATA
+  enum OriginType {
+    MINE = 0,
+    BROADCAST,
+    CATCHUP,
+    LOOSE,
+    UNKNOWN
+  };
+  std::string ToString(OriginType ot)
+  {
+    std::string r="";
+    switch(ot)
+    {
+      case OriginType :: MINE:
+      {
+        r = "mine";
+        break;
+      }
+      case OriginType :: BROADCAST:
+      {
+        r = "broadcast";
+        break;
+      }
+      case OriginType :: CATCHUP:
+      {
+        r = "catchup";
+        break;
+      }
+      case OriginType :: LOOSE:
+      {
+        r = "loose";
+        break;
+      }
+      case OriginType :: UNKNOWN:
+      {
+        r = "unknown";
+        break;
+      }
+    }
+    return r;
+  }
+  struct OriginAndTime {
+    std::string from        = "";
+    std::string transmitter = "";
+    std::time_t time        = -1;
+    std::string type        = "";
+    bool first              = false;
+  };
+  std::unordered_map<std::string, std::vector<OriginAndTime> > block_arrival_; //block hash => OriginAndTime
+private:  std::queue<std::string> block_hash_queue_; // block hash
+public:
+//#endif
+
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
                       BlockCoordinator &block_coordinator);
 
@@ -80,7 +133,7 @@ private:
   using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 
-  void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
+  void OnNewBlock(Address const &from, Block &block, Address const &transmitter, OriginType origin_type = OriginType::UNKNOWN);
 
   bool RequestHeaviestChainFromPeer(Address const &from);
 
