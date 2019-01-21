@@ -37,15 +37,9 @@ public:
   {
     ASSERT(inputs.size() == 1);
     input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    this->output_->Copy(
-        *inputs[0]);  // TODO(private, 521) remove useless copy and replace with lightweight view
-    size_t elementsCount(1);
-    for (size_t i : this->output_->shape())
-    {
-      elementsCount *= i;
-    }
-    this->output_->Reshape(std::vector<size_t>({1, elementsCount}));
+    this->output_ = std::make_shared<ArrayType>(std::vector<size_t>({1, inputs[0]->size()}));
+    // TODO(private, 521) remove useless copy and replace with lightweight view
+    this->output_->Copy(*inputs[0]);
     return this->output_;
   }
 
@@ -53,8 +47,9 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
-    return {errorSignal};
+    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_[0]);
+    ret->Copy(*errorSignal);
+    return {ret};
   }
 
 private:

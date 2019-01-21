@@ -176,6 +176,15 @@ public:
     }
   }
 
+  void Copy(Tensor<T> const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0) ; i < size() ; ++i)
+     {
+	At(i) = o.At(i);
+      }
+  }
+
   T &At(size_t i)
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
