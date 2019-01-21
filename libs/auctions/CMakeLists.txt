@@ -18,4 +18,3 @@ setup_library(fetch-auctions)
 target_link_libraries(fetch-auctions PUBLIC fetch-core fetch-math)
 
 add_test_target()
-
