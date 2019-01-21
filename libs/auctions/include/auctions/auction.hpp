@@ -103,6 +103,26 @@ private:
   ErrorCode    CheckBidValidity(Bid const &bid) const;
 };
 
+
+
+
+/**
+ * adds an item to the auction
+ * @param item
+ * @param item_owner
+ * @param min_price
+ * @return
+ */
+ErrorCode Auction::AddItem(Item const &item)
+{
+  ErrorCode ec = CheckItemValidity(item);
+  if (ec == ErrorCode::SUCCESS)
+  {
+    items_.insert(std::pair<ItemId, Item>(item.id, item));
+  }
+  return ec;
+}
+
 /**
  * returns every listed item
  * @return
@@ -121,7 +141,7 @@ inline std::vector<Item> Auction::ShowListedItems() const
  * returns every listed item
  * @return
  */
-std::vector<Bid> Auction::ShowBids() const
+inline std::vector<Bid> Auction::ShowBids() const
 {
   std::vector<Bid> ret_vec{};
   for (auto &it : bids_)
@@ -131,22 +151,6 @@ std::vector<Bid> Auction::ShowBids() const
   return ret_vec;
 }
 
-/**
- * adds an item to the auction
- * @param item
- * @param item_owner
- * @param min_price
- * @return
- */
-ErrorCode Auction::AddItem(Item const &item)
-{
-  ErrorCode ec = CheckItemValidity(item);
-  if (ec == ErrorCode::SUCCESS)
-  {
-    items_.insert(std::pair<ItemId, Item>(item.id, item));
-  }
-  return ec;
-}
 
 /**
  * Agent adds a bid (potentially on multiple items)

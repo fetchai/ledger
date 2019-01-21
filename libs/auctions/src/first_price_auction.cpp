@@ -21,5 +21,59 @@
 namespace fetch {
 namespace auctions {
 
+FirstPriceAuction::FirstPriceAuction(BlockId start_block_id, BlockId end_block_id)
+  : Auction(start_block_id, end_block_id, false, std::numeric_limits<std::size_t>::max())
+{
+  max_items_         = std::numeric_limits<std::size_t>::max();
+  max_bids_          = std::numeric_limits<std::size_t>::max();
+  max_items_per_bid_ = 1;
+  max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
+}
+
+bool FirstPriceAuction::Execute(BlockId current_block)
+{
+  if ((end_block_ == current_block) && auction_valid_)
+  {
+    // TODO (multi-items-per-bid non-combinatorial auctions not implemented)
+    assert(max_items_per_bid_ == 1);
+
+    // pick winning bid
+    SelectWinners();
+
+    // deduct funds from winner
+
+    // transfer item to winner
+
+    // TODO (handle defaulting to next highest bid if winner cannot pay)
+
+    // close auction
+    auction_valid_ = false;
+
+    return true;
+  }
+  return false;
+}
+
+/**
+ * finds the highest bid on each item
+ */
+void FirstPriceAuction::SelectWinners()
+{
+  // iterate through all items in auction
+  for (auto &cur_item_it : items_)
+  {
+    // find highest bid for this item and set winner
+    for (auto &cur_bid_it : cur_item_it.second.bids)
+    {
+      if (cur_bid_it.price > cur_item_it.second.max_bid)
+      {
+        cur_item_it.second.winner     = cur_bid_it.bidder;
+        cur_item_it.second.max_bid    = cur_bid_it.price;
+        cur_item_it.second.sell_price = cur_bid_it.price;
+      }
+    }
+  }
+}
+
 }  // namespace auctions
 }  // namespace fetch

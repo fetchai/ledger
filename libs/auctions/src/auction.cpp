@@ -21,5 +21,6 @@
 namespace fetch {
 namespace auctions {
 
+
 }  // namespace auctions
 }  // namespace fetch
