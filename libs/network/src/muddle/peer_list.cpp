@@ -223,7 +223,6 @@ void PeerConnectionList::RemoveConnection(Handle handle)
   {
     if (it->second->handle() == handle)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
       auto metadata = peer_metadata_.find(it->first);
       if (metadata != peer_metadata_.end())
       {

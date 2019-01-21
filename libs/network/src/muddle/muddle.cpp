@@ -357,8 +357,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "KLL:Blacklist", ToBase64(target));
-  DropPeer(target);
+:  DropPeer(target);
   if (trust_system_ != nullptr && trust_system_->GetTrustUncertaintyOfPeer(target) > 10.)
   {
     return;

@@ -374,11 +374,6 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
       });
   peerTrusts.erase(erase_untrusted_peers, peerTrusts.end());
 
-  for (auto const &p : peerTrusts)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Stage 1: ", ToBase64(p.address));
-  }
-
   auto erase_unknown_peers = std::remove_if(
       peerTrusts.begin(), peerTrusts.end(),
       [this](PeerTrust const &x) {
@@ -386,11 +381,6 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
         return !(identity_cache_.Lookup(x.address, uri) && uri.IsDirectlyConnectable());
       });
   peerTrusts.erase(erase_unknown_peers, peerTrusts.end());
-
-  for (auto const &p : peerTrusts)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Stage 2: ", ToBase64(p.address));
-  }
 
   std::sort(
       peerTrusts.begin(), peerTrusts.end(),
@@ -411,7 +401,6 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
     auto p = peerTrusts.back().address;
     peerTrusts.pop_back();
     desired_peers_.insert(p);
-    FETCH_LOG_INFO(LOGGING_NAME, "KLL: Desired: ", ToBase64(p));
   }
 
   auto new_experimental_peers = trust_system_.GetRandomPeers(transient_peers_, 0.0);
@@ -421,7 +410,6 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
     {
       desired_peers_.insert(p);
       experimental_peers_.insert(p);
-      FETCH_LOG_INFO(LOGGING_NAME, "KLL: Experimental: ", ToBase64(p));
     }
   }
 }
