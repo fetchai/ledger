@@ -58,7 +58,8 @@ public:
     GET = 0,
     SET,
     SET_BULK,
-    HAS
+    HAS,
+    GET_RECENT
   };
 
   ObjectStoreProtocol(TransientObjectStore<T> *obj_store)
@@ -69,6 +70,7 @@ public:
     this->Expose(SET, this, &self_type::Set);
     this->Expose(SET_BULK, this, &self_type::SetBulk);
     this->Expose(HAS, obj_store, &TransientObjectStore<T>::Has);
+    this->Expose(GET_RECENT, obj_store, &TransientObjectStore<T>::GetRecent);
   }
 
   void OnSetObject(event_set_object_type const &f)
@@ -86,7 +88,7 @@ private:
       on_set_(object);
     }
 
-    obj_store_->Set(rid, object);
+    obj_store_->Set(rid, object, false);
   }
 
   void SetBulk(ElementList const &elements)
