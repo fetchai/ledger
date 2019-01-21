@@ -73,7 +73,7 @@ void TCPServer::Start()
       volatile std::shared_ptr<int> closure_alive_copy = closure_alive;
 
       std::shared_ptr<acceptor_type> acceptor;
-      FETCH_LOG_INFO(LOGGING_NAME, "Opening TCP server");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
 
       try
       {
@@ -89,7 +89,7 @@ void TCPServer::Start()
         {
           Accept(acceptor);
 
-          FETCH_LOG_INFO(LOGGING_NAME, "Accepting TCP server connections");
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
       }
       catch (std::exception &e)
