@@ -47,7 +47,7 @@ namespace ledger {
 
 class MuddleLaneConnectorWorker;
 
-class StorageUnitClient : public StorageUnitInterface
+class StorageUnitClient final : public StorageUnitInterface
 {
 public:
   struct ClientDetails
@@ -61,7 +61,7 @@ public:
   using MuddleEp  = muddle::MuddleEndpoint;
   using Muddle    = muddle::Muddle;
   using MuddlePtr = std::shared_ptr<Muddle>;
-  using Address   = Muddle::Address;  // == a crypto::Identity.identifier_
+  using Address   = Muddle::Address;
   using Uri       = Muddle::Uri;
   using Peer      = fetch::network::Peer;
 
@@ -102,7 +102,6 @@ public:
     assert(count == (1u << log2_lanes_));
   }
 
-public:
   size_t AddLaneConnectionsWaiting(
       std::map<LaneIndex, Uri> const & lanes,
       std::chrono::milliseconds const &timeout = std::chrono::milliseconds(1000));
@@ -193,6 +192,43 @@ public:
     }
   }
 
+  TxSummaries PollRecentTx(uint32_t max_to_poll) override
+  {
+    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    std::vector<service::Promise> promises;
+    TxSummaries                   new_txs;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
+
+    // Assume that the lanes are roughly balanced in terms of new TXs
+    for (auto const &lane_index : lane_to_identity_map_)
+    {
+      auto    lane = lane_index.first;
+      Address address;
+      GetAddressForLane(lane, address);
+      auto client = GetClientForLane(lane);
+      auto promise =
+          client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET_RECENT,
+                                      uint32_t(max_to_poll / lane_to_identity_map_.size()));
+      FETCH_LOG_PROMISE();
+      promises.push_back(promise);
+    }
+
+    for (auto const &promise : promises)
+    {
+      auto txs = promise->As<TxSummaries>();
+
+      new_txs.insert(new_txs.end(), std::make_move_iterator(txs.begin()),
+                     std::make_move_iterator(txs.end()));
+    }
+
+    if (new_txs.size() > 0)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Found: ", new_txs.size(), " newly seen TXs from lanes");
+    }
+    return new_txs;
+  }
+
   bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
@@ -200,18 +236,20 @@ public:
     auto      res  = fetch::storage::ResourceID(digest);
     LaneIndex lane = res.lane(log2_lanes_);
     Address   address;
+
     try
     {
       GetAddressForLane(lane, address);
+
+      auto client  = GetClientForLane(lane);
+      auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
+      tx           = promise->As<chain::VerifiedTransaction>();
     }
-    catch (std::runtime_error &e)
+    catch (std::exception const &e)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to get transaction, because: ", e.what());
       return false;
     }
-    auto client  = GetClientForLane(lane);
-    auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
-    tx           = promise->As<chain::VerifiedTransaction>();
 
     return true;
   }
@@ -402,14 +440,13 @@ public:
   }
 
 private:
-private:
-  friend class LaneConnectorWorkerInterface;
-
-  friend class MuddleLaneConnectorWorker;
-
-  friend class LaneConnectorWorker;  // these will do work for us, it's
+  // these will do work for us, it's
   // easier if it has access to our
   // types.
+  friend class LaneConnectorWorkerInterface;
+  friend class MuddleLaneConnectorWorker;
+  friend class LaneConnectorWorker;
+
   enum class State
   {
     INITIAL = 0,
@@ -428,6 +465,7 @@ private:
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using Muddles                   = std::vector<MuddlePtr>;
   using Clients                   = std::vector<ClientPtr>;
+  using TxSummaries               = std::vector<fetch::chain::TransactionSummary>;
 
   void WorkCycle();
 
@@ -435,7 +473,8 @@ private:
   {
     if (!muddles_[lane])
     {
-      muddles_[lane] = Muddle::CreateMuddle(Muddle::CreateNetworkId('S', lane), network_manager_);
+      muddles_[lane] = Muddle::CreateMuddle(Muddle::NetworkId("Storage" + std::to_string(lane)),
+                                            network_manager_);
       muddles_[lane]->Start({});
     }
     return muddles_[lane];

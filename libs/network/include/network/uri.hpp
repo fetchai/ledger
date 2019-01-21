@@ -100,6 +100,8 @@ public:
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
 
+  bool IsDirectlyConnectable() const;
+
 private:
   ConstByteArray uri_;
   Scheme         scheme_{Scheme::Unknown};
@@ -142,6 +144,11 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Uri::IsDirectlyConnectable() const
+{
+  return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
 }
 
 template <typename T>

@@ -28,6 +28,8 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
+#include <iostream>
+
 namespace fetch {
 namespace vectorize {
 
@@ -45,7 +47,7 @@ struct UnrollSet
 template <typename T>
 struct UnrollSet<T, 0>
 {
-  static void Set(T *ptr, T const &c)
+  static void Set(T * /*ptr*/, T const & /*c*/)
   {}
 };
 }  // namespace details

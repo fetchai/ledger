@@ -155,7 +155,7 @@ public:
     members_[n] = fnc;
   }
 
-  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
   {}
 
   /* Registers a feed from an implementation.

@@ -73,7 +73,7 @@ protected:
 
   PeerConnectionListTests()
     : register_(dispatcher_)
-    , router_(fetch::muddle::Muddle::CreateNetworkId("Test"),
+    , router_(fetch::muddle::Muddle::NetworkId("Test"),
               Router::Address{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
               register_, dispatcher_)
     , peer_list_(router_)

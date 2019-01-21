@@ -41,7 +41,7 @@ using container_type       = fetch::memory::SharedArray<data_type>;
 using vector_register_type = typename container_type::vector_register_type;
 #define N 200
 
-NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t m)
+NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t /*m*/)
 {
   static fetch::random::LinearCongruentialGenerator gen;
   NDArray<data_type, container_type>                array1(n);

@@ -18,10 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/ndarray_iterator.hpp"
 #include "math/ndarray_view.hpp"
 #include "math/shapeless_array.hpp"
-#include "meta/type_traits.hpp"
 #include "vectorise/memory/array.hpp"
 
 #include <numeric>
@@ -246,11 +246,19 @@ public:
    * @param indices index to access
    */
   template <typename S>
-  fetch::meta::IfIsUnsignedInteger<S, T> Get(std::vector<S> const &indices) const
+  fetch::meta::IfIsUnsignedInteger<S, T> &Get(std::vector<S> const &indices)
   {
     assert(indices.size() == shape_.size());
     return this->operator[](ComputeColIndex(indices));
   }
+
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> const &Get(std::vector<S> const &indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->operator[](ComputeColIndex(indices));
+  }
+
   /**
    * extract data from NDArray based on the NDArrayView
    * @param array_view
@@ -495,8 +503,8 @@ public:
    * Copies data from a row major numpy array into the current column major array
    * @param new_array
    */
-  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &stride,
-                     std::vector<std::size_t> &index)
+  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> & /*stride*/,
+                     std::vector<std::size_t> & /*index*/)
   {
     std::size_t total_size = NDArray<T>::SizeFromShape(shape);
 

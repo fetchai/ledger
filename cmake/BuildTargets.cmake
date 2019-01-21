@@ -66,9 +66,9 @@ macro(setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragmas")
   endif()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   if(FETCH_WARNINGS_AS_ERRORS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-unused-parameter")
   endif(FETCH_WARNINGS_AS_ERRORS)
 
   # prefer PIC
@@ -109,6 +109,11 @@ macro(setup_compiler)
   if (FETCH_ENABLE_METRICS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
+
+  # allow disabling of colour log file
+  if (FETCH_DISABLE_COLOUR_LOG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DISABLE_COLOUR_LOG_OUTPUT")
+  endif (FETCH_DISABLE_COLOUR_LOG)
 
   # needed for configuration files etc
   include_directories(${FETCH_ROOT_BINARY_DIR})
@@ -169,8 +174,10 @@ function(configure_vendor_targets)
 
   # Google Benchmark
   # Do not build the google benchmark library tests
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
-  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  if(FETCH_ENABLE_BENCHMARKS)
+      set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+      add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  endif(FETCH_ENABLE_BENCHMARKS)
 
 endfunction(configure_vendor_targets)
 

@@ -35,6 +35,7 @@ namespace chain {
 class MainChainMiner
 {
 public:
+  using ConstByteArray          = byte_array::ConstByteArray;
   using BlockType               = chain::MainChain::BlockType;
   using BlockHash               = chain::MainChain::BlockHash;
   using BodyType                = chain::MainChain::BlockType::body_type;
@@ -46,17 +47,17 @@ public:
   static constexpr uint32_t    BLOCK_PERIOD_MS = 5000;
 
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, chain::MainChain &mainChain,
-                 chain::BlockCoordinator &blockCoordinator, MinerInterface &miner,
-                 ConsensusMinerInterface &consensus_miner, uint64_t minerNumber,
+                 chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
+                 ConsensusMinerInterface &consensus_miner, ConstByteArray miner_identity,
                  std::chrono::steady_clock::duration block_interval =
                      std::chrono::milliseconds{BLOCK_PERIOD_MS})
     : num_lanes_{num_lanes}
     , num_slices_{num_slices}
-    , mainChain_{mainChain}
-    , blockCoordinator_{blockCoordinator}
+    , main_chain_{mainChain}
+    , blockCoordinator_{block_coordinator}
     , miner_{miner}
     , consensus_miner_{consensus_miner}
-    , minerNumber_{minerNumber}
+    , miner_identity_{std::move(miner_identity)}
     , block_interval_{block_interval}
   {}
 
@@ -112,7 +113,7 @@ private:
     while (!stop_)
     {
       // determine the heaviest block
-      auto &block = mainChain_.HeaviestBlock();
+      auto &block = main_chain_.HeaviestBlock();
 
       // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
@@ -151,7 +152,7 @@ private:
         // update the metadata for the block
         next_block_body.block_number  = block.body().block_number + 1;
         next_block_body.previous_hash = block.hash();
-        next_block_body.miner_number  = minerNumber_;
+        next_block_body.miner         = miner_identity_;
 
         // Reset previous state
         next_block_body.slices.clear();
@@ -159,7 +160,7 @@ private:
         FETCH_LOG_INFO(LOGGING_NAME, "Generate new block: ", num_lanes_, " x ", num_slices_);
 
         // Pack the block with transactions
-        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_);
+        miner_.GenerateBlock(next_block_body, num_lanes_, num_slices_, main_chain_);
         next_block.SetBody(next_block_body);
         next_block.UpdateDigest();
 
@@ -189,12 +190,12 @@ private:
   std::size_t       num_lanes_;
   std::size_t       num_slices_;
 
-  chain::MainChain &                  mainChain_;
+  chain::MainChain &                  main_chain_;
   chain::BlockCoordinator &           blockCoordinator_;
   MinerInterface &                    miner_;
   ConsensusMinerInterface             consensus_miner_;
   std::thread                         thread_;
-  uint64_t                            minerNumber_{0};
+  ConstByteArray                      miner_identity_;
   BlockCompleteCallback               on_block_complete_;
   std::chrono::steady_clock::duration block_interval_;
 };

@@ -52,7 +52,7 @@ struct ArgumentsToList<T>
 template <>
 struct ArgumentsToList<>
 {
-  static void AppendTo(std::vector<std::type_index> &list)
+  static void AppendTo(std::vector<std::type_index> & /*list*/)
   {}
 };
 

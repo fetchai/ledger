@@ -24,7 +24,7 @@ RE_LICENSE = """//--------------------------------------------------------------
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 //
-//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------([\\s\\n]*)
 """
 
 LICENSE = """//------------------------------------------------------------------------------
@@ -44,9 +44,8 @@ LICENSE = """//-----------------------------------------------------------------
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-""".format(CURRENT_YEAR)
 
-FULL_LICENSE = LICENSE + '\n'
+""".format(CURRENT_YEAR)
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 APP_FOLDERS = ('apps', 'libs')
@@ -77,7 +76,7 @@ def read_file(path):
 def check_source_file(path):
     contents = read_file(path)
 
-    if FULL_LICENSE not in contents:
+    if LICENSE not in contents:
         print('License missing from:', os.path.relpath(path, PROJECT_ROOT))
         return False
 
@@ -88,9 +87,10 @@ def update_source_file(path):
 
     contents = read_file(path)
 
+
     # do not bother processing files which have the license
-    if FULL_LICENSE in contents:
-        return
+    if LICENSE in contents:
+        return True
 
     # determine if the license is present already in the source code
     existing_license_present = bool(re.search(RE_LICENSE, contents, re.MULTILINE))
@@ -103,19 +103,19 @@ def update_source_file(path):
     elif path.endswith('.cpp'):
 
         # add license to the top of the file
-        contents = FULL_LICENSE + contents
+        contents = LICENSE + contents
 
     elif path.endswith('.hpp'):
 
         # add the license after the header guard
-        contents = re.sub(r'#pragma once\s+', '#pragma once\n' + FULL_LICENSE, contents)
+        contents = re.sub(r'#pragma once\s+', '#pragma once\n' + LICENSE, contents)
 
     else:
         print('Unable to update file: ', os.path.relpath(path, PROJECT_ROOT))
         return False
 
     # final top level sanity check
-    if FULL_LICENSE not in contents:
+    if LICENSE not in contents:
         print('Unable to apply update to file:', os.path.relpath(path, PROJECT_ROOT))
         return False
 

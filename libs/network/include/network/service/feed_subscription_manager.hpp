@@ -80,7 +80,7 @@ public:
     , feed_(feed)
     , publisher_(publisher)
   {
-    workers_ = network::MakeThreadPool(3);
+    workers_ = network::MakeThreadPool(3, "FeedSubscriptionManager");
   }
 
   /* Attaches a feed to a given service.

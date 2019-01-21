@@ -30,12 +30,10 @@
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;
 using fetch::chain::VerifiedTransaction;
 using fetch::chain::MutableTransaction;
-using fetch::crypto::ECDSASigner;
 using fetch::random::LinearCongruentialGenerator;
 
 using TransientStore   = fetch::storage::TransientObjectStore<VerifiedTransaction>;
@@ -93,7 +91,7 @@ void TxSubmitFixedLarge(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
     }
   }
 }
@@ -111,7 +109,7 @@ void TxSubmitFixedSmall(benchmark::State &state)
   {
     for (auto const &tx : transactions)
     {
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
     }
   }
 }
@@ -129,7 +127,7 @@ void TxSubmitSingleLarge(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
   }
 }
 
@@ -146,7 +144,7 @@ void TxSubmitSingleSmall(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
   }
 }
 
@@ -163,7 +161,7 @@ void TxSubmitSingleSmallAlt(benchmark::State &state)
   for (auto _ : state)
   {
     auto const &tx = transactions.at(tx_index++);
-    tx_store.Set(ResourceID{tx.digest()}, tx);
+    tx_store.Set(ResourceID{tx.digest()}, tx, false);
   }
 }
 
@@ -189,7 +187,7 @@ void TransientStoreExpectedOperation(benchmark::State &state)
       // Basic pattern for a transient store is to intake X transactions into the mempool,
       // then read some subset N of them (for block verification/packing), then commit
       // those to the underlying object store.
-      tx_store.Set(ResourceID{tx.digest()}, tx);
+      tx_store.Set(ResourceID{tx.digest()}, tx, false);
 
       // also trigger the read from the store and the subsequent right schedule
       tx_store.Get(rid, dummy);
