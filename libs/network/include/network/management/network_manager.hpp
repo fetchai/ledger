@@ -125,6 +125,16 @@ public:
     return (!is_copy_) || bool(weak_pointer_.lock());
   }
 
+  bool Running()
+  {
+    auto ptr = lock();
+    if (ptr)
+    {
+      return ptr->Running();
+    }
+    return false;
+  }
+
   bool is_primary()
   {
     return (!is_copy_);
