@@ -40,7 +40,7 @@ public:
   }
 
   // Mine for set number of iterations
-  bool Mine(BlockType &block, uint64_t iterations) override
+  bool Mine(BlockType &block, uint64_t /*iterations*/) override
   {
     block.body().nonce = 0;
     block.UpdateDigest();

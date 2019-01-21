@@ -93,7 +93,7 @@ int main(int argc, char **argv)
   // Client setup
   fetch::network::NetworkManager tm;
 
-  auto                client_muddle = Muddle::CreateMuddle(Muddle::CreateNetworkId("TEST"), tm);
+  auto                client_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
   fetch::network::Uri peer("tcp://127.0.0.1:8080");
   client_muddle->AddPeer(peer);
   auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(),

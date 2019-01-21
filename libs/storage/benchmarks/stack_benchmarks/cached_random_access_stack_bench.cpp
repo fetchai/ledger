@@ -28,7 +28,7 @@ using fetch::storage::CachedRandomAccessStack;
 class CachedRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(const ::benchmark::State & /*st*/) override
   {
     stack_.New("RAS_bench.db");
 

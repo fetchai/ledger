@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "storage/slightly_better_random_access_stack.hpp"
+#include "storage/cache_line_random_access_stack.hpp"
 
 #include <gtest/gtest.h>
 #include <stack>
@@ -36,15 +36,15 @@ public:
   }
 };
 
-TEST(slightly_better_random_access_stack, basic_functionality)
+TEST(cache_line_random_access_stack, basic_functionality)
 {
-  constexpr uint64_t                         testSize = 10000;
-  fetch::random::LaggedFibonacciGenerator<>  lfg;
-  SlightlyBetterRandomAccessStack<TestClass> stack;
-  std::vector<TestClass>                     reference;
+  constexpr uint64_t                        testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  CacheLineRandomAccessStack<TestClass>     stack;
+  std::vector<TestClass>                    reference;
 
   stack.New("CRAS_test.db");
-
+  stack.SetMemoryLimit(std::size_t(1ULL << 18));
   EXPECT_TRUE(stack.is_open());
 
   // Test push/top
@@ -71,8 +71,11 @@ TEST(slightly_better_random_access_stack, basic_functionality)
     for (uint64_t i = 0; i < testSize; ++i)
     {
       TestClass temp;
+
+      auto expected = reference[i];
       stack.Get(i, temp);
-      ASSERT_TRUE(temp == reference[i]);
+      ASSERT_TRUE(temp == reference[i])
+          << "Failed to get from stack at: " << i << " " << (expected == expected);
     }
   }
 
@@ -106,14 +109,16 @@ TEST(slightly_better_random_access_stack, basic_functionality)
       TestClass c;
       stack.Get(pos1, c);
 
-      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i;
+      ASSERT_TRUE(c == b) << "Stack swap test failed, iteration " << i << " pos1: " << pos1
+                          << " pos2: " << pos2;
     }
 
     {
-      TestClass c;
-      stack.Get(pos2, c);
+      TestClass d;
+      stack.Get(pos2, d);
 
-      ASSERT_TRUE(c == a) << "Stack swap test failed, iteration " << i;
+      ASSERT_TRUE(d == a) << "Stack swap test failed, iteration " << i << " pos1: " << pos1
+                          << " pos2: " << pos2;
     }
   }
 
@@ -127,15 +132,15 @@ TEST(slightly_better_random_access_stack, basic_functionality)
   ASSERT_TRUE(stack.empty() == true);
 }
 
-TEST(slightly_better_random_access_stack, file_writing_and_recovery)
+TEST(cache_line_random_access_stack, file_writing_and_recovery)
 {
   constexpr uint64_t                        testSize = 10000;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
-
+    CacheLineRandomAccessStack<TestClass> stack;
+    stack.SetMemoryLimit(std::size_t(1ULL << 18));
     stack.New("CRAS_test_2.db");
 
     stack.SetExtraHeader(0x00deadbeefcafe00);
@@ -156,8 +161,8 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Check values against loaded file
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
-
+    CacheLineRandomAccessStack<TestClass> stack;
+    stack.SetMemoryLimit(std::size_t(1ULL << 18));
     stack.Load("CRAS_test_2.db");
 
     EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
@@ -180,8 +185,8 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Check we can set new elements after loading
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
-
+    CacheLineRandomAccessStack<TestClass> stack;
+    stack.SetMemoryLimit(std::size_t(1ULL << 18));
     stack.Load("CRAS_test_2.db");
 
     EXPECT_TRUE(stack.header_extra() == 0x00deadbeefcafe00);
@@ -205,8 +210,8 @@ TEST(slightly_better_random_access_stack, file_writing_and_recovery)
 
   // Verify
   {
-    SlightlyBetterRandomAccessStack<TestClass> stack;
-
+    CacheLineRandomAccessStack<TestClass> stack;
+    stack.SetMemoryLimit(std::size_t(1ULL << 18));
     stack.Load("CRAS_test_2.db");
 
     {

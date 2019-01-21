@@ -14,7 +14,12 @@ PORT_BASE = 9000
 
 # (clear;cd ../../build/;make swarm) && ./runswarm.py --members 51 --binary ../../build/examples/swarm --caching 1 --initialpeers 2 --maxpeers 4  --idlespeed 100 2>&1 | tee log
 #
-#
+
+
+# ['/Users/katie/Coding/fetch-ledger7/build/apps/constellation/constellation', '-port', '8060',
+# '-block-interval', '5000', '-transient-peers', '2', '-max-peers', '4',
+# '-peers-update-cycle-ms', '200', '-block-interval', '3000',
+# '-peers', 'tcp://127.0.0.1:8041,tcp://127.0.0.1:8021']
 
 class RunSwarmArgs(object):
     def __init__(self):
@@ -25,7 +30,7 @@ class RunSwarmArgs(object):
         self.parser.add_argument("--initialpeers", help="number of seed peers", type=int, default=2)
         self.parser.add_argument("--maxpeers", help="max peers to discover", type=int, default=4)
         self.parser.add_argument("--idlespeed", help="idle cycle time in MS for a node", type=int, default=1000)
-        self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="build/swarmlog/")
+        self.parser.add_argument("--logdir", help="where to put individual logfiles", type=str, default="../../build/swarmlog/")
         self.parser.add_argument("--startindex", help="Index of first launchable node", type=int, default=0)
         self.parser.add_argument("--debugger", help="Name of debugger", type=str, default="")
         self.parser.add_argument("--clean", help="Name of debugger", default=False, action='store_true')
@@ -85,21 +90,33 @@ class ConstellationNode(object):
             peers.add(rnd * 20 + PORT_BASE + 1)
 
         os.makedirs(args.logdir, exist_ok=True)
-        os.makedirs("data-{}/".format(self.index), exist_ok=True)
 
         self.peers = [
-            "127.0.0.1:{}".format(x) for x in peers
+            "tcp://127.0.0.1:{}".format(x) for x in peers
         ]
 
         frontargs = re.split(r'\s+', args.binary)
 
-        self.moreargs = frontargs[1:]
+        arg_binary_name = frontargs[0]
+        self.dir =  os.path.join(frontargs[1], "data-{}/".format(self.index))
+
+        os.makedirs(self.dir, exist_ok=True)
+
+        self.moreargs = []
         self.frontargs = frontargs[0]
 
+        if index == 0:
+            self.moreargs.append('-mine')
+
         self.backargs = {
+            '-block-interval': '5000',
+            '-transient-peers': '2',
+            '-max-peers': '4',
+            '-peers-update-cycle-ms': '200',
+            '-block-interval': '3000',
             "-port": "{}".format(self.myport),
             "-peers": ",".join(self.peers),
-            "-db-prefix": "data-{}/".format(self.index),
+            #"-db-prefix": "data-{}/".format(self.index),
         }
 
     def Run(self):
@@ -119,11 +136,12 @@ class ConstellationNode(object):
         cmdstr = " ".join(cmdstr)
 
         cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
-        print(cmdstr)
-        self.p = subprocess.Popen("{} | tee {}".format(cmdstr, os.path.join(self.logdir, str(self.index))),
-            shell=True
+        print("CMD=", cmdstr)
+        print("CWD=", self.dir)
+        self.p = subprocess.Popen("{}".format(cmdstr),
+            shell=True,
+            cwd=self.dir
         )
-
 
     def launchRun(self):
 
@@ -141,114 +159,13 @@ class ConstellationNode(object):
         print(cmdstr)
         self.p = subprocess.Popen(
             cmdstr,
-            shell=True
+            shell=True,
+            cwd=self.dir,
+            stdout=self._logfile,
+            stderr=subprocess.STDOUT
         )
 
     def close(self):
-        self.p.terminate()
-        self.p.kill()
-
-
-class PyfetchNode(object):
-    def __init__(self, index, args, chainident):
-        self.peercount = args.initialpeers
-        self.maxpeers = args.maxpeers
-        self.myport = PORT_BASE + index
-        self.logdir = args.logdir
-        self.index = index
-
-        peers = set()
-        while len(peers)<args.initialpeers:
-            rnd = (index + random.randint(0, args.members)) % args.members
-            if rnd == index:
-                continue
-            peers.add(rnd + PORT_BASE)
-
-        self.peers = [
-            "127.0.0.1:{}".format(x) for x in peers
-        ]
-
-        os.makedirs(args.logdir, exist_ok=True)
-
-        frontargs = re.split(r'\s+', args.binary)
-
-        self.moreargs = frontargs[1:]
-        self.frontargs = frontargs[0]
-
-        self.backargs = {
-            "-id": "{}".format(self.index),
-            "-maxpeers": "{}".format(self.maxpeers),
-            "-target": "{}".format(args.target),
-            "-port": "{}".format(PORT_BASE + self.index),
-            "-chainident": "{}".format(chainident),
-            "-peers": ",".join(self.peers),
-            "-idlespeed": "{}".format(args.idlespeed),
-        }
-
-        self.debugger = args.debugger
-
-    def Run(self):
-        {
-            "": self.launchRun,
-            "gdb": self.launchGDB,
-            "lldb": self.launchLLDB,
-        }[self.debugger]()
-
-
-    def launchLLDB(self):
-        cmdstr = (self.moreargs +
-            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
-
-        cmdstr = " ".join(cmdstr)
-
-        cmdstr = "screen -S 'lldb-{}' -dm lldb ".format(self.index) + self.frontargs + " -s '/tmp/lldb.run.cmd' -- " + cmdstr
-        print(cmdstr)
-
-        if logdir:
-            cmdstr += " | tee {}".format(os.path.join(self.logdir, str(self.index)))
-        else:
-            cmdstr += " >/dev/null"
-
-        self.p = subprocess.Popen("{}".format(cmdstr), shell=True)
-
-    def launchGDB(self):
-        pass
-
-    def killGDB(self):
-        pass
-
-    def killRun(self):
-        pass
-
-    def killLLDB(self):
-        pass
-
-    def launchRun(self):
-
-        cmdstr = ([ self.frontargs ] +
-            self.moreargs +
-            [ " ".join([ x[0], x[1] ]) for x in self.backargs.items() ])
-
-        cmdstr = " ".join(cmdstr)
-
-        cmdstr = "{} >{}".format(
-                cmdstr
-                , os.path.join(self.logdir, str(self.index))
-            )
-
-        print(cmdstr)
-        self.p = subprocess.Popen(
-            cmdstr,
-            shell=True
-        )
-
-    def close(self):
-        {
-            "": self.killRun,
-            "gdb": self.killGDB,
-            "lldb": self.killLLDB,
-        }[self.debugger]()
-
         self.p.terminate()
         self.p.kill()
 
@@ -256,10 +173,7 @@ class PyfetchNode(object):
 class Swarm(object):
     def __init__(self, args):
         chainident = int(time.time())
-        builder = {
-            "ConstellationNode": ConstellationNode,
-            "PyfetchNode": PyfetchNode,
-        }[args.nodetype]
+        builder = ConstellationNode
         self.nodes = dict([ (x, builder(x, args, chainident)) for x in range(args.lo, args.members)])
 
     def Run(self):
@@ -300,11 +214,11 @@ def main():
             args.debugfirst = args.members
 
     with open("/tmp/lldb.run.cmd", "w") as fn:
-        fn.write("br s -M bad_weak_ptr\n")
-        fn.write("br s -M system_error\n")
-        fn.write("br s -n exit\n")
-        fn.write("br s -n abort\n")
-        fn.write("br s -M TCPServer::~TCPServer()\n")
+        #fn.write("br s -M bad_weak_ptr\n")
+        #fn.write("br s -M system_error\n")
+        #fn.write("br s -n exit\n")
+        #fn.write("br s -n abort\n")
+        #fn.write("br s -M TCPServer::~TCPServer()\n")
         fn.write("run\n")
 
     if args.clean:

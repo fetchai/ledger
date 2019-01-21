@@ -31,8 +31,6 @@
 
 static constexpr char const *LOGGING_NAME = "Executor";
 
-using fetch::metrics::Metrics;
-
 namespace fetch {
 namespace ledger {
 

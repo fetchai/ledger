@@ -25,7 +25,7 @@ namespace fetch {
 namespace ledger {
 
 template <typename S>
-std::unique_ptr<vm::Module> CreateVMDefinition(S *smart_contract_instance = nullptr)
+std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ = nullptr)
 {
   using SmartContract = S;
 

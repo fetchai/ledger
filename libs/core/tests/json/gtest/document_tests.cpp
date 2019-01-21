@@ -23,7 +23,6 @@
 
 using fetch::json::JSONDocument;
 using fetch::variant::Variant;
-using fetch::byte_array::ConstByteArray;
 
 TEST(JsonTests, SimpleParseTest)
 {

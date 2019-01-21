@@ -220,7 +220,7 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 }
 
 template <int CATCH_ALL>
-int AnyChar(byte_array::ConstByteArray const &str, uint64_t &pos)
+int AnyChar(byte_array::ConstByteArray const & /*str*/, uint64_t &pos)
 {
   ++pos;
   return CATCH_ALL;
