@@ -38,8 +38,9 @@ template <typename Object>
 class TransientObjectStore
 {
 public:
-  using Callback = std::function<void(Object const &)>;
-  using Archive  = ObjectStore<Object>;
+  using Callback    = std::function<void(Object const &)>;
+  using Archive     = ObjectStore<Object>;
+  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
 
   // Construction / Destruction
   TransientObjectStore();
@@ -57,10 +58,10 @@ public:
 
   /// @name Accessors
   /// @{
-  bool Get(ResourceID const &rid, Object &object);
-  bool Has(ResourceID const &rid);
-  void Set(ResourceID const &rid, Object const &object, bool newly_seen);
-  bool Confirm(ResourceID const &rid);
+  bool        Get(ResourceID const &rid, Object &object);
+  bool        Has(ResourceID const &rid);
+  void        Set(ResourceID const &rid, Object const &object, bool newly_seen);
+  bool        Confirm(ResourceID const &rid);
   TxSummaries GetRecent(uint32_t max_to_poll);
   /// @}
 
@@ -79,7 +80,6 @@ private:
   using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
-  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
   using Flag        = std::atomic<bool>;
 
   bool GetFromCache(ResourceID const &rid, Object &object);
@@ -176,9 +176,10 @@ bool TransientObjectStore<O>::Get(ResourceID const &rid, O &object)
  * @return a vector of the tx summaries
  */
 template <typename O>
-TxSummaries TransientObjectStore<O>::GetRecent(uint32_t max_to_poll)
+typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent(
+    uint32_t max_to_poll)
 {
-  TxSummaries ret;
+  TransientObjectStore<O>::TxSummaries   ret;
   chain::TransactionSummary              summary;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 

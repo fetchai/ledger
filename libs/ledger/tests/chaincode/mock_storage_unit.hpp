@@ -41,6 +41,7 @@ public:
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::AddTransaction));
     ON_CALL(*this, GetTransaction(_, _))
         .WillByDefault(Invoke(&fake_, &FakeStorageUnit::GetTransaction));
+    ON_CALL(*this, PollRecentTx(_)).WillByDefault(Invoke(&fake_, &FakeStorageUnit::PollRecentTx));
   }
 
   MOCK_METHOD1(Get, Document(ResourceAddress const &));
@@ -56,11 +57,7 @@ public:
   MOCK_METHOD2(GetTransaction,
                bool(fetch::byte_array::ConstByteArray const &, fetch::chain::Transaction &));
 
-  // Does nothing
-  TxSummaries PollRecentTx(uint32_t) override
-  {
-    return {};
-  }
+  MOCK_METHOD1(PollRecentTx, std::vector<fetch::chain::TransactionSummary>(uint32_t));
 
   FakeStorageUnit &GetFake()
   {

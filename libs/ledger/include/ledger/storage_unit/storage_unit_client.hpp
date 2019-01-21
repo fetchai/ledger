@@ -195,8 +195,8 @@ public:
   TxSummaries PollRecentTx(uint32_t max_to_poll) override
   {
     using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
-    std::vector<service::Promise>          promises;
-    TxSummaries new_txs;
+    std::vector<service::Promise> promises;
+    TxSummaries                   new_txs;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
 
@@ -440,7 +440,6 @@ public:
   }
 
 private:
-
   // these will do work for us, it's
   // easier if it has access to our
   // types.
@@ -466,7 +465,7 @@ private:
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using Muddles                   = std::vector<MuddlePtr>;
   using Clients                   = std::vector<ClientPtr>;
-  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
+  using TxSummaries               = std::vector<fetch::chain::TransactionSummary>;
 
   void WorkCycle();
 
