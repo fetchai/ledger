@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "ml/ops/derivatives/derivatives.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -26,15 +26,15 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class ReluLayer : public fetch::ml::Ops<T>
+class SoftmaxLayer : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
   using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  ReluLayer()          = default;
-  virtual ~ReluLayer() = default;
+  SoftmaxLayer()          = default;
+  virtual ~SoftmaxLayer() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
@@ -44,13 +44,25 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    this->output_->Fill(0);
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    /*
+     * Really naive implementation that relies only on ArrayType providing a At(size_t) method
+     * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
+     */
+    typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::min();
+    typename ArrayType::Type sum(0);
+    for (size_t i(0); i < inputs[0]->size(); ++i)
     {
-      if ((*(inputs[0]))[i] > 0)
-      {
-        this->output_->Set(i, DataType((*(inputs[0]))[i]));
-      }
+      maxValue = std::max(maxValue, inputs[0]->At(i));
+    }
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      typename ArrayType::Type v = typename ArrayType::Type(exp(inputs[0]->At(i) - maxValue));
+      this->output_->At(i)       = v;
+      sum += v;
+    }
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      this->output_->At(i) /= sum;
     }
     return this->output_;
   }
@@ -61,20 +73,22 @@ public:
     assert(inputs.size() == 1);
     assert(inputs[0]->shape() == errorSignal->shape());
 
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    ArrayPtrType t = this->Forward(inputs);
+    for (size_t i(0); i < inputs[0]->size(); ++i)
     {
-      if ((*(inputs[0]))[i] <= 0)
-      {
-        errorSignal->Set(i, DataType(0));
-      }
+      errorSignal->At(i) *= t->At(i);
+    }
+    typename ArrayType::Type sum(0);
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      sum += errorSignal->At(i);
+    }
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      errorSignal->At(i) -= (t->At(i) * sum);
     }
     return {errorSignal};
   }
-
-private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function -- May need improvement (TODO private 469)
-  ArrayPtrType zeroes_;
 };
 
 }  // namespace ops

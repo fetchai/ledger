@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/derivatives/derivatives.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -26,55 +24,41 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class ReluLayer : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
-  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  ReluLayer()          = default;
-  virtual ~ReluLayer() = default;
+  Flatten()          = default;
+  virtual ~Flatten() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 1);
-    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
+    ASSERT(inputs.size() == 1);
+    input_shape_  = inputs[0]->shape();
+    this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+    this->output_->Copy(
+        *inputs[0]);  // TODO(private, 521) remove useless copy and replace with lightweight view
+    size_t elementsCount(1);
+    for (size_t i : this->output_->shape())
     {
-      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+      elementsCount *= i;
     }
-
-    this->output_->Fill(0);
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] > 0)
-      {
-        this->output_->Set(i, DataType((*(inputs[0]))[i]));
-      }
-    }
+    this->output_->Reshape(std::vector<size_t>({1, elementsCount}));
     return this->output_;
   }
 
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    assert(inputs.size() == 1);
-    assert(inputs[0]->shape() == errorSignal->shape());
-
-    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
-    {
-      if ((*(inputs[0]))[i] <= 0)
-      {
-        errorSignal->Set(i, DataType(0));
-      }
-    }
+    ASSERT(inputs.size() == 1);
+    errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
     return {errorSignal};
   }
 
 private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function -- May need improvement (TODO private 469)
-  ArrayPtrType zeroes_;
+  std::vector<size_t> input_shape_;
 };
 
 }  // namespace ops
