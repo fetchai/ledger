@@ -305,6 +305,7 @@ public:
   std::string ToString() const
   {
     std::stringstream ss;
+    ss << std::setprecision(5) << std::fixed << std::showpos;
     if (shape_.size() == 2)
     {
       for (size_t i(0); i < shape_[0]; ++i)
