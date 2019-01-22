@@ -47,10 +47,10 @@ public:
     this->SetOutputNode(name + "_MatrixMultiply");
 
     ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<size_t>({in, out}));
-    // Naive random init, range [0.0, 1.0]
+    // Naive random init, range [-.5, .5]
     for (size_t i(0) ; i < weights->size() ; ++i)
       {
-	weights->At(i) = typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+	weights->At(i) = typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
       }
     
     this->SetInput(name + "_Weights", weights);
