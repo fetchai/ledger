@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -224,7 +224,10 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
     reference.push_back(temp);
   }
   
-  std::size_t index, elements, temp_size=0;
+  // avoid uninitialized warning from compiler
+  std::size_t index     = 0;
+  std::size_t elements  = 0;
+  std::size_t temp_size = 0;
 
   //Setting bulk at the end of the stack. Size should be updated
   {
