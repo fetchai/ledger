@@ -17,24 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "auctions/bid.hpp"
-#include "python/fetch_pybind.hpp"
+#include "type_def.hpp"
 
 namespace fetch {
 namespace auctions {
+namespace example {
 
-void BuildBid(std::string const &custom_name, pybind11::module &module)
+class Transaction
 {
-  namespace py = pybind11;
-  py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<BidId, std::vector<ItemId>, Value, AgentId>())
-      .def(py::init<BidId, std::vector<ItemId>, Value, AgentId, std::vector<Bid>>())
-      .def("Id", [](Bid &bid) { return bid.id; })
-      .def("ItemIds", [](Bid &bid) { return bid.item_ids(); })
-      .def("Price", [](Bid &bid) { return bid.price; })
-      .def("Bidder", [](Bid &bid) { return bid.bidder; })
-      .def("Excludes", [](Bid &bid) { return bid.excludes; });
-}
+  //  Transaction(TxId id, AgentId owner_id) : id_(id), owner_id_(owner_id)
+  //  {
+  //  }
 
+private:
+  //  TxId id_;
+  //  AgentId owner_id_;
+};
+
+}  // namespace example
 }  // namespace auctions
 }  // namespace fetch

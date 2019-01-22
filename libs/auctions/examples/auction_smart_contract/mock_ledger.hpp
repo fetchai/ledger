@@ -17,15 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+#include <numeric>
+#include <vector>
+
+#include "transaction.hpp"
 
 namespace fetch {
 namespace auctions {
+namespace example {
 
 class MockLedger
 {
-  MockLedger() = defualt;
+public:
+  MockLedger()
+    : cur_block_id_(0){};
+
+  void AddNewBlock()
+  {
+    //    blocks_.push_back(txs);
+    ++cur_block_id_;
+  }
+
+  size_t CurBlockNum()
+  {
+    return cur_block_id_;
+  }
+
+private:
+  std::vector<std::vector<Transaction>> blocks_{};
+  size_t                                cur_block_id_ = std::numeric_limits<size_t>::max();
 };
 
-
-} // auctions
-} // fetch
+}  // namespace example
+}  // namespace auctions
+}  // namespace fetch

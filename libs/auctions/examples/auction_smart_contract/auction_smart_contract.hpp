@@ -17,88 +17,141 @@
 //
 //------------------------------------------------------------------------------
 
+#include "auction_smart_contract/mock_ledger.hpp"
 #include "auctions/type_def.hpp"
 #include "auctions/vickrey_auction.hpp"
 
-#include <atomic>
-
 namespace fetch {
 namespace auctions {
+namespace example {
 
-enum class MODE
+// 0. set up smart contract
+// 1. add items phase (bids may also be permitted during this phase)
+// 2. add bids phase (hashed - bids require a small deposit)
+// 3. reveal bids phase (bidders must submit new transaction to reveal bid - bidders may be
+// penalized half their deposit if they do not)
+// 4. collection phase (biiders submit transaction to collect with necessary funds - bidders may be
+// penalized half their deposit if winning bidders do not) 4b. (optional) multiple rolling
+// collection phases (2nd winner, 3rd winner) back to phase 1.
+enum class AuctionPhase
 {
-  PLACE_BID,
-  ADD_ITEM
+  LISTING,
+  BIDDING,
+  REVEAL,
+  COLLECTION
+};
+
+enum class Mode
+{
+  ADD_ITEMS,
+  PLACE_BIDS,
+  REVEAL_BIDS,
+  COLLECT_WINNINGS
 };
 
 class VickreyAuctionContract
 {
 public:
-
-//  VickreyAuctionContract();
-  VickreyAuctionContract(AgentId contract_owner_id, BlockId start_block, BlockId end_block);
-//    {
-//    };
-
+  VickreyAuctionContract(AgentId contract_owner_id, BlockId end_block,
+                         std::shared_ptr<MockLedger> ledger);
   ~VickreyAuctionContract() = default;
 
-  static constexpr char const *LOGGING_NAME = "DummyContract";
-
-  std::size_t counter() const
+  bool Call(AgentId           my_id,           // caller id
+            Mode              mode,            // what is this transaction for?
+            std::vector<Item> all_items = {},  // optional arguments depending on mode
+            std::vector<Bid>  all_bids  = {},  // optional arguments depending on mode
+            Value             winning_funds =
+                std::numeric_limits<Value>::max())  // optoinal argument depending on mode
   {
-    return counter_;
-  }
 
-
-  // 0. set up smart contract
-  // 1. add items phase (bids may also be permitted during this phase)
-  // 2. add bids phase (hashed - bids require a small deposit)
-  // 3. reveal bids phase (bidders must submit new transaction to reveal bid - bidders may be penalized half their deposit if they do not)
-  // 4. collection phase (biiders submit transaction to collect with necessary funds - bidders may be penalized half their deposit if winning bidders do not)
-  // 4b. (optional) multiple rolling collection phases (2nd winner, 3rd winner)
-  // back to phase 1.
-
-
-  void Call(AgentId my_id, MODE mode, Value price, std::vector<Item> all_items)
-  {
-    // check my_id is true
-
+    AuctionPhase ap = DeterminePhase();
 
     switch (mode)
     {
-      case MODE::PLACE_BID:
+    case Mode::ADD_ITEMS:
+    {
+      if (ap == AuctionPhase::LISTING)
       {
-        Bid(GenerateNewBidId(), all_items, price, my_id)
-        va.PlaceBid()
-
+        for (std::size_t j = 0; j < all_items.size(); ++j)
+        {
+          va_.AddItem(all_items[j]);
+        }
+        // TODO - LOCK ITEM OWNERSHIP / ESCROW
+        return true;
       }
-      case MODE::ADD_ITEM:
+      return false;
+    }
+    case Mode::PLACE_BIDS:
+    {
+      if ((ap == AuctionPhase::BIDDING) || (ap == AuctionPhase::LISTING))
       {
-
-        //
-
-
-        // lock item ownership
-
+        for (std::size_t j = 0; j < all_bids.size(); ++j)
+        {
+          va_.PlaceBid(all_bids[j]);
+        }
+        return true;
       }
-      case MODE::EXECUTE:
+      return false;
+    }
+    case Mode::REVEAL_BIDS:
+    {
+      if (ap == AuctionPhase::REVEAL)
       {
-
-        if (some_block_condition && (my_id == contract_owner_id));
-        status = va.Execute();
-
-        ChangeFunds(status.id);
-        AddItemOwnership(status.id);
-
-
-
+        // TODO - REVEAL HASHED BIDS
+        return true;
       }
+      return false;
+    }
+    case Mode::COLLECT_WINNINGS:
+    {
+      if (ap == AuctionPhase::COLLECTION)
+      {
+        for (std::size_t j = 0; j < va_.items().size(); ++j)
+        {
+          if (va_.items()[j].winner == my_id)
+          {
+            if (winning_funds >= va_.items()[j].sell_price)
+            {
+              // tell back end library to make checks and then transfer funds and ownership of item
+              // TODO - winner assignment not yet handled (interface between auction and ledger
+              // needed)
+              //              va_.AssignWinner(my_id, winning_funds, va_.items()[j].id);
+            }
+          }
+        }
+
+        // refund any remaining funds to winner
+        // AddFunds(my_id, winning_funds);
+        return true;
+      }
+      return false;
+    }
     }
   }
 
 private:
+  AuctionPhase DeterminePhase()
+  {
+    std::size_t ap_state = ledger_ptr_->CurBlockNum() % 40;
+    if (ap_state < 10)
+    {
+      return AuctionPhase::LISTING;
+    }
+    else if (ap_state < 20)
+    {
+      return AuctionPhase::BIDDING;
+    }
+    else if (ap_state < 30)
+    {
+      return AuctionPhase::REVEAL;
+    }
+    else
+    {
+      return AuctionPhase::COLLECTION;
+    }
+  }
 
-    std::vector<Item>    ShowListedItems() const;
+  std::vector<Item>    ShowListedItems() const;
   std::vector<Bid>     ShowBids() const;
   ErrorCode            AddItem(Item const &item);
   ErrorCode            PlaceBid(Bid bid);
@@ -106,17 +159,11 @@ private:
   std::vector<AgentId> Winners();
   ItemContainer        items();
 
-
-
-
-
-
-  using Counter = std::atomic<std::size_t>;
-
-  VickreyAuction va;
-
-  Counter counter_{0};
+  AgentId                     contract_owner_id_ = std::numeric_limits<AgentId>::max();
+  VickreyAuction              va_;
+  std::shared_ptr<MockLedger> ledger_ptr_ = nullptr;
 };
 
-}  // namespace ledger
+}  // namespace example
+}  // namespace auctions
 }  // namespace fetch

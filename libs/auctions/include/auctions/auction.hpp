@@ -40,9 +40,8 @@ protected:
   std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max();  //
   std::size_t max_items_per_bid_ = 1;                                        //
 
-  // records the block id on which this auction was born and will conclude
-  BlockId start_block_ = std::numeric_limits<BlockId>::max();
-  BlockId end_block_   = std::numeric_limits<BlockId>::max();
+  // records the block id on which this auction will conclude
+  BlockId end_block_ = std::numeric_limits<BlockId>::max();
 
   ItemContainer                     items_{};
   std::vector<fetch::auctions::Bid> bids_{};
@@ -58,11 +57,10 @@ public:
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  Auction(BlockId start_block_id, BlockId end_block_id, bool smart_market = false,
+  Auction(BlockId end_block_id, bool smart_market = false,
           std::size_t max_bids = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)
-    , start_block_(std::move(start_block_id))
     , end_block_(std::move(end_block_id))
   {
     if (smart_market)

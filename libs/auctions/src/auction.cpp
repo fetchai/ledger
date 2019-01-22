@@ -78,12 +78,12 @@ ErrorCode Auction::PlaceBid(Bid bid)
   {
     // place bids and update counter
     bids_.push_back(bid);
-    for (std::size_t j = 0; j < bid.items().size(); ++j)
+    for (std::size_t j = 0; j < bid.item_ids().size(); ++j)
     {
-      items_[bid.items()[j].id].bids.push_back(bid);
+      items_[bid.item_ids()[j]].bids.push_back(bid);
 
       // count of how many times this bidder has bid on this item
-      IncrementBidCount(bid.bidder, bid.items()[j].id);
+      IncrementBidCount(bid.bidder, bid.item_ids()[j]);
     }
   }
   return ec;
@@ -255,21 +255,21 @@ ErrorCode Auction::CheckBidValidity(Bid const &bid) const
   }
 
   // bid must not have more items than permissible
-  if (bid.items().size() > max_items_per_bid_)
+  if (bid.item_ids().size() > max_items_per_bid_)
   {
     return ErrorCode::TOO_MANY_ITEMS;
   }
 
-  for (std::size_t j = 0; j < bid.items().size(); ++j)
+  for (std::size_t j = 0; j < bid.item_ids().size(); ++j)
   {
     // check item listed in auction
-    if (!ItemInAuction(bid.items()[j].id))
+    if (!ItemInAuction(bid.item_ids()[j]))
     {
       return ErrorCode::ITEM_NOT_LISTED;
     }
 
     // check the bidder has not exceeded their allowed number of bids on this item
-    std::size_t n_bids = GetBidsCount(bid.bidder, bid.items()[j].id);
+    std::size_t n_bids = GetBidsCount(bid.bidder, bid.item_ids()[j]);
     if (n_bids >= max_bids_)
     {
       return ErrorCode::TOO_MANY_BIDS;

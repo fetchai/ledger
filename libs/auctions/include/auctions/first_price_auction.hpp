@@ -25,7 +25,7 @@ namespace auctions {
 class FirstPriceAuction : public Auction
 {
 public:
-  FirstPriceAuction(BlockId start_block_id, BlockId end_block_id);
+  FirstPriceAuction(BlockId end_block_id);
 
   bool Execute(BlockId current_block);
 

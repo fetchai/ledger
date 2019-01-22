@@ -34,20 +34,20 @@ constexpr AgentId DEFAULT_BID_BIDDER = std::numeric_limits<AgentId>::max();
 class Bid
 {
 public:
-  Bid(BidId id, std::vector<Item> items, Value price, AgentId bidder,
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
       std::vector<Bid> excludes = {})
     : id(id)
     , price(price)
     , bidder(bidder)
     , excludes(std::move(excludes))
-    , items_(std::move(items))
+    , item_ids_(std::move(item_ids))
   {
-    assert(items_.size() > 0);
+    assert(item_ids_.size() > 0);
   }
 
-  std::vector<Item> items() const
+  std::vector<ItemId> item_ids() const
   {
-    return items_;
+    return item_ids_;
   }
 
   BidId            id     = DEFAULT_BID_ID;
@@ -56,7 +56,7 @@ public:
   std::vector<Bid> excludes{};
 
 private:
-  std::vector<Item> items_{};
+  std::vector<ItemId> item_ids_{};
 };
 
 }  // namespace auctions

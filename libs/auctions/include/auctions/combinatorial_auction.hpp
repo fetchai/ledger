@@ -33,8 +33,8 @@ class CombinatorialAuction : public Auction
   using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
 
 public:
-  CombinatorialAuction(BlockId start_block_id, BlockId end_block_id, std::uint32_t max_flips = 3)
-    : Auction(start_block_id, end_block_id, true, std::numeric_limits<std::size_t>::max())
+  CombinatorialAuction(BlockId end_block_id, std::uint32_t max_flips = 3)
+    : Auction(end_block_id, true, std::numeric_limits<std::size_t>::max())
     , max_flips_(max_flips)
   {
     max_items_         = std::numeric_limits<std::size_t>::max();

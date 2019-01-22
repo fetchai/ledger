@@ -57,7 +57,7 @@ public:
   using StorageInterface      = ledger::StorageInterface;
   using ResourceSet           = chain::TransactionSummary::ResourceSet;
 
-  Contract() = default;
+  Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;
