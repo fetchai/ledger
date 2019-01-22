@@ -36,14 +36,14 @@ public:
   }
 };
 
-TEST(mmap_random_access_stack , max_objects)
+TEST(mmap_random_access_stack, max_objects)
 {
   constexpr uint64_t                        testSize = 100;
   fetch::random::LaggedFibonacciGenerator<> lfg;
   std::vector<TestClass>                    reference;
 
   {
-    MMapRandomAccessStack<TestClass , uint64_t , 512>          stack("test");
+    MMapRandomAccessStack<TestClass, uint64_t, 512> stack("test");
     stack.New("test_mmap.db");
     EXPECT_TRUE(stack.is_open());
     for (uint64_t i = 0; i < testSize; ++i)
@@ -53,20 +53,22 @@ TEST(mmap_random_access_stack , max_objects)
       temp.value1 = random;
       temp.value2 = random & 0xFF;
       stack.Push(temp);
-      
+
       reference.push_back(temp);
-      ASSERT_TRUE(stack.Top() == reference[i]) << "Stack did not match reference stack at index " << i;
+      ASSERT_TRUE(stack.Top() == reference[i])
+          << "Stack did not match reference stack at index " << i;
     }
   }
 
   {
-    MMapRandomAccessStack<TestClass , uint64_t , 1024>          stack("test");
+    MMapRandomAccessStack<TestClass, uint64_t, 1024> stack("test");
     stack.New("test_mmap.db");
     EXPECT_TRUE(stack.is_open());
     for (uint64_t i = 0; i < testSize; ++i)
     {
       stack.Push(reference[i]);
-      ASSERT_TRUE(stack.Top() == reference[i]) << "Stack did not match reference stack at index " << i;
+      ASSERT_TRUE(stack.Top() == reference[i])
+          << "Stack did not match reference stack at index " << i;
     }
   }
 }
@@ -89,7 +91,7 @@ TEST(mmap_random_access_stack, basic_functionality)
     temp.value1 = random;
     temp.value2 = random & 0xFF;
     stack.Push(temp);
-    
+
     reference.push_back(temp);
     TestClass temp2 = stack.Top();
     ASSERT_TRUE(temp2 == reference[i]) << "Stack did not match reference stack at index " << i;
@@ -157,7 +159,6 @@ TEST(mmap_random_access_stack, basic_functionality)
 
   ASSERT_TRUE(stack.size() == 0);
   ASSERT_TRUE(stack.empty() == true);
-   
 }
 
 TEST(mmap_random_access_stack, get_bulk)
@@ -202,7 +203,8 @@ TEST(mmap_random_access_stack, get_bulk)
   }
 }
 
-// Assertion failed: (header_->objects > i), function GetBulk, file mmap_random_access_stack.hpp, line 316.
+// Assertion failed: (header_->objects > i), function GetBulk, file mmap_random_access_stack.hpp,
+// line 316.
 TEST(DISABLED_mmap_random_access_stack, set_bulk)
 {
   constexpr uint64_t                        testSize = 100;
@@ -223,18 +225,18 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
     stack.Push(temp);
     reference.push_back(temp);
   }
-  
+
   // avoid uninitialized warning from compiler
   std::size_t index     = 0;
   std::size_t elements  = 0;
   std::size_t temp_size = 0;
 
-  //Setting bulk at the end of the stack. Size should be updated
+  // Setting bulk at the end of the stack. Size should be updated
   {
     elements           = lfg() % testSize;
     TestClass *objects = new TestClass[elements];
     stack.GetBulk(index, elements, objects);
-    index = stack.size() ;
+    index     = stack.size();
     temp_size = stack.size();
 
     stack.SetBulk(index, elements, objects);
@@ -243,32 +245,30 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
     {
       TestClass obj;
       stack.Get(index + j, obj);
-      EXPECT_TRUE(objects[j] == obj)
-      << " Values does not match in SetBulk at index " << j << " " << obj.value1 << "    "
-      << objects[j].value1 << std::endl;
+      EXPECT_TRUE(objects[j] == obj) << " Values does not match in SetBulk at index " << j << " "
+                                     << obj.value1 << "    " << objects[j].value1 << std::endl;
     }
-    delete []objects;
+    delete[] objects;
   }
-    //Setting bulk at the edge of the stack where half elements would be overwritten 
-    //so size should be incremented by half of elements
+  // Setting bulk at the edge of the stack where half elements would be overwritten
+  // so size should be incremented by half of elements
   {
-    elements = lfg() % testSize;
+    elements           = lfg() % testSize;
     TestClass *objects = new TestClass[elements];
     stack.GetBulk(index, elements, objects);
-    index = stack.size() - elements/2 ;
+    index     = stack.size() - elements / 2;
     temp_size = stack.size();
 
     stack.SetBulk(index, elements, objects);
-    EXPECT_TRUE(temp_size + elements/2 == stack.size());
+    EXPECT_TRUE(temp_size + elements / 2 == stack.size());
     for (uint64_t j = 0; j < elements; j++)
     {
       TestClass obj;
       stack.Get(index + j, obj);
-      EXPECT_TRUE(objects[j] == obj)
-      << " Values does not match in SetBulk at index " << j << " " << obj.value1 << "    "
-      << objects[j].value1 << std::endl;
+      EXPECT_TRUE(objects[j] == obj) << " Values does not match in SetBulk at index " << j << " "
+                                     << obj.value1 << "    " << objects[j].value1 << std::endl;
     }
-    delete []objects;
+    delete[] objects;
   }
 }
 

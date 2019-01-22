@@ -106,7 +106,7 @@ public:
   // Enable constructor for unit tests
   MMapRandomAccessStack(const char *is_testing)
   {
-    if(!(std::string(is_testing).compare(std::string("test")) == 0))
+    if (!(std::string(is_testing).compare(std::string("test")) == 0))
     {
       throw std::runtime_error("This class hasn't been fully tested for production code");
     }
@@ -165,7 +165,7 @@ public:
 
   /**
    * Closes the stack and flush contents to file
-   * 
+   *
    * @lazy: whether to content should be flushed to file or does a lazy flushing.
    */
   void Close(bool const &lazy = false)
@@ -180,7 +180,7 @@ public:
   }
   /**
    *  Load file from disk and if files does not exist already then file will be created.
-   * 
+   *
    * @param: filename Name of the file to be loaded
    * @param: create_if_not_exist If file with this name does not exist already then create it.
    *
@@ -209,8 +209,8 @@ public:
     }
   }
   /**
-   *  Create a new file on disk 
-   * 
+   *  Create a new file on disk
+   *
    * @param: filename Name of the file to be opened
    *
    */
@@ -230,7 +230,7 @@ public:
     InitializeMapping();
     SignalFileLoaded();
   }
- /**
+  /**
    * Get object from the stack at index i, not safe when i > objects.
    *
    * @param: i The Ith object, indexed from 0
@@ -284,8 +284,8 @@ public:
   void SetBulk(std::size_t const &i, std::size_t elements, type *objects)
   {
     assert(filename_ != "");
-    if((i+elements) > header_->objects)
-      ResizeFile(i , elements);// Resize file if needed
+    if ((i + elements) > header_->objects)
+      ResizeFile(i, elements);  // Resize file if needed
     size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
     for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
@@ -298,8 +298,8 @@ public:
       type * file_offset = (reinterpret_cast<type *>(mapped_data_.data()));
       memcpy(&(file_offset[block_index]), &objects[src_index], sizeof(type) * elm_mapped);
     }
-    size_t written_elements = (i+elements) - header_->objects;
-    if(written_elements >0)
+    size_t written_elements = (i + elements) - header_->objects;
+    if (written_elements > 0)
       header_->objects += written_elements;
   }
   /**
@@ -540,27 +540,30 @@ private:
    * memory mapping is not possible on empty file so we need to
    *
    * extend the file to write any object at the end of file.
-   *  
+   *
    * @index: location where data will be written
-   * @elements: elements to be written. File size will be extend if elements exceeds the existing file size.
+   * @elements: elements to be written. File size will be extend if elements exceeds the existing
+   * file size.
    */
-  void ResizeFile(size_t index , size_t elements)
+  void ResizeFile(size_t index, size_t elements)
   {
-    size_t obj_capacity ,expected_obj_count , adjusted_obj_count , block_count , total_length;
+    size_t obj_capacity, expected_obj_count, adjusted_obj_count, block_count, total_length;
 
-    obj_capacity  = (GetFileLength() - header_->size())/sizeof(type);
+    obj_capacity       = (GetFileLength() - header_->size()) / sizeof(type);
     expected_obj_count = index + elements;
     adjusted_obj_count = expected_obj_count - obj_capacity;
 
-    //check if extended objects are multiple of MAX
-    block_count = adjusted_obj_count % MAX == 0? adjusted_obj_count/MAX: adjusted_obj_count/MAX + 1 ;  
+    // check if extended objects are multiple of MAX
+    block_count =
+        adjusted_obj_count % MAX == 0 ? adjusted_obj_count / MAX : adjusted_obj_count / MAX + 1;
     adjusted_obj_count = block_count * MAX;
 
     total_length = GetFileLength() + adjusted_obj_count * sizeof(type);
     try
     {
       file_handle_.seekg((long)total_length, std::ios::beg);
-      std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), adjusted_obj_count * sizeof(type), '\0');
+      std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), adjusted_obj_count * sizeof(type),
+                  '\0');
       file_handle_.flush();
     }
     catch (storage::StorageException &e)

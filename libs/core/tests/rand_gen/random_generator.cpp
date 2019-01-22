@@ -18,11 +18,11 @@
 
 //#include "core/uri.hpp"
 
+#include "core/byte_array/byte_array.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <random>
-#include "core/byte_array/byte_array.hpp"
 
 uint32_t GetRandom()
 {
@@ -33,44 +33,50 @@ uint32_t GetRandom()
   return dis(gen);
 }
 
-using message_type = byte_array::ByteArray;
-const int MID_CYCLES = 50;
+using message_type    = byte_array::ByteArray;
+const int MID_CYCLES  = 50;
 const int PACKET_SIZE = 1000000
 
-class myTestFixture1: public ::testing::test { 
-public: 
-   myTestFixture1( ) { 
-       // initialization code here
-     exit(77)
-   } 
- 
-   void SetUp( ) { 
-       // code here will execute just before the test ensues 
-   }
- 
-   void TearDown( ) { 
-       // code here will be called just after the test completes
-       // ok to through exceptions from here if need be
-   }
- 
-   ~myTestFixture1( )  { 
-       // cleanup any pending stuff, but no exceptions allowed
-   }
- 
-   // put in any custom data members that you need 
+    class myTestFixture1 : public ::testing::test
+{
+public:
+  myTestFixture1()
+  {
+    // initialization code here
+    exit(77)
+  }
+
+  void SetUp()
+  {
+    // code here will execute just before the test ensues
+  }
+
+  void TearDown()
+  {
+    // code here will be called just after the test completes
+    // ok to through exceptions from here if need be
+  }
+
+  ~myTestFixture1()
+  {
+    // cleanup any pending stuff, but no exceptions allowed
+  }
+
+  // put in any custom data members that you need
 };
 
-TEST_F (myTestFixture1, SpeedTest) {
+TEST_F(myTestFixture1, SpeedTest)
+{
   std::vector<message_type> sendData;
   for (std::size_t index = 0; index < 10; ++index)
   {
-    for(int j=0;j<MID_CYCLES;j++)
+    for (int j = 0; j < MID_CYCLES; j++)
     {
-      for(int k=0;k<PACKET_SIZE;k++)
+      for (int k = 0; k < PACKET_SIZE; k++)
       {
         volatile message_type arr;
         arr.Resize(packetSize);
-         for (std::size_t z = 0; z < arr.size(); z++)
+        for (std::size_t z = 0; z < arr.size(); z++)
         {
           //          arr[z] = uint8_t(z+i);
           arr[z] = uint8_t(GetRandom());
@@ -81,10 +87,9 @@ TEST_F (myTestFixture1, SpeedTest) {
   }
 
   auto fd = open("/tmp/oink", "w");
-  for(auto &d : sendData)
+  for (auto &d : sendData)
   {
     write(fd, &(d[0]), PACKET_SIZE);
   }
   close(fd);
 }
-
