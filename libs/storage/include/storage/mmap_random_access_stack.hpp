@@ -98,6 +98,28 @@ public:
   using type               = T;
   using event_handler_type = std::function<void()>;
 
+  MMapRandomAccessStack()
+  {
+    throw std::runtime_error("This class hasn't been fully tested for production code");
+  }
+
+  // Enable constructor for unit tests
+  MMapRandomAccessStack(const char *is_testing)
+  {
+    if(!(std::string(is_testing).compare(std::string("test")) == 0))
+    {
+      throw std::runtime_error("This class hasn't been fully tested for production code");
+    }
+  }
+
+  ~MMapRandomAccessStack()
+  {
+    if (file_handle_.is_open())
+    {
+      Close(false);
+    }
+  }
+
   void ClearEventHandlers()
   {
     on_file_loaded_  = nullptr;
@@ -141,13 +163,6 @@ public:
     return true;
   }
 
-  ~MMapRandomAccessStack()
-  {
-    if (file_handle_.is_open())
-    {
-      Close(false);
-    }
-  }
   /**
    * Closes the stack and flush contents to file
    * 
