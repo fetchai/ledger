@@ -79,7 +79,7 @@ if(FETCH_ENABLE_CCACHE)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
     fetch_info("Found ccache on system - including")
   else()
-    fetch_warning(WARNING "ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times")
+    fetch_warning("ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times")
   endif(CCACHE_FOUND)
 endif(FETCH_ENABLE_CCACHE)
 
