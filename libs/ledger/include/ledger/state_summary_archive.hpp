@@ -55,14 +55,11 @@ public:
   }
 
   /**
-   * Allocate a bookmark to a pending state hash. This is only persisted once
-   * the `ConfirmBookmark`
+   * Allocate a bookmark to a pending state hash. This is only persisted once the `ConfirmBookmark`
    * call has been made.
    *
-   * By design it is assumed that the user of this object will attempt to lookup
-   * a bookmark for a
-   * state hash before allocating a new once. Failure to do so will result in
-   * errors.
+   * By design it is assumed that the user of this object will attempt to lookup a bookmark for a
+   * state hash before allocating a new once. Failure to do so will result in errors.
    *
    * @param state_hash The input state hash
    * @param bookmark The input book
@@ -94,8 +91,7 @@ public:
   /**
    * Confirm a pending bookmark
    *
-   * Confirming a pending bookmark will ensure that the value is persisted. Also
-   * periodically this
+   * Confirming a pending bookmark will ensure that the value is persisted. Also periodically this
    * function will be used to clean up the pending cache
    *
    * @param state_hash The pending bookmark state hash

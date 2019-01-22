@@ -142,10 +142,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
     }
     FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": ", "Expected tx size: ", max_object_count_);
 
-    // If there are objects to sync from the network, fetch N roots from each of
-    // the peers in
-    // parallel. So if we decided to split the sync into 4 roots, the mask would
-    // be 2 (bits) and
+    // If there are objects to sync from the network, fetch N roots from each of the peers in
+    // parallel. So if we decided to split the sync into 4 roots, the mask would be 2 (bits) and
     // the roots to sync 00, 10, 01 and 11...
     // where roots to sync are all objects with the key starting with those bits
     if (max_object_count_ != 0)

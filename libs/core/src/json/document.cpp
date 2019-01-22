@@ -337,7 +337,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
     {
     case '\n':
       ++line;
-    // Falls through.
+      // Falls through.
     case '\t':
     case ' ':
     case '\r':

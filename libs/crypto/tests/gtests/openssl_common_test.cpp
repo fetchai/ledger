@@ -113,8 +113,7 @@ TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding
 
     ASSERT_EQ(1, BN_rand(x.get(), bn_size_in_bites, -1, 0));
     std::size_t i = 0;
-    //* Ensuring that number are different (probability that this loop cycles
-    // more than once is
+    //* Ensuring that number are different (probability that this loop cycles more than once is
     //(almost) zero)
     do
     {

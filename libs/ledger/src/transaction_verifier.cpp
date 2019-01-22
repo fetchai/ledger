@@ -110,8 +110,7 @@ void TransactionVerifier::Verifier()
 }
 
 /**
- * Internal: Dispatch thread process for verified transactions to be sent to the
- * storage
+ * Internal: Dispatch thread process for verified transactions to be sent to the storage
  * engine and the mining interface.
  */
 void TransactionVerifier::Dispatcher()

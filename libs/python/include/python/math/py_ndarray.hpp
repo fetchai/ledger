@@ -54,8 +54,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
       .def_static("Zeros", &NDArray<T>::Zeroes)
       .def_static("Ones", &NDArray<T>::Ones)
 
-      // TODO(private issue 188): Move implementation of these functions to
-      // ndarray.
+      // TODO(private issue 188): Move implementation of these functions to ndarray.
       .def("reduce_sum",
            [](NDArray<T> &x, NDArray<T> &y, uint64_t const &axis) {
              if (axis >= x.shape().size())
@@ -120,8 +119,7 @@ void BuildNDArray(std::string const &custom_name, pybind11::module &module)
                  },
                  y, x, axis);
            })
-      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t
-      //      const& axis) {
+      //      .def("expand_dims",[](NDArray<T> &x, NDArray<T> &y, uint64_t const& axis) {
       //      })
       .def("__add__",
            [](NDArray<T> &b, NDArray<T> &c) {

@@ -133,8 +133,7 @@ public:
   using self_type        = TxSigningAdapter;
   using transaction_type = MUTABLE_TRANSACTION;
 
-  // TODO(issue #260): Runtime switching between different types cryptographic
-  // schemes
+  // TODO(issue #260): Runtime switching between different types cryptographic schemes
   using signature_type   = typename crypto::ECDSASigner::Signature;
   using private_key_type = crypto::openssl::ECDSAPrivateKey<>;
   using public_key_type  = private_key_type::public_key_type;
@@ -249,8 +248,7 @@ public:
 
 private:
   transaction_type *tx_ = nullptr;
-  // Data members as shared pointers to avoid issue with const-ness issues when
-  // modifying content.
+  // Data members as shared pointers to avoid issue with const-ness issues when modifying content.
   std::shared_ptr<serializers::ByteArrayBuffer> stream_{
       std::make_shared<serializers::ByteArrayBuffer>()};
   std::shared_ptr<hasher_type>                  tx_data_hash_{std::make_shared<hasher_type>()};

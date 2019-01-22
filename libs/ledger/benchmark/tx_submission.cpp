@@ -184,10 +184,8 @@ void TransientStoreExpectedOperation(benchmark::State &state)
     {
       ResourceID const rid{tx.digest()};
 
-      // Basic pattern for a transient store is to intake X transactions into
-      // the mempool,
-      // then read some subset N of them (for block verification/packing), then
-      // commit
+      // Basic pattern for a transient store is to intake X transactions into the mempool,
+      // then read some subset N of them (for block verification/packing), then commit
       // those to the underlying object store.
       tx_store.Set(ResourceID{tx.digest()}, tx, false);
 

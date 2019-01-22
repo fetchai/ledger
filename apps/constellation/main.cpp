@@ -200,8 +200,7 @@ struct CommandLineArguments
     parameters.add(args.max_peers, "max-peers",
                    "The number of maximal peers to send to peer requests.", DEFAULT_MAX_PEERS);
     parameters.add(args.transient_peers, "transient-peers",
-                   "The number of the peers which will be random in answer "
-                   "sent to peer requests.",
+                   "The number of the peers which will be random in answer sent to peer requests.",
                    DEFAULT_TRANSIENT_PEERS);
     parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms",
                    "How fast to do peering changes.", uint32_t(2000));
@@ -223,8 +222,7 @@ struct CommandLineArguments
     // calculate the log2 num lanes
     args.log2_num_lanes = Log2(args.num_lanes);
 
-    // if the user has explicitly passed a configuration then we must parse it
-    // here
+    // if the user has explicitly passed a configuration then we must parse it here
     if (!config_path.empty())
     {
       // read the contents of the manifest from the path specified
@@ -234,13 +232,11 @@ struct CommandLineArguments
     args.bootstrap = (!bootstrap_address.empty());
     if (args.bootstrap && args.token.size())
     {
-      // determine what the P2P port is. This is either specified with the port
-      // parameter or
+      // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
       uint16_t p2p_port = static_cast<uint16_t>(args.port + P2P_PORT_OFFSET);
 
-      // if we have a valid manifest then we should respect the port
-      // configuration specified here
+      // if we have a valid manifest then we should respect the port configuration specified here
       // otherwise we default to the port specified
       if (args.manifest)
       {

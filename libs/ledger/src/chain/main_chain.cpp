@@ -79,8 +79,7 @@ bool MainChain::AddBlock(BlockType &block, bool recursive_iteration)
     prev_block = it->second;
   }
 
-  // At this point we have a new block with a prev that's known and not loose.
-  // Update tips
+  // At this point we have a new block with a prev that's known and not loose. Update tips
   block.loose()         = false;
   bool heaviestAdvanced = UpdateTips(block, prev_block);
 

@@ -115,8 +115,7 @@ struct TestBlock
             {
               std::size_t const index = (i + lane_offset);
 
-              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ",
-              //              index);
+              //              FETCH_LOG_INFO(LOGGING_NAME," - Resource: ", index);
 
               summary.resources.insert(resources.at(index));
             }

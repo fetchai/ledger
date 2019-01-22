@@ -115,8 +115,7 @@ private:
       // determine the heaviest block
       auto &block = main_chain_.HeaviestBlock();
 
-      // if the heaviest block has changed then we need to schedule the next
-      // block time
+      // if the heaviest block has changed then we need to schedule the next block time
       if (block.hash() != previous_heaviest)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "==> New heaviest block: ", byte_array::ToBase64(block.hash()),
@@ -135,8 +134,7 @@ private:
           // Add the block
           blockCoordinator_.AddBlock(next_block);
 
-          // TODO(EJF): Feels like this needs to be reworked into the block
-          // coordinator
+          // TODO(EJF): Feels like this needs to be reworked into the block coordinator
           if (on_block_complete_)
           {
             on_block_complete_(next_block);
@@ -144,8 +142,7 @@ private:
             FETCH_METRIC_BLOCK_GENERATED(next_block.hash());
           }
 
-          // stop searching for the hash and schedule the next time to generate
-          // a block
+          // stop searching for the hash and schedule the next time to generate a block
           next_block_time    = Clock::now() + block_interval_;
           searching_for_hash = false;
         }

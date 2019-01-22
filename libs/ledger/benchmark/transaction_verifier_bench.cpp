@@ -83,8 +83,7 @@ public:
 
 void TransactionVerifierBench(benchmark::State &state)
 {
-  //  std::cout << "Tx Verification - threads: " << state.range(0) << " num txs:
-  //  " << state.range(1)
+  //  std::cout << "Tx Verification - threads: " << state.range(0) << " num txs: " << state.range(1)
   //  << std::endl;
 
   // generate the transactions

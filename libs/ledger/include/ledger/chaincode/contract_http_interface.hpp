@@ -62,8 +62,7 @@ private:
    *  have been successfully processed and how many transactions have been
    *  actually received for processing.
    *  The structure is supposed to be used as return value for methods which
-   *  are dedicated to handle HTTP request for bulk transaction
-   * (multi-transaction)
+   *  are dedicated to handle HTTP request for bulk transaction (multi-transaction)
    *  reception, giving caller ability to check status of how request has been
    *  handled (transaction reception/processing).
    *
@@ -77,20 +76,14 @@ private:
   };
 
   /**
-   * Method handles incoming http request containing single or bulk of JSON
-   formatted
+   * Method handles incoming http request containing single or bulk of JSON formatted
    * Wire transactions.
    *
-   * @param request https request containing single or bulk of JSON formatted
-   Wire Transaction(s).
-   * @param expected_contract_name contract name each transaction in request
-   must conform to.
-   *        Transactions which do NOT conform to this contract name will NOT be
-   accepted further
-   *        processing. If the value is `nullptr` (default value) the contract
-   name check is
-   *        DISABLED, and so transactions (each received transaction in bulk)
-   can have any contract
+   * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
+   * @param expected_contract_name contract name each transaction in request must conform to.
+   *        Transactions which do NOT conform to this contract name will NOT be accepted further
+   *        processing. If the value is `nullptr` (default value) the contract name check is
+   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
    *        name.
    *
    * @return submit status, please see the `SubmitTxStatus` structure
@@ -103,24 +96,17 @@ private:
       byte_array::ConstByteArray const *const expected_contract_name = nullptr);
 
   /**
-   * Method handles incoming http request containing single or bulk of Native
-   formattd
+   * Method handles incoming http request containing single or bulk of Native formattd
    * Wire transactions.
    *
-   * This method was originally designed for benchmark/stress-test purposes, but
-   can be used in
+   * This method was originally designed for benchmark/stress-test purposes, but can be used in
    * production environment.
    *
-   * @param request https request containing single or bulk of JSON formatted
-   Wire Transaction(s).
-   * @param expected_contract_name contract name each transaction in request
-   must conform to.
-   *        Transactions which do NOT conform to this contract name will NOT be
-   accepted further
-   *        processing. If the value is `nullptr` (default value) the contract
-   name check is
-   *        DISABLED, and so transactions (each received transaction in bulk)
-   can have any contract
+   * @param request https request containing single or bulk of JSON formatted Wire Transaction(s).
+   * @param expected_contract_name contract name each transaction in request must conform to.
+   *        Transactions which do NOT conform to this contract name will NOT be accepted further
+   *        processing. If the value is `nullptr` (default value) the contract name check is
+   *        DISABLED, and so transactions (each received transaction in bulk) can have any contract
    *        name.
    *
    * @return submit status, please see the `SubmitTxStatus` structure

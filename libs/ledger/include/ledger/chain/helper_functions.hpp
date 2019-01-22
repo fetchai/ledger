@@ -99,8 +99,7 @@ inline std::ostream &operator<<(std::ostream &os, MutableTransaction const &tran
     os << "signature:       " << byte_array::ToHex(sig.second.signature_data) << std::endl;
     os << "signature type:  " << sig.second.type << std::endl;
   }
-  // os << "=========================================================" <<
-  // std::endl;
+  // os << "=========================================================" << std::endl;
   return os;
 }
 

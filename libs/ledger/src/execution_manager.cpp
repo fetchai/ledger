@@ -169,8 +169,7 @@ bool ExecutionManager::PlanExecution(Block const &block)
   execution_plan_.clear();
   execution_plan_.resize(block.slices.size());
 
-  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), "
-  //  slices...");
+  //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
 
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)

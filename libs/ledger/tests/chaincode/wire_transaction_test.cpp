@@ -56,8 +56,7 @@ TEST_F(WiredTransactionTest, basic)
     std::cout << "wire tx = " << std::endl << wire_tx << std::endl;
 
     auto tx_deserialised{FromWireTransaction(wire_tx)};
-    // std::cout << "tx[deserialised] = " << std::endl << tx_deserialised <<
-    // std::endl;
+    // std::cout << "tx[deserialised] = " << std::endl << tx_deserialised << std::endl;
 
     EXPECT_TRUE(tx_deserialised.Verify());
 

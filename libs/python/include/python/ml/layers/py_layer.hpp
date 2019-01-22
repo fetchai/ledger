@@ -31,8 +31,7 @@ namespace layers {
 template <typename ArrayType>
 void BuildLayers(std::string const &custom_name, pybind11::module &module)
 {
-  //  using SessionType  = fetch::ml::SessionManager<ArrayType,
-  //  fetch::ml::Variable<ArrayType>>;
+  //  using SessionType  = fetch::ml::SessionManager<ArrayType, fetch::ml::Variable<ArrayType>>;
   using SelfType = fetch::ml::layers::Layer<ArrayType>;
   //  using VariableType = fetch::ml::Variable<ArrayType>;
 
@@ -40,15 +39,12 @@ void BuildLayers(std::string const &custom_name, pybind11::module &module)
   py::class_<SelfType, std::shared_ptr<SelfType>>(module, custom_name.c_str())
       .def(py::init<>())
 
-      //      .def(py::init<SessionType &, std::size_t const &, std::size_t
-      //      const &>())
+      //      .def(py::init<SessionType &, std::size_t const &, std::size_t const &>())
       //      .def(py::init<SessionType &, std::vector<std::size_t> const &>())
 
       //      .def("Forward", [](SelfType &a, VariableType &activations,
-      //                         bool activate = true) { return
-      //                         a.Forward(activations, activate); })
-      //      .def("Step", [](SelfType &a, typename ArrayType::::Type &lr) {
-      //      return a.Step(lr); })
+      //                         bool activate = true) { return a.Forward(activations, activate); })
+      //      .def("Step", [](SelfType &a, typename ArrayType::::Type &lr) { return a.Step(lr); })
       //      .def("Weights", [](SelfType &a) { return a.weights(); })
       .def("Output", [](SelfType &a) { return a.output(); })
       .def("DotHidden", [](SelfType &a) { return a.dot_hidden(); })

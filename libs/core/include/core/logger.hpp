@@ -243,8 +243,7 @@ public:
     bool use_name = name != nullptr;
     if (use_name && ctx->instance())
     {
-      // in the case where we actually context information we should use this
-      // variant
+      // in the case where we actually context information we should use this variant
       use_name = false;
     }
 

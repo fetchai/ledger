@@ -36,8 +36,7 @@ namespace ledger {
 
 // Useful to include when debugging:
 //
-// std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const
-// &lane_set)
+// std::ostream &operator<<(std::ostream &stream, Executor::lane_set_type const &lane_set)
 //{
 //  std::vector<uint16_t> elements(lane_set.size());
 //  std::copy(lane_set.begin(), lane_set.end(), elements.begin());

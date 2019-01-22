@@ -229,8 +229,7 @@ void BootstrapMonitor::ThreadEntryPoint()
 {
   while (running_)
   {
-    // periodically request peers, this allows the bootstrap node to see that we
-    // are still alive
+    // periodically request peers, this allows the bootstrap node to see that we are still alive
     NotifyNode();
 
     std::this_thread::sleep_for(UPDATE_INTERVAL);

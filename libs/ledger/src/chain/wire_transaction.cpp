@@ -37,8 +37,7 @@ byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const
 {
   Variant tx_v = Variant::Object();
 
-  // TODO(pbukva) (private issue: find nice way to deal with versioning of raw
-  // (C++) transaction and
+  // TODO(pbukva) (private issue: find nice way to deal with versioning of raw (C++) transaction and
   // version of wire format)
   tx_v["ver"] = "1.0";
 
