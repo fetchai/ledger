@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 //#include "ledger/chaincode/dummy_contract.hpp"
-#include "auctions/auction_smart_contract.hpp"
+#include "auction_smart_contract/auction_smart_contract.hpp"
 #include <chrono>
 #include <random>
 
@@ -25,14 +25,16 @@ static constexpr std::size_t MINIMUM_TIME = 50;
 static constexpr std::size_t MAXIMUM_TIME = 200;
 static constexpr std::size_t DELTA_TIME   = MAXIMUM_TIME - MINIMUM_TIME;
 
+using namespace fetch::auctions;
 
-fetch::auctions::VickreyAuctionContract::VickreyAuctionContract() : ledger::Contract("fetch.dummy")
+
+VickreyAuctionContract::VickreyAuctionContract(BlockId start_block, BlockId end_block) : ledger::Contract("fetch.dummy"), va(start_block, end_block)
 {
   OnTransaction("wait", this, &VickreyAuctionContract::Wait);
   OnTransaction("run", this, &VickreyAuctionContract::Run);
 }
 
-fetch::auctions::VickreyAuctionContract::Status fetch::auctions::VickreyAuctionContract::Wait(Transaction const &)
+VickreyAuctionContract::Status VickreyAuctionContract::Wait(Transaction const &)
 {
   std::random_device rd;
   std::mt19937       rng;
@@ -55,16 +57,94 @@ fetch::auctions::VickreyAuctionContract::Status fetch::auctions::VickreyAuctionC
   return Status::OK;
 }
 
-fetch::auctions::VickreyAuctionContract::Status fetch::auctions::VickreyAuctionContract::Run(Transaction const &)
+VickreyAuctionContract::Status VickreyAuctionContract::Run(Transaction const &)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running that contract...");
   return Status::OK;
 }
 
+std::vector<Item> VickreyAuctionContract::ShowListedItems() const
+{
+  return VickreyAuctionContract::va.ShowListedItems();
+}
+
+std::vector<Bid> VickreyAuctionContract::ShowBids() const
+{
+  return VickreyAuctionContract::va.ShowBids();
+};
+
+ErrorCode VickreyAuctionContract::AddItem(Item const &item)
+{
+  return VickreyAuctionContract::va.AddItem(item);
+};
+
+//ErrorCode VickreyAuctionContract::PlaceBid(Bid bid)
+//{
+//  return VickreyAuctionContract::va.PlaceBid(bid);
+//};
+
+AgentId VickreyAuctionContract::Winner(ItemId item_id)
+{
+  return VickreyAuctionContract::va.Winner(item_id);
+};
+
+
+std::vector<AgentId> VickreyAuctionContract::Winners()
+{
+  return VickreyAuctionContract::va.Winners();
+};
+
+ItemContainer VickreyAuctionContract::items()
+{
+  return VickreyAuctionContract::va.items();
+};
+
+
+
+
+
+
+bool VickreyAuctionContract::BidIsValid()
+{
+//  asdfasdfads
+  return true;
+}
+
+ErrorCode VickreyAuctionContract::PlaceBid(Bid bid)
+{
+
+  // check agent ID valid
+  if (VickreyAuctionContract::BidIsValid(bid.bidder))
+  {
+    return VickreyAuctionContract::va.PlaceBid(bid);
+  }
+  return ErrorCode::invalid_bidder;
+
+
+};
+
+
+
 int main()
 {
 
-  fetch::auctions::VickreyAuctionContract va{};
+  // instantiate the contract
+  BlockId start_block("start_block_id");
+  BlockId end_block("end_block_id");
+  VickreyAuctionContract va(start_block, end_block);
+
+  // show listed nothings
+  va.ShowListedItems();
+  va.ShowBids();
+
+  // add items
+  std::vector<Item> all_items{Item(ItemId(0), AgentId(0), Value(0))};
+
+  va.AddItem(all_items[0]);
+
+  //
+  va.PlaceBid(Bid(BidId(0), all_items, Value(0), AgentId(0)));
+  //
 
   return 0 ;
 }
