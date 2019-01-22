@@ -199,9 +199,9 @@ void CombinatorialAuction::BuildGraph()
     couplings_.Set(i, i, 0);
     for (auto &cur_item : items_)
     {
-      for (std::size_t j = 0; j < bids_[i].items.size(); ++j)
+      for (std::size_t j = 0; j < bids_[i].items().size(); ++j)
       {
-        if (bids_[i].items[j].id == cur_item.second.id)
+        if (bids_[i].items()[j].id == cur_item.second.id)
         {
           local_fields_[i] -= cur_item.second.min_price;
         }
@@ -234,9 +234,9 @@ void CombinatorialAuction::BuildGraph()
       {
         ItemId cur_id = items_[k].id;
 
-        for (auto const &itm1 : bids_[i].items)
+        for (auto const &itm1 : bids_[i].items())
         {
-          for (auto const &itm2 : bids_[j].items)
+          for (auto const &itm2 : bids_[j].items())
           {
             if ((cur_id == itm1.id) && (cur_id == itm2.id))
             {
@@ -264,7 +264,7 @@ void CombinatorialAuction::SelectWinners()
   {
     if (active_[j] == 1)
     {
-      for (auto &item : bids_[j].items)
+      for (auto &item : bids_[j].items())
       {
         item.winner = bids_[j].id;
       }

@@ -37,19 +37,26 @@ public:
   Bid(BidId id, std::vector<Item> items, Value price, AgentId bidder,
       std::vector<Bid> excludes = {})
     : id(id)
-    , items(std::move(items))
     , price(price)
     , bidder(bidder)
     , excludes(std::move(excludes))
+    , items_(std::move(items))
   {
-    assert(items.size() > 0);
+    assert(items_.size() > 0);
   }
 
-  BidId             id = DEFAULT_BID_ID;
-  std::vector<Item> items{};
-  Value             price  = DEFAULT_BID_PRICE;
-  AgentId           bidder = DEFAULT_BID_BIDDER;
-  std::vector<Bid>  excludes{};
+  std::vector<Item> items() const
+  {
+    return items_;
+  }
+
+  BidId            id     = DEFAULT_BID_ID;
+  Value            price  = DEFAULT_BID_PRICE;
+  AgentId          bidder = DEFAULT_BID_BIDDER;
+  std::vector<Bid> excludes{};
+
+private:
+  std::vector<Item> items_{};
 };
 
 }  // namespace auctions
