@@ -17,28 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
-namespace fetch {
-namespace ledger {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 
-class TokenContract : public Contract
-{
-public:
-  TokenContract();
-  ~TokenContract() = default;
+#include <mio/mmap.hpp>
 
-  static constexpr char const *LOGGING_NAME = "TokenContract";
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
-private:
-  // transaction handlers
-  Status CreateWealth(Transaction const &tx);
-  Status Deed(Transaction const &tx);
-  Status Transfer(Transaction const &tx);
-
-  // queries
-  Status Balance(Query const &query, Query &response);
-};
-
-}  // namespace ledger
-}  // namespace fetch
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
