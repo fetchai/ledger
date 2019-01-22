@@ -76,9 +76,10 @@ TEST(reference_byte_array_gtest, testing_that_ConstByteArray_r_value_moved_if_un
   ConstByteArray expected_to_be_moved{base};
   EXPECT_EQ(expected_to_be_moved.UseCount(), 1);
 
-  ByteArray copy{std::move(expected_to_be_moved)};
-  EXPECT_EQ(expected_to_be_moved.UseCount(),
-            0);  // NOLINT(bugprone-use-after-move)
+  // clang-format off
+  ByteArray copy{std::move(expected_to_be_moved)}; // NOLINT
+  EXPECT_EQ(expected_to_be_moved.UseCount(), 0); // NOLINT
+  // clang-format on
 
   copy[0] = 'k';
   copy[1] = 'i';
@@ -96,9 +97,10 @@ TEST(reference_byte_array_gtest, testing_that_ConstByteArray_r_value_not_moved_i
   EXPECT_EQ(expected_to_remain_unchanged.UseCount(), 2);
   EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(), expected_to_remain_unchanged.UseCount());
 
-  ByteArray copy{std::move(expected_to_remain_unchanged_2)};
-  EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(),
-            2);  // NOLINT(bugprone-use-after-move)
+  // clang-format off
+  ByteArray copy{std::move(expected_to_remain_unchanged_2)}; // NOLINT
+  EXPECT_EQ(expected_to_remain_unchanged_2.UseCount(), 2); // NOLINT
+  // clang-format on
 
   copy[0] = 'k';
   copy[1] = 'i';
