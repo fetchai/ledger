@@ -692,10 +692,10 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
  */
 void Router::KillConnection(Handle handle, Address const &peer)
 {
+  FETCH_LOCK(routing_table_lock_);
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    FETCH_LOCK(routing_table_lock_);
     conn->Close();
     routing_table_.erase(ConvertAddress(peer));
     direct_address_map_.erase(handle);
