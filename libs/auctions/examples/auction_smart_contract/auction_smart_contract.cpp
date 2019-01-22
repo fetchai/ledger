@@ -122,29 +122,3 @@ ErrorCode VickreyAuctionContract::PlaceBid(Bid bid)
 
 
 };
-
-
-
-int main()
-{
-
-  // instantiate the contract
-  BlockId start_block("start_block_id");
-  BlockId end_block("end_block_id");
-  VickreyAuctionContract va(start_block, end_block);
-
-  // show listed nothings
-  va.ShowListedItems();
-  va.ShowBids();
-
-  // add items
-  std::vector<Item> all_items{Item(ItemId(0), AgentId(0), Value(0))};
-
-  va.AddItem(all_items[0]);
-
-  //
-  va.PlaceBid(Bid(BidId(0), all_items, Value(0), AgentId(0)));
-  //
-
-  return 0 ;
-}
