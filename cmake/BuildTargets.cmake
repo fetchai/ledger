@@ -179,6 +179,11 @@ function(configure_vendor_targets)
       add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
   endif(FETCH_ENABLE_BENCHMARKS)
 
+  # mio vendor library
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mio)
+  add_library(vendor-mio INTERFACE)
+  target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
+
 endfunction(configure_vendor_targets)
 
 function(configure_library_targets)
