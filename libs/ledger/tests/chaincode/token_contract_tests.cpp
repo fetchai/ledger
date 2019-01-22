@@ -46,6 +46,9 @@ using MutTx          = chain::MutableTransaction;
 using VerifTx        = chain::VerifiedTransaction;
 using PrivateKeys    = std::vector<PrivateKey>;
 
+using SigneesPtr    = std::shared_ptr<Deed::Signees>;
+using ThresholdsPtr = std::shared_ptr<Deed::OperationTresholds>;
+
 class TokenContractTests : public ::testing::Test
 {
 protected:
@@ -62,9 +65,9 @@ protected:
     contract_->Attach(*storage_);
   }
 
-  static ConstByteArray CreateTxDeedData(Address const &address, Deed::Signees const &signees,
-                                         Deed::OperationTresholds const &thresholds,
-                                         uint64_t const *const           balance = nullptr)
+  static ConstByteArray CreateTxDeedData(Address const &address, SigneesPtr const signees,
+                                         ThresholdsPtr const   thresholds,
+                                         uint64_t const *const balance = nullptr)
   {
     Variant v_data{Variant::Object()};
     v_data["address"] = byte_array::ToBase64(address);
@@ -74,19 +77,25 @@ protected:
       v_data["balance"] = *balance;
     }
 
-    Variant v_signees = Variant::Object();
-    for (auto const &s : signees)
+    if (signees)
     {
-      v_signees[byte_array::ToBase64(s.first)] = s.second;
+      Variant v_signees = Variant::Object();
+      for (auto const &s : *signees)
+      {
+        v_signees[byte_array::ToBase64(s.first)] = s.second;
+      }
+      v_data["signees"] = v_signees;
     }
-    v_data["signees"] = v_signees;
 
-    Variant v_thresholds = Variant::Object();
-    for (auto const &t : thresholds)
+    if (thresholds)
     {
-      v_thresholds[t.first] = t.second;
+      Variant v_thresholds = Variant::Object();
+      for (auto const &t : *thresholds)
+      {
+        v_thresholds[t.first] = t.second;
+      }
+      v_data["thresholds"] = v_thresholds;
     }
-    v_data["thresholds"] = v_thresholds;
 
     std::ostringstream oss;
     oss << v_data;
@@ -104,7 +113,7 @@ protected:
   }
 
   bool SendDeedTx(Address const &address, PrivateKeys const &keys_to_sign_tx,
-                  Deed::Signees const &signees, Deed::OperationTresholds const &thresholds,
+                  SigneesPtr const &signees, ThresholdsPtr const &thresholds,
                   bool const set_call_expected = true, uint64_t const *const balance = nullptr)
   {
     EXPECT_CALL(*storage_, Get(_)).Times(0);
@@ -290,14 +299,14 @@ TEST_F(TokenContractTests, CheckDeedCreation)
   PrivateKeys keys{4};
   auto const &address = keys.at(0).publicKey().keyAsBin();
 
-  Deed::Signees signees;
-  signees[keys.at(0).publicKey().keyAsBin()] = 1;
-  signees[keys.at(1).publicKey().keyAsBin()] = 2;
-  signees[keys.at(2).publicKey().keyAsBin()] = 2;
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[keys.at(0).publicKey().keyAsBin()] = 1;
+  (*signees)[keys.at(1).publicKey().keyAsBin()] = 2;
+  (*signees)[keys.at(2).publicKey().keyAsBin()] = 2;
 
-  Deed::OperationTresholds thresholds;
-  thresholds["transfer"] = 3;
-  thresholds["modify"]   = 5;
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 3;
+  (*thresholds)["amend"]    = 5;
 
   // EXPECTED to **FAIL**, because of wrong signatory provided (3 instead of 0)
   EXPECT_FALSE(SendDeedTx(address, {keys.at(3)}, signees, thresholds, false));
@@ -310,56 +319,116 @@ TEST_F(TokenContractTests, CheckDeedCreation)
   EXPECT_EQ(balance, 0);
 }
 
-TEST_F(TokenContractTests, CheckDeedModification)
+TEST_F(TokenContractTests, CheckDeedAmend)
 {
-  // PRECONDITION: First create deed
   PrivateKeys keys{4};
   auto const &address = keys.at(0).publicKey().keyAsBin();
 
-  Deed::Signees signees;
-  signees[keys.at(0).publicKey().keyAsBin()] = 2;
-  signees[keys.at(1).publicKey().keyAsBin()] = 5;
-  signees[keys.at(2).publicKey().keyAsBin()] = 5;
+  // PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[keys.at(0).publicKey().keyAsBin()] = 2;
+  (*signees)[keys.at(1).publicKey().keyAsBin()] = 5;
+  (*signees)[keys.at(2).publicKey().keyAsBin()] = 5;
 
-  Deed::OperationTresholds thresholds;
-  thresholds["transfer"] = 7;
-  thresholds["modify"]   = 12;
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
 
   ASSERT_TRUE(SendDeedTx(address, {keys.at(0)}, signees, thresholds));
 
   // TEST OBJECTIVE: Modify deed
-  Deed::Signees signees_modif;
-  signees_modif[keys.at(0).publicKey().keyAsBin()] = 1;
-  signees_modif[keys.at(1).publicKey().keyAsBin()] = 1;
-  signees_modif[keys.at(2).publicKey().keyAsBin()] = 2;
-  signees_modif[keys.at(3).publicKey().keyAsBin()] = 2;
+  SigneesPtr signees_modif{std::make_shared<Deed::Signees>()};
+  (*signees_modif)[keys.at(0).publicKey().keyAsBin()] = 1;
+  (*signees_modif)[keys.at(1).publicKey().keyAsBin()] = 1;
+  (*signees_modif)[keys.at(2).publicKey().keyAsBin()] = 2;
+  (*signees_modif)[keys.at(3).publicKey().keyAsBin()] = 2;
 
-  Deed::OperationTresholds thresholds_modif;
-  thresholds_modif["transfer"] = 5;
-  thresholds_modif["modify"]   = 6;
+  ThresholdsPtr thresholds_modif{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds_modif)["transfer"] = 5;
+  (*thresholds_modif)["amend"]    = 6;
 
   // EXPECTED to **FAIL** due to insufficient voting power (=> deed has **NOT** been modified)
-  EXPECT_FALSE(SendDeedTx(address, {keys.at(1), keys.at(2)}, signees, thresholds, false));
+  EXPECT_FALSE(
+      SendDeedTx(address, {keys.at(1), keys.at(2)}, signees_modif, thresholds_modif, false));
 
   // EXPECTED TO **PASS** (sufficient amount of signatories provided => deed will be modified)
   EXPECT_TRUE(
       SendDeedTx(address, {keys.at(0), keys.at(1), keys.at(2)}, signees_modif, thresholds_modif));
 }
 
-TEST_F(TokenContractTests, CheckDeedModificationDoesNotAffectBallance)
+TEST_F(TokenContractTests, CheckDeedDeletion)
 {
-  // PRECONDITION: First create deed
+  uint64_t const origina_wealth  = 1000;
+  uint64_t const transfer_amount = 400;
+  PrivateKeys    keys{4};
+  auto const &   address    = keys.at(0).publicKey().keyAsBin();
+  auto const &   to_address = keys.at(1).publicKey().keyAsBin();
+
+  // 1st PRE-CONDITION: Create WEALTH
+  ASSERT_TRUE(CreateWealth(address, origina_wealth));
+
+  // 2nd PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[keys.at(0).publicKey().keyAsBin()] = 2;
+  (*signees)[keys.at(1).publicKey().keyAsBin()] = 5;
+  (*signees)[keys.at(2).publicKey().keyAsBin()] = 5;
+
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
+
+  ASSERT_TRUE(SendDeedTx(address, {keys.at(0)}, signees, thresholds));
+
+  // PROVING that DEED is in EFFECT by executing 2 TRANSFERS - first transfer
+  // shall fail nad 2nd transfer shall pass:
+  // EXPECTED to **FAIL** - transfer is intentionally configured as deed would
+  // NOT be in effect (= providing only single signature for FROM address what
+  // would be sufficient **IF** deed would NOT be in effect):
+  ASSERT_FALSE(Transfer(address, to_address, {keys.at(0)}, transfer_amount, false));
+  uint64_t balance = std::numeric_limits<uint64_t>::max();
+  ASSERT_TRUE(GetBalance(address, balance));
+  ASSERT_EQ(origina_wealth, balance);
+  // EXPECTED to **PASS**: 2nd transfer cofigured to conform with deed and so it
+  // shall pass:
+  ASSERT_TRUE(Transfer(address, to_address, {keys.at(0), keys.at(1)}, 400));
+  balance = std::numeric_limits<uint64_t>::max();
+  ASSERT_TRUE(GetBalance(address, balance));
+  ASSERT_EQ(origina_wealth - transfer_amount, balance);
+
+  // TESTS OBJECTIVE: Deletion of the DEED
+  // EXPECTED TO **PASS**
+  EXPECT_TRUE(
+      SendDeedTx(address, {keys.at(0), keys.at(1), keys.at(2)}, SigneesPtr{}, ThresholdsPtr{}));
+
+  // PROVING THAT DEED HAS BEEN DELETED:
+  // EXPECTED to **FAIL** - Proving that transfer int not possible to perform
+  // without at least one signature, e.g. if we would have for some reason the
+  // "empty" deed in effect (= deed would be on record but would contain empty
+  // container of signees):
+  EXPECT_FALSE(Transfer(address, to_address, {}, transfer_amount, false));
+  // EXPECTED to **PASS** - Transfer is intentionally configured as deed would
+  // NOT be in effect (= providing only single signature for FROM address what
+  // shall be sufficient to modify the balance if deed has been deleted):
+  EXPECT_TRUE(Transfer(address, to_address, {keys.at(0)}, transfer_amount));
+  balance = std::numeric_limits<uint64_t>::max();
+  EXPECT_TRUE(GetBalance(address, balance));
+  EXPECT_EQ(origina_wealth - transfer_amount - transfer_amount, balance);
+}
+
+TEST_F(TokenContractTests, CheckDeedAmendDoesNotAffectBallance)
+{
   PrivateKeys keys{4};
   auto const &address = keys.at(0).publicKey().keyAsBin();
 
-  Deed::Signees signees;
-  signees[keys.at(0).publicKey().keyAsBin()] = 2;
-  signees[keys.at(1).publicKey().keyAsBin()] = 5;
-  signees[keys.at(2).publicKey().keyAsBin()] = 5;
+  // PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[keys.at(0).publicKey().keyAsBin()] = 2;
+  (*signees)[keys.at(1).publicKey().keyAsBin()] = 5;
+  (*signees)[keys.at(2).publicKey().keyAsBin()] = 5;
 
-  Deed::OperationTresholds thresholds;
-  thresholds["transfer"] = 7;
-  thresholds["modify"]   = 12;
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
 
   ASSERT_TRUE(SendDeedTx(address, {keys.at(0)}, signees, thresholds));
   uint64_t orig_balance = std::numeric_limits<uint64_t>::max();
@@ -367,19 +436,19 @@ TEST_F(TokenContractTests, CheckDeedModificationDoesNotAffectBallance)
   ASSERT_EQ(orig_balance, 0);
 
   // TEST OBJECTIVE: Modify deed
-  Deed::Signees signees_modif;
-  signees_modif[keys.at(0).publicKey().keyAsBin()] = 1;
-  signees_modif[keys.at(1).publicKey().keyAsBin()] = 1;
-  signees_modif[keys.at(2).publicKey().keyAsBin()] = 2;
-  signees_modif[keys.at(3).publicKey().keyAsBin()] = 2;
+  SigneesPtr signees_modif{std::make_shared<Deed::Signees>()};
+  (*signees_modif)[keys.at(0).publicKey().keyAsBin()] = 1;
+  (*signees_modif)[keys.at(1).publicKey().keyAsBin()] = 1;
+  (*signees_modif)[keys.at(2).publicKey().keyAsBin()] = 2;
+  (*signees_modif)[keys.at(3).publicKey().keyAsBin()] = 2;
 
-  Deed::OperationTresholds thresholds_modif;
-  thresholds_modif["transfer"] = 5;
-  thresholds_modif["modify"]   = 6;
+  ThresholdsPtr thresholds_modif{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds_modif)["transfer"] = 5;
+  (*thresholds_modif)["amend"]    = 6;
 
   uint64_t const new_balance{12345};
-  // EXPECTED to **PASS** and so modify the deed
-  EXPECT_TRUE(SendDeedTx(address, keys, signees, thresholds, true, &new_balance));
+  // EXPECTED to **FAIL** since Tx deed json carries unexpected element(s) (the `balance`)
+  EXPECT_FALSE(SendDeedTx(address, keys, signees_modif, thresholds_modif, false, &new_balance));
 
   // Balance MUST remain UNCHANGED
   uint64_t current_balance = std::numeric_limits<uint64_t>::max();
@@ -394,21 +463,21 @@ TEST_F(TokenContractTests, CheckTransferIsAuthorisedByPreexistingDeed)
   auto const &   to_address = keys.at(1).publicKey().keyAsBin();
   uint64_t const starting_balance{1000};
 
-  // 1st PRECONDITION: Create wealth
+  // 1st PRE-CONDITION: Create wealth
   ASSERT_TRUE(CreateWealth(address, starting_balance));
   uint64_t balance = std::numeric_limits<uint64_t>::max();
   ASSERT_TRUE(GetBalance(address, balance));
   ASSERT_EQ(starting_balance, balance);
 
-  // 2nd PRECONDITION: Create deed
-  Deed::Signees signees;
-  signees[keys.at(0).publicKey().keyAsBin()] = 2;
-  signees[keys.at(1).publicKey().keyAsBin()] = 5;
-  signees[keys.at(2).publicKey().keyAsBin()] = 5;
+  // 2nd PRE-CONDITION: Create DEED
+  SigneesPtr signees{std::make_shared<Deed::Signees>()};
+  (*signees)[keys.at(0).publicKey().keyAsBin()] = 2;
+  (*signees)[keys.at(1).publicKey().keyAsBin()] = 5;
+  (*signees)[keys.at(2).publicKey().keyAsBin()] = 5;
 
-  Deed::OperationTresholds thresholds;
-  thresholds["transfer"] = 7;
-  thresholds["modify"]   = 12;
+  ThresholdsPtr thresholds{std::make_shared<Deed::OperationTresholds>()};
+  (*thresholds)["transfer"] = 7;
+  (*thresholds)["amend"]    = 12;
 
   ASSERT_TRUE(SendDeedTx(address, {keys.at(0)}, signees, thresholds));
   uint64_t curr_balance = std::numeric_limits<uint64_t>::max();

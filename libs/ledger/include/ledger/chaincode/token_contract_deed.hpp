@@ -27,17 +27,20 @@ class VerifiedTransaction;
 
 namespace ledger {
 
-using Address = byte_array::ConstByteArray;
-using Weight  = std::size_t;
-
 struct Deed
 {
+  using Address            = byte_array::ConstByteArray;
+  using Weight             = std::size_t;
+  using Threshold          = Weight;
   using DeedOperation      = byte_array::ConstByteArray;
   using Signees            = std::unordered_map<Address, Weight>;
-  using OperationTresholds = std::unordered_map<DeedOperation, Weight>;
+  using OperationTresholds = std::unordered_map<DeedOperation, Threshold>;
+  using Weights            = std::unordered_map<Weight, std::size_t>;
+  using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
   bool IsSane() const;
   bool Verify(chain::VerifiedTransaction const &tx, DeedOperation const &operation) const;
+  MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;
   Deed(Deed const &) = default;
@@ -50,19 +53,20 @@ struct Deed
 
 private:
   Signees            signees_;
-  OperationTresholds operationTresholds_;
-  Weight             full_weight_{0};
+  OperationTresholds operation_thresholds_;
+  // Derived data:
+  Weight full_weight_{0};
 
   template <typename T>
   friend void Serialize(T &serializer, Deed const &b)
   {
-    serializer << b.signees_ << b.operationTresholds_;
+    serializer << b.signees_ << b.operation_thresholds_;
   }
 
   template <typename T>
   friend void Deserialize(T &serializer, Deed &b)
   {
-    serializer >> b.signees_ >> b.operationTresholds_;
+    serializer >> b.signees_ >> b.operation_thresholds_;
   }
 };
 

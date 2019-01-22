@@ -70,9 +70,21 @@ protected:
 
     return VerifTx::Create(tx);
   }
+
+  static void PrintMandatoryWeights(Deed::MandatorityMatrix const &mandatory_weights)
+  {
+    for (auto const &op_w : mandatory_weights)
+    {
+      std::cout << "threshold=" << op_w.first << std::endl;
+      for (auto const &w : op_w.second)
+      {
+        std::cout << "  w = " << w.first << " : n=" << w.second << std::endl;
+      }
+    }
+  }
 };
 
-TEST_F(TokenContractDeedTests, is_sane)
+TEST_F(TokenContractDeedTests, is_sane_basic)
 {
   Deed::Signees signees;
   signees["0"] = 1;
@@ -87,6 +99,104 @@ TEST_F(TokenContractDeedTests, is_sane)
 
   thresholds["2"] = 7;
   EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
+}
+
+TEST_F(TokenContractDeedTests, is_sane_fails_when_empty_thresholds)
+{
+  Deed::Signees signees;
+  signees["0"] = 1;
+
+  Deed::OperationTresholds thresholds;
+  EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
+
+  thresholds["abc"] = 1;
+  EXPECT_TRUE((Deed{signees, thresholds}.IsSane()));
+}
+
+TEST_F(TokenContractDeedTests, is_sane_fails_when_empty_signees)
+{
+  Deed::Signees signees;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["abc"] = 1;
+  // Expected to **FAIL** due to empty signees
+  EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
+
+  signees["0"] = 1;
+  // Proving above negative expectation by testing for the opposite:
+  // Expected to **PASS**, NON-empty signees and thresholds have been provided
+  EXPECT_TRUE((Deed{signees, thresholds}.IsSane()));
+}
+
+TEST_F(TokenContractDeedTests, infer_mandatory_weights)
+{
+  Deed::Signees signees;
+  signees["0"] = 1;
+  signees["1"] = 1;
+  signees["2"] = 1;
+  signees["3"] = 20;
+  signees["4"] = 20;
+  signees["5"] = 20;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["a"] = 43;
+  thresholds["b"] = 60;
+  thresholds["c"] = 62;
+
+  Deed deed{signees, thresholds};
+  ASSERT_TRUE(deed.IsSane());
+
+  auto const                    inferred_mandatory_weight = deed.InferMandatoryWeights();
+  Deed::MandatorityMatrix const expected_mandatory_weights(
+      {{43, {{20, 2}}}, {60, {{20, 3}}}, {62, {{20, 3}, {1, 2}}}});
+  EXPECT_EQ(expected_mandatory_weights, inferred_mandatory_weight);
+}
+
+TEST_F(TokenContractDeedTests, infer_mandatory_weights_2)
+{
+  Deed::Signees signees;
+  signees["0"]  = 1;
+  signees["1"]  = 1;
+  signees["2"]  = 1;
+  signees["3"]  = 1;
+  signees["4"]  = 1;
+  signees["5"]  = 1;
+  signees["6"]  = 2;
+  signees["7"]  = 2;
+  signees["8"]  = 2;
+  signees["9"]  = 3;
+  signees["10"] = 3;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["a"] = 17;
+  thresholds["b"] = 15;
+  thresholds["c"] = 13;
+
+  Deed deed{signees, thresholds};
+  ASSERT_TRUE(deed.IsSane());
+
+  auto const                    inferred_mandatory_weight = deed.InferMandatoryWeights();
+  Deed::MandatorityMatrix const expected_mandatory_weights({
+      {13, {{1, 1}, {2, 1}, {3, 1}}},
+      {15, {{1, 3}, {2, 2}, {3, 1}}},
+      {17, {{1, 5}, {2, 3}, {3, 2}}},
+  });
+  EXPECT_EQ(expected_mandatory_weights, inferred_mandatory_weight);
+}
+
+TEST_F(TokenContractDeedTests, is_sane_fails_when_some_thresholds_are_zero)
+{
+  Deed::Signees signees;
+  signees["0"] = 3;
+
+  Deed::OperationTresholds thresholds;
+  thresholds["a"] = 1;
+  thresholds["b"] = 0;
+  thresholds["c"] = 1;
+  EXPECT_FALSE((Deed{signees, thresholds}.IsSane()));
+
+  thresholds["b"] = 1;
+  EXPECT_TRUE((Deed{signees, thresholds}.IsSane()));
 }
 
 TEST_F(TokenContractDeedTests, verify_basic_scenario)

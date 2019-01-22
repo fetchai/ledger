@@ -54,16 +54,5 @@ bool Extract(Variant const &object, byte_array::ConstByteArray const &key, T &va
   return success;
 }
 
-inline bool Extract(Variant const &object, byte_array::ConstByteArray const &key, Variant &value)
-{
-  if (!object.Has(key))
-  {
-    return false;
-  }
-
-  value = object[key];
-  return value.IsObject();
-}
-
 }  // namespace variant
 }  // namespace fetch

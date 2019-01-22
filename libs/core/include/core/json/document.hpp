@@ -43,7 +43,7 @@ public:
     KEYWORD_NULL  = 2,
     STRING        = 3,
 
-    // TODO(pbukva): There should be defined more integer and floating point
+    // TODO(private issue #566): There should be defined more integer and floating point
     // types here, however they will be relevant only when used with document
     // SCHEMA defining expected types in the document.
     NUMBER_INT   = 5,
