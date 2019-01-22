@@ -847,6 +847,26 @@ inline bool Variant::operator!=(Variant const &other) const
   return !(*this == other);
 }
 
+/**
+ * Iterates through items contained in variant Object
+ *
+ * @details This method iterates though items in Object, thus variant instance
+ * **MUST** be of `Object` type! This is non-const version of the method, reason
+ * being it is possible to modify value of items iterated through.
+ *
+ * @tparam Function is general type of which instance represents functor going
+ * to be called per each item in Variant Object. The `Function` **MUST** return
+ * boolean value indicating whether iteration is supposed to continue (`true`
+ * value to CONTINUE, or `false` to STOP iteration). Functor receives non-const
+ * reference to an item = it is MUTABLE.
+ * Signature of the `Function` instance is: `bool(Variant & item)`.
+ *
+ * @param Instance of functor, which will be called per each item contained in
+ * the Variant Object, please see description of the the @refitem(Function) for
+ * details.
+ *
+ * @return true if deserialisation passed successfully, false otherwise.
+ */
 template <typename Function>
 void Variant::IterateObject(Function const &function)
 {
@@ -866,6 +886,23 @@ void Variant::IterateObject(Function const &function)
   }
 }
 
+/**
+ * Iterates through items contained in variant Object (CONST version)
+ *
+ * @details This CONST version of the @refitem(Variant::IterateObject) method,
+ * thus is NOT possible to modify value of items iterated through.
+ *
+ * @tparam Please see desc. for the @refitem(Function) in the
+ * @refitem(Variant::IterateObject) method. Since this is CONST version, passed
+ * variant object items are IMMUTABLE, thus the implication is that signature of
+ * the `Function` instance changes to: `bool(Variant const& item)`.
+ *
+ * @param Instance of functor, which will be called per each item contained in
+ * the Variant Object, please see description of the the @refitem(Function) for
+ * details.
+ *
+ * @return true if deserialisation passed successfully, false otherwise.
+ */
 template <typename Function>
 void Variant::IterateObject(Function const &function) const
 {
