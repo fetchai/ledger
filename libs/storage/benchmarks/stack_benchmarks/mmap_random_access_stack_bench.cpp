@@ -28,7 +28,7 @@ using fetch::storage::MMapRandomAccessStack;
 class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State &st) override
+  void SetUp(const ::benchmark::State & /*st*/) override
   {
     stack_.New("test_bench.db");
     EXPECT_TRUE(stack_.is_open());

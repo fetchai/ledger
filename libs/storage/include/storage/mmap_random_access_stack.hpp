@@ -285,7 +285,9 @@ public:
   {
     assert(filename_ != "");
     if ((i + elements) > header_->objects)
+    {
       ResizeFile(i, elements);  // Resize file if needed
+    }
     size_t curr_in = i, elm_mapped = 0, src_index = 0, elm_left = elements;
     for (; elm_left > 0; curr_in += elm_mapped, src_index += elm_mapped, elm_left -= elm_mapped)
     {
@@ -300,7 +302,9 @@ public:
     }
     size_t written_elements = (i + elements) - header_->objects;
     if (written_elements > 0)
+    {
       header_->objects += written_elements;
+    }
   }
   /**
    * Get bulk elements, will fill the pointer with as many elements as are valid, otherwise
