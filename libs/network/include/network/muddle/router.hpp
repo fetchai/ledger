@@ -171,18 +171,19 @@ private:
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 
-  enum PacketRoutingDecisionResult {
+  enum PacketRoutingDecisionResult
+  {
     PACKET_DISCARD,
     PACKET_NEEDS_DISPATCH,
     PACKET_SENT_ONWARDS,
     PACKET_UNKNOWN
   };
 
-  void SendToConnection(Handle handle, PacketPtr packet);
+  void                        SendToConnection(Handle handle, PacketPtr packet);
   PacketRoutingDecisionResult RoutePacket(PacketPtr packet, bool external = true);
-  void DispatchDirect(Handle handle, PacketPtr packet);
-  void KillConnection(Handle handle, Address const &peer);
-  void KillConnection(Handle handle);
+  void                        DispatchDirect(Handle handle, PacketPtr packet);
+  void                        KillConnection(Handle handle, Address const &peer);
+  void                        KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet, Address transmitter);
 

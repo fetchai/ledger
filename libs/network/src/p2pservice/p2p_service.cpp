@@ -22,8 +22,8 @@
 
 #include <algorithm>
 #include <iterator>
-#include <unordered_set>
 #include <random>
+#include <unordered_set>
 
 namespace fetch {
 namespace p2p {
@@ -31,30 +31,30 @@ namespace p2p {
 class BlockCatchUpService
 {
 public:
-  using PromiseState    = fetch::service::PromiseState;
-  using Promise         = service::Promise;
-  using Muddle          = muddle::Muddle;
-  using Address         = Resolver::Address;
-  using AddressSet      = std::unordered_set<Address>;
-  using Client          = muddle::rpc::Client;
-  using Mutex           = mutex::Mutex;
-  using ChainRpcPtr     = std::weak_ptr<ledger::MainChainRpcService>;
-  using Block           = chain::MainChain::BlockType;
-  using BlockQueue      = network::RequestingQueueOf<Address, std::vector<Block>>;
-  using Uri             = network::Uri;
-  using UriSet          = std::unordered_set<Uri>;
-  using TrustInterface  = P2PTrustInterface<Address>;
+  using PromiseState   = fetch::service::PromiseState;
+  using Promise        = service::Promise;
+  using Muddle         = muddle::Muddle;
+  using Address        = Resolver::Address;
+  using AddressSet     = std::unordered_set<Address>;
+  using Client         = muddle::rpc::Client;
+  using Mutex          = mutex::Mutex;
+  using ChainRpcPtr    = std::weak_ptr<ledger::MainChainRpcService>;
+  using Block          = chain::MainChain::BlockType;
+  using BlockQueue     = network::RequestingQueueOf<Address, std::vector<Block>>;
+  using Uri            = network::Uri;
+  using UriSet         = std::unordered_set<Uri>;
+  using TrustInterface = P2PTrustInterface<Address>;
 
   BlockCatchUpService(Muddle &muddle, TrustInterface &trust)
-   : muddle_(muddle)
-   , trust_(trust)
-   , random_engine_(std::random_device()())
-   , distribution_()
-   {
-    next.Set(std::chrono::milliseconds(0));
+    : muddle_(muddle)
+    , trust_(trust)
+    , random_engine_(std::random_device()())
+    , distribution_()
+  {
+    next_.Set(std::chrono::milliseconds(0));
   }
 
-  void AddChainRpc(ChainRpcPtr&& chain_rpc)
+  void AddChainRpc(ChainRpcPtr &&chain_rpc)
   {
     chain_rpc_ = std::move(chain_rpc);
   }
@@ -62,56 +62,60 @@ public:
   void WorkCycle()
   {
     AddressSet callable_peers;
-    if (next.IsDue())
+    if (next_.IsDue())
     {
       FETCH_LOG_WARN("BlockCatchUpService", "New_peers_.size=", new_peers_.size());
-        FETCH_LOCK(mutex_);
-        std::vector<double> ws;
-        std::vector<UriSet::iterator> its;
-        double sum_w = 0.;
-        for (auto it = new_peers_.begin(); it != new_peers_.end(); ++it) {
-          Address address;
-          if (muddle_.UriToDirectAddress(*it, address)) {
-            callable_peers.insert(address);
-            auto w = trust_.GetPeerUsefulness(address);
-            ws.push_back(w);
-            its.push_back(it);
-            sum_w += w;
-            FETCH_LOG_INFO("BlockCatchUpService", "Adding connected address: ", ToBase64(address));
-          }
+      FETCH_LOCK(mutex_);
+      std::vector<double>           ws;
+      std::vector<UriSet::iterator> its;
+      double                        sum_w = 0.;
+      for (auto it = new_peers_.begin(); it != new_peers_.end(); ++it)
+      {
+        Address address;
+        if (muddle_.UriToDirectAddress(*it, address))
+        {
+          callable_peers.insert(address);
+          auto w = trust_.GetPeerUsefulness(address);
+          ws.push_back(w);
+          its.push_back(it);
+          sum_w += w;
+          FETCH_LOG_INFO("BlockCatchUpService", "Adding connected address: ", ToBase64(address));
         }
-        if (new_peers_.size()>KEEP_PEERS) {
-          for(std::size_t i = 0; i<ws.size();++i)
+      }
+      if (new_peers_.size() > KEEP_PEERS)
+      {
+        for (std::size_t i = 0; i < ws.size(); ++i)
+        {
+          if (distribution_(random_engine_) > ws[i] / sum_w)
           {
-            if (distribution_(random_engine_)>ws[i]/sum_w)
-            {
-              new_peers_.erase(its[i]);
-            }
+            new_peers_.erase(its[i]);
           }
         }
-      next.Set(TIMEOUT);
+      }
+      next_.Set(TIMEOUT_);
       FETCH_LOG_WARN("BlockCatchUpService", "End of promise creation");
-
     }
     auto chain_rpc_ptr = chain_rpc_.lock();
-    if (chain_rpc_ptr!=nullptr)
+    if (chain_rpc_ptr != nullptr)
     {
-      for(auto &address : block_promises_.FilterOutInFlight(callable_peers))
+      for (auto &address : block_promises_.FilterOutInFlight(callable_peers))
       {
         auto prom = chain_rpc_ptr->GetLatestBlockFromAddress(address);
         block_promises_.Add(address, prom);
-        FETCH_LOG_WARN("BlockCatchUpService", "Sending GetLatestBlock request to address: ", ToBase64(address));
+        FETCH_LOG_WARN("BlockCatchUpService",
+                       "Sending GetLatestBlock request to address: ", ToBase64(address));
       }
       block_promises_.Resolve();
-      for(auto &res : block_promises_.Get(MAX_RESOLUTIONS_PER_CYCLE))
+      for (auto &res : block_promises_.Get(MAX_RESOLUTIONS_PER_CYCLE))
       {
-        if (res.promised.size()>0)
+        if (res.promised.size() > 0)
         {
           auto block = res.promised[0];
           block.UpdateDigest();
-          if (block.hash()!=last_hash_)
+          if (block.hash() != last_hash_)
           {
-            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key), ", block hash: ", ToBase64(block.hash()));
+            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key),
+                           ", block hash: ", ToBase64(block.hash()));
             last_hash_ = block.hash();
             chain_rpc_ptr->OnNewLatestBlock(res.key, block);
           }
@@ -134,20 +138,21 @@ public:
     FETCH_LOCK(mutex_);
     new_peers_.erase(uri);
   }
+
 private:
-  Muddle &muddle_;
-  TrustInterface &trust_;
-  ChainRpcPtr chain_rpc_;
-  UriSet new_peers_;
-  BlockQueue block_promises_;
-  byte_array::ConstByteArray last_hash_;
-  network::FutureTimepoint next;
-  std::chrono::milliseconds const TIMEOUT{1000};
-  std::mt19937 random_engine_;
+  Muddle &                              muddle_;
+  TrustInterface &                      trust_;
+  ChainRpcPtr                           chain_rpc_;
+  UriSet                                new_peers_;
+  BlockQueue                            block_promises_;
+  byte_array::ConstByteArray            last_hash_;
+  network::FutureTimepoint              next_;
+  std::chrono::milliseconds const       TIMEOUT_{1000};
+  std::mt19937                          random_engine_;
   std::exponential_distribution<double> distribution_;
-  static constexpr std::size_t const KEEP_PEERS = 3;
-  static constexpr std::size_t const MAX_RESOLUTIONS_PER_CYCLE = 32;
-  Mutex mutex_{__LINE__, __FILE__};
+  static constexpr std::size_t const    KEEP_PEERS                = 3;
+  static constexpr std::size_t const    MAX_RESOLUTIONS_PER_CYCLE = 32;
+  Mutex                                 mutex_{__LINE__, __FILE__};
 };
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
@@ -218,20 +223,18 @@ void P2PService::WorkCycle()
   latest_block_sync_->WorkCycle();
   if (process_future_timepoint_.IsDue())
   {
-  process_future_timepoint_.Set(peer_update_cycle_ms_);
-  // get the summary of all the current connections
-  ConnectionMap active_connections;
-  AddressSet    active_addresses;
-  FETCH_LOG_WARN(LOGGING_NAME, "Before GetConnectionStatus");
-  GetConnectionStatus(active_connections, active_addresses);
-  FETCH_LOG_WARN(LOGGING_NAME, "End GetConnectionStatus");
+    process_future_timepoint_.Set(peer_update_cycle_ms_);
+    // get the summary of all the current connections
+    ConnectionMap active_connections;
+    AddressSet    active_addresses;
+    FETCH_LOG_WARN(LOGGING_NAME, "Before GetConnectionStatus");
+    GetConnectionStatus(active_connections, active_addresses);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetConnectionStatus");
 
-
-  // update our identity cache (address -> uri mapping)
+    // update our identity cache (address -> uri mapping)
     FETCH_LOG_WARN(LOGGING_NAME, "Before identity_cache_.Update");
     identity_cache_.Update(active_connections);
     FETCH_LOG_WARN(LOGGING_NAME, "End identity_cache_.Update");
-
 
     // update the trust system with current connection information
     FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateTrustStatus");
@@ -243,18 +246,15 @@ void P2PService::WorkCycle()
     PeerDiscovery(active_addresses);
     FETCH_LOG_WARN(LOGGING_NAME, "End PeerDiscovery");
 
-
     // make the decisions about which peers are desired and which ones we now need to drop
     FETCH_LOG_WARN(LOGGING_NAME, "Before RenewDesiredPeers");
     RenewDesiredPeers(active_addresses);
     FETCH_LOG_WARN(LOGGING_NAME, "End RenewDesiredPeers");
 
-
     // perform connections updates and drops based on previous step
     FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateMuddlePeers");
     UpdateMuddlePeers(active_addresses);
     FETCH_LOG_WARN(LOGGING_NAME, "End UpdateMuddlePeers");
-
 
     // collect up manifests from connected peers
     FETCH_LOG_WARN(LOGGING_NAME, "Before UpdateManifests");
@@ -387,36 +387,24 @@ void P2PService::RenewDesiredPeers(AddressSet const & /*active_addresses*/)
 
   PeerTrusts peerTrusts = trust_system_.GetPeersAndTrusts();
 
-  auto erase_untrusted_peers = std::remove_if(
-      peerTrusts.begin(), peerTrusts.end(),
-      [](PeerTrust const &x) {
-        return x.trust <= 0.0;
-      });
+  auto erase_untrusted_peers = std::remove_if(peerTrusts.begin(), peerTrusts.end(),
+                                              [](PeerTrust const &x) { return x.trust <= 0.0; });
   peerTrusts.erase(erase_untrusted_peers, peerTrusts.end());
 
-  auto erase_unknown_peers = std::remove_if(
-      peerTrusts.begin(), peerTrusts.end(),
-      [this](PeerTrust const &x) {
+  auto erase_unknown_peers =
+      std::remove_if(peerTrusts.begin(), peerTrusts.end(), [this](PeerTrust const &x) {
         Uri uri;
         return !(identity_cache_.Lookup(x.address, uri) && uri.IsDirectlyConnectable());
       });
   peerTrusts.erase(erase_unknown_peers, peerTrusts.end());
 
-  std::sort(
-      peerTrusts.begin(), peerTrusts.end(),
-      [](PeerTrust const &a,PeerTrust const &b)
-      {
-        return a.trust < b.trust;
-      });
+  std::sort(peerTrusts.begin(), peerTrusts.end(),
+            [](PeerTrust const &a, PeerTrust const &b) { return a.trust < b.trust; });
 
   desired_peers_.clear();
   experimental_peers_.clear();
 
-  while(
-        !peerTrusts.empty()
-        &&
-        desired_peers_.size() < max_peers_ - transient_peers_
-        )
+  while (!peerTrusts.empty() && desired_peers_.size() < max_peers_ - transient_peers_)
   {
     auto p = peerTrusts.back().address;
     peerTrusts.pop_back();

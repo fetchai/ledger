@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/service_ids.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
@@ -35,8 +36,6 @@
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/peer.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-
 
 #include <unordered_map>
 
@@ -118,6 +117,7 @@ public:
   bool IsExperimental(Address const &address) const;
 
   void AddMainChainRpcService(std::shared_ptr<ledger::MainChainRpcService> ptr);
+
 private:
   struct PairHash
   {
@@ -179,16 +179,16 @@ private:
   AddressSet desired_peers_;  ///< The desired set of addresses that we want to have connections to
   AddressSet experimental_peers_;  ///< The set we're only trying out.
 
-  AddressSet blacklisted_peers_;  ///< The set of addresses that we will not have connections to
+  AddressSet    blacklisted_peers_;  ///< The set of addresses that we will not have connections to
   ManifestCache manifest_cache_;  ///< The cache of manifests of the peers to which we are connected
   P2PManagedLocalServices local_services_;
   ///@}
 
-  std::size_t min_peers_ = 2;
-  std::size_t max_peers_;
-  std::size_t transient_peers_;
-  uint32_t    process_cycle_ms_;
-  std::chrono::milliseconds  peer_update_cycle_ms_;
+  std::size_t               min_peers_ = 2;
+  std::size_t               max_peers_;
+  std::size_t               transient_peers_;
+  uint32_t                  process_cycle_ms_;
+  std::chrono::milliseconds peer_update_cycle_ms_;
 
   FutureTimepoint process_future_timepoint_;
 

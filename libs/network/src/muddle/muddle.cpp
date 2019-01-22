@@ -155,7 +155,6 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
     // convert the address to a byte array
     ConstByteArray address = ConvertAddress(entry.first);
 
-
     // based on the handle lookup the uri
     auto it = uri_map.find(entry.second.handle);
     if (it != uri_map.end())
