@@ -31,8 +31,7 @@ public:
   {
     EXECUTE = 1,
     LAST_PROCESSED_BLOCK,
-    IS_ACTIVE,
-    IS_IDLE,
+    GET_STATE,
     ABORT
   };
 
@@ -42,17 +41,16 @@ public:
     // define the RPC endpoints
     Expose(EXECUTE, this, &ExecutionManagerRpcProtocol::Execute);
     Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
-    Expose(IS_ACTIVE, &manager_, &ExecutionManagerInterface::IsActive);
-    Expose(IS_IDLE, &manager_, &ExecutionManagerInterface::IsIdle);
+    Expose(GET_STATE, &manager_, &ExecutionManagerInterface::GetState);
     Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);
   }
 
 private:
-  using Status    = ExecutionManagerInterface::Status;
-  using Block     = ExecutionManagerInterface::Block;
-  using FullBlock = chain::MainChain::BlockType;
+  using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
+  using Block          = ExecutionManagerInterface::Block;
+  using FullBlock      = chain::MainChain::BlockType;
 
-  Status Execute(Block const &block)
+  ScheduleStatus Execute(Block const &block)
   {
     // since the hash is not serialised we need to recalculate it
     FullBlock full_block{};

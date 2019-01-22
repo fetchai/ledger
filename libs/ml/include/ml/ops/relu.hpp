@@ -30,6 +30,7 @@ class ReluLayer : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   ReluLayer()          = default;
@@ -38,19 +39,19 @@ public:
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 1);
-
-    if (!zeroes_ || zeroes_->shape() != inputs[0]->shape())
-    {
-      zeroes_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    }
-
     if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    fetch::math::Maximum(*(inputs[0]), *zeroes_, *this->output_);
-
+    this->output_->Fill(0);
+    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    {
+      if ((*(inputs[0]))[i] > 0)
+      {
+        this->output_->Set(i, DataType((*(inputs[0]))[i]));
+      }
+    }
     return this->output_;
   }
 
@@ -64,7 +65,7 @@ public:
     {
       if ((*(inputs[0]))[i] <= 0)
       {
-        errorSignal->Set(i, 0);
+        errorSignal->Set(i, DataType(0));
       }
     }
     return {errorSignal};

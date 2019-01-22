@@ -21,30 +21,27 @@
 #include <stack>
 
 #include "core/random/lfg.hpp"
-#include "storage/slightly_better_random_access_stack.hpp"
+#include "storage/mmap_random_access_stack.hpp"
 
-using fetch::storage::SlightlyBetterRandomAccessStack;
+using fetch::storage::MMapRandomAccessStack;
 
-class SlightlyBetterRandomAccessStackBench : public ::benchmark::Fixture
+class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
   void SetUp(const ::benchmark::State & /*st*/) override
   {
-    stack_.New("RAS_bench.db");
-
+    stack_.New("test_bench.db");
     EXPECT_TRUE(stack_.is_open());
-    EXPECT_TRUE(stack_.DirectWrite() == true)
-        << "Expected slightly better random access stack to be direct write";
   }
 
   void TearDown(const ::benchmark::State &) override
   {}
 
-  SlightlyBetterRandomAccessStack<uint64_t> stack_;
+  MMapRandomAccessStack<uint64_t>           stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-BENCHMARK_F(SlightlyBetterRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+BENCHMARK_F(MMapRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
 {
   uint64_t random;
   for (auto _ : st)

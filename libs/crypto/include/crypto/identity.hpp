@@ -28,9 +28,9 @@ namespace crypto {
 
 class Identity
 {
+public:
   using edcsa_curve_type = crypto::openssl::ECDSACurve<NID_secp256k1>;
 
-public:
   Identity()
   {}
 
@@ -43,6 +43,10 @@ public:
   Identity(byte_array::ConstByteArray identity_parameters, byte_array::ConstByteArray identifier)
     : identity_parameters_{std::move(identity_parameters)}
     , identifier_{std::move(identifier)}
+  {}
+
+  Identity(byte_array::ConstByteArray identifier)
+    : identifier_{std::move(identifier)}
   {}
 
   byte_array::ConstByteArray const &parameters() const
@@ -103,7 +107,7 @@ public:
   }
 
 private:
-  byte_array::ConstByteArray identity_parameters_;
+  byte_array::ConstByteArray identity_parameters_{edcsa_curve_type::sn};
   byte_array::ConstByteArray identifier_;
 };
 

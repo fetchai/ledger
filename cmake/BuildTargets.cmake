@@ -110,6 +110,11 @@ macro(setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_METRICS")
   endif (FETCH_ENABLE_METRICS)
 
+  # allow disabling of colour log file
+  if (FETCH_DISABLE_COLOUR_LOG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DISABLE_COLOUR_LOG_OUTPUT")
+  endif (FETCH_DISABLE_COLOUR_LOG)
+
   # needed for configuration files etc
   include_directories(${FETCH_ROOT_BINARY_DIR})
 
@@ -169,8 +174,15 @@ function(configure_vendor_targets)
 
   # Google Benchmark
   # Do not build the google benchmark library tests
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
-  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  if(FETCH_ENABLE_BENCHMARKS)
+      set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+      add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  endif(FETCH_ENABLE_BENCHMARKS)
+
+  # mio vendor library
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mio)
+  add_library(vendor-mio INTERFACE)
+  target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
 endfunction(configure_vendor_targets)
 

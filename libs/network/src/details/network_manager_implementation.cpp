@@ -25,6 +25,7 @@ namespace details {
 void NetworkManagerImplementation::Start()
 {
   FETCH_LOCK(thread_mutex_);
+  running_ = true;
 
   if (threads_.size() == 0)
   {
@@ -47,6 +48,7 @@ void NetworkManagerImplementation::Work()
 void NetworkManagerImplementation::Stop()
 {
   std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+  running_ = false;
 
   if (threads_.empty())
   {
@@ -77,6 +79,11 @@ void NetworkManagerImplementation::Stop()
 
   threads_.clear();
   io_service_ = std::make_unique<asio::io_service>();
+}
+
+bool NetworkManagerImplementation::Running()
+{
+  return running_;
 }
 
 }  // namespace details

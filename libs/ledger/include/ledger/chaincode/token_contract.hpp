@@ -33,6 +33,7 @@ public:
 private:
   // transaction handlers
   Status CreateWealth(Transaction const &tx);
+  Status Deed(Transaction const &tx);
   Status Transfer(Transaction const &tx);
 
   // queries
