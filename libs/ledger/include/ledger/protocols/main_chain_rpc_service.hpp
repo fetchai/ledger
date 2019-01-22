@@ -23,12 +23,12 @@
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/has_worker_thread.hpp"
+#include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "network/generics/promise_of.hpp"
 
 #include <memory>
 
@@ -66,8 +66,9 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
-//#ifdef BLOCK_EXTRA_DATA
-  enum OriginType {
+  //#ifdef BLOCK_EXTRA_DATA
+  enum OriginType
+  {
     MINE = 0,
     BROADCAST,
     CATCHUP,
@@ -76,48 +77,51 @@ public:
   };
   std::string ToString(OriginType ot)
   {
-    std::string r="";
-    switch(ot)
+    std::string r = "";
+    switch (ot)
     {
-      case OriginType :: MINE:
-      {
-        r = "mine";
-        break;
-      }
-      case OriginType :: BROADCAST:
-      {
-        r = "broadcast";
-        break;
-      }
-      case OriginType :: CATCHUP:
-      {
-        r = "catchup";
-        break;
-      }
-      case OriginType :: LOOSE:
-      {
-        r = "loose";
-        break;
-      }
-      case OriginType :: UNKNOWN:
-      {
-        r = "unknown";
-        break;
-      }
+    case OriginType ::MINE:
+    {
+      r = "mine";
+      break;
+    }
+    case OriginType ::BROADCAST:
+    {
+      r = "broadcast";
+      break;
+    }
+    case OriginType ::CATCHUP:
+    {
+      r = "catchup";
+      break;
+    }
+    case OriginType ::LOOSE:
+    {
+      r = "loose";
+      break;
+    }
+    case OriginType ::UNKNOWN:
+    {
+      r = "unknown";
+      break;
+    }
     }
     return r;
   }
-  struct OriginAndTime {
+  struct OriginAndTime
+  {
     std::string from        = "";
     std::string transmitter = "";
     std::time_t time        = -1;
     std::string type        = "";
-    bool first              = false;
+    bool        first       = false;
   };
-  std::unordered_map<std::string, std::vector<OriginAndTime> > block_arrival_; //block hash => OriginAndTime
-private:  std::queue<std::string> block_hash_queue_; // block hash
+  std::unordered_map<std::string, std::vector<OriginAndTime>>
+      block_arrival;  // block hash => OriginAndTime
+private:
+  std::queue<std::string> block_hash_queue_;  // block hash
 public:
-//#endif
+  //#endif
 
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
                       BlockCoordinator &block_coordinator);
@@ -125,7 +129,7 @@ public:
   void BroadcastBlock(Block const &block);
 
   BlocksPromise GetLatestBlockFromAddress(Address const &address);
-  void OnNewLatestBlock(Address const &from, Block &block);
+  void          OnNewLatestBlock(Address const &from, Block &block);
 
 private:
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
@@ -133,7 +137,8 @@ private:
   using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 
-  void OnNewBlock(Address const &from, Block &block, Address const &transmitter, OriginType origin_type = OriginType::UNKNOWN);
+  void OnNewBlock(Address const &from, Block &block, Address const &transmitter,
+                  OriginType origin_type = OriginType::UNKNOWN);
 
   bool RequestHeaviestChainFromPeer(Address const &from);
 

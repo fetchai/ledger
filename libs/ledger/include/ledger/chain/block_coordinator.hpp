@@ -31,11 +31,11 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using BlockType       = chain::MainChain::BlockType;
-  using BlockHash       = chain::MainChain::BlockHash;
-  using mutex_type      = fetch::mutex::Mutex;
-  using block_body_type = std::shared_ptr<BlockBody>;
-  using NewBlockCallBack = std::function<void(BlockType&)>;
+  using BlockType        = chain::MainChain::BlockType;
+  using BlockHash        = chain::MainChain::BlockHash;
+  using mutex_type       = fetch::mutex::Mutex;
+  using block_body_type  = std::shared_ptr<BlockBody>;
+  using NewBlockCallBack = std::function<void(BlockType &)>;
   using Block            = chain::MainChain::BlockType;
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
@@ -55,7 +55,7 @@ public:
   void Stop();
   /// @}
 
-  void AddBlock(BlockType &block, bool from_miner=true);
+  void AddBlock(BlockType &block, bool from_miner = true);
 
 private:
   enum class State
@@ -102,7 +102,6 @@ private:
   /// @}
 
   NewBlockCallBack callback_;
-
 };
 
 }  // namespace chain

@@ -26,11 +26,11 @@
 #include "http/module.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
 
 #include <random>
 #include <sstream>
@@ -41,16 +41,17 @@ namespace p2p {
 class P2PHttpInterface : public http::HTTPModule
 {
 public:
-  using MainChain   = chain::MainChain;
-  using Muddle      = muddle::Muddle;
-  using TrustSystem = P2PTrustInterface<Muddle::Address>;
-  using Miner       = miner::MinerInterface;
+  using MainChain        = chain::MainChain;
+  using Muddle           = muddle::Muddle;
+  using TrustSystem      = P2PTrustInterface<Muddle::Address>;
+  using Miner            = miner::MinerInterface;
   using MainChainService = std::shared_ptr<ledger::MainChainRpcService>;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, Miner &miner, MainChainService main_chain_service)
+                   P2PService &p2p_service, TrustSystem &trust, Miner &miner,
+                   MainChainService main_chain_service)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
@@ -113,10 +114,10 @@ private:
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     Variant history = Variant::Object();
-    for(auto &d : main_chain_service_->block_arrival_)
+    for (auto &d : main_chain_service_->block_arrival)
     {
       Variant details = Variant::Array(d.second.size());
-      for(std::size_t i=0; i< d.second.size(); ++i)
+      for (std::size_t i = 0; i < d.second.size(); ++i)
       {
         Variant e        = Variant::Object();
         e["from"]        = d.second[i].from;
@@ -150,7 +151,7 @@ private:
         continue;
       }
 
-      Variant object = Variant::Object();
+      Variant object     = Variant::Object();
       object["identity"] = byte_array::ToBase64(entry.first);
       object["uri"]      = entry.second.uri();
       connections_output_list.push_back(object);
@@ -176,7 +177,7 @@ private:
 
     // TODO(private issue 532): Remove legacy API
     response["identity_cache"] = GenerateIdentityCache();
-    auto result = http::CreateJsonResponse(response);
+    auto result                = http::CreateJsonResponse(response);
     FETCH_LOG_WARN(LOGGING_NAME, "End GetP2PStatus");
     return result;
   }
@@ -230,7 +231,7 @@ private:
     FETCH_LOG_WARN(LOGGING_NAME, "Start GetBacklogStatus");
     variant::Variant data = variant::Variant::Object();
     data["backlog"]       = miner_.GetBacklog();
-    auto result = http::CreateJsonResponse(data);
+    auto result           = http::CreateJsonResponse(data);
     FETCH_LOG_WARN(LOGGING_NAME, "End GetBacklogStatus");
     return result;
   }
@@ -339,8 +340,8 @@ private:
   Muddle &    muddle_;
   P2PService &p2p_;
 
-  TrustSystem &trust_;
-  Miner &miner_;
+  TrustSystem &    trust_;
+  Miner &          miner_;
   MainChainService main_chain_service_;
 };
 

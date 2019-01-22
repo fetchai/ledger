@@ -33,11 +33,18 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
   : storage_{storage}
   , miner_{miner}
   , verifier_{*this, num_threads}
+  , running_{false}
 {}
+
+TransactionProcessor::~TransactionProcessor()
+{
+  running_ = false;
+}
 
 void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
 {
-  // submit the transaction to the verifier
+  // submit the transaction to the verifier - it will call back this::OnTransaction(verified) or
+  // this::OnTransactions(verified)
   verifier_.AddTransaction(tx.AsMutable());
 }
 
@@ -103,6 +110,27 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
     FETCH_METRIC_TX_QUEUED_EX(tx.digest(), queued);
   }
 #endif  // FETCH_ENABLE_METRICS
+}
+
+void TransactionProcessor::ThreadEntryPoint()
+{
+  std::vector<chain::TransactionSummary> new_txs;
+  while (running_)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    new_txs.clear();
+    new_txs = storage_.PollRecentTx(10000);
+
+    for (auto const &summary : new_txs)
+    {
+      // Note: metric for TX stored will not fire this way
+      // dispatch the summary to the miner
+      assert(summary.IsWellFormed());
+      miner_.EnqueueTransaction(summary);
+
+      FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
+    }
+  }
 }
 
 }  // namespace ledger

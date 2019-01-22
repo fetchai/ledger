@@ -279,7 +279,7 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > 0.0;
   }
 
-  double GetPeerUsefulness(IDENTITY const &peer_ident) const override
+  double GetPeerUsefulness(IDENTITY const & /*peer_ident*/) const override
   {
     return 1.0;
   }

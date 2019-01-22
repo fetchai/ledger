@@ -151,13 +151,12 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
     // dispatch the event
     OnNewBlock(from, block, transmitter, OriginType::BROADCAST);
   });
-  //mined block
-  block_coordinator_.SetCallback([this](Block &block){
+  // mined block
+  block_coordinator_.SetCallback([this](Block &block) {
     std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
-    auto from = static_cast<std::string>(ToBase64(block.body().miner));
-    block_arrival_[block_hash].push_back(OriginAndTime{
-      from, from, time(nullptr), ToString(OriginType::MINE), true
-    });
+    auto        from       = static_cast<std::string>(ToBase64(block.body().miner));
+    block_arrival[block_hash].push_back(
+        OriginAndTime{from, from, time(nullptr), ToString(OriginType::MINE), true});
   });
 }
 
@@ -178,10 +177,11 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
   endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
 }
 
-MainChainRpcService::BlocksPromise MainChainRpcService::GetLatestBlockFromAddress(Address const &address)
+MainChainRpcService::BlocksPromise MainChainRpcService::GetLatestBlockFromAddress(
+    Address const &address)
 {
-  return BlocksPromise(main_chain_rpc_client_.CallSpecificAddress(address, RPC_MAIN_CHAIN,
-      MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1}));
+  return BlocksPromise(main_chain_rpc_client_.CallSpecificAddress(
+      address, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN, uint32_t{1}));
 }
 
 void MainChainRpcService::OnNewLatestBlock(Address const &from, Block &block)
@@ -190,32 +190,38 @@ void MainChainRpcService::OnNewLatestBlock(Address const &from, Block &block)
   OnNewBlock(from, block, from, OriginType::CATCHUP);
 }
 
-
-void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter, OriginType origin_type ) {
+void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter,
+                                     OriginType origin_type)
+{
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
                  " (from peer: ", ToBase64(transmitter), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
-  OriginAndTime originAndTime{
-      static_cast<std::string>(ToBase64(from)),
-      static_cast<std::string>(ToBase64(transmitter)),
-      std::time(nullptr),
-      ToString(origin_type)
-  };
+  OriginAndTime originAndTime{static_cast<std::string>(ToBase64(from)),
+                              static_cast<std::string>(ToBase64(transmitter)), std::time(nullptr),
+                              ToString(origin_type)};
 
-  try {
-    if (block.proof()()) {
+  try
+  {
+    if (block.proof()())
+    {
       // add the block?
-      if (chain_.AddBlock(block)) {
-        trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-        if (transmitter != from) {
+      if (chain_.AddBlock(block))
+      {
+        trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK,
+                           p2p::TrustQuality::NEW_INFORMATION);
+        if (transmitter != from)
+        {
           trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
         }
         originAndTime.first = true;
-      } else {
+      }
+      else
+      {
         trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
-        if (transmitter != from) {
+        if (transmitter != from)
+        {
           trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
         }
       }
@@ -223,27 +229,32 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
       block_coordinator_.AddBlock(block, false);
 
-      // if we got a block and it is loose then it it probably means that we need to sync the rest of
-      // the block tree
-      if (block.loose()) {
+      // if we got a block and it is loose then it it probably means that we need to sync the rest
+      // of the block tree
+      if (block.loose())
+      {
         AddLooseBlock(block.hash(), from);
         trust_.AddObject(block.hash(), from);
       }
-    } else {
+    }
+    else
+    {
       trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
       FETCH_LOG_INFO(LOGGING_NAME, "Peer ", ToBase64(from), " LIED!");
     }
   }
-  catch (std::exception &e) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception in OnNewBlock: ", e.what(), " Block: ", ToBase64(block.hash()), ", from: ",
-                   ToBase64(from), " transmitter: ", ToBase64(transmitter));
+  catch (std::exception &e)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Exception in OnNewBlock: ", e.what(),
+                   " Block: ", ToBase64(block.hash()), ", from: ", ToBase64(from),
+                   " transmitter: ", ToBase64(transmitter));
   }
   std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
-  block_arrival_[block_hash].push_back(originAndTime);
+  block_arrival[block_hash].push_back(originAndTime);
   block_hash_queue_.push(block_hash);
-  while(block_hash_queue_.size() > 16)
+  while (block_hash_queue_.size() > 16)
   {
-    block_arrival_.erase(block_hash_queue_.front());
+    block_arrival.erase(block_hash_queue_.front());
     block_hash_queue_.pop();
   }
 }
@@ -339,14 +350,10 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     {
       bool n = chain_.AddBlock(*it);
       newdata |= n;
-      OriginAndTime originAndTime{
-          static_cast<std::string>(ToBase64(address)),
-          static_cast<std::string>(ToBase64(address)),
-          std::time(nullptr),
-          ToString(OriginType::LOOSE),
-          n
-      };
-      block_arrival_[static_cast<std::string>(ToBase64(it->hash()))].push_back(originAndTime);
+      OriginAndTime originAndTime{static_cast<std::string>(ToBase64(address)),
+                                  static_cast<std::string>(ToBase64(address)), std::time(nullptr),
+                                  ToString(OriginType::LOOSE), n};
+      block_arrival[static_cast<std::string>(ToBase64(it->hash()))].push_back(originAndTime);
     }
     else
     {

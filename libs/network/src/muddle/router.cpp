@@ -253,11 +253,11 @@ void Router::Route(Handle handle, PacketPtr packet)
     return;
   }
 
-  PacketRoutingDecisionResult r = PacketRoutingDecisionResult :: PACKET_UNKNOWN;
+  PacketRoutingDecisionResult r = PacketRoutingDecisionResult ::PACKET_UNKNOWN;
 
   if (packet->GetTargetRaw() == address_)
   {
-    r = PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH;
+    r = PacketRoutingDecisionResult ::PACKET_NEEDS_DISPATCH;
   }
   else
   {
@@ -269,7 +269,7 @@ void Router::Route(Handle handle, PacketPtr packet)
     r = RoutePacket(packet);
   }
 
-  if (r==PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH)
+  if (r == PacketRoutingDecisionResult ::PACKET_NEEDS_DISPATCH)
   {
     // when the message is targetted at us we must handle it
     Address transmitter;
@@ -332,7 +332,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   packet->SetTarget(address);
 
   auto res = RoutePacket(packet, false);
-  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  if (res == PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Send");
   }
@@ -358,7 +358,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
                   channel, '-', message_num, ")");
 
   auto res = RoutePacket(packet, false);
-  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  if (res == PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Send 2");
   }
@@ -379,8 +379,8 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
   auto packet = FormatPacket(address_, service, channel, counter, DEFAULT_TTL, payload);
   packet->SetBroadcast(true);
 
-  auto res  = RoutePacket(packet, false);
-  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  auto res = RoutePacket(packet, false);
+  if (res == PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Broadcast");
   }
@@ -479,7 +479,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   packet->SetTarget(address);
   packet->SetExchange();
   auto res = RoutePacket(packet, false);
-  if (res==PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
+  if (res == PacketRoutingDecisionResult::PACKET_NEEDS_DISPATCH)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Needs dispatch in Broadcast");
   }
@@ -792,13 +792,13 @@ Router::PacketRoutingDecisionResult Router::RoutePacket(PacketPtr packet, bool e
     if (message_time_expired)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
-      return PacketRoutingDecisionResult :: PACKET_DISCARD;
+      return PacketRoutingDecisionResult ::PACKET_DISCARD;
     }
 
     // if this packet is a broadcast echo we should no longer route this packet
     if (packet->IsBroadcast() && IsEcho(*packet))
     {
-      return PacketRoutingDecisionResult :: PACKET_DISCARD;
+      return PacketRoutingDecisionResult ::PACKET_DISCARD;
     }
   }
 
@@ -816,7 +816,7 @@ Router::PacketRoutingDecisionResult Router::RoutePacket(PacketPtr packet, bool e
 
     if (packet->GetSender() != address_)
     {
-      return PacketRoutingDecisionResult :: PACKET_NEEDS_DISPATCH;
+      return PacketRoutingDecisionResult ::PACKET_NEEDS_DISPATCH;
     }
   }
   else
@@ -827,7 +827,7 @@ Router::PacketRoutingDecisionResult Router::RoutePacket(PacketPtr packet, bool e
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
-      return PacketRoutingDecisionResult :: PACKET_SENT_ONWARDS;
+      return PacketRoutingDecisionResult ::PACKET_SENT_ONWARDS;
     }
 
     // if direct routing fails then randomly select a handle. In future a better routing scheme
@@ -837,10 +837,10 @@ Router::PacketRoutingDecisionResult Router::RoutePacket(PacketPtr packet, bool e
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
       SendToConnection(handle, packet);
-      return PacketRoutingDecisionResult :: PACKET_SENT_ONWARDS;
+      return PacketRoutingDecisionResult ::PACKET_SENT_ONWARDS;
     }
   }
-  return PacketRoutingDecisionResult :: PACKET_UNKNOWN;
+  return PacketRoutingDecisionResult ::PACKET_UNKNOWN;
 }
 
 /**

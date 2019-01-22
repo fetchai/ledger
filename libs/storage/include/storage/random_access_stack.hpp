@@ -363,6 +363,7 @@ public:
    */
   void Pop()
   {
+    assert(header_.objects > 0);
     --header_.objects;
     StoreHeader();
   }
