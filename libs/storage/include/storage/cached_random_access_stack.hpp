@@ -46,12 +46,12 @@ namespace storage {
  * this map.
  *
  */
-template <typename T, typename D = uint64_t>
+template <typename T, typename D = uint64_t, typename STACK = RandomAccessStack<T, D>>
 class CachedRandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
-  using stack_type         = RandomAccessStack<T, D>;
+  using stack_type         = STACK;
   using header_extra_type  = D;
   using type               = T;
 
@@ -253,6 +253,7 @@ public:
         else
         {
           assert(index < stack_.size());
+          std::cerr << "SETTING" << std::endl;
           stack_.Set(index, cached_element.data);
         }
       }
@@ -273,6 +274,11 @@ public:
   bool is_open() const
   {
     return stack_.is_open();
+  }
+
+  stack_type &underlying_stack()
+  {
+    return stack_;
   }
 
 private:
