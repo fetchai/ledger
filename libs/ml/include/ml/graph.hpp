@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/node.hpp"
-#include "ml/ops/placeholder.hpp"
+#include "ml/ops/weights.hpp"
 #include <iostream>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -27,7 +28,7 @@ namespace fetch {
 namespace ml {
 
 template <class T>
-class Graph
+class Graph : public ops::Trainable
 {
 public:
   using ArrayType    = T;
@@ -42,8 +43,8 @@ public:
   }
 
   template <class OperationType, typename... Params>
-  void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs,
-               Params... params)
+  typename std::enable_if<!std::is_base_of<Trainable, OperationType>::value>::type
+  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
@@ -53,6 +54,20 @@ public:
     }
   }
 
+  template <class OperationType, typename... Params>
+  typename std::enable_if<std::is_base_of<Trainable, OperationType>::value>::type
+  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  {
+    std::shared_ptr<Node<ArrayType, OperationType>> op = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
+    nodes_[nodeName] = op;
+    trainable_.push_back(op);
+    FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
+    for (auto const &i : inputs)
+    {
+      nodes_[nodeName]->AddInput(nodes_[i]);
+    }
+  }
+  
   void SetInput(std::string const &nodeName, ArrayPtrType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
@@ -60,8 +75,17 @@ public:
     placeholder->SetData(data);
   }
 
+  virtual void Step()
+  {
+    for (auto &t : trainable_)
+      {
+	t->Step();
+      }
+  }
+
 protected:
   std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
+  std::list<std::shared_ptr<fetch::ml::ops::Trainable>> trainable_;
 };
 
 }  // namespace ml

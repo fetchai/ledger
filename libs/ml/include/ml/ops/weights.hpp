@@ -23,8 +23,14 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+class Trainable
+{
+public:
+  virtual void Step() = 0;
+};
+  
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>
+class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable
 {
 public:
   using ArrayType    = T;
@@ -51,12 +57,12 @@ public:
     }
   }
 
-  void Step()
+  virtual void Step()
   {
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
-    gradientAccumulation_->SetAllZero();
+    gradientAccumulation_->Fill(0);
   }
 
 private:
