@@ -66,7 +66,6 @@ inline std::vector<Bid> Auction::ShowBids() const
   return ret_vec;
 }
 
-
 /**
  * Agent adds a bid (potentially on multiple items)
  * @param bid  a Bid object describing the items to bid on, the price, and the excluded items
@@ -293,7 +292,6 @@ std::vector<AgentId> Auction::Winners()
   }
   return winners;
 }
-
 
 }  // namespace auctions
 }  // namespace fetch
