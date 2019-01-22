@@ -269,11 +269,15 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
                                      AddressSet &   active_addresses)
 {
   // get a summary of addresses and associated URIs
+  FETCH_LOG_WARN(LOGGING_NAME, "Before muddle_.GetConnections");
+
   active_connections = muddle_.GetConnections();
+  FETCH_LOG_WARN(LOGGING_NAME, "After muddle_.GetConnections");
+
 
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
-
+  FETCH_LOG_WARN(LOGGING_NAME, "Before muddle_.IsConnected for");
   for (const auto &c : active_connections)
   {
     if (muddle_.IsConnected(c.first))
@@ -281,6 +285,7 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
       active_addresses.insert(c.first);
     }
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "After muddle_.IsConnected for");
 }
 
 void P2PService::UpdateTrustStatus(ConnectionMap const &active_connections)
