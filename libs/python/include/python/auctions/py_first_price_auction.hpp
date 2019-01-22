@@ -32,7 +32,7 @@ void BuildFirstPriceAuction(std::string const &custom_name, pybind11::module &mo
 
   namespace py = pybind11;
   py::class_<FirstPriceAuction>(module, custom_name.c_str())
-      .def(py::init<BlockIdType, BlockIdType>())
+      .def(py::init<BlockId, BlockId>())
       .def("AddItem",
            [](FirstPriceAuction &ca, Item const &item) {
              ErrorCode ec;
@@ -63,8 +63,7 @@ void BuildFirstPriceAuction(std::string const &custom_name, pybind11::module &mo
                return 1;
              }
            })
-      .def("Execute",
-           [](FirstPriceAuction &ca, BlockIdType block_id) { return ca.Execute(block_id); });
+      .def("Execute", [](FirstPriceAuction &ca, BlockId block_id) { return ca.Execute(block_id); });
 }
 
 }  // namespace auctions

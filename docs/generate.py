@@ -5,8 +5,8 @@ import time
 import subprocess
 import webbrowser
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
 
 
 SOURCEDIR = 'source'
@@ -35,24 +35,24 @@ def build_documentation():
     print('Building documentation...complete')
 
 
-class FileSystemWatcher(FileSystemEventHandler):
-    def on_any_event(self, event):
-        print(event)
-        build_documentation()
+# class FileSystemWatcher(FileSystemEventHandler):
+#     def on_any_event(self, event):
+#         print(event)
+#         build_documentation()
 
 
-def watch():
-    observer = Observer()
-    event_handler = FileSystemWatcher()
-    observer.schedule(event_handler, os.path.join(DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
-    observer.start()
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
+# def watch():
+#     observer = Observer()
+#     event_handler = FileSystemWatcher()
+#     observer.schedule(event_handler, os.path.join(DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
+#     observer.start()
+#     try:
+#         while True:
+#             time.sleep(1)
+#     except KeyboardInterrupt:
+#         observer.stop()
 
-    observer.join()
+#     observer.join()
 
 
 def main():

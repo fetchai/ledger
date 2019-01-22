@@ -27,16 +27,16 @@ void BuildItem(std::string const &custom_name, pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<Item>(module, custom_name.c_str())
-      .def(py::init<ItemIdType, AgentIdType, ValueType>())
-      .def("Id", [](Item &item) { return item.Id(); })
-      .def("SellerId", [](Item &item) { return item.SellerId(); })
-      .def("MinPrice", [](Item &item) { return item.MinPrice(); })
-      .def("MaxBid", [](Item &item) { return item.MaxBid(); })
-      .def("SellPrice", [](Item &item) { return item.SellPrice(); })
-      .def("Bids", [](Item &item) { return item.Bids(); })
-      .def("BidCount", [](Item &item) { return item.BidCount(); })
-      .def("Winner", [](Item &item) { return item.Winner(); })
-      .def("AgentBidCount", [](Item &item) { return item.AgentBidCount(); });
+      .def(py::init<ItemId, AgentId, Value>())
+      .def("Id", [](Item &item) { return item.id; })
+      .def("SellerId", [](Item &item) { return item.seller_id; })
+      .def("MinPrice", [](Item &item) { return item.min_price; })
+      .def("MaxBid", [](Item &item) { return item.max_bid; })
+      .def("SellPrice", [](Item &item) { return item.sell_price; })
+      .def("Bids", [](Item &item) { return item.bids; })
+      .def("BidCount", [](Item &item) { return item.bid_count; })
+      .def("Winner", [](Item &item) { return item.winner; })
+      .def("AgentBidCount", [](Item &item) { return item.agent_bid_count; });
 }
 
 }  // namespace auctions

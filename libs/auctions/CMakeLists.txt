@@ -15,8 +15,7 @@ setup_compiler()
 #-------------------------------------------------------------------------------
 
 setup_library(fetch-auctions)
-target_link_libraries(fetch-auctions INTERFACE fetch-core fetch-math fetch-ledger)
-
+target_link_libraries(fetch-auctions PUBLIC fetch-core fetch-math fetch-ledger)
 
 add_test_target()
 add_subdirectory(examples)

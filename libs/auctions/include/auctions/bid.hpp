@@ -22,9 +22,11 @@
 namespace fetch {
 namespace auctions {
 
-constexpr BidIdType   DefaultBidId     = std::numeric_limits<BidIdType>::max();
-constexpr ValueType   DefaultBidPrice  = std::numeric_limits<ValueType>::max();
-constexpr AgentIdType DefaultBidBidder = std::numeric_limits<AgentIdType>::max();
+class Item;
+
+constexpr BidId   DEFAULT_BID_ID     = std::numeric_limits<BidId>::max();
+constexpr Value   DEFAULT_BID_PRICE  = std::numeric_limits<Value>::max();
+constexpr AgentId DEFAULT_BID_BIDDER = std::numeric_limits<AgentId>::max();
 
 /**
  * A bid upon (potentially many) items
@@ -32,132 +34,22 @@ constexpr AgentIdType DefaultBidBidder = std::numeric_limits<AgentIdType>::max()
 class Bid
 {
 public:
-  Bid(BidIdType id, std::vector<Item> items, ValueType price, AgentIdType bidder,
+  Bid(BidId id, std::vector<Item> items, Value price, AgentId bidder,
       std::vector<Bid> excludes = {})
-    : id_(id)
-    , items_(std::move(items))
-    , price_(price)
-    , bidder_(bidder)
-    , excludes_(std::move(excludes))
+    : id(id)
+    , items(std::move(items))
+    , price(price)
+    , bidder(bidder)
+    , excludes(std::move(excludes))
   {
-    assert(items_.size() > 0);
+    assert(items.size() > 0);
   }
 
-  /**
-   * ID accessor
-   * @return
-   */
-  BidIdType Id() const
-  {
-    return id_;
-  }
-  BidIdType &Id()
-  {
-    return id_;
-  }
-
-  /**
-   * ID setter
-   */
-  void Id(BidIdType &id)
-  {
-    id_ = id;
-  }
-
-  /**
-   * items accessor
-   * @return
-   */
-  std::vector<Item> Items() const
-  {
-    return items_;
-  }
-  std::vector<Item> &Items()
-  {
-    return items_;
-  }
-
-  /**
-   * Items setter
-   * @param items
-   */
-  void Items(std::vector<Item> const &items)
-  {
-    items_ = items;
-  }
-
-  /**
-   * price accessor
-   * @return
-   */
-  ValueType Price() const
-  {
-    return price_;
-  }
-  ValueType &Price()
-  {
-    return price_;
-  }
-
-  /**
-   * price setter
-   * @param price
-   */
-  void Price(ValueType price)
-  {
-    price_ = price;
-  }
-
-  /**
-   * bidder accessor
-   * @return
-   */
-  AgentIdType Bidder() const
-  {
-    return bidder_;
-  }
-  AgentIdType &Bidder()
-  {
-    return bidder_;
-  }
-
-  /**
-   * bidder setter
-   * @param price
-   */
-  void Bidder(AgentIdType bidder)
-  {
-    bidder_ = bidder;
-  }
-
-  /**
-   * excludes accessor
-   * @return
-   */
-  std::vector<Bid> Excludes() const
-  {
-    return excludes_;
-  }
-  std::vector<Bid> &Excludes()
-  {
-    return excludes_;
-  }
-
-  /**
-   * excludes setter
-   * @param price
-   */
-  void Excludes(std::vector<Bid> excludes)
-  {
-    excludes_ = excludes;
-  }
-
-private:
-  BidIdType         id_ = DefaultBidId;
-  std::vector<Item> items_{};
-  ValueType         price_  = DefaultBidPrice;
-  AgentIdType       bidder_ = DefaultBidBidder;
-  std::vector<Bid>  excludes_{};
+  BidId             id = DEFAULT_BID_ID;
+  std::vector<Item> items{};
+  Value             price  = DEFAULT_BID_PRICE;
+  AgentId           bidder = DEFAULT_BID_BIDDER;
+  std::vector<Bid>  excludes{};
 };
 
 }  // namespace auctions
