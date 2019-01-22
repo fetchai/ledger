@@ -42,6 +42,11 @@ public:
     return nodes_[nodeName]->Evaluate();
   }
 
+  void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
+  {
+    nodes_[nodeName]->BackPropagate(errorSignal);
+  }
+
   template <class OperationType, typename... Params>
   typename std::enable_if<!std::is_base_of<Trainable, OperationType>::value>::type
   AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
