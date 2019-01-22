@@ -59,6 +59,9 @@ public:
 
   virtual void Step()
   {
+    ArrayPtrType lr = std::make_shared<ArrayType>(gradientAccumulation_->shape(), std::vector<size_t>(gradientAccumulation_->shape().size()));
+    lr->At(0) = -0.001f;
+    this->gradientAccumulation_->InlineMultiply(*lr);
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
