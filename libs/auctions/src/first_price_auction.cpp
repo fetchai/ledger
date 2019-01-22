@@ -34,7 +34,6 @@ bool FirstPriceAuction::Execute(BlockId current_block)
 {
   if ((end_block_ == current_block) && auction_valid_)
   {
-    // TODO (multi-items-per-bid non-combinatorial auctions not implemented)
     assert(max_items_per_bid_ == 1);
 
     // pick winning bid
@@ -43,8 +42,6 @@ bool FirstPriceAuction::Execute(BlockId current_block)
     // deduct funds from winner
 
     // transfer item to winner
-
-    // TODO (handle defaulting to next highest bid if winner cannot pay)
 
     // close auction
     auction_valid_ = false;
