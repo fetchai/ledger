@@ -42,7 +42,7 @@ ErrorCode Auction::AddItem(Item const &item)
  * returns every listed item
  * @return
  */
-inline std::vector<Item> Auction::ShowListedItems() const
+std::vector<Item> Auction::ShowListedItems() const
 {
   std::vector<Item> ret_vec{};
   for (auto &it : items_)
@@ -56,7 +56,7 @@ inline std::vector<Item> Auction::ShowListedItems() const
  * returns every listed item
  * @return
  */
-inline std::vector<Bid> Auction::ShowBids() const
+std::vector<Bid> Auction::ShowBids() const
 {
   std::vector<Bid> ret_vec{};
   for (auto &it : bids_)
