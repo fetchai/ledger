@@ -366,8 +366,7 @@ void P2PService::PeerDiscovery(AddressSet const &active_addresses)
                          " (from: ", ToBase64(from), ")");
 
           trust_system_.AddFeedback(new_address, TrustSubject::PEER, TrustQuality::NEW_PEER);
-          trust_system_.AddFeedback(from, new_address, TrustSubject::PEER,
-                                    TrustQuality::NEW_INFORMATION);
+          trust_system_.AddObject(new_address, from);
         }
       }
     }
@@ -463,6 +462,9 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
       identity_cache_.Update(result.key.second, result.promised);
       muddle_.AddPeer(result.promised);
       latest_block_sync_->AddUri(uri);
+      trust_system_.AddObjectFeedback(result.key.second, TrustSubject::PEER,
+          TrustQuality::NEW_INFORMATION);
+      trust_system_.RemoveObject(result.key.second);
     }
     else
     {
@@ -483,6 +485,9 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
       FETCH_LOG_INFO(LOGGING_NAME, "Add peer: ", ToBase64(address));
       muddle_.AddPeer(uri);
       latest_block_sync_->AddUri(uri);
+      trust_system_.AddObjectFeedback(address, TrustSubject::PEER,
+                                      TrustQuality::NEW_INFORMATION);
+      trust_system_.RemoveObject(address);
       resolve = false;
     }
 
