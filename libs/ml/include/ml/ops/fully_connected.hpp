@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -42,9 +43,11 @@ public:
     this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
     this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
         name + "_MatrixMultiply", {name + "_Flatten", name + "_Weights"});
+    this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
+    this->template AddNode<fetch::ml::ops::Add<ArrayType>>(name + "_Add", {name + "_MatrixMultiply", name + "_Bias"});
 
     this->AddInputNodes(name + "_Input");
-    this->SetOutputNode(name + "_MatrixMultiply");
+    this->SetOutputNode(name + "_Add");
 
     ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<size_t>({in, out}));
     // Naive random init, range [-.5, .5]
@@ -52,8 +55,14 @@ public:
       {
 	weights->At(i) = typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
       }
-    
     this->SetInput(name + "_Weights", weights);
+    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<size_t>({out}));
+    // Naive random init, range [-.5, .5]
+    for (size_t i(0) ; i < bias->size() ; ++i)
+      {
+	bias->At(i) = typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
+      }
+    this->SetInput(name + "_Bias", bias);
   }
 };
 
