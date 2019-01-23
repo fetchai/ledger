@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -36,8 +37,8 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs[0]->size() == inputs[1]->size());
     if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
@@ -53,9 +54,9 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
-    assert(errorSignal->size() == inputs[1]->size());
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs[0]->size() == inputs[1]->size());
+    ASSERT(errorSignal->size() == inputs[1]->size());
     return {errorSignal, errorSignal};
   }
 
