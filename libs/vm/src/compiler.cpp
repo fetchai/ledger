@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
 #include <sstream>
+
+#include "vm/compiler.hpp"
 
 namespace fetch {
 namespace vm {

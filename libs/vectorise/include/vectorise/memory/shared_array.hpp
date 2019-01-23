@@ -23,6 +23,7 @@
 #include "vectorise/meta/log2.hpp"
 //#include "meta/type_traits.hpp"
 
+#include <mm_malloc.h>
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -30,8 +31,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <mm_malloc.h>
 #include <type_traits>
+
 namespace fetch {
 namespace memory {
 

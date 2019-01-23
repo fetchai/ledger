@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+#include <map>
+#include <memory>
+
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
-
-#include <functional>
-#include <map>
-#include <memory>
 
 namespace fetch {
 namespace network {

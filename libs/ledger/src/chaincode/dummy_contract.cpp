@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/dummy_contract.hpp"
-
 #include <chrono>
 #include <random>
+
+#include "ledger/chaincode/dummy_contract.hpp"
 
 static constexpr std::size_t MINIMUM_TIME = 50;
 static constexpr std::size_t MAXIMUM_TIME = 200;

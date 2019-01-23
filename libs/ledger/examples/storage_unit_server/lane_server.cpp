@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+#include <sstream>
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -26,9 +29,7 @@
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
-#include <iostream>
 
-#include <sstream>
 using namespace fetch;
 using namespace fetch::ledger;
 int main(int argc, char **argv)

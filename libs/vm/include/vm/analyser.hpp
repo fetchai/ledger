@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/node.hpp"
-
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
+
+#include "vm/node.hpp"
 
 namespace fetch {
 namespace vm {

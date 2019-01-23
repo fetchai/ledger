@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
-#include "network/generics/promise_of.hpp"
-#include "network/service/promise.hpp"
-
 #include <algorithm>
 #include <atomic>
 #include <deque>
 #include <iterator>
 #include <unordered_map>
+
+#include "core/serializers/stl_types.hpp"
+#include "network/generics/promise_of.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace network {

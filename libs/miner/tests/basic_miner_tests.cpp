@@ -16,6 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <chrono>
+#include <fstream>
+#include <memory>
+#include <random>
+
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -23,12 +29,6 @@
 #include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 #include "vectorise/platform.hpp"
-
-#include <chrono>
-#include <fstream>
-#include <gtest/gtest.h>
-#include <memory>
-#include <random>
 
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;

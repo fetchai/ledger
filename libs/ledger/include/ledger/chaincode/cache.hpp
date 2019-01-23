@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/factory.hpp"
-#include "meta/is_log2.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <unordered_map>
 #include <utility>
+
+#include "ledger/chaincode/factory.hpp"
+#include "meta/is_log2.hpp"
 
 namespace fetch {
 namespace ledger {

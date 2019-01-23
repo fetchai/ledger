@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+#include <memory>
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
@@ -25,9 +28,6 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/protocol.hpp"
-
-#include <iostream>
-#include <memory>
 
 static constexpr char const *SERVER_PUBLIC_KEY =
     "JW0+xMThgoNlD7i8V8Tq65N4FDs7ylTXGkPBS20yNdGkmdpbk6xeUqm4yCQq9ONxR8i+/0xb9AlwRy3UtMQ/6g==";

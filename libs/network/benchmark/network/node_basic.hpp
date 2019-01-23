@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <stdlib.h>
 // This represents the API to the network test
 #include <chrono>
 #include <ctime>
@@ -26,7 +27,6 @@
 #include <memory>
 #include <random>
 #include <set>
-#include <stdlib.h>
 #include <utility>
 #include <vector>
 

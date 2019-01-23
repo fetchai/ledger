@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions.hpp"
 #include <cassert>
+
+#include "math/kernels/standard_functions.hpp"
 
 namespace fetch {
 namespace math {

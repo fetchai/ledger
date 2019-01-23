@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/identifier.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "variant/variant.hpp"
-
 #include <atomic>
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+
+#include "core/serializers/byte_array_buffer.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/identifier.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace variant {

@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
 #include <functional>
 #include <memory>
 #include <vector>
+
+#include "math/free_functions/free_functions.hpp"
 
 namespace fetch {
 namespace ml {

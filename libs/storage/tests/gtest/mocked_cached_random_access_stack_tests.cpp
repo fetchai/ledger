@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "storage/cached_random_access_stack.hpp"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stack>
+
+#include "core/random/lfg.hpp"
+#include "storage/cached_random_access_stack.hpp"
 
 using namespace fetch::storage;
 using namespace testing;

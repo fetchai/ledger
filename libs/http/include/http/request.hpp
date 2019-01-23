@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <limits>
+
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
@@ -27,9 +30,6 @@
 #include "http/query.hpp"
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
-
-#include <algorithm>
-#include <limits>
 
 namespace fetch {
 namespace http {

@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "vectorise/memory/details.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
-
-#include <type_traits>
 
 namespace fetch {
 namespace memory {

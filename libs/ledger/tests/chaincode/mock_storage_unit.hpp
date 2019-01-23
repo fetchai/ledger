@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_storage_unit.hpp"
-
 #include <gmock/gmock.h>
+
+#include "fake_storage_unit.hpp"
 
 class MockStorageUnit final : public fetch::ledger::StorageUnitInterface
 {

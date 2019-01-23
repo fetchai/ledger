@@ -16,24 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "ledger/protocols/execution_manager_rpc_client.hpp"
-#include "ledger/protocols/execution_manager_rpc_service.hpp"
-#include "network/generics/atomic_inflight_counter.hpp"
-
-#include "block_configs.hpp"
-#include "fake_storage_unit.hpp"
-#include "mock_executor.hpp"
-#include "test_block.hpp"
-
 #include <gmock/gmock.h>
-
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <random>
 #include <thread>
+
+#include "core/logger.hpp"
+#include "ledger/protocols/execution_manager_rpc_client.hpp"
+#include "ledger/protocols/execution_manager_rpc_service.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
+#include "block_configs.hpp"
+#include "fake_storage_unit.hpp"
+#include "mock_executor.hpp"
+#include "test_block.hpp"
 
 class ExecutionManagerRpcTests : public ::testing::TestWithParam<BlockConfig>
 {

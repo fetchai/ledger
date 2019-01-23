@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/tcp_server.hpp"
 #include <cstdlib>
 #include <iostream>
+
+#include "network/tcp/tcp_server.hpp"
+
 using namespace fetch::network;
 
 class Server : public TCPServer

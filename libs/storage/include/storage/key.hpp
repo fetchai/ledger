@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <cstring>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "vectorise/platform.hpp"
 
-#include <algorithm>
-#include <cstring>
 namespace fetch {
 namespace storage {
 

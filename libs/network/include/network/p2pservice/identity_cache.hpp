@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <unordered_map>
+#include <utility>
+
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/uri.hpp"
-
-#include <chrono>
-#include <unordered_map>
-#include <utility>
 
 namespace fetch {
 namespace p2p {

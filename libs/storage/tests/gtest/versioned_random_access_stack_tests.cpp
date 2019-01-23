@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "storage/versioned_random_access_stack.hpp"
 #include <gtest/gtest.h>
-
 #include <iostream>
 #include <stack>
 #include <vector>
+
+#include "core/random/lfg.hpp"
+#include "storage/versioned_random_access_stack.hpp"
+
 using namespace fetch::storage;
 
 class TestClass

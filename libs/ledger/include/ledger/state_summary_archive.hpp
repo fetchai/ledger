@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "storage/object_store.hpp"
-
 #include <chrono>
 #include <cstdint>
 #include <string>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "storage/object_store.hpp"
 
 namespace fetch {
 namespace ledger {

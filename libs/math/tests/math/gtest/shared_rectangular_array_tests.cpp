@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <cstdint>
 #include <iostream>
 #include <vector>
 
 #include "core/random/lcg.hpp"
 #include "math/rectangular_array.hpp"
-
-#include <gtest/gtest.h>
 
 using namespace fetch::math;
 

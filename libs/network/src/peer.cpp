@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/peer.hpp"
-
 #include <regex>
 #include <stdexcept>
-
 #include <iostream>
+
+#include "network/peer.hpp"
 
 static const std::regex ADDRESS_FORMAT("^(.*):(\\d+)$");
 static const std::regex URI_ADDRESS_FORMAT("^tcp://(.*):(\\d+)$");

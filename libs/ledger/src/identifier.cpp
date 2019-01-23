@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/identifier.hpp"
-
 #include <stdexcept>
+
+#include "ledger/identifier.hpp"
 
 namespace fetch {
 namespace ledger {

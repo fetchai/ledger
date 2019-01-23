@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ndarray_iterator.hpp"
 #include <cassert>
 #include <unordered_set>
+
+#include "math/ndarray_iterator.hpp"
 
 namespace fetch {
 namespace math {

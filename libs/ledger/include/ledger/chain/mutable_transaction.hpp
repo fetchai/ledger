@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+#include <set>
+#include <unordered_map>
+#include <vector>
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -28,11 +33,6 @@
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/identifier.hpp"
-
-#include <functional>
-#include <set>
-#include <unordered_map>
-#include <vector>
 
 namespace fetch {
 namespace chain {

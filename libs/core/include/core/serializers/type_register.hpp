@@ -17,10 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/serializable_exception.hpp"
 #include <string>
 #include <typeinfo>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/serializable_exception.hpp"
+
 namespace fetch {
 namespace serializers {
 

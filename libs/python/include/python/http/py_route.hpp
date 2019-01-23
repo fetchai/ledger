@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "http/route.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
+
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace assert {

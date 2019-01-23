@@ -22,7 +22,6 @@
 #include "python/memory/py_range.hpp"
 #include "python/memory/py_rectangular_array.hpp"
 #include "python/memory/py_shared_array.hpp"
-
 #include "python/math/distance/py_braycurtis.hpp"
 #include "python/math/distance/py_chebyshev.hpp"
 #include "python/math/distance/py_distance_matrix.hpp"
@@ -33,40 +32,32 @@
 #include "python/math/distance/py_manhattan.hpp"
 #include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
-
 #include "python/math/clustering/py_kmeans.hpp"
-
 #include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
 #include "python/math/spline/py_linear.hpp"
-
 #include "python/math/correlation/py_eisen.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
 #include "python/math/correlation/py_pearson.hpp"
-
 #include "python/math/statistics/py_geometric_mean.hpp"
 #include "python/math/statistics/py_max.hpp"
 #include "python/math/statistics/py_mean.hpp"
 #include "python/math/statistics/py_min.hpp"
 #include "python/math/statistics/py_standard_deviation.hpp"
 #include "python/math/statistics/py_variance.hpp"
-
 #include "python/byte_array/py_encoders.hpp"
 #include "python/byte_array/py_referenced_byte_array.hpp"
-
 #include "python/byte_array/details/py_encode_decode.hpp"
 #include "python/byte_array/py_basic_byte_array.hpp"
 #include "python/byte_array/py_consumers.hpp"
 #include "python/byte_array/py_decoders.hpp"
 #include "python/byte_array/tokenizer/py_token.hpp"
 #include "python/byte_array/tokenizer/py_tokenizer.hpp"
-
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
-
 #include "python/ml/layers/py_layer.hpp"
 #include "python/ml/ops/py_ops.hpp"
 #include "python/ml/py_session.hpp"

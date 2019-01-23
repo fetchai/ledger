@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "math/rectangular_array.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
+
+#include "core/random/lfg.hpp"
+#include "math/rectangular_array.hpp"
 
 using namespace fetch::math;
 static fetch::random::LinearCongruentialGenerator gen;

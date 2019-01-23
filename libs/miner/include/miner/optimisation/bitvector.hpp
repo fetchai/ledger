@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <initializer_list>
-#include <type_traits>
 #include <vectorise/memory/shared_array.hpp>
 #include <vectorise/platform.hpp>
+#include <initializer_list>
+#include <type_traits>
 
 namespace fetch {
 namespace bitmanip {

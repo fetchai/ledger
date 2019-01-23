@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/stream_hasher.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

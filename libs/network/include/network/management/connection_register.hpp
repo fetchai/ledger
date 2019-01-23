@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/generics/callbacks.hpp"
-#include "network/management/abstract_connection_register.hpp"
-#include "network/service/service_client.hpp"
-
 #include <chrono>
 #include <memory>
 #include <thread>
 #include <unordered_map>
+
+#include "core/mutex.hpp"
+#include "network/generics/callbacks.hpp"
+#include "network/management/abstract_connection_register.hpp"
+#include "network/service/service_client.hpp"
 
 namespace fetch {
 namespace network {

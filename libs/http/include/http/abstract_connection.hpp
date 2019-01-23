@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+#include <string>
+
 #include "core/byte_array/byte_array.hpp"
 #include "http/response.hpp"
 #include "network/fetch_asio.hpp"
-
-#include <memory>
-#include <string>
 
 namespace fetch {
 namespace http {

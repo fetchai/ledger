@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <benchmark/benchmark.h>
+#include <stdexcept>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-
-#include <benchmark/benchmark.h>
-#include <stdexcept>
 
 using fetch::crypto::ECDSASigner;
 using fetch::crypto::ECDSAVerifier;

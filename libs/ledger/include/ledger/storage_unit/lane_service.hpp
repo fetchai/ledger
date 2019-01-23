@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iomanip>
+#include <memory>
+
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
@@ -41,9 +44,6 @@
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
 #include "storage/transient_object_store.hpp"
-
-#include <iomanip>
-#include <memory>
 
 namespace fetch {
 namespace ledger {

@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "crypto/ecdsa.hpp"
@@ -29,11 +34,6 @@
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
-
-#include <chrono>
-#include <memory>
-#include <unordered_map>
-#include <vector>
 
 namespace fetch {
 

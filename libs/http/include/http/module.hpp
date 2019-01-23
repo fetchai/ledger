@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <vector>
+
 #include "core/byte_array/byte_array.hpp"
 #include "http/method.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "http/view_parameters.hpp"
 
-#include <vector>
 namespace fetch {
 namespace http {
 

@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <iostream>
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
-#include <iostream>
 using namespace fetch::byte_array;
 void Test(ByteArray val)
 {

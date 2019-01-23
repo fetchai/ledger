@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+#include <string>
+
 #include "core/byte_array/byte_array.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "network/fetch_asio.hpp"
-
-#include <cstdint>
-#include <string>
 
 namespace fetch {
 namespace http {

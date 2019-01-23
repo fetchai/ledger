@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <thread>
+
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "miner/miner_interface.hpp"
-
-#include <atomic>
-#include <thread>
 
 namespace fetch {
 namespace ledger {

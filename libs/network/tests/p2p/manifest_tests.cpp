@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/manifest.hpp"
-
 #include <gtest/gtest.h>
 #include <vector>
+
+#include "network/p2pservice/manifest.hpp"
 
 namespace {
 

@@ -34,12 +34,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/ops.hpp"
-#include "math/linalg/matrix.hpp"
-#include "ml/session.hpp"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
+
+#include "ml/ops/ops.hpp"
+#include "math/linalg/matrix.hpp"
+#include "ml/session.hpp"
 
 using namespace fetch::ml;
 using Type            = double;

@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/tokenizer/token.hpp"
-
 #include <exception>
 #include <sstream>
 #include <utility>
+
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/tokenizer/token.hpp"
+
 namespace fetch {
 namespace json {
 

@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "commandline/parameter_parser.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

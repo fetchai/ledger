@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <random>
+
 #include "ledger/chain/constants.hpp"
 #include "ledger/execution_manager.hpp"
 #include "storage/resource_mapper.hpp"
-
-#include <algorithm>
-#include <random>
 
 struct TestBlock
 {

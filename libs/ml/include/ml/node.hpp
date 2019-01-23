@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ops/ops.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "ops/ops.hpp"
 
 namespace fetch {
 namespace ml {

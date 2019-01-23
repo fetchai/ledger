@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
 #include "openssl/obj_mac.h"
-
-#include <cstddef>
 
 namespace fetch {
 namespace crypto {

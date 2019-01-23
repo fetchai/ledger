@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_context_session.hpp"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

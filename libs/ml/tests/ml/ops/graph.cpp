@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "ml/graph.hpp"
 #include "math/ndarray.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/relu.hpp"
-#include <gtest/gtest.h>
 
 TEST(graph_test, node_placeholder)
 {

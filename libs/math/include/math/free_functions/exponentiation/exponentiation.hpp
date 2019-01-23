@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cassert>
+
 #include "math/kernels/approx_exp.hpp"
 #include "math/kernels/approx_log.hpp"
 #include "math/kernels/standard_functions.hpp"
-
 #include "math/meta/math_type_traits.hpp"
-
-#include <cassert>
 
 /////////////////////////////////////
 /// include specific math functions

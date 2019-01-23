@@ -59,6 +59,7 @@
 #endif
 
 #include <inttypes.h>
+
 typedef int8_t   flex_int8_t;
 typedef uint8_t  flex_uint8_t;
 typedef int16_t  flex_int16_t;
@@ -493,6 +494,7 @@ static yyconst flex_int16_t yy_chk[245] = {
 #line 7 "tokeniser.l"
 
 #include "vm/token.hpp"
+
 #define YY_EXTRA_TYPE fetch::vm::Location *
 #define YYSTYPE fetch::vm::Token
 

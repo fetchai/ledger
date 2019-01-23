@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <vector>
+
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
@@ -28,13 +31,9 @@
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/range.hpp"
 #include "vectorise/memory/shared_array.hpp"
-
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/statistics/mean.hpp"
 #include "math/meta/math_type_traits.hpp"
-
-#include <algorithm>
-#include <vector>
 
 namespace fetch {
 namespace math {

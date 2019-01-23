@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/opcodes.hpp"
-#include "vm/typeids.hpp"
 #include <cmath>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "vm/opcodes.hpp"
+#include "vm/typeids.hpp"
 
 namespace fetch {
 namespace vm {

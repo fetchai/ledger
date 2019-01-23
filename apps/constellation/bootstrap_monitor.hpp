@@ -17,19 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/mutex.hpp"
-#include "crypto/identity.hpp"
-#include "http/json_client.hpp"
-#include "network/fetch_asio.hpp"
-
-#include "constellation.hpp"
-
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+
+#include "core/byte_array/byte_array.hpp"
+#include "core/mutex.hpp"
+#include "crypto/identity.hpp"
+#include "http/json_client.hpp"
+#include "network/fetch_asio.hpp"
+#include "constellation.hpp"
 
 namespace fetch {
 

@@ -22,6 +22,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+
 namespace fetch {
 namespace commandline {
 

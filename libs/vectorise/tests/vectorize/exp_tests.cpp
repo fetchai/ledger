@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <cmath>
+#include <iostream>
+
 #include "vectorise/math/exp.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
-#include <cmath>
-#include <gtest/gtest.h>
-#include <iostream>
 
 using type        = double;
 using array_type  = fetch::memory::Array<type>;

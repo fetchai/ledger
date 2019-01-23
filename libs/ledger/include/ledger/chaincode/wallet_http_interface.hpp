@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <random>
+#include <sstream>
+#include <utility>
+
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -33,12 +37,7 @@
 #include "ledger/transaction_processor.hpp"
 #include "storage/object_store.hpp"
 #include "variant/variant_utils.hpp"
-
 #include "miner/resource_mapper.hpp"
-
-#include <random>
-#include <sstream>
-#include <utility>
 
 namespace fetch {
 namespace ledger {

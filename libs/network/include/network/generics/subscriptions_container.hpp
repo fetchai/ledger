@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+#include <string>
+#include <utility>
+
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/service/service_client.hpp"
 #include "network/service/types.hpp"
-
-#include <iostream>
-#include <string>
-#include <utility>
 
 namespace fetch {
 namespace network {

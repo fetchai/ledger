@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/shared_array.hpp"
 #include <chrono>
 #include <iostream>
 #include <vector>
+
+#include "vectorise/memory/shared_array.hpp"
 
 using type       = float;
 using array_type = std::vector<type>;

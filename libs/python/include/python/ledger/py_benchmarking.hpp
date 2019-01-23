@@ -17,19 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "vectorise/threading/pool.hpp"
-
 #include <cstddef>
 #include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "core/byte_array/encoders.hpp"
+#include "core/json/document.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "crypto/ecdsa.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "vectorise/threading/pool.hpp"
 
 namespace fetch {
 namespace ledger {

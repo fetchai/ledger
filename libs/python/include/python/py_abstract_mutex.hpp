@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "abstract_mutex.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

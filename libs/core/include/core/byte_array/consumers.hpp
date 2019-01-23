@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <emmintrin.h>
+#include <cctype>
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 
-#include <cctype>
-
-#include <emmintrin.h>
 namespace fetch {
 namespace byte_array {
 namespace consumers {

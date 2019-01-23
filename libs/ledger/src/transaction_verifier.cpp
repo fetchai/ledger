@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
-
-#include <chrono>
 
 static const std::chrono::milliseconds POP_TIMEOUT{300};
 static const std::chrono::milliseconds WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS{1000};

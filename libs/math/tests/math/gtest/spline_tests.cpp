@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/spline/linear.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
+
+#include "core/random/lcg.hpp"
+#include "gtest/gtest.h"
+#include "math/spline/linear.hpp"
+
 // This is to avoid ambiguity in instantation
 double dsin(double x)
 {

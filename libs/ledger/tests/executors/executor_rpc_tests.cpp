@@ -16,6 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <chrono>
+#include <memory>
+#include <random>
+#include <thread>
+
 #include "core/byte_array/encoders.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -27,14 +33,7 @@
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "storage/resource_mapper.hpp"
-
 #include "mock_storage_unit.hpp"
-
-#include <chrono>
-#include <gtest/gtest.h>
-#include <memory>
-#include <random>
-#include <thread>
 
 using ::testing::_;
 using fetch::network::AtomicInFlightCounter;

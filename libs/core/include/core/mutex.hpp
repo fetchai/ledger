@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/macros.hpp"
-
 #include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <utility>
+
+#include "core/logger.hpp"
+#include "core/macros.hpp"
 
 namespace fetch {
 namespace mutex {

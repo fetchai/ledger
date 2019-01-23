@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -27,8 +28,6 @@
 #include "network/tcp/loopback_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
-
-#include <gtest/gtest.h>
 
 // Test of the client. We use an echo server from the asio examples to ensure
 // that any problems must be in the NM or the client. In this way we can test

@@ -16,6 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include <array>
+#include <csignal>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <system_error>
+#include <vector>
+
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/commandline/params.hpp"
@@ -28,19 +38,8 @@
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "variant/variant.hpp"
-
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
-
-#include <array>
-#include <csignal>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <system_error>
-#include <vector>
 
 namespace {
 

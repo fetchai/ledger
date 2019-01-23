@@ -16,17 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/transaction_verifier.hpp"
-
-#include "tx_generation.hpp"
-
 #include <benchmark/benchmark.h>
 #include <condition_variable>
 #include <iostream>
 #include <thread>
+
+#include "crypto/ecdsa.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/transaction_verifier.hpp"
+#include "tx_generation.hpp"
 
 using fetch::chain::VerifiedTransaction;
 using fetch::ledger::TransactionVerifier;

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-
 #include <gtest/gtest.h>
 #include <iostream>
+
+#include "core/json/document.hpp"
 
 using fetch::json::JSONDocument;
 using fetch::variant::Variant;

@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/cli_header.hpp"
@@ -26,7 +28,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
-#include <iostream>
+
 using namespace fetch;
 
 using namespace fetch::service;

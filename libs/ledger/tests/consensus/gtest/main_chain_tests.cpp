@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "ledger/chain/consensus/dummy_miner.hpp"
-#include "ledger/chain/main_chain.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <list>
+
+#include "core/random/lfg.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain.hpp"
 
 static constexpr char const *LOGGING_NAME = "MainChainTests";
 

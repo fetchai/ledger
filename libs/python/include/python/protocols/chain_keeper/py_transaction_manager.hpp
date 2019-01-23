@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "protocols/chain_keeper/transaction_manager.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

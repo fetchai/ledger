@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/block_generator.hpp"
-
 #include "fetch_pybind.hpp"
+
 namespace fetch {
 namespace chain {
 

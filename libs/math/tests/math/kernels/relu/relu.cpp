@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
 #include "math/free_functions/free_functions.hpp"
 #include "math/kernels/relu.hpp"
 #include "math/shapeless_array.hpp"
-#include <gtest/gtest.h>
 
 using namespace fetch::math;
 using data_type      = double;

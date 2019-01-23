@@ -16,15 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gmock/gmock.h>
+#include <iostream>
+#include <memory>
+
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "mock_storage_unit.hpp"
-
-#include <gmock/gmock.h>
-
-#include <iostream>
-#include <memory>
 
 using ::testing::_;
 using namespace fetch;

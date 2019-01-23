@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "core/mutex.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
@@ -28,8 +30,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-
-#include <memory>
 
 namespace fetch {
 namespace chain {

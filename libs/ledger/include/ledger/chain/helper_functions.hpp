@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <random>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include <random>
 
 namespace fetch {
 namespace chain {

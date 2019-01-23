@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <pybind11/stl.h>
+
 //#include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 #include "ml/variable.hpp"
 #include "python/fetch_pybind.hpp"
-#include <pybind11/stl.h>
 
 namespace fetch {
 namespace ml {

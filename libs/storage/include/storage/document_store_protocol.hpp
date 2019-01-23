@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <map>
+
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/revertible_document_store.hpp"
-
-#include <map>
 
 namespace fetch {
 namespace storage {

@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <map>
+#include <memory>
+#include <set>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"
@@ -28,9 +32,6 @@
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
-#include <map>
-#include <memory>
-#include <set>
 
 namespace fetch {
 namespace chain {

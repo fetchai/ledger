@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/sha256.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

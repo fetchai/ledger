@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/client.hpp"
-
 #include <stdexcept>
 #include <system_error>
-
 #include <iostream>
 #include <sstream>
+
+#include "http/client.hpp"
 
 namespace fetch {
 namespace http {

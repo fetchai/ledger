@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "network/muddle/muddle.hpp"
-#include "variant/variant.hpp"
-
 #include <iostream>
 #include <list>
 #include <string>
 #include <unordered_set>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "network/muddle/muddle.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace p2p {

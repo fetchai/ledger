@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2ptrust.hpp"
-
 #include <cmath>
+
+#include "network/p2pservice/p2ptrust.hpp"
 
 namespace fetch {
 namespace p2p {

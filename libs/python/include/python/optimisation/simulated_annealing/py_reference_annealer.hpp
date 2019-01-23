@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "optimisation/simulated_annealing/reference_annealer.hpp"
-
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+
+#include "optimisation/simulated_annealing/reference_annealer.hpp"
+
 namespace fetch {
 namespace optimisers {
 

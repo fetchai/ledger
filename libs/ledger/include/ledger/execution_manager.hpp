@@ -17,6 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <future>
+#include <memory>
+#include <thread>
+#include <unordered_set>
+#include <vector>
+
 #include "core/mutex.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -27,17 +36,7 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
-
 #include "core/byte_array/encoders.hpp"
-
-#include <atomic>
-#include <chrono>
-#include <condition_variable>
-#include <future>
-#include <memory>
-#include <thread>
-#include <unordered_set>
-#include <vector>
 
 namespace fetch {
 namespace ledger {

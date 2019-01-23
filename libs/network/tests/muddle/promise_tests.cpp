@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gmock/gmock.h>
+#include <memory>
+
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/router.hpp"
 #include "network/service/promise.hpp"
-
-#include <gmock/gmock.h>
-#include <memory>
 
 class PeerConnectionListTests : public ::testing::Test
 {

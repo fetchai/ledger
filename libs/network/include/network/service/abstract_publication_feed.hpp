@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
-
-#include <functional>
 
 namespace fetch {
 namespace service {

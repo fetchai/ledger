@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <map>
+
 #include "core/byte_array/const_byte_array.hpp"
 
-#include <map>
 namespace fetch {
 namespace http {
 

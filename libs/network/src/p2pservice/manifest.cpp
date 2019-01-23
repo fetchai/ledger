@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <sstream>
+#include <stdexcept>
+
 #include "network/p2pservice/manifest.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "variant/variant_utils.hpp"
-
-#include <sstream>
-#include <stdexcept>
 
 namespace fetch {
 namespace network {

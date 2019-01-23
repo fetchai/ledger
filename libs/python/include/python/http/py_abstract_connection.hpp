@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "http/abstract_connection.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

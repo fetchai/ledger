@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
 #include <vector>
+
+#include "core/serializers/stl_types.hpp"
+
 namespace fetch {
 namespace serializers {
 

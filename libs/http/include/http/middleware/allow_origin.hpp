@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/server.hpp"
+
 namespace fetch {
 namespace http {
 namespace middleware {

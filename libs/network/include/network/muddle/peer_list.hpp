@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
 #include "network/uri.hpp"
-
-#include <chrono>
-#include <unordered_map>
-#include <unordered_set>
 
 namespace fetch {
 namespace muddle {

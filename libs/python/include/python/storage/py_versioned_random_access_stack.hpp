@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "storage/versioned_random_access_stack.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

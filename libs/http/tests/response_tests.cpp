@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "http/response.hpp"
-#include "network/fetch_asio.hpp"
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "http/response.hpp"
+#include "network/fetch_asio.hpp"
 
 class ResponseTests : public ::testing::Test
 {

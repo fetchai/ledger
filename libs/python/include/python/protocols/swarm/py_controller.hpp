@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "protocols/swarm/controller.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

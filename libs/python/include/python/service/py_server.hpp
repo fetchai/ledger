@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "service/server.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

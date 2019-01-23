@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/service/service_client.hpp"
 #include "service_consts.hpp"
-
-#include <iostream>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;

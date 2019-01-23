@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "core/byte_array/encoders.hpp"
 #include "storage/revertible_document_store.hpp"
-#include <iostream>
+
 using namespace fetch;
 
 using namespace fetch::storage;

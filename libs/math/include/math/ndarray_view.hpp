@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ndarray.hpp"
 #include <cassert>
 #include <vector>
+
+#include "math/ndarray.hpp"
 
 class NDArrayView
 {

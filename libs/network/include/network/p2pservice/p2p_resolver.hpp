@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+#include <vector>
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "network/p2pservice/identity_cache.hpp"
 #include "network/uri.hpp"
-
-#include <cstdint>
-#include <vector>
 
 namespace fetch {
 namespace p2p {

@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/protocol.hpp"
-
 #include "commands.hpp"
 #include "node.hpp"
 

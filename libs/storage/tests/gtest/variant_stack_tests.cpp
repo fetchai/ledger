@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "storage/variant_stack.hpp"
-
 #include <gtest/gtest.h>
 #include <stack>
+
+#include "core/random/lfg.hpp"
+#include "storage/variant_stack.hpp"
 
 using namespace fetch::storage;
 

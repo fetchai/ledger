@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/connection.hpp"
-#include "http/http_connection_manager.hpp"
-#include "http/module.hpp"
-#include "http/route.hpp"
-#include "network/management/network_manager.hpp"
-
 #include <deque>
 #include <functional>
 #include <map>
 #include <regex>
 #include <utility>
 #include <vector>
+
+#include "http/connection.hpp"
+#include "http/http_connection_manager.hpp"
+#include "http/module.hpp"
+#include "http/route.hpp"
+#include "network/management/network_manager.hpp"
 
 namespace fetch {
 namespace http {

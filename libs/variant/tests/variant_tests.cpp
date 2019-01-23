@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "variant/variant.hpp"
-
-#include <gtest/gtest.h>
 
 namespace {
 

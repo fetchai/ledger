@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/info.hpp"
-
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
+
+#include "vectorise/info.hpp"
 
 // clang-format off
 // NOLINTNEXTLINE

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gmock/gmock.h>
+
 #include "fake_executor.hpp"
 #include "ledger/executor_interface.hpp"
-
-#include <gmock/gmock.h>
 
 class MockExecutor : public fetch::ledger::ExecutorInterface
 {

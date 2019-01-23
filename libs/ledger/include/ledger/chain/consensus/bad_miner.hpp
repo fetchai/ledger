@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
-
 #include <random>
+
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
 
 namespace fetch {
 namespace chain {

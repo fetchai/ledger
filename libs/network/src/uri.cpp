@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/uri.hpp"
-
 #include <regex>
 #include <stdexcept>
+
+#include "network/uri.hpp"
 
 namespace fetch {
 namespace network {

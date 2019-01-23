@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cassert>
+
 #include "math/free_functions/exponentiation/exponentiation.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/kernels/standard_functions.hpp"
-#include <cassert>
 
 namespace fetch {
 namespace math {

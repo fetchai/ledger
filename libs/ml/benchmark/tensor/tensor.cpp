@@ -20,7 +20,6 @@
 #include <iostream>
 
 #include "math/tensor.hpp"
-
 #include "benchmark/benchmark.h"
 
 template <class T, int C, int H, int W>

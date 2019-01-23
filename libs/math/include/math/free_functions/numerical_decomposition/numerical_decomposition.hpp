@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cassert>
+
 #include "math/kernels/standard_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include <cassert>
 
 namespace fetch {
 namespace math {

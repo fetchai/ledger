@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <map>
+#include <unordered_map>
+
 #include "core/containers/queue.hpp"
 #include "core/mutex.hpp"
 #include "storage/object_store.hpp"
-
-#include <map>
-#include <unordered_map>
 
 namespace fetch {
 namespace storage {

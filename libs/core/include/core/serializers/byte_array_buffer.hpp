@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/counter.hpp"
-
 #include "core/logger.hpp"
-#include <type_traits>
 
 namespace fetch {
 namespace serializers {

@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_service.hpp"
-#include "core/containers/set_difference.hpp"
-#include "network/p2pservice/manifest.hpp"
-
 #include <algorithm>
 #include <iterator>
 #include <unordered_set>
+
+#include "network/p2pservice/p2p_service.hpp"
+#include "core/containers/set_difference.hpp"
+#include "network/p2pservice/manifest.hpp"
 
 namespace fetch {
 namespace p2p {

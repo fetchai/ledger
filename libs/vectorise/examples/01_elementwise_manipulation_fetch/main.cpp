@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/array.hpp"
-#include "vectorise/memory/shared_array.hpp"
 #include <chrono>
 #include <iostream>
 #include <vector>
+
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
 
 using type        = float;
 using array_type  = fetch::memory::Array<type>;

@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <array>
+#include <tuple>  // emulation layer
+#include <unordered_map>
+
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/call_context.hpp"
 #include "network/service/server_interface.hpp"
 #include "network/tcp/tcp_server.hpp"
-
-#include <array>
-#include <tuple>  // emulation layer
-#include <unordered_map>
 
 namespace fetch {
 namespace muddle {

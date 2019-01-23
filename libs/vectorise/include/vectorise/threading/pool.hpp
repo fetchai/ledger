@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -26,6 +24,8 @@
 #include <thread>
 #include <type_traits>
 #include <utility>
+
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace threading {

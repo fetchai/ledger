@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <utility>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -25,15 +30,9 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
-
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/abstract_connection.hpp"
-
-#include <atomic>
-#include <memory>
-#include <mutex>
-#include <utility>
 
 namespace fetch {
 namespace network {

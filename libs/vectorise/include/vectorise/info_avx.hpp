@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #ifdef __AVX__
-#include <cstddef>
-#include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vectorize {

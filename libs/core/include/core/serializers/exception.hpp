@@ -17,11 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
 #include <exception>
 #include <string>
 #include <utility>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+
 namespace fetch {
 namespace serializers {
 

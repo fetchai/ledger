@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "script/variant.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

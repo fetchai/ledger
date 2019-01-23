@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_memory.hpp"
-
 #include <functional>
 #include <memory>
 
+#include "crypto/openssl_memory.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

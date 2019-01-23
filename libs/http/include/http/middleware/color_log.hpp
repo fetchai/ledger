@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/vt100.hpp"
 #include <iostream>
+
+#include "core/commandline/vt100.hpp"
+
 namespace fetch {
 namespace http {
 namespace middleware {

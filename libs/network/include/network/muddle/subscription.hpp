@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/muddle/packet.hpp"
-
 #include <cstdint>
 #include <functional>
+
+#include "core/mutex.hpp"
+#include "network/muddle/packet.hpp"
 
 namespace fetch {
 namespace muddle {

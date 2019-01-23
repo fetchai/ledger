@@ -17,26 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/approx_logistic.hpp"
-#include "math/kernels/basic_arithmetics.hpp"
-#include "math/kernels/relu.hpp"
-#include "math/kernels/standard_functions.hpp"
-
-#include "core/assert.hpp"
-#include "math/meta/math_type_traits.hpp"
-#include "math/ndarray_broadcast.hpp"
-#include "vectorise/memory/range.hpp"
 #include <algorithm>
 #include <cassert>
 #include <numeric>
 #include <vector>
 
+#include "math/kernels/approx_logistic.hpp"
+#include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/relu.hpp"
+#include "math/kernels/standard_functions.hpp"
+#include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
+#include "math/ndarray_broadcast.hpp"
+#include "vectorise/memory/range.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 #include "math/free_functions/standard_functions/abs.hpp"
 #include "math/free_functions/standard_functions/exp.hpp"
 #include "math/free_functions/standard_functions/fmod.hpp"
 #include "math/free_functions/standard_functions/remainder.hpp"
-
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"

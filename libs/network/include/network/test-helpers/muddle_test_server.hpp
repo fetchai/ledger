@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-
-#include <iostream>
-
 #include "network/test-helpers/muddle_test_definitions.hpp"
 
 using namespace fetch::service;

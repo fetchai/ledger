@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+#include <random>
+#include <utility>
+
 #include "constellation.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "ledger/chain/consensus/bad_miner.hpp"
@@ -29,10 +33,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
-
-#include <memory>
-#include <random>
-#include <utility>
 
 using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;

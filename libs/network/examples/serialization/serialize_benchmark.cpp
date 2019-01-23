@@ -17,17 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include <iostream>
+#include <chrono>
+#include <vector>
 
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
-
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
-#include <chrono>
-#include <vector>
 
 using namespace fetch::serializers;
 using namespace fetch::byte_array;

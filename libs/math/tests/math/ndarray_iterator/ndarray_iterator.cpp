@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
-
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
 
 //#include "math/linalg/matrix.hpp"
 #include "math/free_functions/free_functions.hpp"

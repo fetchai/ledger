@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "json/document.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

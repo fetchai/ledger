@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "ml/ops/weights.hpp"
-#include <gtest/gtest.h>
 
 template <typename T>
 class WeightsTest : public ::testing::Test

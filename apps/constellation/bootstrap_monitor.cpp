@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <sstream>
+
 #include "bootstrap_monitor.hpp"
 #include "fetch_version.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-
-#include <chrono>
-#include <sstream>
 
 namespace fetch {
 namespace {

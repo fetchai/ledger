@@ -17,15 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/common.hpp"
-#include "core/logger.hpp"
-#include "vectorise/memory/shared_array.hpp"
+#include <string.h>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <ostream>
-#include <string.h>
 #include <type_traits>
+
+#include "core/common.hpp"
+#include "core/logger.hpp"
+#include "vectorise/memory/shared_array.hpp"
 
 namespace fetch {
 namespace byte_array {

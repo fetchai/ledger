@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
-
 #include <emmintrin.h>
 #include <limits>
+
+#include "vectorise/sse.hpp"
 
 namespace fetch {
 namespace vectorize {

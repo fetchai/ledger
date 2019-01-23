@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
 #include <sstream>
+
+#include "vm/generator.hpp"
 
 namespace fetch {
 namespace vm {

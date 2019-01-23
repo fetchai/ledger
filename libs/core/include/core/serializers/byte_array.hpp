@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-
-#include <type_traits>
 
 namespace fetch {
 namespace serializers {

@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <iostream>
+
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -23,8 +26,6 @@
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
-#include <gtest/gtest.h>
-#include <iostream>
 
 using namespace fetch::chain;
 using namespace fetch::byte_array;

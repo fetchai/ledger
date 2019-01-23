@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/transaction.hpp"
-#include <memory>
 
 namespace fetch {
 namespace chain {

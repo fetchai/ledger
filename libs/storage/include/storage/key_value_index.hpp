@@ -56,16 +56,16 @@
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
 
+#include <cstring>
+#include <deque>
+#include <queue>
+
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/versioned_random_access_stack.hpp"
-
-#include <cstring>
-#include <deque>
-#include <queue>
 
 namespace fetch {
 namespace storage {

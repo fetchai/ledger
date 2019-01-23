@@ -17,17 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/consumers.hpp"
-
-#include "math/free_functions/free_functions.hpp"
-#include "math/rectangular_array.hpp"
-
-#include "vectorise/threading/pool.hpp"
-
 #include <iostream>
 #include <limits>
 #include <vector>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/consumers.hpp"
+#include "math/free_functions/free_functions.hpp"
+#include "math/rectangular_array.hpp"
+#include "vectorise/threading/pool.hpp"
 
 namespace fetch {
 namespace math {

@@ -36,12 +36,12 @@
 //       │      │      │      │      │      │
 //       └──────┴──────┴──────┴──────┴──────┘
 
+#include <cstring>
+
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/variant_stack.hpp"
-
-#include <cstring>
 
 namespace fetch {
 namespace storage {

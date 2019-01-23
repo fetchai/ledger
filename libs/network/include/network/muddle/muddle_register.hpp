@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/mutex.hpp"
-#include "network/management/abstract_connection_register.hpp"
-
 #include <functional>
 #include <thread>
 #include <unordered_map>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/mutex.hpp"
+#include "network/management/abstract_connection_register.hpp"
 
 namespace fetch {
 namespace muddle {

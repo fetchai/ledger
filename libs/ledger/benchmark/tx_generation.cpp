@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <benchmark/benchmark.h>
+
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "vectorise/threading/pool.hpp"
-
-#include <benchmark/benchmark.h>
 
 using fetch::chain::MutableTransaction;
 using fetch::chain::TxSigningAdapter;

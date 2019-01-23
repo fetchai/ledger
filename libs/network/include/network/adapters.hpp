@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_asio.hpp"
-
 #include <iostream>
 #include <utility>
+
+#include "fetch_asio.hpp"
 
 namespace fetch {
 namespace network {

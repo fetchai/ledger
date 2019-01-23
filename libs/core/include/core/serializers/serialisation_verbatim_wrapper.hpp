@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include <utility>
+
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace serializers {

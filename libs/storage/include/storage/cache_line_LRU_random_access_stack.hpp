@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "storage/random_access_stack.hpp"
-
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <map>
 #include <string>
 #include <unordered_map>
+
+#include "core/assert.hpp"
+#include "storage/random_access_stack.hpp"
 
 namespace fetch {
 namespace storage {

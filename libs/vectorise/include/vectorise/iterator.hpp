@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/register.hpp"
-
 #include <cassert>
+
+#include "vectorise/register.hpp"
 
 namespace fetch {
 namespace vectorize {

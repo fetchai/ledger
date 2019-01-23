@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_rpc.hpp"
-
 #include <chrono>
 #include <iostream>
 #include <thread>
+
+#include "muddle_rpc.hpp"
 
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;

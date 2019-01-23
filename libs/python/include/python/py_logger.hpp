@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "logger.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

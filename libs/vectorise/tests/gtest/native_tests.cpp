@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "vectorise/register.hpp"
+#include <gtest/gtest.h>
 #include <iostream>
 
-#include <gtest/gtest.h>
+#include "core/random/lfg.hpp"
+#include "vectorise/register.hpp"
+
 using namespace fetch::vectorize;
 
 template <typename T>

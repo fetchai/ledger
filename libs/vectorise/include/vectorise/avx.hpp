@@ -18,16 +18,15 @@
 //------------------------------------------------------------------------------
 
 #ifdef __AVX__
-#include "vectorise/info.hpp"
-#include "vectorise/info_avx.hpp"
-#include "vectorise/register.hpp"
-
-#include <cstddef>
-#include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
+#include <cstddef>
+#include <cstdint>
 
+#include "vectorise/info.hpp"
+#include "vectorise/info_avx.hpp"
+#include "vectorise/register.hpp"
 // ???
 #include "vectorise/sse.hpp"
 

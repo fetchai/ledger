@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/ndarray_iterator.hpp"
 #include <assert.h>
 #include <iostream>
+
+#include "math/ndarray_iterator.hpp"
 
 namespace fetch {
 namespace math {

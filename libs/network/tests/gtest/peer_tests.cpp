@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/peer.hpp"
-
 #include <gtest/gtest.h>
+
+#include "network/peer.hpp"
 
 using fetch::network::Peer;
 

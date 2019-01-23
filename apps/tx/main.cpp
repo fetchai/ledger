@@ -18,18 +18,6 @@
 
 #define TX_SIGNING_DBG_OUTPUT
 
-#include "core/commandline/cli_header.hpp"
-#include "core/commandline/parameter_parser.hpp"
-#include "core/commandline/params.hpp"
-
-#include "core/json/document.hpp"
-#include "variant/variant.hpp"
-#include "variant/variant_utils.hpp"
-
-#include "core/byte_array/decoders.hpp"
-#include "ledger/chain/helper_functions.hpp"
-#include "ledger/chain/wire_transaction.hpp"
-
 #include <array>
 #include <csignal>
 #include <fstream>
@@ -39,6 +27,16 @@
 #include <string>
 #include <system_error>
 #include <vector>
+
+#include "core/commandline/cli_header.hpp"
+#include "core/commandline/parameter_parser.hpp"
+#include "core/commandline/params.hpp"
+#include "core/json/document.hpp"
+#include "variant/variant.hpp"
+#include "variant/variant_utils.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "ledger/chain/helper_functions.hpp"
+#include "ledger/chain/wire_transaction.hpp"
 
 namespace {
 

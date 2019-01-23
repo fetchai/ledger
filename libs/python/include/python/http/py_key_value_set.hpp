@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "http/key_value_set.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

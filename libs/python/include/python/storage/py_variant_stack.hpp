@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "storage/variant_stack.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

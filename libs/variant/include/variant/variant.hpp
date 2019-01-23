@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "crypto/fnv.hpp"
-#include "meta/type_traits.hpp"
-#include "variant/detail/element_pool.hpp"
-
 #include <cstdint>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "crypto/fnv.hpp"
+#include "meta/type_traits.hpp"
+#include "variant/detail/element_pool.hpp"
 
 namespace fetch {
 namespace variant {

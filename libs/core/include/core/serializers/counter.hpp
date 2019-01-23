@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/common.hpp"
 #include "core/macros.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
-#include <type_traits>
 
 namespace fetch {
 namespace serializers {

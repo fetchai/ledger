@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <random>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/random/lfg.hpp"
 #include "core/serializers/counter.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "network/service/types.hpp"
-#include <random>
 
 namespace fetch {
 namespace common {

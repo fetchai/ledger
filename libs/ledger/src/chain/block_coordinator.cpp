@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block_coordinator.hpp"
-
 #include <chrono>
+
+#include "ledger/chain/block_coordinator.hpp"
 
 using std::this_thread::sleep_for;
 using std::chrono::microseconds;

@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <random>
+#include <sstream>
+
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -30,9 +33,6 @@
 #include "miner/resource_mapper.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
-
-#include <random>
-#include <sstream>
 
 namespace fetch {
 namespace p2p {

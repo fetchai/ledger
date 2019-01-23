@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/lane_controller.hpp"
+
 namespace fetch {
 namespace ledger {
 

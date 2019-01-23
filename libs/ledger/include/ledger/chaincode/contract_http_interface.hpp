@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <iostream>
+#include <sstream>
+
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/stl_types.hpp"
@@ -27,14 +31,9 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "miner/miner_interface.hpp"
-
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
-
-#include <algorithm>
-#include <iostream>
-#include <sstream>
 
 namespace fetch {
 namespace ledger {

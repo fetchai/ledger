@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-#include "ledger/executor_interface.hpp"
-
 #include <atomic>
 #include <cstdint>
 #include <future>
 #include <memory>
 #include <utility>
+
+#include "ledger/chain/transaction.hpp"
+#include "ledger/executor_interface.hpp"
 
 namespace fetch {
 namespace ledger {

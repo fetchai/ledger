@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <unordered_map>
+
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
@@ -29,9 +32,6 @@
 #include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
 #include "transaction_store_sync_protocol.hpp"
-
-#include <algorithm>
-#include <unordered_map>
 
 namespace fetch {
 namespace ledger {

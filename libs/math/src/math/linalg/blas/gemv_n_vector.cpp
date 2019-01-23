@@ -20,6 +20,7 @@
 #include "math/linalg/blas/gemv_n.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/linalg/prototype.hpp"
+
 namespace fetch {
 namespace math {
 namespace linalg {

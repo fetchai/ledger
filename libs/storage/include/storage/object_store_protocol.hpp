@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+
 #include "network/service/protocol.hpp"
 #include "storage/transient_object_store.hpp"
-#include <functional>
 
 namespace fetch {
 namespace storage {

@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
 #include "core/random/lcg.hpp"
 #include "math/distance/pearson.hpp"
 #include "math/linalg/matrix.hpp"
-#include <gtest/gtest.h>
 
 using namespace fetch::math::distance;
 using namespace fetch::math::linalg;

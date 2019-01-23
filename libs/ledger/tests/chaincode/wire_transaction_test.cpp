@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include <gmock/gmock.h>
+#include <memory>
 
 #include "ledger/chain/helper_functions.hpp"
 #include "ledger/chain/wire_transaction.hpp"
-#include <memory>
 
 namespace fetch {
 namespace chain {

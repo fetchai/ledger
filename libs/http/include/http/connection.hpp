@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <deque>
+#include <memory>
+
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
@@ -26,9 +29,6 @@
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "network/fetch_asio.hpp"
-
-#include <deque>
-#include <memory>
 
 namespace fetch {
 namespace http {

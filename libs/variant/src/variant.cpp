@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "variant/variant.hpp"
 #include "core/macros.hpp"
-
-#include <iostream>
 
 namespace fetch {
 namespace variant {

@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <unordered_set>
+#include <vector>
+
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/p2pservice/manifest.hpp"
-
-#include <unordered_set>
-#include <vector>
 
 namespace fetch {
 namespace p2p {

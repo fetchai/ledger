@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <iostream>
+#include <map>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "storage/file_object.hpp"
 #include "storage/key_value_index.hpp"
-#include <iostream>
-#include <map>
 
-#include <gtest/gtest.h>
 using namespace fetch;
 using namespace fetch::storage;
 

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <stdlib.h>
 // This represents the API to the network test
 #include <chrono>
 #include <ctime>
@@ -26,7 +27,6 @@
 #include <memory>
 #include <random>
 #include <set>
-#include <stdlib.h>
 #include <utility>
 #include <vector>
 
@@ -34,7 +34,6 @@
 #include "core/logger.hpp"
 #include "network_classes.hpp"
 #include "node_directory.hpp"
-
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
 

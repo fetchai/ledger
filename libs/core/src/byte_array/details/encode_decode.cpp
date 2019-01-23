@@ -16,8 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/details/encode_decode.hpp"
 #include <stdexcept>
+
+#include "core/byte_array/details/encode_decode.hpp"
+
 namespace fetch {
 namespace byte_array {
 namespace details {

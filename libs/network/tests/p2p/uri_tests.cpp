@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/uri.hpp"
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+
+#include "network/uri.hpp"
 
 using fetch::network::Uri;
 

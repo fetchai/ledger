@@ -29,7 +29,6 @@
 #include "network/service/message_types.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
-
 #include "core/serializers/counter.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/promise.hpp"

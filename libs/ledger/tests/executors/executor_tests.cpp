@@ -16,16 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <memory>
+#include <random>
+
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/executor.hpp"
-
 #include "mock_storage_unit.hpp"
-
-#include <gtest/gtest.h>
-#include <memory>
-#include <random>
 
 using ::testing::_;
 

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/packet.hpp"
-
 #include <set>
+
+#include "network/muddle/packet.hpp"
 
 namespace fetch {
 namespace muddle {

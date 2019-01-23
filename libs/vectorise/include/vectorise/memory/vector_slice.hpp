@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstring>
+
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/meta/log2.hpp"
 #include "vectorise/platform.hpp"
-
-#include <cstring>
 
 namespace fetch {
 namespace memory {

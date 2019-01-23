@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/feed_subscription_manager.hpp"
-
 #include "network/service/server_interface.hpp"
 
 namespace fetch {

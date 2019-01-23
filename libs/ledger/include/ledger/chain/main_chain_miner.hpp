@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <random>
+#include <thread>
+
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "metrics/metrics.hpp"
 #include "miner/miner_interface.hpp"
-
-#include <chrono>
-#include <random>
-#include <thread>
 
 namespace fetch {
 namespace chain {

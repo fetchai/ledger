@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "./json_long_strings.hpp"
-#include "core/json/document.hpp"
-#include "core/json/exceptions.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+
+#include "./json_long_strings.hpp"
+#include "core/json/document.hpp"
+#include "core/json/exceptions.hpp"
 
 using namespace fetch::json;
 using namespace fetch::byte_array;
@@ -52,7 +53,8 @@ static const TestCase
 4
 ,1,)",
                  false, "", true},
-                {R"(["a"\f])", false, "", true},
+                {R"(["
+a"\f])", false, "", true},
                 {R"([*])", false, "", true},
                 {R"(["")", false, "", true},
                 {R"([1,)", false, "", true},
@@ -170,7 +172,8 @@ static const TestCase
                 {R"({"asd":"asd")", false, "", true},
                 {"å", false, "", true},
                 {R"([⁠])", false, "", true},
-                {R"([])", false, "", true},
+                {R"([
+])", false, "", true},
                 {R"(["\	\"])", false, "", true},
                 {R"(["\�"]))", false, "", true},
                 {R"(["\{["\{["\{["\{)", false, "", true},
@@ -318,7 +321,9 @@ static const TestCase
                 {R"(["\uD834\uDd1e"])", true, R"(["\\uD834\\uDd1e"])", false},
                 {R"(["\u0821"])", true, R"(["\\u0821"])", false},
                 {R"(["\u0123"])", true, R"(["\\u0123"])", false},
-                {R"([" "])", true, R"([" "])", false},
+                {R"(["
+"])", true, R"(["
+"])", false},
                 {R"(["\00,
 "])",
                  true, R"(["\\00,

@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include <gtest/gtest.h>
+
+#include "math/tensor.hpp"
 
 template <typename T>
 class TensorIndexingTest : public ::testing::Test

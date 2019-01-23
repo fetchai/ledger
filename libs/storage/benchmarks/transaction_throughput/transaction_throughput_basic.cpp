@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <benchmark/benchmark.h>
+#include <vector>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
@@ -24,9 +27,6 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "storage/transient_object_store.hpp"
-
-#include <benchmark/benchmark.h>
-#include <vector>
 
 using fetch::byte_array::ByteArray;
 using fetch::storage::ResourceID;

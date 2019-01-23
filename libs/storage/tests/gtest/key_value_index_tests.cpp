@@ -16,15 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <algorithm>
+#include <iomanip>
+#include <iostream>
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
 #include "storage/key.hpp"
 #include "storage/key_value_index.hpp"
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
+
 using namespace fetch;
 using namespace fetch::storage;
 using cached_kvi_type = KeyValueIndex<KeyValuePair<>, CachedRandomAccessStack<KeyValuePair<>>>;

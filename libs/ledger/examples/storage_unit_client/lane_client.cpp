@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "common.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/decoders.hpp"
@@ -32,7 +34,6 @@
 #include "network/tcp/tcp_client.hpp"
 #include "storage/document_store_protocol.hpp"
 
-#include <iostream>
 using namespace fetch;
 
 using namespace fetch::ledger;

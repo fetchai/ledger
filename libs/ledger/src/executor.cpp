@@ -16,6 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <chrono>
+#include <random>
+#include <thread>
+
 #include "ledger/executor.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -23,11 +28,6 @@
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "metrics/metrics.hpp"
-
-#include <algorithm>
-#include <chrono>
-#include <random>
-#include <thread>
 
 static constexpr char const *LOGGING_NAME = "Executor";
 

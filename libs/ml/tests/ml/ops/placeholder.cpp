@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "ml/ops/placeholder.hpp"
 #include "math/ndarray.hpp"
-#include <gtest/gtest.h>
 
 TEST(placeholder_test, setData)
 {

@@ -23,7 +23,6 @@
 #include "ml/layers/layers.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
-
 #include "benchmark/benchmark.h"
 
 using namespace fetch::ml;

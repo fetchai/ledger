@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -25,7 +27,6 @@
 #include "core/serializers/pointer_types.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "core/serializers/type_register.hpp"
-#include <type_traits>
 
 namespace fetch {
 namespace serializers {

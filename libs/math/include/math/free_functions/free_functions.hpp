@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/deep_learning/activation_functions.hpp"
 #include "math/free_functions/deep_learning/loss_functions.hpp"

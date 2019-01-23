@@ -24,13 +24,13 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
-#include "core/assert.hpp"
-#include "storage/random_access_stack.hpp"
-
 #include <fstream>
 #include <map>
 #include <string>
 #include <unordered_map>
+
+#include "core/assert.hpp"
+#include "storage/random_access_stack.hpp"
 
 namespace fetch {
 namespace storage {

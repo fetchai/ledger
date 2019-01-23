@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <algorithm>
+#include <iostream>
+
 #include "core/random/lfg.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "storage/object_store.hpp"
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <iostream>
 
 using namespace fetch::storage;
 using namespace fetch::byte_array;

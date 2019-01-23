@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/lane_identity.hpp"
+
 namespace fetch {
 namespace ledger {
 

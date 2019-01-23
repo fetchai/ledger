@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-
-#include <iostream>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;

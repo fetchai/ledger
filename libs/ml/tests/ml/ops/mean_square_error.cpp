@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "ml/ops/mean_square_error.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
 
 template <typename T>
 class MeanSquareErrorTest : public ::testing::Test

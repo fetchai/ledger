@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/node.hpp"
-#include "ml/ops/placeholder.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
+
+#include "ml/node.hpp"
+#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {

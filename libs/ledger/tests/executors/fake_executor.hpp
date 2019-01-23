@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "ledger/executor_interface.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "storage/resource_mapper.hpp"
-
 #include <atomic>
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
 #include <utility>
+
+#include "core/logger.hpp"
+#include "ledger/executor_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "storage/resource_mapper.hpp"
 
 class FakeExecutor : public fetch::ledger::ExecutorInterface
 {

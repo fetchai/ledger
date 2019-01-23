@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
-
-#include <gtest/gtest.h>
 
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"

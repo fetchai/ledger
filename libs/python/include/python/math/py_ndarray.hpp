@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <pybind11/stl.h>
+
 #include "math/exp.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/log.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_squeeze.hpp"
 #include "python/fetch_pybind.hpp"
-#include <pybind11/stl.h>
 
 namespace fetch {
 namespace math {

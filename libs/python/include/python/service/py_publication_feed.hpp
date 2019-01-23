@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "service/publication_feed.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

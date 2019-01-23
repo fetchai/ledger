@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

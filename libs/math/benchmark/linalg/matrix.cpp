@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include <iostream>
+#include <chrono>
+#include <iomanip>
 
 #include "core/random/lcg.hpp"
 #include "math/linalg/matrix.hpp"
 
-#include <chrono>
-#include <iomanip>
 using namespace fetch::math::linalg;
 
 using data_type            = double;

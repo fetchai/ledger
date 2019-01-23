@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/shared_array.hpp"
 #include <chrono>
 #include <cmath>
 #include <iostream>
 #include <vector>
+
+#include "vectorise/memory/shared_array.hpp"
 
 using type       = double;
 using array_type = std::vector<type>;

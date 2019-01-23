@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/dispatcher.hpp"
-
 #include <gmock/gmock.h>
 #include <memory>
+
+#include "network/muddle/dispatcher.hpp"
 
 class DispatcherTests : public ::testing::Test
 {

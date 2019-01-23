@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <math/linalg/matrix.hpp>
 #include <iomanip>
 #include <iostream>
 
 #include "math/free_functions/combinatorics/combinatorics.hpp"
-#include <math/linalg/matrix.hpp>
 
 using namespace fetch::math::combinatorics;
 

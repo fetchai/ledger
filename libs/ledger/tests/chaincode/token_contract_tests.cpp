@@ -16,6 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gmock/gmock.h>
+#include <ledger/chain/mutable_transaction.hpp>
+#include <iostream>
+#include <memory>
+#include <random>
+#include <sstream>
+#include <string>
+
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -23,15 +31,6 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/token_contract_deed.hpp"
 #include "mock_storage_unit.hpp"
-
-#include <gmock/gmock.h>
-
-#include <iostream>
-#include <ledger/chain/mutable_transaction.hpp>
-#include <memory>
-#include <random>
-#include <sstream>
-#include <string>
 
 namespace fetch {
 namespace ledger {

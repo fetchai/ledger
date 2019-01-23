@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/register.hpp"
-#include "vectorise/sse.hpp"
+#include <gtest/gtest.h>
 #include <iostream>
 
-#include <gtest/gtest.h>
+#include "vectorise/register.hpp"
+#include "vectorise/sse.hpp"
 
 using namespace fetch::vectorize;
 

@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>
+#include <string>
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/identifier.hpp"
 #include "storage/resource_mapper.hpp"
-
-#include <cstdint>
-#include <string>
 
 namespace fetch {
 namespace miner {

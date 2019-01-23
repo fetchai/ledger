@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_memory_detail.hpp"
 #include <memory>
+
+#include "crypto/openssl_memory_detail.hpp"
 
 namespace fetch {
 namespace crypto {

@@ -17,12 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <type_traits>
+
 #include "core/byte_array/byte_array.hpp"
 #include "core/fixed_point/fixed_point.hpp"
-
 #include "meta/type_traits.hpp"
-
-#include <type_traits>
 
 namespace fetch {
 

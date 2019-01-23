@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "core/service_ids.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/protocols/execution_manager_rpc_protocol.hpp"
 #include "network/service/server.hpp"
-
-#include <memory>
 
 namespace fetch {
 namespace ledger {

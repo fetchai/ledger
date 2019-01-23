@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <cmath>
+#include <iostream>
+
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
-#include <cmath>
-#include <gtest/gtest.h>
-#include <iostream>
 
 using type        = float;
 using array_type  = fetch::memory::SharedArray<type>;

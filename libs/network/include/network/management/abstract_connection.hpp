@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <memory>
+
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/message.hpp"
 
-#include <atomic>
-#include <memory>
 namespace fetch {
 namespace network {
 

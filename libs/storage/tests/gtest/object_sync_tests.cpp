@@ -16,6 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <algorithm>
+#include <iostream>
+#include <utility>
+
 #include "core/random/lfg.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
@@ -28,10 +33,6 @@
 #include "network/peer.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <utility>
 
 // Test of the object sync protocol in the style of the transaction sync in the lane service.
 // A service, TestService here, owns an object store, and the protocols ensure that new objects

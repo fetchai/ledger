@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/prover.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

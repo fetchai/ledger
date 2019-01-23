@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <math/linalg/matrix.hpp>
 #include <cassert>
 #include <iostream>
-#include <math/linalg/matrix.hpp>
 
 namespace fetch {
 namespace math {

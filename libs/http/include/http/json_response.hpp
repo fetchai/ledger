@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <sstream>
+
 #include "http/mime_types.hpp"
 #include "http/response.hpp"
 #include "variant/variant.hpp"
 
-#include <sstream>
 namespace fetch {
 namespace http {
 

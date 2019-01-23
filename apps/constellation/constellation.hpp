@@ -17,6 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <deque>
+#include <iterator>
+#include <memory>
+#include <random>
+#include <thread>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "http/module.hpp"
 #include "http/server.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
@@ -33,18 +45,6 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-
-#include <algorithm>
-#include <atomic>
-#include <chrono>
-#include <deque>
-#include <iterator>
-#include <memory>
-#include <random>
-#include <thread>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 
 namespace fetch {
 

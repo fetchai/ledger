@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/consumers.hpp"
-#include "core/byte_array/tokenizer/tokenizer.hpp"
-#include <fstream>
 #include <gtest/gtest.h>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "core/byte_array/consumers.hpp"
+#include "core/byte_array/tokenizer/tokenizer.hpp"
 
 using namespace fetch::byte_array;
 

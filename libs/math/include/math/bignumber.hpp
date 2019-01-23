@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
 #include <algorithm>
 #include <cmath>
 #include <vector>
+
+#include "core/assert.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+
 namespace fetch {
 namespace math {
 /* Implements a subset of big number functionality.

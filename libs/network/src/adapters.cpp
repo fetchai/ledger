@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/adapters.hpp"
-
 #include <ifaddrs.h>
 #include <sys/types.h>
+
+#include "network/adapters.hpp"
 
 namespace fetch {
 namespace network {

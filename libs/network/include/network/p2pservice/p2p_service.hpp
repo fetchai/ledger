@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <unordered_map>
+
 #include "core/service_ids.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/promise_of.hpp"
@@ -35,8 +37,6 @@
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/peer.hpp"
-
-#include <unordered_map>
 
 namespace fetch {
 namespace ledger {

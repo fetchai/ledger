@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "core/logger.hpp"
 #include "helper_functions.hpp"
 #include "http/server.hpp"
@@ -25,7 +27,6 @@
 #include "network/service/server.hpp"
 #include "node_basic.hpp"
 #include "protocols/network_benchmark.hpp"
-#include <memory>
 
 namespace fetch {
 namespace network_benchmark {

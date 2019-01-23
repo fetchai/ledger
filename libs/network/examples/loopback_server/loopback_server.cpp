@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/loopback_server.hpp"
 #include <iostream>
+
+#include "network/tcp/loopback_server.hpp"
 
 int main(int /*argc*/, char * /*argv*/ [])
 {

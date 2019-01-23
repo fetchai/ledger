@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "ledger/execution_manager_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
@@ -25,8 +27,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
-
-#include <memory>
 
 namespace fetch {
 namespace ledger {

@@ -17,12 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/abstract_mutex.hpp"
-#include "core/commandline/vt100.hpp"
+#include <execinfo.h>
 #include <atomic>
 #include <chrono>
 #include <ctime>
-#include <execinfo.h>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
@@ -31,6 +29,9 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "core/abstract_mutex.hpp"
+#include "core/commandline/vt100.hpp"
 
 namespace fetch {
 

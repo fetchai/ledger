@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/logger.hpp"
 #include "network/service/types.hpp"
+
 namespace fetch {
 namespace service {
 

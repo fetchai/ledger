@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/server.hpp"
 #include <fstream>
 #include <iostream>
+
+#include "http/server.hpp"
+
 using namespace fetch::http;
 
 int main()

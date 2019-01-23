@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+
 #include "miner/basic_miner.hpp"
 #include "core/logger.hpp"
 #include "miner/resource_mapper.hpp"
-
-#include <algorithm>
 
 namespace fetch {
 namespace miner {

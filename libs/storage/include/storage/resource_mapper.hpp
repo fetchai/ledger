@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <limits>
+#include <type_traits>
+#include <utility>
+
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-
-#include <limits>
-#include <type_traits>
-#include <utility>
 
 namespace fetch {
 namespace storage {

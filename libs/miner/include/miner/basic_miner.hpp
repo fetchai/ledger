@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <list>
+
 #include "core/mutex.hpp"
 #include "meta/is_log2.hpp"
 #include "miner/miner_interface.hpp"
 #include "miner/optimisation/bitvector.hpp"
 #include "vectorise/threading/pool.hpp"
-#include <list>
 
 namespace fetch {
 namespace miner {

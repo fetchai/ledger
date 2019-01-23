@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+#include <vector>
+
 #include "core/assert.hpp"
 #include "network/service/abstract_callable.hpp"
 #include "network/service/abstract_publication_feed.hpp"
 
-#include <functional>
-#include <vector>
 namespace fetch {
 namespace service {
 

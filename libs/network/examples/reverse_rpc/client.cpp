@@ -21,7 +21,6 @@
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "network/service/service_client.hpp"
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"

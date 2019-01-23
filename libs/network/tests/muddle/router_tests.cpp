@@ -16,17 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include <thread>
+
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/router.hpp"
-
-#include <atomic>
-#include <chrono>
-#include <gtest/gtest.h>
-#include <memory>
-#include <thread>
 
 namespace {
 

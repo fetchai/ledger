@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "containers/vector.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

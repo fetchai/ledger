@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cmath>
+#include <random>
+
 #include "core/random/lcg.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/variable.hpp"
-#include <cmath>
-#include <random>
 
 namespace fetch {
 namespace ml {

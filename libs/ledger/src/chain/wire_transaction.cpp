@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <sstream>
+
 #include "ledger/chain/wire_transaction.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/serialisation_argument_wrapper.hpp"
 #include "variant/variant.hpp"
-
-#include <sstream>
 
 using fetch::variant::Variant;
 using fetch::byte_array::ToBase64;

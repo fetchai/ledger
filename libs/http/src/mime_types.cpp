@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/mime_types.hpp"
 #include <algorithm>
 #include <vector>
+
+#include "http/mime_types.hpp"
+
 namespace fetch {
 namespace http {
 

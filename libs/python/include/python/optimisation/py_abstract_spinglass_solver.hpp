@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "optimisation/abstract_spinglass_solver.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

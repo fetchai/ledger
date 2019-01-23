@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"
-#include "crypto/sha256.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-
 #include <algorithm>
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "crypto/fnv.hpp"
+#include "crypto/sha256.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {

@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/meta/log2.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
+
+#include "vectorise/meta/log2.hpp"
 
 #define TEST_LOG_EX__EQ__X(X) fetch::meta::Log2<(1ull << X)>::value == X
 

@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "ml/ops/relu.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
-#include <gtest/gtest.h>
 
 template <typename T>
 class ReluTest : public ::testing::Test

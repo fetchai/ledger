@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+
 #include "ml/session.hpp"
 #include "math/linalg/matrix.hpp"
 #include "ml/ops/ops.hpp"
-#include <cmath>
-#include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 using namespace fetch::ml;
 #define ARRAY_SIZE 100

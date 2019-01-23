@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
 #include <iostream>
 #include <memory>
+
+#include "ml/graph.hpp"
 
 namespace fetch {
 namespace ml {

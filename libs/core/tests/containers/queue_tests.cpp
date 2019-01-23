@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/queue.hpp"
-
-#include <atomic>
 #include <gtest/gtest.h>
+#include <atomic>
 #include <memory>
 #include <thread>
 #include <vector>
+
+#include "core/containers/queue.hpp"
 
 namespace {
 

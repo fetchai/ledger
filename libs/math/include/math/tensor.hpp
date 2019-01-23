@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include <iostream>
 #include <memory>
 #include <vector>
+
+#include "core/assert.hpp"
 
 namespace fetch {
 namespace math {

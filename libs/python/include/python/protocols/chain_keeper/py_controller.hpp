@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "protocols/chain_keeper/controller.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

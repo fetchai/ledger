@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/commandline/vt100.hpp"
-
 #include <algorithm>
 #include <cctype>
+
+#include "core/commandline/vt100.hpp"
 
 namespace fetch {
 namespace commandline {

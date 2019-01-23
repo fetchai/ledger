@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-
 #include <atomic>
 #include <functional>
 #include <list>
 #include <memory>
 #include <unordered_map>
+
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace service {

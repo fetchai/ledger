@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/sha256.hpp"
 #include <stdexcept>
+
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace crypto {

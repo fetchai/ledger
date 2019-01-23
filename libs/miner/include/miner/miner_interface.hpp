@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
-
-#include <cstddef>
 
 namespace fetch {
 namespace miner {

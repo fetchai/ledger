@@ -19,6 +19,7 @@
 
 //#include "storage/indexed_document_store.hpp"
 #include "fetch_pybind.hpp"
+
 namespace fetch {
 namespace storage {
 

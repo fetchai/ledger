@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cmath>
+
 #include "core/assert.hpp"
 #include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
-
-#include <cmath>
 
 namespace fetch {
 namespace math {

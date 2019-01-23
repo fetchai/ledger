@@ -16,6 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <random>
+#include <sstream>
+#include <unordered_set>
+
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/cli_header.hpp"
 #include "core/commandline/parameter_parser.hpp"
@@ -26,13 +33,6 @@
 #include "ledger/chain/transaction.hpp"
 #include "miner/block_optimiser.hpp"
 #include "miner/transaction_item.hpp"
-
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <random>
-#include <sstream>
-#include <unordered_set>
 
 using namespace fetch;
 using namespace fetch::optimisers;

@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <utility>
+
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
@@ -24,10 +27,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/message.hpp"
-
 #include "network/fetch_asio.hpp"
-#include <atomic>
-#include <utility>
 
 namespace fetch {
 namespace network {

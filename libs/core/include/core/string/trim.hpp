@@ -23,6 +23,7 @@
 #include <cctype>
 #include <functional>
 #include <locale>
+
 namespace fetch {
 namespace string {
 inline void TrimFromRight(std::string &s)

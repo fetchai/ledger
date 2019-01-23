@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
-#include "network/tcp/tcp_client.hpp"
 #include <cstdlib>
 #include <iostream>
+
+#include "core/serializers/stl_types.hpp"
+#include "network/tcp/tcp_client.hpp"
+
 using namespace fetch::network;
 
 class Client : public TCPClient

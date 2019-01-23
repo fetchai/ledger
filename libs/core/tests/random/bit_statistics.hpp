@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-
 #include <cmath>
 #include <iostream>
 #include <vector>
+
+#include "core/random/lfg.hpp"
 
 template <typename T = fetch::random::LaggedFibonacciGenerator<>>
 class BitStatistics

@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa_signature.hpp"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

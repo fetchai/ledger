@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+#include <type_traits>
+#include <utility>
+
 #include "core/logger.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/muddle/router.hpp"
 #include "network/tcp/abstract_server.hpp"
-
-#include <memory>
-#include <type_traits>
-#include <utility>
 
 namespace fetch {
 namespace muddle {

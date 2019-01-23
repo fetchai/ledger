@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/identifier.hpp"
 #include <gtest/gtest.h>
+
+#include "ledger/identifier.hpp"
 
 using fetch::ledger::Identifier;
 

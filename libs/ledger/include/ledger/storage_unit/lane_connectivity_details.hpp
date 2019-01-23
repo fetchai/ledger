@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
-#include <atomic>
 
 namespace fetch {
 namespace ledger {

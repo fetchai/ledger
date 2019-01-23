@@ -18,11 +18,12 @@
 
 //#include "core/uri.hpp"
 
-#include "core/byte_array/byte_array.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <random>
+
+#include "core/byte_array/byte_array.hpp"
 
 uint32_t GetRandom()
 {

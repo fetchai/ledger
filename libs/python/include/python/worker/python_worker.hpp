@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <time.h>
+#include <unistd.h>
+#include <string>
+
 #include "network/generics/network_node_core.hpp"
 #include "network/swarm/swarm_agent_api_impl.hpp"
 #include "network/swarm/swarm_http_interface.hpp"
 #include "network/swarm/swarm_random.hpp"
-
-#include <string>
-#include <time.h>
-#include <unistd.h>
 
 namespace fetch {
 namespace swarm {

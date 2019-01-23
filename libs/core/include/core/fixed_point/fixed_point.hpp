@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fixed_point_tag.hpp"
 #include <iostream>
 #include <sstream>
+
+#include "fixed_point_tag.hpp"
 
 //#include <ostream>
 //#include <exception>
@@ -27,9 +28,10 @@
 //#include <cstdint>
 //#include <type_traits>
 
-#include "meta/type_traits.hpp"
 #include <cassert>
 #include <limits>
+
+#include "meta/type_traits.hpp"
 
 namespace fetch {
 namespace fixed_point {

@@ -18,11 +18,12 @@
 
 #define FETCH_TESTING_ENABLED
 
+#include <gtest/gtest.h>
+
 #include "core/random/lcg.hpp"
 #include "iostream"
 #include "vectorise/memory/shared_array.hpp"
 
-#include <gtest/gtest.h>
 using namespace fetch::memory;
 
 using data_type  = uint64_t;

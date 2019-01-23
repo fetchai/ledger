@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <vector>
+
 namespace fetch {
 namespace math {
 namespace spline {

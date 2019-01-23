@@ -17,18 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <math/linalg/matrix.hpp>
+#include <math/shapeless_array.hpp>
 #include <iomanip>
 #include <iostream>
-
-#include "math/free_functions/clustering_algorithms/k_means.hpp"
-#include "math/free_functions/combinatorics/combinatorics.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/linalg/matrix.hpp>
-#include <math/shapeless_array.hpp>
 #include <string>
 #include <vector>
+
+#include "math/free_functions/clustering_algorithms/k_means.hpp"
+#include "math/free_functions/combinatorics/combinatorics.hpp"
 
 using namespace fetch::math::linalg;
 

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <benchmark/benchmark.h>
+
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
-
-#include <benchmark/benchmark.h>
 
 using fetch::chain::MutableTransaction;
 using fetch::crypto::ECDSASigner;

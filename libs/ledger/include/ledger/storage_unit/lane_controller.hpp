@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/lane_identity.hpp"
@@ -29,10 +33,6 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/uri.hpp"
-
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
 
 namespace fetch {
 namespace ledger {

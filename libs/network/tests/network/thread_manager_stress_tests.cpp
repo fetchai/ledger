@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/management/network_manager.hpp"
-#include <cstdlib>
 #include <gtest/gtest.h>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
+
+#include "network/management/network_manager.hpp"
 
 using namespace fetch::network;
 

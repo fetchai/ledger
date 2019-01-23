@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/service/promise.hpp"
-
 #include <unordered_map>
 #include <vector>
+
+#include "core/mutex.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace p2p {

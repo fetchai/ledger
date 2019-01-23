@@ -16,23 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "ledger/execution_manager.hpp"
-
-#include "block_configs.hpp"
-#include "mock_executor.hpp"
-#include "test_block.hpp"
-
-#include "mock_storage_unit.hpp"
-
 #include <gmock/gmock.h>
-
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <random>
 #include <thread>
+
+#include "core/logger.hpp"
+#include "ledger/execution_manager.hpp"
+#include "block_configs.hpp"
+#include "mock_executor.hpp"
+#include "test_block.hpp"
+#include "mock_storage_unit.hpp"
 
 using ::testing::_;
 

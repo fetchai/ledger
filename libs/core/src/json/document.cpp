@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-
 #include <cstdlib>
+
+#include "core/json/document.hpp"
 
 namespace fetch {
 namespace json {

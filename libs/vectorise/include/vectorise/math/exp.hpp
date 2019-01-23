@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
-
 #include <cstddef>
+
+#include "vectorise/sse.hpp"
 
 namespace fetch {
 namespace vectorize {

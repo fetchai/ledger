@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-
 #include "gmock/gmock.h"
 
 namespace fetch {

@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <vector>
+
 #include "core/byte_array/byte_array.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "storage/document.hpp"
 #include "storage/resource_mapper.hpp"
-
-#include <vector>
 
 namespace fetch {
 namespace ledger {

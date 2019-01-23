@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bit_statistics.hpp"
-#include "core/random/lfg.hpp"
-#include <cmath>
 #include <gtest/gtest.h>
+#include <cmath>
 #include <iostream>
 #include <vector>
+
+#include "bit_statistics.hpp"
+#include "core/random/lfg.hpp"
 
 TEST(lfg_gtest, basic_test)
 {

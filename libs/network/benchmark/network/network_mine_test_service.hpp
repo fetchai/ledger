@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <memory>
+
 #include "core/logger.hpp"
 #include "helper_functions.hpp"
 #include "http/server.hpp"
@@ -27,7 +29,6 @@
 #include "network/test-helpers/muddle_test_server.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_mine_test.hpp"
-#include <memory>
 
 namespace fetch {
 namespace network_mine_test {

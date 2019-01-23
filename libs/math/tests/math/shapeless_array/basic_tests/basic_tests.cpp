@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 
 #include "math/kernels/sign.hpp"
 #include "math/shapeless_array.hpp"
-#include <gtest/gtest.h>
-
 #include "core/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
 

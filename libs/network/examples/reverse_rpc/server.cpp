@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "network/service/server.hpp"
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -31,8 +30,8 @@ const int SERVICE_TEST = 1;
 const int CHANNEL_RPC  = 1;
 
 #include <iostream>
-
 #include <set>
+
 using namespace fetch::service;
 using namespace fetch::byte_array;
 

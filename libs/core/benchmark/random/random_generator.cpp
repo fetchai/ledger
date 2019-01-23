@@ -24,7 +24,6 @@
 */
 
 #include <benchmark/benchmark.h>
-
 #include <memory>
 #include <random>
 

@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <math/linalg/matrix.hpp>
 #include <iomanip>
 #include <iostream>
 
 #include "core/random/lcg.hpp"
 #include "math/free_functions/free_functions.hpp"
-#include <math/linalg/matrix.hpp>
 
 using namespace fetch::math::linalg;
 

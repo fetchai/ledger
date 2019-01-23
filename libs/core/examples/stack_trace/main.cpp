@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/mutex.hpp"
 #include <atomic>
 #include <iostream>
 #include <memory>
 #include <thread>
+
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
 
 static constexpr char const *LOGGING_NAME = "main";
 

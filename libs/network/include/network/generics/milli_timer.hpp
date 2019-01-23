@@ -19,9 +19,9 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 
 #include "core/logger.hpp"
-#include <chrono>
 
 namespace fetch {
 namespace generics {

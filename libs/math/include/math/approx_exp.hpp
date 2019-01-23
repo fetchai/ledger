@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-
 #include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <vector>
+
+#include "core/assert.hpp"
+
 namespace fetch {
 namespace math {
 

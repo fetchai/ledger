@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "network/managementtcp.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

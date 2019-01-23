@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/adapters.hpp"
-
 #include <iostream>
+
+#include "network/adapters.hpp"
 
 int main()
 {

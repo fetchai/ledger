@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <array>
+#include <deque>
+
 #include "core/mutex.hpp"
 #include "core/sync/tickets.hpp"
 #include "meta/is_log2.hpp"
-
-#include <array>
-#include <deque>
 
 namespace fetch {
 namespace core {

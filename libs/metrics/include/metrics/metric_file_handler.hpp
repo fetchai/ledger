@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "metrics/metric_handler.hpp"
-
 #include <atomic>
 #include <condition_variable>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "core/mutex.hpp"
+#include "metrics/metric_handler.hpp"
 
 namespace fetch {
 namespace metrics {

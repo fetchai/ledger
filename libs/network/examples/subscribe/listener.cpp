@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "network/service/function.hpp"
 #include "network/service/service_client.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/subscribe/commands.hpp"
-#include <iostream>
 
 using namespace fetch::service;
 using namespace fetch::protocols;

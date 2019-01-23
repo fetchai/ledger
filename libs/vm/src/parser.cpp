@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/parser.hpp"
 #include <sstream>
+
+#include "vm/parser.hpp"
 
 // Must define YYSTYPE and YY_EXTRA_TYPE *before* including the flex-generated header
 #define YYSTYPE fetch::vm::Token

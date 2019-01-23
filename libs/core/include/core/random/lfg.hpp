@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "lcg.hpp"
 #include <cstdint>
 #include <limits>
+
+#include "lcg.hpp"
 
 namespace fetch {
 namespace random {

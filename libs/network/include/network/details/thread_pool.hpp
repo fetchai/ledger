@@ -28,7 +28,6 @@
 #include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-
 #include "network/details/future_work_store.hpp"
 #include "network/details/idle_work_store.hpp"
 #include "network/details/work_store.hpp"

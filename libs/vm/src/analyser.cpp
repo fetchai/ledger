@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <sstream>
+
 #include "vm/analyser.hpp"
 #include "vm/module.hpp"
-#include <sstream>
 
 namespace fetch {
 namespace vm {

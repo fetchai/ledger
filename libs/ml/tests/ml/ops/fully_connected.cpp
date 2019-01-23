@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gtest/gtest.h>
+
 #include "ml/ops/fully_connected.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
-#include <gtest/gtest.h>
 
 template <typename T>
 class FullyConnectedTest : public ::testing::Test

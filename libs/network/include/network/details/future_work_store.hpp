@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <queue>
 #include <string>
+
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace network {

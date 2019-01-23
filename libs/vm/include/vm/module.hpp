@@ -17,24 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
+#include <iostream>
+
 #include "analyser.hpp"
 #include "defs.hpp"
 #include "vm.hpp"
-
 // Class export
 #include "module/class_constructor_export.hpp"
 #include "module/class_member_export.hpp"
 #include "module/wrapper_class.hpp"
-
 // Functions and static functions
 #include "module/function_export.hpp"
-
 // VM and analyser related
 #include "module/argument_list.hpp"
 #include "module/stack_loader.hpp"
-
-#include <functional>
-#include <iostream>
 
 namespace fetch {
 namespace vm {

@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_version.hpp"
-
 #include <iostream>
 #include <string>
+
+#include "fetch_version.hpp"
 
 namespace fetch {
 namespace commandline {

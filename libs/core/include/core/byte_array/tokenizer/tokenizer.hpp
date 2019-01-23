@@ -17,12 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/tokenizer/token.hpp"
 #include <functional>
 #include <map>
 #include <vector>
+
+#include "core/assert.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/tokenizer/token.hpp"
 
 namespace fetch {
 namespace byte_array {

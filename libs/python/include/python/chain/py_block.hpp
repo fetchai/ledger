@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/block.hpp"
-
 #include "fetch_pybind.hpp"
 
 namespace fetch {

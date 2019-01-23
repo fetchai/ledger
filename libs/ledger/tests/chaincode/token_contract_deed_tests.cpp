@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <gmock/gmock.h>
+
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/token_contract_deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-
-#include <gmock/gmock.h>
 
 // using ::testing::_;
 

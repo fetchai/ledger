@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-
 #include <algorithm>
 #include <deque>
 #include <functional>
 #include <iostream>
 #include <string>
+
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace network {

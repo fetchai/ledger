@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <random>
+#include <vector>
+
 #include "core/random/lfg.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -24,16 +28,13 @@
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/uri.hpp"
-
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include <chrono>
-#include <random>
-#include <vector>
+
 using namespace fetch::serializers;
 using namespace fetch::byte_array;
 using namespace fetch::service;
