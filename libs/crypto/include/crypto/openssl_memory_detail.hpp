@@ -20,7 +20,8 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
-#include <type_traits>  // for remove_const
+
+#include <type_traits>
 
 namespace fetch {
 namespace crypto {

@@ -17,14 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>  // for uint16_t
-#include <string>
-#include <unordered_map>
-
 #include "core/byte_array/const_byte_array.hpp"
-#include "http/client.hpp"  // for HTTPClient
+#include "http/client.hpp"
 #include "http/method.hpp"
 #include "variant/variant.hpp"
+
+#include <string>
+#include <unordered_map>
 
 namespace fetch {
 namespace http {

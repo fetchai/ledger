@@ -17,10 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <openssl/sha.h>  // for SHA256_DIGEST_LENGTH
-
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/stream_hasher.hpp"
+#include <openssl/sha.h>
 
 namespace fetch {
 namespace crypto {

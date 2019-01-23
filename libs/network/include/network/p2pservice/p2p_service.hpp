@@ -17,33 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>  // for uint32_t
-#include <unordered_map>
-
 #include "core/service_ids.hpp"
-#include "crypto/identity.hpp"  // for Identity
 #include "network/details/thread_pool.hpp"
-#include "network/generics/future_timepoint.hpp"  // for FutureT...
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/management/network_manager.hpp"      // for Network...
-#include "network/muddle/muddle.hpp"                   // for Muddle
-#include "network/muddle/muddle_endpoint.hpp"          // for MuddleE...
-#include "network/muddle/peer_list.hpp"                // for PeerCon...
-#include "network/muddle/rpc/client.hpp"               // for Client
-#include "network/muddle/rpc/server.hpp"               // for Server
-#include "network/p2pservice/identity_cache.hpp"       // for Identit...
-#include "network/p2pservice/manifest.hpp"             // for Manifest
-#include "network/p2pservice/p2p_lane_management.hpp"  // for LaneMan...
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/p2pservice/identity_cache.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_lane_management.hpp"
 #include "network/p2pservice/p2p_managed_local_service.hpp"
-#include "network/p2pservice/p2p_managed_local_services.hpp"  // for P2PMana...
-#include "network/p2pservice/p2p_remote_manifest_cache.hpp"   // for Manifes...
-#include "network/p2pservice/p2p_resolver.hpp"                // for Resolver
-#include "network/p2pservice/p2p_resolver_protocol.hpp"       // for Resolve...
-#include "network/p2pservice/p2p_service_defs.hpp"            // for Service...
-#include "network/p2pservice/p2ptrust_interface.hpp"          // for P2PTrus...
+#include "network/p2pservice/p2p_managed_local_services.hpp"
+#include "network/p2pservice/p2p_remote_manifest_cache.hpp"
+#include "network/p2pservice/p2p_resolver.hpp"
+#include "network/p2pservice/p2p_resolver_protocol.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
 #include "network/peer.hpp"
-#include "network/uri.hpp"  // for Uri
+
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {

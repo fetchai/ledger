@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <atomic>
+#include "ledger/chaincode/contract.hpp"
 
-#include "ledger/chaincode/contract.hpp"  // for Contract::Status, Contract:...
+#include <atomic>
 
 namespace fetch {
 namespace ledger {

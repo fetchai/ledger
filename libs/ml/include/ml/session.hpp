@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <assert.h>  // for assert
+#include "ml/layers/layers.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include "ml/layers/layers.hpp"
 
 namespace fetch {
 namespace ml {

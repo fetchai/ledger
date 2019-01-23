@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/p2pservice/p2p_resolver.hpp"  // for Resolver
-#include "network/service/protocol.hpp"         // for Protocol
+#include "network/p2pservice/p2p_resolver.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
 namespace p2p {

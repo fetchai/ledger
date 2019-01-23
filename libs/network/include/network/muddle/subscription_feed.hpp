@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
 #include "core/mutex.hpp"
 #include "network/muddle/subscription.hpp"
+
+#include <memory>
 
 namespace fetch {
 namespace muddle {

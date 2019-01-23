@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <ostream>
 #include <type_traits>
-
-#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace byte_array {

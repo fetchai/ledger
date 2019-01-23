@@ -17,21 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <limits>
-
-#include "asio/streambuf.hpp"  // for streambuf
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/json/document.hpp"
-#include "core/logger.hpp"  // for LOG_STACK_TRACE_POINT
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
+
+#include <algorithm>
+#include <limits>
 
 namespace fetch {
 namespace http {

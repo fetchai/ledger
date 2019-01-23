@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/queue.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/storage_unit/transaction_sinks.hpp"
+
 #include <cstddef>
 #include <thread>
-
-#include "core/containers/queue.hpp"
-#include "ledger/chain/mutable_transaction.hpp"  // for MutableTransaction
-#include "ledger/chain/transaction.hpp"
-#include "ledger/storage_unit/transaction_sinks.hpp"  // for VerifiedTransac...
 
 namespace fetch {
 namespace ledger {

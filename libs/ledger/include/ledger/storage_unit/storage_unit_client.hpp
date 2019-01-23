@@ -17,37 +17,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include <assert.h>  // for assert
-#include <chrono>
-#include <cstddef>  // for size_t
-#include <cstdint>  // for uint32_t
-#include <thread>
-#include <utility>
-
-#include "core/logger.hpp"               // for FETCH_LOG_...
-#include "core/mutex.hpp"                // for FETCH_LOCK
-#include "crypto/identity.hpp"           // for Identity
-#include "ledger/chain/transaction.hpp"  // for Transaction
+#include "core/logger.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
-#include "ledger/storage_unit/lane_identity.hpp"  // for LaneIdentity
+#include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"  // for StorageInt...
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/generics/atomic_state_machine.hpp"
-#include "network/generics/backgrounded_work.hpp"      // for Background...
-#include "network/generics/future_timepoint.hpp"       // for FutureTime...
-#include "network/generics/has_worker_thread.hpp"      // for HasWorkerT...
-#include "network/management/connection_register.hpp"  // for Connection...
-#include "network/management/network_manager.hpp"      // for NetworkMan...
-#include "network/muddle/muddle.hpp"                   // for Muddle
-#include "network/muddle/muddle_endpoint.hpp"          // for MuddleEndp...
-#include "network/muddle/rpc/client.hpp"               // for Client
-#include "network/muddle/rpc/server.hpp"
-#include "network/peer.hpp"                    // for Peer
-#include "network/service/promise.hpp"         // for PromiseState
-#include "network/service/service_client.hpp"  // for ServiceClient
+#include "network/generics/backgrounded_work.hpp"
+#include "network/generics/future_timepoint.hpp"
+#include "network/generics/has_worker_thread.hpp"
+#include "network/management/connection_register.hpp"
+#include "network/service/service_client.hpp"
+
+#include "ledger/chain/transaction.hpp"
 #include "storage/document_store_protocol.hpp"
-#include "storage/object_store_protocol.hpp"  // for ObjectStor...
+#include "storage/object_store_protocol.hpp"
+
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+
+#include <chrono>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace ledger {

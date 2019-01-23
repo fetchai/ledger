@@ -17,10 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/module.hpp"
+#include "http/server.hpp"
+#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/main_chain_miner.hpp"
+#include "ledger/execution_manager.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/storage_unit/lane_remote_control.hpp"
+#include "ledger/storage_unit/storage_unit_bundled_service.hpp"
+#include "ledger/storage_unit/storage_unit_client.hpp"
+#include "ledger/transaction_processor.hpp"
+#include "miner/basic_miner.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/p2pservice/manifest.hpp"
+#include "network/p2pservice/p2p_service.hpp"
+#include "network/p2pservice/p2ptrust_bayrank.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <cstdint>  // for uint...
 #include <deque>
 #include <iterator>
 #include <memory>
@@ -29,25 +45,6 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "http/module.hpp"                     // for HTTP...
-#include "http/server.hpp"                     // for HTTP...
-#include "ledger/chain/block_coordinator.hpp"  // for Bloc...
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
-#include "ledger/chain/main_chain.hpp"                           // for Main...
-#include "ledger/chain/main_chain_miner.hpp"                     // for Main...
-#include "ledger/execution_manager.hpp"                          // for Exec...
-#include "ledger/protocols/main_chain_rpc_service.hpp"           // for Main...
-#include "ledger/storage_unit/lane_remote_control.hpp"           // for Lane...
-#include "ledger/storage_unit/storage_unit_bundled_service.hpp"  // for Stor...
-#include "ledger/storage_unit/storage_unit_client.hpp"           // for Stor...
-#include "ledger/transaction_processor.hpp"                      // for Tran...
-#include "miner/basic_miner.hpp"                                 // for Basi...
-#include "network/management/network_manager.hpp"                // for Netw...
-#include "network/muddle/muddle.hpp"                             // for Muddle
-#include "network/p2pservice/manifest.hpp"                       // for Mani...
-#include "network/p2pservice/p2p_service.hpp"                    // for P2PS...
-#include "network/p2pservice/p2ptrust_bayrank.hpp"
 
 namespace fetch {
 

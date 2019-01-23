@@ -19,8 +19,8 @@
 
 #include <utility>
 
-#include "core/assert.hpp"  // for TODO_FAIL
 #include "defs.hpp"
+
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"

@@ -17,14 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-#include <memory>
-#include <utility>
-
-#include "core/logger.hpp"         // for FETCH_LOG_INFO
 #include "network/fetch_asio.hpp"  // required to avoid failing build due to -Werror
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
+#include <iostream>
+#include <memory>
+#include <utility>
 
 namespace fetch {
 namespace network {

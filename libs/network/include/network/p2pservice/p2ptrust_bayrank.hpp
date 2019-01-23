@@ -17,23 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "core/mutex.hpp"
+#include "math/free_functions/statistics/normal.hpp"
+#include "network/p2pservice/p2ptrust_interface.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <ctime>
-#include <iostream>  // for size_t
+#include <iostream>
 #include <map>
-#include <random>  // for mt19937, random...
+#include <random>
 #include <string>
 #include <vector>
-
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"  // for FETCH_LOG_INFO
-#include "core/mutex.hpp"   // for FETCH_LOCK
-#include "math/free_functions/statistics/normal.hpp"
-#include "meta/type_traits.hpp"                       // for ConstByteArray
-#include "network/p2pservice/p2ptrust_interface.hpp"  // for TrustQuality
 
 namespace fetch {
 namespace p2p {

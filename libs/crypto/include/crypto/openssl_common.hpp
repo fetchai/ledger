@@ -17,14 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstddef>       // for size_t
-#include <openssl/bn.h>  // for BN_num_bytes
-#include <stdexcept>     // for runtime_error
-
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/openssl_memory.hpp"
-#include "crypto/openssl_memory_detail.hpp"  // for eDeleteStrategy
-#include "openssl/obj_mac.h"                 // for NID_secp256k1
+#include "openssl/obj_mac.h"
+
+#include <cstddef>
 
 namespace fetch {
 namespace crypto {

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
-
 #include "metrics/metric_handler.hpp"
+
+#include <string>
 
 namespace fetch {
 namespace metrics {

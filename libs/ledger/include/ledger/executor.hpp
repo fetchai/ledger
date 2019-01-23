@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_set>
-#include <vector>
-
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
-#include "ledger/chaincode/cache.hpp"     // for ChainCodeCache
-#include "ledger/executor_interface.hpp"  // for ExecutorInterface, Executor...
+#include "ledger/chaincode/cache.hpp"
+#include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

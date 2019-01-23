@@ -17,14 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>  // for uint32_t, uint64_t
-#include <set>
-#include <utility>
-#include <vector>
-
 #include "core/logger.hpp"
-#include "core/mutex.hpp"                // for Mutex
-#include "ledger/chain/transaction.hpp"  // for UnverifiedTransaction
+#include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
@@ -35,10 +29,14 @@
 #include "network/muddle/muddle.hpp"
 #include "network/service/call_context.hpp"
 #include "network/service/promise.hpp"
-#include "network/service/protocol.hpp"  // for Protocol
+#include "network/service/protocol.hpp"
 #include "storage/resource_mapper.hpp"
-#include "storage/transient_object_store.hpp"  // for TransientObjectStore
+#include "storage/transient_object_store.hpp"
 #include "vectorise/platform.hpp"
+
+#include <set>
+#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

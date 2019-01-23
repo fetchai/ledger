@@ -17,14 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/contract.hpp"
+
 #include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "ledger/chaincode/contract.hpp"
-#include "meta/type_traits.hpp"  // for ConstByteArray
 
 namespace fetch {
 namespace ledger {

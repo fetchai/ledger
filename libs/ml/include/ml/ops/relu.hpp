@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <assert.h>  // for assert
-
 #include "math/free_functions/free_functions.hpp"
 #include "ml/ops/derivatives/derivatives.hpp"
 #include "ml/ops/ops.hpp"

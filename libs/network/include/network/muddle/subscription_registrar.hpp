@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <map>
-#include <tuple>
-
 #include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
 #include "network/muddle/subscription_feed.hpp"
+
+#include <map>
+#include <tuple>
 
 namespace fetch {
 namespace muddle {

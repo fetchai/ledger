@@ -35,14 +35,13 @@
 //
 //---
 
-#include <assert.h>  // for assert
-#include <functional>
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "crypto/fnv.hpp"
 #include "network/peer.hpp"
+
+#include <functional>
 
 namespace fetch {
 namespace network {

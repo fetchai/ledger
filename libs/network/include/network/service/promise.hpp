@@ -17,6 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/mutex.hpp"
+#include "core/serializers/exception.hpp"
+#include "network/service/types.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -25,12 +31,6 @@
 #include <mutex>
 #include <stdexcept>
 #include <thread>
-
-#include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"  // for LOG_STACK_TRACE_POINT
-#include "core/mutex.hpp"
-#include "core/serializers/exception.hpp"
-#include "network/service/types.hpp"
 
 namespace fetch {
 namespace service {

@@ -17,11 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>  // for uint64_t
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
-#include "http/request.hpp"  // for HTTPRequest
+#include "http/request.hpp"
 
 namespace fetch {
 namespace http {

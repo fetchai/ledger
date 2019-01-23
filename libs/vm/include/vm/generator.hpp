@@ -17,12 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>  // for string
-
-#include "vm/defs.hpp"     // for Script
-#include "vm/node.hpp"     // for ExpressionNodePtr, BlockNodePtr, NodePtr
-#include "vm/opcodes.hpp"  // for Opcode
-#include "vm/typeids.hpp"  // for TypeId
+#include "vm/defs.hpp"
+#include "vm/node.hpp"
 
 namespace fetch {
 namespace vm {

@@ -20,18 +20,19 @@
 #include <list>
 #include <map>
 
-#include "core/logger.hpp"  // for FETCH_LOG_DEBUG, FETCH_LOG_WARN, LOG_STAC...
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/message.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/callable_class_member.hpp"
-#include "network/service/error_codes.hpp"
 #include "network/service/message_types.hpp"
-#include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
+
+#include "core/serializers/counter.hpp"
+#include "network/service/error_codes.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace service {
