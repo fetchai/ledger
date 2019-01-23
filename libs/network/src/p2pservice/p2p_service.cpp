@@ -66,7 +66,7 @@ public:
     {
       FETCH_LOG_WARN("BlockCatchUpService", "New_peers_.size=", new_peers_.size());
       FETCH_LOCK(mutex_);
-      FETCH_LOG_WARN("BlockCatchUpService", "WorkCycle mutex locked"));
+      FETCH_LOG_WARN("BlockCatchUpService", "WorkCycle mutex locked");
       std::vector<double>           ws;
       std::vector<UriSet::iterator> its;
       double                        sum_w = 0.;

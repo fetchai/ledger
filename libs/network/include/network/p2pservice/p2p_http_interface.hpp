@@ -199,7 +199,7 @@ private:
       peer_data["value"] = pt.trust;
       peer_data["address"] = pt.address;
       peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
-      peer_data_list.push_back(std::make_pair(pt.address, peer_data);
+      peer_data_list.push_back(std::make_pair(pt.address, peer_data));
     }
 
     FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding blacklist status");
