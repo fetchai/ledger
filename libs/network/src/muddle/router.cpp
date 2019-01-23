@@ -697,8 +697,10 @@ void Router::KillConnection(Handle handle, Address const &peer)
   if (conn)
   {
     conn->Close();
-    routing_table_.erase(ConvertAddress(peer));
+    auto raw_addr = ConvertAddress(peer);
+    routing_table_.erase(raw_addr);
     direct_address_map_.erase(handle);
+    routing_table_handles_[handle].erase(raw_addr);
   }
   else
   {
