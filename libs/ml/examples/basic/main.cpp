@@ -52,6 +52,7 @@ int main()
   gt->At(0)         = 1.0;
   float        loss = 0;
   unsigned int i(0);
+
   while (true)
   {
     if (dataloader.IsDone())
@@ -59,10 +60,9 @@ int main()
       dataloader.Reset();
     }
     input = dataloader.GetNext(input.second);
+    g.SetInput("Input", input.second);
     gt->Fill(0);
     gt->At(input.first) = 1.0f;
-    g.SetInput("Input", input.second);
-    //      dataloader.Display(input.second);
     std::shared_ptr<Datatype> results = g.Evaluate("Softmax");
     loss += criterion.Forward({results, gt});
     g.BackPropagate("Softmax", criterion.Backward({results, gt}));

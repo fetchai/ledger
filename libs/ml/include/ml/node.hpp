@@ -68,9 +68,9 @@ public:
 
   virtual ArrayPtrType Evaluate()
   {
-    std::vector<ArrayPtrType> inputs = GatherInputs();
     if (!cachedOutput_)
       {
+	std::vector<ArrayPtrType> inputs = GatherInputs();
 	FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
 	cachedOutput_ = this->Forward(inputs);
       }
