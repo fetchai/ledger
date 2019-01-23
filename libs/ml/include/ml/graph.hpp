@@ -82,6 +82,7 @@ public:
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
     placeholder->SetData(data);
+    ResetGraphCache();
   }
 
   virtual void Step(Datatype learningRate)
@@ -90,6 +91,14 @@ public:
     {
       t->Step(learningRate);
     }
+  }
+
+  void ResetGraphCache()
+  {
+    for (auto & node : nodes_)
+      {
+	node.second->ResetCache();
+      }
   }
 
 protected:

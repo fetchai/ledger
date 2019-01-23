@@ -33,12 +33,15 @@ public:
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.size() == this->inputs_nodes_.size());
-    for (size_t i(0); i < inputs.size(); ++i)
-    {
-      this->SetInput(inputs_nodes_[i], inputs[i]);
-    }
-    this->output_ = output_node_->Evaluate();
+    if (!this->output_)
+      {
+	ASSERT(inputs.size() == this->inputs_nodes_.size());
+	for (size_t i(0); i < inputs.size(); ++i)
+	  {
+	    this->SetInput(inputs_nodes_[i], inputs[i]);
+	  }
+	this->output_ = output_node_->Evaluate();
+      }
     return this->output_;
   }
 
@@ -64,6 +67,12 @@ public:
     return backpropagatedErrorSignals;
   }
 
+  virtual void ResetCache()
+  {
+    this->template Graph<T>::ResetGraphCache();
+    this->output_ = nullptr;
+  }
+  
 protected:
   void AddInputNodes(std::string const &nodeName)
   {
