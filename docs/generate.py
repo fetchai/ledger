@@ -5,12 +5,12 @@ import time
 import subprocess
 import webbrowser
 
+WATCHDOG_PRESENT = True
 try:
-    WATCHDOG_PRESENT = True
-    from watchdog.observers import Observer
-    from watchdog.events import FileSystemEventHandler
+  from watchdog.observers import Observer
+  from watchdog.events import FileSystemEventHandler
 except:
-    WATCHDOG_PRESENT = False
+  WATCHDOG_PRESENT = False
 
 SOURCEDIR = 'source'
 BUILDDIR = 'build'
@@ -37,6 +37,7 @@ def build_documentation():
 
     print('Building documentation...complete')
 
+
 if WATCHDOG_PRESENT:
     class FileSystemWatcher(FileSystemEventHandler):
         def on_any_event(self, event):
@@ -44,18 +45,18 @@ if WATCHDOG_PRESENT:
             build_documentation()
 
 
-    def watch():
-        observer = Observer()
-        event_handler = FileSystemWatcher()
-        observer.schedule(event_handler, os.path.join(DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
-        observer.start()
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
+def watch():
+    observer = Observer()
+    event_handler = FileSystemWatcher()
+    observer.schedule(event_handler, os.path.join(DOCUMENTATION_ROOT, SOURCEDIR), recursive=True)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
 
-        observer.join()
+    observer.join()
 
 
 def main():
@@ -68,14 +69,15 @@ def main():
     if args.open_browser:
         index_path = os.path.join(DOCUMENTATION_ROOT, BUILDDIR, 'html', 'index.html')
         index_url = 'file://' + index_path.replace(os.sep, '/')
-        print('Openning:', index_url)
+        print('Opening:', index_url)
         webbrowser.open(index_url)
 
     # watch for update if required
-    if args.watch:
-        watch()
-
-
+    if (WATCHDOG_PRESENT):
+        if (args.watch):
+            watch()
+    else:
+        print("\nWARNING: could not find watchdog package")
 
 
 if __name__ == '__main__':
