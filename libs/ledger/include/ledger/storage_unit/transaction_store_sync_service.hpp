@@ -18,25 +18,25 @@
 //------------------------------------------------------------------------------
 
 #include <algorithm>
+#include <cstdint>  // for uint64_t, uint8_t
 #include <unordered_map>
-#include <cstdint>                                    // for uint64_t, uint8_t
 
+#include "core/logger.hpp"  // for FETCH_LOG_INFO
+#include "core/mutex.hpp"   // for FETCH_LOCK, Mutex
 #include "core/service_ids.hpp"
+#include "ledger/chain/transaction.hpp"  // for VerifiedTransac...
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"  // for VerifiedTransac...
 #include "ledger/transaction_verifier.hpp"            // for TransactionVeri...
 #include "network/generics/atomic_state_machine.hpp"
-#include "network/generics/future_timepoint.hpp"      // for FutureTimepoint
-#include "network/generics/promise_of.hpp"            // for PromiseOf
+#include "network/generics/future_timepoint.hpp"  // for FutureTimepoint
+#include "network/generics/promise_of.hpp"        // for PromiseOf
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"                  // for Muddle
-#include "network/muddle/rpc/client.hpp"              // for Client
-#include "storage/resource_mapper.hpp"                // for ResourceID
+#include "network/muddle/muddle.hpp"           // for Muddle
+#include "network/muddle/rpc/client.hpp"       // for Client
+#include "storage/resource_mapper.hpp"         // for ResourceID
+#include "storage/transient_object_store.hpp"  // for TransientObject...
 #include "transaction_store_sync_protocol.hpp"
-#include "core/logger.hpp"                            // for FETCH_LOG_INFO
-#include "core/mutex.hpp"                             // for FETCH_LOCK, Mutex
-#include "ledger/chain/transaction.hpp"               // for VerifiedTransac...
-#include "storage/transient_object_store.hpp"         // for TransientObject...
 
 namespace fetch {
 namespace ledger {

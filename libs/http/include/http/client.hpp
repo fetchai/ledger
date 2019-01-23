@@ -17,16 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>                   // for uint16_t
+#include <cstdint>  // for uint16_t
 #include <string>
 
-#include "core/byte_array/byte_array.hpp"
-#include "http/request.hpp"          // for HTTPRequest
-#include "http/response.hpp"         // for HTTPResponse
-#include "network/fetch_asio.hpp"
 #include "asio/impl/io_context.ipp"  // for io_context::io_context
 #include "asio/io_service.hpp"       // for io_service
 #include "asio/ip/tcp.hpp"           // for tcp, tcp::socket
+#include "core/byte_array/byte_array.hpp"
+#include "http/request.hpp"   // for HTTPRequest
+#include "http/response.hpp"  // for HTTPResponse
+#include "network/fetch_asio.hpp"
 
 namespace fetch {
 namespace http {

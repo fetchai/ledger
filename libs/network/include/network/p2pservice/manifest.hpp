@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>  // for size_t
+#include <cstdint>  // for uint16_t
 #include <map>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-#include <cstddef>                                  // for size_t
-#include <cstdint>                                  // for uint16_t
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"

@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "core/mutex.hpp"   // for FETCH_LOCK
+#include "core/mutex.hpp"  // for FETCH_LOCK
 #include "crypto/fnv.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/uri.hpp"  // for Uri

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>          // for string
+#include <string>  // for string
 
 #include "vm/defs.hpp"     // for Script
 #include "vm/node.hpp"     // for ExpressionNodePtr, BlockNodePtr, NodePtr

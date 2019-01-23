@@ -17,19 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <openssl/ec.h>                          // for point_conversion_form_t
-#include <openssl/obj_mac.h>                     // for NID_secp256k1
-#include <openssl/opensslv.h>                    // for OPENSSL_VERSION_NUMBER
+#include <cstddef>             // for size_t
+#include <openssl/ec.h>        // for point_conversion_form_t
+#include <openssl/obj_mac.h>   // for NID_secp256k1
+#include <openssl/opensslv.h>  // for OPENSSL_VERSION_NUMBER
+#include <stdexcept>           // for runtime_error
 #include <utility>
-#include <cstddef>                               // for size_t
-#include <stdexcept>                             // for runtime_error
 
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
-#include "crypto/openssl_ecdsa_private_key.hpp"  // for ECDSAPrivateKey
-#include "crypto/sha256.hpp"                     // for SHA256
 #include "crypto/openssl_common.hpp"             // for eECDSAEncoding, eECD...
+#include "crypto/openssl_ecdsa_private_key.hpp"  // for ECDSAPrivateKey
 #include "crypto/openssl_ecdsa_public_key.hpp"   // for ECDSAPublicKey
+#include "crypto/sha256.hpp"                     // for SHA256
 #include "meta/type_traits.hpp"                  // for ConstByteArray, Byte...
 
 namespace fetch {

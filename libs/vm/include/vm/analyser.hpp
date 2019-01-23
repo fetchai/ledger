@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeindex>       // for type_index
+#include <stdexcept>  // for runtime_error
+#include <string>     // for string
+#include <typeindex>  // for type_index
 #include <typeinfo>
 #include <unordered_map>
-#include <stdexcept>       // for runtime_error
-#include <string>          // for string
 
 #include "vm/node.hpp"     // for TypePtr, ExpressionNodePtr, BlockNodePtr
 #include "vm/opcodes.hpp"  // for Opcode

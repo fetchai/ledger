@@ -21,9 +21,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include "core/logger.hpp"  // for FETCH_LOG_INFO
 #include "ml/node.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "core/logger.hpp"  // for FETCH_LOG_INFO
 
 namespace fetch {
 namespace ml {

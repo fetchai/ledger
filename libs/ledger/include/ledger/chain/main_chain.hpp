@@ -17,24 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstdint>  // for uint32_t, uint64_t
 #include <map>
 #include <memory>
 #include <set>
-#include <cstdint>                                   // for uint32_t, uint64_t
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/logger.hpp"  // for FETCH_LOG_DEBUG
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
+#include "crypto/sha256.hpp"                         // for SHA256
 #include "ledger/chain/block.hpp"                    // for BasicBlock
 #include "ledger/chain/consensus/proof_of_work.hpp"  // for ProofOfWork
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "network/generics/milli_timer.hpp"          // for MilliTimer
+#include "network/generics/milli_timer.hpp"  // for MilliTimer
 #include "storage/object_store.hpp"
 #include "storage/resource_mapper.hpp"
-#include "core/logger.hpp"                           // for FETCH_LOG_DEBUG
-#include "crypto/sha256.hpp"                         // for SHA256
 
 namespace fetch {
 namespace chain {

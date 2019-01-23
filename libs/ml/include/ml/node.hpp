@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <assert.h>         // for assert
+#include <assert.h>  // for assert
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include "ops/ops.hpp"
 #include "core/logger.hpp"  // for FETCH_LOG_INFO
+#include "ops/ops.hpp"
 
 namespace fetch {
 namespace ml {

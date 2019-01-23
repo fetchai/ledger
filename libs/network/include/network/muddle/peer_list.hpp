@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <chrono>                     // for steady_clock
+#include <chrono>   // for steady_clock
+#include <cstddef>  // for size_t
+#include <string>   // for string
 #include <unordered_map>
 #include <unordered_set>
-#include <cstddef>                    // for size_t
-#include <string>                     // for string
 
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/blacklist.hpp"
-#include "network/uri.hpp"
 #include "network/muddle/router.hpp"  // for Router
+#include "network/uri.hpp"
 
 namespace fetch {
 namespace muddle {

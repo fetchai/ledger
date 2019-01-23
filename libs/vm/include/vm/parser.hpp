@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>       // for string
+#include <string>  // for string
 
 #include "vm/node.hpp"  // for Node, Node::Kind, ExpressionNodePtr, NodePtr
 

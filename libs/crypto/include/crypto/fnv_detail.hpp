@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>  // for size_t
 #include <cstdint>
-#include <type_traits>          // for conditional, conditional<>::type, is_...
-#include <cstddef>              // for size_t
+#include <type_traits>  // for conditional, conditional<>::type, is_...
 
 namespace fetch {
 namespace crypto {

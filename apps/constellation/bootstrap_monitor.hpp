@@ -18,21 +18,21 @@
 //------------------------------------------------------------------------------
 
 #include <atomic>
+#include <cstdint>  // for uint16_t, uint32_t
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
-#include <cstdint>              // for uint16_t, uint32_t
 
+#include "asio/io_service.hpp"  // for io_service
+#include "asio/ip/tcp.hpp"      // for tcp, tcp::resolver, tcp::socket
+#include "constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
 #include "crypto/identity.hpp"  // for Identity
 #include "http/json_client.hpp"
+#include "http/method.hpp"  // for ConstByteArray
 #include "network/fetch_asio.hpp"
-#include "constellation.hpp"
-#include "asio/io_service.hpp"  // for io_service
-#include "asio/ip/tcp.hpp"      // for tcp, tcp::resolver, tcp::socket
-#include "http/method.hpp"      // for ConstByteArray
 
 namespace fetch {
 

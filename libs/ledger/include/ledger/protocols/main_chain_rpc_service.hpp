@@ -20,18 +20,18 @@
 #include <memory>
 
 #include "core/mutex.hpp"
+#include "ledger/chain/block_coordinator.hpp"            // for BlockCoordin...
 #include "ledger/chain/main_chain.hpp"                   // for MainChain
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"  // for MainChainPro...
 #include "network/generics/backgrounded_work.hpp"        // for Backgrounded...
 #include "network/generics/future_timepoint.hpp"         // for FutureTimepoint
 #include "network/generics/has_worker_thread.hpp"        // for HasWorkerThread
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/rpc/client.hpp"                 // for Client
-#include "network/muddle/rpc/server.hpp"                 // for Server
-#include "network/muddle/subscription.hpp"               // for Subscription
+#include "network/muddle/muddle_endpoint.hpp"  // for MuddleEndpoint
+#include "network/muddle/rpc/client.hpp"       // for Client
+#include "network/muddle/rpc/server.hpp"       // for Server
+#include "network/muddle/subscription.hpp"     // for Subscription
 #include "network/p2pservice/p2ptrust_interface.hpp"
-#include "ledger/chain/block_coordinator.hpp"            // for BlockCoordin...
-#include "network/muddle/muddle_endpoint.hpp"            // for MuddleEndpoint
 
 namespace fetch {
 namespace chain {

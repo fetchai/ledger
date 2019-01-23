@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>            // for string
+#include <string>  // for string
 
 #include "vm/analyser.hpp"   // for Analyser
 #include "vm/generator.hpp"  // for Generator
