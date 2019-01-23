@@ -20,11 +20,10 @@
 #include <cassert>
 
 #include "core/assert.hpp"
-#include "vectorise/memory/range.hpp"
-#include "math/kernels/basic_arithmetics.hpp"
-#include "math/kernels/standard_functions.hpp"
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
+#include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/standard_functions.hpp"
 #include "math/linalg/blas/gemm_nn_vector.hpp"
 #include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
 #include "math/linalg/blas/gemm_nt_vector.hpp"
@@ -32,6 +31,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "vectorise/memory/range.hpp"
 
 namespace fetch {
 namespace math {

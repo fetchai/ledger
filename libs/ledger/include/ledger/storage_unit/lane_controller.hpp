@@ -21,17 +21,23 @@
 #include <unordered_set>
 #include <utility>
 
+#include "core/assert.hpp"  // for TODO_FAIL
+#include "core/logger.hpp"  // for FETCH_L...
+#include "core/mutex.hpp"   // for FETCH_LOCK
 #include "core/service_ids.hpp"
-#include "ledger/storage_unit/lane_connectivity_details.hpp"
+#include "ledger/storage_unit/lane_connectivity_details.hpp"  // for LaneCon...
 #include "ledger/storage_unit/lane_identity.hpp"
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "network/management/network_manager.hpp"  // for Network...
+#include "network/muddle/muddle.hpp"               // for Muddle
+#include "network/muddle/rpc/client.hpp"           // for Client
 #include "network/muddle/rpc/server.hpp"
-#include "network/service/service_client.hpp"
+#include "network/service/service_client.hpp"  // for Service...
+#include "network/service/types.hpp"           // for protoco...
+#include "network/tcp/tcp_client.hpp"          // for TCPClient
 #include "network/uri.hpp"
 
 namespace fetch {

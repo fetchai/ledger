@@ -17,19 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <stdio.h>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <stdio.h>
 
 #include "core/assert.hpp"
+#include "math/meta/math_type_traits.hpp"
 #include "math/shapeless_array.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
-#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace math {

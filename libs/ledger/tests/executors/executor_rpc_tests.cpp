@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <memory>
 #include <random>
 #include <thread>
@@ -30,10 +30,10 @@
 #include "ledger/protocols/executor_rpc_service.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "mock_storage_unit.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/generics/future_timepoint.hpp"
 #include "storage/resource_mapper.hpp"
-#include "mock_storage_unit.hpp"
 
 using ::testing::_;
 using fetch::network::AtomicInFlightCounter;

@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "core/mutex.hpp"
+#include "core/mutex.hpp"  // for FETCH_LOCK
 #include "network/muddle/packet.hpp"
 #include "network/service/promise.hpp"
 

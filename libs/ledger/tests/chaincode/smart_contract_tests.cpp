@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include <gmock/gmock.h>
-#include <ledger/chain/mutable_transaction.hpp>
 #include <iostream>
+#include <ledger/chain/mutable_transaction.hpp>
 #include <memory>
 #include <random>
 #include <sstream>

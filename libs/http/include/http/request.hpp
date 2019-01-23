@@ -25,6 +25,7 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/json/document.hpp"
+#include "core/logger.hpp"  // for LOG_STACK_TRACE_POINT
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"

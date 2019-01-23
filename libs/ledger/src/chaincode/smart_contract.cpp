@@ -18,9 +18,9 @@
 
 #include <stdexcept>
 
-#include "ledger/chaincode/smart_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
 #include "variant/variant.hpp"
 

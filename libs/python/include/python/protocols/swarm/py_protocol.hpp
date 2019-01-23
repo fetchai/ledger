@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols/swarm/protocol.hpp"
 #include "fetch_pybind.hpp"
+#include "protocols/swarm/protocol.hpp"
 
 namespace fetch {
 namespace protocols {

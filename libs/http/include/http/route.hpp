@@ -21,10 +21,10 @@
 #include <regex>
 #include <vector>
 
-#include "http/view_parameters.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+#include "http/view_parameters.hpp"
 
 namespace fetch {
 namespace http {

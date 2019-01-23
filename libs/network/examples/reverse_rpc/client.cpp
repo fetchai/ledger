@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #define FETCH_DISABLE_LOGGING
+#include "network/muddle/rpc/client.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/byte_array.hpp"
-#include "network/service/service_client.hpp"
 #include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/service_client.hpp"
 #include "service_ids.hpp"
 
 using Muddle = fetch::muddle::Muddle;

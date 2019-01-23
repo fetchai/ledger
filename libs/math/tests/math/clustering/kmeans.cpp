@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
-#include <math/linalg/matrix.hpp>
-#include <math/shapeless_array.hpp>
-#include <iomanip>
-#include <iostream>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
+#include <math/linalg/matrix.hpp>
+#include <math/shapeless_array.hpp>
 #include <string>
 #include <vector>
 

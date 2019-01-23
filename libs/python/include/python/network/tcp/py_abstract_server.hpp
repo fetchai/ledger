@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/abstract_server.hpp"
 #include "fetch_pybind.hpp"
+#include "network/tcp/abstract_server.hpp"
 
 namespace fetch {
 namespace network {

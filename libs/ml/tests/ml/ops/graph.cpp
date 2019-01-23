@@ -18,8 +18,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ml/graph.hpp"
 #include "math/ndarray.hpp"
+#include "ml/graph.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/relu.hpp"
 

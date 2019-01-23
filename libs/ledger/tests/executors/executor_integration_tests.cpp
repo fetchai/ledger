@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <memory>
 #include <random>
 #include <thread>

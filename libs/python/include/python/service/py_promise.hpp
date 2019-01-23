@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/promise.hpp"
 #include "fetch_pybind.hpp"
+#include "service/promise.hpp"
 
 namespace fetch {
 namespace service {

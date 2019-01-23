@@ -27,7 +27,7 @@
 #include <thread>
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logger.hpp"  // for LOG_STACK_TRACE_POINT
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
 #include "network/service/types.hpp"

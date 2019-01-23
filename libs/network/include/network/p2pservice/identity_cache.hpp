@@ -21,10 +21,10 @@
 #include <unordered_map>
 #include <utility>
 
-#include "core/mutex.hpp"
+#include "core/mutex.hpp"  // for FETCH_LOCK
 #include "crypto/fnv.hpp"
 #include "network/muddle/muddle.hpp"
-#include "network/uri.hpp"
+#include "network/uri.hpp"  // for Uri
 
 namespace fetch {
 namespace p2p {

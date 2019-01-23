@@ -31,13 +31,13 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+#include "network/test-helpers/muddle_test_client.hpp"
+#include "network/test-helpers/muddle_test_definitions.hpp"
+#include "network/test-helpers/muddle_test_server.hpp"
 #include "network_classes.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/network_benchmark/commands.hpp"
 #include "protocols/network_mine_test/commands.hpp"
-#include "network/test-helpers/muddle_test_client.hpp"
-#include "network/test-helpers/muddle_test_definitions.hpp"
-#include "network/test-helpers/muddle_test_server.hpp"
 
 using TServerPtr = std::shared_ptr<MuddleTestServer>;
 using TClientPtr = std::shared_ptr<MuddleTestClient>;

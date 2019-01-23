@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gmock/gmock.h>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <gmock/gmock.h>
 #include <iostream>
 #include <memory>
 #include <thread>

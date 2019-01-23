@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/counter.hpp"
 #include "fetch_pybind.hpp"
+#include "serializers/counter.hpp"
 
 namespace fetch {
 namespace serializers {

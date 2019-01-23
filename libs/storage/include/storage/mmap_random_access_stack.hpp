@@ -24,11 +24,11 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
-#include <storage/fetch_mmap.hpp>
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
+#include <storage/fetch_mmap.hpp>
 #include <string>
 
 #include "core/assert.hpp"

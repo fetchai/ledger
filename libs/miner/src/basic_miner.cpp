@@ -18,8 +18,8 @@
 
 #include <algorithm>
 
-#include "miner/basic_miner.hpp"
 #include "core/logger.hpp"
+#include "miner/basic_miner.hpp"
 #include "miner/resource_mapper.hpp"
 
 namespace fetch {

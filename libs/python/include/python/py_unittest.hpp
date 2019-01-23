@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "unittest.hpp"
 #include "fetch_pybind.hpp"
+#include "unittest.hpp"
 
 namespace fetch {
 namespace unittest {

@@ -19,8 +19,8 @@
 #include <sstream>
 #include <utility>
 
-#include "http/json_client.hpp"
 #include "core/json/document.hpp"
+#include "http/json_client.hpp"
 
 using fetch::http::HTTPRequest;
 using fetch::http::HTTPResponse;

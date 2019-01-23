@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols/swarm/serializers.hpp"
 #include "fetch_pybind.hpp"
+#include "protocols/swarm/serializers.hpp"

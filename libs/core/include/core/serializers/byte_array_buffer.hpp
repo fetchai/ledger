@@ -22,8 +22,8 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/counter.hpp"
 #include "core/logger.hpp"
+#include "core/serializers/counter.hpp"
 
 namespace fetch {
 namespace serializers {

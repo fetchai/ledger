@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <cmath>
+#include <gtest/gtest.h>
 #include <iostream>
 
 #include "vectorise/math/exp.hpp"

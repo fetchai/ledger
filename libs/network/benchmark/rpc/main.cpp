@@ -25,15 +25,15 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "network/service/server.hpp"
-#include "network/service/service_client.hpp"
-#include "network/uri.hpp"
 #include "helper_functions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serialization.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/server.hpp"
+#include "network/service/service_client.hpp"
+#include "network/uri.hpp"
 
 using namespace fetch::serializers;
 using namespace fetch::byte_array;

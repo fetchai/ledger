@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/key_value_set.hpp"
 #include "fetch_pybind.hpp"
+#include "http/key_value_set.hpp"
 
 namespace fetch {
 namespace http {

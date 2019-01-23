@@ -23,12 +23,12 @@
 #include <utility>
 
 #include "core/byte_array/byte_array.hpp"
-#include "storage/file_object.hpp"
-#include "storage/key_value_index.hpp"
-#include "storage/resource_mapper.hpp"
 #include "core/mutex.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document.hpp"
+#include "storage/file_object.hpp"
+#include "storage/key_value_index.hpp"
+#include "storage/resource_mapper.hpp"
 
 namespace fetch {
 namespace storage {

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
 #include "commands.hpp"
+#include "network/service/protocol.hpp"
 #include "node.hpp"
 
 namespace fetch {

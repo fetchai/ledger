@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 

@@ -38,8 +38,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "ml/ops/ops.hpp"
 #include "math/linalg/matrix.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/session.hpp"
 
 using namespace fetch::ml;

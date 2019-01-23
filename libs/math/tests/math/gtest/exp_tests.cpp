@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <chrono>
 #include <cmath>
+#include <gtest/gtest.h>
 #include <iostream>
 
 #include "core/random/lcg.hpp"

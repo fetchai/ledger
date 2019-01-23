@@ -21,12 +21,12 @@
 #include <random>
 #include <thread>
 
-#include "ledger/executor.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
+#include "ledger/executor.hpp"
 #include "metrics/metrics.hpp"
 
 static constexpr char const *LOGGING_NAME = "Executor";

@@ -18,8 +18,8 @@
 
 #include <iostream>
 
-#include "http/client.hpp"
 #include "core/commandline/params.hpp"
+#include "http/client.hpp"
 
 int main(int argc, char **argv)
 {

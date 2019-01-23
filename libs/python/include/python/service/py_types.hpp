@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/types.hpp"
 #include "fetch_pybind.hpp"
+#include "service/types.hpp"

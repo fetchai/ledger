@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <mm_malloc.h>
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -25,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <mm_malloc.h>
 #include <type_traits>
 
 #include "vectorise/memory/iterator.hpp"

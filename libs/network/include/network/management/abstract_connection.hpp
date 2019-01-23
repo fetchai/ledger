@@ -20,7 +20,7 @@
 #include <atomic>
 #include <memory>
 
-#include "core/logger.hpp"
+#include "core/logger.hpp"  // for FETCH_LOG_DEBUG, FETCH_LOG_WARN, FETCH_LO...
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/message.hpp"

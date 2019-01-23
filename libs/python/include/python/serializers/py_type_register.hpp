@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/type_register.hpp"
 #include "fetch_pybind.hpp"
+#include "serializers/type_register.hpp"
 
 namespace fetch {
 namespace serializers {

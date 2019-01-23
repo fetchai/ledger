@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/callable_class_member.hpp"
 #include "fetch_pybind.hpp"
+#include "service/callable_class_member.hpp"
 
 namespace fetch {
 namespace service {

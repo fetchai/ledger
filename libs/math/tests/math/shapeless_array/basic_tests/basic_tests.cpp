@@ -20,9 +20,9 @@
 #include <iomanip>
 #include <iostream>
 
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/kernels/sign.hpp"
 #include "math/shapeless_array.hpp"
-#include "core/fixed_point/fixed_point.hpp"
 #include "meta/type_traits.hpp"
 
 using namespace fetch::math;

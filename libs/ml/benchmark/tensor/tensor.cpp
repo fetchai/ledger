@@ -19,8 +19,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "math/tensor.hpp"
 #include "benchmark/benchmark.h"
+#include "math/tensor.hpp"
 
 template <class T, int C, int H, int W>
 void BM_tensorIterator(benchmark::State &state)

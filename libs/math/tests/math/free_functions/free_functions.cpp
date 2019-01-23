@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <math/linalg/matrix.hpp>
 #include <iomanip>
 #include <iostream>
+#include <math/linalg/matrix.hpp>
 
 #include "core/random/lcg.hpp"
 #include "math/free_functions/free_functions.hpp"

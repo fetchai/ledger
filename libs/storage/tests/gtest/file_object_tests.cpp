@@ -20,8 +20,8 @@
 #include <core/byte_array/encoders.hpp>
 #include <crypto/hash.hpp>
 #include <gtest/gtest.h>
-#include <storage/file_object.hpp>
 #include <iostream>
+#include <storage/file_object.hpp>
 #include <vector>
 
 #include "core/random/lfg.hpp"

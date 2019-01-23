@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <emmintrin.h>
-#include <immintrin.h>
-#include <smmintrin.h>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <emmintrin.h>
+#include <immintrin.h>
 #include <iostream>
+#include <smmintrin.h>
 
 #include "vectorise/info.hpp"
 #include "vectorise/info_sse.hpp"

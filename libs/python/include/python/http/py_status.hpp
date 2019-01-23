@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/status.hpp"
 #include "fetch_pybind.hpp"
+#include "http/status.hpp"

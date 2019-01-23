@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <thread>
 
 #include "core/byte_array/decoders.hpp"

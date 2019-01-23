@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/abstract_publication_feed.hpp"
 #include "fetch_pybind.hpp"
+#include "service/abstract_publication_feed.hpp"
 
 namespace fetch {
 namespace service {

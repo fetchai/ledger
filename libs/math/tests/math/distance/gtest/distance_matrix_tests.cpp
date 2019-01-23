@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
-#include <math/distance/hamming.hpp>
-#include <math/linalg/matrix.hpp>
 #include <iomanip>
 #include <iostream>
+#include <math/distance/hamming.hpp>
+#include <math/linalg/matrix.hpp>
 
 #include "core/random/lcg.hpp"
 #include "math/distance/distance_matrix.hpp"

@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logger.hpp"  // for FETCH_LOG_DEBUG
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 

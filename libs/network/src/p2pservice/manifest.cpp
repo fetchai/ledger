@@ -19,9 +19,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "network/p2pservice/manifest.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "network/p2pservice/manifest.hpp"
 #include "variant/variant_utils.hpp"
 
 namespace fetch {

@@ -26,14 +26,17 @@
 #include "core/serializers/stl_types.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
-#include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/transaction_processor.hpp"
-#include "miner/miner_interface.hpp"
+#include "http/method.hpp"    // for ConstByteA...
+#include "http/module.hpp"    // for HTTPModule
+#include "http/request.hpp"   // for HTTPRequest
+#include "http/response.hpp"  // for HTTPResponse
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/wire_transaction.hpp"
+#include "ledger/chaincode/cache.hpp"                      // for ChainCodeC...
+#include "ledger/storage_unit/storage_unit_interface.hpp"  // for StorageInt...
+#include "ledger/transaction_processor.hpp"                // for Transactio...
+#include "miner/miner_interface.hpp"
 
 namespace fetch {
 namespace ledger {

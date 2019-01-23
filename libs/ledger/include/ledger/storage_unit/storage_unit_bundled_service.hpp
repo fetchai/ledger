@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/storage_unit/lane_service.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "network/muddle/muddle_endpoint.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/revertible_document_store.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 namespace fetch {
 namespace ledger {

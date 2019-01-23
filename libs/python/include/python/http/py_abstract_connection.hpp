@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/abstract_connection.hpp"
 #include "fetch_pybind.hpp"
+#include "http/abstract_connection.hpp"
 
 namespace fetch {
 namespace http {

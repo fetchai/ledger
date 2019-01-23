@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
 #include <regex>
 #include <stdexcept>
-#include <iostream>
 
 #include "network/peer.hpp"
 

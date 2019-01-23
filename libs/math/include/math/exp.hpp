@@ -20,10 +20,10 @@
 #include <cmath>
 
 #include "core/assert.hpp"
-#include "math/shapeless_array.hpp"
-#include "vectorise/memory/range.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
+#include "math/shapeless_array.hpp"
+#include "vectorise/memory/range.hpp"
 
 namespace fetch {
 namespace math {

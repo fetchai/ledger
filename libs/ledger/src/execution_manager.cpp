@@ -17,17 +17,17 @@
 //------------------------------------------------------------------------------
 
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <thread>
 #include <vector>
-#include <iostream>
 
-#include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
+#include "ledger/execution_manager.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
-#include "core/byte_array/encoders.hpp"
 
 static constexpr char const *LOGGING_NAME              = "ExecutionManager";
 static constexpr std::size_t MAX_STARTUP_ITERATIONS    = 20;

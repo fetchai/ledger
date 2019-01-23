@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/request.hpp"
 #include "fetch_pybind.hpp"
+#include "http/request.hpp"
 
 namespace fetch {
 namespace http {

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
 #include <gmock/gmock.h>
+#include <memory>
 #include <network/muddle/dispatcher.hpp>
 #include <network/muddle/muddle.hpp>
 #include <network/muddle/muddle_register.hpp>
 #include <network/muddle/peer_list.hpp>
 #include <network/muddle/router.hpp>
 #include <network/service/promise.hpp>
-#include <chrono>
-#include <memory>
 #include <thread>
 
 namespace fetch {

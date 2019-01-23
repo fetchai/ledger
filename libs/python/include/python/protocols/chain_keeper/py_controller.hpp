@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols/chain_keeper/controller.hpp"
 #include "fetch_pybind.hpp"
+#include "protocols/chain_keeper/controller.hpp"
 
 namespace fetch {
 namespace protocols {

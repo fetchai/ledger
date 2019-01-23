@@ -25,9 +25,9 @@
 #include "core/mutex.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/message.hpp"
-#include "network/fetch_asio.hpp"
 
 namespace fetch {
 namespace network {

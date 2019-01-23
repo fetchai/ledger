@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string.h>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <ostream>
+#include <string.h>
 #include <type_traits>
 
 #include "core/common.hpp"

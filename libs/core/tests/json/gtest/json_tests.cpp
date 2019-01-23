@@ -54,7 +54,8 @@ static const TestCase
 ,1,)",
                  false, "", true},
                 {R"(["
-a"\f])", false, "", true},
+a"\f])",
+                 false, "", true},
                 {R"([*])", false, "", true},
                 {R"(["")", false, "", true},
                 {R"([1,)", false, "", true},
@@ -173,7 +174,8 @@ a"\f])", false, "", true},
                 {"å", false, "", true},
                 {R"([⁠])", false, "", true},
                 {R"([
-])", false, "", true},
+])",
+                 false, "", true},
                 {R"(["\	\"])", false, "", true},
                 {R"(["\�"]))", false, "", true},
                 {R"(["\{["\{["\{["\{)", false, "", true},
@@ -322,8 +324,10 @@ a"\f])", false, "", true},
                 {R"(["\u0821"])", true, R"(["\\u0821"])", false},
                 {R"(["\u0123"])", true, R"(["\\u0123"])", false},
                 {R"(["
-"])", true, R"(["
-"])", false},
+"])",
+                 true, R"(["
+"])",
+                 false},
                 {R"(["\00,
 "])",
                  true, R"(["\\00,

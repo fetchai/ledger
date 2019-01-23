@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/exception.hpp"
 #include "fetch_pybind.hpp"
+#include "serializers/exception.hpp"
 
 namespace fetch {
 namespace serializers {

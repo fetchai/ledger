@@ -21,9 +21,9 @@
 #include <set>
 #include <stdexcept>
 
-#include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/token_contract_deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"

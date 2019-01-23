@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <gtest/gtest.h>
 #include <atomic>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <memory>
 #include <thread>
 

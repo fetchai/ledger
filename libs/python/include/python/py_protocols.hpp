@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols.hpp"
 #include "fetch_pybind.hpp"
+#include "protocols.hpp"

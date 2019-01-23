@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "optimisation/instance/binary_problem.hpp"
 #include "fetch_pybind.hpp"
+#include "optimisation/instance/binary_problem.hpp"
 
 namespace fetch {
 namespace optimisers {

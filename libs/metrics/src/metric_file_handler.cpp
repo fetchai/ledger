@@ -18,8 +18,8 @@
 
 #include <fstream>
 
-#include "metrics/metric_file_handler.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "metrics/metric_file_handler.hpp"
 
 using fetch::byte_array::ToBase64;
 

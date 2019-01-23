@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string/trim.hpp>
 #include <fstream>
 #include <sstream>
+#include <string/trim.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>

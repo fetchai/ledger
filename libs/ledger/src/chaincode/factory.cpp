@@ -18,9 +18,9 @@
 
 #include <stdexcept>
 
-#include "ledger/chaincode/factory.hpp"
 #include "core/logger.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "ledger/chaincode/factory.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 
 static constexpr char const *LOGGING_NAME = "ChainCodeFactory";

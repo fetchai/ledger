@@ -18,9 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include "ml/ops/flatten.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
+#include "ml/ops/flatten.hpp"
 
 template <typename T>
 class FlattenTest : public ::testing::Test

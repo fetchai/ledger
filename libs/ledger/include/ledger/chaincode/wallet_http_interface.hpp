@@ -35,9 +35,9 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "miner/resource_mapper.hpp"
 #include "storage/object_store.hpp"
 #include "variant/variant_utils.hpp"
-#include "miner/resource_mapper.hpp"
 
 namespace fetch {
 namespace ledger {

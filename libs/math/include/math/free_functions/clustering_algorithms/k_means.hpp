@@ -23,8 +23,8 @@
 #include "math/free_functions/free_functions.hpp"
 #include "math/free_functions/metrics/metrics.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "random"
 #include "math/shapeless_array.hpp"
+#include "random"
 
 /**
  * assigns the absolute of x to this array

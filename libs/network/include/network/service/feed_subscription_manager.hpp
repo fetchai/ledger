@@ -24,6 +24,7 @@ class FeedSubscriptionManager;
 }  // namespace service
 }  // namespace fetch
 
+#include "core/logger.hpp"  // for LOG_STACK_TRACE_POINT
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/work_items_queue.hpp"

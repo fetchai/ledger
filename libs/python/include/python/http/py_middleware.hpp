@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/middleware.hpp"
 #include "fetch_pybind.hpp"
+#include "http/middleware.hpp"

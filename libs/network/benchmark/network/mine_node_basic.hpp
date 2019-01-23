@@ -32,10 +32,10 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
-#include "network_classes.hpp"
-#include "node_directory.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "network_classes.hpp"
+#include "node_directory.hpp"
 
 namespace fetch {
 namespace network_mine_test {

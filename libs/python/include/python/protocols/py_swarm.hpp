@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "protocols/swarm.hpp"
 #include "fetch_pybind.hpp"
+#include "protocols/swarm.hpp"

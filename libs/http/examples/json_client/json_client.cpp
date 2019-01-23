@@ -18,8 +18,8 @@
 
 #include <iostream>
 
-#include "http/json_client.hpp"
 #include "core/commandline/params.hpp"
+#include "http/json_client.hpp"
 
 int main(int argc, char **argv)
 {

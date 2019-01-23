@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "string/trim.hpp"
 #include "fetch_pybind.hpp"
+#include "string/trim.hpp"

@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "service/message_types.hpp"
 #include "fetch_pybind.hpp"
+#include "service/message_types.hpp"

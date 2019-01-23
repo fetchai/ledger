@@ -18,8 +18,8 @@
 
 #include <iostream>
 
-#include "variant/variant.hpp"
 #include "core/macros.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace variant {

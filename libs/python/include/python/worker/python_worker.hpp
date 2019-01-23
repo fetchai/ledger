@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
 #include <time.h>
 #include <unistd.h>
-#include <string>
 
 #include "network/generics/network_node_core.hpp"
 #include "network/swarm/swarm_agent_api_impl.hpp"

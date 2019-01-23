@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/log2.hpp"
 #include "fetch_pybind.hpp"
+#include "meta/log2.hpp"
 
 namespace details {
 namespace meta {

@@ -21,7 +21,6 @@
 #include <sstream>
 #include <utility>
 
-#include "network/muddle/router.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
@@ -31,6 +30,7 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/muddle/router.hpp"
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 

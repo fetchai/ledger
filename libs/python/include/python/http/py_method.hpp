@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/method.hpp"
 #include "fetch_pybind.hpp"
+#include "http/method.hpp"

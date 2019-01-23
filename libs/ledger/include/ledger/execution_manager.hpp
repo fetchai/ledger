@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/cache.hpp"
@@ -36,7 +37,6 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
-#include "core/byte_array/encoders.hpp"
 
 namespace fetch {
 namespace ledger {

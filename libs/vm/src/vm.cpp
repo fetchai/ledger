@@ -18,8 +18,8 @@
 
 #include <sstream>
 
-#include "vm/vm.hpp"
 #include "vm/module.hpp"
+#include "vm/vm.hpp"
 
 namespace fetch {
 namespace vm {

@@ -18,9 +18,9 @@
 
 #include <iostream>
 
-#include "crypto/sha256.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 using namespace fetch;
 using namespace fetch::crypto;

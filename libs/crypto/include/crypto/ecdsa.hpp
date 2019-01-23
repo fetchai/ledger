@@ -20,8 +20,9 @@
 #include <core/assert.hpp>
 
 #include "crypto/ecdsa_signature.hpp"
-#include "crypto/prover.hpp"
-#include "crypto/verifier.hpp"
+#include "crypto/identity.hpp"  // for Identity
+#include "crypto/prover.hpp"    // for Prover::byte_array_type, Prover
+#include "crypto/verifier.hpp"  // for Verifier::byte_array_type, Verifier
 
 namespace fetch {
 namespace crypto {

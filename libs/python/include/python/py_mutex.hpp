@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "mutex.hpp"
 #include "fetch_pybind.hpp"
+#include "mutex.hpp"
 
 namespace fetch {
 namespace mutex {

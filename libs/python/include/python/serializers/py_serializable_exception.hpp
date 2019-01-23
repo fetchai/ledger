@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/serializable_exception.hpp"
 #include "fetch_pybind.hpp"
+#include "serializers/serializable_exception.hpp"

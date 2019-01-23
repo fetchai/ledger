@@ -18,10 +18,10 @@
 
 #include <gtest/gtest.h>
 
-#include "ml/ops/matrix_multiply.hpp"
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 
 template <typename T>
 class MatrixMultiplyTest : public ::testing::Test

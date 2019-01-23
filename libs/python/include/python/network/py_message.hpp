@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/message.hpp"
 #include "fetch_pybind.hpp"
+#include "network/message.hpp"

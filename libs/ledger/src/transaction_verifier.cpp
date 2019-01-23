@@ -18,8 +18,8 @@
 
 #include <chrono>
 
-#include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
+#include "ledger/transaction_verifier.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
 

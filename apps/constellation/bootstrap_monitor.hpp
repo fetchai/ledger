@@ -18,17 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include <atomic>
+#include <cstdint>  // for uint16_t, uint32_t
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 
+#include "constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
-#include "crypto/identity.hpp"
+#include "crypto/identity.hpp"  // for Identity
 #include "http/json_client.hpp"
+#include "http/method.hpp"  // for ConstByteArray
 #include "network/fetch_asio.hpp"
-#include "constellation.hpp"
 
 namespace fetch {
 

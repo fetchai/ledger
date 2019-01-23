@@ -17,5 +17,5 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializers/byte_array.hpp"
 #include "fetch_pybind.hpp"
+#include "serializers/byte_array.hpp"
