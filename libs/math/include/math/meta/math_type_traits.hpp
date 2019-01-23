@@ -47,9 +47,9 @@ class Matrix;
 template <typename T, typename C>
 class NDArray;
 
-  template <typename T>
-  class Tensor;
-  
+template <typename T>
+class Tensor;
+
 namespace meta {
 
 template <bool C, typename R = void>
@@ -201,7 +201,7 @@ struct IsMathShapeArrayImpl<Tensor<T>, R>
 {
   using Type = R;
 };
-  
+
 template <typename T, typename R = void>
 using IfIsMathShapeArray =
     IfIsNotFixedPoint<typename T::Type, typename IsMathShapeArrayImpl<T, R>::Type>;

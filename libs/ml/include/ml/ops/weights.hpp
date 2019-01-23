@@ -23,14 +23,15 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+template <class T>
 class Trainable
 {
 public:
-  virtual void Step() = 0;
+  virtual void Step(T learningRate) = 0;
 };
-  
+
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable
+class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<typename T::Type>
 {
 public:
   using ArrayType    = T;
@@ -57,11 +58,12 @@ public:
     }
   }
 
-  virtual void Step()
+  virtual void Step(typename T::Type learningRate)
   {
-    ArrayPtrType lr = std::make_shared<ArrayType>(gradientAccumulation_->shape(), std::vector<size_t>(gradientAccumulation_->shape().size()));
-    lr->At(0) = -0.001f;
-    this->gradientAccumulation_->InlineMultiply(*lr);
+    for (size_t i(0); i < this->gradientAccumulation_->size(); ++i)
+    {
+      this->gradientAccumulation_->At(i) = this->gradientAccumulation_->At(i) * -learningRate;
+    }
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre

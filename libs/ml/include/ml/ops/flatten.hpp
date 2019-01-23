@@ -39,10 +39,10 @@ public:
     input_shape_  = inputs[0]->shape();
     this->output_ = std::make_shared<ArrayType>(std::vector<size_t>({1, inputs[0]->size()}));
     // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (size_t i(0) ; i < inputs[0]->size() ; ++i)
-      {
-	this->output_->At(i) = inputs[0]->At(i);
-      }
+    for (size_t i(0); i < inputs[0]->size(); ++i)
+    {
+      this->output_->At(i) = inputs[0]->At(i);
+    }
     return this->output_;
   }
 
@@ -51,10 +51,10 @@ public:
   {
     ASSERT(inputs.size() == 1);
     std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (size_t i(0) ; i < ret->size() ; ++i)
-      {
-	ret->At(i) = errorSignal->At(i);
-      }
+    for (size_t i(0); i < ret->size(); ++i)
+    {
+      ret->At(i) = errorSignal->At(i);
+    }
     return {ret};
   }
 

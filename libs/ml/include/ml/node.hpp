@@ -68,14 +68,14 @@ public:
   virtual ArrayPtrType Evaluate()
   {
     std::vector<ArrayPtrType> inputs = GatherInputs();
-    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+    //    FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
     return this->Forward(inputs);
   }
 
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
       ArrayPtrType errorSignal)
   {
-    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
+    //    FETCH_LOG_INFO("ML_LIB", "Backpropagating node [", name_, "]");
     std::vector<ArrayPtrType> inputs                     = GatherInputs();
     std::vector<ArrayPtrType> backpropagatedErrorSignals = this->Backward(inputs, errorSignal);
     std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> nonBackpropagatedErrorSignals;

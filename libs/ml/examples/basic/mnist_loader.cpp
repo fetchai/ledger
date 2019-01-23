@@ -1,78 +1,112 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "mnist_loader.hpp"
 
 #include <fstream>
 
 using namespace std;
 
-typedef unsigned char uchar;
+using uchar = unsigned char;
 
-uchar** read_mnist_images(string full_path, unsigned int& number_of_images, unsigned int& image_size)
+uchar **read_mnist_images(string full_path, unsigned int &number_of_images,
+                          unsigned int &image_size)
 {
-    auto reverseInt = [](unsigned int i) -> unsigned int {
-			unsigned char c1, c2, c3, c4;
-        c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
-        return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
-    };
+  auto reverseInt = [](unsigned int i) -> unsigned int {
+    unsigned char c1, c2, c3, c4;
+    c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
+    return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
+  };
 
-    ifstream file(full_path, ios::binary);
+  ifstream file(full_path, ios::binary);
 
-    if(file.is_open()) {
-      unsigned int magic_number = 0, n_rows = 0, n_cols = 0;
+  if (file.is_open())
+  {
+    unsigned int magic_number = 0, n_rows = 0, n_cols = 0;
 
-        file.read((char *)&magic_number, sizeof(magic_number));
-        magic_number = reverseInt(magic_number);
+    file.read((char *)&magic_number, sizeof(magic_number));
+    magic_number = reverseInt(magic_number);
 
-        if(magic_number != 2051) throw runtime_error("Invalid MNIST image file!");
-
-        file.read((char *)&number_of_images, sizeof(number_of_images)), number_of_images = reverseInt(number_of_images);
-        file.read((char *)&n_rows, sizeof(n_rows)), n_rows = reverseInt(n_rows);
-        file.read((char *)&n_cols, sizeof(n_cols)), n_cols = reverseInt(n_cols);
-
-        image_size = n_rows * n_cols;
-
-        uchar** _dataset = new uchar*[number_of_images];
-        for(unsigned int i = 0; i < number_of_images; i++) {
-            _dataset[i] = new uchar[image_size];
-            file.read((char *)_dataset[i], std::streamsize(image_size));
-        }
-        return _dataset;
-    } else {
-        throw runtime_error("Cannot open file `" + full_path + "`!");
+    if (magic_number != 2051)
+    {
+      throw runtime_error("Invalid MNIST image file!");
     }
+
+    file.read((char *)&number_of_images, sizeof(number_of_images)),
+        number_of_images = reverseInt(number_of_images);
+    file.read((char *)&n_rows, sizeof(n_rows)), n_rows = reverseInt(n_rows);
+    file.read((char *)&n_cols, sizeof(n_cols)), n_cols = reverseInt(n_cols);
+
+    image_size = n_rows * n_cols;
+
+    uchar **_dataset = new uchar *[number_of_images];
+    for (unsigned int i = 0; i < number_of_images; i++)
+    {
+      _dataset[i] = new uchar[image_size];
+      file.read((char *)_dataset[i], std::streamsize(image_size));
+    }
+    return _dataset;
+  }
+  else
+  {
+    throw runtime_error("Cannot open file `" + full_path + "`!");
+  }
 }
 
-uchar* read_mnist_labels(string full_path, unsigned int& number_of_labels) {
-    auto reverseInt = [](unsigned int i) {
-        unsigned char c1, c2, c3, c4;
-        c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
-        return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
-    };
+uchar *read_mnist_labels(string full_path, unsigned int &number_of_labels)
+{
+  auto reverseInt = [](unsigned int i) {
+    unsigned char c1, c2, c3, c4;
+    c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
+    return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
+  };
 
-    typedef unsigned char uchar;
+  ifstream file(full_path, ios::binary);
 
-    ifstream file(full_path, ios::binary);
+  if (file.is_open())
+  {
+    unsigned int magic_number = 0;
+    file.read((char *)&magic_number, sizeof(magic_number));
+    magic_number = reverseInt(magic_number);
 
-    if(file.is_open()) {
-        unsigned int magic_number = 0;
-        file.read((char *)&magic_number, sizeof(magic_number));
-        magic_number = reverseInt(magic_number);
-
-        if(magic_number != 2049) throw runtime_error("Invalid MNIST label file!");
-
-        file.read((char *)&number_of_labels, sizeof(number_of_labels)), number_of_labels = reverseInt(number_of_labels);
-
-        uchar* _dataset = new uchar[number_of_labels];
-        for(unsigned int i = 0; i < number_of_labels; i++) {
-            file.read((char*)&_dataset[i], 1);
-        }
-        return _dataset;
-    } else {
-        throw runtime_error("Unable to open file `" + full_path + "`!");
+    if (magic_number != 2049)
+    {
+      throw runtime_error("Invalid MNIST label file!");
     }
+
+    file.read((char *)&number_of_labels, sizeof(number_of_labels)),
+        number_of_labels = reverseInt(number_of_labels);
+
+    uchar *_dataset = new uchar[number_of_labels];
+    for (unsigned int i = 0; i < number_of_labels; i++)
+    {
+      file.read((char *)&_dataset[i], 1);
+    }
+    return _dataset;
+  }
+  else
+  {
+    throw runtime_error("Unable to open file `" + full_path + "`!");
+  }
 }
 
 MNISTLoader::MNISTLoader()
-  :cursor_(0)
+  : cursor_(0)
 {
   assert(sizeof(int) == sizeof(unsigned int));
   unsigned int recordLength(0);
@@ -98,27 +132,32 @@ void MNISTLoader::Reset()
   cursor_ = 0;
 }
 
-std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader::GetNext(std::shared_ptr<fetch::math::Tensor<float>> buffer)
+std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader::GetNext(
+    std::shared_ptr<fetch::math::Tensor<float>> buffer)
 {
   if (!buffer)
-    {
-      buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<size_t>({28u, 28u}));
-    }
-  for (unsigned int i(0) ; i < 28*28 ; ++i)
-    {
-      buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
-    }  
+  {
+    buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<size_t>({28u, 28u}));
+  }
+  for (unsigned int i(0); i < 28 * 28; ++i)
+  {
+    buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
+  }
   unsigned int label = (unsigned int)(labels_[cursor_]);
+  if (cursor_ % 1000 == 0)
+  {
+    std::cout << cursor_ << " / " << size_ << std::endl;
+    Display(buffer);
+  }
   cursor_++;
   return std::make_pair(label, buffer);
 }
 
 void MNISTLoader::Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const
 {
-  for (unsigned int j(0) ; j < 784 ; ++j)
-    {
-      std::cout << (data->At(j) > 0.5 ? char(219) : ' ');
-      if (j % 28 == 0)
-	std::cout << std::endl;
-    }
+  for (unsigned int j(0); j < 784; ++j)
+  {
+    std::cout << (data->At(j) > 0.5 ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
+  }
+  std::cout << std::endl;
 }

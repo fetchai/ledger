@@ -56,7 +56,7 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   w.SetData(data);
   ASSERT_TRUE(w.Forward({}) == data);  // Test pointed address, should still be the same
   std::vector<std::shared_ptr<TypeParam>> errorSignal = w.Backward({}, error);
-  w.Step();
+  w.Step(typename TypeParam::Type(1));
   ASSERT_TRUE(w.Forward({}) == data);         // Test pointed address, should still be the same
   ASSERT_TRUE(w.Forward({})->AllClose(*gt));  // whit new values
 }

@@ -152,16 +152,19 @@ public:
     for (size_t i(0); i < indices.size(); ++i)
     {
       if (indices[i] >= shape_[i])
-	{
-	  std::cerr << "Trying to index tensor with shape [";
-	    for (size_t s : shape_)
-	      std::cerr << s << " ";
-	  std::cerr << "] using indices [";
-	  for (size_t s : indices)
-	    std::cerr << s << " ";
-	  std::cerr << "]" << std::endl;
-
-	}
+      {
+        std::cerr << "Trying to index tensor with shape [";
+        for (size_t s : shape_)
+        {
+          std::cerr << s << " ";
+        }
+        std::cerr << "] using indices [";
+        for (size_t s : indices)
+        {
+          std::cerr << s << " ";
+        }
+        std::cerr << "]" << std::endl;
+      }
       ASSERT(indices[i] < shape_[i]);
       index += indices[i] * DimensionSize(i);
     }
@@ -179,10 +182,10 @@ public:
   void Copy(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (size_t i(0) ; i < size() ; ++i)
-     {
-	At(i) = o.At(i);
-      }
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = o.At(i);
+    }
   }
 
   T &At(size_t i)

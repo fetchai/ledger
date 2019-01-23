@@ -4,6 +4,9 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project (fetch)
 
+
+add_definitions(-ftemplate-backtrace-limit=0)
+
 #-------------------------------------------------------------------------------
 # Configuration Options
 #-------------------------------------------------------------------------------

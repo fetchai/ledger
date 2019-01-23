@@ -894,9 +894,10 @@ linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, 
  * @param B
  * @return
  */
-template<typename T, class C, class S>
+template <typename T, class C, class S>
 fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspose(
-    linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B, linalg::Matrix<T, C, S> &ret, typename linalg::Matrix<T, C, S>::Type alpha = 1.0,
+    linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
+    linalg::Matrix<T, C, S> &ret, typename linalg::Matrix<T, C, S>::Type alpha = 1.0,
     typename linalg::Matrix<T, C, S>::Type beta = 0.0, bool threaded = false)
 {
   ret.Reshape(std::vector<size_t>({A.shape()[0], B.shape()[0]}));
@@ -933,27 +934,26 @@ fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspos
  * @param B
  * @return
  */
-template<class ArrayType>
+template <class ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
-    ArrayType const &A, ArrayType const &B, ArrayType &ret, typename ArrayType::Type alpha = 1.0,
-    typename ArrayType::Type beta = 0.0, bool threaded = false)
+    ArrayType const &A, ArrayType const &B, ArrayType &ret,
+    typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
+    bool /*threaded*/ = false)
 {
   assert(A.shape()[1] == B.shape()[1]);
 
   for (size_t i(0); i < A.shape()[0]; ++i)
+  {
+    for (size_t j(0); j < B.shape()[0]; ++j)
     {
-      for (size_t j(0); j < B.shape()[0]; ++j)
-	{
-	  for (size_t k(0); k < A.shape()[1]; ++k)
-	    {
-	      ret.Get(std::vector<size_t>({i, j})) +=
-	      	A.Get(std::vector<size_t>({i, k})) *
-	      	B.Get(std::vector<size_t>({j, k}));
-	    }
-	}
-    }  
+      for (size_t k(0); k < A.shape()[1]; ++k)
+      {
+        ret.Get(std::vector<size_t>({i, j})) +=
+            A.Get(std::vector<size_t>({i, k})) * B.Get(std::vector<size_t>({j, k}));
+      }
+    }
+  }
 }
-
 
 template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
@@ -1024,38 +1024,36 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
  * @return
  */
 template <class ArrayType>
-void TransposeDot(ArrayType const &A, ArrayType const &B,
-                  ArrayType &ret, typename ArrayType::Type alpha = 1.0, typename ArrayType::Type beta = 0.0, bool threaded = false)
+void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
+                  typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
+                  bool /*threaded*/ = false)
 {
   assert(A.shape()[0] == B.shape()[0]);
 
   for (size_t i(0); i < A.shape()[1]; ++i)
+  {
+    for (size_t j(0); j < B.shape()[1]; ++j)
     {
-      for (size_t j(0); j < B.shape()[1]; ++j)
-	{
-	  for (size_t k(0); k < A.shape()[0]; ++k)
-	    {
-	      ret.Get(std::vector<size_t>({i, j})) +=
-	      	A.Get(std::vector<size_t>({k, i})) *
-	      	B.Get(std::vector<size_t>({k, j}));
-	    }
-	}
-    }  
+      for (size_t k(0); k < A.shape()[0]; ++k)
+      {
+        ret.Get(std::vector<size_t>({i, j})) +=
+            A.Get(std::vector<size_t>({k, i})) * B.Get(std::vector<size_t>({k, j}));
+      }
+    }
+  }
 }
 
 template <class ArrayType>
-ArrayType TransposeDot(ArrayType const &A,
-		       ArrayType const &B, typename ArrayType::Type alpha = 1.0, typename ArrayType::Type beta = 0.0,
-		       bool threaded = false)
+ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
+                       typename ArrayType::Type beta = 0.0, bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-  ArrayType  ret(return_shape);
+  ArrayType                ret(return_shape);
   TransposeDot(A, B, ret, alpha, beta, threaded);
   return ret;
 }
 template <typename ArrayType>
-ArrayType TransposeDot(ArrayType const &A,
-		       ArrayType const &B, bool threaded = false)
+ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, bool threaded = false)
 {
   return TransposeDot(A, B, 1.0, 0.0, threaded);
 }

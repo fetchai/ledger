@@ -28,11 +28,12 @@ namespace fetch {
 namespace ml {
 
 template <class T>
-class Graph : public ops::Trainable
+class Graph : public ops::Trainable<typename T::Type>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using Datatype     = typename ArrayType::Type;
 
   Graph()
   {}
@@ -48,7 +49,8 @@ public:
   }
 
   template <class OperationType, typename... Params>
-  typename std::enable_if<!std::is_base_of<Trainable, OperationType>::value>::type
+  typename std::enable_if<
+      !std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
   AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
@@ -60,10 +62,12 @@ public:
   }
 
   template <class OperationType, typename... Params>
-  typename std::enable_if<std::is_base_of<Trainable, OperationType>::value>::type
+  typename std::enable_if<
+      std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
   AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
-    std::shared_ptr<Node<ArrayType, OperationType>> op = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
+    std::shared_ptr<Node<ArrayType, OperationType>> op =
+        std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
     nodes_[nodeName] = op;
     trainable_.push_back(op);
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
@@ -72,7 +76,7 @@ public:
       nodes_[nodeName]->AddInput(nodes_[i]);
     }
   }
-  
+
   void SetInput(std::string const &nodeName, ArrayPtrType data)
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
@@ -80,17 +84,17 @@ public:
     placeholder->SetData(data);
   }
 
-  virtual void Step()
+  virtual void Step(Datatype learningRate)
   {
     for (auto &t : trainable_)
-      {
-	t->Step();
-      }
+    {
+      t->Step(learningRate);
+    }
   }
 
 protected:
   std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
-  std::list<std::shared_ptr<fetch::ml::ops::Trainable>> trainable_;
+  std::list<std::shared_ptr<fetch::ml::ops::Trainable<Datatype>>>                       trainable_;
 };
 
 }  // namespace ml
