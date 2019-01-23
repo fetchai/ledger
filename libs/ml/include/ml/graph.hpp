@@ -95,10 +95,10 @@ public:
 
   void ResetGraphCache()
   {
-    for (auto & node : nodes_)
-      {
-	node.second->ResetCache();
-      }
+    for (auto &node : nodes_)
+    {
+      node.second->ResetCache();
+    }
   }
 
 protected:

@@ -35,9 +35,9 @@ public:
   {
     ASSERT(inputs.size() == this->inputs_nodes_.size());
     for (size_t i(0); i < inputs.size(); ++i)
-      {
-	this->SetInput(inputs_nodes_[i], inputs[i]);
-      }
+    {
+      this->SetInput(inputs_nodes_[i], inputs[i]);
+    }
     this->output_ = output_node_->Evaluate();
     return this->output_;
   }
@@ -63,7 +63,7 @@ public:
     }
     return backpropagatedErrorSignals;
   }
-  
+
 protected:
   void AddInputNodes(std::string const &nodeName)
   {

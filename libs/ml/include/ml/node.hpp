@@ -38,7 +38,7 @@ public:
   virtual void         AddInput(std::shared_ptr<NodeInterface<T>> const &i) = 0;
   virtual std::vector<std::pair<NodeInterface<T> *, ArrayPtrType>> BackPropagate(
       ArrayPtrType errorSignal) = 0;
-  virtual void         ResetCache() = 0;
+  virtual void ResetCache()     = 0;
 };
 
 template <class T, class O>
@@ -69,11 +69,11 @@ public:
   virtual ArrayPtrType Evaluate()
   {
     if (!cachedOutput_)
-      {
-	std::vector<ArrayPtrType> inputs = GatherInputs();
-	FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
-	cachedOutput_ = this->Forward(inputs);
-      }
+    {
+      std::vector<ArrayPtrType> inputs = GatherInputs();
+      FETCH_LOG_INFO("ML_LIB", "Evaluating node [", name_, "]");
+      cachedOutput_ = this->Forward(inputs);
+    }
     return cachedOutput_;
   }
 
