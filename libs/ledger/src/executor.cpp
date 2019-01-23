@@ -73,8 +73,8 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   Metrics::Timestamp const started = Metrics::Clock::now();
 #endif  // FETCH_ENABLE_METRICS
 
-  // Get the transaction from the store (we should be able to take the
-  // transaction from any of the lanes, for simplicity, however, just pick the
+  // Get the transaction from the store (WE SHOULD BE ABLE TO TAKE THE
+  // TRANSACTION FROM ANY OF THE LANES(?), for simplicity, however, just pick the
   // first one).
   chain::Transaction tx;
   if (!resources_->GetTransaction(hash, tx))
