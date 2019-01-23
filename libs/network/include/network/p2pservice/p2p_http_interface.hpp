@@ -139,11 +139,13 @@ private:
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const & /*params*/,
                                      http::HTTPRequest const & /*request*/)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetMuddleStatus");
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetMuddleStatus muddle get con");
     auto const connections = muddle_.GetConnections(true);
+    FETCH_LOG_WARN(LOGGING_NAME, "End GetMuddleStatus muddle get con");
 
     std::vector<variant::Variant> connections_output_list;
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Before GetMuddleStatus for IsConnected");
     for (auto const &entry : connections)
     {
       if (muddle_.IsConnected(entry.first))
@@ -156,6 +158,7 @@ private:
       object["uri"]      = entry.second.uri();
       connections_output_list.push_back(object);
     }
+    FETCH_LOG_WARN(LOGGING_NAME, "After GetMuddleStatus for IsConnected");
 
     variant::Variant response = variant::Variant::Array(connections_output_list.size());
     for (std::size_t i = 0; i < connections_output_list.size(); i++)

@@ -172,6 +172,8 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
       connection_map[address] = Uri{"muddle://" + ToBase64(address)};
     }
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "GetCon: End of function / before return");
+
 
   return connection_map;
 }
