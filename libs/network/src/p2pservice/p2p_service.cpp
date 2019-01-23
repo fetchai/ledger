@@ -66,6 +66,7 @@ public:
     {
       FETCH_LOG_WARN("BlockCatchUpService", "New_peers_.size=", new_peers_.size());
       FETCH_LOCK(mutex_);
+      FETCH_LOG_WARN("BlockCatchUpService", "WorkCycle mutex locked"));
       std::vector<double>           ws;
       std::vector<UriSet::iterator> its;
       double                        sum_w = 0.;
@@ -74,6 +75,7 @@ public:
         Address address;
         if (muddle_.UriToDirectAddress(*it, address))
         {
+          FETCH_LOG_WARN("BlockCatchUpService", "inside UriToDirectAddress if before trust");
           callable_peers.insert(address);
           auto w = trust_.GetPeerUsefulness(address);
           ws.push_back(w);

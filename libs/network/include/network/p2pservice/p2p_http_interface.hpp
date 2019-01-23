@@ -186,42 +186,54 @@ private:
   }
 
   http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
-                                    http::HTTPRequest const & /*request*/)
-  {
+                                    http::HTTPRequest const & /*request*/) {
     FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus");
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
-    std::vector<variant::Variant> peer_data_list;
+    std::vector<std::pair<byte_array::ConstByteArray, variant::Variant>> peer_data_list;
 
-    for (const auto &pt : peers_trusts)
-    {
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - building base responses");
+    for (const auto &pt : peers_trusts) {
       variant::Variant peer_data = variant::Variant::Object();
-      peer_data["target"]        = pt.name;
-      peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
-      peer_data["value"]         = pt.trust;
-      peer_data["active"]        = muddle_.IsConnected(pt.address);
-      peer_data["desired"]       = p2p_.IsDesired(pt.address);
-      peer_data["experimental"]  = p2p_.IsExperimental(pt.address);
-      peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
-
-      peer_data_list.push_back(peer_data);
+      peer_data["target"] = pt.name;
+      peer_data["value"] = pt.trust;
+      peer_data["address"] = pt.address;
+      peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
+      peer_data_list.push_back(std::make_pair(pt.address, peer_data);
     }
 
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding blacklist status");
+    for (auto &pt : peer_data_list) {
+      pt.second["blacklisted"] = muddle_.IsBlacklisted(pt.first);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding active connection status");
+    for (auto &pt : peer_data_list) {
+      pt.second["active"] = muddle_.IsConnected(pt.first);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding desired status membership");
+    for (auto &pt : peer_data_list) {
+      pt.second["desired"] = p2p_.IsDesired(pt.first);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding experimental statuses");
+    for (auto &pt : peer_data_list) {
+      pt.second["experimental"] = p2p_.IsExperimental(pt.first);
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - objects made");
+
     variant::Variant trust_list = variant::Variant::Array(peer_data_list.size());
-    for (std::size_t i = 0; i < peer_data_list.size(); i++)
-    {
+    for (std::size_t i = 0; i < peer_data_list.size(); i++) {
       trust_list[i] = peer_data_list[i];
     }
 
-    Variant response     = Variant::Object();
+    Variant response = Variant::Object();
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"]   = trust_list;
+    response["trusts"] = trust_list;
 
     // TODO(private issue 532): Remove legacy API
-    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
-    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     auto result = http::CreateJsonResponse(response);
     FETCH_LOG_WARN(LOGGING_NAME, "End GetTrustStatus");
