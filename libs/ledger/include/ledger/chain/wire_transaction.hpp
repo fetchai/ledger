@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/mutable_transaction.hpp"  // for MutableTransaction
+#include "meta/type_traits.hpp"                  // for ByteArray, ConstByte...
+#include "variant/variant.hpp"                   // for Variant
 
 namespace fetch {
 namespace variant {

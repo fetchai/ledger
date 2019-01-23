@@ -17,10 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/node.hpp"
+#include <string>       // for string
+
+#include "vm/node.hpp"  // for Node, Node::Kind, ExpressionNodePtr, NodePtr
 
 namespace fetch {
 namespace vm {
+struct Token;
 
 class Parser
 {

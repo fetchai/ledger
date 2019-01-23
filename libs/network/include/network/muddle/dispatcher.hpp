@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/muddle/packet.hpp"
-#include "network/service/promise.hpp"
-
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "core/mutex.hpp"  // for FETCH_LOCK
+#include "network/muddle/packet.hpp"
+#include "network/service/promise.hpp"
 
 namespace fetch {
 namespace muddle {

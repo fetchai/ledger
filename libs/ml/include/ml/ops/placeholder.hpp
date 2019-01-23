@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
+#include "core/assert.hpp"  // for ASSERT
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
 #include <cstdint>
 #include <iostream>
 #include <string>
+
+#include "core/logger.hpp"
 
 namespace fetch {
 namespace network {

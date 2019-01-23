@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <openssl/bn.h>  // for BN_CTX_new
 #include <utility>
 
 #include "crypto/openssl_context_detail.hpp"

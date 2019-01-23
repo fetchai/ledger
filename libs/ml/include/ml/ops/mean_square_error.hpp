@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <assert.h>  // for assert
+
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/utils.hpp"
 

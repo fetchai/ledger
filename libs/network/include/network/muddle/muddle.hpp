@@ -17,23 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-#include "core/mutex.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
-#include "network/details/thread_pool.hpp"
-#include "network/management/connection_register.hpp"
-#include "network/muddle/dispatcher.hpp"
-#include "network/muddle/peer_list.hpp"
-#include "network/muddle/router.hpp"
-#include "network/service/promise.hpp"
-#include "network/tcp/abstract_server.hpp"
-#include "network/uri.hpp"
-
 #include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <cstdint>                                     // for uint16_t
+
+#include "core/macros.hpp"
+#include "core/mutex.hpp"
+#include "crypto/ecdsa.hpp"                            // for ECDSASigner
+#include "crypto/prover.hpp"
+#include "network/details/thread_pool.hpp"
+#include "network/management/connection_register.hpp"
+#include "network/muddle/dispatcher.hpp"               // for Dispatcher
+#include "network/muddle/peer_list.hpp"                // for PeerConnection...
+#include "network/muddle/router.hpp"                   // for Router, Router...
+#include "network/service/promise.hpp"
+#include "network/tcp/abstract_server.hpp"
+#include "network/uri.hpp"                             // for Uri
+#include "core/logger.hpp"                             // for FETCH_LOG_WARN
+#include "crypto/identity.hpp"                         // for Identity
+#include "network/management/abstract_connection.hpp"  // for AbstractConnec...
+#include "network/management/network_manager.hpp"      // for NetworkManager
+#include "network/muddle/muddle_endpoint.hpp"          // for MuddleEndpoint
 
 namespace fetch {
 

@@ -17,19 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/mutex.hpp"
-#include "crypto/identity.hpp"
-#include "http/json_client.hpp"
-#include "network/fetch_asio.hpp"
-
-#include "constellation.hpp"
-
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <cstdint>              // for uint16_t, uint32_t
+
+#include "core/byte_array/byte_array.hpp"
+#include "core/mutex.hpp"
+#include "crypto/identity.hpp"  // for Identity
+#include "http/json_client.hpp"
+#include "network/fetch_asio.hpp"
+#include "constellation.hpp"
+#include "asio/io_service.hpp"  // for io_service
+#include "asio/ip/tcp.hpp"      // for tcp, tcp::resolver, tcp::socket
+#include "http/method.hpp"      // for ConstByteArray
 
 namespace fetch {
 

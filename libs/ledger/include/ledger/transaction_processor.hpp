@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/storage_unit/transaction_sinks.hpp"
-#include "ledger/transaction_verifier.hpp"
-#include "miner/miner_interface.hpp"
-
 #include <atomic>
 #include <thread>
+
+#include "ledger/storage_unit/storage_unit_interface.hpp"  // for StorageUni...
+#include "ledger/storage_unit/transaction_sinks.hpp"       // for Unverified...
+#include "ledger/transaction_verifier.hpp"                 // for Transactio...
+#include "miner/miner_interface.hpp"                       // for MinerInter...
+#include "ledger/chain/mutable_transaction.hpp"            // for MutableTra...
+#include "ledger/chain/transaction.hpp"                    // for Unverified...
 
 namespace fetch {
 namespace ledger {

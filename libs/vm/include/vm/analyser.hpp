@@ -17,15 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/node.hpp"
-
-#include <typeindex>
+#include <typeindex>       // for type_index
 #include <typeinfo>
 #include <unordered_map>
+#include <stdexcept>       // for runtime_error
+#include <string>          // for string
+
+#include "vm/node.hpp"     // for TypePtr, ExpressionNodePtr, BlockNodePtr
+#include "vm/opcodes.hpp"  // for Opcode
+#include "vm/typeids.hpp"  // for TypeId
 
 namespace fetch {
 namespace vm {
 class Module;
+struct Token;
 
 class Analyser
 {

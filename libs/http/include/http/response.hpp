@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ostream>
+#include <utility>
+
 #include "http/header.hpp"
 #include "http/mime_types.hpp"
 #include "http/status.hpp"
 #include "network/fetch_asio.hpp"
-#include <ostream>
-#include <utility>
+#include "asio/streambuf.hpp"  // for streambuf
 
 namespace fetch {
 namespace http {

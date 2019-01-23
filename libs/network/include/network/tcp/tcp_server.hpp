@@ -17,18 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
+#include <deque>
+#include <mutex>
+#include <thread>
+#include <cstdint>                                 // for uint16_t
+
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/management/network_manager.hpp"
+#include "network/management/network_manager.hpp"  // for NetworkManager
 #include "network/tcp/client_connection.hpp"
-
 #include "network/fetch_asio.hpp"
-
-#include <deque>
-#include <mutex>
-#include <thread>
+#include "asio/ip/tcp.hpp"                         // for tcp, tcp::acceptor
+#include "network/tcp/abstract_server.hpp"         // for AbstractNetworkServer
 
 namespace fetch {
 namespace network {

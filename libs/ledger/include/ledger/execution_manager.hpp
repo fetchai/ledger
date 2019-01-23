@@ -17,27 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "ledger/chain/constants.hpp"
-#include "ledger/chaincode/cache.hpp"
-#include "ledger/execution_item.hpp"
-#include "ledger/execution_manager_interface.hpp"
-#include "ledger/executor.hpp"
-#include "ledger/state_summary_archive.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "network/details/thread_pool.hpp"
-#include "storage/object_store.hpp"
-
-#include "core/byte_array/encoders.hpp"
-
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
+#include <condition_variable>                              // for condition_...
 #include <future>
 #include <memory>
 #include <thread>
 #include <unordered_set>
 #include <vector>
+
+#include "core/mutex.hpp"
+#include "ledger/chain/constants.hpp"
+#include "ledger/chaincode/cache.hpp"                      // for ChainCodeC...
+#include "ledger/execution_item.hpp"                       // for ExecutionItem
+#include "ledger/execution_manager_interface.hpp"          // for ExecutionM...
+#include "ledger/executor.hpp"
+#include "ledger/state_summary_archive.hpp"                // for StateSumma...
+#include "ledger/storage_unit/storage_unit_interface.hpp"  // for StorageUni...
+#include "network/details/thread_pool.hpp"
+#include "storage/object_store.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "storage/resource_mapper.hpp"                     // for ResourceID
 
 namespace fetch {
 namespace ledger {

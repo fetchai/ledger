@@ -20,10 +20,10 @@
 #include <utility>
 
 #include "defs.hpp"
-
 #include "math/arithmetic/comparison.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/linalg/matrix.hpp"
+#include "core/assert.hpp"  // for TODO_FAIL
 
 namespace fetch {
 namespace vm {

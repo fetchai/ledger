@@ -17,16 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
-#include "variant/variant.hpp"
-
 #include <map>
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include <cstddef>                                  // for size_t
+#include <cstdint>                                  // for uint16_t
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "network/p2pservice/p2p_service_defs.hpp"  // for ServiceIdentifier
+#include "variant/variant.hpp"                      // for Variant
 
 namespace fetch {
 

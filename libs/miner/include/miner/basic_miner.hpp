@@ -17,12 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include <list>
+#include <cstdint>                               // for uint32_t, uint64_t
+
 #include "core/mutex.hpp"
 #include "meta/is_log2.hpp"
-#include "miner/miner_interface.hpp"
-#include "miner/optimisation/bitvector.hpp"
-#include "vectorise/threading/pool.hpp"
-#include <list>
+#include "miner/miner_interface.hpp"             // for MinerInterface
+#include "miner/optimisation/bitvector.hpp"      // for BitVector
+#include "vectorise/threading/pool.hpp"          // for Pool
+#include "ledger/chain/block.hpp"                // for BlockBody, BlockSlice
+#include "ledger/chain/main_chain.hpp"           // for MainChain
+#include "ledger/chain/mutable_transaction.hpp"  // for TransactionSummary
 
 namespace fetch {
 namespace miner {

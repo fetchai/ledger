@@ -17,26 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <deque>
+#include <map>
+#include <mutex>
+#include <cstdint>              // for uint16_t
+
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/message_types.hpp"
 #include "network/service/protocol.hpp"
-
 #include "core/mutex.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/server_interface.hpp"
-
-#include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/assert.hpp"      // for TODO_FAIL
+#include "core/logger.hpp"      // for FETCH_LOG_DEBUG, LOG_STACK_TRACE_POINT
 #include "network/tcp/tcp_server.hpp"
-
-#include <atomic>
-#include <deque>
-#include <map>
-#include <mutex>
 
 namespace fetch {
 namespace service {

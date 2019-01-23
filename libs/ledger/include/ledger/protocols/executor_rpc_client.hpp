@@ -18,20 +18,25 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <cstddef>                                 // for size_t
 
 #include "core/serializers/stl_types.hpp"
 #include "core/service_ids.hpp"
-#include "ledger/executor_interface.hpp"
+#include "ledger/executor_interface.hpp"           // for ExecutorInterface
 #include "ledger/protocols/executor_rpc_protocol.hpp"
 #include "network/generics/atomic_state_machine.hpp"
-#include "network/generics/backgrounded_work.hpp"
-#include "network/generics/future_timepoint.hpp"
-#include "network/generics/has_worker_thread.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "network/generics/backgrounded_work.hpp"  // for BackgroundedWork
+#include "network/generics/future_timepoint.hpp"   // for FutureTimepoint
+#include "network/generics/has_worker_thread.hpp"  // for HasWorkerThread
+#include "network/muddle/muddle.hpp"               // for Muddle
+#include "network/muddle/rpc/client.hpp"           // for Client
 #include "network/muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
+#include "meta/type_traits.hpp"                    // for ConstByteArray
+#include "network/management/network_manager.hpp"  // for NetworkManager
+#include "network/muddle/muddle_endpoint.hpp"      // for MuddleEndpoint
+#include "network/service/promise.hpp"             // for PromiseState
 
 namespace fetch {
 namespace ledger {

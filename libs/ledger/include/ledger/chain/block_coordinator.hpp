@@ -17,13 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/execution_manager.hpp"
-#include "miner/miner_interface.hpp"
-
 #include <atomic>
 #include <thread>
+
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"             // for MainChain, MainCha...
+#include "ledger/execution_manager.hpp"
+#include "miner/miner_interface.hpp"
+#include "core/mutex.hpp"                          // for Mutex
+#include "ledger/execution_manager_interface.hpp"  // for ExecutionManagerIn...
 
 namespace fetch {
 namespace chain {

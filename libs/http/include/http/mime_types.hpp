@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include <algorithm>
-#include <string>
+#include <string>  // for string
 #include <vector>
+
 namespace fetch {
 namespace http {
 

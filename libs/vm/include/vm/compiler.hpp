@@ -17,12 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
-#include "vm/generator.hpp"
-#include "vm/parser.hpp"
+#include <string>            // for string
+
+#include "vm/analyser.hpp"   // for Analyser
+#include "vm/generator.hpp"  // for Generator
+#include "vm/parser.hpp"     // for Parser
 
 namespace fetch {
 namespace vm {
+class Module;
+struct Script;
 
 class Compiler
 {

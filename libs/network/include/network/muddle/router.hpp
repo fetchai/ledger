@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+#include <memory>
+#include <cstdint>                             // for uint16_t
+
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -25,17 +29,14 @@
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
-
-#include <chrono>
-#include <memory>
+#include "network/muddle/dispatcher.hpp"       // for Dispatcher
+#include "network/muddle/muddle_register.hpp"  // for MuddleRegister
 
 namespace fetch {
 namespace muddle {
 
 class Packet;
-
 class Dispatcher;
-
 class MuddleRegister;
 
 /**
