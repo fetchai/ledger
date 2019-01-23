@@ -6,6 +6,8 @@
 #include "ml/ops/relu.hpp"
 #include "ml/ops/softmax.hpp"
 
+#include "mnist_loader.hpp"
+
 #include <iostream>
 
 using namespace fetch::ml::ops;
@@ -13,11 +15,8 @@ using namespace fetch::ml::ops;
 int main(int ac, char **av)
 {
   std::cout << "FETCH MNIST Demo" << std::endl;
-
-  std::cout << std::setprecision(3) << std::endl;
-  
   typedef fetch::math::Tensor<float> Datatype;
-
+  MNISTLoader dataloader;
   fetch::ml::Graph<Datatype> g;
   g.AddNode<PlaceHolder<Datatype>>("Input", {});
   g.AddNode<FullyConnected<Datatype>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -30,22 +29,23 @@ int main(int ac, char **av)
 
   MeanSquareErrorLayer<Datatype> criterion;
 
-  std::shared_ptr<Datatype> input = std::make_shared<Datatype>(std::vector<size_t>({28, 28}));
+  std::pair<size_t, std::shared_ptr<Datatype>> input;
   std::shared_ptr<Datatype> gt = std::make_shared<Datatype>(std::vector<size_t>({10}));
-  for (size_t i(0) ; i < 28 ; ++i)
-    {
-      input->Set(std::vector<size_t>({i, 12}), 1.0f);
-    }
+
   gt->At(0) = 1.0;
-  g.SetInput("Input", input);
   float loss = 1;
-  while (loss > 0)
+  unsigned int i(0);
+  while (i < 1000)
     {
+      input = dataloader.GetNext(input.second);
+      g.SetInput("Input", input.second);
+      //      dataloader.Display(input.second);
       std::shared_ptr<Datatype> results = g.Evaluate("Softmax");
       loss = criterion.Forward({results, gt});
       g.BackPropagate("Softmax", criterion.Backward({results, gt}));
       g.Step();
-      std::cout << "Res: " << results->ToString() << " -- Loss : " << loss << std::endl;      
+      std::cout << "Res: " << results->ToString() << " -- Loss : " << loss << std::endl;
+      i++;
     }
 
   return 0;
