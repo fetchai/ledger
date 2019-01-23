@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,28 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
+#include <benchmark/benchmark.h>
+#include <gtest/gtest.h>
+#include <stack>
 
-namespace fetch {
-namespace ledger {
+#include "core/random/lfg.hpp"
+#include "storage/mmap_random_access_stack.hpp"
 
-class TokenContract : public Contract
+using fetch::storage::MMapRandomAccessStack;
+
+class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
-public:
-  TokenContract();
-  ~TokenContract() = default;
+protected:
+  void SetUp(const ::benchmark::State & /*st*/) override
+  {
+    stack_.New("test_bench.db");
+    EXPECT_TRUE(stack_.is_open());
+  }
 
-  static constexpr char const *LOGGING_NAME = "TokenContract";
+  void TearDown(const ::benchmark::State &) override
+  {}
 
-private:
-  // transaction handlers
-  Status CreateWealth(Transaction const &tx);
-  Status Deed(Transaction const &tx);
-  Status Transfer(Transaction const &tx);
-
-  // queries
-  Status Balance(Query const &query, Query &response);
+  MMapRandomAccessStack<uint64_t>           stack_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-}  // namespace ledger
-}  // namespace fetch
+BENCHMARK_F(MMapRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+{
+  uint64_t random;
+  for (auto _ : st)
+  {
+    st.PauseTiming();
+    random = lfg_();
+    st.ResumeTiming();
+    stack_.Push(random);
+  }
+}

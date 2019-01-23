@@ -188,6 +188,14 @@ public:
   bool operator!=(Variant const &other) const;
   /// @}
 
+  /// @name Iteration
+  /// @{
+  template <typename Function>
+  void IterateObject(Function const &function);
+  template <typename Function>
+  void IterateObject(Function const &function) const;
+  /// @}
+
   friend std::ostream &operator<<(std::ostream &stream, Variant const &variant);
 
 private:
@@ -837,6 +845,81 @@ inline void Variant::ResizeArray(std::size_t length)
 inline bool Variant::operator!=(Variant const &other) const
 {
   return !(*this == other);
+}
+
+/**
+ * Iterates through items contained in variant Object
+ *
+ * @details This method iterates though items in Object, thus variant instance
+ * **MUST** be of `Object` type! This is non-const version of the method, thus
+ * it is possible to modify value of items iterated through.
+ *
+ * @tparam Function - General type of which instance represents functor going
+ * to be called per each item in Variant Object. The `Function` **MUST** return
+ * boolean value indicating whether iteration is supposed to continue (`true`
+ * value to CONTINUE, or `false` to STOP iteration). Functor receives non-const
+ * reference to an item = it is MUTABLE.
+ * Signature of the `Function` instance is: `bool(Variant & item)`.
+ *
+ * @param function - Instance of Function type, which will be called per each
+ * item contained in the Variant Object, please see description of the the
+ * @refitem(Function) for details.
+ *
+ * @return true if deserialisation passed successfully, false otherwise.
+ */
+template <typename Function>
+void Variant::IterateObject(Function const &function)
+{
+  if (IsObject())
+  {
+    for (auto &variant : object_)
+    {
+      if (!function(variant.first, *variant.second))
+      {
+        break;
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("Variant type mismatch, expected `object` type.");
+  }
+}
+
+/**
+ * Iterates through items contained in variant Object (CONST version)
+ *
+ * @details This const CONST version of the @refitem(Variant::IterateObject)
+ * method, thus it is NOT possible to modify value of items iterated through.
+ *
+ * @tparam Function - Please see desc. for the @refitem(Function) in the
+ * @refitem(Variant::IterateObject) method. Since this is CONST version, passed
+ * items of variant Object are IMMUTABLE, thus the implication is that signature
+ * of the `Function` instance changes to: `bool(Variant const& item)`.
+ *
+ * @param function - Instance of functor, which will be called per each item
+ * contained in the Variant Object, please see description of the the
+ * @refitem(Function) for details.
+ *
+ * @return true if deserialisation passed successfully, false otherwise.
+ */
+template <typename Function>
+void Variant::IterateObject(Function const &function) const
+{
+  if (IsObject())
+  {
+    for (auto const &item : object_)
+    {
+      if (!function(item.first, *item.second))
+      {
+        break;
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error("Variant type mismatch, expected `object` type.");
+  }
 }
 
 }  // namespace variant

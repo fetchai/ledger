@@ -19,6 +19,7 @@
 #include "core/random/lfg.hpp"
 #include "storage/random_access_stack.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stack>
 
@@ -35,6 +36,89 @@ public:
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
 };
+
+class MockStream
+{
+public:
+  MockStream()
+  {}
+
+  MockStream(std::string /*a*/, std::ios_base::openmode /*b*/)
+  {}
+
+  operator bool() const
+  {
+    return true;
+  }
+
+  MockStream &operator=(const MockStream & /*other*/)
+  {
+    return *this;
+  }
+
+  bool is_open()
+  {
+    return true;
+  }
+
+  MOCK_CONST_METHOD0(is_open, bool());
+  MOCK_METHOD0(close, void());
+  MOCK_METHOD2(read, MockStream &(char *, std::streamsize));
+  MOCK_METHOD2(write, MockStream &(const char *, std::streamsize));
+  MOCK_METHOD2(seekg, MockStream &(std::streamoff, std::ios_base::seekdir));
+  MOCK_METHOD1(seekg, MockStream &(std::streampos));
+  MOCK_METHOD0(tellg, std::streampos());
+  MOCK_METHOD2(open, void(std::string, std::ios_base::openmode));
+
+  const std::ios_base::seekdir beg = std::ios_base::beg;
+  const std::ios_base::seekdir end = std::ios_base::end;
+};
+
+// fails due to badly mocking the is_open functionality
+TEST(DISABLED_random_access_stack, mocked_test_get_set)
+{
+  RandomAccessStack<TestClass, uint64_t, MockStream> stack;
+
+  std::shared_ptr<MockStream> mocked = std::make_shared<MockStream>();
+  MockStream                  dummy;
+  EXPECT_CALL(stack.underlying_stream(), is_open()).Times(1).WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(stack.underlying_stream(), close()).Times(1);
+
+  EXPECT_CALL(stack.underlying_stream(), seekg(testing::_))
+      .Times(1)
+      .WillRepeatedly(testing::ReturnRef(dummy));
+  EXPECT_CALL(stack.underlying_stream(), seekg(testing::_, testing::_))
+      .Times(1)
+      .WillRepeatedly(testing::ReturnRef(dummy));
+  EXPECT_CALL(stack.underlying_stream(), read(testing::_, testing::_))
+      .Times(1)
+      .WillRepeatedly(testing::ReturnRef(dummy));
+  EXPECT_CALL(stack.underlying_stream(), write(testing::_, testing::_))
+      .Times(1)
+      .WillRepeatedly(testing::ReturnRef(dummy));
+
+  TestClass temp;
+  stack.New("abcd");
+  stack.Set(0, temp);
+  stack.Get(0, temp);
+}
+
+// fails due to badly mocking the is_open functionality
+TEST(DISABLED_random_access_stack, mocked_test_load)
+{
+  RandomAccessStack<TestClass, uint64_t, MockStream> stack;
+
+  EXPECT_CALL(stack.underlying_stream(), is_open())
+      .Times(2)
+      .WillOnce(testing::Return(false))
+      .WillOnce(testing::Return(true));
+  EXPECT_CALL(stack.underlying_stream(), close()).Times(1);
+  // EXPECT_CALL(stack.underlying_stream(), seekg(testing::_, testing::_)) .Times(2)
+  // .WillRepeatedly(testing::ReturnRef(dummy));
+  EXPECT_CALL(stack.underlying_stream(), tellg()).Times(1).WillRepeatedly(testing::Return(10));
+
+  stack.Load("abce");
+}
 
 TEST(random_access_stack, basic_functionality)
 {
@@ -189,5 +273,37 @@ TEST(random_access_stack, file_writing_and_recovery)
     }
 
     stack.Close();
+  }
+}
+
+TEST(random_access_stack, bulk_functionality)
+{
+  constexpr uint64_t                        testSize = 10000;
+  fetch::random::LaggedFibonacciGenerator<> lfg;
+  RandomAccessStack<TestClass>              stack;
+  TestClass                                 referenceSet[testSize];
+  TestClass                                 referenceGet[testSize];
+
+  stack.New("RAS_test.db");
+
+  EXPECT_TRUE(stack.is_open());
+  EXPECT_TRUE(stack.DirectWrite() == true) << "Expected random access stack to be direct write";
+
+  for (uint64_t i = 0; i < testSize; i++)
+  {
+    uint64_t  random = lfg();
+    TestClass temp;
+    temp.value1 = random;
+    temp.value2 = random & 0xFF;
+
+    referenceSet[i] = temp;
+  }
+
+  stack.SetBulk(0, testSize, referenceSet);
+  stack.GetBulk(0, testSize, referenceGet);
+
+  for (uint64_t i = 0; i < testSize; i++)
+  {
+    EXPECT_TRUE(referenceSet[i] == referenceGet[i]);
   }
 }
