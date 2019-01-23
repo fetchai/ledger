@@ -17,5 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+
 using TxId    = std::size_t;
 using AgentId = std::size_t;

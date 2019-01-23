@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "type_def.hpp"
+#include "auctions/type_def.hpp"
+#include "auction_smart_contract/type_def.hpp"
+#include "auction_smart_contract/auction_smart_contract.hpp"
 #include <limits>
 
 namespace fetch {
