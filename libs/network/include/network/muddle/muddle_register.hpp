@@ -72,7 +72,7 @@ protected:
   /// @}
 
 private:
-  mutable RMutex connection_map_lock_{__LINE__, __FILE__};
+  mutable RMutex connection_map_lock_;
   ConnectionMap connection_map_;
   Dispatcher &  dispatcher_;
 };
