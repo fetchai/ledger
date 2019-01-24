@@ -70,6 +70,7 @@
 
 #include "python/ml/layers/py_layer.hpp"
 #include "python/ml/ops/py_ops.hpp"
+#include "python/ml/ops/py_relu.hpp"
 #include "python/ml/py_session.hpp"
 #include "python/ml/py_variable.hpp"
 
@@ -272,4 +273,6 @@ PYBIND11_MODULE(fetch, module)
   fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
 
   fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
+
+  fetch::ml::ops::BuildRelu("Relu", ns_fetch_ml);
 }
