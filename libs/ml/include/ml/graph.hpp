@@ -81,8 +81,24 @@ public:
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
-    placeholder->SetData(data);
-    ResetGraphCache();
+    if (placeholder)
+      {
+	placeholder->SetData(data);
+	ResetGraphCache();
+      }
+    else
+      {
+	std::cerr << "No placeholder node with name [" << nodeName << "]" << std::endl;
+	std::cerr << "Available nodes:" << std::endl;
+	for (auto &n : nodes_)
+	  {
+	    if (n.second)
+	      {
+		std::cerr << n.first << std::endl;
+	      }
+	  }
+	assert(false);
+      }
   }
 
   virtual void Step(Datatype learningRate)
