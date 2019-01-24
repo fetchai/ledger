@@ -5,9 +5,12 @@ import time
 import subprocess
 import webbrowser
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
+WATCHDOG_PRESENT = True
+try:
+  from watchdog.observers import Observer
+  from watchdog.events import FileSystemEventHandler
+except:
+  WATCHDOG_PRESENT = False
 
 SOURCEDIR = 'source'
 BUILDDIR = 'build'
@@ -35,10 +38,11 @@ def build_documentation():
     print('Building documentation...complete')
 
 
-class FileSystemWatcher(FileSystemEventHandler):
-    def on_any_event(self, event):
-        print(event)
-        build_documentation()
+if WATCHDOG_PRESENT:
+    class FileSystemWatcher(FileSystemEventHandler):
+        def on_any_event(self, event):
+            print(event)
+            build_documentation()
 
 
 def watch():
@@ -65,14 +69,15 @@ def main():
     if args.open_browser:
         index_path = os.path.join(DOCUMENTATION_ROOT, BUILDDIR, 'html', 'index.html')
         index_url = 'file://' + index_path.replace(os.sep, '/')
-        print('Openning:', index_url)
+        print('Opening:', index_url)
         webbrowser.open(index_url)
 
     # watch for update if required
-    if args.watch:
-        watch()
-
-
+    if (WATCHDOG_PRESENT):
+        if (args.watch):
+            watch()
+    else:
+        print("\nWARNING: could not find watchdog package")
 
 
 if __name__ == '__main__':

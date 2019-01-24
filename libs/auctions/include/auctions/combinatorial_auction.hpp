@@ -1,0 +1,72 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include "auctions/auction.hpp"
+#include "math/free_functions/exponentiation/exponentiation.hpp"
+#include "math/linalg/matrix.hpp"
+
+#include "core/random/lcg.hpp"
+#include "core/random/lfg.hpp"
+
+namespace fetch {
+namespace auctions {
+
+class CombinatorialAuction : public Auction
+{
+
+  using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
+
+public:
+  CombinatorialAuction(BlockId start_block_id, BlockId end_block_id, std::uint32_t max_flips = 3)
+    : Auction(start_block_id, end_block_id, true, std::numeric_limits<std::size_t>::max())
+    , max_flips_(max_flips)
+  {
+    max_items_         = std::numeric_limits<std::size_t>::max();
+    max_bids_          = std::numeric_limits<std::size_t>::max();
+    max_items_per_bid_ = std::numeric_limits<std::size_t>::max();
+    max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
+  }
+
+  void                               BuildGraph();
+  void                               SelectBid(std::size_t const &bid);
+  Value                              TotalBenefit();
+  bool                               Execute(BlockId current_block) override;
+  fetch::math::linalg::Matrix<Value> Couplings();
+  fetch::math::ShapelessArray<Value> LocalFields();
+  std::uint32_t                      Active(std::size_t n);
+  void                               Mine(std::size_t random_seed, std::size_t run_time);
+  ErrorCode                          PlaceBid(Bid const &bid);
+  ErrorCode                          AddItem(Item const &item);
+
+private:
+  // bids on binary vector
+  fetch::math::linalg::Matrix<Value>         couplings_;
+  fetch::math::ShapelessArray<Value>         local_fields_;
+  fetch::math::ShapelessArray<std::uint32_t> active_;
+  fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+  std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
+
+  bool graph_built_ = false;
+
+  void SelectWinners() override;
+};
+
+}  // namespace auctions
+}  // namespace fetch
