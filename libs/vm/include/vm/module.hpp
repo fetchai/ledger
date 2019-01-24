@@ -73,7 +73,7 @@ public:
                                        ReturnType (*f)(VM *, TypeId, Ts...))
     {
       TypeId         type_id__ = type_id;
-      Opcode         opcode  = module->GetNextOpcode();
+      Opcode         opcode    = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
       TypeIdArray type_id_array  = module->GetTypeIds(type_index_array);
@@ -95,7 +95,7 @@ public:
                                            ReturnType (ObjectType::*f)(Ts...))
     {
       TypeId         type_id__ = type_id;
-      Opcode         opcode  = module->GetNextOpcode();
+      Opcode         opcode    = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
       TypeIdArray type_id_array  = module->GetTypeIds(type_index_array);
