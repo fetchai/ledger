@@ -58,7 +58,7 @@ public:
           typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
     }
     this->SetInput(name + "_Weights", weights);
-    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<size_t>({out}));
+    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<size_t>({1, out}));
     // Naive random init, range [-.5, .5]
     for (size_t i(0); i < bias->size(); ++i)
     {

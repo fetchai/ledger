@@ -18,6 +18,7 @@
 
 #include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
+#include "math/tensor.hpp"
 #include "ml/ops/weights.hpp"
 #include <gtest/gtest.h>
 
@@ -29,7 +30,8 @@ class WeightsTest : public ::testing::Test
 using MyTypes =
     ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
                      fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
-                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
+                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>,
+		     fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(WeightsTest, MyTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
@@ -42,9 +44,9 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   std::shared_ptr<TypeParam> data  = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> error = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt    = std::make_shared<TypeParam>(8);
-  std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int>           errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
-  std::vector<int>           gtInput({0, 0, 6, -9, -3, 7, -14, -42});
+  std::vector<int>           dataInput( { 1, -2,  3, -4,  5,  -6,   7, -8});
+  std::vector<int>           errorInput({-1,  2,  3, -5, -8,  13, -21, -34});
+  std::vector<int>           gtInput(   { 2, -4,  0,  1, 13, -19,  28,  26});
   for (size_t i(0); i < 8; ++i)
   {
     data->Set(i, typename TypeParam::Type(dataInput[i]));
