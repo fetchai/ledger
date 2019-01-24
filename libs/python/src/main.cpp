@@ -42,6 +42,7 @@
 #include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
 #include "python/math/spline/py_linear.hpp"
+#include "python/math/py_tensor.hpp"
 
 #include "python/math/correlation/py_eisen.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
@@ -93,10 +94,13 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_math_clustering  = ns_fetch_math.def_submodule("clustering");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
   py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
+  py::module ns_fetch_math_tensor      = ns_fetch_math.def_submodule("tensor");
   py::module ns_fetch_memory           = module.def_submodule("memory");
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
 
+  fetch::math::BuildTensor("Tensor", ns_fetch_math_tensor);
+  
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
   fetch::memory::BuildArray<int32_t>("ArrayInt32", ns_fetch_memory);
