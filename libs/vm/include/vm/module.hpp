@@ -72,15 +72,15 @@ public:
     ClassInterface &CreateTypeFunction(std::string const &name,
                                        ReturnType (*f)(VM *, TypeId, Ts...))
     {
-      TypeId         type_id = type_id;
+      TypeId         type_id__ = type_id;
       Opcode         opcode  = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
       TypeIdArray type_id_array  = module->GetTypeIds(type_index_array);
       TypeId      return_type_id = module->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-      auto        compiler_setup_function = [type_id, name, opcode, type_id_array,
+      auto        compiler_setup_function = [type_id__, name, opcode, type_id_array,
                                       return_type_id](Compiler *compiler) {
-        compiler->CreateOpcodeTypeFunction(type_id, name, opcode, type_id_array, return_type_id);
+        compiler->CreateOpcodeTypeFunction(type_id__, name, opcode, type_id_array, return_type_id);
       };
       module->AddCompilerSetupFunction(compiler_setup_function);
       OpcodeHandler handler = [f](VM *vm) {
@@ -94,15 +94,15 @@ public:
     ClassInterface &CreateInstanceFunction(std::string const &name,
                                            ReturnType (ObjectType::*f)(Ts...))
     {
-      TypeId         type_id = type_id;
+      TypeId         type_id__ = type_id;
       Opcode         opcode  = module->GetNextOpcode();
       TypeIndexArray type_index_array;
       UnrollParameterTypes<Ts...>::Unroll(type_index_array);
       TypeIdArray type_id_array  = module->GetTypeIds(type_index_array);
       TypeId      return_type_id = module->GetTypeId(TypeGetter<ReturnType>::GetTypeIndex());
-      auto        compiler_setup_function = [type_id, name, opcode, type_id_array,
+      auto        compiler_setup_function = [type_id__, name, opcode, type_id_array,
                                       return_type_id](Compiler *compiler) {
-        compiler->CreateOpcodeInstanceFunction(type_id, name, opcode, type_id_array,
+        compiler->CreateOpcodeInstanceFunction(type_id__, name, opcode, type_id_array,
                                                return_type_id);
       };
       module->AddCompilerSetupFunction(compiler_setup_function);
