@@ -41,7 +41,8 @@ public:
   using ConnectionMap         = std::unordered_map<ConnectionHandle, ConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using Mutex                 = mutex::Mutex;
+  using RMutex                = std::recursive_mutex;
+  using RLock                 = std::unique_lock<RMutex>;
 
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
@@ -71,7 +72,7 @@ protected:
   /// @}
 
 private:
-  mutable Mutex connection_map_lock_{__LINE__, __FILE__};
+  mutable RMutex connection_map_lock_{__LINE__, __FILE__};
   ConnectionMap connection_map_;
   Dispatcher &  dispatcher_;
 };

@@ -39,7 +39,7 @@ MuddleRegister::MuddleRegister(Dispatcher &dispatcher)
  */
 void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback const &cb)
 {
-  FETCH_LOCK(connection_map_lock_);
+  RLock lock(connection_map_lock_);
   cb(connection_map_);
 }
 
@@ -50,7 +50,7 @@ void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback co
  */
 void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
-  FETCH_LOCK(connection_map_lock_);
+  RLock lock(connection_map_lock_);
 
   // loop through all of our current connections
   for (auto const &elem : connection_map_)
@@ -76,7 +76,7 @@ MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle 
   ConnectionPtr conn;
 
   {
-    FETCH_LOCK(connection_map_lock_);
+    RLock lock(connection_map_lock_);
 
     auto it = connection_map_.find(handle);
     if (it != connection_map_.end())
@@ -95,7 +95,7 @@ MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle 
  */
 void MuddleRegister::Enter(ConnectionPtr const &ptr)
 {
-  FETCH_LOCK(connection_map_lock_);
+  RLock lock(connection_map_lock_);
 
   auto strong_conn = ptr.lock();
 
@@ -123,7 +123,7 @@ void MuddleRegister::Enter(ConnectionPtr const &ptr)
 void MuddleRegister::Leave(connection_handle_type id)
 {
   {
-    FETCH_LOCK(connection_map_lock_);
+    RLock lock(connection_map_lock_);
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "### Connection ", id, " ended");
 
