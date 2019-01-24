@@ -17,24 +17,24 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/ops/fully_connected.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <ml/ops/fully_connected.hpp>
 
 namespace py = pybind11;
 
 namespace fetch {
-  namespace ml {
-    namespace ops {
+namespace ml {
+namespace ops {
 
-      void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
-      {
-	py::class_<fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(module, "FullyConnected")
-	  .def(py::init<size_t, size_t>())
-	  .def("Forward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Forward)
-	  .def("Backward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Backward);
-      }
-      
-    }
-  }
+void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
+{
+  py::class_<fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(module, "FullyConnected")
+      .def(py::init<size_t, size_t>())
+      .def("Forward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Forward)
+      .def("Backward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Backward);
 }
+
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

@@ -9,9 +9,10 @@ g.AddRelu("Relu1", "FC1")
 g.AddFullyConnected("FC2", "Relu1", 100, 100)
 g.AddRelu("Relu2", "FC2")
 g.AddFullyConnected("FC3", "Relu2", 100, 10)
+g.AddSoftmax("Softmax", "FC3")
 
 t = fetch.math.tensor.Tensor([28, 28])
 g.SetInput("Input", t)
-res = g.Evaluate("FC3")
+res = g.Evaluate("Softmax")
 
 print(res.ToString())

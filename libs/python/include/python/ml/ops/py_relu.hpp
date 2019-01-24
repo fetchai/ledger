@@ -17,23 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ml/ops/relu.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <ml/ops/relu.hpp>
 
 namespace py = pybind11;
 
 namespace fetch {
 namespace ml {
-  namespace ops {
+namespace ops {
 
-  void BuildRelu(std::string const &custom_name, pybind11::module &module)
-  {
-    py::class_<fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(module, "ReluLayer")
+void BuildRelu(std::string const &custom_name, pybind11::module &module)
+{
+  py::class_<fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(module, "ReluLayer")
       .def(py::init<>())
       .def("Forward", &fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>::Forward);
-  }
-  
 }
-}
-}
+
+}  // namespace ops
+}  // namespace ml
+}  // namespace fetch

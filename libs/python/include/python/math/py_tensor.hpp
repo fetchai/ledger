@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include "math/tensor.hpp"
 
 namespace py = pybind11;
 
@@ -28,17 +28,20 @@ namespace math {
 
 void BuildTensor(std::string const &custom_name, pybind11::module &module)
 {
-  
-  py::class_<fetch::math::Tensor<float>, std::shared_ptr<fetch::math::Tensor<float>>>(module, "Tensor")
-    .def(py::init<std::vector<size_t> const &>())
-    .def("ToString", &fetch::math::Tensor<float>::ToString)
-    .def("Size", &fetch::math::Tensor<float>::size)
-    .def("Fill", &fetch::math::Tensor<float>::Fill)
-    .def("Slice", &fetch::math::Tensor<float>::Slice)
-    .def("At", [](fetch::math::Tensor<float> &a, size_t i) { return a.At(i); })
-    .def("Set", (void (fetch::math::Tensor<float>::*)(std::vector<size_t> const &, float)) &fetch::math::Tensor<float>::Set)
-    .def("Set", (void (fetch::math::Tensor<float>::*)(size_t, float)) &fetch::math::Tensor<float>::Set);
+
+  py::class_<fetch::math::Tensor<float>, std::shared_ptr<fetch::math::Tensor<float>>>(module,
+                                                                                      "Tensor")
+      .def(py::init<std::vector<size_t> const &>())
+      .def("ToString", &fetch::math::Tensor<float>::ToString)
+      .def("Size", &fetch::math::Tensor<float>::size)
+      .def("Fill", &fetch::math::Tensor<float>::Fill)
+      .def("Slice", &fetch::math::Tensor<float>::Slice)
+      .def("At", [](fetch::math::Tensor<float> &a, size_t i) { return a.At(i); })
+      .def("Set", (void (fetch::math::Tensor<float>::*)(std::vector<size_t> const &, float)) &
+                      fetch::math::Tensor<float>::Set)
+      .def("Set",
+           (void (fetch::math::Tensor<float>::*)(size_t, float)) & fetch::math::Tensor<float>::Set);
 }
 
-}
-}
+}  // namespace math
+}  // namespace fetch

@@ -41,8 +41,8 @@
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
-#include "python/math/spline/py_linear.hpp"
 #include "python/math/py_tensor.hpp"
+#include "python/math/spline/py_linear.hpp"
 
 #include "python/math/correlation/py_eisen.hpp"
 #include "python/math/correlation/py_jaccard.hpp"
@@ -69,13 +69,12 @@
 #include "python/random/py_lfg.hpp"
 
 #include "python/ml/layers/py_layer.hpp"
+#include "python/ml/ops/py_fully_connected.hpp"
 #include "python/ml/ops/py_ops.hpp"
 #include "python/ml/ops/py_relu.hpp"
-#include "python/ml/ops/py_fully_connected.hpp"
 #include "python/ml/py_graph.hpp"
 #include "python/ml/py_session.hpp"
 #include "python/ml/py_variable.hpp"
-
 
 // !!!!
 namespace py = pybind11;
@@ -104,7 +103,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
 
   fetch::math::BuildTensor("Tensor", ns_fetch_math_tensor);
-  
+
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
   fetch::memory::BuildArray<int32_t>("ArrayInt32", ns_fetch_memory);

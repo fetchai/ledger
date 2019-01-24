@@ -24,24 +24,37 @@
 #include "ml/ops/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/relu.hpp"
+#include "ml/ops/softmax.hpp"
 
 namespace py = pybind11;
 
 namespace fetch {
-  namespace ml {
+namespace ml {
 
-    void BuildGraph(std::string const &custom_name, pybind11::module &module)
-    {
-      using ArrayType = fetch::math::Tensor<float>;    
-      py::class_<fetch::ml::Graph<ArrayType>>(module, custom_name.c_str())
-	.def(py::init<>())
-	.def("SetInput", &fetch::ml::Graph<ArrayType>::SetInput)
-	.def("Evaluate", &fetch::ml::Graph<ArrayType>::Evaluate)
-	.def("AddInput", [](fetch::ml::Graph<ArrayType> &g, std::string const &name) {g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name, {});})
-	.def("AddFullyConnected", [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input, size_t in, size_t out)
-				  {g.AddNode<fetch::ml::ops::FullyConnected<ArrayType>>(name, {input}, in, out);})
-	.def("AddRelu",           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input)
-				  {g.AddNode<fetch::ml::ops::ReluLayer<ArrayType>>(name, {input});});
-    }
-  }
+void BuildGraph(std::string const &custom_name, pybind11::module &module)
+{
+  using ArrayType = fetch::math::Tensor<float>;
+  py::class_<fetch::ml::Graph<ArrayType>>(module, custom_name.c_str())
+      .def(py::init<>())
+      .def("SetInput", &fetch::ml::Graph<ArrayType>::SetInput)
+      .def("Evaluate", &fetch::ml::Graph<ArrayType>::Evaluate)
+      .def("AddInput",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name) {
+             g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name, {});
+           })
+      .def("AddFullyConnected",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
+              size_t in, size_t out) {
+             g.AddNode<fetch::ml::ops::FullyConnected<ArrayType>>(name, {input}, in, out);
+           })
+      .def("AddRelu",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
+             g.AddNode<fetch::ml::ops::ReluLayer<ArrayType>>(name, {input});
+           })
+      .def("AddSoftmax",
+           [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
+             g.AddNode<fetch::ml::ops::SoftmaxLayer<ArrayType>>(name, {input});
+           });
 }
+}  // namespace ml
+}  // namespace fetch
