@@ -116,10 +116,15 @@ public:
     std::string type        = "";
     bool        first       = false;
   };
-  std::unordered_map<std::string, std::vector<OriginAndTime>>
-      block_arrival;  // block hash => OriginAndTime
-private:
-  std::queue<std::string> block_hash_queue_;  // block hash
+
+  using BlockHistory = std::unordered_map<std::string, std::vector<OriginAndTime>>;
+
+  BlockHistory GetBlockHistory()
+  {
+    FETCH_LOCK(block_history_mutex_);
+    return block_history_;
+  }
+
 public:
   //#endif
 
@@ -162,6 +167,11 @@ private:
 
   Address         last_good_address_;
   FutureTimepoint next_loose_tips_check_;
+
+  std::queue<std::string> block_hash_queue_;  // block hash
+  BlockHistory block_history_;  // block hash => OriginAndTime
+
+  Mutex block_history_mutex_ {__LINE__, __FILE__};
 };
 
 }  // namespace ledger

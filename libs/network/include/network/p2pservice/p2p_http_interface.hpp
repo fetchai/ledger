@@ -114,9 +114,11 @@ private:
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     Variant history = Variant::Object();
-    for (auto &d : main_chain_service_->block_arrival)
+    auto block_history = main_chain_service_->GetBlockHistory();
+    for (auto &d : block_history)
     {
-      Variant details = Variant::Array(d.second.size());
+      //std::list<Variant> details_tmp;
+      Variant details = Variant::Array(d.second.size());//(details_tmp.size());
       for (std::size_t i = 0; i < d.second.size(); ++i)
       {
         Variant e        = Variant::Object();
@@ -125,11 +127,19 @@ private:
         e["time"]        = d.second[i].time;
         e["type"]        = d.second[i].type;
         e["first"]       = d.second[i].first;
+        //details_tmp.push_back(e);
         details[i]       = e;
       }
+      /*std::size_t i = 0;
+      while(!details_tmp.empty()) {
+        details[i++] = details_tmp.front();
+        details_tmp.pop_front();
+      }*/
       history[d.first] = details;
     }
     response["history"] = history;
+
+
 
     auto result = http::CreateJsonResponse(response);
     FETCH_LOG_WARN(LOGGING_NAME, "End GetChainStatus");

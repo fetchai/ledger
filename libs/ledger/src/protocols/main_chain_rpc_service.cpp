@@ -155,7 +155,8 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   block_coordinator_.SetCallback([this](Block &block) {
     std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
     auto        from       = static_cast<std::string>(ToBase64(block.body().miner));
-    block_arrival[block_hash].push_back(
+    FETCH_LOCK(block_history_mutex_);
+    block_history_[block_hash].push_back(
         OriginAndTime{from, from, time(nullptr), ToString(OriginType::MINE), true});
   });
 }
@@ -250,11 +251,12 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
                    " transmitter: ", ToBase64(transmitter));
   }
   std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
-  block_arrival[block_hash].push_back(originAndTime);
+  FETCH_LOCK(block_history_mutex_);
+  block_history_[block_hash].push_back(originAndTime);
   block_hash_queue_.push(block_hash);
   while (block_hash_queue_.size() > 16)
   {
-    block_arrival.erase(block_hash_queue_.front());
+    block_history_.erase(block_hash_queue_.front());
     block_hash_queue_.pop();
   }
 }
@@ -353,7 +355,8 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
       OriginAndTime originAndTime{static_cast<std::string>(ToBase64(address)),
                                   static_cast<std::string>(ToBase64(address)), std::time(nullptr),
                                   ToString(OriginType::LOOSE), n};
-      block_arrival[static_cast<std::string>(ToBase64(it->hash()))].push_back(originAndTime);
+      FETCH_LOCK(block_history_mutex_);
+      block_history_[static_cast<std::string>(ToBase64(it->hash()))].push_back(originAndTime);
     }
     else
     {
