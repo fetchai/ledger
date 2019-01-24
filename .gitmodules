@@ -12,7 +12,7 @@
 	url = ../../google/googletest.git
 [submodule "vendor/benchmark"]
 	path = vendor/benchmark
-	url = ../../google/benchmark.git
+	url = ../../ejfitzgerald/benchmark.git
 [submodule "vendor/mio"]
 	path = vendor/mio
 	url = ../../mandreyel/mio.git
