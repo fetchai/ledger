@@ -197,7 +197,6 @@ private:
       variant::Variant peer_data = variant::Variant::Object();
       peer_data["target"] = pt.name;
       peer_data["value"] = pt.trust;
-      peer_data["address"] = pt.address;
       peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
       peer_data_list.push_back(std::make_pair(pt.address, peer_data));
     }
