@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/sync/tickets.hpp"
 #include "meta/is_log2.hpp"
+#include "meta/type_traits.hpp"
 
 #include <array>
 #include <deque>
@@ -42,7 +43,6 @@ public:
   {}
   SingleThreadedIndex(SingleThreadedIndex const &) = delete;
   SingleThreadedIndex(SingleThreadedIndex &&)      = delete;
-  ~SingleThreadedIndex()                           = default;
 
   /**
    * Post increment operator
@@ -55,6 +55,12 @@ public:
     index_ &= MASK;
 
     return index;
+  }
+
+  template <typename Function>
+  void increment(Function &&function)
+  {
+    function((*this)++);
   }
 
   // Operators
@@ -79,11 +85,12 @@ template <std::size_t SIZE>
 class MultiThreadedIndex : protected SingleThreadedIndex<SIZE>
 {
 public:
+  using Base = SingleThreadedIndex<SIZE>;
+
   // Construction / Destruction
   explicit MultiThreadedIndex(std::size_t initial)
-    : SingleThreadedIndex<SIZE>(initial)
+    : Base(initial)
   {}
-  ~MultiThreadedIndex() = default;
 
   /**
    * Post increment operator
@@ -92,22 +99,21 @@ public:
    */
   std::size_t operator++(int)
   {
-    std::lock_guard<std::mutex>       lock(lock_);
-    return SingleThreadedIndex<SIZE>::operator++(1);
+    std::lock_guard<std::mutex> lock(lock_);
+    return static_cast<Base &>(*this)++;
+  }
+
+  template <typename Function>
+  void increment(Function &&function)
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    Base::increment(std::forward<Function>(function));
   }
 
 private:
   std::mutex lock_;
 };
 
-/**
- * Single Producer, Single Consumer fixed length queue
- *
- * @tparam T The type of element to be store in the queue
- * @tparam SIZE The max size of the queue
- * @tparam Producer The thread safety model for the producer size of the queue
- * @tparam Consumer The thread safety model for the consumer size of the queue
- */
 template <typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIndex<SIZE>,
           typename ConsumerIndex = MultiThreadedIndex<SIZE>>
 class Queue
@@ -127,10 +133,13 @@ public:
   /// @{
   T Pop();
   template <typename R, typename P>
-  bool        Pop(T &value, std::chrono::duration<R, P> const &duration);
-  void        Push(T const &element);
-  void        Push(T &&element);
-  bool        empty();
+  bool Pop(T &value, std::chrono::duration<R, P> const &duration);
+  template <typename U>
+  meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Push(U &&element);
+  template <typename U>
+  meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Push(U &&         element,
+                                                                            std::size_t &count);
+  // bool        empty();
   std::size_t size();
   /// @}
 
@@ -170,7 +179,8 @@ T Queue<T, N, P, C>::Pop()
 {
   read_count_.Wait();
 
-  T value = queue_[read_index_++];
+  T value;
+  read_index_.increment([this, &value](auto const index) { value = std::move(queue_[index]); });
 
   write_count_.Post();
 
@@ -199,7 +209,7 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
     return false;
   }
 
-  value = queue_[read_index_++];
+  read_index_.increment([this, &value](auto const &index) { value = std::move(queue_[index]); });
 
   write_count_.Post();
 
@@ -212,17 +222,23 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
  * If the queue is full this function will block until an element can be added
  *
  * @tparam T The type of element to be store in the queue
+ * @tparam U Has the same meaning as @refitem(T), but is inferred from method
+ * call, rather than provided at object construction time to leverage universal
+ * reference feature, and so eliminate necessity to implement number of method overloads.
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
- * @param element The reference to the element
+ * @param element The universal reference to the element
  */
 template <typename T, std::size_t N, typename P, typename C>
-void Queue<T, N, P, C>::Push(T const &element)
+template <typename U>
+meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Queue<T, N, P, C>::Push(
+    U &&element)
 {
   write_count_.Wait();
 
-  queue_[write_index_++] = element;
+  write_index_.increment(
+      [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
 
   read_count_.Post();
 }
@@ -233,19 +249,26 @@ void Queue<T, N, P, C>::Push(T const &element)
  * If the queue is full this function will block until an element can be added
  *
  * @tparam T The type of element to be store in the queue
+ * @tparam U Has the same meaning as @refitem(T), but is inferred from method
+ * call, rather than provided at object construction time to leverage universal
+ * reference feature, and so eliminate necessity to implement number of method overloads.
  * @tparam N The max size of the queue
  * @tparam P The producer index type
  * @tparam C The consumer index type
- * @param element The reference to the element
- */
+ * @param element The universal reference to the element
+ * @param count Number of enqueued elements still waiting in the queue to be processed.
+ * */
 template <typename T, std::size_t N, typename P, typename C>
-void Queue<T, N, P, C>::Push(T &&element)
+template <typename U>
+meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Queue<T, N, P, C>::Push(
+    U &&element, std::size_t &count)
 {
   write_count_.Wait();
 
-  queue_[write_index_++] = std::move(element);
+  write_index_.increment(
+      [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
 
-  read_count_.Post();
+  read_count_.Post(count);
 }
 
 // Helpful Typedefs
@@ -260,138 +283,6 @@ using MPSCQueue = Queue<T, N, MultiThreadedIndex<N>, SingleThreadedIndex<N>>;
 
 template <typename T, std::size_t N>
 using MPMCQueue = Queue<T, N, MultiThreadedIndex<N>, MultiThreadedIndex<N>>;
-
-template <typename T, std::size_t SIZE>
-class SimpleQueue
-{
-public:
-  static constexpr std::size_t QUEUE_LENGTH = SIZE;
-  using Element                             = T;
-
-  // Construction / Destruction
-  SimpleQueue()                    = default;
-  SimpleQueue(SimpleQueue const &) = delete;
-  SimpleQueue(SimpleQueue &&)      = delete;
-  ~SimpleQueue()                   = default;
-
-  /// @name Queue Interaction
-  /// @{
-  T Pop()
-  {
-    std::unique_lock<std::mutex> lock(mutex_);
-    T                            value;
-    for (;;)
-    {
-      if (queue_.empty())
-      {
-        condition_.wait(lock);
-      }
-      else
-      {
-        // extract the value from the queue
-        value = queue_.front();
-        queue_.pop_front();
-        // trigger all pending threads
-        condition_.notify_all();
-        break;
-      }
-    }
-    return value;
-  }
-
-  template <typename R, typename P>
-  bool Pop(T &value, std::chrono::duration<R, P> const &duration)
-  {
-    using Clock                           = std::chrono::high_resolution_clock;
-    using Timestamp                       = Clock::time_point;
-    Timestamp const              deadline = Clock::now() + duration;
-    std::unique_lock<std::mutex> lock(mutex_);
-    for (;;)
-    {
-      if (queue_.empty())
-      {
-        auto const status = condition_.wait_until(lock, deadline);
-        if (status == std::cv_status::timeout)
-        {
-          return false;
-        }
-      }
-      else
-      {
-        // extract the value from the queue
-        value = queue_.front();
-        queue_.pop_front();
-        // trigger all pending threads
-        condition_.notify_all();
-        break;
-      }
-    }
-    return true;
-  }
-
-  void Push(T const &element)
-  {
-    std::unique_lock<std::mutex> lock(mutex_);
-    for (;;)
-    {
-      if (queue_.size() >= SIZE)
-      {
-        condition_.wait(lock);
-      }
-      else
-      {
-        queue_.emplace_back(element);
-        condition_.notify_all();
-        break;
-      }
-    }
-  }
-
-  void Push(T &&element)
-  {
-    std::unique_lock<std::mutex> lock(mutex_);
-    for (;;)
-    {
-      if (queue_.size() >= SIZE)
-      {
-        condition_.wait(lock);
-      }
-      else
-      {
-        queue_.emplace_back(std::move(element));
-        condition_.notify_all();
-        break;
-      }
-    }
-  }
-
-  template <typename S>
-  bool TryPush(S &&element)
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (queue_.size() >= SIZE)
-    {
-      return false;
-    }
-
-    queue_.emplace_back(std::forward<S>(element));
-    return true;
-  }
-  /// @}
-
-  // Operators
-  SimpleQueue &operator=(SimpleQueue const &) = delete;
-  SimpleQueue &operator=(SimpleQueue &&) = delete;
-
-protected:
-  using Array = std::deque<T>;
-  Array                   queue_;  ///< The main element container
-  std::mutex              mutex_;
-  std::condition_variable condition_;
-  // static asserts
-  static_assert(std::is_default_constructible<T>::value, "T must be default constructable");
-  static_assert(std::is_copy_assignable<T>::value, "T must have copy assignment");
-};
 
 }  // namespace core
 }  // namespace fetch

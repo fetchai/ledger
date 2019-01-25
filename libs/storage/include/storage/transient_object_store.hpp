@@ -76,8 +76,8 @@ public:
 
 private:
   using Mutex       = fetch::mutex::Mutex;
-  using Queue       = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
+  using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
+  using RecentQueue = fetch::core::MPMCQueue<chain::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
   using Flag        = std::atomic<bool>;
@@ -226,7 +226,14 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   if (newly_seen)
   {
-    most_recent_seen_.TryPush(object.summary());
+    std::size_t count{most_recent_seen_.QUEUE_LENGTH};
+    most_recent_seen_.Push(object.summary(), count);
+    if (count == most_recent_seen_.QUEUE_LENGTH)
+    {
+      // TODO(private issue #582): The queue became FULL - this information shall
+      // be propagated out to caller, so it can make appropriate decision how to
+      // proceed.
+    }
   }
 
   // dispatch the callback if necessary
