@@ -38,7 +38,6 @@ class ProductionMutex : public AbstractMutex
 public:
   ProductionMutex(int, std::string)
   {}
-  ProductionMutex() = default;
 };
 
 /**

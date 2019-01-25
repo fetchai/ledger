@@ -91,7 +91,7 @@ private:
   SharedHandler handler_;
 
   PromiseQueue promise_queue_;
-  Mutex        promise_queue_lock_;
+  Mutex        promise_queue_lock_{__LINE__, __FILE__};
 
   std::thread background_thread_;
   Flag        running_{false};
