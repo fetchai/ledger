@@ -25,7 +25,7 @@
 #include <fstream>
 #include <sstream>
 
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
 }
@@ -41,12 +41,12 @@ struct System : public fetch::vm::Object
   System()          = delete;
   virtual ~System() = default;
 
-  static int32_t Argc(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
   {
     return int32_t(System::args.size());
   }
 
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
                                                 int32_t const &a)
   {
     return fetch::vm::Ptr<fetch::vm::String>(
