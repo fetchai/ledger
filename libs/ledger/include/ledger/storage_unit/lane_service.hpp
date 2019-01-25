@@ -191,8 +191,8 @@ public:
     tx_sync_service_->Start();
 
     // TX Sync service
-    workthread_ =
-        std::make_shared<BackgroundedWorkThread>(&bg_work_,"BW:LS-" + std::to_string(lane_), [this]() { tx_sync_service_->Work(); });
+    workthread_ = std::make_shared<BackgroundedWorkThread>(
+        &bg_work_, "BW:LS-" + std::to_string(lane_), [this]() { tx_sync_service_->Work(); });
     workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
   }
 

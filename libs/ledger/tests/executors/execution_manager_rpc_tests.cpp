@@ -74,7 +74,8 @@ protected:
 
     executors_.clear();
 
-    network_manager_ = std::make_unique<fetch::network::NetworkManager>("NetMgr", NUM_NETWORK_THREADS);
+    network_manager_ =
+        std::make_unique<fetch::network::NetworkManager>("NetMgr", NUM_NETWORK_THREADS);
     network_manager_->Start();
 
     // server

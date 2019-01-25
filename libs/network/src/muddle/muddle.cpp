@@ -59,7 +59,8 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr &&certificate, Netwo
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
+  , thread_pool_(
+        network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
   , clients_(router_)
   , network_id_{network_id}
 {}

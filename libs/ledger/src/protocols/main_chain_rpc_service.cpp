@@ -204,9 +204,7 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
   if (!workthread_)
   {
     workthread_ = std::make_shared<BackgroundedWorkThread>(
-        &bg_work_,
-        "BW:MChainR",
-        [this]() { this->ServiceLooseBlocks(); });
+        &bg_work_, "BW:MChainR", [this]() { this->ServiceLooseBlocks(); });
   }
 
   if (!bg_work_.InFlightP(hash))

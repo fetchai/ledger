@@ -25,7 +25,8 @@ namespace fetch {
 namespace muddle {
 namespace rpc {
 
-Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service, uint16_t channel)
+Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
+               uint16_t channel)
   : name_(std::move(name))
   , endpoint_(endpoint)
   , address_(std::move(address))
@@ -48,7 +49,7 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, Address address, uint
   });
 
   // start the background thread processs
-  running_ = true;
+  running_           = true;
   background_thread_ = std::thread{&Client::BackgroundWorker, this};
 }
 
@@ -68,8 +69,7 @@ Client::~Client()
 
 bool Client::DeliverRequest(network::message_type const &data)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",",
-                  channel_);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
 
   unsigned long long int ident = 0;
 
@@ -85,24 +85,24 @@ bool Client::DeliverRequest(network::message_type const &data)
     // establish the correct course of action when
     WeakHandler handler = handler_;
     promise.WithHandlers()
-      .Then([handler, promise]() {
-        LOG_STACK_TRACE_POINT;
+        .Then([handler, promise]() {
+          LOG_STACK_TRACE_POINT;
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
-                        "@prom=", promise.id());
-        auto callback = handler.lock();
-        if (callback)
-        {
-          (*callback)(promise.GetInnerPromise());
-        }
-      })
-      .Catch([promise]() {
-        LOG_STACK_TRACE_POINT;
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
+                          "@prom=", promise.id());
+          auto callback = handler.lock();
+          if (callback)
+          {
+            (*callback)(promise.GetInnerPromise());
+          }
+        })
+        .Catch([promise]() {
+          LOG_STACK_TRACE_POINT;
 
-        // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a
-        // callback process
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
-      });
+          // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a
+          // callback process
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
+        });
 
     // Add this new wrapping promise to the execution queue
     {
@@ -160,7 +160,6 @@ void Client::BackgroundWorker()
   }
 }
 
-} // namespace rpc
-} // namespace muddle
-} // namespace fetch
-
+}  // namespace rpc
+}  // namespace muddle
+}  // namespace fetch

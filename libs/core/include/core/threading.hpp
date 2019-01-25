@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 namespace fetch {
 
-static constexpr std::size_t MAX_THREAD_NAME_LEN = 16; // posix limit
+static constexpr std::size_t MAX_THREAD_NAME_LEN = 16;  // posix limit
 
 inline void SetThreadName(std::string name)
 {
@@ -42,7 +42,7 @@ inline void SetThreadName(std::string name)
 
 inline void SetThreadName(std::string const &prefix, std::size_t index)
 {
-  static constexpr std::size_t MAX_INDEX_LEN = 2;
+  static constexpr std::size_t MAX_INDEX_LEN  = 2;
   static constexpr std::size_t MAX_PREFIX_LEN = MAX_THREAD_NAME_LEN - MAX_INDEX_LEN;
 
   std::ostringstream oss;
@@ -62,4 +62,4 @@ inline void SetThreadName(std::string const &prefix, std::size_t index)
   SetThreadName(oss.str());
 }
 
-} // namespace fetch
+}  // namespace fetch

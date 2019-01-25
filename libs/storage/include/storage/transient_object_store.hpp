@@ -19,8 +19,8 @@
 
 #include "core/containers/queue.hpp"
 #include "core/mutex.hpp"
-#include "storage/object_store.hpp"
 #include "core/threading.hpp"
+#include "storage/object_store.hpp"
 
 #include <map>
 #include <unordered_map>

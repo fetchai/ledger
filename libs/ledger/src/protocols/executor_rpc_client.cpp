@@ -43,8 +43,8 @@ public:
     , timeduration_(std::move(thetimeout))
     , muddle_(themuddle)
   {
-    client_ = std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
-                                       CHANNEL_RPC);
+    client_ = std::make_shared<Client>("R:ExecCW", muddle_.AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC);
     this->Allow(State::CONNECTING, State::INITIAL)
         .Allow(State::SUCCESS, State::CONNECTING)
         .Allow(State::TIMEDOUT, State::CONNECTING)
@@ -142,8 +142,8 @@ void ExecutorRpcClient::Connect(Muddle &muddle, Uri uri, std::chrono::millisecon
 {
   if (!workthread_)
   {
-    workthread_ =
-        std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:ExecRpcC", [this]() { this->WorkCycle(); });
+    workthread_ = std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:ExecRpcC",
+                                                           [this]() { this->WorkCycle(); });
   }
 
   auto worker = std::make_shared<ExecutorConnectorWorker>(uri, muddle, timeout);

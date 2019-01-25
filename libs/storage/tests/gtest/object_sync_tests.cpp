@@ -72,8 +72,8 @@ public:
     tc->muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tm);
     tc->muddle_->Start({});
 
-    tc->client_ =
-        std::make_shared<Client>("Client", tc->muddle_->AsEndpoint(), Address(), SERVICE_LANE, CHANNEL_RPC);
+    tc->client_ = std::make_shared<Client>("Client", tc->muddle_->AsEndpoint(), Address(),
+                                           SERVICE_LANE, CHANNEL_RPC);
     tc->muddle_->AddPeer(uri);
 
     int counter = 40;

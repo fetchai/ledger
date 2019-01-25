@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "core/threading.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {

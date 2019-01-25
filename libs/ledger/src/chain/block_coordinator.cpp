@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
 #include "ledger/chain/block_coordinator.hpp"
+#include "core/threading.hpp"
 
 #include <chrono>
 

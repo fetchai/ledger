@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/types.hpp"
-#include "core/mutex.hpp"
 
-#include <memory>
-#include <utility>
-#include <thread>
 #include <atomic>
 #include <list>
+#include <memory>
+#include <thread>
+#include <utility>
 
 namespace fetch {
 namespace muddle {
@@ -50,9 +50,10 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleRpcClient";
 
   // Construction / Destruction
-  Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service, uint16_t channel);
+  Client(std::string name, MuddleEndpoint &endpoint, Address address, uint16_t service,
+         uint16_t channel);
   Client(Client const &) = delete;
-  Client(Client &&) = delete;
+  Client(Client &&)      = delete;
   ~Client() override;
 
   template <typename... Args>
@@ -71,11 +72,9 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-
   bool DeliverRequest(network::message_type const &data) override;
 
 private:
-
   using Flag         = std::atomic<bool>;
   using Mutex        = fetch::mutex::Mutex;
   using PromiseQueue = std::list<MuddleEndpoint::Response>;
@@ -83,19 +82,19 @@ private:
   static std::size_t const NUM_THREADS = 1;
 
   std::string const name_;
-  MuddleEndpoint &endpoint_;
-  Address         address_;
-  uint16_t const  service_;
-  NetworkId       network_id_;
-  uint16_t const  channel_;
+  MuddleEndpoint &  endpoint_;
+  Address           address_;
+  uint16_t const    service_;
+  NetworkId         network_id_;
+  uint16_t const    channel_;
 
-  SharedHandler   handler_;
+  SharedHandler handler_;
 
-  PromiseQueue    promise_queue_;
-  Mutex           promise_queue_lock_;
+  PromiseQueue promise_queue_;
+  Mutex        promise_queue_lock_;
 
-  std::thread     background_thread_;
-  Flag            running_{false};
+  std::thread background_thread_;
+  Flag        running_{false};
 
   void BackgroundWorker();
 };

@@ -156,7 +156,8 @@ protected:
     server->Add(PROTOCOL, &protocol);
 
     // create the client
-    auto client = std::make_shared<RpcClient>("Client", endpoint, FromBase64(target), SERVICE, CHANNEL);
+    auto client =
+        std::make_shared<RpcClient>("Client", endpoint, FromBase64(target), SERVICE, CHANNEL);
 
     if (NETWORK_A_PUBLIC_KEY == target)
     {

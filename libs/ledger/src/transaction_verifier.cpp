@@ -48,14 +48,10 @@ void TransactionVerifier::Start()
   // create the verifier threads
   for (std::size_t i = 0, end = verifying_threads_; i < end; ++i)
   {
-    threads_.emplace_back(
-      std::make_unique<std::thread>(
-        [this, i]() {
-          SetThreadName(name_ + "-V:", i);
-          Verifier();
-        }
-      )
-    );
+    threads_.emplace_back(std::make_unique<std::thread>([this, i]() {
+      SetThreadName(name_ + "-V:", i);
+      Verifier();
+    }));
   }
 
   // create the dispatcher

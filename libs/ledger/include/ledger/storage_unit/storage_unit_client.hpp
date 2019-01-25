@@ -128,8 +128,9 @@ public:
     auto muddle = GetMuddleForLane(lane);
     if (!clients_[lane])
     {
-      clients_[lane] = std::make_shared<Client>("R:SU-" + std::to_string(lane), muddle->AsEndpoint(), Muddle::Address(),
-                                                SERVICE_LANE, CHANNEL_RPC);
+      clients_[lane] =
+          std::make_shared<Client>("R:SU-" + std::to_string(lane), muddle->AsEndpoint(),
+                                   Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
     }
     return clients_[lane];
   }

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
 #include "network/details/network_manager_implementation.hpp"
+#include "core/threading.hpp"
 
 namespace fetch {
 namespace network {
@@ -39,7 +39,7 @@ void NetworkManagerImplementation::Start()
         SetThreadName(name_, i);
 
         this->Work();
-    });
+      });
       threads_.push_back(thread);
     }
   }
