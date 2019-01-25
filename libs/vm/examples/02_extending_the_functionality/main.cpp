@@ -25,17 +25,19 @@
 #include <fstream>
 #include <sstream>
 
-
 struct IntPair : public fetch::vm::Object
 {
-  IntPair() = delete;
+  IntPair()          = delete;
   virtual ~IntPair() = default;
 
   IntPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t i, int32_t j)
-   : fetch::vm::Object(vm, type_id), first_(i), second_(j)
-  { }
+    : fetch::vm::Object(vm, type_id)
+    , first_(i)
+    , second_(j)
+  {}
 
-  static fetch::vm::Ptr<IntPair> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int const &i, int const &j)
+  static fetch::vm::Ptr<IntPair> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                             int const &i, int const &j)
   {
     return new IntPair(vm, type_id, i, j);
   }
@@ -55,15 +57,14 @@ private:
   int second_;
 };
 
-
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const & s)
+static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
 }
 
 fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
-  fetch::vm::Ptr<fetch::vm::String> ret( new fetch::vm::String(vm, std::to_string(a)) );
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
 
@@ -90,7 +91,7 @@ int main(int argc, char **argv)
   module.CreateClassType<IntPair>("IntPair")
       .CreateTypeConstuctor<int, int>()
       .CreateInstanceFunction("first", &IntPair::first)
-      .CreateInstanceFunction("second", &IntPair::second);      
+      .CreateInstanceFunction("second", &IntPair::second);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
   }
 
   // Setting VM up and running
-  std::string error;
+  std::string        error;
   fetch::vm::Variant output;
 
   fetch::vm::VM vm(&module);
@@ -128,4 +129,3 @@ int main(int argc, char **argv)
   delete compiler;
   return 0;
 }
-

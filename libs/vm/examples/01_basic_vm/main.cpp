@@ -25,20 +25,20 @@
 #include <fstream>
 #include <sstream>
 
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const & s)
+static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
 }
 
 fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
-  fetch::vm::Ptr<fetch::vm::String> ret( new fetch::vm::String(vm, std::to_string(a)) );
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
 
 struct System : public fetch::vm::Object
 {
-  System() = delete;
+  System()          = delete;
   virtual ~System() = default;
 
   static int32_t Argc(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -46,9 +46,11 @@ struct System : public fetch::vm::Object
     return int32_t(System::args.size());
   }
 
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t const &a)
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                int32_t const &a)
   {
-    return fetch::vm::Ptr<fetch::vm::String>( new fetch::vm::String(vm, System::args[std::size_t(a)] ) );
+    return fetch::vm::Ptr<fetch::vm::String>(
+        new fetch::vm::String(vm, System::args[std::size_t(a)]));
   }
 
   static std::vector<std::string> args;
@@ -85,16 +87,14 @@ int main(int argc, char **argv)
       .CreateTypeFunction("Argc", &System::Argc)
       .CreateTypeFunction("Argv", &System::Argv);
 
-
   // Setting compiler up
 
-    fetch::vm::Compiler* compiler = new fetch::vm::Compiler(&module);
-    fetch::vm::VM *vm = new fetch::vm::VM(&module);
+  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
 
-    fetch::vm::Script script;
-    fetch::vm::Strings errors;
-    bool compiled = compiler->Compile(source, "myscript", script, errors);
-
+  fetch::vm::Script  script;
+  fetch::vm::Strings errors;
+  bool               compiled = compiler->Compile(source, "myscript", script, errors);
 
   if (!compiled)
   {
@@ -112,21 +112,17 @@ int main(int argc, char **argv)
     return -2;
   }
 
-  std::string error;
+  std::string        error;
   fetch::vm::Variant output;
 
   // Setting VM up and running
-  if (!vm->Execute(script, "main",  error, output))
+  if (!vm->Execute(script, "main", error, output))
   {
     std::cout << "Runtime error: " << error << std::endl;
   }
 
-
   delete compiler;
   delete vm;
 
-
   return 0;
 }
-
-
