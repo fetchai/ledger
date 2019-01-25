@@ -800,52 +800,6 @@ void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
   // assert(perm.size() == input_array.shape().size());
 }
 
-/**
- * Efficient vectorised and threaded routine for C = A.B, the dot product between A and B
- * @param A
- * @param B
- * @return
- */
-template <typename T, typename C>
-void Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, NDArray<T, C> &ret, T alpha = 1.0,
-         T beta = 0.0, bool threaded = false)
-{
-  assert(ret.shape().size() == 2);
-  ret.Resize(A.shape()[0] * B.shape()[0]);
-
-  if (threaded)
-  {
-    linalg::Blas<T, NDArray<T, C>,
-                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-                           linalg::_C),
-                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-                                       linalg::_beta * linalg::_C),
-                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nn_vector_threaded;
-
-    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-  }
-  else
-  {
-    linalg::Blas<T, NDArray<T, C>,
-                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-                           linalg::_C),
-                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-                                       linalg::_beta * linalg::_C),
-                 platform::Parallelisation::VECTORISE>
-        gemm_nn_vector;
-
-    gemm_nn_vector(alpha, A, B, beta, ret);
-  }
-}
-template <typename T, typename C>
-NDArray<T, C> Dot(NDArray<T, C> const &A, NDArray<T, C> const &B, bool threaded = false)
-{
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  NDArray<T, C>            ret(return_shape);
-  Dot(A, B, ret, threaded);
-  return ret;
-}
 template <typename T, typename C, typename S>
 void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
          linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
@@ -934,6 +888,9 @@ fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspos
  * @param B
  * @return
  */
+// TODO(private, 343)
+// Unused parameter needs to be cleaned up when the need to match
+// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
     ArrayType const &A, ArrayType const &B, ArrayType &ret,
@@ -1025,6 +982,9 @@ void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> cons
  * @param B
  * @return
  */
+// TODO(private, 343)
+// Unused parameter needs to be cleaned up when the need to match
+// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
 void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
                   typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
