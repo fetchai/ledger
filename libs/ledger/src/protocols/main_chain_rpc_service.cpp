@@ -153,11 +153,10 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   });
   // mined block
   block_coordinator_.SetCallback([this](Block &block) {
-    std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
-    auto        from       = static_cast<std::string>(ToBase64(block.body().miner));
-    FETCH_LOCK(block_history_mutex_);
-    block_history_[block_hash].push_back(
-        OriginAndTime{from, from, time(nullptr), ToString(OriginType::MINE), true});
+    auto from          = block.body().miner;
+    auto originAndTime = OriginAndTime{from, from, time(nullptr), OriginType::MINE, true};
+    AddToBlockHistory(block.hash(), std::move(originAndTime));
+
   });
 }
 
@@ -199,9 +198,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   FETCH_METRIC_BLOCK_RECEIVED(block.hash());
 
-  OriginAndTime originAndTime{static_cast<std::string>(ToBase64(from)),
-                              static_cast<std::string>(ToBase64(transmitter)), std::time(nullptr),
-                              ToString(origin_type)};
+  OriginAndTime originAndTime{from, transmitter, std::time(nullptr), origin_type};
 
   try
   {
@@ -250,9 +247,13 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
                    " Block: ", ToBase64(block.hash()), ", from: ", ToBase64(from),
                    " transmitter: ", ToBase64(transmitter));
   }
-  std::string block_hash = static_cast<std::string>(ToBase64(block.hash()));
+  AddToBlockHistory(block.hash(), std::move(originAndTime));
+}
+
+void MainChainRpcService::AddToBlockHistory(byte_array::ConstByteArray block_hash, OriginAndTime&& originAndTime)
+{
   FETCH_LOCK(block_history_mutex_);
-  block_history_[block_hash].push_back(originAndTime);
+  block_history_[block_hash].push_back(std::move(originAndTime));
   block_hash_queue_.push(block_hash);
   while (block_hash_queue_.size() > 16)
   {
@@ -352,11 +353,8 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     {
       bool n = chain_.AddBlock(*it);
       newdata |= n;
-      OriginAndTime originAndTime{static_cast<std::string>(ToBase64(address)),
-                                  static_cast<std::string>(ToBase64(address)), std::time(nullptr),
-                                  ToString(OriginType::LOOSE), n};
-      FETCH_LOCK(block_history_mutex_);
-      block_history_[static_cast<std::string>(ToBase64(it->hash()))].push_back(originAndTime);
+      OriginAndTime originAndTime{address, address, std::time(nullptr), OriginType::LOOSE, n};
+      AddToBlockHistory(it->hash(), std::move(originAndTime));
     }
     else
     {

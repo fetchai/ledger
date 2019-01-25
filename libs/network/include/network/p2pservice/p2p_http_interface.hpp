@@ -117,25 +117,19 @@ private:
     auto block_history = main_chain_service_->GetBlockHistory();
     for (auto &d : block_history)
     {
-      //std::list<Variant> details_tmp;
       Variant details = Variant::Array(d.second.size());//(details_tmp.size());
       for (std::size_t i = 0; i < d.second.size(); ++i)
       {
         Variant e        = Variant::Object();
-        e["from"]        = d.second[i].from;
-        e["transmitter"] = d.second[i].transmitter;
+        e["from"]        = byte_array::ToBase64(d.second[i].from);
+        e["transmitter"] = byte_array::ToBase64(d.second[i].transmitter);
         e["time"]        = d.second[i].time;
-        e["type"]        = d.second[i].type;
+        e["type"]        = ledger::MainChainRpcService::ToString(d.second[i].type);
         e["first"]       = d.second[i].first;
-        //details_tmp.push_back(e);
         details[i]       = e;
       }
-      /*std::size_t i = 0;
-      while(!details_tmp.empty()) {
-        details[i++] = details_tmp.front();
-        details_tmp.pop_front();
-      }*/
-      history[d.first] = details;
+      std::string block_hash = static_cast<std::string>(ToBase64(d.first));
+      history[block_hash] = details;
     }
     response["history"] = history;
 
