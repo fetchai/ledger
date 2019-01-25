@@ -41,10 +41,8 @@ macro(setup_compiler)
   if (WIN32)
     message(FATAL_ERROR "Windows platform not currently supported")
   elseif (APPLE)
-    message(STATUS "Detected Platform: MacOS")
     add_definitions(-DFETCH_PLATFORM_MACOS)
   else () # assume linux flavour
-    message(STATUS "Detected Platform: Linux / Unix based")
     add_definitions(-DFETCH_PLATFORM_LINUX)
   endif ()
 
