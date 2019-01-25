@@ -941,6 +941,8 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
     bool /*threaded*/ = false)
 {
   assert(A.shape()[1] == B.shape()[1]);
+  assert(A.shape()[0] == ret.shape()[0]);
+  assert(B.shape()[0] == ret.shape()[1]);
 
   for (size_t i(0); i < A.shape()[0]; ++i)
   {
@@ -1029,6 +1031,8 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
                   bool /*threaded*/ = false)
 {
   assert(A.shape()[0] == B.shape()[0]);
+  assert(A.shape()[1] == ret.shape()[0]);
+  assert(B.shape()[1] == ret.shape()[1]);
 
   for (size_t i(0); i < A.shape()[1]; ++i)
   {

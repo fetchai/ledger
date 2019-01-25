@@ -48,6 +48,9 @@ public:
     nodes_[nodeName]->BackPropagate(errorSignal);
   }
 
+  /*
+   * Called for node without trainable parameters
+   */
   template <class OperationType, typename... Params>
   typename std::enable_if<
       !std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
@@ -61,6 +64,10 @@ public:
     }
   }
 
+  /*
+   * Called for nodes with trainable parameters
+   * Will keep the node in the trainable_ list to step through them
+   */
   template <class OperationType, typename... Params>
   typename std::enable_if<
       std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type

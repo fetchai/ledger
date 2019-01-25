@@ -47,7 +47,7 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int>           errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int>           gtInput({2, -4, 0, 1, 13, -19, 28, 26});
-  for (size_t i(0); i < 8; ++i)
+  for (std::size_t i(0); i < 8; ++i)
   {
     data->Set(i, typename TypeParam::Type(dataInput[i]));
     error->Set(i, typename TypeParam::Type(errorInput[i]));
