@@ -31,10 +31,10 @@ inline void SetThreadName(std::string name)
     name = name.substr(0, MAX_THREAD_NAME_LEN);
   }
 
-#if 1
+#if defined(FETCH_PLATFORM_MACOS)
   // mac
   pthread_setname_np(name.c_str());
-#else
+#elif defined(FETCH_PLATFORM_LINUX)
   // linux / posix
   pthread_setname_np(pthread_self(), name.c_str());
 #endif

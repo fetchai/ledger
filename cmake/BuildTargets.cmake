@@ -37,6 +37,17 @@ macro(setup_compiler)
     list(APPEND _list_architectures_compiler "AVX2")
   endif(FETCH_ARCH_AVX2)
 
+  # platform configuration
+  if (WIN32)
+    message(FATAL_ERROR "Windows platform not currently supported")
+  elseif (APPLE)
+    message(STATUS "Detected Platform: MacOS")
+    add_definitions(-DFETCH_PLATFORM_MACOS)
+  else () # assume linux flavour
+    message(STATUS "Detected Platform: Linux / Unix based")
+    add_definitions(-DFETCH_PLATFORM_LINUX)
+  endif ()
+
   if(${_num_architectures_compiler} GREATER 1)
     message(SEND_ERROR "Too many architectures configured: ${_list_architectures_compiler}")
   endif()
