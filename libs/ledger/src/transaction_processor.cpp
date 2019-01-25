@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "metrics/metrics.hpp"
 
@@ -32,7 +33,7 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
                                            miner::MinerInterface &miner, std::size_t num_threads)
   : storage_{storage}
   , miner_{miner}
-  , verifier_{*this, num_threads}
+  , verifier_{*this, num_threads, "TxV-P"}
   , running_{false}
 {}
 
@@ -114,6 +115,8 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
 
 void TransactionProcessor::ThreadEntryPoint()
 {
+  SetThreadName("TxProc");
+
   std::vector<chain::TransactionSummary> new_txs;
   while (running_)
   {

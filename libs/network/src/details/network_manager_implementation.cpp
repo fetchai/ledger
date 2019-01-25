@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "network/details/network_manager_implementation.hpp"
 
 namespace fetch {
@@ -34,7 +35,11 @@ void NetworkManagerImplementation::Start()
 
     for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      auto thread = std::make_shared<std::thread>([this]() { this->Work(); });
+      auto thread = std::make_shared<std::thread>([this, i]() {
+        SetThreadName(name_, i);
+
+        this->Work();
+    });
       threads_.push_back(thread);
     }
   }

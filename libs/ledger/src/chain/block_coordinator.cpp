@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 
 #include <chrono>
@@ -158,6 +159,8 @@ void BlockCoordinator::Stop()
  */
 void BlockCoordinator::Monitor()
 {
+  SetThreadName("BlockCoord");
+
   // main state machine loop
   for (;;)
   {

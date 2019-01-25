@@ -58,7 +58,7 @@ public:
   explicit ExecutorRpcClient(NetworkManager const &tm, Muddle &muddle)
     : network_manager_(tm)
   {
-    client_ = std::make_shared<Client>(muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
+    client_ = std::make_shared<Client>("R:Exec", muddle.AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
                                        CHANNEL_RPC);
   }
 

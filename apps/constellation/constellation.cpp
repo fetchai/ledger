@@ -177,8 +177,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
   , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
-  , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
-  , http_network_manager_{4}
+  , network_manager_{"NetMgr",CalcNetworkManagerThreads(num_lanes_)}
+  , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
             network_manager_}
   , trust_{}

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "network/details/thread_pool.hpp"
 
 namespace fetch {
@@ -235,8 +236,10 @@ void ThreadPoolImplementation::Stop()
  * @param index The index of the thread (used for debug purposes)
  * @private
  */
-void ThreadPoolImplementation::ProcessLoop(std::size_t /*index*/)
+void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 {
+  SetThreadName("TP:" + name_, index);
+
   FETCH_LOG_DEBUG(LOGGING_NAME, "Creating thread pool worker (thread: ", index, ')');
 
   try

@@ -27,8 +27,7 @@ using namespace fetch::serializers;
 
 int main(int argc, char **argv)
 {
-
-  fetch::network::NetworkManager tm(30);
+  fetch::network::NetworkManager tm{"NetMgr", 30};
 
   {
     int seed = 0;

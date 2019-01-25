@@ -53,7 +53,7 @@ public:
     , timeduration_(std::move(thetimeout))
     , muddle_(std::move(themuddle))
   {
-    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
+    client_ = std::make_shared<Client>("R:MLC-" + std::to_string(lane), muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE,
                                        CHANNEL_RPC);
 
     this->Allow(State::CONNECTING, State::INITIAL)
@@ -250,7 +250,7 @@ void StorageUnitClient::AddLaneConnections(const std::map<LaneIndex, Uri> & lane
   if (!workthread_)
   {
     workthread_ =
-        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+        std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:StoreUC", [this]() { this->WorkCycle(); });
   }
 
   // number of lanes is the number of the last lane asked for +1

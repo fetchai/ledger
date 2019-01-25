@@ -20,6 +20,7 @@
 #include "core/containers/queue.hpp"
 #include "core/mutex.hpp"
 #include "storage/object_store.hpp"
+#include "core/threading.hpp"
 
 #include <map>
 #include <unordered_map>
@@ -343,6 +344,8 @@ void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t               BATCH_SIZE = 100;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
+
+  SetThreadName("TxStore");
 
   std::vector<ResourceID> rids(BATCH_SIZE);
   std::size_t             extracted_count = 0;

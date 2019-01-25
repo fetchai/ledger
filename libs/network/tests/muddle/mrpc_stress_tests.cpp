@@ -102,11 +102,11 @@ protected:
 
   void SetUp() override
   {
-    managerA_ = std::make_unique<NetworkManager>(1);
+    managerA_ = std::make_unique<NetworkManager>("NetMgrA", 1);
     networkA_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_A_PRIVATE_KEY), *managerA_);
 
-    managerB_ = std::make_unique<NetworkManager>(1);
+    managerB_ = std::make_unique<NetworkManager>("NetMgrB", 1);
     networkB_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"),
                                          LoadIdentity(NETWORK_B_PRIVATE_KEY), *managerB_);
 
@@ -156,7 +156,7 @@ protected:
     server->Add(PROTOCOL, &protocol);
 
     // create the client
-    auto client = std::make_shared<RpcClient>(endpoint, FromBase64(target), SERVICE, CHANNEL);
+    auto client = std::make_shared<RpcClient>("Client", endpoint, FromBase64(target), SERVICE, CHANNEL);
 
     if (NETWORK_A_PUBLIC_KEY == target)
     {
