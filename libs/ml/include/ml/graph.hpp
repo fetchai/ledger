@@ -18,8 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/node.hpp"
-#include "ml/ops/placeholder.hpp"
+#include "ml/ops/weights.hpp"
 #include <iostream>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -27,11 +28,12 @@ namespace fetch {
 namespace ml {
 
 template <class T>
-class Graph
+class Graph : public ops::Trainable<typename T::Type>
 {
 public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using Datatype     = typename ArrayType::Type;
 
   Graph()
   {}
@@ -41,12 +43,41 @@ public:
     return nodes_[nodeName]->Evaluate();
   }
 
+  void BackPropagate(std::string const &nodeName, ArrayPtrType errorSignal)
+  {
+    nodes_[nodeName]->BackPropagate(errorSignal);
+  }
+
+  /*
+   * Called for node without trainable parameters
+   */
   template <class OperationType, typename... Params>
-  void AddNode(std::string const &nodeName, std::vector<std::string> const &inputs,
-               Params... params)
+  typename std::enable_if<
+      !std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
+  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
   {
     nodes_[nodeName] = std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
     FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "]");
+    for (auto const &i : inputs)
+    {
+      nodes_[nodeName]->AddInput(nodes_[i]);
+    }
+  }
+
+  /*
+   * Called for nodes with trainable parameters
+   * Will keep the node in the trainable_ list to step through them
+   */
+  template <class OperationType, typename... Params>
+  typename std::enable_if<
+      std::is_base_of<ops::Trainable<typename T::Type>, OperationType>::value>::type
+  AddNode(std::string const &nodeName, std::vector<std::string> const &inputs, Params... params)
+  {
+    std::shared_ptr<Node<ArrayType, OperationType>> op =
+        std::make_shared<Node<ArrayType, OperationType>>(nodeName, params...);
+    nodes_[nodeName] = op;
+    trainable_.push_back(op);
+    FETCH_LOG_INFO("ML_LIB", "Creating node [", nodeName, "] -- Register as Trainable");
     for (auto const &i : inputs)
     {
       nodes_[nodeName]->AddInput(nodes_[i]);
@@ -58,10 +89,28 @@ public:
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
     placeholder->SetData(data);
+    ResetGraphCache();
+  }
+
+  virtual void Step(Datatype learningRate)
+  {
+    for (auto &t : trainable_)
+    {
+      t->Step(learningRate);
+    }
+  }
+
+  void ResetGraphCache()
+  {
+    for (auto &node : nodes_)
+    {
+      node.second->ResetCache();
+    }
   }
 
 protected:
   std::unordered_map<std::string, std::shared_ptr<fetch::ml::NodeInterface<ArrayType>>> nodes_;
+  std::list<std::shared_ptr<fetch::ml::ops::Trainable<Datatype>>>                       trainable_;
 };
 
 }  // namespace ml
