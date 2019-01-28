@@ -39,8 +39,7 @@ namespace storage {
  * your filesystem
  *
  * To do this it maintains two files, a file that stores a mapping of the keys
- * to locations
- * in the document store
+ * to locations in the document store
  *
  */
 template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,

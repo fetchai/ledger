@@ -29,16 +29,13 @@ namespace storage {
 
 /**
  * Stores objects of type T using ResourceID as a key, writing to disk, hence
- * the New/Load
- * functions.
+ * the New/Load functions.
  *
  * Note that you should be using ResourceAddress to hash to a ResourceID
- * otherwise you will
- * get key collisions. See the test object_store.cpp for usage
+ * otherwise you will get key collisions. See the test object_store.cpp for usage
  *
  * Since the objects are stored to disk, you must have defined a serializer and
- * deserializer for
- * the type T you want to store. See object_store.cpp for an example
+ * deserializer for the type T you want to store. See object_store.cpp for an example
  *
  * S is the document store's underlying block size
  *
@@ -58,14 +55,13 @@ public:
   std::string id = "";
 
   /**
-   * Create a new file for the object store with the filename parameters for the
-   * document,
+   * Create a new file for the object store with the filename parameters for the document,
    * and the index to it.
    *
    * If these arguments correspond to existing files, it will overwrite them
    */
   void New(std::string const &doc_file, std::string const &index_file,
-           bool const & /*create*/ = true)
+           bool /*create*/ = true)
   {
     store_.New(doc_file, index_file);
   }
@@ -75,7 +71,7 @@ public:
    * document,
    * and the index to it
    */
-  void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
+  void Load(std::string const &doc_file, std::string const &index_file, bool create = true)
   {
     store_.Load(doc_file, index_file, create);
   }
@@ -159,8 +155,7 @@ public:
 
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -175,8 +170,7 @@ public:
 
   /**
    * Do a set without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object

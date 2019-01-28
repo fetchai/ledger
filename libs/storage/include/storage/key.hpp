@@ -35,8 +35,7 @@ namespace storage {
  * conceptually this is backwards.
  *
  * So comparing 0xEF... and 0x0F... would return the fourth bit position after
- * it has compared
- * all of 0xF
+ * it has compared all of 0xF
  *
  */
 template <std::size_t S = 64>

@@ -95,7 +95,7 @@ private:
       return bool(stream);
     }
 
-    constexpr std::size_t size() const
+    static constexpr std::size_t size() noexcept
     {
       return sizeof(magic) + sizeof(objects) + sizeof(D);
     }
@@ -112,14 +112,14 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(event_handler_type f)
   {
-    on_file_loaded_ = f;
+    on_file_loaded_ = std::move(f);
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(event_handler_type f)
   {
-    on_before_flush_ = f;
+    on_before_flush_ = std::move(f);
   }
 
   void SignalFileLoaded()
@@ -157,7 +157,7 @@ public:
     }
   }
 
-  void Close(bool const &lazy = false)
+  void Close(bool lazy = false)
   {
     if (!lazy)
     {
@@ -205,9 +205,9 @@ public:
     SignalFileLoaded();
   }
 
-  void New(std::string const &filename)
+  void New(std::string filename)
   {
-    filename_ = filename;
+    filename_ = std::move(filename);
     Clear();
     file_handle_ = std::fstream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
@@ -222,12 +222,12 @@ public:
    * @param: object The object reference to fill
    *
    */
-  void Get(std::size_t const &i, type &object) const
+  void Get(std::size_t i, type &object) const
   {
     assert(filename_ != "");
     assert(i < size());
 
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    auto n = Location(i);
 
     file_handle_.seekg(n);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
@@ -240,11 +240,11 @@ public:
    * @param: object The object to copy to the stack
    *
    */
-  void Set(std::size_t const &i, type const &object)
+  void Set(std::size_t i, type const &object)
   {
     assert(filename_ != "");
     assert(i < size());
-    int64_t start = int64_t(i * sizeof(type) + header_.size());
+    auto start = Location(i);
 
     file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -259,7 +259,7 @@ public:
    * @param: objects Pointer to array of elements
    *
    */
-  void SetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  void SetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
     auto ret = LazySetBulk(i, elements, objects);
 
@@ -278,11 +278,11 @@ public:
    *
    * @return bool Whether the bulk set updated the header (number of elements)
    */
-  bool LazySetBulk(std::size_t const &i, std::size_t elements, type const *objects)
+  bool LazySetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
     assert(filename_ != "");
 
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+    auto start = Location(i);
 
     file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(objects),
@@ -306,11 +306,9 @@ public:
    * @param: elements Number of elements to copy
    * @param: objects Pointer to array of elements
    */
-  void GetBulk(std::size_t const &i, std::size_t elements, type *objects)
+  void GetBulk(std::size_t i, std::size_t elements, type *objects)
   {
     assert(filename_ != "");
-
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
 
     // Figure out how many elements are valid to get, only get those
     if (i >= header_.objects)
@@ -318,7 +316,7 @@ public:
       return;
     }
 
-    assert(header_.objects >= i);
+    auto start = Location(i);
 
     // i is valid location, elements are 1 or more at this point
     elements = std::min(elements, std::size_t(header_.objects - i));
@@ -376,7 +374,7 @@ public:
   {
     assert(header_.objects > 0);
 
-    int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
+    auto n = Location(header_.objects - 1);
 
     file_handle_.seekg(n, file_handle_.beg);
     type object;
@@ -401,18 +399,18 @@ public:
     type a, b;
     assert(filename_ != "");
 
-    int64_t n1 = int64_t(i * sizeof(type) + header_.size());
-    int64_t n2 = int64_t(j * sizeof(type) + header_.size());
+    auto n1 = Location(i);
+    auto n2 = Location(j);
 
     file_handle_.seekg(n1);
     file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
     file_handle_.seekg(n2);
     file_handle_.read(reinterpret_cast<char *>(&b), sizeof(type));
 
-    file_handle_.seekg(n1);
-    file_handle_.write(reinterpret_cast<char const *>(&b), sizeof(type));
     file_handle_.seekg(n2);
     file_handle_.write(reinterpret_cast<char const *>(&a), sizeof(type));
+    file_handle_.seekg(n1);
+    file_handle_.write(reinterpret_cast<char const *>(&b), sizeof(type));
   }
 
   std::size_t size() const
@@ -420,7 +418,7 @@ public:
     return header_.objects;
   }
 
-  std::size_t empty() const
+  bool empty() const
   {
     return header_.objects == 0;
   }
@@ -436,7 +434,7 @@ public:
 
     if (!header_.Write(fin))
     {
-      throw StorageException("Error could not write header from clear");
+      throw StorageException("Error: could not write header from clear");
     }
 
     fin.close();
@@ -448,7 +446,7 @@ public:
    *
    * @param: lazy Whether to execute user defined callbacks
    */
-  void Flush(bool const &lazy = false)
+  void Flush(bool lazy = false)
   {
     if (!lazy)
     {
@@ -472,7 +470,7 @@ public:
   uint64_t LazyPush(type const &object)
   {
     uint64_t ret = header_.objects;
-    int64_t  n   = int64_t(ret * sizeof(type) + header_.size());
+    auto n       = Location(ret);
 
     file_handle_.seekg(n, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -503,6 +501,10 @@ private:
     {
       throw StorageException("Error could not write header");
     }
+  }
+
+  static constexpr std::fstream::pos_type Location(std::fstream::pos_type index) noexcept {
+    return index * sizeof(type) + Header::size();
   }
 };
 }  // namespace storage

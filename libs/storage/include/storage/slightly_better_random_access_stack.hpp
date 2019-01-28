@@ -100,12 +100,12 @@ public:
     on_before_flush_ = f;
   }
 
-  void Get(uint64_t const &i, type &object) const
+  void Get(uint64_t i, type &object) const
   {
     assert(i < objects_);
 
     uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
-    uint64_t cache_subindex = i & ((1 << cache_line_ln2) - 1);  // Lower total - N bits
+    uint64_t cache_subindex = i & subindex_mask;  // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -132,12 +132,12 @@ public:
    * @param: i The index
    * @param: object The object to write
    */
-  void Set(uint64_t const &i, type const &object)
+  void Set(uint64_t i, type const &object)
   {
     assert(i < objects_);
 
     uint64_t cache_lookup   = i >> cache_line_ln2;              // Upper N bits
-    uint64_t cache_subindex = i & ((1 << cache_line_ln2) - 1);  // Lower total - N bits
+    uint64_t cache_subindex = i & subindex_mask;  // Lower total - N bits
 
     auto iter = data_.find(cache_lookup);
 
@@ -201,7 +201,7 @@ public:
     return ret;
   }
 
-  void Swap(uint64_t const &i, uint64_t const &j)
+  void Swap(uint64_t i, uint64_t j)
   {
     if (i == j)
     {
@@ -211,8 +211,8 @@ public:
     uint64_t cache_lookup_i = i >> cache_line_ln2;
     uint64_t cache_lookup_j = j >> cache_line_ln2;
 
-    uint64_t cache_subindex_i = i & ((1 << cache_line_ln2) - 1);
-    uint64_t cache_subindex_j = j & ((1 << cache_line_ln2) - 1);
+    uint64_t cache_subindex_i = i & subindex_mask;
+    uint64_t cache_subindex_j = j & subindex_mask;
 
     // make sure both items are in the cache
     if (data_.find(cache_lookup_i) == data_.end())
@@ -292,8 +292,10 @@ public:
 
 private:
   // Cached items
-  static constexpr std::size_t cache_line_ln2 = 13;  // Default cache lines 8192 * sizeof(T)
-  std::size_t memory_limit_bytes_             = std::size_t(1ULL << 29);  // Default 500K memory
+  static constexpr std::size_t cache_line_ln2  = 13;  // Default cache lines 8192 * sizeof(T)
+  static constexpr std::size_t cache_line_size = 1 << cache_line_ln2;
+  static constexpr uint64_t subindex_mask      = cache_line_size - 1;
+  std::size_t memory_limit_bytes_              = std::size_t(1ULL << 29);  // Default 500K memory
 
   T dummy_;
 
@@ -307,12 +309,15 @@ private:
   {
     uint64_t                              reads  = 0;
     uint64_t                              writes = 0;
-    std::array<type, 1 << cache_line_ln2> elements;
+    std::array<type, cache_line_size> elements;
   };
 
   mutable std::map<uint64_t, CachedDataItem> data_;
   mutable uint64_t                           last_removed_index_ = 0;
   uint64_t                                   objects_            = 0;
+
+  static_assert(sizeof(typename decltype(data_)::value_type) <= memory_limit_bytes_
+		, "Insufficient memory limit for this type");
 
   void FlushLine(uint64_t line, CachedDataItem const &items) const
   {
@@ -326,7 +331,7 @@ private:
       return;
     }
 
-    stack_.SetBulk(line, 1 << cache_line_ln2, items.elements.data());
+    stack_.SetBulk(line, cache_line_size, items.elements.data());
   }
 
   void GetLine(uint64_t line, CachedDataItem &items) const
@@ -336,49 +341,39 @@ private:
       return;
     }
 
-    stack_.GetBulk(line, 1 << cache_line_ln2, items.elements.data());
+    stack_.GetBulk(line, cache_line_size, items.elements.data());
   }
 
   bool ManageMemory() const
   {
     // Lazy policy: remove items FILO style
-    using MapElement = typename decltype(data_)::value_type;
+    using Map        = decltype(data_);
+    using MapElement = typename Map::value_type;
 
-    if (!(data_.size() * sizeof(MapElement) > memory_limit_bytes_))
+    // Note: this cache's contents can possibly take at most 500K + sizeof(MapElement)
+    if (data_.size() * sizeof(MapElement) > memory_limit_bytes_;)
     {
-      return false;
+      // Find and remove next index up from the last one we removed
+      for (auto next_to_remove = data_.upper_bound(last_removed_index_);
+	   data_.size() * sizeof(MapElement) > memory_limit_bytes_;)
+      {
+        if (next_to_remove == data_.end())
+        {
+          next_to_remove = data_.begin();  // Get min element
+        }
+        last_removed_index_ = next_to_remove->first;
+        FlushLine(next_to_remove->first, next_to_remove->second);
+        next_to_remove = data_.erase(next_to_remove);
+      }
     }
 
-    // Find and remove next index up from the last one we removed
-    auto next_to_remove = data_.upper_bound(last_removed_index_);
-
-    if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
-    {
-      last_removed_index_ = next_to_remove->first;
-      FlushLine(next_to_remove->first, next_to_remove->second);
-      data_.erase(next_to_remove);
-    }
-    else
-    {
-      next_to_remove = data_.begin();  // Get min element
-      FlushLine(next_to_remove->first, next_to_remove->second);
-      last_removed_index_ = next_to_remove->first;
-      data_.erase(next_to_remove);
-    }
-
-    return true;
+    return false;
   }
 
   void LoadCacheLine(uint64_t line) const
   {
     // Cull memory usage to max allowed
-    for (;;)
-    {
-      if (!ManageMemory())
-      {
-        break;
-      }
-    }
+    ManageMemory();
 
     // Load in the cache line (memory usage now slightly over)
     uint64_t cache_index = (line >> cache_line_ln2) << cache_line_ln2;
