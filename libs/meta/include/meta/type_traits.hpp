@@ -88,6 +88,9 @@ constexpr bool IsNullPtr = std::is_null_pointer<T>::value;
 template <bool C, typename R = void>
 using EnableIf = typename std::enable_if<C, R>::type;
 
+template <typename T, typename U, typename R = void>
+using EnableIfSame = EnableIf<std::is_same<T, typename std::decay<U>::type>::value, R>;
+
 // template <typename T, typename R = T>
 // using IfIsArithmetic = EnableIf<std::is_arithmetic<T>::value, R>;
 

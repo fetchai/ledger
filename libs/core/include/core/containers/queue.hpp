@@ -58,7 +58,7 @@ public:
   }
 
   template <typename Function>
-  void increment(Function &&function)
+  void Increment(Function &&function)
   {
     function((*this)++);
   }
@@ -104,10 +104,10 @@ public:
   }
 
   template <typename Function>
-  void increment(Function &&function)
+  void Increment(Function &&function)
   {
     std::lock_guard<std::mutex> lock(lock_);
-    Base::increment(std::forward<Function>(function));
+    Base::Increment(std::forward<Function>(function));
   }
 
 private:
@@ -135,10 +135,9 @@ public:
   template <typename R, typename P>
   bool Pop(T &value, std::chrono::duration<R, P> const &duration);
   template <typename U>
-  meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Push(U &&element);
+  meta::EnableIfSame<T, U> Push(U &&element);
   template <typename U>
-  meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Push(U &&         element,
-                                                                            std::size_t &count);
+  meta::EnableIfSame<T, U> Push(U &&element, std::size_t &count);
   // bool        empty();
   std::size_t size();
   /// @}
@@ -180,7 +179,7 @@ T Queue<T, N, P, C>::Pop()
   read_count_.Wait();
 
   T value;
-  read_index_.increment([this, &value](auto const index) { value = std::move(queue_[index]); });
+  read_index_.Increment([this, &value](auto const index) { value = std::move(queue_[index]); });
 
   write_count_.Post();
 
@@ -209,7 +208,7 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
     return false;
   }
 
-  read_index_.increment([this, &value](auto const &index) { value = std::move(queue_[index]); });
+  read_index_.Increment([this, &value](auto const &index) { value = std::move(queue_[index]); });
 
   write_count_.Post();
 
@@ -232,12 +231,11 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
  */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
-meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Queue<T, N, P, C>::Push(
-    U &&element)
+meta::EnableIfSame<T, U> Queue<T, N, P, C>::Push(U &&element)
 {
   write_count_.Wait();
 
-  write_index_.increment(
+  write_index_.Increment(
       [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
 
   read_count_.Post();
@@ -260,12 +258,11 @@ meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Queue<T, N,
  * */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
-meta::EnableIf<std::is_same<T, typename std::decay<U>::type>::value> Queue<T, N, P, C>::Push(
-    U &&element, std::size_t &count)
+meta::EnableIfSame<T, U> Queue<T, N, P, C>::Push(U &&element, std::size_t &count)
 {
   write_count_.Wait();
 
-  write_index_.increment(
+  write_index_.Increment(
       [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
 
   read_count_.Post(count);
