@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <cmath>
+
 namespace fetch {
 namespace math {
 

@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,47 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/compiler.hpp"
-#include "vm/module.hpp"
+#include "vm/opcodes.hpp"
+#include "vm/typeids.hpp"
+#include <utility>
 
 namespace fetch {
 namespace vm {
 
-Compiler::Compiler(Module *module)
-{
-  analyser_.Initialise();
-  module->CompilerSetup(this);
-}
-
-Compiler::~Compiler()
-{
-  analyser_.UnInitialise();
-}
-
-bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
-                       Strings &errors)
-{
-  BlockNodePtr root = parser_.Parse(source, errors);
-  if (root == nullptr)
-  {
-    return false;
-  }
-
-  TypeInfoTable type_info_table;
-  bool          analysed = analyser_.Analyse(root, type_info_table, errors);
-  if (analysed == false)
-  {
-    root->Reset();
-    root = nullptr;
-    return false;
-  }
-
-  generator_.Generate(root, type_info_table, name, script);
-
-  root->Reset();
-  root = nullptr;
-  return true;
-}
+using Index   = uint16_t;
+using Strings = std::vector<std::string>;
 
 }  // namespace vm
 }  // namespace fetch

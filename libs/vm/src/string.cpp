@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,45 +16,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
+#include "vm/string.hpp"
 
 namespace fetch {
 namespace vm {
 
-namespace details {
-
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
+bool String::Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const
 {
+  Ptr<String> lhs = lhso;
+  Ptr<String> rhs = rhso;
+  return lhs->str == rhs->str;
+}
 
-  static void AppendTo(std::vector<std::type_index> &list)
+size_t String::GetHashCode() const
+{
+  return std::hash<std::string>()(str);
+}
+
+void String::AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso)
+{
+  bool const  lhs_is_modifiable = lhso.RefCount() == 1;
+  Ptr<String> lhs               = lhso;
+  Ptr<String> rhs               = rhso;
+  if (lhs_is_modifiable)
   {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
+    lhs->str += rhs->str;
   }
-};
-
-template <typename T>
-struct ArgumentsToList<T>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
+  else
   {
-    list.push_back(std::type_index(typeid(T)));
+    Ptr<String> s(new String(vm_, lhs->str + rhs->str));
+    lhso = std::move(s);
   }
-};
+}
 
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> & /*list*/)
-  {}
-};
-
-}  // namespace details
 }  // namespace vm
 }  // namespace fetch
