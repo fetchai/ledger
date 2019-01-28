@@ -24,7 +24,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>
+class Trainable
+{
+public:
+  virtual void Step(T learningRate) = 0;
+};
+
+template <class T>
+class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<typename T::Type>
 {
 public:
   using ArrayType    = T;
@@ -51,12 +58,16 @@ public:
     }
   }
 
-  void Step()
+  virtual void Step(typename T::Type learningRate)
   {
+    for (std::size_t i(0); i < this->gradientAccumulation_->size(); ++i)
+    {
+      this->gradientAccumulation_->At(i) = this->gradientAccumulation_->At(i) * -learningRate;
+    }
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
-    gradientAccumulation_->SetAllZero();
+    gradientAccumulation_->Fill(0);
   }
 
 private:

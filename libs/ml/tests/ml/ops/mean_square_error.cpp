@@ -37,7 +37,7 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
 {
   std::shared_ptr<TypeParam> data1 = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> data2 = std::make_shared<TypeParam>(8);
-  size_t                     i(0);
+  std::size_t                i(0);
   for (int e : {1, -2, 3, -4, 5, -6, 7, -8})
   {
     data1->Set(i, typename TypeParam::Type(e));
@@ -53,7 +53,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
 {
   std::shared_ptr<TypeParam> data1 = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> data2 = std::make_shared<TypeParam>(8);
-  size_t                     i(0);
+  std::size_t                i(0);
   for (double e : {1.1, -2.2, 3.3, -4.4, 5.5, -6.6, 7.7, -8.8})
   {
     data1->Set(i, typename TypeParam::Type(e));
@@ -77,7 +77,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_backward_test)
   std::shared_ptr<TypeParam> data1 = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> data2 = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt    = std::make_shared<TypeParam>(8);
-  size_t                     i(0);
+  std::size_t                i(0);
   for (float e : {1.1f, -2.2f, 3.3f, -4.4f, 5.5f, -6.6f, 7.7f, -8.8f})
   {
     data1->Set(i, typename TypeParam::Type(e));

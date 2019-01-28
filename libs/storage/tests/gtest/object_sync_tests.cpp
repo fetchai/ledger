@@ -72,8 +72,8 @@ public:
     tc->muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("Test"), tm);
     tc->muddle_->Start({});
 
-    tc->client_ =
-        std::make_shared<Client>(tc->muddle_->AsEndpoint(), Address(), SERVICE_LANE, CHANNEL_RPC);
+    tc->client_ = std::make_shared<Client>("Client", tc->muddle_->AsEndpoint(), Address(),
+                                           SERVICE_LANE, CHANNEL_RPC);
     tc->muddle_->AddPeer(uri);
 
     int counter = 40;
@@ -164,7 +164,7 @@ public:
 
 TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1)
 {
-  NetworkManager nm{1};
+  NetworkManager nm{"NetMgr", 1};
   nm.Start();
 
   uint16_t                         initial_port = 8000;
@@ -207,7 +207,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_1
 
 TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_50)
 {
-  NetworkManager nm{50};
+  NetworkManager nm{"NetMgr", 50};
   nm.Start();
 
   uint16_t                         initial_port = 9000;
@@ -248,7 +248,7 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_5
 TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_caching)
 {
   // TODO(unknown): (HUT) : make this work with 1 - find the post blocking the NM.
-  NetworkManager nm{50};
+  NetworkManager nm{"NetMgr", 50};
   nm.Start();
 
   uint16_t                                  initial_port       = 10000;

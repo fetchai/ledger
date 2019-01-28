@@ -17,45 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include <typeinfo>
-#include <vector>
+#include "auctions/auction.hpp"
 
 namespace fetch {
-namespace vm {
+namespace auctions {
 
-namespace details {
-
-template <typename... Args>
-struct ArgumentsToList;
-
-template <typename T, typename... Args>
-struct ArgumentsToList<T, Args...>
+class FirstPriceAuction : public Auction
 {
+public:
+  FirstPriceAuction(BlockId start_block_id, BlockId end_block_id);
 
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-    ArgumentsToList<Args...>::AppendTo(list);
-  }
+  bool Execute(BlockId current_block);
+
+private:
+  void SelectWinners();
 };
 
-template <typename T>
-struct ArgumentsToList<T>
-{
-
-  static void AppendTo(std::vector<std::type_index> &list)
-  {
-    list.push_back(std::type_index(typeid(T)));
-  }
-};
-
-template <>
-struct ArgumentsToList<>
-{
-  static void AppendTo(std::vector<std::type_index> & /*list*/)
-  {}
-};
-
-}  // namespace details
-}  // namespace vm
+}  // namespace auctions
 }  // namespace fetch

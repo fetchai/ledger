@@ -31,7 +31,7 @@ using fetch::muddle::rpc::Server;
 
 int main()
 {
-  NetworkManager nm(1);
+  NetworkManager nm{"NetMgr", 1};
   nm.Start();
 
   Muddle muddle{Muddle::NetworkId("TEST"), CreateKey(SERVER_PRIVATE_KEY), nm};

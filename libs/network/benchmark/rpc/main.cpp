@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
   std::string                    IP;
   uint16_t                       port     = 8080;  // Default for all benchmark tests
   bool                           pullTest = true;
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
   std::thread                    benchmarkThread;
 
   if (argc > 1)
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 
     // TODO(issue 28): refactor closures to use explicit copy
     benchmarkThread = std::thread([=]() {
-      fetch::network::NetworkManager networkManager(8);
+      fetch::network::NetworkManager networkManager{"NetMgr", 8};
       BenchmarkService               serv(port, networkManager);
       networkManager.Start();
       std::string dummy;

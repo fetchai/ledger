@@ -37,15 +37,12 @@ public:
   {
     ASSERT(inputs.size() == 1);
     input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
-    this->output_->Copy(
-        *inputs[0]);  // TODO(private, 521) remove useless copy and replace with lightweight view
-    size_t elementsCount(1);
-    for (size_t i : this->output_->shape())
+    this->output_ = std::make_shared<ArrayType>(std::vector<std::size_t>({1, inputs[0]->size()}));
+    // TODO(private, 521) remove useless copy and replace with lightweight view
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
-      elementsCount *= i;
+      this->output_->At(i) = inputs[0]->At(i);
     }
-    this->output_->Reshape(std::vector<size_t>({1, elementsCount}));
     return this->output_;
   }
 
@@ -53,12 +50,16 @@ public:
                                              ArrayPtrType                     errorSignal)
   {
     ASSERT(inputs.size() == 1);
-    errorSignal->Reshape(std::vector<size_t>({input_shape_[0], input_shape_[1]}));
-    return {errorSignal};
+    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
+    for (std::size_t i(0); i < ret->size(); ++i)
+    {
+      ret->At(i) = errorSignal->At(i);
+    }
+    return {ret};
   }
 
 private:
-  std::vector<size_t> input_shape_;
+  std::vector<std::size_t> input_shape_;
 };
 
 }  // namespace ops

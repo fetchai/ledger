@@ -40,7 +40,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
-  t1.Add_inplace(t2);
+  t1.InlineAdd(t2);
   for (size_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), gtInput[i]);
@@ -61,7 +61,7 @@ TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
-  t1.Add_inplace(t2);
+  t1.InlineAdd(t2);
   for (size_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), gtInput[i]);
@@ -82,7 +82,7 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
     t1.Set(i, TypeParam(t1Input[i]));
     t2.Set(i, TypeParam(t2Input[i]));
   }
-  t1.Mul_inplace(t2);
+  t1.InlineMultiply(t2);
   for (size_t i(0); i < 8; ++i)
   {
     EXPECT_EQ(t1.At(i), gtInput[i]);

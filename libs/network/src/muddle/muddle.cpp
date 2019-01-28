@@ -45,6 +45,7 @@ static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
 
 static const auto        CLEANUP_INTERVAL        = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS = 2500;
+static std::size_t const NUM_THREADS             = 1;
 
 /**
  * Constructs the muddle node instances
@@ -58,7 +59,8 @@ Muddle::Muddle(NetworkId network_id, Muddle::CertificatePtr certificate, Network
   , dispatcher_()
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_)
-  , thread_pool_(network::MakeThreadPool(1, "Muddle " + static_cast<std::string>(network_id)))
+  , thread_pool_(
+        network::MakeThreadPool(NUM_THREADS, "Muddle " + static_cast<std::string>(network_id)))
   , clients_(router_)
   , network_id_{network_id}
 {}

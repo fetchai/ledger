@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    NetworkManager tmanager;
+    NetworkManager tmanager{"NetMgr", 1};
 
     Server s(uint16_t(std::atoi(argv[1])), tmanager);
     tmanager.Start();

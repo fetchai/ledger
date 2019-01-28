@@ -372,7 +372,7 @@ public:
         // extract the value from the queue
         value = queue_.front();
         queue_.pop_front();
-        // triggerr all pending threads
+        // trigger all pending threads
         condition_.notify_all();
         break;
       }
@@ -414,6 +414,19 @@ public:
         break;
       }
     }
+  }
+
+  template <typename S>
+  bool TryPush(S &&element)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (queue_.size() >= SIZE)
+    {
+      return false;
+    }
+
+    queue_.emplace_back(std::forward<S>(element));
+    return true;
   }
   /// @}
 

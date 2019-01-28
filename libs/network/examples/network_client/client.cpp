@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
       std::cerr << "Usage: client <host> <port>\n";
       return 1;
     }
-    NetworkManager tmanager;
+    NetworkManager tmanager{"NetMgr", 1};
     tmanager.Start();
 
     // Attempt to break the connection

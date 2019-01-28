@@ -37,6 +37,15 @@ macro(setup_compiler)
     list(APPEND _list_architectures_compiler "AVX2")
   endif(FETCH_ARCH_AVX2)
 
+  # platform configuration
+  if (WIN32)
+    message(FATAL_ERROR "Windows platform not currently supported")
+  elseif (APPLE)
+    add_definitions(-DFETCH_PLATFORM_MACOS)
+  else () # assume linux flavour
+    add_definitions(-DFETCH_PLATFORM_LINUX)
+  endif ()
+
   if(${_num_architectures_compiler} GREATER 1)
     message(SEND_ERROR "Too many architectures configured: ${_list_architectures_compiler}")
   endif()
@@ -174,8 +183,14 @@ function(configure_vendor_targets)
 
   # Google Benchmark
   # Do not build the google benchmark library tests
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
-  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  if(FETCH_ENABLE_BENCHMARKS)
+      set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+      add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
+  endif(FETCH_ENABLE_BENCHMARKS)
+
+  # mio vendor library
+  add_library(vendor-mio INTERFACE)
+  target_include_directories(vendor-mio INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mio/include)
 
 endfunction(configure_vendor_targets)
 

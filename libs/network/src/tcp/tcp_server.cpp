@@ -34,12 +34,6 @@ TCPServer::TCPServer(uint16_t const &port, network_manager_type const &network_m
 
 TCPServer::~TCPServer()
 {
-  LOG_STACK_TRACE_POINT;
-  {
-    std::lock_guard<std::mutex> lock(startMutex_);
-    stopping_ = true;
-  }
-
   std::weak_ptr<acceptor_type> acceptorWeak = acceptor_;
 
   network_manager_.Post([acceptorWeak] {
@@ -60,35 +54,29 @@ TCPServer::~TCPServer()
     }
   });
 
-  while (destruct_guard_.use_count() > 1)
+  // Need to block until the acceptor has expired as it refers back to this class.
+  while (!acceptor_.expired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " start closure to clear");
+    // FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 
-  while (!acceptor_.expired() && running_)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for TCP server ", this, " to destruct");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  }
-
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing TCP server ", this);
+  // FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing TCP server ", this);
 }
 
 void TCPServer::Start()
 {
-  std::shared_ptr<int> destruct_guard = destruct_guard_;
+  std::shared_ptr<int> closure_alive = std::make_shared<int>(-1);
 
-  auto closure = [this, destruct_guard] {
-    std::lock_guard<std::mutex> lock(startMutex_);
+  {
+    auto closure = [this, closure_alive] {
+      std::shared_ptr<int> closure_alive_copy = closure_alive;
 
-    if (!stopping_)
-    {
       std::shared_ptr<acceptor_type> acceptor;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
 
       try
-      {  // KLL this also appears to generate a data race.
-        // This might throw if the port is not free
+      {
         acceptor = network_manager_.CreateIO<acceptor_type>(
             asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
@@ -99,11 +87,7 @@ void TCPServer::Start()
 
         if (acceptor)
         {
-          running_ = true;
-
           Accept(acceptor);
-
-          counter_.Completed();
 
           FETCH_LOG_DEBUG(LOGGING_NAME, "Accepting TCP server connections");
         }
@@ -112,10 +96,28 @@ void TCPServer::Start()
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Failed to open socket: ", port_, " with error: ", e.what());
       }
-    }
-  };
 
-  network_manager_.Post(closure);
+      counter_.Completed();
+    };
+
+    if (!network_manager_.Running())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "TCP server trying to start with non-running network manager. This will block "
+                     "until the network manager starts!");
+    }
+
+    network_manager_.Post(closure);
+  }  // end of scope for closure which would hold closure_alive.use_count() at 2
+
+  // Guarantee posted closure has either executed or will never execute
+  while (closure_alive.use_count() != 1)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "TCP server is waiting to open. Use count: ", closure_alive.use_count(),
+                   " NM running: ", network_manager_.Running());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 void TCPServer::Stop()
@@ -200,7 +202,7 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Acceptor in TCP server received EC");
+      FETCH_LOG_WARN(LOGGING_NAME, "Acceptor in TCP server received EC - acceptor will close");
     }
   };
 

@@ -19,6 +19,7 @@
 #include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
+#include "core/threading.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -67,7 +68,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
                                    StorageUnitPtr storage, ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
-  , thread_pool_(network::MakeThreadPool(num_executors, "ExecutionManager"))
+  , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
 {
   // define all the file paths for the databases
   FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
@@ -331,6 +332,8 @@ bool ExecutionManager::Abort()
 
 void ExecutionManager::MonitorThreadEntrypoint()
 {
+  SetThreadName("ExecMgrMon");
+
   enum class MonitorState
   {
     FAILED,

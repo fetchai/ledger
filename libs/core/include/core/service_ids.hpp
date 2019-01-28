@@ -28,9 +28,10 @@ static constexpr uint16_t SERVICE_LANE       = 3003;
 static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 
 // Common Service Channels
-static constexpr uint16_t CHANNEL_RPC =
-    1;  // for convience we essentially reserve channel 1 of any service to be allocated to any
-        // potential RPC interface
+static constexpr uint16_t CHANNEL_RPC = 1;  // for convience we essentially
+                                            // reserve channel 1 of any service
+                                            // to be allocated to any
+                                            // potential RPC interface
 
 // Muddle Service Channels
 static constexpr uint16_t CHANNEL_ROUTING     = 1;

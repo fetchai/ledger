@@ -53,6 +53,7 @@ public:
   using Transaction     = chain::Transaction;
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
+  using TxSummaries     = std::vector<fetch::chain::TransactionSummary>;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;
@@ -71,6 +72,8 @@ public:
     }
   }
   /// @}
+
+  virtual TxSummaries PollRecentTx(uint32_t) = 0;
 
   /// @name Revertible Document Store Interface
   /// @{
