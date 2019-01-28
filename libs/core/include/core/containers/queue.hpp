@@ -135,9 +135,9 @@ public:
   template <typename R, typename P>
   bool Pop(T &value, std::chrono::duration<R, P> const &duration);
   template <typename U>
-  meta::EnableIfSame<T, U> Push(U &&element);
+  meta::EnableIfSame<T, meta::Decay<U>> Push(U &&element);
   template <typename U>
-  meta::EnableIfSame<T, U> Push(U &&element, std::size_t &count);
+  meta::EnableIfSame<T, meta::Decay<U>> Push(U &&element, std::size_t &count);
   // bool        empty();
   std::size_t size();
   /// @}
@@ -231,7 +231,7 @@ bool Queue<T, N, P, C>::Pop(T &value, std::chrono::duration<Rep, Per> const &dur
  */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
-meta::EnableIfSame<T, U> Queue<T, N, P, C>::Push(U &&element)
+meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element)
 {
   write_count_.Wait();
 
@@ -258,7 +258,7 @@ meta::EnableIfSame<T, U> Queue<T, N, P, C>::Push(U &&element)
  * */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
-meta::EnableIfSame<T, U> Queue<T, N, P, C>::Push(U &&element, std::size_t &count)
+meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::size_t &count)
 {
   write_count_.Wait();
 
