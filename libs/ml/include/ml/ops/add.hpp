@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -24,24 +25,28 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::Ops<T>
+class Add : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType    = T;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  Flatten()          = default;
-  virtual ~Flatten() = default;
+  Add()          = default;
+  virtual ~Add() = default;
 
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
-    ASSERT(inputs.size() == 1);
-    input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::size_t>({1, inputs[0]->size()}));
-    // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs[0]->size() == inputs[1]->size());
+    if (!this->output_ || this->output_->shape() != inputs[0]->shape())
     {
-      this->output_->At(i) = inputs[0]->At(i);
+      this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
+    }
+
+    for (std::size_t i = 0; i < inputs[0]->size(); ++i)
+    {
+      this->output_->Set(i, inputs[0]->At(i) + inputs[1]->At(i));
     }
     return this->output_;
   }
@@ -49,17 +54,16 @@ public:
   virtual std::vector<ArrayPtrType> Backward(std::vector<ArrayPtrType> const &inputs,
                                              ArrayPtrType                     errorSignal)
   {
-    ASSERT(inputs.size() == 1);
-    std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::size_t i(0); i < ret->size(); ++i)
-    {
-      ret->At(i) = errorSignal->At(i);
-    }
-    return {ret};
+    ASSERT(inputs.size() == 2);
+    ASSERT(inputs[0]->size() == inputs[1]->size());
+    ASSERT(errorSignal->size() == inputs[1]->size());
+    return {errorSignal, errorSignal};
   }
 
 private:
-  std::vector<std::size_t> input_shape_;
+  // Relu is done in a strange way, comparing input against an array of zeroes
+  // using a parrallel Maximum function -- May need improvement (TODO private 469)
+  ArrayPtrType zeroes_;
 };
 
 }  // namespace ops

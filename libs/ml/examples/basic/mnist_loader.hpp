@@ -17,28 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
+#include "math/tensor.hpp"
 
-namespace fetch {
-namespace ledger {
+#include <memory>
+#include <utility>
 
-class SmartContract : public Contract
+class MNISTLoader
 {
+
 public:
-  SmartContract(vm::Script const &script);
-  ~SmartContract() = default;
+  MNISTLoader();
+
+  unsigned int size() const;
+  bool         IsDone() const;
+  void         Reset();
+  void         Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const;
+
+  std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> GetNext(
+      std::shared_ptr<fetch::math::Tensor<float>> buffer);
 
 private:
-  Status InvokeContract(Transaction const &tx);
-
-  //  vm::Script                  script_;
-  //  std::unique_ptr<vm::Module> module_;
-  //  std::unique_ptr<vm::VM>     vm_;
+  std::uint32_t   cursor_;
+  std::uint32_t   size_;
+  unsigned char **data_;
+  unsigned char * labels_;
 };
-
-}  // namespace ledger
-}  // namespace fetch

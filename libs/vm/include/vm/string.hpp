@@ -17,20 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/defs.hpp"
+
 namespace fetch {
 namespace vm {
 
-template <typename T>
-struct WrapperClass : public Object
+struct String : public Object
 {
-  using Object::Object;
-  WrapperClass(TypeId type_id, VM *vm, T &&o)
-    : Object(std::move(type_id), vm)
-    , object(std::move(o))
+  String() = delete;
+  String(VM *vm, std::string str__, bool is_literal__ = false)
+    : Object(vm, TypeIds::String)
+    , str(std::move(str__))
+    , is_literal(is_literal__)
   {}
-  T object;
-
-  virtual ~WrapperClass() = default;
+  virtual ~String() = default;
+  virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const override;
+  virtual size_t GetHashCode() const override;
+  virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
+  std::string    str;
+  bool           is_literal;
 };
 
 }  // namespace vm

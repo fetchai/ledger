@@ -24,21 +24,58 @@
 namespace fetch {
 namespace vm {
 
+// Forward declarations
+class Module;
+
 class Compiler
 {
 public:
-  Compiler(Module *module = nullptr)
-    : analyser_(module)
-  {}
-  ~Compiler()
-  {}
-  bool Compile(const std::string &source, const std::string &name, Script &script,
-               std::vector<std::string> &errors);
+  Compiler(Module *module);
+  ~Compiler();
+  bool Compile(std::string const &source, std::string const &name, Script &script, Strings &errors);
 
 private:
+  void CreateClassType(std::string const &name, TypeId id)
+  {
+    analyser_.CreateClassType(name, id);
+  }
+
+  void CreateTemplateInstantiationType(TypeId id, TypeId template_type_id,
+                                       TypeIdArray const &parameter_type_ids)
+  {
+    analyser_.CreateTemplateInstantiationType(id, template_type_id, parameter_type_ids);
+  }
+
+  void CreateOpcodeFreeFunction(std::string const &name, Opcode opcode,
+                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  {
+    analyser_.CreateOpcodeFreeFunction(name, opcode, parameter_type_ids, return_type_id);
+  }
+
+  void CreateOpcodeTypeConstructor(TypeId type_id, Opcode opcode,
+                                   TypeIdArray const &parameter_type_ids)
+  {
+    analyser_.CreateOpcodeTypeConstructor(type_id, opcode, parameter_type_ids);
+  }
+
+  void CreateOpcodeTypeFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  {
+    analyser_.CreateOpcodeTypeFunction(type_id, name, opcode, parameter_type_ids, return_type_id);
+  }
+
+  void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
+                                    TypeIdArray const &parameter_type_ids, TypeId return_type_id)
+  {
+    analyser_.CreateOpcodeInstanceFunction(type_id, name, opcode, parameter_type_ids,
+                                           return_type_id);
+  }
+
   Parser    parser_;
   Analyser  analyser_;
   Generator generator_;
+
+  friend class Module;
 };
 
 }  // namespace vm
