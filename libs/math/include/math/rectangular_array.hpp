@@ -384,6 +384,13 @@ public:
     return this->At(indices[0], indices[1]);
   }
 
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> const &Get(std::vector<S> const &indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->At(indices[0], indices[1]);
+  }
+
   /* Sets an element using one coordinatea.
    * @param i is the position along the height.
    * @param j is the position along the width.
