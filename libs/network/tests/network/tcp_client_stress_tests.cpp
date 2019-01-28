@@ -224,7 +224,7 @@ TEST(tcp_client_stress_gtest, NM_dead)
 
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     Client         client(host, std::to_string(emptyPort), nmanager);
   }
   SUCCEED() << "Success." << std::endl;
@@ -240,7 +240,7 @@ TEST(tcp_client_stress_gtest, NM_alive)
 
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     nmanager.Start();
     Client client(host, std::to_string(emptyPort), nmanager);
     nmanager.Stop();
@@ -259,7 +259,7 @@ TEST(tcp_client_stress_gtest, NM_jittering)
   std::cerr << "starting" << std::endl;
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     if (index % 2 == 0)
     {
       nmanager.Start();
@@ -284,7 +284,7 @@ TEST(tcp_client_stress_gtest, NM_dead_existing_port)
 
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     Client         client(host, port, nmanager);
   }
   SUCCEED() << "Success." << std::endl;
@@ -301,7 +301,7 @@ TEST(tcp_client_stress_gtest, NM_alive_existing_port)
 
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     nmanager.Start();
     Client client(host, port, nmanager);
     nmanager.Stop();
@@ -320,7 +320,7 @@ TEST(tcp_client_stress_gtest, NM_jittering_existing_port)
 
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     if (index % 2 == 0)
     {
       nmanager.Start();
@@ -344,7 +344,7 @@ TEST(tcp_client_stress_gtest, move_constr)
   fetch::network::LoopbackServer echo(uint16_t(std::stoi(port)));
   std::vector<Client *>          clients;
 
-  NetworkManager nmanager(N);
+  NetworkManager nmanager{"NetMgr", N};
   nmanager.Start();
   for (std::size_t index = 0; index < MANY_CYCLES; ++index)
   {
@@ -371,7 +371,7 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
   for (std::size_t index = 0; index < 10; ++index)
   {
     std::cerr << "Iteration: " << index << std::endl;
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     nmanager.Start();
     std::atomic<std::size_t> threadCount{0};
     std::size_t              iterations = MID_CYCLES;
@@ -409,7 +409,7 @@ TEST(tcp_client_stress_gtest, NM_being_destroyed_before_clients)
   for (std::size_t index = 0; index < MID_CYCLES; ++index)
   {
     std::vector<Client *> clients;
-    NetworkManager        nmanager(N);
+    NetworkManager        nmanager{"NetMgr", N};
     nmanager.Start();
 
     for (std::size_t j = 0; j < 4; ++j)
@@ -453,7 +453,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting)
   {
     std::cerr << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    NetworkManager                 nmanager(N);
+    NetworkManager                 nmanager{"NetMgr", N};
     nmanager.Start();
     Client client(host, std::to_string(emptyPort), nmanager);
 
@@ -509,7 +509,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_counting_slow_cli
   {
     std::cerr << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    NetworkManager                 nmanager(N);
+    NetworkManager                 nmanager{"NetMgr", N};
     nmanager.Start();
     SlowClient client(host, std::to_string(emptyPort), nmanager);
 
@@ -564,7 +564,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order)
   for (std::size_t i = 0; i < 10; ++i)
   {
     std::cerr << "Iteration: " << i << std::endl;
-    NetworkManager nmanager(N);
+    NetworkManager nmanager{"NetMgr", N};
     nmanager.Start();
     fetch::network::LoopbackServer echoServer(emptyPort);
     VerifyClient                   client(host, std::to_string(emptyPort), nmanager);
@@ -633,7 +633,7 @@ TEST(tcp_client_stress_gtest, bouncing_messages_off_server_and_check_order_multi
   {
     std::cerr << "Iteration: " << index << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    NetworkManager                 nmanager(N);
+    NetworkManager                 nmanager{"NetMgr", N};
     nmanager.Start();
     std::vector<std::shared_ptr<VerifyClient>> clients;
 
@@ -713,7 +713,7 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
   {
     std::cerr << "Iteration: " << i << std::endl;
     fetch::network::LoopbackServer echoServer(emptyPort);
-    NetworkManager                 nmanager(N);
+    NetworkManager                 nmanager{"NetMgr", N};
     nmanager.Start();
     std::vector<std::shared_ptr<VerifyClient>> clients;
 

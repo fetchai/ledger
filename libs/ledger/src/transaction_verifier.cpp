@@ -18,6 +18,7 @@
 
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
+#include "core/threading.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
 
@@ -47,7 +48,10 @@ void TransactionVerifier::Start()
   // create the verifier threads
   for (std::size_t i = 0, end = verifying_threads_; i < end; ++i)
   {
-    threads_.emplace_back(std::make_unique<std::thread>(&TransactionVerifier::Verifier, this));
+    threads_.emplace_back(std::make_unique<std::thread>([this, i]() {
+      SetThreadName(name_ + "-V:", i);
+      Verifier();
+    }));
   }
 
   // create the dispatcher
@@ -97,14 +101,14 @@ void TransactionVerifier::Verifier()
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, id_ + " Unable to verify transaction: ",
+          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: ",
                          byte_array::ToBase64(tx.digest()));
         }
       }
     }
     catch (std::exception &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
   }
 }
@@ -115,6 +119,8 @@ void TransactionVerifier::Verifier()
  */
 void TransactionVerifier::Dispatcher()
 {
+  SetThreadName(name_ + "-D");
+
   std::vector<chain::VerifiedTransaction> txs;
 
   while (active_)
@@ -156,7 +162,7 @@ void TransactionVerifier::Dispatcher()
     }
     catch (std::exception &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
   }
 }

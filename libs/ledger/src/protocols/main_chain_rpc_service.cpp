@@ -128,7 +128,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , main_chain_rpc_client_(endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , main_chain_rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
@@ -204,7 +204,7 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
   if (!workthread_)
   {
     workthread_ = std::make_shared<BackgroundedWorkThread>(
-        &bg_work_, [this]() { this->ServiceLooseBlocks(); });
+        &bg_work_, "BW:MChainR", [this]() { this->ServiceLooseBlocks(); });
   }
 
   if (!bg_work_.InFlightP(hash))
