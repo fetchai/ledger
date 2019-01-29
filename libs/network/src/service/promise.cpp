@@ -22,6 +22,9 @@ namespace fetch {
 namespace service {
 namespace details {
 
+namespace {
+}
+
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
 PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
@@ -30,6 +33,7 @@ PromiseBuilder PromiseImplementation::WithHandlers()
   return PromiseBuilder{*this};
 }
 
+//#undef FETCH_PROMISE_CV
 /**
  * Wait for the promise to conclude.
  *
@@ -37,45 +41,34 @@ PromiseBuilder PromiseImplementation::WithHandlers()
  * @param throw_exception Signal if the promise has failed, if it should throw the associated
  * exception
  * @return true if the promise was fulfilled, otherwise false
- */
+ **/
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
   LOG_STACK_TRACE_POINT;
+  bool const has_timeout = (timeout_ms > 0) && (timeout_ms < FOREVER);
 
-  bool const      has_timeout      = (timeout_ms > 0) && (timeout_ms < FOREVER);
-  Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
-
-  while (timeout_ms && IsWaiting())
+#ifndef FETCH_PROMISE_CV
+  if (has_timeout)
   {
-    // determine if timeout has expired
-    if (has_timeout && (Clock::now() >= timeout_deadline))
+    Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
+    while (timeout_ms && IsWaiting())
     {
-      if (name_.length() > 0)
+      // determine if timeout has expired
+      if (Clock::now() >= timeout_deadline)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
-      }
+        if (name_.length() > 0)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
+        }
 
-      return false;
+        return false;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
-    // poll period
-#ifdef FETCH_PROMISE_CV
-    {
-      std::unique_lock<std::mutex> lock(notify_lock_);
-
-      // double check the state
-      if (state_ == State::WAITING)
-      {
-        notify_.wait(lock);
-      }
-    }
-#else   // !FETCH_PROMISE_CV
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-#endif  // FETCH_PROMISE_CV
   }
 
   if (IsWaiting())
@@ -93,6 +86,44 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 
     return false;
   }
+#else   // FETCH_PROMISE_CV
+  State state_copy{state_};
+  if (has_timeout)
+  {
+    Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
+    std::unique_lock<std::mutex> lock(notify_lock_);
+    // double check the state
+    while (State::WAITING == state_)
+    {
+      if (std::cv_status::timeout == notify_.wait_until(lock, timeout_deadline))
+      {
+        if (name_.length() > 0)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
+        }
+        else
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
+        }
+
+        return false;
+      }
+    }
+    state_copy = state_;
+  }
+
+  if (State::FAILED == state_copy)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " failed!");
+
+    if (throw_exception && exception_)
+    {
+      throw *exception_;
+    }
+
+    return false;
+  }
+#endif  // FETCH_PROMISE_CV
 
   return true;
 }
