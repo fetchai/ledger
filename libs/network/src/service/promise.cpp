@@ -23,7 +23,19 @@ namespace service {
 namespace details {
 
 namespace {
+template <typename NAME, typename ID>
+void LogTimout(NAME const &name, ID const &id)
+{
+  if (name.length() > 0)
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise '", name, "'timed out!");
+  }
+  else
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise ", id, " timed out!");
+  }
 }
+}  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
 PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
@@ -56,15 +68,7 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
       // determine if timeout has expired
       if (Clock::now() >= timeout_deadline)
       {
-        if (name_.length() > 0)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
-        }
-
+        LogTimout(name_, id_);
         return false;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -91,21 +95,12 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
   if (has_timeout)
   {
     Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
-    std::unique_lock<std::mutex> lock(notify_lock_);
-    // double check the state
+    FETCH_LOCK(notify_lock_);
     while (State::WAITING == state_)
     {
       if (std::cv_status::timeout == notify_.wait_until(lock, timeout_deadline))
       {
-        if (name_.length() > 0)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
-        }
-
+        LogTimout(name_, id_);
         return false;
       }
     }
