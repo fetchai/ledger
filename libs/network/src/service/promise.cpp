@@ -56,7 +56,7 @@ PromiseBuilder PromiseImplementation::WithHandlers()
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
   LOG_STACK_TRACE_POINT;
-  bool const has_timeout = (timeout_ms > 0) && (timeout_ms < FOREVER);
+  bool const has_timeout = timeout_ms > 0;
   State      state_copy{state_};
   if (has_timeout)
   {
