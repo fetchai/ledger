@@ -127,7 +127,6 @@ public:
   Queue()              = default;
   Queue(Queue const &) = delete;
   Queue(Queue &&)      = delete;
-  ~Queue()             = default;
 
   /// @name Queue Interaction
   /// @{
@@ -138,8 +137,11 @@ public:
   meta::EnableIfSame<T, meta::Decay<U>> Push(U &&element);
   template <typename U>
   meta::EnableIfSame<T, meta::Decay<U>> Push(U &&element, std::size_t &count);
+  template <typename U, typename R, typename P>
+  meta::EnableIfSame<T, meta::Decay<U>, bool> Push(U &&element, std::size_t &count,
+                                                   std::chrono::duration<R, P> const &duration);
   // bool        empty();
-  std::size_t size();
+  // std::size_t size();
   /// @}
 
   // Operators
@@ -255,7 +257,7 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element)
  * @tparam C The consumer index type
  * @param element The universal reference to the element
  * @param count Number of enqueued elements still waiting in the queue to be processed.
- * */
+ **/
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
 meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::size_t &count)
@@ -266,6 +268,40 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::
       [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
 
   read_count_.Post(count);
+}
+
+/**
+ * Push an element onto the queue
+ *
+ * If the queue is full this function will block until an element can be added
+ *
+ * @tparam T The type of element to be store in the queue
+ * @tparam U Has the same meaning as @refitem(T), but is inferred from method
+ * call, rather than provided at object construction time to leverage universal
+ * reference feature, and so eliminate necessity to implement number of method overloads.
+ * @tparam N The max size of the queue
+ * @tparam P The producer index type
+ * @tparam C The consumer index type
+ * @param element The universal reference to the element
+ * @param count Number of enqueued elements still waiting in the queue to be processed.
+ * @param duration The maximum amount of time to wait for being able to insert the element
+ * @return true if an element was inserted in given timeout, otherwise false
+ **/
+template <typename T, std::size_t N, typename P, typename C>
+template <typename U, typename Rep, typename Per>
+meta::EnableIfSame<T, meta::Decay<U>, bool> Queue<T, N, P, C>::Push(
+    U &&element, std::size_t &count, std::chrono::duration<Rep, Per> const &duration)
+{
+  if (!write_count_.Wait(duration))
+  {
+    return false;
+  }
+
+  write_index_.Increment(
+      [this, &element](auto const index) { queue_[index] = std::forward<U>(element); });
+
+  read_count_.Post(count);
+  return true;
 }
 
 // Helpful Typedefs

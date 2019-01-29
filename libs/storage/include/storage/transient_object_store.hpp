@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
+#include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "storage/object_store.hpp"
 
@@ -96,7 +97,12 @@ private:
   ThreadPtr     thread_;                           ///< The background worker thread
   Callback      set_callback_;                     ///< The completion handler
   Flag          stop_{false};                      ///< Flag to signal the stop of the worker
+  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
+                                                                     1};
 };
+
+template <typename O>
+constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
 
 /**
  * Construct a transient object store
@@ -221,18 +227,27 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
+  static core::Tickets::Count prev_count{0};
+
   // add the element into the cache
   SetInCache(rid, object);
 
   if (newly_seen)
   {
     std::size_t count{most_recent_seen_.QUEUE_LENGTH};
-    most_recent_seen_.Push(object.summary(), count);
-    if (count == most_recent_seen_.QUEUE_LENGTH)
+    bool const  inserted =
+        most_recent_seen_.Push(object.summary(), count, std::chrono::milliseconds{100});
+    if (inserted && prev_count != count)
     {
-      // TODO(private issue #582): The queue became FULL - this information shall
-      // be propagated out to caller, so it can make appropriate decision how to
-      // proceed.
+      if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
+      {
+        FETCH_LOG_WARN("TransientObjectStore", " the `most_recent_seen_` queue size ", count,
+                       " reached or is over threshold ", recent_queue_alarm_threshold, ").");
+        // TODO(private issue #582): The queue became FULL - this information shall
+        // be propagated out to caller, so it can make appropriate decision how to
+        // proceed.
+      }
+      prev_count = count;
     }
   }
 
