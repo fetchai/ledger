@@ -57,7 +57,7 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 {
   LOG_STACK_TRACE_POINT;
   bool const has_timeout = (timeout_ms > 0) && (timeout_ms < FOREVER);
-  State state_copy{state_};
+  State      state_copy{state_};
   if (has_timeout)
   {
     Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
