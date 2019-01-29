@@ -73,8 +73,8 @@ public:
 
   void register_service_instance(std::shared_ptr<Muddle> muddle_ptr)
   {
-    client_ = std::make_shared<Client>(muddle_ptr->AsEndpoint(), Muddle::Address(), SERVICE_TEST,
-                                       CHANNEL_RPC);
+    client_ = std::make_shared<Client>("RRPClient", muddle_ptr->AsEndpoint(), Muddle::Address(),
+                                       SERVICE_TEST, CHANNEL_RPC);
   }
 
 private:
@@ -124,7 +124,7 @@ private:
 
 int main()
 {
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
 
   auto server_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
 

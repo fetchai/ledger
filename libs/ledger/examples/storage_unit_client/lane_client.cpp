@@ -128,7 +128,7 @@ int main(int argc, char **argv)
   std::cout << "Connecting with " << num_lanes << " lanes." << std::endl;
 
   // Client setup
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
   MuddlePtr                      muddle_;
   ProverPtr                      p2p_key = GenerateP2PKey();
   muddle_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(p2p_key), tm);

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -100,6 +101,8 @@ private:
 
   void MinerThreadEntrypoint()
   {
+    SetThreadName("MChainMiner");
+
     // schedule the next block time
     Timestamp next_block_time = Clock::now() + block_interval_;
 
