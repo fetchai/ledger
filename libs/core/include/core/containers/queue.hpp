@@ -114,6 +114,14 @@ private:
   std::mutex lock_;
 };
 
+/**
+ * Single Producer, Single Consumer fixed length queue
+ *
+ * @tparam T The type of element to be store in the queue
+ * @tparam SIZE The max size of the queue
+ * @tparam Producer The thread safety model for the producer size of the queue
+ * @tparam Consumer The thread safety model for the consumer size of the queue
+ */
 template <typename T, std::size_t SIZE, typename ProducerIndex = MultiThreadedIndex<SIZE>,
           typename ConsumerIndex = MultiThreadedIndex<SIZE>>
 class Queue
@@ -140,8 +148,6 @@ public:
   template <typename U, typename R, typename P>
   meta::EnableIfSame<T, meta::Decay<U>, bool> Push(U &&element, std::size_t &count,
                                                    std::chrono::duration<R, P> const &duration);
-  // bool        empty();
-  // std::size_t size();
   /// @}
 
   // Operators
@@ -257,7 +263,7 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element)
  * @tparam C The consumer index type
  * @param element The universal reference to the element
  * @param count Number of enqueued elements still waiting in the queue to be processed.
- **/
+ */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U>
 meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::size_t &count)
@@ -286,7 +292,7 @@ meta::EnableIfSame<T, meta::Decay<U>> Queue<T, N, P, C>::Push(U &&element, std::
  * @param count Number of enqueued elements still waiting in the queue to be processed.
  * @param duration The maximum amount of time to wait for being able to insert the element
  * @return true if an element was inserted in given timeout, otherwise false
- **/
+ */
 template <typename T, std::size_t N, typename P, typename C>
 template <typename U, typename Rep, typename Per>
 meta::EnableIfSame<T, meta::Decay<U>, bool> Queue<T, N, P, C>::Push(
