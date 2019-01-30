@@ -62,6 +62,7 @@ Client::~Client()
 
   FETCH_LOG_WARN(LOGGING_NAME, "Handler reset, stopping threadpool");
   running_ = false;
+  promise_queue_cv_.notify_all();
   background_thread_.join();
   background_thread_ = std::thread{};
   FETCH_LOG_WARN(LOGGING_NAME, "Threadpool stopped, client destructor end");
@@ -106,8 +107,9 @@ bool Client::DeliverRequest(network::message_type const &data)
 
     // Add this new wrapping promise to the execution queue
     {
-      FETCH_LOCK(promise_queue_lock_);
+      std::unique_lock<std::mutex> lk(promise_queue_lock_);
       promise_queue_.emplace_back(std::move(promise));
+      promise_queue_cv_.notify_one();
     }
 
     return true;
@@ -132,7 +134,7 @@ void Client::BackgroundWorker()
   {
     // attempt to extract and promises from the queue
     {
-      FETCH_LOCK(promise_queue_lock_);
+      std::unique_lock<std::mutex> lk(promise_queue_lock_);
       if (!promise_queue_.empty())
       {
         pending_promises.splice(pending_promises.end(), promise_queue_);
@@ -156,6 +158,11 @@ void Client::BackgroundWorker()
         // advance to the next iterator
         ++it;
       }
+    }
+    if (pending_promises.empty())
+    {
+      std::unique_lock<std::mutex> lk(promise_queue_lock_);
+      promise_queue_cv_.wait(lk);
     }
   }
 }
