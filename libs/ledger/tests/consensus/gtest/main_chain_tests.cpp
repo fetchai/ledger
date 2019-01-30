@@ -25,7 +25,6 @@
 
 static constexpr char const *LOGGING_NAME = "MainChainTests";
 
-using fetch::byte_array::ByteArray;
 using fetch::ledger::MainChain;
 using fetch::chain::consensus::DummyMiner;
 using fetch::ledger::Block;
