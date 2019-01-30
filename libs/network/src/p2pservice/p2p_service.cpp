@@ -84,12 +84,12 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
-  AddressSet    active_addresses;
-  ConnectionMap active_connections;
-  GetConnectionStatus(active_connections, active_addresses);
-
   if (peer_update_cycle_ms_.count() > 0 && process_future_timepoint_.IsDue())
   {
+    AddressSet    active_addresses;
+    ConnectionMap active_connections;
+    GetConnectionStatus(active_connections, active_addresses);
+
     process_future_timepoint_.Set(peer_update_cycle_ms_);
     // get the summary of all the current connections
 
@@ -112,6 +112,10 @@ void P2PService::WorkCycle()
 
   if (manifest_update_cycle_ms_.count() > 0 && manifests_next_update_timepoint_.IsDue())
   {
+    AddressSet    active_addresses;
+    ConnectionMap active_connections;
+    GetConnectionStatus(active_connections, active_addresses);
+
     // collect up manifests from connected peers
     process_future_timepoint_.Set(manifest_update_cycle_ms_);
 
