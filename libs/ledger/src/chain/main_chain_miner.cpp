@@ -110,7 +110,7 @@ void MainChainMiner::MinerThreadEntrypoint()
         {
           on_block_complete_(next_block);
 
-          FETCH_METRIC_BLOCK_GENERATED(next_block.hash());
+          FETCH_METRIC_BLOCK_GENERATED(next_block.body.hash);
         }
 
         // stop searching for the hash and schedule the next time to generate a block
@@ -140,7 +140,7 @@ void MainChainMiner::MinerThreadEntrypoint()
 
       for (auto const &slice : next_block_body.slices)
       {
-        for (auto const &tx : slice.transactions)
+        for (auto const &tx : slice)
         {
           FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
         }

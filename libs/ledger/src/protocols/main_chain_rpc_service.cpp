@@ -175,13 +175,13 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
                  " (from peer: ", ToBase64(transmitter), ')');
 
-  FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+  FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
   if (block.proof())
   {
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+    FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
     block_coordinator_.AddBlock(block);
 

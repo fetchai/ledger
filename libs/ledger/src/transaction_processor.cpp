@@ -131,7 +131,7 @@ void TransactionProcessor::ThreadEntryPoint()
       assert(summary.IsWellFormed());
       miner_.EnqueueTransaction(summary);
 
-      FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
+      FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }
   }
 }

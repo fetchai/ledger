@@ -31,8 +31,13 @@
 
 static constexpr char const *LOGGING_NAME = "Executor";
 
+#ifdef FETCH_ENABLE_METRICS
+using fetch::metrics::Metrics;
+#endif // FETCH_ENABLE_METRICS
+
 namespace fetch {
 namespace ledger {
+
 
 // Useful to include when debugging:
 //
