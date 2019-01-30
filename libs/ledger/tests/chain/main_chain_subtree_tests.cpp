@@ -25,8 +25,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <memory>
 #include <initializer_list>
+#include <memory>
 
 using fetch::ledger::Block;
 using fetch::ledger::MainChain;
@@ -39,7 +39,6 @@ using Blocks       = std::vector<BlockPtr>;
 class MainChainSubTreeTests : public ::testing::Test
 {
 protected:
-
   void SetUp() override
   {
     block_generator_.Reset();
@@ -76,10 +75,7 @@ static bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
   if (actual.size() == expected.size())
   {
     equal = std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
-      [](auto const &a, auto const &b) {
-        return a.body.hash == b->body.hash;
-      }
-    );
+                       [](auto const &a, auto const &b) { return a.body.hash == b->body.hash; });
   }
 
   return equal;
@@ -101,7 +97,7 @@ TEST_F(MainChainSubTreeTests, CheckSimpleTree)
   auto b2      = block_generator_(genesis);
 
   // add the blocks to the main chain
-  ASSERT_FALSE(chain_->AddBlock(*genesis)); // genesis is always present
+  ASSERT_FALSE(chain_->AddBlock(*genesis));  // genesis is always present
   ASSERT_TRUE(chain_->AddBlock(*b1));
   ASSERT_TRUE(chain_->AddBlock(*b2));
 
@@ -135,9 +131,9 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree)
   //             └────┘     └────┘
   //
   auto genesis = block_generator_();
-  auto b1 = block_generator_(genesis);
-  auto b2 = block_generator_(genesis);
-  auto b3 = block_generator_(b2);
+  auto b1      = block_generator_(genesis);
+  auto b2      = block_generator_(genesis);
+  auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
@@ -166,9 +162,9 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree2)
   //             └────┘     └────┘
   //
   auto genesis = block_generator_();
-  auto b1 = block_generator_(genesis);
-  auto b2 = block_generator_(genesis);
-  auto b3 = block_generator_(b2);
+  auto b1      = block_generator_(genesis);
+  auto b2      = block_generator_(genesis);
+  auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
   for (auto const &block : Blocks{b1, b2, b3})
@@ -197,9 +193,9 @@ TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
   //             └────┘     └────┘
   //
   auto genesis = block_generator_();
-  auto b1 = block_generator_(genesis);
-  auto b2 = block_generator_(genesis); // (missing block)
-  auto b3 = block_generator_(b2);
+  auto b1      = block_generator_(genesis);
+  auto b2      = block_generator_(genesis);  // (missing block)
+  auto b3      = block_generator_(b2);
 
   // add the blocks to the main chain
   ASSERT_TRUE(chain_->AddBlock(*b1));

@@ -251,7 +251,8 @@ bool MainChain::GetCommonSubTree(Blocks &blocks, BlockHash tip, BlockHash node, 
       }
     }
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToBase64(left_hash), " -> ", left.total_weight, " Right: ", ToBase64(right_hash), " -> ", right.total_weight);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToBase64(left_hash), " -> ", left.total_weight,
+                    " Right: ", ToBase64(right_hash), " -> ", right.total_weight);
 
     if (left_hash == right_hash)
     {
@@ -537,7 +538,7 @@ bool MainChain::CheckDiskForBlock(Block &block)
     RLock lock(main_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
     NewLooseBlock(block);
-    return false; ///? should this be true true here?
+    return false;  ///? should this be true true here?
   }
 
   // The previous block is in our object store but we don't know its weight, need to recalculate

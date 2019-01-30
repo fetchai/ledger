@@ -25,7 +25,7 @@
 class BlockGenerator
 {
 public:
-  using Block = fetch::ledger::Block;
+  using Block    = fetch::ledger::Block;
   using BlockPtr = std::shared_ptr<Block>;
 
   void Reset()
@@ -38,7 +38,7 @@ public:
     BlockPtr block = std::make_shared<Block>();
 
     // set the weight for this block
-    block->weight            = weight;
+    block->weight = weight;
 
     if (from)
     {
@@ -60,6 +60,5 @@ public:
   }
 
 private:
-
   uint64_t block_count_{0};
 };
