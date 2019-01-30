@@ -120,7 +120,7 @@ struct TestBlock
               summary.resources.insert(resources.at(index));
             }
 
-            current_slice.transactions.emplace_back(std::move(summary));
+            current_slice.emplace_back(std::move(summary));
             ++num_transactions;
           }
 

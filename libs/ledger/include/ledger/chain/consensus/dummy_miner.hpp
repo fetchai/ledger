@@ -33,36 +33,36 @@ public:
   ~DummyMiner() = default;
 
   // Blocking mine
-  void Mine(BlockType &block) override
+  void Mine(Block &block) override
   {
     uint64_t initNonce = GetRandom();
-    block.body().nonce = initNonce;
+    block.nonce = initNonce;
 
     block.UpdateDigest();
 
-    while (!block.proof()())
+    while (!block.proof())
     {
-      block.body().nonce++;
+      block.nonce++;
       block.UpdateDigest();
     }
   }
 
   // Mine for set number of iterations
-  bool Mine(BlockType &block, uint64_t iterations) override
+  bool Mine(Block &block, uint64_t iterations) override
   {
     uint32_t initNonce = GetRandom();
-    block.body().nonce = initNonce;
+    block.nonce = initNonce;
 
     block.UpdateDigest();
 
-    while (!block.proof()() && iterations > 0)
+    while (!block.proof() && iterations > 0)
     {
-      block.body().nonce++;
+      block.nonce++;
       block.UpdateDigest();
       iterations--;
     }
 
-    return block.proof()();
+    return block.proof();
   }
 
 private:

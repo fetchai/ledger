@@ -180,7 +180,7 @@ bool ExecutionManager::PlanExecution(Block const &block)
     //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
 
     // process the transactions
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
       Identifier id;
       id.Parse(tx.contract_name);

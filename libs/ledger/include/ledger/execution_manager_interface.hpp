@@ -25,8 +25,8 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
-  using Block     = chain::BlockBody;
-  using BlockHash = Block::Digest;
+  using Block     = Block::Body;
+  using BlockHash = ledger::Block::Digest;
 
   enum class ScheduleStatus
   {

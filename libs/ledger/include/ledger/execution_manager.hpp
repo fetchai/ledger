@@ -89,7 +89,7 @@ private:
   using ExecutorList      = std::vector<ExecutorPtr>;
   using StateHashCache    = storage::ObjectStore<StateHash>;
   using ThreadPtr         = std::unique_ptr<std::thread>;
-  using BlockSliceList    = std::vector<chain::BlockSlice>;
+  using BlockSliceList    = ledger::Block::Slices;
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
