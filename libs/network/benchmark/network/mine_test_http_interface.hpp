@@ -132,9 +132,9 @@ public:
     {
 
       variant::Variant temp = variant::Variant::Object();
-      temp["blockNumber"]   = i.body().block_number;
-      temp["hashcurrent"]   = ToHex(i.hash());
-      temp["hashprev"]      = ToHex(i.body().previous_hash);
+      temp["blockNumber"]   = i.body.block_number;
+      temp["hashcurrent"]   = ToHex(i.body.hash);
+      temp["hashprev"]      = ToHex(i.body.previous_hash);
 
       result[index++] = temp;
     }

@@ -47,17 +47,15 @@ public:
 
 private:
   using ScheduleStatus = ExecutionManagerInterface::ScheduleStatus;
-  using Block          = ExecutionManagerInterface::Block;
-  using FullBlock      = chain::MainChain::BlockType;
 
-  ScheduleStatus Execute(Block const &block)
+  ScheduleStatus Execute(Block::Body const &block_body)
   {
     // since the hash is not serialised we need to recalculate it
-    FullBlock full_block{};
-    full_block.SetBody(block);
+    Block full_block{};
+    full_block.body = block_body;
     full_block.UpdateDigest();
 
-    return manager_.Execute(full_block.body());
+    return manager_.Execute(full_block.body);
   }
 
   ExecutionManagerInterface &manager_;

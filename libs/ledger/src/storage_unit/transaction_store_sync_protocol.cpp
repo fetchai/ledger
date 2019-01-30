@@ -23,6 +23,9 @@ using fetch::byte_array::ConstByteArray;
 using fetch::storage::ResourceID;
 
 #ifdef FETCH_ENABLE_METRICS
+using fetch::metrics::Metrics;
+using fetch::metrics::MetricHandler;
+
 static void RecordNewElement(ConstByteArray const &identifier)
 {
   // record the event

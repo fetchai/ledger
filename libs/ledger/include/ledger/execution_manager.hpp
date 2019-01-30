@@ -60,7 +60,7 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  ScheduleStatus Execute(Block const &block) override;
+  ScheduleStatus Execute(Block::Body const &block) override;
   BlockHash      LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;
@@ -89,7 +89,7 @@ private:
   using ExecutorList      = std::vector<ExecutorPtr>;
   using StateHashCache    = storage::ObjectStore<StateHash>;
   using ThreadPtr         = std::unique_ptr<std::thread>;
-  using BlockSliceList    = std::vector<chain::BlockSlice>;
+  using BlockSliceList    = ledger::Block::Slices;
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
@@ -128,7 +128,7 @@ private:
 
   void MonitorThreadEntrypoint();
 
-  bool PlanExecution(Block const &block);
+  bool PlanExecution(Block::Body const &block);
   void DispatchExecution(ExecutionItem &item);
 
   bool AttemptRestoreToBlock(BlockHash const &digest);

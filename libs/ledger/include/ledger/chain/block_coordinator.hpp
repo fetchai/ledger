@@ -31,17 +31,19 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using BlockType        = chain::MainChain::BlockType;
-  using BlockHash        = chain::MainChain::BlockHash;
+  using MainChain        = ledger::MainChain;
+  using Block            = ledger::Block;
+  using BlockHash        = MainChain::BlockHash;
   using mutex_type       = fetch::mutex::Mutex;
-  using block_body_type  = std::shared_ptr<BlockBody>;
-  using NewBlockCallBack = std::function<void(BlockType &)>;
-  using Block            = chain::MainChain::BlockType;
+  using NewBlockCallBack = std::function<void(Block &)>;
+
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   // Construction / Destruction
-  BlockCoordinator(chain::MainChain &chain, ledger::ExecutionManagerInterface &execution_manager);
+  BlockCoordinator(MainChain &chain, ledger::ExecutionManagerInterface &execution_manager);
+  BlockCoordinator(BlockCoordinator const &) = delete;
+  BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
 
   void SetCallback(NewBlockCallBack fun)
@@ -55,7 +57,11 @@ public:
   void Stop();
   /// @}
 
-  void AddBlock(BlockType &block, bool from_miner = true);
+  void AddBlock(Block &block, bool from_miner = true);
+
+  // Operators
+  BlockCoordinator &operator=(BlockCoordinator const &) = delete;
+  BlockCoordinator &operator=(BlockCoordinator &&) = delete;
 
 private:
   enum class State
@@ -66,7 +72,7 @@ private:
   };
 
   using Mutex         = fetch::mutex::Mutex;
-  using BlockBodyPtr  = std::shared_ptr<BlockBody>;
+  using BlockBodyPtr  = std::shared_ptr<Block::Body>;
   using PendingBlocks = std::deque<BlockBodyPtr>;
   using PendingStack  = std::vector<BlockBodyPtr>;
   using Flag          = std::atomic<bool>;
@@ -82,7 +88,7 @@ private:
 
   /// @name Internal
   /// @{
-  chain::MainChain &                 chain_;              ///< Ref to system chain
+  MainChain &                        chain_;              ///< Ref to system chain
   ledger::ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   Flag                               stop_{false};        ///< Flag to signal stop of monitor
   std::thread                        thread_;             ///< The monitor thread

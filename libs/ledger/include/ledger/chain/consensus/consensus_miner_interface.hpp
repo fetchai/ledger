@@ -26,13 +26,13 @@ namespace consensus {
 class ConsensusMinerInterface
 {
 public:
-  using BlockType = chain::MainChain::BlockType;
+  using Block = ledger::Block;
 
   ConsensusMinerInterface()          = default;
   virtual ~ConsensusMinerInterface() = default;
 
-  virtual void Mine(BlockType &block)                      = 0;
-  virtual bool Mine(BlockType &block, uint64_t iterations) = 0;
+  virtual void Mine(Block &block)                      = 0;
+  virtual bool Mine(Block &block, uint64_t iterations) = 0;
 };
 
 }  // namespace consensus

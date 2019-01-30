@@ -39,7 +39,7 @@ public:
   using Client         = muddle::rpc::Client;
   using Mutex          = mutex::Mutex;
   using ChainRpcPtr    = std::weak_ptr<ledger::MainChainRpcService>;
-  using Block          = chain::MainChain::BlockType;
+  using Block          = ledger::Block;
   using BlockQueue     = network::RequestingQueueOf<Address, std::vector<Block>>;
   using Uri            = network::Uri;
   using UriSet         = std::unordered_set<Uri>;
@@ -111,11 +111,11 @@ public:
         {
           auto block = res.promised[0];
           block.UpdateDigest();
-          if (block.hash() != last_hash_)
+          if (block.body.hash != last_hash_)
           {
             FETCH_LOG_INFO(LOGGING_NAME, "Got new block from: ", ToBase64(res.key),
-                           ", block hash: ", ToBase64(block.hash()));
-            last_hash_ = block.hash();
+                           ", block hash: ", ToBase64(block.body.hash));
+            last_hash_ = block.body.hash;
             chain_rpc_ptr->OnNewLatestBlock(res.key, block);
           }
         }

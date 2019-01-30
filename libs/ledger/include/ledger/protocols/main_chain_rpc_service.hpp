@@ -34,11 +34,11 @@
 
 namespace fetch {
 namespace chain {
-class MainChain;
 class BlockCoordinator;
 }  // namespace chain
 namespace ledger {
 
+class MainChain;
 class MainChainSyncWorker;
 
 class MainChainRpcService : public muddle::rpc::Server,
@@ -47,13 +47,13 @@ class MainChainRpcService : public muddle::rpc::Server,
 public:
   friend class MainChainSyncWorker;
   using MuddleEndpoint   = muddle::MuddleEndpoint;
-  using MainChain        = chain::MainChain;
+  using MainChain        = ledger::MainChain;
   using BlockCoordinator = chain::BlockCoordinator;
   using Subscription     = muddle::Subscription;
   using SubscriptionPtr  = std::shared_ptr<Subscription>;
   using Address          = muddle::Packet::Address;
-  using Block            = chain::MainChain::BlockType;
-  using BlockHash        = chain::MainChain::BlockHash;
+  using Block            = ledger::Block;
+  using BlockHash        = Block::Digest;
   using Promise          = service::Promise;
   using BlocksPromise    = network::PromiseOf<std::vector<Block>>;
   using RpcClient        = muddle::rpc::Client;
@@ -137,7 +137,7 @@ public:
 private:
   static constexpr std::size_t BLOCK_CATCHUP_STEP_SIZE = 30;
 
-  using BlockList     = fetch::ledger::MainChainProtocol::BlockList;
+  using BlockList     = fetch::ledger::MainChainProtocol::Blocks;
   using ChainRequests = network::RequestingQueueOf<Address, BlockList>;
 
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter,

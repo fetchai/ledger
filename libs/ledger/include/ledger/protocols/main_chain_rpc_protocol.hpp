@@ -28,9 +28,8 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Block     = chain::MainChain::BlockType;
-  using BlockList = std::vector<Block>;
-  using BlockHash = chain::MainChain::BlockHash;
+  using Blocks    = MainChain::Blocks;
+  using BlockHash = Block::Digest;
 
   enum
   {
@@ -38,7 +37,7 @@ public:
     CHAIN_PRECEDING = 2,
   };
 
-  explicit MainChainProtocol(chain::MainChain &chain)
+  explicit MainChainProtocol(MainChain &chain)
     : chain_(chain)
   {
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
@@ -46,18 +45,19 @@ public:
   }
 
 private:
-  std::vector<Block> GetHeaviestChain(uint32_t const &maxsize)
+  Blocks GetHeaviestChain(uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
     return chain_.HeaviestChain(maxsize);
   }
-  std::vector<Block> GetChainPreceding(const BlockHash &at, uint32_t const &maxsize)
+
+  Blocks GetChainPreceding(BlockHash const &at, uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;
     return chain_.ChainPreceding(at, maxsize);
   }
 
-  chain::MainChain &chain_;
+  MainChain &chain_;
 };
 
 }  // namespace ledger

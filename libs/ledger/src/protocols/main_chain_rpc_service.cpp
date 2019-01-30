@@ -119,7 +119,7 @@ private:
   BlockList                            blocks_;
 };
 
-MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
+MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
                                          TrustSystem &trust, BlockCoordinator &block_coordinator)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
@@ -153,9 +153,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   });
   // mined block
   block_coordinator_.SetCallback([this](Block &block) {
-    auto from          = block.body().miner;
+    auto from          = block.body.miner;
     auto originAndTime = OriginAndTime{from, from, time(nullptr), OriginType::MINE, true};
-    AddToBlockHistory(block.hash(), std::move(originAndTime));
+    AddToBlockHistory(block.body.hash, std::move(originAndTime));
   });
 }
 
@@ -192,16 +192,16 @@ void MainChainRpcService::OnNewLatestBlock(Address const &from, Block &block)
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter,
                                      OriginType origin_type)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
+  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
                  " (from peer: ", ToBase64(transmitter), ')');
 
-  FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+  FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
   OriginAndTime originAndTime{from, transmitter, std::time(nullptr), origin_type};
 
   try
   {
-    if (block.proof()())
+    if (block.proof())
     {
       // add the block?
       if (chain_.AddBlock(block))
@@ -222,16 +222,16 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
           trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::DUPLICATE);
         }
       }
-      FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+      FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
       block_coordinator_.AddBlock(block, false);
 
       // if we got a block and it is loose then it it probably means that we need to sync the rest
       // of the block tree
-      if (block.loose())
+      if (block.is_loose)
       {
-        AddLooseBlock(block.hash(), from);
-        trust_.AddObject(block.hash(), from);
+        AddLooseBlock(block.body.hash, from);
+        trust_.AddObject(block.body.hash, from);
       }
     }
     else
@@ -243,10 +243,10 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   catch (std::exception &e)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in OnNewBlock: ", e.what(),
-                   " Block: ", ToBase64(block.hash()), ", from: ", ToBase64(from),
+                   " Block: ", ToBase64(block.body.hash), ", from: ", ToBase64(from),
                    " transmitter: ", ToBase64(transmitter));
   }
-  AddToBlockHistory(block.hash(), std::move(originAndTime));
+  AddToBlockHistory(block.body.hash, std::move(originAndTime));
 }
 
 void MainChainRpcService::AddToBlockHistory(byte_array::ConstByteArray block_hash,
@@ -349,12 +349,12 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     it->UpdateDigest();
 
     // add the block
-    if (it->proof()())
+    if (it->proof())
     {
       bool n = chain_.AddBlock(*it);
       newdata |= n;
       OriginAndTime originAndTime{address, address, std::time(nullptr), OriginType::LOOSE, n};
-      AddToBlockHistory(it->hash(), std::move(originAndTime));
+      AddToBlockHistory(it->body.hash, std::move(originAndTime));
     }
     else
     {
@@ -370,18 +370,18 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
   if (newdata && !block_list.empty())
   {
     Block blk;
-    if (chain_.Get(block_list.back().hash(), blk))
+    if (chain_.Get(block_list.back().body.hash, blk))
     {
       blk.UpdateDigest();
-      if (blk.loose())
+      if (blk.is_loose)
       {
-        AddLooseBlock(block_list.back().hash(), address);
+        AddLooseBlock(block_list.back().body.hash, address);
       }
     }
     else
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",
-                      ToBase64(block_list.back().hash()), " from the block store!");
+                      ToBase64(block_list.back().body.hash), " from the block store!");
     }
   }
 }

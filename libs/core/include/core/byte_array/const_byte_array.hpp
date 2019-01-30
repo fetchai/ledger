@@ -250,6 +250,12 @@ public:
   {
     return length_;
   }
+
+  bool empty() const
+  {
+    return 0 == length_;
+  }
+
   container_type const *pointer() const
   {
     return arr_pointer_;
