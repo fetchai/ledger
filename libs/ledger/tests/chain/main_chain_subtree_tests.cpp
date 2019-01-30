@@ -30,7 +30,6 @@
 
 using fetch::ledger::Block;
 using fetch::ledger::MainChain;
-using fetch::byte_array::ToBase64;
 
 using MainChainPtr = std::unique_ptr<MainChain>;
 using BlockPtr     = std::shared_ptr<Block>;

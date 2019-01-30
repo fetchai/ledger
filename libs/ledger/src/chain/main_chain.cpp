@@ -376,7 +376,9 @@ void MainChain::WriteToFile()
 {
   // skip if the block store is not persistent
   if (!block_store_)
+  {
     return;
+  }
 
   fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
 
