@@ -132,7 +132,7 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
   bg_work_.Add(worker);
 }
 
-ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block const &block)
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block::Body const &block)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::EXECUTE, block);

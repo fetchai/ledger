@@ -27,16 +27,16 @@
 struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
-  using Block         = fetch::ledger::ExecutionManager::Block;
-  using BlockHash     = fetch::ledger::ExecutionManager::BlockHash;
+  using BlockBody     = fetch::ledger::Block::Body;
+  using BlockHash     = fetch::ledger::Block::Digest;
 
   static constexpr char const *LOGGING_NAME = "TestBlock";
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;
 
-  Block block;
-  int   num_transactions = 0;
+  BlockBody block;
+  int       num_transactions = 0;
 
   template <typename RNG>
   static BlockHash GenerateHash(RNG &rng)

@@ -25,7 +25,6 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
-  using Block     = Block::Body;
   using BlockHash = ledger::Block::Digest;
 
   enum class ScheduleStatus
@@ -60,10 +59,10 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  virtual ScheduleStatus Execute(Block const &block) = 0;
-  virtual BlockHash      LastProcessedBlock()        = 0;
-  virtual State          GetState()                  = 0;
-  virtual bool           Abort()                     = 0;
+  virtual ScheduleStatus Execute(Block::Body const &block) = 0;
+  virtual BlockHash      LastProcessedBlock()              = 0;
+  virtual State          GetState()                        = 0;
+  virtual bool           Abort()                           = 0;
   /// @}
 };
 

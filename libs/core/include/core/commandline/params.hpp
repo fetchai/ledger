@@ -25,6 +25,7 @@
 #include <string>
 #include <tuple>
 
+#include "core/macros.hpp"
 #include "core/commandline/parameter_parser.hpp"
 
 namespace fetch {
@@ -110,6 +111,9 @@ public:
     assigners_[name]        = [name_local, &assignee, deflt_local, this](
                            const std::set<std::string> &args,
                            std::list<std::string> &     errs) mutable {
+      FETCH_UNUSED(args);
+      FETCH_UNUSED(errs);
+
       assignee = this->paramsParser_.GetParam(name_local, deflt_local);
     };
 
