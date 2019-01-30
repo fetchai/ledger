@@ -88,6 +88,8 @@ public:
   Blocks ChainPreceding(BlockHash const &at,
                         uint64_t         limit = std::numeric_limits<uint64_t>::max()) const;
 
+  bool GetCommonSubTree(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = std::numeric_limits<uint64_t>::max());
+
   void Reset();
 
   // TODO(private issue 512): storage code blocks this being const

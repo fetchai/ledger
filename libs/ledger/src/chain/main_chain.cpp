@@ -18,6 +18,8 @@
 
 #include "ledger/chain/main_chain.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace ledger {
 
@@ -196,6 +198,84 @@ MainChain::Blocks MainChain::ChainPreceding(BlockHash const &at, uint64_t limit)
   return result;
 }
 
+/**
+ * Get a common sub tree from the chain.
+ *
+ * This function will search down both input references input nodes until a common ancestor is
+ * found. Once found the blocks from the specified tip that to that common ancestor are returned.
+ *
+ * @param blocks The output list of blocks (from heaviest to lightest)
+ * @param tip The tip the output list should start from
+ * @param node A node in chain that is searched for
+ * @param limit The maximum number of nodes to be returned
+ * @return true if successful, otherwise false
+ */
+bool MainChain::GetCommonSubTree(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit)
+{
+  fetch::generics::MilliTimer myTimer("MainChain::GetCommonSubTree");
+  RLock                       lock(main_mutex_);
+
+  bool success{false};
+
+  // clear the output structure
+  blocks.clear();
+
+  Block left;
+  Block right;
+
+  BlockHash left_hash  = std::move(tip);
+  BlockHash right_hash = std::move(node);
+
+  // The algorithm implemented here is effectively a coordinated parallel walk about from the two
+  // input tips until the a common ancestor is located.
+  while (blocks.size() < limit)
+  {
+    // load up the left side
+    if (left.body.hash != left_hash)
+    {
+      if (!Get(left_hash, left))
+      {
+        break;
+      }
+
+      // left side always loaded into output queue as we traverse
+      blocks.push_back(left);
+    }
+
+    // load up the right side
+    if (right.body.hash != right_hash)
+    {
+      if (!Get(right_hash, right))
+      {
+        break;
+      }
+    }
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Left: ", ToBase64(left_hash), " -> ", left.total_weight, " Right: ", ToBase64(right_hash), " -> ", right.total_weight);
+
+    if (left_hash == right_hash)
+    {
+      // exit condition
+      success = true;
+      break;
+    }
+    else
+    {
+      if (left.total_weight <= right.total_weight)
+      {
+        right_hash = right.body.previous_hash;
+      }
+
+      if (left.total_weight >= right.total_weight)
+      {
+        left_hash = left.body.previous_hash;
+      }
+    }
+  }
+
+  return success;
+}
+
 void MainChain::Reset()
 {
   RLock lock_main(main_mutex_);
@@ -293,7 +373,9 @@ void MainChain::RecoverFromFile()
 
 void MainChain::WriteToFile()
 {
-  assert(static_cast<bool>(block_store_));
+  // skip if the block store is not persistent
+  if (!block_store_)
+    return;
 
   fetch::generics::MilliTimer myTimer("MainChain::WriteToFile");
 
@@ -439,7 +521,11 @@ void MainChain::NewLooseBlock(Block &block)
 // our cache. This might be expensive due to disk reads and hashing.
 bool MainChain::CheckDiskForBlock(Block &block)
 {
-  assert(static_cast<bool>(block_store_));
+  if (!block_store_)
+  {
+    NewLooseBlock(block);
+    return true;
+  }
 
   // Only guaranteed way to calculate the weight of the block is to walk back to genesis
   // is by walking backwards from one of our tips
@@ -451,7 +537,7 @@ bool MainChain::CheckDiskForBlock(Block &block)
     RLock lock(main_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
     NewLooseBlock(block);
-    return false;
+    return false; ///? should this be true true here?
   }
 
   // The previous block is in our object store but we don't know its weight, need to recalculate
