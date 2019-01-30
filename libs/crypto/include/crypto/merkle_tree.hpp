@@ -83,7 +83,7 @@ public:
     }
 
     // If necessary bump the 'leaves' up to a power of 2
-    while (!platform::IsLog2(hashes.size()))
+    while (!platform::IsLog2(uint64_t(hashes.size())))
     {
       hashes.push_back(HashArray{});
     }
