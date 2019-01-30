@@ -38,7 +38,7 @@ namespace chain {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(chain::MainChain &                 chain,
+BlockCoordinator::BlockCoordinator(MainChain &                        chain,
                                    ledger::ExecutionManagerInterface &execution_manager)
   : chain_{chain}
   , execution_manager_{execution_manager}
@@ -64,23 +64,23 @@ void BlockCoordinator::AddBlock(Block &block)
 
   // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
   //                          does not fire all of the time.
-  auto const heaviestHash = chain_.HeaviestBlock().hash();
+  auto const heaviest_hash = chain_.HeaviestBlock().body.hash;
 
-  if (block.hash() == heaviestHash)
+  if (block.body.hash == heaviest_hash)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.hash()),
-                   " from: ", ToBase64(block.prev()));
+    FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.body.hash),
+                   " from: ", ToBase64(block.body.previous_hash));
 
     // add the new block into the pending queue
     {
       FETCH_LOCK(pending_blocks_mutex_);
-      pending_blocks_.push_front(std::make_shared<BlockBody>(block.body()));
+      pending_blocks_.push_front(std::make_shared<Block::Body>(block.body));
     }
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.hash()),
-                   " Heaviest: ", ToBase64(heaviestHash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.body.hash),
+                   " Heaviest: ", ToBase64(heaviest_hash));
   }
 }
 
@@ -312,7 +312,7 @@ void BlockCoordinator::OnExecuteBlock()
         current_block_.reset();
 
         // make the parent block the next block to execute
-        current_block_ = std::make_shared<BlockBody>(parent_block.body());
+        current_block_ = std::make_shared<Block::Body>(parent_block.body);
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(block->hash));
       }

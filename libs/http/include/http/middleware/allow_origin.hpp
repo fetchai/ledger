@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "http/server.hpp"
+
 namespace fetch {
 namespace http {
 namespace middleware {
@@ -25,6 +27,8 @@ namespace middleware {
 inline typename HTTPServer::response_middleware_type AllowOrigin(std::string const &val)
 {
   return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
+    FETCH_UNUSED(req);
+
     res.AddHeader("Access-Control-Allow-Origin", val);
   };
 }

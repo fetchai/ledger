@@ -40,7 +40,7 @@ namespace p2p {
 class P2PHttpInterface : public http::HTTPModule
 {
 public:
-  using MainChain   = chain::MainChain;
+  using MainChain   = ledger::MainChain;
   using Muddle      = muddle::Muddle;
   using TrustSystem = P2PTrustInterface<Muddle::Address>;
   using Miner       = miner::MinerInterface;
@@ -100,11 +100,11 @@ private:
     Variant response     = Variant::Object();
     response["chain"]    = GenerateBlockList(include_transactions, chain_length);
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]    = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["block"]    = fetch::byte_array::ToBase64(chain_.HeaviestBlock().body.hash);
 
     // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().body.hash);
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     return http::CreateJsonResponse(response);
@@ -175,8 +175,8 @@ private:
 
     // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
-    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
+    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().body.hash);
+    response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().body.hash);
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     return http::CreateJsonResponse(response);
@@ -207,29 +207,29 @@ private:
       // format the block number
       auto block = Variant::Object();
 
-      block["hash"]         = byte_array::ToBase64(b.hash());
-      block["previousHash"] = byte_array::ToBase64(b.prev());
-      block["merkleHash"]   = byte_array::ToBase64(b.body().merkle_hash);
-      block["proof"]        = byte_array::ToBase64(b.proof().header());
-      block["miner"]        = byte_array::ToBase64(b.body().miner);
-      block["blockNumber"]  = b.body().block_number;
+      block["hash"]         = byte_array::ToBase64(b.body.hash);
+      block["previousHash"] = byte_array::ToBase64(b.body.previous_hash);
+      block["merkleHash"]   = byte_array::ToBase64(b.body.merkle_hash);
+      block["proof"]        = byte_array::ToBase64(b.proof.header());
+      block["miner"]        = byte_array::ToBase64(b.body.miner);
+      block["blockNumber"]  = b.body.block_number;
 
       // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b.hash());
+      block["currentHash"] = byte_array::ToBase64(b.body.hash);
 
       if (include_transactions)
       {
-        auto const &slices = b.body().slices;
+        auto const &slices = b.body.slices;
 
         Variant slice_list = Variant::Array(slices.size());
 
         std::size_t slice_idx{0};
         for (auto const &slice : slices)
         {
-          Variant transaction_list = Variant::Array(slice.transactions.size());
+          Variant transaction_list = Variant::Array(slice.size());
 
           std::size_t tx_idx{0};
-          for (auto const &transaction : slice.transactions)
+          for (auto const &transaction : slice)
           {
             Variant tx_obj         = Variant::Object();
             tx_obj["digest"]       = ToBase64(transaction.transaction_hash);
