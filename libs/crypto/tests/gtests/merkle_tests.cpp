@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
-#include "crypto/merkle_tree.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/byte_array.hpp"
-#include <iostream>
+#include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/merkle_tree.hpp"
+#include "crypto/sha256.hpp"
 #include <gtest/gtest.h>
+#include <iostream>
 
 using namespace fetch;
 using namespace fetch::crypto;
@@ -54,7 +54,7 @@ TEST(crypto_merkle_tree, partially_filled_tree)
   tree.CalculateRoot();
 
   EXPECT_EQ(tree.root().size(), 256 / 8);
-  EXPECT_NE(tree.root(), Hash<crypto::SHA256>(ByteArray{})); // This is unlikely
+  EXPECT_NE(tree.root(), Hash<crypto::SHA256>(ByteArray{}));  // This is unlikely
 }
 
 TEST(crypto_merkle_tree, complete_tree_and_deterministic)
@@ -64,7 +64,7 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 
   for (std::size_t i = 0; i < 256; ++i)
   {
-    tree[i] = ByteArray{std::to_string(i)};
+    tree[i]  = ByteArray{std::to_string(i)};
     tree2[i] = ByteArray{std::to_string(i)};
   }
 
@@ -78,22 +78,21 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 
 TEST(crypto_merkle_tree, serializes_deserializes)
 {
-  MerkleTree tree;  // Reference
-  MerkleTree tree2; // Calculate root then serialize
-  MerkleTree tree3; // Don't calculate root until after serialize
+  MerkleTree tree;   // Reference
+  MerkleTree tree2;  // Calculate root then serialize
+  MerkleTree tree3;  // Don't calculate root until after serialize
   MerkleTree tree2_deser;
   MerkleTree tree3_deser;
 
   for (std::size_t i = 0; i < 256; ++i)
   {
-    tree[i] = ByteArray{std::to_string(i)};
+    tree[i]  = ByteArray{std::to_string(i)};
     tree2[i] = ByteArray{std::to_string(i)};
     tree3[i] = ByteArray{std::to_string(i)};
   }
 
   tree.CalculateRoot();
   tree2.CalculateRoot();
-
 
   {
     fetch::serializers::ByteArrayBuffer arr;
@@ -123,8 +122,8 @@ TEST(crypto_merkle_tree, same_result_shifted_index)
 
   for (std::size_t i = 0; i < 256; ++i)
   {
-    tree[i] = ByteArray{std::to_string(i)};
-    tree2[i+5] = ByteArray{std::to_string(i)};
+    tree[i]      = ByteArray{std::to_string(i)};
+    tree2[i + 5] = ByteArray{std::to_string(i)};
   }
 
   tree.CalculateRoot();

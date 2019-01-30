@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 #include "vectorise/platform.hpp"
 
 namespace fetch {
@@ -28,14 +28,14 @@ namespace crypto {
 class MerkleTree
 {
 public:
-  using HashArray      = byte_array::ConstByteArray;
+  using HashArray = byte_array::ConstByteArray;
   using Container = std::map<uint64_t, HashArray>;
 
-  MerkleTree()                                 = default;
-  MerkleTree(MerkleTree const &rhs)            = default;
-  MerkleTree(MerkleTree &&rhs)                 = default;
+  MerkleTree()                      = default;
+  MerkleTree(MerkleTree const &rhs) = default;
+  MerkleTree(MerkleTree &&rhs)      = default;
   MerkleTree &operator=(MerkleTree const &rhs) = default;
-  MerkleTree &operator=(MerkleTree&& rhs)      = default;
+  MerkleTree &operator=(MerkleTree &&rhs) = default;
 
   HashArray &operator[](std::size_t const &n)
   {
@@ -44,21 +44,21 @@ public:
 
   void CalculateRoot() const
   {
-    if(leaf_nodes_.size() == 0)
+    if (leaf_nodes_.size() == 0)
     {
       root_ = Hash<crypto::SHA256>(HashArray{});
       return;
     }
 
     std::vector<HashArray> hashes;
-    uint64_t          last_index = 0;
+    uint64_t               last_index = 0;
 
-    for(auto const &kv_iterator : leaf_nodes_)
+    for (auto const &kv_iterator : leaf_nodes_)
     {
       auto &key   = kv_iterator.first;
       auto &value = kv_iterator.second;
 
-      if(kv_iterator == (*leaf_nodes_.cbegin()))
+      if (kv_iterator == (*leaf_nodes_.cbegin()))
       {
         hashes.push_back(value);
         last_index = key;
@@ -68,7 +68,7 @@ public:
       // Make sure to fill the vector with absent leaves if necessary
       assert(last_index != 0);
 
-      while(last_index < key - 1)
+      while (last_index < key - 1)
       {
         hashes.push_back(HashArray{});
         last_index++;
@@ -83,19 +83,19 @@ public:
     }
 
     // If necessary bump the 'leaves' up to a power of 2
-    while(!platform::IsLog2(hashes.size()))
+    while (!platform::IsLog2(hashes.size()))
     {
       hashes.push_back(HashArray{});
     }
 
     // Now, repeatedly condense the vector by calculating the parents of each of the roots
-    while(hashes.size() > 1)
+    while (hashes.size() > 1)
     {
       for (std::size_t i = 0; i < hashes.size(); i += 2)
       {
-        HashArray concantenated_hash = hashes[i] + hashes[i+1];
-        concantenated_hash       = Hash<crypto::SHA256>(concantenated_hash);
-        hashes[i]                = concantenated_hash;
+        HashArray concantenated_hash = hashes[i] + hashes[i + 1];
+        concantenated_hash           = Hash<crypto::SHA256>(concantenated_hash);
+        hashes[i]                    = concantenated_hash;
       }
 
       hashes.resize(hashes.size() / 2);
@@ -116,7 +116,7 @@ public:
   }
 
 private:
-  Container     leaf_nodes_;
+  Container         leaf_nodes_;
   mutable HashArray root_;
 
   template <typename T>
