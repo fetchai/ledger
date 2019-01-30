@@ -29,7 +29,7 @@ namespace p2p {
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
                        std::size_t max_peers, std::size_t transient_peers,
-                       uint32_t process_cycle_ms)
+                       uint32_t peer_update_cycle_ms)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -42,7 +42,8 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
-  , process_cycle_ms_(process_cycle_ms)
+  , peer_update_cycle_ms_(peer_update_cycle_ms)
+  , manifest_update_cycle_ms_(500)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -67,12 +68,12 @@ void P2PService::Start(UriList const &initial_peer_list)
   FETCH_LOG_INFO(LOGGING_NAME, "Establishing CORE Service on tcp://127.0.0.1:", "??",
                  " ID: ", byte_array::ToBase64(muddle_.identity().identifier()));
 
-  thread_pool_->SetIdleInterval(process_cycle_ms_);
+  thread_pool_->SetIdleInterval(100);
   thread_pool_->Start();
-  if (process_cycle_ms_ > 0)
-  {
-    thread_pool_->PostIdle([this]() { WorkCycle(); });
-  }
+  thread_pool_->PostIdle([this]() { WorkCycle(); });
+
+  process_future_timepoint_.Set(peer_update_cycle_ms_);
+  manifests_next_update_timepoint_.Set(manifest_update_cycle_ms_);
 }
 
 void P2PService::Stop()
@@ -83,30 +84,39 @@ void P2PService::Stop()
 
 void P2PService::WorkCycle()
 {
-  // get the summary of all the current connections
-  ConnectionMap active_connections;
   AddressSet    active_addresses;
+  ConnectionMap active_connections;
   GetConnectionStatus(active_connections, active_addresses);
 
-  // update our identity cache (address -> uri mapping)
-  identity_cache_.Update(active_connections);
+  if (peer_update_cycle_ms_.count() > 0 && process_future_timepoint_.IsDue())
+  {
+    process_future_timepoint_.Set(peer_update_cycle_ms_);
+    // get the summary of all the current connections
 
-  // update the trust system with current connection information
-  UpdateTrustStatus(active_connections);
+    // update our identity cache (address -> uri mapping)
+    identity_cache_.Update(active_connections);
 
-  // discover new good peers on the network
-  PeerDiscovery(active_addresses);
+    // update the trust system with current connection information
+    UpdateTrustStatus(active_connections);
 
-  // make the decisions about which peers are desired and which ones we now need to drop
-  RenewDesiredPeers(active_addresses);
+    // discover new good peers on the network
+    PeerDiscovery(active_addresses);
 
-  // perform connections updates and drops based on previous step
-  UpdateMuddlePeers(active_addresses);
+    // make the decisions about which peers are desired and which ones we now need to drop
+    RenewDesiredPeers(active_addresses);
 
-  // collect up manifests from connected peers
-  UpdateManifests(active_addresses);
+    // perform connections updates and drops based on previous step
+    UpdateMuddlePeers(active_addresses);
 
-  // increment the work cycle counter (used for scheduling of periodic events)
+  }
+
+  if (manifest_update_cycle_ms_.count() > 0 && manifests_next_update_timepoint_.IsDue())
+  {
+    // collect up manifests from connected peers
+    process_future_timepoint_.Set(manifest_update_cycle_ms_);
+
+    UpdateManifests(active_addresses);
+  }
 }
 
 void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
