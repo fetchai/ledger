@@ -66,7 +66,6 @@ public:
   using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
-  //#ifdef BLOCK_EXTRA_DATA
   enum OriginType
   {
     MINE = 0,
@@ -108,6 +107,7 @@ public:
     }
     return r;
   }
+
   struct OriginAndTime
   {
     byte_array::ConstByteArray from;
@@ -126,7 +126,6 @@ public:
   }
 
 public:
-  //#endif
 
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
                       BlockCoordinator &block_coordinator);

@@ -83,7 +83,8 @@ public:
 
   // Construction / Destruction
   P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
-             std::size_t max_peers, std::size_t transient_peers, uint32_t process_cycle_ms);
+             std::size_t max_peers, std::size_t transient_peers, uint32_t peer_update_cycle_ms,
+             uint32_t process_cycle_ms, uint32_t manifest_update_cycle_ms, uint32_t block_catchup_cycle);
   ~P2PService() = default;
 
   void Start(UriList const &initial_peer_list);

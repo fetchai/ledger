@@ -45,9 +45,12 @@ public:
   using UriSet         = std::unordered_set<Uri>;
   using TrustInterface = P2PTrustInterface<Address>;
 
-  BlockCatchUpService(Muddle &muddle, TrustInterface &trust)
+  static constexpr char const *LOGGING_NAME = "BlockCatchUpService";
+
+  BlockCatchUpService(Muddle &muddle, TrustInterface &trust, uint32_t timeout)
     : muddle_(muddle)
     , trust_(trust)
+    , timeout_{std::chrono::milliseconds(timeout)}
     , random_engine_(std::random_device()())
     , distribution_()
   {
@@ -64,9 +67,8 @@ public:
     AddressSet callable_peers;
     if (next_.IsDue())
     {
-      FETCH_LOG_WARN("BlockCatchUpService", "New_peers_.size=", new_peers_.size());
+      next_.Set(timeout_);
       FETCH_LOCK(mutex_);
-      FETCH_LOG_WARN("BlockCatchUpService", "WorkCycle mutex locked");
       std::vector<double>           ws;
       std::vector<UriSet::iterator> its;
       double                        sum_w = 0.;
@@ -75,13 +77,11 @@ public:
         Address address;
         if (muddle_.UriToDirectAddress(*it, address))
         {
-          FETCH_LOG_WARN("BlockCatchUpService", "inside UriToDirectAddress if before trust");
           callable_peers.insert(address);
           auto w = trust_.GetPeerUsefulness(address);
           ws.push_back(w);
           its.push_back(it);
           sum_w += w;
-          FETCH_LOG_INFO("BlockCatchUpService", "Adding connected address: ", ToBase64(address));
         }
       }
       if (new_peers_.size() > KEEP_PEERS)
@@ -94,8 +94,6 @@ public:
           }
         }
       }
-      next_.Set(TIMEOUT_);
-      FETCH_LOG_WARN("BlockCatchUpService", "End of promise creation");
     }
     auto chain_rpc_ptr = chain_rpc_.lock();
     if (chain_rpc_ptr != nullptr)
@@ -104,8 +102,7 @@ public:
       {
         auto prom = chain_rpc_ptr->GetLatestBlockFromAddress(address);
         block_promises_.Add(address, prom);
-        FETCH_LOG_WARN("BlockCatchUpService",
-                       "Sending GetLatestBlock request to address: ", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Sending catchup request to ", ToBase64(address));
       }
       block_promises_.Resolve();
       for (auto &res : block_promises_.Get(MAX_RESOLUTIONS_PER_CYCLE))
@@ -116,7 +113,7 @@ public:
           block.UpdateDigest();
           if (block.hash() != last_hash_)
           {
-            FETCH_LOG_WARN("BlockCatchUpService", "Got new block from: ", ToBase64(res.key),
+            FETCH_LOG_INFO(LOGGING_NAME, "Got new block from: ", ToBase64(res.key),
                            ", block hash: ", ToBase64(block.hash()));
             last_hash_ = block.hash();
             chain_rpc_ptr->OnNewLatestBlock(res.key, block);
@@ -149,7 +146,7 @@ private:
   BlockQueue                            block_promises_;
   byte_array::ConstByteArray            last_hash_;
   network::FutureTimepoint              next_;
-  std::chrono::milliseconds const       TIMEOUT_{1000};
+  std::chrono::milliseconds const       timeout_;
   std::mt19937                          random_engine_;
   std::exponential_distribution<double> distribution_;
   static constexpr std::size_t const    KEEP_PEERS                = 3;
@@ -159,7 +156,8 @@ private:
 
 P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInterface &trust,
                        std::size_t max_peers, std::size_t transient_peers,
-                       uint32_t peer_update_cycle_ms)
+                       uint32_t peer_update_cycle_ms, uint32_t process_cycle_ms,
+                       uint32_t manifest_update_cycle_ms, uint32_t block_catchup_cycle)
   : muddle_(muddle)
   , muddle_ep_(muddle.AsEndpoint())
   , lane_management_{lane_management}
@@ -172,10 +170,10 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , local_services_(lane_management_)
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
-  , process_cycle_ms_(1000)
+  , process_cycle_ms_(process_cycle_ms)
   , peer_update_cycle_ms_(peer_update_cycle_ms)
-  , manifest_update_cycle_ms_(500)
-  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_, trust_system_)}
+  , manifest_update_cycle_ms_(manifest_update_cycle_ms)
+  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_, trust_system_, block_catchup_cycle)}
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);

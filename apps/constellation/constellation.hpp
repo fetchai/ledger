@@ -80,7 +80,9 @@ public:
                          std::string my_network_address, std::size_t processor_threads,
                          std::size_t                         verification_threads,
                          std::chrono::steady_clock::duration block_interval, std::size_t max_peers,
-                         std::size_t transient_peers, uint32_t p2p_cycle_time_ms);
+                         std::size_t transient_peers, uint32_t peer_update_cycle_ms,
+                         uint32_t p2p_process_cycle_ms, uint32_t p2p_manifest_update_cycle_ms,
+                         uint32_t p2p_block_catchup_cycle);
 
   void Run(UriList const &initial_peers, chain::consensus::ConsensusMinerType const &mining);
   void SignalStop();

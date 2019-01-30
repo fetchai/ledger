@@ -156,7 +156,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
     auto from          = block.body().miner;
     auto originAndTime = OriginAndTime{from, from, time(nullptr), OriginType::MINE, true};
     AddToBlockHistory(block.hash(), std::move(originAndTime));
-
   });
 }
 

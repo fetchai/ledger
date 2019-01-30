@@ -179,7 +179,7 @@ private:
                                     http::HTTPRequest const & /*request*/) {
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
-    std::vector<std::pair<byte_array::ConstByteArray, variant::Variant>> peer_data_list;
+    std::vector<variant::Variant> peer_data_list;
 
     for (const auto &pt : peers_trusts) {
       variant::Variant peer_data = variant::Variant::Object();
@@ -195,7 +195,7 @@ private:
 
     variant::Variant trust_list = variant::Variant::Array(peers_trusts.size());
     for (std::size_t i = 0; i < peer_data_list.size(); i++) {
-      trust_list[i] = peer_data_list[i].second;
+      trust_list[i] = peer_data_list[i];
     }
 
     Variant response = Variant::Object();
@@ -203,10 +203,10 @@ private:
     response["trusts"] = trust_list;
 
     // TODO(private issue 532): Remove legacy API
-    response["i_am"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"] = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
+    response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());
+    response["block"]     = fetch::byte_array::ToBase64(chain_.HeaviestBlock().hash());
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
-    response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
+    response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
     return http::CreateJsonResponse(response);
   }

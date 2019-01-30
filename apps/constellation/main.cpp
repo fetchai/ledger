@@ -152,6 +152,9 @@ struct CommandLineArguments
   std::size_t        max_peers;
   std::size_t        transient_peers;
   uint32_t           peers_update_cycle_ms;
+  uint32_t           p2p_process_cycle_ms;
+  uint32_t           p2p_manifest_update_cycle_ms;
+  uint32_t           p2p_block_catchup_cycle_ms;
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -204,6 +207,13 @@ struct CommandLineArguments
                    DEFAULT_TRANSIENT_PEERS);
     parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms",
                    "How fast to do peering changes.", uint32_t(2000));
+    parameters.add(args.p2p_process_cycle_ms, "p2p-process-cycle-ms",
+                   "How fast the p2p inner cycle spins.", uint32_t(1000));
+    parameters.add(args.p2p_manifest_update_cycle_ms, "p2p-manifest-update-cycle-ms",
+                   "Manifest update cycle.", uint32_t(500));
+    parameters.add(args.p2p_block_catchup_cycle_ms, "p2p-block-catchup-cycle-ms",
+                   "Block catchup cycle.", uint32_t(1000));
+
     // parse the args
     parameters.Parse(argc, argv);
 
@@ -380,6 +390,10 @@ struct CommandLineArguments
     s << "block interval............: " << args.block_interval << "ms" << '\n';
     s << "max peers.................: " << args.max_peers << '\n';
     s << "peers update cycle........: " << args.peers_update_cycle_ms << "ms\n";
+    s << "p2p process cycle.........: " << args.p2p_process_cycle_ms << "ms\n";
+    s << "manifest update cycle.....: " << args.p2p_manifest_update_cycle_ms << "ms\n";
+    s << "block catchup cycle.......: " << args.p2p_block_catchup_cycle_ms << "ms\n";
+
 
     // generate the peer listing
     s << "peers.....................: ";
@@ -510,7 +524,8 @@ int main(int argc, char **argv)
         std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
         args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
         args.verification_threads, std::chrono::milliseconds(args.block_interval), args.max_peers,
-        args.transient_peers, args.peers_update_cycle_ms);
+        args.transient_peers, args.peers_update_cycle_ms, args.p2p_process_cycle_ms,
+        args.p2p_manifest_update_cycle_ms, args.p2p_block_catchup_cycle_ms);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
