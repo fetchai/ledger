@@ -115,25 +115,6 @@ TEST(crypto_merkle_tree, serializes_deserializes)
   EXPECT_EQ(tree2_deser.root(), tree3_deser.root());
 }
 
-TEST(crypto_merkle_tree, same_result_shifted_index)
-{
-  MerkleTree tree;
-  MerkleTree tree2;
-
-  for (std::size_t i = 0; i < 256; ++i)
-  {
-    tree[i]      = ByteArray{std::to_string(i)};
-    tree2[i + 5] = ByteArray{std::to_string(i)};
-  }
-
-  tree.CalculateRoot();
-  tree2.CalculateRoot();
-
-  EXPECT_EQ(tree.root().size(), 256 / 8);
-  EXPECT_NE(tree.root(), Hash<crypto::SHA256>(ByteArray{}));
-  EXPECT_EQ(tree.root(), tree2.root());
-}
-
 TEST(crypto_merkle_tree, same_result_after_move)
 {
   MerkleTree tree2;
