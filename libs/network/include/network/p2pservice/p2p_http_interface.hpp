@@ -88,8 +88,6 @@ private:
   http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const &request)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetChainStatus");
-
     std::size_t chain_length         = 20;
     bool        include_transactions = false;
 
@@ -133,23 +131,16 @@ private:
     }
     response["history"] = history;
 
-
-
-    auto result = http::CreateJsonResponse(response);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetChainStatus");
-    return result;
+    return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetMuddleStatus(http::ViewParameters const & /*params*/,
                                      http::HTTPRequest const & /*request*/)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetMuddleStatus muddle get con");
     auto const connections = muddle_.GetConnections(true);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetMuddleStatus muddle get con");
 
     std::vector<variant::Variant> connections_output_list;
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Before GetMuddleStatus for IsConnected");
     for (auto const &entry : connections)
     {
       if (muddle_.IsConnected(entry.first))
@@ -162,68 +153,47 @@ private:
       object["uri"]      = entry.second.uri();
       connections_output_list.push_back(object);
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "After GetMuddleStatus for IsConnected");
 
     variant::Variant response = variant::Variant::Array(connections_output_list.size());
     for (std::size_t i = 0; i < connections_output_list.size(); i++)
     {
       response[i] = connections_output_list[i];
     }
-    auto result = http::CreateJsonResponse(response);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetMuddleStatus");
-    return result;
+
+    return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
                                   http::HTTPRequest const & /*request*/)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetP2PStatus");
-
     Variant response          = Variant::Object();
     response["identityCache"] = GenerateIdentityCache();
 
     // TODO(private issue 532): Remove legacy API
     response["identity_cache"] = GenerateIdentityCache();
-    auto result                = http::CreateJsonResponse(response);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetP2PStatus");
-    return result;
+
+    return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const & /*request*/) {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus");
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
     std::vector<std::pair<byte_array::ConstByteArray, variant::Variant>> peer_data_list;
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - building base responses");
     for (const auto &pt : peers_trusts) {
       variant::Variant peer_data = variant::Variant::Object();
-      peer_data["target"] = pt.name;
-      peer_data["value"] = pt.trust;
-      peer_data["source"] = byte_array::ToBase64(muddle_.identity().identifier());
-      peer_data_list.push_back(std::make_pair(pt.address, peer_data));
+      peer_data["target"]       = pt.name;
+      peer_data["value"]        = pt.trust;
+      peer_data["source"]       = byte_array::ToBase64(muddle_.identity().identifier());
+      peer_data["blacklisted"]  = muddle_.IsBlacklisted(pt.address);
+      peer_data["active"]       = muddle_.IsConnected(pt.address);
+      peer_data["desired"]      = p2p_.IsDesired(pt.address);
+      peer_data["experimental"] = p2p_.IsExperimental(pt.address);
+      peer_data_list.emplace_back(std::move(peer_data));
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding blacklist status");
-    for (auto &pt : peer_data_list) {
-      pt.second["blacklisted"] = muddle_.IsBlacklisted(pt.first);
-    }
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding active connection status");
-    for (auto &pt : peer_data_list) {
-      pt.second["active"] = muddle_.IsConnected(pt.first);
-    }
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding desired status membership");
-    for (auto &pt : peer_data_list) {
-      pt.second["desired"] = p2p_.IsDesired(pt.first);
-    }
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - adding experimental statuses");
-    for (auto &pt : peer_data_list) {
-      pt.second["experimental"] = p2p_.IsExperimental(pt.first);
-    }
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetTrustStatus - objects made");
-
-    variant::Variant trust_list = variant::Variant::Array(peer_data_list.size());
+    variant::Variant trust_list = variant::Variant::Array(peers_trusts.size());
     for (std::size_t i = 0; i < peer_data_list.size(); i++) {
       trust_list[i] = peer_data_list[i].second;
     }
@@ -238,20 +208,16 @@ private:
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"] = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
-    auto result = http::CreateJsonResponse(response);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetTrustStatus");
-    return result;
+    return http::CreateJsonResponse(response);
   }
 
   http::HTTPResponse GetBacklogStatus(http::ViewParameters const & /*params*/,
                                       http::HTTPRequest const & /*request*/)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Start GetBacklogStatus");
     variant::Variant data = variant::Variant::Object();
     data["backlog"]       = miner_.GetBacklog();
-    auto result           = http::CreateJsonResponse(data);
-    FETCH_LOG_WARN(LOGGING_NAME, "End GetBacklogStatus");
-    return result;
+
+    return http::CreateJsonResponse(data);
   }
 
   Variant GenerateBlockList(bool include_transactions, std::size_t length)

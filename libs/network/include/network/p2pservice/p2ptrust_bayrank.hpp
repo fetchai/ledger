@@ -139,8 +139,6 @@ public:
       peer_it->update_score();
       peer_it->last_modified = GetCurrentTime();
       sp->Update();
-      FETCH_LOG_WARN(LOGGING_NAME, "(AB): ", ToBase64(peer_ident),
-                     " updated: score=", peer_it->score);
 
       auto place = the_train_.MoveIfPossible(ToPlaceEnum(id_it->second), peer_ident);
       auto s_idx = FromPlaceEnum(place);

@@ -144,11 +144,8 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
   ConnectionMap connection_map;
 
-  FETCH_LOG_WARN(LOGGING_NAME, "GetCon: Before GetRoutingTable");
   auto const routing_table = router_.GetRoutingTable();
-  FETCH_LOG_WARN(LOGGING_NAME, "GetCon: After GetRoutingTable");
   auto const uri_map       = clients_.GetUriMap();
-  FETCH_LOG_WARN(LOGGING_NAME, "GetCon: After GetUriMap");
 
 
   for (auto const &entry : routing_table)
@@ -335,9 +332,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
   strong_conn->OnLeave([this, peer]() {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection left...to go where?");
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection OnLeave before disconnect");
     clients_.Disconnect(peer);
-    FETCH_LOG_WARN(LOGGING_NAME, "(AB): Connection OnLeave after disconnect");
   });
 
   strong_conn->OnMessage([this, conn_handle](network::message_type const &msg) {
