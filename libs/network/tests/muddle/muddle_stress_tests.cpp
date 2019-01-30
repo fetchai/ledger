@@ -20,8 +20,8 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-#include "core/macros.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"

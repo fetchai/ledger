@@ -130,7 +130,7 @@ public:
   void StartTestAsMaster(uint64_t startTime)
   {
     FETCH_UNUSED(startTime);
-    
+
     if (thread_.joinable())
     {
       thread_.join();
