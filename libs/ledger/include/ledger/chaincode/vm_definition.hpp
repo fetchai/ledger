@@ -23,9 +23,10 @@
 
 namespace fetch {
 namespace ledger {
-
+/*
 template <typename S>
-std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ = nullptr)
+std::unique_ptr<vm::Module> CreateVMDefinition(S * smart_contract_instance =
+nullptr)
 {
   using SmartContract = S;
 
@@ -36,7 +37,8 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ =
 
   module->ExportClass<variant::Variant>("Variant").Constructor();
 
-  module->ExportFunction("toString", [](variant::Variant const &var) -> std::string {
+  module->ExportFunction("toString", [](variant::Variant const &var) ->
+std::string {
     if (var.Is<std::string>())
     {
       return var.As<std::string>();
@@ -68,18 +70,22 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ =
     return bool(false);
   });
 
-  module->ExportFunction("toVariant", [](std::string const &val) -> variant::Variant {
+  module->ExportFunction("toVariant", [](std::string const &val) ->
+variant::Variant {
     return variant::Variant{val.c_str()};
   });
 
   module->ExportFunction(
-      "toVariant", [](int64_t const &val) -> variant::Variant { return variant::Variant{val}; });
+      "toVariant", [](int64_t const &val) -> variant::Variant { return
+variant::Variant{val}; });
 
   module->ExportFunction(
-      "toVariant", [](int32_t const &val) -> variant::Variant { return variant::Variant{val}; });
+      "toVariant", [](int32_t const &val) -> variant::Variant { return
+variant::Variant{val}; });
 
   module->ExportFunction("toVariant",
-                         [](bool const &val) -> variant::Variant { return variant::Variant{val}; });
+                         [](bool const &val) -> variant::Variant { return
+variant::Variant{val}; });
 
   module->ExportClass<SmartContract>("Ledger")
       .ExportStaticFunction("GetOrCreateRecord",
@@ -93,6 +99,7 @@ std::unique_ptr<vm::Module> CreateVMDefinition(S * /*smart_contract_instance*/ =
 
   return module;
 }
+*/
 
 }  // namespace ledger
 }  // namespace fetch

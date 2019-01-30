@@ -411,7 +411,7 @@ public:
   void Set(std::vector<size_t> const &indices, Type v)
   {
     assert(indices.size() == 2);
-    Set(indices[1], indices[0], v);
+    Set(indices[0], indices[1], v);
   }
 
   void SetRange(std::vector<std::vector<std::size_t>> const &idxs, RectangularArray<T> const &s)

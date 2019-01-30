@@ -31,12 +31,12 @@ void TestCase1()
   std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
 
   {
-    NetworkManager tmanager(N);
+    NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
   }
 
   {
-    NetworkManager tmanager(N);
+    NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
 
     // Don't post a stop to the original tmanager into itself or it will break
@@ -47,7 +47,7 @@ void TestCase1()
   }
 
   {
-    NetworkManager tmanager(N);
+    NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
 
     tmanager.Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
@@ -70,7 +70,7 @@ void TestCase3()
   for (std::size_t index = 0; index < 10; ++index)
   {
     {
-      NetworkManager tmanager(N);
+      NetworkManager tmanager{"NetMgr", N};
       tmanager.Start();
 
       std::vector<int> ints{0, 0, 0, 0};
@@ -120,7 +120,7 @@ void TestCase4()
   std::cout << "Info: Stopping thread manager through its own post mechanism" << std::endl;
   for (std::size_t i = 0; i < 1000; ++i)
   {
-    NetworkManager tmanager(N);
+    NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
     tmanager.Post([&tmanager]() { tmanager.Stop(); });
   }

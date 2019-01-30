@@ -184,13 +184,16 @@ private:
   P2PManagedLocalServices local_services_;
   ///@}
 
-  std::size_t               min_peers_ = 2;
-  std::size_t               max_peers_;
-  std::size_t               transient_peers_;
-  uint32_t                  process_cycle_ms_;
-  std::chrono::milliseconds peer_update_cycle_ms_;
+  std::size_t min_peers_ = 2;
+  std::size_t max_peers_;
+  std::size_t transient_peers_;
+  uint32_t    process_cycle_ms_;
 
-  FutureTimepoint process_future_timepoint_;
+
+  std::chrono::milliseconds peer_update_cycle_ms_;
+  FutureTimepoint           process_future_timepoint_;
+  std::chrono::milliseconds manifest_update_cycle_ms_;
+  FutureTimepoint           manifests_next_update_timepoint_;
 
   std::shared_ptr<BlockCatchUpService> latest_block_sync_;
 

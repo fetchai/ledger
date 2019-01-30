@@ -91,12 +91,12 @@ int main(int argc, char **argv)
   params.Parse(argc, argv);
 
   // Client setup
-  fetch::network::NetworkManager tm;
+  fetch::network::NetworkManager tm{"NetMgr", 1};
 
   auto                client_muddle = Muddle::CreateMuddle(Muddle::NetworkId("TEST"), tm);
   fetch::network::Uri peer("tcp://127.0.0.1:8080");
   client_muddle->AddPeer(peer);
-  auto client = std::make_shared<Client>(client_muddle->AsEndpoint(), Muddle::Address(),
+  auto client = std::make_shared<Client>("Client", client_muddle->AsEndpoint(), Muddle::Address(),
                                          SERVICE_TEST, CHANNEL_RPC);
   auto server = std::make_shared<Server>(client_muddle->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC);
 

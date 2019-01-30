@@ -75,7 +75,7 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
 BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
-  , thread_pool_{max_num_threads_}
+  , thread_pool_{max_num_threads_, "Miner"}
 {}
 
 /**

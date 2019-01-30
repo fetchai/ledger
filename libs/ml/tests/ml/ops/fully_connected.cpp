@@ -35,7 +35,7 @@ TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
-  fetch::ml::ops::FullyConnected<TypeParam> fc(100, 10);
+  fetch::ml::ops::FullyConnected<TypeParam> fc(100u, 10u);
   std::shared_ptr<TypeParam> inputData = std::make_shared<TypeParam>(std::vector<size_t>({10, 10}));
   fc.SetInput("FC_Input", inputData);
   std::shared_ptr<TypeParam> output = fc.Evaluate("FC_MatrixMultiply");
