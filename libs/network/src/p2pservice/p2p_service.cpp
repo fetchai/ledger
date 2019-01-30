@@ -122,7 +122,11 @@ void P2PService::WorkCycle()
       {
         if (muddle_.IsConnected(c.first))
         {
-          active_addresses.insert(c.first);
+          if (desired_peers_.find(c.first) == desired_peers_.end())
+          {
+            desired_peers_.insert(c.first);
+            trust_system_.AddFeedback(c.first, TrustSubject::PEER, TrustQuality::NEW_PEER);
+          }
         }
       }
     }
