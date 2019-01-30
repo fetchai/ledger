@@ -33,19 +33,19 @@ namespace muddle {
  * @param router The reference to the router
  */
 PeerConnectionList::PeerConnectionList(Router &router)
-  : Blackset(lock_)
+  : Parent(lock_)
   , router_(router)
 {}
 
 PeerConnectionList::PeerConnectionList(Router &router, PeerSet blacklisted)
-  : Blackset(lock_, std::move(blacklisted))
+  : Parent(lock_, std::move(blacklisted))
   , router_(router)
 {}
 
 bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
   FETCH_LOCK(lock_);
-  if (Blacklisted(peer))
+  if (LocklessIsBlacklisted(peer))
   {
     return false;
   }
@@ -81,7 +81,7 @@ std::size_t PeerConnectionList::GetNumPeers() const
 bool PeerConnectionList::AddConnection(Uri const &peer, ConnectionPtr const &conn)
 {
   FETCH_LOCK(lock_);
-  if (Blacklisted(peer))
+  if (LocklessIsBlacklisted(peer))
   {
     return false;
   }
@@ -108,7 +108,7 @@ PeerConnectionList::Handle PeerConnectionList::UriToHandle(const Uri &uri) const
   auto element = peer_connections_.find(uri);
   if (element != peer_connections_.end())
   {
-    return element.second->handle();
+    return element->second->handle();
   }
   return 0;
 }

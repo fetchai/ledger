@@ -71,7 +71,7 @@ namespace fetch {
 namespace storage {
 
 /**
- * Key value pair for binary tries where the key is a byte array. The tree can
+ * Key-value pair for binary tries where the key is a byte array. The tree can
  * be traversed given a key by switching on the split until the leaf or its nearest equivalent is
  * found.
  *
@@ -126,7 +126,7 @@ struct KeyValuePair
     return split == S;
   }
 
-  bool UpdateLeaf(uint64_t const &val, byte_array::ConstByteArray const &data)
+  bool UpdateLeaf(uint64_t val, byte_array::ConstByteArray const &data)
   {
     HashFunction hasher;
     hasher.Reset();

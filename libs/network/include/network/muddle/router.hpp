@@ -57,7 +57,7 @@ public:
   using Handle              = network::AbstractConnection::connection_handle_type;
   using ThreadPool          = network::ThreadPool;
   using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
-  using BlackTime           = generics::Blackset2<Handle, Address, void>::Timepoint;
+  using BlackTime           = generics::black::Timepoint;
 
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
 
@@ -73,6 +73,9 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
+  template<class... Args>
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher, Args &&...args);
+
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -189,8 +192,8 @@ private:
   using EchoCache       = std::unordered_map<std::size_t, Timepoint>;
   using RawAddress      = Packet::RawAddress;
   using HandleSet       = std::unordered_set<Handle>;
-  using BlackIns        = generics::Blackset2<Handle, Address, void>;
-  using BlackOuts       = generics::Blackset2<Handle, Address>;
+  using BlackIns        = generics::UnguardedPersistentBlackset<Address>;
+  using BlackOuts       = generics::Blackset<Address>;
   using ByteArrayBuffer = serializers::ByteArrayBuffer;
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 10;
@@ -210,7 +213,7 @@ private:
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();
 
-  bool Disallowed(Handle handle, PacketPtr const &packet) const;
+  bool Disallowed(PacketPtr const &packet) const;
 
   void SendMaintenance(Address const &address, uint64_t tag);
   template<typename T> void SendMaintenance(Address const &address, uint64_t tag, T &&arg);

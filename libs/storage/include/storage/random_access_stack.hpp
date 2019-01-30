@@ -52,7 +52,7 @@ namespace storage {
  * The header for the stack optionally allows arbitrary data to be stored, which can be useful to
  * the user
  */
-template <typename T, typename D = uint64_t, typename STREAM = std::fstream>
+template <typename T, typename D = uint64_t, typename Stream = std::fstream>
 class RandomAccessStack
 {
 private:
@@ -69,7 +69,7 @@ private:
     uint64_t objects = 0;
     D        extra;
 
-    bool Write(STREAM &stream) const
+    bool Write(Stream &stream) const
     {
       if ((!stream) || (!stream.is_open()))
       {
@@ -82,7 +82,7 @@ private:
       return bool(stream);
     }
 
-    bool Read(STREAM &stream)
+    bool Read(Stream &stream)
     {
       if ((!stream) || (!stream.is_open()))
       {
@@ -169,14 +169,14 @@ public:
   void Load(std::string const &filename, bool const &create_if_not_exist = false)
   {
     filename_    = filename;
-    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = Stream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     if (!file_handle_)
     {
       if (create_if_not_exist)
       {
         Clear();
-        file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+        file_handle_ = Stream(filename_, std::ios::in | std::ios::out | std::ios::binary);
       }
       else
       {
@@ -209,7 +209,7 @@ public:
   {
     filename_ = std::move(filename);
     Clear();
-    file_handle_ = STREAM(filename_, std::ios::in | std::ios::out | std::ios::binary);
+    file_handle_ = Stream(filename_, std::ios::in | std::ios::out | std::ios::binary);
 
     SignalFileLoaded();
   }
@@ -430,7 +430,7 @@ public:
   void Clear()
   {
     assert(filename_ != "");
-    STREAM fin(filename_, std::ios::out | std::ios::binary);
+    Stream fin(filename_, std::ios::out | std::ios::binary);
     header_ = Header();
 
     if (!header_.Write(fin))
@@ -480,7 +480,7 @@ public:
     return ret;
   }
 
-  STREAM &underlying_stream()
+  Stream &underlying_stream()
   {
     return file_handle_;
   }
@@ -488,7 +488,7 @@ public:
 private:
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;
-  mutable STREAM     file_handle_;
+  mutable Stream     file_handle_;
   std::string        filename_ = "";
   Header             header_;
 

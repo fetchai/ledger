@@ -478,6 +478,11 @@ inline std::string ConstByteArray::ToBase64() const
   return static_cast<std::string>(fetch::byte_array::ToBase64(*this));
 }
 
+inline ConstByteArray ToConstByteArray(ConstByteArray t) noexcept
+{
+  return t;
+}
+
 template <typename T>
 inline ConstByteArray ToConstByteArray(T const &t)
 {

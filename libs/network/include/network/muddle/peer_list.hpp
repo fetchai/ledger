@@ -39,6 +39,7 @@ class Router;
  */
 class PeerConnectionList : public generics::Blackset<network::Uri>
 {
+  using Parent = generics::Blackset<network::Uri>;
 public:
   using Uri           = network::Uri;
   using PeerList      = std::vector<Uri>;
@@ -82,7 +83,7 @@ public:
 
   /// @name Persistent connections
   /// @{
-  void AddPersistentPeer(Uri const &peer);
+  bool AddPersistentPeer(Uri const &peer);
   void RemovePersistentPeer(Uri const &peer);
   void RemovePersistentPeer(Handle handle);
   std::size_t GetNumPeers() const;

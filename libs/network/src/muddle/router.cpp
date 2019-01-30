@@ -205,6 +205,19 @@ Router::Router(NetworkId network_id, Router::Address address, MuddleRegister con
   , black_outs_(routing_table_lock_)
 {}
 
+template<class... Args>
+Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
+               Dispatcher &dispatcher, Args &&...args)
+  : address_(std::move(address))
+  , address_raw_(ConvertAddress(address_))
+  , register_(reg)
+  , dispatcher_(dispatcher)
+  , network_id_(std::move(network_id))
+  , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
+  , black_ins_(std::forward<Args>(args)...)
+  , black_outs_(routing_table_lock_)
+{}
+
 /**
  * Starts the routers internal dispatch thread pool
  */
@@ -781,16 +794,16 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   }
   else
   {
+    // if this receiver currently has us blacklisted
+    if (black_outs_.IsBlacklisted(packet->GetTarget()))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
+      return;
+    }
     // attempt to route to one of our direct peers
     Handle handle = LookupHandle(packet->GetTargetRaw());
     if (handle)
     {
-      // if this receiver currently has us blacklisted
-      if (black_outs_.IsBlacklisted(handle, packet->GetTarget()))
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
-        return;
-      }
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
       return;
@@ -802,7 +815,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     if (handle)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
-      if (black_outs_.IsBlacklisted2(packet->GetTarget()))
+      if (black_outs_.IsBlacklisted(packet->GetTarget()))
       {
         FETCH_LOG_INFO(LOGGING_NAME, "The packet's target currently would not accept it.");
         return;
@@ -820,7 +833,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
  */
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
-  if (Disallowed(handle, packet))
+  if (Disallowed(packet))
   {
     return;
   }
@@ -867,15 +880,15 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
         FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted temporarily on the remote");
         black_outs_.Quarantine(
             BlackOuts::Clock::from_time_t(FromConstByteArray<std::time_t>(payload, sizeof(tag))),
-            handle, address);
+            address);
         break;
       case MAINT_MUTE:
         FETCH_LOG_DEBUG(LOGGING_NAME, "Blacklisted on the remote");
-        black_outs_.Blacklist(handle, address);
+        black_outs_.Blacklist(address);
         break;
       case MAINT_UNMUTE:
         FETCH_LOG_DEBUG(LOGGING_NAME, "Whitelisted on the remote");
-        black_outs_.Whitelist(handle, address);
+        black_outs_.Whitelist(address);
         break;
       }
     }
@@ -891,7 +904,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 {
-  if (black_ins_.IsBlacklisted2(packet->GetSender()))
+  if (black_ins_.IsBlacklisted(packet->GetSender()))
   {
     return;
   }
@@ -1004,15 +1017,8 @@ Router &Router::Blacklist(Address address)
   SendMaintenance(address, MAINT_MUTE);
 
   FETCH_LOCK(routing_table_lock_);
-  auto address_it = routing_table_.find(ConvertAddress(address));
-  if (address_it != routing_table_.end())
-  {
-    black_ins_.Blacklist(address_it->second.handle, std::move(address));
-  }
-  else
-  {
-    black_ins_.Blacklist2(std::move(address));
-  }
+  black_ins_.Blacklist(std::move(address));
+
   return *this;
 }
 
@@ -1030,15 +1036,8 @@ Router &Router::Quarantine(BlackTime until, Address address)
   SendMaintenance(address, MAINT_HOLD_BACK, BlackIns::Clock::to_time_t(until));
 
   FETCH_LOCK(routing_table_lock_);
-  auto address_it = routing_table_.find(ConvertAddress(address));
-  if (address_it != routing_table_.end())
-  {
-    black_ins_.Quarantine(std::move(until), address_it->second.handle, std::move(address));
-  }
-  else
-  {
-    black_ins_.Quarantine2(std::move(until), std::move(address));
-  }
+  black_ins_.Quarantine(std::move(until), std::move(address));
+
   return *this;
 }
 
@@ -1051,7 +1050,7 @@ Router &Router::Quarantine(BlackTime until, Address address)
 bool Router::IsBlacklisted(Address const &address) const
 {
   FETCH_LOCK(routing_table_lock_);
-  return black_ins_.IsBlacklisted2(address);
+  return black_ins_.IsBlacklisted(address);
 }
 
 /**
@@ -1065,12 +1064,8 @@ Router &Router::Whitelist(Address const &address)
   SendMaintenance(address, MAINT_UNMUTE);
 
   FETCH_LOCK(routing_table_lock_);
-  auto address_it = routing_table_.find(ConvertAddress(address));
-  if (address_it != routing_table_.end())
-  {
-    black_ins_.Whitelist(address_it->second.handle, address);
-  }
-  black_ins_.Whitelist2(address);
+  black_ins_.Whitelist(address);
+
   return *this;
 }
 
@@ -1103,11 +1098,11 @@ Router &Router::Disconnect(Handle handle) {
  * @param packet The packet received through that handle
  * @return This.
  */
-bool Router::Disallowed(Handle handle, PacketPtr const &packet) const
+bool Router::Disallowed(PacketPtr const &packet) const
 {
   FETCH_LOCK(routing_table_lock_);
 
-  return black_ins_.IsBlacklisted(handle, packet->GetSender());
+  return black_ins_.IsBlacklisted(packet->GetSender());
 }
 
 void Router::DropPeer(Address const &peer)
