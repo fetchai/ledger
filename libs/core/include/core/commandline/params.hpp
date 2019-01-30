@@ -25,8 +25,8 @@
 #include <string>
 #include <tuple>
 
-#include "core/macros.hpp"
 #include "core/commandline/parameter_parser.hpp"
+#include "core/macros.hpp"
 
 namespace fetch {
 namespace commandline {
