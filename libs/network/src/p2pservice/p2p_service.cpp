@@ -86,12 +86,13 @@ void P2PService::WorkCycle()
 {
   if (peer_update_cycle_ms_.count() > 0 && process_future_timepoint_.IsDue())
   {
-    AddressSet    active_addresses;
-    ConnectionMap active_connections;
-    GetConnectionStatus(active_connections, active_addresses);
-
     process_future_timepoint_.Set(peer_update_cycle_ms_);
+
+    AddressSet    active_addresses;
+    ConnectionMap active_connections; 
+
     // get the summary of all the current connections
+    GetConnectionStatus(active_connections, active_addresses);
 
     // update our identity cache (address -> uri mapping)
     identity_cache_.Update(active_connections);
@@ -114,6 +115,17 @@ void P2PService::WorkCycle()
     AddressSet    active_addresses;
     ConnectionMap active_connections;
     GetConnectionStatus(active_connections, active_addresses);
+
+    if (!peer_update_cycle_ms_.count())
+    {
+      for (const auto &c : active_connections)
+      {
+        if (muddle_.IsConnected(c.first))
+        {
+          active_addresses.insert(c.first);
+        }
+      }
+    }
 
     // collect up manifests from connected peers
     process_future_timepoint_.Set(manifest_update_cycle_ms_);
