@@ -33,11 +33,11 @@
 
 namespace fetch {
 namespace chain {
-class MainChain;
 class BlockCoordinator;
 }  // namespace chain
 namespace ledger {
 
+class MainChain;
 class MainChainSyncWorker;
 
 class MainChainRpcService : public muddle::rpc::Server,
