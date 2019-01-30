@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   std::cout << "Starting " << lane_count << " lanes." << std::endl << std::endl;
 
   // Setting up
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
   tm.Start();
 
   StorageUnitBundledService service;

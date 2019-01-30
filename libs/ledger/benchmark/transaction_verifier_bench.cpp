@@ -98,7 +98,7 @@ void TransactionVerifierBench(benchmark::State &state)
     DummySink sink{txs.size()};
 
     // needs to be created on the heap because of memory use
-    auto verifier = std::make_unique<TransactionVerifier>(sink, state.range(0));
+    auto verifier = std::make_unique<TransactionVerifier>(sink, state.range(0), "Verifier");
 
     // front load the verifier
     for (auto const &tx : txs)

@@ -50,8 +50,8 @@ public:
     , timeduration_(std::move(thetimeout))
     , muddle_(std::move(themuddle))
   {
-    client_ = std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_EXECUTOR,
-                                       CHANNEL_RPC);
+    client_ = std::make_shared<Client>("R:ExecMgrCW", muddle_->AsEndpoint(), Muddle::Address(),
+                                       SERVICE_EXECUTOR, CHANNEL_RPC);
   }
   static constexpr char const *LOGGING_NAME = "MuddleLaneConnectorWorker";
 
@@ -113,8 +113,8 @@ ExecutionManagerRpcClient::ExecutionManagerRpcClient(NetworkManager const &netwo
   : network_manager_(network_manager)
 {
   muddle_ = Muddle::CreateMuddle(Muddle::NetworkId("EXEM"), network_manager_);
-  client_ =
-      std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+  client_ = std::make_shared<Client>("R:ExecMgr", muddle_->AsEndpoint(), Muddle::Address(),
+                                     SERVICE_LANE, CHANNEL_RPC);
   muddle_->Start({});
 }
 
@@ -123,8 +123,8 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
 {
   if (!workthread_)
   {
-    workthread_ =
-        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { this->WorkCycle(); });
+    workthread_ = std::make_shared<BackgroundedWorkThread>(&bg_work_, "BW:ExcMgrRpc",
+                                                           [this]() { this->WorkCycle(); });
   }
 
   auto worker = std::make_shared<ExecutionManagerRpcConnectorWorker>(
@@ -132,7 +132,8 @@ void ExecutionManagerRpcClient::AddConnection(const Uri &                      u
   bg_work_.Add(worker);
 }
 
-ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(Block const &block)
+ExecutionManagerRpcClient::ScheduleStatus ExecutionManagerRpcClient::Execute(
+    Block::Body const &block)
 {
   auto result = client_->CallSpecificAddress(address_, RPC_EXECUTION_MANAGER,
                                              ExecutionManagerRpcProtocol::EXECUTE, block);

@@ -31,12 +31,15 @@ namespace chain {
 class BlockCoordinator
 {
 public:
-  using Block = chain::MainChain::BlockType;
+  using Block     = ledger::Block;
+  using MainChain = ledger::MainChain;
 
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   // Construction / Destruction
-  BlockCoordinator(chain::MainChain &chain, ledger::ExecutionManagerInterface &execution_manager);
+  BlockCoordinator(MainChain &chain, ledger::ExecutionManagerInterface &execution_manager);
+  BlockCoordinator(BlockCoordinator const &) = delete;
+  BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
 
   /// @name Service Control
@@ -47,6 +50,10 @@ public:
 
   void AddBlock(Block &block);
 
+  // Operators
+  BlockCoordinator &operator=(BlockCoordinator const &) = delete;
+  BlockCoordinator &operator=(BlockCoordinator &&) = delete;
+
 private:
   enum class State
   {
@@ -56,7 +63,7 @@ private:
   };
 
   using Mutex         = fetch::mutex::Mutex;
-  using BlockBodyPtr  = std::shared_ptr<BlockBody>;
+  using BlockBodyPtr  = std::shared_ptr<Block::Body>;
   using PendingBlocks = std::deque<BlockBodyPtr>;
   using PendingStack  = std::vector<BlockBodyPtr>;
   using Flag          = std::atomic<bool>;
@@ -72,7 +79,7 @@ private:
 
   /// @name Internal
   /// @{
-  chain::MainChain &                 chain_;              ///< Ref to system chain
+  MainChain &                        chain_;              ///< Ref to system chain
   ledger::ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   Flag                               stop_{false};        ///< Flag to signal stop of monitor
   std::thread                        thread_;             ///< The monitor thread

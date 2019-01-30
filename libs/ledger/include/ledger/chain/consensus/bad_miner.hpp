@@ -33,16 +33,16 @@ public:
   ~BadMiner() = default;
 
   // Blocking mine
-  void Mine(BlockType &block) override
+  void Mine(Block &block) override
   {
-    block.body().nonce = 0;
+    block.nonce = 0;
     block.UpdateDigest();
   }
 
   // Mine for set number of iterations
-  bool Mine(BlockType &block, uint64_t /*iterations*/) override
+  bool Mine(Block &block, uint64_t /*iterations*/) override
   {
-    block.body().nonce = 0;
+    block.nonce = 0;
     block.UpdateDigest();
     return true;
   }

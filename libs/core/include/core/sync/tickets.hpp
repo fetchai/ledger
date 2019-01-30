@@ -31,15 +31,17 @@ namespace core {
 class Tickets
 {
 public:
+  using Count = std::size_t;
+
   // Construction / Destruction
-  Tickets(std::size_t initial = 0);
+  Tickets(Count initial = 0);
   Tickets(Tickets const &) = delete;
   Tickets(Tickets &&)      = delete;
-  ~Tickets();
 
   void Post();
-  void Wait();
+  void Post(Count &count);
 
+  void Wait();
   template <typename R, typename P>
   bool Wait(std::chrono::duration<R, P> const &duration);
 
@@ -52,30 +54,36 @@ public:
 private:
   std::mutex              mutex_;
   std::condition_variable cv_;
-  std::size_t             count_;
-  std::atomic<bool>       shutdown_{false};
+  Count                   count_;
 };
 
-inline Tickets::Tickets(std::size_t initial)
+inline Tickets::Tickets(Count initial)
   : count_{initial}
 {}
-
-inline Tickets::~Tickets()
-{
-  shutdown_ = true;
-  cv_.notify_all();
-}
 
 /**
  * Post / increment the internal counter
  */
 inline void Tickets::Post()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (++count_)
   {
-    cv_.notify_one();
+    std::lock_guard<std::mutex> lock(mutex_);
+    ++count_;
   }
+  cv_.notify_one();
+}
+
+/**
+ * Post / increment the internal counter
+ * @param count - current number of submitted tickets (=number of tickets still in waiting stage)
+ */
+inline void Tickets::Post(Count &count)
+{
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    count = ++count_;
+  }
+  cv_.notify_one();
 }
 
 /**
@@ -86,24 +94,12 @@ inline void Tickets::Post()
 inline void Tickets::Wait()
 {
   std::unique_lock<std::mutex> lock(mutex_);
-
-  for (;;)
+  // wait for an event to be triggered
+  while (count_ == 0)
   {
-    if (shutdown_)
-    {
-      return;
-    }
-
-    // check an update the count
-    if (count_ > 0)
-    {
-      --count_;
-      break;
-    }
-
-    // wait for an event to be triggered
     cv_.wait(lock);
   }
+  --count_;
 }
 
 /**
@@ -125,47 +121,22 @@ bool Tickets::Wait(std::chrono::duration<R, P> const &duration)
   // calculate the deadline
   Timepoint deadline = Clock::now() + duration;
 
-  bool success = false;
-
   {
     std::unique_lock<std::mutex> lock(mutex_);
 
     // loop required since it is possible because we are emulating the semaphore behaviour that
     // even though we were triggered by the CV another worker might have take our place.
-    for (;;)
+    while (count_ == 0)
     {
-      if (shutdown_)
+      // detect if we have exceeded the deadline
+      if (std::cv_status::timeout == cv_.wait_until(lock, deadline))
       {
         return false;
       }
-
-      if (count_ == 0)
-      {
-        Timepoint now = Clock::now();
-
-        // detect if we have exceeded the deadline
-        if (now >= deadline)
-        {
-          break;
-        }
-
-        // otherwise configure the CV wait for the remaining time
-        if (std::cv_status::timeout == cv_.wait_until(lock, deadline))
-        {
-          break;
-        }
-      }
-      else
-      {
-        --count_;
-
-        success = true;
-        break;
-      }
     }
+    --count_;
+    return true;
   }
-
-  return success;
 }
 
 }  // namespace core
