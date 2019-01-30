@@ -36,7 +36,7 @@ public:
   void Mine(Block &block) override
   {
     uint64_t initNonce = GetRandom();
-    block.nonce = initNonce;
+    block.nonce        = initNonce;
 
     block.UpdateDigest();
 
@@ -51,7 +51,7 @@ public:
   bool Mine(Block &block, uint64_t iterations) override
   {
     uint32_t initNonce = GetRandom();
-    block.nonce = initNonce;
+    block.nonce        = initNonce;
 
     block.UpdateDigest();
 

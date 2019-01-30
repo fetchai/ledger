@@ -53,10 +53,10 @@ class MineNodeBasic
 public:
   static constexpr char const *LOGGING_NAME = "MineNodeBasic";
 
-  MineNodeBasic() = default;
+  MineNodeBasic()                    = default;
   MineNodeBasic(MineNodeBasic &rhs)  = delete;
   MineNodeBasic(MineNodeBasic &&rhs) = delete;
-  ~MineNodeBasic() = default;
+  ~MineNodeBasic()                   = default;
 
   MineNodeBasic operator=(MineNodeBasic &rhs) = delete;
   MineNodeBasic operator=(MineNodeBasic &&rhs) = delete;

@@ -36,7 +36,6 @@ using BlockHash = Block::Digest;
 
 static constexpr std::size_t NUM_BLOCKS = 1000;
 
-
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality
 using time_point = std::chrono::high_resolution_clock::time_point;
@@ -69,7 +68,6 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
 
   return ret;
 }
-
 
 TEST(ledger_main_chain_gtest, building_on_main_chain)
 {
@@ -111,7 +109,7 @@ TEST(ledger_main_chain_gtest, building_on_main_chain)
   Block dummy;
   Body  dummy_body;
   dummy_body.block_number = 1;
-  dummy.body = dummy_body;
+  dummy.body              = dummy_body;
   dummy.UpdateDigest();
   dummy.body.previous_hash = genesis.body.hash;
 
@@ -132,7 +130,7 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
   Block dummy;
   Body  dummy_body;
   dummy_body.block_number = 2;
-  dummy.body = dummy_body;
+  dummy.body              = dummy_body;
   dummy.UpdateDigest();
   dummy.body.previous_hash = dummy.body.hash;
 
@@ -141,7 +139,7 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
   EXPECT_EQ(mainChain.HeaviestBlock().body.hash, block.body.hash);
 
   BlockHash prevHash = block.body.hash;
-  Blocks      blocks;
+  Blocks    blocks;
 
   // Add another 3 blocks in order
   for (std::size_t i = 0; i < 3; ++i)
@@ -186,7 +184,7 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
     Body  nextBody;
     nextBody.block_number  = i;
     nextBody.previous_hash = prevHash;
-    nextBlock.body = nextBody;
+    nextBlock.body         = nextBody;
     nextBlock.UpdateDigest();
 
     if (i != 7)
@@ -206,9 +204,9 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof)
 {
-  Blocks             blocks;
-  std::size_t                         blockIterations = 10;
-  DummyMiner miner;
+  Blocks      blocks;
+  std::size_t blockIterations = 10;
+  DummyMiner  miner;
 
   for (std::size_t diff = 1; diff < 16; diff <<= 1)
   {
@@ -219,8 +217,8 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
       Block block;
       Body  block_body;
       block_body.block_number = j;
-      block.body  = block_body;
-      block.nonce = 0;
+      block.body              = block_body;
+      block.nonce             = 0;
       block.UpdateDigest();
       block.proof.SetTarget(diff);  // Number of zeroes
 
@@ -246,7 +244,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
 
 TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 {
-  Blocks             blocks;
+  Blocks     blocks;
   DummyMiner miner;
 
   for (std::size_t j = 0; j < 10; ++j)
@@ -254,8 +252,8 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
     Block block;
     Body  block_body;
     block_body.block_number = j;
-    block.nonce = 0;
-    block.body  = block_body;
+    block.nonce             = 0;
+    block.body              = block_body;
     block.UpdateDigest();
     block.proof.SetTarget(8);  // Number of zeroes
 
@@ -300,8 +298,8 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
 
   BlockHash prevHash = block.body.hash;
 
-  Blocks blocks(NUM_BLOCKS, block);
-  uint64_t                blockNumber = block.body.block_number++;
+  Blocks   blocks(NUM_BLOCKS, block);
+  uint64_t blockNumber = block.body.block_number++;
 
   {
     auto t1 = TimePoint();
@@ -347,8 +345,8 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
 
   auto block = mainChain.HeaviestBlock();
 
-  BlockHash              prevHash = block.body.hash;
-  Blocks                   blocks(NUM_BLOCKS, block);
+  BlockHash                                 prevHash = block.body.hash;
+  Blocks                                    blocks(NUM_BLOCKS, block);
   std::map<std::size_t, std::size_t>        randomIndexes;
   uint64_t                                  blockNumber = block.body.block_number++;
   fetch::random::LaggedFibonacciGenerator<> lfg;
@@ -401,8 +399,8 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_
   auto block = mainChain.HeaviestBlock();
 
   BlockHash prevHash = block.body.hash;
-  Blocks      blocks(NUM_BLOCKS, block);
-  uint64_t                     blockNumber = block.body.block_number++;
+  Blocks    blocks(NUM_BLOCKS, block);
+  uint64_t  blockNumber = block.body.block_number++;
 
   {
     auto t1 = TimePoint();
@@ -448,8 +446,8 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order_with_file_
 
   auto block = mainChain.HeaviestBlock();
 
-  BlockHash              prevHash = block.body.hash;
-  Blocks                   blocks(NUM_BLOCKS, block);
+  BlockHash                                 prevHash = block.body.hash;
+  Blocks                                    blocks(NUM_BLOCKS, block);
   std::map<std::size_t, std::size_t>        randomIndexes;
   uint64_t                                  blockNumber = block.body.block_number++;
   fetch::random::LaggedFibonacciGenerator<> lfg;

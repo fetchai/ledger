@@ -38,7 +38,7 @@ namespace chain {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &                 chain,
+BlockCoordinator::BlockCoordinator(MainChain &                        chain,
                                    ledger::ExecutionManagerInterface &execution_manager)
   : chain_{chain}
   , execution_manager_{execution_manager}
@@ -79,8 +79,8 @@ void BlockCoordinator::AddBlock(Block &block)
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.body.hash), " Heaviest: ",
-                   ToBase64(heaviest_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.body.hash),
+                   " Heaviest: ", ToBase64(heaviest_hash));
   }
 }
 

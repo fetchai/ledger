@@ -21,11 +21,10 @@
 namespace fetch {
 namespace ledger {
 
-MainChainMiner::MainChainMiner(std::size_t num_lanes, std::size_t num_slices,
-                               MainChain &mainChain,
+MainChainMiner::MainChainMiner(std::size_t num_lanes, std::size_t num_slices, MainChain &mainChain,
                                chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
-                               ConsensusMinerInterface &consensus_miner,
-                               ConstByteArray miner_identity,
+                               ConsensusMinerInterface &           consensus_miner,
+                               ConstByteArray                      miner_identity,
                                std::chrono::steady_clock::duration block_interval)
   : num_lanes_{num_lanes}
   , num_slices_{num_slices}
@@ -89,7 +88,8 @@ void MainChainMiner::MinerThreadEntrypoint()
     // if the heaviest block has changed then we need to schedule the next block time
     if (block.body.hash != previous_heaviest)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "==> New heaviest block: ", byte_array::ToBase64(block.body.hash),
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "==> New heaviest block: ", byte_array::ToBase64(block.body.hash),
                      " from: ", byte_array::ToBase64(block.body.previous_hash));
 
       // new heaviest has been detected
@@ -138,13 +138,13 @@ void MainChainMiner::MinerThreadEntrypoint()
 #ifdef FETCH_ENABLE_METRICS
       metrics::Metrics::Timestamp const now = metrics::Metrics::Clock::now();
 
-        for (auto const &slice : next_block_body.slices)
+      for (auto const &slice : next_block_body.slices)
+      {
+        for (auto const &tx : slice.transactions)
         {
-          for (auto const &tx : slice.transactions)
-          {
-            FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
-          }
+          FETCH_METRIC_TX_PACKED_EX(tx.transaction_hash, now);
         }
+      }
 #endif  // FETCH_ENABLE_METRICS
 
       // Mine the block
@@ -156,5 +156,5 @@ void MainChainMiner::MinerThreadEntrypoint()
   }
 }
 
-}
-}
+}  // namespace ledger
+}  // namespace fetch

@@ -108,8 +108,8 @@ void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
  * @param num_lanes The number of lanes for the block
  * @param num_slices The number of slices for the block
  */
-void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes,
-                               std::size_t num_slices, MainChain const &chain)
+void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::size_t num_slices,
+                               MainChain const &chain)
 {
   assert(num_lanes == (1u << log2_num_lanes_));
   std::size_t pending_size = 0;
@@ -233,7 +233,7 @@ void BasicMiner::GenerateSlices(TransactionList &tx, Block::Body &block, std::si
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice & slice,
+void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice &      slice,
                                std::size_t /*slice_index*/, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};

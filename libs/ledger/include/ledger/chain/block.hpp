@@ -22,8 +22,8 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
 #include "crypto/fnv.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
+#include "ledger/chain/transaction.hpp"
 #include <memory>
 
 namespace fetch {
@@ -47,18 +47,18 @@ public:
   struct Body
   {
     // TODO(private issue 496): Populate the state hash
-    Digest   hash;              ///< The hash of the block
-    Digest   previous_hash;     ///< The hash of the previous block
-    Digest   merkle_hash;       ///< The merkle state hash across all shards
-    uint64_t block_number{0};   ///< The of the block
-    Identity miner;             ///< The identity of the generated miner
-    uint32_t log2_num_lanes{0}; ///< The log2(number of lanes)
-    Slices   slices;            ///< The slice lists
+    Digest   hash;               ///< The hash of the block
+    Digest   previous_hash;      ///< The hash of the previous block
+    Digest   merkle_hash;        ///< The merkle state hash across all shards
+    uint64_t block_number{0};    ///< The of the block
+    Identity miner;              ///< The identity of the generated miner
+    uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
+    Slices   slices;             ///< The slice lists
   };
 
   /// @name Block Contents
   /// @{
-  Body     body;     ///< The core fields that make up a block
+  Body body;  ///< The core fields that make up a block
   /// @}
 
   /// @name Proof of Work specifics
@@ -84,8 +84,7 @@ public:
 inline void Block::UpdateDigest()
 {
   serializers::ByteArrayBuffer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce
-      << body.miner;
+  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner;
 
   HashFunction hash;
   hash.Reset();
@@ -131,8 +130,8 @@ void Deserialize(T &serializer, Block::Slices &slice)
 template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
-  serializer << body.previous_hash << body.merkle_hash << body.block_number
-             << body.miner << body.log2_num_lanes << body.slices;
+  serializer << body.previous_hash << body.merkle_hash << body.block_number << body.miner
+             << body.log2_num_lanes << body.slices;
 }
 
 /**
@@ -145,8 +144,8 @@ void Serialize(T &serializer, Block::Body const &body)
 template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
-  serializer >> body.previous_hash >> body.merkle_hash >> body.block_number >>
-             body.miner >> body.log2_num_lanes >> body.slices;
+  serializer >> body.previous_hash >> body.merkle_hash >> body.block_number >> body.miner >>
+      body.log2_num_lanes >> body.slices;
 }
 
 /**

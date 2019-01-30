@@ -23,7 +23,7 @@ namespace ledger {
 
 MainChain::MainChain(bool disable_persistence)
 {
-  Block genesis                = CreateGenesisBlock();
+  Block genesis                   = CreateGenesisBlock();
   block_chain_[genesis.body.hash] = genesis;
 
   // Create tip for genesis
@@ -187,8 +187,7 @@ MainChain::Blocks MainChain::ChainPreceding(BlockHash const &at, uint64_t limit)
     auto it = block_chain_.find(hash);
     if (it == block_chain_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME,
-                     "Mainchain: Failed while walking down from ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Mainchain: Failed while walking down from ",
                      byte_array::ToBase64(at), " to find genesis!");
       break;
     }

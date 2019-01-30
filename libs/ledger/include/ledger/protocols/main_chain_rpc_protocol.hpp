@@ -45,7 +45,6 @@ public:
   }
 
 private:
-
   Blocks GetHeaviestChain(uint32_t maxsize)
   {
     LOG_STACK_TRACE_POINT;

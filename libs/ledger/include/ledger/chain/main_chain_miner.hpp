@@ -49,10 +49,10 @@ public:
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, MainChain &mainChain,
                  chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
                  ConsensusMinerInterface &consensus_miner, ConstByteArray miner_identity,
-                 std::chrono::steady_clock::duration block_interval =
-                     std::chrono::milliseconds{BLOCK_PERIOD_MS});
+                 std::chrono::steady_clock::duration block_interval = std::chrono::milliseconds{
+                     BLOCK_PERIOD_MS});
   MainChainMiner(MainChainMiner const &) = delete;
-  MainChainMiner(MainChainMiner &&) = delete;
+  MainChainMiner(MainChainMiner &&)      = delete;
   ~MainChainMiner();
 
   void Start();

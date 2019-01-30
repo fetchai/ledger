@@ -57,10 +57,9 @@ struct Tip
 class MainChain
 {
 public:
-  using Blocks             = std::vector<Block>;
-  using BlockHash          = Block::Digest;
-  using BlockHashs         = std::vector<BlockHash>;
-
+  using Blocks     = std::vector<Block>;
+  using BlockHash  = Block::Digest;
+  using BlockHashs = std::vector<BlockHash>;
 
   // Hard code genesis on construction
 
@@ -68,7 +67,7 @@ public:
   explicit MainChain(bool disable_persistence = false);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
-  ~MainChain() = default;
+  ~MainChain()                    = default;
 
   bool AddBlock(Block &block, bool recursive_iteration = false);
 
@@ -86,7 +85,8 @@ public:
 
   Blocks HeaviestChain(uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const;
 
-  Blocks ChainPreceding(BlockHash const &at, uint64_t limit = std::numeric_limits<uint64_t>::max()) const;
+  Blocks ChainPreceding(BlockHash const &at,
+                        uint64_t         limit = std::numeric_limits<uint64_t>::max()) const;
 
   void Reset();
 
@@ -105,7 +105,6 @@ public:
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
-
   using BlockMap           = std::unordered_map<BlockHash, Block>;
   using Proof              = Block::Proof;
   using TipPtr             = std::shared_ptr<Tip>;
@@ -118,8 +117,8 @@ private:
   using RMutex             = std::recursive_mutex;
   using RLock              = std::unique_lock<RMutex>;
 
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint32_t block_confirmation_ = 10;
+  static constexpr char const *LOGGING_NAME        = "MainChain";
+  static constexpr uint32_t    block_confirmation_ = 10;
 
   void RecoverFromFile();
   void WriteToFile();
@@ -136,9 +135,9 @@ private:
   BlockStorePtr block_store_;  /// < Long term storage and backup
 
   mutable RMutex main_mutex_;
-  BlockMap       block_chain_; ///< all recent blocks are here
-  TipsMap         tips_;        ///< Keep track of the tips
-  HeaviestTip    heaviest_;    ///< Heaviest block/tip
+  BlockMap       block_chain_;  ///< all recent blocks are here
+  TipsMap        tips_;         ///< Keep track of the tips
+  HeaviestTip    heaviest_;     ///< Heaviest block/tip
 
   mutable RMutex loose_mutex_;
   LooseBlockMap  loose_blocks_;  ///< Waiting (loose) blocks
@@ -157,7 +156,7 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting TX uniqueness verify");
 
-  Block   block;
+  Block       block;
   std::size_t blocks_checked = 0;
   auto        t1             = std::chrono::high_resolution_clock::now();
 
@@ -201,8 +200,8 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
   // remove duplicate transactions
   if (!transactions_duplicated.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "TX uniqueness verify - found duplicate TXs!: ",
-                   transactions_duplicated.size());
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "TX uniqueness verify - found duplicate TXs!: ", transactions_duplicated.size());
 
     // Iterate our container
     auto it = container.cbegin();
@@ -237,5 +236,5 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
   return true;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

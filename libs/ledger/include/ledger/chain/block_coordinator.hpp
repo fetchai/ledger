@@ -39,7 +39,7 @@ public:
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, ledger::ExecutionManagerInterface &execution_manager);
   BlockCoordinator(BlockCoordinator const &) = delete;
-  BlockCoordinator(BlockCoordinator &&) = delete;
+  BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
 
   /// @name Service Control
@@ -79,7 +79,7 @@ private:
 
   /// @name Internal
   /// @{
-  MainChain &                       chain_;               ///< Ref to system chain
+  MainChain &                        chain_;              ///< Ref to system chain
   ledger::ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   Flag                               stop_{false};        ///< Flag to signal stop of monitor
   std::thread                        thread_;             ///< The monitor thread
