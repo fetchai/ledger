@@ -89,7 +89,7 @@ void P2PService::WorkCycle()
     process_future_timepoint_.Set(peer_update_cycle_ms_);
 
     AddressSet    active_addresses;
-    ConnectionMap active_connections; 
+    ConnectionMap active_connections;
 
     // get the summary of all the current connections
     GetConnectionStatus(active_connections, active_addresses);
