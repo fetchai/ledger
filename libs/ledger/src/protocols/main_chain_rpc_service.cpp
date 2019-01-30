@@ -249,7 +249,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   AddToBlockHistory(block.hash(), std::move(originAndTime));
 }
 
-void MainChainRpcService::AddToBlockHistory(byte_array::ConstByteArray block_hash, OriginAndTime&& originAndTime)
+void MainChainRpcService::AddToBlockHistory(byte_array::ConstByteArray block_hash,
+                                            OriginAndTime &&           originAndTime)
 {
   FETCH_LOCK(block_history_mutex_);
   block_history_[block_hash].push_back(std::move(originAndTime));

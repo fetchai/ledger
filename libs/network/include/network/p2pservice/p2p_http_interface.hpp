@@ -111,11 +111,11 @@ private:
     response["block_hex"] = fetch::byte_array::ToHex(chain_.HeaviestBlock().hash());
     response["i_am_hex"]  = fetch::byte_array::ToHex(muddle_.identity().identifier());
 
-    Variant history = Variant::Object();
-    auto block_history = main_chain_service_->GetBlockHistory();
+    Variant history       = Variant::Object();
+    auto    block_history = main_chain_service_->GetBlockHistory();
     for (auto &d : block_history)
     {
-      Variant details = Variant::Array(d.second.size());//(details_tmp.size());
+      Variant details = Variant::Array(d.second.size());  //(details_tmp.size());
       for (std::size_t i = 0; i < d.second.size(); ++i)
       {
         Variant e        = Variant::Object();
@@ -127,7 +127,7 @@ private:
         details[i]       = e;
       }
       std::string block_hash = static_cast<std::string>(ToBase64(d.first));
-      history[block_hash] = details;
+      history[block_hash]    = details;
     }
     response["history"] = history;
 
@@ -176,31 +176,34 @@ private:
   }
 
   http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
-                                    http::HTTPRequest const & /*request*/) {
+                                    http::HTTPRequest const & /*request*/)
+  {
     auto peers_trusts = trust_.GetPeersAndTrusts();
 
     std::vector<variant::Variant> peer_data_list;
 
-    for (const auto &pt : peers_trusts) {
+    for (const auto &pt : peers_trusts)
+    {
       variant::Variant peer_data = variant::Variant::Object();
-      peer_data["target"]       = pt.name;
-      peer_data["value"]        = pt.trust;
-      peer_data["source"]       = byte_array::ToBase64(muddle_.identity().identifier());
-      peer_data["blacklisted"]  = muddle_.IsBlacklisted(pt.address);
-      peer_data["active"]       = muddle_.IsConnected(pt.address);
-      peer_data["desired"]      = p2p_.IsDesired(pt.address);
-      peer_data["experimental"] = p2p_.IsExperimental(pt.address);
+      peer_data["target"]        = pt.name;
+      peer_data["value"]         = pt.trust;
+      peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
+      peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
+      peer_data["active"]        = muddle_.IsConnected(pt.address);
+      peer_data["desired"]       = p2p_.IsDesired(pt.address);
+      peer_data["experimental"]  = p2p_.IsExperimental(pt.address);
       peer_data_list.emplace_back(std::move(peer_data));
     }
 
     variant::Variant trust_list = variant::Variant::Array(peers_trusts.size());
-    for (std::size_t i = 0; i < peer_data_list.size(); i++) {
+    for (std::size_t i = 0; i < peer_data_list.size(); i++)
+    {
       trust_list[i] = peer_data_list[i];
     }
 
-    Variant response = Variant::Object();
+    Variant response     = Variant::Object();
     response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"] = trust_list;
+    response["trusts"]   = trust_list;
 
     // TODO(private issue 532): Remove legacy API
     response["i_am"]      = fetch::byte_array::ToBase64(muddle_.identity().identifier());

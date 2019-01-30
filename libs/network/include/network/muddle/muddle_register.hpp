@@ -73,8 +73,8 @@ protected:
 
 private:
   mutable RMutex connection_map_lock_;
-  ConnectionMap connection_map_;
-  Dispatcher &  dispatcher_;
+  ConnectionMap  connection_map_;
+  Dispatcher &   dispatcher_;
 };
 
 }  // namespace muddle

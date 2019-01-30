@@ -170,7 +170,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                              std::chrono::steady_clock::duration block_interval,
                              std::size_t max_peers, std::size_t transient_peers,
                              uint32_t peer_update_cycle_ms, uint32_t p2p_process_cycle_ms,
-                             uint32_t p2p_manifest_update_cycle_ms, uint32_t p2p_block_catchup_cycle)
+                             uint32_t p2p_manifest_update_cycle_ms,
+                             uint32_t p2p_block_catchup_cycle)
   : active_{true}
   , manifest_(std::move(manifest))
   , interface_address_{std::move(interface_address)}
@@ -184,7 +185,15 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
             network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, peer_update_cycle_ms, p2p_process_cycle_ms, p2p_manifest_update_cycle_ms, p2p_block_catchup_cycle}
+  , p2p_{muddle_,
+         lane_control_,
+         trust_,
+         max_peers,
+         transient_peers,
+         peer_update_cycle_ms,
+         p2p_process_cycle_ms,
+         p2p_manifest_update_cycle_ms,
+         p2p_block_catchup_cycle}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)

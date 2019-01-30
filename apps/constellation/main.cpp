@@ -394,7 +394,6 @@ struct CommandLineArguments
     s << "manifest update cycle.....: " << args.p2p_manifest_update_cycle_ms << "ms\n";
     s << "block catchup cycle.......: " << args.p2p_block_catchup_cycle_ms << "ms\n";
 
-
     // generate the peer listing
     s << "peers.....................: ";
     for (auto const &peer : args.peers)

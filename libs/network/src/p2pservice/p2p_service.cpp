@@ -173,7 +173,8 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , process_cycle_ms_(process_cycle_ms)
   , peer_update_cycle_ms_(peer_update_cycle_ms)
   , manifest_update_cycle_ms_(manifest_update_cycle_ms)
-  , latest_block_sync_{std::make_shared<BlockCatchUpService>(muddle_, trust_system_, block_catchup_cycle)}
+  , latest_block_sync_{
+        std::make_shared<BlockCatchUpService>(muddle_, trust_system_, block_catchup_cycle)}
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
@@ -284,7 +285,6 @@ void P2PService::GetConnectionStatus(ConnectionMap &active_connections,
 
   active_connections = muddle_.GetConnections();
   FETCH_LOG_WARN(LOGGING_NAME, "After muddle_.GetConnections");
-
 
   // generate the set of addresses to whom we are currently connected
   active_addresses.reserve(active_connections.size());
@@ -474,7 +474,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
       muddle_.AddPeer(result.promised);
       latest_block_sync_->AddUri(uri);
       trust_system_.AddObjectFeedback(result.key.second, TrustSubject::PEER,
-          TrustQuality::NEW_INFORMATION);
+                                      TrustQuality::NEW_INFORMATION);
       trust_system_.RemoveObject(result.key.second);
     }
     else
@@ -496,8 +496,7 @@ void P2PService::UpdateMuddlePeers(AddressSet const &active_addresses)
       FETCH_LOG_INFO(LOGGING_NAME, "Add peer: ", ToBase64(address));
       muddle_.AddPeer(uri);
       latest_block_sync_->AddUri(uri);
-      trust_system_.AddObjectFeedback(address, TrustSubject::PEER,
-                                      TrustQuality::NEW_INFORMATION);
+      trust_system_.AddObjectFeedback(address, TrustSubject::PEER, TrustQuality::NEW_INFORMATION);
       trust_system_.RemoveObject(address);
       resolve = false;
     }

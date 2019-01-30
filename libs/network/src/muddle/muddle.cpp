@@ -147,7 +147,6 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
   auto const routing_table = router_.GetRoutingTable();
   auto const uri_map       = clients_.GetUriMap();
 
-
   for (auto const &entry : routing_table)
   {
     if (direct_only && !entry.second.direct)

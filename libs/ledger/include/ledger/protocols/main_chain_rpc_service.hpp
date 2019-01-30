@@ -112,9 +112,9 @@ public:
   {
     byte_array::ConstByteArray from;
     byte_array::ConstByteArray transmitter;
-    std::time_t time        = -1;
-    OriginType  type        = OriginType :: UNKNOWN;
-    bool        first       = false;
+    std::time_t                time  = -1;
+    OriginType                 type  = OriginType ::UNKNOWN;
+    bool                       first = false;
   };
 
   using BlockHistory = std::unordered_map<byte_array::ConstByteArray, std::vector<OriginAndTime>>;
@@ -126,7 +126,6 @@ public:
   }
 
 public:
-
   MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain, TrustSystem &trust,
                       BlockCoordinator &block_coordinator);
 
@@ -150,7 +149,7 @@ private:
   void ServiceLooseBlocks();
   void RequestedChainArrived(Address const &peer, BlockList block_list);
 
-  void AddToBlockHistory(byte_array::ConstByteArray block_hash, OriginAndTime&& originAndTime);
+  void AddToBlockHistory(byte_array::ConstByteArray block_hash, OriginAndTime &&originAndTime);
 
   MuddleEndpoint &  endpoint_;
   MainChain &       chain_;
@@ -170,9 +169,9 @@ private:
   FutureTimepoint next_loose_tips_check_;
 
   std::queue<BlockHistory::key_type> block_hash_queue_;  // block hash
-  BlockHistory block_history_;  // block hash => OriginAndTime
+  BlockHistory                       block_history_;     // block hash => OriginAndTime
 
-  Mutex block_history_mutex_ {__LINE__, __FILE__};
+  Mutex block_history_mutex_{__LINE__, __FILE__};
 };
 
 }  // namespace ledger
