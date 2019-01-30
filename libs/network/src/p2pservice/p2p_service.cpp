@@ -107,7 +107,6 @@ void P2PService::WorkCycle()
 
     // perform connections updates and drops based on previous step
     UpdateMuddlePeers(active_addresses);
-
   }
 
   if (manifest_update_cycle_ms_.count() > 0 && manifests_next_update_timepoint_.IsDue())
