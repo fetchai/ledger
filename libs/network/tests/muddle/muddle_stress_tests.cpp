@@ -21,6 +21,7 @@
 #include <thread>
 
 #include "core/byte_array/decoders.hpp"
+#include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
@@ -137,6 +138,9 @@ protected:
     subscription->SetMessageHandler([&num_messages](Address const &from, uint16_t service,
                                                     uint16_t channel, uint16_t counter,
                                                     Payload const &payload, Address const &) {
+      FETCH_UNUSED(from);
+      FETCH_UNUSED(counter);
+
       EXPECT_EQ(service, uint16_t{SERVICE});
       EXPECT_EQ(channel, uint16_t{CHANNEL});
       EXPECT_EQ(payload.size(), PAYLOAD_LENGTH);

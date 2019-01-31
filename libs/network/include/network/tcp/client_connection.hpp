@@ -165,6 +165,8 @@ private:
     FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Waiting for next header.");
     auto self(shared_from_this());
     auto cb = [this, socket_ptr, self](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       auto ptr = manager_.lock();
       if (!ptr)
       {
@@ -216,6 +218,8 @@ private:
     message.Resize(header_.content.length);
     auto self(shared_from_this());
     auto cb = [this, socket_ptr, self, message](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
+
       auto ptr = manager_.lock();
       if (!ptr)
       {

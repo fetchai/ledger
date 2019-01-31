@@ -102,7 +102,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -162,7 +162,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block const &block)
+bool ExecutionManager::PlanExecution(Block::Body const &block)
 {
   std::lock_guard<Mutex> lock(execution_plan_lock_);
 
@@ -180,7 +180,7 @@ bool ExecutionManager::PlanExecution(Block const &block)
     //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
 
     // process the transactions
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
       Identifier id;
       id.Parse(tx.contract_name);
