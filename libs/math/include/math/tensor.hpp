@@ -165,6 +165,15 @@ public:
     }
   }
 
+  void Copy(Tensor<T> const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = o.At(i);
+    }
+  }
+
   T &At(size_t i)
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
@@ -175,7 +184,12 @@ public:
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
   }
 
-  T Get(std::vector<size_t> const &indices) const
+  T const &Get(std::vector<size_t> const &indices) const
+  {
+    return (*storage_)[OffsetOfElement(indices)];
+  }
+
+  T &Get(std::vector<size_t> const &indices)
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
@@ -235,7 +249,7 @@ public:
     return true;
   }
 
-  Tensor<T> &Add_inplace(Tensor<T> const &o)
+  Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
@@ -245,7 +259,7 @@ public:
     return *this;
   }
 
-  Tensor<T> &Mul_inplace(Tensor<T> const &o)
+  Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
@@ -280,6 +294,7 @@ public:
   std::string ToString() const
   {
     std::stringstream ss;
+    ss << std::setprecision(5) << std::fixed << std::showpos;
     if (shape_.size() == 2)
     {
       for (size_t i(0); i < shape_[0]; ++i)

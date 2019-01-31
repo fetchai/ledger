@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
+#include "core/logger.hpp"
 #include "core/mutex.hpp"
+#include "core/threading.hpp"
 #include "storage/object_store.hpp"
 
 #include <map>
@@ -76,8 +78,8 @@ public:
 
 private:
   using Mutex       = fetch::mutex::Mutex;
-  using Queue       = fetch::core::SimpleQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::SimpleQueue<chain::TransactionSummary, 1 << 15>;
+  using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
+  using RecentQueue = fetch::core::MPMCQueue<chain::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
   using Flag        = std::atomic<bool>;
@@ -96,7 +98,12 @@ private:
   ThreadPtr     thread_;                           ///< The background worker thread
   Callback      set_callback_;                     ///< The completion handler
   Flag          stop_{false};                      ///< Flag to signal the stop of the worker
+  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
+                                                                     1};
 };
+
+template <typename O>
+constexpr core::Tickets::Count TransientObjectStore<O>::recent_queue_alarm_threshold;
 
 /**
  * Construct a transient object store
@@ -221,12 +228,28 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
+  static core::Tickets::Count prev_count{0};
+
   // add the element into the cache
   SetInCache(rid, object);
 
   if (newly_seen)
   {
-    most_recent_seen_.TryPush(object.summary());
+    std::size_t count{most_recent_seen_.QUEUE_LENGTH};
+    bool const  inserted =
+        most_recent_seen_.Push(object.summary(), count, std::chrono::milliseconds{100});
+    if (inserted && prev_count != count)
+    {
+      if (prev_count < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
+      {
+        FETCH_LOG_WARN("TransientObjectStore", " the `most_recent_seen_` queue size ", count,
+                       " reached or is over threshold ", recent_queue_alarm_threshold, ").");
+        // TODO(private issue #582): The queue became FULL - this information shall
+        // be propagated out to caller, so it can make appropriate decision how to
+        // proceed.
+      }
+      prev_count = count;
+    }
   }
 
   // dispatch the callback if necessary
@@ -343,6 +366,8 @@ void TransientObjectStore<O>::ThreadLoop()
 {
   static const std::size_t               BATCH_SIZE = 100;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{200};
+
+  SetThreadName("TxStore");
 
   std::vector<ResourceID> rids(BATCH_SIZE);
   std::size_t             extracted_count = 0;

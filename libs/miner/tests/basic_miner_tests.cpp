@@ -49,13 +49,13 @@ protected:
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
   using MutableTransaction  = fetch::chain::MutableTransaction;
   using VerifiedTransaction = fetch::chain::VerifiedTransaction;
-  using BlockBody           = fetch::chain::BlockBody;
+  using BlockBody           = fetch::ledger::Block::Body;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using BitVector           = fetch::bitmanip::BitVector;
   using TransactionSummary  = fetch::chain::TransactionSummary;
-  using MainChain           = fetch::chain::MainChain;
-  using Block               = fetch::chain::MainChain::BlockType;
+  using MainChain           = fetch::ledger::MainChain;
+  using Block               = fetch::ledger::Block;
 
   void SetUp() override
   {
@@ -112,7 +112,7 @@ TEST_P(BasicMinerTests, Sample)
   MainChain dummy;
 
   auto &heaviest_block = dummy.HeaviestBlock();
-  block.previous_hash  = heaviest_block.hash();
+  block.previous_hash  = heaviest_block.body.hash;
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
@@ -120,7 +120,7 @@ TEST_P(BasicMinerTests, Sample)
   {
     BitVector lanes{NUM_LANES};
 
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
       BitVector resources{NUM_LANES};
 
@@ -171,7 +171,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     BlockBody body;
 
     auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.hash();
+    body.previous_hash   = heaviest_block.body.hash;
 
     miner_->GenerateBlock(body, lanes, slices, chain);
 
@@ -179,7 +179,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     transactions_within_block.clear();
     for (auto const &slice : body.slices)
     {
-      for (auto const &tx : slice.transactions)
+      for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
         bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
@@ -199,7 +199,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     }
 
     Block block;
-    block.SetBody(body);
+    block.body = body;
     block.UpdateDigest();
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
@@ -216,20 +216,20 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     BlockBody body;
 
     auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.hash();
+    body.previous_hash   = heaviest_block.body.hash;
 
     miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
 
     for (auto const &slice : body.slices)
     {
-      EXPECT_EQ(slice.transactions.size(), 0);
+      EXPECT_EQ(slice.size(), 0);
     }
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
     for (auto const &slice : body.slices)
     {
-      for (auto const &tx : slice.transactions)
+      for (auto const &tx : slice)
       {
         // Guarantee each body fresh transactions
         bool not_found = transactions_within_block.find(tx) == transactions_within_block.end();
@@ -249,7 +249,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
     }
 
     Block block;
-    block.SetBody(body);
+    block.body = body;
     block.UpdateDigest();
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);

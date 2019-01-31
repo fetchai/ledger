@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/transaction_processor.hpp"
+#include "core/threading.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -32,7 +33,7 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
                                            miner::MinerInterface &miner, std::size_t num_threads)
   : storage_{storage}
   , miner_{miner}
-  , verifier_{*this, num_threads}
+  , verifier_{*this, num_threads, "TxV-P"}
   , running_{false}
 {}
 
@@ -114,6 +115,8 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
 
 void TransactionProcessor::ThreadEntryPoint()
 {
+  SetThreadName("TxProc");
+
   std::vector<chain::TransactionSummary> new_txs;
   while (running_)
   {
@@ -128,7 +131,7 @@ void TransactionProcessor::ThreadEntryPoint()
       assert(summary.IsWellFormed());
       miner_.EnqueueTransaction(summary);
 
-      FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
+      FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }
   }
 }
