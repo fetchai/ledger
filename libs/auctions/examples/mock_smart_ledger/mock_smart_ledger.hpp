@@ -141,23 +141,16 @@ private:
       doc.Parse(request.body());
 
       BidId bid_id = DEFAULT_BID_ID;
-//      std::vector<ItemId> item_ids = {};
-      ItemId item_id = DEFAULT_ITEM_ID;
+      std::vector<ItemId> item_ids = {};
       Value bid_price = DEFAULT_BID_PRICE;
       AgentId bidder_id = DEFAULT_BID_BIDDER;
       std::vector<Bid> excludes = {};
 
       // extract all the request parameters
-//      if (variant::Extract(doc.root(), "bid_id", bid_id) && variant::Extract(doc.root(), "item_ids", item_ids) &&
-//          variant::Extract(doc.root(), "bid_price", bid_price) && variant::Extract(doc.root(), "bidder_id", bidder_id))
-      if (variant::Extract(doc.root(), "bid_id", bid_id) && variant::Extract(doc.root(), "item_id", item_id) &&
+      if (variant::Extract(doc.root(), "bid_id", bid_id) && variant::Extract(doc.root(), "item_ids", item_ids) &&
           variant::Extract(doc.root(), "bid_price", bid_price) && variant::Extract(doc.root(), "bidder_id", bidder_id))
       {
-//        variant::Extract(doc.root(), "excludes", excludes);
-
-        std::cout << "Adding bid with id: " << bid_id << std::endl;
-        auction_.PlaceBid(Bid{bid_id, {item_id}, bid_price, bidder_id, excludes});
-
+        auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }
