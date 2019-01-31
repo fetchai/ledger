@@ -98,8 +98,14 @@ inline void TransactionProcessor::Start()
  */
 inline void TransactionProcessor::Stop()
 {
-  verifier_.Stop();
   running_ = false;
+  if (poll_new_tx_thread_)
+  {
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
+  }
+
+  verifier_.Stop();
 }
 
 /**

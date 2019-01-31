@@ -39,7 +39,7 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
 
 TransactionProcessor::~TransactionProcessor()
 {
-  running_ = false;
+  Stop();
 }
 
 void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
