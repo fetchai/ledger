@@ -77,7 +77,7 @@ private:
   miner::MinerInterface &miner_;
   TransactionVerifier    verifier_;
   ThreadPtr              poll_new_tx_thread_;
-  bool                   running_;
+  std::atomic_bool       running_;
 
   void ThreadEntryPoint();
 };
