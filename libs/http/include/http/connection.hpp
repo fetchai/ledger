@@ -160,6 +160,8 @@ public:
     // Reading remaining bits if not all was read.
     auto self = shared_from_this();
     auto cb = [this, buffer_ptr, request, self](std::error_code const &ec, std::size_t const &len) {
+      FETCH_UNUSED(len);
+
       FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body cb");
       if (ec)
       {

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/threading.hpp"
 #include "network/generics/resolvable.hpp"
 #include "network/service/promise.hpp"
 
@@ -46,9 +47,10 @@ private:
 public:
   static constexpr char const *LOGGING_NAME = "HasWorkerThread";
 
-  HasWorkerThread(Target *target, std::function<void()> workcycle)
+  HasWorkerThread(Target *target, std::string name, std::function<void()> workcycle)
     : target_(target)
     , workcycle_(std::move(workcycle))
+    , name_{std::move(name)}
   {
     thread_ = std::make_shared<std::thread>([this]() { this->Run(); });
   }
@@ -76,6 +78,8 @@ public:
 protected:
   void Run()
   {
+    SetThreadName(name_);
+
     if (!target_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No target configured, stopping thread.");
@@ -100,6 +104,7 @@ protected:
   ThreadPtr                 thread_;
   ShutdownFlag              shutdown_{false};
   WorkFunc                  workcycle_;
+  std::string               name_;
   std::chrono::milliseconds wait_time_{100};
 };
 

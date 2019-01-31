@@ -25,8 +25,15 @@
 
 static constexpr char const *LOGGING_NAME = "MainChainTests";
 
-using namespace fetch::chain;
-using namespace fetch::byte_array;
+using fetch::ledger::MainChain;
+using fetch::chain::consensus::DummyMiner;
+using fetch::ledger::Block;
+
+using Blocks    = MainChain::Blocks;
+using Body      = Block::Body;
+using BlockHash = Block::Digest;
+
+static constexpr std::size_t NUM_BLOCKS = 1000;
 
 // TODO(issue 33): get these from helper_functions when it's sorted
 // Time related functionality
@@ -61,24 +68,19 @@ std::map<std::size_t, std::size_t> GetRandomIndexes(std::size_t size)
   return ret;
 }
 
-using block_type = MainChain::BlockType;
-using body_type  = MainChain::BlockType::body_type;
-
-static constexpr std::size_t NUM_BLOCKS = 1000;
-
 TEST(ledger_main_chain_gtest, building_on_main_chain)
 {
-  block_type block;
+  Block block;
 
   MainChain mainChain{};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto genesis = mainChain.HeaviestBlock();
 
-  EXPECT_EQ(genesis.body().block_number, 0);
+  EXPECT_EQ(genesis.body.block_number, 0);
 
-  fetch::byte_array::ByteArray prevHash = genesis.hash();
-  fetch::byte_array::ByteArray currHash = genesis.hash();
+  BlockHash prevHash = genesis.body.hash;
+  BlockHash currHash = genesis.body.hash;
 
   // Add another 3 blocks in order
   for (std::size_t i = 0; i < 3; ++i)
@@ -86,73 +88,73 @@ TEST(ledger_main_chain_gtest, building_on_main_chain)
     FETCH_LOG_INFO(LOGGING_NAME, "Test: Adding blocks in order");
 
     // Create another block sequential to previous
-    block_type nextBlock;
-    body_type  nextBody;
+    Block nextBlock;
+    Body  nextBody;
     nextBody.block_number  = 1 + i;
     nextBody.previous_hash = prevHash;
 
-    nextBlock.SetBody(nextBody);
+    nextBlock.body = nextBody;
     nextBlock.UpdateDigest();
 
     mainChain.AddBlock(nextBlock);
 
-    EXPECT_EQ(mainChain.HeaviestBlock().hash(), nextBlock.hash());
+    EXPECT_EQ(mainChain.HeaviestBlock().body.hash, nextBlock.body.hash);
 
-    prevHash = nextBlock.hash();
-    currHash = nextBlock.hash();
+    prevHash = nextBlock.body.hash;
+    currHash = nextBlock.body.hash;
   }
 
   // Try adding a non-sequential block (prev hash is itself)
-  block_type dummy;
-  body_type  dummy_body;
+  Block dummy;
+  Body  dummy_body;
   dummy_body.block_number = 1;
-  dummy.SetBody(dummy_body);
+  dummy.body              = dummy_body;
   dummy.UpdateDigest();
-  dummy.body().previous_hash = genesis.hash();
+  dummy.body.previous_hash = genesis.body.hash;
 
   mainChain.AddBlock(dummy);
 
   // check that the heaviest block has not changed
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), currHash);
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, currHash);
 }
 
 TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
 {
   MainChain mainChain{};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
   // Try adding a non-sequential block (prev hash is itself)
-  block_type dummy;
-  body_type  dummy_body;
+  Block dummy;
+  Body  dummy_body;
   dummy_body.block_number = 2;
-  dummy.SetBody(dummy_body);
+  dummy.body              = dummy_body;
   dummy.UpdateDigest();
-  dummy.body().previous_hash = dummy.hash();
+  dummy.body.previous_hash = dummy.body.hash;
 
   mainChain.AddBlock(dummy);
 
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), block.hash());
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, block.body.hash);
 
-  fetch::byte_array::ByteArray prevHash = block.hash();
-  std::vector<block_type>      blocks;
+  BlockHash prevHash = block.body.hash;
+  Blocks    blocks;
 
   // Add another 3 blocks in order
   for (std::size_t i = 0; i < 3; ++i)
   {
     // Create another block sequential to previous
-    block_type nextBlock;
-    body_type  nextBody;
+    Block nextBlock;
+    Body  nextBody;
     nextBody.block_number  = 1 + i;
     nextBody.previous_hash = prevHash;
 
-    nextBlock.SetBody(nextBody);
+    nextBlock.body = nextBody;
     nextBlock.UpdateDigest();
 
     blocks.push_back(nextBlock);
 
-    prevHash = nextBlock.hash();
+    prevHash = nextBlock.body.hash;
   }
 
   for (auto i : blocks)
@@ -160,29 +162,28 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
     mainChain.AddBlock(i);
   }
 
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), prevHash);
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, prevHash);
 }
 
 TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
 {
   MainChain mainChain{};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
-  fetch::byte_array::ByteArray prevHash = block.hash();
-  fetch::byte_array::ByteArray topHash  = block.hash();
+  BlockHash prevHash = block.body.hash;
+  BlockHash topHash  = block.body.hash;
 
   // Add another N blocks in order
-  for (std::size_t i = block.body().block_number + 1; i < 15; ++i)
+  for (std::size_t i = block.body.block_number + 1; i < 15; ++i)
   {
     // Create another block sequential to previous
-    block_type nextBlock;
-    body_type  nextBody;
+    Block nextBlock;
+    Body  nextBody;
     nextBody.block_number  = i;
     nextBody.previous_hash = prevHash;
-
-    nextBlock.SetBody(nextBody);
+    nextBlock.body         = nextBody;
     nextBlock.UpdateDigest();
 
     if (i != 7)
@@ -191,20 +192,20 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
     }
     else
     {
-      topHash = block.hash();
+      topHash = block.body.hash;
     }
-    prevHash = nextBlock.hash();
+    prevHash = nextBlock.body.hash;
   }
 
-  EXPECT_NE(mainChain.HeaviestBlock().hash(), prevHash);
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), topHash);
+  EXPECT_NE(mainChain.HeaviestBlock().body.hash, prevHash);
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, topHash);
 }
 
 TEST(ledger_main_chain_gtest, Test_mining_proof)
 {
-  std::vector<block_type>             blocks;
-  std::size_t                         blockIterations = 10;
-  fetch::chain::consensus::DummyMiner miner;
+  Blocks      blocks;
+  std::size_t blockIterations = 10;
+  DummyMiner  miner;
 
   for (std::size_t diff = 1; diff < 16; diff <<= 1)
   {
@@ -212,13 +213,13 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
 
     for (std::size_t j = 0; j < blockIterations; ++j)
     {
-      block_type block;
-      body_type  block_body;
+      Block block;
+      Body  block_body;
       block_body.block_number = j;
-      block_body.nonce        = 0;
-      block.SetBody(block_body);
+      block.body              = block_body;
+      block.nonce             = 0;
       block.UpdateDigest();
-      block.proof().SetTarget(diff);  // Number of zeroes
+      block.proof.SetTarget(diff);  // Number of zeroes
 
       miner.Mine(block);
 
@@ -233,27 +234,27 @@ TEST(ledger_main_chain_gtest, Test_mining_proof)
   // Verify blocks
   for (auto &i : blocks)
   {
-    if (!i.proof()())
+    if (!i.proof())
     {
-      EXPECT_EQ(i.proof()(), 1);
+      EXPECT_EQ(i.proof(), 1);
     }
   }
 }
 
 TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 {
-  std::vector<block_type>             blocks;
-  fetch::chain::consensus::DummyMiner miner;
+  Blocks     blocks;
+  DummyMiner miner;
 
   for (std::size_t j = 0; j < 10; ++j)
   {
-    block_type block;
-    body_type  block_body;
+    Block block;
+    Body  block_body;
     block_body.block_number = j;
-    block_body.nonce        = 0;
-    block.SetBody(block_body);
+    block.nonce             = 0;
+    block.body              = block_body;
     block.UpdateDigest();
-    block.proof().SetTarget(8);  // Number of zeroes
+    block.proof.SetTarget(8);  // Number of zeroes
 
     miner.Mine(block);
 
@@ -268,20 +269,20 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
     fetch::serializers::ByteArrayBuffer arr;
     arr << i;
     arr.seek(0);
-    block_type block;
+    Block block;
     arr >> block;
 
     block.UpdateDigest();  // digest and target not serialized due to trust
                            // issues
-    block.proof().SetTarget(8);
+    block.proof.SetTarget(8);
 
-    if (!block.proof()())
+    if (!block.proof())
     {
       std::cout << "block not verified" << std::endl;
       blockVerified = false;
     }
 
-    EXPECT_EQ(ToHex(i.hash()), ToHex(block.hash()));
+    EXPECT_EQ(ToHex(i.body.hash), ToHex(block.body.hash));
   }
 
   EXPECT_EQ(blockVerified, true);
@@ -290,14 +291,14 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
 {
   MainChain mainChain{};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
-  fetch::byte_array::ByteArray prevHash = block.hash();
+  BlockHash prevHash = block.body.hash;
 
-  std::vector<block_type> blocks(NUM_BLOCKS, block);
-  uint64_t                blockNumber = block.body().block_number++;
+  Blocks   blocks(NUM_BLOCKS, block);
+  uint64_t blockNumber = block.body.block_number++;
 
   {
     auto t1 = TimePoint();
@@ -306,17 +307,17 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
     for (std::size_t i = 0; i < NUM_BLOCKS; ++i)
     {
       // Create another block sequential to previous
-      block_type nextBlock;
-      body_type  nextBody;
+      Block nextBlock;
+      Body  nextBody;
       nextBody.block_number  = blockNumber++;
       nextBody.previous_hash = prevHash;
 
-      nextBlock.SetBody(nextBody);
+      nextBlock.body = nextBody;
       nextBlock.UpdateDigest();
 
       blocks[i] = nextBlock;
 
-      prevHash = nextBlock.hash();
+      prevHash = nextBlock.body.hash;
     }
 
     auto t2 = TimePoint();
@@ -333,20 +334,20 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
   auto t2 = TimePoint();
   std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), prevHash);
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, prevHash);
 }
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
 {
   MainChain mainChain{};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
-  fetch::byte_array::ByteArray              prevHash = block.hash();
-  std::vector<block_type>                   blocks(NUM_BLOCKS, block);
+  BlockHash                                 prevHash = block.body.hash;
+  Blocks                                    blocks(NUM_BLOCKS, block);
   std::map<std::size_t, std::size_t>        randomIndexes;
-  uint64_t                                  blockNumber = block.body().block_number++;
+  uint64_t                                  blockNumber = block.body.block_number++;
   fetch::random::LaggedFibonacciGenerator<> lfg;
 
   {
@@ -355,17 +356,17 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
     for (std::size_t i = 0; i < NUM_BLOCKS; ++i)
     {
       // Create another block sequential to previous
-      block_type nextBlock;
-      body_type  nextBody;
+      Block nextBlock;
+      Body  nextBody;
       nextBody.block_number  = blockNumber++;
       nextBody.previous_hash = prevHash;
 
-      nextBlock.SetBody(nextBody);
+      nextBlock.body = nextBody;
       nextBlock.UpdateDigest();
 
       blocks[i] = nextBlock;
 
-      prevHash = nextBlock.hash();
+      prevHash = nextBlock.body.hash;
     }
 
     randomIndexes = GetRandomIndexes(NUM_BLOCKS);
@@ -385,20 +386,20 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
   std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
   // Last block in vector still heaviest block for main chain
-  EXPECT_EQ(mainChain.HeaviestBlock().totalWeight(), NUM_BLOCKS + 1);
-  EXPECT_EQ(ToHex(mainChain.HeaviestBlock().hash()), ToHex(prevHash));
+  EXPECT_EQ(mainChain.HeaviestBlock().total_weight, NUM_BLOCKS + 1);
+  EXPECT_EQ(ToHex(mainChain.HeaviestBlock().body.hash), ToHex(prevHash));
 }
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_storage)
 {
   MainChain mainChain{0};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
-  fetch::byte_array::ByteArray prevHash = block.hash();
-  std::vector<block_type>      blocks(NUM_BLOCKS, block);
-  uint64_t                     blockNumber = block.body().block_number++;
+  BlockHash prevHash = block.body.hash;
+  Blocks    blocks(NUM_BLOCKS, block);
+  uint64_t  blockNumber = block.body.block_number++;
 
   {
     auto t1 = TimePoint();
@@ -407,17 +408,17 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_
     for (std::size_t i = 0; i < NUM_BLOCKS; ++i)
     {
       // Create another block sequential to previous
-      block_type nextBlock;
-      body_type  nextBody;
+      Block nextBlock;
+      Body  nextBody;
       nextBody.block_number  = blockNumber++;
       nextBody.previous_hash = prevHash;
 
-      nextBlock.SetBody(nextBody);
+      nextBlock.body = nextBody;
       nextBlock.UpdateDigest();
 
       blocks[i] = nextBlock;
 
-      prevHash = nextBlock.hash();
+      prevHash = nextBlock.body.hash;
     }
 
     auto t2 = TimePoint();
@@ -434,20 +435,20 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_
   auto t2 = TimePoint();
   std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
-  EXPECT_EQ(mainChain.HeaviestBlock().hash(), prevHash);
+  EXPECT_EQ(mainChain.HeaviestBlock().body.hash, prevHash);
 }
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order_with_file_storage)
 {
   MainChain mainChain{0};
-  mainChain.reset();
+  mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
 
-  fetch::byte_array::ByteArray              prevHash = block.hash();
-  std::vector<block_type>                   blocks(NUM_BLOCKS, block);
+  BlockHash                                 prevHash = block.body.hash;
+  Blocks                                    blocks(NUM_BLOCKS, block);
   std::map<std::size_t, std::size_t>        randomIndexes;
-  uint64_t                                  blockNumber = block.body().block_number++;
+  uint64_t                                  blockNumber = block.body.block_number++;
   fetch::random::LaggedFibonacciGenerator<> lfg;
 
   {
@@ -457,17 +458,17 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order_with_file_
     for (std::size_t i = 0; i < NUM_BLOCKS; ++i)
     {
       // Create another block sequential to previous
-      block_type nextBlock;
-      body_type  nextBody;
+      Block nextBlock;
+      Body  nextBody;
       nextBody.block_number  = blockNumber++;
       nextBody.previous_hash = prevHash;
 
-      nextBlock.SetBody(nextBody);
+      nextBlock.body = nextBody;
       nextBlock.UpdateDigest();
 
       blocks[i] = nextBlock;
 
-      prevHash = nextBlock.hash();
+      prevHash = nextBlock.body.hash;
     }
 
     randomIndexes = GetRandomIndexes(NUM_BLOCKS);
@@ -487,6 +488,6 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order_with_file_
   std::cout << "Blocks: " << NUM_BLOCKS << ". Time: " << TimeDifference(t2, t1) << std::endl;
 
   // Last block in vector still heaviest block for main chain
-  EXPECT_EQ(mainChain.HeaviestBlock().totalWeight(), NUM_BLOCKS + 1);
-  EXPECT_EQ(ToHex(mainChain.HeaviestBlock().hash()), ToHex(prevHash));
+  EXPECT_EQ(mainChain.HeaviestBlock().total_weight, NUM_BLOCKS + 1);
+  EXPECT_EQ(ToHex(mainChain.HeaviestBlock().body.hash), ToHex(prevHash));
 }

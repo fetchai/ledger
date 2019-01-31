@@ -82,9 +82,9 @@ public:
   using ThreadPoolPtr = std::shared_ptr<ThreadPoolImplementation>;
   using WorkItem      = std::function<void()>;
 
-  static ThreadPoolPtr Create(std::size_t threads, std::string const &name = "");
+  static ThreadPoolPtr Create(std::size_t threads, std::string const &name);
 
-  explicit ThreadPoolImplementation(std::size_t threads, std::string name = "");
+  explicit ThreadPoolImplementation(std::size_t threads, std::string name);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
   ThreadPoolImplementation(ThreadPoolImplementation &&)      = default;
   ~ThreadPoolImplementation();
