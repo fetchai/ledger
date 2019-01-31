@@ -77,6 +77,7 @@ bool Extract(Variant const &object, byte_array::ConstByteArray const &key, std::
     // ensure that the element is compatible with the requested byte
     if (element.IsArray())
     {
+      value.reserve(element.size());
       for (std::size_t j = 0; j < element.size(); ++j)
       {
         if (element[j].Is<T>())

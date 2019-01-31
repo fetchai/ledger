@@ -17,35 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "auction_smart_contract/mock_ledger.hpp"
-//#include "auctions/vickrey_auction.hpp"
-
 #include "core/assert.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logger.hpp"
-#include "crypto/ecdsa.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-#include "ledger/chain/helper_functions.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chaincode/token_contract.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/transaction_processor.hpp"
-#include "storage/object_store.hpp"
 #include "variant/variant_utils.hpp"
 
 #include "auctions/type_def.hpp"
 #include "auctions/combinatorial_auction.hpp"
-//#include "http/json_client.hpp"
-#include "http/module.hpp"
 
 namespace fetch {
 namespace auctions {
 namespace examples {
 
+/**
+ * class offering a HTTP interface to a smart market (i.e. combinatorial auction). Ledger integration details
+ * ignored or mocked as necessary for now.
+ */
 class MockSmartLedger : public fetch::http::HTTPModule
 {
 public:
@@ -63,7 +50,8 @@ public:
   {
     auction_ = CombinatorialAuction();
 
-    /// BEGIN TIMER
+    // TODO(private 597): implement timer & cycling auction clearance
+    // TODO(private 596): implement bid exclusions
 
     /////////////////////////////////
     /// Register valid http calls ///
@@ -77,12 +65,10 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            return OnPlaceBid(request);
          });
-
     Post("/api/mine",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            return OnMine(request);
          });
-
     Post("/api/execute",
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            return OnExecute(request);
@@ -114,7 +100,6 @@ private:
       if (variant::Extract(doc.root(), "item_id", item_id) && variant::Extract(doc.root(), "seller_id", seller_id) &&
           variant::Extract(doc.root(), "min_price", min_price))
       {
-        std::cout << "Adding item with id: " << item_id << std::endl;
         auction_.AddItem(Item{item_id, seller_id, min_price});
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
@@ -130,7 +115,7 @@ private:
 
 
   /**
-   * method for listing a new item in the auction
+   * method for placing new bids
    */
   http::HTTPResponse OnPlaceBid(http::HTTPRequest const &request)
   {
@@ -163,7 +148,7 @@ private:
   }
 
   /**
-   * method for listing a new item in the auction
+   * method for commencing mining the smart market
    */
   http::HTTPResponse OnMine(http::HTTPRequest const &request)
   {
@@ -179,7 +164,6 @@ private:
       // extract all the request parameters
       if (variant::Extract(doc.root(), "random_seed", random_seed) && variant::Extract(doc.root(), "run_time", run_time))
       {
-        std::cout << "Beginning mining with random seed: " << random_seed << ", for run time: " << run_time << std::endl;
         auction_.Mine(random_seed, run_time);
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
@@ -193,9 +177,8 @@ private:
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
 
-
   /**
-   * method for listing a new item in the auction
+   * method that executes the auction, i.e. simply prints out winning and losing bids following mining
    */
   http::HTTPResponse OnExecute(http::HTTPRequest const &request)
   {
@@ -224,13 +207,6 @@ private:
 
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
-
-
-
-
-
-
-
 
   /**
    * method for printing error codes
