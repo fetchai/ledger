@@ -54,5 +54,44 @@ bool Extract(Variant const &object, byte_array::ConstByteArray const &key, T &va
   return success;
 }
 
+/**
+ * Handles case where the variant is an array and extracts the data into a vector
+ *
+ * @tparam T The data type contained in the vector/array
+ * @param object The object to extract from
+ * @param key The key to lookup
+ * @param value The destination for the extracted vector of values
+ * @return true if successful, otherwise false
+ * @return
+ */
+template <typename T>
+bool Extract(Variant const &object, byte_array::ConstByteArray const &key, std::vector<T> &value)
+{
+  bool success{false};
+
+  // ensure the input variant is an object and has be desired key
+  if (object.IsObject() && object.Has(key))
+  {
+    Variant const &element = object[key];
+
+    // ensure that the element is compatible with the requested byte
+    if (element.IsArray())
+    {
+      value.reserve(element.size());
+      for (std::size_t j = 0; j < element.size(); ++j)
+      {
+        if (element[j].Is<T>())
+        {
+          value.emplace_back(element[j].As<T>());
+        }
+      }
+
+      success = true;
+    }
+  }
+
+  return success;
+}
+
 }  // namespace variant
 }  // namespace fetch
