@@ -205,9 +205,9 @@ Router::Router(NetworkId network_id, Router::Address address, MuddleRegister con
   , black_outs_(routing_table_lock_)
 {}
 
-template<class... Args>
+template <class... Args>
 Router::Router(NetworkId network_id, Router::Address address, MuddleRegister const &reg,
-               Dispatcher &dispatcher, Args &&...args)
+               Dispatcher &dispatcher, Args &&... args)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
@@ -1000,12 +1000,15 @@ void Router::CleanEchoCache()
  * @return This.
  */
 
-void Router::SendMaintenance(Address const &address, MaintTag tag) {
+void Router::SendMaintenance(Address const &address, MaintTag tag)
+{
   ConstByteArray signal{byte_array::ToConstByteArray(tag)};
   Send(address, SERVICE_MUDDLE, CHANNEL_MAINTENANCE, signal);
 }
 
-template<typename T> void Router::SendMaintenance(Address const &address, MaintTag tag, T &&arg) {
+template <typename T>
+void Router::SendMaintenance(Address const &address, MaintTag tag, T &&arg)
+{
   ByteArrayBuffer signal(sizeof(MaintTag) + sizeof(std::time_t));
 
   signal << tag << arg;
@@ -1074,10 +1077,11 @@ Router &Router::Whitelist(Address const &address)
  * @param handle The address of a peer to disconnect from.
  * @return This.
  */
-Router &Router::Disconnect(Address const &address) {
-	SendMaintenance(address, MAINT_DISCONNECT);
-	DropPeer(address);
-	return *this;
+Router &Router::Disconnect(Address const &address)
+{
+  SendMaintenance(address, MAINT_DISCONNECT);
+  DropPeer(address);
+  return *this;
 }
 
 /**
@@ -1085,9 +1089,10 @@ Router &Router::Disconnect(Address const &address) {
  * @param handle The handle of a connection to disconnect from.
  * @return This.
  */
-Router &Router::Disconnect(Handle handle) {
-	Address address;
-	return HandleToDirectAddress(handle, address)? Disconnect(address) : *this;
+Router &Router::Disconnect(Handle handle)
+{
+  Address address;
+  return HandleToDirectAddress(handle, address) ? Disconnect(address) : *this;
 }
 
 /**

@@ -225,8 +225,7 @@ public:
     if (pos < length_)
     {
       auto retVal{
-          static_cast<container_type const *>(
-		  std::memchr(arr_pointer_ + pos, c, length_ - pos))};
+          static_cast<container_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos))};
       if (retVal)
       {
         return static_cast<std::size_t>(retVal - arr_pointer_);

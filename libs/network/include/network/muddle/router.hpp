@@ -73,8 +73,9 @@ public:
 
   // Construction / Destruction
   Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher);
-  template<class... Args>
-  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher, Args &&...args);
+  template <class... Args>
+  Router(NetworkId network_id, Address address, MuddleRegister const &reg, Dispatcher &dispatcher,
+         Args &&... args);
 
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
@@ -216,7 +217,8 @@ private:
   bool Disallowed(PacketPtr const &packet) const;
 
   void SendMaintenance(Address const &address, uint64_t tag);
-  template<typename T> void SendMaintenance(Address const &address, uint64_t tag, T &&arg);
+  template <typename T>
+  void SendMaintenance(Address const &address, uint64_t tag, T &&arg);
 
   Address const         address_;
   RawAddress const      address_raw_;

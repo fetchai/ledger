@@ -105,7 +105,8 @@ class MuddleEndpoint;
  */
 class Muddle
 {
-  using Clock      = std::chrono::system_clock;
+  using Clock = std::chrono::system_clock;
+
 public:
   using CertificatePtr  = std::unique_ptr<crypto::Prover>;
   using Uri             = network::Uri;
@@ -117,7 +118,7 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
   using NetworkId       = MuddleEndpoint::NetworkId;
-  using Timepoint  = Clock::time_point;
+  using Timepoint       = Clock::time_point;
 
   using Handle = network::AbstractConnection::connection_handle_type;
 

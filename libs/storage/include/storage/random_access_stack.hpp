@@ -471,7 +471,7 @@ public:
   uint64_t LazyPush(type const &object)
   {
     uint64_t ret = header_.objects;
-    auto n       = Location(ret);
+    auto     n   = Location(ret);
 
     file_handle_.seekg(n, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -509,7 +509,8 @@ private:
     }
   }
 
-  static constexpr std::fstream::pos_type Location(std::fstream::pos_type index) noexcept {
+  static constexpr std::fstream::pos_type Location(std::fstream::pos_type index) noexcept
+  {
     return index * sizeof(type) + Header::size();
   }
 };

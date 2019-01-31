@@ -26,8 +26,8 @@
 #include <mutex>
 #include <thread>
 #include <type_traits>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include <core/mutex.hpp>
@@ -42,13 +42,13 @@ namespace black {
 using Clock     = std::chrono::system_clock;
 using Timepoint = Clock::time_point;
 
-template<class Set, class Key>
+template <class Set, class Key>
 inline typename Set::const_iterator FindQuarantined(Set &suspended, Key const &key)
 {
   auto where{suspended.find(key)};
-  if(where != suspended.cend())
+  if (where != suspended.cend())
   {
-    if(where->second > Clock::now())
+    if (where->second > Clock::now())
     {
       return where;
     }
@@ -57,19 +57,20 @@ inline typename Set::const_iterator FindQuarantined(Set &suspended, Key const &k
   return suspended.cend();
 }
 
-template<class Set, class Key>
+template <class Set, class Key>
 inline bool Quarantined(Set &suspended, Key const &key)
 {
   return FindQuarantined(suspended, key) != suspended.cend();
 }
 
+template <class Persistence>
+class Cache;
+template <class T>
+class Persistence;
+template <class T>
+class NoPersistence;
 
-template <class Persistence> class Cache;
-template <class T> class Persistence;
-template <class T> class NoPersistence;
-
-}
-
+}  // namespace black
 
 template <class Cache, class Mx = mutex::Mutex>
 class BasicBlackset
@@ -80,19 +81,17 @@ public:
   using Clock     = typename Cache::Clock;
   using Timepoint = typename Cache::Timepoint;
 
-
-  template<typename... Args>
-  BasicBlackset(Mutex &mutex, Args &&...args)
+  template <typename... Args>
+  BasicBlackset(Mutex &mutex, Args &&... args)
     : mutex_(&mutex)
     , cache_(std::forward<Args>(args)...)
   {}
   BasicBlackset(BasicBlackset const &) = default;
   BasicBlackset(BasicBlackset &&)      = default;
 
-
-  BasicBlackset &operator=(BasicBlackset const &) = default;
-  BasicBlackset &operator=(BasicBlackset &&) noexcept(std::is_nothrow_move_assignable<Cache>::value) = default;
-
+  BasicBlackset &operator=(BasicBlackset const &)    = default;
+  BasicBlackset &operator                            =(BasicBlackset &&) noexcept(
+      std::is_nothrow_move_assignable<Cache>::value) = default;
 
   template <typename... Args>
   void Blacklist(Args &&... args)
@@ -101,19 +100,17 @@ public:
     LocklessBlacklist(std::forward<Args>(args)...);
   }
 
-
   void Quarantine(Timepoint until, Value t)
   {
     FETCH_LOCK(*mutex_);
     LocklessQuarantine(until, std::move(t));
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Quarantine(Timepoint const &until, Begin begin, End end)
   {
     FETCH_LOCK(*mutex_);
     LocklessQuarantine(until, std::move(begin), std::move(end));
   }
-
 
   bool IsBlacklisted(Value const &t) const
   {
@@ -131,7 +128,6 @@ public:
     return LocklessGetQuarantined();
   }
 
-
   void Whitelist(Value const &t)
   {
     FETCH_LOCK(*mutex_);
@@ -141,7 +137,7 @@ public:
   {
     Whitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Whitelist(Begin begin, End end)
   {
     FETCH_LOCK(*mutex_);
@@ -155,17 +151,15 @@ protected:
     cache_.Blacklist(std::forward<Args>(args)...);
   }
 
-
   void LocklessQuarantine(Timepoint until, Value t)
   {
     cache_.Quarantine(until, std::move(t));
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void LocklessQuarantine(Timepoint const &until, Begin begin, End end)
   {
     cache_.Quarantine(until, std::move(begin), std::move(end));
   }
-
 
   bool LocklessIsBlacklisted(Value const &t) const
   {
@@ -188,25 +182,28 @@ protected:
   {
     LocklessWhitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void LocklessWhitelist(Begin begin, End end)
   {
     cache_.Whitelist(std::move(begin), std::move(end));
   }
 
 private:
-  Mx * mutex_;
+  Mx *  mutex_;
   Cache cache_;
 };
 
+template <typename T, class Mutex = mutex::Mutex>
+using Blackset = BasicBlackset<black::Cache<black::NoPersistence<T>>, Mutex>;
+template <typename T>
+using UnguardedBlackset = BasicBlackset<black::Cache<black::NoPersistence<T>>, void>;
+template <typename T, class Mutex = mutex::Mutex>
+using PersistentBlackset = BasicBlackset<black::Cache<black::Persistence<T>>, Mutex>;
+template <typename T>
+using UnguardedPersistentBlackset = BasicBlackset<black::Cache<black::Persistence<T>>, void>;
 
-template<typename T, class Mutex = mutex::Mutex> using Blackset                    = BasicBlackset<black::Cache<black::NoPersistence<T>>, Mutex>;
-template<typename T>                             using UnguardedBlackset           = BasicBlackset<black::Cache<black::NoPersistence<T>>, void>;
-template<typename T, class Mutex = mutex::Mutex> using PersistentBlackset          = BasicBlackset<black::Cache<black::Persistence<T>>, Mutex>;
-template<typename T>                             using UnguardedPersistentBlackset = BasicBlackset<black::Cache<black::Persistence<T>>, void>;
-
-
-template <class Cache> class BasicBlackset<Cache, void>
+template <class Cache>
+class BasicBlackset<Cache, void>
 {
 public:
   using Mutex     = void;
@@ -214,18 +211,16 @@ public:
   using Clock     = typename Cache::Clock;
   using Timepoint = typename Cache::Timepoint;
 
-
-  template<typename... Args>
-  BasicBlackset(Args &&...args)
+  template <typename... Args>
+  BasicBlackset(Args &&... args)
     : cache_(std::forward<Args>(args)...)
   {}
   BasicBlackset(BasicBlackset const &) = default;
   BasicBlackset(BasicBlackset &&)      = default;
 
-
-  BasicBlackset &operator=(BasicBlackset const &) = default;
-  BasicBlackset &operator=(BasicBlackset &&) noexcept(std::is_nothrow_move_assignable<Cache>::value) = default;
-
+  BasicBlackset &operator=(BasicBlackset const &)    = default;
+  BasicBlackset &operator                            =(BasicBlackset &&) noexcept(
+      std::is_nothrow_move_assignable<Cache>::value) = default;
 
   template <typename... Args>
   void Blacklist(Args &&... args)
@@ -233,17 +228,15 @@ public:
     LocklessBlacklist(std::forward<Args>(args)...);
   }
 
-
   void Quarantine(Timepoint until, Value t)
   {
     LocklessQuarantine(until, std::move(t));
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Quarantine(Timepoint const &until, Begin begin, End end)
   {
     LocklessQuarantine(until, std::move(begin), std::move(end));
   }
-
 
   bool IsBlacklisted(Value const &t) const
   {
@@ -258,7 +251,6 @@ public:
     return LocklessGetQuarantined();
   }
 
-
   void Whitelist(Value const &t)
   {
     LocklessWhitelist(t);
@@ -267,7 +259,7 @@ public:
   {
     Whitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Whitelist(Begin begin, End end)
   {
     LocklessWhitelist(std::move(begin), std::move(end));
@@ -280,17 +272,15 @@ protected:
     cache_.Blacklist(std::forward<Args>(args)...);
   }
 
-
   void LocklessQuarantine(Timepoint until, Value t)
   {
     cache_.Quarantine(until, std::move(t));
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void LocklessQuarantine(Timepoint const &until, Begin begin, End end)
   {
     cache_.Quarantine(until, std::move(begin), std::move(end));
   }
-
 
   bool LocklessIsBlacklisted(Value const &t) const
   {
@@ -313,7 +303,7 @@ protected:
   {
     LocklessWhitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void LocklessWhitelist(Begin begin, End end)
   {
     cache_.Whitelist(std::move(begin), std::move(end));
@@ -322,7 +312,6 @@ protected:
 private:
   Cache cache_;
 };
-
 
 namespace black {
 
@@ -339,24 +328,20 @@ private:
   using Suspended = typename Persistence::Suspended;
 
 public:
-  template<typename... Args>
-  Cache(Args &&...args)
-    noexcept(std::is_nothrow_constructible<Persistence, Args...>::value
-	     && noexcept(std::declval<Persistence &>().Populate(
-			     std::declval<Banned &>(), std::declval<Suspended &>())))
+  template <typename... Args>
+  Cache(Args &&... args) noexcept(
+      std::is_nothrow_constructible<Persistence, Args...>::value &&noexcept(
+          std::declval<Persistence &>().Populate(std::declval<Banned &>(),
+                                                 std::declval<Suspended &>())))
     : persistence_(std::forward<Args>(args)...)
   {
     persistence_.Populate(banned_, suspended_);
   }
-  Cache(Cache &&)
-    noexcept(type_util::AnyV<std::is_nothrow_move_constructible, Persistence, Banned, Suspended>)
-    = default;
+  Cache(Cache &&) noexcept(type_util::AnyV<std::is_nothrow_move_constructible, Persistence, Banned,
+                                           Suspended>) = default;
 
-
-  Cache &operator=(Cache &&)
-    noexcept(type_util::AnyV<std::is_nothrow_move_assignable, Persistence, Banned, Suspended>)
-    = default;
-
+  Cache &operator=(Cache &&) noexcept(
+      type_util::AnyV<std::is_nothrow_move_assignable, Persistence, Banned, Suspended>) = default;
 
   template <typename... Args>
   void Blacklist(Args &&... args)
@@ -365,22 +350,21 @@ public:
     banned_.insert(std::forward<Args>(args)...);
   }
 
-
   void Quarantine(Timepoint until, Value t)
   {
     persistence_.Quarantine(until, t);
     suspended_.emplace(std::move(t), std::move(until));
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Quarantine(Timepoint until, Begin begin, End end)
   {
-    while(begin != end) {
+    while (begin != end)
+    {
       persistence_.Quarantine(until, static_cast<decltype(*begin) &>(*begin));
       suspended_.emplace(*begin, until);
       ++begin;
     }
   }
-
 
   bool IsBlacklisted(Value const &t) const
   {
@@ -395,7 +379,6 @@ public:
     return suspended_;
   }
 
-
   void Whitelist(Value const &t)
   {
     persistence_.Whitelist(t);
@@ -405,10 +388,11 @@ public:
   {
     Whitelist(ts.begin(), ts.end());
   }
-  template<typename Begin, typename End>
+  template <typename Begin, typename End>
   void Whitelist(Begin begin, End end)
   {
-    while(begin != end) {
+    while (begin != end)
+    {
       persistence_.Whitelist(*begin);
       banned_.erase(*begin) || suspended_.erase(*begin);
       ++begin;
@@ -416,13 +400,13 @@ public:
   }
 
 private:
-  Persistence persistence_;
-  Banned banned_;
+  Persistence       persistence_;
+  Banned            banned_;
   mutable Suspended suspended_;
 };
 
-
-template<class T> class NoPersistence
+template <class T>
+class NoPersistence
 {
 public:
   using Value     = T;
@@ -431,8 +415,8 @@ public:
   using Banned    = std::unordered_set<T>;
   using Suspended = std::unordered_map<T, Clock::time_point>;
 
-  template<typename... Args>
-  NoPersistence(Args &&...args) noexcept(std::is_nothrow_constructible<Banned, Args...>::value)
+  template <typename... Args>
+  NoPersistence(Args &&... args) noexcept(std::is_nothrow_constructible<Banned, Args...>::value)
     : banned_(std::forward<Args>(args)...)
   {}
 
@@ -441,25 +425,33 @@ public:
     banned.swap(banned_);
   }
 
-  template<typename... Args> static void Blacklist(Args &&...) noexcept {}
+  template <typename... Args>
+  static void Blacklist(Args &&...) noexcept
+  {}
 
-  template<typename... Args> static void Quarantine(Args &&...) noexcept {}
+  template <typename... Args>
+  static void Quarantine(Args &&...) noexcept
+  {}
 
-  template<typename... Args> static void Whitelist(Args &&...) noexcept {}
+  template <typename... Args>
+  static void Whitelist(Args &&...) noexcept
+  {}
+
 private:
   Banned banned_;
 };
 
-
-template<class T> class Persistence
+template <class T>
+class Persistence
 {
   using Implementation = fetch::storage::KeyValueIndex<>;
 
-  using StoredType = uint64_t;
+  using StoredType              = uint64_t;
   static constexpr auto forever = std::numeric_limits<StoredType>::max();
   // TODO: Implementation::Delete() currently not implemented,
   // this value signifies a whitelisted entry
   static constexpr auto never = std::numeric_limits<StoredType>::min();
+
 public:
   using Value     = T;
   using Clock     = black::Clock;
@@ -478,71 +470,77 @@ public:
   }
   Persistence(Persistence &&) = default;
 
-
   ~Persistence()
   {
     stop();
   }
 
-
   void Populate(Banned &banned, Suspended &suspended)
   {
-    if(!valid()) return;
-    Timepoint now{Clock::now()};
-    for(auto const &kv: *file_)
+    if (!valid())
     {
-      if(kv.second == forever)
+      return;
+    }
+    Timepoint now{Clock::now()};
+    for (auto const &kv : *file_)
+    {
+      if (kv.second == forever)
       {
         banned.insert(kv.first);
       }
       else
       {
         Timepoint then{Clock::from_time_t(kv.second)};
-        if(then > now)
-	{
+        if (then > now)
+        {
           suspended.emplace(kv.first, then);
-	}
+        }
       }
     }
   }
 
-
-  template<typename... Args> void Blacklist(Args &&...args)
+  template <typename... Args>
+  void Blacklist(Args &&... args)
   {
     Set(T(std::forward<Args>(args)...), forever);
   }
 
-  template<typename... Args> void Quarantine(Timepoint until, Args &&...args)
+  template <typename... Args>
+  void Quarantine(Timepoint until, Args &&... args)
   {
     Set(T(std::forward<Args>(args)...), static_cast<StoredType>(Clock::to_time_t(until)));
   }
 
-  template<typename... Args> void Whitelist(Args &&...args)
+  template <typename... Args>
+  void Whitelist(Args &&... args)
   {
     Set(T(std::forward<Args>(args)...), never);
   }
+
 private:
   bool valid() const noexcept
   {
     return bool{file_};
   }
 
-  void Set(T t, StoredType until) {
-    if(valid())
+  void Set(T t, StoredType until)
+  {
+    if (valid())
     {
       static const byte_array::ConstByteArray noData;
       file_->Set(byte_array::ToConstByteArray(std::forward<T>(t)), until, noData);
-      if(++mutations_ >= threshold_)
+      if (++mutations_ >= threshold_)
       {
         flush();
-	mutations_ = 0;
+        mutations_ = 0;
       }
     }
   }
 
   void stop() noexcept
   {
-    if(valid()) {
+    if (valid())
+    {
       running_ = false;
       flush();
       synchronization_.join();
@@ -554,47 +552,47 @@ private:
     flush_signal_.notify_one();
   }
 
-
   auto run()
   {
-    return std::thread([this](){
-	    try {
-		    while(running_)
-		    {
-			    std::unique_lock<Mutex> lock(flush_mutex_);
-			    flush_signal_.wait(lock);
-			    file_->Flush();
-		    }
-	    }
-	    catch(...)
-	    {
-		    try
-		    {
-			    FETCH_LOG_WARN(LOGGING_NAME, "Blackset is not flushed");
-		    }
-		    catch(...)
-		    {}
-	    }
+    return std::thread([this]() {
+      try
+      {
+        while (running_)
+        {
+          std::unique_lock<Mutex> lock(flush_mutex_);
+          flush_signal_.wait(lock);
+          file_->Flush();
+        }
+      }
+      catch (...)
+      {
+        try
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Blackset is not flushed");
+        }
+        catch (...)
+        {
+        }
+      }
     });
   }
-
 
   using Mutex = std::mutex;
 
   static constexpr std::size_t DEFAULT_THRESHOLD = 16;
-  static constexpr char const *LOGGING_NAME = "Persistence";
+  static constexpr char const *LOGGING_NAME      = "Persistence";
 
   const std::size_t threshold_ = DEFAULT_THRESHOLD;
-  std::size_t mutations_ = 0;
+  std::size_t       mutations_ = 0;
 
   std::unique_ptr<Implementation> file_;
 
   std::condition_variable flush_signal_;
-  Mutex flush_mutex_;
-  std::thread synchronization_;
-  std::atomic_bool running_{true};
+  Mutex                   flush_mutex_;
+  std::thread             synchronization_;
+  std::atomic_bool        running_{true};
 };
 
-}
+}  // namespace black
 }  // namespace generics
 }  // namespace fetch
