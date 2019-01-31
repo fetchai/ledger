@@ -234,7 +234,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
     // load up the left side
     if (left.body.hash != left_hash)
     {
-      if (!Get(left_hash, left))
+      if (!Get(left_hash, left) || left.is_loose)
       {
         break;
       }
@@ -246,7 +246,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
     // load up the right side
     if (right.body.hash != right_hash)
     {
-      if (!Get(right_hash, right))
+      if (!Get(right_hash, right) || right.is_loose)
       {
         break;
       }
@@ -263,12 +263,12 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
     }
     else
     {
-      if (left.total_weight <= right.total_weight)
+      if (left.body.block_number <= right.body.block_number)
       {
         right_hash = right.body.previous_hash;
       }
 
-      if (left.total_weight >= right.total_weight)
+      if (left.body.block_number >= right.body.block_number)
       {
         left_hash = left.body.previous_hash;
       }
@@ -541,7 +541,7 @@ bool MainChain::CheckDiskForBlock(Block &block)
     RLock lock(main_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Didn't find block's previous, adding as loose block");
     NewLooseBlock(block);
-    return false;  ///? should this be true true here?
+    return true;
   }
 
   // The previous block is in our object store but we don't know its weight, need to recalculate
