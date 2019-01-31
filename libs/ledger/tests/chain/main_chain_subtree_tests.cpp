@@ -141,7 +141,7 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree)
   }
 
   MainChain::Blocks blocks;
-  EXPECT_TRUE(chain_->GetCommonSubTree(blocks, b3->body.hash, b1->body.hash));
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
   ASSERT_EQ(3, blocks.size());
   EXPECT_EQ(b3->body.hash, blocks[0].body.hash);
   EXPECT_EQ(b2->body.hash, blocks[1].body.hash);
@@ -172,7 +172,7 @@ TEST_F(MainChainSubTreeTests, CheckCommonSubTree2)
   }
 
   MainChain::Blocks blocks;
-  EXPECT_TRUE(chain_->GetCommonSubTree(blocks, b1->body.hash, b3->body.hash));
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b1->body.hash, b3->body.hash));
 
   ASSERT_EQ(2, blocks.size());
   EXPECT_EQ(b1->body.hash, blocks[0].body.hash);
@@ -201,13 +201,13 @@ TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
   ASSERT_TRUE(chain_->AddBlock(*b3));
 
   MainChain::Blocks blocks;
-  EXPECT_FALSE(chain_->GetCommonSubTree(blocks, b3->body.hash, b1->body.hash));
+  EXPECT_FALSE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
 
   // missing block turns up
   ASSERT_TRUE(chain_->AddBlock(*b2));
 
   // ensure that the sub tree can now be located
-  EXPECT_TRUE(chain_->GetCommonSubTree(blocks, b3->body.hash, b1->body.hash));
+  EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, b3->body.hash, b1->body.hash));
   ASSERT_EQ(3, blocks.size());
   EXPECT_EQ(b3->body.hash, blocks[0].body.hash);
   EXPECT_EQ(b2->body.hash, blocks[1].body.hash);
@@ -277,7 +277,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B13 vs. B12
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[13]->body.hash, chain[12]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[13]->body.hash, chain[12]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {13, 7, 4, 2})));
@@ -286,7 +286,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B16 vs. B15
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[16]->body.hash, chain[15]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->body.hash, chain[15]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {16, 8})));
@@ -295,7 +295,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B16 vs. B14
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[16]->body.hash, chain[14]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->body.hash, chain[14]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {16, 8, 4})));
@@ -304,7 +304,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B16 vs. B2
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[16]->body.hash, chain[2]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[16]->body.hash, chain[2]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {16, 8, 4, 2})));
@@ -313,7 +313,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B1 vs. B16
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[1]->body.hash, chain[16]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[1]->body.hash, chain[16]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {1})));
@@ -322,7 +322,7 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
   // B4 vs. B11
   {
     MainChain::Blocks blocks;
-    EXPECT_TRUE(chain_->GetCommonSubTree(blocks, chain[4]->body.hash, chain[11]->body.hash));
+    EXPECT_TRUE(chain_->GetPathToCommonAncestor(blocks, chain[4]->body.hash, chain[11]->body.hash));
 
     // compare against expected results
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {4, 2})));

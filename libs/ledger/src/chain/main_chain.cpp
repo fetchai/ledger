@@ -210,9 +210,10 @@ MainChain::Blocks MainChain::ChainPreceding(BlockHash const &at, uint64_t limit)
  * @param limit The maximum number of nodes to be returned
  * @return true if successful, otherwise false
  */
-bool MainChain::GetCommonSubTree(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit)
+bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+                                        uint64_t limit)
 {
-  fetch::generics::MilliTimer myTimer("MainChain::GetCommonSubTree");
+  fetch::generics::MilliTimer myTimer("MainChain::GetPathToCommonAncestor");
   RLock                       lock(main_mutex_);
 
   bool success{false};
