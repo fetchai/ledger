@@ -28,9 +28,14 @@
 namespace fetch {
 namespace auctions {
 
+constexpr std::size_t DEFAULT_SIZE_T_BLOCK_ID = std::numeric_limits<std::size_t>::max();
+
 // template <typename A, typename V = fetch::ml::Variable<A>>
 class Auction
 {
+
+public:
+
 protected:
   // Auction parameters
 
@@ -50,6 +55,7 @@ protected:
   bool auction_valid_ = false;
 
 public:
+
   /**
    * constructor for an auction
    * @param start_block_id  defines the start time of an auction
@@ -57,7 +63,7 @@ public:
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  Auction(BlockId end_block_id, bool smart_market = false,
+  explicit Auction(BlockId end_block_id = BlockId(DEFAULT_SIZE_T_BLOCK_ID), bool smart_market = false,
           std::size_t max_bids = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)

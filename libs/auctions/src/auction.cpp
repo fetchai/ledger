@@ -182,19 +182,19 @@ void Auction::IncrementBidCount(AgentId bidder, ItemId item_id)
 ErrorCode Auction::CheckItemValidity(Item const &item) const
 {
   // Item must have a valid ID
-  if (item.id == DefaultItemId)
+  if (item.id == DEFAULT_ITEM_ID)
   {
     return ErrorCode::ITEM_ID_ERROR;
   }
 
   // Item seller must have a valid ID
-  if (item.seller_id == DefaultItemAgentId)
+  if (item.seller_id == DEFAULT_ITEM_AGENT_ID)
   {
     return ErrorCode::AGENT_ID_ERROR;
   }
 
   // Item must have a valid minimum price
-  if (item.min_price == DefaultItemMinPrice)
+  if (item.min_price == DEFAULT_ITEM_MIN_PRICE)
   {
     return ErrorCode::ITEM_MIN_PRICE_ERROR;
   }
