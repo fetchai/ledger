@@ -47,7 +47,7 @@ public:
   void                               BuildGraph();
   void                               SelectBid(std::size_t const &bid);
   Value                              TotalBenefit();
-  bool                               Execute(BlockId current_block) override;
+  ErrorCode                          Execute(BlockId current_block) override;
   fetch::math::linalg::Matrix<Value> Couplings();
   fetch::math::ShapelessArray<Value> LocalFields();
   std::uint32_t                      Active(std::size_t n);

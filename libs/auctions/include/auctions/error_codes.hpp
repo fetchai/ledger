@@ -28,6 +28,7 @@ enum class ErrorCode
   ITEM_NOT_LISTED,
   TOO_MANY_BIDS,
   AUCTION_CLOSED,
+  AUCTION_STILL_LISTING,
   TOO_MANY_ITEMS,
   ITEM_ID_ERROR,
   AGENT_ID_ERROR,
@@ -35,7 +36,8 @@ enum class ErrorCode
   INVALID_BID_ID,
   REPEAT_BID_ID,
   BID_PRICE,
-  BID_BIDDER_ID
+  BID_BIDDER_ID,
+  INCORRECT_END_BLOCK
 };
 
 }  // namespace auctions

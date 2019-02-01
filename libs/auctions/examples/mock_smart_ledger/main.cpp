@@ -19,13 +19,12 @@
 #include "core/commandline/params.hpp"
 #include <iostream>
 
-#include "mock_smart_ledger.hpp"
 #include "http/server.hpp"
+#include "mock_smart_ledger.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <chrono>
 #include <thread>
-
 
 int main(int argc, char **argv)
 {

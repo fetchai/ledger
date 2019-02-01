@@ -35,6 +35,13 @@ class Auction
 {
 
 public:
+  enum class AuctionState
+  {
+    INITIALISED,
+    LISTING,
+    CLEARED
+  };
+
 protected:
   // Auction parameters
 
@@ -51,7 +58,7 @@ protected:
   std::vector<fetch::auctions::Bid> bids_{};
 
   // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
-  bool auction_valid_ = false;
+  AuctionState auction_valid_ = AuctionState::INITIALISED;
 
 public:
   /**
@@ -78,7 +85,7 @@ public:
     // must be some items in the auction!
     assert(max_items_ > 0);
 
-    auction_valid_ = true;
+    auction_valid_ = AuctionState::LISTING;
   }
 
   std::vector<Item>    ShowListedItems() const;
@@ -88,13 +95,8 @@ public:
   AgentId              Winner(ItemId item_id);
   std::vector<AgentId> Winners();
   ItemContainer        items();
-
-  /**
-   * Executes the auction by identifying the winners, and making appropriate transfers
-   * @param current_block
-   * @return
-   */
-  virtual bool Execute(BlockId current_block) = 0;
+  ErrorCode            ShowAuctionResult();
+  virtual ErrorCode    Execute(BlockId current_block) = 0;
 
 private:
   bool         ItemInAuction(ItemId const &item_id) const;

@@ -124,15 +124,21 @@ fetch::math::linalg::Matrix<Value> CombinatorialAuction::Couplings()
   return couplings_;
 }
 
-bool CombinatorialAuction::Execute(BlockId current_block)
+ErrorCode CombinatorialAuction::Execute(BlockId current_block)
 {
-  if ((end_block_ == current_block) && auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
-    SelectWinners();
-    auction_valid_ = false;
-    return true;
+    return ErrorCode::AUCTION_CLOSED;
   }
-  return false;
+
+  if (!(end_block_ == current_block))
+  {
+    return ErrorCode::INCORRECT_END_BLOCK;
+  }
+
+  SelectWinners();
+  auction_valid_ = AuctionState::CLEARED;
+  return ErrorCode::SUCCESS;
 }
 
 /**
@@ -224,7 +230,7 @@ void CombinatorialAuction::BuildGraph()
       // penalize exclusive bid combinations
       for (std::size_t k = 0; k < bids_[j].excludes.size(); ++k)
       {
-        if (bids_[j].excludes[k].id == bids_[i].id)
+        if (bids_[j].excludes[k] == bids_[i].id)
         {
           coupling = exclusive_bid_penalty;
         }

@@ -43,8 +43,8 @@ all_bids.append(
     "bid_id" : 0,
     "item_ids" : [0, 1],
     "bid_price": 17.0,
-    "bidder_id": 0
-    # "excludes": 0
+    "bidder_id": 0,
+    "excludes": [2]
 }
 )
 all_bids.append(
@@ -52,17 +52,17 @@ all_bids.append(
     "bid_id" : 1,
     "item_ids" : [0, 1],
     "bid_price": 19.0,
-    "bidder_id": 1
-    # "excludes": 0
+    "bidder_id": 1,
+    "excludes": [3]
 }
 )
 all_bids.append(
 {
     "bid_id" : 2,
     "item_ids" : [1, 2],
-    "bid_price": 35.0,
-    "bidder_id": 0
-    # "excludes": 0
+    "bid_price": 30.0,
+    "bidder_id": 0,
+    "excludes": [0]
 }
 )
 all_bids.append(
@@ -70,8 +70,8 @@ all_bids.append(
     "bid_id" : 3,
     "item_ids" : [1, 2],
     "bid_price": 32.0,
-    "bidder_id": 1
-    # "exclues": 0
+    "bidder_id": 1,
+    "excludes": [1]
 }
 )
 all_bids.append(
@@ -80,7 +80,6 @@ all_bids.append(
     "item_ids" : [2],
     "bid_price": 5.0,
     "bidder_id": 2
-    # "exclues": 0
 }
 )
 

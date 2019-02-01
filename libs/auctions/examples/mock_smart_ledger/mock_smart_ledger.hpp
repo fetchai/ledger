@@ -122,7 +122,7 @@ private:
       std::vector<ItemId> item_ids  = {};
       Value               bid_price = DEFAULT_BID_PRICE;
       AgentId             bidder_id = DEFAULT_BID_BIDDER;
-      std::vector<Bid>    excludes  = {};
+      std::vector<BidId>  excludes  = {};
 
       // extract all the request parameters
       if (variant::Extract(doc.root(), "bid_id", bid_id) &&
@@ -130,6 +130,7 @@ private:
           variant::Extract(doc.root(), "bid_price", bid_price) &&
           variant::Extract(doc.root(), "bidder_id", bidder_id))
       {
+        variant::Extract(doc.root(), "excludes", excludes);
         auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }

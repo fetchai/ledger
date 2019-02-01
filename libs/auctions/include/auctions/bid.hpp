@@ -35,7 +35,7 @@ class Bid
 {
 public:
   Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
-      std::vector<Bid> excludes = {})
+      std::vector<BidId> excludes = {})
     : id(id)
     , price(price)
     , bidder(bidder)
@@ -50,10 +50,10 @@ public:
     return item_ids_;
   }
 
-  BidId            id     = DEFAULT_BID_ID;
-  Value            price  = DEFAULT_BID_PRICE;
-  AgentId          bidder = DEFAULT_BID_BIDDER;
-  std::vector<Bid> excludes{};
+  BidId              id     = DEFAULT_BID_ID;
+  Value              price  = DEFAULT_BID_PRICE;
+  AgentId            bidder = DEFAULT_BID_BIDDER;
+  std::vector<BidId> excludes{};
 
 private:
   std::vector<ItemId> item_ids_{};

@@ -200,7 +200,7 @@ ErrorCode Auction::CheckItemValidity(Item const &item) const
   }
 
   // auction must be still open to adding new items
-  if (!auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
   }
@@ -249,7 +249,7 @@ ErrorCode Auction::CheckBidValidity(Bid const &bid) const
   }
 
   // auction must be still open to adding new bids
-  if (!auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
   }
@@ -276,6 +276,21 @@ ErrorCode Auction::CheckBidValidity(Bid const &bid) const
     }
   }
 
+  return ErrorCode::SUCCESS;
+}
+
+ErrorCode Auction::ShowAuctionResult()
+{
+  if (!(auction_valid_ == AuctionState::CLEARED))
+  {
+    return ErrorCode::AUCTION_STILL_LISTING;
+  }
+  for (auto &item : items())
+  {
+    std::cout << "item id: " << item.first << std::endl;
+    std::cout << "winning bid: " << item.second.winner << std::endl;
+    std::cout << std::endl;
+  }
   return ErrorCode::SUCCESS;
 }
 

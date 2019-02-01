@@ -34,7 +34,7 @@ public:
     max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
   }
 
-  bool Execute(BlockId current_block);
+  ErrorCode Execute(BlockId current_block);
 
 private:
   void SelectWinners();
