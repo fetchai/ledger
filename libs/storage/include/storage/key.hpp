@@ -92,7 +92,7 @@ struct Key
     }
 
     // Assert that the corresponding compare would return the same
-    int dummy = 0;
+    int dummy          = 0;
     int compare_result = Compare(rhs, dummy, 0, 64);
 
     FETCH_UNUSED(compare_result);
