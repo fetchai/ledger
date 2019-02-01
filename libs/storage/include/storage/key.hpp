@@ -135,7 +135,7 @@ struct Key
     }
 
     pos = bit + (i << 8);
-    if (pos >= int(this->size()))
+    if (pos >= int(this->size_in_bits()))
     {
       return 0;
     }
@@ -169,9 +169,9 @@ struct Key
   }
 
   // BLOCKS
-  std::size_t size() const
+  std::size_t size_in_bits() const
   {
-    return BYTES;
+    return BITS;
   }
 
 private:
