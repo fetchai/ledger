@@ -31,7 +31,7 @@ namespace fetch {
 namespace storage {
 
 /**
- * The SlightlyBetterRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
+ * The CacheLineRandomAccessStack owns a stack of type T (RandomAccessStack), and provides
  * caching in an invisible manner.
  *
  * It does this by maintaining a quick access structure (data_ map) that can be used without disk
@@ -43,7 +43,7 @@ namespace storage {
  *
  */
 template <typename T, typename D = uint64_t>
-class SlightlyBetterRandomAccessStack
+class CacheLineRandomAccessStack
 {
 public:
   using event_handler_type = std::function<void()>;
@@ -51,9 +51,9 @@ public:
   using header_extra_type  = D;
   using type               = T;
 
-  SlightlyBetterRandomAccessStack() = default;
+  CacheLineRandomAccessStack() = default;
 
-  ~SlightlyBetterRandomAccessStack()
+  ~CacheLineRandomAccessStack()
   {
     Flush(false);
   }
@@ -117,7 +117,6 @@ public:
     }
     else
     {
-      // std::cout << "Missed item " << i << " " << cache_lookup << std::endl;
       // Case where item isn't found, load it into the cache, then access
       LoadCacheLine(i);
 
@@ -225,6 +224,10 @@ public:
       LoadCacheLine(cache_lookup_j);
     }
 
+    // If this assertion fails, there might not be enough memory for two cache lines
+    assert(data_.find(cache_lookup_i) != data_.end());
+    assert(data_.find(cache_lookup_j) != data_.end());
+
     data_[cache_lookup_i].reads++;
     data_[cache_lookup_j].reads++;
 
@@ -326,7 +329,7 @@ private:
       return;
     }
 
-    stack_.SetBulk(line, 1 << cache_line_ln2, items.elements.data());
+    stack_.SetBulk(line, 1ull << cache_line_ln2, items.elements.data());
   }
 
   void GetLine(uint64_t line, CachedDataItem &items) const
@@ -355,14 +358,15 @@ private:
     if (next_to_remove->first > last_removed_index_ && next_to_remove != data_.end())
     {
       last_removed_index_ = next_to_remove->first;
-      FlushLine(next_to_remove->first, next_to_remove->second);
+      FlushLine(next_to_remove->first << cache_line_ln2, next_to_remove->second);
       data_.erase(next_to_remove);
     }
     else
     {
       next_to_remove = data_.begin();  // Get min element
-      FlushLine(next_to_remove->first, next_to_remove->second);
+      FlushLine(next_to_remove->first << cache_line_ln2, next_to_remove->second);
       last_removed_index_ = next_to_remove->first;
+
       data_.erase(next_to_remove);
     }
 

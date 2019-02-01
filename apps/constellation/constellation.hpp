@@ -91,9 +91,9 @@ private:
   using Muddle                  = muddle::Muddle;
   using NetworkManager          = network::NetworkManager;
   using BlockPackingAlgorithm   = miner::BasicMiner;
-  using Miner                   = chain::MainChainMiner;
+  using Miner                   = ledger::MainChainMiner;
   using BlockCoordinator        = chain::BlockCoordinator;
-  using MainChain               = chain::MainChain;
+  using MainChain               = ledger::MainChain;
   using MainChainRpcService     = ledger::MainChainRpcService;
   using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
   using LaneServices            = ledger::StorageUnitBundledService;

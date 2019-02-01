@@ -132,7 +132,7 @@ protected:
 
     // --- Start a NETWORK MANAGER ----------------------------------
 
-    network_manager_ = std::make_shared<NetworkManager>(10);
+    network_manager_ = std::make_shared<NetworkManager>("NetMgr", 10);
     network_manager_->Start();
 
     // --- Start the MUDDLE on top of the NETWORK MANAGER -----------

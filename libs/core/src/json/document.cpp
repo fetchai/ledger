@@ -58,11 +58,15 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     break;
 
   case NUMBER_INT:
+    // TODO(private issue #566): the `std::strtoll(...)` should be used here instead (converting to
+    // `long long`)
     variant = std::atoi(document.char_pointer() + token.first);
     success = true;
     break;
 
   case NUMBER_FLOAT:
+    // TODO(private issue #566)): the `std::strtold(...)` should be used here instead (converting to
+    // `long double`)
     variant = std::atof(document.char_pointer() + token.first);
     success = true;
     break;

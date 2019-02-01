@@ -23,7 +23,7 @@ using namespace fetch::http;
 
 int main()
 {
-  fetch::network::NetworkManager tm(1);
+  fetch::network::NetworkManager tm{"NetMgr", 1};
 
   HTTPServer server(tm);
   server.Start(8080);

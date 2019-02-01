@@ -39,8 +39,10 @@ class NetworkManagerImplementation
 public:
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";
 
-  NetworkManagerImplementation(std::size_t threads = 1)
-    : number_of_threads_(threads)
+  NetworkManagerImplementation(std::string name, std::size_t threads)
+    : name_(std::move(name))
+    , number_of_threads_(threads)
+    , running_{false}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Creating network manager");
   }
@@ -57,6 +59,7 @@ public:
   void Start();
   void Work();
   void Stop();
+  bool Running();
 
   // Must only be called within a post, then the io_service_ is always
   // guaranteed to be valid
@@ -73,9 +76,11 @@ public:
   }
 
 private:
+  std::string const                         name_;
   std::thread::id                           owning_thread_;
   std::size_t                               number_of_threads_ = 1;
   std::vector<std::shared_ptr<std::thread>> threads_;
+  std::atomic<bool>                         running_;
 
   std::unique_ptr<asio::io_service> io_service_ = std::make_unique<asio::io_service>();
 

@@ -119,7 +119,7 @@ private:
   BlockList                            blocks_;
 };
 
-MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainChain &chain,
+MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &chain,
                                          TrustSystem &trust, BlockCoordinator &block_coordinator)
   : muddle::rpc::Server(endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
   , endpoint_(endpoint)
@@ -128,7 +128,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, chain::MainCh
   , block_coordinator_(block_coordinator)
   , block_subscription_(endpoint.Subscribe(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS))
   , main_chain_protocol_(chain_)
-  , main_chain_rpc_client_(endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
+  , main_chain_rpc_client_("R:MChain", endpoint, Address{}, SERVICE_MAIN_CHAIN, CHANNEL_RPC)
 {
   // register the main chain protocol
   Add(RPC_MAIN_CHAIN, &main_chain_protocol_);
@@ -172,24 +172,24 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.hash()),
+  FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
                  " (from peer: ", ToBase64(transmitter), ')');
 
-  FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+  FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
-  if (block.proof()())
+  if (block.proof())
   {
     trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-    FETCH_METRIC_BLOCK_RECEIVED(block.hash());
+    FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
     block_coordinator_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree
-    if (block.loose())
+    if (block.is_loose)
     {
-      AddLooseBlock(block.hash(), from);
+      AddLooseBlock(block.body.hash, from);
     }
   }
   else
@@ -204,7 +204,7 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
   if (!workthread_)
   {
     workthread_ = std::make_shared<BackgroundedWorkThread>(
-        &bg_work_, [this]() { this->ServiceLooseBlocks(); });
+        &bg_work_, "BW:MChainR", [this]() { this->ServiceLooseBlocks(); });
   }
 
   if (!bg_work_.InFlightP(hash))
@@ -275,7 +275,7 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     it->UpdateDigest();
 
     // add the block
-    if (it->proof()())
+    if (it->proof())
     {
       newdata |= chain_.AddBlock(*it);
     }
@@ -293,18 +293,18 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
   if (newdata && !block_list.empty())
   {
     Block blk;
-    if (chain_.Get(block_list.back().hash(), blk))
+    if (chain_.Get(block_list.back().body.hash, blk))
     {
       blk.UpdateDigest();
-      if (blk.loose())
+      if (blk.is_loose)
       {
-        AddLooseBlock(block_list.back().hash(), address);
+        AddLooseBlock(block_list.back().body.hash, address);
       }
     }
     else
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Could not Get() recently added block ",
-                      ToBase64(block_list.back().hash()), " from the block store!");
+                      ToBase64(block_list.back().body.hash), " from the block store!");
     }
   }
 }

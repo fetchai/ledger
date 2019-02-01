@@ -27,7 +27,7 @@
 #include <unordered_set>
 #include <vector>
 
-class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
+class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
@@ -178,6 +178,13 @@ public:
 
       state_.clear();
     }
+  }
+
+  // Does nothing
+  TxSummaries PollRecentTx(uint32_t) override
+
+  {
+    return {};
   }
 
 private:

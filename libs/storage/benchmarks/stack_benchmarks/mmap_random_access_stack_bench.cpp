@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,21 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace vm {
+#include <benchmark/benchmark.h>
+#include <gtest/gtest.h>
+#include <stack>
 
-template <typename T>
-struct WrapperClass : public Object
+#include "core/random/lfg.hpp"
+#include "storage/mmap_random_access_stack.hpp"
+
+using fetch::storage::MMapRandomAccessStack;
+
+class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
-  using Object::Object;
-  WrapperClass(TypeId type_id, VM *vm, T &&o)
-    : Object(std::move(type_id), vm)
-    , object(std::move(o))
-  {}
-  T object;
+protected:
+  void SetUp(const ::benchmark::State & /*st*/) override
+  {
+    stack_.New("test_bench.db");
+    EXPECT_TRUE(stack_.is_open());
+  }
 
-  virtual ~WrapperClass() = default;
+  void TearDown(const ::benchmark::State &) override
+  {}
+
+  MMapRandomAccessStack<uint64_t>           stack_;
+  fetch::random::LaggedFibonacciGenerator<> lfg_;
 };
 
-}  // namespace vm
-}  // namespace fetch
+BENCHMARK_F(MMapRandomAccessStackBench, WritingIntToStack)(benchmark::State &st)
+{
+  uint64_t random;
+  for (auto _ : st)
+  {
+    st.PauseTiming();
+    random = lfg_();
+    st.ResumeTiming();
+    stack_.Push(random);
+  }
+}

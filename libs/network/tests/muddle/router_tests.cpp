@@ -105,7 +105,7 @@ class RouterTests : public ::testing::Test
 protected:
   void SetUp() override
   {
-    network_manager_ = std::make_unique<NetworkManager>(6);
+    network_manager_ = std::make_unique<NetworkManager>("NetMgr", 6);
     network_manager_->Start();
   }
 

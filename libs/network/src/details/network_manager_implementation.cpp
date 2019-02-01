@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/details/network_manager_implementation.hpp"
+#include "core/threading.hpp"
 
 namespace fetch {
 namespace network {
@@ -25,6 +26,7 @@ namespace details {
 void NetworkManagerImplementation::Start()
 {
   FETCH_LOCK(thread_mutex_);
+  running_ = true;
 
   if (threads_.size() == 0)
   {
@@ -33,7 +35,11 @@ void NetworkManagerImplementation::Start()
 
     for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      auto thread = std::make_shared<std::thread>([this]() { this->Work(); });
+      auto thread = std::make_shared<std::thread>([this, i]() {
+        SetThreadName(name_, i);
+
+        this->Work();
+      });
       threads_.push_back(thread);
     }
   }
@@ -47,6 +53,7 @@ void NetworkManagerImplementation::Work()
 void NetworkManagerImplementation::Stop()
 {
   std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+  running_ = false;
 
   if (threads_.empty())
   {
@@ -77,6 +84,11 @@ void NetworkManagerImplementation::Stop()
 
   threads_.clear();
   io_service_ = std::make_unique<asio::io_service>();
+}
+
+bool NetworkManagerImplementation::Running()
+{
+  return running_;
 }
 
 }  // namespace details
