@@ -47,17 +47,17 @@ public:
   StringProxy(std::string const &in)
   {
     memset(this, 0, sizeof(decltype(*this)));
-    std::memcpy(string_as_chars_, in.c_str(), std::min(in.size(), std::size_t(127)));
+    std::memcpy(string_as_chars, in.c_str(), std::min(in.size(), std::size_t(127)));
   }
 
   bool operator!=(StringProxy const &rhs) const
   {
-    return memcmp(string_as_chars_, rhs.string_as_chars_, 128) != 0;
+    return memcmp(string_as_chars, rhs.string_as_chars, 128) != 0;
   }
 
   bool operator==(StringProxy const &rhs) const
   {
-    return memcmp(string_as_chars_, rhs.string_as_chars_, 128) == 0;
+    return memcmp(string_as_chars, rhs.string_as_chars, 128) == 0;
   }
 
   char string_as_chars[128];
@@ -65,7 +65,7 @@ public:
 
 std::ostream &operator<<(std::ostream &os, StringProxy const &m)
 {
-  return os << m.string_as_chars_;
+  return os << m.string_as_chars;
 }
 
 using ByteArray = fetch::byte_array::ByteArray;

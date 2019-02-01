@@ -80,21 +80,25 @@ struct Key
    */
   bool operator==(Key const &rhs) const
   {
-    int dummy = int(size());
-
-    int compare_result = Compare(rhs, dummy, BLOCKS - 1, 64);
-
-    assert(compare_result != 999);
-    FETCH_UNUSED(compare_result);
+    bool result = true;
 
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
       if (key_[i] != rhs.key_[i])
       {
-        return false;
+        result = false;
+        break;
       }
     }
-    return true;
+
+    // Assert that the corresponding compare would return the same
+    int dummy = 0;
+    int compare_result = Compare(rhs, dummy, 0, 64);
+
+    FETCH_UNUSED(compare_result);
+    assert(result == compare_result);
+
+    return result;
   }
 
   /**
