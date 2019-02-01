@@ -24,12 +24,12 @@ namespace auctions {
 
 class Bid;
 
-constexpr ItemId  DEFAULT_ITEM_ID        = std::numeric_limits<ItemId>::max();
+constexpr ItemId  DEFAULT_ITEM_ID         = std::numeric_limits<ItemId>::max();
 constexpr AgentId DEFAULT_ITEM_AGENT_ID   = std::numeric_limits<AgentId>::max();
 constexpr Value   DEFAULT_ITEM_MIN_PRICE  = std::numeric_limits<Value>::max();
 constexpr Value   DEFAULT_ITEM_MAX_BID    = std::numeric_limits<Value>::min();
 constexpr Value   DEFAULT_ITEM_SELL_PRICE = std::numeric_limits<Value>::min();
-constexpr AgentId DEFAULT_ITEM_WINNER = std::numeric_limits<AgentId>::max();
+constexpr AgentId DEFAULT_ITEM_WINNER     = std::numeric_limits<AgentId>::max();
 
 /**
  * An item in the auction which may be bid upon

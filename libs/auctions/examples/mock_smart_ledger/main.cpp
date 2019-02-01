@@ -22,14 +22,13 @@
 #include "mock_smart_ledger.hpp"
 //#include "ledger/chaincode/wallet_http_interface.hpp"
 
-#include "network/management/network_manager.hpp"
 #include "http/server.hpp"
+#include "network/management/network_manager.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
-
-//bool OrdinaryClientCodeTest(fetch::auctions::examples::MockSmartLedger &msl)
+// bool OrdinaryClientCodeTest(fetch::auctions::examples::MockSmartLedger &msl)
 //{
 //  int exit_code = EXIT_FAILURE;
 //
@@ -68,13 +67,11 @@ int main(int argc, char **argv)
   // create the client
   fetch::auctions::examples::MockSmartLedger msl{};
 
-
   fetch::network::NetworkManager nm{};
-  fetch::http::HTTPServer server(nm);
+  fetch::http::HTTPServer        server(nm);
   server.Start(8080);
   server.AddModule(msl);
   nm.Start();
 
   std::this_thread::sleep_for(std::chrono::minutes(1));
-
 }

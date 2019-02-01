@@ -25,7 +25,6 @@ namespace auctions {
 class FirstPriceAuction : public Auction
 {
 public:
-
   explicit FirstPriceAuction(BlockId end_block_id = BlockId(DEFAULT_SIZE_T_BLOCK_ID));
 
   bool Execute(BlockId current_block) override;

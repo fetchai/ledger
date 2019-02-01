@@ -22,16 +22,16 @@
 #include "http/module.hpp"
 #include "variant/variant_utils.hpp"
 
-#include "auctions/type_def.hpp"
 #include "auctions/combinatorial_auction.hpp"
+#include "auctions/type_def.hpp"
 
 namespace fetch {
 namespace auctions {
 namespace examples {
 
 /**
- * class offering a HTTP interface to a smart market (i.e. combinatorial auction). Ledger integration details
- * ignored or mocked as necessary for now.
+ * class offering a HTTP interface to a smart market (i.e. combinatorial auction). Ledger
+ * integration details ignored or mocked as necessary for now.
  */
 class MockSmartLedger : public fetch::http::HTTPModule
 {
@@ -57,28 +57,21 @@ public:
     /// Register valid http calls ///
     /////////////////////////////////
 
-    Post("/api/item/list",
-            [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnListItem(request);
-         });
-    Post("/api/bid/place",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnPlaceBid(request);
-         });
-    Post("/api/mine",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnMine(request);
-         });
-    Post("/api/execute",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnExecute(request);
-         });
-
+    Post("/api/item/list", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      return OnListItem(request);
+    });
+    Post("/api/bid/place", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      return OnPlaceBid(request);
+    });
+    Post("/api/mine", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      return OnMine(request);
+    });
+    Post("/api/execute", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+      return OnExecute(request);
+    });
   }
 
-
 private:
-
   CombinatorialAuction auction_;
 
   /**
@@ -92,12 +85,13 @@ private:
       json::JSONDocument doc;
       doc.Parse(request.body());
 
-      ItemId item_id = DEFAULT_ITEM_ID;
+      ItemId  item_id   = DEFAULT_ITEM_ID;
       AgentId seller_id = DEFAULT_ITEM_AGENT_ID;
-      Value min_price = DEFAULT_ITEM_MIN_PRICE;
+      Value   min_price = DEFAULT_ITEM_MIN_PRICE;
 
       // extract all the request parameters
-      if (variant::Extract(doc.root(), "item_id", item_id) && variant::Extract(doc.root(), "seller_id", seller_id) &&
+      if (variant::Extract(doc.root(), "item_id", item_id) &&
+          variant::Extract(doc.root(), "seller_id", seller_id) &&
           variant::Extract(doc.root(), "min_price", min_price))
       {
         auction_.AddItem(Item{item_id, seller_id, min_price});
@@ -113,7 +107,6 @@ private:
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
 
-
   /**
    * method for placing new bids
    */
@@ -125,15 +118,17 @@ private:
       json::JSONDocument doc;
       doc.Parse(request.body());
 
-      BidId bid_id = DEFAULT_BID_ID;
-      std::vector<ItemId> item_ids = {};
-      Value bid_price = DEFAULT_BID_PRICE;
-      AgentId bidder_id = DEFAULT_BID_BIDDER;
-      std::vector<Bid> excludes = {};
+      BidId               bid_id    = DEFAULT_BID_ID;
+      std::vector<ItemId> item_ids  = {};
+      Value               bid_price = DEFAULT_BID_PRICE;
+      AgentId             bidder_id = DEFAULT_BID_BIDDER;
+      std::vector<Bid>    excludes  = {};
 
       // extract all the request parameters
-      if (variant::Extract(doc.root(), "bid_id", bid_id) && variant::Extract(doc.root(), "item_ids", item_ids) &&
-          variant::Extract(doc.root(), "bid_price", bid_price) && variant::Extract(doc.root(), "bidder_id", bidder_id))
+      if (variant::Extract(doc.root(), "bid_id", bid_id) &&
+          variant::Extract(doc.root(), "item_ids", item_ids) &&
+          variant::Extract(doc.root(), "bid_price", bid_price) &&
+          variant::Extract(doc.root(), "bidder_id", bidder_id))
       {
         auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
@@ -159,10 +154,11 @@ private:
       doc.Parse(request.body());
 
       std::size_t random_seed = std::numeric_limits<std::size_t>::max();
-      std::size_t run_time = std::numeric_limits<std::size_t>::min();
+      std::size_t run_time    = std::numeric_limits<std::size_t>::min();
 
       // extract all the request parameters
-      if (variant::Extract(doc.root(), "random_seed", random_seed) && variant::Extract(doc.root(), "run_time", run_time))
+      if (variant::Extract(doc.root(), "random_seed", random_seed) &&
+          variant::Extract(doc.root(), "run_time", run_time))
       {
         auction_.Mine(random_seed, run_time);
 
@@ -178,7 +174,8 @@ private:
   }
 
   /**
-   * method that executes the auction, i.e. simply prints out winning and losing bids following mining
+   * method that executes the auction, i.e. simply prints out winning and losing bids following
+   * mining
    */
   http::HTTPResponse OnExecute(http::HTTPRequest const &request)
   {
@@ -198,7 +195,6 @@ private:
       }
 
       return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
-
     }
     catch (json::JSONParseException const &ex)
     {
@@ -245,11 +241,8 @@ private:
 
     return msg;
   }
-
 };
 
-} // examples
-} // auctions
-} // fetch
-
-
+}  // namespace examples
+}  // namespace auctions
+}  // namespace fetch
