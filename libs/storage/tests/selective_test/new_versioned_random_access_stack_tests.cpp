@@ -16,19 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "storage/new_versioned_random_access_stack.hpp"
-#include "crypto/sha256.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/random/lfg.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <iostream>
 #include <stack>
-#include <vector>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::storage;
@@ -38,7 +38,6 @@ using namespace fetch::crypto;
 class StringProxy
 {
 public:
-
   StringProxy()
   {
     memset(this, 0, sizeof(decltype(*this)));
@@ -51,21 +50,22 @@ public:
     std::memcpy(string_as_chars_, in.c_str(), std::min(in.size(), std::size_t(127)));
   }
 
-  bool operator !=(StringProxy const &rhs) const
+  bool operator!=(StringProxy const &rhs) const
   {
     return memcmp(string_as_chars_, rhs.string_as_chars_, 128) != 0;
   }
 
-  bool operator ==(StringProxy const &rhs) const
+  bool operator==(StringProxy const &rhs) const
   {
     return memcmp(string_as_chars_, rhs.string_as_chars_, 128) == 0;
   }
 
-  char string_as_chars_[128];
+  char string_as_chars[128];
 };
 
-std::ostream &operator<<(std::ostream &os, StringProxy const &m) { 
-    return os << m.string_as_chars_;
+std::ostream &operator<<(std::ostream &os, StringProxy const &m)
+{
+  return os << m.string_as_chars_;
 }
 
 using ByteArray = fetch::byte_array::ByteArray;
@@ -92,17 +92,17 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
   // Verify state is correct with no changes
   for (std::size_t i = 0; i < 17; ++i)
   {
-      StringProxy a;
-      a = stack.Get(i);
-      StringProxy b;
-      b = StringProxy(std::to_string(i));
+    StringProxy a;
+    a = stack.Get(i);
+    StringProxy b;
+    b = StringProxy(std::to_string(i));
 
-      bool res = a == b;
+    bool res = a == b;
 
     EXPECT_EQ(a, b) << "thing";
     EXPECT_EQ(res, true) << "thing";
 
-    EXPECT_NE(stack.Get(i), std::to_string(i + 11)); // counter check
+    EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
     EXPECT_EQ(stack.Get(i), std::to_string(i));
   }
 
@@ -132,7 +132,7 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
   // Revert!
   stack.RevertToHash(hashes[0]);
 
-  /* EXPECT_EQ(stack.HashExists(hashes[0], false)); */ // TODO(HUT): this.
+  /* EXPECT_EQ(stack.HashExists(hashes[0], false)); */  // TODO(HUT): this.
 
   // Verify old state is as it was
   for (std::size_t i = 0; i < 17; ++i)
@@ -171,5 +171,4 @@ TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
 
   // Revert!
   ASSERT_THROW(stack.RevertToHash(hashes[1]), StorageException);
-
 }

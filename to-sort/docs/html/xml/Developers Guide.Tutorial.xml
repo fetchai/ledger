@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<category id="Developers Guide::Tutorial" name="Tutorial" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <category name="Creating a peer to peer network" ref="Developers Guide::Tutorial::Creating a peer to peer network#Developers Guide::Tutorial::Creating a peer to peer network">
-    <brief>In this tutorial we go through the concepts of RPC, data feed and serialization.</brief>
-  </category>
-</category>

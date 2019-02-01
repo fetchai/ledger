@@ -1,4 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="fetch::assert::details" name="details" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <struct name="Printer" ref="fetch::assert::details::Printer#fetch::assert::details::Printer" />
-</namespace>

@@ -19,8 +19,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "vectorise/platform.hpp"
 #include "core/macros.hpp"
+#include "vectorise/platform.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -56,7 +56,8 @@ struct Key
 
   Key(byte_array::ConstByteArray const &key)
   {
-    static_assert(BITS == 128 || BITS == 256 || BITS >= 1024, "Keys expected to be a cryptographic hash function output");
+    static_assert(BITS == 128 || BITS == 256 || BITS >= 1024,
+                  "Keys expected to be a cryptographic hash function output");
     assert(key.size() == BYTES);
 
     const uint64_t *key_reinterpret = reinterpret_cast<const uint64_t *>(key.pointer());
@@ -81,14 +82,14 @@ struct Key
   {
     int dummy = int(size());
 
-    int compare_result = Compare(rhs, dummy, BLOCKS-1, 64);
+    int compare_result = Compare(rhs, dummy, BLOCKS - 1, 64);
 
     assert(compare_result != 999);
     FETCH_UNUSED(compare_result);
 
     for (std::size_t i = 0; i < BLOCKS; ++i)
     {
-      if(key_[i] != rhs.key_[i])
+      if (key_[i] != rhs.key_[i])
       {
         return false;
       }

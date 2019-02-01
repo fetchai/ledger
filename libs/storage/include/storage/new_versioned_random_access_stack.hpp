@@ -37,10 +37,10 @@
 //       └──────┴──────┴──────┴──────┴──────┘
 
 #include "storage/cached_random_access_stack.hpp"
+#include "storage/key.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
 #include "storage/variant_stack.hpp"
-#include "storage/key.hpp"
 
 #include <cstring>
 
@@ -51,26 +51,28 @@ namespace storage {
 using DefaultKey = Key<256>;
 
 /**
- * This header is at the beginning of the main RAS and keeps track of the final bookmark in the history stack
+ * This header is at the beginning of the main RAS and keeps track of the final bookmark in the
+ * history stack
  */
 template <typename UINT64_TEMPLATE>
 struct BookmarkHeader
 {
-  UINT64_TEMPLATE          header;
-  uint64_t   bookmark; // aim to remove this.
+  UINT64_TEMPLATE header;
+  uint64_t        bookmark;  // aim to remove this.
 };
 
 /**
- * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous state.
- * It does this by having a random access stack, and also keeping a stack recording all of the
- * state-changing operations made to the stack (in the history).
- * The user can place bookmarks which allow reverting the stack to it's state at that point in time.
+ * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous
+ * state. It does this by having a random access stack, and also keeping a stack recording all of
+ * the state-changing operations made to the stack (in the history). The user can place bookmarks
+ * which allow reverting the stack to it's state at that point in time.
  *
  * The history is a variant stack so as to allow different operations to be saved. However note that
  * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
-template <typename T, typename UINT64_TEMPLATE = uint64_t, typename S = RandomAccessStack<T, BookmarkHeader<UINT64_TEMPLATE>>>
+template <typename T, typename UINT64_TEMPLATE = uint64_t,
+          typename S = RandomAccessStack<T, BookmarkHeader<UINT64_TEMPLATE>>>
 class NewVersionedRandomAccessStack
 {
 private:
@@ -98,7 +100,7 @@ private:
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
       bookmark = val;
-      key = key_in;
+      key      = key_in;
     }
 
     enum
@@ -106,8 +108,8 @@ private:
       value = 0
     };
 
-    UINT64_TEMPLATE bookmark = 0; // Internal index
-    DefaultKey key{};             // User supplied key
+    UINT64_TEMPLATE bookmark = 0;  // Internal index
+    DefaultKey      key{};         // User supplied key
   };
 
   /**
@@ -254,8 +256,8 @@ private:
   };
 
 public:
-  using type               = T;
-  //using bookmark_type      = UINT64_TEMPLATE;
+  using type = T;
+  // using bookmark_type      = UINT64_TEMPLATE;
   using event_handler_type = std::function<void()>;
 
   NewVersionedRandomAccessStack()
@@ -406,15 +408,15 @@ public:
 
     // Update our header with this information (the bookmark index)
     header_type h = stack_.header_extra();
-    h.bookmark = internal_bookmark_index_;
+    h.bookmark    = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
     internal_bookmark_index_++;
 
-    return internal_bookmark_index_-1;
+    return internal_bookmark_index_ - 1;
   }
 
-  bool HashExists(DefaultKey const &key) const
+  bool HashExists(DefaultKey const & /*key*/) const
   {
     // TODO(HUT): this.
     return true;
@@ -428,7 +430,8 @@ public:
 
   /**
    * Revert the main stack to the point at bookmark b by continually popping off changes from the
-   * history, inspecting their type, and applying a revert with that change. Unsafe if the key doesn't exist!
+   * history, inspecting their type, and applying a revert with that change. Unsafe if the key
+   * doesn't exist!
    *
    * @param: b The bookmark to revert to
    *
@@ -439,9 +442,10 @@ public:
 
     while (!bookmark_found)
     {
-      if(history_.empty())
+      if (history_.empty())
       {
-        throw StorageException("Attempt to revert to key failed, leaving stack in undefined state.");
+        throw StorageException(
+            "Attempt to revert to key failed, leaving stack in undefined state.");
       }
 
       // Find the type of the top of the history
@@ -473,7 +477,6 @@ public:
     }
   }
 
-
   void Flush(bool lazy = true)
   {
     stack_.Flush(lazy);
@@ -495,7 +498,7 @@ public:
   }
 
 private:
-  VariantStack  history_;
+  VariantStack    history_;
   UINT64_TEMPLATE internal_bookmark_index_{0};
 
   event_handler_type on_file_loaded_;
