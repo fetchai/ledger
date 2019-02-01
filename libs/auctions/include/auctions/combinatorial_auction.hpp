@@ -33,9 +33,8 @@ class CombinatorialAuction : public Auction
   using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
 
 public:
-  explicit CombinatorialAuction(BlockId       end_block_id = BlockId(DEFAULT_SIZE_T_BLOCK_ID),
-                                std::uint32_t max_flips    = 3)
-    : Auction(end_block_id, true, std::numeric_limits<std::size_t>::max())
+  explicit CombinatorialAuction(std::uint32_t max_flips = 3)
+    : Auction(true, std::numeric_limits<std::size_t>::max())
     , max_flips_(max_flips)
   {
     max_items_         = std::numeric_limits<std::size_t>::max();
@@ -47,7 +46,7 @@ public:
   void                               BuildGraph();
   void                               SelectBid(std::size_t const &bid);
   Value                              TotalBenefit();
-  ErrorCode                          Execute(BlockId current_block) override;
+  ErrorCode                          Execute() override;
   fetch::math::linalg::Matrix<Value> Couplings();
   fetch::math::ShapelessArray<Value> LocalFields();
   std::uint32_t                      Active(std::size_t n);
@@ -61,6 +60,9 @@ private:
   fetch::math::ShapelessArray<Value>         local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+  Value                                      best_value_;
+  fetch::math::ShapelessArray<std::uint32_t> best_active_;
 
   std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
 

@@ -21,16 +21,11 @@
 namespace fetch {
 namespace auctions {
 
-ErrorCode VickreyAuction::Execute(BlockId current_block)
+ErrorCode VickreyAuction::Execute()
 {
   if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
-  }
-
-  if (!(end_block_ == current_block))
-  {
-    return ErrorCode::INCORRECT_END_BLOCK;
   }
 
   assert(max_items_per_bid_ == 1);

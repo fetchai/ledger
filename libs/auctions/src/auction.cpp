@@ -288,7 +288,14 @@ ErrorCode Auction::ShowAuctionResult()
   for (auto &item : items())
   {
     std::cout << "item id: " << item.first << std::endl;
-    std::cout << "winning bid: " << item.second.winner << std::endl;
+    if (item.second.winner == DEFAULT_ITEM_WINNER)
+    {
+      std::cout << "item unsold" << std::endl;
+    }
+    else
+    {
+      std::cout << "winning bid: " << item.second.winner << std::endl;
+    }
     std::cout << std::endl;
   }
   return ErrorCode::SUCCESS;
@@ -306,6 +313,24 @@ std::vector<AgentId> Auction::Winners()
     winners.push_back(item_it.second.winner);
   }
   return winners;
+}
+
+/**
+ * reset the auction
+ * @return
+ */
+ErrorCode Auction::Reset()
+{
+  if (!(auction_valid_ == AuctionState::CLEARED))
+  {
+    return ErrorCode::PREVIOUS_AUCTION_NOT_CLEARED;
+  }
+
+  items_.clear();
+  bids_.clear();
+  auction_valid_ = AuctionState::INITIALISED;
+
+  return ErrorCode::SUCCESS;
 }
 
 }  // namespace auctions

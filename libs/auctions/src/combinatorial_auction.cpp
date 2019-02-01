@@ -91,11 +91,18 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
       }
 
       new_reward = TotalBenefit();
-      de         = prev_reward - new_reward;
 
+      // record best iteration
+      if (new_reward > best_value_)
+      {
+        best_active_.Copy(active_);
+        best_value_ = new_reward;
+      }
+
+      // stochastically ignore (or keep) new activation set
+      de              = prev_reward - new_reward;
       Value ran_val   = static_cast<Value>(rng.AsDouble());
       Value threshold = std::exp(-beta * de);  // TODO(tfr): use exponential approximation
-
       if (ran_val >= threshold)
       {
         active_.Copy(prev_active_);
@@ -124,16 +131,11 @@ fetch::math::linalg::Matrix<Value> CombinatorialAuction::Couplings()
   return couplings_;
 }
 
-ErrorCode CombinatorialAuction::Execute(BlockId current_block)
+ErrorCode CombinatorialAuction::Execute()
 {
   if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
-  }
-
-  if (!(end_block_ == current_block))
-  {
-    return ErrorCode::INCORRECT_END_BLOCK;
   }
 
   SelectWinners();
@@ -268,7 +270,7 @@ void CombinatorialAuction::SelectWinners()
   std::vector<BidId> ret{};
   for (std::size_t j = 0; j < active_.size(); ++j)
   {
-    if (active_[j] == 1)
+    if (best_active_[j] == 1)
     {
       for (auto &item : items_)
       {

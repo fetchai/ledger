@@ -52,5 +52,20 @@ int main(int argc, char **argv)
   server.AddModule(msl);
   nm.Start();
 
-  std::this_thread::sleep_for(std::chrono::minutes(1));
+  while (1)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+    //
+    std::cout << "executing auction: " << std::endl;
+    msl.Execute();
+
+    //
+    std::cout << "showing auction result: " << std::endl;
+    msl.ShowAuctionResult();
+
+    //
+    std::cout << "resetting auction: " << std::endl;
+    msl.Reset();
+  }
 }

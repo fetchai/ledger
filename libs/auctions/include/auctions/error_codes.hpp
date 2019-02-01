@@ -23,6 +23,7 @@ namespace auctions {
 enum class ErrorCode
 {
   SUCCESS,
+  PREVIOUS_AUCTION_NOT_CLEARED,
   ITEM_ALREADY_LISTED,
   AUCTION_FULL,
   ITEM_NOT_LISTED,

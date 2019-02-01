@@ -39,6 +39,7 @@ public:
   {
     INITIALISED,
     LISTING,
+    MINING,
     CLEARED
   };
 
@@ -51,9 +52,6 @@ protected:
   std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max();  //
   std::size_t max_items_per_bid_ = 1;                                        //
 
-  // records the block id on which this auction will conclude
-  BlockId end_block_ = std::numeric_limits<BlockId>::max();
-
   ItemContainer                     items_{};
   std::vector<fetch::auctions::Bid> bids_{};
 
@@ -64,16 +62,13 @@ public:
   /**
    * constructor for an auction
    * @param start_block_id  defines the start time of an auction
-   * @param end_block_id    defines the close time of an auction
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  explicit Auction(BlockId     end_block_id = BlockId(DEFAULT_SIZE_T_BLOCK_ID),
-                   bool        smart_market = false,
+  explicit Auction(bool        smart_market = false,
                    std::size_t max_bids     = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)
-    , end_block_(std::move(end_block_id))
   {
     if (smart_market)
     {
@@ -87,16 +82,19 @@ public:
 
     auction_valid_ = AuctionState::LISTING;
   }
+  virtual ~Auction() = default;
 
-  std::vector<Item>    ShowListedItems() const;
-  std::vector<Bid>     ShowBids() const;
-  ErrorCode            AddItem(Item const &item);
-  ErrorCode            PlaceBid(Bid bid);
+  ErrorCode         AddItem(Item const &item);
+  ErrorCode         PlaceBid(Bid bid);
+  ErrorCode         ShowAuctionResult();
+  virtual ErrorCode Execute() = 0;
+  ErrorCode         Reset();
+
   AgentId              Winner(ItemId item_id);
   std::vector<AgentId> Winners();
   ItemContainer        items();
-  ErrorCode            ShowAuctionResult();
-  virtual ErrorCode    Execute(BlockId current_block) = 0;
+  std::vector<Item>    ShowListedItems() const;
+  std::vector<Bid>     ShowBids() const;
 
 private:
   bool         ItemInAuction(ItemId const &item_id) const;

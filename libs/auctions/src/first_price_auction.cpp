@@ -21,8 +21,8 @@
 namespace fetch {
 namespace auctions {
 
-FirstPriceAuction::FirstPriceAuction(BlockId end_block_id)
-  : Auction(end_block_id, false, std::numeric_limits<std::size_t>::max())
+FirstPriceAuction::FirstPriceAuction()
+  : Auction(false, std::numeric_limits<std::size_t>::max())
 {
   max_items_         = std::numeric_limits<std::size_t>::max();
   max_bids_          = std::numeric_limits<std::size_t>::max();
@@ -30,16 +30,11 @@ FirstPriceAuction::FirstPriceAuction(BlockId end_block_id)
   max_bids_per_item_ = std::numeric_limits<std::size_t>::max();
 }
 
-ErrorCode FirstPriceAuction::Execute(BlockId current_block)
+ErrorCode FirstPriceAuction::Execute()
 {
   if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
-  }
-
-  if (!(end_block_ == current_block))
-  {
-    return ErrorCode::INCORRECT_END_BLOCK;
   }
 
   assert(max_items_per_bid_ == 1);

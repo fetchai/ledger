@@ -39,20 +39,12 @@ private:
   Bidder() = default;
 };
 
-FirstPriceAuction SetupAuction(std::size_t end_block_val)
-{
-  BlockId end_block(end_block_val);
-  return FirstPriceAuction(end_block);
-}
-
 TEST(first_price_auction, one_item_many_bid_first_price_auction)
 {
   ErrorCode err;
 
   // set up auction
-  std::size_t       start_block = 10000;
-  std::size_t       end_block   = 10010;
-  FirstPriceAuction a           = SetupAuction(end_block);
+  FirstPriceAuction a = FirstPriceAuction();
 
   // add item to auction
   ItemId  item_id   = 0;
@@ -80,19 +72,9 @@ TEST(first_price_auction, one_item_many_bid_first_price_auction)
     ASSERT_TRUE(err == ErrorCode::SUCCESS);
   }
 
-  std::size_t cur_block       = start_block;
-  std::size_t execution_block = 0;
-  for (std::size_t j = 0; j < 20; ++j)
-  {
-    bool success = a.Execute(BlockId(cur_block));
-    if (success)
-    {
-      execution_block = cur_block;
-    }
-    cur_block++;
-  }
+  err = a.Execute();
+  ASSERT_TRUE(err == ErrorCode::SUCCESS);
 
-  ASSERT_TRUE(execution_block == end_block);
   ASSERT_TRUE(a.Winner(item.id) == bidders[bidders.size() - 1].id);
   ASSERT_TRUE(a.items()[0].sell_price == bidders[bidders.size() - 1].funds);
 }

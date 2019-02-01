@@ -49,7 +49,6 @@ public:
     auction_ = CombinatorialAuction();
 
     // TODO(private 597): implement timer & cycling auction clearance
-    // TODO(private 596): implement bid exclusions
 
     /////////////////////////////////
     /// Register valid http calls ///
@@ -67,6 +66,30 @@ public:
     Post("/api/execute", [this](http::ViewParameters const &, http::HTTPRequest const &request) {
       return OnExecute(request);
     });
+  }
+
+  ////////////////////////
+  /// C++ method calls ///
+  ////////////////////////
+
+  void Execute()
+  {
+    auction_.Execute();
+
+    for (std::size_t j = 0; j < auction_.ShowBids().size(); ++j)
+    {
+      std::cout << "j: " << j << ", status: " << auction_.Active(j) << std::endl;
+    }
+  }
+
+  void Reset()
+  {
+    auction_.Reset();
+  }
+
+  void ShowAuctionResult()
+  {
+    auction_.ShowAuctionResult();
   }
 
 private:
@@ -186,7 +209,7 @@ private:
 
       BlockId end_block = std::numeric_limits<BlockId>::max();
 
-      auction_.Execute(end_block);
+      auction_.Execute();
 
       for (std::size_t j = 0; j < auction_.ShowBids().size(); ++j)
       {

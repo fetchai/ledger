@@ -39,20 +39,13 @@ private:
   Bidder() = default;
 };
 
-CombinatorialAuction SetupAuction(std::size_t end_block_val)
-{
-  BlockId end_block(end_block_val);
-  return CombinatorialAuction(end_block);
-}
-
 TEST(combinatorial_auction, many_bid_many_item_auction)
 {
 
   ErrorCode err;
 
   // set up auction
-  std::size_t          end_block = 10010;
-  CombinatorialAuction ca        = SetupAuction(end_block);
+  CombinatorialAuction ca = CombinatorialAuction();
 
   // add items to auction
   std::vector<Item> items{};
@@ -117,8 +110,8 @@ TEST(combinatorial_auction, many_bid_many_item_auction)
   bid_price = 30;
   Bid bid6(bid_id, {items[0].id, items[1].id, items[3].id}, bid_price, bidders[0].id);
 
-  bid5.excludes = {bid6};
-  bid6.excludes = {bid5};
+  bid5.excludes.emplace_back(bid6.id);
+  bid6.excludes.emplace_back(bid5.id);
 
   err = ca.PlaceBid(bid5);
   ASSERT_TRUE(err == ErrorCode::SUCCESS);
