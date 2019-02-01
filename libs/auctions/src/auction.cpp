@@ -294,7 +294,7 @@ ErrorCode Auction::ShowAuctionResult()
     }
     else
     {
-      std::cout << "winning bid: " << item.second.winner << std::endl;
+      std::cout << "winning bid: " << item.second.winner << ", at price: " << item.second.sell_price << std::endl;
     }
     std::cout << std::endl;
   }

@@ -72,6 +72,22 @@ public:
   /// C++ method calls ///
   ////////////////////////
 
+  ItemContainer items()
+  {
+    return auction_.items();
+  }
+
+  std::vector<Bid> bids()
+  {
+    return auction_.ShowBids();
+  }
+
+  void Mine()
+  {
+    auction_.Mine(1234, 10000);
+  }
+
+
   void Execute()
   {
     auction_.Execute();
@@ -144,6 +160,7 @@ private:
       Value               bid_price = DEFAULT_BID_PRICE;
       AgentId             bidder_id = DEFAULT_BID_BIDDER;
       std::vector<BidId>  excludes  = {};
+      bool                exclude_all = false;
 
       // extract all the request parameters
       if (variant::Extract(doc.root(), "bid_id", bid_id) &&
@@ -151,8 +168,21 @@ private:
           variant::Extract(doc.root(), "bid_price", bid_price) &&
           variant::Extract(doc.root(), "bidder_id", bidder_id))
       {
+
         variant::Extract(doc.root(), "excludes", excludes);
-        auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
+        variant::Extract(doc.root(), "exclude_all", exclude_all);
+
+        std::cout << "bid_price: " << bid_price << std::endl;
+        if (exclude_all == false)
+        {
+          auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, excludes});
+        }
+        else
+        {
+          auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, exclude_all});
+        }
+
+
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }

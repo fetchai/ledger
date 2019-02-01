@@ -52,20 +52,31 @@ int main(int argc, char **argv)
   server.AddModule(msl);
   nm.Start();
 
+
+  std::size_t min_bids = 5;
+  std::size_t min_items = 3;
   while (1)
   {
+    // sleep for 1 minute
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-    //
-    std::cout << "executing auction: " << std::endl;
-    msl.Execute();
+    if ((msl.bids().size() > min_bids) & (msl.items().size() > min_items))
+    {
+      // do some mining
+      std::cout << "mining auction: " << std::endl;
+      msl.Mine();
 
-    //
-    std::cout << "showing auction result: " << std::endl;
-    msl.ShowAuctionResult();
+      //
+      std::cout << "executing auction: " << std::endl;
+      msl.Execute();
 
-    //
-    std::cout << "resetting auction: " << std::endl;
-    msl.Reset();
+      //
+      std::cout << "showing auction result: " << std::endl;
+      msl.ShowAuctionResult();
+
+      //
+      std::cout << "resetting auction: " << std::endl;
+      msl.Reset();
+    }
   }
 }

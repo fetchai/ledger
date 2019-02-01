@@ -196,13 +196,34 @@ void CombinatorialAuction::BuildGraph()
   local_fields_ = fetch::math::ShapelessArray<Value>::Zeroes({bids_.size()});
   active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
+
+  // check for any cases where bids specify to 'exclude all' and set up the relevant 'excludes' vector
+  for (std::size_t j = 0; j < bids_.size(); ++j)
+  {
+    if (bids_[j].exclude_all)
+    {
+      // get all bids made by this bidder (except current bid)
+      std::vector<BidId> all_bids{};
+      for (std::size_t k = 0; k < bids_.size(); ++k)
+      {
+        if (!(j == k) && (bids_[k].bidder == bids_[j].bidder))
+        {
+          all_bids.emplace_back(bids_[k].id);
+        }
+      }
+
+      bids_[j].excludes = all_bids;
+    }
+  }
+
+
+  // set local fields according to the following equation:
+  // local_fields_ = bid_price - Sum(items.min_price)
+  // thus local_fields_ represents the release value due to a bid
+  // and only bids with positive local_fields can be accepted
   for (std::size_t i = 0; i < bids_.size(); ++i)
   {
 
-    // set local fields according to the following equation:
-    // local_fields_ = bid_price - Sum(items.min_price)
-    // thus local_fields_ represents the release value due to a bid
-    // and only bids with positive local_fields can be accepted
     local_fields_[i] = static_cast<Value>(bids_[i].price);
     couplings_.Set(i, i, 0);
     for (auto &cur_item : items_)
@@ -217,6 +238,7 @@ void CombinatorialAuction::BuildGraph()
     }
   }
 
+  // Assign Couplings
   for (std::size_t i = 0; i < bids_.size(); ++i)
   {
 
@@ -279,6 +301,7 @@ void CombinatorialAuction::SelectWinners()
           if (bid_item_id == item.first)
           {
             item.second.winner = bids_[j].id;
+            item.second.sell_price = bids_[j].price;
           }
         }
       }
