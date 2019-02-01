@@ -17,148 +17,159 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "storage/versioned_random_access_stack.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
+#include "crypto/sha256.hpp"
+#include "core/byte_array/encoders.hpp"
+#include "crypto/hash.hpp"
+
 #include <gtest/gtest.h>
 
 #include <iostream>
 #include <stack>
 #include <vector>
-using namespace fetch::storage;
+#include <string>
+#include <algorithm>
 
-class TestClass
+using namespace fetch;
+using namespace fetch::storage;
+using namespace fetch::crypto;
+
+// Since the stacks do not serialize, use this class to make testing using strings easier
+class StringProxy
 {
 public:
-  uint64_t value1 = 0;
-  uint8_t  value2 = 0;
 
-  bool operator==(TestClass const &rhs)
+  StringProxy()
   {
-    return value1 == rhs.value1 && value2 == rhs.value2;
+    memset(this, 0, sizeof(decltype(*this)));
   }
+
+  // Implicitly convert strings to this class
+  StringProxy(std::string const &in)
+  {
+    memset(this, 0, sizeof(decltype(*this)));
+    std::memcpy(string_as_chars_, in.c_str(), std::min(in.size(), std::size_t(127)));
+  }
+
+  bool operator !=(StringProxy const &rhs) const
+  {
+    return memcmp(string_as_chars_, rhs.string_as_chars_, 128) != 0;
+  }
+
+  bool operator ==(StringProxy const &rhs) const
+  {
+    return memcmp(string_as_chars_, rhs.string_as_chars_, 128) == 0;
+  }
+
+  char string_as_chars_[128];
 };
 
-#define TYPE uint64_t
-
-TEST(versioned_random_access_stack_gtest, creation_and_manipulation)
-{
-  VersionedRandomAccessStack<TYPE> stack;
-  stack.New("versioned_random_access_stack_test_1.db", "versioned_random_access_stack_diff.db");
-  VersionedRandomAccessStack<TYPE>::bookmark_type cp1, cp2, cp3;
-
-  // testing basic manipulation)
-  cp1 = stack.Commit();
-  stack.Push(1);
-  stack.Push(2);
-  stack.Push(3);
-  cp2 = stack.Commit();
-  stack.Swap(1, 2);
-  stack.Push(4);
-  stack.Push(5);
-  stack.Set(0, 9);
-  cp3 = stack.Commit();
-  stack.Push(6);
-  stack.Push(7);
-  stack.Push(9);
-  stack.Pop();
-  EXPECT_EQ(stack.Top(), 7);
-  EXPECT_EQ(stack.Get(0), 9);
-  EXPECT_EQ(stack.Get(1), 3);
-  EXPECT_EQ(stack.Get(2), 2);
-
-  // testing revert 1
-  stack.Revert(cp3);
-  EXPECT_EQ(stack.Top(), 5);
-  EXPECT_EQ(stack.Get(0), 9);
-  EXPECT_EQ(stack.Get(1), 3);
-
-  EXPECT_EQ(stack.Get(2), 2);
-
-  // testing revert 2
-  stack.Revert(cp2);
-  EXPECT_EQ(stack.Top(), 3);
-  EXPECT_EQ(stack.Get(0), 1);
-  EXPECT_EQ(stack.Get(1), 2);
-  EXPECT_EQ(stack.Get(2), 3);
-
-  // testing revert 3
-  stack.Revert(cp1);
-  EXPECT_NE(stack.empty(), 0);
-
-  // testing refilling
-  cp1 = stack.Commit();
-  stack.Push(1);
-  stack.Push(2);
-  stack.Push(3);
-  cp2 = stack.Commit();
-  stack.Swap(1, 2);
-  stack.Push(4);
-  stack.Push(5);
-  stack.Set(0, 9);
-  cp3 = stack.Commit();
-  stack.Push(6);
-  stack.Push(7);
-  stack.Push(9);
-  stack.Pop();
-
-  EXPECT_EQ(stack.Top(), 7);
-  EXPECT_EQ(stack.Get(0), 9);
-  EXPECT_EQ(stack.Get(1), 3);
-  EXPECT_EQ(stack.Get(2), 2);
-
-  // testing revert 2
-  stack.Revert(cp2);
-  EXPECT_EQ(stack.Top(), 3);
-  EXPECT_EQ(stack.Get(0), 1);
-  EXPECT_EQ(stack.Get(1), 2);
-  EXPECT_EQ(stack.Get(2), 3);
+std::ostream &operator<<(std::ostream &os, StringProxy const &m) { 
+    return os << m.string_as_chars_;
 }
 
-TEST(versioned_random_access_stack_gtest, storage_of_large_objects)
+using ByteArray = fetch::byte_array::ByteArray;
+
+TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
 {
-  fetch::random::LaggedFibonacciGenerator<> lfg;
+  NewVersionedRandomAccessStack<StringProxy> stack;
+  stack.New("b_main.db", "b_history.db");
 
-  struct Element
+  // Create a bunch of hashes we want to bookmark with
+  std::vector<ByteArray> hashes;
+
+  for (std::size_t i = 0; i < 4; ++i)
   {
-    int      a;
-    uint8_t  b;
-    uint64_t c;
-    uint16_t d;
-    bool     operator==(Element const &o) const
-    {
-      return ((a == o.a) && (b == o.b) && (c == o.c) && (d == o.d));
-    }
-  };
-  VersionedRandomAccessStack<Element> stack;
-  stack.New("versioned_random_access_stack_test_2.db", "versioned_random_access_stack_diff2.db");
-  std::vector<Element> reference;
-
-  auto newElement = [&stack, &reference, &lfg]() -> Element {
-    Element e;
-    e.a = int(lfg());
-    e.b = uint8_t(lfg());
-    e.c = uint64_t(lfg());
-    e.d = uint16_t(lfg());
-    stack.Push(e);
-    reference.push_back(e);
-    return e;
-  };
-
-  bool all_equal = true;
-  for (std::size_t i = 1; i < 20; ++i)
-  {
-    if ((i % 4) == 0)
-    {
-      stack.Commit();
-    }
-    newElement();
-    all_equal &= (stack.Top() == reference.back());
+    hashes.push_back(Hash<crypto::SHA256>(std::to_string(i)));
   }
-  EXPECT_TRUE(all_equal);
 
-  all_equal = true;
-  for (std::size_t i = 0; i < reference.size(); ++i)
+  // Make some changes to the stack
+  for (std::size_t i = 0; i < 17; ++i)
   {
-    all_equal &= (stack.Get(i) == reference[i]);
+    stack.Push(std::to_string(i));
   }
-  EXPECT_TRUE(all_equal);
+
+  // Verify state is correct with no changes
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+      StringProxy a;
+      a = stack.Get(i);
+      StringProxy b;
+      b = StringProxy(std::to_string(i));
+
+      bool res = a == b;
+
+    EXPECT_EQ(a, b) << "thing";
+    EXPECT_EQ(res, true) << "thing";
+
+    EXPECT_NE(stack.Get(i), std::to_string(i + 11)); // counter check
+    EXPECT_EQ(stack.Get(i), std::to_string(i));
+  }
+
+  // *** Commit this ***
+  stack.Commit(hashes[0]);
+
+  // Verify state is the same
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    EXPECT_EQ(stack.Get(i), std::to_string(i));
+  }
+
+  // mash the state
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    stack.Set(i, std::to_string(i + 5));
+  }
+
+  // Verify the change
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    EXPECT_EQ(stack.Get(i), std::to_string(i + 5));
+  }
+
+  EXPECT_EQ(stack.HashExists(hashes[0]), true);
+
+  // Revert!
+  stack.RevertToHash(hashes[0]);
+
+  /* EXPECT_EQ(stack.HashExists(hashes[0], false)); */ // TODO(HUT): this.
+
+  // Verify old state is as it was
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    EXPECT_EQ(stack.Get(i), std::to_string(i));
+  }
+}
+
+TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
+{
+  NewVersionedRandomAccessStack<std::string> stack;
+  stack.New("b_main.db", "b_history.db");
+
+  // Create a bunch of hashes we want to bookmark with
+  std::vector<ByteArray> hashes;
+
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    hashes.push_back(Hash<crypto::SHA256>(std::to_string(i)));
+  }
+
+  // Make some changes to the stack
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    stack.Push(std::to_string(i));
+  }
+
+  // Verify state is correct with no changes
+  for (std::size_t i = 0; i < 17; ++i)
+  {
+    EXPECT_EQ(stack.Get(i), std::to_string(i));
+  }
+
+  // *** Commit this ***
+  stack.Commit(hashes[0]);
+
+  // Revert!
+  ASSERT_THROW(stack.RevertToHash(hashes[1]), StorageException);
+
 }

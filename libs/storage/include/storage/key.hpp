@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "vectorise/platform.hpp"
+#include "core/macros.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -39,13 +40,13 @@ namespace storage {
  * all of 0xF
  *
  */
-template <std::size_t S = 64>
+template <std::size_t BITS = 256>
 struct Key
 {
   enum
   {
-    BLOCKS = S / 64,
-    BYTES  = S / 8
+    BLOCKS = BITS / 64,
+    BYTES  = BITS / 8
   };
 
   Key()
@@ -55,6 +56,7 @@ struct Key
 
   Key(byte_array::ConstByteArray const &key)
   {
+    static_assert(BITS == 128 || BITS == 256 || BITS >= 1024, "Keys expected to be a cryptographic hash function output");
     assert(key.size() == BYTES);
 
     const uint64_t *key_reinterpret = reinterpret_cast<const uint64_t *>(key.pointer());
@@ -66,6 +68,32 @@ struct Key
       //                          disk. This should be investigated.
       key_[i] = platform::ConvertToBigEndian(key_reinterpret[i]);
     }
+  }
+
+  /**
+   * Compare against another key
+   *
+   * @param: rhs The key to compare against
+   *
+   * @return: whether there is equality between keys
+   */
+  bool operator==(Key const &rhs) const
+  {
+    int dummy = int(size());
+
+    int compare_result = Compare(rhs, dummy, BLOCKS-1, 64);
+
+    assert(compare_result != 999);
+    FETCH_UNUSED(compare_result);
+
+    for (std::size_t i = 0; i < BLOCKS; ++i)
+    {
+      if(key_[i] != rhs.key_[i])
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -138,7 +166,7 @@ struct Key
   // BLOCKS
   std::size_t size() const
   {
-    return BYTES << 3;
+    return BYTES;
   }
 
 private:
