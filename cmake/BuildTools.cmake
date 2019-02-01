@@ -27,6 +27,11 @@ function(setup_library name)
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+    # CoreFoundation Support on MacOS
+    if (APPLE)
+      target_link_libraries(${name} PUBLIC "-framework CoreFoundation")
+    endif ()
+
   endif()
 endfunction()
 
@@ -35,6 +40,11 @@ function(fetch_add_executable name)
 
   # add the executable
   add_executable(${name} "${ARGV}")
+
+  # CoreFoundation Support on MacOS
+  if (APPLE)
+    target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
+  endif ()
 
 endfunction()
 
@@ -81,6 +91,11 @@ function(setup_library_examples library)
             target_include_directories(${example_name} PRIVATE ${example_path})
             target_include_directories(${example_name} PRIVATE ${examples_root})
 
+            # CoreFoundation Support on MacOS
+            if (APPLE)
+              target_link_libraries(${example_name} PRIVATE "-framework CoreFoundation")
+            endif ()
+
             if(FETCH_VERBOSE_CMAKE)
               message(STATUS "Creating ${example_name} target linking to ${library}")
             endif(FETCH_VERBOSE_CMAKE)
@@ -116,6 +131,11 @@ function(add_fetch_test name library file)
 
       add_executable(${name} ${file})
       target_link_libraries(${name} PRIVATE ${library} fetch-testing)
+
+      # CoreFoundation Support on MacOS
+      if (APPLE)
+        target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
+      endif ()
 
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
@@ -157,6 +177,11 @@ function(add_fetch_gtest name library directory)
       target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
       target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
+      # CoreFoundation Support on MacOS
+      if (APPLE)
+        target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
+      endif ()
+
       # define the test
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
@@ -195,6 +220,11 @@ function(add_fetch_gbench name library directory)
 
       target_link_libraries(${name} PRIVATE ${library} gmock gmock_main)
       target_link_libraries(${name} PRIVATE ${library} benchmark)
+
+      # CoreFoundation Support on MacOS
+      if (APPLE)
+        target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
+      endif ()
 
       #Google bench requires google test
       target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
