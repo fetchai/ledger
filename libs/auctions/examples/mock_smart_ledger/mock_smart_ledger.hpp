@@ -36,8 +36,6 @@ namespace examples {
 class MockSmartLedger : public fetch::http::HTTPModule
 {
 public:
-  using CombinatorialAuction = typename fetch::auctions::CombinatorialAuction;
-
   static constexpr char const *LOGGING_NAME = "MockSmartLedger";
 
   enum class ErrorCode
