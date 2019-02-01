@@ -20,32 +20,12 @@
 #include <iostream>
 
 #include "mock_smart_ledger.hpp"
-//#include "ledger/chaincode/wallet_http_interface.hpp"
-
 #include "http/server.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <chrono>
 #include <thread>
 
-// bool OrdinaryClientCodeTest(fetch::auctions::examples::MockSmartLedger &msl)
-//{
-//  int exit_code = EXIT_FAILURE;
-//
-//  fetch::variant::Variant response;
-//  if (msl.Get("/?format=json", response))
-//  {
-//    std::cout << "Response\n\n" << response << std::endl;
-//
-//    exit_code = EXIT_SUCCESS;
-//  }
-//  else
-//  {
-//    std::cout << "ERROR: Unable to make query" << std::endl;
-//  }
-//
-//  return exit_code;
-//}
 
 int main(int argc, char **argv)
 {
@@ -67,7 +47,7 @@ int main(int argc, char **argv)
   // create the client
   fetch::auctions::examples::MockSmartLedger msl{};
 
-  fetch::network::NetworkManager nm{};
+  fetch::network::NetworkManager nm{"mock_smart_ledger_network_manager", 8};
   fetch::http::HTTPServer        server(nm);
   server.Start(8080);
   server.AddModule(msl);
