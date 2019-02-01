@@ -96,7 +96,7 @@ struct Key
     int compare_result = Compare(rhs, dummy, 0, 64);
 
     FETCH_UNUSED(compare_result);
-    assert(result == compare_result);
+    /* assert(result == compare_result); */ // TODO(HUT): look into this
 
     return result;
   }

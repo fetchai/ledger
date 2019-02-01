@@ -92,16 +92,6 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
   // Verify state is correct with no changes
   for (std::size_t i = 0; i < 17; ++i)
   {
-    StringProxy a;
-    a = stack.Get(i);
-    StringProxy b;
-    b = StringProxy(std::to_string(i));
-
-    bool res = a == b;
-
-    EXPECT_EQ(a, b) << "thing";
-    EXPECT_EQ(res, true) << "thing";
-
     EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
     EXPECT_EQ(stack.Get(i), std::to_string(i));
   }
@@ -143,7 +133,7 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
 
 TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
 {
-  NewVersionedRandomAccessStack<std::string> stack;
+  NewVersionedRandomAccessStack<StringProxy> stack;
   stack.New("b_main.db", "b_history.db");
 
   // Create a bunch of hashes we want to bookmark with
@@ -163,12 +153,23 @@ TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
   // Verify state is correct with no changes
   for (std::size_t i = 0; i < 17; ++i)
   {
+    StringProxy a;
+    a = stack.Get(i);
+    StringProxy b;
+    b = StringProxy(std::to_string(i));
+
+    bool res = a == b;
+
+    EXPECT_EQ(a, b) << "thing";
+    EXPECT_EQ(res, true) << "thing";
+
+    EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
     EXPECT_EQ(stack.Get(i), std::to_string(i));
   }
 
   // *** Commit this ***
   stack.Commit(hashes[0]);
 
-  // Revert!
+  // Revert to bad hash
   ASSERT_THROW(stack.RevertToHash(hashes[1]), StorageException);
 }
