@@ -57,7 +57,7 @@ TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_with_predfined_private_ke
   EXPECT_TRUE(verifier.Verify(test_data_, signer.signature()));
 }
 
-TEST_F(ECDSASignerVerifierTest, test_ign_verify_cycle_generated_key)
+TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_generated_key)
 {
   ECDSASigner signer;
   signer.GenerateKeys();
@@ -67,6 +67,24 @@ TEST_F(ECDSASignerVerifierTest, test_ign_verify_cycle_generated_key)
   ECDSAVerifier verifier{signer.identity()};
 
   EXPECT_TRUE(verifier.Verify(test_data_, signer.signature()));
+}
+
+TEST_F(ECDSASignerVerifierTest, test_sane_verify)
+{
+  ECDSASigner signer;
+  signer.GenerateKeys();
+
+  ASSERT_TRUE(signer.Sign(test_data_));
+
+  ECDSAVerifier falseVerifier{Identity()};
+
+  EXPECT_FALSE(falseVerifier);
+  EXPECT_FALSE(falseVerifier.Verify(test_data_, signer.signature()));
+
+  ECDSAVerifier trueVerifier{signer.identity()};
+
+  EXPECT_TRUE(trueVerifier);
+  EXPECT_TRUE(trueVerifier.Verify(test_data_, signer.signature()));
 }
 
 }  // namespace
