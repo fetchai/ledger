@@ -371,7 +371,7 @@ public:
     {
       kv.key        = key;
       kv.parent     = uint64_t(-1);
-      kv.split      = uint16_t(key.size());
+      kv.split      = uint16_t(key.size_in_bits());
       update_parent = kv.UpdateLeaf(args...);
 
       index = stack_.Push(kv);
@@ -393,7 +393,7 @@ public:
         pid = right.parent;
 
         left.key   = key;
-        left.split = uint16_t(key.size());
+        left.split = uint16_t(key.size_in_bits());
 
         left.parent  = stack_.size() + 1;
         right.parent = stack_.size() + 1;
@@ -410,7 +410,7 @@ public:
         pid = left.parent;
 
         right.key   = key;
-        right.split = uint16_t(key.size());
+        right.split = uint16_t(key.size_in_bits());
 
         right.parent = stack_.size() + 1;
         left.parent  = stack_.size() + 1;
@@ -734,7 +734,7 @@ private:
       ++depth;
       index = next;
 
-      pos = int(key.size());
+      pos = int(key.size_in_bits());
 
       stack_.Get(next, kv);
 
