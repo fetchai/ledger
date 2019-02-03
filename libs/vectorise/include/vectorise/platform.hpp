@@ -214,5 +214,11 @@ inline uint32_t ToLog2(uint32_t value)
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
+// https://graphics.stanford.edu/~seander/bithacks.html
+inline bool IsLog2(uint64_t value)
+{
+  return value && !(value & (value - 1));
+}
+
 }  // namespace platform
 }  // namespace fetch
