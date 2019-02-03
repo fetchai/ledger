@@ -38,8 +38,7 @@ namespace ledger {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &                        chain,
-                                   ExecutionManagerInterface &execution_manager)
+BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager)
   : chain_{chain}
   , execution_manager_{execution_manager}
 {}

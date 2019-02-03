@@ -84,7 +84,7 @@ public:
   }
 
   static VerifiedTransaction Create(fetch::ledger::MutableTransaction const &trans,
-                                    bool *                                  status = nullptr)
+                                    bool *                                   status = nullptr)
   {
     VerifiedTransaction ret;
 

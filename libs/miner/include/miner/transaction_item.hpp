@@ -49,7 +49,7 @@ public:
 
 private:
   ledger::TransactionSummary summary_;
-  std::size_t               id_;
+  std::size_t                id_;
 };
 
 }  // namespace miner

@@ -58,12 +58,12 @@ public:
   using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore            = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
-  using TransactionStore         = storage::TransientObjectStore<VerifiedTransaction>;
-  using TransactionStoreProtocol = storage::ObjectStoreProtocol<VerifiedTransaction>;
-  using BackgroundedWork         = network::BackgroundedWork<TransactionStoreSyncService>;
-  using BackgroundedWorkThread   = network::HasWorkerThread<BackgroundedWork>;
+  using DocumentStore             = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore          = storage::TransientObjectStore<VerifiedTransaction>;
+  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<VerifiedTransaction>;
+  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
 
   using Identifier = byte_array::ConstByteArray;

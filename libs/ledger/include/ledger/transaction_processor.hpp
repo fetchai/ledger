@@ -31,8 +31,8 @@ namespace ledger {
 class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
-  using ThreadPtr          = std::unique_ptr<std::thread>;
-  using TransactionList    = std::vector<Transaction>;
+  using ThreadPtr       = std::unique_ptr<std::thread>;
+  using TransactionList = std::vector<Transaction>;
 
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 

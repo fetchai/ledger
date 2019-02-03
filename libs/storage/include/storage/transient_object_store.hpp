@@ -187,7 +187,7 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
     uint32_t max_to_poll)
 {
   TransientObjectStore<O>::TxSummaries   ret;
-  ledger::TransactionSummary              summary;
+  ledger::TransactionSummary             summary;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)

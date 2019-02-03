@@ -50,7 +50,7 @@ T Clip3(T value, T min_value, T max_value)
  * @param log2_num_lanes The log2 of the number of lanes
  */
 BasicMiner::TransactionEntry::TransactionEntry(ledger::TransactionSummary const &summary,
-                                               uint32_t                         log2_num_lanes)
+                                               uint32_t                          log2_num_lanes)
   : resources{1u << log2_num_lanes}
   , transaction{summary}
 

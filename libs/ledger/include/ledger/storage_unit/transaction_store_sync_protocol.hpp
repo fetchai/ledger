@@ -51,7 +51,7 @@ public:
     PULL_SUBTREE = 3
   };
 
-  using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
+  using ObjectStore = storage::TransientObjectStore<VerifiedTransaction>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreSyncProtocol";
 

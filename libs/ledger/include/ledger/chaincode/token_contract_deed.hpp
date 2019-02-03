@@ -36,8 +36,8 @@ struct Deed
   using Weights            = std::unordered_map<Weight, std::size_t>;
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
-  bool IsSane() const;
-  bool Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const;
+  bool              IsSane() const;
+  bool              Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;

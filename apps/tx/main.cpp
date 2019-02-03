@@ -125,7 +125,7 @@ void PrintTx(fetch::ledger::MutableTransaction const &tx, std::string const &des
 void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &is_verbose = false)
 {
   fetch::ledger::MutableTransaction tx;
-  auto                             txdata = fetch::ledger::TxSigningAdapterFactory(tx);
+  auto                              txdata = fetch::ledger::TxSigningAdapterFactory(tx);
   tx_data_stream >> txdata;
 
   if (tx.Verify(txdata))
@@ -146,7 +146,7 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &i
 }
 
 fetch::ledger::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant const &metadata_v,
-                                                         PrivateKeys const &private_keys)
+                                                          PrivateKeys const &private_keys)
 {
   using fetch::ledger::MutableTransaction;
   using fetch::byte_array::ConstByteArray;

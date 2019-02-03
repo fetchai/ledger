@@ -38,7 +38,7 @@ using namespace fetch;
 using namespace fetch::optimisers;
 
 ledger::BlockGenerator generator;
-std::mt19937          rng(42);
+std::mt19937           rng(42);
 
 static byte_array::ConstByteArray CreateResource(int64_t value)
 {

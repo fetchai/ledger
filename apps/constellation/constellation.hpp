@@ -88,29 +88,30 @@ public:
 private:
   void CreateInfoFile(std::string const &filename);
 
-  using Muddle                  = muddle::Muddle;
-  using NetworkManager          = network::NetworkManager;
-  using BlockPackingAlgorithm   = miner::BasicMiner;
-  using Miner                   = ledger::MainChainMiner;
-  using BlockCoordinator        = ledger::BlockCoordinator;
-  using MainChain               = ledger::MainChain;
-  using MainChainRpcService     = ledger::MainChainRpcService;
-  using MainChainRpcServicePtr  = std::shared_ptr<MainChainRpcService>;
-  using LaneServices            = ledger::StorageUnitBundledService;
-  using StorageUnitClient       = ledger::StorageUnitClient;
-  using LaneIndex               = StorageUnitClient::LaneIndex;
-  using StorageUnitClientPtr    = std::shared_ptr<StorageUnitClient>;
-  using Flag                    = std::atomic<bool>;
-  using ExecutionManager        = ledger::ExecutionManager;
-  using ExecutionManagerPtr     = std::shared_ptr<ExecutionManager>;
-  using LaneRemoteControl       = ledger::LaneRemoteControl;
-  using HttpServer              = http::HTTPServer;
-  using HttpModule              = http::HTTPModule;
-  using HttpModulePtr           = std::shared_ptr<HttpModule>;
-  using HttpModules             = std::vector<HttpModulePtr>;
-  using TransactionProcessor    = ledger::TransactionProcessor;
-  using TrustSystem             = p2p::P2PTrustBayRank<Muddle::Address>;
-  using ConsensusMinerInterface = std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
+  using Muddle                 = muddle::Muddle;
+  using NetworkManager         = network::NetworkManager;
+  using BlockPackingAlgorithm  = miner::BasicMiner;
+  using Miner                  = ledger::MainChainMiner;
+  using BlockCoordinator       = ledger::BlockCoordinator;
+  using MainChain              = ledger::MainChain;
+  using MainChainRpcService    = ledger::MainChainRpcService;
+  using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
+  using LaneServices           = ledger::StorageUnitBundledService;
+  using StorageUnitClient      = ledger::StorageUnitClient;
+  using LaneIndex              = StorageUnitClient::LaneIndex;
+  using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
+  using Flag                   = std::atomic<bool>;
+  using ExecutionManager       = ledger::ExecutionManager;
+  using ExecutionManagerPtr    = std::shared_ptr<ExecutionManager>;
+  using LaneRemoteControl      = ledger::LaneRemoteControl;
+  using HttpServer             = http::HTTPServer;
+  using HttpModule             = http::HTTPModule;
+  using HttpModulePtr          = std::shared_ptr<HttpModule>;
+  using HttpModules            = std::vector<HttpModulePtr>;
+  using TransactionProcessor   = ledger::TransactionProcessor;
+  using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using ConsensusMinerInterface =
+      std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
   /// @name Configuration
   /// @{

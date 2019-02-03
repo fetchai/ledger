@@ -36,7 +36,7 @@ namespace ledger {
 
 struct AdaptedTx
 {
-  ledger::MutableTransaction                          tx;
+  ledger::MutableTransaction                           tx;
   ledger::TxSigningAdapter<ledger::MutableTransaction> adapter{tx};
 
   template <typename T>

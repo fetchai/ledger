@@ -143,7 +143,7 @@ public:
   void startMining()
   {
     fetch::ledger::consensus::DummyMiner miner;
-    auto                                closure = [this, &miner] {
+    auto                                 closure = [this, &miner] {
       // Loop code
       while (!stopped_)
       {
