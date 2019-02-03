@@ -55,7 +55,7 @@ public:
   using MuddlePtr      = std::shared_ptr<Muddle>;
   using Server         = fetch::muddle::rpc::Server;
   using ServerPtr      = std::shared_ptr<Server>;
-  using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
   using DocumentStore            = storage::RevertibleDocumentStore;
@@ -227,8 +227,7 @@ private:
 
   ServerPtr server_;
   MuddlePtr muddle_;  ///< The muddle networking service
-  // mutex::Mutex certificate_lock_{__LINE__, __FILE__};
-  uint16_t port_;
+  uint16_t  port_;
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
