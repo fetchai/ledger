@@ -95,32 +95,6 @@ inline void Block::UpdateDigest()
 }
 
 /**
- * Serializer for the block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the slices to be serialised
- */
-template <typename T>
-void Serialize(T &serializer, Block::Slices const &slice)
-{
-  serializer << slice;
-}
-
-/**
- * Deserializer for block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the output slice list
- */
-template <typename T>
-void Deserialize(T &serializer, Block::Slices &slice)
-{
-  serializer >> slice;
-}
-
-/**
  * Serializer for the block body
  *
  * @tparam T The serializer type
