@@ -50,7 +50,6 @@ namespace storage {
 // defined in key.hpp
 using DefaultKey = Key<256>;
 
-namespace {
 /**
  * This header is at the beginning of the main RAS and keeps track of the final bookmark in the
  * history stack
@@ -60,8 +59,6 @@ struct NewBookmarkHeader
   uint64_t header;
   uint64_t bookmark;  // aim to remove this.
 };
-
-}  // namespace
 
 /**
  * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous
