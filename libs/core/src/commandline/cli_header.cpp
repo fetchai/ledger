@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,13 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include "fetch_version.hpp"
+
+#include <iostream>
 
 namespace fetch {
 namespace commandline {
 
-void DisplayCLIHeader(std::string const &name, std::string const &years = "2018",
-                             std::string const &additional = "");
+void DisplayCLIHeader(std::string const &name, std::string const &years, std::string const &additional)
+{
+  std::cout << " F E ╱     " << name << ' ' << version::FULL << '\n';
+  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << '\n';
+  std::cout << "     H     " << additional << '\n' << std::endl;
+}
 
 }  // namespace commandline
 }  // namespace fetch
