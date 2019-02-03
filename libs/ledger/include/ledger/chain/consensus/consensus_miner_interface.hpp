@@ -20,7 +20,7 @@
 #include "ledger/chain/main_chain.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
 class ConsensusMinerInterface
@@ -36,5 +36,5 @@ public:
 };
 
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

@@ -116,7 +116,6 @@ private:
   using LooseBlockMap      = std::unordered_map<BlockHash, BlockHashs>;
   using BlockStore         = fetch::storage::ObjectStore<Block>;
   using BlockStorePtr      = std::unique_ptr<BlockStore>;
-  using TransactionSummary = chain::TransactionSummary;
   using RMutex             = std::recursive_mutex;
   using RLock              = std::unique_lock<RMutex>;
 

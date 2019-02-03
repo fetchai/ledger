@@ -32,11 +32,9 @@
 #include <memory>
 
 namespace fetch {
-namespace chain {
-class BlockCoordinator;
-}  // namespace chain
 namespace ledger {
 
+class BlockCoordinator;
 class MainChain;
 class MainChainSyncWorker;
 
@@ -47,7 +45,6 @@ public:
   friend class MainChainSyncWorker;
   using MuddleEndpoint   = muddle::MuddleEndpoint;
   using MainChain        = ledger::MainChain;
-  using BlockCoordinator = chain::BlockCoordinator;
   using Subscription     = muddle::Subscription;
   using SubscriptionPtr  = std::shared_ptr<Subscription>;
   using Address          = muddle::Packet::Address;

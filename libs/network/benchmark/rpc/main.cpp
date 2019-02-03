@@ -45,7 +45,7 @@ using namespace fetch;
 #include "network/test-helpers/muddle_test_definitions.hpp"
 #include "network/test-helpers/muddle_test_server.hpp"
 
-using transaction_type = fetch::chain::VerifiedTransaction;
+using transaction_type = fetch::ledger::VerifiedTransaction;
 
 std::size_t                         sizeOfTxMin = 0;  // base size of Tx
 ByteArray                           TestString;

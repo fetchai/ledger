@@ -21,11 +21,9 @@
 #include "crypto/fnv.hpp"
 
 namespace fetch {
-namespace chain {
-class VerifiedTransaction;
-}
-
 namespace ledger {
+
+class VerifiedTransaction;
 
 struct Deed
 {
@@ -39,7 +37,7 @@ struct Deed
   using MandatorityMatrix  = std::unordered_map<Threshold, Weights>;
 
   bool IsSane() const;
-  bool Verify(chain::VerifiedTransaction const &tx, DeedOperation const &operation) const;
+  bool Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const;
   MandatorityMatrix InferMandatoryWeights() const;
 
   Deed()             = default;

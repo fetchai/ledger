@@ -40,8 +40,8 @@ public:
   using Identity     = byte_array::ConstByteArray;
   using Digest       = byte_array::ConstByteArray;
   using HashFunction = crypto::SHA256;
-  using Proof        = chain::consensus::ProofOfWork;
-  using Slice        = std::vector<chain::TransactionSummary>;
+  using Proof        = consensus::ProofOfWork;
+  using Slice        = std::vector<TransactionSummary>;
   using Slices       = std::vector<Slice>;
 
   struct Body

@@ -311,7 +311,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   return result;
 }
 
-void TransactionStoreSyncService::OnTransaction(chain::VerifiedTransaction const &tx)
+void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
 {
   ResourceID const rid(tx.digest());
 

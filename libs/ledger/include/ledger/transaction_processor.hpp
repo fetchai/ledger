@@ -31,9 +31,8 @@ namespace ledger {
 class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
-  using MutableTransaction = chain::MutableTransaction;
   using ThreadPtr          = std::unique_ptr<std::thread>;
-  using TransactionList    = std::vector<chain::Transaction>;
+  using TransactionList    = std::vector<Transaction>;
 
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
@@ -63,12 +62,12 @@ public:
 protected:
   /// @name Unverified Transaction Sink
   /// @{
-  void OnTransaction(chain::UnverifiedTransaction const &tx) override;
+  void OnTransaction(UnverifiedTransaction const &tx) override;
   /// @}
 
   /// @name Transaction Handlers
   /// @{
-  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransaction(VerifiedTransaction const &tx) override;
   void OnTransactions(TransactionList const &txs) override;
   /// @}
 

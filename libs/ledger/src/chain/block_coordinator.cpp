@@ -30,7 +30,7 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 static const std::chrono::milliseconds STALL_INTERVAL{250};
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 /**
  * Construct the Block Coordinator
@@ -39,7 +39,7 @@ namespace chain {
  * @param execution_manager  The reference to the execution manager
  */
 BlockCoordinator::BlockCoordinator(MainChain &                        chain,
-                                   ledger::ExecutionManagerInterface &execution_manager)
+                                   ExecutionManagerInterface &execution_manager)
   : chain_{chain}
   , execution_manager_{execution_manager}
 {}
@@ -343,5 +343,5 @@ void BlockCoordinator::OnExecuteBlock()
   state_ = next_state;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

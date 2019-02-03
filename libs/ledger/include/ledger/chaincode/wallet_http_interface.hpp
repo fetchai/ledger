@@ -150,7 +150,7 @@ private:
         std::ostringstream oss;
         oss << wealth_data;
 
-        chain::MutableTransaction mtx;
+        ledger::MutableTransaction mtx;
         mtx.set_contract_name("fetch.token.wealth");
         mtx.set_data(oss.str());
         mtx.set_fee(rng() & 0x1FF);
@@ -262,7 +262,7 @@ private:
         oss << data;
 
         // build up the transfer transaction
-        chain::MutableTransaction mtx;
+        ledger::MutableTransaction mtx;
         mtx.set_contract_name("fetch.token.transfer");
         mtx.set_data(oss.str());
         mtx.PushResource(byte_array::FromBase64(from));
@@ -280,7 +280,7 @@ private:
         }
 
         // sign the transaction
-        auto tx_sign_adapter{chain::TxSigningAdapterFactory(mtx)};
+        auto tx_sign_adapter{ledger::TxSigningAdapterFactory(mtx)};
 
         mtx.Sign(priv_key, tx_sign_adapter);
 

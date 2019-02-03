@@ -20,7 +20,7 @@
 #include "ledger/chain/mutable_transaction.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 class UnverifiedTransaction : private MutableTransaction
 {
@@ -78,12 +78,12 @@ public:
   using super_type::TxDigest;
   using super_type::ResourceSet;
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction &&trans)
+  static VerifiedTransaction Create(fetch::ledger::MutableTransaction &&trans)
   {
     return VerifiedTransaction::Create(trans);
   }
 
-  static VerifiedTransaction Create(fetch::chain::MutableTransaction const &trans,
+  static VerifiedTransaction Create(fetch::ledger::MutableTransaction const &trans,
                                     bool *                                  status = nullptr)
   {
     VerifiedTransaction ret;
@@ -114,7 +114,7 @@ public:
 protected:
   using super_type::operator=;
 
-  bool Finalise(fetch::chain::MutableTransaction const &base)
+  bool Finalise(fetch::ledger::MutableTransaction const &base)
   {
     *this = base;
     UpdateDigest();
@@ -137,5 +137,5 @@ protected:
 
 using Transaction = VerifiedTransaction;
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
