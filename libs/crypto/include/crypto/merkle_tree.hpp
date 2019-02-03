@@ -69,7 +69,3 @@ void Deserialize(T &serializer, MerkleTree &tree)
 
 }  // namespace crypto
 }  // namespace fetch
-
-namespace std {
-
-}  // namespace std
