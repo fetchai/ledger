@@ -40,7 +40,7 @@ public:
   HashArray &operator[](std::size_t const &n);
   HashArray &operator[](HashArray const &n);
 
-  void CalculateRoot() const;
+  void             CalculateRoot() const;
   HashArray const &root() const;
   Container const &leaf_nodes() const;
 

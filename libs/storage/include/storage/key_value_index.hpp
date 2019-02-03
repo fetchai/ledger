@@ -59,9 +59,9 @@
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
-#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/versioned_random_access_stack.hpp"
 
 #include <cstring>
@@ -540,7 +540,7 @@ public:
     stack_.Revert(b);
 
     root_ = stack_.header_extra();
-  } 
+  }
 
   //*/
 

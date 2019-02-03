@@ -56,6 +56,5 @@ inline std::ostream &operator<<(std::ostream &os, StringProxy const &m)
   return os << m.string_as_chars;
 }
 
-
 }  // namespace testing
 }  // namespace fetch

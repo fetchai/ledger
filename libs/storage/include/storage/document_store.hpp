@@ -43,10 +43,8 @@ namespace storage {
  * in the document store
  *
  */
-template <std::size_t BLOCK_SIZE = 2048,
-          typename A = FileBlockType<BLOCK_SIZE>,
-          typename B = KeyValueIndex<>,
-          typename C = VersionedRandomAccessStack<A>,
+template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
+          typename B = KeyValueIndex<>, typename C = VersionedRandomAccessStack<A>,
           typename D = FileObject<C>>
 class DocumentStore
 {
@@ -398,7 +396,7 @@ public:
   byte_array_type Commit()
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
-    byte_array_type hash = key_index_.Hash();
+    byte_array_type               hash = key_index_.Hash();
 
     key_index_.underlying_stack().Commit(hash);
     file_store_.Commit(hash);
@@ -410,7 +408,7 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
-    if(!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
+    if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
     {
       return false;
     }

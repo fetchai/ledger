@@ -32,12 +32,14 @@ public:
 
   NewRevertibleDocumentStore();
 
-  bool New(std::string const &state, std::string const &state_history, std::string const &index, std::string const &index_history, bool create_if_not_exist);
-  bool Load(std::string const &state, std::string const &state_history, std::string const &index, std::string const &index_history, bool create_if_not_exist);
+  bool New(std::string const &state, std::string const &state_history, std::string const &index,
+           std::string const &index_history, bool create_if_not_exist);
+  bool Load(std::string const &state, std::string const &state_history, std::string const &index,
+            std::string const &index_history, bool create_if_not_exist);
 
   UnderlyingType Get(ResourceID const &rid);
   UnderlyingType GetOrCreate(ResourceID const &rid);
-  void Set(ResourceID const &rid, ByteArray const &value);
+  void           Set(ResourceID const &rid, ByteArray const &value);
 
   Hash Commit();
   bool RevertToHash(Hash const &hash);
@@ -45,14 +47,14 @@ public:
   bool HashExists(Hash const &hash);
 
 private:
-
-  using Storage = storage::DocumentStore<2048,                                        // block size
-        FileBlockType<2048>,                                                          // file block type
-        KeyValueIndex<KeyValuePair<>, NewVersionedRandomAccessStack<KeyValuePair<>>>, // Key value index
-        NewVersionedRandomAccessStack<FileBlockType<2048>>>; // File store
+  using Storage = storage::DocumentStore<
+      2048,                 // block size
+      FileBlockType<2048>,  // file block type
+      KeyValueIndex<KeyValuePair<>, NewVersionedRandomAccessStack<KeyValuePair<>>>,  // Key value
+                                                                                     // index
+      NewVersionedRandomAccessStack<FileBlockType<2048>>>;                           // File store
 
   Storage storage_;
-
 };
 
 }  // namespace storage

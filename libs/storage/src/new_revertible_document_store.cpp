@@ -28,16 +28,19 @@ using ByteArray      = NewRevertibleDocumentStore::ByteArray;
 using UnderlyingType = NewRevertibleDocumentStore::UnderlyingType;
 
 NewRevertibleDocumentStore::NewRevertibleDocumentStore()
-{
-}
+{}
 
-bool NewRevertibleDocumentStore::Load(std::string const &state, std::string const &state_history, std::string const &index, std::string const &index_history, bool create = true)
+bool NewRevertibleDocumentStore::Load(std::string const &state, std::string const &state_history,
+                                      std::string const &index, std::string const &index_history,
+                                      bool create = true)
 {
   storage_.Load(state, state_history, index, index_history, create);
   return true;
 }
 
-bool NewRevertibleDocumentStore::New(std::string const &state, std::string const &state_history, std::string const &index, std::string const &index_history, bool create = true)
+bool NewRevertibleDocumentStore::New(std::string const &state, std::string const &state_history,
+                                     std::string const &index, std::string const &index_history,
+                                     bool /*create*/ = true)
 {
   storage_.New(state, state_history, index, index_history);
   return true;
@@ -79,5 +82,5 @@ Hash NewRevertibleDocumentStore::CurrentHash()
   return storage_.CurrentHash();
 }
 
-}  // namespace ledger
+}  // namespace storage
 }  // namespace fetch

@@ -50,8 +50,7 @@ namespace storage {
 // defined in key.hpp
 using DefaultKey = Key<256>;
 
-namespace
-{
+namespace {
 /**
  * This header is at the beginning of the main RAS and keeps track of the final bookmark in the
  * history stack
@@ -62,7 +61,7 @@ struct NewBookmarkHeader
   uint64_t bookmark;  // aim to remove this.
 };
 
-}
+}  // namespace
 
 /**
  * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous
@@ -74,8 +73,7 @@ struct NewBookmarkHeader
  * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
-template <typename T,
-          typename S = RandomAccessStack<T, NewBookmarkHeader>>
+template <typename T, typename S = RandomAccessStack<T, NewBookmarkHeader>>
 class NewVersionedRandomAccessStack
 {
 private:
@@ -111,8 +109,8 @@ private:
       value = 0
     };
 
-    uint64_t bookmark = 0;  // Internal index
-    DefaultKey      key{};         // User supplied key
+    uint64_t   bookmark = 0;  // Internal index
+    DefaultKey key{};         // User supplied key
   };
 
   /**
@@ -500,8 +498,8 @@ public:
   }
 
 private:
-  VariantStack    history_;
-  uint64_t internal_bookmark_index_{0};
+  VariantStack history_;
+  uint64_t     internal_bookmark_index_{0};
 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;

@@ -88,7 +88,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert)
   for (std::size_t i = 0; i < 17; ++i)
   {
     std::string set_me{std::to_string(i)};
-    store.Set(storage::ResourceAddress(set_me), std::to_string(i+5));
+    store.Set(storage::ResourceAddress(set_me), std::to_string(i + 5));
   }
 
   // Verify the change
@@ -96,7 +96,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert)
   {
     auto document = store.Get(storage::ResourceAddress(std::to_string(i)));
     EXPECT_EQ(document.failed, false);
-    EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i+5)));
+    EXPECT_EQ(ConstByteArray(document), ByteArray(std::to_string(i + 5)));
   }
 
   EXPECT_EQ(store.HashExists(hashes[0]), true);
@@ -114,5 +114,6 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert)
   }
 
   // Test: we should fail badly trying to revert to a hash that doesn't exist
-  ASSERT_THROW(store.RevertToHash(storage::ResourceAddress("non-existent key").id()), StorageException);
+  ASSERT_THROW(store.RevertToHash(storage::ResourceAddress("non-existent key").id()),
+               StorageException);
 }

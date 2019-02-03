@@ -227,7 +227,7 @@ private:
 
   ServerPtr server_;
   MuddlePtr muddle_;  ///< The muddle networking service
-  uint16_t port_;
+  uint16_t  port_;
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;
