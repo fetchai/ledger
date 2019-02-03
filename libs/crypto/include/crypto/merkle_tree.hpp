@@ -31,70 +31,18 @@ public:
   using HashArray = byte_array::ConstByteArray;
   using Container = std::map<HashArray, HashArray>;
 
-  MerkleTree()                      = default;
-  MerkleTree(MerkleTree const &rhs) = default;
-  MerkleTree(MerkleTree &&rhs)      = default;
-  MerkleTree &operator=(MerkleTree const &rhs) = default;
-  MerkleTree &operator=(MerkleTree &&rhs) = default;
+  MerkleTree();
+  MerkleTree(MerkleTree const &rhs);
+  MerkleTree(MerkleTree &&rhs);
+  MerkleTree &operator=(MerkleTree const &rhs);
+  MerkleTree &operator=(MerkleTree &&rhs);
 
-  HashArray &operator[](std::size_t const &n)
-  {
-    return leaf_nodes_[std::to_string(n)];
-  }
+  HashArray &operator[](std::size_t const &n);
+  HashArray &operator[](HashArray const &n);
 
-  HashArray &operator[](HashArray const &n)
-  {
-    return leaf_nodes_[n];
-  }
-
-  void CalculateRoot() const
-  {
-    if (leaf_nodes_.size() == 0)
-    {
-      root_ = Hash<crypto::SHA256>(HashArray{});
-      return;
-    }
-
-    std::vector<HashArray> hashes;
-
-    for (auto const &kv_iterator : leaf_nodes_)
-    {
-      auto &value = kv_iterator.second;
-      hashes.push_back(value);
-    }
-
-    // If necessary bump the 'leaves' up to a power of 2
-    while (!platform::IsLog2(uint64_t(hashes.size())))
-    {
-      hashes.push_back(HashArray{});
-    }
-
-    // Now, repeatedly condense the vector by calculating the parents of each of the roots
-    while (hashes.size() > 1)
-    {
-      for (std::size_t i = 0; i < hashes.size(); i += 2)
-      {
-        HashArray concantenated_hash = hashes[i] + hashes[i + 1];
-        concantenated_hash           = Hash<crypto::SHA256>(concantenated_hash);
-        hashes[i]                    = concantenated_hash;
-      }
-
-      hashes.resize(hashes.size() / 2);
-    }
-
-    assert(hashes.size() == 1);
-    root_ = hashes[0];
-  }
-
-  HashArray const &root() const
-  {
-    return root_;
-  }
-
-  Container const &leaf_nodes() const
-  {
-    return leaf_nodes_;
-  }
+  void CalculateRoot() const;
+  HashArray const &root() const;
+  Container const &leaf_nodes() const;
 
 private:
   Container         leaf_nodes_;

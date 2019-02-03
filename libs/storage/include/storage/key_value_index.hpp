@@ -61,6 +61,7 @@
 #include "storage/key.hpp"
 #include "storage/random_access_stack.hpp"
 #include "storage/storage_exception.hpp"
+#include "storage/new_versioned_random_access_stack.hpp"
 #include "storage/versioned_random_access_stack.hpp"
 
 #include <cstring>
@@ -169,7 +170,7 @@ struct KeyValuePair
  *
  * The kvi is versioned, so it includes the functionality to revert to a previous state
  */
-template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV, uint64_t>>
+template <typename KV = KeyValuePair<>, typename D = VersionedRandomAccessStack<KV>>
 class KeyValueIndex
 {
   /**
@@ -492,6 +493,11 @@ public:
     return kv.Hash();
   }
 
+  stack_type &underlying_stack()
+  {
+    return stack_;
+  }
+
   std::size_t size() const
   {
     return stack_.size();
@@ -517,6 +523,7 @@ public:
     stack_.Close();
   }
 
+  // TODO(HUT): this will be removed when updating the versioned stack
   using bookmark_type = uint64_t;
   bookmark_type Commit()
   {
@@ -533,7 +540,9 @@ public:
     stack_.Revert(b);
 
     root_ = stack_.header_extra();
-  }
+  } 
+
+  //*/
 
   uint64_t const &root_element() const
   {

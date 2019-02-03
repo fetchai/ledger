@@ -50,16 +50,19 @@ namespace storage {
 // defined in key.hpp
 using DefaultKey = Key<256>;
 
+namespace
+{
 /**
  * This header is at the beginning of the main RAS and keeps track of the final bookmark in the
  * history stack
  */
-template <typename UINT64_TEMPLATE>
-struct BookmarkHeader
+struct NewBookmarkHeader
 {
-  UINT64_TEMPLATE header;
-  uint64_t        bookmark;  // aim to remove this.
+  uint64_t header;
+  uint64_t bookmark;  // aim to remove this.
 };
+
+}
 
 /**
  * NewVersionedRandomAccessStack implements a random access stack that can revert to a previous
@@ -71,14 +74,14 @@ struct BookmarkHeader
  * the stack itself has elements of constant width, so no dynamically allocated memory.
  *
  */
-template <typename T, typename UINT64_TEMPLATE = uint64_t,
-          typename S = RandomAccessStack<T, BookmarkHeader<UINT64_TEMPLATE>>>
+template <typename T,
+          typename S = RandomAccessStack<T, NewBookmarkHeader>>
 class NewVersionedRandomAccessStack
 {
 private:
   using stack_type        = S;
-  using header_extra_type = UINT64_TEMPLATE;
-  using header_type       = BookmarkHeader<UINT64_TEMPLATE>;
+  using header_extra_type = uint64_t;
+  using header_type       = NewBookmarkHeader;
 
   static constexpr char const *LOGGING_NAME = "NewVersionedRandomAccessStack";
 
@@ -95,7 +98,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryBookmark(UINT64_TEMPLATE const &val, DefaultKey const &key_in)
+    HistoryBookmark(uint64_t const &val, DefaultKey const &key_in)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
@@ -108,7 +111,7 @@ private:
       value = 0
     };
 
-    UINT64_TEMPLATE bookmark = 0;  // Internal index
+    uint64_t bookmark = 0;  // Internal index
     DefaultKey      key{};         // User supplied key
   };
 
@@ -239,7 +242,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryHeader(UINT64_TEMPLATE const &d)
+    HistoryHeader(uint64_t const &d)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));
@@ -252,12 +255,11 @@ private:
       value = 5
     };
 
-    UINT64_TEMPLATE data = 0;
+    uint64_t data = 0;
   };
 
 public:
-  using type = T;
-  // using bookmark_type      = UINT64_TEMPLATE;
+  using type               = T;
   using event_handler_type = std::function<void()>;
 
   NewVersionedRandomAccessStack()
@@ -394,7 +396,7 @@ public:
     return stack_.header_extra().header;
   }
 
-  UINT64_TEMPLATE Commit(DefaultKey const &key)
+  uint64_t Commit(DefaultKey const &key)
   {
     // The flush here is vitally important since we must ensure the all flush handlers successfully
     // execute. Failure to do this results in an incorrectly ordered difference / history stack
@@ -499,7 +501,7 @@ public:
 
 private:
   VariantStack    history_;
-  UINT64_TEMPLATE internal_bookmark_index_{0};
+  uint64_t internal_bookmark_index_{0};
 
   event_handler_type on_file_loaded_;
   event_handler_type on_before_flush_;

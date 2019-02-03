@@ -21,6 +21,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/new_versioned_random_access_stack.hpp"
+#include "testing/common_testing_functionality.hpp"
 
 #include <gtest/gtest.h>
 
@@ -33,40 +34,7 @@
 using namespace fetch;
 using namespace fetch::storage;
 using namespace fetch::crypto;
-
-// Since the stacks do not serialize, use this class to make testing using strings easier
-class StringProxy
-{
-public:
-  StringProxy()
-  {
-    memset(this, 0, sizeof(decltype(*this)));
-  }
-
-  // Implicitly convert strings to this class
-  StringProxy(std::string const &in)
-  {
-    memset(this, 0, sizeof(decltype(*this)));
-    std::memcpy(string_as_chars, in.c_str(), std::min(in.size(), std::size_t(127)));
-  }
-
-  bool operator!=(StringProxy const &rhs) const
-  {
-    return memcmp(string_as_chars, rhs.string_as_chars, 128) != 0;
-  }
-
-  bool operator==(StringProxy const &rhs) const
-  {
-    return memcmp(string_as_chars, rhs.string_as_chars, 128) == 0;
-  }
-
-  char string_as_chars[128];
-};
-
-std::ostream &operator<<(std::ostream &os, StringProxy const &m)
-{
-  return os << m.string_as_chars;
-}
+using namespace fetch::testing;
 
 using ByteArray = fetch::byte_array::ByteArray;
 
