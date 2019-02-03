@@ -34,10 +34,11 @@ public:
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
+  /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
   using lock_store_type    = std::unordered_set<fetch::byte_array::ConstByteArray>;
   using mutex_type         = std::mutex;
   using lock_guard_type    = std::lock_guard<mutex_type>;
+  using hash_type = fetch::byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
 
@@ -135,7 +136,7 @@ public:
     return success;
   }
 
-  hash_type Hash() override
+  /*hash_type Hash() override
   {
     lock_guard_type       lock(mutex_);
     fetch::crypto::SHA256 hasher{};
@@ -156,9 +157,9 @@ public:
     }
 
     return hasher.Final();
-  }
+  } */
 
-  void Commit(bookmark_type const &bookmark) override
+  /*void Commit(bookmark_type const &bookmark) override
   {
     lock_guard_type lock(mutex_);
     state_archive_[bookmark] = state_;
@@ -179,10 +180,16 @@ public:
       state_.clear();
     }
   }
+  */
+
+  Hash                CurrentHash()                  override {return "";};
+  Hash                LastCommitHash()               override {return "";};
+  bool                RevertToHash(Hash const &hash) override {return true;};
+  Hash                Commit()                       override {return "";};
+  bool                HashExists(Hash const &hash)   override {return true;};
 
   // Does nothing
   TxSummaries PollRecentTx(uint32_t) override
-
   {
     return {};
   }
@@ -192,5 +199,5 @@ private:
   transaction_store_type transactions_;
   state_store_type       state_;
   lock_store_type        locks_;
-  state_archive_type     state_archive_;
+  /* state_archive_type     state_archive_; */
 };

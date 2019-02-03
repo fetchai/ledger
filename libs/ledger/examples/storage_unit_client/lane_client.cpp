@@ -272,8 +272,8 @@ int main(int argc, char **argv)
         {
           if (command.size() == 2)
           {
-            uint64_t bookmark = uint64_t(command[1].AsInt());
-            client.Commit(bookmark);
+            //uint64_t bookmark = uint64_t(command[1].AsInt());
+            //client.Commit(bookmark);
           }
           else
           {
@@ -284,8 +284,8 @@ int main(int argc, char **argv)
         {
           if (command.size() == 2)
           {
-            uint64_t bookmark = uint64_t(command[1].AsInt());
-            client.Revert(bookmark);
+            //uint64_t bookmark = uint64_t(command[1].AsInt());
+            //client.Revert(bookmark);
           }
           else
           {
@@ -296,8 +296,8 @@ int main(int argc, char **argv)
         {
           if (command.size() == 1)
           {
-            ByteArray barr = client.Hash();
-            std::cout << "State hash: " << ToBase64(barr) << std::endl;
+            //ByteArray barr = client.Hash();
+            //std::cout << "State hash: " << ToBase64(barr) << std::endl;
           }
           else
           {

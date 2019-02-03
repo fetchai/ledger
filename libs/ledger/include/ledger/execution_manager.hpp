@@ -84,8 +84,8 @@ private:
   using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
-  using Bookmark          = StorageUnitInterface::bookmark_type;
-  using StateHash         = StorageUnitInterface::hash_type;
+  //using Bookmark          = StorageUnitInterface::bookmark_type; // TODO(HUT): remove
+  using StateHash         = StorageUnitInterface::Hash;
   using ExecutorList      = std::vector<ExecutorPtr>;
   using StateHashCache    = storage::ObjectStore<StateHash>;
   using ThreadPtr         = std::unique_ptr<std::thread>;
@@ -123,7 +123,7 @@ private:
 
   // Block state retrieval
   Mutex               state_archive_lock_;  ///< guards state_archive_ & block_state_cache_
-  StateSummaryArchive state_archive_;
+  /*StateSummaryArchive state_archive_; */
   StateHashCache      block_state_cache_;
 
   void MonitorThreadEntrypoint();

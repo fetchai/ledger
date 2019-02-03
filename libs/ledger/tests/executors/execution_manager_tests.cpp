@@ -184,8 +184,8 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
   // start the execution manager
   manager_->Start();
 
-  EXPECT_CALL(*mock_storage_, Hash()).Times(1);
-  EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
+  //EXPECT_CALL(*mock_storage_, Hash()).Times(1);
+  //EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
 
   fetch::byte_array::ConstByteArray prev_hash;
 

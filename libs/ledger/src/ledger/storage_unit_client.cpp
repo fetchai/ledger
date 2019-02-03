@@ -288,5 +288,180 @@ size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Ur
   return nLanes;
 }
 
+// Convenience function for repeated code below
+void GetClientAddress(StorageUnitClient::LaneIndex lane, StorageUnitClient::Address address, StorageUnitClient *this_ptr)
+{
+  try
+  {
+    this_ptr->GetAddressForLane(lane, address);
+  }
+  catch (std::runtime_error &e)
+  {
+    throw e;
+  }
+}
+
+// Get the current hash of the world state (merkle tree root)
+byte_array::ConstByteArray StorageUnitClient::CurrentHash()
+{
+  MerkleTree                    tree;
+  std::vector<service::Promise> promises;
+
+  for (auto const &lanedata : lane_to_identity_map_)
+  {
+    auto const &address = lanedata.second;
+    auto        client  = GetClientForLane(lanedata.first);
+    auto        promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::CURRENT_HASH);
+    promises.push_back(promise);
+  }
+
+  std::size_t index = 0;
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    tree[index] = p->As<byte_array::ByteArray>();
+    index++;
+  }
+
+  tree.CalculateRoot();
+  return tree.root();
+}
+
+// return the last committed hash (should correspond to the state hash before you began execution)
+byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
+{
+  FETCH_LOCK(merkle_mutex_);
+  return current_merkle_.root();
+}
+
+// Revert to a previous hash if possible
+bool StorageUnitClient::RevertToHash(Hash const &hash)
+{
+  // Try to find whether we believe the hash exists (look in memory)
+  // TODO(HUT): this is going to be tricky if the previous state has less/more lanes
+  MerkleTree tree;
+  if(!state_merkle_cache_.Get(storage::ResourceID{hash}, tree)) // note that we directly use the hash as a key here
+  {
+    return false;
+  }
+
+  // Note: we shouldn't be touching the lanes at this point from other threads
+  std::vector<service::Promise> promises;
+
+  // Due diligence: check all lanes can revert to this state before trying this operation
+  // k = lane, v = lane hash
+  for(auto const &leaf_kv : tree.leaf_nodes())
+  {
+    Address address;
+    auto &lane = leaf_kv.first;
+    auto &hash = leaf_kv.second;
+
+    assert(hash.size() > 0);
+
+    GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+
+    auto client  = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS,
+        hash);
+    promises.push_back(promise);
+  }
+
+  std::vector<uint32_t> failed_lanes;
+  uint32_t lane_counter = 0;
+
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+
+    if(!p->As<bool>())
+    {
+      failed_lanes.push_back(lane_counter);
+    }
+
+    lane_counter++;
+  }
+
+  for(auto const &i : failed_lanes)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Merkle hash mismatch: hash not found in lane: ", i);
+    return false;
+  }
+
+  promises.clear();
+
+  // Now perform the revert
+  for(auto const &leaf_kv : tree.leaf_nodes())
+  {
+    Address address;
+    auto &lane = leaf_kv.first;
+    auto &hash = leaf_kv.second;
+
+    assert(hash.size() > 0);
+
+    GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+
+    auto client  = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
+        hash);
+    promises.push_back(promise);
+  }
+
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    if(!p->As<bool>())
+    {
+      // TODO(HUT): revert all lanes to their previous state
+      throw std::runtime_error("Failed to revert all of the lanes -\
+          the system may have entered an unknown state");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// We have finished execution presumably, commit this state
+byte_array::ConstByteArray StorageUnitClient::Commit()
+{
+  MerkleTree                    tree;
+  std::vector<service::Promise> promises;
+
+  for (auto const &lanedata : lane_to_identity_map_)
+  {
+    auto const &address = lanedata.second;
+    auto        client  = GetClientForLane(lanedata.first);
+    auto        promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT);
+    promises.push_back(promise);
+  }
+
+  std::size_t index = 0;
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    tree[index] = p->As<byte_array::ByteArray>();
+    index++;
+  }
+
+  tree.CalculateRoot();
+
+  {
+    FETCH_LOCK(merkle_mutex_);
+    current_merkle_ = std::move(tree);
+    return current_merkle_.root();
+  }
+}
+
+bool StorageUnitClient::HashExists(Hash const &hash)
+{
+  return state_merkle_cache_.Has(storage::ResourceID{hash});
+}
+
 }  // namespace ledger
 }  // namespace fetch

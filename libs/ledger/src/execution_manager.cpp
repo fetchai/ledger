@@ -77,7 +77,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
   // load state archive updates
   {
     std::lock_guard<Mutex> lock(state_archive_lock_);
-    state_archive_.New(state_archive_paths.data_path, state_archive_paths.index_path);
+    /*state_archive_.New(state_archive_paths.data_path, state_archive_paths.index_path);*/
     block_state_cache_.New(block_state_paths.data_path, block_state_paths.index_path);
   }
 
@@ -501,7 +501,10 @@ void ExecutionManager::MonitorThreadEntrypoint()
     {
       // calculate the final state hash
       crypto::SHA256 hash;
+
+      /*
       hash.Update(storage_->Hash());
+
       StateHash state_hash = hash.Final();
 
       // request a bookmark
@@ -544,6 +547,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
           block_state_cache_.Set(ResourceID{current_block}, state_hash);
         }
       }
+      */
 
       // finished processing the block
       monitor_state = MonitorState::IDLE;
@@ -561,6 +565,7 @@ bool ExecutionManager::AttemptRestoreToBlock(BlockHash const &digest)
   assert(digest.size() == 32);
 
   std::lock_guard<Mutex> lock(state_archive_lock_);
+  /*
 
   // need to load the state from a previous application, so lookup the
   // corresponding state hash
@@ -577,6 +582,7 @@ bool ExecutionManager::AttemptRestoreToBlock(BlockHash const &digest)
       success = true;
     }
   }
+  */
 
   return success;
 }

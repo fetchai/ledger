@@ -58,7 +58,7 @@ public:
   using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore            = storage::RevertibleDocumentStore;
+  using DocumentStore            = storage::NewRevertibleDocumentStore;
   using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
   using TransactionStore         = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
   using TransactionStoreProtocol = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
@@ -140,7 +140,7 @@ public:
     if (refresh_storage)
     {
       state_db_->New(prefix + "state.db", prefix + "state_deltas.db", prefix + "state_index.db",
-                     prefix + "state_index_deltas.db");
+                     prefix + "state_index_deltas.db", false);
     }
     else
     {
