@@ -30,10 +30,23 @@ using namespace fetch::testing;
 
 using ByteArray      = fetch::byte_array::ByteArray;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
-using Key            = fetch::storage::Key<256>;
+using DefaultKey            = fetch::storage::Key<256>;
 
 // Test that closely correlated keys are found to be unique
-TEST(key_test, correlated_keys_are_unique)
+TEST(new_key_test, correlated_keys_are_unique)
 {
-  throw std::runtime_error("This test isn't included for some reason?");
+  auto unique_hashes = GenerateUniqueHashes(1000);
+
+  std::vector<DefaultKey> seen_keys;
+
+  for (auto const &hash : unique_hashes)
+  {
+    for (auto const &key : seen_keys)
+    {
+      // Check equality operator
+      ASSERT_EQ(DefaultKey{hash} == key, false);
+    }
+
+    seen_keys.push_back(hash);
+  }
 }
