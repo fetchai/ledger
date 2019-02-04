@@ -16,36 +16,54 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_controller.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
+
+#include <random>
+
+static uint32_t GetRandom()
+{
+  std::random_device                      rd;
+  std::mt19937                            gen(rd());
+  std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
+  return dis(gen);
+}
 
 namespace fetch {
 namespace ledger {
+namespace consensus {
 
-void LaneController::WorkCycle()
+void DummyMiner::Mine(Block &block)
 {
-  UriSet remove;
-  UriSet create;
+  uint64_t initNonce = GetRandom();
+  block.nonce        = initNonce;
 
-  GeneratePeerDeltas(create, remove);
+  block.UpdateDigest();
 
-  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:create:", create.size());
-  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:remove:", remove.size());
-
-  for (auto &uri : create)
+  while (!block.proof())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:creating:", uri.ToString());
-    muddle_->AddPeer(Uri(uri.ToString()));
-  }
-
-  for (auto &uri : create)
-  {
-    Address target_address;
-    if (muddle_->UriToDirectAddress(uri, target_address))
-    {
-      peer_connections_[uri] = target_address;
-    }
+    block.nonce++;
+    block.UpdateDigest();
   }
 }
 
+bool DummyMiner::Mine(Block &block, uint64_t iterations)
+{
+  uint32_t initNonce = GetRandom();
+  block.nonce        = initNonce;
+
+  block.UpdateDigest();
+
+  while (!block.proof() && iterations > 0)
+  {
+    block.nonce++;
+    block.UpdateDigest();
+    iterations--;
+  }
+
+  return block.proof();
+}
+
+}  // namespace consensus
 }  // namespace ledger
 }  // namespace fetch

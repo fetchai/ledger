@@ -50,10 +50,9 @@ public:
   using Hash            = byte_array::ConstByteArray;
   //using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
 
-  using Transaction     = chain::Transaction;
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
-  using TxSummaries     = std::vector<fetch::chain::TransactionSummary>;
+  using TxSummaries     = std::vector<TransactionSummary>;
 
   // Construction / Destruction
   StorageUnitInterface()          = default;

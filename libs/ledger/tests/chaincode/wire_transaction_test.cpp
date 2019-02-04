@@ -23,7 +23,7 @@
 #include <memory>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 namespace {
 
@@ -71,5 +71,5 @@ TEST_F(WiredTransactionTest, basic)
 }
 }  // namespace
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

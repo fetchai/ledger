@@ -20,7 +20,7 @@
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
-using namespace fetch::chain::consensus;
+using namespace fetch::ledger::consensus;
 using namespace fetch::byte_array;
 
 ProofOfWork Test1(ByteArray tx, uint64_t diff)

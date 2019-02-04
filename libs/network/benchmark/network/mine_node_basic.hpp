@@ -48,7 +48,7 @@ class MineNodeBasic
   using BlockType = ledger::Block;
   using BlockHash = ledger::Block::Digest;
   using body_type = ledger::Block::Body;
-  using miner     = fetch::chain::consensus::DummyMiner;
+  using miner     = fetch::ledger::consensus::DummyMiner;
 
 public:
   static constexpr char const *LOGGING_NAME = "MineNodeBasic";
@@ -142,8 +142,8 @@ public:
   // Mining loop
   void startMining()
   {
-    fetch::chain::consensus::DummyMiner miner;
-    auto                                closure = [this, &miner] {
+    fetch::ledger::consensus::DummyMiner miner;
+    auto                                 closure = [this, &miner] {
       // Loop code
       while (!stopped_)
       {

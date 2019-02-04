@@ -19,34 +19,31 @@
 
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 
-#include <random>
-
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
 class BadMiner : public ConsensusMinerInterface
 {
-
 public:
-  BadMiner()  = default;
-  ~BadMiner() = default;
 
-  // Blocking mine
-  void Mine(Block &block) override
-  {
-    block.nonce = 0;
-    block.UpdateDigest();
-  }
+  // Construction / Destruction
+  BadMiner() = default;
+  BadMiner(BadMiner const &) = delete;
+  BadMiner(BadMiner &&) = delete;
+  ~BadMiner() override = default;
 
-  // Mine for set number of iterations
-  bool Mine(Block &block, uint64_t /*iterations*/) override
-  {
-    block.nonce = 0;
-    block.UpdateDigest();
-    return true;
-  }
+  /// @name Consensus Miner Interface
+  /// @{
+  void Mine(Block &block) override;
+  bool Mine(Block &block, uint64_t iterations) override;
+  /// @}
+
+  // Operators
+  BadMiner &operator=(BadMiner const &) = delete;
+  BadMiner &operator=(BadMiner &&) = delete;
 };
+
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

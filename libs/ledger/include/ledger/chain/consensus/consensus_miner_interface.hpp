@@ -17,17 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/main_chain.hpp"
+#include <cstdint>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
+
+class Block;
+
 namespace consensus {
 
 class ConsensusMinerInterface
 {
 public:
-  using Block = ledger::Block;
-
   ConsensusMinerInterface()          = default;
   virtual ~ConsensusMinerInterface() = default;
 
@@ -36,5 +37,5 @@ public:
 };
 
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

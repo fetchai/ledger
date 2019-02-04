@@ -26,7 +26,7 @@
 #include <random>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 inline uint64_t GetRandom()
 {
@@ -103,5 +103,5 @@ inline std::ostream &operator<<(std::ostream &os, MutableTransaction const &tran
   return os;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

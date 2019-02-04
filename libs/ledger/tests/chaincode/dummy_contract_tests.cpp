@@ -83,13 +83,13 @@ TEST_F(DummyContractTests, CheckDispatch)
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
   // create the sample transaction
-  chain::MutableTransaction tx;
+  MutableTransaction tx;
   tx.set_contract_name("fetch.dummy.wait");
 
   Identifier identifier;
   identifier.Parse(tx.contract_name());
 
-  contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+  contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
   EXPECT_EQ(contract_->GetTransactionCounter("wait"), 1u);
   */
 }

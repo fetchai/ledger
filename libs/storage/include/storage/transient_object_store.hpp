@@ -42,7 +42,7 @@ class TransientObjectStore
 public:
   using Callback    = std::function<void(Object const &)>;
   using Archive     = ObjectStore<Object>;
-  using TxSummaries = std::vector<fetch::chain::TransactionSummary>;
+  using TxSummaries = std::vector<ledger::TransactionSummary>;
 
   // Construction / Destruction
   TransientObjectStore();
@@ -79,7 +79,7 @@ public:
 private:
   using Mutex       = fetch::mutex::Mutex;
   using Queue       = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
-  using RecentQueue = fetch::core::MPMCQueue<chain::TransactionSummary, 1 << 15>;
+  using RecentQueue = fetch::core::MPMCQueue<ledger::TransactionSummary, 1 << 15>;
   using Cache       = std::unordered_map<ResourceID, Object>;
   using ThreadPtr   = std::shared_ptr<std::thread>;
   using Flag        = std::atomic<bool>;
@@ -187,7 +187,7 @@ typename TransientObjectStore<O>::TxSummaries TransientObjectStore<O>::GetRecent
     uint32_t max_to_poll)
 {
   TransientObjectStore<O>::TxSummaries   ret;
-  chain::TransactionSummary              summary;
+  ledger::TransactionSummary             summary;
   static const std::chrono::milliseconds MAX_WAIT_INTERVAL{5};
 
   for (std::size_t i = 0; i < max_to_poll; ++i)
