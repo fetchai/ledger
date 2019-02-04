@@ -29,8 +29,12 @@ namespace auctions {
  */
 ErrorCode CombinatorialAuction::AddItem(Item const &item)
 {
-  graph_built_ = false;
-  return Auction::AddItem(item);
+  ErrorCode ec = Auction::AddItem(item);
+  if (ec == fetch::auctions::ErrorCode::SUCCESS)
+  {
+    graph_built_ = false;
+  }
+  return ec;
 }
 
 /**
@@ -41,8 +45,12 @@ ErrorCode CombinatorialAuction::AddItem(Item const &item)
  */
 ErrorCode CombinatorialAuction::PlaceBid(Bid const &bid)
 {
-  graph_built_ = false;
-  return Auction::PlaceBid(bid);
+  ErrorCode ec = Auction::PlaceBid(bid);
+  if (ec == fetch::auctions::ErrorCode::SUCCESS)
+  {
+    graph_built_ = false;
+  }
+  return ec;
 }
 
 /**
@@ -71,6 +79,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 
   for (std::size_t i = 0; i < run_time; ++i)
   {
+    std::cout << "mining run: " << i << std::endl;
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       prev_active_.Copy(active_);
@@ -134,7 +143,7 @@ fetch::math::linalg::Matrix<Value> CombinatorialAuction::Couplings()
 
 ErrorCode CombinatorialAuction::Execute()
 {
-  if (!(auction_valid_ == AuctionState::LISTING))
+  if (!(auction_valid_ == AuctionState::MINING))
   {
     return ErrorCode::AUCTION_CLOSED;
   }
@@ -307,16 +316,14 @@ void CombinatorialAuction::SelectWinners()
   }
 }
 
-
 ErrorCode CombinatorialAuction::ShowAuctionResult()
 {
   ErrorCode result = Auction::ShowAuctionResult();
-  
+
   std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
-  
+
   return result;
 }
-
 
 }  // namespace auctions
 }  // namespace fetch

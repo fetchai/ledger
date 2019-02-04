@@ -19,8 +19,8 @@
 #include "core/commandline/params.hpp"
 #include <iostream>
 
+#include "auctions/mock_smart_ledger.hpp"
 #include "http/server.hpp"
-#include "mock_smart_ledger.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <chrono>
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   parser.Parse(argc, argv);
 
   // create the client
-  fetch::auctions::examples::MockSmartLedger msl{};
+  fetch::auctions::MockSmartLedger msl{};
 
   fetch::network::NetworkManager nm{"mock_smart_ledger_network_manager", 8};
   fetch::http::HTTPServer        server(nm);

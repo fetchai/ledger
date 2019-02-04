@@ -34,8 +34,18 @@ constexpr AgentId DEFAULT_BID_BIDDER = std::numeric_limits<AgentId>::max();
 class Bid
 {
 public:
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder)
+    : id(id)
+    , price(price)
+    , bidder(bidder)
+    , item_ids_(std::move(item_ids))
+  {
+    assert(item_ids_.size() > 0);
+    exclude_all = false;
+  }
+
   Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
-      std::vector<BidId> excludes = {})
+      std::vector<BidId> excludes)
     : id(id)
     , price(price)
     , bidder(bidder)
@@ -46,7 +56,7 @@ public:
     exclude_all = false;
   }
 
-  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder, bool exclude_all = false)
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder, bool exclude_all)
     : id(id)
     , price(price)
     , bidder(bidder)

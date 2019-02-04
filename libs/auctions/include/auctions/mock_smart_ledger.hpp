@@ -27,7 +27,6 @@
 
 namespace fetch {
 namespace auctions {
-namespace examples {
 
 /**
  * class offering a HTTP interface to a smart market (i.e. combinatorial auction). Ledger
@@ -84,7 +83,7 @@ public:
 
   void Mine()
   {
-    auction_.Mine(1234, 100);
+    auction_.Mine(1234, 10);
   }
 
   void Execute()
@@ -130,19 +129,14 @@ private:
           variant::Extract(doc.root(), "seller_id", seller_id) &&
           variant::Extract(doc.root(), "min_price", min_price))
       {
-
         fetch::auctions::ErrorCode ec = auction_.AddItem(Item{item_id, seller_id, min_price});
 
         if (ec == fetch::auctions::ErrorCode::SUCCESS)
         {
-          std::cout << "item: " << item_id << ", listed for seller_id: " << seller_id << ", at min price: " << min_price << std::endl;
-          return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
+          std::cout << "item: " << item_id << ", listed for seller_id: " << seller_id
+                    << ", at min price: " << min_price << std::endl;
         }
-        else
-        {
-          return http::CreateJsonResponse(R"({"success": false})", http::Status::UNKNOWN);
-        }
-
+        return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }
     catch (json::JSONParseException const &ex)
@@ -193,19 +187,15 @@ private:
 
         if (ec == fetch::auctions::ErrorCode::SUCCESS)
         {
-          std::cout << "bidder: " << bidder_id << " placed bid of value: " << bid_price << ", on item_ids: ";
+          std::cout << "bidder: " << bidder_id << " placed bid of value: " << bid_price
+                    << ", on item_ids: ";
           for (std::size_t i = 0; i < item_ids.size(); ++i)
           {
             std::cout << item_ids[i] << ", ";
           }
           std::cout << std::endl;
-
-          return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
         }
-        else
-        {
-          return http::CreateJsonResponse(R"({"success": false})", http::Status::UNKNOWN);
-        }
+        return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }
     }
     catch (json::JSONParseException const &ex)
@@ -317,6 +307,5 @@ private:
   }
 };
 
-}  // namespace examples
 }  // namespace auctions
 }  // namespace fetch

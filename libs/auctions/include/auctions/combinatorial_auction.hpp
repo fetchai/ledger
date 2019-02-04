@@ -55,7 +55,6 @@ public:
   ErrorCode                          AddItem(Item const &item);
   ErrorCode                          ShowAuctionResult();
 
-
 private:
   // bids on binary vector
   fetch::math::linalg::Matrix<Value>         couplings_;
