@@ -13,5 +13,5 @@ setup_compiler()
 setup_library_examples(fetch-math)
 
 if (FETCH_ENABLE_EXAMPLES)
-   target_link_libraries(example-math-blas-dgemm PRIVATE pthread)
+   # Add examples here
 endif(FETCH_ENABLE_EXAMPLES)

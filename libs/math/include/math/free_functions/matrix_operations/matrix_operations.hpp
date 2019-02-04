@@ -29,13 +29,6 @@
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 
-#include "math/linalg/blas/gemm_nn_vector.hpp"
-#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_nt_vector.hpp"
-#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_tn_vector.hpp"
-#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
-
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -800,69 +793,35 @@ void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
   // assert(perm.size() == input_array.shape().size());
 }
 
-// template <typename T, typename C, typename S>
-// void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-//          linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
-// {
-//   ret.Resize(A.shape()[0], B.shape()[1]);
-
-//   if (threaded)
-//   {
-//     linalg::Blas<T, linalg::Matrix<T, C, S>,
-//                  Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-//                            linalg::_C),
-//                  Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-//                                        linalg::_beta * linalg::_C),
-//                  platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-//         gemm_nn_vector_threaded;
-
-//     gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-//   }
-//   else
-//   {
-//     linalg::Blas<T, linalg::Matrix<T, C, S>,
-//                  Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-//                            linalg::_C),
-//                  Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-//                                        linalg::_beta * linalg::_C),
-//                  platform::Parallelisation::VECTORISE>
-//         gemm_nn_vector;
-
-//     gemm_nn_vector(alpha, A, B, beta, ret);
-//   }
-// }
-
 template <typename ArrayType>
-void Dot(ArrayType const &A, ArrayType const &B,
-         ArrayType &ret, typename ArrayType::Type alpha = 1.0, typename ArrayType::Type beta = 0.0, bool threaded = false)
+void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
+         typename ArrayType::Type alpha = 1.0, typename ArrayType::Type beta = 0.0,
+         bool threaded = false)
 {
   assert(A.shape().size() == 2);
   assert(B.shape().size() == 2);
   assert(A.shape()[1] == B.shape()[0]);
-  
+
   for (std::size_t i(0); i < A.shape()[0]; ++i)
+  {
+    for (std::size_t j(0); j < B.shape()[1]; ++j)
     {
-      for (std::size_t j(0); j < B.shape()[1]; ++j)
-	{
-	  ret.Get(std::vector<std::size_t>({i, j})) =
-            A.Get(std::vector<std::size_t>({i, 0})) *
-            B.Get(std::vector<std::size_t>({0, j}));
-	  for (std::size_t k(1); k < A.shape()[1]; ++k)
-	    {
-	      ret.Get(std::vector<std::size_t>({i, j})) +=
-		A.Get(std::vector<std::size_t>({i, k})) *
-		B.Get(std::vector<std::size_t>({k, j}));
-	    }
-	}
+      ret.Get(std::vector<std::size_t>({i, j})) =
+          A.Get(std::vector<std::size_t>({i, 0})) * B.Get(std::vector<std::size_t>({0, j}));
+      for (std::size_t k(1); k < A.shape()[1]; ++k)
+      {
+        ret.Get(std::vector<std::size_t>({i, j})) +=
+            A.Get(std::vector<std::size_t>({i, k})) * B.Get(std::vector<std::size_t>({k, j}));
+      }
     }
+  }
 }
 
 template <typename ArrayType>
-ArrayType Dot(ArrayType const &A, ArrayType const &B,
-                            bool threaded = false)
+ArrayType Dot(ArrayType const &A, ArrayType const &B, bool threaded = false)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
-  ArrayType  ret(return_shape);
+  ArrayType                ret(return_shape);
   Dot(A, B, ret, 1.0, 0.0, threaded);
   return ret;
 }
