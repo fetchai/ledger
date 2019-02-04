@@ -105,12 +105,6 @@ pipeline {
               }
             }
           }
-
-          post {
-            always {
-              junit 'build-release/TestResults.xml'
-            }
-          }
         } // clang 6 release
 
         stage('GCC 7 Debug') {
