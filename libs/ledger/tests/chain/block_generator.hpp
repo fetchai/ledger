@@ -50,7 +50,7 @@ public:
     else
     {
       // update the previous hash
-      block->body.previous_hash = fetch::chain::GENESIS_DIGEST;
+      block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
     }
 
     // compute the digest for the block

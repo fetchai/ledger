@@ -35,7 +35,7 @@
 #include <vector>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 struct Signature
 {
@@ -534,5 +534,5 @@ void Deserialize(T &serializer, Signatory &b)
   serializer >> b.first >> b.second;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

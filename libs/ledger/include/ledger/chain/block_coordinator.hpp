@@ -26,7 +26,7 @@
 #include <thread>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 class BlockCoordinator
 {
@@ -99,5 +99,5 @@ private:
   /// @}
 };
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

@@ -103,7 +103,7 @@ struct TestBlock
           {
 
             // create the transaction summary
-            fetch::chain::TransactionSummary summary;
+            fetch::ledger::TransactionSummary summary;
             summary.transaction_hash = GenerateHash(rng);
             summary.contract_name    = "fetch.dummy.run";
 
@@ -188,7 +188,7 @@ struct TestBlock
   }
 
   static TestBlock Generate(std::size_t log2_num_lanes, std::size_t num_slices, uint32_t seed,
-                            BlockHash const &previous_hash = fetch::chain::GENESIS_DIGEST)
+                            BlockHash const &previous_hash = fetch::ledger::GENESIS_DIGEST)
   {
     TestBlock block;
     block.GenerateBlock(seed, static_cast<uint32_t>(log2_num_lanes), num_slices, previous_hash);

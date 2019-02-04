@@ -107,7 +107,7 @@ function(setup_library_examples library)
   endif(FETCH_ENABLE_EXAMPLES)
 endfunction()
 
-function(add_fetch_test name library file)
+function(add_fetch_test name library directory)
   if(FETCH_ENABLE_TESTS)
 
     # remove all the arguments
@@ -115,51 +115,22 @@ function(add_fetch_test name library file)
     list(REMOVE_AT ARGV 0)
     list(REMOVE_AT ARGV 0)
 
-    # detect if the "DISABLED" flag has been passed to this test
-    set(is_disabled FALSE)
-    foreach(arg ${ARGV})
-      if(arg STREQUAL "DISABLED")
-        set(is_disabled TRUE)
-      endif()
-    endforeach()
-
-    if(is_disabled)
-      fetch_warning("Disabled Test: ${name} - ${file}")
+    # define the label for the test
+    if ("SLOW" IN_LIST ARGV)
+      set(test_label "Slow")
+      fetch_warning("Slow Test: ${name}")
+    elseif("INTEGRAION" IN_LIST ARGV)
+      set(test_label "Integration")
+      fetch_warning("Integration Test: ${name}")
     else()
-
-      include(CTest)
-
-      add_executable(${name} ${file})
-      target_link_libraries(${name} PRIVATE ${library} fetch-testing)
-
-      # CoreFoundation Support on MacOS
-      if (APPLE)
-        target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
-      endif ()
-
-      add_test(${name} ${name} ${ARGV})
-      set_tests_properties(${name} PROPERTIES TIMEOUT 300)
-
+      set(test_label "Normal")
     endif()
 
-  endif(FETCH_ENABLE_TESTS)
-endfunction()
-
-function(add_fetch_gtest name library directory)
-  if(FETCH_ENABLE_TESTS)
-
-    # remove all the arguments
-    list(REMOVE_AT ARGV 0)
-    list(REMOVE_AT ARGV 0)
-    list(REMOVE_AT ARGV 0)
-
     # detect if the "DISABLED" flag has been passed to this test
     set(is_disabled FALSE)
-    foreach(arg ${ARGV})
-      if(arg STREQUAL "DISABLED")
+    if ("DISABLED" IN_LIST ARGV)
         set(is_disabled TRUE)
-      endif()
-    endforeach()
+    endif()
 
     if(is_disabled)
       fetch_warning("Disabled Test: ${name} - ${file}")
@@ -185,6 +156,7 @@ function(add_fetch_gtest name library directory)
       # define the test
       add_test(${name} ${name} ${ARGV})
       set_tests_properties(${name} PROPERTIES TIMEOUT 300)
+      set_tests_properties(${name} PROPERTIES LABELS "${test_label}")
 
     endif()
 
