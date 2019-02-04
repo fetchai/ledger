@@ -42,14 +42,14 @@ TransactionProcessor::~TransactionProcessor()
   Stop();
 }
 
-void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
+void TransactionProcessor::OnTransaction(UnverifiedTransaction const &tx)
 {
   // submit the transaction to the verifier - it will call back this::OnTransaction(verified) or
   // this::OnTransactions(verified)
   verifier_.AddTransaction(tx.AsMutable());
 }
 
-void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
+void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
@@ -117,7 +117,7 @@ void TransactionProcessor::ThreadEntryPoint()
 {
   SetThreadName("TxProc");
 
-  std::vector<chain::TransactionSummary> new_txs;
+  std::vector<TransactionSummary> new_txs;
   while (running_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

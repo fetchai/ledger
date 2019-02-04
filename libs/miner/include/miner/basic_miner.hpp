@@ -52,7 +52,7 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void EnqueueTransaction(chain::TransactionSummary const &tx) override;
+  void EnqueueTransaction(ledger::TransactionSummary const &tx) override;
   void GenerateBlock(Block::Body &block, std::size_t num_lanes, std::size_t num_slices,
                      MainChain const &chain) override;
   /// @}
@@ -72,16 +72,16 @@ private:
 
   struct TransactionEntry
   {
-    BitVector                 resources;
-    chain::TransactionSummary transaction;
+    BitVector                  resources;
+    ledger::TransactionSummary transaction;
 
-    TransactionEntry(chain::TransactionSummary const &summary, uint32_t log2_num_lanes);
+    TransactionEntry(ledger::TransactionSummary const &summary, uint32_t log2_num_lanes);
     ~TransactionEntry() = default;
   };
 
   using Mutex           = mutex::Mutex;
   using TransactionList = std::list<TransactionEntry>;
-  using TransactionSet  = std::set<chain::TransactionSummary>;
+  using TransactionSet  = std::set<ledger::TransactionSummary>;
   using ThreadPool      = threading::Pool;
 
   static void GenerateSlices(TransactionList &tx, Block::Body &block, std::size_t offset,

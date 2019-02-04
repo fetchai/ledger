@@ -20,10 +20,10 @@
 #include "core/byte_array/decoders.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 extern const byte_array::ConstByteArray GENESIS_DIGEST =
     byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

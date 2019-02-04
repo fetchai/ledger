@@ -39,11 +39,10 @@ namespace {
 
 using ::testing::_;
 using fetch::variant::Variant;
-using chain::Signatories;
 using ConstByteArray = byte_array::ConstByteArray;
-using PrivateKey     = fetch::chain::TxSigningAdapter<>::private_key_type;
-using MutTx          = chain::MutableTransaction;
-using VerifTx        = chain::VerifiedTransaction;
+using PrivateKey     = TxSigningAdapter<>::private_key_type;
+using MutTx          = MutableTransaction;
+using VerifTx        = VerifiedTransaction;
 using PrivateKeys    = std::vector<PrivateKey>;
 
 using SigneesPtr    = std::shared_ptr<Deed::Signees>;
@@ -105,7 +104,7 @@ protected:
 
   static void SignTx(MutTx &tx, PrivateKeys const &keys_to_sign_tx)
   {
-    auto sign_adapter{chain::TxSigningAdapterFactory(tx)};
+    auto sign_adapter{TxSigningAdapterFactory(tx)};
     for (auto const &key : keys_to_sign_tx)
     {
       tx.Sign(key, sign_adapter);
@@ -138,7 +137,7 @@ protected:
 
     // dispatch the transaction
     auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }
@@ -163,7 +162,7 @@ protected:
         << R"("amount": )" << amount << " }";
 
     // create the transaction
-    chain::MutableTransaction tx;
+    MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
     tx.PushResource(address);
@@ -173,7 +172,7 @@ protected:
 
     // dispatch the transaction
     auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }
@@ -199,7 +198,7 @@ protected:
         << R"("amount": )" << amount << " }";
 
     // create the transaction
-    chain::MutableTransaction tx;
+    MutableTransaction tx;
     tx.set_contract_name("fetch.token.transfer");
     tx.set_data(oss.str());
     tx.PushResource(from);
@@ -211,7 +210,7 @@ protected:
     identifier.Parse(tx.contract_name());
 
     auto status =
-        contract_->DispatchTransaction(identifier.name(), chain::VerifiedTransaction::Create(tx));
+        contract_->DispatchTransaction(identifier.name(), VerifiedTransaction::Create(tx));
     return (Contract::Status::OK == status);
   }
 

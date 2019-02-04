@@ -60,13 +60,11 @@ public:
   using Uri                   = Muddle::Uri;
   using Client                = muddle::rpc::Client;
   using ClientPtr             = std::shared_ptr<Client>;
-  using VerifiedTransaction   = chain::VerifiedTransaction;
   using ObjectStore           = storage::TransientObjectStore<VerifiedTransaction>;
   using FutureTimepoint       = network::FutureTimepoint;
-  using UnverifiedTransaction = chain::UnverifiedTransaction;
   using RequestingObjectCount = network::RequestingQueueOf<Address, uint64_t>;
   using PromiseOfObjectCount  = network::PromiseOf<uint64_t>;
-  using TxList                = std::vector<chain::UnverifiedTransaction>;
+  using TxList                = std::vector<UnverifiedTransaction>;
   using RequestingTxList      = network::RequestingQueueOf<Address, TxList>;
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxList>;
   using PromiseOfTxList       = network::PromiseOf<TxList>;
@@ -118,7 +116,7 @@ public:
   }
 
 protected:
-  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransaction(VerifiedTransaction const &tx) override;
 
   // Reverse bits in byte
   uint8_t Reverse(uint8_t c)

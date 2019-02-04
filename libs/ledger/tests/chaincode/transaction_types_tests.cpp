@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-using namespace fetch::chain;
+using namespace fetch::ledger;
 using namespace fetch::byte_array;
 TEST(testing_ser_deser_transactions, Ser_deser_transactions_into_ConstTransaction)
 {
@@ -47,7 +47,7 @@ TEST(testing_ser_deser_transactions, random_transaction_generation)
 {
   for (std::size_t i = 0; i < 1000; ++i)
   {
-    MutableTransaction        mutableTx   = fetch::chain::RandomTransaction();
+    MutableTransaction        mutableTx   = fetch::ledger::RandomTransaction();
     const VerifiedTransaction transaction = VerifiedTransaction::Create(mutableTx);
     std::cout << "\n= TX[" << std::setfill('0') << std::setw(5) << i
               << "] ==========================================" << std::endl;

@@ -22,7 +22,7 @@
 #include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 template <typename P, typename H>
 void BuildBasicBlock(std::string const &custom_name, pybind11::module &module)
@@ -47,16 +47,16 @@ void BuildBasicBlock(std::string const &custom_name, pybind11::module &module)
       .def("total_weight",
            (const double &(BasicBlock<P, H>::*)() const) & BasicBlock<P, H>::total_weight)
       .def("total_weight", (double &(BasicBlock<P, H>::*)()) & BasicBlock<P, H>::total_weight)
-      .def("proof", (const typename fetch::chain::BasicBlock<P, H>::proof_type &(
+      .def("proof", (const typename fetch::ledger::BasicBlock<P, H>::proof_type &(
                         BasicBlock<P, H>::*)() const) &
                         BasicBlock<P, H>::proof)
       .def("proof",
-           (typename fetch::chain::BasicBlock<P, H>::proof_type & (BasicBlock<P, H>::*)()) &
+           (typename fetch::ledger::BasicBlock<P, H>::proof_type & (BasicBlock<P, H>::*)()) &
                BasicBlock<P, H>::proof)
       .def("is_verified", &BasicBlock<P, H>::is_verified)
       .def("id", &BasicBlock<P, H>::id)
       .def("set_id", &BasicBlock<P, H>::set_id)
       .def("previous", &BasicBlock<P, H>::previous);
 }
-};  // namespace chain
+};  // namespace ledger
 };  // namespace fetch

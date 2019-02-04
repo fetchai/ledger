@@ -20,9 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 extern const byte_array::ConstByteArray GENESIS_DIGEST;
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

@@ -31,7 +31,7 @@ using fetch::byte_array::FromBase64;
 using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 byte_array::ByteArray ToWireTransaction(MutableTransaction const &tx, bool const add_metadata)
 {
@@ -103,5 +103,5 @@ MutableTransaction FromWireTransaction(variant::Variant const &transaction)
   return tx;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
