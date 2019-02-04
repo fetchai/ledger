@@ -50,6 +50,7 @@ ErrorCode CombinatorialAuction::PlaceBid(Bid const &bid)
  */
 void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 {
+  auction_valid_ = AuctionState::MINING;
   fetch::random::LaggedFibonacciGenerator<> rng(random_seed);
   BuildGraph();
 
@@ -305,6 +306,17 @@ void CombinatorialAuction::SelectWinners()
     }
   }
 }
+
+
+ErrorCode CombinatorialAuction::ShowAuctionResult()
+{
+  ErrorCode result = Auction::ShowAuctionResult();
+  
+  std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
+  
+  return result;
+}
+
 
 }  // namespace auctions
 }  // namespace fetch

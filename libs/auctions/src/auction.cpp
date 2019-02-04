@@ -285,6 +285,9 @@ ErrorCode Auction::ShowAuctionResult()
   {
     return ErrorCode::AUCTION_STILL_LISTING;
   }
+
+  Value total_sales = 0;
+
   for (auto &item : items())
   {
     std::cout << "item id: " << item.first << std::endl;
@@ -296,9 +299,12 @@ ErrorCode Auction::ShowAuctionResult()
     {
       std::cout << "winning bid: " << item.second.winner << ", at price: " << item.second.sell_price
                 << std::endl;
+      total_sales += item.second.sell_price;
     }
     std::cout << std::endl;
   }
+
+  std::cout << "total_sales: " << total_sales << std::endl;
   return ErrorCode::SUCCESS;
 }
 

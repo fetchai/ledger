@@ -53,6 +53,8 @@ public:
   void                               Mine(std::size_t random_seed, std::size_t run_time);
   ErrorCode                          PlaceBid(Bid const &bid);
   ErrorCode                          AddItem(Item const &item);
+  ErrorCode                          ShowAuctionResult();
+
 
 private:
   // bids on binary vector

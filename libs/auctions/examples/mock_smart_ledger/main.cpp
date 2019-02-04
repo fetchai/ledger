@@ -60,6 +60,9 @@ int main(int argc, char **argv)
     std::cout << "waiting for listings and bids....: " << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
+    std::cout << "msl.bids().size(): " << msl.bids().size() << std::endl;
+    std::cout << "msl.items().size(): " << msl.items().size() << std::endl;
+
     if ((msl.bids().size() > min_bids) & (msl.items().size() > min_items))
     {
       // do some mining
