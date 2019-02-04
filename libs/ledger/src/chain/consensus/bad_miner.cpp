@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,32 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+#include "ledger/chain/consensus/bad_miner.hpp"
+#include "ledger/chain/block.hpp"
 
 namespace fetch {
 namespace ledger {
 namespace consensus {
 
-class BadMiner : public ConsensusMinerInterface
+void BadMiner::Mine(Block &block)
 {
-public:
+  block.nonce = 0;
+  block.UpdateDigest();
+}
 
-  // Construction / Destruction
-  BadMiner() = default;
-  BadMiner(BadMiner const &) = delete;
-  BadMiner(BadMiner &&) = delete;
-  ~BadMiner() override = default;
-
-  /// @name Consensus Miner Interface
-  /// @{
-  void Mine(Block &block) override;
-  bool Mine(Block &block, uint64_t iterations) override;
-  /// @}
-
-  // Operators
-  BadMiner &operator=(BadMiner const &) = delete;
-  BadMiner &operator=(BadMiner &&) = delete;
-};
+bool BadMiner::Mine(Block &block, uint64_t /*iterations*/)
+{
+  block.nonce = 0;
+  block.UpdateDigest();
+  return true;
+}
 
 }  // namespace consensus
 }  // namespace ledger

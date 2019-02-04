@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,32 +16,53 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/consensus_miner_interface.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
+
+#include <random>
+
+static uint32_t GetRandom()
+{
+  std::random_device                      rd;
+  std::mt19937                            gen(rd());
+  std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
+  return dis(gen);
+}
 
 namespace fetch {
 namespace ledger {
 namespace consensus {
 
-class BadMiner : public ConsensusMinerInterface
+void DummyMiner::Mine(Block &block)
 {
-public:
+  uint64_t initNonce = GetRandom();
+  block.nonce        = initNonce;
 
-  // Construction / Destruction
-  BadMiner() = default;
-  BadMiner(BadMiner const &) = delete;
-  BadMiner(BadMiner &&) = delete;
-  ~BadMiner() override = default;
+  block.UpdateDigest();
 
-  /// @name Consensus Miner Interface
-  /// @{
-  void Mine(Block &block) override;
-  bool Mine(Block &block, uint64_t iterations) override;
-  /// @}
+  while (!block.proof())
+  {
+    block.nonce++;
+    block.UpdateDigest();
+  }
+}
 
-  // Operators
-  BadMiner &operator=(BadMiner const &) = delete;
-  BadMiner &operator=(BadMiner &&) = delete;
-};
+bool DummyMiner::Mine(Block &block, uint64_t iterations)
+{
+  uint32_t initNonce = GetRandom();
+  block.nonce        = initNonce;
+
+  block.UpdateDigest();
+
+  while (!block.proof() && iterations > 0)
+  {
+    block.nonce++;
+    block.UpdateDigest();
+    iterations--;
+  }
+
+  return block.proof();
+}
 
 }  // namespace consensus
 }  // namespace ledger
