@@ -518,7 +518,7 @@ private:
 
     // If we are reverting to a state, we want this bookmark to stay - this
     // will make reverting to the same hash twice in a row valid.
-    if(key_to_compare != book.key)
+    if (key_to_compare != book.key)
     {
       history_.Pop();
     }
