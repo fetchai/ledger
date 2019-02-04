@@ -36,15 +36,22 @@ class Bid
 public:
   Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
       std::vector<BidId> excludes = {})
-          : id(id), price(price), bidder(bidder), excludes(std::move(excludes)), item_ids_(std::move(item_ids))
+    : id(id)
+    , price(price)
+    , bidder(bidder)
+    , excludes(std::move(excludes))
+    , item_ids_(std::move(item_ids))
   {
     assert(item_ids_.size() > 0);
     exclude_all = false;
   }
 
-  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder,
-      bool exclude_all = false)
-          : id(id), price(price), bidder(bidder), exclude_all(exclude_all), item_ids_(std::move(item_ids))
+  Bid(BidId id, std::vector<ItemId> item_ids, Value price, AgentId bidder, bool exclude_all = false)
+    : id(id)
+    , price(price)
+    , bidder(bidder)
+    , exclude_all(exclude_all)
+    , item_ids_(std::move(item_ids))
   {
     assert(item_ids_.size() > 0);
   }

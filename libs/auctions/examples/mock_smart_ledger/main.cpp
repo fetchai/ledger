@@ -52,12 +52,12 @@ int main(int argc, char **argv)
   server.AddModule(msl);
   nm.Start();
 
-
-  std::size_t min_bids = 5;
+  std::size_t min_bids  = 5;
   std::size_t min_items = 3;
   while (1)
   {
     // sleep for 1 minute
+    std::cout << "waiting for listings and bids....: " << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
     if ((msl.bids().size() > min_bids) & (msl.items().size() > min_items))

@@ -87,7 +87,6 @@ public:
     auction_.Mine(1234, 10000);
   }
 
-
   void Execute()
   {
     auction_.Execute();
@@ -155,11 +154,11 @@ private:
       json::JSONDocument doc;
       doc.Parse(request.body());
 
-      BidId               bid_id    = DEFAULT_BID_ID;
-      std::vector<ItemId> item_ids  = {};
-      Value               bid_price = DEFAULT_BID_PRICE;
-      AgentId             bidder_id = DEFAULT_BID_BIDDER;
-      std::vector<BidId>  excludes  = {};
+      BidId               bid_id      = DEFAULT_BID_ID;
+      std::vector<ItemId> item_ids    = {};
+      Value               bid_price   = DEFAULT_BID_PRICE;
+      AgentId             bidder_id   = DEFAULT_BID_BIDDER;
+      std::vector<BidId>  excludes    = {};
       bool                exclude_all = false;
 
       // extract all the request parameters
@@ -181,7 +180,6 @@ private:
         {
           auction_.PlaceBid(Bid{bid_id, item_ids, bid_price, bidder_id, exclude_all});
         }
-
 
         return http::CreateJsonResponse(R"({"success": true})", http::Status::SUCCESS_OK);
       }

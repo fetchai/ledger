@@ -196,8 +196,8 @@ void CombinatorialAuction::BuildGraph()
   local_fields_ = fetch::math::ShapelessArray<Value>::Zeroes({bids_.size()});
   active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
-
-  // check for any cases where bids specify to 'exclude all' and set up the relevant 'excludes' vector
+  // check for any cases where bids specify to 'exclude all' and set up the relevant 'excludes'
+  // vector
   for (std::size_t j = 0; j < bids_.size(); ++j)
   {
     if (bids_[j].exclude_all)
@@ -215,7 +215,6 @@ void CombinatorialAuction::BuildGraph()
       bids_[j].excludes = all_bids;
     }
   }
-
 
   // set local fields according to the following equation:
   // local_fields_ = bid_price - Sum(items.min_price)
@@ -260,15 +259,13 @@ void CombinatorialAuction::BuildGraph()
         }
       }
 
-      for (std::size_t k = 0; k < items_.size(); ++k)
+      for (auto const &itm : items_)
       {
-        ItemId cur_id = items_[k].id;
-
         for (auto const &itm1 : bids_[i].item_ids())
         {
           for (auto const &itm2 : bids_[j].item_ids())
           {
-            if ((cur_id == itm1) && (cur_id == itm2))
+            if ((itm.first == itm1) && (itm.first == itm2))
             {
               coupling += (bids_[i].price + bids_[j].price);
             }
@@ -300,7 +297,7 @@ void CombinatorialAuction::SelectWinners()
         {
           if (bid_item_id == item.first)
           {
-            item.second.winner = bids_[j].id;
+            item.second.winner     = bids_[j].id;
             item.second.sell_price = bids_[j].price;
           }
         }
