@@ -31,6 +31,7 @@
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
+#include "fetch_version.hpp"
 
 #include <array>
 #include <csignal>
