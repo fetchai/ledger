@@ -47,13 +47,13 @@ protected:
   using Rng                 = std::mt19937_64;
   using BasicMiner          = fetch::miner::BasicMiner;
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
-  using MutableTransaction  = fetch::chain::MutableTransaction;
-  using VerifiedTransaction = fetch::chain::VerifiedTransaction;
+  using MutableTransaction  = fetch::ledger::MutableTransaction;
+  using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
   using BlockBody           = fetch::ledger::Block::Body;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using BitVector           = fetch::bitmanip::BitVector;
-  using TransactionSummary  = fetch::chain::TransactionSummary;
+  using TransactionSummary  = fetch::ledger::TransactionSummary;
   using MainChain           = fetch::ledger::MainChain;
   using Block               = fetch::ledger::Block;
 

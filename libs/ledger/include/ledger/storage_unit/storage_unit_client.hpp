@@ -135,9 +135,9 @@ public:
     return clients_[lane];
   }
 
-  void AddTransaction(chain::VerifiedTransaction const &tx) override
+  void AddTransaction(VerifiedTransaction const &tx) override
   {
-    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    using protocol = fetch::storage::ObjectStoreProtocol<Transaction>;
 
     auto      res  = fetch::storage::ResourceID(tx.digest());
     LaneIndex lane = res.lane(log2_lanes_);
@@ -152,7 +152,7 @@ public:
 
   void AddTransactions(TransactionList const &txs) override
   {
-    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    using protocol = fetch::storage::ObjectStoreProtocol<Transaction>;
 
     std::vector<protocol::ElementList> transaction_lists(1 << log2_lanes_);
 
@@ -195,7 +195,7 @@ public:
 
   TxSummaries PollRecentTx(uint32_t max_to_poll) override
   {
-    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    using protocol = fetch::storage::ObjectStoreProtocol<Transaction>;
     std::vector<service::Promise> promises;
     TxSummaries                   new_txs;
 
@@ -230,9 +230,9 @@ public:
     return new_txs;
   }
 
-  bool GetTransaction(byte_array::ConstByteArray const &digest, chain::Transaction &tx) override
+  bool GetTransaction(byte_array::ConstByteArray const &digest, Transaction &tx) override
   {
-    using protocol = fetch::storage::ObjectStoreProtocol<chain::Transaction>;
+    using protocol = fetch::storage::ObjectStoreProtocol<Transaction>;
 
     auto      res  = fetch::storage::ResourceID(digest);
     LaneIndex lane = res.lane(log2_lanes_);
@@ -244,7 +244,7 @@ public:
 
       auto client  = GetClientForLane(lane);
       auto promise = client->CallSpecificAddress(address, RPC_TX_STORE, protocol::GET, res);
-      tx           = promise->As<chain::VerifiedTransaction>();
+      tx           = promise->As<VerifiedTransaction>();
     }
     catch (std::exception const &e)
     {
@@ -466,7 +466,7 @@ private:
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
   using Muddles                   = std::vector<MuddlePtr>;
   using Clients                   = std::vector<ClientPtr>;
-  using TxSummaries               = std::vector<fetch::chain::TransactionSummary>;
+  using TxSummaries               = std::vector<TransactionSummary>;
 
   void WorkCycle();
 

@@ -108,17 +108,16 @@ public:
   MainChain &operator=(MainChain &&rhs) = delete;
 
 private:
-  using BlockMap           = std::unordered_map<BlockHash, Block>;
-  using Proof              = Block::Proof;
-  using TipPtr             = std::shared_ptr<Tip>;
-  using TipsMap            = std::unordered_map<BlockHash, TipPtr>;
-  using HeaviestTip        = std::pair<uint64_t, BlockHash>;
-  using LooseBlockMap      = std::unordered_map<BlockHash, BlockHashs>;
-  using BlockStore         = fetch::storage::ObjectStore<Block>;
-  using BlockStorePtr      = std::unique_ptr<BlockStore>;
-  using TransactionSummary = chain::TransactionSummary;
-  using RMutex             = std::recursive_mutex;
-  using RLock              = std::unique_lock<RMutex>;
+  using BlockMap      = std::unordered_map<BlockHash, Block>;
+  using Proof         = Block::Proof;
+  using TipPtr        = std::shared_ptr<Tip>;
+  using TipsMap       = std::unordered_map<BlockHash, TipPtr>;
+  using HeaviestTip   = std::pair<uint64_t, BlockHash>;
+  using LooseBlockMap = std::unordered_map<BlockHash, BlockHashs>;
+  using BlockStore    = fetch::storage::ObjectStore<Block>;
+  using BlockStorePtr = std::unique_ptr<BlockStore>;
+  using RMutex        = std::recursive_mutex;
+  using RLock         = std::unique_lock<RMutex>;
 
   static constexpr char const *LOGGING_NAME        = "MainChain";
   static constexpr uint32_t    block_confirmation_ = 10;

@@ -147,7 +147,7 @@ def build_project(project_root, build_root, options):
     if os.path.exists(os.path.join(build_root, "build.ninja")):
         cmd = ["ninja"]
     else:
-        # manually specifying the number of cores is required because make automatic dectection is
+        # manually specifying the number of cores is required because make automatic detection is
         # flakey inside docker.
         cmd = ['make', '-j', str(CONCURRENCY)]
 

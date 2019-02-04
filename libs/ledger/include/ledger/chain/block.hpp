@@ -40,8 +40,8 @@ public:
   using Identity     = byte_array::ConstByteArray;
   using Digest       = byte_array::ConstByteArray;
   using HashFunction = crypto::SHA256;
-  using Proof        = chain::consensus::ProofOfWork;
-  using Slice        = std::vector<chain::TransactionSummary>;
+  using Proof        = consensus::ProofOfWork;
+  using Slice        = std::vector<TransactionSummary>;
   using Slices       = std::vector<Slice>;
 
   struct Body
@@ -92,32 +92,6 @@ inline void Block::UpdateDigest()
   body.hash = hash.Final();
 
   proof.SetHeader(body.hash);
-}
-
-/**
- * Serializer for the block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the slices to be serialised
- */
-template <typename T>
-void Serialize(T &serializer, Block::Slices const &slice)
-{
-  serializer << slice;
-}
-
-/**
- * Deserializer for block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the output slice list
- */
-template <typename T>
-void Deserialize(T &serializer, Block::Slices &slice)
-{
-  serializer >> slice;
 }
 
 /**

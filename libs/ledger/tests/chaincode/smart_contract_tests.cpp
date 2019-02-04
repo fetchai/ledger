@@ -88,7 +88,7 @@ errors);
     contract_ = std::make_unique<SmartContract>(script);
     contract_->Attach(*storage_);
 
-    chain::MutableTransaction tx;
+    ledger::MutableTransaction tx;
     tx.set_contract_name("ai.fetch.testcontract.Test");
     //    tx.set_data(oss.str());
     //    tx.PushResource(address);
@@ -99,7 +99,7 @@ errors);
     // dispatch the transaction
     auto status =
         contract_->DispatchTransaction(identifier.name(),
-chain::VerifiedTransaction::Create(tx));
+ledger::VerifiedTransaction::Create(tx));
 
     tx.set_contract_name("ai.fetch.testcontract.EdsFunction");
     //    tx.set_data(oss.str());
@@ -110,7 +110,7 @@ chain::VerifiedTransaction::Create(tx));
     // dispatch the transaction
     status =
         contract_->DispatchTransaction(identifier.name(),
-chain::VerifiedTransaction::Create(tx));
+ledger::VerifiedTransaction::Create(tx));
 
     return (Contract::Status::OK == status);
   }

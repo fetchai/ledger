@@ -22,7 +22,7 @@ namespace fetch {
 namespace ledger {
 
 MainChainMiner::MainChainMiner(std::size_t num_lanes, std::size_t num_slices, MainChain &mainChain,
-                               chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
+                               BlockCoordinator &block_coordinator, MinerInterface &miner,
                                ConsensusMinerInterface &           consensus_miner,
                                ConstByteArray                      miner_identity,
                                std::chrono::steady_clock::duration block_interval)
