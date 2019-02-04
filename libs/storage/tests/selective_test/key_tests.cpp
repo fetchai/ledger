@@ -30,7 +30,7 @@ using namespace fetch::testing;
 
 using ByteArray      = fetch::byte_array::ByteArray;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
-using DefaultKey            = fetch::storage::Key<256>;
+using DefaultKey     = fetch::storage::Key<256>;
 
 // Test that closely correlated keys are found to be unique
 TEST(new_key_test, correlated_keys_are_unique)
