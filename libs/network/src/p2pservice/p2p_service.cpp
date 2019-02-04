@@ -43,7 +43,7 @@ P2PService::P2PService(Muddle &muddle, LaneManagement &lane_management, TrustInt
   , max_peers_(max_peers)
   , transient_peers_(transient_peers)
   , peer_update_cycle_ms_(peer_update_cycle_ms)
-  , manifest_update_cycle_ms_(500)
+  , manifest_update_cycle_ms_(2000)
 {
   // register the services with the rpc server
   rpc_server_.Add(RPC_P2P_RESOLVER, &resolver_proto_);
