@@ -23,6 +23,9 @@
 #include "storage/new_revertible_document_store.hpp"
 #include "testing/common_testing_functionality.hpp"
 
+#include "storage/key.hpp"
+using DefaultKey            = fetch::storage::Key<256>;
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -100,7 +103,6 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert)
   }
 
   EXPECT_EQ(store.HashExists(hashes[0]), true);
-  /* EXPECT_EQ(store.HashExists(hashes[0], false)); */  // TODO(HUT): this.
 
   // Revert!
   store.RevertToHash(hashes[0]);
@@ -116,4 +118,23 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert)
   // Test: we should fail badly trying to revert to a hash that doesn't exist
   ASSERT_THROW(store.RevertToHash(storage::ResourceAddress("non-existent key").id()),
                StorageException);
+}
+
+// Test that closely correlated keys are found to be unique
+TEST(new_key_test, correlated_keys_are_unique)
+{
+  auto unique_hashes = GenerateUniqueHashes(1000);
+
+  std::vector<DefaultKey> seen_keys;
+
+  for(auto const &hash : unique_hashes)
+  {
+    for(auto const &key : seen_keys)
+    {
+      // Check equality operator
+      ASSERT_EQ(DefaultKey{hash} == key, false);
+    }
+
+    seen_keys.push_back(hash);
+  }
 }

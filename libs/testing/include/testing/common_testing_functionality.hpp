@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+
+#include <set>
 
 namespace fetch {
 namespace testing {
@@ -54,6 +58,58 @@ public:
 inline std::ostream &operator<<(std::ostream &os, StringProxy const &m)
 {
   return os << m.string_as_chars;
+}
+
+// Generate unique hashes that are very close together to stress unit tests. Do this by creating a
+// random reference and then for each hash required flipping a single bit of this reference hash
+inline std::vector<fetch::byte_array::ByteArray> GenerateUniqueHashes(uint64_t size, uint64_t seed = 0, bool verify_unique = false)
+{
+  fetch::byte_array::ByteArray reference = crypto::Hash<crypto::SHA256>(std::to_string(seed));
+  std::vector<fetch::byte_array::ByteArray> ret;
+  uint32_t bit_flip_position     = 0;
+  uint32_t byte_flip_position    = 0;
+  uint8_t sub_byte_flip_position = 0;
+  assert(reference.size() == 256/8);
+
+  while(ret.size() < size)
+  {
+    // Copy reference
+    fetch::byte_array::ByteArray to_push = reference.Copy();
+
+    // Flip one bit
+    byte_flip_position = bit_flip_position >> 3;
+    sub_byte_flip_position = uint8_t(1ull << (bit_flip_position & 0x7));
+    to_push[byte_flip_position] = to_push[byte_flip_position] ^ sub_byte_flip_position;
+
+    ret.push_back(to_push);
+
+    bit_flip_position++;
+
+    // once all bits are flipped, generate new reference
+    if(bit_flip_position == 256)
+    {
+      bit_flip_position = 0;
+      seed++;
+      reference = crypto::Hash<crypto::SHA256>(std::to_string(seed));
+    }
+  }
+
+  if(verify_unique)
+  {
+    // Test they're actually unique
+    std::set<byte_array::ByteArray> arrays;
+
+    for(auto const &hash : ret)
+    {
+      if(arrays.find(hash) != arrays.end())
+      {
+        throw std::runtime_error("Failed to generate all unique hashes");
+      }
+      arrays.insert(hash);
+    }
+  }
+
+  return ret;
 }
 
 }  // namespace testing

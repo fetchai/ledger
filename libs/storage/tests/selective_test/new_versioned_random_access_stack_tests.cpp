@@ -90,7 +90,7 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
   // Revert!
   stack.RevertToHash(hashes[0]);
 
-  /* EXPECT_EQ(stack.HashExists(hashes[0], false)); */  // TODO(HUT): this.
+  EXPECT_EQ(stack.HashExists(hashes[0], false));
 
   // Verify old state is as it was
   for (std::size_t i = 0; i < 17; ++i)
