@@ -67,11 +67,6 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
-#include "python/ml/layers/py_layer.hpp"
-#include "python/ml/ops/py_ops.hpp"
-#include "python/ml/py_session.hpp"
-#include "python/ml/py_variable.hpp"
-
 #include "python/auctions/py_bid.hpp"
 #include "python/auctions/py_combinatorial_auction.hpp"
 #include "python/auctions/py_item.hpp"
@@ -263,16 +258,6 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
-
-  // Machine Learning
-
-  using ArrayType = fetch::math::linalg::Matrix<double>;
-  fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
-  using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
-  fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
-  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
-
-  fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
 
   /////////////
 

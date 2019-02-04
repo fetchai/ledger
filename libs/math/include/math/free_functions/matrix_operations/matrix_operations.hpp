@@ -832,7 +832,9 @@ ArrayType Dot(ArrayType const &A, ArrayType const &B)
  * @return
  */
 template <class ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(ArrayType const &A,
+                                                                    ArrayType const &B,
+                                                                    ArrayType &      ret)
 {
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);
@@ -852,7 +854,8 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(ArrayType co
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A, ArrayType const &B)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
+                                                                         ArrayType const &B)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
   ArrayType                ret(return_shape);
