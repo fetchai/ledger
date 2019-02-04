@@ -45,9 +45,9 @@ void Dot(std::shared_ptr<VariableType> cur_node)
   assert(cur_node->prev.size() == 2);
 
   cur_node->prev[0]->GradientAdd(
-      fetch::math::DotTranspose(cur_node->grad(), cur_node->prev[1]->data(), cur_node->threaded()));
+      fetch::math::DotTranspose(cur_node->grad(), cur_node->prev[1]->data()));
   cur_node->prev[1]->GradientAdd(
-      fetch::math::TransposeDot(cur_node->prev[0]->data(), cur_node->grad(), cur_node->threaded()));
+      fetch::math::TransposeDot(cur_node->prev[0]->data(), cur_node->grad()));
 }
 
 template <typename VariablePtrType>

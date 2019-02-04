@@ -794,9 +794,7 @@ void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
 }
 
 template <typename ArrayType>
-void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
-         typename ArrayType::Type alpha = 1.0, typename ArrayType::Type beta = 0.0,
-         bool threaded = false)
+void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape().size() == 2);
   assert(B.shape().size() == 2);
@@ -818,11 +816,11 @@ void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
 }
 
 template <typename ArrayType>
-ArrayType Dot(ArrayType const &A, ArrayType const &B, bool threaded = false)
+ArrayType Dot(ArrayType const &A, ArrayType const &B)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
   ArrayType                ret(return_shape);
-  Dot(A, B, ret, 1.0, 0.0, threaded);
+  Dot(A, B, ret);
   return ret;
 }
 
@@ -830,16 +828,11 @@ ArrayType Dot(ArrayType const &A, ArrayType const &B, bool threaded = false)
  * Naive routine for C = A.T(B)
  * @param A
  * @param B
+ * @param ret
  * @return
  */
-// TODO(private, 343)
-// Unused parameter needs to be cleaned up when the need to match
-// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
-    ArrayType const &A, ArrayType const &B, ArrayType &ret,
-    typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
-    bool /*threaded*/ = false)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);
@@ -859,25 +852,11 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
-    ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
-    typename ArrayType::Type beta = 0.0, bool threaded = false)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A, ArrayType const &B)
 {
-
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
   ArrayType                ret(return_shape);
-  DotTranspose(A, B, ret, alpha, beta, threaded);
-  return ret;
-}
-template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
-                                                                         ArrayType const &B,
-                                                                         bool threaded = false)
-{
-
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  ArrayType                ret(return_shape);
-  DotTranspose(A, B, ret, 1.0, 0.0, threaded);
+  DotTranspose(A, B, ret);
   return ret;
 }
 
@@ -885,15 +864,11 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayTy
  * Naive routine for C = T(A).B
  * @param A
  * @param B
+ * @param ret
  * @return
  */
-// TODO(private, 343)
-// Unused parameter needs to be cleaned up when the need to match
-// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
-void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
-                  typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
-                  bool /*threaded*/ = false)
+void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape()[0] == B.shape()[0]);
   assert(A.shape()[1] == ret.shape()[0]);
@@ -913,18 +888,12 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
 }
 
 template <class ArrayType>
-ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
-                       typename ArrayType::Type beta = 0.0, bool threaded = false)
+ArrayType TransposeDot(ArrayType const &A, ArrayType const &B)
 {
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   ArrayType                ret(return_shape);
-  TransposeDot(A, B, ret, alpha, beta, threaded);
+  TransposeDot(A, B, ret);
   return ret;
-}
-template <typename ArrayType>
-ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, bool threaded = false)
-{
-  return TransposeDot(A, B, 1.0, 0.0, threaded);
 }
 
 /**

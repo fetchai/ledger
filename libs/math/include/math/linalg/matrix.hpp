@@ -205,10 +205,10 @@ public:
    * @A is the first matrix.
    * @B is the second matrix.
    **/
-  self_type &Dot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
+  self_type &Dot(self_type const &A, self_type const &B)
   {
     this->Resize(A.height(), B.width());
-    fetch::math::Dot(A, B, *this, alpha, beta);
+    fetch::math::Dot(A, B, *this);
     return *this;
   }
 
@@ -218,10 +218,10 @@ public:
    * @param B
    * @return
    */
-  self_type &DotTranspose(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
+  self_type &DotTranspose(self_type const &A, self_type const &B)
   {
     this->Resize(A.height(), B.height());
-    fetch::math::DotTranspose(A, B, *this, alpha, beta);
+    fetch::math::DotTranspose(A, B, *this);
     return *this;
   }
 
@@ -231,10 +231,10 @@ public:
    * @param B
    * @return
    */
-  self_type &TransposeDot(self_type const &A, self_type const &B, Type alpha = 1.0, Type beta = 0.0)
+  self_type &TransposeDot(self_type const &A, self_type const &B)
   {
     this->Resize(A.width(), B.width());
-    fetch::math::TransposeDot(A, B, *this, alpha, beta);
+    fetch::math::TransposeDot(A, B, *this);
     return *this;
   }
 };
