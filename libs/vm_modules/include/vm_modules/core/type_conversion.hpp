@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 /**
  * method for converting int32_t to string
  */
@@ -26,7 +25,6 @@ fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, int32_t const &a)
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
-
 
 void CreateToString(std::shared_ptr<fetch::vm::Module> module)
 {

@@ -21,8 +21,8 @@
 
 /// core library ///
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/core/type_conversion.hpp"
 #include "vm_modules/core/system.hpp"
+#include "vm_modules/core/type_conversion.hpp"
 #include "vm_modules/core/types.hpp"
 
 namespace fetch {
@@ -41,7 +41,5 @@ std::shared_ptr<fetch::vm::Module> SetupModule()
   return module;
 }
 
-
-
-} // vm_modules
-} // fetch
+}  // namespace vm_modules
+}  // namespace fetch

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 /**
  * method for creating and int pair
  */
@@ -54,13 +53,10 @@ private:
   int second_;
 };
 
-
 void CreateIntPair(std::shared_ptr<fetch::vm::Module> module)
 {
   module->CreateClassType<IntPair>("IntPair")
-    .CreateTypeConstuctor<int, int>()
-    .CreateInstanceFunction("first", &IntPair::first)
-    .CreateInstanceFunction("second", &IntPair::second);
+      .CreateTypeConstuctor<int, int>()
+      .CreateInstanceFunction("first", &IntPair::first)
+      .CreateInstanceFunction("second", &IntPair::second);
 }
-
-

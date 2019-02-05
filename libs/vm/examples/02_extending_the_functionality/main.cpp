@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   std::shared_ptr<fetch::vm::Module> module = fetch::vm_modules::SetupModule();
 
   // Setting compiler up
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(module.get());
+  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 

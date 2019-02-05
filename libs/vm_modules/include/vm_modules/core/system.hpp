@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "vm/analyser.hpp"
-#include "vm/typeids.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
+#include "vm/typeids.hpp"
 #include "vm/vm.hpp"
 #include <fstream>
 #include <sstream>
@@ -50,10 +50,9 @@ struct System : public fetch::vm::Object
 
 std::vector<std::string> System::args;
 
-
 void CreateSystem(std::shared_ptr<fetch::vm::Module> module)
 {
   module->CreateClassType<System>("System")
-          .CreateTypeFunction("Argc", &System::Argc)
-          .CreateTypeFunction("Argv", &System::Argv);
+      .CreateTypeFunction("Argc", &System::Argc)
+      .CreateTypeFunction("Argv", &System::Argv);
 }

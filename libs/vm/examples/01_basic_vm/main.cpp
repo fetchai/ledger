@@ -26,11 +26,10 @@
 #include <sstream>
 
 // setup vm_modules
-#include "vm_modules/setup_modules.hpp"
 #include "vm_modules/core/print.hpp"
-#include "vm_modules/core/type_conversion.hpp"
 #include "vm_modules/core/system.hpp"
-
+#include "vm_modules/core/type_conversion.hpp"
+#include "vm_modules/setup_modules.hpp"
 
 std::vector<std::string> System::args;
 
