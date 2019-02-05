@@ -32,7 +32,7 @@ void BuildCombinatorialAuction(std::string const &custom_name, pybind11::module 
 
   namespace py = pybind11;
   py::class_<CombinatorialAuction>(module, custom_name.c_str())
-      .def(py::init<BlockId, BlockId>())
+      .def(py::init<>())
       .def("AddItem",
            [](CombinatorialAuction &ca, Item const &item) {
              ErrorCode ec;

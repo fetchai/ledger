@@ -29,8 +29,12 @@ namespace auctions {
  */
 ErrorCode CombinatorialAuction::AddItem(Item const &item)
 {
-  graph_built_ = false;
-  return Auction::AddItem(item);
+  ErrorCode ec = Auction::AddItem(item);
+  if (ec == fetch::auctions::ErrorCode::SUCCESS)
+  {
+    graph_built_ = false;
+  }
+  return ec;
 }
 
 /**
@@ -41,8 +45,12 @@ ErrorCode CombinatorialAuction::AddItem(Item const &item)
  */
 ErrorCode CombinatorialAuction::PlaceBid(Bid const &bid)
 {
-  graph_built_ = false;
-  return Auction::PlaceBid(bid);
+  ErrorCode ec = Auction::PlaceBid(bid);
+  if (ec == fetch::auctions::ErrorCode::SUCCESS)
+  {
+    graph_built_ = false;
+  }
+  return ec;
 }
 
 /**
@@ -50,6 +58,7 @@ ErrorCode CombinatorialAuction::PlaceBid(Bid const &bid)
  */
 void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 {
+  auction_valid_ = AuctionState::MINING;
   fetch::random::LaggedFibonacciGenerator<> rng(random_seed);
   BuildGraph();
 
@@ -70,6 +79,7 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
 
   for (std::size_t i = 0; i < run_time; ++i)
   {
+    std::cout << "mining run: " << i << std::endl;
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       prev_active_.Copy(active_);
@@ -91,11 +101,18 @@ void CombinatorialAuction::Mine(std::size_t random_seed, std::size_t run_time)
       }
 
       new_reward = TotalBenefit();
-      de         = prev_reward - new_reward;
 
+      // record best iteration
+      if (new_reward > best_value_)
+      {
+        best_active_.Copy(active_);
+        best_value_ = new_reward;
+      }
+
+      // stochastically ignore (or keep) new activation set
+      de              = prev_reward - new_reward;
       Value ran_val   = static_cast<Value>(rng.AsDouble());
       Value threshold = std::exp(-beta * de);  // TODO(tfr): use exponential approximation
-
       if (ran_val >= threshold)
       {
         active_.Copy(prev_active_);
@@ -124,15 +141,16 @@ fetch::math::linalg::Matrix<Value> CombinatorialAuction::Couplings()
   return couplings_;
 }
 
-bool CombinatorialAuction::Execute(BlockId current_block)
+ErrorCode CombinatorialAuction::Execute()
 {
-  if ((end_block_ == current_block) && auction_valid_)
+  if (!(auction_valid_ == AuctionState::MINING))
   {
-    SelectWinners();
-    auction_valid_ = false;
-    return true;
+    return ErrorCode::AUCTION_CLOSED;
   }
-  return false;
+
+  SelectWinners();
+  auction_valid_ = AuctionState::CLEARED;
+  return ErrorCode::SUCCESS;
 }
 
 /**
@@ -188,20 +206,40 @@ void CombinatorialAuction::BuildGraph()
   local_fields_ = fetch::math::ShapelessArray<Value>::Zeroes({bids_.size()});
   active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
+  // check for any cases where bids specify to 'exclude all' and set up the relevant 'excludes'
+  // vector
+  for (std::size_t j = 0; j < bids_.size(); ++j)
+  {
+    if (bids_[j].exclude_all)
+    {
+      // get all bids made by this bidder (except current bid)
+      std::vector<BidId> all_bids{};
+      for (std::size_t k = 0; k < bids_.size(); ++k)
+      {
+        if (!(j == k) && (bids_[k].bidder == bids_[j].bidder))
+        {
+          all_bids.emplace_back(bids_[k].id);
+        }
+      }
+
+      bids_[j].excludes = all_bids;
+    }
+  }
+
+  // set local fields according to the following equation:
+  // local_fields_ = bid_price - Sum(items.min_price)
+  // thus local_fields_ represents the release value due to a bid
+  // and only bids with positive local_fields can be accepted
   for (std::size_t i = 0; i < bids_.size(); ++i)
   {
 
-    // set local fields according to the following equation:
-    // local_fields_ = bid_price - Sum(items.min_price)
-    // thus local_fields_ represents the release value due to a bid
-    // and only bids with positive local_fields can be accepted
     local_fields_[i] = static_cast<Value>(bids_[i].price);
     couplings_.Set(i, i, 0);
     for (auto &cur_item : items_)
     {
-      for (std::size_t j = 0; j < bids_[i].items().size(); ++j)
+      for (std::size_t j = 0; j < bids_[i].item_ids().size(); ++j)
       {
-        if (bids_[i].items()[j].id == cur_item.second.id)
+        if (bids_[i].item_ids()[j] == cur_item.second.id)
         {
           local_fields_[i] -= cur_item.second.min_price;
         }
@@ -209,6 +247,7 @@ void CombinatorialAuction::BuildGraph()
     }
   }
 
+  // Assign Couplings
   for (std::size_t i = 0; i < bids_.size(); ++i)
   {
 
@@ -224,21 +263,19 @@ void CombinatorialAuction::BuildGraph()
       // penalize exclusive bid combinations
       for (std::size_t k = 0; k < bids_[j].excludes.size(); ++k)
       {
-        if (bids_[j].excludes[k].id == bids_[i].id)
+        if (bids_[j].excludes[k] == bids_[i].id)
         {
           coupling = exclusive_bid_penalty;
         }
       }
 
-      for (std::size_t k = 0; k < items_.size(); ++k)
+      for (auto const &itm : items_)
       {
-        ItemId cur_id = items_[k].id;
-
-        for (auto const &itm1 : bids_[i].items())
+        for (auto const &itm1 : bids_[i].item_ids())
         {
-          for (auto const &itm2 : bids_[j].items())
+          for (auto const &itm2 : bids_[j].item_ids())
           {
-            if ((cur_id == itm1.id) && (cur_id == itm2.id))
+            if ((itm.first == itm1) && (itm.first == itm2))
             {
               coupling += (bids_[i].price + bids_[j].price);
             }
@@ -262,14 +299,30 @@ void CombinatorialAuction::SelectWinners()
   std::vector<BidId> ret{};
   for (std::size_t j = 0; j < active_.size(); ++j)
   {
-    if (active_[j] == 1)
+    if (best_active_[j] == 1)
     {
-      for (auto &item : bids_[j].items())
+      for (auto &item : items_)
       {
-        item.winner = bids_[j].id;
+        for (auto &bid_item_id : bids_[j].item_ids())
+        {
+          if (bid_item_id == item.first)
+          {
+            item.second.winner     = bids_[j].id;
+            item.second.sell_price = bids_[j].price;
+          }
+        }
       }
     }
   }
+}
+
+ErrorCode CombinatorialAuction::ShowAuctionResult()
+{
+  ErrorCode result = Auction::ShowAuctionResult();
+
+  std::cout << "TotalBenefit(): " << TotalBenefit() << std::endl;
+
+  return result;
 }
 
 }  // namespace auctions

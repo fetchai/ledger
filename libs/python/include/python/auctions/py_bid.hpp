@@ -27,10 +27,10 @@ void BuildBid(std::string const &custom_name, pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<Bid>(module, custom_name.c_str())
-      .def(py::init<BidId, std::vector<Item>, Value, AgentId>())
-      .def(py::init<BidId, std::vector<Item>, Value, AgentId, std::vector<Bid>>())
+      .def(py::init<BidId, std::vector<ItemId>, Value, AgentId>())
+      .def(py::init<BidId, std::vector<ItemId>, Value, AgentId, std::vector<BidId>>())
       .def("Id", [](Bid &bid) { return bid.id; })
-      .def("Items", [](Bid &bid) { return bid.items(); })
+      .def("ItemIds", [](Bid &bid) { return bid.item_ids(); })
       .def("Price", [](Bid &bid) { return bid.price; })
       .def("Bidder", [](Bid &bid) { return bid.bidder; })
       .def("Excludes", [](Bid &bid) { return bid.excludes; });
