@@ -78,12 +78,12 @@ ErrorCode Auction::PlaceBid(Bid bid)
   {
     // place bids and update counter
     bids_.push_back(bid);
-    for (std::size_t j = 0; j < bid.items().size(); ++j)
+    for (std::size_t j = 0; j < bid.item_ids().size(); ++j)
     {
-      items_[bid.items()[j].id].bids.push_back(bid);
+      items_[bid.item_ids()[j]].bids.push_back(bid);
 
       // count of how many times this bidder has bid on this item
-      IncrementBidCount(bid.bidder, bid.items()[j].id);
+      IncrementBidCount(bid.bidder, bid.item_ids()[j]);
     }
   }
   return ec;
@@ -182,25 +182,25 @@ void Auction::IncrementBidCount(AgentId bidder, ItemId item_id)
 ErrorCode Auction::CheckItemValidity(Item const &item) const
 {
   // Item must have a valid ID
-  if (item.id == DefaultItemId)
+  if (item.id == DEFAULT_ITEM_ID)
   {
     return ErrorCode::ITEM_ID_ERROR;
   }
 
   // Item seller must have a valid ID
-  if (item.seller_id == DefaultItemAgentId)
+  if (item.seller_id == DEFAULT_ITEM_AGENT_ID)
   {
     return ErrorCode::AGENT_ID_ERROR;
   }
 
   // Item must have a valid minimum price
-  if (item.min_price == DefaultItemMinPrice)
+  if (item.min_price == DEFAULT_ITEM_MIN_PRICE)
   {
     return ErrorCode::ITEM_MIN_PRICE_ERROR;
   }
 
   // auction must be still open to adding new items
-  if (!auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
   }
@@ -249,33 +249,62 @@ ErrorCode Auction::CheckBidValidity(Bid const &bid) const
   }
 
   // auction must be still open to adding new bids
-  if (!auction_valid_)
+  if (!(auction_valid_ == AuctionState::LISTING))
   {
     return ErrorCode::AUCTION_CLOSED;
   }
 
   // bid must not have more items than permissible
-  if (bid.items().size() > max_items_per_bid_)
+  if (bid.item_ids().size() > max_items_per_bid_)
   {
     return ErrorCode::TOO_MANY_ITEMS;
   }
 
-  for (std::size_t j = 0; j < bid.items().size(); ++j)
+  for (std::size_t j = 0; j < bid.item_ids().size(); ++j)
   {
     // check item listed in auction
-    if (!ItemInAuction(bid.items()[j].id))
+    if (!ItemInAuction(bid.item_ids()[j]))
     {
       return ErrorCode::ITEM_NOT_LISTED;
     }
 
     // check the bidder has not exceeded their allowed number of bids on this item
-    std::size_t n_bids = GetBidsCount(bid.bidder, bid.items()[j].id);
+    std::size_t n_bids = GetBidsCount(bid.bidder, bid.item_ids()[j]);
     if (n_bids >= max_bids_)
     {
       return ErrorCode::TOO_MANY_BIDS;
     }
   }
 
+  return ErrorCode::SUCCESS;
+}
+
+ErrorCode Auction::ShowAuctionResult()
+{
+  if (!(auction_valid_ == AuctionState::CLEARED))
+  {
+    return ErrorCode::AUCTION_STILL_LISTING;
+  }
+
+  Value total_sales = 0;
+
+  for (auto &item : items())
+  {
+    std::cout << "item id: " << item.first << std::endl;
+    if (item.second.winner == DEFAULT_ITEM_WINNER)
+    {
+      std::cout << "item unsold" << std::endl;
+    }
+    else
+    {
+      std::cout << "winning bid: " << item.second.winner << ", at price: " << item.second.sell_price
+                << std::endl;
+      total_sales += item.second.sell_price;
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "total_sales: " << total_sales << std::endl;
   return ErrorCode::SUCCESS;
 }
 
@@ -291,6 +320,24 @@ std::vector<AgentId> Auction::Winners()
     winners.push_back(item_it.second.winner);
   }
   return winners;
+}
+
+/**
+ * reset the auction
+ * @return
+ */
+ErrorCode Auction::Reset()
+{
+  if (!(auction_valid_ == AuctionState::CLEARED))
+  {
+    return ErrorCode::PREVIOUS_AUCTION_NOT_CLEARED;
+  }
+
+  items_.clear();
+  bids_.clear();
+  auction_valid_ = AuctionState::INITIALISED;
+
+  return ErrorCode::SUCCESS;
 }
 
 }  // namespace auctions

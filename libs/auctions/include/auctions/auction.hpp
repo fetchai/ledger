@@ -28,9 +28,21 @@
 namespace fetch {
 namespace auctions {
 
+constexpr std::size_t DEFAULT_SIZE_T_BLOCK_ID = std::numeric_limits<std::size_t>::max();
+
 // template <typename A, typename V = fetch::ml::Variable<A>>
 class Auction
 {
+
+public:
+  enum class AuctionState
+  {
+    INITIALISED,
+    LISTING,
+    MINING,
+    CLEARED
+  };
+
 protected:
   // Auction parameters
 
@@ -40,30 +52,23 @@ protected:
   std::size_t max_bids_per_item_ = std::numeric_limits<std::size_t>::max();  //
   std::size_t max_items_per_bid_ = 1;                                        //
 
-  // records the block id on which this auction was born and will conclude
-  BlockId start_block_ = std::numeric_limits<BlockId>::max();
-  BlockId end_block_   = std::numeric_limits<BlockId>::max();
-
   ItemContainer                     items_{};
   std::vector<fetch::auctions::Bid> bids_{};
 
   // a valid auction is ongoing (i.e. neither concluded nor yet to begin)
-  bool auction_valid_ = false;
+  AuctionState auction_valid_ = AuctionState::INITIALISED;
 
 public:
   /**
    * constructor for an auction
    * @param start_block_id  defines the start time of an auction
-   * @param end_block_id    defines the close time of an auction
    * @param item  defines the item to be sold
    * @param initiator  the id of the agent initiating the auction
    */
-  Auction(BlockId start_block_id, BlockId end_block_id, bool smart_market = false,
-          std::size_t max_bids = std::numeric_limits<std::size_t>::max())
+  explicit Auction(bool        smart_market = false,
+                   std::size_t max_bids     = std::numeric_limits<std::size_t>::max())
     : smart_market_(smart_market)
     , max_bids_(max_bids)
-    , start_block_(std::move(start_block_id))
-    , end_block_(std::move(end_block_id))
   {
     if (smart_market)
     {
@@ -75,23 +80,21 @@ public:
     // must be some items in the auction!
     assert(max_items_ > 0);
 
-    auction_valid_ = true;
+    auction_valid_ = AuctionState::LISTING;
   }
+  virtual ~Auction() = default;
 
-  std::vector<Item>    ShowListedItems() const;
-  std::vector<Bid>     ShowBids() const;
-  ErrorCode            AddItem(Item const &item);
-  ErrorCode            PlaceBid(Bid bid);
+  ErrorCode         AddItem(Item const &item);
+  ErrorCode         PlaceBid(Bid bid);
+  ErrorCode         ShowAuctionResult();
+  virtual ErrorCode Execute() = 0;
+  ErrorCode         Reset();
+
   AgentId              Winner(ItemId item_id);
   std::vector<AgentId> Winners();
   ItemContainer        items();
-
-  /**
-   * Executes the auction by identifying the winners, and making appropriate transfers
-   * @param current_block
-   * @return
-   */
-  virtual bool Execute(BlockId current_block) = 0;
+  std::vector<Item>    ShowListedItems() const;
+  std::vector<Bid>     ShowBids() const;
 
 private:
   bool         ItemInAuction(ItemId const &item_id) const;
