@@ -69,6 +69,7 @@
 #include "python/auctions/py_bid.hpp"
 #include "python/auctions/py_combinatorial_auction.hpp"
 #include "python/auctions/py_item.hpp"
+#include "python/auctions/py_mock_smart_ledger.hpp"
 
 // !!!!
 namespace py = pybind11;
@@ -234,4 +235,6 @@ PYBIND11_MODULE(fetch, module)
   fetch::auctions::BuildCombinatorialAuction("CombinatorialAuction", ns_fetch_auctions);
   fetch::auctions::BuildItem("Item", ns_fetch_auctions);
   fetch::auctions::BuildBid("Bid", ns_fetch_auctions);
+
+  fetch::auctions::BuildMockSmartLedger("MockSmartLedger", ns_fetch_auctions);
 }

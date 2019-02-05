@@ -22,7 +22,7 @@
 #include "fetch_pybind.hpp"
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 void BuildTransaction(pybind11::module &module)
 {
@@ -46,5 +46,5 @@ void BuildTransaction(pybind11::module &module)
       .def("set_contract_name", &Transaction::set_contract_name)
       .def("digest", &Transaction::digest);
 }
-};  // namespace chain
+};  // namespace ledger
 };  // namespace fetch

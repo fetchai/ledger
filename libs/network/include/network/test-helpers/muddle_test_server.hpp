@@ -83,7 +83,7 @@ public:
   ServerPtr                      server;
   uint16_t                       port;
   MuddlePtr                      muddle;
-  fetch::network::NetworkManager tm;
+  fetch::network::NetworkManager tm{"NetMgr", 1};
 
   MuddleTestServer()
   {}

@@ -80,6 +80,8 @@ public:
 
   http::HTTPResponse AddEndpoint(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+
     LOG_STACK_TRACE_POINT;
     json::JSONDocument doc;
     try
@@ -101,6 +103,9 @@ public:
 
   http::HTTPResponse Start(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
 
     node_->startMining();
@@ -109,6 +114,9 @@ public:
 
   http::HTTPResponse Stop(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     LOG_STACK_TRACE_POINT;
 
     node_->stopMining();
@@ -117,12 +125,18 @@ public:
 
   http::HTTPResponse Reset(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     node_->reset();
     return http::HTTPResponse(successString);
   }
 
   http::HTTPResponse Mainchain(http::ViewParameters const &params, http::HTTPRequest const &req)
   {
+    FETCH_UNUSED(params);
+    FETCH_UNUSED(req);
+
     auto chainArray = node_->HeaviestChain();
 
     variant::Variant result = variant::Variant::Array(chainArray.size());
@@ -132,9 +146,9 @@ public:
     {
 
       variant::Variant temp = variant::Variant::Object();
-      temp["blockNumber"]   = i.body().block_number;
-      temp["hashcurrent"]   = ToHex(i.hash());
-      temp["hashprev"]      = ToHex(i.body().previous_hash);
+      temp["blockNumber"]   = i.body.block_number;
+      temp["hashcurrent"]   = ToHex(i.body.hash);
+      temp["hashprev"]      = ToHex(i.body.previous_hash);
 
       result[index++] = temp;
     }

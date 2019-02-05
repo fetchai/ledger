@@ -34,8 +34,8 @@ class CombinatorialAuction : public Auction
   using RandomInt = typename fetch::random::LinearCongruentialGenerator::random_type;
 
 public:
-  CombinatorialAuction(BlockId start_block_id, BlockId end_block_id, std::uint32_t max_flips = 3)
-    : Auction(start_block_id, end_block_id, true, std::numeric_limits<std::size_t>::max())
+  explicit CombinatorialAuction(std::uint32_t max_flips = 3)
+    : Auction(true, std::numeric_limits<std::size_t>::max())
     , max_flips_(max_flips)
   {
     max_items_         = std::numeric_limits<std::size_t>::max();
@@ -47,13 +47,14 @@ public:
   void                               BuildGraph();
   void                               SelectBid(std::size_t const &bid);
   Value                              TotalBenefit();
-  bool                               Execute(BlockId current_block) override;
   fetch::math::Tensor<Value>         Couplings();
+  ErrorCode                          Execute() override;
   fetch::math::ShapelessArray<Value> LocalFields();
   std::uint32_t                      Active(std::size_t n);
   void                               Mine(std::size_t random_seed, std::size_t run_time);
   ErrorCode                          PlaceBid(Bid const &bid);
   ErrorCode                          AddItem(Item const &item);
+  ErrorCode                          ShowAuctionResult();
 
 private:
   // bids on binary vector
@@ -61,6 +62,9 @@ private:
   fetch::math::ShapelessArray<Value>         local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;
+
+  Value                                      best_value_;
+  fetch::math::ShapelessArray<std::uint32_t> best_active_;
 
   std::uint32_t max_flips_ = std::numeric_limits<std::uint32_t>::max();
 

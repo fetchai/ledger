@@ -28,13 +28,13 @@ class TransactionItem
 {
 public:
   // Construction / Destruction
-  TransactionItem(chain::TransactionSummary tx, std::size_t id)
+  TransactionItem(ledger::TransactionSummary tx, std::size_t id)
     : summary_(std::move(tx))
     , id_(id)
   {}
   ~TransactionItem() = default;
 
-  chain::TransactionSummary const &summary() const
+  ledger::TransactionSummary const &summary() const
   {
     return summary_;
   }
@@ -48,8 +48,8 @@ public:
   std::unordered_set<std::size_t> lanes;
 
 private:
-  chain::TransactionSummary summary_;
-  std::size_t               id_;
+  ledger::TransactionSummary summary_;
+  std::size_t                id_;
 };
 
 }  // namespace miner

@@ -128,7 +128,7 @@ int main(int argc, char **argv)
   std::cout << "Connecting with " << num_lanes << " lanes." << std::endl;
 
   // Client setup
-  fetch::network::NetworkManager tm(8);
+  fetch::network::NetworkManager tm{"NetMgr", 8};
   MuddlePtr                      muddle_;
   ProverPtr                      p2p_key = GenerateP2PKey();
   muddle_ = std::make_unique<Muddle>(Muddle::NetworkId("Test"), std::move(p2p_key), tm);
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
             auto enckey = command[1].SubArray(1, command[1].size() - 2);
             auto key    = byte_array::FromBase64(enckey);
 
-            chain::Transaction tx;
+            Transaction tx;
             client.GetTransaction(key, tx);
             std::cout << std::endl;
 
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
         {
           if (command.size() == 1)
           {
-            chain::Transaction tx = chain::VerifiedTransaction::Create(chain::RandomTransaction());
+            Transaction tx = VerifiedTransaction::Create(RandomTransaction());
             std::cout << std::endl;
             std::cout << "Transaction: " << byte_array::ToBase64(tx.digest()) << std::endl;
             examples::common::ToBase64(std::cout, tx.signatures());

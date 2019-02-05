@@ -45,24 +45,21 @@ class MineNodeBasic
 {
 
   // Main chain
-  using BlockType = chain::MainChain::BlockType;
-  using BlockHash = chain::MainChain::BlockHash;
-  using body_type = chain::MainChain::BlockType::body_type;
-  using miner     = fetch::chain::consensus::DummyMiner;
+  using BlockType = ledger::Block;
+  using BlockHash = ledger::Block::Digest;
+  using body_type = ledger::Block::Body;
+  using miner     = fetch::ledger::consensus::DummyMiner;
 
 public:
   static constexpr char const *LOGGING_NAME = "MineNodeBasic";
 
-  explicit MineNodeBasic(uint64_t miner_number)
-    : miner_number_{miner_number}
-  {}
-
+  MineNodeBasic()                    = default;
   MineNodeBasic(MineNodeBasic &rhs)  = delete;
   MineNodeBasic(MineNodeBasic &&rhs) = delete;
+  ~MineNodeBasic()                   = default;
+
   MineNodeBasic operator=(MineNodeBasic &rhs) = delete;
   MineNodeBasic operator=(MineNodeBasic &&rhs) = delete;
-
-  ~MineNodeBasic() = default;
 
   ///////////////////////////////////////////////////////////
   // RPC calls
@@ -71,9 +68,9 @@ public:
     block.UpdateDigest();
 
     // Verify the block
-    block.proof().SetTarget(target_);
+    block.proof.SetTarget(target_);
 
-    if (!block.proof()())
+    if (!block.proof())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Received not verified");
     }
@@ -83,7 +80,7 @@ public:
 
       // The main chain will set whether that block was loose. If it was, try
       // and walk down until it touches the main chain
-      if (block.loose())
+      if (block.is_loose)
       {
         std::thread{[this, block] {
           BlockType copy = block;
@@ -99,7 +96,7 @@ public:
   void SyncBlock(BlockType &block)
   {
     BlockType walkBlock;
-    BlockHash hash = block.body().previous_hash;
+    BlockHash hash = block.body.previous_hash;
 
     do
     {
@@ -110,7 +107,7 @@ public:
       }
 
       walkBlock.UpdateDigest();  // critical we update the hash after transmission
-      hash = walkBlock.body().previous_hash;
+      hash = walkBlock.body.previous_hash;
 
     } while (main_chain_.AddBlock(walkBlock));
   }
@@ -137,7 +134,7 @@ public:
   void reset()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting miner");
-    main_chain_.reset();
+    main_chain_.Reset();
     stopped_ = true;
   }
 
@@ -145,8 +142,8 @@ public:
   // Mining loop
   void startMining()
   {
-    fetch::chain::consensus::DummyMiner miner;
-    auto                                closure = [this, &miner] {
+    fetch::ledger::consensus::DummyMiner miner;
+    auto                                 closure = [this, &miner] {
       // Loop code
       while (!stopped_)
       {
@@ -156,14 +153,14 @@ public:
         // Create another block sequential to previous
         BlockType nextBlock;
         body_type nextBody;
-        nextBody.block_number  = block.body().block_number + 1;
-        nextBody.previous_hash = block.hash();
+        nextBody.block_number  = block.body.block_number + 1;
+        nextBody.previous_hash = block.body.hash;
 
-        nextBlock.SetBody(nextBody);
+        nextBlock.body = nextBody;
         nextBlock.UpdateDigest();
 
         // Mine the block
-        nextBlock.proof().SetTarget(target_);
+        nextBlock.proof.SetTarget(target_);
         miner.Mine(nextBlock);
 
         if (stopped_)
@@ -205,9 +202,8 @@ private:
   fetch::mutex::Mutex              mutex_{__LINE__, __FILE__};
   bool                             stopped_{false};
   std::size_t                      target_ = 16;  // 16 = roughly one block every 0.18s
-  uint64_t                         miner_number_{1};
 
-  chain::MainChain main_chain_{uint32_t(miner_number_)};
+  ledger::MainChain main_chain_{};
 };
 }  // namespace network_mine_test
 }  // namespace fetch

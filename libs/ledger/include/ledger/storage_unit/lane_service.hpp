@@ -55,17 +55,16 @@ public:
   using MuddlePtr      = std::shared_ptr<Muddle>;
   using Server         = fetch::muddle::rpc::Server;
   using ServerPtr      = std::shared_ptr<Server>;
-  using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore            = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
-  using TransactionStore         = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
-  using TransactionStoreProtocol = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using BackgroundedWork         = network::BackgroundedWork<TransactionStoreSyncService>;
-  using BackgroundedWorkThread   = network::HasWorkerThread<BackgroundedWork>;
+  using DocumentStore             = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore          = storage::TransientObjectStore<VerifiedTransaction>;
+  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<VerifiedTransaction>;
+  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
-  using VerifiedTransaction       = chain::VerifiedTransaction;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -191,8 +190,8 @@ public:
     tx_sync_service_->Start();
 
     // TX Sync service
-    workthread_ =
-        std::make_shared<BackgroundedWorkThread>(&bg_work_, [this]() { tx_sync_service_->Work(); });
+    workthread_ = std::make_shared<BackgroundedWorkThread>(
+        &bg_work_, "BW:LS-" + std::to_string(lane_), [this]() { tx_sync_service_->Work(); });
     workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
   }
 
@@ -227,8 +226,7 @@ private:
 
   ServerPtr server_;
   MuddlePtr muddle_;  ///< The muddle networking service
-  // mutex::Mutex certificate_lock_{__LINE__, __FILE__};
-  uint16_t port_;
+  uint16_t  port_;
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;

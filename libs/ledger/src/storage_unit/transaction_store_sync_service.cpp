@@ -31,15 +31,15 @@ TransactionStoreSyncService::TransactionStoreSyncService(
     std::chrono::milliseconds fetch_object_wait_duration)
   : muddle_(std::move(muddle))
   , store_(std::move(store))
-  , verifier_(*this, verification_threads, "Lane " + std::to_string(lane_id) + ": ")
+  , verifier_(*this, verification_threads, "TxV-L" + std::to_string(lane_id))
   , lane_controller_(std::move(controller_ptr))
   , time_duration_(the_timeout)
   , promise_wait_time_duration_(promise_wait_timeout)
   , fetch_object_wait_duration_(fetch_object_wait_duration)
   , id_(lane_id)
 {
-  client_ =
-      std::make_shared<Client>(muddle_->AsEndpoint(), Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
+  client_ = std::make_shared<Client>("R:TxSync-L" + std::to_string(lane_id), muddle_->AsEndpoint(),
+                                     Muddle::Address(), SERVICE_LANE, CHANNEL_RPC);
 
   this->Allow(State::QUERY_OBJECT_COUNTS, State::INITIAL)
       .Allow(State::RESOLVING_OBJECT_COUNTS, State::QUERY_OBJECT_COUNTS)
@@ -311,7 +311,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   return result;
 }
 
-void TransactionStoreSyncService::OnTransaction(chain::VerifiedTransaction const &tx)
+void TransactionStoreSyncService::OnTransaction(VerifiedTransaction const &tx)
 {
   ResourceID const rid(tx.digest());
 

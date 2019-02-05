@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/transaction_processor.hpp"
+#include "core/threading.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -32,23 +33,23 @@ TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
                                            miner::MinerInterface &miner, std::size_t num_threads)
   : storage_{storage}
   , miner_{miner}
-  , verifier_{*this, num_threads}
+  , verifier_{*this, num_threads, "TxV-P"}
   , running_{false}
 {}
 
 TransactionProcessor::~TransactionProcessor()
 {
-  running_ = false;
+  Stop();
 }
 
-void TransactionProcessor::OnTransaction(chain::UnverifiedTransaction const &tx)
+void TransactionProcessor::OnTransaction(UnverifiedTransaction const &tx)
 {
   // submit the transaction to the verifier - it will call back this::OnTransaction(verified) or
   // this::OnTransactions(verified)
   verifier_.AddTransaction(tx.AsMutable());
 }
 
-void TransactionProcessor::OnTransaction(chain::VerifiedTransaction const &tx)
+void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
@@ -114,7 +115,9 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
 
 void TransactionProcessor::ThreadEntryPoint()
 {
-  std::vector<chain::TransactionSummary> new_txs;
+  SetThreadName("TxProc");
+
+  std::vector<TransactionSummary> new_txs;
   while (running_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -128,7 +131,7 @@ void TransactionProcessor::ThreadEntryPoint()
       assert(summary.IsWellFormed());
       miner_.EnqueueTransaction(summary);
 
-      FETCH_METRIC_TX_QUEUED(sumamry.transaction_hash);
+      FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }
   }
 }
