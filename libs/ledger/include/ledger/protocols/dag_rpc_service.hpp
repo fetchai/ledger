@@ -174,6 +174,7 @@ public:
       n = int(normal_node_queue_.size());
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Processing ", n, "DAG nodes");
     while(n > 0)
     {
       QueueItem item;
@@ -183,6 +184,7 @@ public:
         item = normal_node_queue_.front();
         normal_node_queue_.pop_front();
       }
+      FETCH_LOG_INFO(LOGGING_NAME, "Processing DAG node: ", byte_array::ToBase64(item.node.hash));
 
       if(!dag_.HasNode(item.node.hash))
       {
@@ -288,22 +290,28 @@ public:
 
     for (uint64_t i   = 0; i < dag_chunks; ++i)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Call: ", i);      
       dag_chunk_requests[i] = clients[cid]->Call(muddle_.network_id(), DAG_SYNCRONISATION, DAGProtocol::DOWNLOAD_DAG, i, uint64_t(DAG_CHUNK_SIZE));
       cid = (cid + 1) % clients.size();
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding nodes!");
 
     // Building DAG
     std::vector<DAGNode> dag_nodes;
     for (uint64_t        i = 0; i < dag_chunks; ++i)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Resolving: ", i);            
       dag_nodes.clear();
+      dag_chunk_requests[i]->Wait();
+      FETCH_LOG_INFO(LOGGING_NAME, "XX: ", int(dag_chunk_requests[i]->GetState()));
       dag_chunk_requests[i]->As(dag_nodes);
 
       
-      for (auto &node: dag_nodes)
+      for (auto node: dag_nodes)
       {
-        AddNodeToQueue(node);
+
+//        AddNodeToQueue(node);
       }
 
     }
@@ -347,10 +355,20 @@ private:
   bool AddNodeToQueue(DAGNode node)
   { 
     FETCH_LOCK(global_mutex_);
+    // Ensures that we are not adding nodes we already know
+    if(dag_.HasNode(node.hash))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "DAG node already exists: ", byte_array::ToBase64(node.hash));
+      return false;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Queuing node: ", byte_array::ToBase64(node.hash) );
     if(node.identity.identifier().size() == 0)
     {
       // TODO: work out why this errors comes around.
       std::cout << "TODO: Error in AddNodeToQUeue" << std::endl;
+      std::cout << byte_array::ToBase64(node.hash) << std::endl;
+      std::cout << node.contents << std::endl;
       return false;
     }
 

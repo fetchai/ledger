@@ -170,11 +170,13 @@ int main(int argc, char **argv)
 
   if(argc <= 1)
   {
+
     std::cout << "New credentials" << std::endl;
     signer->GenerateKeys();
     std::cout << "Parameters: " << signer->identity().parameters() << std::endl;
     std::cout << "Public key: " << fetch::byte_array::ToBase64(signer->identity().identifier()) << std::endl;    
     std::cout << "Private key: " << fetch::byte_array::ToBase64(signer->private_key()) << std::endl;
+
     return 0;
   }  
 
@@ -223,7 +225,7 @@ int main(int argc, char **argv)
   std::cout << "Listening on " << port << std::endl;
 
   NetworkId nid("dag-testnet");
-  Muddle muddle{nid, std::move(signer), network_manager};
+  Muddle muddle{nid,  std::move(signer), network_manager};
 
   std::cout << "Creating list of peers" << std::endl;
   std::vector< fetch::network::Uri > connect_to;
@@ -263,8 +265,10 @@ int main(int argc, char **argv)
   fetch::ledger::dag::DAG dag;
 
   std::atomic< int > node_count{0};
-  dag.OnNewNode([&outfile, &node_count](DAGNode n)
+  fetch::mutex::Mutex file_mutex{__LINE__, __FILE__};
+  dag.OnNewNode([&outfile, &node_count, &file_mutex](DAGNode n)
   {
+    FETCH_LOCK(file_mutex);
     using Clock     = std::chrono::system_clock;
     using Timepoint = Clock::time_point;    
     Timepoint const now           = Clock::now();
@@ -302,7 +306,7 @@ int main(int argc, char **argv)
     DAGNode node = GenerateNode(rng, *certificate, dag);
 
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+   // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     // send the node around the network
 
     controller.BroadcastDAGNode(node);

@@ -53,11 +53,11 @@ int main()
   using Clock = std::chrono::high_resolution_clock;
 
   PromiseList promises;
-  promises.reserve(5000);
+  promises.reserve(20);
 
   auto const start = Clock::now();
 
-  for (uint64_t i = 0; i < 5000; ++i)
+  for (uint64_t i = 0; i < 20; ++i)
   {
     promises.push_back(client->Call(NetworkId("1"), 1, i, i));
   }

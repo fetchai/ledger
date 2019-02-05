@@ -53,11 +53,11 @@ public:
 
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
-  DigestSet const& tips() const;
+  DigestSet const tips() const;
 
-  DigestCache const &last_nodes() const;
-  NodeMap const &nodes() const;
-  NodeList const &block_nodes() const;
+  DigestCache const last_nodes() const;
+  NodeMap const nodes() const;
+  NodeList const block_nodes() const;
   uint64_t time_since_last_block() const;
   bool HasNode(Digest const &hash);
 
@@ -99,8 +99,9 @@ private:
 /**
  * @brief returns the tips of the DAG.
  */
-inline std::unordered_set< byte_array::ConstByteArray > const& DAG::tips() const
+inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips() const
 {
+  FETCH_LOCK(maintenance_mutex_);    
   return tips_;
 }
 
@@ -109,24 +110,27 @@ inline std::unordered_set< byte_array::ConstByteArray > const& DAG::tips() const
  *
  * TODO(tfr): make the number of cached last nodes configurable.
  */
-inline DAG::DigestCache const &DAG::last_nodes() const
+inline DAG::DigestCache const DAG::last_nodes() const
 {
+  FETCH_LOCK(maintenance_mutex_);  
   return last_nodes_;
 }
 
 /**
  * @brief returns all nodes.
  */
-inline DAG::NodeMap const &DAG::nodes() const
+inline DAG::NodeMap const DAG::nodes() const
 {
+  FETCH_LOCK(maintenance_mutex_);  
   return nodes_;
 }
 
 /**
  * @brief returns block nodes.
  */
-inline DAG::NodeList const &DAG::block_nodes() const
+inline DAG::NodeList const DAG::block_nodes() const
 {
+  FETCH_LOCK(maintenance_mutex_);  
   return block_nodes_;
 }
 
@@ -135,6 +139,7 @@ inline DAG::NodeList const &DAG::block_nodes() const
  */
 inline uint64_t DAG::time_since_last_block() const
 {
+  FETCH_LOCK(maintenance_mutex_);    
   return time_since_last_block_;
 }
 
@@ -143,6 +148,7 @@ inline uint64_t DAG::time_since_last_block() const
  */
 inline bool DAG::HasNode(byte_array::ConstByteArray const &hash)
 {
+  FETCH_LOCK(maintenance_mutex_);    
   return nodes_.find(hash) != nodes_.end();
 }
 
