@@ -45,22 +45,22 @@ public:
     }
 
     /*
-     * Really naive implementation that relies only on ArrayType providing a At(size_t) method
+     * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
      * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
      */
     typename ArrayType::Type maxValue = std::numeric_limits<typename ArrayType::Type>::min();
     typename ArrayType::Type sum(0);
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       maxValue = std::max(maxValue, inputs[0]->At(i));
     }
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       typename ArrayType::Type v = typename ArrayType::Type(exp(inputs[0]->At(i) - maxValue));
       this->output_->At(i)       = v;
       sum += v;
     }
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       this->output_->At(i) /= sum;
     }
@@ -74,16 +74,16 @@ public:
     assert(inputs[0]->shape() == errorSignal->shape());
 
     ArrayPtrType t = this->Forward(inputs);
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       errorSignal->At(i) *= t->At(i);
     }
     typename ArrayType::Type sum(0);
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       sum += errorSignal->At(i);
     }
-    for (size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
       errorSignal->At(i) -= (t->At(i) * sum);
     }

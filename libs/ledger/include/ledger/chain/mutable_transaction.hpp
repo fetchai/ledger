@@ -35,7 +35,7 @@
 #include <vector>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 struct Signature
 {
@@ -92,6 +92,18 @@ struct TransactionSummary
   bool operator>(TransactionSummary const &rhs) const
   {
     return !(*this < rhs);
+  }
+
+  bool IsWellFormed() const
+  {
+    if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 };
 
@@ -522,5 +534,5 @@ void Deserialize(T &serializer, Signatory &b)
   serializer >> b.first >> b.second;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

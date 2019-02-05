@@ -25,17 +25,28 @@
 #include <fstream>
 #include <sstream>
 
-struct IntPair
+struct IntPair : public fetch::vm::Object
 {
-  IntPair(int const &i, int const &j)
-    : first_(i)
+  IntPair()          = delete;
+  virtual ~IntPair() = default;
+
+  IntPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t i, int32_t j)
+    : fetch::vm::Object(vm, type_id)
+    , first_(i)
     , second_(j)
   {}
+
+  static fetch::vm::Ptr<IntPair> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                             int const &i, int const &j)
+  {
+    return new IntPair(vm, type_id, i, j);
+  }
 
   int first()
   {
     return first_;
   }
+
   int second()
   {
     return second_;
@@ -46,14 +57,15 @@ private:
   int second_;
 };
 
-void Print(std::string const &s)
+static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cout << s << std::endl;
+  std::cout << s->str << std::endl;
 }
 
-std::string toString(int32_t const &a)
+fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
-  return std::to_string(a);
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+  return ret;
 }
 
 int main(int argc, char **argv)
@@ -72,13 +84,14 @@ int main(int argc, char **argv)
   file.close();
 
   fetch::vm::Module module;
-  module.ExportClass<IntPair>("IntPair")
-      .Constructor<int, int>()
-      .Export("first", &IntPair::first)
-      .Export("second", &IntPair::second);
 
-  module.ExportFunction("Print", &Print);
-  module.ExportFunction("toString", &toString);
+  module.CreateFreeFunction("Print", &Print);
+  module.CreateFreeFunction("toString", &toString);
+
+  module.CreateClassType<IntPair>("IntPair")
+      .CreateTypeConstuctor<int, int>()
+      .CreateInstanceFunction("first", &IntPair::first)
+      .CreateInstanceFunction("second", &IntPair::second);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
@@ -105,10 +118,13 @@ int main(int argc, char **argv)
   }
 
   // Setting VM up and running
+  std::string        error;
+  fetch::vm::Variant output;
+
   fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main"))
+  if (!vm.Execute(script, "main", error, output))
   {
-    std::cout << "Runtime error on line " << vm.error_line() << ": " << vm.error() << std::endl;
+    std::cout << "Runtime error on line " << error << std::endl;
   }
   delete compiler;
   return 0;

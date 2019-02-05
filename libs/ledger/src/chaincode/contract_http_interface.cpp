@@ -24,8 +24,8 @@ namespace {
 
 struct AdaptedTx
 {
-  chain::MutableTransaction                          tx;
-  chain::TxSigningAdapter<chain::MutableTransaction> adapter{tx};
+  MutableTransaction                   tx;
+  TxSigningAdapter<MutableTransaction> adapter{tx};
 
   template <typename T>
   friend void Deserialize(T &serializer, AdaptedTx &tx)
@@ -243,7 +243,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
     {
       auto const &tx_obj = doc[i];
 
-      chain::MutableTransaction tx{chain::FromWireTransaction(tx_obj)};
+      MutableTransaction tx{FromWireTransaction(tx_obj)};
 
       if (expected_contract_name && tx.contract_name() != *expected_contract_name)
       {
@@ -258,7 +258,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitJsonTx(
   else
   {
     expected_count = 1;
-    chain::MutableTransaction tx{chain::FromWireTransaction(doc.root())};
+    MutableTransaction tx{FromWireTransaction(doc.root())};
 
     if (!expected_contract_name || tx.contract_name() == *expected_contract_name)
     {

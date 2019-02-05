@@ -19,6 +19,7 @@
 #include "ledger/execution_manager.hpp"
 #include "core/assert.hpp"
 #include "core/logger.hpp"
+#include "core/threading.hpp"
 #include "ledger/executor.hpp"
 #include "storage/resource_mapper.hpp"
 
@@ -67,7 +68,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
                                    StorageUnitPtr storage, ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
-  , thread_pool_(network::MakeThreadPool(num_executors, "ExecutionManager"))
+  , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
 {
   // define all the file paths for the databases
   FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
@@ -101,7 +102,7 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  * @param block The block to be executed
  * @return the status of the execution
  */
-ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
+ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
 {
   // if the execution manager is not running then no further transactions
   // should be scheduled
@@ -161,7 +162,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block const &block)
  * @param block The input block to plan
  * @return true if successful, otherwise false
  */
-bool ExecutionManager::PlanExecution(Block const &block)
+bool ExecutionManager::PlanExecution(Block::Body const &block)
 {
   std::lock_guard<Mutex> lock(execution_plan_lock_);
 
@@ -179,7 +180,7 @@ bool ExecutionManager::PlanExecution(Block const &block)
     //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
 
     // process the transactions
-    for (auto const &tx : slice.transactions)
+    for (auto const &tx : slice)
     {
       Identifier id;
       id.Parse(tx.contract_name);
@@ -331,6 +332,8 @@ bool ExecutionManager::Abort()
 
 void ExecutionManager::MonitorThreadEntrypoint()
 {
+  SetThreadName("ExecMgrMon");
+
   enum class MonitorState
   {
     FAILED,

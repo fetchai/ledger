@@ -43,22 +43,24 @@ public:
     assert(inputs[1]->shape().size() == 2);
     assert(inputs[0]->shape()[1] == inputs[1]->shape()[0]);
 
-    std::vector<size_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
+    std::vector<std::size_t> outputShape({inputs[0]->shape()[0], inputs[1]->shape()[1]});
     if (!this->output_ || this->output_->shape() != outputShape)
     {
       this->output_ = std::make_shared<ArrayType>(outputShape);
     }
 
-    for (size_t i(0); i < inputs[0]->shape()[0]; ++i)
+    for (std::size_t i(0); i < inputs[0]->shape()[0]; ++i)
     {
-      for (size_t j(0); j < inputs[1]->shape()[1]; ++j)
+      for (std::size_t j(0); j < inputs[1]->shape()[1]; ++j)
       {
-        this->output_->Get(std::vector<size_t>({i, j})) = typename ArrayType::Type(0);
-        for (size_t k(0); k < inputs[0]->shape()[1]; ++k)
+        this->output_->Get(std::vector<std::size_t>({i, j})) =
+            inputs[0]->Get(std::vector<std::size_t>({i, 0})) *
+            inputs[1]->Get(std::vector<std::size_t>({0, j}));
+        for (std::size_t k(1); k < inputs[0]->shape()[1]; ++k)
         {
-          this->output_->Get(std::vector<size_t>({i, j})) +=
-              inputs[0]->Get(std::vector<size_t>({i, k})) *
-              inputs[1]->Get(std::vector<size_t>({k, j}));
+          this->output_->Get(std::vector<std::size_t>({i, j})) +=
+              inputs[0]->Get(std::vector<std::size_t>({i, k})) *
+              inputs[1]->Get(std::vector<std::size_t>({k, j}));
         }
       }
     }

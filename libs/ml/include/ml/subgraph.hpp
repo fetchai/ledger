@@ -34,7 +34,7 @@ public:
   virtual ArrayPtrType Forward(std::vector<ArrayPtrType> const &inputs)
   {
     ASSERT(inputs.size() == this->inputs_nodes_.size());
-    for (size_t i(0); i < inputs.size(); ++i)
+    for (std::size_t i(0); i < inputs.size(); ++i)
     {
       this->SetInput(inputs_nodes_[i], inputs[i]);
     }

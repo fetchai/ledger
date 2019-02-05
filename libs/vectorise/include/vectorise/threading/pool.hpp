@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/threading.hpp"
 
 #include <condition_variable>
 #include <functional>
@@ -37,14 +38,19 @@ public:
     : Pool(2 * std::thread::hardware_concurrency())
   {}
 
-  Pool(std::size_t const &n)
+  Pool(std::size_t const &n, std::string name = std::string{})
+    : name_{std::move(name)}
   {
-    running_           = true;
-    tasks_in_progress_ = 0;
-
     for (std::size_t i = 0; i < n; ++i)
     {
-      workers_.emplace_back([this]() { this->Work(); });
+      workers_.emplace_back([this, i]() {
+        if (!name_.empty())
+        {
+          SetThreadName(name_, i);
+        }
+
+        this->Work();
+      });
     }
   }
 
@@ -129,8 +135,9 @@ private:
     return task;
   }
 
-  std::atomic<uint32_t>             tasks_in_progress_;
-  std::atomic<bool>                 running_;
+  std::string                       name_{};
+  std::atomic<uint32_t>             tasks_in_progress_{0};
+  std::atomic<bool>                 running_{true};
   std::mutex                        mutex_;
   std::vector<std::thread>          workers_;
   std::queue<std::function<void()>> tasks_;

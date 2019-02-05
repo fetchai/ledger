@@ -24,16 +24,17 @@ using namespace std;
 
 using uchar = unsigned char;
 
-uchar **read_mnist_images(string full_path, unsigned int &number_of_images,
+
+uchar **read_mnist_images(string full_path, std::uint32_t &number_of_images,
                           unsigned int &image_size)
 {
-  auto reverseInt = [](unsigned int i) -> unsigned int {
+  auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
     unsigned char c1, c2, c3, c4;
     c1 = (unsigned char)(i & 255);
     c2 = (unsigned char)((i >> 8) & 255);
     c3 = (unsigned char)((i >> 16) & 255);
     c4 = (unsigned char)((i >> 24) & 255);
-    return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
+    return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
   };
 
   ifstream file(full_path, ios::binary);
@@ -71,22 +72,22 @@ uchar **read_mnist_images(string full_path, unsigned int &number_of_images,
   }
 }
 
-uchar *read_mnist_labels(string full_path, unsigned int &number_of_labels)
+uchar *read_mnist_labels(string full_path, std::uint32_t &number_of_labels)
 {
-  auto reverseInt = [](unsigned int i) {
+  auto reverseInt = [](std::uint32_t i) {
     unsigned char c1, c2, c3, c4;
     c1 = (unsigned char)(i & 255);
     c2 = (unsigned char)((i >> 8) & 255);
     c3 = (unsigned char)((i >> 16) & 255);
     c4 = (unsigned char)((i >> 24) & 255);
-    return (unsigned int)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
+    return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
   };
 
   ifstream file(full_path, ios::binary);
 
   if (file.is_open())
   {
-    unsigned int magic_number = 0;
+    std::uint32_t magic_number = 0;
     file.read((char *)&magic_number, sizeof(magic_number));
     magic_number = reverseInt(magic_number);
 
@@ -114,8 +115,7 @@ uchar *read_mnist_labels(string full_path, unsigned int &number_of_labels)
 MNISTLoader::MNISTLoader()
   : cursor_(0)
 {
-  assert(sizeof(int) == sizeof(unsigned int));
-  unsigned int recordLength(0);
+  std::uint32_t recordLength(0);
   data_ = read_mnist_images("train-images-idx3-ubyte", size_, recordLength);
   assert(size_ == 60000);
   labels_ = read_mnist_labels("train-labels-idx1-ubyte", size_);
@@ -145,7 +145,7 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
   {
     buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<size_t>({28u, 28u}));
   }
-  for (unsigned int i(0); i < 28 * 28; ++i)
+  for (std::size_t i(0); i < 28 * 28; ++i)
   {
     buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
   }
@@ -161,7 +161,7 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
 
 void MNISTLoader::Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const
 {
-  for (unsigned int j(0); j < 784; ++j)
+  for (std::size_t j(0); j < 784; ++j)
   {
     std::cout << (data->At(j) > 0.5 ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
   }

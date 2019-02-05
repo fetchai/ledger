@@ -40,9 +40,9 @@ public:
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
 
-  explicit NetworkManager(std::size_t threads = 1)
+  NetworkManager(std::string name, std::size_t threads)
   {
-    pointer_ = std::make_shared<implementation_type>(threads);
+    pointer_ = std::make_shared<implementation_type>(std::move(name), threads);
   }
 
   NetworkManager(NetworkManager const &other)
@@ -123,6 +123,16 @@ public:
   bool is_valid()
   {
     return (!is_copy_) || bool(weak_pointer_.lock());
+  }
+
+  bool Running()
+  {
+    auto ptr = lock();
+    if (ptr)
+    {
+      return ptr->Running();
+    }
+    return false;
   }
 
   bool is_primary()

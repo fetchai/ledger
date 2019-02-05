@@ -16,6 +16,7 @@ option(FETCH_ENABLE_BENCHMARKS      "Enable benchmarking targets"       ON)
 option(FETCH_ENABLE_EXAMPLES        "Enable example targets"            ON)
 option(FETCH_ENABLE_BENCHMARKS      "Enable benchmark targets"          ON)
 option(FETCH_ENABLE_PYTHON_BINDINGS "Build Python examples"             ON)
+option(FETCH_ENABLE_CCACHE          "Speed build times with ccache"     OFF)
 option(FETCH_WARNINGS_AS_ERRORS     "Enable warnings as errors"         ON)
 option(FETCH_VERBOSE_CMAKE          "Enable verbose cmake output"       OFF)
 option(FETCH_ENABLE_CLANG_TIDY      "Enable clang tidy checking"        OFF)
@@ -71,6 +72,19 @@ endif (FETCH_ENABLE_TESTS)
 if (FETCH_DEBUG_SANITIZER)
   fetch_info("Running with sanitizer: ${FETCH_DEBUG_SANITIZER}")
 endif (FETCH_DEBUG_SANITIZER)
+
+# Enable CCACHE - compiler caching to reduce build times
+if(FETCH_ENABLE_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+    fetch_info("Found ccache on system - including")
+  else()
+    fetch_warning("ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times")
+  endif(CCACHE_FOUND)
+endif(FETCH_ENABLE_CCACHE)
 
 #-------------------------------------------------------------------------------
 # System / Vendor Targets

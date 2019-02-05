@@ -18,6 +18,7 @@
 
 #include "ledger/transaction_verifier.hpp"
 #include "core/logger.hpp"
+#include "core/threading.hpp"
 #include "metrics/metrics.hpp"
 #include "network/generics/milli_timer.hpp"
 
@@ -47,7 +48,10 @@ void TransactionVerifier::Start()
   // create the verifier threads
   for (std::size_t i = 0, end = verifying_threads_; i < end; ++i)
   {
-    threads_.emplace_back(std::make_unique<std::thread>(&TransactionVerifier::Verifier, this));
+    threads_.emplace_back(std::make_unique<std::thread>([this, i]() {
+      SetThreadName(name_ + "-V:", i);
+      Verifier();
+    }));
   }
 
   // create the dispatcher
@@ -88,7 +92,7 @@ void TransactionVerifier::Verifier()
       if (unverified_queue_.Pop(mtx, POP_TIMEOUT))
       {
         // convert the transaction to a verified one and enqueue
-        auto const tx = chain::VerifiedTransaction::Create(mtx, &success);
+        auto const tx = VerifiedTransaction::Create(mtx, &success);
 
         // check the status
         if (success)
@@ -97,14 +101,14 @@ void TransactionVerifier::Verifier()
         }
         else
         {
-          FETCH_LOG_WARN(LOGGING_NAME, id_ + " Unable to verify transaction: ",
+          FETCH_LOG_WARN(LOGGING_NAME, name_ + " Unable to verify transaction: ",
                          byte_array::ToBase64(tx.digest()));
         }
       }
     }
     catch (std::exception &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
   }
 }
@@ -115,7 +119,9 @@ void TransactionVerifier::Verifier()
  */
 void TransactionVerifier::Dispatcher()
 {
-  std::vector<chain::VerifiedTransaction> txs;
+  SetThreadName(name_ + "-D");
+
+  std::vector<VerifiedTransaction> txs;
 
   while (active_)
   {
@@ -125,7 +131,7 @@ void TransactionVerifier::Dispatcher()
       while (txs.size() < batch_size_ && active_)
       {
         std::chrono::milliseconds wait_time{WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
-        chain::VerifiedTransaction tx;
+        VerifiedTransaction       tx;
         if (txs.empty())
         {
           wait_time = WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS;
@@ -156,7 +162,7 @@ void TransactionVerifier::Dispatcher()
     }
     catch (std::exception &e)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, id_ + " Exception caught: ", e.what());
+      FETCH_LOG_WARN(LOGGING_NAME, name_ + " Exception caught: ", e.what());
     }
   }
 }

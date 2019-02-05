@@ -140,11 +140,11 @@ public:
 
   void AddTransaction(ConstByteArray const &tx_data)
   {
-    json::JSONDocument doc(tx_data);
-    chain::Transaction tx;
+    json::JSONDocument  doc(tx_data);
+    ledger::Transaction tx;
   }
 
-  void AddTransaction(chain::Transaction &tx)
+  void AddTransaction(ledger::Transaction &tx)
   {
     //    tx.UpdateDigests();
   }
@@ -169,8 +169,8 @@ enum
 
 void AddTransactionDialog()
 {
-  chain::Transaction tx;
-  std::string        contract_name, args, res;
+  ledger::Transaction tx;
+  std::string         contract_name, args, res;
   std::cout << "Contract name: ";
 
   std::getline(std::cin, contract_name);

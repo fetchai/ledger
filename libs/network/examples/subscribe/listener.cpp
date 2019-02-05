@@ -30,7 +30,7 @@ int main(int /*argc*/, char const ** /*argv*/)
 
   uint16_t port = 8080;
 
-  fetch::network::NetworkManager tm;
+  fetch::network::NetworkManager tm{"NetMgr", 1};
   // Create a client connection to the server
   fetch::network::TCPClient connection(tm);
   connection.Connect("localhost", 8080);

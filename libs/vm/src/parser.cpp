@@ -27,7 +27,12 @@
 namespace fetch {
 namespace vm {
 
-BlockNodePtr Parser::Parse(const std::string &source, std::vector<std::string> &errors)
+Parser::Parser()
+{
+  template_names_ = {"Matrix", "Array", "Map"};
+}
+
+BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
 {
   Tokenise(source);
 
@@ -42,7 +47,7 @@ BlockNodePtr Parser::Parse(const std::string &source, std::vector<std::string> &
 
   BlockNodePtr root = std::make_shared<BlockNode>(Node::Kind::Root, &tokens_[0]);
   ParseBlock(*root);
-  const bool ok = errors_.size() == 0;
+  bool const ok = errors_.size() == 0;
   errors        = std::move(errors_);
 
   tokens_.clear();
@@ -63,7 +68,7 @@ BlockNodePtr Parser::Parse(const std::string &source, std::vector<std::string> &
   }
 }
 
-void Parser::Tokenise(const std::string &source)
+void Parser::Tokenise(std::string const &source)
 {
   tokens_.clear();
   Location location;
@@ -98,7 +103,6 @@ bool Parser::ParseBlock(BlockNode &node)
       child = ParseFunctionDefinition();
       break;
     }
-
     case Token::Kind::EndFunction:
     {
       if (node.kind == Node::Kind::FunctionDefinitionStatement)
@@ -110,13 +114,11 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'function'");
       break;
     }
-
     case Token::Kind::While:
     {
       child = ParseWhileStatement();
       break;
     }
-
     case Token::Kind::EndWhile:
     {
       if (node.kind == Node::Kind::WhileStatement)
@@ -128,13 +130,11 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'while'");
       break;
     }
-
     case Token::Kind::For:
     {
       child = ParseForStatement();
       break;
     }
-
     case Token::Kind::EndFor:
     {
       if (node.kind == Node::Kind::ForStatement)
@@ -146,13 +146,11 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'for'");
       break;
     }
-
     case Token::Kind::If:
     {
       child = ParseIfStatement();
       break;
     }
-
     case Token::Kind::ElseIf:
     case Token::Kind::Else:
     {
@@ -165,7 +163,6 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'if' or 'elseif'");
       break;
     }
-
     case Token::Kind::EndIf:
     {
       if ((node.kind == Node::Kind::If) || (node.kind == Node::Kind::ElseIf) ||
@@ -178,31 +175,26 @@ bool Parser::ParseBlock(BlockNode &node)
       AddError("no matching 'if', 'elseif' or 'else'");
       break;
     }
-
     case Token::Kind::Var:
     {
       child = ParseVarStatement();
       break;
     }
-
     case Token::Kind::Return:
     {
       child = ParseReturnStatement();
       break;
     }
-
     case Token::Kind::Break:
     {
       child = ParseBreakStatement();
       break;
     }
-
     case Token::Kind::Continue:
     {
       child = ParseContinueStatement();
       break;
     }
-
     case Token::Kind::EndOfInput:
     {
       quit = true;
@@ -217,21 +209,18 @@ bool Parser::ParseBlock(BlockNode &node)
       }
       break;
     }
-
     default:
     {
       Undo();
       child = ParseExpressionStatement();
       break;
     }
-    }
-
+    }  // switch
     if (quit)
     {
       blocks_.pop_back();
       return state;
     }
-
     if (child == nullptr)
     {
       // We got a syntax error but we want to keep on parsing to try to find
@@ -240,7 +229,6 @@ bool Parser::ParseBlock(BlockNode &node)
       GoToNextStatement();
       continue;
     }
-
     node.block_children.push_back(std::move(child));
   } while (true);
 }
@@ -252,7 +240,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
   bool ok = false;
   do
   {
-    const Node::Kind block_kind = blocks_.back();
+    Node::Kind const block_kind = blocks_.back();
     if (block_kind != Node::Kind::Root)
     {
       AddError("local function definitions are not permitted");
@@ -357,7 +345,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
 
 BlockNodePtr Parser::ParseWhileStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("while loop not permitted at topmost scope");
@@ -382,7 +370,7 @@ BlockNodePtr Parser::ParseWhileStatement()
 
 BlockNodePtr Parser::ParseForStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("for loop not permitted at topmost scope");
@@ -456,7 +444,7 @@ BlockNodePtr Parser::ParseForStatement()
 
 NodePtr Parser::ParseIfStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("if statement not permitted at topmost scope");
@@ -515,7 +503,7 @@ NodePtr Parser::ParseIfStatement()
 
 NodePtr Parser::ParseVarStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("variable declaration not permitted at topmost scope");
@@ -593,7 +581,7 @@ NodePtr Parser::ParseVarStatement()
 
 NodePtr Parser::ParseReturnStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("return statement not permitted at topmost scope");
@@ -630,7 +618,7 @@ NodePtr Parser::ParseReturnStatement()
 
 NodePtr Parser::ParseBreakStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("break statement not permitted at topmost scope");
@@ -650,7 +638,7 @@ NodePtr Parser::ParseBreakStatement()
 
 NodePtr Parser::ParseContinueStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     AddError("continue statement not permitted at topmost scope");
@@ -671,7 +659,7 @@ NodePtr Parser::ParseContinueStatement()
 
 ExpressionNodePtr Parser::ParseExpressionStatement()
 {
-  const Node::Kind block_kind = blocks_.back();
+  Node::Kind const block_kind = blocks_.back();
   if (block_kind == Node::Kind::Root)
   {
     // Get the first token of the expression
@@ -759,6 +747,18 @@ void Parser::SkipFunctionDefinition()
   }
 }
 
+bool Parser::IsTemplateName(std::string const &name) const
+{
+  for (size_t i = 0; i < template_names_.size(); ++i)
+  {
+    if (name == template_names_[i])
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 ExpressionNodePtr Parser::ParseType()
 {
   Next();
@@ -770,20 +770,13 @@ ExpressionNodePtr Parser::ParseType()
   std::string       name = token_->text;
   ExpressionNodePtr identifier_node =
       std::make_shared<ExpressionNode>(ExpressionNode(Node::Kind::Identifier, token_));
-  const bool is_matrix = name == "Matrix";
-  const bool is_array  = name == "Array";
-  if ((is_matrix == false) && (is_array == false))
+  if (IsTemplateName(name) == false)
   {
     return identifier_node;
   }
   Next();
   if (token_->kind != Token::Kind::LessThan)
   {
-    if (is_matrix)
-    {
-      Undo();
-      return identifier_node;
-    }
     AddError("expected '<'");
     return nullptr;
   }
@@ -803,7 +796,7 @@ ExpressionNodePtr Parser::ParseType()
     Next();
     if (token_->kind == Token::Kind::Comma)
     {
-      name += ",";
+      name += ", ";
       continue;
     }
     if (token_->kind == Token::Kind::GreaterThan)
@@ -829,7 +822,7 @@ ExpressionNodePtr Parser::ParseConditionalExpression()
   return ParseExpression(true);
 }
 
-ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
+ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 {
   state_                       = State::PreOperand;
   found_expression_terminator_ = false;
@@ -851,7 +844,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Integer32:
     {
       if (HandleLiteral(Node::Kind::Integer32) == false)
@@ -860,7 +852,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::UnsignedInteger32:
     {
       if (HandleLiteral(Node::Kind::UnsignedInteger32) == false)
@@ -869,7 +860,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Integer64:
     {
       if (HandleLiteral(Node::Kind::Integer64) == false)
@@ -878,7 +868,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::UnsignedInteger64:
     {
       if (HandleLiteral(Node::Kind::UnsignedInteger64) == false)
@@ -887,7 +876,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::SinglePrecisionNumber:
     {
       if (HandleLiteral(Node::Kind::SinglePrecisionNumber) == false)
@@ -896,7 +884,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::DoublePrecisionNumber:
     {
       if (HandleLiteral(Node::Kind::DoublePrecisionNumber) == false)
@@ -905,7 +892,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::String:
     {
       if (HandleLiteral(Node::Kind::String) == false)
@@ -914,7 +900,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::True:
     {
       if (HandleLiteral(Node::Kind::True) == false)
@@ -923,7 +908,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::False:
     {
       if (HandleLiteral(Node::Kind::False) == false)
@@ -932,7 +916,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Null:
     {
       if (HandleLiteral(Node::Kind::Null) == false)
@@ -941,19 +924,16 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Plus:
     {
       HandlePlus();
       break;
     }
-
     case Token::Kind::Minus:
     {
       HandleMinus();
       break;
     }
-
     case Token::Kind::Multiply:
     {
       if (HandleBinaryOp(Node::Kind::MultiplyOp, OpInfo(6, Association::Left, 2)) == false)
@@ -962,7 +942,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Divide:
     {
       if (HandleBinaryOp(Node::Kind::DivideOp, OpInfo(6, Association::Left, 2)) == false)
@@ -971,7 +950,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Equal:
     {
       if (HandleBinaryOp(Node::Kind::EqualOp, OpInfo(3, Association::Left, 2)) == false)
@@ -980,7 +958,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::NotEqual:
     {
       if (HandleBinaryOp(Node::Kind::NotEqualOp, OpInfo(3, Association::Left, 2)) == false)
@@ -989,7 +966,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::LessThan:
     {
       if (HandleBinaryOp(Node::Kind::LessThanOp, OpInfo(4, Association::Left, 2)) == false)
@@ -998,7 +974,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::LessThanOrEqual:
     {
       if (HandleBinaryOp(Node::Kind::LessThanOrEqualOp, OpInfo(4, Association::Left, 2)) == false)
@@ -1007,7 +982,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::GreaterThan:
     {
       if (HandleBinaryOp(Node::Kind::GreaterThanOp, OpInfo(4, Association::Left, 2)) == false)
@@ -1016,7 +990,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::GreaterThanOrEqual:
     {
       if (HandleBinaryOp(Node::Kind::GreaterThanOrEqualOp, OpInfo(4, Association::Left, 2)) ==
@@ -1026,7 +999,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::And:
     {
       if (HandleBinaryOp(Node::Kind::AndOp, OpInfo(2, Association::Left, 2)) == false)
@@ -1035,7 +1007,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Or:
     {
       if (HandleBinaryOp(Node::Kind::OrOp, OpInfo(1, Association::Left, 2)) == false)
@@ -1044,39 +1015,33 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Not:
     {
       HandleNot();
       break;
     }
-
     case Token::Kind::Inc:
     {
       HandleIncDec(Node::Kind::PrefixIncOp, OpInfo(7, Association::Right, 1),
                    Node::Kind::PostfixIncOp, OpInfo(8, Association::Left, 1));
       break;
     }
-
     case Token::Kind::Dec:
     {
       HandleIncDec(Node::Kind::PrefixDecOp, OpInfo(7, Association::Right, 1),
                    Node::Kind::PostfixDecOp, OpInfo(8, Association::Left, 1));
       break;
     }
-
     case Token::Kind::LeftRoundBracket:
     {
       HandleOpener(Node::Kind::RoundBracketGroup, Node::Kind::InvokeOp);
       break;
     }
-
     case Token::Kind::LeftSquareBracket:
     {
       HandleOpener(Node::Kind::SquareBracketGroup, Node::Kind::IndexOp);
       break;
     }
-
     case Token::Kind::RightRoundBracket:
     case Token::Kind::RightSquareBracket:
     {
@@ -1086,7 +1051,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Dot:
     {
       if (HandleDot() == false)
@@ -1095,7 +1059,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     case Token::Kind::Comma:
     {
       if (HandleComma() == false)
@@ -1104,7 +1067,6 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       }
       break;
     }
-
     default:
     {
       if (state_ == State::PreOperand)
@@ -1115,7 +1077,7 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
       found_expression_terminator_ = true;
       break;
     }
-    }
+    }  // switch
   } while (found_expression_terminator_ == false);
 
   if (groups_.size())
@@ -1148,8 +1110,8 @@ ExpressionNodePtr Parser::ParseExpression(const bool is_conditional_expression)
     }
     if (expr.is_operator)
     {
-      const std::size_t arity = std::size_t(expr.op_info.arity);
-      const std::size_t size  = infix_stack_.size();
+      std::size_t const arity = std::size_t(expr.op_info.arity);
+      std::size_t const size  = infix_stack_.size();
       for (std::size_t j = size - arity; j < size; ++j)
       {
         Expr &operand = infix_stack_[j];
@@ -1189,21 +1151,14 @@ bool Parser::HandleIdentifier()
 bool Parser::ParseExpressionIdentifier(std::string &name)
 {
   AddOperand(Node::Kind::Identifier);
-  name                 = token_->text;
-  const bool is_matrix = token_->text == "Matrix";
-  const bool is_array  = token_->text == "Array";
-  if ((is_matrix == false) && (is_array == false))
+  name = token_->text;
+  if (IsTemplateName(name) == false)
   {
     return true;
   }
   Next();
   if (token_->kind != Token::Kind::LessThan)
   {
-    if (is_matrix)
-    {
-      Undo();
-      return true;
-    }
     AddError("expected '<'");
     return false;
   }
@@ -1226,7 +1181,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
     Next();
     if (token_->kind == Token::Kind::Comma)
     {
-      name += ",";
+      name += ", ";
       Expr &groupop = operators_.back();
       (groupop.op_info.arity)++;
       continue;
@@ -1247,7 +1202,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
   } while (true);
 }
 
-bool Parser::HandleLiteral(const Node::Kind kind)
+bool Parser::HandleLiteral(Node::Kind kind)
 {
   if (state_ == State::PostOperand)
   {
@@ -1285,7 +1240,7 @@ void Parser::HandleMinus()
   }
 }
 
-bool Parser::HandleBinaryOp(const Node::Kind kind, const OpInfo &op_info)
+bool Parser::HandleBinaryOp(Node::Kind kind, OpInfo const &op_info)
 {
   if (state_ == State::PreOperand)
   {
@@ -1309,8 +1264,8 @@ void Parser::HandleNot()
   }
 }
 
-void Parser::HandleIncDec(const Node::Kind prefix_kind, const OpInfo &prefix_op_info,
-                          const Node::Kind postfix_kind, const OpInfo &postfix_op_info)
+void Parser::HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info,
+                          Node::Kind postfix_kind, OpInfo const &postfix_op_info)
 {
   if (state_ == State::PreOperand)
   {
@@ -1349,7 +1304,7 @@ bool Parser::HandleDot()
   return true;
 }
 
-void Parser::HandleOpener(const Node::Kind prefix_kind, const Node::Kind postfix_kind)
+void Parser::HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind)
 {
   if (state_ == State::PreOperand)
   {
@@ -1362,7 +1317,7 @@ void Parser::HandleOpener(const Node::Kind prefix_kind, const Node::Kind postfix
   state_ = State::PreOperand;
 }
 
-bool Parser::HandleCloser(const bool is_conditional_expression)
+bool Parser::HandleCloser(bool is_conditional_expression)
 {
   if (groups_.empty())
   {
@@ -1377,9 +1332,9 @@ bool Parser::HandleCloser(const bool is_conditional_expression)
     return true;
   }
 
-  const Expr &     groupop     = operators_[std::size_t(groups_.back())];
-  const Node::Kind group_kind  = groupop.node->kind;
-  const int        group_count = groupop.count;
+  Expr const &     groupop     = operators_[std::size_t(groups_.back())];
+  Node::Kind const group_kind  = groupop.node->kind;
+  int const        group_count = groupop.count;
 
   if (token_->kind == Token::Kind::RightRoundBracket)
   {
@@ -1463,8 +1418,8 @@ bool Parser::HandleComma()
     return true;
   }
 
-  const Expr &     groupop    = operators_[std::size_t(groups_.back())];
-  const Node::Kind group_kind = groupop.node->kind;
+  Expr const &     groupop    = operators_[std::size_t(groups_.back())];
+  Node::Kind const group_kind = groupop.node->kind;
 
   if (group_kind == Node::Kind::RoundBracketGroup)
   {
@@ -1488,13 +1443,13 @@ bool Parser::HandleComma()
   return true;
 }
 
-void Parser::HandleOp(const Node::Kind kind, const OpInfo &op_info)
+void Parser::HandleOp(Node::Kind kind, OpInfo const &op_info)
 {
   Node::Kind group_kind;
   bool       check_if_group_opener = false;
   if (groups_.size())
   {
-    const Expr &groupop   = operators_[std::size_t(groups_.back())];
+    Expr const &groupop   = operators_[std::size_t(groups_.back())];
     group_kind            = groupop.node->kind;
     check_if_group_opener = true;
   }
@@ -1522,7 +1477,7 @@ void Parser::HandleOp(const Node::Kind kind, const OpInfo &op_info)
   AddOp(kind, op_info);
 }
 
-void Parser::AddGroup(const Node::Kind kind, const int initial_arity)
+void Parser::AddGroup(Node::Kind kind, int initial_arity)
 {
   IncrementNodeCount();
   Expr expr;
@@ -1534,7 +1489,7 @@ void Parser::AddGroup(const Node::Kind kind, const int initial_arity)
   operators_.push_back(std::move(expr));
 }
 
-void Parser::AddOp(const Node::Kind kind, const OpInfo &op_info)
+void Parser::AddOp(Node::Kind kind, OpInfo const &op_info)
 {
   IncrementNodeCount();
   Expr expr;
@@ -1545,7 +1500,7 @@ void Parser::AddOp(const Node::Kind kind, const OpInfo &op_info)
   operators_.push_back(std::move(expr));
 }
 
-void Parser::AddOperand(const Node::Kind kind)
+void Parser::AddOperand(Node::Kind kind)
 {
   IncrementNodeCount();
   Expr expr;
@@ -1555,7 +1510,7 @@ void Parser::AddOperand(const Node::Kind kind)
   rpn_.push_back(std::move(expr));
 }
 
-void Parser::AddError(const std::string &message)
+void Parser::AddError(std::string const &message)
 {
   std::stringstream stream;
   stream << "line " << token_->line << ": ";

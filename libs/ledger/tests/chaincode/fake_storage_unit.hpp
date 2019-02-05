@@ -27,11 +27,11 @@
 #include <unordered_set>
 #include <vector>
 
-class FakeStorageUnit : public fetch::ledger::StorageUnitInterface
+class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
   using transaction_store_type =
-      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::chain::Transaction>;
+      std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
@@ -113,14 +113,14 @@ public:
     return success;
   }
 
-  void AddTransaction(fetch::chain::Transaction const &tx) override
+  void AddTransaction(fetch::ledger::Transaction const &tx) override
   {
     lock_guard_type lock(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
-                      fetch::chain::Transaction &              tx) override
+                      fetch::ledger::Transaction &             tx) override
   {
     lock_guard_type lock(mutex_);
     bool            success = false;
@@ -178,6 +178,13 @@ public:
 
       state_.clear();
     }
+  }
+
+  // Does nothing
+  TxSummaries PollRecentTx(uint32_t) override
+
+  {
+    return {};
   }
 
 private:

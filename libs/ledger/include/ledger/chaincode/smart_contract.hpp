@@ -35,9 +35,9 @@ public:
 private:
   Status InvokeContract(Transaction const &tx);
 
-  vm::Script                  script_;
-  std::unique_ptr<vm::Module> module_;
-  std::unique_ptr<vm::VM>     vm_;
+  //  vm::Script                  script_;
+  //  std::unique_ptr<vm::Module> module_;
+  //  std::unique_ptr<vm::VM>     vm_;
 };
 
 }  // namespace ledger

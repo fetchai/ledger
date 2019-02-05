@@ -153,11 +153,15 @@ constexpr bool has_sse42()
 #if defined(FETCH_PLATFORM_BIG_ENDIAN) || defined(FETCH_PLATFORM_LITTLE_ENDIAN)
 #else
 
-#if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+#if (defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN)) ||             \
+    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
+    defined(__BIG_ENDIAN__)
 
 #define FETCH_PLATFORM_BIG_ENDIAN
 
-#elif (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) || defined(__LITTLE_ENDIAN__)
+#elif (defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN)) ||           \
+    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) || \
+    defined(__LITTLE_ENDIAN__)
 
 #define FETCH_PLATFORM_LITTLE_ENDIAN
 
@@ -208,6 +212,12 @@ inline uint32_t ToLog2(uint32_t value)
   static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
+}
+
+// https://graphics.stanford.edu/~seander/bithacks.html
+inline bool IsLog2(uint64_t value)
+{
+  return value && !(value & (value - 1));
 }
 
 }  // namespace platform

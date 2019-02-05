@@ -49,8 +49,8 @@ T Clip3(T value, T min_value, T max_value)
  * @param summary The reference to the transaction
  * @param log2_num_lanes The log2 of the number of lanes
  */
-BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &summary,
-                                               uint32_t                         log2_num_lanes)
+BasicMiner::TransactionEntry::TransactionEntry(ledger::TransactionSummary const &summary,
+                                               uint32_t                          log2_num_lanes)
   : resources{1u << log2_num_lanes}
   , transaction{summary}
 
@@ -75,7 +75,7 @@ BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &
 BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
-  , thread_pool_{max_num_threads_}
+  , thread_pool_{max_num_threads_, "Miner"}
 {}
 
 /**
@@ -83,7 +83,7 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
+void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
 
@@ -108,8 +108,8 @@ void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
  * @param num_lanes The number of lanes for the block
  * @param num_slices The number of slices for the block
  */
-void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
-                               std::size_t num_slices, chain::MainChain const &chain)
+void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::size_t num_slices,
+                               MainChain const &chain)
 {
   assert(num_lanes == (1u << log2_num_lanes_));
   std::size_t pending_size = 0;
@@ -135,7 +135,7 @@ void BasicMiner::GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
   std::size_t const main_transactions = main_queue_.size();
 
   // Before packing transactions, we must be sure they're unique
-  const_cast<chain::MainChain &>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
+  const_cast<MainChain &>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
                  ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
@@ -210,7 +210,7 @@ uint64_t BasicMiner::GetBacklog() const
  * @param interval The slice index interval to be used when selecting the next slice to populate
  * @param num_lanes The number of lanes of the block
  */
-void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, std::size_t offset,
+void BasicMiner::GenerateSlices(TransactionList &tx, Block::Body &block, std::size_t offset,
                                 std::size_t interval, std::size_t num_lanes)
 {
   // sort by fees
@@ -233,7 +233,7 @@ void BasicMiner::GenerateSlices(TransactionList &tx, chain::BlockBody &block, st
  * @param slice_index The slice number
  * @param num_lanes The number of lanes for the block
  */
-void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice & slice,
+void BasicMiner::GenerateSlice(TransactionList &tx, Block::Slice &      slice,
                                std::size_t /*slice_index*/, std::size_t num_lanes)
 {
   BitVector slice_state{num_lanes};
@@ -257,7 +257,7 @@ void BasicMiner::GenerateSlice(TransactionList &tx, chain::BlockSlice & slice,
       slice_state |= it->resources;
 
       // insert the transaction into the slice
-      slice.transactions.push_back(it->transaction);
+      slice.push_back(it->transaction);
 
       // remove the transaction from the main queue
       it = tx.erase(it);

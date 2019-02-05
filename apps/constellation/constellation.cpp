@@ -45,12 +45,12 @@ using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
-using fetch::chain::consensus::DummyMiner;
-using fetch::chain::consensus::BadMiner;
-using fetch::chain::consensus::ConsensusMinerType;
+using fetch::ledger::consensus::DummyMiner;
+using fetch::ledger::consensus::BadMiner;
+using fetch::ledger::consensus::ConsensusMinerType;
 
 using ConsensusMinerInterfacePtr =
-    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+    std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
@@ -58,6 +58,7 @@ namespace {
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
 static const std::chrono::milliseconds LANE_CONNECTION_TIME{10000};
+static const std::size_t               HTTP_THREADS{4};
 
 bool WaitForLaneServersToStart()
 {
@@ -177,8 +178,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
   , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
   , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
-  , network_manager_{CalcNetworkManagerThreads(num_lanes_)}
-  , http_network_manager_{4}
+  , network_manager_{"NetMgr", CalcNetworkManagerThreads(num_lanes_)}
+  , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
             network_manager_}
   , trust_{}

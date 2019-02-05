@@ -31,6 +31,10 @@
 
 static constexpr char const *LOGGING_NAME = "Executor";
 
+#ifdef FETCH_ENABLE_METRICS
+using fetch::metrics::Metrics;
+#endif  // FETCH_ENABLE_METRICS
+
 namespace fetch {
 namespace ledger {
 
@@ -76,7 +80,7 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   // Get the transaction from the store (we should be able to take the
   // transaction from any of the lanes, for simplicity, however, just pick the
   // first one).
-  chain::Transaction tx;
+  Transaction tx;
   if (!resources_->GetTransaction(hash, tx))
   {
     return Status::TX_LOOKUP_FAILURE;

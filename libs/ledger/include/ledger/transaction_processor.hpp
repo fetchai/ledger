@@ -31,9 +31,8 @@ namespace ledger {
 class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
 public:
-  using MutableTransaction = chain::MutableTransaction;
-
-  using TransactionList = std::vector<chain::Transaction>;
+  using ThreadPtr       = std::unique_ptr<std::thread>;
+  using TransactionList = std::vector<Transaction>;
 
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
@@ -42,7 +41,7 @@ public:
                        std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
-  ~TransactionProcessor() override                   = default;
+  ~TransactionProcessor() override;
 
   /// @name Processor Controls
   /// @{
@@ -63,12 +62,12 @@ public:
 protected:
   /// @name Unverified Transaction Sink
   /// @{
-  void OnTransaction(chain::UnverifiedTransaction const &tx) override;
+  void OnTransaction(UnverifiedTransaction const &tx) override;
   /// @}
 
   /// @name Transaction Handlers
   /// @{
-  void OnTransaction(chain::VerifiedTransaction const &tx) override;
+  void OnTransaction(VerifiedTransaction const &tx) override;
   void OnTransactions(TransactionList const &txs) override;
   /// @}
 
@@ -76,6 +75,10 @@ private:
   StorageUnitInterface & storage_;
   miner::MinerInterface &miner_;
   TransactionVerifier    verifier_;
+  ThreadPtr              poll_new_tx_thread_;
+  std::atomic_bool       running_;
+
+  void ThreadEntryPoint();
 };
 
 /**
@@ -84,6 +87,9 @@ private:
 inline void TransactionProcessor::Start()
 {
   verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
 }
 
 /**
@@ -91,6 +97,13 @@ inline void TransactionProcessor::Start()
  */
 inline void TransactionProcessor::Stop()
 {
+  running_ = false;
+  if (poll_new_tx_thread_)
+  {
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
+  }
+
   verifier_.Stop();
 }
 

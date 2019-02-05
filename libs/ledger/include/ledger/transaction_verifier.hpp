@@ -30,16 +30,14 @@ namespace ledger {
 class TransactionVerifier
 {
 public:
-  using MutableTransaction = chain::MutableTransaction;
-
   static constexpr char const *LOGGING_NAME = "TxVerifier";
 
   // Construction / Destruction
   explicit TransactionVerifier(VerifiedTransactionSink &sink, std::size_t verifying_threads,
-                               std::string name_for_logging = "")
+                               std::string name)
     : verifying_threads_(verifying_threads)
+    , name_(std::move(name))
     , sink_(sink)
-    , id_(std::move(name_for_logging))
   {}
   TransactionVerifier(TransactionVerifier const &) = delete;
   TransactionVerifier(TransactionVerifier &&)      = delete;
@@ -66,8 +64,8 @@ private:
   static constexpr std::size_t DEFAULT_BATCH_SIZE = 1000;
 
   using Flag            = std::atomic<bool>;
-  using VerifiedQueue   = core::SimpleQueue<chain::VerifiedTransaction, QUEUE_SIZE>;
-  using UnverifiedQueue = core::SimpleQueue<chain::MutableTransaction, QUEUE_SIZE>;
+  using VerifiedQueue   = core::MPSCQueue<VerifiedTransaction, QUEUE_SIZE>;
+  using UnverifiedQueue = core::MPMCQueue<MutableTransaction, QUEUE_SIZE>;
   using ThreadPtr       = std::unique_ptr<std::thread>;
   using Threads         = std::vector<ThreadPtr>;
   using Sink            = VerifiedTransactionSink;
@@ -78,13 +76,13 @@ private:
   std::size_t batch_size_{DEFAULT_BATCH_SIZE};
   std::size_t verifying_threads_;
 
-  Sink &          sink_;
-  Flag            active_{true};
-  Threads         threads_;
-  VerifiedQueue   verified_queue_;
-  UnverifiedQueue unverified_queue_;
-
-  std::string id_;
+  std::string const name_;
+  std::string const logging_name_;
+  Sink &            sink_;
+  Flag              active_{true};
+  Threads           threads_;
+  VerifiedQueue     verified_queue_;
+  UnverifiedQueue   unverified_queue_;
 };
 
 inline void TransactionVerifier::AddTransaction(MutableTransaction const &mtx)

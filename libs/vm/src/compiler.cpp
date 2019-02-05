@@ -17,13 +17,24 @@
 //------------------------------------------------------------------------------
 
 #include "vm/compiler.hpp"
-#include <sstream>
+#include "vm/module.hpp"
 
 namespace fetch {
 namespace vm {
 
-bool Compiler::Compile(const std::string &source, const std::string &name, Script &script,
-                       std::vector<std::string> &errors)
+Compiler::Compiler(Module *module)
+{
+  analyser_.Initialise();
+  module->CompilerSetup(this);
+}
+
+Compiler::~Compiler()
+{
+  analyser_.UnInitialise();
+}
+
+bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
+                       Strings &errors)
 {
   BlockNodePtr root = parser_.Parse(source, errors);
   if (root == nullptr)
@@ -31,14 +42,19 @@ bool Compiler::Compile(const std::string &source, const std::string &name, Scrip
     return false;
   }
 
-  bool analysed = analyser_.Analyse(root, errors);
+  TypeInfoTable type_info_table;
+  bool          analysed = analyser_.Analyse(root, type_info_table, errors);
   if (analysed == false)
   {
+    root->Reset();
+    root = nullptr;
     return false;
   }
 
-  generator_.Generate(root, name, script);
+  generator_.Generate(root, type_info_table, name, script);
 
+  root->Reset();
+  root = nullptr;
   return true;
 }
 

@@ -32,6 +32,9 @@ namespace miner {
 class MinerInterface
 {
 public:
+  using BlockBody = ledger::Block::Body;
+  using MainChain = ledger::MainChain;
+
   // Construction / Destruction
   MinerInterface()          = default;
   virtual ~MinerInterface() = default;
@@ -44,7 +47,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(chain::TransactionSummary const &tx) = 0;
+  virtual void EnqueueTransaction(ledger::TransactionSummary const &tx) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions
@@ -54,16 +57,15 @@ public:
    * @param num_slices The number of slices for the block
    * @param chain The main chain
    */
-  virtual void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
-                             chain::MainChain const &chain) = 0;
+  virtual void GenerateBlock(BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
+                             MainChain const &chain) = 0;
 
   /**
-   * How many transactions are yet to be processed (mempool size). Not guaranteed to be accurate.
+   * How many transactions are yet to be processed (mem-pool size). Not guaranteed to be accurate.
    *
    * @return: number of transactions
    */
   virtual uint64_t GetBacklog() const = 0;
-
   /// @}
 };
 
