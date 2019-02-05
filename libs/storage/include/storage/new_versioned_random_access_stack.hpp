@@ -227,7 +227,7 @@ private:
 
   /**
    * Represents a change to the header of the main stack, for example when changing the
-   * 'extra' data that can be stored there.
+   * 'extra' data that can be stored  there.
    */
   struct HistoryHeader
   {
