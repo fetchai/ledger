@@ -47,7 +47,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(chain::TransactionSummary const &tx) = 0;
+  virtual void EnqueueTransaction(ledger::TransactionSummary const &tx) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions

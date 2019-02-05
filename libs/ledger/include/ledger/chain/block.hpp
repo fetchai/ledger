@@ -40,8 +40,8 @@ public:
   using Identity     = byte_array::ConstByteArray;
   using Digest       = byte_array::ConstByteArray;
   using HashFunction = crypto::SHA256;
-  using Proof        = chain::consensus::ProofOfWork;
-  using Slice        = std::vector<chain::TransactionSummary>;
+  using Proof        = consensus::ProofOfWork;
+  using Slice        = std::vector<TransactionSummary>;
   using Slices       = std::vector<Slice>;
 
   struct Body
@@ -50,7 +50,7 @@ public:
     Digest   hash;               ///< The hash of the block
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
-    uint64_t block_number{0};    ///< The of the block
+    uint64_t block_number{0};    ///< The height of the block from genesis
     Identity miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
@@ -92,32 +92,6 @@ inline void Block::UpdateDigest()
   body.hash = hash.Final();
 
   proof.SetHeader(body.hash);
-}
-
-/**
- * Serializer for the block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the slices to be serialised
- */
-template <typename T>
-void Serialize(T &serializer, Block::Slices const &slice)
-{
-  serializer << slice;
-}
-
-/**
- * Deserializer for block slices
- *
- * @tparam T The serializer type
- * @param serializer The reference to the serializer
- * @param slice The reference to the output slice list
- */
-template <typename T>
-void Deserialize(T &serializer, Block::Slices &slice)
-{
-  serializer >> slice;
 }
 
 /**

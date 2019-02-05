@@ -33,7 +33,7 @@ class ExecutionItem
 {
 public:
   using LaneIndex = uint32_t;
-  using TxDigest  = chain::Transaction::TxDigest;
+  using TxDigest  = Transaction::TxDigest;
   using LaneSet   = std::unordered_set<LaneIndex>;
   using Status    = ExecutorInterface::Status;
 

@@ -45,8 +45,7 @@ public:
     NOT_FOUND,
   };
 
-  using ContractName          = chain::TransactionSummary::ContractName;
-  using Transaction           = chain::Transaction;
+  using ContractName          = TransactionSummary::ContractName;
   using Query                 = variant::Variant;
   using TransactionHandler    = std::function<Status(Transaction const &)>;
   using TransactionHandlerMap = std::unordered_map<ContractName, TransactionHandler>;
@@ -55,7 +54,7 @@ public:
   using Counter               = std::atomic<std::size_t>;
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
-  using ResourceSet           = chain::TransactionSummary::ResourceSet;
+  using ResourceSet           = TransactionSummary::ResourceSet;
 
   Contract()                 = default;
   Contract(Contract const &) = delete;

@@ -92,7 +92,7 @@ void TransactionVerifier::Verifier()
       if (unverified_queue_.Pop(mtx, POP_TIMEOUT))
       {
         // convert the transaction to a verified one and enqueue
-        auto const tx = chain::VerifiedTransaction::Create(mtx, &success);
+        auto const tx = VerifiedTransaction::Create(mtx, &success);
 
         // check the status
         if (success)
@@ -121,7 +121,7 @@ void TransactionVerifier::Dispatcher()
 {
   SetThreadName(name_ + "-D");
 
-  std::vector<chain::VerifiedTransaction> txs;
+  std::vector<VerifiedTransaction> txs;
 
   while (active_)
   {
@@ -131,7 +131,7 @@ void TransactionVerifier::Dispatcher()
       while (txs.size() < batch_size_ && active_)
       {
         std::chrono::milliseconds wait_time{WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS_IF_FLUSH_NEEDED};
-        chain::VerifiedTransaction tx;
+        VerifiedTransaction       tx;
         if (txs.empty())
         {
           wait_time = WAITTIME_FOR_NEW_VERIFIED_TRANSACTIONS;
