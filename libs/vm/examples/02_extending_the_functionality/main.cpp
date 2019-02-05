@@ -25,48 +25,7 @@
 #include <fstream>
 #include <sstream>
 
-struct IntPair : public fetch::vm::Object
-{
-  IntPair()          = delete;
-  virtual ~IntPair() = default;
-
-  IntPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t i, int32_t j)
-    : fetch::vm::Object(vm, type_id)
-    , first_(i)
-    , second_(j)
-  {}
-
-  static fetch::vm::Ptr<IntPair> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             int const &i, int const &j)
-  {
-    return new IntPair(vm, type_id, i, j);
-  }
-
-  int first()
-  {
-    return first_;
-  }
-
-  int second()
-  {
-    return second_;
-  }
-
-private:
-  int first_;
-  int second_;
-};
-
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
-
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
+#include "vm_modules/setup_modules.hpp"
 
 int main(int argc, char **argv)
 {
@@ -83,18 +42,11 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  fetch::vm::Module module;
-
-  module.CreateFreeFunction("Print", &Print);
-  module.CreateFreeFunction("toString", &toString);
-
-  module.CreateClassType<IntPair>("IntPair")
-      .CreateTypeConstuctor<int, int>()
-      .CreateInstanceFunction("first", &IntPair::first)
-      .CreateInstanceFunction("second", &IntPair::second);
+  // Creating new VM module
+  std::shared_ptr<fetch::vm::Module> module = fetch::vm_modules::SetupModule();
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(module.get());
   fetch::vm::Script        script;
   std::vector<std::string> errors;
 
@@ -121,7 +73,7 @@ int main(int argc, char **argv)
   std::string        error;
   fetch::vm::Variant output;
 
-  fetch::vm::VM vm(&module);
+  fetch::vm::VM vm(module.get());
   if (!vm.Execute(script, "main", error, output))
   {
     std::cout << "Runtime error on line " << error << std::endl;

@@ -25,36 +25,12 @@
 #include <fstream>
 #include <sstream>
 
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
+// setup vm_modules
+#include "vm_modules/setup_modules.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_conversion.hpp"
+#include "vm_modules/core/system.hpp"
 
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
-
-struct System : public fetch::vm::Object
-{
-  System()          = delete;
-  virtual ~System() = default;
-
-  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
-  {
-    return int32_t(System::args.size());
-  }
-
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
-  {
-    return fetch::vm::Ptr<fetch::vm::String>(
-        new fetch::vm::String(vm, System::args[std::size_t(a)]));
-  }
-
-  static std::vector<std::string> args;
-};
 
 std::vector<std::string> System::args;
 
@@ -71,7 +47,7 @@ int main(int argc, char **argv)
     System::args.push_back(std::string(argv[i]));
   }
 
-  // Reading file
+  // Reading fileThe
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -79,18 +55,11 @@ int main(int argc, char **argv)
   file.close();
 
   // Creating new VM module
-  fetch::vm::Module module;
-
-  module.CreateFreeFunction("Print", &Print);
-  module.CreateFreeFunction("toString", &toString);
-  module.CreateClassType<System>("System")
-      .CreateTypeFunction("Argc", &System::Argc)
-      .CreateTypeFunction("Argv", &System::Argv);
+  std::shared_ptr<fetch::vm::Module> module = fetch::vm_modules::SetupModule();
 
   // Setting compiler up
-
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
+  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(module.get());
+  fetch::vm::VM *      vm       = new fetch::vm::VM(module.get());
 
   fetch::vm::Script  script;
   fetch::vm::Strings errors;
