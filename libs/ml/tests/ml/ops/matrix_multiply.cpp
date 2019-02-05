@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/matrix_multiply.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -27,10 +26,7 @@ class MatrixMultiplyTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<  // fetch::math::linalg::Matrix<int>,
-    fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>,
-    fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-    fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>>;
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>, fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>>;
 TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)

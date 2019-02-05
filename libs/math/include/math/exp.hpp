@@ -21,7 +21,6 @@
 #include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 
 #include <cmath>
@@ -61,20 +60,10 @@ inline void ExpImplementation(T const &array, memory::Range const &r, T &ret)
 }
 }  // namespace details
 
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(NDArray<T, C> const &array, NDArray<T, C> ret)
+template <typename ArrayType>
+inline void Exp(ArrayType const &array, ArrayType ret)
 {
-  details::ExpImplementation<NDArray<T, C>>(array, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(linalg::Matrix<T, C> const &array, linalg::Matrix<T, C> ret)
-{
-  details::ExpImplementation<linalg::Matrix<T, C>>(array, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(RectangularArray<T, C> const &array, RectangularArray<T, C> &ret)
-{
-  details::ExpImplementation<RectangularArray<T, C>>(array, ret);
+  details::ExpImplementation<ArrayType>(array, ret);
 }
 
 /**
@@ -85,20 +74,10 @@ inline void Exp(RectangularArray<T, C> const &array, RectangularArray<T, C> &ret
  * @return
  */
 
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(NDArray<T, C> const &array, memory::Range r, NDArray<T, C> &ret)
+template <typename ArrayType>
+inline void Exp(ArrayType const &array, memory::Range r, ArrayType &ret)
 {
-  details::ExpImplementation<NDArray<T, C>>(array, r, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(linalg::Matrix<T, C> const &array, memory::Range r, linalg::Matrix<T, C> &ret)
-{
-  details::ExpImplementation<linalg::Matrix<T, C>>(array, r, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Exp(RectangularArray<T, C> const &array, memory::Range r, RectangularArray<T, C> &ret)
-{
-  details::ExpImplementation<RectangularArray<T, C>>(array, r, ret);
+  details::ExpImplementation<ArrayType>(array, r, ret);
 }
 
 }  // namespace math

@@ -249,6 +249,15 @@ public:
     return true;
   }
 
+  Tensor<T> &InlineAdd(T const &o)
+  {
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) + o);
+    }
+    return *this;
+  }
+  
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
@@ -259,12 +268,71 @@ public:
     return *this;
   }
 
+  Tensor<T> &InlineSubtract(T const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) - o);
+    }
+    return *this;
+  }
+  
+  Tensor<T> &InlineSubtract(Tensor<T> const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) - o.At(i));
+    }
+    return *this;
+  }
+
+  Tensor<T> &InlineReverseSubtract(Tensor<T> const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(o.At(i) - At(i));
+    }
+    return *this;
+  }
+
+  Tensor<T> &InlineMultiply(T const &o)
+  {
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) * o);
+    }
+    return *this;    
+  }
+  
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
     {
       At(i) = T(At(i) * o.At(i));
+    }
+    return *this;
+  }
+
+  Tensor<T> &InlineDivide(T const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) / o);
+    }
+    return *this;
+  }
+  
+  Tensor<T> &InlineDivide(Tensor<T> const &o)
+  {
+    assert(size() == o.size());
+    for (size_t i(0); i < size(); ++i)
+    {
+      At(i) = T(At(i) / o.At(i));
     }
     return *this;
   }

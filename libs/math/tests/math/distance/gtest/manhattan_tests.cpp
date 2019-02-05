@@ -22,28 +22,32 @@
 #include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 #include <math/distance/manhattan.hpp>
-#include <math/linalg/matrix.hpp>
 
 using namespace fetch::math::distance;
-using namespace fetch::math::linalg;
+using namespace fetch::math;
 
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
 
 TEST(manhattan_gtest, basic_info)
 {
-  _M<double> A = _M<double>(R"(1 0 0)");
+  ShapelessArray<double> A = ShapelessArray<double>(3);
+  A.Set({0}, 1);
+  A.Set({1}, 0);
+  A.Set({2}, 0);
   EXPECT_EQ(0, Manhattan(A, A));
 
-  _M<double> B = _M<double>(R"(0 1 0)");
+  ShapelessArray<double> B = ShapelessArray<double>(3);
+  B.Set({0}, 0);
+  B.Set({1}, 1);
+  B.Set({2}, 0);
   EXPECT_EQ(Manhattan(A, B), 2);
 
-  B = _M<double>(R"(0 2 0)");
+  B.Set({0}, 0);
+  B.Set({1}, 2);
+  B.Set({2}, 0);
   EXPECT_EQ(Manhattan(A, B), 3);
 
-  B = _M<double>(R"(1 1 0)");
+  B.Set({0}, 1);
+  B.Set({1}, 1);
+  B.Set({2}, 0);
   EXPECT_EQ(Manhattan(A, B), 1);
 }

@@ -41,11 +41,6 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
-
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
 
@@ -297,49 +292,6 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
 }
 
 /**
- * Finds the maximum value in each row/column depending on axis and stores the output in ret
- * @tparam T
- * @tparam C
- * @tparam S
- * @param array the array to find max over
- * @param axis the axis along which to max
- * @param ret the return array
- */
-template <typename T, typename C, typename S>
-void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
-         linalg::Matrix<T, C, S> &ret)
-{
-  assert(axis == 0 || axis == 1);
-
-  if (axis == 0)
-  {
-    assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == array.shape()[1]);
-    for (std::size_t i = 0; i < array.shape()[1]; ++i)
-    {
-      ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-      for (std::size_t j = 0; j < array.shape()[0]; ++j)
-      {
-        ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
-      }
-    }
-  }
-  else
-  {
-    assert(ret.shape()[0] == array.shape()[0]);
-    assert(ret.shape()[1] == 1);
-    for (std::size_t i = 0; i < array.shape()[0]; ++i)
-    {
-      ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-      for (std::size_t j = 0; j < array.shape()[1]; ++j)
-      {
-        ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
-      }
-    }
-  }
-}
-
-/**
  * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
  * the array
  * @tparam T
@@ -543,33 +495,6 @@ ShapelessArray<T, C> Maximum(ShapelessArray<T, C> const &array1, ShapelessArray<
   return ret;
 }
 
-template <typename T, typename C, typename S>
-void Maximum(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-             linalg::Matrix<T, C, S> &ret)
-{
-  details::MaximumImplementation(array1, array2, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1,
-                                linalg::Matrix<T, C, S> const &array2)
-{
-  std::vector<std::size_t> return_shape(array1.shape());
-  linalg::Matrix<T, C, S>  ret(return_shape);
-  Maximum(array1, array2, ret);
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &scalar)
-{
-  std::vector<std::size_t> return_shape(array1.shape());
-  linalg::Matrix<T, C, S>  ret(return_shape);
-  linalg::Matrix<T, C, S>  compare(return_shape);
-  compare.Fill(scalar);
-  Maximum(array1, compare, ret);
-  return ret;
-}
-
 /**
  * return the product of all elements in the array
  * @tparam T
@@ -694,70 +619,6 @@ T ArgMax(ShapelessArray<T, C> const &array)
 {
   T ret;
   return ArgMax(array, ret);
-}
-
-template <typename T, typename C, typename S>
-void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapelessArray<T, C> &ret)
-{
-  assert(axis < 2);
-
-  if (axis == 0)
-  {
-    assert(ret.size() == array.width());
-    T cur_maxval;
-
-    // just using ret as a free variable to store the current maxval for the loop here
-    for (std::size_t i = 0; i < array.width(); ++i)
-    {
-      cur_maxval = std::numeric_limits<T>::lowest();
-      for (std::size_t j = 0; j < array.height(); ++j)
-      {
-        if (cur_maxval < array.At(j, i))
-        {
-          ret[i]     = static_cast<T>(j);
-          cur_maxval = array.At(j, i);
-        }
-      }
-    }
-  }
-  else
-  {
-    assert(ret.size() == array.height());
-    T cur_maxval;
-
-    // just using ret as a free variable to store the current maxval for the loop here
-    for (std::size_t i = 0; i < array.height(); ++i)
-    {
-      cur_maxval = std::numeric_limits<T>::lowest();
-      for (std::size_t j = 0; j < array.width(); ++j)
-      {
-        if (cur_maxval < array.At(i, j))
-        {
-          ret[i]     = static_cast<T>(j);
-          cur_maxval = array.At(i, j);
-        }
-      }
-    }
-  }
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
-{
-  assert(array.shape().size() == 2);
-  assert(axis == 0 || axis == 1);
-
-  if (axis == 0)
-  {
-    linalg::Matrix<T, C, S> ret{array.shape()[1]};
-    ArgMax(array, axis, ret);
-    return ret;
-  }
-  else
-  {
-    linalg::Matrix<T, C, S> ret{array.shape()[0]};
-    ArgMax(array, axis, ret);
-    return ret;
-  }
 }
 
 template <typename T, typename C>

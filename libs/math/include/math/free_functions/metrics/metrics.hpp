@@ -41,23 +41,24 @@ ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B, std::size_t 
   assert(A.shape().size() == 2);
   assert(axis == 0 || axis == 1);
 
-  ArrayType temp{A.shape()};
-  ArrayType ret{};
+  ArrayType temp(A.shape());
+  std::vector<std::size_t> retSize;
   if ((A.shape()[0] == 1) || (A.shape()[1] == 1))  // case where one dimension = size 1
   {
-    ret.Reshape(A.shape());
+    retSize = A.shape();
   }
   else  // case where two dimensions, neither size 1, euclid across axis
   {
     if (axis == 0)
     {
-      ret.Reshape({1, A.shape()[1]});
+      retSize = std::vector<std::size_t>({1, A.shape()[1]});
     }
     else
     {
-      ret.Reshape({A.shape()[0], 1});
+      retSize = std::vector<std::size_t>({A.shape()[0], 1});
     }
   }
+  ArrayType ret(retSize);
   Subtract(A, B, temp);
   Square(temp);
   ret = ReduceSum(temp, axis);

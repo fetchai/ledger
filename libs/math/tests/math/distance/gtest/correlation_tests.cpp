@@ -21,20 +21,16 @@
 
 #include "core/random/lcg.hpp"
 #include "math/distance/pearson.hpp"
-#include "math/linalg/matrix.hpp"
 #include <gtest/gtest.h>
 
 using namespace fetch::math::distance;
-using namespace fetch::math::linalg;
-
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
+using namespace fetch::math;
 
 TEST(correlation_gtest, pearson_correlation_test)
 {
-  _M<double> A = _M<double>(R"(1 0 0)");
+  ShapelessArray<double> A = ShapelessArray<double>::Zeroes(3);
+  A.At(0) = 1.0;
+  A.At(1) = 0.0;
+  A.At(2) = 0.0;
   EXPECT_EQ(0, Pearson(A, A));
 }

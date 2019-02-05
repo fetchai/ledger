@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/correlation/jaccard.hpp"
-#include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -38,13 +37,11 @@ inline typename A::Type WrapperJaccard(A const &a, A const &b)
 
 inline void BuildJaccardCorrelation(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperJaccard<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperJaccard<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperJaccard<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperJaccard<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperJaccard<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperJaccard<ShapelessArray<double>>)
       .def(custom_name.c_str(), &WrapperJaccard<ShapelessArray<float>>);
@@ -64,13 +61,11 @@ inline typename A::Type WrapperGeneralisedJaccard(A const &a, A const &b)
 inline void BuildGeneralisedJaccardCorrelation(std::string const &custom_name,
                                                pybind11::module & module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperGeneralisedJaccard<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapelessArray<double>>)
       .def(custom_name.c_str(), &WrapperGeneralisedJaccard<ShapelessArray<float>>);

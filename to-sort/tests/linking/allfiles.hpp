@@ -31,7 +31,6 @@
 #include "image/load_png.hpp"
 #include "math/bignumber.hpp"
 #include "math/exp.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/log.hpp"
 #include "math/spline/linear.hpp"
 #include "memory/rectangular_array.hpp"

@@ -19,7 +19,8 @@
 
 #include "auctions/auction.hpp"
 #include "math/free_functions/exponentiation/exponentiation.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/shapeless_array.hpp"
+#include "math/tensor.hpp"
 
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
@@ -47,7 +48,7 @@ public:
   void                               SelectBid(std::size_t const &bid);
   Value                              TotalBenefit();
   bool                               Execute(BlockId current_block) override;
-  fetch::math::linalg::Matrix<Value> Couplings();
+  fetch::math::Tensor<Value>         Couplings();
   fetch::math::ShapelessArray<Value> LocalFields();
   std::uint32_t                      Active(std::size_t n);
   void                               Mine(std::size_t random_seed, std::size_t run_time);
@@ -56,7 +57,7 @@ public:
 
 private:
   // bids on binary vector
-  fetch::math::linalg::Matrix<Value>         couplings_;
+  fetch::math::Tensor<Value>                 couplings_;
   fetch::math::ShapelessArray<Value>         local_fields_;
   fetch::math::ShapelessArray<std::uint32_t> active_;
   fetch::math::ShapelessArray<std::uint32_t> prev_active_;

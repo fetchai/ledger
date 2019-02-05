@@ -34,9 +34,8 @@
 #include "python/math/distance/py_pairwise_distance.hpp"
 #include "python/math/distance/py_pearson.hpp"
 
-#include "python/math/clustering/py_kmeans.hpp"
+// #include "python/math/clustering/py_kmeans.hpp"
 
-#include "python/math/linalg/py_matrix.hpp"
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
@@ -171,40 +170,12 @@ PYBIND11_MODULE(fetch, module)
   //  fetch::math::BuildExp< 0, 60801, false>("Exp0", ns_fetch_math);
   //  fetch::math::BuildLog(ns_fetch_math);
 
-  //  fetch::math::linalg::BuildMatrix<int8_t>("MatrixInt8",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int16_t>("MatrixInt16",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int32_t>("MatrixInt32",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<int64_t>("MatrixInt64",
-  //  ns_fetch_math_linalg);
-
-  //  fetch::math::linalg::BuildMatrix<uint8_t>("MatrixUInt8",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint16_t>("MatrixUInt16",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint32_t>("MatrixUInt32",
-  //  ns_fetch_math_linalg);
-  //  fetch::math::linalg::BuildMatrix<uint64_t>("MatrixUInt64",
-  //  ns_fetch_math_linalg);
-
-  fetch::math::linalg::BuildMatrix<float>("MatrixFloat", ns_fetch_math_linalg);
-  fetch::math::linalg::BuildMatrix<double>("MatrixDouble", ns_fetch_math_linalg);
-
   fetch::math::BuildNDArray<float>("NDArrayFloat", ns_fetch_math);
   fetch::math::BuildNDArray<double>("NDArrayDouble", ns_fetch_math);
   //  fetch::math::BuildNDArray<std::size_t>("NDArrayUInt", ns_fetch_math);
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
-  //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
-  //  3>("ColorRGB8",ns_fetch_image_colors);
-  //  fetch::image::colors::BuildAbstractColor<uint32_t, 8,
-  //  4>("ColorRGBA8",ns_fetch_image_colors);
 
-  //  fetch::image::BuildImageType< fetch::image::colors::RGB8 >("ImageRGB8",
-  //  ns_fetch_image); fetch::image::BuildImageType< fetch::image::colors::RGBA8
-  //  >("ImageRGBA8", ns_fetch_image);
 
   ///////////
   // Comparisons
@@ -233,7 +204,7 @@ PYBIND11_MODULE(fetch, module)
 
   ////////////
 
-  fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
+  // fetch::math::clustering::BuildKMeansClustering("KMeans", ns_fetch_math_clustering);
 
   ////////////
 

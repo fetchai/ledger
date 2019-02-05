@@ -24,7 +24,6 @@
 #include "math/free_functions/free_functions.hpp"
 
 #include "math/ndarray.hpp"
-#include <math/linalg/matrix.hpp>
 
 ///////////////////
 /// Sigmoid 2x2 ///
@@ -53,14 +52,6 @@ void sigmoid_22()
   numpy_output[3] = T(1);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, sigmoid_2x2_matrix_float)
-{
-  sigmoid_22<float, fetch::math::linalg::Matrix<float>>();
-}
-TEST(ndarray, sigmoid_2x2_matrix_double)
-{
-  sigmoid_22<double, fetch::math::linalg::Matrix<double>>();
 }
 TEST(ndarray, sigmoid_2x2_ndarray_float)
 {
@@ -91,14 +82,6 @@ void sigmoid_11()
   numpy_output[0] = T(0.574442516811659);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, sigmoid_11_matrix_float)
-{
-  sigmoid_11<float, fetch::math::linalg::Matrix<float>>();
-}
-TEST(ndarray, sigmoid_11_matrix_double)
-{
-  sigmoid_11<double, fetch::math::linalg::Matrix<double>>();
 }
 TEST(ndarray, sigmoid_11_ndarray_float)
 {
@@ -137,14 +120,6 @@ void tanh_22()
   numpy_output[3] = T(1);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
-}
-TEST(ndarray, Tanh_22_matrix_float)
-{
-  tanh_22<float, fetch::math::linalg::Matrix<float>>();
-}
-TEST(ndarray, Tanh_22_matrix_double)
-{
-  tanh_22<double, fetch::math::linalg::Matrix<double>>();
 }
 TEST(ndarray, Tanh_22_ndarray_float)
 {

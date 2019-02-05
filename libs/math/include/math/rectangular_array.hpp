@@ -398,8 +398,6 @@ public:
    */
   Type const &Set(size_type const &n, Type const &v)
   {
-    // Compiler won't let us jump from linalg::Matrix (which is a subclass of Rectangular array)
-    // to ShapelessArray::Set without redefining here
     return super_type::Set(n, v);
   }
 

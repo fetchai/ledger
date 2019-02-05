@@ -119,7 +119,7 @@ fetch::math::ShapelessArray<Value> CombinatorialAuction::LocalFields()
   return local_fields_;
 }
 
-fetch::math::linalg::Matrix<Value> CombinatorialAuction::Couplings()
+fetch::math::Tensor<Value> CombinatorialAuction::Couplings()
 {
   return couplings_;
 }
@@ -154,7 +154,7 @@ Value CombinatorialAuction::TotalBenefit()
     for (std::size_t j = 0; j < bids_.size(); ++j)
     {
       a2 = active_[j];
-      reward += a1 * a2 * couplings_.At(i, j);
+      reward += a1 * a2 * couplings_.Get({j, i});
     }
   }
 
@@ -170,7 +170,7 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
 
   for (std::size_t j = 0; j < bids_.size(); ++j)
   {
-    if (couplings_(bid, j) != 0)
+    if (couplings_.Get({j, bid}) != 0)
     {
       active_[j] = 0;
     }
@@ -184,7 +184,7 @@ void CombinatorialAuction::SelectBid(std::size_t const &bid)
  */
 void CombinatorialAuction::BuildGraph()
 {
-  couplings_    = fetch::math::linalg::Matrix<Value>::Zeroes({bids_.size(), bids_.size()});
+  couplings_    = fetch::math::Tensor<Value>({bids_.size(), bids_.size()});
   local_fields_ = fetch::math::ShapelessArray<Value>::Zeroes({bids_.size()});
   active_       = fetch::math::ShapelessArray<std::uint32_t>::Zeroes({bids_.size()});
 
@@ -196,7 +196,7 @@ void CombinatorialAuction::BuildGraph()
     // thus local_fields_ represents the release value due to a bid
     // and only bids with positive local_fields can be accepted
     local_fields_[i] = static_cast<Value>(bids_[i].price);
-    couplings_.Set(i, i, 0);
+    couplings_.Set({i, i}, 0);
     for (auto &cur_item : items_)
     {
       for (std::size_t j = 0; j < bids_[i].items().size(); ++j)
@@ -246,7 +246,7 @@ void CombinatorialAuction::BuildGraph()
         }
       }
 
-      couplings_.At(i, j) = couplings_.At(j, i) = -coupling;
+      couplings_.Get({j, i}) = couplings_.Get({i, j}) = -coupling;
     }
   }
 
