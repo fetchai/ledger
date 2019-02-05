@@ -31,8 +31,6 @@
 #include "vm_modules/core/type_conversion.hpp"
 #include "vm_modules/setup_modules.hpp"
 
-std::vector<std::string> System::args;
-
 int main(int argc, char **argv)
 {
   if (argc < 2)
