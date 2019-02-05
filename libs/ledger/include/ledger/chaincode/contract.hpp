@@ -56,6 +56,7 @@ public:
   using StorageInterface      = ledger::StorageInterface;
   using ResourceSet           = TransactionSummary::ResourceSet;
 
+  Contract()                 = default;
   Contract(Contract const &) = delete;
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;

@@ -176,7 +176,13 @@ private:
   std::size_t min_peers_ = 2;
   std::size_t max_peers_;
   std::size_t transient_peers_;
-  uint32_t    process_cycle_ms_;
+
+  std::chrono::milliseconds peer_update_cycle_ms_;
+
+  FutureTimepoint process_future_timepoint_;
+
+  std::chrono::milliseconds manifest_update_cycle_ms_;
+  FutureTimepoint           manifests_next_update_timepoint_;
 
   static constexpr std::size_t MAX_PEERS_PER_CYCLE = 32;
 };
