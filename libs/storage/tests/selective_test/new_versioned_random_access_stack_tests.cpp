@@ -85,7 +85,7 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert)
     EXPECT_EQ(stack.Get(i), std::to_string(i + 5));
   }
 
-  EXPECT_EQ(stack.HashExists(hashes[0]), true);
+  // EXPECT_EQ(stack.HashExists(hashes[0]), true);
 
   // Revert!
   stack.RevertToHash(hashes[0]);
