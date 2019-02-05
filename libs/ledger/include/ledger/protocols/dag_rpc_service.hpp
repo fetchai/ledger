@@ -91,7 +91,10 @@ public:
                                                 Packet::Payload const &payload,
                                                 Address                transmitter)  {
         DAGNode node = UnpackNode(payload);
-        thread_pool_->Post([this, node]() { AddNodeToQueue(node); });
+        thread_pool_->Post([this, node]() { 
+
+          AddNodeToQueue(node); 
+        });
       });
 
     // Worker thread
@@ -282,6 +285,7 @@ public:
 
     uint64_t      cid = 0;
     // TODO: Consider the case where one chunk does not come back. This may make that we need to resync
+
     for (uint64_t i   = 0; i < dag_chunks; ++i)
     {
       dag_chunk_requests[i] = clients[cid]->Call(muddle_.network_id(), DAG_SYNCRONISATION, DAGProtocol::DOWNLOAD_DAG, i, uint64_t(DAG_CHUNK_SIZE));
@@ -296,10 +300,12 @@ public:
       dag_nodes.clear();
       dag_chunk_requests[i]->As(dag_nodes);
 
+      
       for (auto &node: dag_nodes)
       {
         AddNodeToQueue(node);
       }
+
     }
 
     syncronising_ = false;
@@ -339,7 +345,8 @@ private:
   using Flag              = std::atomic< bool >;
 
   bool AddNodeToQueue(DAGNode node)
-  {
+  { 
+    FETCH_LOCK(global_mutex_);
     if(node.identity.identifier().size() == 0)
     {
       // TODO: work out why this errors comes around.
@@ -379,6 +386,7 @@ private:
     return ret;
   }
 
+  mutable fetch::mutex::Mutex global_mutex_{__LINE__, __FILE__};
 
   mutable fetch::mutex::Mutex urgent_queue_mutex_{__LINE__, __FILE__};
   NodeQueue urgent_node_queue_;
