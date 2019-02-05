@@ -25,22 +25,22 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <math/tensor.hpp>
 #include <math/shapeless_array.hpp>
+#include <math/tensor.hpp>
 #include <string>
 #include <vector>
 
 using namespace fetch::math;
 
-using DataType      = double;
-using MatrixType    = Tensor<DataType>;
+using DataType   = double;
+using MatrixType = Tensor<DataType>;
 
 using ClusteringType = fetch::math::clustering::ClusteringType;
 
 // // Helper function for kmeans_test_ndimensions
 // std::size_t add_cluster_to_matrix(std::size_t n_points_per_cluster, std::size_t n_dimensions,
-//                                   std::vector<int> dimension_signs, std::size_t row, MatrixType &A,
-//                                   int initial_val_magnitude)
+//                                   std::vector<int> dimension_signs, std::size_t row, MatrixType
+//                                   &A, int initial_val_magnitude)
 // {
 //   int val_magnitude = initial_val_magnitude;
 //   // Create specified number of points in each cluster
@@ -56,8 +56,8 @@ using ClusteringType = fetch::math::clustering::ClusteringType;
 //       A.Set(std::vector<size_t>(k, row), val);
 //     }
 //     row += 1;
-//     // Increment magnitude of values within cluster so not all points are identical in each cluster
-//     val_magnitude += 5;
+//     // Increment magnitude of values within cluster so not all points are identical in each
+//     cluster val_magnitude += 5;
 //   }
 //   return row;
 // }
@@ -131,7 +131,8 @@ using ClusteringType = fetch::math::clustering::ClusteringType;
 //   std::size_t      row                   = 0;
 //   int              initial_val_magnitude = 50;
 //   // Initialize first point in each cluster with magnitude 50 in each dimension
-//   std::size_t next_row = add_cluster_to_matrix(n_points_per_cluster, n_dimensions, dimension_signs,
+//   std::size_t next_row = add_cluster_to_matrix(n_points_per_cluster, n_dimensions,
+//   dimension_signs,
 //                                                row, A, initial_val_magnitude);
 //   row                  = next_row;
 
@@ -153,7 +154,8 @@ using ClusteringType = fetch::math::clustering::ClusteringType;
 //       }
 
 //       std::size_t next_row = add_cluster_to_matrix(n_points_per_cluster, n_dimensions,
-//                                                    dimension_signs, row, A, initial_val_magnitude);
+//                                                    dimension_signs, row, A,
+//                                                    initial_val_magnitude);
 //       row                  = next_row;
 //     }
 //   }
@@ -244,8 +246,8 @@ using ClusteringType = fetch::math::clustering::ClusteringType;
 //     A.Set({1, i}, static_cast<DataType>(i + 50));
 //   }
 
-//   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each cluster
-//   for (std::size_t i = 0; i < 5; ++i)
+//   // initialise the previous assignments to be 5 data points assigned, 20 unassigned in each
+//   cluster for (std::size_t i = 0; i < 5; ++i)
 //   {
 //     prev_k.Set(i, 0);
 //   }

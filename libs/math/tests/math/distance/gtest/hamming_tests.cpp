@@ -40,7 +40,7 @@ TEST(hamming_gtest, DISABLED_basic_info)
   B.Set({1}, 2);
   B.Set({2}, 3);
   B.Set({3}, 2);
-  
+
   ASSERT_EQ(Hamming(A, B), 3);
 
   ShapelessArray<double> C = ShapelessArray<double>(3);
@@ -52,6 +52,6 @@ TEST(hamming_gtest, DISABLED_basic_info)
   A.Set({0}, 1);
   A.Set({1}, 2);
   A.Set({2}, 9);
-  
+
   EXPECT_EQ(Hamming(C, D), 2);
 }

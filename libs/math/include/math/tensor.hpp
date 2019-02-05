@@ -257,7 +257,7 @@ public:
     }
     return *this;
   }
-  
+
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
@@ -277,7 +277,7 @@ public:
     }
     return *this;
   }
-  
+
   Tensor<T> &InlineSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
@@ -304,9 +304,9 @@ public:
     {
       At(i) = T(At(i) * o);
     }
-    return *this;    
+    return *this;
   }
-  
+
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
@@ -326,7 +326,7 @@ public:
     }
     return *this;
   }
-  
+
   Tensor<T> &InlineDivide(Tensor<T> const &o)
   {
     assert(size() == o.size());

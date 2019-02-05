@@ -26,7 +26,6 @@
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
-
 TEST(manhattan_gtest, basic_info)
 {
   ShapelessArray<double> A = ShapelessArray<double>(3);

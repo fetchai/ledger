@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/flatten.hpp"
-#include "math/tensor.hpp"
 #include "math/ndarray.hpp"
+#include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -27,9 +27,9 @@ class FlattenTest : public ::testing::Test
 };
 
 // TODO(private, 520) Adapt for NDArray
-using MyTypes =
-    ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-		     fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
+                                 fetch::math::NDArray<double>, fetch::math::Tensor<int>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)

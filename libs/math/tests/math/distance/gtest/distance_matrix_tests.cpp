@@ -42,5 +42,6 @@ TEST(distance_matrix_gtest, DISABLED_basic_info)
   // B = _M<double>(R"(1 2 9 ; 1 0 0 ; 1 2 3)");
 
   // EXPECT_TRUE(
-  //     bool(DistanceMatrix(R, A, B, Hamming<double>) == _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0 )")));
+  //     bool(DistanceMatrix(R, A, B, Hamming<double>) == _M<double>(R"( 2 1 3 ; 1 1 1  ; 0 0 0
+  //     )")));
 }

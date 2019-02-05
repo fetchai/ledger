@@ -41,7 +41,7 @@ ArrayType EuclideanDistance(ArrayType const &A, ArrayType const &B, std::size_t 
   assert(A.shape().size() == 2);
   assert(axis == 0 || axis == 1);
 
-  ArrayType temp(A.shape());
+  ArrayType                temp(A.shape());
   std::vector<std::size_t> retSize;
   if ((A.shape()[0] == 1) || (A.shape()[1] == 1))  // case where one dimension = size 1
   {

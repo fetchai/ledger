@@ -157,7 +157,7 @@ TEST(combinatorics, test_combinations_standard_input)
   // Row 10
   python_output.Set({0, 9}, 1);
   python_output.Set({1, 9}, 2);
-  
+
   fetch_output = combinations(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));

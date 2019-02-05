@@ -663,7 +663,9 @@ private:
         cur_k = static_cast<std::size_t>(k_assignment_[i]);
         for (std::size_t j = 0; j < n_dimensions_; ++j)
         {
-          k_means_.Set(std::vector<size_t>({j, cur_k}), k_means_.Get(std::vector<size_t>({j, cur_k, j})) + data.Get(std::vector<size_t>({j, i})));
+          k_means_.Set(std::vector<size_t>({j, cur_k}),
+                       k_means_.Get(std::vector<size_t>({j, cur_k, j})) +
+                           data.Get(std::vector<size_t>({j, i})));
         }
       }
     }
@@ -673,7 +675,9 @@ private:
     {
       for (std::size_t i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(std::vector<size_t>({m, i}), k_means_.Get(std::vector<size_t>({m, i})) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(std::vector<size_t>({m, i}),
+                     k_means_.Get(std::vector<size_t>({m, i})) /
+                         static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }

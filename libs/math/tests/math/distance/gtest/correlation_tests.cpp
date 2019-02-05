@@ -29,8 +29,8 @@ using namespace fetch::math;
 TEST(correlation_gtest, pearson_correlation_test)
 {
   ShapelessArray<double> A = ShapelessArray<double>::Zeroes(3);
-  A.At(0) = 1.0;
-  A.At(1) = 0.0;
-  A.At(2) = 0.0;
+  A.At(0)                  = 1.0;
+  A.At(1)                  = 0.0;
+  A.At(2)                  = 0.0;
   EXPECT_EQ(0, Pearson(A, A));
 }

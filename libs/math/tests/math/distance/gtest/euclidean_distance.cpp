@@ -24,7 +24,6 @@
 #include "math/distance/euclidean.hpp"
 #include "math/tensor.hpp"
 
-
 using namespace fetch::math::distance;
 using namespace fetch::math;
 
@@ -42,6 +41,6 @@ TEST(distance_tests, euclidean_distance)
   B.Set({1}, 2);
   B.Set({2}, 3);
   B.Set({3}, 2);
-  
+
   ASSERT_TRUE(Euclidean(A, B) == 2);
 }

@@ -26,9 +26,8 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)

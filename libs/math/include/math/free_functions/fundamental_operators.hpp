@@ -102,9 +102,9 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &s
 {
   assert(array.shape() == ret.shape());
   for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret.At(i) = array.At(i) + scalar;
-    }
+  {
+    ret.At(i) = array.At(i) + scalar;
+  }
 }
 template <typename T, typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
@@ -193,9 +193,9 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType
   assert(array1.shape() == ret.shape());
 
   for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret.At(i) = array1.At(i) - array2.At(i);
-    }
+  {
+    ret.At(i) = array1.At(i) - array2.At(i);
+  }
 }
 template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
@@ -562,9 +562,9 @@ meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array, T con
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret.At(i) = array.At(i) * scalar;
-    }
+  {
+    ret.At(i) = array.At(i) * scalar;
+  }
 }
 
 template <typename ArrayType, typename T>
@@ -1034,12 +1034,10 @@ meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &array, T const
   assert(array.size() == ret.size());
   assert(array.shape() == ret.shape());
 
-  assert(obj1.size() == obj2.size());
-
   for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret.At(i) = array.At(i) / scalar;
-    }
+  {
+    ret.At(i) = array.At(i) / scalar;
+  }
 }
 template <typename ArrayType, typename T>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)

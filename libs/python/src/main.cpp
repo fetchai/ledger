@@ -176,7 +176,6 @@ PYBIND11_MODULE(fetch, module)
 
   //  fetch::math::BuildSpline(ns_fetch_math_spline);
 
-
   ///////////
   // Comparisons
 

@@ -26,9 +26,8 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(SoftmaxTest, MyTypes);
 
 TYPED_TEST(SoftmaxTest, forward_test)
