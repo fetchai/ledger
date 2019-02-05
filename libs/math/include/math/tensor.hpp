@@ -270,7 +270,6 @@ public:
 
   Tensor<T> &InlineSubtract(T const &o)
   {
-    assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
     {
       At(i) = T(At(i) - o);
@@ -319,7 +318,6 @@ public:
 
   Tensor<T> &InlineDivide(T const &o)
   {
-    assert(size() == o.size());
     for (size_t i(0); i < size(); ++i)
     {
       At(i) = T(At(i) / o);
