@@ -185,7 +185,13 @@ private:
       /*FETCH_LOG_INFO(LOGGING_NAME, "Now count: ", write_in_use_.use_count());
       FETCH_LOG_INFO(LOGGING_NAME, "Now count: ", write_in_use_copy.use_count()); */
 
+      if(write_in_use_copy.use_count() != 2)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Use count not correct");
+      }
+
       write_in_use_mutex_.unlock();
+
 
       // Try to get a message from the queue
       write_mutex_.lock();
@@ -204,6 +210,11 @@ private:
       write_queue_.pop_front();
       write_mutex_.unlock();
 
+      if(buffer.size() != 2508)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Sending: ", buffer.size());
+      }
+
       // Scope for closures
       {
         // Send the message, make sure write_in_use_ use count will be kept alive as long as the CB is.
@@ -213,7 +224,12 @@ private:
         // Post a closure to asio
         network_manager_.Post([this, self, weak_socket, buffer, write_in_use_copy, header]
             {
-              // 
+              if(write_in_use_copy.use_count() == 0)
+              {
+                FETCH_LOG_INFO(LOGGING_NAME, "Something is wrong");
+              }
+              /*FETCH_LOG_INFO(LOGGING_NAME, "Count in VB", write_in_use_copy.use_count());*/
+
               auto socket_ptr = socket_.lock();
 
               if(!socket_ptr)
@@ -222,7 +238,9 @@ private:
               }
 
               // Note this cb keeps header and buffer alive
-              auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
+              auto cb   = [this, buffer, socket_ptr, header, self, write_in_use_copy](std::error_code ec, std::size_t) {
+
+                FETCH_UNUSED(write_in_use_copy.use_count());
                 auto ptr = manager_.lock();
                 if (!ptr)
                 {
@@ -241,8 +259,8 @@ private:
                 }
               };
 
-              std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
-                                                      asio::buffer(buffer.pointer(), buffer.size())};
+              buffers.clear();
+              buffers = {asio::buffer(header.pointer(), header.size()), asio::buffer(buffer.pointer(), buffer.size())};
 
               asio::async_write(*socket_ptr, buffers, cb);
 
@@ -251,60 +269,7 @@ private:
     }
   }
 
-  /*
-  void thing()
-  {
-    if (shutting_down_)
-    {
-      return;
-    }
-
-    LOG_STACK_TRACE_POINT;
-    auto socket_ptr = socket_.lock();
-    if (!socket_ptr)
-    {
-      return;
-    }
-
-    write_mutex_.lock();
-
-    if (write_queue_.empty())
-    {
-      write_mutex_.unlock();
-      return;
-    }
-
-    auto buffer = write_queue_.front();
-
-    byte_array::ByteArray header;
-    SetHeader(header, buffer.size());
-    write_queue_.pop_front();
-    write_mutex_.unlock();
-
-    auto self = shared_from_this();
-    auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
-      auto ptr = manager_.lock();
-      if (!ptr)
-      {
-        return;
-      }
-
-      if (!ec)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Wrote message.");
-        Write();
-      }
-      else
-      {
-        ptr->Leave(this->handle());
-      }
-    };
-
-    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
-                                            asio::buffer(buffer.pointer(), buffer.size())};
-
-    asio::async_write(*socket_ptr, buffers, cb);
-  }*/
+  std::vector<asio::const_buffer> buffers;
 
   void ReadHeader()
   {

@@ -67,9 +67,9 @@ public:
   using Packet = fetch::muddle::Packet;
   using DAGNodeAddedCallback = std::function< void(DAGNode const &) >;
 
-  enum 
+  enum
   {
-    DAG_CHUNK_SIZE = 100
+    DAG_CHUNK_SIZE = 1000
   };
 
   // Construction / Destruction
@@ -221,7 +221,6 @@ public:
   { 
     fetch::serializers::TypedByteArrayBuffer buf;
     buf << node;
-    /*FETCH_LOG_INFO(LOGGING_NAME, "Data size: ", buf.data().size());*/
     endpoint_.Broadcast(fetch::ledger::dag::DAG_RPC_SERVICE, fetch::ledger::dag::CHANNEL_DAG, buf.data());
   } 
 
