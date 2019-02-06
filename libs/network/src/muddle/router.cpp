@@ -768,7 +768,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Routing external packet.");    
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Routing external packet.");    
     // Handle TTL based routing timeout
     bool message_time_expired = true;
     if (packet->GetTTL() > 2u)
@@ -796,7 +796,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   // broadcast packet
   if (packet->IsBroadcast())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Routing packet.");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet.");
     if (packet->GetSender() != address_)
     {
       DispatchPacket(packet, address_);

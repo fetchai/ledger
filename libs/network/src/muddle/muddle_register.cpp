@@ -53,7 +53,7 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
   LOG_STACK_TRACE_POINT;  
   FETCH_LOCK(connection_map_lock_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting message.");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcasting message.");
 
   // loop through all of our current connections
   for (auto const &elem : connection_map_)

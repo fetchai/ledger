@@ -90,14 +90,14 @@ public:
     dag_subscription_->SetMessageHandler([/*this*/](Address const &from, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter)  {
-  /*    
+/*      
         DAGNode node = UnpackNode(payload);
 
         thread_pool_->Post([this, node]() { 
 
           AddNodeToQueue(node); 
         });
-*/      
+  */      
       });
 
     // Worker thread
@@ -319,7 +319,6 @@ public:
       
       for (auto node: dag_nodes)
       {
-
         AddNodeToQueue(node);
       }
 
