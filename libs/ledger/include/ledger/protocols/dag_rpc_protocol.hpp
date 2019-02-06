@@ -42,7 +42,7 @@ public:
 
   enum 
   {
-    MAX_DAG_CHUNK_SIZE = 10000
+    MAX_DAG_CHUNK_SIZE = 100000
   };
 
 

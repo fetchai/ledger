@@ -310,7 +310,7 @@ int main(int argc, char **argv)
     DAGNode node = GenerateNode(rng, *certificate, dag);
 
     
-   // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     // send the node around the network
 
     controller.BroadcastDAGNode(node);
