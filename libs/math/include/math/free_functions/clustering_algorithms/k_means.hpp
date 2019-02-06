@@ -664,7 +664,7 @@ private:
         for (std::size_t j = 0; j < n_dimensions_; ++j)
         {
           k_means_.Set(std::vector<size_t>({j, cur_k}),
-                       k_means_.Get(std::vector<size_t>({j, cur_k, j})) +
+                       k_means_.Get(std::vector<size_t>({j, cur_k})) +
                            data.Get(std::vector<size_t>({j, i})));
         }
       }
