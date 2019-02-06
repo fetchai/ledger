@@ -21,23 +21,26 @@
 #include <iostream>
 
 #include "core/random/lcg.hpp"
-#include <math/distance/euclidean.hpp>
-#include <math/linalg/matrix.hpp>
+#include "math/distance/euclidean.hpp"
+#include "math/tensor.hpp"
 
 using namespace fetch::math::distance;
-using namespace fetch::math::linalg;
-
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
+using namespace fetch::math;
 
 TEST(distance_tests, euclidean_distance)
 {
-  _M<double> A = _M<double>(R"(1 2; 3 4)");
+  ShapelessArray<double> A = ShapelessArray<double>(4);
+  A.Set({0}, 1);
+  A.Set({1}, 2);
+  A.Set({2}, 3);
+  A.Set({3}, 4);
   ASSERT_TRUE(Euclidean(A, A) == 0);
 
-  _M<double> B = _M<double>(R"(1 2; 3 2)");
+  ShapelessArray<double> B = ShapelessArray<double>(4);
+  B.Set({0}, 1);
+  B.Set({1}, 2);
+  B.Set({2}, 3);
+  B.Set({3}, 2);
+
   ASSERT_TRUE(Euclidean(A, B) == 2);
 }

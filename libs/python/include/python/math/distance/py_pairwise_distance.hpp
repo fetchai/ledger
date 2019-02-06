@@ -19,7 +19,6 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "math/distance/pairwise_distance.hpp"
-#include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -81,13 +80,11 @@ inline A WrapperPairWiseDistance(A const &a, std::string const &method = "euclud
 
 inline void BuildPairWiseDistanceDistance(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperPairWiseDistance<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperPairWiseDistance<RectangularArray<float>>);
   //    .def(custom_name.c_str(), &WrapperPairWiseDistance< ShapelessArray<
   //    double > >) .def(custom_name.c_str(), &WrapperPairWiseDistance<

@@ -25,7 +25,6 @@
 #include "math/distance/jaccard.hpp"
 #include "math/distance/manhattan.hpp"
 #include "math/distance/pearson.hpp"
-#include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -91,13 +90,11 @@ inline A WrapperDistanceMatrix(A const &a, A const &b, std::string const &method
 
 inline void BuildDistanceMatrixDistance(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperDistanceMatrix<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperDistanceMatrix<RectangularArray<float>>);
   //    .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray< double
   //    > >) .def(custom_name.c_str(), &WrapperDistanceMatrix< ShapelessArray<
