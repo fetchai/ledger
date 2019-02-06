@@ -29,8 +29,8 @@ namespace math {
 void BuildTensor(std::string const &custom_name, pybind11::module &module)
 {
 
-  py::class_<fetch::math::Tensor<float>, std::shared_ptr<fetch::math::Tensor<float>>>(module,
-                                                                                      "Tensor")
+  py::class_<fetch::math::Tensor<float>, std::shared_ptr<fetch::math::Tensor<float>>>(
+      module, custom_name.c_str())
       .def(py::init<std::vector<size_t> const &>())
       .def("ToString", &fetch::math::Tensor<float>::ToString)
       .def("Size", &fetch::math::Tensor<float>::size)
