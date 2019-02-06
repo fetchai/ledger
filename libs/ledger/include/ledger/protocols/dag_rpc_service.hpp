@@ -90,14 +90,14 @@ public:
     dag_subscription_->SetMessageHandler([/*this*/](Address const &from, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter)  {
-/*      
+  /*    
         DAGNode node = UnpackNode(payload);
 
         thread_pool_->Post([this, node]() { 
 
           AddNodeToQueue(node); 
         });
-  */      
+*/      
       });
 
     // Worker thread
@@ -111,7 +111,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     std::cout << "IDLE" << std::endl;
-    /*
+    
     if(!syncronising_)
     {
       std::this_thread::sleep_for( std::chrono::milliseconds(100));
@@ -122,7 +122,7 @@ public:
       std::this_thread::sleep_for( std::chrono::milliseconds(1000));
       thread_pool_->Post([this]() { IdleUntilWork(); });        
     }
-*/
+
   }
 
   void AddUrgentNodes() 
@@ -320,7 +320,7 @@ public:
       for (auto node: dag_nodes)
       {
 
-//        AddNodeToQueue(node);
+        AddNodeToQueue(node);
       }
 
     }

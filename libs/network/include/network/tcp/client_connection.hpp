@@ -101,8 +101,9 @@ public:
     ReadHeader();
   }
 
-  void Send(message_type const &msg) override
+  void Send(message_type const &omsg) override
   {
+    message_type msg = omsg.Copy();    
     LOG_STACK_TRACE_POINT;
 
     if (shutting_down_)
