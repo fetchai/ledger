@@ -25,6 +25,7 @@
 #include "network/tcp/client_connection.hpp"
 
 #include "network/fetch_asio.hpp"
+#include "network/monitor.hpp"
 
 #include <deque>
 #include <mutex>

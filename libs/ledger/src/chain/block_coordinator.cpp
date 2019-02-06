@@ -314,7 +314,7 @@ void BlockCoordinator::OnExecuteBlock()
         // make the parent block the next block to execute
         current_block_ = std::make_shared<Block::Body>(parent_block.body);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(block->hash));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(parent_block.body.hash));
       }
       else
       {

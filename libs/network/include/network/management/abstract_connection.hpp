@@ -54,7 +54,7 @@ public:
   {
     auto h = handle_.load();
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ", h);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destruction in progress for handle ");
     FETCH_LOG_VARIABLE(h);
 
     {
@@ -105,30 +105,35 @@ public:
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
+    LOG_STACK_TRACE_POINT;      
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;      
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;  
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
+    LOG_STACK_TRACE_POINT;  
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
+    LOG_STACK_TRACE_POINT;  
     std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
@@ -159,6 +164,7 @@ protected:
 
   void SignalLeave()
   {
+    LOG_STACK_TRACE_POINT;      
     FETCH_LOG_WARN(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
                    ", SignalLeave called.");
     std::function<void(void)> cb;
@@ -177,6 +183,7 @@ protected:
 
   void SignalMessage(network::message_type const &msg)
   {
+    LOG_STACK_TRACE_POINT;  
     std::function<void(network::message_type const &)> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -190,6 +197,7 @@ protected:
 
   void SignalConnectionFailed()
   {
+    LOG_STACK_TRACE_POINT;  
     std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
@@ -205,6 +213,7 @@ protected:
 
   void SignalConnectionSuccess()
   {
+    LOG_STACK_TRACE_POINT;  
     std::function<void()> cb;
     {
       std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);

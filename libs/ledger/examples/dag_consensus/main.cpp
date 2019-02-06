@@ -164,7 +164,6 @@ static DAGNode GenerateNode(Rng &rng, ECDSASigner &certificate, DAG &dag)
 
 int main(int argc, char **argv)
 {
-
   std::unique_ptr<fetch::crypto::ECDSASigner> signer = std::make_unique<fetch::crypto::ECDSASigner>();
   std::unique_ptr<fetch::crypto::ECDSASigner> certificate = std::make_unique<fetch::crypto::ECDSASigner>();  
 
@@ -211,6 +210,11 @@ int main(int argc, char **argv)
   }
 
   // Setting  up
+  fetch::network::DumpNetworkActivityTo("netdump-"+ params.GetArg(2));
+  std::cout << "XXX: " << fetch::network::MonitoringClass::monitor.get() <<std::endl;
+  DUMP_INCOMING_MESSAGE("xxx","yyy", "zzz");
+//  exit(0);
+
   NetworkManager network_manager("nid-name", params.GetParam<std::size_t>("threads", 16) );
   network_manager.Start();
   std::cout << "Node certificiate: " << fetch::byte_array::ToBase64(signer->identity().identifier()) << std::endl;

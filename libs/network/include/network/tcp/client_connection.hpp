@@ -24,6 +24,7 @@
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/message.hpp"
+#include "network/monitor.hpp"
 
 #include "network/fetch_asio.hpp"
 #include <atomic>
@@ -180,6 +181,7 @@ private:
       if (!ec)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Read header.");
+        DUMP_INCOMING_MESSAGE("TCP-S", "HEADER", header_.bytes, 2*sizeof(uint64_t)); 
         ReadBody();
       }
       else
@@ -234,7 +236,7 @@ private:
       if (!ec)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Recv message");
-
+        DUMP_INCOMING_MESSAGE("TCP-S", "BODY", message); 
         ptr->PushRequest(this->handle(), message);
         ReadHeader();
       }
@@ -310,6 +312,8 @@ private:
       }
     };
 
+    DUMP_OUTGOING_MESSAGE("TCP-S", "HEADER", header); 
+    DUMP_OUTGOING_MESSAGE("TCP-S", "BODY", buffer);     
     std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
                                             asio::buffer(buffer.pointer(), buffer.size())};
 

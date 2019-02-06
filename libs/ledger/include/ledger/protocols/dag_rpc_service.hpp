@@ -69,7 +69,7 @@ public:
 
   enum 
   {
-    DAG_CHUNK_SIZE = 100
+    DAG_CHUNK_SIZE = 100000
   };
 
   // Construction / Destruction
@@ -109,6 +109,7 @@ public:
 
   void IdleUntilWork() 
   {
+    LOG_STACK_TRACE_POINT;
     std::cout << "IDLE" << std::endl;
     /*
     if(!syncronising_)
@@ -126,11 +127,13 @@ public:
 
   void AddUrgentNodes() 
   {
+    LOG_STACK_TRACE_POINT;
     thread_pool_->Post([this]() { AddBacklogNodes(); });    
   }  
 
   void AddBacklogNodes() 
   {
+    LOG_STACK_TRACE_POINT;
     int n;
     {
       FETCH_LOCK(backlog_queue_mutex_);
@@ -172,6 +175,7 @@ public:
 
   void AddNewNodes() 
   {
+    LOG_STACK_TRACE_POINT;
     int n;
     {
       FETCH_LOCK(normal_queue_mutex_);
@@ -219,6 +223,7 @@ public:
 
   void BroadcastDAGNode(DAGNode node) 
   { 
+    LOG_STACK_TRACE_POINT;
     fetch::serializers::TypedByteArrayBuffer buf;
     buf << node;
     endpoint_.Broadcast(fetch::ledger::dag::DAG_RPC_SERVICE, fetch::ledger::dag::CHANNEL_DAG, buf.data());
@@ -305,7 +310,7 @@ public:
     std::vector<DAGNode> dag_nodes;
     for (uint64_t        i = 0; i < dag_chunks; ++i)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Resolving: ", i, dag_chunk_requests.size());            
+      FETCH_LOG_INFO(LOGGING_NAME, "Resolving: ", i," ", dag_chunk_requests.size());            
       dag_nodes.clear();
       dag_chunk_requests[i]->Wait();
       FETCH_LOG_INFO(LOGGING_NAME, "XX: ", int(dag_chunk_requests[i]->GetState()));
@@ -338,7 +343,7 @@ public:
 
   void SignalNewDAGNode(DAGNode node, bool broadcast = true) 
   { 
-
+    LOG_STACK_TRACE_POINT;
     if(!dag_.HasNode(node.hash))
     {
       dag_.Push(node);

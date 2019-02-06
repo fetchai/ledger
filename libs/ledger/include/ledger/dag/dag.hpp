@@ -73,6 +73,7 @@ public:
 
   void OnNewNode(CallbackFunction cb)
   {
+    LOG_STACK_TRACE_POINT;      
     on_new_node_ = std::move(cb);
   }
 
@@ -80,6 +81,7 @@ public:
 private:
   void SignalNewNode(DAGNode n)
   {
+    LOG_STACK_TRACE_POINT;      
     if(on_new_node_) on_new_node_(std::move(n));
   }
 
