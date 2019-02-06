@@ -401,7 +401,7 @@ public:
       StackTrace();
     }
 
-    //    exit(-1);
+    exit(-1);
   }
 
   template <typename... Args>
@@ -417,7 +417,7 @@ public:
       StackTrace();
     }
 
-    //    exit(-1);
+    exit(-1);
   }
 
   template <typename... Args>

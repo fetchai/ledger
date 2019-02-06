@@ -87,14 +87,17 @@ public:
 
     this->Add(DAG_SYNCRONISATION, &dag_protocol_); // TODO: Use shared pointers
 
-    dag_subscription_->SetMessageHandler([this](Address const &from, uint16_t, uint16_t, uint16_t,
+    dag_subscription_->SetMessageHandler([/*this*/](Address const &from, uint16_t, uint16_t, uint16_t,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter)  {
+/*      
         DAGNode node = UnpackNode(payload);
+
         thread_pool_->Post([this, node]() { 
 
           AddNodeToQueue(node); 
         });
+  */      
       });
 
     // Worker thread
@@ -107,6 +110,7 @@ public:
   void IdleUntilWork() 
   {
     std::cout << "IDLE" << std::endl;
+    /*
     if(!syncronising_)
     {
       std::this_thread::sleep_for( std::chrono::milliseconds(100));
@@ -117,7 +121,7 @@ public:
       std::this_thread::sleep_for( std::chrono::milliseconds(1000));
       thread_pool_->Post([this]() { IdleUntilWork(); });        
     }
-
+*/
   }
 
   void AddUrgentNodes() 
@@ -301,7 +305,7 @@ public:
     std::vector<DAGNode> dag_nodes;
     for (uint64_t        i = 0; i < dag_chunks; ++i)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Resolving: ", i);            
+      FETCH_LOG_INFO(LOGGING_NAME, "Resolving: ", i, dag_chunk_requests.size());            
       dag_nodes.clear();
       dag_chunk_requests[i]->Wait();
       FETCH_LOG_INFO(LOGGING_NAME, "XX: ", int(dag_chunk_requests[i]->GetState()));

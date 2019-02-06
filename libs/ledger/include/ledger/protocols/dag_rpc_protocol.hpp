@@ -76,6 +76,7 @@ private:
       to = dag_.node_count();
     }
 
+    FETCH_LOG_INFO("DAGProtocol", "Getting ", from, " to ", to, " / ", dag_.node_count());
     return dag_.GetChunk(from, to);
   }
   /// @}
