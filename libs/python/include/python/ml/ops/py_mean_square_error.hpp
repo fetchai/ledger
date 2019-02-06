@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <ml/ops/relu.hpp>
+#include <ml/ops/mean_square_error.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -27,11 +27,13 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-void BuildRelu(std::string const &custom_name, pybind11::module &module)
+void BuildMeanSquareError(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(module, custom_name.c_str())
+  py::class_<fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>>(module,
+                                                                               custom_name.c_str())
       .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>::Forward);
+      .def("Forward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Forward)
+      .def("Backward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Backward);
 }
 
 }  // namespace ops

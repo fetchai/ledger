@@ -70,6 +70,7 @@
 
 #include "python/ml/layers/py_layer.hpp"
 #include "python/ml/ops/py_fully_connected.hpp"
+#include "python/ml/ops/py_mean_square_error.hpp"
 #include "python/ml/ops/py_ops.hpp"
 #include "python/ml/ops/py_relu.hpp"
 #include "python/ml/py_graph.hpp"
@@ -274,17 +275,10 @@ PYBIND11_MODULE(fetch, module)
 
   // Machine Learning
 
-  using ArrayType = fetch::math::linalg::Matrix<double>;
-  fetch::ml::BuildVariable<ArrayType>("Variable", ns_fetch_ml);
-  using VariableType = fetch::ml::Variable<fetch::math::linalg::Matrix<double>>;
-  fetch::ml::BuildSession<ArrayType, VariableType>("Session", ns_fetch_ml);
-  fetch::ml::layers::BuildLayers<ArrayType>("Layer", ns_fetch_ml);
-
-  fetch::ml::ops::BuildOps<ArrayType>("Ops", ns_fetch_ml);
-
   fetch::ml::BuildGraph("Graph", ns_fetch_ml);
   fetch::ml::ops::BuildRelu("Relu", ns_fetch_ml);
   fetch::ml::ops::BuildFullyConnected("FullyConnected", ns_fetch_ml);
+  fetch::ml::ops::BuildMeanSquareError("MeanSquareError", ns_fetch_ml);
 
   /////////////
 
@@ -293,5 +287,4 @@ PYBIND11_MODULE(fetch, module)
   fetch::auctions::BuildBid("Bid", ns_fetch_auctions);
 
   fetch::auctions::BuildMockSmartLedger("MockSmartLedger", ns_fetch_auctions);
-
 }

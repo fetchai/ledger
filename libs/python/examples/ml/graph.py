@@ -11,8 +11,19 @@ g.AddRelu("Relu2", "FC2")
 g.AddFullyConnected("FC3", "Relu2", 100, 10)
 g.AddSoftmax("Softmax", "FC3")
 
-t = fetch.math.tensor.Tensor([28, 28])
-g.SetInput("Input", t)
-res = g.Evaluate("Softmax")
+criterion = fetch.ml.MeanSquareError()
 
-print(res.ToString())
+gt = fetch.math.tensor.Tensor([10])
+gt.Set([4], 1) # Overfitting the network to always output 1 in  pos 4
+for i in range(0, 1000):
+    t = fetch.math.tensor.Tensor([28, 28])
+    g.SetInput("Input", t)
+    res = g.Evaluate("Softmax")
+    
+    loss = criterion.Forward([res, gt])
+    grad = criterion.Backward([res, gt])
+
+    g.Backpropagate("Softmax", grad)
+    g.Step(0.01)
+
+    print(str(loss))

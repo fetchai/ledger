@@ -38,6 +38,8 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
       .def(py::init<>())
       .def("SetInput", &fetch::ml::Graph<ArrayType>::SetInput)
       .def("Evaluate", &fetch::ml::Graph<ArrayType>::Evaluate)
+      .def("Backpropagate", &fetch::ml::Graph<ArrayType>::BackPropagate)
+      .def("Step", &fetch::ml::Graph<ArrayType>::Step)
       .def("AddInput",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name) {
              g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name, {});

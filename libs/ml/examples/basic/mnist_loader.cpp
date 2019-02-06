@@ -24,7 +24,6 @@ using namespace std;
 
 using uchar = unsigned char;
 
-
 uchar **read_mnist_images(string full_path, std::uint32_t &number_of_images,
                           unsigned int &image_size)
 {

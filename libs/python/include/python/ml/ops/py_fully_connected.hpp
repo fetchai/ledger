@@ -29,7 +29,8 @@ namespace ops {
 
 void BuildFullyConnected(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(module, "FullyConnected")
+  py::class_<fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(module,
+                                                                         custom_name.c_str())
       .def(py::init<size_t, size_t>())
       .def("Forward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Forward)
       .def("Backward", &fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>::Backward);
