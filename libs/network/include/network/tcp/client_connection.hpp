@@ -117,12 +117,6 @@ public:
 
   void Send(message_type const &msg) override
   {
-
-    if(msg.size() == 2508)
-    {
-      ERROR_BACKTRACE;
-    }
-
     LOG_STACK_TRACE_POINT;
 
     if (shutting_down_)
@@ -193,8 +187,6 @@ private:
 
       write_in_use_mutex_.unlock();
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Writing to socket");
-
       // Try to get a message from the queue
       write_mutex_.lock();
 
@@ -211,8 +203,6 @@ private:
       SetHeader(header, buffer.size());
       write_queue_.pop_front();
       write_mutex_.unlock();
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Socket write. Size: ", buffer.size());
 
       // Scope for closures
       {
