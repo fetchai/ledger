@@ -82,6 +82,12 @@ public:
 
   ~ClientConnection()
   {
+    running_ = false;
+    if(thread_)
+    {
+      thread_->join();
+    }
+
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
@@ -90,13 +96,6 @@ public:
     }
 
     ptr->Leave(this->handle());
-
-    running_ = false;
-
-    if(thread_)
-    {
-      thread_->join();
-    }
   }
 
   void Start()
