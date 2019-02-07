@@ -37,7 +37,6 @@ public:
   using mutex_type       = fetch::mutex::Mutex;
   using NewBlockCallBack = std::function<void(Block &)>;
 
-
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
   // Construction / Destruction
