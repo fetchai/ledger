@@ -29,6 +29,7 @@
 
 #include "meta/type_traits.hpp"
 #include <cassert>
+#include <iomanip>
 #include <limits>
 
 namespace fetch {
@@ -223,7 +224,7 @@ public:
   using Type         = typename BaseTypeInfo::ValueType;
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
-
+ 
   const Type fractional_mask = Type((2 ^ fractional_bits) - 1);
   const Type integer_mask    = ~fractional_mask;
 
@@ -253,7 +254,7 @@ public:
     : data_(static_cast<Type>(n * one))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
-    assert(details::CheckNoRounding(n, fractional_bits));
+    // assert(details::CheckNoRounding(n, fractional_bits));
   }
 
   FixedPoint(const FixedPoint &o)
@@ -499,6 +500,17 @@ public:
     return FixedPoint(n, NoScale());
   }
 };
+
+template <std::size_t I, std::size_t F>
+std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
+{
+  std::ios_base::fmtflags f(s.flags());
+  s << std::setprecision(F);
+  s << std::fixed;
+  s << double(n);
+  s.flags(f);
+  return s;
+}
 
 }  // namespace fixed_point
 }  // namespace fetch

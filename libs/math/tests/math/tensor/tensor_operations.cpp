@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -24,7 +25,9 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, long, float, double>;
+using MyTypes = ::testing::Types<int, long, float, double,
+				 fetch::fixed_point::FixedPoint<16, 16>,
+				 fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)
@@ -43,8 +46,8 @@ TYPED_TEST(TensorOperationsTest, inline_add_test)
   t1.InlineAdd(t2);
   for (size_t i(0); i < 8; ++i)
   {
-    EXPECT_EQ(t1.At(i), gtInput[i]);
-    EXPECT_EQ(t2.At(i), t2Input[i]);
+    EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
+    EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
   }
 }
 
@@ -64,8 +67,8 @@ TYPED_TEST(TensorOperationsTest, inline_add_with_stride_test)
   t1.InlineAdd(t2);
   for (size_t i(0); i < 8; ++i)
   {
-    EXPECT_EQ(t1.At(i), gtInput[i]);
-    EXPECT_EQ(t2.At(i), t2Input[i]);
+    EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
+    EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
   }
 }
 
@@ -85,8 +88,8 @@ TYPED_TEST(TensorOperationsTest, inline_mul_test)
   t1.InlineMultiply(t2);
   for (size_t i(0); i < 8; ++i)
   {
-    EXPECT_EQ(t1.At(i), gtInput[i]);
-    EXPECT_EQ(t2.At(i), t2Input[i]);
+    EXPECT_EQ(t1.At(i), TypeParam(gtInput[i]));
+    EXPECT_EQ(t2.At(i), TypeParam(t2Input[i]));
   }
 }
 
@@ -183,9 +186,9 @@ TYPED_TEST(TensorOperationsTest, transpose_and_slice_test)
   fetch::math::Tensor<TypeParam> t3 = t2.Slice(2);
   EXPECT_EQ(t3.shape(), std::vector<size_t>({3}));
 
-  EXPECT_EQ(t3.At(0), 2);
-  EXPECT_EQ(t3.At(1), 7);
-  EXPECT_EQ(t3.At(2), 12);
+  EXPECT_EQ(t3.At(0), TypeParam(2));
+  EXPECT_EQ(t3.At(1), TypeParam(7));
+  EXPECT_EQ(t3.At(2), TypeParam(12));
 }
 
 TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
