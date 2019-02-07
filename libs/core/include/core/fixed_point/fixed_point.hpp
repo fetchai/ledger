@@ -335,7 +335,7 @@ public:
 
   operator int() const
   {
-    return (data_ & integer_mask) >> fractional_bits;
+    return int((data_ & integer_mask) >> fractional_bits);
   }
 
   operator float() const
