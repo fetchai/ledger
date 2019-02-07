@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+
 namespace fetch {
 namespace fixed_point {
 template <std::size_t I, std::size_t F>
