@@ -68,7 +68,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
-  ASSERT_FLOAT_EQ(op.Forward({data1, data2}), typename TypeParam::Type(191.18f / 8.0f / 2.0f));
+  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 191.18f / 8.0f / 2.0f);
   // fetch::math::MeanSquareError divided sum by number of element (ie 8 in this case)
   // and then further didivde by do (cf issue 343)
 }
