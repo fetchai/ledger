@@ -262,6 +262,8 @@ private:
 
   void ReadHeader() noexcept
   {
+    std::cerr << " read header" << std::endl;
+
     LOG_STACK_TRACE_POINT;
     auto strand = strand_.lock();
     if (!strand)
@@ -323,6 +325,8 @@ private:
     assert(header.size() >= sizeof(networkMagic_));
     uint64_t magic = *reinterpret_cast<const uint64_t *>(header.pointer());
     uint64_t size  = *reinterpret_cast<const uint64_t *>(header.pointer() + sizeof(uint64_t));
+
+    std::cerr << " read header size: " << size << std::endl;
 
     if (magic != networkMagic_)
     {
