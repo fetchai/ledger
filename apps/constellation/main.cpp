@@ -52,7 +52,7 @@ using ProverPtr      = std::unique_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
 
-using fetch::chain::consensus::ConsensusMinerType;
+using fetch::ledger::consensus::ConsensusMinerType;
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};

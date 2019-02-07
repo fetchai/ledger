@@ -49,8 +49,8 @@ T Clip3(T value, T min_value, T max_value)
  * @param summary The reference to the transaction
  * @param log2_num_lanes The log2 of the number of lanes
  */
-BasicMiner::TransactionEntry::TransactionEntry(chain::TransactionSummary const &summary,
-                                               uint32_t                         log2_num_lanes)
+BasicMiner::TransactionEntry::TransactionEntry(ledger::TransactionSummary const &summary,
+                                               uint32_t                          log2_num_lanes)
   : resources{1u << log2_num_lanes}
   , transaction{summary}
 
@@ -83,7 +83,7 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, uint32_t /*num_slices*/)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(chain::TransactionSummary const &tx)
+void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
 {
   FETCH_LOCK(pending_lock_);
 

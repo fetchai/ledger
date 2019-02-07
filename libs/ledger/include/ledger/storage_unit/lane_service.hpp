@@ -55,17 +55,16 @@ public:
   using MuddlePtr      = std::shared_ptr<Muddle>;
   using Server         = fetch::muddle::rpc::Server;
   using ServerPtr      = std::shared_ptr<Server>;
-  using CertificatePtr = Muddle::CertificatePtr;  // == std::unique_ptr<crypto::Prover>;
+  using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore            = storage::RevertibleDocumentStore;
-  using DocumentStoreProtocol    = storage::RevertibleDocumentStoreProtocol;
-  using TransactionStore         = storage::TransientObjectStore<fetch::chain::VerifiedTransaction>;
-  using TransactionStoreProtocol = storage::ObjectStoreProtocol<fetch::chain::VerifiedTransaction>;
-  using BackgroundedWork         = network::BackgroundedWork<TransactionStoreSyncService>;
-  using BackgroundedWorkThread   = network::HasWorkerThread<BackgroundedWork>;
+  using DocumentStore             = storage::RevertibleDocumentStore;
+  using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
+  using TransactionStore          = storage::TransientObjectStore<VerifiedTransaction>;
+  using TransactionStoreProtocol  = storage::ObjectStoreProtocol<VerifiedTransaction>;
+  using BackgroundedWork          = network::BackgroundedWork<TransactionStoreSyncService>;
+  using BackgroundedWorkThread    = network::HasWorkerThread<BackgroundedWork>;
   using BackgroundedWorkThreadPtr = std::shared_ptr<BackgroundedWorkThread>;
-  using VerifiedTransaction       = chain::VerifiedTransaction;
 
   using Identifier = byte_array::ConstByteArray;
 
@@ -227,8 +226,7 @@ private:
 
   ServerPtr server_;
   MuddlePtr muddle_;  ///< The muddle networking service
-  // mutex::Mutex certificate_lock_{__LINE__, __FILE__};
-  uint16_t port_;
+  uint16_t  port_;
 
   BackgroundedWork          bg_work_;
   BackgroundedWorkThreadPtr workthread_;

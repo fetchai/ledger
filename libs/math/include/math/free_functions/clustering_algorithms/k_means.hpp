@@ -221,7 +221,7 @@ private:
         // initialise k means
         fetch::core::Vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
         k_means_      = ArrayType(k_means_shape);
-        prev_k_means_ = ArrayType::Zeroes(k_means_shape);
+        prev_k_means_ = ArrayType(k_means_shape);
       }
     }
 
@@ -266,7 +266,7 @@ private:
       // initialise k means
       fetch::core::Vector<std::size_t> k_means_shape{n_clusters_, n_dimensions_};
       k_means_      = ArrayType(k_means_shape);
-      prev_k_means_ = ArrayType::Zeroes(k_means_shape);
+      prev_k_means_ = ArrayType(k_means_shape);
 
       // if any clusters begin empty, we'll actually default to KMeans++ via fall through
       if (sufficient_previous_assignment)
@@ -440,7 +440,7 @@ private:
     // assign first cluster centre
     for (std::size_t j = 0; j < n_dimensions_; ++j)
     {
-      k_means_.Set(0, j, data.At(data_idxs_[0], j));
+      k_means_.Set(std::vector<size_t>({j, 0}), data.Get(std::vector<size_t>({j, data_idxs_[0]})));
     }
 
     // assign remaining cluster centres
@@ -467,7 +467,7 @@ private:
         {
           for (std::size_t k = 0; k < n_dimensions_; ++k)
           {
-            temp_k_.Set(l, k, k_means_.At(i, k));
+            temp_k_.Set(std::vector<size_t>({k, l}), k_means_.Get({k, i}));
           }
         }
 
@@ -512,7 +512,7 @@ private:
 
       for (std::size_t j = 0; j < n_dimensions_; ++j)
       {
-        k_means_.Set(cur_cluster, j, data.At(assigned_data_points.back(), j));
+        k_means_.Set({j, cur_cluster}, data.Get({j, assigned_data_points.back()}));
       }
 
       // update count of remaining data points and clusters
@@ -653,7 +653,7 @@ private:
    */
   void PartialUpdate(ArrayType const &data)
   {
-    std::fill(k_means_.begin(), k_means_.end(), 0);
+    k_means_.Fill(0);
     // get KSums
     std::size_t cur_k;
     for (std::size_t i = 0; i < n_points_; ++i)
@@ -663,7 +663,9 @@ private:
         cur_k = static_cast<std::size_t>(k_assignment_[i]);
         for (std::size_t j = 0; j < n_dimensions_; ++j)
         {
-          k_means_.Set(cur_k, j, k_means_.At(cur_k, j) + data.At(i, j));
+          k_means_.Set(std::vector<size_t>({j, cur_k}),
+                       k_means_.Get(std::vector<size_t>({j, cur_k})) +
+                           data.Get(std::vector<size_t>({j, i})));
         }
       }
     }
@@ -673,7 +675,9 @@ private:
     {
       for (std::size_t i = 0; i < n_dimensions_; ++i)
       {
-        k_means_.Set(m, i, k_means_.At(m, i) / static_cast<typename ArrayType::Type>(k_count_[m]));
+        k_means_.Set(std::vector<size_t>({m, i}),
+                     k_means_.Get(std::vector<size_t>({m, i})) /
+                         static_cast<typename ArrayType::Type>(k_count_[m]));
       }
     }
   }

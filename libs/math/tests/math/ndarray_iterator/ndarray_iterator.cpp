@@ -22,7 +22,6 @@
 //#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 
-//#include "math/linalg/matrix.hpp"
 #include "math/free_functions/free_functions.hpp"
 #include "math/ndarray.hpp"
 #include "math/ndarray_iterator.hpp"

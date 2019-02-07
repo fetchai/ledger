@@ -33,11 +33,9 @@
 #include <memory>
 
 namespace fetch {
-namespace chain {
-class BlockCoordinator;
-}  // namespace chain
 namespace ledger {
 
+class BlockCoordinator;
 class MainChain;
 class MainChainSyncWorker;
 
@@ -46,19 +44,18 @@ class MainChainRpcService : public muddle::rpc::Server,
 {
 public:
   friend class MainChainSyncWorker;
-  using MuddleEndpoint   = muddle::MuddleEndpoint;
-  using MainChain        = ledger::MainChain;
-  using BlockCoordinator = chain::BlockCoordinator;
-  using Subscription     = muddle::Subscription;
-  using SubscriptionPtr  = std::shared_ptr<Subscription>;
-  using Address          = muddle::Packet::Address;
-  using Block            = ledger::Block;
-  using BlockHash        = Block::Digest;
-  using Promise          = service::Promise;
-  using BlocksPromise    = network::PromiseOf<std::vector<Block>>;
-  using RpcClient        = muddle::rpc::Client;
-  using TrustSystem      = p2p::P2PTrustInterface<Address>;
-  using FutureTimepoint  = network::FutureTimepoint;
+  using MuddleEndpoint  = muddle::MuddleEndpoint;
+  using MainChain       = ledger::MainChain;
+  using Subscription    = muddle::Subscription;
+  using SubscriptionPtr = std::shared_ptr<Subscription>;
+  using Address         = muddle::Packet::Address;
+  using Block           = ledger::Block;
+  using BlockHash       = Block::Digest;
+  using Promise         = service::Promise;
+  using RpcClient       = muddle::rpc::Client;
+  using TrustSystem     = p2p::P2PTrustInterface<Address>;
+  using FutureTimepoint = network::FutureTimepoint;
+  using BlocksPromise   = network::PromiseOf<std::vector<Block>>;
 
   using Worker                    = MainChainSyncWorker;
   using WorkerPtr                 = std::shared_ptr<Worker>;

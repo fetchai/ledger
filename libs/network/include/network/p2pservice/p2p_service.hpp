@@ -189,8 +189,8 @@ private:
   std::size_t min_peers_ = 2;
   std::size_t max_peers_;
   std::size_t transient_peers_;
-  uint32_t    process_cycle_ms_;
 
+  uint32_t                  process_cycle_ms_;
   std::chrono::milliseconds peer_update_cycle_ms_;
   FutureTimepoint           process_future_timepoint_;
   std::chrono::milliseconds manifest_update_cycle_ms_;

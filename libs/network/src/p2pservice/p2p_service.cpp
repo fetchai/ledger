@@ -225,6 +225,8 @@ void P2PService::WorkCycle()
   latest_block_sync_->WorkCycle();
   if (peer_update_cycle_ms_.count() > 0 && process_future_timepoint_.IsDue())
   {
+    // Important, set the cycle time early to prevent rapid re-calls
+    // in the case of exceptions.
     process_future_timepoint_.Set(peer_update_cycle_ms_);
 
     AddressSet    active_addresses;
@@ -251,10 +253,28 @@ void P2PService::WorkCycle()
 
   if (manifest_update_cycle_ms_.count() > 0 && manifests_next_update_timepoint_.IsDue())
   {
+    // Important, set the cycle time early to prevent rapid re-calls
+    // in the case of exceptions.
+    process_future_timepoint_.Set(manifest_update_cycle_ms_);
+
     AddressSet    active_addresses;
     ConnectionMap active_connections;
+
     GetConnectionStatus(active_connections, active_addresses);
 
+    // Now we have the list of active addresses from the networking,
+    // make all the subsystems try to match it. We work off the
+    // network's ACTUAL connections instead of the trust system's
+    // ideally desired peer list because this means that we know we've
+    // got one connection to the target and hence the subsystem
+    // connections can be more expected to work.
+    UpdateManifests(active_addresses);
+
+    // At this point, if we aren't doing the peer-churning section
+    // above, we'll "fake" the trust system's contents by adding the
+    // connected peers into it.  This will have the effect of making
+    // the HTTP requests for SwarmEye work for static network geometry
+    // as well as dynamic.
     if (!peer_update_cycle_ms_.count())
     {
       for (const auto &c : active_connections)
@@ -269,11 +289,6 @@ void P2PService::WorkCycle()
         }
       }
     }
-
-    // collect up manifests from connected peers
-    process_future_timepoint_.Set(manifest_update_cycle_ms_);
-
-    UpdateManifests(active_addresses);
   }
 }
 

@@ -32,7 +32,7 @@ void BuildFirstPriceAuction(std::string const &custom_name, pybind11::module &mo
 
   namespace py = pybind11;
   py::class_<FirstPriceAuction>(module, custom_name.c_str())
-      .def(py::init<BlockId, BlockId>())
+      .def(py::init<>())
       .def("AddItem",
            [](FirstPriceAuction &ca, Item const &item) {
              ErrorCode ec;

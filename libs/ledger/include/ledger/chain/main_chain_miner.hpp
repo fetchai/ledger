@@ -38,7 +38,7 @@ class MainChainMiner
 public:
   using ConstByteArray          = byte_array::ConstByteArray;
   using BlockHash               = Block::Digest;
-  using ConsensusMinerInterface = std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+  using ConsensusMinerInterface = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using MinerInterface          = fetch::miner::MinerInterface;
   using BlockCompleteCallback   = std::function<void(Block const &)>;
 
@@ -47,7 +47,7 @@ public:
 
   // Construction / Destruction
   MainChainMiner(std::size_t num_lanes, std::size_t num_slices, MainChain &mainChain,
-                 chain::BlockCoordinator &block_coordinator, MinerInterface &miner,
+                 BlockCoordinator &block_coordinator, MinerInterface &miner,
                  ConsensusMinerInterface &consensus_miner, ConstByteArray miner_identity,
                  std::chrono::steady_clock::duration block_interval = std::chrono::milliseconds{
                      BLOCK_PERIOD_MS});
@@ -78,7 +78,7 @@ private:
   std::size_t       num_slices_;
 
   MainChain &                         main_chain_;
-  chain::BlockCoordinator &           blockCoordinator_;
+  BlockCoordinator &                  blockCoordinator_;
   MinerInterface &                    miner_;
   ConsensusMinerInterface             consensus_miner_;
   std::thread                         thread_;

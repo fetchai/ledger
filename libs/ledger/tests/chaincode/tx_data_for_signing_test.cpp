@@ -23,7 +23,7 @@
 #include <memory>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 namespace {
 
@@ -51,7 +51,7 @@ TEST_F(TxDataForSigningTest, basic_sign_verify_cycle)
     crypto::openssl::ECDSAPrivateKey<> key;
 
     tx.Sign(key.KeyAsBin(), txdfs);
-    chain::Signatory const &sig = *tx.signatures().begin();
+    ledger::Signatory const &sig = *tx.signatures().begin();
     EXPECT_TRUE(txdfs.Verify(sig));
     EXPECT_TRUE(tx.Verify());
   }
@@ -83,5 +83,5 @@ TEST_F(TxDataForSigningTest, data_for_signing_are_equal_after_serialize_deserial
 }
 }  // namespace
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

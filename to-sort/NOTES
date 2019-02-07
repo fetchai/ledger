@@ -1,7 +1,0 @@
-port is always uin16_t
-connection count is always uint16_t
-group number is always group_type (defined in chain/transaction.hpp)
-byte array and buffer sizes are always uint64_t
-lines are always int
-
-client_handle_type uint64_t

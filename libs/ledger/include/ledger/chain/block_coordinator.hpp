@@ -26,7 +26,7 @@
 #include <thread>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 class BlockCoordinator
 {
@@ -110,5 +110,5 @@ private:
   NewBlockCallBack callback_;
 };
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
