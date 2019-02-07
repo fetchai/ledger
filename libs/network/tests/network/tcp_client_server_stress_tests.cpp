@@ -303,7 +303,7 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF)); // 0x41 = 'A'
+      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
 
@@ -395,7 +395,8 @@ void TestCase6(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char        to_fill = char(0x41 + (i & 0xFF)); // 0x41 = 'A'
+      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+
       std::string send_me(1 << (i + 14), to_fill);
       to_send.push_back(send_me);
     }
