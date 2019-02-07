@@ -38,7 +38,7 @@ std::atomic<std::size_t> serverReceivedCount{0};
 
 std::vector<message_type> globalMessagesFromServer_{};
 std::vector<message_type> globalMessagesToServer_{};
-std::mutex messages_;
+std::mutex                messages_;
 
 // Basic server
 class Server : public TCPServer
@@ -50,7 +50,7 @@ public:
 
   ~Server() override = default;
 
-  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
+  void PushRequest(connection_handle_type /*client*/,message_type const &msg) override
   {
     /*std::cerr << "Message: " << msg << std::endl;*/
     std::lock_guard<std::mutex> lock(messages_);
@@ -305,14 +305,14 @@ void TestCase5(std::string host, uint16_t port)
     {
       char to_fill = 'a' + char(i);
 
-      std::string send_me(1 << (i+14), to_fill);
+      std::string send_me(1 << (i + 14), to_fill);
 
       to_send.push_back(send_me);
     }
 
     // This will be over a single connection
     auto i = std::make_shared<Client>(host, port, nmanager);
-    if(!(i->WaitForAlive(100)))
+    if (!(i->WaitForAlive(100)))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened");
       throw 1;
@@ -323,7 +323,7 @@ void TestCase5(std::string host, uint16_t port)
     auto cb = [&] {
       std::size_t send_index = send_atomic++;
 
-      if(send_index < to_send.size())
+      if (send_index < to_send.size())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Sending ", send_index);
         i->Send(to_send[send_index]);
@@ -332,19 +332,20 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < to_send.size(); ++i)
     {
-      auto dummy0 = std::async(std::launch::async, cb);  // dummy is important to force async execution
+      auto dummy0 =
+          std::async(std::launch::async, cb);  // dummy is important to force async execution
       auto dummy1 = std::async(std::launch::async, cb);
       auto dummy2 = std::async(std::launch::async, cb);
       auto dummy3 = std::async(std::launch::async, cb);
       auto dummy4 = std::async(std::launch::async, cb);
     }
 
-    for(;;)
+    for (;;)
     {
       {
         std::lock_guard<std::mutex> lock(messages_);
 
-        if(globalMessagesFromServer_.size() == to_send.size())
+        if (globalMessagesFromServer_.size() == to_send.size())
         {
           break;
         }
@@ -358,11 +359,11 @@ void TestCase5(std::string host, uint16_t port)
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send.begin(), to_send.end());
 
-    if(globalMessagesFromServer_ != to_send)
+    if (globalMessagesFromServer_ != to_send)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
 
-      for(auto const &i : globalMessagesFromServer_)
+      for (auto const &i : globalMessagesFromServer_)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, i);
       }
@@ -394,14 +395,14 @@ void TestCase6(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = 'a' + char(i);
-      std::string send_me(1 << (i+14), to_fill);
+      char        to_fill = 'a' + char(i);
+      std::string send_me(1 << (i + 14), to_fill);
       to_send.push_back(send_me);
     }
 
     // This will be over a single connection
     auto i = std::make_shared<Client>(host, port, nmanager);
-    if(!(i->WaitForAlive(100)))
+    if (!(i->WaitForAlive(100)))
     {
       std::cerr << "client never opened!" << std::endl;
       throw 1;
@@ -409,8 +410,7 @@ void TestCase6(std::string host, uint16_t port)
 
     std::mutex messages_recieve;
 
-    auto lam = [&](message_type const &msg)
-    {
+    auto lam = [&](message_type const &msg) {
       std::lock_guard<std::mutex> lock(messages_recieve);
       to_recieve.push_back(msg);
     };
@@ -422,7 +422,7 @@ void TestCase6(std::string host, uint16_t port)
     auto cb = [&] {
       std::size_t send_index = send_atomic++;
 
-      if(send_index < to_send.size())
+      if (send_index < to_send.size())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Sending ", send_index);
         server->Broadcast(to_send[send_index]);
@@ -431,19 +431,20 @@ void TestCase6(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < to_send.size(); ++i)
     {
-      auto dummy0 = std::async(std::launch::async, cb);  // dummy is important to force async execution
+      auto dummy0 =
+          std::async(std::launch::async, cb);  // dummy is important to force async execution
       auto dummy1 = std::async(std::launch::async, cb);
       auto dummy2 = std::async(std::launch::async, cb);
       auto dummy3 = std::async(std::launch::async, cb);
       auto dummy4 = std::async(std::launch::async, cb);
     }
 
-    for(;;)
+    for (;;)
     {
       {
         std::lock_guard<std::mutex> lock(messages_recieve);
 
-        if(to_recieve.size() == to_send.size())
+        if (to_recieve.size() == to_send.size())
         {
           break;
         }
@@ -456,11 +457,11 @@ void TestCase6(std::string host, uint16_t port)
     std::sort(to_recieve.begin(), to_recieve.end());
     std::sort(to_send.begin(), to_send.end());
 
-    if(to_recieve != to_send)
+    if (to_recieve != to_send)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
 
-      for(auto const &i : globalMessagesFromServer_)
+      for (auto const &i : globalMessagesFromServer_)
       {
         FETCH_LOG_ERROR(LOGGING_NAME, i);
       }
