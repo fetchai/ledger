@@ -78,9 +78,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     bool ret = true;
-
     clients_mutex_.lock();
-    FETCH_LOG_INFO(LOGGING_NAME, "Sending to client: ", client, " of: ", clients_.size());
 
     auto which{clients_.find(client)};
     if (which != clients_.end())
@@ -93,14 +91,7 @@ public:
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Client not found when attempting callback. Tried: ", client);
-
-      /*
-      for(auto const &client_id : clients_)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Available: ", client_id);
-      }*/
-
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client not found.");
       ret = false;
     }
     clients_mutex_.unlock();

@@ -50,7 +50,7 @@ public:
 
   ~Server() override = default;
 
-  void PushRequest(connection_handle_type /*client*/,message_type const &msg) override
+  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
     /*std::cerr << "Message: " << msg << std::endl;*/
     std::lock_guard<std::mutex> lock(messages_);
@@ -303,7 +303,7 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = 'a' + char(i);
+      char to_fill = 'a' + char(i & 0xFF);
 
       std::string send_me(1 << (i + 14), to_fill);
 
@@ -395,7 +395,7 @@ void TestCase6(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char        to_fill = 'a' + char(i);
+      char        to_fill = 'a' + char(i & 0xFF);
       std::string send_me(1 << (i + 14), to_fill);
       to_send.push_back(send_me);
     }
