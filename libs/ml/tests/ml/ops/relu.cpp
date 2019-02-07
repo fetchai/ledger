@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/relu.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -28,9 +27,7 @@ class ReluTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
-                                 fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
-                                 fetch::math::linalg::Matrix<float>,
-                                 fetch::math::linalg::Matrix<double>, fetch::math::Tensor<int>,
+                                 fetch::math::NDArray<double>, fetch::math::Tensor<int>,
                                  fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(ReluTest, MyTypes);
 

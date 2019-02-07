@@ -24,11 +24,6 @@
 namespace fetch {
 namespace math {
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
-
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
 

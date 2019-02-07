@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/correlation/pearson.hpp"
-#include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -38,14 +37,11 @@ inline typename A::Type WrapperPearson(A const &a, A const &b)
 
 inline void BuildPearsonCorrelation(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperPearson<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperPearson<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperPearson<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperPearson<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperPearson<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperPearson<ShapelessArray<double>>)
       .def(custom_name.c_str(), &WrapperPearson<ShapelessArray<float>>);

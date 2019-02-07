@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/mean_square_error.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -27,10 +26,8 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>,
-                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
