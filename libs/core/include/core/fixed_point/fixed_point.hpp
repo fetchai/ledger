@@ -107,12 +107,11 @@ struct TypeFromSize<8>
  * @return
  */
 template <std::size_t I, std::size_t F>
-FixedPoint<I, F> Divide(const FixedPoint<I, F> & /*numerator*/,
-                        const FixedPoint<I, F> & /*denominator*/, FixedPoint<I, F> & /*remainder*/)
+FixedPoint<I, F> Divide(const FixedPoint<I, F> &numerator, const FixedPoint<I, F> &denominator,
+                        FixedPoint<I, F> & /*remainder*/)
 {
-  assert(0);  // not yet implemented
-  FixedPoint<I, F> quotient(0);
-  return quotient;
+  // TODO(private, 501) --
+  return numerator / denominator;
 }
 
 /**

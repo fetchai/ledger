@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/mean_square_error.hpp"
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -27,7 +28,10 @@ class MeanSquareErrorTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 // -- Insufficiant Precision
+                                 // fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
@@ -43,7 +47,7 @@ TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
   }
 
   fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
-  EXPECT_EQ(op.Forward({data1, data2}), 0.0f);
+  EXPECT_EQ(op.Forward({data1, data2}), typename TypeParam::Type(0));
 }
 
 TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
@@ -64,7 +68,7 @@ TYPED_TEST(MeanSquareErrorTest, one_dimensional_forward_test)
   }
 
   fetch::ml::ops::MeanSquareErrorLayer<TypeParam> op;
-  ASSERT_FLOAT_EQ(float(op.Forward({data1, data2})), 191.18f / 8.0f / 2.0f);
+  ASSERT_FLOAT_EQ(op.Forward({data1, data2}), typename TypeParam::Type(191.18f / 8.0f / 2.0f));
   // fetch::math::MeanSquareError divided sum by number of element (ie 8 in this case)
   // and then further didivde by do (cf issue 343)
 }
