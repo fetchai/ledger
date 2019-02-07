@@ -10,10 +10,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(blas_gtest fetch-math math/linalg/blas/)
-
-add_fetch_test(matrix_gtest fetch-math math/linalg/matrix)
-target_link_libraries(matrix_gtest PRIVATE pthread)
 
 add_fetch_test(ndarray_gtest fetch-math math/ndarray)
 add_fetch_test(ndarray_view_gtest fetch-math math/ndarray_view)

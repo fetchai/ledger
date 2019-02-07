@@ -19,7 +19,7 @@
 
 #include <cassert>
 #include <iostream>
-#include <math/linalg/matrix.hpp>
+#include <math/tensor.hpp>
 
 namespace fetch {
 namespace math {
@@ -91,12 +91,12 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
  * @return - Matrix of size (num possible combinations, r), where each row contains a unique
  * combination of r items
  */
-fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
+fetch::math::Tensor<double> combinations(std::size_t n, std::size_t r)
 {
   assert(r <= n);
   if (r == 0)
   {
-    fetch::math::linalg::Matrix<double> output_array{};
+    fetch::math::Tensor<double> output_array({});
     return output_array;
   }
 
@@ -107,7 +107,7 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
   std::vector<bool> v(n);
   std::fill(v.end() - static_cast<int>(r), v.end(), true);
 
-  fetch::math::linalg::Matrix<double> output_array{n_combinations, r};
+  fetch::math::Tensor<double> output_array({r, n_combinations});
   do
   {
     for (std::size_t i = 0; i < n; ++i)
@@ -115,7 +115,7 @@ fetch::math::linalg::Matrix<double> combinations(std::size_t n, std::size_t r)
       if (v[i])
       {
         std::size_t dim = (i + 1);
-        output_array.Set(current_row, current_dim, static_cast<float>(dim));
+        output_array.Set({current_dim, current_row}, static_cast<float>(dim));
         if (current_dim == r - 1)
         {
           ++current_row;
