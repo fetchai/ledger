@@ -25,9 +25,8 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, long, float, double,
-				 fetch::fixed_point::FixedPoint<16, 16>,
-				 fetch::fixed_point::FixedPoint<32, 32>>;
+using MyTypes = ::testing::Types<int, long, float, double, fetch::fixed_point::FixedPoint<16, 16>,
+                                 fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorOperationsTest, MyTypes);
 
 TYPED_TEST(TensorOperationsTest, inline_add_test)

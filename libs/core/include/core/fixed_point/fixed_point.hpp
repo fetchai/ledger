@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "fixed_point_operations.hpp"
 #include "fixed_point_tag.hpp"
 #include <iostream>
 #include <sstream>
@@ -123,10 +124,10 @@ FixedPoint<I, F> Divide(const FixedPoint<I, F> & /*numerator*/,
  * @param result
  */
 template <std::size_t I, std::size_t F>
-void Multiply(const FixedPoint<I, F> & /*lhs*/, const FixedPoint<I, F> & /*rhs*/,
-              FixedPoint<I, F> & /*result*/)
+void Multiply(const FixedPoint<I, F> &lhs, const FixedPoint<I, F> &rhs, FixedPoint<I, F> &result)
 {
-  assert(0);  // not yet implemented
+  // TODO(private, 501) -- Remove cast
+  result = rhs * lhs;
 }
 
 /**
@@ -224,7 +225,7 @@ public:
   using Type         = typename BaseTypeInfo::ValueType;
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
- 
+
   const Type fractional_mask = Type((2 ^ fractional_bits) - 1);
   const Type integer_mask    = ~fractional_mask;
 
