@@ -224,7 +224,7 @@ public:
   using NextType     = typename BaseTypeInfo::NextSize::ValueType;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
-  const Type fractional_mask = UnsignedType((2 ^ fractional_bits) - 1);
+  const Type fractional_mask = Type((2 ^ fractional_bits) - 1);
   const Type integer_mask    = ~fractional_mask;
 
   static const Type one = Type(1) << fractional_bits;
@@ -354,7 +354,9 @@ public:
 
   FixedPoint operator+(const FixedPoint &n) const
   {
-    return FixedPoint(data_ + n.data_);
+    FixedPoint fp;
+    fp.data_ = data_ + n.data_;
+    return fp;
   }
 
   template <typename T>
@@ -365,7 +367,9 @@ public:
 
   FixedPoint operator-(const FixedPoint &n) const
   {
-    return FixedPoint(data_ - n.data_);
+    FixedPoint fp;
+    fp.data_ = data_ - n.data_;
+    return fp;
   }
 
   template <typename T>
@@ -376,7 +380,8 @@ public:
 
   FixedPoint operator*(const FixedPoint &n) const
   {
-    return FixedPoint(data_ * n.data_);
+    // TODO(private, 501)
+    return FixedPoint(double(*this) * double(n));
   }
 
   template <typename T>
@@ -387,7 +392,8 @@ public:
 
   FixedPoint operator/(const FixedPoint &n) const
   {
-    return FixedPoint(data_ / n.data_);
+    // TODO(private, 501)
+    return FixedPoint(double(*this) / double(n));
   }
 
   template <typename T>
