@@ -17,11 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/fixed_point/fixed_point.hpp"
-#include <gtest/gtest.h>
 #include <array>
+#include <gtest/gtest.h>
 #include <iostream>
-
-
 
 TEST(FixedPointTest, Conversion)
 {
@@ -80,7 +78,6 @@ TEST(FixedPointTest, Addition)
   EXPECT_EQ(double(m_one + one), 0.0);
   EXPECT_EQ(double(m_one + m_two), -3.0);
 
-
   // Zero
   fetch::fixed_point::FixedPoint<32, 32> zero(0);
   fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
@@ -90,7 +87,7 @@ TEST(FixedPointTest, Addition)
   EXPECT_EQ(float(zero), 0.0f);
   EXPECT_EQ(float(m_zero), 0.0f);
   EXPECT_EQ(double(zero), 0.0);
-  EXPECT_EQ(double(m_zero), 0.0);  
+  EXPECT_EQ(double(m_zero), 0.0);
 }
 
 TEST(FixedPointTest, Subtraction)
@@ -119,7 +116,7 @@ TEST(FixedPointTest, Subtraction)
   EXPECT_EQ(double(m_one - m_two), 1.0);
 }
 
-TEST(FixedPointTest, Multiplicationtion)
+TEST(FixedPointTest, Multiplication)
 {
   // Positive
   fetch::fixed_point::FixedPoint<32, 32> zero(0);
@@ -139,7 +136,7 @@ TEST(FixedPointTest, Multiplicationtion)
   EXPECT_EQ(double(two * zero), 0.0);
 }
 
-TEST(FixedPointTest, Divide)
+TEST(FixedPointTest, Division)
 {
   // Positive
   fetch::fixed_point::FixedPoint<32, 32> zero(0);
@@ -154,10 +151,105 @@ TEST(FixedPointTest, Divide)
   EXPECT_EQ(float(one / two), 0.5f);
   EXPECT_EQ(double(one / two), 0.5);
 
-  // ???
+  // ??? -- What should the behaviour be here ?
   /*
     EXPECT_EQ(int(two / zero), 0);
     EXPECT_EQ(float(two / zero), 0.0f);
     EXPECT_EQ(double(two / zero), 0.0);
   */
+}
+
+TEST(FixedPointTest, Comparaison)
+{
+  fetch::fixed_point::FixedPoint<32, 32> zero(0);
+  fetch::fixed_point::FixedPoint<32, 32> one(1);
+  fetch::fixed_point::FixedPoint<32, 32> two(2);
+
+  EXPECT_TRUE(zero < one);
+  EXPECT_TRUE(zero < two);
+  EXPECT_TRUE(one < two);
+
+  EXPECT_FALSE(zero > one);
+  EXPECT_FALSE(zero > two);
+  EXPECT_FALSE(one > two);
+
+  EXPECT_FALSE(zero == one);
+  EXPECT_FALSE(zero == two);
+  EXPECT_FALSE(one == two);
+
+  EXPECT_TRUE(zero == zero);
+  EXPECT_TRUE(one == one);
+  EXPECT_TRUE(two == two);
+
+  EXPECT_TRUE(zero >= zero);
+  EXPECT_TRUE(one >= one);
+  EXPECT_TRUE(two >= two);
+
+  EXPECT_TRUE(zero <= zero);
+  EXPECT_TRUE(one <= one);
+  EXPECT_TRUE(two <= two);
+
+  fetch::fixed_point::FixedPoint<32, 32> zero_point_five(0.5);
+  fetch::fixed_point::FixedPoint<32, 32> one_point_five(1.5);
+  fetch::fixed_point::FixedPoint<32, 32> two_point_five(2.5);
+
+  EXPECT_TRUE(zero_point_five < one);
+  EXPECT_TRUE(zero_point_five < two);
+  EXPECT_TRUE(one_point_five < two);
+
+  EXPECT_FALSE(zero_point_five > one);
+  EXPECT_FALSE(zero_point_five > two);
+  EXPECT_FALSE(one_point_five > two);
+
+  EXPECT_FALSE(zero_point_five == one);
+  EXPECT_FALSE(zero_point_five == two);
+  EXPECT_FALSE(one_point_five == two);
+
+  EXPECT_TRUE(zero_point_five == zero_point_five);
+  EXPECT_TRUE(one_point_five == one_point_five);
+  EXPECT_TRUE(two_point_five == two_point_five);
+
+  EXPECT_TRUE(zero_point_five >= zero_point_five);
+  EXPECT_TRUE(one_point_five >= one_point_five);
+  EXPECT_TRUE(two_point_five >= two_point_five);
+
+  EXPECT_TRUE(zero_point_five <= zero_point_five);
+  EXPECT_TRUE(one_point_five <= one_point_five);
+  EXPECT_TRUE(two_point_five <= two_point_five);
+
+  fetch::fixed_point::FixedPoint<32, 32> m_zero(-0);
+  fetch::fixed_point::FixedPoint<32, 32> m_one(-1.0);
+  fetch::fixed_point::FixedPoint<32, 32> m_two(-2);
+
+  EXPECT_TRUE(m_zero > m_one);
+  EXPECT_TRUE(m_zero > m_two);
+  EXPECT_TRUE(m_one > m_two);
+
+  EXPECT_FALSE(m_zero < m_one);
+  EXPECT_FALSE(m_zero < m_two);
+  EXPECT_FALSE(m_one < m_two);
+
+  EXPECT_FALSE(m_zero == m_one);
+  EXPECT_FALSE(m_zero == m_two);
+  EXPECT_FALSE(m_one == m_two);
+
+  EXPECT_TRUE(zero == m_zero);
+  EXPECT_TRUE(m_zero == m_zero);
+  EXPECT_TRUE(m_one == m_one);
+  EXPECT_TRUE(m_two == m_two);
+
+  EXPECT_TRUE(m_zero >= m_zero);
+  EXPECT_TRUE(m_one >= m_one);
+  EXPECT_TRUE(m_two >= m_two);
+
+  EXPECT_TRUE(m_zero <= m_zero);
+  EXPECT_TRUE(m_one <= m_one);
+  EXPECT_TRUE(m_two <= m_two);
+
+  EXPECT_TRUE(zero > m_one);
+  EXPECT_TRUE(zero > m_two);
+  EXPECT_TRUE(one > m_two);
+
+  EXPECT_TRUE(m_two < one);
+  EXPECT_TRUE(m_one < two);
 }

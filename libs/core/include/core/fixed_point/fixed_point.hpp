@@ -284,6 +284,21 @@ public:
     return data_ < o.data_;
   }
 
+  bool operator>(const FixedPoint &o) const
+  {
+    return data_ > o.data_;
+  }
+
+  bool operator<=(const FixedPoint &o) const
+  {
+    return data_ <= o.data_;
+  }
+
+  bool operator>=(const FixedPoint &o) const
+  {
+    return data_ >= o.data_;
+  }
+
   ///////////////////////
   /// unary operators ///
   ///////////////////////
