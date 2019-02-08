@@ -188,7 +188,7 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 
     if (!ec)
     {
-      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_);
+      auto conn = std::make_shared<ClientConnection>(strongSocket, manager_, network_manager_);
       auto ptr  = connection_register_.lock();
 
       if (ptr)

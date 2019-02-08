@@ -227,7 +227,7 @@ private:
 
   /**
    * Represents a change to the header of the main stack, for example when changing the
-   * 'extra' data that can be stored  there.
+   * 'extra' data that can be stored there.
    */
   struct HistoryHeader
   {
@@ -516,12 +516,7 @@ private:
     h.bookmark    = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
-    // If we are reverting to a state, we want this bookmark to stay - this
-    // will make reverting to the same hash twice in a row valid.
-    if (!(key_to_compare == book.key))
-    {
-      history_.Pop();
-    }
+    history_.Pop();
 
     return key_to_compare == book.key;
   }

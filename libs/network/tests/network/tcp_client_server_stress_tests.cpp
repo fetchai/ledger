@@ -38,6 +38,7 @@ std::atomic<std::size_t> serverReceivedCount{0};
 
 std::vector<message_type> globalMessagesFromServer_{};
 std::vector<message_type> globalMessagesToServer_{};
+std::mutex                messages_;
 
 // Basic server
 class Server : public TCPServer
@@ -51,7 +52,9 @@ public:
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
-    std::cerr << "Message: " << msg << std::endl;
+    /*std::cerr << "Message: " << msg << std::endl;*/
+    std::lock_guard<std::mutex> lock(messages_);
+    globalMessagesFromServer_.push_back(msg);
   }
 };
 
@@ -83,20 +86,21 @@ void waitUntilConnected(std::string const &host, uint16_t port)
 
     for (std::size_t i = 0; i < 4; ++i)
     {
-      if (client.is_alive())
+      if (client.WaitForAlive(10))
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Connected successfully to ", host, ":", port);
         return;
       }
 
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    if (attempts++ % 100 == 0)
+    if (attempts++ % 10 == 0)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for client to connect to: ", port);
     }
 
-    if (attempts == 500)
+    if (attempts == 50)
     {
       throw std::runtime_error("Failed to connect test client to port");
     }
@@ -273,6 +277,203 @@ void TestCase4(std::string host, uint16_t port)
 
   SUCCEED() << "Success." << std::endl;
 }
+
+template <std::size_t N = 1>
+void TestCase5(std::string host, uint16_t port)
+{
+  std::cerr << "\nTEST CASE 5. Threads: " << N << std::endl;
+  std::cerr << "Verify very large packet transmission, client side" << std::endl;
+
+  NetworkManager nmanager{"NetMgr", N};
+  nmanager.Start();
+
+  for (std::size_t index = 0; index < 3; ++index)
+  {
+    std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
+    server->Start();
+
+    waitUntilConnected(host, port);
+
+    // Create packets of varying sizes
+    std::vector<message_type> to_send;
+
+    {
+      std::lock_guard<std::mutex> lock(messages_);
+      globalMessagesFromServer_.clear();
+    }
+
+    for (std::size_t i = 0; i < 5; ++i)
+    {
+      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+
+      std::string send_me(1 << (i + 14), to_fill);
+
+      to_send.push_back(send_me);
+    }
+
+    // This will be over a single connection
+    auto i = std::make_shared<Client>(host, port, nmanager);
+    if (!(i->WaitForAlive(100)))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened");
+      throw 1;
+    }
+
+    std::atomic<std::size_t> send_atomic{0};
+
+    auto cb = [&] {
+      std::size_t send_index = send_atomic++;
+
+      if (send_index < to_send.size())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Sending ", send_index);
+        i->Send(to_send[send_index]);
+      }
+    };
+
+    for (std::size_t i = 0; i < to_send.size(); ++i)
+    {
+      auto dummy0 =
+          std::async(std::launch::async, cb);  // dummy is important to force async execution
+      auto dummy1 = std::async(std::launch::async, cb);
+      auto dummy2 = std::async(std::launch::async, cb);
+      auto dummy3 = std::async(std::launch::async, cb);
+      auto dummy4 = std::async(std::launch::async, cb);
+    }
+
+    for (;;)
+    {
+      {
+        std::lock_guard<std::mutex> lock(messages_);
+
+        if (globalMessagesFromServer_.size() == to_send.size())
+        {
+          break;
+        }
+      }
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for messages to arrive");
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    std::lock_guard<std::mutex> lock(messages_);
+    std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
+    std::sort(to_send.begin(), to_send.end());
+
+    if (globalMessagesFromServer_ != to_send)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+
+      for (auto const &i : globalMessagesFromServer_)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, i);
+      }
+    }
+  }
+
+  SUCCEED() << "Success." << std::endl;
+}
+
+template <std::size_t N = 1>
+void TestCase6(std::string host, uint16_t port)
+{
+  std::cerr << "\nTEST CASE 5. Threads: " << N << std::endl;
+  std::cerr << "Verify very large packet transmission, tcp server side" << std::endl;
+
+  NetworkManager nmanager{"NetMgr", N};
+  nmanager.Start();
+
+  for (std::size_t index = 0; index < 3; ++index)
+  {
+    std::unique_ptr<Server> server = std::make_unique<Server>(port, nmanager);
+    server->Start();
+
+    waitUntilConnected(host, port);
+
+    // Create packets of varying sizes
+    std::vector<message_type> to_send;
+    std::vector<message_type> to_recieve;
+
+    for (std::size_t i = 0; i < 5; ++i)
+    {
+      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+
+      std::string send_me(1 << (i + 14), to_fill);
+      to_send.push_back(send_me);
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
+    // This will be over a single connection
+    auto i = std::make_shared<Client>(host, port, nmanager);
+    if (!(i->WaitForAlive(1000)))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Client never opened 1");
+      throw 1;
+    }
+
+    std::mutex messages_recieve;
+
+    auto lam = [&](message_type const &msg) {
+      std::lock_guard<std::mutex> lock(messages_recieve);
+      to_recieve.push_back(msg);
+    };
+
+    i->OnMessage(lam);
+
+    std::atomic<std::size_t> send_atomic{0};
+
+    auto cb = [&] {
+      std::size_t send_index = send_atomic++;
+
+      if (send_index < to_send.size())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Sending ", send_index);
+        server->Broadcast(to_send[send_index]);
+      }
+    };
+
+    for (std::size_t i = 0; i < to_send.size(); ++i)
+    {
+      auto dummy0 =
+          std::async(std::launch::async, cb);  // dummy is important to force async execution
+      auto dummy1 = std::async(std::launch::async, cb);
+      auto dummy2 = std::async(std::launch::async, cb);
+      auto dummy3 = std::async(std::launch::async, cb);
+      auto dummy4 = std::async(std::launch::async, cb);
+    }
+
+    for (;;)
+    {
+      {
+        std::lock_guard<std::mutex> lock(messages_recieve);
+
+        if (to_recieve.size() == to_send.size())
+        {
+          break;
+        }
+      }
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for messages to arrive");
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    std::sort(to_recieve.begin(), to_recieve.end());
+    std::sort(to_send.begin(), to_send.end());
+
+    if (to_recieve != to_send)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+
+      for (auto const &i : globalMessagesFromServer_)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, i);
+      }
+    }
+  }
+
+  SUCCEED() << "Success." << std::endl;
+}
+
 class TCPClientServerTest : public testing::TestWithParam<std::size_t>
 {
 };
@@ -295,13 +496,17 @@ TEST_P(TCPClientServerTest, basic_test)
     TestCase1<1>(host, portNumber);
     TestCase2<1>(host, portNumber);
     TestCase3<1>(host, portNumber);
-    // TestCase4<1>(host, portNumber);
+    TestCase4<1>(host, portNumber);
+    TestCase5<1>(host, portNumber);
+    TestCase6<1>(host, portNumber);
 
     TestCase0<10>(host, portNumber);
     TestCase1<10>(host, portNumber);
     TestCase2<10>(host, portNumber);
     TestCase3<10>(host, portNumber);
-    // TestCase4<10>(host, portNumber);
+    TestCase4<10>(host, portNumber);
+    TestCase5<10>(host, portNumber);
+    TestCase6<10>(host, portNumber);
   }
 
   SUCCEED() << "Success." << std::endl;
