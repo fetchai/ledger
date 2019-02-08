@@ -40,7 +40,7 @@
 using namespace fetch::storage;
 using namespace fetch::byte_array;
 using namespace fetch::network;
-using namespace fetch::chain;
+using namespace fetch::ledger;
 using namespace fetch::service;
 using namespace fetch::ledger;
 using namespace fetch;

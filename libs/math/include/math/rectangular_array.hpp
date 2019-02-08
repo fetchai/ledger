@@ -384,6 +384,13 @@ public:
     return this->At(indices[0], indices[1]);
   }
 
+  template <typename S>
+  fetch::meta::IfIsUnsignedInteger<S, T> const &Get(std::vector<S> const &indices) const
+  {
+    assert(indices.size() == shape_.size());
+    return this->At(indices[0], indices[1]);
+  }
+
   /* Sets an element using one coordinatea.
    * @param i is the position along the height.
    * @param j is the position along the width.
@@ -391,8 +398,6 @@ public:
    */
   Type const &Set(size_type const &n, Type const &v)
   {
-    // Compiler won't let us jump from linalg::Matrix (which is a subclass of Rectangular array)
-    // to ShapelessArray::Set without redefining here
     return super_type::Set(n, v);
   }
 

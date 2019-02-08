@@ -51,11 +51,11 @@ protected:
     executor_ = std::make_unique<underlying_executor_type>(storage_);
   }
 
-  fetch::chain::Transaction CreateDummyTransaction()
+  fetch::ledger::Transaction CreateDummyTransaction()
   {
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.dummy.wait");
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   fetch::byte_array::ConstByteArray CreateAddress()
@@ -71,7 +71,7 @@ protected:
     return {address};
   }
 
-  fetch::chain::Transaction CreateWalletTransaction()
+  fetch::ledger::Transaction CreateWalletTransaction()
   {
 
     // generate an address
@@ -85,11 +85,11 @@ protected:
         << R"("amount": )" << 1000 << " }";
 
     // create the transaction
-    fetch::chain::MutableTransaction tx;
+    fetch::ledger::MutableTransaction tx;
     tx.set_contract_name("fetch.token.wealth");
     tx.set_data(oss.str());
 
-    return fetch::chain::VerifiedTransaction::Create(std::move(tx));
+    return fetch::ledger::VerifiedTransaction::Create(std::move(tx));
   }
 
   storage_type  storage_;

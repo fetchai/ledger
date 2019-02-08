@@ -22,6 +22,21 @@ namespace fetch {
 namespace service {
 namespace details {
 
+namespace {
+template <typename NAME, typename ID>
+void LogTimout(NAME const &name, ID const &id)
+{
+  if (name.length() > 0)
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise '", name, "'timed out!");
+  }
+  else
+  {
+    FETCH_LOG_WARN(PromiseImplementation::LOGGING_NAME, "Promise ", id, " timed out!");
+  }
+}
+}  // namespace
+
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
 PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
@@ -41,48 +56,24 @@ PromiseBuilder PromiseImplementation::WithHandlers()
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
   LOG_STACK_TRACE_POINT;
-
-  bool const      has_timeout      = (timeout_ms > 0) && (timeout_ms < FOREVER);
-  Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
-
-  while (timeout_ms && IsWaiting())
+  bool const has_timeout = timeout_ms > 0;
+  State      state_copy{state_};
+  if (has_timeout)
   {
-    // determine if timeout has expired
-    if (has_timeout && (Clock::now() >= timeout_deadline))
+    Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
+    std::unique_lock<std::mutex> lock(notify_lock_);
+    while (State::WAITING == state_)
     {
-      if (name_.length() > 0)
+      if (std::cv_status::timeout == notify_.wait_until(lock, timeout_deadline))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise '", name_, "'timed out!");
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " timed out!");
-      }
-
-      return false;
-    }
-
-    // poll period
-#ifdef FETCH_PROMISE_CV
-    {
-      std::unique_lock<std::mutex> lock(notify_lock_);
-
-      // double check the state
-      if (state_ == State::WAITING)
-      {
-        notify_.wait(lock);
+        LogTimout(name_, id_);
+        return false;
       }
     }
-#else   // !FETCH_PROMISE_CV
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-#endif  // FETCH_PROMISE_CV
+    state_copy = state_;
   }
 
-  if (IsWaiting())
-  {
-    return false;
-  }
-  else if (IsFailed())
+  if (State::FAILED == state_copy)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Promise ", id_, " failed!");
 
@@ -100,36 +91,25 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 void PromiseImplementation::UpdateState(State state)
 {
   LOG_STACK_TRACE_POINT;
-
-#ifdef FETCH_PROMISE_CV
+  assert(state != State::WAITING);
 
   bool dispatch = false;
 
   {
-    FETCH_LOCK(notify_lock_);
+    std::unique_lock<std::mutex> lock(notify_lock_);
     if (state_ == State::WAITING)
     {
       state_   = state;
       dispatch = true;
-
-      // wake up all the pending threads
-      notify_.notify_all();
     }
   }
 
   if (dispatch)
   {
+    // wake up all the pending threads
+    notify_.notify_all();
     DispatchCallbacks();
   }
-
-#else
-  if (state_.exchange(state) == State::WAITING)
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Promise ", id_, " set from Waiting to ", ToString(state));
-
-    DispatchCallbacks();
-  }
-#endif
 }
 
 void PromiseImplementation::DispatchCallbacks()
@@ -162,9 +142,9 @@ void PromiseImplementation::DispatchCallbacks()
   }
 
   // invalidate the callbacks
-  callback_success_    = Callback{};
-  callback_failure_    = Callback{};
-  callback_completion_ = Callback{};
+  callback_success_    = nullptr;
+  callback_failure_    = nullptr;
+  callback_completion_ = nullptr;
 }
 
 PromiseImplementation::Counter PromiseImplementation::GetNextId()

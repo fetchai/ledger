@@ -35,11 +35,11 @@ public:
   using mutex_type             = fetch::mutex::Mutex;
   using lock_guard_type        = std::lock_guard<mutex_type>;
   using transaction_queue_type = std::vector<transaction_type>;
-  using generator_type         = chain::BlockGenerator;
+  using generator_type         = ledger::BlockGenerator;
 
   static constexpr char const *LOGGING_NAME = "AnnealerMiner";
 
-  void EnqueueTransaction(chain::TransactionSummary const &tx) override
+  void EnqueueTransaction(ledger::TransactionSummary const &tx) override
   {
     lock_guard_type lock(pending_queue_lock_);
 
@@ -50,7 +50,7 @@ public:
     pending_queue_.push_back(stx);
   }
 
-  void GenerateBlock(chain::BlockBody &block, std::size_t num_lanes,
+  void GenerateBlock(ledger::BlockBody &block, std::size_t num_lanes,
                      std::size_t num_slices) override
   {
 
@@ -84,7 +84,7 @@ public:
   }
 
 private:
-  void FillBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
+  void FillBlock(ledger::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
   {
     block.slices.clear();
     block.slices.resize(num_slices);
@@ -98,7 +98,7 @@ private:
     }
   }
 
-  void PopulateBlock(chain::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
+  void PopulateBlock(ledger::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
   {
     using Strategy = generator_type::Strategy;
 

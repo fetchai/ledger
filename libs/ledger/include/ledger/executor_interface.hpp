@@ -25,7 +25,7 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using TxDigest  = chain::Transaction::TxDigest;
+  using TxDigest  = Transaction::TxDigest;
   using LaneIndex = uint32_t;
   using LaneSet   = std::unordered_set<LaneIndex>;
 

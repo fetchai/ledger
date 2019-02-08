@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/deep_learning/activation_functions.hpp"
-#include "ml/ops/derivatives/derivatives.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {

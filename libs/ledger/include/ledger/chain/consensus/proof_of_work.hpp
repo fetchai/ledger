@@ -21,7 +21,7 @@
 #include <crypto/sha256.hpp>
 #include <math/bignumber.hpp>
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
 class ProofOfWork : public math::BigUnsigned
@@ -103,5 +103,5 @@ inline void Deserialize(T &serializer, ProofOfWork &p)
 }
 
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch
