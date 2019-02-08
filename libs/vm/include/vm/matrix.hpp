@@ -386,7 +386,7 @@ inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t rows, i
   if ((rows < 0) || (columns < 0))
   {
     vm->RuntimeError("negative size");
-    return nullptr;
+    return Ptr<IMatrix>();
   }
   if (element_type_id == TypeIds::Float32)
   {

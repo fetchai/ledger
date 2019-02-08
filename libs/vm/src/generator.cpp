@@ -49,15 +49,17 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
     {
     case Node::Kind::FunctionDefinitionStatement:
     {
-      BlockNodePtr      function_definition_node = ConvertToBlockNodePtr(child);
+      BlockNodePtr        function_definition_node = ConvertToBlockNodePtr(child);
+      NodePtr             annotations_node         = function_definition_node->children[0];
+      Script::Annotations annotations;
+      CreateAnnotations(annotations_node, annotations);
       ExpressionNodePtr identifier_node =
-          ConvertToExpressionNodePtr(function_definition_node->children[0]);
-
+          ConvertToExpressionNodePtr(function_definition_node->children[1]);
       FunctionPtr        f              = identifier_node->function;
       std::string const &name           = f->name;
       int const          num_parameters = (int)f->parameter_variables.size();
       TypeId const       return_type_id = f->return_type->id;
-      Script::Function   function(name, num_parameters, return_type_id);
+      Script::Function function(name, annotations, num_parameters, return_type_id);
       for (VariablePtr const &v : f->parameter_variables)
       {
         v->index = function.AddVariable(v->name, v->type->id);
@@ -70,6 +72,73 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
       break;
     }
     }  // switch
+  }
+}
+
+void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annotations &annotations)
+{
+  annotations.clear();
+  if (annotations_node == nullptr)
+    return;
+  for (NodePtr const &annotation_node : annotations_node->children)
+  {
+    Script::Annotation annotation;
+    annotation.name = annotation_node->token.text;
+    for (NodePtr const &annotation_element_node : annotation_node->children)
+    {
+      Script::AnnotationElement element;
+      NodePtr node;
+      if (annotation_element_node->kind == Node::Kind::AnnotationNameValuePair)
+      {
+        std::string const &name = annotation_element_node->token.text;
+        element.type            = Script::AnnotationElementType::NameValuePair;
+        element.name            = name.substr(1, name.size() - 2);
+        node                    = annotation_element_node->children[0];
+      }
+      else
+      {
+        element.type = Script::AnnotationElementType::Value;
+        node         = annotation_element_node;
+      }
+      const std::string &text = node->token.text;
+      switch (node->kind)
+      {
+      case Node::Kind::True:
+      {
+        element.value.Set(true);
+        break;
+      }
+      case Node::Kind::False:
+      {
+        element.value.Set(false);
+        break;
+      }
+      case Node::Kind::Integer64:
+      {
+        int64_t i = atol(text.c_str());
+        element.value.Set(i);
+        break;
+      }
+      case Node::Kind::Float64:
+      {
+        double r = atof(text.c_str());
+        element.value.Set(r);
+        break;
+      }
+      case Node::Kind::String:
+      {
+        std::string s = text.substr(1, text.size() - 2);
+        element.value.Set(s);
+        break;
+      }
+      default:
+      {
+        break;
+      }
+      } // switch
+      annotation.elements.push_back(element);
+    }
+    annotations.push_back(annotation);
   }
 }
 
@@ -150,7 +219,7 @@ void Generator::HandleBlock(BlockNodePtr const &block)
 
 void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 {
-  ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr identifier_node = ConvertToExpressionNodePtr(node->children[1]);
   FunctionPtr       f               = identifier_node->function;
   function_                         = &(script_.functions[f->index]);
 
@@ -160,8 +229,7 @@ void Generator::HandleFunctionDefinitionStatement(BlockNodePtr const &node)
 
   if (f->return_type->id == TypeIds::Void)
   {
-    // 0 is not correct line number, it should be the line number of the endfunction token
-    Script::Instruction instruction(Opcodes::Return, 0);
+    Script::Instruction instruction(Opcodes::Return, node->block_terminator.line);
     instruction.type_id  = TypeIds::Void;
     instruction.data.i32 = 0;  // scope number
     function_->AddInstruction(instruction);
@@ -192,8 +260,7 @@ void Generator::HandleWhileStatement(BlockNodePtr const &node)
   HandleBlock(node);
   ScopeLeave(node);
 
-  // 0 is not correct line number, it should be the line number of the endwhile token
-  Script::Instruction jump_instruction(Opcodes::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, node->block_terminator.line);
 
   jump_instruction.index = continue_pc;
   function_->AddInstruction(jump_instruction);
@@ -251,13 +318,11 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   HandleBlock(node);
   ScopeLeave(node);
 
-  // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction jump_instruction(Opcodes::Jump, 0);
+  Script::Instruction jump_instruction(Opcodes::Jump, node->block_terminator.line);
   jump_instruction.index = iterate_pc;
   function_->AddInstruction(jump_instruction);
 
-  // 0 is not correct line number, it should be the line number of the endfor token
-  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate, 0);
+  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate, node->block_terminator.line);
 
   terminate_instruction.index   = v->index;
   terminate_instruction.type_id = v->type->id;
@@ -313,8 +378,7 @@ void Generator::HandleIfStatement(NodePtr const &node)
       if (i < last_index)
       {
         // Only arrange jump to the endif if not the last block
-        // 0 is not correct line number!
-        Script::Instruction jump_instruction(Opcodes::Jump, 0);
+        Script::Instruction jump_instruction(Opcodes::Jump, block->block_terminator.line);
         jump_instruction.index = 0;  // pc placeholder
         Index const jump_pc    = function_->AddInstruction(jump_instruction);
         jump_pcs.push_back(jump_pc);
@@ -624,14 +688,14 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleUnsignedInteger64(node);
     break;
   }
-  case Node::Kind::SinglePrecisionNumber:
+  case Node::Kind::Float32:
   {
-    HandleSinglePrecisionNumber(node);
+    HandleFloat32(node);
     break;
   }
-  case Node::Kind::DoublePrecisionNumber:
+  case Node::Kind::Float64:
   {
-    HandleDoublePrecisionNumber(node);
+    HandleFloat64(node);
     break;
   }
   case Node::Kind::String:
@@ -752,7 +816,7 @@ void Generator::HandleUnsignedInteger64(ExpressionNodePtr const &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleFloat32(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float32;
@@ -760,7 +824,7 @@ void Generator::HandleSinglePrecisionNumber(ExpressionNodePtr const &node)
   function_->AddInstruction(instruction);
 }
 
-void Generator::HandleDoublePrecisionNumber(ExpressionNodePtr const &node)
+void Generator::HandleFloat64(ExpressionNodePtr const &node)
 {
   Script::Instruction instruction(Opcodes::PushConstant, node->token.line);
   instruction.type_id  = TypeIds::Float64;
@@ -1140,9 +1204,8 @@ void Generator::ScopeLeave(BlockNodePtr block_node)
     // present, already take care of destructing objects
     if (block_node->kind != Node::Kind::FunctionDefinitionStatement)
     {
-      // 0 is not correct line number, should be end of block!
-      Script::Instruction instruction(Opcodes::Destruct, 0);
-      // Arrange for all live objects with scope >= scope_number to be destucted
+      Script::Instruction instruction(Opcodes::Destruct, block_node->block_terminator.line);
+      // Arrange for all live objects with scope >= scope_number to be destructed
       instruction.data.i32 = scope_number;
       function_->AddInstruction(instruction);
     }

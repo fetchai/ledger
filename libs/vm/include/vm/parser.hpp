@@ -34,7 +34,7 @@ private:
   {
     // [group opener, prefix op or operand] is required
     PreOperand,
-    // [postfix op, binary op, group separator or group closer] is optional
+    // [postfix op, binary op, comma or group closer] is optional
     PostOperand
   };
 
@@ -64,7 +64,7 @@ private:
     bool              is_operator;
     ExpressionNodePtr node;
     OpInfo            op_info;
-    int               count;
+    int               num_group_members;
   };
 
   Strings                 template_names_;
@@ -75,7 +75,7 @@ private:
   std::vector<Node::Kind> blocks_;
   State                   state_;
   bool                    found_expression_terminator_;
-  std::vector<int>        groups_;
+  std::vector<size_t>     groups_;
   std::vector<Expr>       operators_;
   std::vector<Expr>       rpn_;
   std::vector<Expr>       infix_stack_;
@@ -83,6 +83,9 @@ private:
   void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
   BlockNodePtr      ParseFunctionDefinition();
+  NodePtr           ParseAnnotations();
+  NodePtr           ParseAnnotation();
+  NodePtr           ParseAnnotationLiteral();
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
@@ -116,12 +119,12 @@ private:
   void AddOperand(Node::Kind kind);
   void AddError(std::string const &message);
 
-  void IncrementNodeCount()
+  void IncrementGroupMembers()
   {
     if (groups_.size())
     {
-      Expr &group = operators_[std::size_t(groups_.back())];
-      ++(group.count);
+      Expr &group = operators_[groups_.back()];
+      ++(group.num_group_members);
     }
   }
 

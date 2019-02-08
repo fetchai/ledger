@@ -96,9 +96,9 @@ struct IsConstRef<
 };
 
 template <typename T>
-struct ptr_managed_type;
+struct PtrManagedType;
 template <typename T>
-struct ptr_managed_type<Ptr<T>>
+struct PtrManagedType<Ptr<T>>
 {
   using type = T;
 };
@@ -136,6 +136,20 @@ struct IsVariantParameter<T,
   : std::true_type
 {
 };
+
+template <typename T, typename = void>
+struct StorageType;
+template <typename T>
+struct StorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+{
+  using type = T;
+};
+template <typename T>
+struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+{
+  using type = Ptr<Object>;
+};
+
 
 class Object
 {
@@ -214,9 +228,21 @@ public:
     ptr_ = nullptr;
   }
 
-  Ptr(T *other)
+  explicit Ptr(T *other)
   {
     ptr_ = other;
+  }
+
+  static Ptr PtrFromThis(T *this__)
+  {
+    this__->AddRef();
+    return Ptr(this__);
+  }
+
+  Ptr &operator=(nullptr_t)
+  {
+    Reset();
+    return *this;
   }
 
   Ptr(Ptr const &other)
@@ -258,7 +284,7 @@ public:
 
   Ptr &operator=(Ptr &&other)
   {
-    if (ptr_ != other.ptr_)
+    if (this != &other)
     {
       Release();
       ptr_       = other.ptr_;
@@ -282,12 +308,9 @@ public:
   template <typename U>
   Ptr &operator=(Ptr<U> &&other)
   {
-    if (ptr_ != other.ptr_)
-    {
-      Release();
-      ptr_       = static_cast<T *>(other.ptr_);
-      other.ptr_ = nullptr;
-    }
+    Release();
+    ptr_       = static_cast<T *>(other.ptr_);
+    other.ptr_ = nullptr;
     return *this;
   }
 
@@ -614,79 +637,79 @@ struct Variant
 
   Variant &operator=(Variant const &other)
   {
-    bool const is_object       = IsObject();
-    bool const other_is_object = other.IsObject();
-    type_id                    = other.type_id;
-    if (is_object)
+    if (this != &other)
     {
-      if (other_is_object)
+      bool const is_object       = IsObject();
+      bool const other_is_object = other.IsObject();
+      type_id                    = other.type_id;
+      if (is_object)
       {
-        // Copy object to current object
-        object = other.object;
-        return *this;
+        if (other_is_object)
+        {
+          // Copy object to current object
+          object = other.object;
+        }
+        else
+        {
+          // Copy primitive to current object
+          object.Reset();
+          primitive = other.primitive;
+        }
       }
       else
       {
-        // Copy primitive to current object
-        object.Reset();
-        primitive = other.primitive;
-        return *this;
+        if (other_is_object)
+        {
+          // Copy object to current primitive
+          new (&object) Ptr<Object>(other.object);
+        }
+        else
+        {
+          // Copy primitive to current primitive
+          primitive = other.primitive;
+        }
       }
     }
-    else
-    {
-      if (other_is_object)
-      {
-        // Copy object to current primitive
-        new (&object) Ptr<Object>(other.object);
-        return *this;
-      }
-      else
-      {
-        // Copy primitive to current primitive
-        primitive = other.primitive;
-        return *this;
-      }
-    }
+    return *this;
   }
 
   Variant &operator=(Variant &&other)
   {
-    bool const is_object       = IsObject();
-    bool const other_is_object = other.IsObject();
-    type_id                    = other.type_id;
-    other.type_id              = TypeIds::Unknown;
-    if (is_object)
+    if (this != &other)
     {
-      if (other_is_object)
+      bool const is_object       = IsObject();
+      bool const other_is_object = other.IsObject();
+      type_id                    = other.type_id;
+      other.type_id              = TypeIds::Unknown;
+      if (is_object)
       {
-        // Move object to current object
-        object = std::move(other.object);
-        return *this;
+        if (other_is_object)
+        {
+          // Move object to current object
+          object = std::move(other.object);
+        }
+        else
+        {
+          // Move primitive to current object
+          object.Reset();
+          primitive = other.primitive;
+        }
       }
       else
       {
-        // Move primitive to current object
-        object.Reset();
-        primitive = other.primitive;
-        return *this;
+        if (other_is_object)
+        {
+          // Move object to current primitive
+          new (&object) Ptr<Object>(std::move(other.object));
+        }
+        else
+        {
+          // Move primitive to current primitive
+          primitive = other.primitive;
+        }
       }
     }
-    else
-    {
-      if (other_is_object)
-      {
-        // Move object to current primitive
-        new (&object) Ptr<Object>(std::move(other.object));
-        return *this;
-      }
-      else
-      {
-        // Move primitive to current primitive
-        primitive = other.primitive;
-        return *this;
-      }
-    }
+    return *this;
   }
 
   template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
@@ -857,11 +880,90 @@ struct Script
     TypeId      type_id;
   };
 
+  using Variables = std::vector<Variable>;
+
+  enum class AnnotationValueType : uint16_t
+  {
+    Unknown = 0,
+    Boolean,
+    Integer,
+    Real,
+    String
+  };
+
+  struct AnnotationValue
+  {
+    AnnotationValue()
+    {
+      type = AnnotationValueType::Unknown;
+    }
+    void Set(bool b)
+    {
+      type    = AnnotationValueType::Boolean;
+      boolean = b;
+    }
+    void Set(int64_t i)
+    {
+      type    = AnnotationValueType::Integer;
+      integer = i;
+    }
+    void Set(double r)
+    {
+      type = AnnotationValueType::Real;
+      real = r;
+    }
+    void Set(std::string const &s)
+    {
+      type = AnnotationValueType::String;
+      str  = s;
+    }
+    AnnotationValueType type;
+    union
+    {
+      bool    boolean;
+      int64_t integer;
+      double  real;
+    };
+    std::string str;
+  };
+
+  enum class AnnotationElementType : uint16_t
+  {
+    Unknown = 0,
+    Value,
+    NameValuePair
+  };
+
+  struct AnnotationElement
+  {
+    AnnotationElement()
+    {
+      type = AnnotationElementType::Unknown;
+    }
+    AnnotationElementType type;
+    std::string           name;
+    AnnotationValue       value;
+  };
+
+  using AnnotationElements = std::vector<AnnotationElement>;
+
+  struct Annotation
+  {
+    std::string        name;
+    AnnotationElements elements;
+  };
+
+  using Annotations = std::vector<Annotation>;
+
   struct Function
   {
-    Function(std::string const &name__, int num_parameters__, TypeId return_type_id__)
+    Function(std::string const &name__,
+             Annotations const &annotations__,
+             int                num_parameters__,
+             TypeId             return_type_id__)
     {
       name           = name__;
+      annotations    = annotations__;
       num_variables  = 0;
       num_parameters = num_parameters__;
       return_type_id = return_type_id__;
@@ -878,12 +980,13 @@ struct Script
       instructions.push_back(std::move(instruction));
       return pc;
     }
-    std::string           name;
-    int                   num_variables;  // parameters + locals
-    int                   num_parameters;
-    TypeId                return_type_id;
-    std::vector<Variable> variables;  // parameters + locals
-    Instructions          instructions;
+    std::string  name;
+    Annotations  annotations;
+    int          num_variables;  // parameters + locals
+    int          num_parameters;
+    TypeId       return_type_id;
+    Variables    variables;      // parameters + locals
+    Instructions instructions;
   };
 
   using Functions = std::vector<Function>;

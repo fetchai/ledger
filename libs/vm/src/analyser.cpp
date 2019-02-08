@@ -288,17 +288,17 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
 {
   function_definition_node->symbol_table = CreateSymbolTable();
   ExpressionNodePtr identifier_node =
-      ConvertToExpressionNodePtr(function_definition_node->children[0]);
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &name  = identifier_node->token.text;
   int const          count = (int)function_definition_node->children.size();
   VariablePtrArray   parameter_variables;
   TypePtrArray       parameter_types;
-  int const          num_parameters = int((count - 1) / 2);
+  int const          num_parameters = int((count - 3) / 2);
   int                problems       = 0;
   for (int i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(1 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i*2)]);
     std::string const &parameter_name = parameter_node->token.text;
     SymbolPtr          symbol = function_definition_node->symbol_table->Find(parameter_name);
     if (symbol)
@@ -309,7 +309,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
       continue;
     }
     ExpressionNodePtr parameter_type_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i * 2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[size_t(3 + i*2)]);
     TypePtr parameter_type = FindType(parameter_type_node);
     if (parameter_type == nullptr)
     {
@@ -326,12 +326,11 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     parameter_variables.push_back(parameter_variable);
     parameter_types.push_back(parameter_type);
   }
-  bool    return_type_supplied = (count % 2 == 0);
-  TypePtr return_type;
-  if (return_type_supplied)
+  TypePtr           return_type;
+  ExpressionNodePtr return_type_node =
+    ConvertToExpressionNodePtr(function_definition_node->children[size_t(count - 1)]);
+  if (return_type_node)
   {
-    ExpressionNodePtr return_type_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(count - 1)]);
     return_type = FindType(return_type_node);
     if (return_type == nullptr)
     {
@@ -485,7 +484,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_definition_node)
 {
   ExpressionNodePtr identifier_node =
-      ConvertToExpressionNodePtr(function_definition_node->children[0]);
+      ConvertToExpressionNodePtr(function_definition_node->children[1]);
   function_ = identifier_node->function;
   AnnotateBlock(function_definition_node);
   if (errors_.size() == 0)
@@ -831,12 +830,12 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     SetRV(node, uint64_type_);
     break;
   }
-  case Node::Kind::SinglePrecisionNumber:
+  case Node::Kind::Float32:
   {
     SetRV(node, float32_type_);
     break;
   }
-  case Node::Kind::DoublePrecisionNumber:
+  case Node::Kind::Float64:
   {
     SetRV(node, float64_type_);
     break;

@@ -98,6 +98,7 @@ bool Parser::ParseBlock(BlockNode &node)
     Next();
     switch (token_->kind)
     {
+    case Token::Kind::AnnotationIdentifier:
     case Token::Kind::Function:
     {
       child = ParseFunctionDefinition();
@@ -218,6 +219,8 @@ bool Parser::ParseBlock(BlockNode &node)
     }  // switch
     if (quit)
     {
+      // Store information on the token which terminated the block
+      node.block_terminator = *token_;
       blocks_.pop_back();
       return state;
     }
@@ -235,8 +238,35 @@ bool Parser::ParseBlock(BlockNode &node)
 
 BlockNodePtr Parser::ParseFunctionDefinition()
 {
+  NodePtr annotations_node;
+  if (token_->kind == Token::Kind::AnnotationIdentifier)
+  {
+    annotations_node = ParseAnnotations();
+    if (annotations_node)
+    {
+      if (token_->kind != Token::Kind::Function)
+      {
+        AddError("expected 'function'");
+        annotations_node = nullptr;
+      }
+    }
+    if (annotations_node == nullptr)
+    {
+      while ((token_->kind != Token::Kind::EndOfInput) &&
+             (token_->kind != Token::Kind::Function))
+      {
+        Next();
+      }
+      if (token_->kind == Token::Kind::EndOfInput)
+      {
+        return nullptr;
+      }
+    }
+  }
   BlockNodePtr function_definition_node =
       std::make_shared<BlockNode>(BlockNode(Node::Kind::FunctionDefinitionStatement, token_));
+  // Note: the annotations node is null if no annotations are supplied
+  function_definition_node->children.push_back(annotations_node);
   bool ok = false;
   do
   {
@@ -315,20 +345,22 @@ BlockNodePtr Parser::ParseFunctionDefinition()
       }
     }
     // Scan for optional return type
+    ExpressionNodePtr return_type_node;
     Next();
     if (token_->kind == Token::Kind::Colon)
     {
-      ExpressionNodePtr return_type_node = ParseType();
+      return_type_node = ParseType();
       if (return_type_node == nullptr)
       {
         break;
       }
-      function_definition_node->children.push_back(std::move(return_type_node));
     }
     else
     {
       Undo();
     }
+    // Note: the return type node is null if no return type ia supplied
+    function_definition_node->children.push_back(return_type_node);
     ok = true;
   } while (false);
   if (ok == false)
@@ -341,6 +373,147 @@ BlockNodePtr Parser::ParseFunctionDefinition()
     return nullptr;
   }
   return function_definition_node;
+}
+
+NodePtr Parser::ParseAnnotations()
+{
+  NodePtr annotations_node =
+      std::make_shared<Node>(Node(Node::Kind::Annotations, token_));
+  do
+  {
+    NodePtr annotation_node = ParseAnnotation();
+    if (annotation_node == nullptr)
+    {
+      return nullptr;
+    }
+    annotations_node->children.push_back(annotation_node);
+    Next();
+  } while (token_->kind == Token::Kind::AnnotationIdentifier);
+  return annotations_node;
+}
+
+NodePtr Parser::ParseAnnotation()
+{
+  NodePtr annotation_node = std::make_shared<Node>(Node(Node::Kind::Annotation, token_));
+  Next();
+  if (token_->kind != Token::Kind::LeftRoundBracket)
+  {
+    AddError("expected '('");
+    return nullptr;
+  }
+  do
+  {
+    NodePtr node = ParseAnnotationLiteral();
+    if (node == nullptr)
+    {
+      return nullptr;
+    }
+    if (node->kind != Node::Kind::String)
+    {
+      annotation_node->children.push_back(node);
+    }
+    else
+    {
+      Next();
+      if (token_->kind != Token::Kind::Assign)
+      {
+        Undo();
+        annotation_node->children.push_back(node);
+      }
+      else
+      {
+        NodePtr value_node = ParseAnnotationLiteral();
+        if (value_node == nullptr)
+        {
+          return nullptr;
+        }
+        node->kind = Node::Kind::AnnotationNameValuePair;
+        node->children.push_back(value_node);
+        annotation_node->children.push_back(node);
+      }
+    }
+    Next();
+    if (token_->kind == Token::Kind::RightRoundBracket)
+    {
+      return annotation_node;
+    }
+    if (token_->kind != Token::Kind::Comma)
+    {
+      AddError("expected ',' or ')'");
+      return nullptr;
+    }
+  }
+  while (true);
+}
+
+NodePtr Parser::ParseAnnotationLiteral()
+{
+  Node::Kind kind;
+  int        sign   = 0;
+  bool       number = false;
+  Next();
+  if (token_->kind == Token::Kind::Plus)
+  {
+    sign = 1;
+    Next();
+  }
+  else if (token_->kind == Token::Kind::Minus)
+  {
+    sign = -1;
+    Next();
+  }
+  switch (token_->kind)
+  {
+  case Token::Kind::Integer32:
+  {
+    kind   = Node::Kind::Integer64;
+    number = true;
+    break;
+  }
+  case Token::Kind::Float64:
+  {
+    kind   = Node::Kind::Float64;
+    number = true;
+    break;
+  }
+  case Token::Kind::True:
+  {
+    kind = Node::Kind::True;
+    break;
+  }
+  case Token::Kind::False:
+  {
+    kind = Node::Kind::False;
+    break;
+  }
+  case Token::Kind::String:
+  {
+    kind = Node::Kind::String;
+    break;
+  }
+  default:
+  {
+    AddError("expected annotation literal");
+    return nullptr;
+  }
+  } // switch
+  NodePtr node = std::make_shared<Node>(Node(kind, token_));
+  if (sign != 0)
+  {
+    if (number)
+    {
+      if (sign == -1)
+      {
+        node->token.text = "-" + node->token.text;
+      }
+    }
+    else
+    {
+      AddError("expected number");
+      return nullptr;
+    }
+  }
+  return node;
 }
 
 BlockNodePtr Parser::ParseWhileStatement()
@@ -664,7 +837,14 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
   {
     // Get the first token of the expression
     Next();
-    AddError("expression statement not permitted at topmost scope");
+    if (token_->kind != Token::Kind::Unknown)
+    {
+      AddError("expression statement not permitted at topmost scope");
+    }
+    else
+    {
+      AddError("unrecognised token");
+    }
     return nullptr;
   }
   ExpressionNodePtr lhs = ParseExpression();
@@ -727,10 +907,15 @@ void Parser::GoToNextStatement()
 {
   while ((token_->kind != Token::Kind::EndOfInput) && (token_->kind != Token::Kind::SemiColon))
   {
-    if ((token_->kind == Token::Kind::Function) || (token_->kind == Token::Kind::While) ||
-        (token_->kind == Token::Kind::For) || (token_->kind == Token::Kind::If) ||
-        (token_->kind == Token::Kind::Var) || (token_->kind == Token::Kind::Return) ||
-        (token_->kind == Token::Kind::Break) || (token_->kind == Token::Kind::Continue))
+    if ((token_->kind == Token::Kind::AnnotationIdentifier) ||
+        (token_->kind == Token::Kind::Function) ||
+        (token_->kind == Token::Kind::While) ||
+        (token_->kind == Token::Kind::For) ||
+        (token_->kind == Token::Kind::If) ||
+        (token_->kind == Token::Kind::Var) ||
+        (token_->kind == Token::Kind::Return) ||
+        (token_->kind == Token::Kind::Break) ||
+        (token_->kind == Token::Kind::Continue))
     {
       Undo();
       return;
@@ -876,17 +1061,17 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       }
       break;
     }
-    case Token::Kind::SinglePrecisionNumber:
+    case Token::Kind::Float32:
     {
-      if (HandleLiteral(Node::Kind::SinglePrecisionNumber) == false)
+      if (HandleLiteral(Node::Kind::Float32) == false)
       {
         return nullptr;
       }
       break;
     }
-    case Token::Kind::DoublePrecisionNumber:
+    case Token::Kind::Float64:
     {
-      if (HandleLiteral(Node::Kind::DoublePrecisionNumber) == false)
+      if (HandleLiteral(Node::Kind::Float64) == false)
       {
         return nullptr;
       }
@@ -1071,7 +1256,14 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     {
       if (state_ == State::PreOperand)
       {
-        AddError("expected expression");
+        if (token_->kind != Token::Kind::Unknown)
+        {
+          AddError("expected expression");
+        }
+        else
+        {
+          AddError("unrecognised token");
+        }
         return nullptr;
       }
       found_expression_terminator_ = true;
@@ -1293,12 +1485,12 @@ bool Parser::HandleDot()
     return false;
   }
   AddOperand(Node::Kind::Identifier);
-  IncrementNodeCount();
+  IncrementGroupMembers();
   Expr expr;
-  expr.is_operator   = true;
-  expr.node          = std::move(dot_node);
-  expr.op_info.arity = 2;
-  expr.count         = 0;
+  expr.is_operator       = true;
+  expr.node              = std::move(dot_node);
+  expr.op_info.arity     = 2;
+  expr.num_group_members = 0;
   rpn_.push_back(std::move(expr));
   state_ = State::PostOperand;
   return true;
@@ -1332,9 +1524,9 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     return true;
   }
 
-  Expr const &     groupop     = operators_[std::size_t(groups_.back())];
+  Expr const &     groupop     = operators_[groups_.back()];
   Node::Kind const group_kind  = groupop.node->kind;
-  int const        group_count = groupop.count;
+  int const        group_count = groupop.num_group_members;
 
   if (token_->kind == Token::Kind::RightRoundBracket)
   {
@@ -1418,7 +1610,7 @@ bool Parser::HandleComma()
     return true;
   }
 
-  Expr const &     groupop    = operators_[std::size_t(groups_.back())];
+  Expr const &     groupop    = operators_[groups_.back()];
   Node::Kind const group_kind = groupop.node->kind;
 
   if (group_kind == Node::Kind::RoundBracketGroup)
@@ -1449,7 +1641,7 @@ void Parser::HandleOp(Node::Kind kind, OpInfo const &op_info)
   bool       check_if_group_opener = false;
   if (groups_.size())
   {
-    Expr const &groupop   = operators_[std::size_t(groups_.back())];
+    Expr const &groupop   = operators_[groups_.back()];
     group_kind            = groupop.node->kind;
     check_if_group_opener = true;
   }
@@ -1479,34 +1671,34 @@ void Parser::HandleOp(Node::Kind kind, OpInfo const &op_info)
 
 void Parser::AddGroup(Node::Kind kind, int initial_arity)
 {
-  IncrementNodeCount();
+  IncrementGroupMembers();
   Expr expr;
-  expr.is_operator   = true;
-  expr.node          = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
-  expr.op_info.arity = initial_arity;
-  expr.count         = 0;
-  groups_.push_back((int)operators_.size());
+  expr.is_operator       = true;
+  expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
+  expr.op_info.arity     = initial_arity;
+  expr.num_group_members = 0;
+  groups_.push_back(operators_.size());
   operators_.push_back(std::move(expr));
 }
 
 void Parser::AddOp(Node::Kind kind, OpInfo const &op_info)
 {
-  IncrementNodeCount();
+  IncrementGroupMembers();
   Expr expr;
-  expr.is_operator = true;
-  expr.node        = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
-  expr.op_info     = op_info;
-  expr.count       = 0;
+  expr.is_operator       = true;
+  expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
+  expr.op_info           = op_info;
+  expr.num_group_members = 0;
   operators_.push_back(std::move(expr));
 }
 
 void Parser::AddOperand(Node::Kind kind)
 {
-  IncrementNodeCount();
+  IncrementGroupMembers();
   Expr expr;
-  expr.is_operator = false;
-  expr.node        = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
-  expr.count       = 0;
+  expr.is_operator       = false;
+  expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
+  expr.num_group_members = 0;
   rpn_.push_back(std::move(expr));
 }
 
@@ -1524,7 +1716,7 @@ void Parser::AddError(std::string const &message)
   }
   if (message.length())
   {
-    stream << " (" << message << ")";
+    stream << ", " << message;
   }
   errors_.push_back(stream.str());
 }
