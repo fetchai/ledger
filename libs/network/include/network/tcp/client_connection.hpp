@@ -23,8 +23,8 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/client_manager.hpp"
-#include "network/message.hpp"
 #include "network/management/network_manager.hpp"
+#include "network/message.hpp"
 
 #include "network/fetch_asio.hpp"
 #include <atomic>
@@ -50,11 +50,10 @@ public:
   using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
   using Socket           = asio::ip::tcp::tcp::socket;
   using shared_self_type = std::shared_ptr<AbstractConnection>;
-  using mutex_type = std::mutex;
+  using mutex_type       = std::mutex;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
-                   std::weak_ptr<ClientManager> manager,
-                   NetworkManager network_manager)
+                   std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
     : socket_(std::move(socket))
     , manager_(std::move(manager))
     , network_manager_(network_manager)
@@ -132,15 +131,16 @@ public:
       write_queue_.push_back(msg);
     }
 
-    std::weak_ptr<AbstractConnection>             self   = shared_from_this();
-    std::weak_ptr<Strand> strand = strand_;
+    std::weak_ptr<AbstractConnection> self   = shared_from_this();
+    std::weak_ptr<Strand>             strand = strand_;
 
     network_manager_.Post([this, self, strand] {
       shared_self_type selfLock   = self.lock();
       auto             strandLock = strand_.lock();
       if (!selfLock || !strandLock)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock), " socket: ", bool(strandLock));
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock),
+                       " socket: ", bool(strandLock));
         return;
       }
 
@@ -178,8 +178,8 @@ public:
 
       if (!strong_strand || !strong_socket)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(strong_strand), " socket: ", bool(strong_socket));
-        return;
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(strong_strand), " socket: ",
+  bool(strong_socket)); return;
       }
 
       // This lambda will execute in the context of a strand. This is important as there is a gotcha
@@ -229,8 +229,6 @@ public:
   }
   */
 
-
-
   uint16_t Type() const override
   {
     return AbstractConnection::TYPE_INCOMING;
@@ -261,15 +259,14 @@ public:
   }
 
 private:
-
   std::atomic<bool>                         shutting_down_{false};
   std::weak_ptr<asio::ip::tcp::tcp::socket> socket_;
   std::weak_ptr<ClientManager>              manager_;
 
-  std::string                               address_;
+  std::string address_;
 
-  NetworkManager        network_manager_;
-  //bool                  posted_close_ = false;
+  NetworkManager network_manager_;
+  // bool                  posted_close_ = false;
   std::weak_ptr<Strand> strand_;
 
   message_queue_type write_queue_;
@@ -361,7 +358,8 @@ private:
 
     message.Resize(header_.content.length);
     auto self(shared_from_this());
-    auto cb = [this, socket_ptr, self, message, strong_strand](std::error_code ec, std::size_t len) {
+    auto cb = [this, socket_ptr, self, message, strong_strand](std::error_code ec,
+                                                               std::size_t     len) {
       FETCH_UNUSED(len);
 
       auto ptr = manager_.lock();
@@ -455,7 +453,6 @@ private:
     asio::async_write(*socket_ptr, buffers, cb);
   } */
 
-
   // Always executed in a run(), in a strand
   void WriteNext(shared_self_type selfLock)
   {
@@ -531,7 +528,6 @@ private:
       SignalLeave();
     }
   }
-
 };
 }  // namespace network
 }  // namespace fetch
