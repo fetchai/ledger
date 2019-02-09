@@ -23,7 +23,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace dag {
 
 /**
  * DAG implementation.
@@ -154,6 +153,5 @@ inline bool DAG::HasNode(byte_array::ConstByteArray const &hash)
   return nodes_.find(hash) != nodes_.end();
 }
 
-} // namespace dag
 } // namespace ledger
 } // namespace fetch

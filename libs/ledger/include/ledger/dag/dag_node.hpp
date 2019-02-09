@@ -22,7 +22,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace dag {
 
 struct DAGNode
 {
@@ -86,6 +85,5 @@ void Deserialize(T &serializer, DAGNode &node)
              >> node.signature;
 }
 
-} // namespace dag
 } // namespace ledger
 } // namespace fetch

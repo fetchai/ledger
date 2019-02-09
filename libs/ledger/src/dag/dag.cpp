@@ -20,7 +20,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace dag {
 
 DAG::DAG()
 {
@@ -224,6 +223,5 @@ bool DAG::PushInternal(DAGNode node)
   return false;
 }
 
-} // namespace dag
 } // namespace ledger
 } // namespace fetch

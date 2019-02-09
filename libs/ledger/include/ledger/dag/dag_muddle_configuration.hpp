@@ -4,8 +4,6 @@ namespace fetch
 {
 namespace ledger
 {
-namespace dag
-{
 
 enum {
   DAG_RPC_SERVICE = 7562
@@ -20,6 +18,6 @@ enum {
   DAG_SYNCRONISATION = 125 // Subservice
 };
 
-}
+
 }
 }

@@ -34,6 +34,11 @@
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 
+
+#include "ledger/dag/dag.hpp"
+#include "ledger/protocols/dag_rpc_service.hpp"
+#include "ledger/dag/dag_muddle_configuration.hpp" //< TODO(tfr): Move to where it belongs
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -110,8 +115,11 @@ private:
   using HttpModules            = std::vector<HttpModulePtr>;
   using TransactionProcessor   = ledger::TransactionProcessor;
   using TrustSystem            = p2p::P2PTrustBayRank<Muddle::Address>;
+  using DAGRpcService          = fetch::ledger::DAGRpcService;
+  using DAG                    = fetch::ledger::DAG;
   using ConsensusMinerInterface =
       std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
+
 
   /// @name Configuration
   /// @{
@@ -145,6 +153,13 @@ private:
   /// @{
   ExecutionManagerPtr execution_manager_;  ///< The transaction execution manager
   /// @}
+
+  /// @name DAG and useful work
+  /// @{
+  DAG dag_;
+  DAGRpcService dag_rpc_service_;
+  /// @}
+
 
   /// @name Blockchain and Mining
   /// @[

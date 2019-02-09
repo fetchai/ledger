@@ -39,14 +39,17 @@ class Block
 public:
   using Identity     = byte_array::ConstByteArray;
   using Digest       = byte_array::ConstByteArray;
+  using DAGDigest    = byte_array::ConstByteArray;  
   using HashFunction = crypto::SHA256;
   using Proof        = consensus::ProofOfWork;
   using Slice        = std::vector<TransactionSummary>;
   using Slices       = std::vector<Slice>;
+  using DAGNodes     = std::vector<DAGDigest>;
 
   struct Body
   {
     // TODO(private issue 496): Populate the state hash
+    // TODO(tfr): Add transaction hash to certify transactions
     Digest   hash;               ///< The hash of the block
     Digest   previous_hash;      ///< The hash of the previous block
     Digest   merkle_hash;        ///< The merkle state hash across all shards
@@ -54,6 +57,7 @@ public:
     Identity miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
+    DAGNodes dag_nodes;          ///< The DAG nodes which the chain is certifying
   };
 
   /// @name Block Contents
@@ -105,7 +109,7 @@ template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
   serializer << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-             << body.log2_num_lanes << body.slices;
+             << body.log2_num_lanes << body.slices << body.dag_nodes;
 }
 
 /**
@@ -119,7 +123,7 @@ template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
   serializer >> body.previous_hash >> body.merkle_hash >> body.block_number >> body.miner >>
-      body.log2_num_lanes >> body.slices;
+      body.log2_num_lanes >> body.slices >> body.dag_nodes;
 }
 
 /**

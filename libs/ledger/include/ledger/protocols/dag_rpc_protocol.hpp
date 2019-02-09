@@ -26,8 +26,6 @@ namespace fetch
 {
 namespace ledger 
 {
-namespace dag
-{
 
 class DAGProtocol : public fetch::service::Protocol
 {
@@ -83,6 +81,7 @@ private:
 
   DAG &dag_;
 };  
-}
+
+
 }
 }

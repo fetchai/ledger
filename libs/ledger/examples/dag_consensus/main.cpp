@@ -39,9 +39,9 @@ using NetworkId = fetch::muddle::MuddleEndpoint::NetworkId;
 using fetch::muddle::rpc::Client;
 using fetch::service::Promise;
 using fetch::commandline::ParamsParser;
-using fetch::ledger::dag::DAGNode;
-using fetch::ledger::dag::DAGRpcService;
-//using fetch::ledger::dag::LeaderBoard;
+using fetch::ledger::DAGNode;
+using fetch::ledger::DAGRpcService;
+//using fetch::ledger::LeaderBoard;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
 using fetch::crypto::ECDSASigner;
@@ -60,7 +60,7 @@ using Rng = std::mt19937_64;
 using RngWord = Rng::result_type;
 
 using HttpServerPtr = std::unique_ptr<HTTPServer>;
-using DAG = fetch::ledger::dag::DAG;
+using DAG = fetch::ledger::DAG;
 
 /**
  * Tests to write:
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
 
   // Building initial stake holder board
   /*
-  std::vector<fetch::ledger::dag::Candidacy> stake_holders;
+  std::vector<fetch::ledger::Candidacy> stake_holders;
   std::cout << "Setting committee up" << std::endl;
   auto committee = doc["committee"];
   for(std::size_t i=0; i < committee.size(); ++i)
@@ -266,11 +266,11 @@ int main(int argc, char **argv)
 
   // Creating the consensus controller
   std::fstream outfile(params.GetArg(2), std::ios::out);
-  fetch::ledger::dag::DAG dag;
+  fetch::ledger::DAG dag;
 
   std::atomic< int > node_count{0};
   fetch::mutex::Mutex file_mutex{__LINE__, __FILE__};
-  dag.OnNewNode([&outfile, &node_count, &file_mutex](DAGNode n)
+   dag.OnNewNode([&outfile, &node_count, &file_mutex](DAGNode n)
   {
     FETCH_LOCK(file_mutex);
     using Clock     = std::chrono::system_clock;

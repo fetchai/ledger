@@ -41,8 +41,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace dag {
-
 
 class DAGRpcService : public muddle::rpc::Server,
                       public std::enable_shared_from_this<DAGRpcService>
@@ -100,17 +98,25 @@ public:
   */      
       });
 
+  }
+
+  void Start() 
+  {
     // Worker thread
     // TODO: Move to separate start function
     thread_pool_->Start();
     thread_pool_->Post([this]() { IdleUntilWork(); });
   }
 
+  void Stop()
+  {
+    thread_pool_->Stop();
+  }
+
 
   void IdleUntilWork() 
   {
     LOG_STACK_TRACE_POINT;
-    std::cout << "IDLE" << std::endl;
     
     if(!syncronising_)
     {
@@ -182,7 +188,7 @@ public:
       n = int(normal_node_queue_.size());
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Processing ", n, "DAG nodes");
+//    FETCH_LOG_INFO(LOGGING_NAME, "Processing ", n, "DAG nodes");
     while(n > 0)
     {
       QueueItem item;
@@ -192,7 +198,7 @@ public:
         item = normal_node_queue_.front();
         normal_node_queue_.pop_front();
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "Processing DAG node: ", byte_array::ToBase64(item.node.hash));
+//      FETCH_LOG_INFO(LOGGING_NAME, "Processing DAG node: ", byte_array::ToBase64(item.node.hash));
 
       if(!dag_.HasNode(item.node.hash))
       {
@@ -226,7 +232,9 @@ public:
     LOG_STACK_TRACE_POINT;
     fetch::serializers::TypedByteArrayBuffer buf;
     buf << node;
-    endpoint_.Broadcast(fetch::ledger::dag::DAG_RPC_SERVICE, fetch::ledger::dag::CHANNEL_DAG, buf.data());
+    
+    // TODO(tfr): Move constants to where they belong
+    endpoint_.Broadcast(fetch::ledger::DAG_RPC_SERVICE, fetch::ledger::CHANNEL_DAG, buf.data());
   } 
 
 
@@ -251,9 +259,9 @@ public:
       auto client = std::make_shared<muddle::rpc::Client>("DAG Sync Client", muddle_.AsEndpoint(), c.first,
                                                           DAG_RPC_SERVICE, CHANNEL_DAG_RPC);
       clients.push_back(client);
-      FETCH_LOG_INFO(LOGGING_NAME, "Making call");
+//      FETCH_LOG_INFO(LOGGING_NAME, "Making call");
       promises.push_back(client->Call(muddle_.network_id(), DAG_SYNCRONISATION, DAGProtocol::NUMBER_OF_DAG_NODES));
-      FETCH_LOG_INFO(LOGGING_NAME, "DONE!");      
+//      FETCH_LOG_INFO(LOGGING_NAME, "DONE!");      
     }
 
     if (clients.size() == 0)
@@ -370,7 +378,7 @@ private:
       return false;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Queuing node: ", byte_array::ToBase64(node.hash) );
+//    FETCH_LOG_INFO(LOGGING_NAME, "Queuing node: ", byte_array::ToBase64(node.hash) );
     if(node.identity.identifier().size() == 0)
     {
       // TODO: work out why this errors comes around.
@@ -445,6 +453,5 @@ private:
 
 };
 
-}
 }
 }
