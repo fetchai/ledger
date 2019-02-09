@@ -101,12 +101,10 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &s
                                               ArrayType &ret)
 {
   assert(array.shape() == ret.shape());
-  typename ArrayType::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ArrayType::vector_register_type const &x,
-            typename ArrayType::vector_register_type &      z) { z = x + val; },
-      array.data());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array.At(i) + scalar;
+  }
 }
 template <typename T, typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
@@ -194,16 +192,17 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array1, ArrayType
   assert(array1.shape() == array2.shape());
   assert(array1.shape() == ret.shape());
 
-  memory::Range range{0, std::min(array1.data().size(), array2.data().size()), 1};
-  details::Add(array1, array2, range, ret);
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array1.At(i) - array2.At(i);
+  }
 }
 template <typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2)
 {
   assert(array1.shape() == array2.shape());
   ArrayType ret{array1.shape()};
-  details::Add(array1, array2, ret);
-
+  Add(array1, array2, ret);
   return ret;
 }
 
@@ -320,7 +319,19 @@ meta::IfIsMathShapeArray<ArrayType, void> Subtract(T const &scalar, ArrayType co
   assert(array.shape() == ret.shape());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret[i] = scalar - array[i];
+    ret.At(i) = scalar - array.At(i);
+  }
+}
+
+template <typename ArrayType>
+meta::IfIsMathShapeArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType const &array2,
+                                                   ArrayType &ret)
+{
+  assert(array1.size() == ret.size());
+  assert(array2.shape() == ret.shape());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array1.At(i) - array2.At(i);
   }
 }
 
@@ -339,7 +350,7 @@ meta::IfIsMathShapeArray<ArrayType, void> Subtract(ArrayType const &array, T con
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret[i] = array[i] - scalar;
+    ret.At(i) = array.At(i) - scalar;
   }
 }
 
@@ -396,94 +407,6 @@ meta::IfIsMathShapelessArray<ShapelessArray<T, C>, ShapelessArray<T, C>> Subtrac
   ShapelessArray<T, C> ret{array.size()};
   Subtract(scalar, array, ret);
   return ret;
-}
-
-//////////////////////////////////////////////////
-/// SHAPED ARRAY - SHAPED ARRAY  SUBTRACTION   ///
-//////////////////////////////////////////////////
-
-template <typename T, typename C, typename S>
-meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, linalg::Matrix<T, C, S>> Subtract(
-    linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2)
-{
-  linalg::Matrix<T, C, S> ret{array1.shape()};
-  Subtract(array1, array2, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> Subtract(
-    linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-    linalg::Matrix<T, C, S> &ret)
-{
-  // broadcasting is permissible
-  assert((array1.size() == ret.size()) || (array1.shape()[0] == ret.shape()[0]) ||
-         (array1.shape()[1] == ret.shape()[1]));
-  assert((array1.size() == array2.size()) || (array1.shape()[0] == array2.shape()[0]) ||
-         (array1.shape()[1] == array2.shape()[1]));
-
-  if (array1.size() == array2.size())
-  {
-    for (std::size_t i = 0; i < ret.size(); ++i)
-    {
-      ret[i] = array1[i] - array2[i];
-    }
-  }
-  else if (array1.shape()[0] == array2.shape()[0])
-  {
-    for (std::size_t i = 0; i < ret.shape()[0]; ++i)
-    {
-      for (std::size_t j = 0; j < ret.shape()[1]; ++j)
-      {
-        ret.Set(i, j, array1.At(i, j) - array2.At(i, 0));
-      }
-    }
-  }
-  else
-  {
-    for (std::size_t i = 0; i < ret.shape()[1]; ++i)
-    {
-      for (std::size_t j = 0; j < ret.shape()[0]; ++j)
-      {
-        ret.Set(j, i, array1.At(j, i) - array2.At(0, i));
-      }
-    }
-  }
-}
-
-/**
- * subtract array from another array within a range
- * @tparam T
- * @tparam C
- * @param array1
- * @param scalar
- * @param ret
- */
-template <typename T, typename C, typename S>
-meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> Subtract(
-    linalg::Matrix<T, C, S> const &obj1, linalg::Matrix<T, C, S> const &obj2,
-    memory::Range const &range, linalg::Matrix<T, C, S> &ret)
-{
-  assert(obj1.size() == obj2.size());
-  assert(obj1.size() == ret.size());
-
-  // TODO (private 516)
-  assert(range.is_trivial() || range.is_undefined());
-
-  if (range.is_undefined())
-  {
-    Subtract(obj1, obj2, ret);
-  }
-  else
-  {
-    auto r = range.ToTrivialRange(ret.data().size());
-
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename linalg::Matrix<T, C, S>::vector_register_type const &x,
-           typename linalg::Matrix<T, C, S>::vector_register_type const &y,
-           typename linalg::Matrix<T, C, S>::vector_register_type &      z) { z = x - y; },
-        obj1.data(), obj2.data());
-  }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -638,13 +561,12 @@ meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array, T con
                                                    ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  typename ArrayType::vector_register_type val(scalar);
-
-  ret.data().in_parallel().Apply(
-      [val](typename ArrayType::vector_register_type const &x,
-            typename ArrayType::vector_register_type &      z) { z = x * val; },
-      array.data());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array.At(i) * scalar;
+  }
 }
+
 template <typename ArrayType, typename T>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
 {
@@ -1111,12 +1033,11 @@ meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &array, T const
 {
   assert(array.size() == ret.size());
   assert(array.shape() == ret.shape());
-  typename ArrayType::vector_register_type val(scalar);
 
-  ret.data().in_parallel().Apply(
-      [val](typename ArrayType::vector_register_type const &x,
-            typename ArrayType::vector_register_type &      z) { z = x / val; },
-      array.data());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array.At(i) / scalar;
+  }
 }
 template <typename ArrayType, typename T>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Divide(ArrayType const &array, T const &scalar)

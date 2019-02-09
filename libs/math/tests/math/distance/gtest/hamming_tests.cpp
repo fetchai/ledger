@@ -22,26 +22,36 @@
 #include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
 #include <math/distance/hamming.hpp>
-#include <math/linalg/matrix.hpp>
 
 using namespace fetch::math::distance;
-using namespace fetch::math::linalg;
-
-template <typename D>
-using _S = fetch::memory::SharedArray<D>;
-
-template <typename D>
-using _M = Matrix<D, _S<D>>;
+using namespace fetch::math;
 
 TEST(hamming_gtest, DISABLED_basic_info)
 {
-  _M<double> A = _M<double>(R"(1 2; 3 4)");
-  EXPECT_EQ(Hamming(A, A), 4);
+  ShapelessArray<double> A = ShapelessArray<double>(4);
+  A.Set({0}, 1);
+  A.Set({1}, 2);
+  A.Set({2}, 3);
+  A.Set({3}, 4);
+  ASSERT_EQ(Hamming(A, A), 4);
 
-  _M<double> B = _M<double>(R"(1 2; 3 2)");
-  EXPECT_EQ(Hamming(A, B), 3);
+  ShapelessArray<double> B = ShapelessArray<double>(4);
+  B.Set({0}, 1);
+  B.Set({1}, 2);
+  B.Set({2}, 3);
+  B.Set({3}, 2);
 
-  A = _M<double>(R"(1 2 3)");
-  B = _M<double>(R"(1 2 9)");
-  EXPECT_EQ(Hamming(A, B), 2);
+  ASSERT_EQ(Hamming(A, B), 3);
+
+  ShapelessArray<double> C = ShapelessArray<double>(3);
+  A.Set({0}, 1);
+  A.Set({1}, 2);
+  A.Set({2}, 3);
+
+  ShapelessArray<double> D = ShapelessArray<double>(3);
+  A.Set({0}, 1);
+  A.Set({1}, 2);
+  A.Set({2}, 9);
+
+  EXPECT_EQ(Hamming(C, D), 2);
 }

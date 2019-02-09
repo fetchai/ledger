@@ -12,5 +12,5 @@ setup_compiler()
 
 
 
-add_fetch_gtest(storage_gtest fetch-storage gtest)
-add_fetch_gtest(selective_storage_gtest fetch-storage selective_test)
+add_fetch_test(storage_gtest fetch-storage gtest SLOW)
+add_fetch_test(selective_storage_gtest fetch-storage selective_test)

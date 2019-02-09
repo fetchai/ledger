@@ -30,7 +30,7 @@ using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 static const std::chrono::milliseconds STALL_INTERVAL{250};
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 
 /**
  * Construct the Block Coordinator
@@ -38,8 +38,7 @@ namespace chain {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &                        chain,
-                                   ledger::ExecutionManagerInterface &execution_manager)
+BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager)
   : chain_{chain}
   , execution_manager_{execution_manager}
 {}
@@ -314,7 +313,7 @@ void BlockCoordinator::OnExecuteBlock()
         // make the parent block the next block to execute
         current_block_ = std::make_shared<Block::Body>(parent_block.body);
 
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(parent_block.body.hash));
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(block->hash));
       }
       else
       {
@@ -343,5 +342,5 @@ void BlockCoordinator::OnExecuteBlock()
   state_ = next_state;
 }
 
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

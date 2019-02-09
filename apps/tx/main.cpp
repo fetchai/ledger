@@ -112,20 +112,20 @@ struct CommandLineArguments
   }
 };
 
-void PrintTx(fetch::chain::MutableTransaction const &tx, std::string const &desc = std::string{},
+void PrintTx(fetch::ledger::MutableTransaction const &tx, std::string const &desc = std::string{},
              bool const &is_verbose = false)
 {
   if (is_verbose)
   {
     PrintSeparator(std::cout, desc);
   }
-  std::cout << fetch::chain::ToWireTransaction(tx, true) << std::endl;
+  std::cout << fetch::ledger::ToWireTransaction(tx, true) << std::endl;
 }
 
 void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &is_verbose = false)
 {
-  fetch::chain::MutableTransaction tx;
-  auto                             txdata = fetch::chain::TxSigningAdapterFactory(tx);
+  fetch::ledger::MutableTransaction tx;
+  auto                              txdata = fetch::ledger::TxSigningAdapterFactory(tx);
   tx_data_stream >> txdata;
 
   if (tx.Verify(txdata))
@@ -145,10 +145,10 @@ void verifyTx(fetch::serializers::ByteArrayBuffer &tx_data_stream, bool const &i
   }
 }
 
-fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant const &metadata_v,
-                                                         PrivateKeys const &private_keys)
+fetch::ledger::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant const &metadata_v,
+                                                          PrivateKeys const &private_keys)
 {
-  using fetch::chain::MutableTransaction;
+  using fetch::ledger::MutableTransaction;
   using fetch::byte_array::ConstByteArray;
   using fetch::byte_array::FromBase64;
 
@@ -183,7 +183,7 @@ fetch::chain::MutableTransaction ConstructTxFromMetadata(fetch::variant::Variant
               << std::endl;
   }
 
-  auto txSigningAdapter = fetch::chain::TxSigningAdapterFactory(mtx);
+  auto txSigningAdapter = fetch::ledger::TxSigningAdapterFactory(mtx);
   for (auto const &priv_key : private_keys)
   {
     mtx.Sign(priv_key, txSigningAdapter);
@@ -253,7 +253,7 @@ void HandleProvidedTx(fetch::byte_array::ConstByteArray const &tx_jsom_string,
 
 PrivateKeys GetPrivateKeys(std::string const &priv_keys_filename_argument)
 {
-  using SignPrivateKey = fetch::chain::TxSigningAdapter<>::private_key_type;
+  using SignPrivateKey = fetch::ledger::TxSigningAdapter<>::private_key_type;
   PrivateKeys keys;
 
   if (priv_keys_filename_argument.empty())
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 
     if (args.input_json_tx_filename.empty())
     {
-      auto mtx = fetch::chain::RandomTransaction(3, 3);
+      auto mtx = fetch::ledger::RandomTransaction(3, 3);
       PrintTx(mtx, "RANDOM GENERATED TRANSACTION", args.is_verbose);
       return EXIT_SUCCESS;
     }

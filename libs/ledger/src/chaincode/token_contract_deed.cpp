@@ -95,7 +95,7 @@ bool Deed::IsSane() const
  *
  * @return true if sanity check passes, false otherwise
  */
-bool Deed::Verify(chain::VerifiedTransaction const &tx, DeedOperation const &operation) const
+bool Deed::Verify(VerifiedTransaction const &tx, DeedOperation const &operation) const
 {
   auto const op = operation_thresholds_.find(operation);
   if (op == operation_thresholds_.end())

@@ -1,4 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<namespace id="details" name="details" xmlns="http://jessevdk.github.com/cldoc/1.0">
-  <namespace name="meta" ref="details::meta#details::meta" />
-</namespace>

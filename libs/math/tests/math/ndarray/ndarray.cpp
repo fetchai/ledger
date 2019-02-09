@@ -25,7 +25,6 @@
 
 #include "math/free_functions/free_functions.hpp"
 //#include "math/kernels/concurrent_vm.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
 #include "math/rectangular_array.hpp"
 //#include "vectorise/threading/pool.hpp"

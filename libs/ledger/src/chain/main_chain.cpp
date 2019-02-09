@@ -632,7 +632,7 @@ bool MainChain::UpdateTips(Block &block, Block const &prev_block)
 Block MainChain::CreateGenesisBlock()
 {
   Block genesis{};
-  genesis.body.previous_hash = chain::GENESIS_DIGEST;
+  genesis.body.previous_hash = GENESIS_DIGEST;
   genesis.is_loose           = false;
   genesis.UpdateDigest();
 

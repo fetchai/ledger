@@ -22,7 +22,7 @@
 #include <random>
 
 namespace fetch {
-namespace chain {
+namespace ledger {
 namespace consensus {
 
 class DummyMiner : public ConsensusMinerInterface
@@ -75,5 +75,5 @@ private:
   }
 };
 }  // namespace consensus
-}  // namespace chain
+}  // namespace ledger
 }  // namespace fetch

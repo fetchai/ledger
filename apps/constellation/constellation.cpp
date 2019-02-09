@@ -45,12 +45,12 @@ using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
-using fetch::chain::consensus::DummyMiner;
-using fetch::chain::consensus::BadMiner;
-using fetch::chain::consensus::ConsensusMinerType;
+using fetch::ledger::consensus::DummyMiner;
+using fetch::ledger::consensus::BadMiner;
+using fetch::ledger::consensus::ConsensusMinerType;
 
 using ConsensusMinerInterfacePtr =
-    std::shared_ptr<fetch::chain::consensus::ConsensusMinerInterface>;
+    std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
 namespace fetch {
 namespace {
