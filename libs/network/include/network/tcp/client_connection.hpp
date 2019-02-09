@@ -122,7 +122,7 @@ public:
   {
     if (shutting_down_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket xxxxxxxxxxxxxxxxxxxx.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket while it's shut down.");
       return;
     }
 
@@ -398,60 +398,6 @@ private:
       header[i + 8] = uint8_t((bufSize >> i * 8) & 0xff);
     }
   }
-
-  /*void Write()
-  {
-    if (shutting_down_)
-    {
-      return;
-    }
-
-    LOG_STACK_TRACE_POINT;
-    auto socket_ptr = socket_.lock();
-    if (!socket_ptr)
-    {
-      return;
-    }
-
-    write_mutex_.lock();
-
-    if (write_queue_.empty())
-    {
-      write_mutex_.unlock();
-      return;
-    }
-
-    auto buffer = write_queue_.front();
-
-    byte_array::ByteArray header;
-    SetHeader(header, buffer.size());
-    write_queue_.pop_front();
-    write_mutex_.unlock();
-
-    auto self = shared_from_this();
-    auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
-      auto ptr = manager_.lock();
-      if (!ptr)
-      {
-        return;
-      }
-
-      if (!ec)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Wrote message.");
-        Write();
-      }
-      else
-      {
-        ptr->Leave(this->handle());
-      }
-    };
-
-    std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
-                                            asio::buffer(buffer.pointer(), buffer.size())};
-
-    asio::async_write(*socket_ptr, buffers, cb);
-  } */
 
   // Always executed in a run(), in a strand
   void WriteNext(shared_self_type selfLock)
