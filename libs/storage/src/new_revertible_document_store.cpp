@@ -82,5 +82,10 @@ Hash NewRevertibleDocumentStore::CurrentHash()
   return storage_.CurrentHash();
 }
 
+std::size_t NewRevertibleDocumentStore::size() const
+{
+  return storage_.size();
+}
+
 }  // namespace storage
 }  // namespace fetch

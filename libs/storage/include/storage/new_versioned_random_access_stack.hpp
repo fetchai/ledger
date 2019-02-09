@@ -415,14 +415,7 @@ public:
 
   bool HashExists(DefaultKey const & /*key*/) const
   {
-    // TODO(HUT): this.
-    return true;
-
-    /*
-    do
-    {
-    }
-    while(index > 0) */
+    throw std::runtime_error("HashExists functionality not yet implemented");
   }
 
   /**
