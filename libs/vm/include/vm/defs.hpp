@@ -228,7 +228,7 @@ public:
     ptr_ = nullptr;
   }
 
-  explicit Ptr(T *other)
+  Ptr(T *other)
   {
     ptr_ = other;
   }
@@ -239,7 +239,7 @@ public:
     return Ptr(this__);
   }
 
-  Ptr &operator=(nullptr_t)
+  Ptr &operator=(std::nullptr_t)
   {
     Reset();
     return *this;
