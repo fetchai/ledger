@@ -57,6 +57,11 @@ public:
           return Status(params, request);
         });        
 
+    Get("/api/dag/list",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return List(params, request);
+        });            
+
     certificate_.GenerateKeys();
   }
 
@@ -125,12 +130,6 @@ private:
     auto payload = doc["payload"].As<ConstByteArray>();
     DAGNode node = GenerateNode(payload, DAGNode::WORK);
 
-    std::cout << "================================" << std::endl;
-    std::cout << "================================" << std::endl;
-    std::cout << node.contents << std::endl;
-    std::cout << "================================" << std::endl;    
-    std::cout << "================================" << std::endl;
-
     dag_rpc_.BroadcastDAGNode(node);
     dag_.Push(node);
 
@@ -141,10 +140,23 @@ private:
                             http::HTTPRequest const &request)
   {
     Variant response     = Variant::Object();
-/*
+
+    json::JSONDocument doc;
+    doc.Parse(request.body());
+
+    if(!doc.Has("payload"))
+    {
+      response["error"] = "Work request did not have a payload.";
+      return http::CreateJsonResponse(response);
+    }
+
+    // TODO(tfr): Use wire format.
+    auto payload = doc["payload"].As<ConstByteArray>();
+    DAGNode node = GenerateNode(payload, DAGNode::BID);
+
     dag_rpc_.BroadcastDAGNode(node);
     dag_.Push(node);
-*/
+
     return http::CreateJsonResponse(response);
   }
 
@@ -153,12 +165,49 @@ private:
                             http::HTTPRequest const &request)
   {
     Variant response     = Variant::Object();
-/*
-    dag_rpc_.BroadcastDAGNode(node);
-    dag_.Push(node);
-*/
+
     return http::CreateJsonResponse(response);
   }
+
+  http::HTTPResponse List(http::ViewParameters const & /*params*/,
+                          http::HTTPRequest const &request)
+  {
+
+
+    uint64_t from = 0;
+    uint64_t to = dag_.node_count();
+
+    // TODO(tfr): add parameter to get chunk
+
+    auto list = dag_.GetChunk(from, to);
+    Variant response     = Variant::Array(list.size());
+
+    std::size_t index = 0;
+    for (auto const &obj : list)
+    {
+      Variant previous = Variant::Array(obj.previous.size());
+      std::size_t j = 0;
+      for(auto const& h : obj.previous)
+      {
+        previous[j++] = byte_array::ToBase64(h);
+      }
+
+      Variant object = Variant::Object();
+
+      object["type"]      = obj.type;
+      object["identity"]  = byte_array::ToBase64(obj.identity.identifier());
+      object["previous"]  = previous;
+      object["contents"]  = obj.contents;
+      object["hash"]      = byte_array::ToBase64(obj.hash);
+      object["signature"] = byte_array::ToBase64(obj.signature); 
+
+      response[index++] = object;
+    }
+
+
+    return http::CreateJsonResponse(response);
+  }
+
 
   DAG &  dag_;
   DAGRpcService & dag_rpc_;
