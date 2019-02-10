@@ -632,7 +632,6 @@ TEST_P(TCPClientServerTest, basic_test)
     TestCase6<1>(host, portNumber);
     TestCase7<1>(host, portNumber);
 
-
     TestCase0<10>(host, portNumber);
     TestCase1<10>(host, portNumber);
     TestCase2<10>(host, portNumber);
