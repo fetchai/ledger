@@ -286,13 +286,13 @@ BlockNodePtr Parser::ParseFunctionDefinition()
         std::make_shared<ExpressionNode>(ExpressionNode(Node::Kind::Identifier, token_));
     function_definition_node->children.push_back(std::move(identifier_node));
     Next();
-    if (token_->kind != Token::Kind::LeftRoundBracket)
+    if (token_->kind != Token::Kind::LeftParenthesis)
     {
       AddError("expected '('");
       break;
     }
     Next();
-    if (token_->kind != Token::Kind::RightRoundBracket)
+    if (token_->kind != Token::Kind::RightParenthesis)
     {
       bool inner_ok = false;
       int  count    = 0;
@@ -326,7 +326,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
         }
         function_definition_node->children.push_back(std::move(type_node));
         Next();
-        if (token_->kind == Token::Kind::RightRoundBracket)
+        if (token_->kind == Token::Kind::RightParenthesis)
         {
           inner_ok = true;
           break;
@@ -396,7 +396,7 @@ NodePtr Parser::ParseAnnotation()
 {
   NodePtr annotation_node = std::make_shared<Node>(Node(Node::Kind::Annotation, token_));
   Next();
-  if (token_->kind != Token::Kind::LeftRoundBracket)
+  if (token_->kind != Token::Kind::LeftParenthesis)
   {
     AddError("expected '('");
     return nullptr;
@@ -433,7 +433,7 @@ NodePtr Parser::ParseAnnotation()
       }
     }
     Next();
-    if (token_->kind == Token::Kind::RightRoundBracket)
+    if (token_->kind == Token::Kind::RightParenthesis)
     {
       return annotation_node;
     }
@@ -554,7 +554,7 @@ BlockNodePtr Parser::ParseForStatement()
   BlockNodePtr for_statement_node =
       std::make_shared<BlockNode>(BlockNode(Node::Kind::ForStatement, token_));
   Next();
-  if (token_->kind != Token::Kind::LeftRoundBracket)
+  if (token_->kind != Token::Kind::LeftParenthesis)
   {
     AddError("expected '('");
     return nullptr;
@@ -603,7 +603,7 @@ BlockNodePtr Parser::ParseForStatement()
     for_statement_node->children.push_back(std::move(part3));
     Next();
   }
-  if (token_->kind != Token::Kind::RightRoundBracket)
+  if (token_->kind != Token::Kind::RightParenthesis)
   {
     AddError("expected ')'");
     return nullptr;
@@ -998,7 +998,7 @@ ExpressionNodePtr Parser::ParseType()
 ExpressionNodePtr Parser::ParseConditionalExpression()
 {
   Next();
-  if (token_->kind != Token::Kind::LeftRoundBracket)
+  if (token_->kind != Token::Kind::LeftParenthesis)
   {
     AddError("expected '('");
     return nullptr;
@@ -1217,17 +1217,25 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
                    Node::Kind::PostfixDecOp, OpInfo(8, Association::Left, 1));
       break;
     }
-    case Token::Kind::LeftRoundBracket:
+    case Token::Kind::LeftParenthesis:
     {
-      HandleOpener(Node::Kind::RoundBracketGroup, Node::Kind::InvokeOp);
+      if (HandleOpener(Node::Kind::ParenthesisGroup, Node::Kind::InvokeOp,
+                       Token::Kind::RightParenthesis, ")") == false)
+      {
+        return nullptr;
+      }
       break;
     }
     case Token::Kind::LeftSquareBracket:
     {
-      HandleOpener(Node::Kind::SquareBracketGroup, Node::Kind::IndexOp);
+      if (HandleOpener(Node::Kind::Unknown, Node::Kind::IndexOp,
+                      Token::Kind::RightSquareBracket, "]") == false)
+      {
+        return nullptr;
+      }
       break;
     }
-    case Token::Kind::RightRoundBracket:
+    case Token::Kind::RightParenthesis:
     case Token::Kind::RightSquareBracket:
     {
       if (HandleCloser(is_conditional_expression) == false)
@@ -1271,30 +1279,26 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     }  // switch
   } while (found_expression_terminator_ == false);
-
   if (groups_.size())
   {
-    AddError("unterminated brackets");
+    Expr const &groupop = operators_[groups_.back()];
+    AddError("expected '" + groupop.closer_token_text + "'");
     return nullptr;
   }
-
   // Roll back so token_ is pointing at the last token of the expression
   Undo();
-
   while (operators_.size())
   {
     Expr &topop = operators_.back();
     rpn_.push_back(std::move(topop));
     operators_.pop_back();
   }
-
   // rpn_ holds the Reverse Polish Notation (aka postfix) expression
   // Here we convert the RPN to an infix expression tree
-
   for (std::size_t i = 0; i < rpn_.size(); ++i)
   {
     Expr &expr = rpn_[i];
-    if ((expr.node->kind == Node::Kind::RoundBracketGroup) ||
+    if ((expr.node->kind == Node::Kind::ParenthesisGroup) ||
         (expr.node->kind == Node::Kind::UnaryPlusOp))
     {
       // Just ignore these no-ops
@@ -1355,7 +1359,7 @@ bool Parser::ParseExpressionIdentifier(std::string &name)
     return false;
   }
   name += "<";
-  AddGroup(Node::Kind::Template, 1);
+  AddGroup(Node::Kind::Template, 1, Token::Kind::GreaterThan, ">");
   do
   {
     Next();
@@ -1490,74 +1494,69 @@ bool Parser::HandleDot()
   expr.is_operator       = true;
   expr.node              = std::move(dot_node);
   expr.op_info.arity     = 2;
-  expr.num_group_members = 0;
+  expr.closer_token_kind = Token::Kind::Unknown;
+  expr.num_members = 0;
   rpn_.push_back(std::move(expr));
   state_ = State::PostOperand;
   return true;
 }
 
-void Parser::HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind)
+bool Parser::HandleOpener(Node::Kind         prefix_kind,
+                          Node::Kind         postfix_kind,
+                          Token::Kind        closer_token_kind,
+                          std::string const &closer_token_text)
 {
   if (state_ == State::PreOperand)
   {
-    AddGroup(prefix_kind, 0);
+    if (prefix_kind == Node::Kind::Unknown)
+    {
+      AddError("expected expression");
+      return false;
+    }
+    AddGroup(prefix_kind, 0, closer_token_kind, closer_token_text);
+    return true;
   }
-  else
+  if (postfix_kind == Node::Kind::Unknown)
   {
-    AddGroup(postfix_kind, 1);
+    found_expression_terminator_ = true;
+    return true;
   }
+  AddGroup(postfix_kind, 1, closer_token_kind, closer_token_text);
   state_ = State::PreOperand;
+  return true;
 }
 
 bool Parser::HandleCloser(bool is_conditional_expression)
 {
   if (groups_.empty())
   {
-    // Unexpected closer
+    // Closer without an opener
     if (state_ == State::PreOperand)
     {
       AddError("expected expression");
       return false;
     }
-    // Regard the bad closer as the expression terminator
     found_expression_terminator_ = true;
     return true;
   }
-
-  Expr const &     groupop     = operators_[groups_.back()];
-  Node::Kind const group_kind  = groupop.node->kind;
-  int const        group_count = groupop.num_group_members;
-
-  if (token_->kind == Token::Kind::RightRoundBracket)
+  Expr const groupop = operators_[groups_.back()];
+  if (token_->kind != groupop.closer_token_kind)
   {
-    if ((group_kind == Node::Kind::SquareBracketGroup) || (group_kind == Node::Kind::IndexOp))
-    {
-      // Opener and closer don't match
-      // Regardless of state, this is a syntax error
-      AddError("expected ']'");
-      return false;
-    }
-  }
-  else
-  {
-    if ((group_kind == Node::Kind::RoundBracketGroup) || (group_kind == Node::Kind::InvokeOp))
-    {
-      // Opener and closer don't match
-      // Regardless of state, this is a syntax error
-      AddError("expected ')'");
-      return false;
-    }
+    // Opener and closer don't match
+    // Regardless of state_, this is a syntax error
+    AddError("expected '" + groupop.closer_token_text + "'");
+    return false;
   }
   while (operators_.size())
   {
     Expr &topop = operators_.back();
-    if (topop.node->kind != group_kind)
+    if (topop.node->kind != groupop.node->kind)
     {
       rpn_.push_back(std::move(topop));
       operators_.pop_back();
       continue;
     }
-    if (group_count)
+    if (groupop.num_members > 0)
     {
       // Non-empty group
       if (state_ == State::PreOperand)
@@ -1570,21 +1569,20 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     else
     {
       // Empty group
-      if ((group_kind == Node::Kind::RoundBracketGroup) || (group_kind == Node::Kind::IndexOp))
+      if ((groupop.node->kind == Node::Kind::ParenthesisGroup) ||
+          (groupop.node->kind == Node::Kind::IndexOp))
       {
-
-        // is empty SquareBracketGroup valid? empty initialise list?
-
         AddError("expected expression");
         return false;
       }
     }
-    if ((group_kind == Node::Kind::RoundBracketGroup) && (groups_.size() == 1) &&
+    if ((groupop.node->kind == Node::Kind::ParenthesisGroup) &&
+        (groups_.size() == 1) &&
         (is_conditional_expression))
     {
       // We've found the final closing bracket of a conditional expression
-      found_expression_terminator_ = true;
       Next();
+      found_expression_terminator_ = true;
     }
     groups_.pop_back();
     rpn_.push_back(std::move(topop));
@@ -1605,25 +1603,20 @@ bool Parser::HandleComma()
   if (groups_.empty())
   {
     // Commas must be inside a group
-    // Regard the bad comma as the expression terminator
     found_expression_terminator_ = true;
     return true;
   }
-
-  Expr const &     groupop    = operators_[groups_.back()];
-  Node::Kind const group_kind = groupop.node->kind;
-
-  if (group_kind == Node::Kind::RoundBracketGroup)
+  Expr const groupop = operators_[groups_.back()];
+  if (groupop.node->kind == Node::Kind::ParenthesisGroup)
   {
-    // Commas are not allowed inside a bracket group
+    // Commas are not allowed inside a parenthesis group
     AddError("");
     return false;
   }
-
   while (operators_.size())
   {
     Expr &topop = operators_.back();
-    if (topop.node->kind == group_kind)
+    if (topop.node->kind == groupop.node->kind)
     {
       (topop.op_info.arity)++;
       break;
@@ -1669,14 +1662,19 @@ void Parser::HandleOp(Node::Kind kind, OpInfo const &op_info)
   AddOp(kind, op_info);
 }
 
-void Parser::AddGroup(Node::Kind kind, int initial_arity)
+void Parser::AddGroup(Node::Kind         kind,
+                      int                arity,
+                      Token::Kind        closer_token_kind,
+                      std::string const &closer_token_text)
 {
   IncrementGroupMembers();
   Expr expr;
   expr.is_operator       = true;
   expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
-  expr.op_info.arity     = initial_arity;
-  expr.num_group_members = 0;
+  expr.op_info.arity     = arity;
+  expr.closer_token_kind = closer_token_kind;
+  expr.closer_token_text = closer_token_text;
+  expr.num_members       = 0;
   groups_.push_back(operators_.size());
   operators_.push_back(std::move(expr));
 }
@@ -1688,7 +1686,8 @@ void Parser::AddOp(Node::Kind kind, OpInfo const &op_info)
   expr.is_operator       = true;
   expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
   expr.op_info           = op_info;
-  expr.num_group_members = 0;
+  expr.closer_token_kind = Token::Kind::Unknown;
+  expr.num_members = 0;
   operators_.push_back(std::move(expr));
 }
 
@@ -1698,7 +1697,8 @@ void Parser::AddOperand(Node::Kind kind)
   Expr expr;
   expr.is_operator       = false;
   expr.node              = std::make_shared<ExpressionNode>(ExpressionNode(kind, token_));
-  expr.num_group_members = 0;
+  expr.closer_token_kind = Token::Kind::Unknown;
+  expr.num_members       = 0;
   rpn_.push_back(std::move(expr));
 }
 

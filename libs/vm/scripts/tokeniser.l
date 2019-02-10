@@ -156,8 +156,8 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 "."   {return Set(yylval, fetch::vm::Token::Kind::Dot, yytext, yyleng, yyextra);}
 ":"   {return Set(yylval, fetch::vm::Token::Kind::Colon, yytext, yyleng, yyextra);}
 ";"   {return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
-"("   {return Set(yylval, fetch::vm::Token::Kind::LeftRoundBracket, yytext, yyleng, yyextra);}
-")"   {return Set(yylval, fetch::vm::Token::Kind::RightRoundBracket, yytext, yyleng, yyextra);}
+"("   {return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
+")"   {return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 "["   {return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
 "]"   {return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
 "+"   {return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}

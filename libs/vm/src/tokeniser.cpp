@@ -1172,12 +1172,12 @@ YY_RULE_SETUP
 case 43:
 YY_RULE_SETUP
 #line 160 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::LeftRoundBracket, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
 #line 161 "tokeniser.l"
-{return Set(yylval, fetch::vm::Token::Kind::RightRoundBracket, yytext, yyleng, yyextra);}
+{return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP

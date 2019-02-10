@@ -293,8 +293,7 @@ struct Node
     IndexOp,
     DotOp,
     InvokeOp,
-    RoundBracketGroup,
-    SquareBracketGroup
+    ParenthesisGroup
   };
   Node(Kind kind__, Token *token__)
   {

@@ -923,7 +923,6 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
     }
     break;
   }
-  // case Node::Kind::SquareBracketGroup:
   case Node::Kind::IndexOp:
   {
     if (AnnotateIndexOp(node) == false)

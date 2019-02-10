@@ -748,11 +748,6 @@ void Generator::HandleExpression(ExpressionNodePtr const &node)
     HandleUnaryOp(node);
     break;
   }
-  case Node::Kind::SquareBracketGroup:
-  {
-    // ???
-    break;
-  }
   case Node::Kind::IndexOp:
   {
     HandleIndexOp(node);

@@ -64,7 +64,9 @@ private:
     bool              is_operator;
     ExpressionNodePtr node;
     OpInfo            op_info;
-    int               num_group_members;
+    Token::Kind       closer_token_kind;
+    std::string       closer_token_text;
+    int               num_members;
   };
 
   Strings                 template_names_;
@@ -110,11 +112,17 @@ private:
   void HandleIncDec(Node::Kind prefix_kind, OpInfo const &prefix_op_info, Node::Kind postfix_kind,
                     OpInfo const &postfix_op_info);
   bool HandleDot();
-  void HandleOpener(Node::Kind prefix_kind, Node::Kind postfix_kind);
+  bool HandleOpener(Node::Kind         prefix_kind,
+                    Node::Kind         postfix_kind,
+                    Token::Kind        closer_token_kind,
+                    std::string const &closer_token_text);
   bool HandleCloser(bool is_conditional_expression);
   bool HandleComma();
   void HandleOp(Node::Kind kind, OpInfo const &op_info);
-  void AddGroup(Node::Kind kind, int initial_arity);
+  void AddGroup(Node::Kind         kind,
+                int                arity,
+                Token::Kind        closer_token_kind,
+                std::string const &closer_token_text);
   void AddOp(Node::Kind kind, OpInfo const &op_info);
   void AddOperand(Node::Kind kind);
   void AddError(std::string const &message);
@@ -123,8 +131,8 @@ private:
   {
     if (groups_.size())
     {
-      Expr &group = operators_[groups_.back()];
-      ++(group.num_group_members);
+      Expr &groupop = operators_[groups_.back()];
+      ++(groupop.num_members);
     }
   }
 
