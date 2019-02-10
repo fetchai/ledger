@@ -37,9 +37,7 @@ struct DAGNode
   enum
   {
     WORK = 1,
-    REGISTER_CANDIDACY,
-    UNREGISTER_CANDIDACY,
-    BLOCK
+    BID  = 2
   };
 
   uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
@@ -58,11 +56,7 @@ struct DAGNode
     serializers::ByteArrayBuffer buf;
     buf << previous << contents;
 
-    // Block hashes must be indifferent to the identity
-    if (type != BLOCK)
-    {
-      buf << identity;
-    }
+    buf << identity;
 
     HasherType hasher;
     hasher.Reset();

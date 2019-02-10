@@ -217,7 +217,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                                                 block_packer_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<ledger::MainChainHTTPInterface>(log2_num_lanes, chain_), // TODO(tfr): possibly make these ones optional
-        std::make_shared<ledger::DAGHTTPInterface>(dag_),
+        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_) 
       }
 {
   FETCH_UNUSED(num_slices_);

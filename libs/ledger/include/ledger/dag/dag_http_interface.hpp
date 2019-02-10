@@ -35,31 +35,133 @@ class DAGHTTPInterface : public http::HTTPModule
 {
 public:
   using DAG   = ledger::DAG;
-
   static constexpr char const *LOGGING_NAME = "DAGHTTPInterface";
 
-  DAGHTTPInterface(DAG &dag)
-    : dag_(dag)
+  DAGHTTPInterface(DAG &dag, DAGRpcService &rpc)
+    : rng_{random_dev_()}
+    , dag_(dag)
+    , dag_rpc_(rpc)
   {
-    Get("/api/dag/ping",
+    Post("/api/dag/add-work",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return Ping(params, request);
+          return AddWork(params, request);
         });
 
+    Post("/api/dag/add-bid",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return AddBid(params, request);
+        }); 
+
+    Get("/api/dag/status",
+        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
+          return Status(params, request);
+        });        
+
+    certificate_.GenerateKeys();
   }
 
 private:
   using Variant = variant::Variant;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ECDSASigner = crypto::ECDSASigner;
+  using Rng = std::mt19937_64;
+  using RngWord = Rng::result_type;
 
-  http::HTTPResponse Ping(http::ViewParameters const & /*params*/,
-                                    http::HTTPRequest const &request)
+
+  // TODO (tfr): Temporary helper function that will be removed once wire format exists
+  ECDSASigner certificate_;
+  std::random_device random_dev_;
+  Rng rng_;
+
+
+  DAGNode GenerateNode(ConstByteArray const &data, uint64_t type)
+  {
+    // build up the DAG node
+    DAGNode node;
+    node.contents = data;
+    node.identity = certificate_.identity();
+
+    // TODO: Set previous and type
+    auto prev_candidates = dag_.last_nodes();
+
+    if(prev_candidates.size() > 0 )
+    {
+      node.previous.push_back( prev_candidates[ rng_() % prev_candidates.size() ]);
+    }
+
+    if(prev_candidates.size() > 3 )
+    {
+      node.previous.push_back( prev_candidates[ rng_() % prev_candidates.size() ]);
+    }
+
+    node.Finalise();
+
+    if(!certificate_.Sign(node.hash))
+    {
+      throw std::runtime_error("Signing failed");
+    }
+
+    node.signature = certificate_.signature();
+
+    return node;
+  }
+  // TODO(tfr): end of temporary function
+
+  http::HTTPResponse AddWork(http::ViewParameters const & /*params*/,
+                             http::HTTPRequest const &request)
   {
     Variant response     = Variant::Object();
+
+    json::JSONDocument doc;
+    doc.Parse(request.body());
+
+    if(!doc.Has("payload"))
+    {
+      response["error"] = "Work request did not have a payload.";
+      return http::CreateJsonResponse(response);
+    }
+
+    // TODO(tfr): Use wire format.
+    auto payload = doc["payload"].As<ConstByteArray>();
+    DAGNode node = GenerateNode(payload, DAGNode::WORK);
+
+    std::cout << "================================" << std::endl;
+    std::cout << "================================" << std::endl;
+    std::cout << node.contents << std::endl;
+    std::cout << "================================" << std::endl;    
+    std::cout << "================================" << std::endl;
+
+    dag_rpc_.BroadcastDAGNode(node);
+    dag_.Push(node);
 
     return http::CreateJsonResponse(response);
   }
 
+  http::HTTPResponse AddBid(http::ViewParameters const & /*params*/,
+                            http::HTTPRequest const &request)
+  {
+    Variant response     = Variant::Object();
+/*
+    dag_rpc_.BroadcastDAGNode(node);
+    dag_.Push(node);
+*/
+    return http::CreateJsonResponse(response);
+  }
+
+
+  http::HTTPResponse Status(http::ViewParameters const & /*params*/,
+                            http::HTTPRequest const &request)
+  {
+    Variant response     = Variant::Object();
+/*
+    dag_rpc_.BroadcastDAGNode(node);
+    dag_.Push(node);
+*/
+    return http::CreateJsonResponse(response);
+  }
+
   DAG &  dag_;
+  DAGRpcService & dag_rpc_;
 };
 
 

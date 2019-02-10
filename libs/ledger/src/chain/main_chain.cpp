@@ -106,7 +106,7 @@ bool MainChain::AddBlock(Block &block, bool recursive_iteration)
   bool heaviestAdvanced = UpdateTips(block, prev_block);
 
   // Add block
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block.body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block.hash()));  
   block_chain_[block.body.hash] = block;
 
   if (heaviestAdvanced)

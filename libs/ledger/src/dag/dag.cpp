@@ -46,10 +46,6 @@ uint64_t DAG::GetNodeTime(DAGNode const & node)
 {
   LOG_STACK_TRACE_POINT;
   uint64_t ret = 0;
-  if(node.type == DAGNode::BLOCK)
-  {
-    return 0;
-  }
 
   for(auto const &h: node.previous)
   {
