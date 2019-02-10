@@ -298,7 +298,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   for (int i = 0; i < num_parameters; ++i)
   {
     ExpressionNodePtr parameter_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i*2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[size_t(2 + i * 2)]);
     std::string const &parameter_name = parameter_node->token.text;
     SymbolPtr          symbol = function_definition_node->symbol_table->Find(parameter_name);
     if (symbol)
@@ -309,7 +309,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
       continue;
     }
     ExpressionNodePtr parameter_type_node =
-        ConvertToExpressionNodePtr(function_definition_node->children[size_t(3 + i*2)]);
+        ConvertToExpressionNodePtr(function_definition_node->children[size_t(3 + i * 2)]);
     TypePtr parameter_type = FindType(parameter_type_node);
     if (parameter_type == nullptr)
     {
@@ -328,7 +328,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   }
   TypePtr           return_type;
   ExpressionNodePtr return_type_node =
-    ConvertToExpressionNodePtr(function_definition_node->children[size_t(count - 1)]);
+      ConvertToExpressionNodePtr(function_definition_node->children[size_t(count - 1)]);
   if (return_type_node)
   {
     return_type = FindType(return_type_node);

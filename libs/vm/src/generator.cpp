@@ -59,7 +59,7 @@ void Generator::CreateFunctions(BlockNodePtr const &root)
       std::string const &name           = f->name;
       int const          num_parameters = (int)f->parameter_variables.size();
       TypeId const       return_type_id = f->return_type->id;
-      Script::Function function(name, annotations, num_parameters, return_type_id);
+      Script::Function   function(name, annotations, num_parameters, return_type_id);
       for (VariablePtr const &v : f->parameter_variables)
       {
         v->index = function.AddVariable(v->name, v->type->id);
@@ -87,7 +87,7 @@ void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annot
     for (NodePtr const &annotation_element_node : annotation_node->children)
     {
       Script::AnnotationElement element;
-      NodePtr node;
+      NodePtr                   node;
       if (annotation_element_node->kind == Node::Kind::AnnotationNameValuePair)
       {
         std::string const &name = annotation_element_node->token.text;
@@ -135,7 +135,7 @@ void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annot
       {
         break;
       }
-      } // switch
+      }  // switch
       annotation.elements.push_back(element);
     }
     annotations.push_back(annotation);
@@ -322,7 +322,8 @@ void Generator::HandleForStatement(BlockNodePtr const &node)
   jump_instruction.index = iterate_pc;
   function_->AddInstruction(jump_instruction);
 
-  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate, node->block_terminator.line);
+  Script::Instruction terminate_instruction(Opcodes::ForRangeTerminate,
+                                            node->block_terminator.line);
 
   terminate_instruction.index   = v->index;
   terminate_instruction.type_id = v->type->id;

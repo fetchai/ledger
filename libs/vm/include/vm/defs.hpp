@@ -150,7 +150,6 @@ struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
   using type = Ptr<Object>;
 };
 
-
 class Object
 {
 public:
@@ -957,10 +956,8 @@ struct Script
 
   struct Function
   {
-    Function(std::string const &name__,
-             Annotations const &annotations__,
-             int                num_parameters__,
-             TypeId             return_type_id__)
+    Function(std::string const &name__, Annotations const &annotations__, int num_parameters__,
+             TypeId return_type_id__)
     {
       name           = name__;
       annotations    = annotations__;
@@ -985,7 +982,7 @@ struct Script
     int          num_variables;  // parameters + locals
     int          num_parameters;
     TypeId       return_type_id;
-    Variables    variables;      // parameters + locals
+    Variables    variables;  // parameters + locals
     Instructions instructions;
   };
 
