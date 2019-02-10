@@ -79,7 +79,9 @@ void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annot
 {
   annotations.clear();
   if (annotations_node == nullptr)
+  {
     return;
+  }
   for (NodePtr const &annotation_node : annotations_node->children)
   {
     Script::Annotation annotation;
