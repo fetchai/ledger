@@ -52,6 +52,7 @@ private:
   Script::Function *                     function_;
 
   void   CreateFunctions(BlockNodePtr const &root);
+  void   CreateAnnotations(NodePtr const &annotations_node, Script::Annotations &annotations);
   void   HandleBlock(BlockNodePtr const &block);
   void   HandleFunctionDefinitionStatement(BlockNodePtr const &node);
   void   HandleWhileStatement(BlockNodePtr const &node);
@@ -73,8 +74,8 @@ private:
   void HandleUnsignedInteger32(ExpressionNodePtr const &node);
   void HandleInteger64(ExpressionNodePtr const &node);
   void HandleUnsignedInteger64(ExpressionNodePtr const &node);
-  void HandleSinglePrecisionNumber(ExpressionNodePtr const &node);
-  void HandleDoublePrecisionNumber(ExpressionNodePtr const &node);
+  void HandleFloat32(ExpressionNodePtr const &node);
+  void HandleFloat64(ExpressionNodePtr const &node);
   void HandleString(ExpressionNodePtr const &node);
   void HandleTrue(ExpressionNodePtr const &node);
   void HandleFalse(ExpressionNodePtr const &node);

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/token_contract_deed.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/deed.hpp"
 
 namespace fetch {
 namespace ledger {
