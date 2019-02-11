@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {

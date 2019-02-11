@@ -134,8 +134,8 @@ void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, uint64_t const &
   output.Resize(k);
   output.Reshape(out_shape);
 
-  NDArrayIterator<T, C> it_a(input);  // TODO(tfr): Make const iterator
-  NDArrayIterator<T, C> it_b(output);
+  fetch::math::NDArrayIterator<T, C> it_a(input);  // TODO(tfr): Make const iterator
+  fetch::math::NDArrayIterator<T, C> it_b(output);
 
   if (axis != 0)
   {
