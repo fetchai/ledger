@@ -45,7 +45,7 @@ struct DevNull : public network::AbstractConnection
   virtual void Close() override
   {}
 
-  virtual bool Closed() override
+  virtual bool Closed() const override
   {
     return false;
   }
