@@ -1,3 +1,22 @@
+#pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #ifndef yyHEADER_H
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
@@ -64,12 +83,12 @@ typedef uint16_t flex_uint16_t;
 typedef int32_t  flex_int32_t;
 typedef uint32_t flex_uint32_t;
 #else
-typedef signed char        flex_int8_t;
-typedef short int          flex_int16_t;
-typedef int                flex_int32_t;
-typedef unsigned char      flex_uint8_t;
-typedef unsigned short int flex_uint16_t;
-typedef unsigned int       flex_uint32_t;
+using flex_int8_t   = signed char;
+using flex_int16_t  = short;
+using flex_int32_t  = int;
+using flex_uint8_t  = unsigned char;
+using flex_uint16_t = unsigned short;
+using flex_uint32_t = unsigned int;
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -122,7 +141,7 @@ typedef unsigned int       flex_uint32_t;
 /* An opaque pointer. */
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
-typedef void *yyscan_t;
+using yyscan_t = void *;
 #endif
 
 /* For convenience, these vars (plus the bison vars far below)
@@ -151,12 +170,12 @@ typedef void *yyscan_t;
 
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
-typedef struct yy_buffer_state *YY_BUFFER_STATE;
+using YY_BUFFER_STATE = struct yy_buffer_state *;
 #endif
 
 #ifndef YY_TYPEDEF_YY_SIZE_T
 #define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
+using yy_size_t = size_t;
 #endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
