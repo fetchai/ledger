@@ -755,10 +755,10 @@ extern int yylex(YYSTYPE *yylval_param, yyscan_t yyscanner);
  */
 YY_DECL
 {
-  yy_state_type    yy_current_state;
-  char *           yy_cp, *yy_bp;
-  int              yy_act;
-  struct YygutsT * yyg = (struct YygutsT *)yyscanner;
+  yy_state_type   yy_current_state;
+  char *          yy_cp, *yy_bp;
+  int             yy_act;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   yylval = yylval_param;
 
@@ -1491,11 +1491,11 @@ YY_DECL
  */
 static int yy_get_next_buffer(yyscan_t yyscanner)
 {
-  struct YygutsT * yyg    = (struct YygutsT *)yyscanner;
-  char *           dest   = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-  char *           source = yyg->yytext_ptr;
-  int              number_to_move, i;
-  int              ret_val;
+  struct YygutsT *yyg    = (struct YygutsT *)yyscanner;
+  char *          dest   = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+  char *          source = yyg->yytext_ptr;
+  int             number_to_move, i;
+  int             ret_val;
 
   if (yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1])
   {
@@ -1641,9 +1641,9 @@ static int yy_get_next_buffer(yyscan_t yyscanner)
 
 static yy_state_type yy_get_previous_state(yyscan_t yyscanner)
 {
-  yy_state_type    yy_current_state;
-  char *           yy_cp;
-  struct YygutsT * yyg = (struct YygutsT *)yyscanner;
+  yy_state_type   yy_current_state;
+  char *          yy_cp;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   yy_current_state = yyg->yy_start;
 
@@ -1676,8 +1676,8 @@ static yy_state_type yy_get_previous_state(yyscan_t yyscanner)
  */
 static yy_state_type yy_try_NUL_trans(yy_state_type yy_current_state, yyscan_t yyscanner)
 {
-  int              yy_is_jam;
-  struct YygutsT * yyg =
+  int             yy_is_jam;
+  struct YygutsT *yyg =
       (struct YygutsT *)yyscanner; /* This var may be unused depending upon options. */
   char *yy_cp = yyg->yy_c_buf_p;
 
@@ -1706,8 +1706,8 @@ static yy_state_type yy_try_NUL_trans(yy_state_type yy_current_state, yyscan_t y
 
 static void yyunput(int c, char *yy_bp, yyscan_t yyscanner)
 {
-  char *           yy_cp;
-  struct YygutsT * yyg = (struct YygutsT *)yyscanner;
+  char *          yy_cp;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   yy_cp = yyg->yy_c_buf_p;
 
@@ -1754,8 +1754,8 @@ static int input(yyscan_t yyscanner)
 #endif
 
 {
-  int              c;
-  struct YygutsT * yyg = (struct YygutsT *)yyscanner;
+  int             c;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   *yyg->yy_c_buf_p = yyg->yy_hold_char;
 
@@ -1885,8 +1885,8 @@ void yy_switch_to_buffer(YY_BUFFER_STATE new_buffer, yyscan_t yyscanner)
 
 static void yy_load_buffer_state(yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yyg->yy_n_chars      = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yyg->yy_n_chars     = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
   yyg->yytext_ptr = yyg->yy_c_buf_p = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
   yyin                              = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
   yyg->yy_hold_char                 = *yyg->yy_c_buf_p;
@@ -1959,8 +1959,8 @@ void yy_delete_buffer(YY_BUFFER_STATE b, yyscan_t yyscanner)
 static void yy_init_buffer(YY_BUFFER_STATE b, FILE *file, yyscan_t yyscanner)
 
 {
-  int              oerrno = errno;
-  struct YygutsT * yyg    = (struct YygutsT *)yyscanner;
+  int             oerrno = errno;
+  struct YygutsT *yyg    = (struct YygutsT *)yyscanner;
 
   yy_flush_buffer(b, yyscanner);
 
@@ -2082,8 +2082,8 @@ void yypop_buffer_state(yyscan_t yyscanner)
  */
 static void yyensure_buffer_stack(yyscan_t yyscanner)
 {
-  yy_size_t        num_to_alloc;
-  struct YygutsT * yyg = (struct YygutsT *)yyscanner;
+  yy_size_t       num_to_alloc;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
 
   if (!yyg->yy_buffer_stack)
   {
@@ -2335,8 +2335,8 @@ char *yyget_text(yyscan_t yyscanner)
  */
 void yyset_extra(YY_EXTRA_TYPE user_defined, yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yyextra              = user_defined;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yyextra             = user_defined;
 }
 
 /** Set the current line number.
@@ -2381,14 +2381,14 @@ void yyset_column(int _column_no, yyscan_t yyscanner)
  */
 void yyset_in(FILE *_in_str, yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yyin                 = _in_str;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yyin                = _in_str;
 }
 
 void yyset_out(FILE *_out_str, yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yyout                = _out_str;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yyout               = _out_str;
 }
 
 int yyget_debug(yyscan_t yyscanner)
@@ -2399,8 +2399,8 @@ int yyget_debug(yyscan_t yyscanner)
 
 void yyset_debug(int _bdebug, yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yy_flex_debug        = _bdebug;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yy_flex_debug       = _bdebug;
 }
 
 /* Accessor methods for yylval and yylloc */
@@ -2413,8 +2413,8 @@ YYSTYPE *yyget_lval(yyscan_t yyscanner)
 
 void yyset_lval(YYSTYPE *yylval_param, yyscan_t yyscanner)
 {
-  struct YygutsT *yyg  = (struct YygutsT *)yyscanner;
-  yylval               = yylval_param;
+  struct YygutsT *yyg = (struct YygutsT *)yyscanner;
+  yylval              = yylval_param;
 }
 
 /* User-visible API */
