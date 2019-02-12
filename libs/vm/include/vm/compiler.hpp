@@ -31,7 +31,6 @@ class Compiler
 {
 public:
   Compiler(Module *module);
-  Compiler(std::shared_ptr<Module> module);
   ~Compiler();
   bool Compile(std::string const &source, std::string const &name, Script &script, Strings &errors);
 

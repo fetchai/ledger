@@ -94,7 +94,6 @@ class VM
 {
 public:
   VM(Module *module);
-  VM(std::shared_ptr<Module> module);
   ~VM() = default;
 
   template <typename... Ts>
