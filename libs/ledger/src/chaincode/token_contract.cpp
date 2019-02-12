@@ -79,57 +79,7 @@ Contract::Status TokenContract::CreateWealth(Transaction const &tx)
  *
  * @details The transaction shall carry deed JSON structure in it's data member.
  * The data must have expected JSON structure to make deed valid, please see the
- * examples bellow.
- *
- * Bellow is expected deed JSON structure for CREATION of deed on provided
- * address, or AMENDing the deed currently existing on the provided address.
- * All 3 root elements `address`, `signees` and `thresholds` are MANDATORY,
- * `signees` MUST contain at LEAST one signee, and `thresholds` must contain
- * at LEAST one threshold. Where only known & handled thresholds are "transfer"
- * and "amend". The "amend" threshold is utilized for amending (what includes
- * DELETION) of the pre-existing deed.
- * PLEASE BE MINDFUL, that even if permitted, omission of the "amend" threshold
- * has severe consequences - forever DISABLING possibility to amend the deed!
- * {
- *   "address": "BASE64_ENCODED_DESTINATION_ADDRESS",
- *   "signees" : {
- *     "BASE64_ENCODED_ADDRESS_0" : VOTING_WEIGHT_0 as UNSIGNED_INT,
- *     "BASE64_ENCODED_ADDRESS_1" : VOTING_WEIGHT_1 as UNSIGNED_INT,
- *     ...,
- *     "BASE64_ENCODED_ADDRESS_N" : VOTING_WEIGHT_N as UNSIGNED_INT
- *     },
- *   "thresholds" : {
- *     "transfer" : UNSIGNED_INT,
- *     "amend" : UNSIGNED_INT
- *     }
- * }
- * @example Example:
- * {
- *   "address" : "OTc3NTY1MzAwMTMyMzQzMzM2Ng==",
- *   "signees" : {
- *     "NTAzOTA1MzM4NDM3OTM3MzI5Ng==" : 1,
- *     "OTc3NTY1MzAwMTMyMzQzMzM2Ng==" : 2,
- *     "ODc4MDQ4NDMxNDM1MzY4NDgwNg==" : 3
- *     },
- *   "thresholds" : {
- *     "transfer" : 4,
- *     "amend" : 6
- *     }
- * }
- *
- * Bellow is expected deed JSON structure for DELETION of the deed currently
- * existing on the provided address.
- * Both `signees` AND `thresholds` elements must NOT be present to clearly
- * indicate intention to DELETE the pre-existing deed - if any of these elements
- * are present, amend procedure will fail and so pre-existing deed will remain
- * in effect:
- * {
- *   "address": "BASE64_ENCODED_DESTINATION_ADDRESS"
- * }
- * @example
- * {
- *   "address": "MTM1NTgwMTI1ODkwMzQzNDMyODQ="
- * }
+ * examples in deed.cpp
  *
  * @param Transaction carrying deed JSON structure in it's data member.
  *

@@ -40,12 +40,12 @@ protected:
   template <typename T>
   void AddBinding(std::string const &name, T function)
   {
-    module->CreateFreeFunction(name, function);
+    module_->CreateFreeFunction(name, function);
   }
 
   bool Compile(std::string const &source)
   {
-    std::vector<std::string> errors = VMFactory::Compile(module, source, script);
+    std::vector<std::string> errors = VMFactory::Compile(module_, source, script_);
 
     for (auto const &error : errors)
     {
@@ -57,12 +57,12 @@ protected:
 
   bool Execute(std::string const &function = "main")
   {
-    vm = VMFactory::GetVM(module);
+    vm_ = VMFactory::GetVM(module_);
     std::string        error;
     fetch::vm::Variant output;
 
     // Execute our fn
-    if (!vm->Execute(script, function, error, output))
+    if (!vm_->Execute(script_, function, error, output))
     {
       std::cerr << "Runtime error: " << error << std::endl;
       return false;
@@ -71,9 +71,9 @@ protected:
     return true;
   }
 
-  Module            module = VMFactory::GetModule();
-  VM                vm;
-  fetch::vm::Script script;
+  Module            module_ = VMFactory::GetModule();
+  VM                vm_;
+  fetch::vm::Script script_;
 };
 
 TEST_F(VMTests, CheckCompileAndExecute)
