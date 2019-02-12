@@ -37,9 +37,9 @@ namespace vm {
 class VMFactory
 {
 public:
-
   /**
-   * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard library'
+   * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard
+   * library'
    *
    * @return: The module
    */
@@ -63,10 +63,11 @@ public:
    *
    * @return: Vector of strings which represent errors found during compilation
    */
-  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> module, std::string const &source, fetch::vm::Script &script)
+  static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> module,
+                                          std::string const &source, fetch::vm::Script &script)
   {
     std::vector<std::string> errors;
-    auto compiler = std::make_shared<fetch::vm::Compiler>(module.get());
+    auto                     compiler = std::make_shared<fetch::vm::Compiler>(module.get());
 
     bool compiled = compiler->Compile(source, "myscript", script, errors);
 
@@ -96,5 +97,5 @@ public:
   }
 };
 
-}  // namespace ledger
 }  // namespace vm
+}  // namespace fetch

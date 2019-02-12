@@ -178,5 +178,5 @@ struct WalletRecord
 
 }  // namespace
 
-}
-}
+}  // namespace ledger
+}  // namespace fetch

@@ -17,15 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/string.hpp"
 #include "vm/node.hpp"
+#include "vm/string.hpp"
 
 #include <iostream>
 
 namespace fetch {
 namespace vm {
 
-// VM free functions. These will be available for all smart contracts and MUST NOT RETAIN STATE (be thread safe)
+// VM free functions. These will be available for all smart contracts and MUST NOT RETAIN STATE (be
+// thread safe)
 
 fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
@@ -38,6 +39,5 @@ static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> cons
   std::cout << s->str << std::endl;
 }
 
-}  // namespace ledger
 }  // namespace vm
-
+}  // namespace fetch

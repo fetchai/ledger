@@ -26,17 +26,15 @@ class VMTests : public ::testing::Test
 {
 protected:
   using Module = std::shared_ptr<fetch::vm::Module>;
-  using VM = std::unique_ptr<fetch::vm::VM>;
+  using VM     = std::unique_ptr<fetch::vm::VM>;
 
   VMTests()
-  {
-
-  }
+  {}
 
   void SetUp() override
   {
-    //storage_.reset(new underlying_storage_type);
-    //executor_ = std::make_unique<underlying_executor_type>(storage_);
+    // storage_.reset(new underlying_storage_type);
+    // executor_ = std::make_unique<underlying_executor_type>(storage_);
   }
 
   template <typename T>
@@ -49,7 +47,7 @@ protected:
   {
     std::vector<std::string> errors = VMFactory::Compile(module, source, script);
 
-    for(auto const &error : errors)
+    for (auto const &error : errors)
     {
       std::cerr << error << std::endl;
     }
@@ -81,9 +79,9 @@ protected:
 TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
-  " function main() "
-  "   Print(\"Hello, world\");"
-  " endfunction ";
+      " function main() "
+      "   Print(\"Hello, world\");"
+      " endfunction ";
 
   bool res = Compile(source);
 
@@ -104,9 +102,9 @@ static void CustomBinding(fetch::vm::VM * /*vm*/)
 TEST_F(VMTests, CheckCustomBinding)
 {
   const std::string source =
-  " function main() "
-  "   CustomBinding();"
-  " endfunction ";
+      " function main() "
+      "   CustomBinding();"
+      " endfunction ";
 
   EXPECT_EQ(binding_called_count, 0);
 

@@ -32,8 +32,8 @@ int main(int argc, char **argv)
   }
 
   // Reading file
-  std::ifstream      file(argv[1], std::ios::binary);
-  if(!file)
+  std::ifstream file(argv[1], std::ios::binary);
+  if (!file)
   {
     throw std::runtime_error("Failed to find input file.");
   }
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
   fetch::vm::Script        script;
   std::vector<std::string> errors = VMFactory::Compile(module, source, script);
 
-  for(auto const &error : errors)
+  for (auto const &error : errors)
   {
     std::cerr << error << std::endl;
   }

@@ -61,7 +61,7 @@ public:
   Contract(Contract &&)      = delete;
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;
-  virtual ~Contract() = default;
+  virtual ~Contract()              = default;
 
   static constexpr char const *LOGGING_NAME = "Contract";
 
