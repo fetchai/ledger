@@ -29,13 +29,6 @@
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
 
-#include "math/linalg/blas/gemm_nn_vector.hpp"
-#include "math/linalg/blas/gemm_nn_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_nt_vector.hpp"
-#include "math/linalg/blas/gemm_nt_vector_threaded.hpp"
-#include "math/linalg/blas/gemm_tn_vector.hpp"
-#include "math/linalg/blas/gemm_tn_vector_threaded.hpp"
-
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -47,11 +40,6 @@ template <typename T, typename C>
 class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
-
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
 
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
@@ -304,49 +292,6 @@ inline void Max(ShapelessArray<T, C> const &array, memory::Range r, T &ret)
 }
 
 /**
- * Finds the maximum value in each row/column depending on axis and stores the output in ret
- * @tparam T
- * @tparam C
- * @tparam S
- * @param array the array to find max over
- * @param axis the axis along which to max
- * @param ret the return array
- */
-template <typename T, typename C, typename S>
-void Max(linalg::Matrix<T, C, S> const &array, std::size_t const &axis,
-         linalg::Matrix<T, C, S> &ret)
-{
-  assert(axis == 0 || axis == 1);
-
-  if (axis == 0)
-  {
-    assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == array.shape()[1]);
-    for (std::size_t i = 0; i < array.shape()[1]; ++i)
-    {
-      ret.Set(0, i, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-      for (std::size_t j = 0; j < array.shape()[0]; ++j)
-      {
-        ret.Set(0, i, std::max(ret.At(0, i), array.At(j, i)));
-      }
-    }
-  }
-  else
-  {
-    assert(ret.shape()[0] == array.shape()[0]);
-    assert(ret.shape()[1] == 1);
-    for (std::size_t i = 0; i < array.shape()[0]; ++i)
-    {
-      ret.Set(i, 0, -std::numeric_limits<typename linalg::Matrix<T, C, S>::Type>::max());
-      for (std::size_t j = 0; j < array.shape()[1]; ++j)
-      {
-        ret.Set(i, 0, std::max(ret.At(i, 0), array.At(i, j)));
-      }
-    }
-  }
-}
-
-/**
  * Implementation of Max that returns the n-1 dim array by finding the max of all 1-d vectors within
  * the array
  * @tparam T
@@ -550,33 +495,6 @@ ShapelessArray<T, C> Maximum(ShapelessArray<T, C> const &array1, ShapelessArray<
   return ret;
 }
 
-template <typename T, typename C, typename S>
-void Maximum(linalg::Matrix<T, C, S> const &array1, linalg::Matrix<T, C, S> const &array2,
-             linalg::Matrix<T, C, S> &ret)
-{
-  details::MaximumImplementation(array1, array2, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1,
-                                linalg::Matrix<T, C, S> const &array2)
-{
-  std::vector<std::size_t> return_shape(array1.shape());
-  linalg::Matrix<T, C, S>  ret(return_shape);
-  Maximum(array1, array2, ret);
-  return ret;
-}
-
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Maximum(linalg::Matrix<T, C, S> const &array1, T const &scalar)
-{
-  std::vector<std::size_t> return_shape(array1.shape());
-  linalg::Matrix<T, C, S>  ret(return_shape);
-  linalg::Matrix<T, C, S>  compare(return_shape);
-  compare.Fill(scalar);
-  Maximum(array1, compare, ret);
-  return ret;
-}
-
 /**
  * return the product of all elements in the array
  * @tparam T
@@ -703,70 +621,6 @@ T ArgMax(ShapelessArray<T, C> const &array)
   return ArgMax(array, ret);
 }
 
-template <typename T, typename C, typename S>
-void ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis, ShapelessArray<T, C> &ret)
-{
-  assert(axis < 2);
-
-  if (axis == 0)
-  {
-    assert(ret.size() == array.width());
-    T cur_maxval;
-
-    // just using ret as a free variable to store the current maxval for the loop here
-    for (std::size_t i = 0; i < array.width(); ++i)
-    {
-      cur_maxval = std::numeric_limits<T>::lowest();
-      for (std::size_t j = 0; j < array.height(); ++j)
-      {
-        if (cur_maxval < array.At(j, i))
-        {
-          ret[i]     = static_cast<T>(j);
-          cur_maxval = array.At(j, i);
-        }
-      }
-    }
-  }
-  else
-  {
-    assert(ret.size() == array.height());
-    T cur_maxval;
-
-    // just using ret as a free variable to store the current maxval for the loop here
-    for (std::size_t i = 0; i < array.height(); ++i)
-    {
-      cur_maxval = std::numeric_limits<T>::lowest();
-      for (std::size_t j = 0; j < array.width(); ++j)
-      {
-        if (cur_maxval < array.At(i, j))
-        {
-          ret[i]     = static_cast<T>(j);
-          cur_maxval = array.At(i, j);
-        }
-      }
-    }
-  }
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> ArgMax(linalg::Matrix<T, C, S> const &array, std::size_t axis)
-{
-  assert(array.shape().size() == 2);
-  assert(axis == 0 || axis == 1);
-
-  if (axis == 0)
-  {
-    linalg::Matrix<T, C, S> ret{array.shape()[1]};
-    ArgMax(array, axis, ret);
-    return ret;
-  }
-  else
-  {
-    linalg::Matrix<T, C, S> ret{array.shape()[0]};
-    ArgMax(array, axis, ret);
-    return ret;
-  }
-}
-
 template <typename T, typename C>
 void Transpose(NDArray<T, C> &input_array, std::vector<std::size_t> const &perm)
 {
@@ -800,102 +654,46 @@ void Transpose(NDArray<T, C> & /*input_array*/, NDArray<T, C> const & /*perm*/)
   // assert(perm.size() == input_array.shape().size());
 }
 
-template <typename T, typename C, typename S>
-void Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-         linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
+template <typename ArrayType>
+void Dot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
-  ret.Resize(A.shape()[0], B.shape()[1]);
+  assert(A.shape().size() == 2);
+  assert(B.shape().size() == 2);
+  assert(A.shape()[1] == B.shape()[0]);
 
-  if (threaded)
+  for (std::size_t i(0); i < A.shape()[0]; ++i)
   {
-    linalg::Blas<T, linalg::Matrix<T, C, S>,
-                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-                           linalg::_C),
-                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-                                       linalg::_beta * linalg::_C),
-                 platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nn_vector_threaded;
-
-    gemm_nn_vector_threaded(alpha, A, B, beta, ret);
-  }
-  else
-  {
-    linalg::Blas<T, linalg::Matrix<T, C, S>,
-                 Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta,
-                           linalg::_C),
-                 Computes(linalg::_C = linalg::_alpha * linalg::_A * linalg::_B +
-                                       linalg::_beta * linalg::_C),
-                 platform::Parallelisation::VECTORISE>
-        gemm_nn_vector;
-
-    gemm_nn_vector(alpha, A, B, beta, ret);
+    for (std::size_t j(0); j < B.shape()[1]; ++j)
+    {
+      ret.Get(std::vector<std::size_t>({i, j})) =
+          A.Get(std::vector<std::size_t>({i, 0})) * B.Get(std::vector<std::size_t>({0, j}));
+      for (std::size_t k(1); k < A.shape()[1]; ++k)
+      {
+        ret.Get(std::vector<std::size_t>({i, j})) +=
+            A.Get(std::vector<std::size_t>({i, k})) * B.Get(std::vector<std::size_t>({k, j}));
+      }
+    }
   }
 }
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Dot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-                            bool threaded = false)
+
+template <typename ArrayType>
+ArrayType Dot(ArrayType const &A, ArrayType const &B)
 {
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[1]};
-  linalg::Matrix<T, C, S>  ret(return_shape);
-  Dot(A, B, ret, 1.0, 0.0, threaded);
+  ArrayType                ret(return_shape);
+  Dot(A, B, ret);
   return ret;
-}
-
-/**
- * Efficient vectorised and threaded routine for C = A.T(B)
- * Specialised for linalg::Matrix
- * @param A
- * @param B
- * @return
- */
-template <typename T, class C, class S>
-fetch::math::meta::IfIsMathShapeArray<linalg::Matrix<T, C, S>, void> DotTranspose(
-    linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-    linalg::Matrix<T, C, S> &ret, typename linalg::Matrix<T, C, S>::Type alpha = 1.0,
-    typename linalg::Matrix<T, C, S>::Type beta = 0.0, bool threaded = false)
-{
-  ret.Reshape(std::vector<size_t>({A.shape()[0], B.shape()[0]}));
-
-  if (threaded)
-  {
-    linalg::Blas<
-        typename linalg::Matrix<T, C, S>::Type, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_nt_vector_threaded;
-
-    gemm_nt_vector_threaded(alpha, A, B, beta, ret);
-  }
-  else
-  {
-    linalg::Blas<
-        typename linalg::Matrix<T, C, S>::Type, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * linalg::_A * fetch::math::linalg::T(linalg::_B) +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE>
-        gemm_nt_vector;
-
-    gemm_nt_vector(alpha, A, B, beta, ret);
-  }
 }
 
 /**
  * Naive routine for C = A.T(B)
  * @param A
  * @param B
+ * @param ret
  * @return
  */
-// TODO(private, 343)
-// Unused parameter needs to be cleaned up when the need to match
-// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
-    ArrayType const &A, ArrayType const &B, ArrayType &ret,
-    typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
-    bool /*threaded*/ = false)
+void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);
@@ -915,80 +713,24 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(
-    ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
-    typename ArrayType::Type beta = 0.0, bool threaded = false)
-{
-
-  std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
-  ArrayType                ret(return_shape);
-  DotTranspose(A, B, ret, alpha, beta, threaded);
-  return ret;
-}
-template <typename ArrayType>
 fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> DotTranspose(ArrayType const &A,
-                                                                         ArrayType const &B,
-                                                                         bool threaded = false)
+                                                                         ArrayType const &B)
 {
-
   std::vector<std::size_t> return_shape{A.shape()[0], B.shape()[0]};
   ArrayType                ret(return_shape);
-  DotTranspose(A, B, ret, 1.0, 0.0, threaded);
+  DotTranspose(A, B, ret);
   return ret;
-}
-
-/**
- * Efficient vectorised and threaded routine for C = T(A).B
- * Specialised for linalg::Matrix
- * @param A
- * @param B
- * @return
- */
-template <typename T, typename C, typename S>
-void TransposeDot(linalg::Matrix<T, C, S> const &A, linalg::Matrix<T, C, S> const &B,
-                  linalg::Matrix<T, C, S> &ret, T alpha = 1.0, T beta = 0.0, bool threaded = false)
-{
-  ret.Resize(A.width(), B.width());
-
-  if (threaded)
-  {
-    linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-        gemm_tn_vector_threaded;
-
-    gemm_tn_vector_threaded(alpha, A, B, beta, ret);
-  }
-  else
-  {
-    linalg::Blas<
-        T, linalg::Matrix<T, C, S>,
-        Signature(linalg::_C <= linalg::_alpha, linalg::_A, linalg::_B, linalg::_beta, linalg::_C),
-        Computes(linalg::_C = linalg::_alpha * fetch::math::linalg::T(linalg::_A) * linalg::_B +
-                              linalg::_beta * linalg::_C),
-        platform::Parallelisation::VECTORISE>
-        gemm_tn_vector;
-
-    gemm_tn_vector(alpha, A, B, beta, ret);
-  }
 }
 
 /**
  * Naive routine for C = T(A).B
  * @param A
  * @param B
+ * @param ret
  * @return
  */
-// TODO(private, 343)
-// Unused parameter needs to be cleaned up when the need to match
-// the linagl::Matrix signature doesn't exist anymore
 template <class ArrayType>
-void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
-                  typename ArrayType::Type /*alpha*/ = 1.0, typename ArrayType::Type /*beta*/ = 0.0,
-                  bool /*threaded*/ = false)
+void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape()[0] == B.shape()[0]);
   assert(A.shape()[1] == ret.shape()[0]);
@@ -1008,18 +750,12 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret,
 }
 
 template <class ArrayType>
-ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, typename ArrayType::Type alpha = 1.0,
-                       typename ArrayType::Type beta = 0.0, bool threaded = false)
+ArrayType TransposeDot(ArrayType const &A, ArrayType const &B)
 {
   std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
   ArrayType                ret(return_shape);
-  TransposeDot(A, B, ret, alpha, beta, threaded);
+  TransposeDot(A, B, ret);
   return ret;
-}
-template <typename ArrayType>
-ArrayType TransposeDot(ArrayType const &A, ArrayType const &B, bool threaded = false)
-{
-  return TransposeDot(A, B, 1.0, 0.0, threaded);
 }
 
 /**

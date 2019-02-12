@@ -17,28 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/base.hpp"
-#include "math/linalg/prototype.hpp"
-#include "vectorise/threading/singleton_pool.hpp"
+#include <cstddef>
 
 namespace fetch {
-namespace math {
-namespace linalg {
-
-template <typename S, typename MATRIX>
-class Blas<S, MATRIX, Signature(_C <= _alpha, _A, _B, _beta, _C),
-           Computes(_C = _alpha * T(_A) * _B + _beta * _C),
-           platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>
-{
-public:
-  using type = S;
-
-  void operator()(type const &alpha, MATRIX const &a, MATRIX const &b, type const &beta, MATRIX &c);
-
-private:
-  threading::SingletonPool &pool_ = threading::SingletonPool::GetInstance();
-};
-
-}  // namespace linalg
-}  // namespace math
+namespace fixed_point {
+template <std::size_t I, std::size_t F>
+class FixedPoint;
+}
 }  // namespace fetch
+
+// These method stays in global namespace as we need them to be available just as native types abs,
+// exp, log, ...
+template <std::size_t I, std::size_t F>
+fetch::fixed_point::FixedPoint<I, F> abs(fetch::fixed_point::FixedPoint<I, F> n)
+{
+  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
+  {
+    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
+  }
+  return n;
+}

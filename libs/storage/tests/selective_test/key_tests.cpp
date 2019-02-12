@@ -16,37 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iomanip>
-#include <iostream>
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "storage/key.hpp"
+#include "testing/common_testing_functionality.hpp"
 
-#include "core/random/lcg.hpp"
 #include <gtest/gtest.h>
-#include <math/distance/manhattan.hpp>
 
-using namespace fetch::math::distance;
-using namespace fetch::math;
+using namespace fetch;
+using namespace fetch::storage;
+using namespace fetch::crypto;
+using namespace fetch::testing;
 
-TEST(manhattan_gtest, basic_info)
+using ByteArray      = fetch::byte_array::ByteArray;
+using ConstByteArray = fetch::byte_array::ConstByteArray;
+using DefaultKey     = fetch::storage::Key<256>;
+
+// Test that closely correlated keys are found to be unique
+TEST(new_key_test, correlated_keys_are_unique)
 {
-  ShapelessArray<double> A = ShapelessArray<double>(3);
-  A.Set({0}, 1);
-  A.Set({1}, 0);
-  A.Set({2}, 0);
-  EXPECT_EQ(0, Manhattan(A, A));
+  auto unique_hashes = GenerateUniqueHashes(1000);
 
-  ShapelessArray<double> B = ShapelessArray<double>(3);
-  B.Set({0}, 0);
-  B.Set({1}, 1);
-  B.Set({2}, 0);
-  EXPECT_EQ(Manhattan(A, B), 2);
+  std::vector<DefaultKey> seen_keys;
 
-  B.Set({0}, 0);
-  B.Set({1}, 2);
-  B.Set({2}, 0);
-  EXPECT_EQ(Manhattan(A, B), 3);
+  for (auto const &hash : unique_hashes)
+  {
+    for (auto const &key : seen_keys)
+    {
+      // Check equality operator
+      ASSERT_EQ(DefaultKey{hash} == key, false);
+    }
 
-  B.Set({0}, 1);
-  B.Set({1}, 1);
-  B.Set({2}, 0);
-  EXPECT_EQ(Manhattan(A, B), 1);
+    seen_keys.push_back(hash);
+  }
 }

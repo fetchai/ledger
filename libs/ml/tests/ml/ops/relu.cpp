@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/relu.hpp"
-#include "math/linalg/matrix.hpp"
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -28,10 +28,10 @@ class ReluTest : public ::testing::Test
 };
 
 using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
-                                 fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
-                                 fetch::math::linalg::Matrix<float>,
-                                 fetch::math::linalg::Matrix<double>, fetch::math::Tensor<int>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+                                 fetch::math::NDArray<double>, fetch::math::Tensor<int>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)

@@ -39,11 +39,6 @@ class ShapelessArray;
 template <typename T, typename C, bool H, bool W>
 class RectangularArray;
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
-
 template <typename T, typename C>
 class NDArray;
 
@@ -128,11 +123,6 @@ struct IsMathImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C, typename S>
-struct IsMathImpl<fetch::math::linalg::Matrix<T, C, S>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T, typename C>
 struct IsMathImpl<NDArray<T, C>, R>
 {
@@ -159,11 +149,6 @@ struct IsMathArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C, typename S>
-struct IsMathArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T, typename C>
 struct IsMathArrayImpl<NDArray<T, C>, R>
 {
@@ -182,11 +167,6 @@ struct IsMathShapeArrayImpl
 };
 template <typename R, typename T, typename C, bool H, bool W>
 struct IsMathShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
-{
-  using Type = R;
-};
-template <typename R, typename T, typename C, typename S>
-struct IsMathShapeArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
 {
   using Type = R;
 };
@@ -242,11 +222,6 @@ struct IsMathFixedPointArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C, typename S>
-struct IsMathFixedPointArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T, typename C>
 struct IsMathFixedPointArrayImpl<NDArray<T, C>, R>
 {
@@ -266,11 +241,6 @@ struct IsMathFixedPointShapeArrayImpl
 };
 template <typename R, typename T, typename C, bool H, bool W>
 struct IsMathFixedPointShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
-{
-  using Type = R;
-};
-template <typename R, typename T, typename C, typename S>
-struct IsMathFixedPointShapeArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
 {
   using Type = R;
 };
@@ -319,11 +289,6 @@ struct IsBlasArrayImpl<RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C, typename S>
-struct IsBlasArrayImpl<linalg::Matrix<T, C, S>, R>
-{
-  using Type = R;
-};
 template <typename A, typename R>
 using IsBlasArray = typename IsBlasArrayImpl<A, R>::Type;
 
@@ -353,11 +318,6 @@ struct IsBlasAndShapedArrayImpl
 };
 template <typename R, typename T, typename C, bool H, bool W>
 struct IsBlasAndShapedArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
-{
-  using Type = R;
-};
-template <typename R, typename T, typename C, typename S>
-struct IsBlasAndShapedArrayImpl<fetch::math::linalg::Matrix<T, C, S>, R>
 {
   using Type = R;
 };

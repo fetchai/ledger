@@ -53,11 +53,6 @@ class NDArray;
 template <typename T, typename C>
 class NDArrayIterator;
 
-namespace linalg {
-template <typename T, typename C, typename S>
-class Matrix;
-}
-
 template <typename T, typename C>
 T Max(ShapelessArray<T, C> const &array);
 
@@ -155,21 +150,6 @@ template <typename T, typename C>
 NDArray<T, C> Softmax(NDArray<T, C> const &array)
 {
   NDArray<T, C> ret{array.shape()};
-  Softmax(array, ret);
-  return ret;
-}
-template <typename T, typename C, typename S>
-void Softmax(linalg::Matrix<T, C, S> const &array, linalg::Matrix<T, C, S> &ret)
-{
-  assert(ret.size() == array.size());
-  assert(ret.shape() == array.shape());
-
-  details::SoftmaxImplementation(array, ret);
-}
-template <typename T, typename C, typename S>
-linalg::Matrix<T, C, S> Softmax(linalg::Matrix<T, C, S> const &array)
-{
-  linalg::Matrix<T, C, S> ret{array.shape()};
   Softmax(array, ret);
   return ret;
 }

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/transaction.hpp"
-#include "ledger/chaincode/token_contract_deed.hpp"
+#include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
