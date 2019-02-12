@@ -22,7 +22,6 @@
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
 using fetch::variant::Variant;
-using fetch::variant::Extract;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 
