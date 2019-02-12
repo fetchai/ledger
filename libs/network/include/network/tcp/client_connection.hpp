@@ -23,9 +23,8 @@
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "network/management/client_manager.hpp"
-#include "network/message.hpp"
-#include "network/monitor.hpp"
 #include "network/management/network_manager.hpp"
+#include "network/message.hpp"
 
 #include "network/fetch_asio.hpp"
 #include <atomic>
@@ -39,24 +38,25 @@ namespace network {
  * The class will generically push data to its manager, and also allow pushing
  * data to the connected client.
  */
-class ClientConnection final: public AbstractConnection
+class ClientConnection : public AbstractConnection
 {
 public:
   static constexpr char const *LOGGING_NAME = "ClientConnection";
 
   using connection_type = typename AbstractConnection::shared_type;
 
-  using handle_type = typename AbstractConnection::connection_handle_type;
+  using handle_type      = typename AbstractConnection::connection_handle_type;
+  using Strand           = asio::io_service::strand;
+  using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
+  using Socket           = asio::ip::tcp::tcp::socket;
+  using shared_self_type = std::shared_ptr<AbstractConnection>;
+  using mutex_type       = std::mutex;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
-                   std::weak_ptr<ClientManager>              manager,
-                   NetworkManager                            network_manager
-                   )
+                   std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
     : socket_(std::move(socket))
     , manager_(std::move(manager))
     , network_manager_(network_manager)
-    , write_mutex_(__LINE__, __FILE__)
-    , write_in_use_mutex_(__LINE__, __FILE__)
   {
     LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
@@ -83,12 +83,6 @@ public:
 
   ~ClientConnection()
   {
-    running_ = false;
-    if(thread_)
-    {
-      thread_->join();
-    }
-
     LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
@@ -109,26 +103,49 @@ public:
     }
 
     ptr->Join(shared_from_this());
-    ReadHeader();
 
-    running_ = true;
-    thread_ = std::make_unique<std::thread>([this]() { this->WriteLoop(); });
+    auto strong_strand = network_manager_.CreateIO<Strand>();
+    if (!strong_strand)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to create strand. Will not read header");
+      return;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Created strand");
+
+    strand_ = strong_strand;
+
+    ReadHeader(strong_strand);
   }
 
   void Send(message_type const &msg) override
   {
-    LOG_STACK_TRACE_POINT;
-
     if (shutting_down_)
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempting to write to socket while it's shut down.");
       return;
     }
 
-    //FETCH_LOG_INFO(LOGGING_NAME, "Pushing message to queue");
-    write_mutex_.lock();
-    write_queue_.push_back(msg);
-    write_mutex_.unlock();
-    //FETCH_LOG_INFO(LOGGING_NAME, "Finished pushing message to queue");
+    {
+      std::lock_guard<mutex_type> lock(queue_mutex_);
+      write_queue_.push_back(msg);
+    }
+
+    std::weak_ptr<AbstractConnection> self   = shared_from_this();
+    std::weak_ptr<Strand>             strand = strand_;
+
+    network_manager_.Post([this, self, strand] {
+      shared_self_type selfLock   = self.lock();
+      auto             strandLock = strand_.lock();
+      if (!selfLock || !strandLock)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock),
+                       " socket: ", bool(strandLock));
+        return;
+      }
+
+      strandLock->post([this, selfLock] { WriteNext(selfLock); });
+    });
   }
 
   uint16_t Type() const override
@@ -147,7 +164,7 @@ public:
     }
   }
 
-  bool Closed() override
+  bool Closed() const override
   {
     return !static_cast<bool>(socket_.lock());
   }
@@ -161,117 +178,36 @@ public:
   }
 
 private:
+  std::atomic<bool>                         shutting_down_{false};
+  std::weak_ptr<asio::ip::tcp::tcp::socket> socket_;
+  std::weak_ptr<ClientManager>              manager_;
 
-  void WriteLoop()
+  std::string address_;
+
+  NetworkManager network_manager_;
+  // bool                  posted_close_ = false;
+  std::weak_ptr<Strand> strand_;
+
+  message_queue_type write_queue_;
+  mutable mutex_type can_write_mutex_;
+  bool               can_write_{true};
+  mutable mutex_type queue_mutex_;
+
+  // TODO(issue 17): put this in shared class
+  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
+
+  // TODO(issue 17): fix this to be self-contained
+  union
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Entering write loop");
-
-    while(running_ && !shutting_down_)
+    char bytes[2 * sizeof(uint64_t)];
+    struct
     {
+      uint64_t magic;
+      uint64_t length;
+    } content;
+  } header_;
 
-      write_in_use_mutex_.lock();
-
-      // Verify the socket is ready to accept a write
-      if(write_in_use_.use_count() != 1)
-      {
-        /*FETCH_LOG_INFO(LOGGING_NAME, "Failed to get use_count: ", write_in_use_.use_count());*/
-        write_in_use_mutex_.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        continue;
-      }
-
-      auto write_in_use_copy = write_in_use_;
-
-      /*FETCH_LOG_INFO(LOGGING_NAME, "Now count: ", write_in_use_.use_count());
-      FETCH_LOG_INFO(LOGGING_NAME, "Now count: ", write_in_use_copy.use_count()); */
-
-      if(write_in_use_copy.use_count() != 2)
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Use count not correct");
-      }
-
-      write_in_use_mutex_.unlock();
-
-
-      // Try to get a message from the queue
-      write_mutex_.lock();
-
-      if (write_queue_.empty())
-      {
-        write_mutex_.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        continue;
-      }
-
-      auto buffer = write_queue_.front();
-
-      byte_array::ByteArray header;
-      SetHeader(header, buffer.size());
-      write_queue_.pop_front();
-      write_mutex_.unlock();
-
-      if(buffer.size() != 2508)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Sending: ", buffer.size());
-      }
-
-      // Scope for closures
-      {
-        // Send the message, make sure write_in_use_ use count will be kept alive as long as the CB is.
-        auto self = shared_from_this();
-        auto weak_socket = socket_;
-
-        // Post a closure to asio
-        network_manager_.Post([this, self, weak_socket, buffer, write_in_use_copy, header]
-            {
-              if(write_in_use_copy.use_count() == 0)
-              {
-                FETCH_LOG_INFO(LOGGING_NAME, "Something is wrong");
-              }
-              /*FETCH_LOG_INFO(LOGGING_NAME, "Count in VB", write_in_use_copy.use_count());*/
-
-              auto socket_ptr = socket_.lock();
-
-              if(!socket_ptr)
-              {
-                return;
-              }
-
-              // Note this cb keeps header and buffer alive
-              auto cb   = [this, buffer, socket_ptr, header, self, write_in_use_copy](std::error_code ec, std::size_t) {
-
-                FETCH_UNUSED(write_in_use_copy.use_count());
-                auto ptr = manager_.lock();
-                if (!ptr)
-                {
-                  FETCH_LOG_WARN(LOGGING_NAME, "Server: Failed to contact manager.");
-                  return;
-                }
-
-                if (!ec)
-                {
-                  FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Successfully wrote message.");
-                }
-                else
-                {
-                  FETCH_LOG_WARN(LOGGING_NAME, "Server: Failed to write message. Leaving.");
-                  ptr->Leave(this->handle());
-                }
-              };
-
-              buffers.clear();
-              buffers = {asio::buffer(header.pointer(), header.size()), asio::buffer(buffer.pointer(), buffer.size())};
-
-              asio::async_write(*socket_ptr, buffers, cb);
-
-            });
-      }
-    }
-  }
-
-  std::vector<asio::const_buffer> buffers;
-
-  void ReadHeader()
+  void ReadHeader(StrongStrand strong_strand)
   {
     if (shutting_down_)
     {
@@ -287,7 +223,7 @@ private:
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Waiting for next header.");
     auto self(shared_from_this());
-    auto cb = [this, socket_ptr, self](std::error_code ec, std::size_t len) {
+    auto cb = [this, socket_ptr, self, strong_strand](std::error_code ec, std::size_t len) {
       FETCH_UNUSED(len);
 
       auto ptr = manager_.lock();
@@ -299,8 +235,7 @@ private:
       if (!ec)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Read header.");
-        DUMP_INCOMING_MESSAGE("TCP-S", "HEADER", header_.bytes, 2*sizeof(uint64_t)); 
-        ReadBody();
+        ReadBody(strong_strand);
       }
       else
       {
@@ -311,7 +246,7 @@ private:
     asio::async_read(*socket_ptr, asio::buffer(header_.bytes, 2 * sizeof(uint64_t)), cb);
   }
 
-  void ReadBody()
+  void ReadBody(StrongStrand strong_strand)
   {
     LOG_STACK_TRACE_POINT;
 
@@ -342,7 +277,8 @@ private:
 
     message.Resize(header_.content.length);
     auto self(shared_from_this());
-    auto cb = [this, socket_ptr, self, message](std::error_code ec, std::size_t len) {
+    auto cb = [this, socket_ptr, self, message, strong_strand](std::error_code ec,
+                                                               std::size_t     len) {
       FETCH_UNUSED(len);
 
       auto ptr = manager_.lock();
@@ -354,9 +290,9 @@ private:
       if (!ec)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Recv message");
-        DUMP_INCOMING_MESSAGE("TCP-S", "BODY", message); 
+
         ptr->PushRequest(this->handle(), message);
-        ReadHeader();
+        ReadHeader(strong_strand);
       }
       else
       {
@@ -367,7 +303,7 @@ private:
     asio::async_read(*socket_ptr, asio::buffer(message.pointer(), message.size()), cb);
   }
 
-  void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
+  static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize)
   {
     header.Resize(16);
 
@@ -382,89 +318,81 @@ private:
     }
   }
 
-  /*
-  void Write()
+  // Always executed in a run(), in a strand
+  void WriteNext(shared_self_type selfLock)
   {
-    if (shutting_down_)
+    // Only one thread can get past here at a time. Effectively a try_lock
+    // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      return;
-    }
-
-    LOG_STACK_TRACE_POINT;
-    auto socket_ptr = socket_.lock();
-    if (!socket_ptr)
-    {
-      return;
-    }
-
-    write_mutex_.lock();
-
-    if (write_queue_.empty())
-    {
-      write_mutex_.unlock();
-      return;
-    }
-
-    auto buffer = write_queue_.front();
-
-    byte_array::ByteArray header;
-    SetHeader(header, buffer.size());
-    write_queue_.pop_front();
-    write_mutex_.unlock();
-
-    auto self = shared_from_this();
-    auto cb   = [this, buffer, socket_ptr, header, self](std::error_code ec, std::size_t) {
-      auto ptr = manager_.lock();
-      if (!ptr)
+      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      if (can_write_)
       {
-        return;
-      }
-
-      if (!ec)
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Server: Wrote message.");
-        Write();
+        can_write_ = false;
       }
       else
       {
-        ptr->Leave(this->handle());
+        return;
       }
-    };
+    }
 
-    DUMP_OUTGOING_MESSAGE("TCP-S", "HEADER", header); 
-    DUMP_OUTGOING_MESSAGE("TCP-S", "BODY", buffer);     
+    message_type buffer;
+    {
+      std::lock_guard<mutex_type> lock(queue_mutex_);
+      if (write_queue_.empty())
+      {
+        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        can_write_ = true;
+        return;
+      }
+      buffer = write_queue_.front();
+      write_queue_.pop_front();
+    }
+
+    byte_array::ByteArray header;
+    SetHeader(header, buffer.size());
+
     std::vector<asio::const_buffer> buffers{asio::buffer(header.pointer(), header.size()),
                                             asio::buffer(buffer.pointer(), buffer.size())};
 
-    asio::async_write(*socket_ptr, buffers, cb);
-  } */
+    auto socket = socket_.lock();
 
-  std::atomic<bool>                         shutting_down_{false};
-  std::weak_ptr<asio::ip::tcp::tcp::socket> socket_;
-  std::weak_ptr<ClientManager>              manager_;
-  message_queue_type                        write_queue_;
-  NetworkManager                            network_manager_;
-  fetch::mutex::Mutex                       write_mutex_;
-  std::string                               address_;
-  std::unique_ptr<std::thread>              thread_;
-  bool                                      running_{false};
+    auto cb = [this, selfLock, socket, buffer, header](std::error_code ec, std::size_t len) {
+      FETCH_UNUSED(len);
 
-  std::shared_ptr<int>                      write_in_use_ = std::make_shared<int>(0);
-  fetch::mutex::Mutex                       write_in_use_mutex_;
+      {
+        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        can_write_ = true;
+      }
 
-  // TODO(issue 17): put this in shared class
-  static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
+      if (ec)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Error writing to socket, closing.");
+        SignalLeave();
+      }
+      else
+      {
+        // TODO(issue 16): this strand should be unnecessary
+        auto strandLock = strand_.lock();
+        if (strandLock)
+        {
+          WriteNext(selfLock);
+        }
+      }
+    };
 
-  // TODO(issue 17): fix this to be self-contained
-  union
-  {
-    char bytes[2 * sizeof(uint64_t)];
-    struct
+    auto strand = strand_.lock();
+
+    if (socket && strand)
     {
-      uint64_t magic;
-      uint64_t length;
-    } content;
-  } header_;
+      assert(strand->running_in_this_thread());
+      asio::async_write(*socket, buffers, strand->wrap(cb));
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      SignalLeave();
+    }
+  }
 };
 }  // namespace network
 }  // namespace fetch

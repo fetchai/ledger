@@ -1,0 +1,31 @@
+
+@settle("syngergic_contract1")
+function applyWork(work: Array< Int64 >) : Float64
+	// Computes the market optimality
+
+	return 0;
+endfunction
+
+@bid("syngergic_contract1")
+function addBid()
+
+endfunction
+
+@objective("syngergic_contract1")
+function leisureMarketObjective(work: Array< Int64 >) : Float64
+	// Computes the market optimality
+
+	return 0;
+endfunction
+
+@price("syngergic_contract1")
+function workPrice(work: Array< Int64 >)
+	// Computes the price of the work
+endfunction
+
+@work("syngergic_contract1")
+function leisureMarketWork(rng : Int64) : Array< Int64 >
+	// Computes the market optimallity
+
+	return Array< Int64 >(0);
+endfunction

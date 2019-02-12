@@ -693,9 +693,7 @@ ArrayType Dot(ArrayType const &A, ArrayType const &B)
  * @return
  */
 template <class ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> DotTranspose(ArrayType const &A,
-                                                                    ArrayType const &B,
-                                                                    ArrayType &      ret)
+void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 {
   assert(A.shape()[1] == B.shape()[1]);
   assert(A.shape()[0] == ret.shape()[0]);

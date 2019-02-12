@@ -74,7 +74,7 @@ public:
   virtual void     Send(message_type const &) = 0;
   virtual uint16_t Type() const               = 0;
   virtual void     Close()                    = 0;
-  virtual bool     Closed()                   = 0;
+  virtual bool     Closed() const             = 0;
   virtual bool     is_alive() const           = 0;
 
   // Common to all
