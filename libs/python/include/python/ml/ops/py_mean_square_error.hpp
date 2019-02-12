@@ -17,30 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cmath>
-#include <cstddef>
+#include <ml/ops/mean_square_error.hpp>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
 
 namespace fetch {
-namespace fixed_point {
-template <std::size_t I, std::size_t F>
-class FixedPoint;
+namespace ml {
+namespace ops {
+
+template <typename T>
+void BuildMeanSquareError(std::string const &custom_name, pybind11::module &module)
+{
+  py::class_<fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>>(module,
+                                                                           custom_name.c_str())
+      .def(py::init<>())
+      .def("Forward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>::Forward)
+      .def("Backward", &fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<T>>::Backward);
 }
+
+}  // namespace ops
+}  // namespace ml
 }  // namespace fetch
-
-// These method stays in global namespace as we need them to be available just as native types abs,
-// exp, log, ...
-template <std::size_t I, std::size_t F>
-fetch::fixed_point::FixedPoint<I, F> abs(fetch::fixed_point::FixedPoint<I, F> n)
-{
-  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
-  {
-    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
-  }
-  return n;
-}
-
-template <std::size_t I, std::size_t F>
-fetch::fixed_point::FixedPoint<I, F> exp(fetch::fixed_point::FixedPoint<I, F> n)
-{
-  return fetch::fixed_point::FixedPoint<I, F>(::exp(double(n)));
-}

@@ -17,30 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cmath>
-#include <cstddef>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include "python/ml/ops/py_fully_connected.hpp"
+#include "python/ml/ops/py_mean_square_error.hpp"
+#include "python/ml/ops/py_relu.hpp"
+#include "python/ml/py_graph.hpp"
+
+namespace py = pybind11;
 
 namespace fetch {
-namespace fixed_point {
-template <std::size_t I, std::size_t F>
-class FixedPoint;
+namespace ml {
+
+template <typename T>
+void BuildMLLibrary(pybind11::module &module)
+{
+  fetch::ml::BuildGraph<T>("Graph", module);
+  fetch::ml::ops::BuildRelu<T>("Relu", module);
+  fetch::ml::ops::BuildFullyConnected<T>("FullyConnected", module);
+  fetch::ml::ops::BuildMeanSquareError<T>("MeanSquareError", module);
 }
+
+}  // namespace ml
 }  // namespace fetch
-
-// These method stays in global namespace as we need them to be available just as native types abs,
-// exp, log, ...
-template <std::size_t I, std::size_t F>
-fetch::fixed_point::FixedPoint<I, F> abs(fetch::fixed_point::FixedPoint<I, F> n)
-{
-  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
-  {
-    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
-  }
-  return n;
-}
-
-template <std::size_t I, std::size_t F>
-fetch::fixed_point::FixedPoint<I, F> exp(fetch::fixed_point::FixedPoint<I, F> n)
-{
-  return fetch::fixed_point::FixedPoint<I, F>(::exp(double(n)));
-}
