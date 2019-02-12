@@ -413,7 +413,8 @@ NodePtr Parser::ParseAnnotation()
       }
       else
       {
-        NodePtr pair_node = std::make_shared<Node>(Node(Node::Kind::AnnotationNameValuePair, token_));
+        NodePtr pair_node =
+            std::make_shared<Node>(Node(Node::Kind::AnnotationNameValuePair, token_));
         pair_node->children.push_back(node);
         NodePtr value_node = ParseAnnotationLiteral();
         if (value_node == nullptr)
