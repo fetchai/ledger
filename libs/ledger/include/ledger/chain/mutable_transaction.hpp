@@ -42,7 +42,7 @@ struct Signature
   byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
 
-  void Clone()
+  void Copy()
   {
     signature_data = signature_data.Copy();
     type           = type.Copy();

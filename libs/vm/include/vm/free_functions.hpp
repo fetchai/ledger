@@ -17,32 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
+#include "vm/string.hpp"
+#include "vm/node.hpp"
+
+#include <iostream>
 
 namespace fetch {
-namespace ledger {
+namespace vm {
 
-class SmartContract : public Contract
+fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
-public:
-  SmartContract();
-  ~SmartContract() = default;
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+  return ret;
+}
 
-  static constexpr char const *LOGGING_NAME = "SmartContract";
-
-private:
-  // transaction handlers
-  Status CreateInitialContract(Transaction const &tx);
-  Status Invoke(Transaction const &tx);
-  Status DeleteContract(Transaction const &tx);
-
-  // queries
-  /* Status Balance(Query const &query, Query &response); */
-};
+static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  std::cout << s->str << std::endl;
+}
 
 }  // namespace ledger
-}  // namespace fetch
+}  // namespace vm
+

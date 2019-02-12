@@ -27,30 +27,64 @@
 namespace fetch {
 namespace ledger {
 
-SmartContract::SmartContract(vm::Script const &script)
-  : Contract(script.name)
-//  , script_(script)
+byte_array::ConstByteArray const SMART_CONTRACT{"smart_contract"};
+byte_array::ConstByteArray const ADDRESS{"address"};
+
+SmartContract::SmartContract()
+  : Contract("fetch.smart_contract")
 {
-  /*
-  for (auto &fnc : script.functions)
-  {
-    OnTransaction(fnc.name, this, &SmartContract::InvokeContract);
-  }
-  */
-  //  module_ = CreateVMDefinition(this);
-  //  vm_     = std::make_unique<vm::VM>(module_.get());
+  OnTransaction("create_initial_contract", this, &SmartContract::CreateInitialContract);
+  OnTransaction("invoke_contract", this, &SmartContract::Invoke);
+  OnTransaction("delete_contract", this, &SmartContract::DeleteContract);
 }
 
-Contract::Status SmartContract::InvokeContract(Transaction const &tx)
+Contract::Status SmartContract::CreateInitialContract(Transaction const &tx)
 {
-  Identifier identifier;
-  identifier.Parse(static_cast<std::string>(tx.contract_name()));
+//  variant::Variant data;
+//
+//  if (!ParseAsJson(tx, data))
+//  {
+//    return Status::FAILED;
+//  }
+//
+//  ConstByteArray smart_contract; // Smart contract as text
+//  ConstByteArray address;        // Location to put the smart contract
+//
+//  if (!Extract(data, SMART_CONTRACT, smart_contract) && Extract(data, ADDRESS, address))
+//  {
+//    return Status::FAILED;
+//  }
+//
+//  auto identity = *(tx.signatures().begin()).first;
+//
+//  if (!GetOrCreateStateRecord(smart_contract, tx.))
+//  {
+//  }
+
   /*
-    if (!vm_->Execute(script_, static_cast<std::string>(identifier.name())))
-    {
-      return Status::FAILED;
-    }
+  address = FromBase64(address);  //  the address needs to be converted
+
+  // retrieve the record (if it exists)
+  WalletRecord record{};
+  GetOrCreateStateRecord(record, address);
+
+  // update the balance
+  record.balance += amount;
+
+  SetStateRecord(record, address);
   */
+
+  return Status::OK;
+
+}
+
+Contract::Status SmartContract::Invoke(Transaction const &tx)
+{
+  return Status::OK;
+}
+
+Contract::Status SmartContract::DeleteContract(Transaction const &tx)
+{
   return Status::OK;
 }
 

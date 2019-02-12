@@ -73,6 +73,11 @@ int main(int argc, char **argv)
 
   // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
+  if(!file)
+  {
+    throw std::runtime_error("Failed to find input file.");
+  }
+
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
