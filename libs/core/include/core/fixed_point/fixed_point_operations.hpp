@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 
 namespace fetch {
 namespace fixed_point {
