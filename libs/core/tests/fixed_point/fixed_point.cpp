@@ -159,7 +159,7 @@ TEST(FixedPointTest, Division)
   */
 }
 
-TEST(FixedPointTest, Comparaison)
+TEST(FixedPointTest, Comparison)
 {
   fetch::fixed_point::FixedPoint<32, 32> zero(0);
   fetch::fixed_point::FixedPoint<32, 32> one(1);

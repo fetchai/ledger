@@ -254,6 +254,7 @@ public:
     : data_(static_cast<Type>(n * one))
   {
     assert(details::CheckNoOverflow(n, fractional_bits, total_bits));
+    // TODO(private, 629)
     // assert(details::CheckNoRounding(n, fractional_bits));
   }
 
