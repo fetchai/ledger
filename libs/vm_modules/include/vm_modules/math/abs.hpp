@@ -17,16 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/free_functions/standard_functions/abs.hpp"
+
+namespace fetch {
+namespace vm_modules {
+
+
 /**
- * method for converting int32_t to string
+ * method for printing string to std::cout
  */
-fetch::vm::Ptr<fetch::vm::String> ToString(fetch::vm::VM *vm, int32_t const &a)
+int32_t Abs(fetch::vm::VM *vm, int32_t const &a)
 {
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
+  int32_t x = int32_t (a);
+  fetch::math::Abs(x);
+  return x;
 }
 
-void CreateToString(std::shared_ptr<fetch::vm::Module> module)
+void CreateAbs(fetch::vm::Module &module)
 {
-  module->CreateFreeFunction("toString", &ToString);
+  module.CreateFreeFunction("Abs", &Abs);
 }
+
+
+} // vm_modules
+} // fetch
+

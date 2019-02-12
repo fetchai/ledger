@@ -17,19 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "auctions/mock_smart_ledger.hpp"
+namespace fetch {
+namespace vm_modules {
 
-struct MSL
+/**
+ * method for printing string to std::cout
+ */
+fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
- int32_t SomeFunc()
-  {
-    return  int32_t(0);
-  }
-};
-
-void CreateSystem(std::shared_ptr<fetch::vm::Module> module)
-{
-  module->CreateClassType<MSL>("MockSmartLedger")
-      .CreateTypeFunction("Argc", &System::Argc)
-      .CreateTypeFunction("Argv", &System::Argv);
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+  return ret;
 }
+
+void CreateToString(fetch::vm::Module & module)
+{
+  module.CreateFreeFunction("toString", &toString);
+}
+
+
+} // vm_modules
+} // fetch
+
+
