@@ -227,7 +227,7 @@ private:
 
   /**
    * Represents a change to the header of the main stack, for example when changing the
-   * 'extra' data that can be stored there.
+   * 'extra' data that can be stored  there.
    */
   struct HistoryHeader
   {
@@ -415,14 +415,7 @@ public:
 
   bool HashExists(DefaultKey const & /*key*/) const
   {
-    // TODO(HUT): this.
-    return true;
-
-    /*
-    do
-    {
-    }
-    while(index > 0) */
+    throw std::runtime_error("HashExists functionality not yet implemented");
   }
 
   /**
@@ -516,7 +509,12 @@ private:
     h.bookmark    = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
-    history_.Pop();
+    // If we are reverting to a state, we want this bookmark to stay - this
+    // will make reverting to the same hash twice in a row valid.
+    if (!(key_to_compare == book.key))
+    {
+      history_.Pop();
+    }
 
     return key_to_compare == book.key;
   }

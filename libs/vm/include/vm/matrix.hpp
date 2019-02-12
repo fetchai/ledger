@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
-#include "math/linalg/matrix.hpp"
+#include "math/tensor.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -40,7 +40,7 @@ struct Matrix : public IMatrix
   Matrix() = delete;
   Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
     : IMatrix(vm, type_id)
-    , matrix(rows, columns)
+    , matrix(std::vector<std::size_t>(columns, rows))
   {}
   virtual ~Matrix() = default;
 
@@ -54,8 +54,8 @@ struct Matrix : public IMatrix
     bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
     Ptr<Matrix>  lhs                      = lhsv.object;
     T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.height();
-    size_t const lhs_columns              = lhs->matrix.width();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineAdd(rhs);
@@ -72,10 +72,10 @@ struct Matrix : public IMatrix
     bool const   rhs_matrix_is_modifiable = rhso.RefCount() == 1;
     Ptr<Matrix>  lhs                      = lhso;
     Ptr<Matrix>  rhs                      = rhso;
-    size_t const lhs_rows                 = lhs->matrix.height();
-    size_t const lhs_columns              = lhs->matrix.width();
-    size_t const rhs_rows                 = rhs->matrix.height();
-    size_t const rhs_columns              = rhs->matrix.width();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    size_t const rhs_columns              = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -108,10 +108,10 @@ struct Matrix : public IMatrix
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.height();
-    size_t const lhs_columns = lhs->matrix.width();
-    size_t const rhs_rows    = rhs->matrix.height();
-    size_t const rhs_columns = rhs->matrix.width();
+    size_t const lhs_rows    = lhs->matrix.shape()[0];
+    size_t const lhs_columns = lhs->matrix.shape()[1];
+    size_t const rhs_rows    = rhs->matrix.shape()[0];
+    size_t const rhs_columns = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -125,8 +125,8 @@ struct Matrix : public IMatrix
     bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
     Ptr<Matrix>  lhs                      = lhsv.object;
     T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.height();
-    size_t const lhs_columns              = lhs->matrix.width();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineSubtract(rhs);
@@ -143,10 +143,10 @@ struct Matrix : public IMatrix
     bool const   rhs_matrix_is_modifiable = rhso.RefCount() == 1;
     Ptr<Matrix>  lhs                      = lhso;
     Ptr<Matrix>  rhs                      = rhso;
-    size_t const lhs_rows                 = lhs->matrix.height();
-    size_t const lhs_columns              = lhs->matrix.width();
-    size_t const rhs_rows                 = rhs->matrix.height();
-    size_t const rhs_columns              = rhs->matrix.width();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
+    size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    size_t const rhs_columns              = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -179,10 +179,10 @@ struct Matrix : public IMatrix
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.height();
-    size_t const lhs_columns = lhs->matrix.width();
-    size_t const rhs_rows    = rhs->matrix.height();
-    size_t const rhs_columns = rhs->matrix.width();
+    size_t const lhs_rows    = lhs->matrix.shape()[0];
+    size_t const lhs_columns = lhs->matrix.shape()[1];
+    size_t const rhs_rows    = rhs->matrix.shape()[0];
+    size_t const rhs_columns = rhs->matrix.shape()[1];
     if ((lhs_rows != rhs_rows) || (lhs_columns != rhs_columns))
     {
       RuntimeError("invalid operation");
@@ -196,8 +196,8 @@ struct Matrix : public IMatrix
     bool const   rhs_matrix_is_modifiable = rhsv.object.RefCount() == 1;
     T            lhs                      = lhsv.primitive.Get<T>();
     Ptr<Matrix>  rhs                      = rhsv.object;
-    size_t const rhs_rows                 = rhs->matrix.height();
-    size_t const rhs_columns              = rhs->matrix.width();
+    size_t const rhs_rows                 = rhs->matrix.shape()[0];
+    size_t const rhs_columns              = rhs->matrix.shape()[1];
     if (rhs_matrix_is_modifiable)
     {
       rhs->matrix.InlineMultiply(lhs);
@@ -214,8 +214,8 @@ struct Matrix : public IMatrix
     bool const   lhs_matrix_is_modifiable = lhsv.object.RefCount() == 1;
     Ptr<Matrix>  lhs                      = lhsv.object;
     T            rhs                      = rhsv.primitive.Get<T>();
-    size_t const lhs_rows                 = lhs->matrix.height();
-    size_t const lhs_columns              = lhs->matrix.width();
+    size_t const lhs_rows                 = lhs->matrix.shape()[0];
+    size_t const lhs_columns              = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineMultiply(rhs);
@@ -230,10 +230,10 @@ struct Matrix : public IMatrix
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.height();
-    size_t const lhs_columns = lhs->matrix.width();
-    size_t const rhs_rows    = rhs->matrix.height();
-    size_t const rhs_columns = rhs->matrix.width();
+    size_t const lhs_rows    = lhs->matrix.shape()[0];
+    size_t const lhs_columns = lhs->matrix.shape()[1];
+    size_t const rhs_rows    = rhs->matrix.shape()[0];
+    size_t const rhs_columns = rhs->matrix.shape()[1];
     if (lhs_columns != rhs_rows)
     {
       RuntimeError("invalid operation");
@@ -256,10 +256,10 @@ struct Matrix : public IMatrix
   {
     Ptr<Matrix>  lhs         = lhso;
     Ptr<Matrix>  rhs         = rhso;
-    size_t const lhs_rows    = lhs->matrix.height();
-    size_t const lhs_columns = lhs->matrix.width();
-    size_t const rhs_rows    = rhs->matrix.height();
-    size_t const rhs_columns = rhs->matrix.width();
+    size_t const lhs_rows    = lhs->matrix.shape()[0];
+    size_t const lhs_columns = lhs->matrix.shape()[1];
+    size_t const rhs_rows    = rhs->matrix.shape()[0];
+    size_t const rhs_columns = rhs->matrix.shape()[1];
     if (lhs_columns != rhs_rows)
     {
       RuntimeError("invalid operation");
@@ -281,8 +281,8 @@ struct Matrix : public IMatrix
       RuntimeError("division by zero");
       return;
     }
-    size_t const lhs_rows    = lhs->matrix.height();
-    size_t const lhs_columns = lhs->matrix.width();
+    size_t const lhs_rows    = lhs->matrix.shape()[0];
+    size_t const lhs_columns = lhs->matrix.shape()[1];
     if (lhs_matrix_is_modifiable)
     {
       lhs->matrix.InlineDivide(rhs);
@@ -309,8 +309,8 @@ struct Matrix : public IMatrix
   {
     bool const   matrix_is_modifiable = object.RefCount() == 1;
     Ptr<Matrix>  operand              = object;
-    size_t const rows                 = operand->matrix.height();
-    size_t const columns              = operand->matrix.width();
+    size_t const rows                 = operand->matrix.shape()[0];
+    size_t const columns              = operand->matrix.shape()[1];
 
     // TODO(tfr): implement unary minus
     if (matrix_is_modifiable)
@@ -341,14 +341,14 @@ struct Matrix : public IMatrix
       return nullptr;
     }
     rowv.Reset();
-    size_t const rows    = matrix.height();
-    size_t const columns = matrix.width();
+    size_t const rows    = matrix.shape()[0];
+    size_t const columns = matrix.shape()[1];
     if ((row >= rows) || (column >= columns))
     {
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.At(row, column);
+    return &matrix.Get(std::vector<std::size_t>(column, row));
   }
 
   virtual void *FindElement() override
@@ -376,7 +376,7 @@ struct Matrix : public IMatrix
     }
   }
 
-  fetch::math::linalg::Matrix<T, fetch::memory::Array<T>> matrix;
+  fetch::math::Tensor<T> matrix;
 };
 
 inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns)
@@ -386,7 +386,7 @@ inline Ptr<IMatrix> IMatrix::Constructor(VM *vm, TypeId type_id, int32_t rows, i
   if ((rows < 0) || (columns < 0))
   {
     vm->RuntimeError("negative size");
-    return nullptr;
+    return Ptr<IMatrix>();
   }
   if (element_type_id == TypeIds::Float32)
   {

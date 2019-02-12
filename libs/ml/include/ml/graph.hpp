@@ -88,6 +88,16 @@ public:
   {
     std::shared_ptr<fetch::ml::ops::PlaceHolder<ArrayType>> placeholder =
         std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<ArrayType>>(nodes_[nodeName]);
+    if (placeholder)
+    {
+      placeholder->SetData(data);
+      ResetGraphCache();
+    }
+    else
+    {
+      std::cerr << "No placeholder node with name [" << nodeName << "]" << std::endl;
+      assert(false);
+    }
     placeholder->SetData(data);
     ResetGraphCache();
   }

@@ -65,11 +65,6 @@ inline void Log(NDArray<T, C> const &array, NDArray<T, C> &ret)
   details::LogImplementation<NDArray<T, C>>(array, ret);
 }
 template <typename T, typename C = memory::SharedArray<T>>
-inline void Log(linalg::Matrix<T, C> const &array, linalg::Matrix<T, C> &ret)
-{
-  details::LogImplementation<linalg::Matrix<T, C>>(array, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
 inline void Log(RectangularArray<T, C> const &array, RectangularArray<T, C> &ret)
 {
   details::LogImplementation<RectangularArray<T, C>>(array, ret);
@@ -87,11 +82,6 @@ template <typename T, typename C = memory::SharedArray<T>>
 inline void Log(NDArray<T, C> const &array, memory::Range r, NDArray<T, C> &ret)
 {
   details::LogImplementation<NDArray<T, C>>(array, r, ret);
-}
-template <typename T, typename C = memory::SharedArray<T>>
-inline void Log(linalg::Matrix<T, C> const &array, memory::Range r, linalg::Matrix<T, C> &ret)
-{
-  details::LogImplementation<linalg::Matrix<T, C>>(array, r, ret);
 }
 template <typename T, typename C = memory::SharedArray<T>>
 inline void Log(RectangularArray<T, C> const &array, memory::Range r, RectangularArray<T, C> &ret)

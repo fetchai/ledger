@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/distance/eisen.hpp"
-#include "math/linalg/matrix.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -38,13 +37,11 @@ inline typename A::Type WrapperEisen(A const &a, A const &b)
 
 inline void BuildEisenDistance(std::string const &custom_name, pybind11::module &module)
 {
-  using namespace fetch::math::linalg;
+  using namespace fetch::math;
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperEisen<Matrix<double>>)
-      .def(custom_name.c_str(), &WrapperEisen<Matrix<float>>)
-      .def(custom_name.c_str(), &WrapperEisen<RectangularArray<double>>)
+  module.def(custom_name.c_str(), &WrapperEisen<RectangularArray<double>>)
       .def(custom_name.c_str(), &WrapperEisen<RectangularArray<float>>)
       .def(custom_name.c_str(), &WrapperEisen<ShapelessArray<double>>)
       .def(custom_name.c_str(), &WrapperEisen<ShapelessArray<float>>);

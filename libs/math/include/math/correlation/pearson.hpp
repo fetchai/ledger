@@ -37,7 +37,6 @@ inline typename memory::VectorSlice<T, S>::Type Pearson(memory::VectorSlice<T, S
 
   Type meanA = a.in_parallel().Reduce(
       [](vector_register_type const &x, vector_register_type const &y) { return x + y; });
-
   Type meanB = b.in_parallel().Reduce(
       [](vector_register_type const &x, vector_register_type const &y) { return x + y; });
 

@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/fully_connected.hpp"
-#include "math/linalg/matrix.hpp"
 #include "math/ndarray.hpp"
+#include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -27,10 +27,9 @@ class FullyConnectedTest : public ::testing::Test
 };
 
 // TODO (private 507)
-using MyTypes =
-    ::testing::Types<  // fetch::math::NDArray<int>, fetch::math::NDArray<float>,
-                       // fetch::math::NDArray<double>, fetch::math::linalg::Matrix<int>,
-        fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
+                                 fetch::math::NDArray<double>, fetch::math::Tensor<int>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph

@@ -235,7 +235,7 @@ public:
     });
   }
 
-  bool Closed() override
+  bool Closed() const override
   {
     return socket_.expired();
   }

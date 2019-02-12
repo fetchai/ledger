@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/softmax.hpp"
-#include "math/linalg/matrix.hpp"
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
@@ -27,10 +27,10 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-using MyTypes =
-    ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                     fetch::math::linalg::Matrix<float>, fetch::math::linalg::Matrix<double>,
-                     fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
+using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
+                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+
 TYPED_TEST_CASE(SoftmaxTest, MyTypes);
 
 TYPED_TEST(SoftmaxTest, forward_test)
