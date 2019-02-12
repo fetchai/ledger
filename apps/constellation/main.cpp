@@ -206,7 +206,7 @@ struct CommandLineArguments
                    "The number of the peers which will be random in answer sent to peer requests.",
                    DEFAULT_TRANSIENT_PEERS);
     parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms",
-                   "How fast to do peering changes.", uint32_t(2000));
+                   "How fast to do peering changes.", uint32_t(0));
     parameters.add(args.p2p_process_cycle_ms, "p2p-process-cycle-ms",
                    "How fast the p2p inner cycle spins.", uint32_t(1000));
     parameters.add(args.p2p_manifest_update_cycle_ms, "p2p-manifest-update-cycle-ms",
