@@ -40,42 +40,7 @@ SmartContract::SmartContract()
 
 Contract::Status SmartContract::CreateInitialContract(Transaction const &tx)
 {
-//  variant::Variant data;
-//
-//  if (!ParseAsJson(tx, data))
-//  {
-//    return Status::FAILED;
-//  }
-//
-//  ConstByteArray smart_contract; // Smart contract as text
-//  ConstByteArray address;        // Location to put the smart contract
-//
-//  if (!Extract(data, SMART_CONTRACT, smart_contract) && Extract(data, ADDRESS, address))
-//  {
-//    return Status::FAILED;
-//  }
-//
-//  auto identity = *(tx.signatures().begin()).first;
-//
-//  if (!GetOrCreateStateRecord(smart_contract, tx.))
-//  {
-//  }
-
-  /*
-  address = FromBase64(address);  //  the address needs to be converted
-
-  // retrieve the record (if it exists)
-  WalletRecord record{};
-  GetOrCreateStateRecord(record, address);
-
-  // update the balance
-  record.balance += amount;
-
-  SetStateRecord(record, address);
-  */
-
   return Status::OK;
-
 }
 
 Contract::Status SmartContract::Invoke(Transaction const &tx)

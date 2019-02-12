@@ -29,10 +29,40 @@
 namespace fetch {
 namespace vm {
 
+/**
+ * VMFactory provides the user with convenient management of the VM
+ * and its associated bindings
+ *
+ */
 class VMFactory
 {
 public:
 
+  /**
+   * Get a module, the VMFactory will add whatever bindings etc. are considered in the 'standard library'
+   *
+   * @return: The module
+   */
+  static std::shared_ptr<fetch::vm::Module> GetModule()
+  {
+    auto module = std::make_shared<fetch::vm::Module>();
+
+    // Bind our vm free functions to the module
+    module->CreateFreeFunction("Print", &Print);
+    module->CreateFreeFunction("toString", &toString);
+
+    return module;
+  }
+
+  /**
+   * Compile a source file, returning a script
+   *
+   * @param: module The module which the user might have added various bindings/classes to etc.
+   * @param: source The raw source to compile
+   * @param: script script to fill
+   *
+   * @return: Vector of strings which represent errors found during compilation
+   */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> module, std::string const &source, fetch::vm::Script &script)
   {
     std::vector<std::string> errors;
@@ -53,35 +83,16 @@ public:
     return errors;
   }
 
-  static std::shared_ptr<fetch::vm::Module> GetModule()
-  {
-    auto module = std::make_shared<fetch::vm::Module>();
-
-    // Bind our vm free functions to the module
-    module->CreateFreeFunction("Print", &Print);
-    module->CreateFreeFunction("toString", &toString);
-
-    return module;
-  }
-
+  /**
+   * Get an instance of the VM after binding to a module
+   *
+   * @param: module Module which the user has added bindings to
+   *
+   * @return: An instance of the VM
+   */
   static std::unique_ptr<fetch::vm::VM> GetVM(std::shared_ptr<fetch::vm::Module> module)
   {
     return std::make_unique<fetch::vm::VM>(module.get());
-  }
-
-  static std::unique_ptr<fetch::vm::Compiler> GetCompiler()
-  {
-    static fetch::vm::Module module;
-
-    module.CreateFreeFunction("Print", &Print);
-    /*module.CreateFreeFunction("toString", &toString);
-
-    module.CreateClassType<IntPair>("IntPair")
-        .CreateTypeConstuctor<int, int>()
-        .CreateInstanceFunction("first", &IntPair::first)
-        .CreateInstanceFunction("second", &IntPair::second); */
-
-    return std::make_unique<fetch::vm::Compiler>(&module);
   }
 };
 

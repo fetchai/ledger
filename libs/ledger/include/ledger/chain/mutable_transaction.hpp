@@ -41,12 +41,6 @@ struct Signature
 {
   byte_array::ConstByteArray signature_data;
   byte_array::ConstByteArray type;
-
-  void Copy()
-  {
-    signature_data = signature_data.Copy();
-    type           = type.Copy();
-  }
 };
 
 using Signatories = std::unordered_map<crypto::Identity, Signature>;

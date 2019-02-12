@@ -259,27 +259,6 @@ protected:
     return fetch::ledger::Transaction::Create(std::move(tx));
   }
 
-  fetch::ledger::Transaction CreateSmartContract()
-  {
-    // generate an address
-    auto address = CreateAddress();
-
-    // format the transaction contents
-    std::ostringstream oss;
-    oss << "{ "
-        << R"("address": ")" << static_cast<std::string>(fetch::byte_array::ToBase64(address))
-        << "\", "
-        << R"("amount": )" << 1000 << " }";
-
-    // create the transaction
-    fetch::ledger::MutableTransaction tx;
-    tx.set_contract_name("fetch.token.wealth");
-    tx.set_data(oss.str());
-    tx.PushResource(address);
-
-    return fetch::ledger::Transaction::Create(std::move(tx));
-  }
-
   NetworkManagerPtr            network_manager_;
   StorageUnitBundledServicePtr storage_service_;
   StorageUnitClientPtr         storage_;
@@ -303,30 +282,6 @@ TEST_F(ExecutorIntegrationTests, CheckDummyContract)
 }
 
 TEST_F(ExecutorIntegrationTests, CheckTokenContract)
-{
-  // create the dummy contract
-  auto tx = CreateWalletTransaction();
-
-  // store the transaction inside the store
-  storage_->AddTransaction(tx);
-
-  auto const status = executor_->Execute(tx.digest(), 0, {0});
-  EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
-}
-
-TEST_F(ExecutorIntegrationTests, CheckSmartContract)
-{
-  // create the dummy contract
-  auto tx = CreateWalletTransaction();
-
-  // store the transaction inside the store
-  storage_->AddTransaction(tx);
-
-  auto const status = executor_->Execute(tx.digest(), 0, {0});
-  EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
-}
-
-TEST_F(ExecutorIntegrationTests, CheckTokenContract_xx)
 {
   // create the dummy contract
   auto tx = CreateWalletTransaction();

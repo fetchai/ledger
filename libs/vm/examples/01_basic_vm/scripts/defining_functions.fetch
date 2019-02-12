@@ -8,7 +8,7 @@ endfunction
 
 
 function main()
-  var n = 5;
+  var n = 3;
   var fib = fibonacci(n);
   Print("Fibonacci number " + toString(n) + " is " + toString(fib));
 endfunction
