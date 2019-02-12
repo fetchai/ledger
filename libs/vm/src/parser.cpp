@@ -246,7 +246,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
     {
       if (token_->kind != Token::Kind::Function)
       {
-        AddError("expected 'function'");
+        AddError("");
         annotations_node = nullptr;
       }
     }
@@ -385,7 +385,6 @@ NodePtr Parser::ParseAnnotations()
       return nullptr;
     }
     annotations_node->children.push_back(annotation_node);
-    Next();
   } while (token_->kind == Token::Kind::AnnotationIdentifier);
   return annotations_node;
 }
@@ -396,8 +395,7 @@ NodePtr Parser::ParseAnnotation()
   Next();
   if (token_->kind != Token::Kind::LeftParenthesis)
   {
-    AddError("expected '('");
-    return nullptr;
+    return annotation_node;
   }
   do
   {
@@ -406,33 +404,35 @@ NodePtr Parser::ParseAnnotation()
     {
       return nullptr;
     }
-    if (node->kind != Node::Kind::String)
-    {
-      annotation_node->children.push_back(node);
-    }
-    else
+    if ((node->kind == Node::Kind::String) || (node->kind == Node::Kind::Identifier))
     {
       Next();
       if (token_->kind != Token::Kind::Assign)
       {
-        Undo();
         annotation_node->children.push_back(node);
       }
       else
       {
+        NodePtr pair_node = std::make_shared<Node>(Node(Node::Kind::AnnotationNameValuePair, token_));
+        pair_node->children.push_back(node);
         NodePtr value_node = ParseAnnotationLiteral();
         if (value_node == nullptr)
         {
           return nullptr;
         }
-        node->kind = Node::Kind::AnnotationNameValuePair;
-        node->children.push_back(value_node);
-        annotation_node->children.push_back(node);
+        pair_node->children.push_back(value_node);
+        annotation_node->children.push_back(pair_node);
+        Next();
       }
     }
-    Next();
+    else
+    {
+      annotation_node->children.push_back(node);
+      Next();
+    }
     if (token_->kind == Token::Kind::RightParenthesis)
     {
+      Next();
       return annotation_node;
     }
     if (token_->kind != Token::Kind::Comma)
@@ -486,6 +486,11 @@ NodePtr Parser::ParseAnnotationLiteral()
   case Token::Kind::String:
   {
     kind = Node::Kind::String;
+    break;
+  }
+  case Token::Kind::Identifier:
+  {
+    kind = Node::Kind::Identifier;
     break;
   }
   default:

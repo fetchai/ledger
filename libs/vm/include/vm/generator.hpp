@@ -53,6 +53,7 @@ private:
 
   void   CreateFunctions(BlockNodePtr const &root);
   void   CreateAnnotations(NodePtr const &annotations_node, Script::Annotations &annotations);
+  void   SetAnnotationLiteral(NodePtr const &node, Script::AnnotationLiteral &literal);
   void   HandleBlock(BlockNodePtr const &block);
   void   HandleFunctionDefinitionStatement(BlockNodePtr const &node);
   void   HandleWhileStatement(BlockNodePtr const &node);
