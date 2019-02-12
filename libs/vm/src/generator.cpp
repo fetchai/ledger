@@ -89,59 +89,66 @@ void Generator::CreateAnnotations(NodePtr const &annotations_node, Script::Annot
     for (NodePtr const &annotation_element_node : annotation_node->children)
     {
       Script::AnnotationElement element;
-      NodePtr                   node;
       if (annotation_element_node->kind == Node::Kind::AnnotationNameValuePair)
       {
-        std::string const &name = annotation_element_node->token.text;
-        element.type            = Script::AnnotationElementType::NameValuePair;
-        element.name            = name.substr(1, name.size() - 2);
-        node                    = annotation_element_node->children[0];
+        element.type = Script::AnnotationElementType::NameValuePair;
+        SetAnnotationLiteral(annotation_element_node->children[0], element.name);
+        SetAnnotationLiteral(annotation_element_node->children[1], element.value);
       }
       else
       {
         element.type = Script::AnnotationElementType::Value;
-        node         = annotation_element_node;
+        SetAnnotationLiteral(annotation_element_node, element.value);
       }
-      const std::string &text = node->token.text;
-      switch (node->kind)
-      {
-      case Node::Kind::True:
-      {
-        element.value.Set(true);
-        break;
-      }
-      case Node::Kind::False:
-      {
-        element.value.Set(false);
-        break;
-      }
-      case Node::Kind::Integer64:
-      {
-        int64_t i = atol(text.c_str());
-        element.value.Set(i);
-        break;
-      }
-      case Node::Kind::Float64:
-      {
-        double r = atof(text.c_str());
-        element.value.Set(r);
-        break;
-      }
-      case Node::Kind::String:
-      {
-        std::string s = text.substr(1, text.size() - 2);
-        element.value.Set(s);
-        break;
-      }
-      default:
-      {
-        break;
-      }
-      }  // switch
       annotation.elements.push_back(element);
     }
     annotations.push_back(annotation);
   }
+}
+
+void Generator::SetAnnotationLiteral(NodePtr const &node, Script::AnnotationLiteral &literal)
+{
+  const std::string &text = node->token.text;
+  switch (node->kind)
+  {
+  case Node::Kind::True:
+  {
+    literal.SetBoolean(true);
+    break;
+  }
+  case Node::Kind::False:
+  {
+    literal.SetBoolean(false);
+    break;
+  }
+  case Node::Kind::Integer64:
+  {
+    int64_t i = atol(text.c_str());
+    literal.SetInteger(i);
+    break;
+  }
+  case Node::Kind::Float64:
+  {
+    double r = atof(text.c_str());
+    literal.SetReal(r);
+    break;
+  }
+  case Node::Kind::String:
+  {
+    std::string s = text.substr(1, text.size() - 2);
+    literal.SetString(s);
+    break;
+  }
+  case Node::Kind::Identifier:
+  {
+    literal.SetIdentifier(text);
+    break;
+  }
+  default:
+  {
+    break;
+  }
+  }  // switch
 }
 
 void Generator::HandleBlock(BlockNodePtr const &block)

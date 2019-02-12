@@ -881,42 +881,48 @@ struct Script
 
   using Variables = std::vector<Variable>;
 
-  enum class AnnotationValueType : uint16_t
+  enum class AnnotationLiteralType : uint16_t
   {
     Unknown = 0,
     Boolean,
     Integer,
     Real,
-    String
+    String,
+    Identifier
   };
 
-  struct AnnotationValue
+  struct AnnotationLiteral
   {
-    AnnotationValue()
+    AnnotationLiteral()
     {
-      type = AnnotationValueType::Unknown;
+      type = AnnotationLiteralType::Unknown;
     }
-    void Set(bool b)
+    void SetBoolean(bool b)
     {
-      type    = AnnotationValueType::Boolean;
+      type    = AnnotationLiteralType::Boolean;
       boolean = b;
     }
-    void Set(int64_t i)
+    void SetInteger(int64_t i)
     {
-      type    = AnnotationValueType::Integer;
+      type    = AnnotationLiteralType::Integer;
       integer = i;
     }
-    void Set(double r)
+    void SetReal(double r)
     {
-      type = AnnotationValueType::Real;
+      type = AnnotationLiteralType::Real;
       real = r;
     }
-    void Set(std::string const &s)
+    void SetString(std::string const &s)
     {
-      type = AnnotationValueType::String;
+      type = AnnotationLiteralType::String;
       str  = s;
     }
-    AnnotationValueType type;
+    void SetIdentifier(std::string const &s)
+    {
+      type = AnnotationLiteralType::Identifier;
+      str  = s;
+    }
+    AnnotationLiteralType type;
     union
     {
       bool    boolean;
@@ -940,8 +946,8 @@ struct Script
       type = AnnotationElementType::Unknown;
     }
     AnnotationElementType type;
-    std::string           name;
-    AnnotationValue       value;
+    AnnotationLiteral     name;
+    AnnotationLiteral     value;
   };
 
   using AnnotationElements = std::vector<AnnotationElement>;
