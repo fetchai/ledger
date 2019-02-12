@@ -76,6 +76,7 @@ protected:
   fetch::vm::Script script_;
 };
 
+// Test we can compile and run a fairly inoffensive smart contract
 TEST_F(VMTests, CheckCompileAndExecute)
 {
   const std::string source =
@@ -92,6 +93,8 @@ TEST_F(VMTests, CheckCompileAndExecute)
   EXPECT_EQ(res, true);
 }
 
+// Test to add a custom binding that will increment this counter when
+// the smart contract is executed
 static int32_t binding_called_count = 0;
 
 static void CustomBinding(fetch::vm::VM * /*vm*/)

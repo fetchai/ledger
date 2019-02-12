@@ -38,17 +38,17 @@ SmartContract::SmartContract()
   OnTransaction("delete_contract", this, &SmartContract::DeleteContract);
 }
 
-Contract::Status SmartContract::CreateInitialContract(Transaction const &/*tx*/)
+Contract::Status SmartContract::CreateInitialContract(Transaction const & /*tx*/)
 {
   return Status::OK;
 }
 
-Contract::Status SmartContract::Invoke(Transaction const &/*tx*/)
+Contract::Status SmartContract::Invoke(Transaction const & /*tx*/)
 {
   return Status::OK;
 }
 
-Contract::Status SmartContract::DeleteContract(Transaction const &/*tx*/)
+Contract::Status SmartContract::DeleteContract(Transaction const & /*tx*/)
 {
   throw std::runtime_error("Contract deletion not implemented yet.");
   return Status::OK;
