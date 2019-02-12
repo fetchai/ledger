@@ -67,7 +67,7 @@ public:
     this->output_->InlineAdd(*gradientAccumulation_);
     // Major DL framework do not do that, but as I can't think of any reason why, I'll leave it here
     // for convenience. Remove if needed -- Pierre
-    gradientAccumulation_->Fill(0);
+    gradientAccumulation_->Fill(typename T::Type(0));
   }
 
 private:

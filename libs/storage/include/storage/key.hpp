@@ -168,7 +168,11 @@ struct Key
     return ret;
   }
 
-  // BLOCKS
+  /**
+   * Return the number of bits the key represents
+   *
+   * @return: the number of bits
+   */
   std::size_t size_in_bits() const
   {
     return BITS;
