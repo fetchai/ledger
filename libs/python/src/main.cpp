@@ -40,6 +40,7 @@
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
 #include "python/math/py_ndarray.hpp"
+#include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
 #include "python/math/correlation/py_eisen.hpp"
@@ -65,6 +66,8 @@
 
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
+
+#include "python/ml/all.hpp"
 
 #include "python/auctions/py_bid.hpp"
 #include "python/auctions/py_combinatorial_auction.hpp"
@@ -92,10 +95,13 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_math_clustering  = ns_fetch_math.def_submodule("clustering");
   py::module ns_fetch_math_statistics  = ns_fetch_math.def_submodule("statistics");
   py::module ns_fetch_math_spline      = ns_fetch_math.def_submodule("spline");
+  py::module ns_fetch_math_tensor      = ns_fetch_math.def_submodule("tensor");
   py::module ns_fetch_memory           = module.def_submodule("memory");
   py::module ns_fetch_byte_array       = module.def_submodule("byte_array");
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
   py::module ns_fetch_auctions         = module.def_submodule("auctions");
+
+  fetch::math::BuildTensor("Tensor", ns_fetch_math_tensor);
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -229,6 +235,16 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+
+  // Machine Learning
+  py::module ns_fetch_ml_float = ns_fetch_ml.def_submodule("float");
+  fetch::ml::BuildMLLibrary<float>(ns_fetch_ml_float);
+
+  py::module ns_fetch_ml_double = ns_fetch_ml.def_submodule("double");
+  fetch::ml::BuildMLLibrary<double>(ns_fetch_ml_double);
+
+  py::module ns_fetch_ml_fixed_32_32 = ns_fetch_ml.def_submodule("fixed_32_32");
+  fetch::ml::BuildMLLibrary<fetch::fixed_point::FixedPoint<32, 32>>(ns_fetch_ml_fixed_32_32);
 
   /////////////
 
