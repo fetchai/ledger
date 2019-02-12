@@ -1,9 +1,37 @@
+@work("syngergic_contract1")
+@param(work_param = "The work parameter.")
+@help("This function computes the optimal market configuration for our hotel demo.")
+function leisureMarketWork(work_param : Int64) : Array< Int64 >
+  // Algorithm parameters  
+  var beta0 : Float64 = 0.1;
+  var beta1 : Float64 = 3.;
+  var run_time : Int64 = toInt64(1000);
 
+  // Getting the problem
+
+  // Main loop of annealing algorithm
+  var delta = (beta1 - beta0) / toFloat64(run_time);
+  var rng = CryptoRNG(work_param);
+  
+  for(i in toInt64(0):run_time)
+
+  endfor
+
+  return Array< Int64 >(0);
+endfunction
+
+
+function main()
+
+endfunction
+
+
+/*
 @settle("syngergic_contract1")
 function applyWork(work: Array< Int64 >) : Float64
-	// Computes the market optimality
+  // Computes the market optimality
 
-	return 0;
+  return 0.;
 endfunction
 
 @bid("syngergic_contract1")
@@ -13,19 +41,14 @@ endfunction
 
 @objective("syngergic_contract1")
 function leisureMarketObjective(work: Array< Int64 >) : Float64
-	// Computes the market optimality
+  var x = true;
 
-	return 0;
+  return 0.;
 endfunction
 
 @price("syngergic_contract1")
-function workPrice(work: Array< Int64 >)
-	// Computes the price of the work
+@param(work_param = "Work to be evaluated.")
+function workPrice(work: Array< Int64 > )
+  // Computes the price of the work
 endfunction
-
-@work("syngergic_contract1")
-function leisureMarketWork(rng : Int64) : Array< Int64 >
-	// Computes the market optimallity
-
-	return Array< Int64 >(0);
-endfunction
+*/

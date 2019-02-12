@@ -10,5 +10,6 @@ setup_compiler()
 add_executable(contract-mockup
   main.cpp
 )
+
 target_link_libraries(contract-mockup PRIVATE fetch-ledger fetch-vm)
 

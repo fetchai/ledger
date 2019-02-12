@@ -22,6 +22,9 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "crypto_rng.hpp"
+#include "exp.hpp"
+
 #include <fstream>
 #include <sstream>
 
@@ -35,6 +38,9 @@ fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
+
+
+
 
 struct System : public fetch::vm::Object
 {
@@ -87,6 +93,8 @@ int main(int argc, char **argv)
       .CreateTypeFunction("Argc", &System::Argc)
       .CreateTypeFunction("Argv", &System::Argv);
 
+  fetch::modules::CryptoRNG::Bind(module);
+  fetch::modules::BindExp(module);  
   // Setting compiler up
 
   fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
