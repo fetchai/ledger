@@ -39,7 +39,7 @@ public:
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
+    assert(inputs[0]->shape() == inputs[1]->shape());
 
     typename ArrayType::Type sum(0);
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
@@ -54,7 +54,7 @@ public:
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
-    assert(inputs[0]->size() == inputs[1]->size());
+    assert(inputs[0]->shape() == inputs[1]->shape());
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {

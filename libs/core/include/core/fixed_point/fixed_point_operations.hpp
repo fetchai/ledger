@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <cstddef>
+#include <cmath>
 
 namespace fetch {
 namespace fixed_point {
@@ -36,4 +37,10 @@ fetch::fixed_point::FixedPoint<I, F> abs(fetch::fixed_point::FixedPoint<I, F> n)
     n *= fetch::fixed_point::FixedPoint<I, F>(-1);
   }
   return n;
+}
+
+template <std::size_t I, std::size_t F>
+fetch::fixed_point::FixedPoint<I, F> exp(fetch::fixed_point::FixedPoint<I, F> n)
+{
+  return fetch::fixed_point::FixedPoint<I, F>(::exp(double(n)));
 }

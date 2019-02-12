@@ -27,11 +27,12 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+template <typename T>
 void BuildRelu(std::string const &custom_name, pybind11::module &module)
 {
-  py::class_<fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(module, custom_name.c_str())
+  py::class_<fetch::ml::ops::ReluLayer<fetch::math::Tensor<T>>>(module, custom_name.c_str())
       .def(py::init<>())
-      .def("Forward", &fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>::Forward);
+      .def("Forward", &fetch::ml::ops::ReluLayer<fetch::math::Tensor<T>>::Forward);
 }
 
 }  // namespace ops

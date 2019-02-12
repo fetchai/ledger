@@ -31,9 +31,10 @@ namespace py = pybind11;
 namespace fetch {
 namespace ml {
 
+template <typename T>
 void BuildGraph(std::string const &custom_name, pybind11::module &module)
 {
-  using ArrayType = fetch::math::Tensor<float>;
+  using ArrayType = fetch::math::Tensor<T>;
   py::class_<fetch::ml::Graph<ArrayType>>(module, custom_name.c_str())
       .def(py::init<>())
       .def("SetInput", &fetch::ml::Graph<ArrayType>::SetInput)
@@ -42,20 +43,20 @@ void BuildGraph(std::string const &custom_name, pybind11::module &module)
       .def("Step", &fetch::ml::Graph<ArrayType>::Step)
       .def("AddInput",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name) {
-             g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name, {});
+             g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name, {});
            })
       .def("AddFullyConnected",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input,
               size_t in, size_t out) {
-             g.AddNode<fetch::ml::ops::FullyConnected<ArrayType>>(name, {input}, in, out);
+             g.template AddNode<fetch::ml::ops::FullyConnected<ArrayType>>(name, {input}, in, out);
            })
       .def("AddRelu",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
-             g.AddNode<fetch::ml::ops::ReluLayer<ArrayType>>(name, {input});
+             g.template AddNode<fetch::ml::ops::ReluLayer<ArrayType>>(name, {input});
            })
       .def("AddSoftmax",
            [](fetch::ml::Graph<ArrayType> &g, std::string const &name, std::string const &input) {
-             g.AddNode<fetch::ml::ops::SoftmaxLayer<ArrayType>>(name, {input});
+             g.template AddNode<fetch::ml::ops::SoftmaxLayer<ArrayType>>(name, {input});
            });
 }
 }  // namespace ml

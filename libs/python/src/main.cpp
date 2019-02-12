@@ -67,10 +67,7 @@
 #include "python/random/py_lcg.hpp"
 #include "python/random/py_lfg.hpp"
 
-#include "python/ml/ops/py_fully_connected.hpp"
-#include "python/ml/ops/py_mean_square_error.hpp"
-#include "python/ml/ops/py_relu.hpp"
-#include "python/ml/py_graph.hpp"
+#include "python/ml/all.hpp"
 
 #include "python/auctions/py_bid.hpp"
 #include "python/auctions/py_combinatorial_auction.hpp"
@@ -240,11 +237,14 @@ PYBIND11_MODULE(fetch, module)
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
 
   // Machine Learning
+  py::module ns_fetch_ml_float = ns_fetch_ml.def_submodule("float");
+  fetch::ml::BuildMLLibrary<float>(ns_fetch_ml_float);
 
-  fetch::ml::BuildGraph("Graph", ns_fetch_ml);
-  fetch::ml::ops::BuildRelu("Relu", ns_fetch_ml);
-  fetch::ml::ops::BuildFullyConnected("FullyConnected", ns_fetch_ml);
-  fetch::ml::ops::BuildMeanSquareError("MeanSquareError", ns_fetch_ml);
+  py::module ns_fetch_ml_double = ns_fetch_ml.def_submodule("double");
+  fetch::ml::BuildMLLibrary<double>(ns_fetch_ml_double);
+
+  py::module ns_fetch_ml_fixed_32_32 = ns_fetch_ml.def_submodule("fixed_32_32");
+  fetch::ml::BuildMLLibrary<fetch::fixed_point::FixedPoint<32, 32>>(ns_fetch_ml_fixed_32_32);
 
   /////////////
 
