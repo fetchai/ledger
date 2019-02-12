@@ -33,6 +33,7 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
+#include "mock_chain.hpp" // TODO(tfr): remove in the long term
 
 
 #include "ledger/dag/dag.hpp"
@@ -120,6 +121,8 @@ private:
   using ConsensusMinerInterface =
       std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
+  using MockChain = fetch::ledger::MockChain; // TODO(tfr): remove
+
 
   /// @name Configuration
   /// @{
@@ -163,6 +166,7 @@ private:
 
   /// @name Blockchain and Mining
   /// @[
+  MockChain               mock_chain_;        ///< TODO(tfr): remove
   MainChain               chain_;              ///< The main block chain component
   BlockPackingAlgorithm   block_packer_;       ///< The block packing / mining algorithm
   BlockCoordinator        block_coordinator_;  ///< The block execution coordinator

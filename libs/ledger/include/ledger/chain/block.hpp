@@ -57,7 +57,7 @@ public:
     Identity miner;              ///< The identity of the generated miner
     uint32_t log2_num_lanes{0};  ///< The log2(number of lanes)
     Slices   slices;             ///< The slice lists
-//    DAGNodes dag_nodes;          ///< The DAG nodes which the chain is certifying
+    DAGNodes dag_nodes;          ///< The DAG nodes which the chain is certifying
   };
 
   /// @name Block Contents
@@ -88,7 +88,7 @@ public:
 inline void Block::UpdateDigest()
 {
   serializers::ByteArrayBuffer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner;
+  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner << body.dag_nodes;
 
   HashFunction hash;
   hash.Reset();
@@ -109,7 +109,7 @@ template <typename T>
 void Serialize(T &serializer, Block::Body const &body)
 {
   serializer << body.previous_hash << body.merkle_hash << body.block_number << body.miner
-             << body.log2_num_lanes << body.slices; // << body.dag_nodes;
+             << body.log2_num_lanes << body.slices << body.dag_nodes;
 }
 
 /**
@@ -123,7 +123,7 @@ template <typename T>
 void Deserialize(T &serializer, Block::Body &body)
 {
   serializer >> body.previous_hash >> body.merkle_hash >> body.block_number >> body.miner >>
-      body.log2_num_lanes >> body.slices; // >> body.dag_nodes;
+      body.log2_num_lanes >> body.slices >> body.dag_nodes;
 }
 
 /**

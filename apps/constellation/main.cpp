@@ -516,7 +516,9 @@ int main(int argc, char **argv)
     gConstellationInstance = constellation.get();
 
     // register the signal handler
-    std::signal(SIGINT, InterruptHandler);
+    volatile void *x = (void*)InterruptHandler;
+    FETCH_UNUSED(x);
+    // std::signal(SIGINT, InterruptHandler);
 
     // run the application
     constellation->Run(args.peers, args.mine);

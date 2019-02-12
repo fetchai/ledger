@@ -53,11 +53,12 @@ public:
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
   DigestSet const tips() const;
+  DigestSet const tips_unsafe() const;
 
   DigestCache const last_nodes() const;
   NodeMap const nodes() const;
   NodeList const block_nodes() const;
-  uint64_t time_since_last_block() const;
+
   bool HasNode(Digest const &hash);
 
   NodeArray DAGNodes() const;
@@ -76,8 +77,71 @@ public:
     on_new_node_ = std::move(cb);
   }
 
-  bool ValidatePrevious(DAGNode const &node);
+
+  /// Control logic for setting the time of the nodes.
+  /// @{
+  void SetNodeTime(uint64_t block_number, DigestArray hashes)
+  {
+    FETCH_LOCK(maintenance_mutex_);
+    std::cout << "========================================================================" << std::endl;
+    std::cout << "CERTIFYING" << std::endl;
+    std::cout << "========================================================================" << std::endl;    
+
+    std::queue< Digest > queue;
+    for(auto const& h :hashes)
+    {
+      queue.push(h);
+    }
+
+    while(!queue.empty())
+    {
+      auto hash = queue.front();
+      queue.pop();
+      if(nodes_.find(hash) == nodes_.end())
+      {
+        // FETCH_LOG_ERROR
+        return;
+      }
+
+      auto &node = nodes_[hash];
+      if(node.timestamp == DAGNode::INVALID_TIMESTAMP)
+      {
+        node.timestamp = block_number;
+        for(auto &p: node.previous)
+        {
+          queue.push(p);
+        }
+      }
+    }
+
+  }
+
+  void ClearNodeTime(DigestArray hashes)
+  {
+    FETCH_LOCK(maintenance_mutex_);
+  }
+
+  NodeArray ExtractSegment(uint64_t block_number, DigestArray hashes)
+  {
+    // TODO: 
+    return {};
+  }
+  /// }
+
+ /**
+ * @brief validates the previous nodes referenced by a node.
+ *
+ * @param node is the node which needs to be checked.
+ */
+  bool ValidatePrevious(DAGNode const &node)
+  {
+    FETCH_LOCK(maintenance_mutex_);
+    return ValidatePreviousInternal(node);
+  }
+
 private:
+  // Not thread safe
+  bool ValidatePreviousInternal(DAGNode const &node);
   void SignalNewNode(DAGNode n)
   {
     LOG_STACK_TRACE_POINT;      
@@ -87,8 +151,6 @@ private:
 
   bool PushInternal(DAGNode node);
 
-  uint64_t    time_since_last_block_ = 0;    ///< keeps track of the time since last block.
-  NodeList    block_nodes_;
   DigestCache last_nodes_;                   ///< buffer used when creating new nodes to ensure enough referencing.
   NodeMap     nodes_;                        ///< the full DAG.
   DigestSet   tips_;                         ///< tips of the DAG.
@@ -105,6 +167,15 @@ inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips() const
   FETCH_LOCK(maintenance_mutex_);    
   return tips_;
 }
+
+/**
+ * @brief returns the tips of the DAG.
+ */
+inline std::unordered_set< byte_array::ConstByteArray > const DAG::tips_unsafe() const
+{
+  return tips_;
+}
+
 
 /**
  * @brief returns the last nodes.
@@ -126,23 +197,6 @@ inline DAG::NodeMap const DAG::nodes() const
   return nodes_;
 }
 
-/**
- * @brief returns block nodes.
- */
-inline DAG::NodeList const DAG::block_nodes() const
-{
-  FETCH_LOCK(maintenance_mutex_);  
-  return block_nodes_;
-}
-
-/**
- * @brief returns the time that has passed since last block
- */
-inline uint64_t DAG::time_since_last_block() const
-{
-  FETCH_LOCK(maintenance_mutex_);    
-  return time_since_last_block_;
-}
 
 /**
  * @brief checks whether a given hash is found in the DAG.

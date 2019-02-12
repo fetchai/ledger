@@ -195,6 +195,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
         [this] { return std::make_shared<Executor>(storage_); })}
   , dag_{}
   , dag_rpc_service_{muddle_, muddle_.AsEndpoint(), dag_}
+  , mock_chain_{}
   , chain_{}
   , block_packer_{log2_num_lanes, num_slices}
   , block_coordinator_{chain_, *execution_manager_}
@@ -217,7 +218,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
                                                 block_packer_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
         std::make_shared<ledger::MainChainHTTPInterface>(log2_num_lanes, chain_), // TODO(tfr): possibly make these ones optional
-        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_) 
+        std::make_shared<ledger::DAGHTTPInterface>(dag_, dag_rpc_service_),
+        std::make_shared<ledger::MockChainHTTPInterface>(log2_num_lanes, mock_chain_)
       }
 {
   FETCH_UNUSED(num_slices_);
@@ -322,7 +324,20 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   execution_manager_->Start();
   block_coordinator_.Start();
   tx_processor_.Start();
+
+  dag_.OnNewNode([this](fetch::ledger::DAGNode /*node*/)
+  {
+    mock_chain_.SetTips(dag_.tips_unsafe());
+  });
+
+  mock_chain_.OnBlock([this](fetch::ledger::Block block)
+  {
+    dag_.SetNodeTime(block.body.block_number, block.body.dag_nodes);
+  });
+
   dag_rpc_service_.Start();
+  mock_chain_.Start();
+
 
   if (mining != ConsensusMinerType::NO_MINER)
   {
@@ -368,7 +383,12 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
     miner_.Stop();
   }
 
+  mock_chain_.Stop();
   dag_rpc_service_.Stop();
+  mock_chain_.OnBlock(nullptr);
+  dag_.OnNewNode(nullptr);
+
+
   tx_processor_.Stop();
   block_coordinator_.Stop();
   execution_manager_->Stop();

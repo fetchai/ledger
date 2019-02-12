@@ -1,51 +1,133 @@
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
-
-#include "core/assert.hpp"
-#include "core/byte_array/decoders.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logger.hpp"
-#include "miner/resource_mapper.hpp"
+#pragma once
+#include "ledger/chain/block.hpp"
+#include "core/mutex.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-#include "ledger/chain/main_chain.hpp"
+#include "miner/resource_mapper.hpp"
 
+#include <vector>
+#include <functional>
+#include <algorithm>
 #include <random>
 #include <sstream>
 
-namespace fetch {
-namespace ledger {
+namespace fetch
+{
+namespace ledger
+{
 
-class MainChainHTTPInterface : public http::HTTPModule
+class MockChain
+{
+public:
+  using BlockEventCallback = std::function< void(Block) >;
+  using Digest = byte_array::ConstByteArray;
+  using DigestArray = std::vector< Digest >;
+  using ThreadPool      = network::ThreadPool;
+  using DigestSet         = std::unordered_set<Digest>;
+
+  MockChain()
+  {
+    Block genesis{};
+    genesis.body.previous_hash = GENESIS_DIGEST;
+    genesis.is_loose           = false;
+    genesis.UpdateDigest();
+
+    chain_.push_back(genesis);
+
+    thread_pool_ = network::MakeThreadPool(1, "MockChain Thread Pool");    
+  }
+
+  void Start()
+  {
+    thread_pool_->Start();
+    thread_pool_->Post([this]() { BlockCycle(); });
+  }
+
+
+  void Stop()
+  {
+    thread_pool_->Stop();
+  }
+
+  void BlockCycle()
+  {
+    FETCH_LOCK(chain_mutex_);
+    MakeBlock();
+    thread_pool_->Post([this]() { BlockCycle(); }, 25000);
+  }
+
+  void OnBlock(BlockEventCallback on_block )
+  {
+    FETCH_LOCK(chain_mutex_);    
+    on_block_ = on_block;
+  }
+
+  std::vector< Block > HeaviestChain(int const &n)
+  {
+    FETCH_LOCK(chain_mutex_);    
+    std::vector< Block > blocks;
+    int q = int(chain_.size()) - n;
+
+    if(q < 0) 
+    {
+      q = 0;
+    }
+
+    for(; q < int(chain_.size()); ++q)
+    {
+      blocks.push_back( chain_[q] );
+    }
+    return blocks;
+  }
+
+  void SetTips(DigestSet tips) 
+  {
+    FETCH_LOCK(chain_mutex_);    
+    tips_ = tips;
+  }
+private:
+  void MakeBlock()
+  {
+    Block       next_block;
+    Block::Body next_block_body;
+    Block const &last = chain_.back();
+
+    next_block_body.previous_hash = last.body.hash;
+    next_block_body.block_number = last.body.block_number + 1;
+
+    std::copy(tips_.begin(), tips_.end(), std::back_inserter(next_block_body.dag_nodes));
+    tips_.clear();
+
+    next_block.body =     next_block_body;
+    next_block.UpdateDigest();
+
+    chain_.push_back(next_block);
+    if(on_block_) on_block_(next_block);
+  }
+
+
+
+  BlockEventCallback on_block_{nullptr};
+  ThreadPool thread_pool_;
+  fetch::mutex::Mutex chain_mutex_{__LINE__, __FILE__};
+  std::vector< Block > chain_;
+  DigestSet tips_;  
+};
+
+
+class MockChainHTTPInterface : public http::HTTPModule
 {
 public:
   using MainChain   = ledger::MainChain;
 
-  static constexpr char const *LOGGING_NAME = "MainChainHTTPInterface";
+  static constexpr char const *LOGGING_NAME = "MockChainHTTPInterface";
 
-  MainChainHTTPInterface(uint32_t log2_num_lanes, MainChain &chain)
+  MockChainHTTPInterface(uint32_t log2_num_lanes, MockChain &chain)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
   {
-    Get("/api/main-chain/list-blocks",
+    Get("/api/mock-chain/list-blocks",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          std::cout << "WAS HERE! 222" << std::endl;
           return GetChain(params, request);
         });
 
@@ -80,8 +162,7 @@ private:
     using byte_array::ToBase64;
 
     // lookup the blocks from the heaviest chain
-    std::cout << "GETTING BLOCKS: " << length << std::endl;
-    auto blocks = chain_.HeaviestChain(length);
+    auto blocks = chain_.HeaviestChain(int(length));
 
     Variant block_list = Variant::Array(blocks.size());
 
@@ -91,16 +172,22 @@ private:
     {
       // format the block number
       auto block = Variant::Object();
+      auto dag_nodes = Variant::Array(b.body.dag_nodes.size());
+
+      int dag_idx = 0;
+      for(auto const&n: b.body.dag_nodes)
+      {
+        dag_nodes[dag_idx++] = byte_array::ToBase64(n);
+      }
+
 
       block["hash"]         = byte_array::ToBase64(b.body.hash);
       block["previousHash"] = byte_array::ToBase64(b.body.previous_hash);
       block["merkleHash"]   = byte_array::ToBase64(b.body.merkle_hash);
-      block["proof"]        = byte_array::ToBase64(b.proof.header());
+      block["proof"]        = byte_array::ToBase64(b.proof.digest());
       block["miner"]        = byte_array::ToBase64(b.body.miner);
       block["blockNumber"]  = b.body.block_number;
-
-      // TODO(private issue 532): Remove legacy API
-      block["currentHash"] = byte_array::ToBase64(b.body.hash);
+      block["dag_nodes"] = dag_nodes;
 
       if (include_transactions)
       {
@@ -152,8 +239,10 @@ private:
   }
 
   uint32_t     log2_num_lanes_;
-  MainChain &  chain_;
+  MockChain &  chain_;
 };
+
+
 
 
 

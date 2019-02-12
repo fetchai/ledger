@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
+#include "core/mutex.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/dag/dag.hpp"
@@ -75,6 +76,7 @@ private:
 
   // TODO (tfr): Temporary helper function that will be removed once wire format exists
   ECDSASigner certificate_;
+  fetch::mutex::Mutex generate_mutex_{__LINE__, __FILE__};
   std::random_device random_dev_;
   Rng rng_;
 
@@ -82,10 +84,12 @@ private:
   DAGNode GenerateNode(ConstByteArray const &data, uint64_t type)
   {
     // build up the DAG node
+    FETCH_LOCK(generate_mutex_);
     DAGNode node;
     node.contents = data;
     node.identity = certificate_.identity();
 
+    std::cout << "WAS HERE!! -------------------------------------------------------" << std::endl;
     // TODO: Set previous and type
     auto prev_candidates = dag_.last_nodes();
 
@@ -115,6 +119,7 @@ private:
   http::HTTPResponse AddWork(http::ViewParameters const & /*params*/,
                              http::HTTPRequest const &request)
   {
+
     Variant response     = Variant::Object();
 
     json::JSONDocument doc;
@@ -132,6 +137,7 @@ private:
 
     dag_rpc_.BroadcastDAGNode(node);
     dag_.Push(node);
+
 
     return http::CreateJsonResponse(response);
   }
@@ -194,6 +200,7 @@ private:
 
       Variant object = Variant::Object();
 
+      object["timestamp"] = obj.timestamp;
       object["type"]      = obj.type;
       object["identity"]  = byte_array::ToBase64(obj.identity.identifier());
       object["previous"]  = previous;

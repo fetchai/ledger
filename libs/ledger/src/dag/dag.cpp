@@ -76,7 +76,7 @@ bool DAG::Push(DAGNode node)
   LOG_STACK_TRACE_POINT;
 
   // Checking that the previous nodes are valid.
-  if(!ValidatePrevious(node))
+  if(!ValidatePreviousInternal(node))
   {
     FETCH_LOG_ERROR("DAG", "Could not validate previous");
     return false;
@@ -143,12 +143,8 @@ DAG::NodeArray DAG::GetChunk(uint64_t const &f, uint64_t const &t)
   return ret;
 }
 
-/**
- * @brief validates the previous nodes referenced by a node.
- *
- * @param node is the node which needs to be checked.
- */
-bool DAG::ValidatePrevious(DAGNode const &node)
+
+bool DAG::ValidatePreviousInternal(DAGNode const &node)
 {
   LOG_STACK_TRACE_POINT;
   // The node is only valid if it refers existing nodes.
@@ -209,8 +205,6 @@ bool DAG::PushInternal(DAGNode node)
     {
       last_nodes_.pop_front();
     }
-
-    time_since_last_block_  = std::max(time_since_last_block_, time);
 
     SignalNewNode(node);
     return true;
