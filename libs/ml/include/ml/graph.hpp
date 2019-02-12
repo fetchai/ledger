@@ -96,14 +96,6 @@ public:
     else
     {
       std::cerr << "No placeholder node with name [" << nodeName << "]" << std::endl;
-      std::cerr << "Available nodes:" << std::endl;
-      for (auto &n : nodes_)
-      {
-        if (n.second)
-        {
-          std::cerr << n.first << std::endl;
-        }
-      }
       assert(false);
     }
     placeholder->SetData(data);
