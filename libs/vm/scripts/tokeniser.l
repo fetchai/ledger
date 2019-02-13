@@ -45,8 +45,8 @@ STR			([^"\\\n]|\\.)*
 INTEGER		[0-9][0-9]*
 REAL1		([0-9]*\.[0-9]+|[0-9]+\.){EXP}?
 REAL2		[0-9]+{EXP}
+IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 		
-	
 %%
 
 	/* whitespace */
@@ -102,12 +102,12 @@ REAL2		[0-9]+{EXP}
 
 {REAL1}f |
 {REAL2}f {
-	return Set(yylval, fetch::vm::Token::Kind::SinglePrecisionNumber, yytext, yyleng, yyextra);
+	return Set(yylval, fetch::vm::Token::Kind::Float32, yytext, yyleng, yyextra);
 }
 
 {REAL1} |
 {REAL2} {
-	return Set(yylval, fetch::vm::Token::Kind::DoublePrecisionNumber, yytext, yyleng, yyextra);
+	return Set(yylval, fetch::vm::Token::Kind::Float64, yytext, yyleng, yyextra);
 }
 
 	/* strings */
@@ -142,8 +142,13 @@ REAL2		[0-9]+{EXP}
 "continue"    {return Set(yylval, fetch::vm::Token::Kind::Continue, yytext, yyleng, yyextra);}
 
 	/* identifiers */
-[_a-zA-Z][_a-zA-Z0-9]* {
+{IDENT} {
 	return Set(yylval, fetch::vm::Token::Kind::Identifier, yytext, yyleng, yyextra);
+}
+
+	/* annotation identifiers */
+@{IDENT} {
+	return Set(yylval, fetch::vm::Token::Kind::AnnotationIdentifier, yytext, yyleng, yyextra);
 }
 
 	/*  punctuation and operators */
@@ -151,8 +156,8 @@ REAL2		[0-9]+{EXP}
 "."   {return Set(yylval, fetch::vm::Token::Kind::Dot, yytext, yyleng, yyextra);}
 ":"   {return Set(yylval, fetch::vm::Token::Kind::Colon, yytext, yyleng, yyextra);}
 ";"   {return Set(yylval, fetch::vm::Token::Kind::SemiColon, yytext, yyleng, yyextra);}
-"("   {return Set(yylval, fetch::vm::Token::Kind::LeftRoundBracket, yytext, yyleng, yyextra);}
-")"   {return Set(yylval, fetch::vm::Token::Kind::RightRoundBracket, yytext, yyleng, yyextra);}
+"("   {return Set(yylval, fetch::vm::Token::Kind::LeftParenthesis, yytext, yyleng, yyextra);}
+")"   {return Set(yylval, fetch::vm::Token::Kind::RightParenthesis, yytext, yyleng, yyextra);}
 "["   {return Set(yylval, fetch::vm::Token::Kind::LeftSquareBracket, yytext, yyleng, yyextra);}
 "]"   {return Set(yylval, fetch::vm::Token::Kind::RightSquareBracket, yytext, yyleng, yyextra);}
 "+"   {return Set(yylval, fetch::vm::Token::Kind::Plus, yytext, yyleng, yyextra);}
@@ -176,7 +181,7 @@ REAL2		[0-9]+{EXP}
 "++"  {return Set(yylval, fetch::vm::Token::Kind::Inc, yytext, yyleng, yyextra);}
 "--"  {return Set(yylval, fetch::vm::Token::Kind::Dec, yytext, yyleng, yyextra);}
 
-<<EOF>> {Set(yylval, fetch::vm::Token::Kind::EndOfInput, yytext, yyleng, yyextra); return 0;}
+<<EOF>> {Set(yylval, fetch::vm::Token::Kind::EndOfInput, "", 0, yyextra); return 0;}
 
 	/* catch-all for unrecognised */
 . {return Set(yylval, fetch::vm::Token::Kind::Unknown, yytext, yyleng, yyextra);}
