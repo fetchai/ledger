@@ -71,6 +71,11 @@ struct Vector : public fetch::vm::Object
     return vector_.at(idx);
   }
 
+  void set(int32_t idx, T val)
+  {
+    vector_[idx] = val;
+  }
+
   T &front()
   {
     return vector_.front();
