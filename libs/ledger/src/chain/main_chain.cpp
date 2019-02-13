@@ -867,7 +867,7 @@ bool MainChain::DetermineHeaviestTip()
     success          = true;
   }
 
-  return true;
+  return success;
 }
 
 /**

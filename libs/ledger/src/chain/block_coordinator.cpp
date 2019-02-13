@@ -274,7 +274,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     }
 
     // Check: Ensure the number of lanes is correct
-    if (num_lanes_ != (1 << current_block_->body.log2_num_lanes))
+    if (num_lanes_ != (1u << current_block_->body.log2_num_lanes))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
                      ToBase64(current_block_->body.hash), ")");
