@@ -53,6 +53,8 @@ public:
   void CreateOpcodeInstanceFunction(TypeId type_id, std::string const &name, Opcode opcode,
                                     TypeIdArray const &parameter_type_ids, TypeId return_type_id);
 
+  void EnableIndexOperator(TypeId type_id, TypeIdArray index_ids, TypeId return_type_id);
+
   bool Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors);
 
 private:

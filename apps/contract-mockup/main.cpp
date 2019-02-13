@@ -25,22 +25,17 @@
 #include "crypto_rng.hpp"
 #include "exp.hpp"
 #include "byte_array_wrapper.hpp"
+#include "print.hpp"
+#include "item.hpp"
 
 #include <fstream>
 #include <sstream>
-
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cout << s->str << std::endl;
-}
 
 fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
-
-
 
 
 struct System : public fetch::vm::Object
@@ -88,7 +83,6 @@ int main(int argc, char **argv)
   // Creating new VM module
   fetch::vm::Module module;
 
-  module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("toString", &toString);
   module.CreateClassType<System>("System")
       .CreateTypeFunction("Argc", &System::Argc)
@@ -96,7 +90,9 @@ int main(int argc, char **argv)
 
   fetch::modules::CryptoRNG::Bind(module);
   fetch::modules::ByteArrayWrapper::Bind(module);  
-  fetch::modules::BindExp(module);  
+  fetch::modules::ItemWrapper::Bind(module);    
+  fetch::modules::BindExp(module);
+  fetch::modules::BindPrint(module);
   // Setting compiler up
 
   fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);

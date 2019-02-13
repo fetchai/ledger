@@ -130,6 +130,12 @@ public:
     return Execute(error, output);
   }
 
+  template<typename T, typename ... Args>
+  Ptr<T> NewObject(Args &&... args)
+  {
+    return new T(this, registered_types_.GetTypeId(std::type_index(typeid(T))), std::forward<Args>(args)...);
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;

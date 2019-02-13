@@ -12,11 +12,16 @@ endfunction
 
 @work("syngergic_contract1")
 function leisureMarketWork(work_param : Int64) : Array< Int64 >
+  var itm = Item();
+  PrintLn(itm.owner());
+  PrintLn(itm.value());
+
   var bytearray = ByteArray(20);
   for(i in 0:19)
     bytearray[i] = toByte(64 + i);
   endfor
-  
+  PrintLn(bytearray);
+
   // Algorithm parameters  
   var beta0 : Float64 = 0.1;
   var beta1 : Float64 = 3.;

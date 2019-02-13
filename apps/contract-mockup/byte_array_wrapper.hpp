@@ -27,7 +27,8 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<ByteArrayWrapper>("ByteArray")
-      .CreateTypeConstuctor<int32_t>();
+      .CreateTypeConstuctor<int32_t>()
+      .EnableIndexOperator<uint8_t, int32_t>();
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &bytearray)
@@ -91,6 +92,10 @@ public:
     }
   }
 
+  byte_array::ByteArray byte_array()
+  {
+    return byte_array_;
+  }
 private:
   byte_array::ByteArray byte_array_;
 };

@@ -195,6 +195,11 @@ void Analyser::CreateOpcodeInstanceFunction(TypeId type_id, std::string const &n
                                GetTypePtr(return_type_id));
 }
 
+void Analyser::EnableIndexOperator(TypeId type_id, TypeIdArray index_ids, TypeId return_type_id)
+{
+  EnableIndexOperator(GetTypePtr(type_id), GetTypePtrs(index_ids), GetTypePtr(return_type_id));
+}
+
 bool Analyser::Analyse(BlockNodePtr const &root, TypeInfoTable &type_info_table, Strings &errors)
 {
   root_ = root;
@@ -1149,7 +1154,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     }
     if (symbol->IsVariable() == false)
     {
-      AddError(lhs->token, "operand does not support index operator");
+      AddError(lhs->token, "operand does not support index operator (1)");
       return false;
     }
     VariablePtr variable = ConvertToVariablePtr(symbol);
@@ -1171,7 +1176,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   if ((lhs->category == ExpressionNode::Category::Type) ||
       (lhs->category == ExpressionNode::Category::Function))
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (2)");
     return false;
   }
 
@@ -1188,7 +1193,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   size_t const num_expected_indexes = type->index_input_types.size();
   if (num_expected_indexes == 0)
   {
-    AddError(lhs->token, "operand does not support index operator");
+    AddError(lhs->token, "operand does not support index operator (3)");
     return false;
   }
 
