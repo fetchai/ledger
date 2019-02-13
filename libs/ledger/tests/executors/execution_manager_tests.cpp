@@ -34,8 +34,6 @@
 #include <random>
 #include <thread>
 
-using ::testing::_;
-
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:

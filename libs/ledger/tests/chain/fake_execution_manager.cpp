@@ -22,8 +22,6 @@
 #include "fake_storage_unit.hpp"
 
 using fetch::byte_array::ToBase64;
-using fetch::byte_array::ByteArray;
-using fetch::byte_array::ConstByteArray;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}

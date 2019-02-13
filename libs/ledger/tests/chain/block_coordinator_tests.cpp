@@ -35,13 +35,11 @@
 using fetch::ledger::BlockCoordinator;
 using fetch::ledger::MainChain;
 using fetch::ledger::Block;
-using fetch::core::Runnable;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::GENESIS_DIGEST;
 
 using ::testing::_;
 using ::testing::InSequence;
-using ::testing::Return;
 
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
 using MainChainPtr        = std::unique_ptr<MainChain>;
@@ -59,8 +57,8 @@ static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
-  std::size_t NUM_LANES  = 1;
-  std::size_t NUM_SLICES = 1;
+  static constexpr std::size_t NUM_LANES  = 1;
+  static constexpr std::size_t NUM_SLICES = 1;
 
   void SetUp() override
   {

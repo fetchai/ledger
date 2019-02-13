@@ -25,7 +25,6 @@
 #include <memory>
 
 using fetch::storage::ResourceAddress;
-using fetch::byte_array::ToHex;
 
 using FakeStorageUnitPtr = std::unique_ptr<FakeStorageUnit>;
 

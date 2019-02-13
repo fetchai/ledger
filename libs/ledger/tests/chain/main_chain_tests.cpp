@@ -31,8 +31,7 @@ using namespace fetch;
 
 using fetch::ledger::Block;
 using fetch::ledger::MainChain;
-using fetch::byte_array::ByteArray;
-using fetch::byte_array::ToBase64;
+// using fetch::byte_array::ToBase64; // needed for debug messages
 
 using Rng               = std::mt19937_64;
 using BlockHash         = Block::Digest;
