@@ -32,7 +32,7 @@ namespace modules
 
 struct Item {
   byte_array::ConstByteArray contract;   
-  byte_array::ConstByteArray owner; 
+  byte_array::ConstByteArray owner;
   int64_t type;
   int64_t id;
   int64_t value;  

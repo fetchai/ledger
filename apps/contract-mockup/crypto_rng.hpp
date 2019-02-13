@@ -39,23 +39,23 @@ public:
   static void Bind(vm::Module &module)
   {
     module.CreateClassType<CryptoRNG>("CryptoRNG")
-      .CreateTypeConstuctor<int64_t>()
+      .CreateTypeConstuctor<uint64_t>()
       .CreateInstanceFunction("next", &CryptoRNG::Next)
       .CreateInstanceFunction("nextAsFloat", &CryptoRNG::NextAsFloat);
   }
 
-  CryptoRNG(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int64_t seed)
+  CryptoRNG(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t seed)
     : fetch::vm::Object(vm, type_id)
     , rng_(seed)
   {}
 
   static fetch::vm::Ptr<CryptoRNG> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             int64_t seed)
+                                             uint64_t seed)
   {
     return new CryptoRNG(vm, type_id, seed);
   }
 
-  int64_t Next()
+  uint64_t Next()
   {
     return rng_();
   }

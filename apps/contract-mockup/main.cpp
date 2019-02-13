@@ -24,6 +24,7 @@
 #include "vm/vm.hpp"
 #include "crypto_rng.hpp"
 #include "exp.hpp"
+#include "byte_array_wrapper.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -94,6 +95,7 @@ int main(int argc, char **argv)
       .CreateTypeFunction("Argv", &System::Argv);
 
   fetch::modules::CryptoRNG::Bind(module);
+  fetch::modules::ByteArrayWrapper::Bind(module);  
   fetch::modules::BindExp(module);  
   // Setting compiler up
 
