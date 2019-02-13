@@ -69,6 +69,7 @@ public:
   uint64_t weight       = 1;
   uint64_t total_weight = 1;
   bool     is_loose     = true;
+  bool     is_valid     = true;
   /// @}
 
   // Helper functions

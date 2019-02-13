@@ -42,8 +42,8 @@ public:
   // Construction / Destruction
   LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle);
   LaneController(LaneController const &) = delete;
-  LaneController(LaneController &&) = delete;
-  ~LaneController() = default;
+  LaneController(LaneController &&)      = delete;
+  ~LaneController()                      = default;
 
   /// External controls
   /// @{
@@ -59,7 +59,7 @@ public:
   void UseThesePeers(UriSet uris);
 
   AddressSet GetPeers();
-  void GeneratePeerDeltas(UriSet &create, UriSet &remove);
+  void       GeneratePeerDeltas(UriSet &create, UriSet &remove);
   /// @}
 
   // Operators
@@ -67,7 +67,6 @@ public:
   LaneController &operator=(LaneController &&) = delete;
 
 private:
-
   std::weak_ptr<LaneIdentity> lane_identity_;
 
   // Most methods do not need both mutexes. If they do, they should

@@ -87,11 +87,11 @@ public:
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
   {
-    state_merkle_cache_.Load("merkle_hash_cache_index.db", "merkle_hash_cache.db", true);
+    //    state_merkle_cache_.Load("merkle_hash_cache_index.db", "merkle_hash_cache.db", true);
   }
 
   StorageUnitClient(StorageUnitClient const &) = delete;
-  StorageUnitClient(StorageUnitClient &&) = delete;
+  StorageUnitClient(StorageUnitClient &&)      = delete;
   StorageUnitClient &operator=(StorageUnitClient const &) = delete;
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
@@ -200,7 +200,7 @@ public:
     std::vector<service::Promise> promises;
     TxSummaries                   new_txs;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Polling recent transactions from lanes");
 
     // Assume that the lanes are roughly balanced in terms of new TXs
     for (auto const &lane_index : lane_to_identity_map_)
@@ -326,15 +326,15 @@ public:
                                                key.as_resource_id(), value);
 
     FETCH_LOG_PROMISE();
-    promise->Wait(); // TODO(HUT): no error state is checked/allowed for setting things?
+    promise->Wait();  // TODO(HUT): no error state is checked/allowed for setting things?
   }
 
   // state hash functions
-  byte_array::ConstByteArray     CurrentHash()           override;
-  byte_array::ConstByteArray     LastCommitHash()        override;
-  bool                           RevertToHash(Hash const &hash) override;
-  byte_array::ConstByteArray     Commit()                override;
-  bool                           HashExists(Hash const &hash)   override;
+  byte_array::ConstByteArray CurrentHash() override;
+  byte_array::ConstByteArray LastCommitHash() override;
+  bool                       RevertToHash(Hash const &hash) override;
+  byte_array::ConstByteArray Commit() override;
+  bool                       HashExists(Hash const &hash) override;
 
   bool Lock(ResourceAddress const &key) override
   {
@@ -419,6 +419,8 @@ private:
   using TxSummaries               = std::vector<TransactionSummary>;
   using MerkleCache               = storage::ObjectStore<crypto::MerkleTree>;
   using MerkleTree                = crypto::MerkleTree;
+  using MerkleTreePtr             = std::shared_ptr<MerkleTree>;
+  using MerkleStack               = std::vector<MerkleTreePtr>;
 
   void WorkCycle();
 
@@ -438,6 +440,8 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
+  bool HashInStack(Hash const &hash);
+
   NetworkManager            network_manager_;
   uint32_t                  log2_lanes_ = 0;
   mutable Mutex             mutex_{__LINE__, __FILE__};
@@ -447,10 +451,11 @@ private:
   Muddles                   muddles_;
   Clients                   clients_;
 
-  // Mutex only needs to protect current merkle, the cache is thread safe
-  mutable Mutex             merkle_mutex_{__LINE__, __FILE__};
-  MerkleTree                current_merkle_;
-  MerkleCache               state_merkle_cache_;
+  // Mutex only needs to protect current merkle and merkle stack, the cache is thread safe
+  mutable Mutex merkle_mutex_{__LINE__, __FILE__};
+  MerkleTreePtr current_merkle_;
+  MerkleStack   state_merkle_stack_;
+  //  MerkleCache               state_merkle_cache_;
 };
 
 }  // namespace ledger

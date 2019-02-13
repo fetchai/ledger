@@ -29,24 +29,23 @@ namespace commandline {
 class ParamsParser
 {
 public:
-
   // Construction / Destruction
-  ParamsParser() = default;
+  ParamsParser()                     = default;
   ParamsParser(ParamsParser const &) = delete;
-  ParamsParser(ParamsParser &&) = delete;
-  ~ParamsParser() = default;
+  ParamsParser(ParamsParser &&)      = delete;
+  ~ParamsParser()                    = default;
 
   void Parse(int argc, char **argv);
 
   template <typename T>
   T GetArg(std::size_t const &i, T const &default_value) const;
   template <typename T>
-  T GetArg(std::size_t const &i) const;
+  T           GetArg(std::size_t const &i) const;
   std::string GetArg(std::size_t const &i) const;
   std::string GetArg(std::size_t const &i, std::string const &default_value) const;
 
   template <typename T>
-  T GetParam(std::string const &key, T const &default_value) const;
+  T           GetParam(std::string const &key, T const &default_value) const;
   std::string GetParam(std::string const &key, std::string const &default_value) const;
 
   std::size_t arg_size() const;

@@ -74,8 +74,8 @@ public:
 
   bool ParseAsJson(Transaction const &tx, variant::Variant &output);
 
-  Identifier const &identifier() const;
-  QueryHandlerMap const &query_handlers() const;
+  Identifier const &           identifier() const;
+  QueryHandlerMap const &      query_handlers() const;
   TransactionHandlerMap const &transaction_handlers() const;
 
   storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const;
@@ -98,7 +98,6 @@ protected:
   void SetStateRecord(T const &record, byte_array::ByteArray const &address);
 
 private:
-
   bool LockResources(ResourceSet const &resources);
   bool UnlockResources(ResourceSet const &resources);
 

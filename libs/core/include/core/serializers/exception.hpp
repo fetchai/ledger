@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/logger.hpp"
+
 #include <exception>
 #include <string>
 #include <utility>
@@ -24,7 +26,7 @@
 namespace fetch {
 namespace byte_array {
 class ConstByteArray;
-} // namespace byte_array
+}  // namespace byte_array
 namespace serializers {
 
 namespace error {
@@ -35,19 +37,19 @@ error_type const TYPE_ERROR = 0;
 class SerializableException : public std::exception
 {
 public:
-
   /// @name Construction / Destruction
   /// @{
   SerializableException();
   SerializableException(std::string explanation);
   SerializableException(byte_array::ConstByteArray const &explanation);
   SerializableException(error::error_type error_code, std::string explanation);
-  SerializableException(error::error_type error_code, byte_array::ConstByteArray const &explanation);
+  SerializableException(error::error_type                 error_code,
+                        byte_array::ConstByteArray const &explanation);
   ~SerializableException() override;
   /// @}
 
   char const *what() const noexcept override;
-  uint64_t error_code() const;
+  uint64_t    error_code() const;
   std::string explanation() const;
 
   void StackTrace() const;

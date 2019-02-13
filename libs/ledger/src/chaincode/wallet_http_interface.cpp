@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -45,14 +44,14 @@ namespace fetch {
 namespace ledger {
 
 WalletHttpInterface::WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor,
-                    std::size_t num_lanes)
+                                         std::size_t num_lanes)
   : state_{state}
   , processor_{processor}
   , num_lanes_{num_lanes}
 {
 
   log2_lanes_ =
-    uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
+      uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(num_lanes_)) + 1));
 
   // load permanent key store (or create it if files do not exist)
   key_store_.Load("key_store_main.db", "key_store_index.db", true);
@@ -147,7 +146,7 @@ http::HTTPResponse WalletHttpInterface::OnRegister(http::HTTPRequest const &requ
       uint32_t lane = miner::MapResourceToLane(address, mtx.contract_name(), log2_lanes_);
 
       std::tuple<std::string, int> tmp =
-                                     std::make_tuple(std::string(byte_array::ToBase64(signer.public_key())), lane);
+          std::make_tuple(std::string(byte_array::ToBase64(signer.public_key())), lane);
       return_info.push_back(tmp);
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting register transaction");
@@ -262,8 +261,8 @@ http::HTTPResponse WalletHttpInterface::OnTransfer(http::HTTPRequest const &requ
       if (!key_store_.Get(get_id, priv_key))
       {
         return http::CreateJsonResponse(
-          R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
-          http::Status::CLIENT_ERROR_BAD_REQUEST);
+            R"({"success": false, "error": "provided address/pub.key does not exist in key store"})",
+            http::Status::CLIENT_ERROR_BAD_REQUEST);
       }
 
       // sign the transaction
@@ -307,12 +306,12 @@ const char *WalletHttpInterface::ToString(ErrorCode error_code)
 
   switch (error_code)
   {
-    case ErrorCode::NOT_IMPLEMENTED:
-      msg = "Not implemented";
-      break;
-    case ErrorCode::PARSE_FAILURE:
-      msg = "Parse failure";
-      break;
+  case ErrorCode::NOT_IMPLEMENTED:
+    msg = "Not implemented";
+    break;
+  case ErrorCode::PARSE_FAILURE:
+    msg = "Parse failure";
+    break;
   }
 
   return msg;

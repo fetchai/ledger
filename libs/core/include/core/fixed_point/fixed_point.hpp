@@ -17,19 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fixed_point_tag.hpp"
-#include <iostream>
-#include <sstream>
-
-//#include <ostream>
-//#include <exception>
-//#include <cstddef>      // std::size_t
-//#include <cstdint>
-//#include <type_traits>
-
+#include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
+
 #include <cassert>
+#include <iostream>
 #include <limits>
+#include <sstream>
 
 namespace fetch {
 namespace fixed_point {

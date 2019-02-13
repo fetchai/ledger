@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/block.hpp"
 
 #include <random>
 

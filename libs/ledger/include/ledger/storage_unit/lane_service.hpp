@@ -58,7 +58,7 @@ public:
   using CertificatePtr = Muddle::CertificatePtr;
   using NetworkId      = muddle::Muddle::NetworkId;
 
-  using DocumentStore            = storage::NewRevertibleDocumentStore;
+  using DocumentStore             = storage::NewRevertibleDocumentStore;
   using DocumentStoreProtocol     = storage::RevertibleDocumentStoreProtocol;
   using TransactionStore          = storage::TransientObjectStore<VerifiedTransaction>;
   using TransactionStoreProtocol  = storage::ObjectStoreProtocol<VerifiedTransaction>;

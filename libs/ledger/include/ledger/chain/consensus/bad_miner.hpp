@@ -26,12 +26,11 @@ namespace consensus {
 class BadMiner : public ConsensusMinerInterface
 {
 public:
-
   // Construction / Destruction
-  BadMiner() = default;
+  BadMiner()                 = default;
   BadMiner(BadMiner const &) = delete;
-  BadMiner(BadMiner &&) = delete;
-  ~BadMiner() override = default;
+  BadMiner(BadMiner &&)      = delete;
+  ~BadMiner() override       = default;
 
   /// @name Consensus Miner Interface
   /// @{

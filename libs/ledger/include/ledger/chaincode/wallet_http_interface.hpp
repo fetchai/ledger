@@ -32,7 +32,6 @@ class TransactionProcessor;
 class WalletHttpInterface : public http::HTTPModule
 {
 public:
-
   static constexpr char const *LOGGING_NAME = "WalletHttpInterface";
 
   enum class ErrorCode
@@ -45,8 +44,8 @@ public:
   WalletHttpInterface(StorageInterface &state, TransactionProcessor &processor,
                       std::size_t num_lanes);
   WalletHttpInterface(WalletHttpInterface const &) = delete;
-  WalletHttpInterface(WalletHttpInterface &&) = delete;
-  ~WalletHttpInterface() = default;
+  WalletHttpInterface(WalletHttpInterface &&)      = delete;
+  ~WalletHttpInterface()                           = default;
 
   // Operators
   WalletHttpInterface &operator=(WalletHttpInterface const &) = delete;
@@ -58,10 +57,10 @@ private:
   http::HTTPResponse OnRegister(http::HTTPRequest const &request);
   http::HTTPResponse OnBalance(http::HTTPRequest const &request);
   http::HTTPResponse OnTransfer(http::HTTPRequest const &request);
-  http::HTTPResponse OnTransactions(http::HTTPRequest const & request);
+  http::HTTPResponse OnTransactions(http::HTTPRequest const &request);
 
   static http::HTTPResponse BadJsonResponse(ErrorCode error_code);
-  static const char *ToString(ErrorCode error_code);
+  static const char *       ToString(ErrorCode error_code);
 
   StorageInterface &    state_;
   TransactionProcessor &processor_;

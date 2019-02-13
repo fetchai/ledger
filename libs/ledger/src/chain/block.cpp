@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
-#include "crypto/sha256.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -39,5 +39,5 @@ void Block::UpdateDigest()
   proof.SetHeader(body.hash);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

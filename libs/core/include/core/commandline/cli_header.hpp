@@ -23,7 +23,7 @@ namespace fetch {
 namespace commandline {
 
 void DisplayCLIHeader(std::string const &name, std::string const &years = "2018",
-                             std::string const &additional = "");
+                      std::string const &additional = "");
 
 }  // namespace commandline
 }  // namespace fetch

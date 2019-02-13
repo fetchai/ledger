@@ -17,6 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract_http_interface.hpp"
+#include "core/json/document.hpp"
+#include "core/logger.hpp"
+#include "core/serializers/stl_types.hpp"
+#include "core/string/replace.hpp"
+#include "http/json_response.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/wire_transaction.hpp"
+#include "ledger/transaction_processor.hpp"
 
 namespace fetch {
 namespace ledger {

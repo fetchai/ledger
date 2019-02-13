@@ -183,7 +183,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
     FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
-    block_coordinator_.AddBlock(block);
+    // add the new block to the chain
+    chain_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree

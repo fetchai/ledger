@@ -17,15 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-// would be nice to remove these
-//#include "core/byte_array/byte_array.hpp"
-//#include "core/byte_array/const_byte_array.hpp"
-// #include "core/fixed_point/fixed_point.hpp"
+#include "meta/tags.hpp"
 
 #include <string>
 #include <type_traits>
-
-#include "core/fixed_point/fixed_point_tag.hpp"
 
 namespace fetch {
 

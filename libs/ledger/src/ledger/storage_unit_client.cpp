@@ -18,6 +18,8 @@
 
 #include "ledger/storage_unit/storage_unit_client.hpp"
 
+#include <algorithm>
+
 namespace fetch {
 namespace ledger {
 
@@ -332,7 +334,7 @@ byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
 {
   FETCH_LOCK(merkle_mutex_);
-  return current_merkle_.root();
+  return current_merkle_->root();
 }
 
 // Revert to a previous hash if possible
@@ -340,9 +342,27 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
 {
   // Try to find whether we believe the hash exists (look in memory)
   // TODO(HUT): this is going to be tricky if the previous state has less/more lanes
-  MerkleTree tree;
-  if(!state_merkle_cache_.Get(storage::ResourceID{hash}, tree)) // note that we directly use the hash as a key here
+  MerkleTreePtr tree;
   {
+    FETCH_LOCK(merkle_mutex_);
+
+    auto it = std::find_if(state_merkle_stack_.rbegin(), state_merkle_stack_.rend(),
+                           [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
+
+    if (state_merkle_stack_.rend() != it)
+    {
+      // update the tree
+      tree = *it;
+
+      // remove the other commits that occured later than this stack
+      state_merkle_stack_.erase(it.base(), state_merkle_stack_.end());
+    }
+  }
+
+  if (!tree)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Unable to lookup the required commit hash: ", byte_array::ToBase64(hash));
     return false;
   }
 
@@ -351,32 +371,31 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
 
   // Due diligence: check all lanes can revert to this state before trying this operation
   // k = lane, v = lane hash
-  for(auto const &leaf_kv : tree.leaf_nodes())
+  for (auto const &leaf_kv : tree->leaf_nodes())
   {
     Address address;
-    auto &lane = leaf_kv.first;
-    auto &hash = leaf_kv.second;
+    auto &  lane = leaf_kv.first;
+    auto &  hash = leaf_kv.second;
 
     assert(hash.size() > 0);
 
     GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
 
-    auto client  = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+    auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
 
     auto promise = client->CallSpecificAddress(
-        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS,
-        hash);
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
     promises.push_back(promise);
   }
 
   std::vector<uint32_t> failed_lanes;
-  uint32_t lane_counter = 0;
+  uint32_t              lane_counter = 0;
 
   for (auto &p : promises)
   {
     FETCH_LOG_PROMISE();
 
-    if(!p->As<bool>())
+    if (!p->As<bool>())
     {
       failed_lanes.push_back(lane_counter);
     }
@@ -384,7 +403,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
     lane_counter++;
   }
 
-  for(auto const &i : failed_lanes)
+  for (auto const &i : failed_lanes)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Merkle hash mismatch: hash not found in lane: ", i);
     return false;
@@ -393,34 +412,40 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   promises.clear();
 
   // Now perform the revert
-  for(auto const &leaf_kv : tree.leaf_nodes())
+  for (auto const &leaf_kv : tree->leaf_nodes())
   {
     Address address;
-    auto &lane = leaf_kv.first;
-    auto &hash = leaf_kv.second;
+    auto &  lane = leaf_kv.first;
+    auto &  hash = leaf_kv.second;
 
     assert(hash.size() > 0);
 
     GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
 
-    auto client  = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+    auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
 
     auto promise = client->CallSpecificAddress(
-        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT_TO_HASH,
-        hash);
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT_TO_HASH, hash);
     promises.push_back(promise);
   }
 
   for (auto &p : promises)
   {
     FETCH_LOG_PROMISE();
-    if(!p->As<bool>())
+    if (!p->As<bool>())
     {
       // TODO(HUT): revert all lanes to their previous state
-      throw std::runtime_error("Failed to revert all of the lanes -\
+      throw std::runtime_error(
+          "Failed to revert all of the lanes -\
           the system may have entered an unknown state");
       return false;
     }
+  }
+
+  // since the state has now been restored we can update the current merkle reference
+  {
+    FETCH_LOCK(merkle_mutex_);
+    current_merkle_ = tree;
   }
 
   return true;
@@ -429,7 +454,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
 // We have finished execution presumably, commit this state
 byte_array::ConstByteArray StorageUnitClient::Commit()
 {
-  MerkleTree                    tree;
+  MerkleTreePtr                 tree = std::make_shared<MerkleTree>();
   std::vector<service::Promise> promises;
 
   for (auto const &lanedata : lane_to_identity_map_)
@@ -445,22 +470,41 @@ byte_array::ConstByteArray StorageUnitClient::Commit()
   for (auto &p : promises)
   {
     FETCH_LOG_PROMISE();
-    tree[index] = p->As<byte_array::ByteArray>();
-    index++;
+    (*tree)[index] = p->As<byte_array::ByteArray>();
+    ++index;
   }
 
-  tree.CalculateRoot();
+  tree->CalculateRoot();
+
+  auto const tree_root = tree->root();
 
   {
     FETCH_LOCK(merkle_mutex_);
-    current_merkle_ = std::move(tree);
-    return current_merkle_.root();
+    current_merkle_ = tree;
+
+    // this is a little
+    if (!HashInStack(tree_root))
+    {
+      state_merkle_stack_.push_back(tree);
+    }
   }
+
+  return tree_root;
 }
 
 bool StorageUnitClient::HashExists(Hash const &hash)
 {
-  return state_merkle_cache_.Has(storage::ResourceID{hash});
+  FETCH_LOCK(merkle_mutex_);
+  return HashInStack(hash);
+}
+
+bool StorageUnitClient::HashInStack(Hash const &hash)
+{
+  // small optimisation to do the search in reverse
+  auto const it = std::find_if(state_merkle_stack_.crbegin(), state_merkle_stack_.crend(),
+                               [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
+
+  return state_merkle_stack_.rend() == it;
 }
 
 }  // namespace ledger

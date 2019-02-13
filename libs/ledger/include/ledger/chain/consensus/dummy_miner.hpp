@@ -26,12 +26,11 @@ namespace consensus {
 class DummyMiner : public ConsensusMinerInterface
 {
 public:
-
   // Construction / Destruction
-  DummyMiner() = default;
+  DummyMiner()                   = default;
   DummyMiner(DummyMiner const &) = delete;
-  DummyMiner(DummyMiner &&) = delete;
-  ~DummyMiner() override = default;
+  DummyMiner(DummyMiner &&)      = delete;
+  ~DummyMiner() override         = default;
 
   /// @name Consensus Miner Interface
   /// @{

@@ -23,7 +23,7 @@ namespace fetch {
 namespace ledger {
 
 Contract::Contract(byte_array::ConstByteArray const &identifier)
-: contract_identifier_{identifier}
+  : contract_identifier_{identifier}
 {}
 
 Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query, Query &response)
@@ -153,7 +153,6 @@ storage::ResourceAddress Contract::CreateStateIndex(byte_array::ByteArray const 
   index.Append(contract_identifier_.name_space(), ".state.", suffix);
   return storage::ResourceAddress{index};
 }
-
 
 StorageInterface &Contract::state()
 {

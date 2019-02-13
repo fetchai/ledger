@@ -41,7 +41,7 @@ public:
   void SetTarget(math::BigUnsigned &&target);
   void SetHeader(byte_array::ByteArray header);
 
-  header_type const &header() const;
+  header_type const &      header() const;
   math::BigUnsigned const &digest() const;
   math::BigUnsigned const &target() const;
 

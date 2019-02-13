@@ -41,9 +41,8 @@ public:
   }
 
 private:
-
-  using Clock       = std::chrono::high_resolution_clock;
-  using Timepoint   = Clock::time_point;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
 
   struct Element
   {
