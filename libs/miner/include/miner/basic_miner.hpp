@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
-#include "ledger/chain/transaction.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "meta/is_log2.hpp"
 #include "miner/optimisation/bitvector.hpp"
 #include "vectorise/threading/pool.hpp"

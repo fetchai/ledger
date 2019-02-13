@@ -156,8 +156,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
-  , execution_manager_{std::make_shared<ExecutionManager>(cfg_.num_executors, storage_,
-        [this] { return std::make_shared<Executor>(storage_); })}
+  , execution_manager_{std::make_shared<ExecutionManager>(
+        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{true}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_, *execution_manager_, *storage_,      block_packer_,

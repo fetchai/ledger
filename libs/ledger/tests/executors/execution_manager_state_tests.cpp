@@ -60,7 +60,7 @@ protected:
 
     // create the manager
     manager_ = std::make_shared<ExecutionManager>(config.executors, mock_storage_,
-                                           [this]() { return CreateExecutor(); });
+                                                  [this]() { return CreateExecutor(); });
   }
 
   FakeExecutorPtr CreateExecutor()

@@ -291,7 +291,8 @@ size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Ur
 }
 
 // Convenience function for repeated code below
-void GetClientAddress(StorageUnitClient::LaneIndex lane, StorageUnitClient::Address address, StorageUnitClient *this_ptr)
+void GetClientAddress(StorageUnitClient::LaneIndex lane, StorageUnitClient::Address address,
+                      StorageUnitClient *this_ptr)
 {
   try
   {

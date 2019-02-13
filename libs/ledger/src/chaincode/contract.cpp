@@ -26,7 +26,8 @@ Contract::Contract(byte_array::ConstByteArray const &identifier)
   : contract_identifier_{identifier}
 {}
 
-Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query, Query &response)
+Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &query,
+                                         Query &response)
 {
   Status status{Status::NOT_FOUND};
 
@@ -40,7 +41,8 @@ Contract::Status Contract::DispatchQuery(ContractName const &name, Query const &
   return status;
 }
 
-Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx)
+Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const &name,
+                                               Transaction const &               tx)
 {
   Status status{Status::NOT_FOUND};
 

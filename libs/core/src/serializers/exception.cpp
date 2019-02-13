@@ -63,7 +63,8 @@ SerializableException::SerializableException(error::error_type error_code, std::
   LOG_SET_CONTEXT_VARIABLE(stack_trace_)
 }
 
-SerializableException::SerializableException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
+SerializableException::SerializableException(error::error_type                 error_code,
+                                             byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
   , explanation_(std::string(explanation))
 {

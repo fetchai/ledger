@@ -110,7 +110,8 @@ private:
 };
 
 template <typename C>
-void Contract::OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &))
+void Contract::OnTransaction(std::string const &name, C *instance,
+                             Status (C::*func)(Transaction const &))
 {
   if (transaction_handlers_.find(name) == transaction_handlers_.end())
   {
@@ -126,7 +127,8 @@ void Contract::OnTransaction(std::string const &name, C *instance, Status (C::*f
 }
 
 template <typename C>
-void Contract::OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &))
+void Contract::OnQuery(std::string const &name, C *instance,
+                       Status (C::*func)(Query const &, Query &))
 {
   if (query_handlers_.find(name) == query_handlers_.end())
   {

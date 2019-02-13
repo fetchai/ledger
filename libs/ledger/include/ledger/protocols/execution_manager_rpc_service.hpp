@@ -35,7 +35,8 @@ public:
   using StorageUnitPtr      = ExecutionManager::StorageUnitPtr;
 
   ExecutionManagerRpcService(uint16_t port, network_manager_type const &network_manager,
-                             std::size_t num_executors, StorageUnitPtr storage, ExecutorFactory const &factory)
+                             std::size_t num_executors, StorageUnitPtr storage,
+                             ExecutorFactory const &factory)
     : ServiceServer(port, network_manager)
     , manager_(new ExecutionManager(num_executors, std::move(storage), factory))
   {
