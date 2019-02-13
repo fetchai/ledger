@@ -21,10 +21,10 @@ namespace fetch {
 namespace vm_modules {
 
 /**
- * method for printing string to std::cout
+ * method for type converting from arithmetic to string
  */
 template <typename T>
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, T const &a)
+fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm, T const &a)
 {
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
