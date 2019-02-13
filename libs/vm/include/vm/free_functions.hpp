@@ -17,33 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
+#include "vm/node.hpp"
+#include "vm/string.hpp"
 
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
+#include <iostream>
 
 namespace fetch {
-namespace ledger {
+namespace vm {
 
-class SmartContract : public Contract
+// VM free functions. These will be available for all smart contracts and MUST NOT RETAIN STATE (be
+// thread safe)
+
+fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
 {
-public:
-  SmartContract();
-  ~SmartContract() = default;
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+  return ret;
+}
 
-  static constexpr char const *LOGGING_NAME = "SmartContract";
+static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
+{
+  std::cout << s->str << std::endl;
+}
 
-private:
-  // transaction handlers
-  Status CreateInitialContract(Transaction const &tx);
-  Status Invoke(Transaction const &tx);
-  Status DeleteContract(Transaction const &tx);
-
-  // queries
-  /* Status Balance(Query const &query, Query &response); */
-};
-
-}  // namespace ledger
+}  // namespace vm
 }  // namespace fetch

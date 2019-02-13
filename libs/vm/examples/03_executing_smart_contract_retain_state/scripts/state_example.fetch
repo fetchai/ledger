@@ -1,0 +1,3 @@
+function main()
+  Print("Hello, world");
+endfunction
