@@ -236,7 +236,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized()
   }
 
   return next_state;
-};
+}
 
 BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 {
