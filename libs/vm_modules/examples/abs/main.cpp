@@ -30,12 +30,6 @@
 #include "vm_modules/core/type_convert.hpp"
 #include "vm_modules/math/abs.hpp"
 
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
-
 int main(int argc, char **argv)
 {
   if (argc < 2)

@@ -18,24 +18,32 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/standard_functions/abs.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
 namespace vm_modules {
 
-
 /**
- * method for printing string to std::cout
+ * method for taking the absolute of a value
  */
-int32_t Abs(fetch::vm::VM *vm, int32_t const &a)
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *vm, T const &a)
 {
-  int32_t x = int32_t (a);
+  T x = T(a);
   fetch::math::Abs(x);
   return x;
 }
 
 void CreateAbs(fetch::vm::Module &module)
 {
-  module.CreateFreeFunction("Abs", &Abs);
+  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
+  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+//  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+//  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+//  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+//  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+
 }
 
 

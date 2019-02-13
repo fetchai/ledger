@@ -2,7 +2,12 @@ function main()
 
   Print("Abs of 1: ");
   Print(toString(Abs(1)));
-
   Print("Abs of -1: ");
   Print(toString(Abs(-1)));
+
+  Print("Abs of 0.1123: ");
+  Print(toString(Abs(0.1123)));
+  Print("Abs of -7.151: ");
+  Print(toString(Abs(-7.151)));
+
 endfunction
