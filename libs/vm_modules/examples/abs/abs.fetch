@@ -1,13 +1,30 @@
+function do_abs(value: Int32)
+  Print("Abs of " + toString(value) + ": ");
+  Print(toString(Abs(value)));
+endfunction
+
+function do_abs(value: Float64)
+  Print("Abs of " + toString(value) + ": ");
+  Print(toString(Abs(value)));
+endfunction
+
+
 function main()
 
-  Print("Abs of 1: ");
-  Print(toString(Abs(1)));
-  Print("Abs of -1: ");
-  Print(toString(Abs(-1)));
+  // positive int 32
+  var x_int = 1;
+  do_abs(x_int);
 
-  Print("Abs of 0.1123: ");
-  Print(toString(Abs(0.1123)));
-  Print("Abs of -7.151: ");
-  Print(toString(Abs(-7.151)));
+  // negative int 32
+  x_int = -1;
+  do_abs(x_int);
+
+  // positive float 64
+  var x_float = 0.1123;
+  do_abs(x_float);
+
+  // negative float 64
+  x_float = -7.151;
+  do_abs(x_float);
 
 endfunction
