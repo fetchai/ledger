@@ -24,21 +24,19 @@ namespace vm_modules {
  * method for type converting from arithmetic to string
  */
 template <typename T>
-fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm, T const &a)
+fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm,
+                                                                                 T const &      a)
 {
   fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
   return ret;
 }
 
-void CreateToString(fetch::vm::Module & module)
+void CreateToString(fetch::vm::Module &module)
 {
   module.CreateFreeFunction("toString", &toString<int32_t>);
   module.CreateFreeFunction("toString", &toString<float_t>);
   module.CreateFreeFunction("toString", &toString<double_t>);
 }
 
-
-} // vm_modules
-} // fetch
-
-
+}  // namespace vm_modules
+}  // namespace fetch

@@ -41,7 +41,5 @@ void CreateAbs(fetch::vm::Module &module)
   module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
 }
 
-
-} // vm_modules
-} // fetch
-
+}  // namespace vm_modules
+}  // namespace fetch

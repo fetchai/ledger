@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/defs.hpp"
 #include "vm/analyser.hpp"
+#include "vm/defs.hpp"
 #include "vm/typeids.hpp"
 
 #include "vm/compiler.hpp"
@@ -44,7 +44,6 @@ int main(int argc, char **argv)
   ss << file.rdbuf();
   const std::string source = ss.str();
   file.close();
-
 
   fetch::vm::Module module{};
 

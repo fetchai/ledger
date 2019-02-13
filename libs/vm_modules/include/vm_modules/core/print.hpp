@@ -33,7 +33,5 @@ void CreatePrint(fetch::vm::Module &module)
   module.CreateFreeFunction("Print", &Print);
 }
 
-
-} // vm_modules
-} // fetch
-
+}  // namespace vm_modules
+}  // namespace fetch
