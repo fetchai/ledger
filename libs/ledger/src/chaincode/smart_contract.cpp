@@ -35,7 +35,6 @@ SmartContract::SmartContract()
 {
   OnTransaction("create_initial_contract", this, &SmartContract::CreateInitialContract);
   OnTransaction("invoke_contract", this, &SmartContract::Invoke);
-  OnTransaction("delete_contract", this, &SmartContract::DeleteContract);
 }
 
 Contract::Status SmartContract::CreateInitialContract(Transaction const & /*tx*/)

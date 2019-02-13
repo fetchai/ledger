@@ -1,5 +1,5 @@
 ################################################################################
-# F E T C H   L E D G E R   T E S T S
+# F E T C H   V M   T E S T S
 ################################################################################
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-ledger)
