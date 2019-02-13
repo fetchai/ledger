@@ -61,9 +61,9 @@ The result of executing this code a message stating `The result is: 5` as you wo
 
 Branching and looping
 ---------------------
-Next, let's loops and branches. While the VM does not support system arguments natively, `example_01_basic_vm` implements 
-support for system arguments. Making loops in the Fetch VM is easy and below we show how one can iterate over all
-passed system arguments:
+Next, let's look at loops and branches. While the VM does not support system arguments natively, `example_01_basic_vm`
+implements support for system arguments. Making loops in the Fetch VM is easy and below we show how one can iterate
+over all passed system arguments:
 
 .. literalinclude:: ../../../libs/vm/examples/01_basic_vm/scripts/using_system_args.fetch
 
@@ -88,7 +88,7 @@ With this, the most basic functionality is covered and we will explore how to ex
 
 Extending the functionality
 ===========================
-In this section we will go through the details on how to build extensions for the VM. We will start out be 
+In this section we will go through the details on how to build extensions for the VM. We will start out by
 investigating the implementation of the `example_01_basic_vm`.
 
 Adding free functions
