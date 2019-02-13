@@ -27,15 +27,16 @@ namespace vm_modules {
 template <typename T>
 struct Vector : public fetch::vm::Object
 {
-  Vector()           = delete;
-  virtual ~Vector()  = default;
+  Vector()          = delete;
+  virtual ~Vector() = default;
 
-  Vector(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t size) : fetch::vm::Object(vm, type_id),
-    vector_(static_cast<std::size_t>(size))
-  {
-  }
+  Vector(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t size)
+    : fetch::vm::Object(vm, type_id)
+    , vector_(static_cast<std::size_t>(size))
+  {}
 
-  static fetch::vm::Ptr<Vector> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t size)
+  static fetch::vm::Ptr<Vector> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                            int32_t size)
   {
     return new Vector(vm, type_id, size);
   }
@@ -60,32 +61,32 @@ struct Vector : public fetch::vm::Object
     return vector_[std::size_t(idx)];
   }
 
-  T& at(int32_t idx)
+  T &at(int32_t idx)
   {
     return vector_.at(idx);
   }
 
-  T& at(int32_t idx) const
+  T &at(int32_t idx) const
   {
     return vector_.at(idx);
   }
 
-  T& front()
+  T &front()
   {
     return vector_.front();
   }
 
-  T& front() const
+  T &front() const
   {
     return vector_.front();
   }
 
-  T& back()
+  T &back()
   {
     return vector_.back();
   }
 
-  T& back() const
+  T &back() const
   {
     return vector_.back();
   }
@@ -110,29 +111,27 @@ struct Vector : public fetch::vm::Object
     vector_.pop_back();
   }
 
-  T* data() noexcept
+  T *data() noexcept
   {
     return vector_.data();
   }
 
-  const T* data() noexcept
+  const T *data() noexcept
   {
     return vector_.data();
   }
-  
 
 private:
   std::vector<T> vector_;
 };
 
-
 template <typename T>
 void CreateVectorImpl(fetch::vm::Module &module)
 {
   module.CreateClassType<Vector<T>>("Vector")
-          .template CreateTypeConstuctor<int32_t>()
-          .CreateInstanceFunction("size", &Vector<T>::size)
-          .CreateInstanceFunction("at", &Vector<T>::operator[]);
+      .template CreateTypeConstuctor<int32_t>()
+      .CreateInstanceFunction("size", &Vector<T>::size)
+      .CreateInstanceFunction("at", &Vector<T>::operator[]);
 }
 
 void CreateVector(fetch::vm::Module &module)
