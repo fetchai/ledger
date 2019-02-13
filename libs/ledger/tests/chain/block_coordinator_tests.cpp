@@ -53,13 +53,12 @@ using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using State = fetch::ledger::BlockCoordinator::State;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
+static constexpr std::size_t NUM_LANES  = 1;
+static constexpr std::size_t NUM_SLICES = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
 protected:
-  static constexpr std::size_t NUM_LANES  = 1;
-  static constexpr std::size_t NUM_SLICES = 1;
-
   void SetUp() override
   {
     block_generator_.Reset();
