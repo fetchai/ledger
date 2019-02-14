@@ -17,10 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
+
 
 #include "block_generator.hpp"
 #include "fake_block_sink.hpp"
@@ -37,6 +39,7 @@ using fetch::ledger::MainChain;
 using fetch::ledger::Block;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::GENESIS_DIGEST;
+using fetch::crypto::ECDSASigner;
 
 using ::testing::_;
 using ::testing::InSequence;
@@ -63,6 +66,9 @@ protected:
   {
     block_generator_.Reset();
 
+    // generate a public/private key pair
+    ECDSASigner const signer{};
+
     main_chain_        = std::make_unique<MainChain>(true);
     storage_unit_      = std::make_unique<MockStorageUnit>();
     execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
@@ -70,7 +76,8 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ =
         std::make_unique<BlockCoordinator>(*main_chain_, *execution_manager_, *storage_unit_,
-                                           *packer_, *block_sink_, NUM_LANES, NUM_SLICES);
+                                           *packer_, *block_sink_, signer.identity().identifier(),
+                                           NUM_LANES, NUM_SLICES, 1u);
   }
 
   void TearDown() override
