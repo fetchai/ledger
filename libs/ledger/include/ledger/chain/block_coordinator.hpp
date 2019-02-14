@@ -29,6 +29,9 @@
 
 namespace fetch {
 namespace ledger {
+namespace consensus {
+  class ConsensusMinerInterface;
+}
 
 class BlockPackerInterface;
 class ExecutionManagerInterface;
@@ -114,30 +117,29 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
+  using Identity = byte_array::ConstByteArray;
+
   enum class State
   {
-    SYNCHRONIZING,  ///< Determine the current state of the chain and if a new block needs
-    ///< to executed.
-    SYNCHRONIZED,
-
-    PRE_EXEC_BLOCK_VALIDATION,   ///< Validation stage before block execution
-    SCHEDULE_BLOCK_EXECUTION,    ///< Schedule the block to be executed
-    WAIT_FOR_EXECUTION,          ///< Wait for the execution to be completed
-    POST_EXEC_BLOCK_VALIDATION,  ///< Perform final block validation
-
-    PACK_NEW_BLOCK,                ///< Mine a new block from the head of the chain
-    EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
-    WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
-    TRANSMIT_BLOCK,                ///< Transmit the new block to
-
-    RESET  ///< Error state, reset and try again
+    SYNCHRONIZING,                ///< Catch up with the outstanding blocks
+    SYNCHRONIZED,                 ///< Caught up waiting to generate a new block
+    PRE_EXEC_BLOCK_VALIDATION,    ///< Validation stage before block execution
+    SCHEDULE_BLOCK_EXECUTION,     ///< Schedule the block to be executed
+    WAIT_FOR_EXECUTION,           ///< Wait for the execution to be completed
+    POST_EXEC_BLOCK_VALIDATION,   ///< Perform final block validation
+    PACK_NEW_BLOCK,               ///< Mine a new block from the head of the chain
+    EXECUTE_NEW_BLOCK,            ///< Schedule the execution of the new block
+    WAIT_FOR_NEW_BLOCK_EXECUTION, ///< Wait for the new block to be executed
+    PROOF_SEARCH,                 ///< New Block: Waiting until a hash can be found
+    TRANSMIT_BLOCK,               ///< Transmit the new block to
+    RESET                         ///< Cycle complete
   };
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, std::size_t num_lanes, std::size_t num_slices);
+                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
@@ -184,11 +186,12 @@ private:
   using Clock           = std::chrono::system_clock;
   using Timepoint       = Clock::time_point;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
+  using MinerPtr        = std::shared_ptr<consensus::ConsensusMinerInterface>;
 
   /// @name Monitor State
   /// @{
   State OnSynchronizing();
-  State OnSynchronized();
+  State OnSynchronized(State current, State previous);
   State OnPreExecBlockValidation();
   State OnScheduleBlockExecution();
   State OnWaitForExecution();
@@ -196,6 +199,7 @@ private:
   State OnPackNewBlock();
   State OnExecuteNewBlock();
   State OnWaitForNewBlockExecution();
+  State OnProofSearch();
   State OnTransmitBlock();
   State OnReset();
   /// @}
@@ -214,11 +218,14 @@ private:
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
+  MinerPtr                   miner_;
   /// @}
 
   /// @name State Machine State
   /// @{
+  Identity        identity_{};       ///< The miner identity
   StateMachinePtr state_machine_;    ///< The main state machine for this service
+  std::size_t     block_difficulty_; ///< The number of leading zeros needed in the proof
   std::size_t     num_lanes_;        ///< The current number of lanes
   std::size_t     num_slices_;       ///< The current number of slices
   std::size_t     stall_count_{0};   ///< The number of times the execution has been stalled

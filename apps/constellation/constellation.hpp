@@ -87,6 +87,7 @@ public:
     uint32_t    max_peers{0};
     uint32_t    transient_peers{0};
     uint32_t    block_interval_ms{0};
+    uint32_t    block_difficulty{17};
     uint32_t    peers_update_cycle_ms{0};
 
     uint32_t num_lanes() const

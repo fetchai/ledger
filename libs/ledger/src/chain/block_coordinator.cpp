@@ -21,6 +21,7 @@
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -49,14 +50,17 @@ namespace ledger {
  */
 BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &block_sink, std::size_t num_lanes,
-                                   std::size_t num_slices)
+                                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes,
+                                   std::size_t num_slices, std::size_t block_difficulty)
   : chain_{chain}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
+  , miner_{std::make_shared<consensus::DummyMiner>()}
+  , identity_{std::move(identity)}
   , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET)}
+  , block_difficulty_{block_difficulty}
   , num_lanes_{num_lanes}
   , num_slices_{num_slices}
 {
@@ -71,6 +75,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &
   state_machine_->RegisterHandler(State::PACK_NEW_BLOCK,               this, &BlockCoordinator::OnPackNewBlock);
   state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
+  state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
   state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
@@ -208,13 +213,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
   return next_state;
 }
 
-BlockCoordinator::State BlockCoordinator::OnSynchronized()
+BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
+  FETCH_UNUSED(current);
   State next_state{State::SYNCHRONIZED};
-
-  //  FETCH_LOG_INFO(LOGGING_NAME, "Is Mining: ", mining_, " Now: ",
-  //  Clock::now().time_since_epoch().count(), " Due: ",
-  //  next_block_time_.time_since_epoch().count());
 
   // if we have detected a change in the chain then we need to re-evaluate the chain
   if (chain_.HeaviestBlock().body.hash != current_block_->body.hash)
@@ -227,12 +229,22 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized()
     auto next_block                = std::make_shared<Block>();
     next_block->body.previous_hash = current_block_->body.hash;
     next_block->body.block_number  = current_block_->body.block_number + 1;
+    next_block->body.miner         = identity_;
+
+    // ensure the difficulty is correctly set
+    next_block->proof.SetTarget(block_difficulty_);
 
     // replace the current block
     current_block_ = std::move(next_block);
 
     // trigger packing state
     next_state = State::PACK_NEW_BLOCK;
+  }
+  else if (State::SYNCHRONIZING == previous)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on ", ToBase64(current_block_->body.hash),
+                   " (block: ", current_block_->body.block_number, " prev: ",
+                   ToBase64(current_block_->body.previous_hash), ")");
   }
 
   return next_state;
@@ -362,18 +374,45 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   // Check: Ensure the merkle hash is correct for this block
   auto const state_hash = storage_unit_.CurrentHash();
 
+  bool invalid_block{false};
   if (GENESIS_DIGEST != current_block_->body.previous_hash)
   {
     if (state_hash != current_block_->body.merkle_hash)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (",
-                     ToBase64(current_block_->body.hash), ")");
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: ",
+                     ToBase64(current_block_->body.hash), " expected: ", ToBase64(current_block_->body.merkle_hash), " actual: ", state_hash, ")");
 
-      chain_.InvalidateBlock(current_block_->body.hash);
-      next_state = State::RESET;
-
-      // TODO(EJF): Need to roll back the state here
+      // signal the block is invalid
+      invalid_block = true;
     }
+  }
+
+  // After the checks have been completed, if the validation has failed, the system needs to recover
+  if (invalid_block)
+  {
+    bool  revert_successful{false};
+    Block previous_block;
+
+    // we need to restore back to the previous block
+    if (chain_.Get(current_block_->body.previous_hash, previous_block))
+    {
+      // signal the storage engine to make these changes
+      if (storage_unit_.RevertToHash(previous_block.body.merkle_hash))
+      {
+        execution_manager_.SetLastProcessedBlock(previous_block.body.hash);
+        revert_successful = true;
+      }
+    }
+
+    // if the revert has gone wrong, we need to initiate a complete resync
+    if (!revert_successful)
+    {
+      storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT);
+      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+    }
+
+    // finally mark the block as invalid and purge it from the chain
+    chain_.InvalidateBlock(current_block_->body.hash);
   }
 
   return next_state;
@@ -429,18 +468,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
     FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash: ", ToBase64(current_block_->body.merkle_hash));
 
-    auto const prev_hash = current_block_->body.hash.Copy();
-
-    current_block_->UpdateDigest();
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Update Hash: ", ToBase64(current_block_->body.hash),
-                   " was: ", ToBase64(prev_hash));
-
-    // this step is needed because the execution manager is actually unaware of the actual last
-    // block that is executed because the merkle hash was not known at this point.
-    execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
-
-    next_state = State::TRANSMIT_BLOCK;
+    next_state = State::PROOF_SEARCH;
     break;
   }
 
@@ -471,6 +499,29 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
 
   return next_state;
 }
+
+BlockCoordinator::State BlockCoordinator::OnProofSearch()
+{
+  State next_state{State::PROOF_SEARCH};
+
+  if (miner_->Mine(*current_block_, 100))
+  {
+    // update the digest
+    current_block_->UpdateDigest();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block Hash: ", ToBase64(current_block_->body.hash));
+
+    // this step is needed because the execution manager is actually unaware of the actual last
+    // block that is executed because the merkle hash was not known at this point.
+    execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
+
+    // the block is now fully formed it can be sent across the network
+    next_state = State::TRANSMIT_BLOCK;
+  }
+
+  return next_state;
+}
+
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
@@ -610,6 +661,9 @@ char const *BlockCoordinator::ToString(State state)
     break;
   case State::WAIT_FOR_NEW_BLOCK_EXECUTION:
     text = "Waiting for New Block Execution";
+    break;
+  case State::PROOF_SEARCH:
+    text = "Searching for Proof";
     break;
   case State::TRANSMIT_BLOCK:
     text = "Transmitting Block";
