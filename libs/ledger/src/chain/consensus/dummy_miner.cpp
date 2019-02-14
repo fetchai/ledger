@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/encoders.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "ledger/chain/block.hpp"
 
 #include <random>
@@ -51,7 +51,8 @@ void DummyMiner::Mine(Block &block)
 
 bool DummyMiner::Mine(Block &block, uint64_t iterations)
 {
-  block.nonce = GetRandom();;
+  block.nonce = GetRandom();
+  ;
 
   block.UpdateDigest();
 

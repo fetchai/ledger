@@ -30,7 +30,7 @@
 namespace fetch {
 namespace ledger {
 namespace consensus {
-  class ConsensusMinerInterface;
+class ConsensusMinerInterface;
 }
 
 class BlockPackerInterface;
@@ -121,25 +121,26 @@ public:
 
   enum class State
   {
-    SYNCHRONIZING,                ///< Catch up with the outstanding blocks
-    SYNCHRONIZED,                 ///< Caught up waiting to generate a new block
-    PRE_EXEC_BLOCK_VALIDATION,    ///< Validation stage before block execution
-    SCHEDULE_BLOCK_EXECUTION,     ///< Schedule the block to be executed
-    WAIT_FOR_EXECUTION,           ///< Wait for the execution to be completed
-    POST_EXEC_BLOCK_VALIDATION,   ///< Perform final block validation
-    PACK_NEW_BLOCK,               ///< Mine a new block from the head of the chain
-    EXECUTE_NEW_BLOCK,            ///< Schedule the execution of the new block
-    WAIT_FOR_NEW_BLOCK_EXECUTION, ///< Wait for the new block to be executed
-    PROOF_SEARCH,                 ///< New Block: Waiting until a hash can be found
-    TRANSMIT_BLOCK,               ///< Transmit the new block to
-    RESET                         ///< Cycle complete
+    SYNCHRONIZING,                 ///< Catch up with the outstanding blocks
+    SYNCHRONIZED,                  ///< Caught up waiting to generate a new block
+    PRE_EXEC_BLOCK_VALIDATION,     ///< Validation stage before block execution
+    SCHEDULE_BLOCK_EXECUTION,      ///< Schedule the block to be executed
+    WAIT_FOR_EXECUTION,            ///< Wait for the execution to be completed
+    POST_EXEC_BLOCK_VALIDATION,    ///< Perform final block validation
+    PACK_NEW_BLOCK,                ///< Mine a new block from the head of the chain
+    EXECUTE_NEW_BLOCK,             ///< Schedule the execution of the new block
+    WAIT_FOR_NEW_BLOCK_EXECUTION,  ///< Wait for the new block to be executed
+    PROOF_SEARCH,                  ///< New Block: Waiting until a hash can be found
+    TRANSMIT_BLOCK,                ///< Transmit the new block to
+    RESET                          ///< Cycle complete
   };
   using StateMachine = core::StateMachine<State>;
 
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator();
@@ -223,16 +224,16 @@ private:
 
   /// @name State Machine State
   /// @{
-  Identity        identity_{};       ///< The miner identity
-  StateMachinePtr state_machine_;    ///< The main state machine for this service
-  std::size_t     block_difficulty_; ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;        ///< The current number of lanes
-  std::size_t     num_slices_;       ///< The current number of slices
-  std::size_t     stall_count_{0};   ///< The number of times the execution has been stalled
-  Flag            mining_{false};    ///< Flag to signal if this node generating blocks
-  BlockPeriod     block_period_;     ///< The desired period before a block is generated
-  Timepoint       next_block_time_;  ///< THe next point that a block should be generated
-  BlockPtr        current_block_{};  ///< The pointer to the current block
+  Identity        identity_{};        ///< The miner identity
+  StateMachinePtr state_machine_;     ///< The main state machine for this service
+  std::size_t     block_difficulty_;  ///< The number of leading zeros needed in the proof
+  std::size_t     num_lanes_;         ///< The current number of lanes
+  std::size_t     num_slices_;        ///< The current number of slices
+  std::size_t     stall_count_{0};    ///< The number of times the execution has been stalled
+  Flag            mining_{false};     ///< Flag to signal if this node generating blocks
+  BlockPeriod     block_period_;      ///< The desired period before a block is generated
+  Timepoint       next_block_time_;   ///< THe next point that a block should be generated
+  BlockPtr        current_block_{};   ///< The pointer to the current block
   /// @}
 };
 

@@ -72,7 +72,8 @@ bool MainChain::AddBlock(Block &block)
   }
 
   bool const success = AddBlockInternal(block, false);
-  FETCH_LOG_WARN(LOGGING_NAME, "New Block: ", ToBase64(block.body.hash), " -> ", block.weight, " -> ", block.total_weight);
+  FETCH_LOG_WARN(LOGGING_NAME, "New Block: ", ToBase64(block.body.hash), " -> ", block.weight,
+                 " -> ", block.total_weight);
 
   return success;
 }

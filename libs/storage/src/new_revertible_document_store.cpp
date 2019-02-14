@@ -29,22 +29,22 @@ static constexpr char const *LOGGING_NAME = "NewRevertibleDocStore";
 namespace fetch {
 namespace storage {
 namespace {
-  bool IsAllZeros(Hash const &hash)
+bool IsAllZeros(Hash const &hash)
+{
+  bool all_zeros{true};
+
+  for (std::size_t i = 0, end = hash.size(); i < end; ++i)
   {
-    bool all_zeros{true};
-
-    for (std::size_t i = 0, end = hash.size(); i < end; ++i)
+    if (hash[i] > 0)
     {
-      if (hash[i] > 0)
-      {
-        all_zeros = false;
-        break;
-      }
+      all_zeros = false;
+      break;
     }
-
-    return all_zeros;
   }
+
+  return all_zeros;
 }
+}  // namespace
 
 bool NewRevertibleDocumentStore::Load(std::string const &state, std::string const &state_history,
                                       std::string const &index, std::string const &index_history,

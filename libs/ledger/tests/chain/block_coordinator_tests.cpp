@@ -23,7 +23,6 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 
-
 #include "block_generator.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
@@ -56,8 +55,8 @@ using BlockSinkPtr        = std::unique_ptr<FakeBlockSink>;
 using State = fetch::ledger::BlockCoordinator::State;
 
 static constexpr char const *LOGGING_NAME = "BlockCoordinatorTests";
-static constexpr std::size_t NUM_LANES  = 1;
-static constexpr std::size_t NUM_SLICES = 1;
+static constexpr std::size_t NUM_LANES    = 1;
+static constexpr std::size_t NUM_SLICES   = 1;
 
 class BlockCoordinatorTests : public ::testing::Test
 {
@@ -74,10 +73,9 @@ protected:
     execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
     packer_            = std::make_unique<MockBlockPacker>();
     block_sink_        = std::make_unique<FakeBlockSink>();
-    block_coordinator_ =
-        std::make_unique<BlockCoordinator>(*main_chain_, *execution_manager_, *storage_unit_,
-                                           *packer_, *block_sink_, signer.identity().identifier(),
-                                           NUM_LANES, NUM_SLICES, 1u);
+    block_coordinator_ = std::make_unique<BlockCoordinator>(
+        *main_chain_, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        signer.identity().identifier(), NUM_LANES, NUM_SLICES, 1u);
   }
 
   void TearDown() override

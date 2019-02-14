@@ -20,8 +20,8 @@
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
-#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -50,8 +50,9 @@ namespace ledger {
  */
 BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &block_sink, Identity identity, std::size_t num_lanes,
-                                   std::size_t num_slices, std::size_t block_difficulty)
+                                   BlockSinkInterface &block_sink, Identity identity,
+                                   std::size_t num_lanes, std::size_t num_slices,
+                                   std::size_t block_difficulty)
   : chain_{chain}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
@@ -243,8 +244,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   else if (State::SYNCHRONIZING == previous)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on ", ToBase64(current_block_->body.hash),
-                   " (block: ", current_block_->body.block_number, " prev: ",
-                   ToBase64(current_block_->body.previous_hash), ")");
+                   " (block: ", current_block_->body.block_number,
+                   " prev: ", ToBase64(current_block_->body.previous_hash), ")");
   }
 
   return next_state;
@@ -380,7 +381,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     if (state_hash != current_block_->body.merkle_hash)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: ",
-                     ToBase64(current_block_->body.hash), " expected: ", ToBase64(current_block_->body.merkle_hash), " actual: ", state_hash, ")");
+                     ToBase64(current_block_->body.hash),
+                     " expected: ", ToBase64(current_block_->body.merkle_hash),
+                     " actual: ", state_hash, ")");
 
       // signal the block is invalid
       invalid_block = true;
@@ -429,10 +432,13 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
 
 #if 1
     FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(current_block_->body.hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Previous.....: ", ToBase64(current_block_->body.previous_hash));
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Merkle.......: ", ToBase64(current_block_->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Previous.....: ", ToBase64(current_block_->body.previous_hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Merkle.......: ", ToBase64(current_block_->body.merkle_hash));
     FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", current_block_->body.block_number);
-    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Miner........: ", ToBase64(current_block_->body.miner));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Miner........: ", ToBase64(current_block_->body.miner));
     FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", current_block_->body.log2_num_lanes);
 
     std::size_t slice_index{1};
@@ -549,7 +555,6 @@ BlockCoordinator::State BlockCoordinator::OnProofSearch()
 
   return next_state;
 }
-
 
 BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {

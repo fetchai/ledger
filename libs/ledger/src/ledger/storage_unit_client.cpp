@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/constants.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "ledger/chain/constants.hpp"
 
 #include <algorithm>
 
@@ -396,8 +396,8 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
     for (auto const &leaf_kv : tree->leaf_nodes())
     {
       Address address;
-      auto &lane = leaf_kv.first;
-      auto &hash = leaf_kv.second;
+      auto &  lane = leaf_kv.first;
+      auto &  hash = leaf_kv.second;
 
       assert(hash.size() > 0);
 
@@ -406,7 +406,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
       auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
 
       auto promise = client->CallSpecificAddress(
-        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
+          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
       promises.push_back(promise);
     }
 

@@ -195,7 +195,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(block.body.hash), " (from: ", ToBase64(from), ")");
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(block.body.hash),
+                   " (from: ", ToBase64(from), ")");
   }
 }
 
@@ -210,7 +211,8 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
   if (!bg_work_.InFlightP(hash))
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash), " from: ", ToBase64(address));
+                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash),
+                   " from: ", ToBase64(address));
     auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
     bg_work_.Add(worker);
   }

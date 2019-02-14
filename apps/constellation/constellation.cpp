@@ -155,8 +155,15 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
         cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
   , chain_{true}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
-  , block_coordinator_{chain_, *execution_manager_, *storage_,      block_packer_,
-                       *this,  muddle_.identity().identifier(), cfg_.num_lanes(),    cfg_.num_slices, cfg_.block_difficulty}
+  , block_coordinator_{chain_,
+                       *execution_manager_,
+                       *storage_,
+                       block_packer_,
+                       *this,
+                       muddle_.identity().identifier(),
+                       cfg_.num_lanes(),
+                       cfg_.num_slices,
+                       cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               block_coordinator_)}
   , tx_processor_{*storage_, block_packer_, cfg_.processor_threads}

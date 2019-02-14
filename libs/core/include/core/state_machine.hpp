@@ -104,9 +104,7 @@ void StateMachine<S>::RegisterHandler(S state, C *instance,
                                       S (C::*func)(S /*current*/, S /*previous*/))
 {
   FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S state, S prev) {
-    return (instance->*func)(state, prev);
-  };
+  callbacks_[state] = [instance, func](S state, S prev) { return (instance->*func)(state, prev); };
 }
 
 template <typename S>

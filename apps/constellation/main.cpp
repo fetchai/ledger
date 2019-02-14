@@ -130,10 +130,10 @@ struct CommandLineArguments
 
   /// @name Constellation Config
   /// @{
-  Config             cfg;
-  uint16_t           port{0};
-  uint32_t           network_id;
-  UriList            peers;
+  Config   cfg;
+  uint16_t port{0};
+  uint32_t network_id;
+  UriList  peers;
   /// @}
 
   /// @name Bootstrap Config
@@ -350,7 +350,8 @@ struct CommandLineArguments
     s << "external address..........: " << args.external_address << '\n';
     s << "db-prefix.................: " << args.cfg.db_prefix << '\n';
     s << "interface.................: " << args.cfg.interface_address << '\n';
-    s << "mining....................: " << ((args.cfg.block_interval_ms > 0) ? "Yes" : "No") << '\n';
+    s << "mining....................: " << ((args.cfg.block_interval_ms > 0) ? "Yes" : "No")
+      << '\n';
     s << "tx processor threads......: " << args.cfg.processor_threads << '\n';
     s << "shard verification threads: " << args.cfg.verification_threads << '\n';
     s << "block interval............: " << args.cfg.block_interval_ms << "ms" << '\n';
