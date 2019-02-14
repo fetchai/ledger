@@ -197,14 +197,17 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
 
-      // transform the resources into lane allocation
-      for (auto const &resource : tx.resources)
-      {
-        storage::ResourceID const resource_id{FreeFnCreateStateIndex(id.name_space(), resource)};
-        item->AddLane(resource_id.lane(block.log2_num_lanes));
-      }
+      auto contract = contracts_.Lookup(id.name_space());
 
-      FETCH_LOG_INFO(LOGGING_NAME, "LOCKING");
+      if(contract)
+      {
+        // transform the resources into lane allocation
+        for (auto const &resource : tx.resources)
+        {
+          storage::ResourceID const resource_id{contract->CreateStateIndex(resource)};
+          item->AddLane(resource_id.lane(block.log2_num_lanes));
+        }
+      }
 
       // If the tx uses smart contract(s), need to lock those lanes without a namespace
       for (auto const &smart_contract_hash : tx.contract_hashes)
@@ -225,7 +228,6 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
     ++slice_index;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Do the thing");
   return true;
 }
 

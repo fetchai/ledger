@@ -317,28 +317,20 @@ private:
   {
     byte_array::ConstByteArray smart_contract;
 
-    std::cerr << request.body() << std::endl;
-
     try
     {
       // parse the json request
-      std::cerr << "Hersse1" << std::endl;
       json::JSONDocument doc;
-      std::cerr << "Here1" << std::endl;
       doc.Parse(request.body());
-
-      std::cerr << "Here" << std::endl;
 
       // extract all the request parameters
       if (!variant::Extract(doc.root(), "smart_contract", smart_contract))
       {
-        std::cerr << "Failed to extract" << std::endl;
         return BadJsonResponse(ErrorCode::PARSE_FAILURE);
       }
     }
     catch (json::JSONParseException const &ex)
     {
-      std::cerr << "Failed to parse" << std::endl;
       return BadJsonResponse(ErrorCode::PARSE_FAILURE);
     }
 
@@ -413,7 +405,6 @@ private:
 
     // construct the TX to create the SC
     ledger::MutableTransaction mtx;
-    // mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract.main");
     mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract");
 
     // Add the SC to the TX
