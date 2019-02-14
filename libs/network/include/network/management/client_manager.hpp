@@ -53,7 +53,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
     connection_handle_type handle = client->handle();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
     std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
     clients_[handle] = client;
@@ -69,7 +69,7 @@ public:
     auto client{clients_.find(handle)};
     if (client != clients_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Client ", handle, " is leaving");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is leaving");
       clients_.erase(client);
     }
   }

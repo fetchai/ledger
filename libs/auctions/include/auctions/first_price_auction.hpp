@@ -25,12 +25,12 @@ namespace auctions {
 class FirstPriceAuction : public Auction
 {
 public:
-  FirstPriceAuction(BlockId start_block_id, BlockId end_block_id);
+  explicit FirstPriceAuction();
 
-  bool Execute(BlockId current_block);
+  ErrorCode Execute() override;
 
 private:
-  void SelectWinners();
+  void SelectWinners() override;
 };
 
 }  // namespace auctions

@@ -35,25 +35,27 @@ struct IArray : public Object
 template <typename T>
 struct Array : public IArray
 {
+  using ElementType = typename StorageType<T>::type;
+
   Array() = delete;
   Array(VM *vm, TypeId type_id, int32_t size)
     : IArray(vm, type_id)
   {
-    Init<T>(size_t(size));
+    Init<ElementType>(size_t(size));
   }
   virtual ~Array() = default;
 
   template <typename U, typename std::enable_if_t<IsPrimitive<U>::value> * = nullptr>
   void Init(size_t size)
   {
-    elements = std::vector<T>(size, 0);
+    elements = std::vector<U>(size, 0);
   }
   template <typename U, typename std::enable_if_t<IsPtr<U>::value> * = nullptr>
   void Init(size_t size)
   {
-    elements = std::vector<T>(size);
+    elements = std::vector<U>(size);
   }
-  T *Find()
+  ElementType *Find()
   {
     Variant &positionv = Pop();
     size_t   position;
@@ -78,7 +80,7 @@ struct Array : public IArray
 
   virtual void PushElement(TypeId element_type_id) override
   {
-    T *ptr = Find();
+    ElementType *ptr = Find();
     if (ptr)
     {
       Variant &top = Push();
@@ -88,15 +90,15 @@ struct Array : public IArray
 
   virtual void PopToElement() override
   {
-    T *ptr = Find();
+    ElementType *ptr = Find();
     if (ptr)
     {
       Variant &top = Pop();
-      *ptr         = top.Move<T>();
+      *ptr         = top.Move<ElementType>();
     }
   }
 
-  std::vector<T> elements;
+  std::vector<ElementType> elements;
 };
 
 inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
@@ -106,7 +108,7 @@ inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
   if (size < 0)
   {
     vm->RuntimeError("negative size");
-    return nullptr;
+    return Ptr<IArray>();
   }
   switch (element_type_id)
   {

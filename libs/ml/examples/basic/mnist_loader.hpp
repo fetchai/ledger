@@ -37,8 +37,9 @@ public:
       std::shared_ptr<fetch::math::Tensor<float>> buffer);
 
 private:
-  std::uint32_t   cursor_;
-  std::uint32_t   size_;
+  std::uint32_t cursor_;
+  std::uint32_t size_;
+
   unsigned char **data_;
   unsigned char * labels_;
 };

@@ -408,10 +408,13 @@ public:
   {
     std::lock_guard<mutex::Mutex> lock(mutex_);
 
+    // TODO(private issue 615): HashExists implement
+    /*
     if (!(key_index_.underlying_stack().HashExists(hash) && file_store_.HashExists(hash)))
     {
       return false;
     }
+    */
 
     key_index_.underlying_stack().RevertToHash(hash);
     file_store_.RevertToHash(hash);

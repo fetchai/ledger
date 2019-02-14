@@ -18,9 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/free_functions.hpp"
-#include "ml/ops/activation_functions.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/utils.hpp"
 
 namespace fetch {
 namespace ml {

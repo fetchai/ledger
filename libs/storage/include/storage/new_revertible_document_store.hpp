@@ -46,6 +46,8 @@ public:
   Hash CurrentHash();
   bool HashExists(Hash const &hash);
 
+  std::size_t size() const;
+
 private:
   using Storage = storage::DocumentStore<
       2048,                 // block size

@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "ml/ops/derivatives/derivatives.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -44,10 +42,10 @@ public:
       this->output_ = std::make_shared<ArrayType>(inputs[0]->shape());
     }
 
-    this->output_->Fill(0);
+    this->output_->Fill(DataType(0));
     for (std::size_t i = 0; i < inputs[0]->size(); ++i)
     {
-      if ((*(inputs[0]))[i] > 0)
+      if ((*(inputs[0]))[i] > DataType(0))
       {
         this->output_->Set(i, DataType((*(inputs[0]))[i]));
       }
@@ -63,18 +61,13 @@ public:
 
     for (std::size_t i = 0; i < inputs[0]->size(); ++i)
     {
-      if ((*(inputs[0]))[i] <= 0)
+      if ((*(inputs[0]))[i] <= DataType(0))
       {
         errorSignal->Set(i, DataType(0));
       }
     }
     return {errorSignal};
   }
-
-private:
-  // Relu is done in a strange way, comparing input against an array of zeroes
-  // using a parrallel Maximum function -- May need improvement (TODO private 469)
-  ArrayPtrType zeroes_;
 };
 
 }  // namespace ops

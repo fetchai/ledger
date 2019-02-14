@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include "math/free_functions/combinatorics/combinatorics.hpp"
-#include <math/linalg/matrix.hpp>
+#include <math/tensor.hpp>
 
 using namespace fetch::math::combinatorics;
 
@@ -115,51 +115,52 @@ TEST(combinatorics, test_combinations_standard_input)
   std::size_t n = 5;
   std::size_t r = 2;
 
-  fetch::math::linalg::Matrix<double> python_output{10, 2};
-  fetch::math::linalg::Matrix<double> fetch_output{10, 2};
+  fetch::math::Tensor<double> python_output({2, 10});
+  fetch::math::Tensor<double> fetch_output({2, 10});
 
   // Row 1
-  python_output.Set(0, 0, 4);
-  python_output.Set(0, 1, 5);
+  python_output.Set({0, 0}, 4);
+  python_output.Set({1, 0}, 5);
 
   // Row 2
-  python_output.Set(1, 0, 3);
-  python_output.Set(1, 1, 5);
+  python_output.Set({0, 1}, 3);
+  python_output.Set({1, 1}, 5);
 
   // Row 3
-  python_output.Set(2, 0, 3);
-  python_output.Set(2, 1, 4);
+  python_output.Set({0, 2}, 3);
+  python_output.Set({1, 2}, 4);
 
   // Row 4
-  python_output.Set(3, 0, 2);
-  python_output.Set(3, 1, 5);
+  python_output.Set({0, 3}, 2);
+  python_output.Set({1, 3}, 5);
 
   // Row 5
-  python_output.Set(4, 0, 2);
-  python_output.Set(4, 1, 4);
+  python_output.Set({0, 4}, 2);
+  python_output.Set({1, 4}, 4);
 
   // Row 6
-  python_output.Set(5, 0, 2);
-  python_output.Set(5, 1, 3);
+  python_output.Set({0, 5}, 2);
+  python_output.Set({1, 5}, 3);
 
   // Row 7
-  python_output.Set(6, 0, 1);
-  python_output.Set(6, 1, 5);
+  python_output.Set({0, 6}, 1);
+  python_output.Set({1, 6}, 5);
 
   // Row 8
-  python_output.Set(7, 0, 1);
-  python_output.Set(7, 1, 4);
+  python_output.Set({0, 7}, 1);
+  python_output.Set({1, 7}, 4);
 
   // Row 9
-  python_output.Set(8, 0, 1);
-  python_output.Set(8, 1, 3);
+  python_output.Set({0, 8}, 1);
+  python_output.Set({1, 8}, 3);
 
   // Row 10
-  python_output.Set(9, 0, 1);
-  python_output.Set(9, 1, 2);
+  python_output.Set({0, 9}, 1);
+  python_output.Set({1, 9}, 2);
 
   fetch_output = combinations(n, r);
-  ASSERT_TRUE(fetch_output == python_output);
+
+  ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - n=r
@@ -168,18 +169,19 @@ TEST(combinatorics, test_combinations_edge_case1)
   std::size_t n = 5;
   std::size_t r = 5;
 
-  fetch::math::linalg::Matrix<double> python_output{1, 5};
-  fetch::math::linalg::Matrix<double> fetch_output{1, 5};
+  fetch::math::Tensor<double> python_output({5, 1});
+  fetch::math::Tensor<double> fetch_output({5, 1});
 
   // Row 1
-  python_output.Set(0, 0, 1);
-  python_output.Set(0, 1, 2);
-  python_output.Set(0, 2, 3);
-  python_output.Set(0, 3, 4);
-  python_output.Set(0, 4, 5);
+  python_output.Set({0, 0}, 1);
+  python_output.Set({1, 0}, 2);
+  python_output.Set({2, 0}, 3);
+  python_output.Set({3, 0}, 4);
+  python_output.Set({4, 0}, 5);
 
   fetch_output = combinations(n, r);
-  ASSERT_TRUE(fetch_output == python_output);
+
+  ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - n=r=1
@@ -188,14 +190,14 @@ TEST(combinatorics, test_combinations_edge_case2)
   std::size_t n = 1;
   std::size_t r = 1;
 
-  fetch::math::linalg::Matrix<double> python_output{1, 1};
-  fetch::math::linalg::Matrix<double> fetch_output{1, 1};
+  fetch::math::Tensor<double> python_output({1, 1});
+  fetch::math::Tensor<double> fetch_output({1, 1});
 
   // Row 1
-  python_output.Set(0, 0, 1);
+  python_output.Set({0, 0}, 1);
 
   fetch_output = combinations(n, r);
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
 // Combinations function - edge case - r=0
@@ -204,9 +206,9 @@ TEST(combinatorics, test_combinations_edge_case3)
   std::size_t n = 12;
   std::size_t r = 0;
 
-  fetch::math::linalg::Matrix<double> python_output{};
-  fetch::math::linalg::Matrix<double> fetch_output{};
+  fetch::math::Tensor<double> python_output{};
+  fetch::math::Tensor<double> fetch_output{};
 
   fetch_output = combinations(n, r);
-  ASSERT_TRUE(fetch_output == python_output);
+  ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
