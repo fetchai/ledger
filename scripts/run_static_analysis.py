@@ -96,7 +96,7 @@ def main():
         for excluded_file in excluded_file_list:
             if excluded_file in source_path:
                 output("Skipping excluded file {}".format(source_path))
-                return True
+                return False
 
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
 
