@@ -12,6 +12,8 @@ endfunction
 
 @work("syngergic_contract1")
 function leisureMarketWork(work_param : Int64) : Array< Int64 >
+  var d = Dummy( Array< Int64 >(3) );
+
   var dag = DAG();
 
   var itm = Item();
@@ -27,11 +29,13 @@ function leisureMarketWork(work_param : Int64) : Array< Int64 >
 
   var messages = Array< ByteArray >(3);
   messages[0] = bytearray.copy();
-  messages[1] = bytearray.copy();  
-  messages[2] = bytearray.copy();    
+  messages[1] = bytearray.copy();
+  messages[2] = bytearray.copy();
+
   messages[0][0] = toByte(97);
   messages[1][0] = toByte(98);
   messages[2][0] = toByte(99);
+
   PrintLn(messages[0]);
   PrintLn(messages[1]); 
   PrintLn(messages[2]); 

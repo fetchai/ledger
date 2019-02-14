@@ -27,6 +27,7 @@
 #include "byte_array_wrapper.hpp"
 #include "print.hpp"
 #include "item.hpp"
+#include "dummy.hpp"
 #include "dag_accessor.hpp"
 
 #include <fstream>
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
   fetch::modules::ByteArrayWrapper::Bind(module);  
   fetch::modules::ItemWrapper::Bind(module);     
   fetch::modules::DAGWrapper::Bind(module);
+  fetch::modules::DummyWrapper::Bind(module);
 
   fetch::modules::BindExp(module);
   fetch::modules::BindPrint(module);

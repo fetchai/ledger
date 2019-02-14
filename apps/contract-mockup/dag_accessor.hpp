@@ -29,14 +29,34 @@ namespace fetch
 {
 namespace modules
 {
+/*
+// 1) register your class and get its interface
+
+auto myclassi = module.CreateClassType<MyClass>("MyClass");
+
+// 2) Register the instantiation:
+
+module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<MyClass>>(fetch::vm::TypeIds::IArray);
+
+// 3) setup MyClass
+
+myclassi.CreateInstanceFunction("Test", &MyClass::Test);
+
+void MyClass::Test(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<MyClass>>> const & array)  { .... }
+
+// Now in the VM  script you can just do:
+
+var a = Array<MyClass>(6);
+var mc = MyClass(12, 34.5
+  */
 
   template<typename T>
   vm::Ptr< vm::IArray > CreateNewArray(vm::VM *vm, std::vector< T > items)
   {
-    vm::Ptr< vm::Array< T > > array = new vm::Array<T> (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
-    array->elements = std::move(items);
+    vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
+//    array->elements = std::move(items);
     return array;
-  }  
+  }
 
 class DAGWrapper : public fetch::vm::Object
 {
@@ -54,6 +74,7 @@ public:
   DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ledger::DAG *dag)
     : fetch::vm::Object(vm, type_id)
     , dag_(dag)
+    , vm_(vm)
   { }
 
   static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
@@ -65,15 +86,16 @@ public:
   
   vm::Ptr< vm::IArray > GetNodes()
   {
-    std::vector< int64_t > items;
+    std::vector< ItemWrapper > items;
 
     FETCH_UNUSED(dag_);
 
-    return CreateNewArray< int64_t >( vm_, items );
-  }
+    return CreateNewArray(vm_, items);
+  }  
     
 private:
   ledger::DAG *dag_{nullptr};
+  fetch::vm::VM *vm_;
 };
 
 

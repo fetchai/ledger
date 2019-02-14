@@ -46,12 +46,17 @@ public:
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<ItemWrapper>("Item")
+    auto interface = module.CreateClassType<ItemWrapper>("Item");
+
+    module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<ItemWrapper>>(fetch::vm::TypeIds::IArray);      
+
+    interface
       .CreateInstanceFunction("owner", &ItemWrapper::owner)
       .CreateInstanceFunction("type", &ItemWrapper::type)      
       .CreateInstanceFunction("id", &ItemWrapper::id) 
       .CreateInstanceFunction("value", &ItemWrapper::value)      
       .CreateTypeConstuctor<>();
+
       // TODO: Does not work:
      //  .CreateTypeConstuctor<ByteArrayWrapper, ByteArrayWrapper, int64_t, int64_t, int64_t>();
   }
