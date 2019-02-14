@@ -238,7 +238,8 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   Tick(State::PACK_NEW_BLOCK, State::EXECUTE_NEW_BLOCK);
   Tick(State::EXECUTE_NEW_BLOCK, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
   Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::WAIT_FOR_NEW_BLOCK_EXECUTION);
-  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::TRANSMIT_BLOCK);
+  Tick(State::WAIT_FOR_NEW_BLOCK_EXECUTION, State::PROOF_SEARCH);
+  Tick(State::PROOF_SEARCH, State::TRANSMIT_BLOCK);
   Tick(State::TRANSMIT_BLOCK, State::RESET);
 
   ASSERT_NE(execution_manager_->fake.LastProcessedBlock(), genesis->body.hash);
