@@ -115,9 +115,9 @@ MNISTLoader::MNISTLoader()
   : cursor_(0)
 {
   std::uint32_t recordLength(0);
-  data_ = read_mnist_images("train-images-idx3-ubyte", size_, recordLength);
+  data_ = read_mnist_images("./train-images-idx3-ubyte", size_, recordLength);
   assert(size_ == 60000);
-  labels_ = read_mnist_labels("train-labels-idx1-ubyte", size_);
+  labels_ = read_mnist_labels("./train-labels-idx1-ubyte", size_);
   assert(size_ == 60000);
   assert(recordLength == 28 * 28);
 }

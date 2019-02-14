@@ -175,13 +175,11 @@ struct IsMathShapeArrayImpl<NDArray<T, C>, R>
 {
   using Type = R;
 };
-
 template <typename R, typename T>
 struct IsMathShapeArrayImpl<Tensor<T>, R>
 {
   using Type = R;
 };
-
 template <typename T, typename R = void>
 using IfIsMathShapeArray =
     IfIsNotFixedPoint<typename T::Type, typename IsMathShapeArrayImpl<T, R>::Type>;
@@ -339,6 +337,7 @@ struct IsBlasAndNoShapeArrayLike<fetch::math::ShapelessArray<T, C>, R>
 };
 template <typename A, typename R>
 using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
+
 
 }  // namespace meta
 }  // namespace math

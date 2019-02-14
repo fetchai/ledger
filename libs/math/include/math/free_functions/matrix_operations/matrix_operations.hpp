@@ -583,6 +583,84 @@ T Mean(ShapelessArray<T, C> const &obj1)
   return ret;
 }
 
+
+template <typename ArrayType>
+void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
+{
+  assert((axis == 0) || (axis == 1));
+  assert(obj1.shape().size() == 2);
+
+  std::vector<std::size_t> access_idx{0, 0};
+  if (axis == 0)
+  {
+    assert(ret.shape()[0] == 1);
+    assert(ret.shape()[1] == obj1.shape()[1]);
+
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = 0;
+      for (std::size_t j = 0; j < obj1.shape()[0]; ++j)
+      {
+        ret[i] += obj1({j, i});
+      }
+    }
+  }
+  else
+  {
+    assert(ret.shape()[0] == obj1.shape()[0]);
+    assert(ret.shape()[1] == 1);
+
+    for (std::size_t i = 0; i < ret.size(); ++i)
+    {
+      ret[i] = 0;
+      for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
+      {
+        ret[i] += obj1({i, j});
+      }
+    }
+  }
+}
+template <typename ArrayType>
+ArrayType ReduceSum(ArrayType const &obj1, std::size_t axis)
+{
+  assert((axis == 0) || (axis == 1));
+  if (axis == 0)
+  {
+    std::vector<std::size_t> new_shape{1, obj1.shape()[1]};
+    ArrayType ret{new_shape};
+    ReduceSum(obj1, axis, ret);
+    return ret;
+  }
+  else
+  {
+    std::vector<std::size_t> new_shape{obj1.shape()[0], 1};
+    ArrayType ret{new_shape};
+    ReduceSum(obj1, axis, ret);
+    return ret;
+  }
+}
+
+template <typename ArrayType>
+ArrayType ReduceMean(ArrayType const &obj1, std::size_t const &axis)
+{
+  assert(axis == 0 || axis == 1);
+  typename ArrayType::DataType n;
+  if (axis == 0)
+  {
+    n = obj1.shape()[1];
+  }
+  else
+  {
+    n = obj1.shape()[0];
+  }
+  return Divide(ReduceSum(obj1, axis), n);
+}
+
+
+
+
+
+
 /**
  * Distance between max and min values in an array
  */

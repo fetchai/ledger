@@ -26,39 +26,79 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MeanSquareErrorLayer
+class CrossEntropyLayer
 {
 public:
   using ArrayType    = T;
   using Datatype     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  MeanSquareErrorLayer()          = default;
-  virtual ~MeanSquareErrorLayer() = default;
+  CrossEntropyLayer()          = default;
+  virtual ~CrossEntropyLayer() = default;
 
   virtual typename ArrayType::Type Forward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    // we can't handle taking log(0), and the user should ensure this is never asked for
+    for (std::size_t k = 0; k < inputs[0]->size(); ++k)
     {
-      sum += (inputs[0]->At(i) - inputs[1]->At(i)) * (inputs[0]->At(i) - inputs[1]->At(i));
+      assert(inputs[0]->At(k) != 0);
     }
-    sum /= Datatype(inputs[0]->shape()[0]);
-    sum /= Datatype(2);  // TODO(private 343)
-    return sum;
+
+    // deep copy and take log of input
+    ArrayType logx{inputs[0]->shape()};
+    logx.Copy(*inputs[0]);
+    fetch::math::Log(logx);
+
+    // assuming 2D input[0],
+    ArrayType plogx{logx.shape()};
+    for (std::size_t j = 0; j < logx.size(); ++j)
+    {
+      if (inputs[1]->At(j) == 0)
+      {
+        plogx.Set(j, 0);
+      }
+      else if (inputs[1]->At(j) == 1)
+      {
+        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
+      }
+      else
+      {
+        // should be a one hot
+        assert(false);
+      }
+//      else if (logx.At(j) == 0)
+//      {
+//        plogx.Set(j, 0);
+//      }
+//      else
+//      {
+//        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
+//      }
+    }
+
+    ArrayType cel      = fetch::math::Multiply(plogx, -1.0);
+    typename ArrayType::Type n = typename ArrayType::Type(cel.size());
+    ArrayType mean_cel = fetch::math::ReduceSum(cel, 1);
+
+    ArrayType ret = fetch::math::Divide(mean_cel, n);
+    assert(ret.size() == 1);
+    return typename ArrayType::Type(ret[0]);
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)
   {
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
+
+    typename ArrayType::Type n_classes = inputs[1]->size();
+
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
-      ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i));
+      ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i)) / n_classes;
     }
     return ret;
   }

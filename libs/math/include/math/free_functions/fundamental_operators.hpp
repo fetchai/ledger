@@ -563,12 +563,12 @@ meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &array, T con
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.At(i) = array.At(i) * scalar;
+    ret.At(i) = array.At(i) * static_cast<typename ArrayType::Type>(scalar);
   }
 }
 
 template <typename ArrayType, typename T>
-meta::IfIsMathShapeArray<ArrayType, ArrayType> Multiply(ArrayType const &array, T const &scalar)
+ArrayType Multiply(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.shape()};
   Multiply(array, scalar, ret);
