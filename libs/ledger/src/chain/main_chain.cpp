@@ -22,7 +22,6 @@
 
 #include <utility>
 
-using fetch::byte_array::ByteArray;
 using fetch::byte_array::ToBase64;
 
 namespace fetch {
