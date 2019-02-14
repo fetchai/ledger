@@ -223,8 +223,8 @@ private:
     }
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
+      // /*
       auto                          it = locks_.find(rid.id());
-
       if (it == locks_.end())
       {
         throw serializers::SerializableException(  // TODO(issue 11): set exception number
@@ -238,6 +238,7 @@ private:
                                " because it is held for " +
                                static_cast<std::string>(ToBase64(it->second))));
       }
+      // */
     }
 
     doc_store_->Set(rid, value);

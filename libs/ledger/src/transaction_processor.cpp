@@ -53,6 +53,8 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
 {
   FETCH_METRIC_TX_SUBMITTED(tx.digest());
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "New TX: ", byte_array::ToHex(tx.digest()));
+
   // dispatch the transaction to the storage engine
   try
   {

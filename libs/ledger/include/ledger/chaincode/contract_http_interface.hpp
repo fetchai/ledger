@@ -23,7 +23,7 @@
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "miner/miner_interface.hpp"

@@ -35,6 +35,13 @@ class Variant;
 }
 namespace ledger {
 
+inline storage::ResourceAddress FreeFnCreateStateIndex(byte_array::ByteArray const &name, byte_array::ByteArray const &suffix)
+{
+  byte_array::ByteArray index;
+  index.Append(name, ".state.", suffix);
+  return storage::ResourceAddress{index};
+}
+
 class Contract
 {
 public:
@@ -55,6 +62,7 @@ public:
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
   using ResourceSet           = TransactionSummary::ResourceSet;
+  using ContractHashes        = TransactionSummary::ContractHashes;
 
   Contract()                 = default;
   Contract(Contract const &) = delete;
@@ -88,7 +96,7 @@ public:
     {
 
       // lock the contract resources
-      if (!LockResources(tx.summary().resources))
+      if (!LockResources(tx.summary().resources, tx.summary().contract_hashes))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
         return Status::FAILED;
@@ -98,7 +106,7 @@ public:
       status = it->second(tx);
 
       // unlock the contract resources
-      if (!UnlockResources(tx.summary().resources))
+      if (!UnlockResources(tx.summary().resources, tx.summary().contract_hashes))
       {
         FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
         return Status::FAILED;
@@ -165,9 +173,7 @@ public:
 
   storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
   {
-    byte_array::ByteArray index;
-    index.Append(contract_identifier_.name_space(), ".state.", suffix);
-    return storage::ResourceAddress{index};
+    return FreeFnCreateStateIndex(contract_identifier_.name_space(), suffix);
   }
 
 protected:
@@ -271,8 +277,29 @@ protected:
     state().Set(index, buffer.data());
   }
 
+  void SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address)
+  {
+    state().Set(storage::ResourceAddress{address}, payload);
+  }
+
+  bool GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address)
+  {
+    auto document = state().Get(storage::ResourceAddress{address});
+
+    if (document.failed)
+    {
+      return false;
+    }
+
+    // update the document if it wasn't created
+    serializers::ByteArrayBuffer buffer(document.document);
+    payload =  buffer.data();
+
+    return true;
+  }
+
 private:
-  bool LockResources(ResourceSet const &resources)
+  bool LockResources(ResourceSet const &resources, ContractHashes const &hashes)
   {
     bool success = true;
 
@@ -284,16 +311,34 @@ private:
       }
     }
 
+    // Lock raw locations for SC
+    for(auto const &hash : hashes)
+    {
+      if (!state().Lock(storage::ResourceAddress{hash}))
+      {
+        success = false;
+      }
+    }
+
     return success;
   }
 
-  bool UnlockResources(ResourceSet const &resources)
+  bool UnlockResources(ResourceSet const &resources, ContractHashes const &hashes)
   {
     bool success = true;
 
     for (auto const &group : resources)
     {
       if (!state().Unlock(CreateStateIndex(group)))
+      {
+        success = false;
+      }
+    }
+
+    // Unlock raw locations for SC
+    for(auto const &hash : hashes)
+    {
+      if (!state().Unlock(storage::ResourceAddress{hash}))
       {
         success = false;
       }

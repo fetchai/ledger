@@ -104,16 +104,19 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  */
 ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
 {
+  //std::cerr << "A0" << std::endl;
   // if the execution manager is not running then no further transactions
   // should be scheduled
   if (!running_)
   {
+  std::cerr << "A1" << std::endl;
     return ScheduleStatus::NOT_STARTED;
   }
 
   // cache the current state
   if (State::ACTIVE == state_)
   {
+  std::cerr << "A2" << std::endl;
     return ScheduleStatus::ALREADY_RUNNING;
   }
 
@@ -121,6 +124,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // state of the block
   if (AttemptRestoreToBlock(block.hash))
   {
+  std::cerr << "A3" << std::endl;
     last_block_hash_ = block.hash;
     return ScheduleStatus::RESTORED;
   }
@@ -130,7 +134,8 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   {
     if (!AttemptRestoreToBlock(block.previous_hash))
     {
-      return ScheduleStatus::NO_PARENT_BLOCK;
+      //std::cerr << "A4" << std::endl;
+      //return ScheduleStatus::NO_PARENT_BLOCK;
     }
   }
 
@@ -139,6 +144,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // plan the execution for this block
   if (!PlanExecution(block))
   {
+  std::cerr << "A5" << std::endl;
     return ScheduleStatus::UNABLE_TO_PLAN;
   }
 
@@ -152,6 +158,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
     monitor_wake_.notify_one();
   }
 
+  std::cerr << "A6" << std::endl;
   return ScheduleStatus::SCHEDULED;
 }
 
@@ -172,45 +179,51 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
   //  FETCH_LOG_INFO(LOGGING_NAME,"Planning ", block.slices.size(), " slices...");
 
+  std::cerr << "planning execution" << std::endl;
+
   std::size_t slice_index = 0;
   for (auto const &slice : block.slices)
   {
     auto &slice_plan = execution_plan_[slice_index];
 
-    //    FETCH_LOG_INFO(LOGGING_NAME,"Planning slice ", slice_index, "...");
-
     // process the transactions
     for (auto const &tx : slice)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Planning execution for: ", byte_array::ToHex(tx.transaction_hash));
+
       Identifier id;
       id.Parse(tx.contract_name);
-      auto contract = contracts_.Lookup(id.name_space());
 
-      if (contract)
+      auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
+
+      // transform the resources into lane allocation
+      for (auto const &resource : tx.resources)
       {
-        auto item = std::make_unique<ExecutionItem>(tx.transaction_hash, slice_index);
-
-        // transform the resources into lane allocation
-        for (auto const &resource : tx.resources)
-        {
-          storage::ResourceID const id{contract->CreateStateIndex(resource)};
-          item->AddLane(id.lane(block.log2_num_lanes));
-        }
-
-        // insert the item into the execution plan
-        slice_plan.emplace_back(std::move(item));
+        storage::ResourceID const resource_id{FreeFnCreateStateIndex(id.name_space(), resource)};
+        item->AddLane(resource_id.lane(block.log2_num_lanes));
       }
-      else
+
+      FETCH_LOG_INFO(LOGGING_NAME, "LOCKING");
+
+      // If the tx uses smart contract(s), need to lock those lanes without a namespace
+      for (auto const &smart_contract_hash : tx.contract_hashes)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to plan execution of tx: ",
-                       byte_array::ToBase64(tx.transaction_hash));
-        return false;
+        // TX verification guarantees this is a valid hash
+        FETCH_LOG_INFO(LOGGING_NAME, "Locking ", byte_array::ToHex(smart_contract_hash));
+        storage::ResourceID const resource_id{smart_contract_hash};
+        item->AddLane(resource_id.lane(block.log2_num_lanes));
       }
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Planned execution for: ", byte_array::ToHex(tx.transaction_hash));
+
+      // insert the item into the execution plan
+      slice_plan.emplace_back(std::move(item));
     }
 
     ++slice_index;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Do the thing");
   return true;
 }
 

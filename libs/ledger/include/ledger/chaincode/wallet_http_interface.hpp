@@ -89,6 +89,16 @@ public:
          [this](http::ViewParameters const &, http::HTTPRequest const &request) {
            return OnTransactions(request);
          });
+
+    Post("/api/wallet/create_smart_contract",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnCreateSC(request);
+         });
+
+    Post("/api/wallet/invoke_smart_contract",
+         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+           return OnInvokeSC(request);
+         });
   }
 
   ~WalletHttpInterface() = default;
@@ -301,6 +311,141 @@ private:
   http::HTTPResponse OnTransactions(http::HTTPRequest const & /*request*/)
   {
     return BadJsonResponse(ErrorCode::NOT_IMPLEMENTED);
+  }
+
+  http::HTTPResponse OnCreateSC(http::HTTPRequest const &request)
+  {
+    byte_array::ConstByteArray smart_contract;
+
+    std::cerr << request.body() << std::endl;
+
+    try
+    {
+      // parse the json request
+      std::cerr << "Hersse1" << std::endl;
+      json::JSONDocument doc;
+      std::cerr << "Here1" << std::endl;
+      doc.Parse(request.body());
+
+      std::cerr << "Here" << std::endl;
+
+      // extract all the request parameters
+      if (!variant::Extract(doc.root(), "smart_contract", smart_contract))
+      {
+        std::cerr << "Failed to extract" << std::endl;
+        return BadJsonResponse(ErrorCode::PARSE_FAILURE);
+      }
+    }
+    catch (json::JSONParseException const &ex)
+    {
+      std::cerr << "Failed to parse" << std::endl;
+      return BadJsonResponse(ErrorCode::PARSE_FAILURE);
+    }
+
+    // We now have our smart contract body
+    crypto::ECDSASigner          signer;
+    signer.GenerateKeys();
+
+    // construct the TX to create the SC
+    ledger::MutableTransaction mtx;
+    mtx.set_contract_name("fetch.smart_contract.create_initial_contract");
+
+    // Add the SC to the TX
+    {
+      variant::Variant TX_data = variant::Variant::Object();
+      TX_data["contract_source"]       = smart_contract;
+
+      std::ostringstream oss;
+      oss << TX_data;
+      mtx.set_data(oss.str());
+    }
+
+    mtx.set_fee(0xADDED);
+    mtx.PushContractHash(crypto::Hash<crypto::SHA256>(smart_contract));
+
+    // sign the transaction
+    mtx.Sign(signer.private_key());
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting SC creation.");
+
+    // dispatch the transaction
+    processor_.AddTransaction(std::move(mtx));
+
+    variant::Variant   data;
+    std::ostringstream oss;
+
+    data = variant::Variant::Object();
+
+    data["SC_HASH"] = byte_array::ToHex(crypto::Hash<crypto::SHA256>(smart_contract));
+    data["success"] = true;
+
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
+  }
+
+  http::HTTPResponse OnInvokeSC(http::HTTPRequest const &request)
+  {
+    // *** This will just be a HASH ***
+    byte_array::ConstByteArray smart_contract;
+
+    try
+    {
+      // parse the json request
+      json::JSONDocument doc;
+      doc.Parse(request.body());
+
+      // extract all the request parameters
+      if (!variant::Extract(doc.root(), "smart_contract", smart_contract))
+      {
+        return BadJsonResponse(ErrorCode::PARSE_FAILURE);
+      }
+    }
+    catch (json::JSONParseException const &ex)
+    {
+      return BadJsonResponse(ErrorCode::PARSE_FAILURE);
+    }
+
+    smart_contract = byte_array::FromHex(smart_contract);
+
+    // We now have our smart contract body
+    crypto::ECDSASigner          signer;
+    signer.GenerateKeys();
+
+    // construct the TX to create the SC
+    ledger::MutableTransaction mtx;
+    //mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract.main");
+    mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract");
+
+    // Add the SC to the TX
+    {
+      variant::Variant TX_data = variant::Variant::Object();
+      TX_data["contract_hash"]       = smart_contract;
+
+      std::ostringstream oss;
+      oss << TX_data;
+      mtx.set_data(oss.str());
+    }
+
+    mtx.set_fee(0XCA11AB1E);
+    mtx.PushContractHash(smart_contract);
+
+    // sign the transaction
+    mtx.Sign(signer.private_key());
+
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Submitting SC invocation.");
+
+    // dispatch the transaction
+    processor_.AddTransaction(std::move(mtx));
+
+    variant::Variant   data;
+    std::ostringstream oss;
+
+    data = variant::Variant::Object();
+
+    data["success"] = true;
+
+    oss << data;
+    return http::CreateJsonResponse(oss.str(), http::Status::SUCCESS_OK);
   }
 
   static http::HTTPResponse BadJsonResponse(ErrorCode error_code)

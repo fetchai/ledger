@@ -68,6 +68,7 @@ namespace ledger {
 Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, LaneSet const &lanes)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(hash));
 
   // TODO(issue 33): Add code to validate / check lane resources
   FETCH_UNUSED(slice);
@@ -96,16 +97,20 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
 
   // Lookup the chain code associated with the transaction
   auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
+
   if (!chain_code)
   {
     return Status::CHAIN_CODE_LOOKUP_FAILURE;
   }
 
   // attach the chain code to the current working context
+  FETCH_LOG_INFO(LOGGING_NAME, "Attach! ");
   chain_code->Attach(*resources_);
+  FETCH_LOG_INFO(LOGGING_NAME, "Attached! ");
 
   // Dispatch the transaction to the contract
   auto result = chain_code->DispatchTransaction(identifier.name(), tx);
+  FETCH_LOG_INFO(LOGGING_NAME, "dispatched! ");
   if (Contract::Status::OK != result)
   {
     return Status::CHAIN_CODE_EXEC_FAILURE;
