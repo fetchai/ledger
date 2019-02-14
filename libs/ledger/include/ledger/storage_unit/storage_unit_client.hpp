@@ -79,17 +79,12 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using Mutex                = fetch::mutex::Mutex;
   using LockT                = std::lock_guard<Mutex>;
-  using SmartContractStore =
-      fetch::storage::ObjectStore<byte_array::ConstByteArray>;  // TODO(HUT): this must be
-                                                                // revertible
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
-  {
-    smart_contract_store_.Load("smart_contract_store.db", "smart_contract_store.index.db");
-  }
+  {}
 
   StorageUnitClient(StorageUnitClient const &) = delete;
 
@@ -499,7 +494,6 @@ private:
   BackgroundedWorkThreadPtr workthread_;
   Muddles                   muddles_;
   Clients                   clients_;
-  SmartContractStore        smart_contract_store_;
 };
 
 }  // namespace ledger

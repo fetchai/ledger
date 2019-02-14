@@ -33,7 +33,6 @@ public:
   using Document        = storage::Document;
   using ResourceAddress = storage::ResourceAddress;
   using StateValue      = byte_array::ConstByteArray;
-  using ConstByteArray  = byte_array::ConstByteArray;
 
   /// @name State Interface
   /// @{
@@ -42,7 +41,6 @@ public:
   virtual void     Set(ResourceAddress const &key, StateValue const &value) = 0;
   virtual bool     Lock(ResourceAddress const &key)                         = 0;
   virtual bool     Unlock(ResourceAddress const &key)                       = 0;
-
   /// @}
 };
 

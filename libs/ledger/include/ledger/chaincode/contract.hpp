@@ -35,15 +35,6 @@ class Variant;
 }
 namespace ledger {
 
-  /*
-inline storage::ResourceAddress FreeFnCreateStateIndex(byte_array::ByteArray const &name,
-                                                       byte_array::ByteArray const &suffix)
-{
-  byte_array::ByteArray index;
-  index.Append(name, ".state.", suffix);
-  return storage::ResourceAddress{index};
-}*/
-
 class Contract
 {
 public:

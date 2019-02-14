@@ -51,8 +51,6 @@ SmartContract::SmartContract()
 
 Contract::Status SmartContract::CreateInitialContract(Transaction const &tx)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "***** creating contract 0");
-
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
@@ -79,14 +77,11 @@ Contract::Status SmartContract::CreateInitialContract(Transaction const &tx)
 
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "***** invoking contract 0");
-
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
     return Status::FAILED;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "***** invoking contract 1");
 
   byte_array::ConstByteArray contract_hash;    // Lookup
   byte_array::ByteArray      contract_source;  // Fill this
@@ -96,15 +91,10 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
     return Status::FAILED;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "***** invoking contract 2");
-  FETCH_LOG_INFO(LOGGING_NAME, "Getting smart contract ", ToHex(contract_hash));
-
   if (!GetRawState(contract_source, contract_hash))
   {
     return Status::FAILED;
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Try to exec: ", contract_source);
 
   std::string as_string{contract_source};
 
@@ -122,11 +112,6 @@ bool RunSmartContract(std::string &source, std::string const &target_fn,
   FETCH_UNUSED(hash);
   char const *LOGGING_NAME = "RunSmartContract";
   auto        module       = vm::VMFactory::GetModule();
-
-  std::replace(source.begin(), source.end(), '\'',
-               '"');  // replace all ' to " - the compiler does not support these
-
-  FETCH_LOG_INFO(LOGGING_NAME, "EXEC: ", source);
 
   // ********** Attach way to interface with state here **********
   // module->state
@@ -156,7 +141,7 @@ bool RunSmartContract(std::string &source, std::string const &target_fn,
   // Execute our fn
   if (!vm->Execute(script, target_fn, error, output))
   {
-    std::cerr << "Runtime error: " << error << std::endl;
+    FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
   }
 
   return true;

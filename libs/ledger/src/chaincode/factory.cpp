@@ -41,9 +41,6 @@ FactoryRegistry CreateRegistry()
   registry["fetch.token"]          = []() { return std::make_shared<TokenContract>(); };
   registry["fetch.smart_contract"] = []() { return std::make_shared<SmartContract>(); };
 
-  // registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
-  // registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
-
   return registry;
 }
 
