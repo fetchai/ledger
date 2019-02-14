@@ -12,8 +12,6 @@ endfunction
 
 @work("syngergic_contract1")
 function leisureMarketWork(work_param : Int64) : Array< Int64 >
-  var d = Dummy( Array< Int64 >(3) );
-
   var dag = DAG();
 
   var itm = Item();

@@ -30,42 +30,48 @@ namespace fetch
 namespace modules
 {
 
-struct Dummy {
+struct Tensor {
   std::vector< int64_t > shape;
 };
 
-class DummyWrapper : public fetch::vm::Object
+class TensorWrapper : public fetch::vm::Object
 {
 public:
-  DummyWrapper()          = delete;
-  virtual ~DummyWrapper() = default;
+  TensorWrapper()          = delete;
+  virtual ~TensorWrapper() = default;
 
   static void Bind(vm::Module &module)
   {
-    auto interface = module.CreateClassType<DummyWrapper>("Dummy");
+    auto interface = module.CreateClassType<TensorWrapper>("Tensor");
+
+   module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t >(fetch::vm::TypeIds::IArray);   
 
     interface
-      .CreateTypeConstuctor<vm::Ptr< vm::Array<int64_t> > >();
-
+      .CreateTypeConstuctor<vm::Ptr< vm::Array<int64_t> > >()
+      .CreateInstanceFunction("shape", &TensorWrapper::shape);
   }
 
-  DummyWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Dummy const &dummy)
+  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Tensor const &dummy)
     : fetch::vm::Object(vm, type_id)
-    , dummy_(dummy)
+    , tensor_(dummy)
   {
 
-    std::cout << this->type_id_ << std::endl;    
   }
 
-  static fetch::vm::Ptr<DummyWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, vm::Ptr< vm::Array< int64_t > > arr)
+  static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, vm::Ptr< vm::Array< int64_t > > arr)
   {
-
-    return new DummyWrapper(vm, type_id, Dummy{{1, 2, 3}});
+    return new TensorWrapper(vm, type_id, Tensor{arr->elements});
   }
 
+  vm::Ptr< vm::Array< int64_t > > shape()
+  {
+    vm::Ptr< vm::Array< int64_t > > ret = new vm::Array< int64_t >(this->vm_, this->vm_->GetTypeId< vm::Array< int64_t > >(), int32_t(tensor_.shape.size()) );
+    std::copy(tensor_.shape.begin(), tensor_.shape.end(), ret->elements.begin());
 
+    return ret;
+  }
 private:
-  Dummy dummy_;
+  Tensor tensor_;
 };
 
 

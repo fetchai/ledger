@@ -28,7 +28,7 @@ public:
   {
     module.CreateClassType<ByteArrayWrapper>("ByteArray")
       .CreateTypeConstuctor<int32_t>()
-      .CreateInstanceFunction("Copy", &ByteArrayWrapper::Copy)
+      .CreateInstanceFunction("copy", &ByteArrayWrapper::Copy)
       .EnableIndexOperator<uint8_t, int32_t>();
   }
 
