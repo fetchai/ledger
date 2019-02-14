@@ -28,6 +28,9 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+
+#include "mnist_loader.hpp"
+
 #include <fstream>
 #include <vector>
 #include <sstream>
@@ -104,6 +107,31 @@ public:
   
 };
 
+class TrainingPairWrapper : public fetch::vm::Object, public std::pair<uint64_t, fetch::vm::Ptr<TensorWrapper>>
+{
+public:
+  TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<TensorWrapper> t)
+    : fetch::vm::Object(vm, type_id)
+  {
+    this->second = t;
+  }
+
+  static fetch::vm::Ptr<TrainingPairWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<TensorWrapper> t)
+  {
+    return new TrainingPairWrapper(vm, type_id, t);
+  }
+
+  fetch::vm::Ptr<TensorWrapper> data()
+  {
+    return this->second;
+  }
+
+  uint64_t label()
+  {
+    return this->first;
+  }
+};
+
 class DataLoaderWrapper : public fetch::vm::Object
 {
 public:
@@ -115,13 +143,20 @@ public:
   {
     return new DataLoaderWrapper(vm, type_id);
   }
-  
-  fetch::vm::Ptr<TensorWrapper> getData()
+
+  // Wont compile if parameter is not const &
+  // The actual fetch::vm::Ptr is const, but the pointed to memory is modified
+  fetch::vm::Ptr<TrainingPairWrapper> GetData(fetch::vm::Ptr<TrainingPairWrapper> const &dataHolder)
   {
-    // fetch::vm::Ptr<TensorWrapper> tensor = new TensorWrapper(vm_, fetch::vm::Getter<TensorWrapper>::GetTypeIndex(), {28, 28});
-    return nullptr;
+    std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> d = loader_.GetNext(nullptr);
+    std::shared_ptr<fetch::math::Tensor<float>> a = *(dataHolder->second);
+    a->Copy(*(d.second));
+    dataHolder->first = d.first;
+    return dataHolder;
   }
-  
+
+private:
+  MNISTLoader loader_;
 };
 
 template<typename T>
@@ -162,6 +197,7 @@ int main(int argc, char **argv)
 
   module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("Print", &PrintNumber<int>);
+  module.CreateFreeFunction("Print", &PrintNumber<uint64_t>);
   module.CreateFreeFunction("Print", &PrintNumber<float>);
   module.CreateFreeFunction("Print", &PrintNumber<double>);
   module.CreateFreeFunction("Print", &Print);
@@ -182,7 +218,16 @@ int main(int argc, char **argv)
     .CreateInstanceFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
     .CreateInstanceFunction("AddRelu", &GraphWrapper::AddRelu)
     .CreateInstanceFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
-      
+
+  module.CreateClassType<TrainingPairWrapper>("TrainingPair")
+    .CreateTypeConstuctor<fetch::vm::Ptr<TensorWrapper>>()
+    .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
+    .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
+
+  module.CreateClassType<DataLoaderWrapper>("MNISTLoader")
+    .CreateTypeConstuctor<>()
+    .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData);
+  
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
   fetch::vm::Script        script;

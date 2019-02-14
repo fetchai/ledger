@@ -1,12 +1,16 @@
 
 function main()
 
+var trainingIterations = 10000;
+
 var s = Array<UInt64>(2);
 s[0] = 28ul;
 s[1] = 28ul;
 
 var t = Tensor(s);
 var g = Graph();
+var d = MNISTLoader();
+var p = TrainingPair(t);
 
 g.AddPlaceholder("Input");
 g.AddFullyConnected("FC_1", "Input", 28*28, 128);
@@ -18,6 +22,11 @@ g.AddSoftmax("Softmax", "FC_3");
 
 g.SetInput("Input", t);
 
-g.Evaluate("Softmax");
+for(i in 0:trainingIterations)
+    d.GetData(p);
+    // No need to call SetInput here as we're reusing same memory space
+    var pred = g.Evaluate("Softmax");
+endfor
+
 
 endfunction
