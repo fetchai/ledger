@@ -100,12 +100,6 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   return buffer;
 }
 
-std::ostream &operator<<(std::ostream &os, const ConsensusMinerType &obj)
-{
-  os << static_cast<std::underlying_type<ConsensusMinerType>::type>(obj);
-  return os;
-}
-
 struct CommandLineArguments
 {
   using StringList  = std::vector<std::string>;
@@ -130,14 +124,13 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
   static const uint16_t DEFAULT_PORT            = 8000;
   static const uint32_t DEFAULT_NETWORK_ID      = 0x10;
-  static const uint32_t DEFAULT_BLOCK_INTERVAL  = 5000;  // milliseconds.
+  static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
   static const uint32_t DEFAULT_MAX_PEERS       = 3;
   static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
 
   /// @name Constellation Config
   /// @{
   Config             cfg;
-  ConsensusMinerType mine{ConsensusMinerType::NO_MINER};
   uint16_t           port{0};
   uint32_t           network_id;
   UriList            peers;
@@ -161,7 +154,6 @@ struct CommandLineArguments
     std::string bootstrap_address;
     std::string config_path;
     std::string raw_peers;
-    int         mine;
     ManifestPtr manifest;
     uint32_t    num_lanes{0};
 
@@ -173,12 +165,11 @@ struct CommandLineArguments
     p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                 std::string{});
     p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
     p.add(args.network_id,                "network-id",            "The network id",                                                                DEFAULT_NETWORK_ID);
-    p.add(args.cfg.interface_address,     "interface",             "The network id",                                                                std::string{"127.0.0.1"});
+    p.add(args.cfg.interface_address,     "interface",             "The address of the network inferface to be used",                               std::string{"127.0.0.1"});
     p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds.",                                               uint32_t{DEFAULT_BLOCK_INTERVAL});
     p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
-    p.add(mine,                           "mine",                  "Enable mining on this node",                                                    0);
-    p.add(args.external_address,          "external",              "This node's global IP addr.",                                                   std::string{});
-    p.add(bootstrap_address,              "bootstrap",             "Src addr for network boostrap.",                                                std::string{});
+    p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
+    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap.",                                            std::string{});
     p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
     p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
     p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
@@ -193,8 +184,6 @@ struct CommandLineArguments
 
     // update the peers
     args.SetPeers(raw_peers);
-
-    args.mine = static_cast<ConsensusMinerType>(mine);
 
     // ensure that the number lanes is a valid power of 2
     if (!EnsureLog2(num_lanes))
@@ -361,7 +350,7 @@ struct CommandLineArguments
     s << "external address..........: " << args.external_address << '\n';
     s << "db-prefix.................: " << args.cfg.db_prefix << '\n';
     s << "interface.................: " << args.cfg.interface_address << '\n';
-    s << "mining....................: " << args.mine << '\n';
+    s << "mining....................: " << ((args.cfg.block_interval_ms > 0) ? "Yes" : "No") << '\n';
     s << "tx processor threads......: " << args.cfg.processor_threads << '\n';
     s << "shard verification threads: " << args.cfg.verification_threads << '\n';
     s << "block interval............: " << args.cfg.block_interval_ms << "ms" << '\n';
