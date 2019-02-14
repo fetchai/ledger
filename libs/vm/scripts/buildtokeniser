@@ -1,8 +1,10 @@
 #!/bin/bash
 flex tokeniser.l
 
-prepend_this="#pragma once\n"\
-"//------------------------------------------------------------------------------\n"\
+
+prepend_pragma="#pragma once"
+
+prepend_this="//------------------------------------------------------------------------------\n"\
 "//\n"\
 "//   Copyright 2018-2019 Fetch.AI Limited\n"\
 "//\n"\
@@ -25,6 +27,7 @@ prepend_this="#pragma once\n"\
 append_this="// clang-format on"
 
 echo -e "$prepend_this" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
+echo -e "$prepend_pragma" | cat - ../include/vm/tokeniser.hpp > temp && mv temp ../include/vm/tokeniser.hpp
 echo -e "$prepend_this" | cat - ../src/tokeniser.cpp > temp && mv temp ../src/tokeniser.cpp
 
 echo -e "$append_this" >> ../include/vm/tokeniser.hpp
