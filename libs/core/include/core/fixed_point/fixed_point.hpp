@@ -17,13 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point_operations.hpp"
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
-#include "core/fixed_point/fixed_point_operations.hpp"
 
 #include <iostream>
 #include <sstream>
-
 
 #include <cassert>
 #include <iomanip>
