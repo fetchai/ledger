@@ -23,14 +23,14 @@
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 
-#include "crypto/sha256.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
 
 #include "vm/vm_factory.hpp"
 
-#include <stdexcept>
 #include <algorithm>
+#include <stdexcept>
 #include <string>
 
 namespace fetch {
@@ -39,7 +39,8 @@ namespace ledger {
 byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source"};
 byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
 
-bool RunSmartContract(std::string &source, std::string const &target_fn, byte_array::ConstByteArray const &hash);
+bool RunSmartContract(std::string &source, std::string const &target_fn,
+                      byte_array::ConstByteArray const &hash);
 
 SmartContract::SmartContract()
   : Contract("fetch.smart_contract")
@@ -87,8 +88,8 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   }
   FETCH_LOG_INFO(LOGGING_NAME, "***** invoking contract 1");
 
-  byte_array::ConstByteArray contract_hash;   // Lookup
-  byte_array::ByteArray contract_source; // Fill this
+  byte_array::ConstByteArray contract_hash;    // Lookup
+  byte_array::ByteArray      contract_source;  // Fill this
 
   if (!Extract(data, CONTRACT_HASH, contract_hash))
   {
@@ -98,7 +99,7 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   FETCH_LOG_INFO(LOGGING_NAME, "***** invoking contract 2");
   FETCH_LOG_INFO(LOGGING_NAME, "Getting smart contract ", ToHex(contract_hash));
 
-  if(!GetRawState(contract_source, contract_hash))
+  if (!GetRawState(contract_source, contract_hash))
   {
     return Status::FAILED;
   }
@@ -107,7 +108,7 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 
   std::string as_string{contract_source};
 
-  if(!RunSmartContract(as_string, "main", contract_hash))
+  if (!RunSmartContract(as_string, "main", contract_hash))
   {
     return Status::FAILED;
   }
@@ -115,13 +116,15 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   return Status::OK;
 }
 
-bool RunSmartContract(std::string &source, std::string const &target_fn, byte_array::ConstByteArray const &hash)
+bool RunSmartContract(std::string &source, std::string const &target_fn,
+                      byte_array::ConstByteArray const &hash)
 {
   FETCH_UNUSED(hash);
   char const *LOGGING_NAME = "RunSmartContract";
-  auto module = vm::VMFactory::GetModule();
+  auto        module       = vm::VMFactory::GetModule();
 
-  std::replace(source.begin(), source.end(), '\'', '"'); // replace all ' to " - the compiler does not support these
+  std::replace(source.begin(), source.end(), '\'',
+               '"');  // replace all ' to " - the compiler does not support these
 
   FETCH_LOG_INFO(LOGGING_NAME, "EXEC: ", source);
 
@@ -134,7 +137,8 @@ bool RunSmartContract(std::string &source, std::string const &target_fn, byte_ar
 
   for (auto const &error : errors)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Smart contract ", byte_array::ToHex(hash) ," encountered errors: ", error);
+    FETCH_LOG_WARN(LOGGING_NAME, "Smart contract ", byte_array::ToHex(hash),
+                   " encountered errors: ", error);
   }
 
   if (errors.size() > 0)
@@ -160,5 +164,3 @@ bool RunSmartContract(std::string &source, std::string const &target_fn, byte_ar
 
 }  // namespace ledger
 }  // namespace fetch
-
-

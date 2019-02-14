@@ -35,7 +35,8 @@ class Variant;
 }
 namespace ledger {
 
-inline storage::ResourceAddress FreeFnCreateStateIndex(byte_array::ByteArray const &name, byte_array::ByteArray const &suffix)
+inline storage::ResourceAddress FreeFnCreateStateIndex(byte_array::ByteArray const &name,
+                                                       byte_array::ByteArray const &suffix)
 {
   byte_array::ByteArray index;
   index.Append(name, ".state.", suffix);
@@ -293,7 +294,7 @@ protected:
 
     // update the document if it wasn't created
     serializers::ByteArrayBuffer buffer(document.document);
-    payload =  buffer.data();
+    payload = buffer.data();
 
     return true;
   }
@@ -312,7 +313,7 @@ private:
     }
 
     // Lock raw locations for SC
-    for(auto const &hash : hashes)
+    for (auto const &hash : hashes)
     {
       if (!state().Lock(storage::ResourceAddress{hash}))
       {
@@ -336,7 +337,7 @@ private:
     }
 
     // Unlock raw locations for SC
-    for(auto const &hash : hashes)
+    for (auto const &hash : hashes)
     {
       if (!state().Unlock(storage::ResourceAddress{hash}))
       {

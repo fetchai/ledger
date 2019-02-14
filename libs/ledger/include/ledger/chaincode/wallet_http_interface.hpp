@@ -343,7 +343,7 @@ private:
     }
 
     // We now have our smart contract body
-    crypto::ECDSASigner          signer;
+    crypto::ECDSASigner signer;
     signer.GenerateKeys();
 
     // construct the TX to create the SC
@@ -352,8 +352,8 @@ private:
 
     // Add the SC to the TX
     {
-      variant::Variant TX_data = variant::Variant::Object();
-      TX_data["contract_source"]       = smart_contract;
+      variant::Variant TX_data   = variant::Variant::Object();
+      TX_data["contract_source"] = smart_contract;
 
       std::ostringstream oss;
       oss << TX_data;
@@ -408,18 +408,18 @@ private:
     smart_contract = byte_array::FromHex(smart_contract);
 
     // We now have our smart contract body
-    crypto::ECDSASigner          signer;
+    crypto::ECDSASigner signer;
     signer.GenerateKeys();
 
     // construct the TX to create the SC
     ledger::MutableTransaction mtx;
-    //mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract.main");
+    // mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract.main");
     mtx.set_contract_name("fetch.smart_contract.invoke_smart_contract");
 
     // Add the SC to the TX
     {
       variant::Variant TX_data = variant::Variant::Object();
-      TX_data["contract_hash"]       = smart_contract;
+      TX_data["contract_hash"] = smart_contract;
 
       std::ostringstream oss;
       oss << TX_data;

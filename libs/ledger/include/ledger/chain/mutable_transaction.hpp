@@ -72,7 +72,7 @@ struct TransactionSummary
   Fee         fee{0};
 
   // TODO(issue 33): Needs to be replaced with some kind of ID
-  ContractName   contract_name;
+  ContractName contract_name;
 
   // Hashes of the body of the smart contract(s) accessed
   ContractHashes contract_hashes;
@@ -96,11 +96,12 @@ struct TransactionSummary
   {
     if (resources.size() > 0 && transaction_hash.size() > 0 && contract_name.size() > 0)
     {
-      for(auto const &hash : contract_hashes)
+      for (auto const &hash : contract_hashes)
       {
-        if(hash.size() != 256/8)
+        if (hash.size() != 256 / 8)
         {
-          FETCH_LOG_INFO("TransactionSummary", "Found invalid TX: smart contact hash ref size: ", hash.size());
+          FETCH_LOG_INFO("TransactionSummary",
+                         "Found invalid TX: smart contact hash ref size: ", hash.size());
           return false;
         }
       }
@@ -318,7 +319,6 @@ public:
     return summary_.contract_hashes;
   }
 
-
   TxDigest const &digest() const
   {
     return summary_.transaction_hash;
@@ -508,7 +508,8 @@ void TxSigningAdapter<MUTABLE_TX>::Update() const
   if (stream_->size() == 0)
   {
     serializers::ByteArrayBuffer &stream = *stream_.get();
-    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data(), tx_->contract_hashes());
+    stream.Append(tx_->contract_name(), tx_->fee(), tx_->resources(), tx_->data(),
+                  tx_->contract_hashes());
     // tx_data_hash_.Reset();
     tx_data_hash_->Update(stream.data());
   }
@@ -525,21 +526,21 @@ template <typename T, typename MUTABLE_TX>
 void Deserialize(T &stream, TxSigningAdapter<MUTABLE_TX> &tx)
 {
   MutableTransaction &tx_ = tx;
-  stream >> tx_.summary_.contract_name >> tx_.summary_.contract_name >> tx_.summary_.fee >> tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
+  stream >> tx_.summary_.contract_name >> tx_.summary_.contract_name >> tx_.summary_.fee >>
+      tx_.summary_.resources >> tx_.data_ >> tx_.signatures_;
   tx.Reset();
 }
-
 
 template <typename MUTABLE_TX>
 bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 {
   MutableTransaction const &left = left_tx;
   // TODO(HUT): need to check with peter this is ok.
-  //return tx_ == left;
+  // return tx_ == left;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->data() == left.data() && tx_->contract_hashes() == left.contract_hashes();
+         tx_->resources() == left.resources() && tx_->data() == left.data() &&
+         tx_->contract_hashes() == left.contract_hashes();
 }
-
 
 template <typename MUTABLE_TX>
 bool TxSigningAdapter<MUTABLE_TX>::operator!=(TxSigningAdapter<MUTABLE_TX> const &left_tx) const

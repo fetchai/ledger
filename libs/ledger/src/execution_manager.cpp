@@ -104,19 +104,19 @@ ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t 
  */
 ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &block)
 {
-  //std::cerr << "A0" << std::endl;
+  // std::cerr << "A0" << std::endl;
   // if the execution manager is not running then no further transactions
   // should be scheduled
   if (!running_)
   {
-  std::cerr << "A1" << std::endl;
+    std::cerr << "A1" << std::endl;
     return ScheduleStatus::NOT_STARTED;
   }
 
   // cache the current state
   if (State::ACTIVE == state_)
   {
-  std::cerr << "A2" << std::endl;
+    std::cerr << "A2" << std::endl;
     return ScheduleStatus::ALREADY_RUNNING;
   }
 
@@ -124,7 +124,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // state of the block
   if (AttemptRestoreToBlock(block.hash))
   {
-  std::cerr << "A3" << std::endl;
+    std::cerr << "A3" << std::endl;
     last_block_hash_ = block.hash;
     return ScheduleStatus::RESTORED;
   }
@@ -134,8 +134,8 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   {
     if (!AttemptRestoreToBlock(block.previous_hash))
     {
-      //std::cerr << "A4" << std::endl;
-      //return ScheduleStatus::NO_PARENT_BLOCK;
+      // std::cerr << "A4" << std::endl;
+      // return ScheduleStatus::NO_PARENT_BLOCK;
     }
   }
 
@@ -144,7 +144,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   // plan the execution for this block
   if (!PlanExecution(block))
   {
-  std::cerr << "A5" << std::endl;
+    std::cerr << "A5" << std::endl;
     return ScheduleStatus::UNABLE_TO_PLAN;
   }
 
@@ -189,7 +189,8 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
     // process the transactions
     for (auto const &tx : slice)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Planning execution for: ", byte_array::ToHex(tx.transaction_hash));
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Planning execution for: ", byte_array::ToHex(tx.transaction_hash));
 
       Identifier id;
       id.Parse(tx.contract_name);
@@ -214,7 +215,8 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
         item->AddLane(resource_id.lane(block.log2_num_lanes));
       }
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Planned execution for: ", byte_array::ToHex(tx.transaction_hash));
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Planned execution for: ", byte_array::ToHex(tx.transaction_hash));
 
       // insert the item into the execution plan
       slice_plan.emplace_back(std::move(item));

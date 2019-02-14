@@ -224,7 +224,7 @@ private:
     {
       std::lock_guard<mutex::Mutex> lock(lock_mutex_);
       // /*
-      auto                          it = locks_.find(rid.id());
+      auto it = locks_.find(rid.id());
       if (it == locks_.end())
       {
         throw serializers::SerializableException(  // TODO(issue 11): set exception number

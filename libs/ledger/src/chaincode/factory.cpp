@@ -19,8 +19,8 @@
 #include "ledger/chaincode/factory.hpp"
 #include "core/logger.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
-#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 
 #include <stdexcept>
 
@@ -37,12 +37,12 @@ FactoryRegistry CreateRegistry()
 {
   FactoryRegistry registry;
 
-  registry["fetch.dummy"] = []() { return std::make_shared<DummyContract>(); };
-  registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
+  registry["fetch.dummy"]          = []() { return std::make_shared<DummyContract>(); };
+  registry["fetch.token"]          = []() { return std::make_shared<TokenContract>(); };
   registry["fetch.smart_contract"] = []() { return std::make_shared<SmartContract>(); };
 
-  //registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
-  //registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
+  // registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
+  // registry["fetch.token"] = []() { return std::make_shared<TokenContract>(); };
 
   return registry;
 }

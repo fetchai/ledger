@@ -79,7 +79,9 @@ public:
   using FutureTimepoint      = network::FutureTimepoint;
   using Mutex                = fetch::mutex::Mutex;
   using LockT                = std::lock_guard<Mutex>;
-  using SmartContractStore   = fetch::storage::ObjectStore<byte_array::ConstByteArray>; // TODO(HUT): this must be revertible
+  using SmartContractStore =
+      fetch::storage::ObjectStore<byte_array::ConstByteArray>;  // TODO(HUT): this must be
+                                                                // revertible
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
