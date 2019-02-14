@@ -17,33 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
-
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
-
 namespace fetch {
-namespace ledger {
+namespace vm_modules {
 
-class SmartContract : public Contract
+/**
+ * method for type converting from arithmetic to string
+ */
+template <typename T>
+fetch::math::meta::IfIsArithmetic<T, fetch::vm::Ptr<fetch::vm::String>> toString(fetch::vm::VM *vm,
+                                                                                 T const &      a)
 {
-public:
-  SmartContract();
-  ~SmartContract() = default;
+  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
+  return ret;
+}
 
-  static constexpr char const *LOGGING_NAME = "SmartContract";
+void CreateToString(fetch::vm::Module &module)
+{
+  module.CreateFreeFunction("toString", &toString<int32_t>);
+  module.CreateFreeFunction("toString", &toString<float_t>);
+  module.CreateFreeFunction("toString", &toString<double_t>);
+}
 
-private:
-  // transaction handlers
-  Status CreateInitialContract(Transaction const &tx);
-  Status Invoke(Transaction const &tx);
-  Status DeleteContract(Transaction const &tx);
-
-  // queries
-  /* Status Balance(Query const &query, Query &response); */
-};
-
-}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch

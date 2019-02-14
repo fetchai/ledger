@@ -17,33 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
-
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
+#include "math/free_functions/standard_functions/abs.hpp"
+#include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
-namespace ledger {
+namespace vm_modules {
 
-class SmartContract : public Contract
+/**
+ * method for taking the absolute of a value
+ */
+template <typename T>
+fetch::math::meta::IfIsMath<T, T> Abs(fetch::vm::VM *vm, T const &a)
 {
-public:
-  SmartContract();
-  ~SmartContract() = default;
+  T x = T(a);
+  fetch::math::Abs(x);
+  return x;
+}
 
-  static constexpr char const *LOGGING_NAME = "SmartContract";
+void CreateAbs(fetch::vm::Module &module)
+{
+  module.CreateFreeFunction<int32_t>("Abs", &Abs<int32_t>);
+  module.CreateFreeFunction<float_t>("Abs", &Abs<float_t>);
+  module.CreateFreeFunction<double_t>("Abs", &Abs<double_t>);
+}
 
-private:
-  // transaction handlers
-  Status CreateInitialContract(Transaction const &tx);
-  Status Invoke(Transaction const &tx);
-  Status DeleteContract(Transaction const &tx);
-
-  // queries
-  /* Status Balance(Query const &query, Query &response); */
-};
-
-}  // namespace ledger
+}  // namespace vm_modules
 }  // namespace fetch
