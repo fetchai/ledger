@@ -130,7 +130,7 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   {
     if (!AttemptRestoreToBlock(block.previous_hash))
     {
-       return ScheduleStatus::NO_PARENT_BLOCK;
+      return ScheduleStatus::NO_PARENT_BLOCK;
     }
   }
 
@@ -185,7 +185,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
 
       auto contract = contracts_.Lookup(id.name_space());
 
-      if(contract)
+      if (contract)
       {
         // transform the resources into lane allocation
         for (auto const &resource : tx.resources)
