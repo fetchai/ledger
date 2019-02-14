@@ -535,11 +535,8 @@ template <typename MUTABLE_TX>
 bool TxSigningAdapter<MUTABLE_TX>::operator==(TxSigningAdapter<MUTABLE_TX> const &left_tx) const
 {
   MutableTransaction const &left = left_tx;
-  // TODO(HUT): need to check with peter this is ok.
-  // return tx_ == left;
   return tx_->contract_name() == left.contract_name() && tx_->fee() == left.fee() &&
-         tx_->resources() == left.resources() && tx_->data() == left.data() &&
-         tx_->contract_hashes() == left.contract_hashes();
+         tx_->resources() == left.resources() && tx_->data() == left.data();
 }
 
 template <typename MUTABLE_TX>
