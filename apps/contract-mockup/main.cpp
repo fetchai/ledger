@@ -99,6 +99,15 @@ int main(int argc, char **argv)
   fetch::modules::BindPrint(module);
   // Setting compiler up
   fetch::ledger::DAG dag;
+  fetch::ledger::DAGNode node;
+
+  for(auto const &n: dag.nodes())
+  {
+    node.previous.push_back(n.second.hash);
+  }
+
+  node.contents  = "{\"contract\":\"hello.contract\"}";
+
 
   fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
   fetch::vm::VM *      vm       = new fetch::vm::VM(&module);

@@ -15,6 +15,10 @@ function leisureMarketWork(work_param : Int64) : Array< Int64 >
   var dag = DAG();
   var nodes = dag.getNodes();
 
+  for(i in 0:(nodes.size()-1))
+    PrintLn("Node found");
+  endfor
+
   var itm = Item();
   PrintLn(itm.owner());
   PrintLn(itm.value());

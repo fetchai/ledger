@@ -94,7 +94,10 @@ public:
         vm_->RuntimeError(e.what());
         return nullptr;
       }
+
       item.contract = doc["contract"].As<byte_array::ConstByteArray>();
+      
+      items.push_back( vm_->CreateNewObject< ItemWrapper >( item ) );
     }
 
     return CreateNewArray(vm_, items);
