@@ -13,6 +13,7 @@ endfunction
 @work("syngergic_contract1")
 function leisureMarketWork(work_param : Int64) : Array< Int64 >
   var dag = DAG();
+  var nodes = dag.getNodes();
 
   var itm = Item();
   PrintLn(itm.owner());

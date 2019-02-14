@@ -23,38 +23,20 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+
+#include "core/json/document.hpp"
 #include "ledger/dag/dag.hpp"
 #include "item.hpp"
 namespace fetch
 {
 namespace modules
 {
-/*
-// 1) register your class and get its interface
-
-auto myclassi = module.CreateClassType<MyClass>("MyClass");
-
-// 2) Register the instantiation:
-
-module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<MyClass>>(fetch::vm::TypeIds::IArray);
-
-// 3) setup MyClass
-
-myclassi.CreateInstanceFunction("Test", &MyClass::Test);
-
-void MyClass::Test(fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<MyClass>>> const & array)  { .... }
-
-// Now in the VM  script you can just do:
-
-var a = Array<MyClass>(6);
-var mc = MyClass(12, 34.5
-  */
 
   template<typename T>
-  vm::Ptr< vm::IArray > CreateNewArray(vm::VM *vm, std::vector< T > items)
+  vm::Ptr< vm::IArray > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
   {
     vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
-//    array->elements = std::move(items);
+    array->elements = items;
     return array;
   }
 
@@ -86,9 +68,34 @@ public:
   
   vm::Ptr< vm::IArray > GetNodes()
   {
-    std::vector< ItemWrapper > items;
+    std::vector< vm::Ptr< vm::Object > > items;
 
-    FETCH_UNUSED(dag_);
+    if(dag_ == nullptr)
+    {
+      RuntimeError("DAG pointer is null.");
+      return nullptr;
+    }
+
+    auto nodes = dag_->nodes();
+    for(auto &n : nodes )
+    {
+      if(n.second.previous.size() == 0)
+      {
+        continue;
+      }
+
+      Item item;
+      json::JSONDocument doc; // TODO: Use serialisation
+      try {
+
+        doc.Parse(n.second.contents);
+      } catch(fetch::json::JSONParseException &e)
+      {
+        vm_->RuntimeError(e.what());
+        return nullptr;
+      }
+      item.contract = doc["contract"].As<byte_array::ConstByteArray>();
+    }
 
     return CreateNewArray(vm_, items);
   }  

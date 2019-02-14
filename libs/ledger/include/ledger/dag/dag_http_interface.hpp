@@ -89,7 +89,6 @@ private:
     node.contents = data;
     node.identity = certificate_.identity();
 
-    std::cout << "WAS HERE!! -------------------------------------------------------" << std::endl;
     // TODO: Set previous and type
     auto prev_candidates = dag_.last_nodes();
 

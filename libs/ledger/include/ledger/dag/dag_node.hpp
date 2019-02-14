@@ -36,8 +36,8 @@ struct DAGNode
   // Different types of DAG nodes.
   enum
   {
-    WORK = 1,
-    BID  = 2
+    WORK  = 1,
+    DATA  = 2
   };
 
   uint64_t          timestamp{INVALID_TIMESTAMP};    ///< timestamp to that keeps the time since last validated block.
