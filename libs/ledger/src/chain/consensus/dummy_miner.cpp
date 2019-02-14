@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/encoders.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/block.hpp"
 
@@ -29,28 +30,28 @@ static uint32_t GetRandom()
   return dis(gen);
 }
 
+static constexpr char const *LOGGING_NAME = "DummyMiner";
+
+using fetch::byte_array::ToHex;
+
 namespace fetch {
 namespace ledger {
 namespace consensus {
 
 void DummyMiner::Mine(Block &block)
 {
-  uint64_t initNonce = GetRandom();
-  block.nonce        = initNonce;
-
-  block.UpdateDigest();
-
-  while (!block.proof())
+  for (;;)
   {
-    block.nonce++;
-    block.UpdateDigest();
+    if (Mine(block, std::numeric_limits<uint64_t>::max()))
+    {
+      break;
+    }
   }
 }
 
 bool DummyMiner::Mine(Block &block, uint64_t iterations)
 {
-  uint32_t initNonce = GetRandom();
-  block.nonce        = initNonce;
+  block.nonce = GetRandom();;
 
   block.UpdateDigest();
 
@@ -61,7 +62,14 @@ bool DummyMiner::Mine(Block &block, uint64_t iterations)
     iterations--;
   }
 
-  return block.proof();
+  bool const success = block.proof();
+  if (success)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Proof: Digest: ", ToHex(block.proof.digest()));
+    FETCH_LOG_INFO(LOGGING_NAME, "Proof: Target: ", ToHex(block.proof.target()));
+  }
+
+  return success;
 }
 
 }  // namespace consensus
