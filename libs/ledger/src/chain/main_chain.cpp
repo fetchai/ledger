@@ -65,7 +65,16 @@ MainChain::MainChain(bool disable_persistence)
  */
 bool MainChain::AddBlock(Block &block)
 {
-  return AddBlockInternal(block, false);
+  // update the weight based on the proof and the number of transactions
+  for (auto const &slice : block.body.slices)
+  {
+    block.weight += slice.size();
+  }
+
+  bool const success = AddBlockInternal(block, false);
+  FETCH_LOG_WARN(LOGGING_NAME, "New Block: ", ToBase64(block.body.hash), " -> ", block.weight, " -> ", block.total_weight);
+
+  return success;
 }
 
 /**
