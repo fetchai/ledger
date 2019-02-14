@@ -294,8 +294,9 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
     // load up the left side
     if (left.body.hash != left_hash)
     {
-      if (!Get(left_hash, left) || left.is_loose)
+      if (!Get(left_hash, left))
       {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (left): ", ToBase64(left_hash));
         break;
       }
 
@@ -306,8 +307,9 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
     // load up the right side
     if (right.body.hash != right_hash)
     {
-      if (!Get(right_hash, right) || right.is_loose)
+      if (!Get(right_hash, right))
       {
+        FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup block (right): ", ToBase64(right_hash));
         break;
       }
     }
