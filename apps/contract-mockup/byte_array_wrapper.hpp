@@ -28,12 +28,14 @@ public:
   {
     module.CreateClassType<ByteArrayWrapper>("ByteArray")
       .CreateTypeConstuctor<int32_t>()
+      .CreateInstanceFunction("copy", &ByteArrayWrapper::Copy)
       .EnableIndexOperator<uint8_t, int32_t>();
   }
 
   ByteArrayWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, byte_array::ByteArray const &bytearray)
     : fetch::vm::Object(vm, type_id)
     , byte_array_(bytearray)
+    , vm_(vm)
   {}
 
   static fetch::vm::Ptr<ByteArrayWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
@@ -48,6 +50,10 @@ public:
     return new ByteArrayWrapper(vm, type_id, bytearray );
   }
 
+  fetch::vm::Ptr<ByteArrayWrapper> Copy()
+  {
+    return vm_->CreateNewObject< ByteArrayWrapper >(byte_array_.Copy());
+  }
 
   ElementType *Find()
   {
@@ -98,6 +104,7 @@ public:
   }
 private:
   byte_array::ByteArray byte_array_;
+  fetch::vm::VM *vm_;
 };
 
 }

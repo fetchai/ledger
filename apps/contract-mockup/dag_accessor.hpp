@@ -24,11 +24,19 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "ledger/dag/dag.hpp"
-
+#include "item.hpp"
 namespace fetch
 {
 namespace modules
 {
+
+  template<typename T>
+  vm::Ptr< vm::IArray > CreateNewArray(vm::VM *vm, std::vector< T > items)
+  {
+    vm::Ptr< vm::Array< T > > array = new vm::Array<T> (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
+    array->elements = std::move(items);
+    return array;
+  }  
 
 class DAGWrapper : public fetch::vm::Object
 {
@@ -38,26 +46,34 @@ public:
 
   static void Bind(vm::Module &module)
   {
-    module.CreateClassType<DAGWrapper>("DAGWrapper")
-      .CreateTypeConstuctor<int64_t>()
-      .CreateInstanceFunction("next", &DAGWrapper::Next)
-      .CreateInstanceFunction("nextAsFloat", &DAGWrapper::NextAsFloat);
+    module.CreateClassType<DAGWrapper>("DAG")
+      .CreateTypeConstuctor<>()
+      .CreateInstanceFunction("getNodes", &DAGWrapper::GetNodes);
   }
 
-  DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ledger::DAG &dag)
+  DAGWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, ledger::DAG *dag)
     : fetch::vm::Object(vm, type_id)
     , dag_(dag)
-  {}
-/*
-  static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             int64_t seed)
-  {
-    return new VMDAG(vm, type_id, seed);
-  }
-*/
+  { }
 
+  static fetch::vm::Ptr<DAGWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  {
+    auto dag = vm->GetGlobalPointer<ledger::DAG> ();
+    return new DAGWrapper(vm, type_id, dag);
+  }
+
+  
+  vm::Ptr< vm::IArray > GetNodes()
+  {
+    std::vector< int64_t > items;
+
+    FETCH_UNUSED(dag_);
+
+    return CreateNewArray< int64_t >( vm_, items );
+  }
+    
 private:
-  ledger::DAG &dag_;
+  ledger::DAG *dag_{nullptr};
 };
 
 

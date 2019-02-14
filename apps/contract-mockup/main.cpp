@@ -27,6 +27,7 @@
 #include "byte_array_wrapper.hpp"
 #include "print.hpp"
 #include "item.hpp"
+#include "dag_accessor.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -90,13 +91,17 @@ int main(int argc, char **argv)
 
   fetch::modules::CryptoRNG::Bind(module);
   fetch::modules::ByteArrayWrapper::Bind(module);  
-  fetch::modules::ItemWrapper::Bind(module);    
+  fetch::modules::ItemWrapper::Bind(module);     
+  fetch::modules::DAGWrapper::Bind(module);
+
   fetch::modules::BindExp(module);
   fetch::modules::BindPrint(module);
   // Setting compiler up
+  fetch::ledger::DAG dag;
 
   fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
   fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
+  vm->RegisterGlobalPointer(&dag);
 
   fetch::vm::Script  script;
   fetch::vm::Strings errors;

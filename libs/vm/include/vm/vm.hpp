@@ -21,6 +21,7 @@
 #include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
 #include "vm/string.hpp"
+#include "vm/pointer_register.hpp"
 
 namespace fetch {
 namespace vm {
@@ -130,13 +131,40 @@ public:
     return Execute(error, output);
   }
 
-  template<typename T, typename ... Args>
-  Ptr<T> NewObject(Args &&... args)
+  template<typename T> 
+  TypeId GetTypeId()
   {
-    return new T(this, registered_types_.GetTypeId(std::type_index(typeid(T))), std::forward<Args>(args)...);
+    // TODO: Error if not.
+    return registered_types_.GetTypeId(std::type_index(typeid(T)));
   }
 
+  template<typename T, typename ... Args>
+  Ptr<T> CreateNewObject(Args &&... args)
+  {
+    return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
+  }
+
+
+  template< typename T >
+  void RegisterGlobalPointer(T* ptr)
+  {
+    pointer_register_.Set(ptr);
+  }
+
+  template< typename T >
+  T* GetGlobalPointer()
+  {
+    T* ptr = pointer_register_.Get<T>();
+    if(ptr == nullptr)
+    {
+      RuntimeError("could not find pointer.");
+    }
+    return ptr;
+  }  
+
 private:
+  PointerRegister pointer_register_;
+
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;

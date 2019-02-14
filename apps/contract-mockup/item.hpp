@@ -76,7 +76,7 @@ public:
 
   fetch::vm::Ptr< ByteArrayWrapper > owner()
   {
-    return vm_->NewObject<ByteArrayWrapper>(item_.owner);
+    return vm_->CreateNewObject<ByteArrayWrapper>(item_.owner);
   }
 
   int64_t type()
