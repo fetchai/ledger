@@ -427,6 +427,34 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     // call the block packer
     block_packer_.GenerateBlock(*current_block_, num_lanes_, num_slices_, chain_);
 
+#if 1
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(current_block_->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Previous.....: ", ToBase64(current_block_->body.previous_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Merkle.......: ", ToBase64(current_block_->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", current_block_->body.block_number);
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Miner........: ", ToBase64(current_block_->body.miner));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", current_block_->body.log2_num_lanes);
+
+    std::size_t slice_index{1};
+    for (auto const &slice : current_block_->body.slices)
+    {
+      if (!slice.empty())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", slice_index);
+
+        for (auto const &tx : slice)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "New Block: TX...........: ", ToBase64(tx.transaction_hash),
+                         " (", tx.contract_name, ")");
+        }
+      }
+
+      ++slice_index;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", ToBase64(current_block_->body.hash));
+#endif
+
     // update our desired next block time
     UpdateNextBlockTime();
 
