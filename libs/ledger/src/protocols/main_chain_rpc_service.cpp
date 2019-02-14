@@ -173,7 +173,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
-                 " (from peer: ", ToBase64(transmitter), ')');
+                 " (from peer: ", ToBase64(from), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
