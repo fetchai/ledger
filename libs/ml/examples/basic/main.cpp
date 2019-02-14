@@ -20,8 +20,8 @@
 #include "ml/graph.hpp"
 #include "ml/ops/fully_connected.hpp"
 
-#include "ml/ops/mean_square_error.hpp"
 #include "ml/ops/cross_entropy.hpp"
+#include "ml/ops/mean_square_error.hpp"
 
 #include "ml/ops/relu.hpp"
 #include "ml/ops/softmax.hpp"
@@ -32,13 +32,13 @@
 
 using namespace fetch::ml::ops;
 
-using DataType = float;
+using DataType  = float;
 using ArrayType = fetch::math::Tensor<DataType>;
 
 int main()
 {
   std::cout << "FETCH MNIST Demo" << std::endl;
-  MNISTLoader                dataloader;
+  MNISTLoader                 dataloader;
   fetch::ml::Graph<ArrayType> g;
   g.AddNode<PlaceHolder<ArrayType>>("Input", {});
   g.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -50,13 +50,13 @@ int main()
   //  Input -> FC -> Relu -> FC -> Relu -> FC -> Softmax
 
   CrossEntropyLayer<ArrayType> criterion;
-//  MeanSquareErrorLayer<ArrayType> criterion;
+  //  MeanSquareErrorLayer<ArrayType> criterion;
 
   std::pair<size_t, std::shared_ptr<ArrayType>> input;
   std::shared_ptr<ArrayType> gt = std::make_shared<ArrayType>(std::vector<size_t>({1, 10}));
 
   gt->At(0)         = 1.0;
-  DataType        loss = 0;
+  DataType     loss = 0;
   unsigned int i(0);
 
   while (true)
@@ -68,8 +68,8 @@ int main()
     input = dataloader.GetNext(input.second);
     g.SetInput("Input", input.second);
     gt->Fill(0);
-    gt->At(input.first)               = DataType(1.0);
-    std::shared_ptr<ArrayType > results = g.Evaluate("Softmax");
+    gt->At(input.first)                = DataType(1.0);
+    std::shared_ptr<ArrayType> results = g.Evaluate("Softmax");
 
     loss += criterion.Forward({results, gt});
     g.BackPropagate("Softmax", criterion.Backward({results, gt}));

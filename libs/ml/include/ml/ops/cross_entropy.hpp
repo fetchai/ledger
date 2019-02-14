@@ -69,19 +69,19 @@ public:
         // should be a one hot
         assert(false);
       }
-//      else if (logx.At(j) == 0)
-//      {
-//        plogx.Set(j, 0);
-//      }
-//      else
-//      {
-//        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
-//      }
+      //      else if (logx.At(j) == 0)
+      //      {
+      //        plogx.Set(j, 0);
+      //      }
+      //      else
+      //      {
+      //        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
+      //      }
     }
 
-    ArrayType cel      = fetch::math::Multiply(plogx, -1.0);
-    typename ArrayType::Type n = typename ArrayType::Type(cel.size());
-    ArrayType mean_cel = fetch::math::ReduceSum(cel, 1);
+    ArrayType                cel      = fetch::math::Multiply(plogx, -1.0);
+    typename ArrayType::Type n        = typename ArrayType::Type(cel.size());
+    ArrayType                mean_cel = fetch::math::ReduceSum(cel, 1);
 
     ArrayType ret = fetch::math::Divide(mean_cel, n);
     assert(ret.size() == 1);

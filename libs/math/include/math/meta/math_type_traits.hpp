@@ -338,7 +338,6 @@ struct IsBlasAndNoShapeArrayLike<fetch::math::ShapelessArray<T, C>, R>
 template <typename A, typename R>
 using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
 
-
 }  // namespace meta
 }  // namespace math
 }  // namespace fetch

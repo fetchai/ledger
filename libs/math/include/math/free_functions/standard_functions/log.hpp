@@ -36,7 +36,7 @@ fetch::math::meta::IsBlasAndShapedArray<ArrayType, void> Log(ArrayType &x)
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType>  Log(ArrayType const &x)
+fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const &x)
 {
   ArrayType ret{x.shape()};
   ret.Copy(x);

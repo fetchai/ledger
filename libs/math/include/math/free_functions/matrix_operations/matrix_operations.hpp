@@ -583,7 +583,6 @@ T Mean(ShapelessArray<T, C> const &obj1)
   return ret;
 }
 
-
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
 {
@@ -627,14 +626,14 @@ ArrayType ReduceSum(ArrayType const &obj1, std::size_t axis)
   if (axis == 0)
   {
     std::vector<std::size_t> new_shape{1, obj1.shape()[1]};
-    ArrayType ret{new_shape};
+    ArrayType                ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
   else
   {
     std::vector<std::size_t> new_shape{obj1.shape()[0], 1};
-    ArrayType ret{new_shape};
+    ArrayType                ret{new_shape};
     ReduceSum(obj1, axis, ret);
     return ret;
   }
@@ -655,11 +654,6 @@ ArrayType ReduceMean(ArrayType const &obj1, std::size_t const &axis)
   }
   return Divide(ReduceSum(obj1, axis), n);
 }
-
-
-
-
-
 
 /**
  * Distance between max and min values in an array

@@ -222,7 +222,6 @@ public:
     return At(i);
   }
 
-
   /*
    * return a slice of the tensor along the first dimension
    */
