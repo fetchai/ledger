@@ -38,7 +38,7 @@ class StateMachine : public Runnable
 public:
   static_assert(std::is_enum<State>::value, "");
 
-  using Callback            = std::function<State(State /*current*/)>;
+  using Callback            = std::function<State(State /*current*/, State /*previous*/)>;
   using StateChangeCallback = std::function<void(State /*current*/, State /*previous*/)>;
 
   // Construction / Destruction
@@ -104,8 +104,8 @@ void StateMachine<S>::RegisterHandler(S state, C *instance,
                                       S (C::*func)(S /*current*/, S /*previous*/))
 {
   FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func, this](S state) {
-    return (instance->*func)(state, previous_state_);
+  callbacks_[state] = [instance, func](S state, S prev) {
+    return (instance->*func)(state, prev);
   };
 }
 
@@ -114,7 +114,10 @@ template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*current*/))
 {
   FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S state) { return (instance->*func)(state); };
+  callbacks_[state] = [instance, func](S state, S prev) {
+    FETCH_UNUSED(prev);
+    return (instance->*func)(state);
+  };
 }
 
 template <typename S>
@@ -122,7 +125,11 @@ template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
 {
   FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S) { return (instance->*func)(); };
+  callbacks_[state] = [instance, func](S state, S prev) {
+    FETCH_UNUSED(state);
+    FETCH_UNUSED(prev);
+    return (instance->*func)();
+  };
 }
 
 template <typename S>
@@ -167,28 +174,21 @@ void StateMachine<S>::Execute()
   if (it != callbacks_.end())
   {
     // execute the state handler
-    S const next_state = it->second(current_state_);
+    S const next_state = it->second(current_state_, previous_state_);
 
-    // check to see if the state has been updated
-    if (next_state != current_state_)
+    // perform the state updates
+    previous_state_ = current_state_.load();
+    current_state_  = next_state;
+
+    // detect a state change
+    if (current_state_ != previous_state_)
     {
-      // state has been updated, trigger the update
-      previous_state_ = current_state_.load();
-      current_state_  = next_state;
-
       // trigger the state change callback if configured
       if (state_change_callback_)
       {
-        state_change_callback_(current_state_.load(), previous_state_.load());
+        state_change_callback_(current_state_, previous_state_);
       }
     }
-#if 0
-    else
-    {
-      // state has not been updated signal that we should plan the execution for a later time point.
-      next_execution_ = Clock::now() + std::chrono::milliseconds{10};
-    }
-#endif
   }
 }
 
