@@ -49,7 +49,6 @@ protected:
   using BasicMinerPtr       = std::unique_ptr<BasicMiner>;
   using MutableTransaction  = fetch::ledger::MutableTransaction;
   using VerifiedTransaction = fetch::ledger::VerifiedTransaction;
-  using BlockBody           = fetch::ledger::Block::Body;
   using Clock               = std::chrono::high_resolution_clock;
   using Timepoint           = Clock::time_point;
   using BitVector           = fetch::bitmanip::BitVector;
@@ -102,21 +101,21 @@ protected:
   BasicMinerPtr miner_;
 };
 
-TEST_P(BasicMinerTests, Sample)
+TEST_P(BasicMinerTests, SimpleExample)
 {
   std::size_t const num_tx = GetParam();
 
   PopulateWithTransactions(num_tx);
 
-  BlockBody block;
-  MainChain dummy;
+  Block     block;
+  MainChain dummy{true};
 
-  auto &heaviest_block = dummy.HeaviestBlock();
-  block.previous_hash  = heaviest_block.body.hash;
+  auto &heaviest_block     = dummy.HeaviestBlock();
+  block.body.previous_hash = heaviest_block.body.hash;
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
-  for (auto const &slice : block.slices)
+  for (auto const &slice : block.body.slices)
   {
     BitVector lanes{NUM_LANES};
 
@@ -152,32 +151,25 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   std::size_t lanes  = 16;
   std::size_t slices = 16;
 
-  // Takes too long in debug mode
-#if !defined(NDEBUG)
-  num_tx = num_tx / 16;
-  lanes  = lanes / 4;
-  slices = slices / 4;
-#endif
-
   miner_->log2_num_lanes() = uint32_t(fetch::platform::ToLog2(uint32_t(lanes)));
 
   PopulateWithTransactions(num_tx, 1);
-  MainChain                    chain;
+  MainChain                    chain{true};
   std::set<TransactionSummary> transactions_already_seen;
   std::set<TransactionSummary> transactions_within_block;
 
   while (miner_->GetBacklog() > 0)
   {
-    BlockBody body;
+    Block block;
 
-    auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.body.hash;
+    auto &heaviest_block     = chain.HeaviestBlock();
+    block.body.previous_hash = heaviest_block.body.hash;
 
-    miner_->GenerateBlock(body, lanes, slices, chain);
+    miner_->GenerateBlock(block, lanes, slices, chain);
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
       for (auto const &tx : slice)
       {
@@ -198,9 +190,8 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       transactions_already_seen.insert(tx);
     }
 
-    Block block;
-    block.body = body;
     block.UpdateDigest();
+
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
   }
@@ -213,21 +204,21 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
 
   while (miner_->GetBacklog() > 0)
   {
-    BlockBody body;
+    Block block;
 
-    auto &heaviest_block = chain.HeaviestBlock();
-    body.previous_hash   = heaviest_block.body.hash;
+    auto &heaviest_block     = chain.HeaviestBlock();
+    block.body.previous_hash = heaviest_block.body.hash;
 
-    miner_->GenerateBlock(body, NUM_LANES, NUM_SLICES, chain);
+    miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
       EXPECT_EQ(slice.size(), 0);
     }
 
     // Check no duplicate transactions within a block
     transactions_within_block.clear();
-    for (auto const &slice : body.slices)
+    for (auto const &slice : block.body.slices)
     {
       for (auto const &tx : slice)
       {
@@ -248,12 +239,11 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
       transactions_already_seen.insert(tx);
     }
 
-    Block block;
-    block.body = body;
     block.UpdateDigest();
+
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10000, 20000, 30000), );
+INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10, 20), );

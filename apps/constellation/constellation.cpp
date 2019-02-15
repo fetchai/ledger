@@ -44,11 +44,6 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
-
-using fetch::ledger::consensus::DummyMiner;
-using fetch::ledger::consensus::BadMiner;
-using fetch::ledger::consensus::ConsensusMinerType;
-
 using ConsensusMinerInterfacePtr =
     std::shared_ptr<fetch::ledger::consensus::ConsensusMinerInterface>;
 
@@ -126,28 +121,6 @@ std::map<LaneIndex, Uri> BuildLaneConnectionMap(Manifest const &manifest, LaneIn
   return connection_map;
 }
 
-/**
- * ConsensusMinerInterface factory method
- */
-ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_type)
-{
-  ConsensusMinerInterfacePtr miner;
-
-  switch (miner_type)
-  {
-  case ConsensusMinerType::NO_MINER:
-    break;
-  case ConsensusMinerType::DUMMY_MINER:
-    miner = std::make_shared<DummyMiner>();
-    break;
-  case ConsensusMinerType::BAD_MINER:
-    miner = std::make_shared<BadMiner>();
-    break;
-  }
-
-  return miner;
-}
-
 }  // namespace
 
 /**
@@ -162,69 +135,57 @@ ConsensusMinerInterfacePtr GetConsensusMiner(ConsensusMinerType const &miner_typ
  * @param interface_address The current interface address TODO(EJF): This should be more integrated
  * @param db_prefix The database file(s) prefix
  */
-Constellation::Constellation(CertificatePtr &&certificate, Manifest &&manifest,
-                             uint32_t num_executors, uint32_t log2_num_lanes, uint32_t num_slices,
-                             std::string interface_address, std::string const &db_prefix,
-                             std::string /*my_network_address*/, std::size_t   processor_threads,
-                             std::size_t                         verification_threads,
-                             std::chrono::steady_clock::duration block_interval,
-                             std::size_t max_peers, std::size_t transient_peers,
-                             uint32_t p2p_cycle_time_ms)
+Constellation::Constellation(CertificatePtr &&certificate, Config config)
   : active_{true}
-  , manifest_(std::move(manifest))
-  , interface_address_{std::move(interface_address)}
-  , num_lanes_{static_cast<uint32_t>(1u << log2_num_lanes)}
-  , num_slices_{static_cast<uint32_t>(num_slices)}
-  , p2p_port_(LookupLocalPort(manifest_, ServiceType::CORE))
-  , http_port_(LookupLocalPort(manifest_, ServiceType::HTTP))
-  , lane_port_start_(LookupLocalPort(manifest_, ServiceType::LANE))
-  , network_manager_{"NetMgr", CalcNetworkManagerThreads(num_lanes_)}
+  , cfg_{std::move(config)}
+  , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceType::CORE))
+  , http_port_(LookupLocalPort(cfg_.manifest, ServiceType::HTTP))
+  , lane_port_start_(LookupLocalPort(cfg_.manifest, ServiceType::LANE))
+  , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
   , muddle_{Muddle::NetworkId(ToString(ServiceType::CORE)), std::move(certificate),
             network_manager_}
   , trust_{}
-  , p2p_{muddle_, lane_control_, trust_, max_peers, transient_peers, p2p_cycle_time_ms}
+  , p2p_{muddle_,        lane_control_,        trust_,
+         cfg_.max_peers, cfg_.transient_peers, cfg_.peers_update_cycle_ms}
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(network_manager_))
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
-        db_prefix, num_executors, storage_,
-        [this] { return std::make_shared<Executor>(storage_); })}
-  , chain_{}
-  , block_packer_{log2_num_lanes, num_slices}
-  , block_coordinator_{chain_, *execution_manager_}
-  , consensus_miner_{GetConsensusMiner(ConsensusMinerType::NO_MINER)}
-  , miner_{num_lanes_,
-           num_slices,
-           chain_,
-           block_coordinator_,
-           block_packer_,
-           consensus_miner_,
-           muddle_.identity().identifier(),
-           block_interval}
+        cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
+  , chain_{true}
+  , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
+  , block_coordinator_{chain_,
+                       *execution_manager_,
+                       *storage_,
+                       block_packer_,
+                       *this,
+                       muddle_.identity().identifier(),
+                       cfg_.num_lanes(),
+                       cfg_.num_slices,
+                       cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               block_coordinator_)}
-  , tx_processor_{*storage_, block_packer_, processor_threads}
+  , tx_processor_{*storage_, block_packer_, cfg_.processor_threads}
   , http_{http_network_manager_}
   , http_modules_{
-        std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, num_lanes_),
-        std::make_shared<p2p::P2PHttpInterface>(log2_num_lanes, chain_, muddle_, p2p_, trust_,
+        std::make_shared<ledger::WalletHttpInterface>(*storage_, tx_processor_, cfg_.num_lanes()),
+        std::make_shared<p2p::P2PHttpInterface>(cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_,
                                                 block_packer_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_)}
 {
-  FETCH_UNUSED(num_slices_);
-
   // print the start up log banner
-  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", interface_address, " E ", num_executors, " S ",
-                 num_lanes_, "x", num_slices);
+  FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.interface_address, " E ",
+                 cfg_.num_executors, " S ", cfg_.num_lanes(), "x", cfg_.num_slices);
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
-  miner_.OnBlockComplete([this](auto const &block) { main_chain_service_->BroadcastBlock(block); });
+  // attach the services to the reactor
+  reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(db_prefix, num_lanes_, lane_port_start_, network_manager_,
-                       verification_threads);
+  lane_services_.Setup(cfg_.db_prefix, cfg_.num_lanes(), lane_port_start_, network_manager_,
+                       cfg_.verification_threads);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));
@@ -266,11 +227,17 @@ void Constellation::CreateInfoFile(std::string const &filename)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &mining)
+void Constellation::Run(UriList const &initial_peers)
 {
   //---------------------------------------------------------------
   // Step 1. Start all the components
   //---------------------------------------------------------------
+
+  // if a non-zero block interval it set then the application will generate blocks
+  if (cfg_.block_interval_ms > 0)
+  {
+    block_coordinator_.SetBlockPeriod(std::chrono::milliseconds{cfg_.block_interval_ms});
+  }
 
   /// NETWORKING INFRASTRUCTURE
 
@@ -293,38 +260,31 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   /// LANE / SHARD CLIENTS
 
   // add the lane connections
-  storage_->SetNumberOfLanes(num_lanes_);
+  storage_->SetNumberOfLanes(cfg_.num_lanes());
 
-  auto lane_connections_map = BuildLaneConnectionMap(manifest_, num_lanes_, true);
+  auto lane_connections_map = BuildLaneConnectionMap(cfg_.manifest, cfg_.num_lanes(), true);
 
   std::size_t const count = storage_->AddLaneConnectionsWaiting(
-      BuildLaneConnectionMap(manifest_, num_lanes_, true), LANE_CONNECTION_TIME);
+      BuildLaneConnectionMap(cfg_.manifest, cfg_.num_lanes(), true), LANE_CONNECTION_TIME);
 
   // check to see if the connections where successful
-  if (count != num_lanes_)
+  if (count != cfg_.num_lanes())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "ERROR: Unable to establish connections to lane service (", count,
-                    " of ", num_lanes_, ")");
+                    " of ", cfg_.num_lanes(), ")");
     return;
   }
 
   /// BLOCK EXECUTION & MINING
 
   execution_manager_->Start();
-  block_coordinator_.Start();
+  reactor_.Start();
   tx_processor_.Start();
-
-  if (mining != ConsensusMinerType::NO_MINER)
-  {
-    consensus_miner_ = GetConsensusMiner(mining);
-    miner_.SetConsensusMiner(consensus_miner_);
-    miner_.Start();
-  }
 
   /// P2P (TRUST) HIGH LEVEL MANAGEMENT
 
   // P2P configuration
-  p2p_.SetLocalManifest(manifest_);
+  p2p_.SetLocalManifest(cfg_.manifest);
   p2p_.Start(initial_peers);
 
   /// INPUT INTERFACES
@@ -352,14 +312,8 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   http_.Stop();
   p2p_.Stop();
 
-  // tear down all the services
-  if (mining != ConsensusMinerType::NO_MINER)
-  {
-    miner_.Stop();
-  }
-
   tx_processor_.Stop();
-  block_coordinator_.Stop();
+  reactor_.Stop();
   execution_manager_->Stop();
 
   storage_.reset();
@@ -370,6 +324,11 @@ void Constellation::Run(UriList const &initial_peers, ConsensusMinerType const &
   network_manager_.Stop();
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
+}
+
+void Constellation::OnBlock(ledger::Block const &block)
+{
+  main_chain_service_->BroadcastBlock(block);
 }
 
 }  // namespace fetch

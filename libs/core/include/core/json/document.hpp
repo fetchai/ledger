@@ -127,13 +127,12 @@ private:
   static void ExtractPrimitive(Variant &variant, JSONToken const &token,
                                ConstByteArray const &document);
 
-  std::vector<uint16_t>    counters_;
-  std::vector<JSONToken *> object_stack_;
-  std::vector<JSONToken>   tokens_;
+  std::vector<uint16_t>    counters_{};
+  std::vector<JSONToken *> object_stack_{};
+  std::vector<JSONToken>   tokens_{};
   Variant                  variant_{1024};
-  std::size_t              objects_;
-
-  std::vector<char> brace_stack_;
+  std::size_t              objects_{0};
+  std::vector<char>        brace_stack_{};
 };
 }  // namespace json
 }  // namespace fetch
