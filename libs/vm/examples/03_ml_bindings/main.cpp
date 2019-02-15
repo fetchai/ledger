@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/fully_connected.hpp"
+#include "ml/ops/mean_square_error.hpp"
 #include "ml/ops/relu.hpp"
 #include "ml/ops/softmax.hpp"
 
@@ -54,6 +55,19 @@ public:
     */
     return new TensorWrapper(vm, type_id, shape->elements);
   }
+
+  void SetAt(uint64_t index, float value)
+  {
+    (*this)->At(index) = value;
+  }
+
+  fetch::vm::Ptr<fetch::vm::String> ToString()
+  {
+    return new fetch::vm::String(vm_, (*this)->ToString());
+  }
+
+  
+  
 };
 
 class GraphWrapper : public fetch::vm::Object, public fetch::ml::Graph<fetch::math::Tensor<float>>
@@ -68,11 +82,6 @@ public:
     return new GraphWrapper(vm, type_id);
   }
 
-  void PassArray(fetch::vm::Ptr<fetch::vm::IArray> const &shape)
-  {
-    
-  }
-
   void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name, fetch::vm::Ptr<TensorWrapper> const &input)
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::SetInput(name->str, *input);
@@ -81,10 +90,21 @@ public:
   fetch::vm::Ptr<TensorWrapper> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
     std::shared_ptr<fetch::math::Tensor<float>> t = fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
-    // Need to convert std::shared_ptr to vm::Ptr
-    return nullptr;
+    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t->shape());
+    (*ret)->Copy(*t);
+    return ret;
   }
 
+  void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name, fetch::vm::Ptr<TensorWrapper> const &dt)
+  {
+    fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
+  }
+
+  void Step(float lr)
+  {
+    fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
+  }
+  
   void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name)
   {
     fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>(name->str, {});
@@ -159,6 +179,33 @@ private:
   MNISTLoader loader_;
 };
 
+class MSEWrapper : public fetch::vm::Object, public fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>
+{
+public:
+  MSEWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+    :fetch::vm::Object(vm, type_id)
+  {}
+
+  static fetch::vm::Ptr<MSEWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
+  {
+    return new MSEWrapper(vm, type_id);
+  }
+
+  float ForwardWrapper(fetch::vm::Ptr<TensorWrapper> const &pred, fetch::vm::Ptr<TensorWrapper> const &groundTruth)
+  {
+    return fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Forward({*pred, *groundTruth});
+  }
+
+  fetch::vm::Ptr<TensorWrapper> BackwardWrapper(fetch::vm::Ptr<TensorWrapper> const &pred, fetch::vm::Ptr<TensorWrapper> const &groundTruth)
+  {
+    std::shared_ptr<fetch::math::Tensor<float>> dt = fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Backward({*pred, *groundTruth});
+    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(dt->shape());
+    (*ret)->Copy(*dt);
+    return ret;
+  }
+
+};
+
 template<typename T>
 static void PrintNumber(fetch::vm::VM * /*vm*/, T const &s)
 {
@@ -195,25 +242,26 @@ int main(int argc, char **argv)
 
   fetch::vm::Module module;
 
-  module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("Print", &PrintNumber<int>);
   module.CreateFreeFunction("Print", &PrintNumber<uint64_t>);
   module.CreateFreeFunction("Print", &PrintNumber<float>);
   module.CreateFreeFunction("Print", &PrintNumber<double>);
-  module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("toString", &toString);
 
   module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
   
   module.CreateClassType<TensorWrapper>("Tensor")
-    .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<uint64_t>>>();
+    .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<uint64_t>>>()
+    .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
+    .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
   
   module.CreateClassType<GraphWrapper>("Graph")
     .CreateTypeConstuctor<>()
-    .CreateInstanceFunction("PassArray", &GraphWrapper::PassArray)
     .CreateInstanceFunction("SetInput", &GraphWrapper::SetInput)
     .CreateInstanceFunction("Evaluate", &GraphWrapper::Evaluate)
+    .CreateInstanceFunction("Backpropagate", &GraphWrapper::Backpropagate)
+    .CreateInstanceFunction("Step", &GraphWrapper::Step)
     .CreateInstanceFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
     .CreateInstanceFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
     .CreateInstanceFunction("AddRelu", &GraphWrapper::AddRelu)
@@ -227,6 +275,12 @@ int main(int argc, char **argv)
   module.CreateClassType<DataLoaderWrapper>("MNISTLoader")
     .CreateTypeConstuctor<>()
     .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData);
+
+  module.CreateClassType<MSEWrapper>("MeanSquareError")
+    .CreateTypeConstuctor<>()
+    .CreateInstanceFunction("Forward", &MSEWrapper::ForwardWrapper)
+    .CreateInstanceFunction("Backward", &MSEWrapper::BackwardWrapper);
+  
   
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);

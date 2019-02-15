@@ -149,11 +149,11 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
     buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
   }
   unsigned int label = (unsigned int)(labels_[cursor_]);
-  if (cursor_ % 1000 == 0)
-  {
-    std::cout << cursor_ << " / " << size_ << std::endl;
-    Display(buffer);
-  }
+  // if (cursor_ % 1000 == 0)
+  // {
+  //   std::cout << cursor_ << " / " << size_ << std::endl;
+  //   Display(buffer);
+  // }
   cursor_++;
   return std::make_pair(label, buffer);
 }
