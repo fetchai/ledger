@@ -119,12 +119,11 @@ TEST_F(MainChainTests, CheckSideChainSwitching)
   ASSERT_EQ(chain_->heaviest_block_hash(), side2->body.hash);
   ASSERT_TRUE(chain_->AddBlock(*main2));
   ASSERT_EQ(chain_->heaviest_block_hash(),
-            main2->body.hash);  // this happens to be the case because of the values of the hashes
+            side2->body.hash);  // this happens to be the case because of the values of the hashes
   ASSERT_TRUE(chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->heaviest_block_hash(), main3->body.hash);
 }
 
-#if 1
 TEST_F(MainChainTests, CheckChainTipInvalidation)
 {
   auto const genesis = generator_->Generate();
@@ -156,7 +155,7 @@ TEST_F(MainChainTests, CheckChainTipInvalidation)
   ASSERT_EQ(chain_->heaviest_block_hash(), side2->body.hash);
   ASSERT_TRUE(chain_->AddBlock(*main2));
   ASSERT_EQ(chain_->heaviest_block_hash(),
-            main2->body.hash);  // this happens to be the case because of the values of the hashes
+            side2->body.hash);  // this happens to be the case because of the values of the hashes
   ASSERT_TRUE(chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->heaviest_block_hash(), main3->body.hash);
 
@@ -164,9 +163,8 @@ TEST_F(MainChainTests, CheckChainTipInvalidation)
   ASSERT_TRUE(chain_->InvalidateTip(main3->body.hash));
   FETCH_LOG_DEBUG(LOGGING_NAME, "Heaviest: ", ToBase64(chain_->heaviest_block_hash()));
 
-  ASSERT_EQ(chain_->heaviest_block_hash(), main2->body.hash);
+  ASSERT_EQ(chain_->heaviest_block_hash(), side2->body.hash);
 }
-#endif
 
 TEST_F(MainChainTests, CheckChainBlockInvalidation)
 {
@@ -199,7 +197,7 @@ TEST_F(MainChainTests, CheckChainBlockInvalidation)
   ASSERT_EQ(chain_->heaviest_block_hash(), side2->body.hash);
   ASSERT_TRUE(chain_->AddBlock(*main2));
   ASSERT_EQ(chain_->heaviest_block_hash(),
-            main2->body.hash);  // this happens to be the case because of the values of the hashes
+            side2->body.hash);  // this happens to be the case because of the values of the hashes
   ASSERT_TRUE(chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->heaviest_block_hash(), main3->body.hash);
 
