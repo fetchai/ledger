@@ -44,3 +44,9 @@ fetch::fixed_point::FixedPoint<I, F> exp(fetch::fixed_point::FixedPoint<I, F> n)
 {
   return fetch::fixed_point::FixedPoint<I, F>(::exp(double(n)));
 }
+
+template <std::size_t I, std::size_t F>
+fetch::fixed_point::FixedPoint<I, F> log(fetch::fixed_point::FixedPoint<I, F> n)
+{
+  return fetch::fixed_point::FixedPoint<I, F>(::log(double(n)));
+}
