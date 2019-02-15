@@ -71,11 +71,12 @@ public:
                                              ByteArrayWrapper contract, ByteArrayWrapper owner, 
                                              int64_t type, int64_t id, int64_t value)
   {
-    return new ItemWrapper(vm, type_id, Item{contract.byte_array(), owner.byte_array(), type, id, value} );
+    return new ItemWrapper(vm, type_id, Item{contract.byte_array(), owner.byte_array(), type, id, value});
   }
 
   static fetch::vm::Ptr<ItemWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
   {
+    // TODO: Delete this constructor
     return new ItemWrapper(vm, type_id, Item{"hello", "world",2,3,4} );
   }
 

@@ -48,6 +48,7 @@ struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
 
 template <int POSITION, typename... Ts>
 struct AssignParameters;
+
 template <int POSITION, typename T, typename... Ts>
 struct AssignParameters<POSITION, T, Ts...>
 {
@@ -65,6 +66,19 @@ struct AssignParameters<POSITION, T, Ts...>
     }
   }
 };
+
+template <int POSITION,  typename... Ts>
+struct AssignParameters<POSITION, Variant, Ts...>
+{
+  // Invoked on non-final parameter
+  static void Assign(Variant *stack, RegisteredTypes &types, Variant const &parameter,
+                     Ts const &... parameters)
+  {
+    stack[POSITION] = parameter;
+    AssignParameters<POSITION + 1, Ts...>::Assign(stack, types, parameters...);
+  }
+};
+
 template <int POSITION, typename T>
 struct AssignParameters<POSITION, T>
 {
@@ -80,6 +94,18 @@ struct AssignParameters<POSITION, T>
     }
   }
 };
+
+template <int POSITION>
+struct AssignParameters<POSITION, Variant>
+{
+  // Invoked on final parameter
+  static void Assign(Variant *stack, RegisteredTypes &types, Variant const &parameter)
+  {
+    stack[POSITION] = parameter;
+  }
+};
+
+
 template <int POSITION>
 struct AssignParameters<POSITION>
 {

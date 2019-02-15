@@ -1,27 +1,28 @@
 
+@problem
+function createProblem() : Array< Int64 > 
+  var problem = Array< Int64 >(200) ;
+  PrintLn("Generating problem");
+  return problem;
+endfunction
+
 @objective
-function objective(solution : Array< Int32 >, problem : Matrix< Float64 > ) : Float64
+function evaluate(problem : Array< Int64 >, solution : Array< Int64 >) : Float64
   var cost : Float64 = toFloat64(0);
 
   return cost;
 endfunction
 
-
-@param(work_param = "The work parameter.")
-@help("This function computes the optimal market configuration for our hotel demo.")
-
-@work("syngergic_contract1")
-function leisureMarketWork(work_param : Int64) : Array< Int64 >
+@work
+function leisureMarketWork(problem : Array< Int64 >, nonce : Int64) : Array< Int64 >
+  PrintLn("Mining solution.");
   var dag = DAG();
   var nodes = dag.getNodes();
 
-  for(i in 0:(nodes.size()-1))
-    PrintLn("Node found");
+  for(i in 0:0) //(nodes.size()-1))
+    PrintLn("Node found" );
+    PrintLn(nodes[i].owner());
   endfor
-
-  var itm = Item();
-  PrintLn(itm.owner());
-  PrintLn(itm.value());
 
   var bytearray = ByteArray(20);
   for(i in 0:19)
@@ -51,25 +52,24 @@ function leisureMarketWork(work_param : Int64) : Array< Int64 >
 
   // Getting the problem
   var n = 64; // Problem size.
-  var state = Array< Int32 >(n);
-  var problem = Matrix< Float64 >(n,n);
+  var state = Array< Int64 >(n);
   // TODO: Load
-  var cost_function = objective(state, problem);
+  var cost_function = evaluate(state, problem);
 
   // Main loop of annealing algorithm
   var delta = (beta1 - beta0) / toFloat64(run_time);
-  var rng = CryptoRNG( toUInt64(work_param) );
+  var rng = CryptoRNG( toUInt64(nonce) );
   
   for(i in toInt64(0):run_time)
     for(j in 0:n-1)
 
-      if(state[j] == 0)
-        state[j] = 1;
+      if(state[j] == toInt64(0))
+        state[j] = toInt64(1);
       else
-        state[j] = 0;
+        state[j] = toInt64(0);
       endif
 
-      var new_cost = objective(state, problem);
+      var new_cost = evaluate(state, problem);
       var cost_change = cost_function - new_cost;
       var boltzmann = exp(-beta * cost_change);
 
@@ -86,7 +86,7 @@ endfunction
 
 
 function main()
-  leisureMarketWork(toInt64(2042223));
+//  leisureMarketWork(toInt64(2042223));
 endfunction
 
 

@@ -33,16 +33,23 @@ namespace modules
 {
 
   template<typename T>
-  vm::Ptr< vm::IArray > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
+  vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
   {
     vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
-    array->elements = items;
+    std::size_t idx = 0;
+
+    for(auto const &e: items)
+    {
+      array->elements[idx++] = e;
+    }
+
     return array;
   }
 
 class DAGWrapper : public fetch::vm::Object
 {
 public:
+
   DAGWrapper()          = delete;
   virtual ~DAGWrapper() = default;
 
@@ -65,10 +72,9 @@ public:
     return new DAGWrapper(vm, type_id, dag);
   }
 
-  
-  vm::Ptr< vm::IArray > GetNodes()
+  vm::Ptr< vm::Array< vm::Ptr< ItemWrapper > > > GetNodes()
   {
-    std::vector< vm::Ptr< vm::Object > > items;
+    std::vector< vm::Ptr< ItemWrapper > > items;
 
     if(dag_ == nullptr)
     {
@@ -95,11 +101,14 @@ public:
         return nullptr;
       }
 
+      // TODO: Extend
       item.contract = doc["contract"].As<byte_array::ConstByteArray>();
-      
+      item.owner = doc["owner"].As<byte_array::ConstByteArray>();      
+
       items.push_back( vm_->CreateNewObject< ItemWrapper >( item ) );
     }
 
+    std::cout << "Created list with " << items.size() << " elements" << std::endl;
     return CreateNewArray(vm_, items);
   }  
     

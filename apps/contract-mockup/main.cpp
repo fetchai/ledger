@@ -29,38 +29,10 @@
 #include "item.hpp"
 #include "dummy.hpp"
 #include "dag_accessor.hpp"
+#include "miner.hpp"
 
 #include <fstream>
 #include <sstream>
-
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
-
-
-struct System : public fetch::vm::Object
-{
-  System()          = delete;
-  virtual ~System() = default;
-
-  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
-  {
-    return int32_t(System::args.size());
-  }
-
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
-  {
-    return fetch::vm::Ptr<fetch::vm::String>(
-        new fetch::vm::String(vm, System::args[std::size_t(a)]));
-  }
-
-  static std::vector<std::string> args;
-};
-
-std::vector<std::string> System::args;
 
 int main(int argc, char **argv)
 {
@@ -70,11 +42,6 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
-  for (int i = 1; i < argc; ++i)
-  {
-    System::args.push_back(std::string(argv[i]));
-  }
-
   // Reading file
   std::ifstream      file(argv[1], std::ios::binary);
   std::ostringstream ss;
@@ -82,22 +49,6 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-  // Creating new VM module
-  fetch::vm::Module module;
-
-  module.CreateFreeFunction("toString", &toString);
-  module.CreateClassType<System>("System")
-      .CreateTypeFunction("Argc", &System::Argc)
-      .CreateTypeFunction("Argv", &System::Argv);
-
-  fetch::modules::CryptoRNG::Bind(module);
-  fetch::modules::ByteArrayWrapper::Bind(module);  
-  fetch::modules::ItemWrapper::Bind(module);     
-  fetch::modules::DAGWrapper::Bind(module);
-
-  fetch::modules::BindExp(module);
-  fetch::modules::BindPrint(module);
-  // Setting compiler up
   fetch::ledger::DAG dag;
   fetch::ledger::DAGNode node;
 
@@ -106,44 +57,18 @@ int main(int argc, char **argv)
     node.previous.push_back(n.second.hash);
   }
 
-  node.contents  = "{\"contract\":\"hello.contract\"}";
+  node.contents  = "{\"contract\":\"hello.contract\", \"owner\":\"troels\"}";
+  dag.Push(node);
 
-
-  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
-  vm->RegisterGlobalPointer(&dag);
-
-  fetch::vm::Script  script;
-  fetch::vm::Strings errors;
-  bool               compiled = compiler->Compile(source, "myscript", script, errors);
-
-  if (!compiled)
+  fetch::consensus::Miner miner(dag);
+  if(!miner.AttachContract("0xf232", source))
   {
-    std::cout << "Failed to compile" << std::endl;
-    for (auto &s : errors)
-    {
-      std::cout << s << std::endl;
-    }
-    return -1;
+    std::cout << "Could not attach contract."  << std::endl;
+    return 0;
   }
 
-  if (!script.FindFunction("main"))
-  {
-    std::cout << "Function 'main' not found" << std::endl;
-    return -2;
-  }
+  miner.ExecuteWork(12232);
 
-  std::string        error;
-  fetch::vm::Variant output;
-
-  // Setting VM up and running
-  if (!vm->Execute(script, "main", error, output))
-  {
-    std::cout << "Runtime error: " << error << std::endl;
-  }
-
-  delete compiler;
-  delete vm;
 
   return 0;
 }
