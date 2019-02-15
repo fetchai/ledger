@@ -50,7 +50,7 @@ TEST(crypto_merkle_tree, empty_tree)
   EXPECT_EQ(tree.root(), Hash<crypto::SHA256>(ByteArray{}));
 }
 
-TEST(crypto_merkle_tree, manual_test)
+TEST(crypto_merkle_tree, manual_test_log2_count)
 {
   MerkleTree tree{4};
 
@@ -72,6 +72,37 @@ TEST(crypto_merkle_tree, manual_test)
   auto const final         = CalculateHash(intermediate1, intermediate2);
 
   tree.CalculateRoot();
+  EXPECT_EQ(tree.root().size(), 256 / 8);
+  EXPECT_EQ(tree.root(), final);
+}
+
+TEST(crypto_merkle_tree, manual_test_non_log2_count)
+{
+  MerkleTree tree{5};
+
+  // populate the tree
+  for (std::size_t i = 0; i < tree.size(); ++i)
+  {
+    // generate the value
+    ByteArray hash_value;
+    hash_value.Resize(256 / 8);
+    std::memset(hash_value.pointer(), static_cast<int>(i), hash_value.size());
+
+    // store it in the tree
+    tree[i] = hash_value;
+  }
+
+  // manually generate the merkle hash
+  auto const intermediate1_1 = CalculateHash(tree[0], tree[1]);
+  auto const intermediate1_2 = CalculateHash(tree[2], tree[3]);
+  auto const intermediate1_3 = CalculateHash(tree[4], ConstByteArray{});
+  auto const intermediate1_4 = CalculateHash(ConstByteArray{}, ConstByteArray{});
+  auto const intermediate2_1 = CalculateHash(intermediate1_1, intermediate1_2);
+  auto const intermediate2_2 = CalculateHash(intermediate1_3, intermediate1_4);
+  auto const final           = CalculateHash(intermediate2_1, intermediate2_2);
+
+  tree.CalculateRoot();
+
   EXPECT_EQ(tree.root().size(), 256 / 8);
   EXPECT_EQ(tree.root(), final);
 }
