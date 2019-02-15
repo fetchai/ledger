@@ -47,7 +47,7 @@ public:
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using Hash = byte_array::ConstByteArray;
+  using Hash            = byte_array::ConstByteArray;
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
   using TxSummaries     = std::vector<TransactionSummary>;
