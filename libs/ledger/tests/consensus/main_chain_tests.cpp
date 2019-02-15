@@ -72,7 +72,7 @@ TEST(ledger_main_chain_gtest, building_on_main_chain)
 {
   Block block;
 
-  MainChain mainChain{};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto genesis = mainChain.HeaviestBlock();
@@ -120,7 +120,7 @@ TEST(ledger_main_chain_gtest, building_on_main_chain)
 
 TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
 {
-  MainChain mainChain{};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
@@ -167,7 +167,7 @@ TEST(ledger_main_chain_gtest, addition_of_blocks_out_of_order)
 
 TEST(ledger_main_chain_gtest, addition_of_blocks_with_a_break)
 {
-  MainChain mainChain{};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
@@ -290,7 +290,7 @@ TEST(ledger_main_chain_gtest, Test_mining_proof_after_serialization)
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
 {
-  MainChain mainChain{};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
@@ -339,7 +339,7 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially)
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
 {
-  MainChain mainChain{};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
@@ -392,7 +392,7 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order)
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_storage)
 {
-  MainChain mainChain{0};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
@@ -440,7 +440,7 @@ TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_sequentially_with_file_
 
 TEST(ledger_main_chain_gtest, Testing_time_to_add_blocks_out_of_order_with_file_storage)
 {
-  MainChain mainChain{0};
+  MainChain mainChain{true};
   mainChain.Reset();
 
   auto block = mainChain.HeaviestBlock();
