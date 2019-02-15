@@ -130,15 +130,13 @@ public:
     return Execute(error, output);
   }
 
-  
-  template<typename T> 
+  template <typename T>
   TypeId GetTypeId()
   {
-    // TODO: Error if not.
     return registered_types_.GetTypeId(std::type_index(typeid(T)));
   }
 
-  template<typename T, typename ... Args>
+  template <typename T, typename... Args>
   Ptr<T> CreateNewObject(Args &&... args)
   {
     return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
