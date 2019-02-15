@@ -30,130 +30,35 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/mean_square_error.hpp"
+
 #include "mnist_loader.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <vector>
 
-class TensorWrapper : public fetch::vm::Object, public std::shared_ptr<fetch::math::Tensor<float>>
+class TrainingPairWrapper
+  : public fetch::vm::Object,
+    public std::pair<uint64_t, fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>
 {
 public:
-  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::size_t> const &shape)
-    : fetch::vm::Object(vm, type_id)
-    , std::shared_ptr<fetch::math::Tensor<float>>(new fetch::math::Tensor<float>(shape))
-  {}
-
-  static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                   fetch::vm::Ptr<fetch::vm::Array<uint64_t>> shape)
-  {
-    /*
-    if(shape.type != TYPE_INT32)
-      {
-        vm->RuntimeError("constructor args must be array of ints");
-        return nullptr;
-      }
-    */
-    return new TensorWrapper(vm, type_id, shape->elements);
-  }
-
-  void SetAt(uint64_t index, float value)
-  {
-    (*this)->At(index) = value;
-  }
-
-  fetch::vm::Ptr<fetch::vm::String> ToString()
-  {
-    return new fetch::vm::String(vm_, (*this)->ToString());
-  }
-};
-
-class GraphWrapper : public fetch::vm::Object, public fetch::ml::Graph<fetch::math::Tensor<float>>
-{
-public:
-  GraphWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-    , fetch::ml::Graph<fetch::math::Tensor<float>>()
-  {}
-
-  static fetch::vm::Ptr<GraphWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return new GraphWrapper(vm, type_id);
-  }
-
-  void SetInput(fetch::vm::Ptr<fetch::vm::String> const &name,
-                fetch::vm::Ptr<TensorWrapper> const &    input)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::SetInput(name->str, *input);
-  }
-
-  fetch::vm::Ptr<TensorWrapper> Evaluate(fetch::vm::Ptr<fetch::vm::String> const &name)
-  {
-    std::shared_ptr<fetch::math::Tensor<float>> t =
-        fetch::ml::Graph<fetch::math::Tensor<float>>::Evaluate(name->str);
-    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(t->shape());
-    (*ret)->Copy(*t);
-    return ret;
-  }
-
-  void Backpropagate(fetch::vm::Ptr<fetch::vm::String> const &name,
-                     fetch::vm::Ptr<TensorWrapper> const &    dt)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::BackPropagate(name->str, *dt);
-  }
-
-  void Step(float lr)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::Step(lr);
-  }
-
-  void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::PlaceHolder<fetch::math::Tensor<float>>>(name->str, {});
-  }
-
-  void AddFullyConnected(fetch::vm::Ptr<fetch::vm::String> const &name,
-                         fetch::vm::Ptr<fetch::vm::String> const &inputName, int in, int out)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::FullyConnected<fetch::math::Tensor<float>>>(
-        name->str, {inputName->str}, std::size_t(in), std::size_t(out));
-  }
-
-  void AddRelu(fetch::vm::Ptr<fetch::vm::String> const &name,
-               fetch::vm::Ptr<fetch::vm::String> const &inputName)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::ReluLayer<fetch::math::Tensor<float>>>(name->str, {inputName->str});
-  }
-
-  void AddSoftmax(fetch::vm::Ptr<fetch::vm::String> const &name,
-                  fetch::vm::Ptr<fetch::vm::String> const &inputName)
-  {
-    fetch::ml::Graph<fetch::math::Tensor<float>>::AddNode<
-        fetch::ml::ops::SoftmaxLayer<fetch::math::Tensor<float>>>(name->str, {inputName->str});
-  }
-};
-
-class TrainingPairWrapper : public fetch::vm::Object,
-                            public std::pair<uint64_t, fetch::vm::Ptr<TensorWrapper>>
-{
-public:
-  TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<TensorWrapper> t)
+  TrainingPairWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> t)
     : fetch::vm::Object(vm, type_id)
   {
     this->second = t;
   }
 
-  static fetch::vm::Ptr<TrainingPairWrapper> Constructor(fetch::vm::VM *               vm,
-                                                         fetch::vm::TypeId             type_id,
-                                                         fetch::vm::Ptr<TensorWrapper> t)
+  static fetch::vm::Ptr<TrainingPairWrapper> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> t)
   {
     return new TrainingPairWrapper(vm, type_id, t);
   }
 
-  fetch::vm::Ptr<TensorWrapper> data()
+  fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> data()
   {
     return this->second;
   }
@@ -190,38 +95,6 @@ public:
 
 private:
   MNISTLoader loader_;
-};
-
-class MSEWrapper : public fetch::vm::Object,
-                   public fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>
-{
-public:
-  MSEWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-    : fetch::vm::Object(vm, type_id)
-  {}
-
-  static fetch::vm::Ptr<MSEWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    return new MSEWrapper(vm, type_id);
-  }
-
-  float ForwardWrapper(fetch::vm::Ptr<TensorWrapper> const &pred,
-                       fetch::vm::Ptr<TensorWrapper> const &groundTruth)
-  {
-    return fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Forward(
-        {*pred, *groundTruth});
-  }
-
-  fetch::vm::Ptr<TensorWrapper> BackwardWrapper(fetch::vm::Ptr<TensorWrapper> const &pred,
-                                                fetch::vm::Ptr<TensorWrapper> const &groundTruth)
-  {
-    std::shared_ptr<fetch::math::Tensor<float>> dt =
-        fetch::ml::ops::MeanSquareErrorLayer<fetch::math::Tensor<float>>::Backward(
-            {*pred, *groundTruth});
-    fetch::vm::Ptr<TensorWrapper> ret = this->vm_->CreateNewObject<TensorWrapper>(dt->shape());
-    (*ret)->Copy(*dt);
-    return ret;
-  }
 };
 
 template <typename T>
@@ -267,35 +140,18 @@ int main(int argc, char **argv)
 
   module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t>(fetch::vm::TypeIds::IArray);
 
-  module.CreateClassType<TensorWrapper>("Tensor")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<uint64_t>>>()
-      .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
-      .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
-
-  module.CreateClassType<GraphWrapper>("Graph")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("SetInput", &GraphWrapper::SetInput)
-      .CreateInstanceFunction("Evaluate", &GraphWrapper::Evaluate)
-      .CreateInstanceFunction("Backpropagate", &GraphWrapper::Backpropagate)
-      .CreateInstanceFunction("Step", &GraphWrapper::Step)
-      .CreateInstanceFunction("AddPlaceholder", &GraphWrapper::AddPlaceholder)
-      .CreateInstanceFunction("AddFullyConnected", &GraphWrapper::AddFullyConnected)
-      .CreateInstanceFunction("AddRelu", &GraphWrapper::AddRelu)
-      .CreateInstanceFunction("AddSoftmax", &GraphWrapper::AddSoftmax);
+  fetch::vm_modules::ml::CreateTensor(module);
+  fetch::vm_modules::ml::CreateGraph(module);
+  fetch::vm_modules::ml::CreateMeanSquareError(module);
 
   module.CreateClassType<TrainingPairWrapper>("TrainingPair")
-      .CreateTypeConstuctor<fetch::vm::Ptr<TensorWrapper>>()
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
       .CreateInstanceFunction("Data", &TrainingPairWrapper::data)
       .CreateInstanceFunction("Label", &TrainingPairWrapper::label);
 
   module.CreateClassType<DataLoaderWrapper>("MNISTLoader")
       .CreateTypeConstuctor<>()
       .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData);
-
-  module.CreateClassType<MSEWrapper>("MeanSquareError")
-      .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("Forward", &MSEWrapper::ForwardWrapper)
-      .CreateInstanceFunction("Backward", &MSEWrapper::BackwardWrapper);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
