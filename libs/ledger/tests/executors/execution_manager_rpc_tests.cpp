@@ -80,8 +80,7 @@ protected:
 
     // server
     service_ = std::make_unique<ExecutionManagerRpcService>(
-        PORT, *network_manager_, "exec_mgr_rpc_tests_", config.executors, storage_,
-        [this]() { return CreateExecutor(); });
+        PORT, *network_manager_, config.executors, storage_, [this]() { return CreateExecutor(); });
 
     manager_ = std::make_unique<ExecutionManagerRpcClient>(*network_manager_);
 

@@ -23,7 +23,7 @@ namespace vm_modules {
 /**
  * method for printing string to std::cout
  */
-static void Print(fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &s)
+static void Print(fetch::vm::VM *, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
 }

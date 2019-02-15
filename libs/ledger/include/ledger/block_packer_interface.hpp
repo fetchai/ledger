@@ -17,27 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/chain/mutable_transaction.hpp"
-
 #include <cstddef>
+#include <cstdint>
 
 namespace fetch {
-namespace miner {
+namespace ledger {
+
+// forward declarations
+class Block;
+class MainChain;
+struct TransactionSummary;
 
 /**
  * Interface that generalises all mining / block packing algorithms in the system
  */
-class MinerInterface
+class BlockPackerInterface
 {
 public:
-  using BlockBody = ledger::Block::Body;
-  using MainChain = ledger::MainChain;
-
   // Construction / Destruction
-  MinerInterface()          = default;
-  virtual ~MinerInterface() = default;
+  BlockPackerInterface()          = default;
+  virtual ~BlockPackerInterface() = default;
 
   /// @name Miner Interface
   /// @{
@@ -47,7 +46,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(ledger::TransactionSummary const &tx) = 0;
+  virtual void EnqueueTransaction(TransactionSummary const &tx) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions
@@ -57,7 +56,7 @@ public:
    * @param num_slices The number of slices for the block
    * @param chain The main chain
    */
-  virtual void GenerateBlock(BlockBody &block, std::size_t num_lanes, std::size_t num_slices,
+  virtual void GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                              MainChain const &chain) = 0;
 
   /**
@@ -69,5 +68,5 @@ public:
   /// @}
 };
 
-}  // namespace miner
+}  // namespace ledger
 }  // namespace fetch

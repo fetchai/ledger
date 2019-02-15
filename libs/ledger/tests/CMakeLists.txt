@@ -13,6 +13,6 @@ setup_compiler()
 add_fetch_test(chaincode_gtest fetch-ledger chaincode SLOW)
 add_fetch_test(executors_gtest fetch-ledger executors SLOW)
 target_include_directories(executors_gtest PRIVATE chaincode)
-add_fetch_test(ledger_main_chain_gtest fetch-ledger consensus SLOW)
+add_fetch_test(ledger_main_chain_gtest fetch-ledger consensus)
 add_fetch_test(ledger-chain-tests fetch-ledger chain)
 

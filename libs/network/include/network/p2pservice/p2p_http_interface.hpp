@@ -24,6 +24,7 @@
 #include "core/logger.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
@@ -40,21 +41,21 @@ namespace p2p {
 class P2PHttpInterface : public http::HTTPModule
 {
 public:
-  using MainChain   = ledger::MainChain;
-  using Muddle      = muddle::Muddle;
-  using TrustSystem = P2PTrustInterface<Muddle::Address>;
-  using Miner       = miner::MinerInterface;
+  using MainChain            = ledger::MainChain;
+  using Muddle               = muddle::Muddle;
+  using TrustSystem          = P2PTrustInterface<Muddle::Address>;
+  using BlockPackerInterface = ledger::BlockPackerInterface;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
   P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, Miner &miner)
+                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
     , muddle_(muddle)
     , p2p_(p2p_service)
     , trust_(trust)
-    , miner_(miner)
+    , packer_(packer)
   {
     Get("/api/status/chain",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -186,7 +187,7 @@ private:
                                       http::HTTPRequest const & /*request*/)
   {
     variant::Variant data = variant::Variant::Object();
-    data["backlog"]       = miner_.GetBacklog();
+    data["backlog"]       = packer_.GetBacklog();
 
     return http::CreateJsonResponse(data);
   }
@@ -290,12 +291,12 @@ private:
     return cache;
   }
 
-  uint32_t     log2_num_lanes_;
-  MainChain &  chain_;
-  Muddle &     muddle_;
-  P2PService & p2p_;
-  TrustSystem &trust_;
-  Miner &      miner_;
+  uint32_t              log2_num_lanes_;
+  MainChain &           chain_;
+  Muddle &              muddle_;
+  P2PService &          p2p_;
+  TrustSystem &         trust_;
+  BlockPackerInterface &packer_;
 };
 
 }  // namespace p2p

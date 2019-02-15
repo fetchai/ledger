@@ -17,21 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_version.hpp"
-
-#include <iostream>
 #include <string>
 
 namespace fetch {
 namespace commandline {
 
-inline void DisplayCLIHeader(std::string const &name, std::string const &years = "2018",
-                             std::string const &additional = "")
-{
-  std::cout << " F E ╱     " << name << ' ' << version::FULL << '\n';
-  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << '\n';
-  std::cout << "     H     " << additional << '\n' << std::endl;
-}
+void DisplayCLIHeader(std::string const &name, std::string const &years = "2018",
+                      std::string const &additional = "");
 
 }  // namespace commandline
 }  // namespace fetch
