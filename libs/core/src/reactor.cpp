@@ -81,7 +81,7 @@ void Reactor::StartWorker()
     throw std::runtime_error("Worker already started");
   }
 
-  // signal the reactor is runing
+  // signal the reactor is running
   running_ = true;
 
   // create the worker routine
@@ -110,7 +110,7 @@ void Reactor::Monitor()
     {
       FETCH_LOCK(work_map_mutex_);
 
-      // loop through and evalute the map
+      // loop through and evaluate the map
       auto it = work_map_.begin();
       while (it != work_map_.end())
       {
@@ -119,7 +119,7 @@ void Reactor::Monitor()
 
         if (concrete_runnable)
         {
-          // evalute if the runnable is ready to execute, if it is then add it to the work queue
+          // evaluate if the runnable is ready to execute, if it is then add it to the work queue
           if (concrete_runnable->IsReadyToExecute())
           {
             work_queue.emplace_back(it->second);
