@@ -16,35 +16,69 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/byte_array.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
+
 #include <gtest/gtest.h>
 #include <iostream>
 
 using namespace fetch;
 using namespace fetch::crypto;
 
-using ByteArray = byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ByteArray;
+
+static ConstByteArray CalculateHash(ConstByteArray const &a, ConstByteArray const &b)
+{
+  crypto::SHA256 sha256{};
+  sha256.Update(a);
+  sha256.Update(b);
+  return sha256.Final();
+}
 
 TEST(crypto_merkle_tree, empty_tree)
 {
-  MerkleTree tree;
-
+  MerkleTree tree{0};
   tree.CalculateRoot();
-
-  /* std::cout << "Output is: '" << byte_array::ToHex(tree.root())  << "'"<< std::endl; */
 
   EXPECT_EQ(tree.root().size(), 256 / 8);
   EXPECT_EQ(tree.root(), Hash<crypto::SHA256>(ByteArray{}));
 }
 
+TEST(crypto_merkle_tree, manual_test)
+{
+  MerkleTree tree{4};
+
+  // populate the tree
+  for (std::size_t i = 0; i < tree.size(); ++i)
+  {
+    // generate the value
+    ByteArray hash_value;
+    hash_value.Resize(256 / 8);
+    std::memset(hash_value.pointer(), static_cast<int>(i), hash_value.size());
+
+    // store it in the tree
+    tree[i] = hash_value;
+  }
+
+  // manually generate the merkle hash
+  auto const intermediate1 = CalculateHash(tree[0], tree[1]);
+  auto const intermediate2 = CalculateHash(tree[2], tree[3]);
+  auto const final         = CalculateHash(intermediate1, intermediate2);
+
+  tree.CalculateRoot();
+  EXPECT_EQ(tree.root().size(), 256 / 8);
+  EXPECT_EQ(tree.root(), final);
+}
+
 TEST(crypto_merkle_tree, partially_filled_tree)
 {
-  MerkleTree tree;
+  MerkleTree tree{100};
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -59,8 +93,8 @@ TEST(crypto_merkle_tree, partially_filled_tree)
 
 TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 {
-  MerkleTree tree;
-  MerkleTree tree2;
+  MerkleTree tree{256};
+  MerkleTree tree2{256};
 
   for (std::size_t i = 0; i < 256; ++i)
   {
@@ -78,11 +112,11 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
 
 TEST(crypto_merkle_tree, serializes_deserializes)
 {
-  MerkleTree tree;   // Reference
-  MerkleTree tree2;  // Calculate root then serialize
-  MerkleTree tree3;  // Don't calculate root until after serialize
-  MerkleTree tree2_deser;
-  MerkleTree tree3_deser;
+  MerkleTree tree{256};   // Reference
+  MerkleTree tree2{256};  // Calculate root then serialize
+  MerkleTree tree3{256};  // Don't calculate root until after serialize
+  MerkleTree tree2_deser{256};
+  MerkleTree tree3_deser{256};
 
   for (std::size_t i = 0; i < 256; ++i)
   {
@@ -117,8 +151,8 @@ TEST(crypto_merkle_tree, serializes_deserializes)
 
 TEST(crypto_merkle_tree, same_result_after_move)
 {
-  MerkleTree tree2;
-  MerkleTree tree;
+  MerkleTree tree2{256};
+  MerkleTree tree{256};
 
   for (std::size_t i = 0; i < 256; ++i)
   {
@@ -129,7 +163,7 @@ TEST(crypto_merkle_tree, same_result_after_move)
 
   ByteArray root_before = tree2.root();
 
-  tree = tree2;
+  tree = std::move(tree2);
 
   EXPECT_EQ(tree.root().size(), 256 / 8);
   EXPECT_EQ(tree.root(), root_before);
