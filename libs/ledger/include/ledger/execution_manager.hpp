@@ -84,7 +84,6 @@ private:
   using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
-  // using Bookmark          = StorageUnitInterface::bookmark_type; // TODO(HUT): remove
   using StateHash      = StorageUnitInterface::Hash;
   using ExecutorList   = std::vector<ExecutorPtr>;
   using StateHashCache = storage::ObjectStore<StateHash>;
