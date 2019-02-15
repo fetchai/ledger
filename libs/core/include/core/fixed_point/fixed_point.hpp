@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fixed_point_operations.hpp"
 #include "fixed_point_tag.hpp"
 #include <iostream>
 #include <sstream>
