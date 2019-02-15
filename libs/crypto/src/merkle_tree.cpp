@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/merkle_tree.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "vectorise/platform.hpp"
-#include "crypto/merkle_tree.hpp"
 
 namespace fetch {
 namespace crypto {
@@ -30,8 +30,7 @@ using Container = MerkleTree::Container;
 MerkleTree::MerkleTree(std::size_t count)
   : leaf_nodes_{count}
   , root_{}
-{
-}
+{}
 
 HashArray &MerkleTree::operator[](std::size_t n)
 {
@@ -48,8 +47,6 @@ void MerkleTree::CalculateRoot() const
 
   // make a copy of the leaf nodes which are then condensed
   std::vector<Digest> hashes = leaf_nodes_;
-
-
 
   // If necessary bump the 'leaves' up to a power of 2
   while (!platform::IsLog2(uint64_t(hashes.size())))
@@ -73,7 +70,6 @@ void MerkleTree::CalculateRoot() const
   assert(hashes.size() == 1);
   root_ = hashes[0];
 }
-
 
 }  // namespace crypto
 }  // namespace fetch

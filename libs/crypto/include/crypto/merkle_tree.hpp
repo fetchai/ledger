@@ -27,29 +27,29 @@ namespace crypto {
 class MerkleTree
 {
 public:
-  using Digest    = byte_array::ConstByteArray;
-  using Container = std::vector<Digest>;
-  using Iterator  = Container::iterator;
+  using Digest        = byte_array::ConstByteArray;
+  using Container     = std::vector<Digest>;
+  using Iterator      = Container::iterator;
   using ConstIterator = Container::const_iterator;
 
   explicit MerkleTree(std::size_t count);
   MerkleTree(MerkleTree const &rhs) = delete;
-  MerkleTree(MerkleTree &&rhs) = default;
-  ~MerkleTree() = default;
+  MerkleTree(MerkleTree &&rhs)      = default;
+  ~MerkleTree()                     = default;
 
   /// @name Leaf Node Access
   /// @{
-  Iterator begin();
+  Iterator      begin();
   ConstIterator begin() const;
   ConstIterator cbegin();
-  Iterator end();
+  Iterator      end();
   ConstIterator end() const;
   ConstIterator cend() const;
   /// @}
 
-  Digest const &root() const;
+  Digest const &   root() const;
   Container const &leaf_nodes() const;
-  std::size_t size() const;
+  std::size_t      size() const;
 
   void CalculateRoot() const;
 
@@ -59,7 +59,7 @@ public:
   MerkleTree &operator=(MerkleTree &&rhs) = default;
 
 private:
-  Container         leaf_nodes_;
+  Container      leaf_nodes_;
   mutable Digest root_;
 
   template <typename T>

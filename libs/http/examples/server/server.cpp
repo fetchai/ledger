@@ -53,26 +53,23 @@ int main()
                    return res;
                  });
 
-  server.AddView(Method::GET, "/pages/sub",
-                 [](ViewParameters const &, HTTPRequest const &) {
-                   HTTPResponse res("pages sub index");
+  server.AddView(Method::GET, "/pages/sub", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("pages sub index");
 
-                   return res;
-                 });
+    return res;
+  });
 
-  server.AddView(Method::GET, "/pages/sub/",
-                 [](ViewParameters const &, HTTPRequest const &) {
-                   HTTPResponse res("pages sub index with slash");
+  server.AddView(Method::GET, "/pages/sub/", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("pages sub index with slash");
 
-                   return res;
-                 });
+    return res;
+  });
 
-  server.AddView(Method::GET, "/pages/(id=\\d+)/",
-                 [](ViewParameters const &, HTTPRequest const &) {
-                   HTTPResponse res("Secret page 1");
+  server.AddView(Method::GET, "/pages/(id=\\d+)/", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("Secret page 1");
 
-                   return res;
-                 });
+    return res;
+  });
 
   server.AddView(Method::GET, "/other/(name=\\w+)",
                  [](ViewParameters const &, HTTPRequest const &) {

@@ -74,7 +74,7 @@ public:
 
   // Helper functions
   std::size_t GetTransactionCount() const;
-  void UpdateDigest();
+  void        UpdateDigest();
 };
 
 /**

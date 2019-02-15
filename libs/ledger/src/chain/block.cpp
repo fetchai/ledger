@@ -18,8 +18,8 @@
 
 #include "ledger/chain/block.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/merkle_tree.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -63,13 +63,8 @@ void Block::UpdateDigest()
 
   // Generate hash stream
   serializers::ByteArrayBuffer buf;
-  buf << body.previous_hash
-      << body.merkle_hash
-      << body.block_number
-      << body.miner
-      << body.log2_num_lanes
-      << tx_merkle_tree.root()
-      << nonce;
+  buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
+      << body.log2_num_lanes << tx_merkle_tree.root() << nonce;
 
   // Generate the hash
   crypto::SHA256 hash;
