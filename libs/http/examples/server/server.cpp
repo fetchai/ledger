@@ -28,13 +28,13 @@ int main()
   HTTPServer server(tm);
   server.Start(8080);
 
-  server.AddMiddleware([](HTTPRequest &req) { std::cout << "Middleware 1" << std::endl; });
+  server.AddMiddleware([](HTTPRequest &) { std::cout << "Middleware 1" << std::endl; });
 
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {
     std::cout << static_cast<uint16_t>(res.status()) << " " << req.uri() << std::endl;
   });
 
-  server.AddView(Method::GET, "/", [](ViewParameters const &params, HTTPRequest const &req) {
+  server.AddView(Method::GET, "/", [](ViewParameters const &, HTTPRequest const &) {
     HTTPResponse res("Hello world -- this is a render of the view");
 
     return res;
@@ -44,7 +44,7 @@ int main()
   std::atomic<int> pages_count{0};
 
   server.AddView(Method::GET, "/pages",
-                 [&pages_count](ViewParameters const &params, HTTPRequest const &req) {
+                 [&pages_count](ViewParameters const &, HTTPRequest const &) {
                    std::ostringstream ret;
                    ret << "pages index. You have called " << pages_count++ << " times.";
 
@@ -53,36 +53,33 @@ int main()
                    return res;
                  });
 
-  server.AddView(Method::GET, "/pages/sub",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
-                   HTTPResponse res("pages sub index");
+  server.AddView(Method::GET, "/pages/sub", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("pages sub index");
 
-                   return res;
-                 });
+    return res;
+  });
 
-  server.AddView(Method::GET, "/pages/sub/",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
-                   HTTPResponse res("pages sub index with slash");
+  server.AddView(Method::GET, "/pages/sub/", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("pages sub index with slash");
 
-                   return res;
-                 });
+    return res;
+  });
 
-  server.AddView(Method::GET, "/pages/(id=\\d+)/",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
-                   HTTPResponse res("Secret page 1");
+  server.AddView(Method::GET, "/pages/(id=\\d+)/", [](ViewParameters const &, HTTPRequest const &) {
+    HTTPResponse res("Secret page 1");
 
-                   return res;
-                 });
+    return res;
+  });
 
   server.AddView(Method::GET, "/other/(name=\\w+)",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
+                 [](ViewParameters const &, HTTPRequest const &) {
                    HTTPResponse res("Secret page with name");
 
                    return res;
                  });
 
   server.AddView(Method::GET, "/other/(name=\\w+)/(number=\\d+)",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
+                 [](ViewParameters const &params, HTTPRequest const &) {
                    HTTPResponse res("Secret page with name and number: " + params["name"] +
                                     " and " + params["number"]);
 
@@ -90,7 +87,7 @@ int main()
                  });
 
   server.AddView(Method::GET, "/static/(filename=.+)",
-                 [](ViewParameters const &params, HTTPRequest const &req) {
+                 [](ViewParameters const &params, HTTPRequest const &) {
                    std::string filename = std::string(params["filename"]);
                    std::size_t pos      = filename.find_last_of('.');
                    std::string ext      = filename.substr(pos, filename.size() - pos);

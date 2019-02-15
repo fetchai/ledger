@@ -308,7 +308,7 @@ void GetClientAddress(StorageUnitClient::LaneIndex lane, StorageUnitClient::Addr
 // Get the current hash of the world state (merkle tree root)
 byte_array::ConstByteArray StorageUnitClient::CurrentHash()
 {
-  MerkleTree                    tree;
+  MerkleTree                    tree{1u << log2_lanes_};
   std::vector<service::Promise> promises;
 
   for (auto const &lanedata : lane_to_identity_map_)
@@ -349,7 +349,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   if (genesis_state)
   {
     // create the new tree
-    tree = std::make_shared<MerkleTree>();
+    tree = std::make_shared<MerkleTree>(1u << log2_lanes_);
 
     // fill the tree with empty leaf nodes
     for (std::size_t i = 0, num_lanes = 1u << log2_lanes_; i < num_lanes; ++i)
@@ -392,22 +392,21 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   if (!genesis_state)
   {
     // Due diligence: check all lanes can revert to this state before trying this operation
-    // k = lane, v = lane hash
-    for (auto const &leaf_kv : tree->leaf_nodes())
+    StorageUnitClient::LaneIndex lane_index{0};
+    for (auto const &hash : *tree)
     {
-      Address address;
-      auto &  lane = leaf_kv.first;
-      auto &  hash = leaf_kv.second;
-
       assert(hash.size() > 0);
 
-      GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+      Address address;
+      GetClientAddress(lane_index, address, this);
 
-      auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+      auto client = GetClientForLane(lane_index);
 
       auto promise = client->CallSpecificAddress(
           address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
       promises.push_back(promise);
+
+      ++lane_index;
     }
 
     std::vector<uint32_t> failed_lanes;
@@ -435,17 +434,15 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
   }
 
   // Now perform the revert
-  for (auto const &leaf_kv : tree->leaf_nodes())
+  StorageUnitClient::LaneIndex lane_index{0};
+  for (auto const &hash : *tree)
   {
-    Address address;
-    auto &  lane = leaf_kv.first;
-    auto &  hash = leaf_kv.second;
-
     assert(hash.size() > 0);
 
-    GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+    Address address;
+    GetClientAddress(lane_index, address, this);
 
-    auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+    auto client = GetClientForLane(lane_index);
 
     auto promise = client->CallSpecificAddress(
         address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT_TO_HASH, hash);
@@ -477,7 +474,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash)
 // We have finished execution presumably, commit this state
 byte_array::ConstByteArray StorageUnitClient::Commit()
 {
-  MerkleTreePtr                 tree = std::make_shared<MerkleTree>();
+  MerkleTreePtr                 tree = std::make_shared<MerkleTree>(1u << log2_lanes_);
   std::vector<service::Promise> promises;
 
   for (auto const &lanedata : lane_to_identity_map_)

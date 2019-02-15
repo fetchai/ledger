@@ -18,19 +18,55 @@
 
 #include "ledger/chain/block.hpp"
 #include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace ledger {
 
 /**
+ * Get the number of transactions present in the block
+ *
+ * @return The transaction count
+ */
+std::size_t Block::GetTransactionCount() const
+{
+  std::size_t count{0};
+
+  for (auto const &slice : body.slices)
+  {
+    count += slice.size();
+  }
+
+  return count;
+}
+
+/**
  * Populate the block hash field based on the contents of the current block
  */
 void Block::UpdateDigest()
 {
-  serializers::ByteArrayBuffer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner;
+  crypto::MerkleTree tx_merkle_tree{GetTransactionCount()};
 
+  // Populate the merkle tree
+  std::size_t index{0};
+  for (auto const &slice : body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      tx_merkle_tree[index++] = tx.transaction_hash;
+    }
+  }
+
+  // Calculate the root
+  tx_merkle_tree.CalculateRoot();
+
+  // Generate hash stream
+  serializers::ByteArrayBuffer buf;
+  buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
+      << body.log2_num_lanes << tx_merkle_tree.root() << nonce;
+
+  // Generate the hash
   crypto::SHA256 hash;
   hash.Reset();
   hash.Update(buf.data());

@@ -73,7 +73,8 @@ public:
   /// @}
 
   // Helper functions
-  void UpdateDigest();
+  std::size_t GetTransactionCount() const;
+  void        UpdateDigest();
 };
 
 /**
