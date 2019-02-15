@@ -75,7 +75,9 @@ private:
  */
 inline ResourceID::ResourceID(byte_array::ConstByteArray id)
   : id_(std::move(id))
-{}
+{
+  assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
+}
 
 /**
  * Gets the current id (hashed) value

@@ -224,7 +224,7 @@ MainChain::Blocks MainChain::HeaviestChain(uint64_t limit) const
 }
 
 /**
- * Walk the block history collecting blocks until
+ * Walk the block history collecting blocks until either genesis or the block limit is reached
  *
  * @param start The hash of the first block
  * @param limit The maximum number of blocks to be returned
