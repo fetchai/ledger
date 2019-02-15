@@ -32,7 +32,8 @@ public:
     EXECUTE = 1,
     LAST_PROCESSED_BLOCK,
     GET_STATE,
-    ABORT
+    ABORT,
+    SET_LAST_PROCESSED_BLOCK
   };
 
   explicit ExecutionManagerRpcProtocol(ExecutionManagerInterface &manager)
@@ -40,6 +41,7 @@ public:
   {
     // define the RPC endpoints
     Expose(EXECUTE, this, &ExecutionManagerRpcProtocol::Execute);
+    Expose(SET_LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::SetLastProcessedBlock);
     Expose(LAST_PROCESSED_BLOCK, &manager_, &ExecutionManagerInterface::LastProcessedBlock);
     Expose(GET_STATE, &manager_, &ExecutionManagerInterface::GetState);
     Expose(ABORT, &manager_, &ExecutionManagerInterface::Abort);

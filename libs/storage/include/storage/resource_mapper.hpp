@@ -181,6 +181,16 @@ public:
     return *this;
   }
 
+  bool operator<(ResourceAddress const &other) const
+  {
+    return address_ < other.address_;
+  }
+
+  bool operator==(ResourceAddress const &other) const
+  {
+    return address_ == other.address_;
+  }
+
 private:
   byte_array::ByteArray address_;  ///< The canonical resource address
 };

@@ -10,7 +10,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_test(vectorise_memory_gtest fetch-vectorise memory SLOW)
+add_fetch_test(vectorise_memory_gtest fetch-vectorise memory)
 include_directories(vectorise_memory_gtest PRIVATE "../../core/include") # This should be handled with library imports
 
 add_fetch_test(vectorise_exponent_gtest fetch-vectorise vectorize)

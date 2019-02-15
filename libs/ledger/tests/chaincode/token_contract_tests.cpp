@@ -120,9 +120,6 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _)).Times(set_call_expected ? 1 : 0);
     EXPECT_CALL(*storage_, Lock(_)).Times(1);
     EXPECT_CALL(*storage_, Unlock(_)).Times(1);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -150,9 +147,6 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _)).Times(1);
     EXPECT_CALL(*storage_, Lock(_)).Times(1);
     EXPECT_CALL(*storage_, Unlock(_)).Times(1);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -185,9 +179,6 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _)).Times(set_call_expected ? 2 : 0);
     EXPECT_CALL(*storage_, Lock(_)).Times(2);
     EXPECT_CALL(*storage_, Unlock(_)).Times(2);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 
@@ -222,9 +213,6 @@ protected:
     EXPECT_CALL(*storage_, Set(_, _)).Times(0);
     EXPECT_CALL(*storage_, Lock(_)).Times(0);
     EXPECT_CALL(*storage_, Unlock(_)).Times(0);
-    EXPECT_CALL(*storage_, Hash()).Times(0);
-    EXPECT_CALL(*storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*storage_, Revert(_)).Times(0);
     EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
     EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 

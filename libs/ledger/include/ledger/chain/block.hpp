@@ -18,12 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/encoders.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/stl_types.hpp"
-#include "crypto/fnv.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/mutable_transaction.hpp"
+
 #include <memory>
 
 namespace fetch {
@@ -37,12 +35,11 @@ namespace ledger {
 class Block
 {
 public:
-  using Identity     = byte_array::ConstByteArray;
-  using Digest       = byte_array::ConstByteArray;
-  using HashFunction = crypto::SHA256;
-  using Proof        = consensus::ProofOfWork;
-  using Slice        = std::vector<TransactionSummary>;
-  using Slices       = std::vector<Slice>;
+  using Identity = byte_array::ConstByteArray;
+  using Digest   = byte_array::ConstByteArray;
+  using Proof    = consensus::ProofOfWork;
+  using Slice    = std::vector<TransactionSummary>;
+  using Slices   = std::vector<Slice>;
 
   struct Body
   {
@@ -72,27 +69,12 @@ public:
   uint64_t weight       = 1;
   uint64_t total_weight = 1;
   bool     is_loose     = true;
+  bool     is_valid     = true;
   /// @}
 
   // Helper functions
   void UpdateDigest();
 };
-
-/**
- * Populate the block hash field based on the contents of the current block
- */
-inline void Block::UpdateDigest()
-{
-  serializers::ByteArrayBuffer buf;
-  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner;
-
-  HashFunction hash;
-  hash.Reset();
-  hash.Update(buf.data());
-  body.hash = hash.Final();
-
-  proof.SetHeader(body.hash);
-}
 
 /**
  * Serializer for the block body

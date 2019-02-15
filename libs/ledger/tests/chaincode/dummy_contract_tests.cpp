@@ -50,23 +50,23 @@ protected:
 
 TEST_F(DummyContractTests, CheckConstruction)
 {
-
   // we expect that the state database is not called this time
   EXPECT_CALL(*storage_, Get(_)).Times(0);
   EXPECT_CALL(*storage_, GetOrCreate(_)).Times(0);
   EXPECT_CALL(*storage_, Set(_, _)).Times(0);
   EXPECT_CALL(*storage_, Lock(_)).Times(0);
   EXPECT_CALL(*storage_, Unlock(_)).Times(0);
-  EXPECT_CALL(*storage_, Hash()).Times(0);
-  EXPECT_CALL(*storage_, Commit(_)).Times(0);
-  EXPECT_CALL(*storage_, Revert(_)).Times(0);
+  EXPECT_CALL(*storage_, CurrentHash()).Times(0);
+  EXPECT_CALL(*storage_, LastCommitHash()).Times(0);
+  EXPECT_CALL(*storage_, RevertToHash(_)).Times(0);
+  EXPECT_CALL(*storage_, Commit()).Times(0);
+  EXPECT_CALL(*storage_, HashExists(_)).Times(0);
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 }
 
 TEST_F(DummyContractTests, CheckDispatch)
 {
-
   // since the dummy contract doesn't use the state database we expect no calls
   // to it
   EXPECT_CALL(*storage_, Get(_)).Times(0);
@@ -74,9 +74,11 @@ TEST_F(DummyContractTests, CheckDispatch)
   EXPECT_CALL(*storage_, Set(_, _)).Times(0);
   EXPECT_CALL(*storage_, Lock(_)).Times(0);
   EXPECT_CALL(*storage_, Unlock(_)).Times(0);
-  EXPECT_CALL(*storage_, Hash()).Times(0);
-  EXPECT_CALL(*storage_, Commit(_)).Times(0);
-  EXPECT_CALL(*storage_, Revert(_)).Times(0);
+  EXPECT_CALL(*storage_, CurrentHash()).Times(0);
+  EXPECT_CALL(*storage_, LastCommitHash()).Times(0);
+  EXPECT_CALL(*storage_, RevertToHash(_)).Times(0);
+  EXPECT_CALL(*storage_, Commit()).Times(0);
+  EXPECT_CALL(*storage_, HashExists(_)).Times(0);
   EXPECT_CALL(*storage_, AddTransaction(_)).Times(0);
   EXPECT_CALL(*storage_, GetTransaction(_, _)).Times(0);
 

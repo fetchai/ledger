@@ -28,6 +28,8 @@
 #include <initializer_list>
 #include <memory>
 
+namespace {
+
 using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 
@@ -38,6 +40,9 @@ using Blocks       = std::vector<BlockPtr>;
 class MainChainSubTreeTests : public ::testing::Test
 {
 protected:
+  static constexpr std::size_t NUM_LANES  = 1;
+  static constexpr std::size_t NUM_SLICES = 1;
+
   void SetUp() override
   {
     block_generator_.Reset();
@@ -50,7 +55,7 @@ protected:
     chain_.reset();
   }
 
-  BlockGenerator block_generator_;
+  BlockGenerator block_generator_{NUM_LANES, NUM_SLICES};
   MainChainPtr   chain_;
 };
 
@@ -331,3 +336,5 @@ TEST_F(MainChainSubTreeTests, ComplicatedSubTrees)
     ASSERT_TRUE(AreEqual(blocks, Extract(chain, {4, 2})));
   }
 }
+
+}  // namespace

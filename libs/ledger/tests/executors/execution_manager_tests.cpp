@@ -34,8 +34,6 @@
 #include <random>
 #include <thread>
 
-using ::testing::_;
-
 class ExecutionManagerTests : public ::testing::TestWithParam<BlockConfig>
 {
 protected:
@@ -60,7 +58,7 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>("exec_mgr_tests", config.executors, mock_storage_,
+    manager_ = std::make_shared<ExecutionManager>(config.executors, mock_storage_,
                                                   [this]() { return CreateExecutor(); });
   }
 
@@ -183,9 +181,6 @@ TEST_P(ExecutionManagerTests, CheckIncrementalExecution)
 
   // start the execution manager
   manager_->Start();
-
-  EXPECT_CALL(*mock_storage_, Hash()).Times(1);
-  EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
 
   fetch::byte_array::ConstByteArray prev_hash;
 

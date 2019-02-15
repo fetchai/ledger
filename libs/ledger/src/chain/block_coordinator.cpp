@@ -18,16 +18,26 @@
 
 #include "ledger/chain/block_coordinator.hpp"
 #include "core/threading.hpp"
+#include "ledger/block_packer_interface.hpp"
+#include "ledger/block_sink_interface.hpp"
+#include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/execution_manager_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include <chrono>
 
 using std::this_thread::sleep_for;
 using std::chrono::microseconds;
+using fetch::byte_array::ToBase64;
 
 using ScheduleStatus = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState = fetch::ledger::ExecutionManagerInterface::State;
 
 static const std::chrono::milliseconds STALL_INTERVAL{250};
+static const std::size_t               STALL_THRESHOLD{20};
+static const std::size_t               DIGEST_LENGTH_BYTES{32};
+static const std::size_t               IDENTITY_LENGTH_BYTES{64};
 
 namespace fetch {
 namespace ledger {
@@ -38,308 +48,688 @@ namespace ledger {
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager)
+BlockCoordinator::BlockCoordinator(MainChain &chain, ExecutionManagerInterface &execution_manager,
+                                   StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
+                                   BlockSinkInterface &block_sink, Identity identity,
+                                   std::size_t num_lanes, std::size_t num_slices,
+                                   std::size_t block_difficulty)
   : chain_{chain}
   , execution_manager_{execution_manager}
-{}
+  , storage_unit_{storage_unit}
+  , block_packer_{packer}
+  , block_sink_{block_sink}
+  , miner_{std::make_shared<consensus::DummyMiner>()}
+  , identity_{std::move(identity)}
+  , state_machine_{std::make_shared<StateMachine>("BlockCoordinator", State::RESET)}
+  , block_difficulty_{block_difficulty}
+  , num_lanes_{num_lanes}
+  , num_slices_{num_slices}
+{
+  // configure the state machine
+  // clang-format off
+  state_machine_->RegisterHandler(State::SYNCHRONIZING,                this, &BlockCoordinator::OnSynchronizing);
+  state_machine_->RegisterHandler(State::SYNCHRONIZED,                 this, &BlockCoordinator::OnSynchronized);
+  state_machine_->RegisterHandler(State::PRE_EXEC_BLOCK_VALIDATION,    this, &BlockCoordinator::OnPreExecBlockValidation);
+  state_machine_->RegisterHandler(State::SCHEDULE_BLOCK_EXECUTION,     this, &BlockCoordinator::OnScheduleBlockExecution);
+  state_machine_->RegisterHandler(State::WAIT_FOR_EXECUTION,           this, &BlockCoordinator::OnWaitForExecution);
+  state_machine_->RegisterHandler(State::POST_EXEC_BLOCK_VALIDATION,   this, &BlockCoordinator::OnPostExecBlockValidation);
+  state_machine_->RegisterHandler(State::PACK_NEW_BLOCK,               this, &BlockCoordinator::OnPackNewBlock);
+  state_machine_->RegisterHandler(State::EXECUTE_NEW_BLOCK,            this, &BlockCoordinator::OnExecuteNewBlock);
+  state_machine_->RegisterHandler(State::WAIT_FOR_NEW_BLOCK_EXECUTION, this, &BlockCoordinator::OnWaitForNewBlockExecution);
+  state_machine_->RegisterHandler(State::PROOF_SEARCH,                 this, &BlockCoordinator::OnProofSearch);
+  state_machine_->RegisterHandler(State::TRANSMIT_BLOCK,               this, &BlockCoordinator::OnTransmitBlock);
+  state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
+  // clang-format on
+
+  // for debug purposes
+  state_machine_->OnStateChange([](State current, State previous) {
+    FETCH_LOG_INFO(LOGGING_NAME, "Changed state: ", ToString(previous), " -> ", ToString(current));
+  });
+}
 
 /**
  * Destruct the Block Coordinator
  */
 BlockCoordinator::~BlockCoordinator()
 {
-  Stop();
+  state_machine_->Reset();
+  state_machine_.reset();
 }
 
 /**
- * Called whenever a new block has been generated from the network
- *
- * @param block Reference to the new block
+ * Force the block interval to expire causing the state machine to be able to generate a block if
+ * needed
  */
-void BlockCoordinator::AddBlock(Block &block)
+void BlockCoordinator::TriggerBlockGeneration()
 {
-  // add the block to the chain data structure
-  chain_.AddBlock(block);
-
-  // TODO(private issue 242): This logic is somewhat flawed, this means that the execution manager
-  //                          does not fire all of the time.
-  auto const heaviest_hash = chain_.HeaviestBlock().body.hash;
-
-  if (block.body.hash == heaviest_hash)
+  if (mining_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "New block: ", ToBase64(block.body.hash),
-                   " from: ", ToBase64(block.body.previous_hash));
+    next_block_time_ = Clock::now();
+  }
+}
 
-    // add the new block into the pending queue
+BlockCoordinator::State BlockCoordinator::OnSynchronizing()
+{
+  State next_state{State::SYNCHRONIZING};
+
+  // ensure that we have a current block that we are executing
+  if (!current_block_)
+  {
+    current_block_ = std::make_shared<Block>(chain_.HeaviestBlock());
+  }
+
+  // cache some useful variables
+  auto const current_hash         = current_block_->body.hash;
+  auto const previous_hash        = current_block_->body.previous_hash;
+  auto const desired_state        = current_block_->body.merkle_hash;
+  auto const current_state        = storage_unit_.CurrentHash();
+  auto const last_processed_block = execution_manager_.LastProcessedBlock();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current......: ", ToBase64(current_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Previous.....: ", ToBase64(previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Desired State: ", ToBase64(desired_state));
+  FETCH_LOG_INFO(LOGGING_NAME, "Sync: Current State: ", ToBase64(current_state));
+  FETCH_LOG_INFO(LOGGING_NAME, "Sync: last Block...: ", ToBase64(last_processed_block));
+
+  // initial condition, the last processed block is empty
+  if (GENESIS_DIGEST == last_processed_block)
+  {
+    // start up - we need to work out which of the blocks has been executed previously
+
+    if (GENESIS_DIGEST == previous_hash)
     {
-      FETCH_LOCK(pending_blocks_mutex_);
-      pending_blocks_.push_front(std::make_shared<Block::Body>(block.body));
+      // once we have got back to genesis then we need to start executing from the beginning
+      next_state = State::PRE_EXEC_BLOCK_VALIDATION;
     }
+    else
+    {
+      // look up the previous block
+      auto previous_block = std::make_shared<Block>();
+      if (!chain_.Get(previous_hash, *previous_block))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup previous block: ", ToBase64(current_hash));
+        return State::RESET;
+      }
+
+      // update the current block
+      current_block_ = previous_block;
+    }
+  }
+  else if (current_hash == last_processed_block)
+  {
+    // the block coordinator has now successfully synced with the chain of blocks.
+    next_state = State::SYNCHRONIZED;
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unscheduled block: ", ToBase64(block.body.hash),
-                   " Heaviest: ", ToBase64(heaviest_hash));
-  }
-}
+    // normal case - we have processed at least one block
 
-/**
- * Start the Block Coordinator
- */
-void BlockCoordinator::Start()
-{
-  // ensure stop flag is cleared
-  stop_ = false;
+    // find the path
+    MainChain::Blocks blocks;
+    bool const        lookup_success =
+        chain_.GetPathToCommonAncestor(blocks, current_hash, last_processed_block);
 
-  // create the new thread to run the monitor
-  thread_ = std::thread{&BlockCoordinator::Monitor, this};
-}
-
-/**
- * Stp[ the Block Coordinator
- */
-void BlockCoordinator::Stop()
-{
-  if (thread_.joinable())
-  {
-    stop_ = true;
-    thread_.join();
-  }
-}
-
-/**
- * Monitor the state of the execution manager
- *
- * The role of the monitor to periodically access the status of the execution engine. Depending on
- * its state it will attempt to schedule the next block to be executed. In the case that no new
- * blocks are present it will idle.
- *
- * This monitor is implemented as a state machine which is illustrated in the following diagram:
- *
- * ┌───────────────────────────────┐
- * │                               │
- * │                               ▼
- * │                         ┌───────────┐
- * │                         │   Query   │
- * │                         │ Execution │
- * │                         └───────────┘
- * │                               │
- * │                               │
- * │       ┌───────────────┬───────┴───────┬───────────────┐
- * │       │               │               │               │
- * │       │               │               │               │
- * │       ▼               ▼               ▼               ▼
- * │
- * │   Executing         Idle           Stalled          Error
- * │
- * │       │               │               │               │
- * │       │               │               │               │
- * │       │               ▼               │               │
- * │       │          ┌─────────┐  Block   │               ▼
- * │       │          │Get Next │  Exists  │            ┌ ─ ─ ┐
- * │       │          │  Block  │──────────┤              ???
- * │       │          └─────────┘          │            └ ─ ─ ┘
- * │       │               │               │
- * │       │               │               ▼
- * │       │               │          ┌─────────┐
- * │       │      No Block │          │ Execute │
- * │       │               │          │  Block  │
- * │       │               │          └─────────┘
- * │       │               ▼               │
- * │       │         ┌───────────┐         │
- * │       └────────▶│   Wait    │◀────────┘
- * │                 └───────────┘
- * │                       │
- * │                       │
- * └───────────────────────┘
- *
- * It should be noted that the failed state is not currently handled and will be handles as part
- * of a more comprehensive update to block scheduling as described in #540, #537, #536 and #534.
- */
-void BlockCoordinator::Monitor()
-{
-  SetThreadName("BlockCoord");
-
-  // main state machine loop
-  for (;;)
-  {
-    if (stop_)
+    if (!lookup_success)
     {
-      break;
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Unable to lookup common ancestor for block:", ToBase64(current_hash));
+      return State::RESET;
     }
 
-    // execute the correct state handler
-    switch (state_)
+    assert(blocks.size() >= 2);
+    assert(!blocks.empty());
+
+    for (auto const &block : blocks)
     {
-    case State::QUERY_EXECUTION_STATUS:
-      OnQueryExecutionStatus();
-      break;
-    case State::GET_NEXT_BLOCK:
-      OnGetNextBlock();
-      break;
-    case State::EXECUTE_BLOCK:
-      OnExecuteBlock();
-      break;
+      FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block.body.hash));
     }
 
-    // allow fast exit/shutdown
-    if (stop_)
+    auto         block_path_it = blocks.crbegin();
+    Block const &common_parent = *block_path_it++;
+    Block const &next_block    = *block_path_it++;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent.body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block.body.hash));
+
+    // we expect that the common parent in this case will always have been processed, but this
+    // should be checked
+    if (!storage_unit_.HashExists(common_parent.body.merkle_hash))
     {
-      break;
+      FETCH_LOG_INFO(LOGGING_NAME, "Ancestor block not executed:", ToBase64(current_hash));
+      return State::RESET;
     }
 
-    sleep_for(std::chrono::milliseconds(10));
+    // revert the storage back to the known state
+    if (!storage_unit_.RevertToHash(common_parent.body.merkle_hash))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Unable to restore state for block", ToBase64(current_hash));
+      return State::RESET;
+    }
+
+    // update the current block and begin scheduling
+    current_block_ = std::make_shared<Block>(next_block);
+    next_state     = State::PRE_EXEC_BLOCK_VALIDATION;
   }
+
+  return next_state;
 }
 
-/**
- * State: Query the current state of the execution engine
- */
-void BlockCoordinator::OnQueryExecutionStatus()
+BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State previous)
 {
-  State next_state{State::QUERY_EXECUTION_STATUS};
+  FETCH_UNUSED(current);
+  State next_state{State::SYNCHRONIZED};
 
-  // based on the state of the execution manager determine
-  auto const execution_state = execution_manager_.GetState();
-
-  switch (execution_state)
+  // if we have detected a change in the chain then we need to re-evaluate the chain
+  if (chain_.HeaviestBlock().body.hash != current_block_->body.hash)
   {
-  case ExecutionState::IDLE:
-    next_state = State::GET_NEXT_BLOCK;
-    current_block_.reset();  // this is mostly for debug
+    next_state = State::RESET;
+  }
+  else if (mining_ && (Clock::now() >= next_block_time_))
+  {
+    // create a new block
+    auto next_block                = std::make_shared<Block>();
+    next_block->body.previous_hash = current_block_->body.hash;
+    next_block->body.block_number  = current_block_->body.block_number + 1;
+    next_block->body.miner         = identity_;
+
+    // ensure the difficulty is correctly set
+    next_block->proof.SetTarget(block_difficulty_);
+
+    // replace the current block
+    current_block_ = std::move(next_block);
+
+    // trigger packing state
+    next_state = State::PACK_NEW_BLOCK;
+  }
+  else if (State::SYNCHRONIZING == previous)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on ", ToBase64(current_block_->body.hash),
+                   " (block: ", current_block_->body.block_number,
+                   " prev: ", ToBase64(current_block_->body.previous_hash), ")");
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
+{
+  bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
+
+  // Check: Ensure that we have a previous block
+  Block previous{};
+  if (!is_genesis)
+  {
+    if (!chain_.Get(current_block_->body.previous_hash, previous))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: No previous block in chain (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.InvalidateBlock(current_block_->body.hash);
+      return State::RESET;
+    }
+
+    // Check: Ensure the block number is continuous
+    uint64_t const expected_block_number = previous.body.block_number + 1u;
+    if (expected_block_number != current_block_->body.block_number)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Block number mismatch (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.InvalidateBlock(current_block_->body.hash);
+      return State::RESET;
+    }
+
+    // Check: Ensure the identity is the correct size
+    if (IDENTITY_LENGTH_BYTES != current_block_->body.miner.size())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Miner identity size mismatch (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.InvalidateBlock(current_block_->body.hash);
+      return State::RESET;
+    }
+
+    // Check: Ensure the number of lanes is correct
+    if (num_lanes_ != (1u << current_block_->body.log2_num_lanes))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Lane count mismatch (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.InvalidateBlock(current_block_->body.hash);
+      return State::RESET;
+    }
+
+    // Check: Ensure the number of slices is correct
+    if (num_slices_ != current_block_->body.slices.size())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Slice count mismatch (",
+                     ToBase64(current_block_->body.hash), ")");
+      chain_.InvalidateBlock(current_block_->body.hash);
+      return State::RESET;
+    }
+  }
+
+  // Check: Ensure the digests are the correct size
+  if (DIGEST_LENGTH_BYTES != current_block_->body.previous_hash.size())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Previous block hash size mismatch (",
+                   ToBase64(current_block_->body.hash), ")");
+    chain_.InvalidateBlock(current_block_->body.hash);
+    return State::RESET;
+  }
+
+  // All the checks pass
+  return State::SCHEDULE_BLOCK_EXECUTION;
+}
+
+BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
+{
+  State next_state{State::RESET};
+
+  // schedule the current block for execution
+  if (ScheduleCurrentBlock())
+  {
+    next_state = State::WAIT_FOR_EXECUTION;
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnWaitForExecution()
+{
+  State next_state{State::WAIT_FOR_EXECUTION};
+
+  auto const status = QueryExecutorStatus();
+  switch (status)
+  {
+  case ExecutionStatus::IDLE:
+    next_state = State::POST_EXEC_BLOCK_VALIDATION;
     break;
 
-  case ExecutionState::ACTIVE:
-    // simple wait for this not to be the case
+  case ExecutionStatus::RUNNING:
     break;
 
-  case ExecutionState::TRANSACTIONS_UNAVAILABLE:
+  case ExecutionStatus::STALLED:
+    if (stall_count_ < STALL_THRESHOLD)
+    {
+      ++stall_count_;
 
-    // TODO(private issue 540): Possibly endless stalling waiting for transaction
-    sleep_for(STALL_INTERVAL);
+      sleep_for(STALL_INTERVAL);
+      next_state = State::EXECUTE_NEW_BLOCK;
+    }
+    else
+    {
+      next_state = State::RESET;
+    }
 
-    // schedule the execution of the block again (hopefully the transactions would have arrived)
-    next_state = State::EXECUTE_BLOCK;
     break;
 
-  case ExecutionState::EXECUTION_ABORTED:
-  case ExecutionState::EXECUTION_FAILED:
-    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
+  case ExecutionStatus::ERROR:
+    next_state = State::RESET;
+    break;
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
+{
+  State next_state{State::RESET};
+
+  // Check: Ensure the merkle hash is correct for this block
+  auto const state_hash = storage_unit_.CurrentHash();
+
+  bool invalid_block{false};
+  if (GENESIS_DIGEST != current_block_->body.previous_hash)
+  {
+    if (state_hash != current_block_->body.merkle_hash)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: Merkle hash mismatch (block: ",
+                     ToBase64(current_block_->body.hash),
+                     " expected: ", ToBase64(current_block_->body.merkle_hash),
+                     " actual: ", state_hash, ")");
+
+      // signal the block is invalid
+      invalid_block = true;
+    }
+  }
+
+  // After the checks have been completed, if the validation has failed, the system needs to recover
+  if (invalid_block)
+  {
+    bool  revert_successful{false};
+    Block previous_block;
+
+    // we need to restore back to the previous block
+    if (chain_.Get(current_block_->body.previous_hash, previous_block))
+    {
+      // signal the storage engine to make these changes
+      if (storage_unit_.RevertToHash(previous_block.body.merkle_hash))
+      {
+        execution_manager_.SetLastProcessedBlock(previous_block.body.hash);
+        revert_successful = true;
+      }
+    }
+
+    // if the revert has gone wrong, we need to initiate a complete resync
+    if (!revert_successful)
+    {
+      storage_unit_.RevertToHash(GENESIS_MERKLE_ROOT);
+      execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
+    }
+
+    // finally mark the block as invalid and purge it from the chain
+    chain_.InvalidateBlock(current_block_->body.hash);
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
+{
+  State next_state{State::RESET};
+
+  try
+  {
+    // call the block packer
+    block_packer_.GenerateBlock(*current_block_, num_lanes_, num_slices_, chain_);
+
+#if 1
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Hash.........: ", ToBase64(current_block_->body.hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Previous.....: ", ToBase64(current_block_->body.previous_hash));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Merkle.......: ", ToBase64(current_block_->body.merkle_hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", current_block_->body.block_number);
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "New Block: Miner........: ", ToBase64(current_block_->body.miner));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", current_block_->body.log2_num_lanes);
+
+    std::size_t slice_index{1};
+    for (auto const &slice : current_block_->body.slices)
+    {
+      if (!slice.empty())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", slice_index);
+
+        for (auto const &tx : slice)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "New Block: TX...........: ", ToBase64(tx.transaction_hash),
+                         " (", tx.contract_name, ")");
+        }
+      }
+
+      ++slice_index;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Slice........: ", ToBase64(current_block_->body.hash));
+#endif
+
+    // update our desired next block time
+    UpdateNextBlockTime();
+
+    // trigger the execution of the block
+    next_state = State::EXECUTE_NEW_BLOCK;
+  }
+  catch (std::exception &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error generated performing block packing: ", ex.what());
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnExecuteNewBlock()
+{
+  State next_state{State::RESET};
+
+  // schedule the current block for execution
+  if (ScheduleCurrentBlock())
+  {
+    next_state = State::WAIT_FOR_NEW_BLOCK_EXECUTION;
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
+{
+  State next_state{State::WAIT_FOR_NEW_BLOCK_EXECUTION};
+
+  auto const status = QueryExecutorStatus();
+  switch (status)
+  {
+  case ExecutionStatus::IDLE:
+  {
+    // update the current block with the desired hash
+    current_block_->body.merkle_hash = storage_unit_.CurrentHash();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Merkle Hash: ", ToBase64(current_block_->body.merkle_hash));
+
+    next_state = State::PROOF_SEARCH;
+    break;
+  }
+
+  case ExecutionStatus::RUNNING:
+    break;
+
+  case ExecutionStatus::STALLED:
 
     // TODO(private issue 540): Possibly endless stalling in the error case
-    sleep_for(STALL_INTERVAL);
+    if (stall_count_ < STALL_THRESHOLD)
+    {
+      ++stall_count_;
+
+      sleep_for(STALL_INTERVAL);
+      next_state = State::EXECUTE_NEW_BLOCK;
+    }
+    else
+    {
+      next_state = State::RESET;
+    }
+
+    break;
+
+  case ExecutionStatus::ERROR:
+    next_state = State::RESET;
     break;
   }
 
-  // update the state
-  state_ = next_state;
+  return next_state;
 }
 
-/**
- * State: Attempt to lookup a new block to execute
- */
-void BlockCoordinator::OnGetNextBlock()
+BlockCoordinator::State BlockCoordinator::OnProofSearch()
 {
-  State next_state{State::QUERY_EXECUTION_STATUS};
+  State next_state{State::PROOF_SEARCH};
 
-  // get the next block from the pending queue
-  if (!pending_stack_.empty())
+  if (miner_->Mine(*current_block_, 100))
   {
-    // extract the next element from the pending stack
-    current_block_ = pending_stack_.back();
-    pending_stack_.pop_back();
+    // update the digest
+    current_block_->UpdateDigest();
 
-    // signal intention to execute the next block
-    next_state = State::EXECUTE_BLOCK;
-  }
-  else
-  {
-    // get the next block from the queue (if there is one)
-    FETCH_LOCK(pending_blocks_mutex_);
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block Hash: ", ToBase64(current_block_->body.hash));
 
-    if (!pending_blocks_.empty())
-    {
-      // extract the next element from the pending queue
-      current_block_ = pending_blocks_.back();
-      pending_blocks_.pop_back();
+    // this step is needed because the execution manager is actually unaware of the actual last
+    // block that is executed because the merkle hash was not known at this point.
+    execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
 
-      // signal intention to execute the next block
-      next_state = State::EXECUTE_BLOCK;
-    }
+    // the block is now fully formed it can be sent across the network
+    next_state = State::TRANSMIT_BLOCK;
   }
 
-  // update the state
-  state_ = next_state;
+  return next_state;
 }
 
-/**
- * State: Attempt to execute the next block
- */
-void BlockCoordinator::OnExecuteBlock()
+BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 {
-  State next_state{State::QUERY_EXECUTION_STATUS};
+  State next_state{State::RESET};
+
+  try
+  {
+    // ensure that the main chain is aware of the block
+    chain_.AddBlock(*current_block_);
+
+    // dispatch the block that has been generated
+    block_sink_.OnBlock(*current_block_);
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Error transmitting verified block: ", ex.what());
+  }
+
+  return next_state;
+}
+
+BlockCoordinator::State BlockCoordinator::OnReset()
+{
+  // mostly for debug
+  current_block_.reset();
+  stall_count_ = 0;
+
+  // we should update the next block time
+  UpdateNextBlockTime();
+
+  // TODO(EJF): error handling
+
+  return State::SYNCHRONIZING;
+}
+
+bool BlockCoordinator::ScheduleCurrentBlock()
+{
+  bool success{false};
 
   // sanity check - ensure there is a block to execute
   if (current_block_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(current_block_->hash));
+    FETCH_LOG_INFO(LOGGING_NAME, "Attempting exec on block: ", ToBase64(current_block_->body.hash));
 
     // instruct the execution manager to execute the current block
-    auto const execution_status = execution_manager_.Execute(*current_block_);
+    auto const execution_status = execution_manager_.Execute(current_block_->body);
 
-    switch (execution_status)
+    if (execution_status == ScheduleStatus::SCHEDULED)
     {
-    case ScheduleStatus::RESTORED:
-      FETCH_LOG_INFO(LOGGING_NAME, "Block Restored: ", ToBase64(current_block_->hash));
-      break;
-
-    case ScheduleStatus::SCHEDULED:
-      FETCH_LOG_INFO(LOGGING_NAME, "Block Scheduled: ", ToBase64(current_block_->hash));
-      break;
-
-    case ScheduleStatus::ALREADY_RUNNING:
-      // nothing to be done here except wait for the execution to finish
-      break;
-
-    case ScheduleStatus::NO_PARENT_BLOCK:
-    {
-      Block parent_block;
-      if (chain_.Get(current_block_->previous_hash, parent_block))
-      {
-        // add the current block to the stack
-        pending_stack_.push_back(current_block_);
-        current_block_.reset();
-
-        // make the parent block the next block to execute
-        current_block_ = std::make_shared<Block::Body>(parent_block.body);
-
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Retrieved parent block: ", ToBase64(block->hash));
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to retrieve parent block: ",
-                       ToBase64(current_block_->previous_hash));
-
-        // TODO(private issue 540): Possibly endless stalling waiting for block
-        sleep_for(STALL_INTERVAL);
-      }
-
-      // if no parent block then we need to attempt to reschedule the block
-      next_state = State::EXECUTE_BLOCK;
-
-      break;
+      // signal success
+      success = true;
     }
-
-    case ScheduleStatus::NOT_STARTED:
-    case ScheduleStatus::UNABLE_TO_PLAN:
+    else
+    {
       FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Execution engine stalled. State: ", ToString(execution_status));
-      break;
+                      "Execution engine stalled. State: ", ledger::ToString(execution_status));
     }
   }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to execute empty block");
+  }
 
-  // move to the next state
-  state_ = next_state;
+  return success;
+}
+
+BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
+{
+  ExecutionStatus status{ExecutionStatus::ERROR};
+
+  // based on the state of the execution manager determine
+  auto const execution_state = execution_manager_.GetState();
+
+  // map the raw executor status into our simplified version
+  switch (execution_state)
+  {
+  case ExecutionState::IDLE:
+    status = ExecutionStatus::IDLE;
+    break;
+
+  case ExecutionState::ACTIVE:
+    status = ExecutionStatus::RUNNING;
+    break;
+
+  case ExecutionState::TRANSACTIONS_UNAVAILABLE:
+    status = ExecutionStatus::STALLED;
+    break;
+
+  case ExecutionState::EXECUTION_ABORTED:
+  case ExecutionState::EXECUTION_FAILED:
+    status = ExecutionStatus::ERROR;
+    break;
+  }
+
+  if (ExecutionStatus::ERROR == status)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Execution in error state: ", ledger::ToString(execution_state));
+  }
+
+  return status;
+}
+
+void BlockCoordinator::UpdateNextBlockTime()
+{
+  next_block_time_ = Clock::now() + block_period_;
+}
+
+char const *BlockCoordinator::ToString(State state)
+{
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case State::SYNCHRONIZING:
+    text = "Synchronizing";
+    break;
+  case State::SYNCHRONIZED:
+    text = "Synchronized";
+    break;
+  case State::PRE_EXEC_BLOCK_VALIDATION:
+    text = "Pre Block Execution Validation";
+    break;
+  case State::SCHEDULE_BLOCK_EXECUTION:
+    text = "Schedule Block Execution";
+    break;
+  case State::WAIT_FOR_EXECUTION:
+    text = "Waiting for Block Execution";
+    break;
+  case State::POST_EXEC_BLOCK_VALIDATION:
+    text = "Post Block Execution Validation";
+    break;
+  case State::PACK_NEW_BLOCK:
+    text = "Pack New Block";
+    break;
+  case State::EXECUTE_NEW_BLOCK:
+    text = "Execution New Block";
+    break;
+  case State::WAIT_FOR_NEW_BLOCK_EXECUTION:
+    text = "Waiting for New Block Execution";
+    break;
+  case State::PROOF_SEARCH:
+    text = "Searching for Proof";
+    break;
+  case State::TRANSMIT_BLOCK:
+    text = "Transmitting Block";
+    break;
+  case State::RESET:
+    text = "Reset";
+    break;
+  }
+
+  return text;
+}
+
+char const *BlockCoordinator::ToString(ExecutionStatus state)
+{
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case ExecutionStatus::IDLE:
+    text = "Idle";
+    break;
+  case ExecutionStatus::RUNNING:
+    text = "Running";
+    break;
+  case ExecutionStatus::STALLED:
+    text = "Stalled";
+    break;
+  case ExecutionStatus::ERROR:
+    text = "Error";
+    break;
+  }
+
+  return text;
 }
 
 }  // namespace ledger

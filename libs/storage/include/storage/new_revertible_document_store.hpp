@@ -20,6 +20,8 @@
 #include "storage/document_store.hpp"
 #include "storage/new_versioned_random_access_stack.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace storage {
 
@@ -29,8 +31,6 @@ public:
   using Hash           = byte_array::ConstByteArray;
   using ByteArray      = byte_array::ConstByteArray;
   using UnderlyingType = storage::Document;
-
-  NewRevertibleDocumentStore();
 
   bool New(std::string const &state, std::string const &state_history, std::string const &index,
            std::string const &index_history, bool create_if_not_exist);
@@ -56,7 +56,11 @@ private:
                                                                                      // index
       NewVersionedRandomAccessStack<FileBlockType<2048>>>;                           // File store
 
-  Storage storage_;
+  std::string state_path_;
+  std::string state_history_path_;
+  std::string index_path_;
+  std::string index_history_path_;
+  Storage     storage_;
 };
 
 }  // namespace storage

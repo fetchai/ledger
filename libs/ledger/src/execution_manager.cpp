@@ -64,23 +64,12 @@ namespace ledger {
  * @param num_executors The specified number of executors (and threads)
  */
 // std::make_shared<fetch::network::ThreadPool>(num_executors)
-ExecutionManager::ExecutionManager(std::string const &storage_path, std::size_t num_executors,
-                                   StorageUnitPtr storage, ExecutorFactory const &factory)
+ExecutionManager::ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
+                                   ExecutorFactory const &factory)
   : storage_(std::move(storage))
   , idle_executors_(num_executors)
   , thread_pool_(network::MakeThreadPool(num_executors, "Executor"))
 {
-  // define all the file paths for the databases
-  FilePaths const state_archive_paths = FilePaths::Create(storage_path, "exec_state_bookmark_map");
-  FilePaths const block_state_paths   = FilePaths::Create(storage_path, "exec_block_state_map");
-
-  // load state archive updates
-  {
-    std::lock_guard<Mutex> lock(state_archive_lock_);
-    state_archive_.New(state_archive_paths.data_path, state_archive_paths.index_path);
-    block_state_cache_.New(block_state_paths.data_path, block_state_paths.index_path);
-  }
-
   // setup the executor pool
   {
     std::lock_guard<Mutex> lock(idle_executors_lock_);
@@ -115,23 +104,6 @@ ExecutionManager::ScheduleStatus ExecutionManager::Execute(Block::Body const &bl
   if (State::ACTIVE == state_)
   {
     return ScheduleStatus::ALREADY_RUNNING;
-  }
-
-  // if we have seen the transactions for this block simply revert to the known
-  // state of the block
-  if (AttemptRestoreToBlock(block.hash))
-  {
-    last_block_hash_ = block.hash;
-    return ScheduleStatus::RESTORED;
-  }
-
-  // determine if the current block doesn't follow on from the previous block
-  if (block.previous_hash != last_block_hash_)
-  {
-    if (!AttemptRestoreToBlock(block.previous_hash))
-    {
-      return ScheduleStatus::NO_PARENT_BLOCK;
-    }
   }
 
   // TODO(issue 33): Detect and handle number of lanes updates
@@ -311,6 +283,12 @@ void ExecutionManager::Stop()
 
   // tear down the thread pool
   thread_pool_->Stop();
+}
+
+void ExecutionManager::SetLastProcessedBlock(BlockHash hash)
+{
+  // TODO(issue 33): thread safety
+  last_block_hash_ = hash;
 }
 
 ExecutionManagerInterface::BlockHash ExecutionManager::LastProcessedBlock()
@@ -498,87 +476,15 @@ void ExecutionManager::MonitorThreadEntrypoint()
     }
 
     case MonitorState::BOOKMARKING_STATE:
-    {
-      // calculate the final state hash
-      crypto::SHA256 hash;
-      hash.Update(storage_->Hash());
-      StateHash state_hash = hash.Final();
 
-      // request a bookmark
-      Bookmark bookmark     = 0;
-      bool     new_bookmark = false;
-
-      if (state_hash.size())
-      {
-        std::lock_guard<Mutex> lock(state_archive_lock_);
-        new_bookmark = state_archive_.AllocateBookmark(state_hash, bookmark);
-      }
-      else
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Unable to request state hash");
-      }
-
-      // only need to commit the new bookmark if there is actually a change in
-      // state
-      if (new_bookmark)
-      {
-        // commit the changes in state
-        try
-        {
-          storage_->Commit(bookmark);
-        }
-        catch (std::exception &ex)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Unable to commit state. Error: ", ex.what());
-        }
-
-        // update the state archives
-        {
-          std::lock_guard<Mutex> lock(state_archive_lock_);
-          if (!state_archive_.ConfirmBookmark(state_hash, bookmark))
-          {
-            FETCH_LOG_WARN(LOGGING_NAME, "Unable to confirm bookmark: ", bookmark);
-          }
-
-          // update the block state cache
-          block_state_cache_.Set(ResourceID{current_block}, state_hash);
-        }
-      }
+      // trigger the storage to archive the current state
+      storage_->Commit();
 
       // finished processing the block
       monitor_state = MonitorState::IDLE;
-
       break;
     }
-    }
   }
-}
-
-bool ExecutionManager::AttemptRestoreToBlock(BlockHash const &digest)
-{
-  bool success = false;
-
-  assert(digest.size() == 32);
-
-  std::lock_guard<Mutex> lock(state_archive_lock_);
-
-  // need to load the state from a previous application, so lookup the
-  // corresponding state hash
-  StateHash state_hash{};
-  if (block_state_cache_.Get(ResourceID{digest}, state_hash))
-  {
-    Bookmark bookmark{0};
-
-    // lookup the bookmark
-    if (state_archive_.LookupBookmark(state_hash, bookmark))
-    {
-      // revert
-      storage_->Revert(bookmark);
-      success = true;
-    }
-  }
-
-  return success;
 }
 
 }  // namespace ledger

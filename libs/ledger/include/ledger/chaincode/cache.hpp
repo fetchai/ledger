@@ -32,45 +32,8 @@ class ChainCodeCache
 {
 public:
   using ContractPtr = ChainCodeFactory::ContractPtr;
-  using Clock       = std::chrono::high_resolution_clock;
-  using Timepoint   = Clock::time_point;
 
-  static constexpr uint64_t CLEANUP_PERIOD = 16;
-  static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
-
-  struct Element
-  {
-    Element(ContractPtr c)
-      : chain_code{std::move(c)}
-    {}
-
-    ContractPtr chain_code;
-    Timepoint   timestamp{Clock::now()};
-  };
-
-  using underlying_cache_type = std::unordered_map<byte_array::ConstByteArray, Element>;
-  using cache_value_type      = underlying_cache_type::value_type;
-
-  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name)
-  {
-
-    // attempt to locate the contract in the cache
-    ContractPtr contract = FindInCache(contract_name);
-
-    // if this fails create the contract
-    if (!contract)
-    {
-      contract = CreateContract(contract_name);
-    }
-
-    // periodically run cache maintenance
-    if ((++counter_ & CLEANUP_MASK) == 0)
-    {
-      RunMaintenance();
-    }
-
-    return contract;
-  }
+  ContractPtr Lookup(byte_array::ConstByteArray const &contract_name);
 
   ChainCodeFactory const &factory() const
   {
@@ -78,56 +41,32 @@ public:
   }
 
 private:
-  ContractPtr FindInCache(byte_array::ConstByteArray const &name)
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+
+  struct Element
   {
-    ContractPtr contract;
+    explicit Element(ContractPtr c)
+      : chain_code{std::move(c)}
+    {}
 
-    // attempt to lookup the contract in the cache
-    auto it = cache_.find(name);
-    if (it != cache_.end())
-    {
+    ContractPtr chain_code;
+    Timepoint   timestamp{Clock::now()};
+  };
 
-      // extract the contract and refresh the cache timestamp
-      contract             = it->second.chain_code;
-      it->second.timestamp = Clock::now();
-    }
+  using UnderlyingCache = std::unordered_map<byte_array::ConstByteArray, Element>;
 
-    return contract;
-  }
+  static constexpr uint64_t CLEANUP_PERIOD = 16;
+  static constexpr uint64_t CLEANUP_MASK   = CLEANUP_PERIOD - 1u;
 
-  ContractPtr CreateContract(byte_array::ConstByteArray const &name)
-  {
-    ContractPtr contract = factory_.Create(name);
+  ContractPtr FindInCache(byte_array::ConstByteArray const &name);
+  ContractPtr CreateContract(byte_array::ConstByteArray const &name);
 
-    // update the cache
-    cache_.emplace(name, contract);
+  void RunMaintenance();
 
-    return contract;
-  }
-
-  void RunMaintenance()
-  {
-    static const std::chrono::hours CACHE_LIFETIME{1};
-
-    Timepoint const now = Clock::now();
-
-    for (auto it = cache_.begin(), end = cache_.end(); it != end;)
-    {
-      auto const delta = now - it->second.timestamp;
-      if (delta >= CACHE_LIFETIME)
-      {
-        it = cache_.erase(it);
-      }
-      else
-      {
-        ++it;
-      }
-    }
-  }
-
-  std::size_t           counter_;
-  underlying_cache_type cache_;
-  ChainCodeFactory      factory_;
+  std::size_t      counter_;
+  UnderlyingCache  cache_;
+  ChainCodeFactory factory_;
 
   static_assert(meta::IsLog2<CLEANUP_PERIOD>::value, "Clean up period must be a valid power of 2");
 };

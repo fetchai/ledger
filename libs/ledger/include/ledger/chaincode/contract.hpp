@@ -65,242 +65,43 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Contract";
 
-  Status DispatchQuery(ContractName const &name, Query const &query, Query &response)
-  {
-    Status status{Status::NOT_FOUND};
+  Status DispatchQuery(ContractName const &name, Query const &query, Query &response);
+  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx);
 
-    auto it = query_handlers_.find(name);
-    if (it != query_handlers_.end())
-    {
-      status = it->second(query, response);
-      ++query_counters_[name];
-    }
+  void Attach(StorageInterface &state);
+  void Detach();
 
-    return status;
-  }
-
-  Status DispatchTransaction(byte_array::ConstByteArray const &name, Transaction const &tx)
-  {
-    Status status{Status::NOT_FOUND};
-
-    auto it = transaction_handlers_.find(name);
-    if (it != transaction_handlers_.end())
-    {
-
-      // lock the contract resources
-      if (!LockResources(tx.summary().resources))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
-        return Status::FAILED;
-      }
-
-      // dispatch the contract
-      status = it->second(tx);
-
-      // unlock the contract resources
-      if (!UnlockResources(tx.summary().resources))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
-        return Status::FAILED;
-      }
-
-      ++transaction_counters_[name];
-    }
-
-    return status;
-  }
-
-  void Attach(StorageInterface &state)
-  {
-    state_ = &state;
-  }
-
-  void Detach()
-  {
-    state_ = nullptr;
-  }
-
-  std::size_t GetQueryCounter(std::string const &name)
-  {
-    auto it = query_counters_.find(name);
-    if (it != query_counters_.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      return 0;
-    }
-  }
-
-  std::size_t GetTransactionCounter(std::string const &name)
-  {
-    auto it = transaction_counters_.find(name);
-    if (it != transaction_counters_.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      return 0;
-    }
-  }
+  std::size_t GetQueryCounter(std::string const &name);
+  std::size_t GetTransactionCounter(std::string const &name);
 
   bool ParseAsJson(Transaction const &tx, variant::Variant &output);
 
-  Identifier const &identifier() const
-  {
-    return contract_identifier_;
-  }
+  Identifier const &           identifier() const;
+  QueryHandlerMap const &      query_handlers() const;
+  TransactionHandlerMap const &transaction_handlers() const;
 
-  QueryHandlerMap const &query_handlers() const
-  {
-    return query_handlers_;
-  }
-
-  TransactionHandlerMap const &transaction_handlers() const
-  {
-    return transaction_handlers_;
-  }
-
-  storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const
-  {
-    byte_array::ByteArray index;
-    index.Append(contract_identifier_.name_space(), ".state.", suffix);
-    return storage::ResourceAddress{index};
-  }
+  storage::ResourceAddress CreateStateIndex(byte_array::ByteArray const &suffix) const;
 
 protected:
-  explicit Contract(byte_array::ConstByteArray const &identifier)
-    : contract_identifier_{identifier}
-  {}
+  explicit Contract(byte_array::ConstByteArray const &identifier);
 
   template <typename C>
-  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &))
-  {
-    if (transaction_handlers_.find(name) == transaction_handlers_.end())
-    {
-      transaction_handlers_[name] = [instance, func](Transaction const &tx) {
-        return (instance->*func)(tx);
-      };
-      transaction_counters_[name] = 0;
-    }
-    else
-    {
-      throw std::logic_error("Duplicate transaction handler registered");
-    }
-  }
-
+  void OnTransaction(std::string const &name, C *instance, Status (C::*func)(Transaction const &));
   template <typename C>
-  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &))
-  {
-    if (query_handlers_.find(name) == query_handlers_.end())
-    {
-      query_handlers_[name] = [instance, func](Query const &query, Query &response) {
-        return (instance->*func)(query, response);
-      };
-      query_counters_[name] = 0;
-    }
-    else
-    {
-      throw std::logic_error("Duplicate query handler registered");
-    }
-  }
+  void OnQuery(std::string const &name, C *instance, Status (C::*func)(Query const &, Query &));
 
-  StorageInterface &state()
-  {
-    detailed_assert(state_ != nullptr);
-    return *state_;
-  }
+  StorageInterface &state();
 
   template <typename T>
-  bool GetOrCreateStateRecord(T &record, byte_array::ByteArray const &address)
-  {
-
-    // create the index that is required
-    auto index = CreateStateIndex(address);
-
-    // retrieve the state data
-    auto document = state().GetOrCreate(index);
-    if (document.failed)
-    {
-      return false;
-    }
-
-    // update the document if it wasn't created
-    if (!document.was_created)
-    {
-      serializers::ByteArrayBuffer buffer(document.document);
-      buffer >> record;
-    }
-
-    return true;
-  }
-
+  bool GetOrCreateStateRecord(T &record, byte_array::ByteArray const &address);
   template <typename T>
-  bool GetStateRecord(T &record, byte_array::ByteArray const &address)
-  {
-
-    // create the index that is required
-    auto index = CreateStateIndex(address);
-
-    // retrieve the state data
-    auto document = state().Get(index);
-    if (document.failed)
-    {
-      return false;
-    }
-
-    // update the document if it wasn't created
-    serializers::ByteArrayBuffer buffer(document.document);
-    buffer >> record;
-
-    return true;
-  }
-
+  bool GetStateRecord(T &record, byte_array::ByteArray const &address);
   template <typename T>
-  void SetStateRecord(T const &record, byte_array::ByteArray const &address)
-  {
-    auto index = CreateStateIndex(address);
-
-    // serialize the record to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << record;
-
-    // store the buffer
-    state().Set(index, buffer.data());
-  }
+  void SetStateRecord(T const &record, byte_array::ByteArray const &address);
 
 private:
-  bool LockResources(ResourceSet const &resources)
-  {
-    bool success = true;
-
-    for (auto const &group : resources)
-    {
-      if (!state().Lock(CreateStateIndex(group)))
-      {
-        success = false;
-      }
-    }
-
-    return success;
-  }
-
-  bool UnlockResources(ResourceSet const &resources)
-  {
-    bool success = true;
-
-    for (auto const &group : resources)
-    {
-      if (!state().Unlock(CreateStateIndex(group)))
-      {
-        success = false;
-      }
-    }
-
-    return success;
-  }
+  bool LockResources(ResourceSet const &resources);
+  bool UnlockResources(ResourceSet const &resources);
 
   Identifier            contract_identifier_;
   QueryHandlerMap       query_handlers_{};
@@ -309,6 +110,98 @@ private:
   CounterMap            query_counters_{};
   StorageInterface *    state_ = nullptr;
 };
+
+template <typename C>
+void Contract::OnTransaction(std::string const &name, C *instance,
+                             Status (C::*func)(Transaction const &))
+{
+  if (transaction_handlers_.find(name) == transaction_handlers_.end())
+  {
+    transaction_handlers_[name] = [instance, func](Transaction const &tx) {
+      return (instance->*func)(tx);
+    };
+    transaction_counters_[name] = 0;
+  }
+  else
+  {
+    throw std::logic_error("Duplicate transaction handler registered");
+  }
+}
+
+template <typename C>
+void Contract::OnQuery(std::string const &name, C *instance,
+                       Status (C::*func)(Query const &, Query &))
+{
+  if (query_handlers_.find(name) == query_handlers_.end())
+  {
+    query_handlers_[name] = [instance, func](Query const &query, Query &response) {
+      return (instance->*func)(query, response);
+    };
+    query_counters_[name] = 0;
+  }
+  else
+  {
+    throw std::logic_error("Duplicate query handler registered");
+  }
+}
+
+template <typename T>
+bool Contract::GetOrCreateStateRecord(T &record, byte_array::ByteArray const &address)
+{
+
+  // create the index that is required
+  auto index = CreateStateIndex(address);
+
+  // retrieve the state data
+  auto document = state().GetOrCreate(index);
+  if (document.failed)
+  {
+    return false;
+  }
+
+  // update the document if it wasn't created
+  if (!document.was_created)
+  {
+    serializers::ByteArrayBuffer buffer(document.document);
+    buffer >> record;
+  }
+
+  return true;
+}
+
+template <typename T>
+bool Contract::GetStateRecord(T &record, byte_array::ByteArray const &address)
+{
+
+  // create the index that is required
+  auto index = CreateStateIndex(address);
+
+  // retrieve the state data
+  auto document = state().Get(index);
+  if (document.failed)
+  {
+    return false;
+  }
+
+  // update the document if it wasn't created
+  serializers::ByteArrayBuffer buffer(document.document);
+  buffer >> record;
+
+  return true;
+}
+
+template <typename T>
+void Contract::SetStateRecord(T const &record, byte_array::ByteArray const &address)
+{
+  auto index = CreateStateIndex(address);
+
+  // serialize the record to the buffer
+  serializers::ByteArrayBuffer buffer;
+  buffer << record;
+
+  // store the buffer
+  state().Set(index, buffer.data());
+}
 
 }  // namespace ledger
 }  // namespace fetch

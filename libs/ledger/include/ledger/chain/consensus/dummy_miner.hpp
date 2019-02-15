@@ -19,60 +19,28 @@
 
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 
-#include <random>
-
 namespace fetch {
 namespace ledger {
 namespace consensus {
 
 class DummyMiner : public ConsensusMinerInterface
 {
-
 public:
-  DummyMiner()  = default;
-  ~DummyMiner() = default;
+  // Construction / Destruction
+  DummyMiner()                   = default;
+  DummyMiner(DummyMiner const &) = delete;
+  DummyMiner(DummyMiner &&)      = delete;
+  ~DummyMiner() override         = default;
 
-  // Blocking mine
-  void Mine(Block &block) override
-  {
-    uint64_t initNonce = GetRandom();
-    block.nonce        = initNonce;
+  /// @name Consensus Miner Interface
+  /// @{
+  void Mine(Block &block) override;
+  bool Mine(Block &block, uint64_t iterations) override;
+  /// @}
 
-    block.UpdateDigest();
-
-    while (!block.proof())
-    {
-      block.nonce++;
-      block.UpdateDigest();
-    }
-  }
-
-  // Mine for set number of iterations
-  bool Mine(Block &block, uint64_t iterations) override
-  {
-    uint32_t initNonce = GetRandom();
-    block.nonce        = initNonce;
-
-    block.UpdateDigest();
-
-    while (!block.proof() && iterations > 0)
-    {
-      block.nonce++;
-      block.UpdateDigest();
-      iterations--;
-    }
-
-    return block.proof();
-  }
-
-private:
-  static uint32_t GetRandom()
-  {
-    std::random_device                      rd;
-    std::mt19937                            gen(rd());
-    std::uniform_int_distribution<uint32_t> dis(0, std::numeric_limits<uint32_t>::max());
-    return dis(gen);
-  }
+  // Operators
+  DummyMiner &operator=(DummyMiner const &) = delete;
+  DummyMiner &operator=(DummyMiner &&) = delete;
 };
 }  // namespace consensus
 }  // namespace ledger

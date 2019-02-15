@@ -34,10 +34,11 @@ public:
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
   using state_store_type =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  using state_archive_type = std::unordered_map<bookmark_type, state_store_type>;
-  using lock_store_type    = std::unordered_set<fetch::byte_array::ConstByteArray>;
-  using mutex_type         = std::mutex;
-  using lock_guard_type    = std::lock_guard<mutex_type>;
+  /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
+  using lock_store_type = std::unordered_set<fetch::byte_array::ConstByteArray>;
+  using mutex_type      = std::mutex;
+  using lock_guard_type = std::lock_guard<mutex_type>;
+  using hash_type       = fetch::byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "FakeStorageUnit";
 
@@ -135,54 +136,29 @@ public:
     return success;
   }
 
-  hash_type Hash() override
+  Hash CurrentHash() override
   {
-    lock_guard_type       lock(mutex_);
-    fetch::crypto::SHA256 hasher{};
-
-    std::vector<fetch::byte_array::ConstByteArray> keys;
-    for (auto const &elem : state_)
-    {
-      keys.emplace_back(elem.first);
-    }
-
-    std::sort(keys.begin(), keys.end());
-
-    hasher.Reset();
-    for (auto const &key : keys)
-    {
-      hasher.Update(key);
-      hasher.Update(state_[key]);
-    }
-
-    return hasher.Final();
-  }
-
-  void Commit(bookmark_type const &bookmark) override
+    return "";
+  };
+  Hash LastCommitHash() override
   {
-    lock_guard_type lock(mutex_);
-    state_archive_[bookmark] = state_;
-  }
-
-  void Revert(bookmark_type const &bookmark) override
+    return "";
+  };
+  bool RevertToHash(Hash const &) override
   {
-    lock_guard_type lock(mutex_);
-    auto            it = state_archive_.find(bookmark);
-    if (it != state_archive_.end())
-    {
-      state_ = it->second;
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Reverting to clean state: ", bookmark);
-
-      state_.clear();
-    }
-  }
+    return true;
+  };
+  Hash Commit() override
+  {
+    return "";
+  };
+  bool HashExists(Hash const &) override
+  {
+    return true;
+  };
 
   // Does nothing
   TxSummaries PollRecentTx(uint32_t) override
-
   {
     return {};
   }
@@ -192,5 +168,5 @@ private:
   transaction_store_type transactions_;
   state_store_type       state_;
   lock_store_type        locks_;
-  state_archive_type     state_archive_;
+  /* state_archive_type     state_archive_; */
 };

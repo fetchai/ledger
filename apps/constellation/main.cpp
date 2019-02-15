@@ -31,6 +31,7 @@
 
 #include "bootstrap_monitor.hpp"
 #include "constellation.hpp"
+#include "fetch_version.hpp"
 
 #include <array>
 #include <csignal>
@@ -51,8 +52,6 @@ using BootstrapPtr   = std::unique_ptr<fetch::BootstrapMonitor>;
 using ProverPtr      = std::unique_ptr<Prover>;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 using ByteArray      = fetch::byte_array::ByteArray;
-
-using fetch::ledger::consensus::ConsensusMinerType;
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
@@ -99,12 +98,6 @@ ConstByteArray ReadContentsOfFile(char const *filename)
   return buffer;
 }
 
-std::ostream &operator<<(std::ostream &os, const ConsensusMinerType &obj)
-{
-  os << static_cast<std::underlying_type<ConsensusMinerType>::type>(obj);
-  return os;
-}
-
 struct CommandLineArguments
 {
   using StringList  = std::vector<std::string>;
@@ -114,6 +107,8 @@ struct CommandLineArguments
   using ManifestPtr = std::unique_ptr<Manifest>;
   using Uri         = fetch::network::Uri;
   using Peer        = fetch::network::Peer;
+  using Config      = fetch::Constellation::Config;
+  using Params      = fetch::commandline::Params;
 
   using ServiceIdentifier = fetch::network::ServiceIdentifier;
   using ServiceType       = fetch::network::ServiceType;
@@ -122,36 +117,30 @@ struct CommandLineArguments
   static constexpr uint16_t P2P_PORT_OFFSET     = 1;
   static constexpr uint16_t STORAGE_PORT_OFFSET = 10;
 
-  static const uint32_t    DEFAULT_NUM_LANES       = 4;
-  static const uint32_t    DEFAULT_NUM_SLICES      = 4;
-  static const uint32_t    DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
-  static const uint16_t    DEFAULT_PORT            = 8000;
-  static const uint32_t    DEFAULT_NETWORK_ID      = 0x10;
-  static const uint32_t    DEFAULT_BLOCK_INTERVAL  = 5000;  // milliseconds.
-  static const std::size_t DEFAULT_MAX_PEERS       = 3;
-  static const std::size_t DEFAULT_TRANSIENT_PEERS = 1;
+  static const uint32_t DEFAULT_NUM_LANES       = 1;
+  static const uint32_t DEFAULT_NUM_SLICES      = 100;
+  static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
+  static const uint16_t DEFAULT_PORT            = 8000;
+  static const uint32_t DEFAULT_NETWORK_ID      = 0x10;
+  static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
+  static const uint32_t DEFAULT_MAX_PEERS       = 3;
+  static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
 
-  uint16_t           port{0};
-  uint32_t           network_id;
-  UriList            peers;
-  uint32_t           num_executors;
-  uint32_t           num_lanes;
-  uint32_t           log2_num_lanes;
-  uint32_t           num_slices;
-  uint32_t           block_interval;
-  std::string        interface;
-  std::string        token;
-  bool               bootstrap{false};
-  ConsensusMinerType mine{ConsensusMinerType::NO_MINER};
-  std::string        dbdir;
-  std::string        external_address;
-  std::string        host_name;
-  ManifestPtr        manifest;
-  std::size_t        processor_threads;
-  std::size_t        verification_threads;
-  std::size_t        max_peers;
-  std::size_t        transient_peers;
-  uint32_t           peers_update_cycle_ms;
+  /// @name Constellation Config
+  /// @{
+  Config   cfg;
+  uint16_t port{0};
+  uint32_t network_id;
+  UriList  peers;
+  /// @}
+
+  /// @name Bootstrap Config
+  /// @{
+  bool        bootstrap{false};
+  std::string host_name;
+  std::string token;
+  std::string external_address{};
+  /// @}
 
   static CommandLineArguments Parse(int argc, char **argv, BootstrapPtr &bootstrap,
                                     Prover const &prover)
@@ -159,78 +148,60 @@ struct CommandLineArguments
     CommandLineArguments args;
 
     // define the parameters
+    Params      p;
+    std::string bootstrap_address;
+    std::string config_path;
     std::string raw_peers;
+    ManifestPtr manifest;
+    uint32_t    num_lanes{0};
 
-    fetch::commandline::Params parameters;
-    std::string                bootstrap_address;
-    std::string                external_address;
-    std::string                config_path;
-    int                        mine;
+    // clang-format off
+    p.add(args.port,                      "port",                  "The starting port for ledger services",                                         DEFAULT_PORT);
+    p.add(args.cfg.num_executors,         "executors",             "The number of executors to configure",                                          DEFAULT_NUM_EXECUTORS);
+    p.add(num_lanes,                      "lanes",                 "The number of lanes to be used",                                                DEFAULT_NUM_LANES);
+    p.add(args.cfg.num_slices,            "slices",                "The number of slices to be used",                                               DEFAULT_NUM_SLICES);
+    p.add(raw_peers,                      "peers",                 "The comma separated list of addresses to initially connect to",                 std::string{});
+    p.add(args.cfg.db_prefix,             "db-prefix",             "The directory or prefix added to the node storage",                             std::string{"node_storage"});
+    p.add(args.network_id,                "network-id",            "The network id",                                                                DEFAULT_NETWORK_ID);
+    p.add(args.cfg.interface_address,     "interface",             "The address of the network inferface to be used",                               std::string{"127.0.0.1"});
+    p.add(args.cfg.block_interval_ms,     "block-interval",        "Block interval in milliseconds.",                                               uint32_t{DEFAULT_BLOCK_INTERVAL});
+    p.add(args.token,                     "token",                 "The authentication token to be used with bootstrapping the client",             std::string{});
+    p.add(args.external_address,          "external",              "This node's global IP address",                                                 std::string{});
+    p.add(bootstrap_address,              "bootstrap",             "Src address for network bootstrap.",                                            std::string{});
+    p.add(args.host_name,                 "host-name",             "The hostname / identifier for this node",                                       std::string{});
+    p.add(config_path,                    "config",                "The path to the manifest configuration",                                        std::string{});
+    p.add(args.cfg.processor_threads,     "processor-threads",     "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.verification_threads,  "verifier-threads",      "The number of processor threads",                                               uint32_t{std::thread::hardware_concurrency()});
+    p.add(args.cfg.max_peers,             "max-peers",             "The number of maximal peers to send to peer requests.",                         DEFAULT_MAX_PEERS);
+    p.add(args.cfg.transient_peers,       "transient-peers",       "The number of the peers which will be random in answer sent to peer requests.", DEFAULT_TRANSIENT_PEERS);
+    p.add(args.cfg.peers_update_cycle_ms, "peers-update-cycle-ms", "How fast to do peering changes.",                                               uint32_t{0});
+    // clang-format on
 
-    parameters.add(args.port, "port", "The starting port for ledger services", DEFAULT_PORT);
-    parameters.add(args.num_executors, "executors", "The number of executors to configure",
-                   DEFAULT_NUM_EXECUTORS);
-    parameters.add(args.num_lanes, "lanes", "The number of lanes to be used", DEFAULT_NUM_LANES);
-    parameters.add(args.num_slices, "slices", "The number of slices to be used",
-                   DEFAULT_NUM_SLICES);
-    parameters.add(raw_peers, "peers",
-                   "The comma separated list of addresses to initially connect to", std::string{});
-    parameters.add(args.dbdir, "db-prefix", "The directory or prefix added to the node storage",
-                   std::string{"node_storage"});
-    parameters.add(args.network_id, "network-id", "The network id", DEFAULT_NETWORK_ID);
-    parameters.add(args.interface, "interface", "The network id", std::string{"127.0.0.1"});
-    parameters.add(args.block_interval, "block-interval", "Block interval in milliseconds.",
-                   uint32_t{DEFAULT_BLOCK_INTERVAL});
-    parameters.add(external_address, "bootstrap", "Enable bootstrap network support",
-                   std::string{});
-    parameters.add(args.token, "token",
-                   "The authentication token to be used with bootstrapping the client",
-                   std::string{});
-    parameters.add(mine, "mine", "Enable mining on this node", 0);
-
-    parameters.add(args.external_address, "external", "This node's global IP addr.", std::string{});
-    parameters.add(bootstrap_address, "bootstrap", "Src addr for network boostrap.", std::string{});
-    parameters.add(args.host_name, "host-name", "The hostname / identifier for this node",
-                   std::string{});
-    parameters.add(config_path, "config", "The path to the manifest configuration", std::string{});
-    parameters.add(args.processor_threads, "processor-threads", "The number of processor threads",
-                   std::size_t{std::thread::hardware_concurrency()});
-    parameters.add(args.verification_threads, "verifier-threads", "The number of processor threads",
-                   std::size_t{std::thread::hardware_concurrency()});
-    parameters.add(args.max_peers, "max-peers",
-                   "The number of maximal peers to send to peer requests.", DEFAULT_MAX_PEERS);
-    parameters.add(args.transient_peers, "transient-peers",
-                   "The number of the peers which will be random in answer sent to peer requests.",
-                   DEFAULT_TRANSIENT_PEERS);
-    parameters.add(args.peers_update_cycle_ms, "peers-update-cycle-ms",
-                   "How fast to do peering changes.", uint32_t(2000));
     // parse the args
-    parameters.Parse(argc, argv);
+    p.Parse(argc, argv);
 
     // update the peers
     args.SetPeers(raw_peers);
 
-    args.mine = static_cast<ConsensusMinerType>(mine);
-
     // ensure that the number lanes is a valid power of 2
-    if (!EnsureLog2(args.num_lanes))
+    if (!EnsureLog2(num_lanes))
     {
       std::cout << "Number of lanes is not a valid log2 number" << std::endl;
       std::exit(1);
     }
 
     // calculate the log2 num lanes
-    args.log2_num_lanes = Log2(args.num_lanes);
+    args.cfg.log2_num_lanes = Log2(num_lanes);
 
     // if the user has explicitly passed a configuration then we must parse it here
     if (!config_path.empty())
     {
       // read the contents of the manifest from the path specified
-      args.manifest = LoadManifestFromFile(config_path.c_str());
+      manifest = LoadManifestFromFile(config_path.c_str());
     }
 
     args.bootstrap = (!bootstrap_address.empty());
-    if (args.bootstrap && args.token.size())
+    if (args.bootstrap && !args.token.empty())
     {
       // determine what the P2P port is. This is either specified with the port parameter or
       // explicitly given via the manifest
@@ -238,9 +209,9 @@ struct CommandLineArguments
 
       // if we have a valid manifest then we should respect the port configuration specified here
       // otherwise we default to the port specified
-      if (args.manifest)
+      if (manifest)
       {
-        auto const &uri = args.manifest->GetUri(ServiceIdentifier{ServiceType::CORE});
+        auto const &uri = manifest->GetUri(ServiceIdentifier{ServiceType::CORE});
 
         if (uri.scheme() == Uri::Scheme::Tcp)
         {
@@ -255,7 +226,7 @@ struct CommandLineArguments
       // augment the peer list with the bootstrapped version
       if (bootstrap->Start(args.peers))
       {
-        args.interface = bootstrap->interface_address();
+        args.cfg.interface_address = bootstrap->interface_address();
 
         if (args.external_address.empty())
         {
@@ -270,10 +241,13 @@ struct CommandLineArguments
     }
 
     // if we do not have a correct
-    if (!args.manifest)
+    if (!manifest)
     {
-      args.manifest = GenerateManifest(args.external_address, args.port, args.num_lanes);
+      manifest = GenerateManifest(args.external_address, args.port, num_lanes);
     }
+
+    // finally
+    args.cfg.manifest = std::move(*manifest);
 
     return args;
   }
@@ -366,20 +340,21 @@ struct CommandLineArguments
     s << '\n';
     s << "port......................: " << args.port << '\n';
     s << "network id................: 0x" << std::hex << args.network_id << std::dec << '\n';
-    s << "num executors.............: " << args.num_executors << '\n';
-    s << "num lanes.................: " << args.num_lanes << '\n';
-    s << "num slices................: " << args.num_slices << '\n';
+    s << "num executors.............: " << args.cfg.num_executors << '\n';
+    s << "num lanes.................: " << (1 << args.cfg.log2_num_lanes) << '\n';
+    s << "num slices................: " << args.cfg.num_slices << '\n';
     s << "bootstrap.................: " << args.bootstrap << '\n';
     s << "host name.................: " << args.host_name << '\n';
     s << "external address..........: " << args.external_address << '\n';
-    s << "db-prefix.................: " << args.dbdir << '\n';
-    s << "interface.................: " << args.interface << '\n';
-    s << "mining....................: " << args.mine << '\n';
-    s << "tx processor threads......: " << args.processor_threads << '\n';
-    s << "shard verification threads: " << args.verification_threads << '\n';
-    s << "block interval............: " << args.block_interval << "ms" << '\n';
-    s << "max peers.................: " << args.max_peers << '\n';
-    s << "peers update cycle........: " << args.peers_update_cycle_ms << "ms\n";
+    s << "db-prefix.................: " << args.cfg.db_prefix << '\n';
+    s << "interface.................: " << args.cfg.interface_address << '\n';
+    s << "mining....................: " << ((args.cfg.block_interval_ms > 0) ? "Yes" : "No")
+      << '\n';
+    s << "tx processor threads......: " << args.cfg.processor_threads << '\n';
+    s << "shard verification threads: " << args.cfg.verification_threads << '\n';
+    s << "block interval............: " << args.cfg.block_interval_ms << "ms" << '\n';
+    s << "max peers.................: " << args.cfg.max_peers << '\n';
+    s << "peers update cycle........: " << args.cfg.peers_update_cycle_ms << "ms\n";
 
     // generate the peer listing
     s << "peers.....................: ";
@@ -388,10 +363,7 @@ struct CommandLineArguments
       s << peer.uri() << ' ';
     }
 
-    if (args.manifest)
-    {
-      s << '\n' << "manifest.......: " << args.manifest->ToString() << '\n';
-    }
+    s << '\n' << "manifest.......: " << args.cfg.manifest.ToString() << '\n';
 
     // terminate and flush
     s << std::endl;
@@ -506,11 +478,7 @@ int main(int argc, char **argv)
     FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", args);
 
     // create and run the constellation
-    auto constellation = std::make_unique<fetch::Constellation>(
-        std::move(p2p_key), std::move(*args.manifest), args.num_executors, args.log2_num_lanes,
-        args.num_slices, args.interface, args.dbdir, args.external_address, args.processor_threads,
-        args.verification_threads, std::chrono::milliseconds(args.block_interval), args.max_peers,
-        args.transient_peers, args.peers_update_cycle_ms);
+    auto constellation = std::make_unique<fetch::Constellation>(std::move(p2p_key), args.cfg);
 
     // update the instance pointer
     gConstellationInstance = constellation.get();
@@ -519,7 +487,7 @@ int main(int argc, char **argv)
     std::signal(SIGINT, InterruptHandler);
 
     // run the application
-    constellation->Run(args.peers, args.mine);
+    constellation->Run(args.peers);
 
     // stop the bootstrapper if we have one
     if (bootstrap_monitor)

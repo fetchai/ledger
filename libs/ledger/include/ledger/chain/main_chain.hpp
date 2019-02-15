@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -51,15 +52,23 @@ namespace ledger {
  */
 struct Tip
 {
-  uint64_t total_weight;
+  Tip() = default;
+  Tip(uint64_t weight)
+    : total_weight{weight}
+  {}
+
+  uint64_t total_weight{0};
 };
 
 class MainChain
 {
 public:
-  using Blocks     = std::vector<Block>;
-  using BlockHash  = Block::Digest;
-  using BlockHashs = std::vector<BlockHash>;
+  using Blocks       = std::vector<Block>;
+  using BlockHash    = Block::Digest;
+  using BlockHashs   = std::vector<BlockHash>;
+  using BlockHashSet = std::unordered_set<BlockHash>;
+
+  static constexpr uint64_t ALL = std::numeric_limits<uint64_t>::max();
 
   // Hard code genesis on construction
 
@@ -69,36 +78,50 @@ public:
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain()                    = default;
 
-  bool AddBlock(Block &block, bool recursive_iteration = false);
+  bool AddBlock(Block &block);
 
   Block const &HeaviestBlock() const;
 
+  bool InvalidateTip(BlockHash hash);
+  bool InvalidateBlock(BlockHash hash);
+
+  BlockHash heaviest_block_hash() const
+  {
+    // TODO(EJF): Move and rename
+    RLock lock(main_mutex_);
+    return heaviest_.hash;
+  }
+
   uint64_t weight() const
   {
-    return heaviest_.first;
+    // TODO(EJF): Move and rename
+    RLock lock(main_mutex_);
+    return heaviest_.weight;
   }
 
   std::size_t totalBlocks() const
   {
+    // TODO(EJF): Move and rename
+    RLock lock(main_mutex_);
     return block_chain_.size();
   }
 
-  Blocks HeaviestChain(uint64_t const &limit = std::numeric_limits<uint64_t>::max()) const;
+  Blocks HeaviestChain(uint64_t limit = ALL) const;
 
-  Blocks ChainPreceding(BlockHash const &at,
-                        uint64_t         limit = std::numeric_limits<uint64_t>::max()) const;
+  Blocks ChainPreceding(BlockHash at, uint64_t limit = ALL) const;
 
-  bool GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                               uint64_t limit = std::numeric_limits<uint64_t>::max());
+  bool GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = ALL);
 
   void Reset();
 
   // TODO(private issue 512): storage code blocks this being const
-  bool Get(BlockHash hash, Block &block);
+  bool Get(BlockHash hash, Block &block) const;
 
-  BlockHashs GetMissingBlockHashes(std::size_t maximum);
+  BlockHashs GetMissingBlockHashes(std::size_t maximum) const;
 
   bool HasMissingBlocks() const;
+
+  BlockHashSet GetTips() const;
 
   template <typename T>
   bool StripAlreadySeenTx(BlockHash starting_hash, T &container);
@@ -112,12 +135,23 @@ private:
   using Proof         = Block::Proof;
   using TipPtr        = std::shared_ptr<Tip>;
   using TipsMap       = std::unordered_map<BlockHash, TipPtr>;
-  using HeaviestTip   = std::pair<uint64_t, BlockHash>;
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashs>;
   using BlockStore    = fetch::storage::ObjectStore<Block>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
   using RMutex        = std::recursive_mutex;
   using RLock         = std::unique_lock<RMutex>;
+
+  struct HeaviestTip
+  {
+    uint64_t  weight{0};
+    BlockHash hash{GENESIS_DIGEST};
+
+    void Update(uint64_t w, BlockHash digest)
+    {
+      weight = w;
+      hash   = std::move(digest);
+    }
+  };
 
   static constexpr char const *LOGGING_NAME        = "MainChain";
   static constexpr uint32_t    block_confirmation_ = 10;
@@ -128,9 +162,29 @@ private:
   bool GetPrev(Block &block);
   bool GetPrevFromStore(Block &block);
   void CompleteLooseBlocks(Block const &block);
-  void NewLooseBlock(Block &block);
+  void RecordLooseBlock(Block &block);
   bool CheckDiskForBlock(Block &block);
   bool UpdateTips(Block &block, Block const &prev_block);
+
+  /// @name Block Loopup
+  /// @{
+  bool AddBlockInternal(Block &block, bool recursive);
+
+  bool LookupBlock(BlockHash hash, Block &block) const;
+  bool LookupBlockFromCache(BlockHash hash, Block &block) const;
+  bool LookupBlockFromStorage(BlockHash hash, Block &block) const;
+  /// @}
+
+  /// @name Tip Management
+  /// @{
+  bool AddTip(Block const &block);
+  bool DetermineHeaviestTip();
+
+public:  // remove at somepoint
+  bool ReindexTips();
+
+private:
+  /// @}
 
   static Block CreateGenesisBlock();
 

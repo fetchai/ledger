@@ -20,20 +20,43 @@
 
 #include "storage/new_revertible_document_store.hpp"
 
+using Hash           = fetch::storage::NewRevertibleDocumentStore::Hash;
+using ByteArray      = fetch::storage::NewRevertibleDocumentStore::ByteArray;
+using UnderlyingType = fetch::storage::NewRevertibleDocumentStore::UnderlyingType;
+
+static constexpr char const *LOGGING_NAME = "NewRevertibleDocStore";
+
 namespace fetch {
 namespace storage {
+namespace {
+bool IsAllZeros(Hash const &hash)
+{
+  bool all_zeros{true};
 
-using Hash           = NewRevertibleDocumentStore::Hash;
-using ByteArray      = NewRevertibleDocumentStore::ByteArray;
-using UnderlyingType = NewRevertibleDocumentStore::UnderlyingType;
+  for (std::size_t i = 0, end = hash.size(); i < end; ++i)
+  {
+    if (hash[i] > 0)
+    {
+      all_zeros = false;
+      break;
+    }
+  }
 
-NewRevertibleDocumentStore::NewRevertibleDocumentStore()
-{}
+  return all_zeros;
+}
+}  // namespace
 
 bool NewRevertibleDocumentStore::Load(std::string const &state, std::string const &state_history,
                                       std::string const &index, std::string const &index_history,
                                       bool create = true)
 {
+  // cache the filenames
+  state_path_         = state;
+  state_history_path_ = state_history;
+  index_path_         = index;
+  index_history_path_ = index_history;
+
+  // trigger the load
   storage_.Load(state, state_history, index, index_history, create);
   return true;
 }
@@ -42,7 +65,15 @@ bool NewRevertibleDocumentStore::New(std::string const &state, std::string const
                                      std::string const &index, std::string const &index_history,
                                      bool /*create*/ = true)
 {
+  // cache the filenames
+  state_path_         = state;
+  state_history_path_ = state_history;
+  index_path_         = index;
+  index_history_path_ = index_history;
+
+  // trigger creation
   storage_.New(state, state_history, index, index_history);
+
   return true;
 }
 
@@ -69,7 +100,24 @@ Hash NewRevertibleDocumentStore::Commit()
 
 bool NewRevertibleDocumentStore::RevertToHash(Hash const &state)
 {
-  return storage_.RevertToHash(state);
+  bool success{false};
+
+  if (IsAllZeros(state))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Reverting database back to initial state");
+
+    // we are requesting to revert to a blank slate. The simplest way to handle this is to clear
+    // out the database
+    storage_.New(state_path_, state_history_path_, index_path_, index_history_path_);
+
+    success = true;
+  }
+  else
+  {
+    success = storage_.RevertToHash(state);
+  }
+
+  return success;
 }
 
 bool NewRevertibleDocumentStore::HashExists(Hash const &hash)

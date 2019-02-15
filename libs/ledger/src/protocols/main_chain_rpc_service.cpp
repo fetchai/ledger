@@ -173,7 +173,7 @@ void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Recv Block: ", ToBase64(block.body.hash),
-                 " (from peer: ", ToBase64(transmitter), ')');
+                 " (from peer: ", ToBase64(from), ')');
 
   FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
@@ -183,7 +183,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
     FETCH_METRIC_BLOCK_RECEIVED(block.body.hash);
 
-    block_coordinator_.AddBlock(block);
+    // add the new block to the chain
+    chain_.AddBlock(block);
 
     // if we got a block and it is loose then it it probably means that we need to sync the rest of
     // the block tree
@@ -194,8 +195,8 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
   else
   {
-    trust_.AddFeedback(from, p2p::TrustSubject::BLOCK, p2p::TrustQuality::LIED);
-    FETCH_LOG_INFO(LOGGING_NAME, "Peer ", ToBase64(from), " LIED!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(block.body.hash),
+                   " (from: ", ToBase64(from), ")");
   }
 }
 
@@ -210,7 +211,8 @@ void MainChainRpcService::AddLooseBlock(const BlockHash &hash, const Address &ad
   if (!bg_work_.InFlightP(hash))
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash));
+                   "Block is loose, requesting longest chain from counter part: ", ToBase64(hash),
+                   " from: ", ToBase64(address));
     auto worker = std::make_shared<MainChainSyncWorker>(shared_from_this(), hash, address);
     bg_work_.Add(worker);
   }
@@ -267,8 +269,7 @@ void MainChainRpcService::ServiceLooseBlocks()
 
 void MainChainRpcService::RequestedChainArrived(Address const &address, BlockList block_list)
 {
-  bool newdata = false;
-  bool lied    = false;
+  bool new_data = false;
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
     // recompute the digest
@@ -277,20 +278,15 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
     // add the block
     if (it->proof())
     {
-      newdata |= chain_.AddBlock(*it);
+      new_data |= chain_.AddBlock(*it);
     }
     else
     {
-      lied = true;
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid Block Recv: ", ToBase64(it->body.hash));
     }
   }
 
-  if (newdata && !lied)
-  {
-    trust_.AddFeedback(address, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
-  }
-
-  if (newdata && !block_list.empty())
+  if (new_data && !block_list.empty())
   {
     Block blk;
     if (chain_.Get(block_list.back().body.hash, blk))

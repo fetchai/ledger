@@ -23,8 +23,10 @@
 #include <cctype>
 #include <functional>
 #include <locale>
+
 namespace fetch {
 namespace string {
+
 inline void TrimFromRight(std::string &s)
 {
   s.erase(s.begin(),
@@ -43,5 +45,6 @@ inline void Trim(std::string &s)
   TrimFromRight(s);
   TrimFromLeft(s);
 }
+
 }  // namespace string
 }  // namespace fetch

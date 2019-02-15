@@ -17,37 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
-#include "network/service/promise.hpp"
+#include "ledger/block_packer_interface.hpp"
 
-#include <unordered_map>
-#include <vector>
-
-namespace fetch {
-namespace p2p {
-
-template <typename State>
-class StateMachine
+class FakeBlockPacker : public fetch::ledger::BlockPackerInterface
 {
 public:
-  using Promise     = service::Promise;
-  using PromiseList = std::vector<Promise>;
+  /// @name Block Packer Interface
+  /// @{
+  void EnqueueTransaction(fetch::ledger::TransactionSummary const &tx) override;
 
-  StateMachine()  = default;
-  ~StateMachine() = default;
+  void GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes, std::size_t num_slices,
+                     fetch::ledger::MainChain const &chain) override;
 
-  bool AddState(State const &state)
-  {
-    auto const result = map_.insert(state);
-    return result.second;
-  }
+  uint64_t GetBacklog() const override;
+  /// @}
+
+  fetch::ledger::Block const &last_generated_block() const;
 
 private:
-  using StateMap = std::unordered_map<State, Promise>;
-  using Mutex    = mutex::Mutex;
-
-  StateMap map_;
+  fetch::ledger::Block last_generated_block_{};
 };
-
-}  // namespace p2p
-}  // namespace fetch

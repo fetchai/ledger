@@ -29,8 +29,7 @@ public:
 
   enum class ScheduleStatus
   {
-    RESTORED = 0,  ///< The block state restored from previously executed block
-    SCHEDULED,     ///< The block has been successfully scheduled
+    SCHEDULED = 0,  ///< The block has been scheduled for execution
 
     // Errors
     NOT_STARTED,      ///< The executor has not been started
@@ -48,9 +47,11 @@ public:
     // Stalled states
     TRANSACTIONS_UNAVAILABLE,  ///< The execution manager has stalled because transactions are
                                ///< unavailable
-    EXECUTION_ABORTED,         ///< Execution has been stopped on user request
-    EXECUTION_FAILED           ///< Execution has failed for a fundamental reason, the block can be
-                               ///< considered as bad
+
+    // Error States
+    EXECUTION_ABORTED,  ///< Execution has been stopped on user request
+    EXECUTION_FAILED    ///< Execution has failed for a fundamental reason, the block can be
+                        ///< considered as bad
   };
 
   // Construction / Destruction
@@ -59,10 +60,11 @@ public:
 
   /// @name Execution Manager Interface
   /// @{
-  virtual ScheduleStatus Execute(Block::Body const &block) = 0;
-  virtual BlockHash      LastProcessedBlock()              = 0;
-  virtual State          GetState()                        = 0;
-  virtual bool           Abort()                           = 0;
+  virtual ScheduleStatus Execute(Block::Body const &block)     = 0;
+  virtual void           SetLastProcessedBlock(BlockHash hash) = 0;
+  virtual BlockHash      LastProcessedBlock()                  = 0;
+  virtual State          GetState()                            = 0;
+  virtual bool           Abort()                               = 0;
   /// @}
 };
 
@@ -107,9 +109,6 @@ inline char const *ToString(ExecutionManagerInterface::ScheduleStatus status)
   char const *reason = "Unknown";
   switch (status)
   {
-  case ScheduleStatus::RESTORED:
-    reason = "Restored";
-    break;
   case ScheduleStatus::SCHEDULED:
     reason = "Scheduled";
     break;

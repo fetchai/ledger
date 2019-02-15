@@ -161,5 +161,12 @@ bool ExecutionManagerRpcClient::Abort()
   return result->As<bool>();
 }
 
+void ExecutionManagerRpcClient::SetLastProcessedBlock(ExecutionManagerInterface::BlockHash hash)
+{
+  auto result = client_->CallSpecificAddress(
+      address_, RPC_EXECUTION_MANAGER, ExecutionManagerRpcProtocol::SET_LAST_PROCESSED_BLOCK, hash);
+  result->Wait();
+}
+
 }  // namespace ledger
 }  // namespace fetch

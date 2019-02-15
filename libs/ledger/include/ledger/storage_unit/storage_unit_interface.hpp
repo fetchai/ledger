@@ -47,8 +47,8 @@ public:
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using hash_type     = byte_array::ConstByteArray;
-  using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
+  using Hash = byte_array::ConstByteArray;
+  // using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
 
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
@@ -76,9 +76,11 @@ public:
 
   /// @name Revertible Document Store Interface
   /// @{
-  virtual hash_type Hash()                                = 0;
-  virtual void      Commit(bookmark_type const &bookmark) = 0;
-  virtual void      Revert(bookmark_type const &bookmark) = 0;
+  virtual Hash CurrentHash()                  = 0;
+  virtual Hash LastCommitHash()               = 0;
+  virtual bool RevertToHash(Hash const &hash) = 0;
+  virtual Hash Commit()                       = 0;
+  virtual bool HashExists(Hash const &hash)   = 0;
   /// @}
 };
 
