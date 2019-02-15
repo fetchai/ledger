@@ -1,5 +1,4 @@
-#pragma once
-///------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
 //
@@ -17,32 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
+#include "ledger/chain/block.hpp"
+#include "core/serializers/byte_array_buffer.hpp"
+#include "crypto/sha256.hpp"
 
 namespace fetch {
 namespace ledger {
-namespace examples {
-namespace common {
 
-template <typename T>
-void ToBase64(T &stream, Signatory const &signature)
+/**
+ * Populate the block hash field based on the contents of the current block
+ */
+void Block::UpdateDigest()
 {
-  stream << "signature: " << byte_array::ToBase64(signature.second.signature_data)
-         << ", sig.type: " << byte_array::ToBase64(signature.second.type)
-         << ", identity: " << byte_array::ToBase64(signature.first.identifier())
-         << ", ident.params: " << byte_array::ToBase64(signature.first.parameters()) << std::endl;
+  serializers::ByteArrayBuffer buf;
+  buf << body.previous_hash << body.merkle_hash << body.block_number << nonce << body.miner;
+
+  crypto::SHA256 hash;
+  hash.Reset();
+  hash.Update(buf.data());
+  body.hash = hash.Final();
+
+  proof.SetHeader(body.hash);
 }
 
-template <typename T>
-void ToBase64(T &stream, Signatories const &signatures)
-{
-  for (auto const &sig : signatures)
-  {
-    ToBase64(stream, sig);
-  }
-}
-
-}  // namespace common
-}  // namespace examples
 }  // namespace ledger
 }  // namespace fetch

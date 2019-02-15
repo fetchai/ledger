@@ -17,6 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/storage_unit_client.hpp"
+#include "ledger/chain/constants.hpp"
+
+#include <algorithm>
 
 namespace fetch {
 namespace ledger {
@@ -286,6 +289,245 @@ size_t StorageUnitClient::AddLaneConnectionsWaiting(const std::map<LaneIndex, Ur
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Successfully connected ", nLanes, " lane(s).");
   return nLanes;
+}
+
+// Convenience function for repeated code below
+void GetClientAddress(StorageUnitClient::LaneIndex lane, StorageUnitClient::Address address,
+                      StorageUnitClient *this_ptr)
+{
+  try
+  {
+    this_ptr->GetAddressForLane(lane, address);
+  }
+  catch (std::runtime_error &e)
+  {
+    throw e;
+  }
+}
+
+// Get the current hash of the world state (merkle tree root)
+byte_array::ConstByteArray StorageUnitClient::CurrentHash()
+{
+  MerkleTree                    tree;
+  std::vector<service::Promise> promises;
+
+  for (auto const &lanedata : lane_to_identity_map_)
+  {
+    auto const &address = lanedata.second;
+    auto        client  = GetClientForLane(lanedata.first);
+    auto        promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::CURRENT_HASH);
+    promises.push_back(promise);
+  }
+
+  std::size_t index = 0;
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    tree[index] = p->As<byte_array::ByteArray>();
+    index++;
+  }
+
+  tree.CalculateRoot();
+  return tree.root();
+}
+
+// return the last committed hash (should correspond to the state hash before you began execution)
+byte_array::ConstByteArray StorageUnitClient::LastCommitHash()
+{
+  FETCH_LOCK(merkle_mutex_);
+  return current_merkle_->root();
+}
+
+// Revert to a previous hash if possible
+bool StorageUnitClient::RevertToHash(Hash const &hash)
+{
+  // determine if the unit requests the genesis block
+  bool const genesis_state = hash == GENESIS_MERKLE_ROOT;
+
+  MerkleTreePtr tree;
+  if (genesis_state)
+  {
+    // create the new tree
+    tree = std::make_shared<MerkleTree>();
+
+    // fill the tree with empty leaf nodes
+    for (std::size_t i = 0, num_lanes = 1u << log2_lanes_; i < num_lanes; ++i)
+    {
+      (*tree)[i] = GENESIS_MERKLE_ROOT;
+    }
+  }
+  else
+  {
+    // Try to find whether we believe the hash exists (look in memory)
+    // TODO(HUT): this is going to be tricky if the previous state has less/more lanes
+
+    FETCH_LOCK(merkle_mutex_);
+
+    auto it = std::find_if(state_merkle_stack_.rbegin(), state_merkle_stack_.rend(),
+                           [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
+
+    if (state_merkle_stack_.rend() != it)
+    {
+      // update the tree
+      tree = *it;
+
+      // remove the other commits that occured later than this stack
+      state_merkle_stack_.erase(it.base(), state_merkle_stack_.end());
+    }
+  }
+
+  if (!tree)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Unable to lookup the required commit hash: ", byte_array::ToBase64(hash));
+    return false;
+  }
+
+  // Note: we shouldn't be touching the lanes at this point from other threads
+  std::vector<service::Promise> promises;
+
+  // the check to see if the hash exists is only necessary for non genesis blocks since we know that
+  // we can always revert back to nothing!
+  if (!genesis_state)
+  {
+    // Due diligence: check all lanes can revert to this state before trying this operation
+    // k = lane, v = lane hash
+    for (auto const &leaf_kv : tree->leaf_nodes())
+    {
+      Address address;
+      auto &  lane = leaf_kv.first;
+      auto &  hash = leaf_kv.second;
+
+      assert(hash.size() > 0);
+
+      GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+
+      auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+
+      auto promise = client->CallSpecificAddress(
+          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::HASH_EXISTS, hash);
+      promises.push_back(promise);
+    }
+
+    std::vector<uint32_t> failed_lanes;
+    uint32_t              lane_counter = 0;
+
+    for (auto &p : promises)
+    {
+      FETCH_LOG_PROMISE();
+
+      if (!p->As<bool>())
+      {
+        failed_lanes.push_back(lane_counter);
+      }
+
+      lane_counter++;
+    }
+
+    for (auto const &i : failed_lanes)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Merkle hash mismatch: hash not found in lane: ", i);
+      return false;
+    }
+
+    promises.clear();
+  }
+
+  // Now perform the revert
+  for (auto const &leaf_kv : tree->leaf_nodes())
+  {
+    Address address;
+    auto &  lane = leaf_kv.first;
+    auto &  hash = leaf_kv.second;
+
+    assert(hash.size() > 0);
+
+    GetClientAddress(StorageUnitClient::LaneIndex(lane.AsInt()), address, this);
+
+    auto client = GetClientForLane(StorageUnitClient::LaneIndex(lane.AsInt()));
+
+    auto promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT_TO_HASH, hash);
+    promises.push_back(promise);
+  }
+
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    if (!p->As<bool>())
+    {
+      // TODO(HUT): revert all lanes to their previous state
+      throw std::runtime_error(
+          "Failed to revert all of the lanes -\
+          the system may have entered an unknown state");
+      return false;
+    }
+  }
+
+  // since the state has now been restored we can update the current merkle reference
+  {
+    FETCH_LOCK(merkle_mutex_);
+    current_merkle_ = tree;
+  }
+
+  return true;
+}
+
+// We have finished execution presumably, commit this state
+byte_array::ConstByteArray StorageUnitClient::Commit()
+{
+  MerkleTreePtr                 tree = std::make_shared<MerkleTree>();
+  std::vector<service::Promise> promises;
+
+  for (auto const &lanedata : lane_to_identity_map_)
+  {
+    auto const &address = lanedata.second;
+    auto        client  = GetClientForLane(lanedata.first);
+    auto        promise = client->CallSpecificAddress(
+        address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT);
+    promises.push_back(promise);
+  }
+
+  std::size_t index = 0;
+  for (auto &p : promises)
+  {
+    FETCH_LOG_PROMISE();
+    (*tree)[index] = p->As<byte_array::ByteArray>();
+    ++index;
+  }
+
+  tree->CalculateRoot();
+
+  auto const tree_root = tree->root();
+
+  {
+    FETCH_LOCK(merkle_mutex_);
+    current_merkle_ = tree;
+
+    // this is a little
+    if (!HashInStack(tree_root))
+    {
+      state_merkle_stack_.push_back(tree);
+    }
+  }
+
+  return tree_root;
+}
+
+bool StorageUnitClient::HashExists(Hash const &hash)
+{
+  FETCH_LOCK(merkle_mutex_);
+  return HashInStack(hash);
+}
+
+bool StorageUnitClient::HashInStack(Hash const &hash)
+{
+  // small optimisation to do the search in reverse
+  auto const it = std::find_if(state_merkle_stack_.crbegin(), state_merkle_stack_.crend(),
+                               [&hash](MerkleTreePtr const &ptr) { return ptr->root() == hash; });
+
+  return state_merkle_stack_.rend() == it;
 }
 
 }  // namespace ledger

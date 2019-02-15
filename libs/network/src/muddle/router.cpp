@@ -802,7 +802,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing");
+      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);
     }
   }

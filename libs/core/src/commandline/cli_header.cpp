@@ -16,36 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_controller.hpp"
+#include "fetch_version.hpp"
+
+#include <iostream>
 
 namespace fetch {
-namespace ledger {
+namespace commandline {
 
-void LaneController::WorkCycle()
+void DisplayCLIHeader(std::string const &name, std::string const &years,
+                      std::string const &additional)
 {
-  UriSet remove;
-  UriSet create;
-
-  GeneratePeerDeltas(create, remove);
-
-  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:create:", create.size());
-  FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:remove:", remove.size());
-
-  for (auto &uri : create)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "WorkCycle:creating:", uri.ToString());
-    muddle_->AddPeer(Uri(uri.ToString()));
-  }
-
-  for (auto &uri : create)
-  {
-    Address target_address;
-    if (muddle_->UriToDirectAddress(uri, target_address))
-    {
-      peer_connections_[uri] = target_address;
-    }
-  }
+  std::cout << " F E ╱     " << name << ' ' << version::FULL << '\n';
+  std::cout << "   T C     Copyright " << years << " (c) Fetch AI Ltd." << '\n';
+  std::cout << "     H     " << additional << '\n' << std::endl;
 }
 
-}  // namespace ledger
+}  // namespace commandline
 }  // namespace fetch

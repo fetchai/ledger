@@ -17,20 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/string/replace.hpp"
-#include "http/json_response.hpp"
 #include "http/module.hpp"
 #include "ledger/chaincode/cache.hpp"
-#include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "ledger/transaction_processor.hpp"
-#include "miner/miner_interface.hpp"
-
-#include "ledger/chain/mutable_transaction.hpp"
-#include "ledger/chain/transaction.hpp"
-#include "ledger/chain/wire_transaction.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -38,6 +26,9 @@
 
 namespace fetch {
 namespace ledger {
+
+class StorageInterface;
+class TransactionProcessor;
 
 class ContractHttpInterface : public http::HTTPModule
 {

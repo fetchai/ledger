@@ -23,7 +23,6 @@
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/executor.hpp"
-#include "ledger/state_summary_archive.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
@@ -55,12 +54,13 @@ public:
   using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
-  ExecutionManager(std::string const &storage_path, std::size_t num_executors,
-                   StorageUnitPtr storage, ExecutorFactory const &factory);
+  ExecutionManager(std::size_t num_executors, StorageUnitPtr storage,
+                   ExecutorFactory const &factory);
 
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
+  void           SetLastProcessedBlock(BlockHash hash) override;
   BlockHash      LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;
@@ -84,15 +84,15 @@ private:
   using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
-  using Bookmark          = StorageUnitInterface::bookmark_type;
-  using StateHash         = StorageUnitInterface::hash_type;
-  using ExecutorList      = std::vector<ExecutorPtr>;
-  using StateHashCache    = storage::ObjectStore<StateHash>;
-  using ThreadPtr         = std::unique_ptr<std::thread>;
-  using BlockSliceList    = ledger::Block::Slices;
-  using Condition         = std::condition_variable;
-  using ResourceID        = storage::ResourceID;
-  using AtomicState       = std::atomic<State>;
+  // using Bookmark          = StorageUnitInterface::bookmark_type; // TODO(HUT): remove
+  using StateHash      = StorageUnitInterface::Hash;
+  using ExecutorList   = std::vector<ExecutorPtr>;
+  using StateHashCache = storage::ObjectStore<StateHash>;
+  using ThreadPtr      = std::unique_ptr<std::thread>;
+  using BlockSliceList = ledger::Block::Slices;
+  using Condition      = std::condition_variable;
+  using ResourceID     = storage::ResourceID;
+  using AtomicState    = std::atomic<State>;
 
   Flag        running_{false};
   Flag        monitor_ready_{false};
@@ -121,17 +121,10 @@ private:
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
 
-  // Block state retrieval
-  Mutex               state_archive_lock_;  ///< guards state_archive_ & block_state_cache_
-  StateSummaryArchive state_archive_;
-  StateHashCache      block_state_cache_;
-
   void MonitorThreadEntrypoint();
 
   bool PlanExecution(Block::Body const &block);
   void DispatchExecution(ExecutionItem &item);
-
-  bool AttemptRestoreToBlock(BlockHash const &digest);
 };
 
 }  // namespace ledger
