@@ -21,6 +21,10 @@
 #include <memory>
 #include <vector>
 
+#include "math/free_functions/fundamental_operators.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -30,7 +34,7 @@ class CrossEntropyLayer
 {
 public:
   using ArrayType    = T;
-  using Datatype     = typename ArrayType::Type;
+  using DataType     = typename ArrayType::Type;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
   CrossEntropyLayer()          = default;
@@ -41,11 +45,14 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    // we can't handle taking log(0), and the user should ensure this is never asked for
-    for (std::size_t k = 0; k < inputs[0]->size(); ++k)
-    {
-      assert(inputs[0]->At(k) != 0);
-    }
+    //    // we can't handle taking log(0), and the user should ensure this is never asked for
+    //    for (std::size_t k = 0; k < inputs[0]->size(); ++k)
+    //    {
+    //      assert(inputs[0]->At(k) != 0);
+    //    }
+
+    std::size_t n_data    = inputs[0]->shape()[0];
+    std::size_t n_classes = inputs[0]->shape()[1];
 
     // deep copy and take log of input
     ArrayType logx{inputs[0]->shape()};
@@ -54,38 +61,35 @@ public:
 
     // assuming 2D input[0],
     ArrayType plogx{logx.shape()};
-    for (std::size_t j = 0; j < logx.size(); ++j)
+    for (std::size_t i = 0; i < n_data; ++i)
     {
-      if (inputs[1]->At(j) == 0)
+      for (std::size_t j = 0; j < n_classes; ++j)
       {
-        plogx.Set(j, 0);
+        if (inputs[1]->At(j) == DataType(0))
+        {
+          plogx.Set({i, j}, DataType(0));
+        }
+        else if (inputs[1]->At(j) == DataType(1))
+        {
+          plogx.Set({i, j}, logx.At(j));
+        }
+        else
+        {
+          std::cout << "input to cross entropy loss was not a one hot" << std::endl;
+          assert(false);
+        }
       }
-      else if (inputs[1]->At(j) == 1)
-      {
-        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
-      }
-      else
-      {
-        // should be a one hot
-        assert(false);
-      }
-      //      else if (logx.At(j) == 0)
-      //      {
-      //        plogx.Set(j, 0);
-      //      }
-      //      else
-      //      {
-      //        plogx.Set(j, logx.At(j) * inputs[1]->At(j));
-      //      }
     }
+    ArrayType cel = fetch::math::Multiply(plogx, -1.0);
 
-    ArrayType                cel      = fetch::math::Multiply(plogx, -1.0);
-    typename ArrayType::Type n        = typename ArrayType::Type(cel.size());
-    ArrayType                mean_cel = fetch::math::ReduceSum(cel, 1);
+    // every true class label now has a negative log loss
 
-    ArrayType ret = fetch::math::Divide(mean_cel, n);
-    assert(ret.size() == 1);
-    return typename ArrayType::Type(ret[0]);
+    //    ArrayType                mean_cel = fetch::math::ReduceSum(cel, 1);
+    typename ArrayType::Type ret = fetch::math::Divide(
+        fetch::math::Sum(cel), static_cast<typename ArrayType::Type>(n_classes));
+    //    ArrayType ret = fetch::math::Divide(mean_cel, n_classes);
+    //    assert(ret.size() == inputs[0]->shape()[0]);
+    return ret;
   }
 
   virtual ArrayPtrType Backward(std::vector<ArrayPtrType> const &inputs)

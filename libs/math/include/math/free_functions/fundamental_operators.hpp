@@ -1145,6 +1145,20 @@ meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 / scalar2;
 }
+template <typename T>
+meta::IfIsFixedPoint<T, void> Divide(T const &scalar1, T const &scalar2, T &ret)
+{
+  ret = scalar1 / scalar2;
+}
+
+template <typename T>
+meta::IfIsFixedPoint<T, T> Divide(T const &scalar1, T const &scalar2)
+{
+  T ret;
+  Divide(scalar1, scalar2, ret);
+  return ret;
+}
+
 template <typename S>
 meta::IfIsArithmetic<S, S> Divide(S const &scalar1, S const &scalar2)
 {

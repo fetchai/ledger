@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point_operations.hpp"
 #include "math/kernels/standard_functions/log.hpp"
 #include "math/meta/math_type_traits.hpp"
 
@@ -56,6 +57,12 @@ template <typename Type>
 fetch::math::meta::IfIsArithmetic<Type, void> Log(Type &x)
 {
   x = std::log(x);
+}
+
+template <std::size_t I, std::size_t F>
+void Log(fetch::fixed_point::FixedPoint<I, F> &n)
+{
+  n = ::log(n);
 }
 
 template <typename ArrayType>

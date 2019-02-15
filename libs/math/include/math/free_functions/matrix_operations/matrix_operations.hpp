@@ -17,18 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cassert>
+#include <numeric>
+
 #include "core/assert.hpp"
 
 #include "vectorise/memory/range.hpp"
 
-#include <cassert>
-
-#include "math/kernels/basic_arithmetics.hpp"
-#include "math/kernels/standard_functions.hpp"
-
 #include "math/free_functions/comparison/comparison.hpp"
 #include "math/free_functions/fundamental_operators.hpp"  // add, subtract etc.
-
+#include "math/kernels/basic_arithmetics.hpp"
+#include "math/kernels/standard_functions.hpp"
 #include "math/meta/math_type_traits.hpp"
 
 namespace fetch {
@@ -560,6 +559,16 @@ T Sum(ShapelessArray<T, C> const &obj1)
   Sum(obj1, ret);
   return ret;
 }
+template <typename T>
+T Sum(Tensor<T> const &obj1)
+{
+  T ret(0);
+  for (std::size_t j = 0; j < obj1.size(); ++j)
+  {
+    ret += obj1.At(j);
+  }
+  return ret;
+}
 
 /**
  * return the mean of all elements in the array
@@ -597,7 +606,7 @@ void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
 
     for (std::size_t i = 0; i < ret.size(); ++i)
     {
-      ret[i] = 0;
+      ret[i] = typename ArrayType::Type(0);
       for (std::size_t j = 0; j < obj1.shape()[0]; ++j)
       {
         ret[i] += obj1({j, i});
@@ -611,7 +620,7 @@ void ReduceSum(ArrayType const &obj1, std::size_t axis, ArrayType &ret)
 
     for (std::size_t i = 0; i < ret.size(); ++i)
     {
-      ret[i] = 0;
+      ret[i] = typename ArrayType::Type(0);
       for (std::size_t j = 0; j < obj1.shape()[1]; ++j)
       {
         ret[i] += obj1({i, j});
