@@ -93,7 +93,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->size() == inputs[1]->size());
 
-    typename ArrayType::Type n_classes = inputs[1]->size();
+    typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
 
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
