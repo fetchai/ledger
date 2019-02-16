@@ -89,7 +89,15 @@ def main():
     else:
         num_workers = args.jobs
 
+    excluded_file_list = ["vm/src/tokeniser.cpp"]
+
     def analyse_file(source_path):
+
+        for excluded_file in excluded_file_list:
+            if excluded_file in source_path:
+                output("Skipping excluded file {}".format(source_path))
+                return False
+
         output('Analysing {} ...'.format(os.path.relpath(source_path, project_root)))
 
         proc = subprocess.Popen(cmd + [source_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
