@@ -105,10 +105,21 @@ public:
       item.contract = doc["contract"].As<byte_array::ConstByteArray>();
       item.owner = doc["owner"].As<byte_array::ConstByteArray>();      
 
+      auto arr = doc["payload"];
+      if(arr.size() != 4)
+      {
+        std::cout << "IGNORING NODE WITH INCORRECT PAYLOAD" << std::endl;
+        continue;
+      }
+
+      for(std::size_t i = 0; i < 4; ++i)
+      {
+        item.payload[i] = arr[i].As<int64_t>();
+      }
+
       items.push_back( vm_->CreateNewObject< ItemWrapper >( item ) );
     }
 
-    std::cout << "Created list with " << items.size() << " elements" << std::endl;
     return CreateNewArray(vm_, items);
   }  
     

@@ -31,11 +31,11 @@ namespace modules
 {
 
 struct Item {
-  byte_array::ConstByteArray contract;   
+  byte_array::ConstByteArray contract;
+  byte_array::ConstByteArray work_id;  
   byte_array::ConstByteArray owner;
-  int64_t type;
-  int64_t id;
-  int64_t value;  
+
+  int64_t payload[4];
 };
 
 class ItemWrapper : public fetch::vm::Object
@@ -52,56 +52,32 @@ public:
 
     interface
       .CreateInstanceFunction("owner", &ItemWrapper::owner)
-      .CreateInstanceFunction("type", &ItemWrapper::type)      
-      .CreateInstanceFunction("id", &ItemWrapper::id) 
-      .CreateInstanceFunction("value", &ItemWrapper::value)      
-      .CreateTypeConstuctor<>();
-
-      // TODO: Does not work:
-     //  .CreateTypeConstuctor<ByteArrayWrapper, ByteArrayWrapper, int64_t, int64_t, int64_t>();
+      .CreateInstanceFunction("payload", &ItemWrapper::payload);
   }
 
   ItemWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, Item const &item)
     : fetch::vm::Object(vm, type_id)
     , item_(item)
-    , vm_(vm)
   {}
-
-  static fetch::vm::Ptr<ItemWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             ByteArrayWrapper contract, ByteArrayWrapper owner, 
-                                             int64_t type, int64_t id, int64_t value)
-  {
-    return new ItemWrapper(vm, type_id, Item{contract.byte_array(), owner.byte_array(), type, id, value});
-  }
-
-  static fetch::vm::Ptr<ItemWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id)
-  {
-    // TODO: Delete this constructor
-    return new ItemWrapper(vm, type_id, Item{"hello", "world",2,3,4} );
-  }
 
   fetch::vm::Ptr< ByteArrayWrapper > owner()
   {
     return vm_->CreateNewObject<ByteArrayWrapper>(item_.owner);
   }
 
-  int64_t type()
+  int64_t payload(int32_t n)
   {
-    return item_.type;
+    if( (n < 0) || (n >= 4) )
+    {
+      this->vm_->RuntimeError("Index out of bounds");
+      return 0;
+    }
+
+    return item_.payload[n];
   }
 
-  int64_t id()
-  {
-    return item_.id;
-  }
-
-  int64_t value()
-  {
-    return item_.value;
-  }
 private:
   Item item_;
-  fetch::vm::VM *vm_;
 };
 
 

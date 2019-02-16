@@ -16,7 +16,15 @@ function createProblem() : Matrix< Float64 >
 
   for(i in 0: N-1) 
     Print("Element ");
-    PrintLn(i);
+    Print(i);
+    Print(": ");
+    for(j in 0:3)
+      if(j!=0)
+        Print(", ");
+      endif
+      Print(nodes[i].payload(j));      
+    endfor
+    Print(" by ");
     PrintLn(nodes[i].owner());
   endfor
 
@@ -37,8 +45,9 @@ endfunction
 
 @work
 function leisureMarketWork(problem : Matrix< Float64 >, nonce : Int64) : Array< Int64 >
-  PrintLn("Mining solution.");
-
+  Print("Mining solution for problem of ");
+  PrintLn(problem.height());
+  
   // Algorithm parameters  
   var beta0 : Float64 = 0.1;
   var beta1 : Float64 = 3.;

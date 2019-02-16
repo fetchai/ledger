@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     node.previous.push_back(n.second.hash);
   }
 
-  node.contents  = "{\"contract\":\"hello.contract\", \"owner\":\"troels\"}";
+  node.contents  = "{\"contract\":\"hello.contract\", \"owner\":\"troels\", \"payload\": [9,8,7,6]}";
   dag.Push(node);
 
   fetch::consensus::ContractRegister cregister;
