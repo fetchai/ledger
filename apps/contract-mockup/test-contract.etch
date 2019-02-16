@@ -1,28 +1,82 @@
-
 @problem
-function createProblem() : Array< Int64 > 
-  var problem = Array< Int64 >(200) ;
+function createProblem() : Matrix< Float64 >
   PrintLn("Generating problem");
+
+  // Getting data from DAG
+  var dag = DAG();
+  var nodes = dag.getNodes();
+  var N = lengthOf(nodes);
+
+  // Generating problem
+  var problem = Matrix< Float64 >(N,N) ;
+
+  Print("Nodes contain ");
+  Print(N);
+  PrintLn(" elements");
+
+  for(i in 0: N-1) 
+    Print("Element ");
+    PrintLn(i);
+    PrintLn(nodes[i].owner());
+  endfor
+
   return problem;
 endfunction
 
 @objective
-function evaluate(problem : Array< Int64 >, solution : Array< Int64 >) : Float64
+function evaluate(problem : Matrix< Float64 >, solution : Array< Int64 >) : Float64
   var cost : Float64 = toFloat64(0);
 
   return cost;
 endfunction
 
 @work
-function leisureMarketWork(problem : Array< Int64 >, nonce : Int64) : Array< Int64 >
+function leisureMarketWork(problem : Matrix< Float64 >, nonce : Int64) : Array< Int64 >
   PrintLn("Mining solution.");
-  var dag = DAG();
-  var nodes = dag.getNodes();
 
-  for(i in 0:0) //(nodes.size()-1))
-    PrintLn("Node found" );
-    PrintLn(nodes[i].owner());
+  // Algorithm parameters  
+  var beta0 : Float64 = 0.1;
+  var beta1 : Float64 = 3.;
+  var beta  : Float64 = beta0;
+  var run_time : Int64 = toInt64(1000);
+
+  // Getting the problem
+  var n = 64; // Problem size.
+  var state = Array< Int64 >(n);
+  // TODO: Load
+  var cost_function = evaluate(problem, state);
+
+  // Main loop of annealing algorithm
+  var delta = (beta1 - beta0) / toFloat64(run_time);
+  var rng = CryptoRNG( toUInt64(nonce) );
+  
+  for(i in toInt64(0):run_time)
+    for(j in 0:n-1)
+
+      if(state[j] == toInt64(0))
+        state[j] = toInt64(1);
+      else
+        state[j] = toInt64(0);
+      endif
+
+      var new_cost = evaluate(problem, state);
+      var cost_change = cost_function - new_cost;
+      var boltzmann = exp(-beta * cost_change);
+
+      if( boltzmann < rng.nextAsFloat())
+
+      endif
+    endfor
+
+    beta += delta;
   endfor
+
+  return Array< Int64 >(0);
+endfunction
+
+
+function main()
+//  leisureMarketWork(toInt64(2042223));
 
   var bytearray = ByteArray(20);
   for(i in 0:19)
@@ -43,50 +97,6 @@ function leisureMarketWork(problem : Array< Int64 >, nonce : Int64) : Array< Int
   PrintLn(messages[0]);
   PrintLn(messages[1]); 
   PrintLn(messages[2]); 
-
-  // Algorithm parameters  
-  var beta0 : Float64 = 0.1;
-  var beta1 : Float64 = 3.;
-  var beta  : Float64 = beta0;
-  var run_time : Int64 = toInt64(1000);
-
-  // Getting the problem
-  var n = 64; // Problem size.
-  var state = Array< Int64 >(n);
-  // TODO: Load
-  var cost_function = evaluate(state, problem);
-
-  // Main loop of annealing algorithm
-  var delta = (beta1 - beta0) / toFloat64(run_time);
-  var rng = CryptoRNG( toUInt64(nonce) );
-  
-  for(i in toInt64(0):run_time)
-    for(j in 0:n-1)
-
-      if(state[j] == toInt64(0))
-        state[j] = toInt64(1);
-      else
-        state[j] = toInt64(0);
-      endif
-
-      var new_cost = evaluate(state, problem);
-      var cost_change = cost_function - new_cost;
-      var boltzmann = exp(-beta * cost_change);
-
-      if( boltzmann < rng.nextAsFloat())
-
-      endif
-    endfor
-
-    beta += delta;
-  endfor
-
-  return Array< Int64 >(0);
-endfunction
-
-
-function main()
-//  leisureMarketWork(toInt64(2042223));
 endfunction
 
 

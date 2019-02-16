@@ -11,7 +11,7 @@
 #include "item.hpp"
 #include "dummy.hpp"
 #include "dag_accessor.hpp"
-
+#include "length.hpp"
 
 namespace fetch
 {
@@ -31,6 +31,7 @@ public:
 
     fetch::modules::BindExp(module_);
     fetch::modules::BindPrint(module_);
+    fetch::modules::BindLen(module_);
 
     // Preparing VM & compiler
     compiler_ = new fetch::vm::Compiler(&module_);

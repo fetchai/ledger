@@ -40,7 +40,7 @@ struct Matrix : public IMatrix
   Matrix() = delete;
   Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
     : IMatrix(vm, type_id)
-    , matrix(std::vector<std::size_t>(columns, rows))
+    , matrix(std::vector<std::size_t>({columns, rows}))
   {}
   virtual ~Matrix() = default;
 
