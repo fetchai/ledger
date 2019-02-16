@@ -20,6 +20,7 @@
 #include <core/byte_array/const_byte_array.hpp>
 #include <crypto/sha256.hpp>
 #include <math/bignumber.hpp>
+
 namespace fetch {
 namespace ledger {
 namespace consensus {

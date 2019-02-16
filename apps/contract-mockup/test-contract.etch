@@ -30,6 +30,11 @@ function evaluate(problem : Matrix< Float64 >, solution : Array< Int64 >) : Floa
   return cost;
 endfunction
 
+@clear
+function sellItems(problem : Matrix< Float64 >, solution : Array< Int64 >)
+
+endfunction
+
 @work
 function leisureMarketWork(problem : Matrix< Float64 >, nonce : Int64) : Array< Int64 >
   PrintLn("Mining solution.");

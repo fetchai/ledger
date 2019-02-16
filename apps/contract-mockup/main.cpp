@@ -22,14 +22,10 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "crypto_rng.hpp"
-#include "exp.hpp"
-#include "byte_array_wrapper.hpp"
-#include "print.hpp"
-#include "item.hpp"
-#include "dummy.hpp"
-#include "dag_accessor.hpp"
+
 #include "miner.hpp"
+#include "contract_register.hpp"
+#include "work.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -60,15 +56,20 @@ int main(int argc, char **argv)
   node.contents  = "{\"contract\":\"hello.contract\", \"owner\":\"troels\"}";
   dag.Push(node);
 
-  fetch::consensus::Miner miner(dag);
-  if(!miner.AttachContract("0xf232", source))
+  fetch::consensus::ContractRegister cregister;
+  if(!cregister.AddContract("0xf232", source))
   {
     std::cout << "Could not attach contract."  << std::endl;
     return 0;
   }
 
-  miner.ExecuteWork(12232);
+  fetch::consensus::Miner miner(dag);
+  fetch::consensus::Work work;
+  work.contract_address = "0xf232";
+  work.miner = "troels";
+  work.nonce = 29188;
 
+  miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
 
   return 0;
 }
