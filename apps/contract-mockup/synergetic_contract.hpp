@@ -16,6 +16,7 @@ namespace consensus
 
 struct SynergeticContractClass
 {
+  byte_array::ByteArray address;
   vm::Script script;
 
   // TODO: Extend such that each contract can have multiple triplets of these  

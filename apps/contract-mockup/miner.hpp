@@ -34,45 +34,44 @@ public:
     delete vm_;
   }
 
-  double ExecuteWork(SynergeticContract contract, Work work) 
+  bool DefineProblem(SynergeticContract contract, Work const &work) 
   { 
-    std::string        error;
-
     // Defining problem
-    fetch::vm::Variant problem; 
-    if (!vm_->Execute(contract->script, contract->problem_function, error, problem))
+    if (!vm_->Execute(contract->script, contract->problem_function, error_, problem_))
     {
-      std::cout << "Runtime error 1: " << error << std::endl;
-      return std::numeric_limits< double >::infinity(); 
+      return false;
     }
+    return true;
+  }
 
+  int64_t ExecuteWork(SynergeticContract contract, Work work) 
+  { 
     // Executing the work function
-    fetch::vm::Variant solution; 
     int64_t nonce = work();
-    if (!vm_->Execute(contract->script, contract->work_function, error, solution, problem, nonce))
+    if (!vm_->Execute(contract->script, contract->work_function, error_, solution_, problem_, nonce))
     {
-      std::cout << "Runtime error 2: " << error << std::endl;
-      return std::numeric_limits< double >::infinity(); 
+      return std::numeric_limits< int64_t >::infinity();
     }
 
     // Computing objective function
-    fetch::vm::Variant output;    
-    if (!vm_->Execute(contract->script, contract->objective_function, error, output, problem, solution))
+    if (!vm_->Execute(contract->script, contract->objective_function, error_, score_, problem_, solution_))
     {
-      std::cout << "Runtime error 3: " << error << std::endl;
-      return std::numeric_limits< double >::infinity(); 
+      return std::numeric_limits< int64_t >::infinity(); 
     }
 
-    // Storing work
-    // TODO
-
-    // TODO: validate
-    return output.primitive.f64;
+    // TODO: validate that it is i64
+    
+    return score_.primitive.i64;
   }
 private:
   fetch::ledger::DAG  &dag_;
   fetch::vm::Module    module_;
   fetch::vm::VM *      vm_;
+
+  std::string        error_;
+  fetch::vm::Variant problem_;
+  fetch::vm::Variant solution_; 
+  fetch::vm::Variant score_;  
 };
 
 

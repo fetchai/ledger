@@ -69,7 +69,8 @@ int main(int argc, char **argv)
   work.miner = "troels";
   work.nonce = 29188;
 
-  miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
+  miner.DefineProblem(cregister.GetContract(work.contract_address), work);
+  work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
 
   return 0;
 }
