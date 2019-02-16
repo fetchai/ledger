@@ -1,7 +1,7 @@
 #pragma once
 #include "byte_array_wrapper.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "item.hpp"
+#include "dag_node_wrapper.hpp"
 
 namespace fetch
 {
@@ -34,18 +34,16 @@ int32_t LenArrayObj(fetch::vm::VM * /*vm*/, vm::Ptr< vm::Array< vm::Ptr< T > > >
 
 void BindLen(vm::Module &module)
 {
-  module.CreateTemplateInstantiationType<fetch::vm::Array, int32_t >(fetch::vm::TypeIds::IArray);
-  module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t >(fetch::vm::TypeIds::IArray);
-  module.CreateTemplateInstantiationType<fetch::vm::Array, uint32_t >(fetch::vm::TypeIds::IArray);
-  module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t >(fetch::vm::TypeIds::IArray);
-  
+
   module.CreateFreeFunction("lengthOf", &LenByteArray);
   module.CreateFreeFunction("lengthOf", &LenString);
   module.CreateFreeFunction("lengthOf", &LenArray<int64_t>);  
   module.CreateFreeFunction("lengthOf", &LenArray<int64_t>);    
   module.CreateFreeFunction("lengthOf", &LenArray<uint32_t>);  
-  module.CreateFreeFunction("lengthOf", &LenArray<uint64_t>);    
-  module.CreateFreeFunction("lengthOf", &LenArrayObj<ItemWrapper>);      
+  module.CreateFreeFunction("lengthOf", &LenArray<uint64_t>);
+  module.CreateFreeFunction("lengthOf", &LenArray<float>);
+  module.CreateFreeFunction("lengthOf", &LenArray<double>);  
+  module.CreateFreeFunction("lengthOf", &LenArrayObj<DAGNodeWrapper>);      
 }
 
 

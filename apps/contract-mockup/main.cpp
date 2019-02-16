@@ -46,15 +46,31 @@ int main(int argc, char **argv)
   file.close();
 
   fetch::ledger::DAG dag;
-  fetch::ledger::DAGNode node;
-
-  for(auto const &n: dag.nodes())
+  for(std::size_t j = 0 ; j < 100; ++j)
   {
-    node.previous.push_back(n.second.hash);
-  }
+    fetch::ledger::DAGNode node;
 
-  node.contents  = "{\"contract\":\"hello.contract\", \"owner\":\"troels\", \"payload\": [9,8,7,6]}";
-  dag.Push(node);
+    for(auto const &n: dag.nodes())
+    {
+      node.previous.push_back(n.second.hash);
+    }
+
+    fetch::variant::Variant payload = fetch::variant::Variant::Array(4); 
+    payload[0] = j + j*3;
+    payload[1] = j + j*4;
+    payload[2] = j + j*5;
+    payload[3] = j + j*6;
+
+    fetch::variant::Variant doc = fetch::variant::Variant::Object();
+    doc["type"] = 1;
+    doc["price"] = 19.23;
+    doc["bid_on"] = payload;
+    std::stringstream body;
+    body << doc;
+
+    node.contents  = body.str();
+    dag.Push(node);
+  }
 
   fetch::consensus::ContractRegister cregister;
   if(!cregister.AddContract("0xf232", source))

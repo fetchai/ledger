@@ -4,8 +4,7 @@
 #include "exp.hpp"
 #include "byte_array_wrapper.hpp"
 #include "print.hpp"
-#include "item.hpp"
-#include "dummy.hpp"
+#include "dag_node_wrapper.hpp"
 #include "dag_accessor.hpp"
 #include "length.hpp"
 
@@ -16,14 +15,24 @@ namespace consensus
 
 void CreateConensusVMModule(fetch::vm::Module &module)
 {
-    fetch::modules::CryptoRNG::Bind(module);
-    fetch::modules::ByteArrayWrapper::Bind(module);
-    fetch::modules::ItemWrapper::Bind(module);
-    fetch::modules::DAGWrapper::Bind(module);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, int32_t >(fetch::vm::TypeIds::IArray);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, int64_t >(fetch::vm::TypeIds::IArray);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, uint32_t >(fetch::vm::TypeIds::IArray);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, uint64_t >(fetch::vm::TypeIds::IArray);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, double >(fetch::vm::TypeIds::IArray);
+  module.CreateTemplateInstantiationType<fetch::vm::Array, float >(fetch::vm::TypeIds::IArray);
 
-    fetch::modules::BindExp(module);
-    fetch::modules::BindPrint(module);
-    fetch::modules::BindLen(module);
+  fetch::modules::CryptoRNG::Bind(module);
+  fetch::modules::ByteArrayWrapper::Bind(module);
+  fetch::modules::DAGNodeWrapper::Bind(module);
+
+	module.CreateTemplateInstantiationType<fetch::vm::Array, fetch::vm::Ptr<modules::DAGNodeWrapper>>(fetch::vm::TypeIds::IArray);    
+
+  fetch::modules::DAGWrapper::Bind(module);
+
+  fetch::modules::BindExp(module);
+  fetch::modules::BindPrint(module);
+  fetch::modules::BindLen(module);
 }
 
 }

@@ -44,6 +44,8 @@ struct DAGNode
   uint64_t          type{WORK};                      ///< type of the DAG node
   DigestList        previous;                        ///< previous nodes.
   ConstByteArray    contents;                        ///< payload to be deserialised.
+  ConstByteArray    contract_address;                ///< The contract which this node is associated with.
+  // TODO(tfr): NOT READY YET byte_array::ConstByteArray work_id;  
   crypto::Identity  identity;                        ///< identity of the creator.
   Digest            hash;                            ///< DAG hash.
   Signature         signature;                       ///< creators signature.
@@ -54,8 +56,8 @@ struct DAGNode
   void Finalise()
   {
     serializers::ByteArrayBuffer buf;
-    buf << previous << contents;
-
+    buf << type << previous << contents;
+    buf << contract_address;
     buf << identity;
 
     HasherType hasher;
@@ -68,15 +70,15 @@ struct DAGNode
 template<typename T>
 void Serialize(T &serializer, DAGNode const &node)
 {
-  serializer << node.type << node.previous << node.contents << node.hash << node.identity
-             << node.signature;
+  serializer << node.type << node.previous << node.contents << node.contract_address << node.identity 
+             << node.hash << node.signature;
 }
 
 template<typename T>
 void Deserialize(T &serializer, DAGNode &node)
 {
-  serializer >> node.type >> node.previous >> node.contents >> node.hash >> node.identity
-             >> node.signature;
+  serializer >> node.type >> node.previous >> node.contents >> node.contract_address >> node.identity
+             >> node.hash >> node.signature;
 }
 
 } // namespace ledger

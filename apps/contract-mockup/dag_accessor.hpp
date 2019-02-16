@@ -26,25 +26,25 @@
 
 #include "core/json/document.hpp"
 #include "ledger/dag/dag.hpp"
-#include "item.hpp"
+#include "dag_node_wrapper.hpp"
 namespace fetch
 {
 namespace modules
 {
 
-  template<typename T>
-  vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
+template<typename T>
+vm::Ptr< vm::Array< vm::Ptr< T > > > CreateNewArray(vm::VM *vm, std::vector< vm::Ptr< T > > items)
+{
+  vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
+  std::size_t idx = 0;
+
+  for(auto const &e: items)
   {
-    vm::Ptr< vm::Array< fetch::vm::Ptr<T> > > array = new vm::Array< fetch::vm::Ptr<T> > (vm, vm->GetTypeId< vm::IArray >(), int32_t(items.size()));
-    std::size_t idx = 0;
-
-    for(auto const &e: items)
-    {
-      array->elements[idx++] = e;
-    }
-
-    return array;
+    array->elements[idx++] = e;
   }
+
+  return array;
+}
 
 class DAGWrapper : public fetch::vm::Object
 {
@@ -72,9 +72,9 @@ public:
     return new DAGWrapper(vm, type_id, dag);
   }
 
-  vm::Ptr< vm::Array< vm::Ptr< ItemWrapper > > > GetNodes()
+  vm::Ptr< vm::Array< vm::Ptr< DAGNodeWrapper > > > GetNodes()
   {
-    std::vector< vm::Ptr< ItemWrapper > > items;
+    std::vector< vm::Ptr< DAGNodeWrapper > > items;
 
     if(dag_ == nullptr)
     {
@@ -90,34 +90,7 @@ public:
         continue;
       }
 
-      Item item;
-      json::JSONDocument doc; // TODO: Use serialisation
-      try {
-
-        doc.Parse(n.second.contents);
-      } catch(fetch::json::JSONParseException &e)
-      {
-        vm_->RuntimeError(e.what());
-        return nullptr;
-      }
-
-      // TODO: Extend
-      item.contract = doc["contract"].As<byte_array::ConstByteArray>();
-      item.owner = doc["owner"].As<byte_array::ConstByteArray>();      
-
-      auto arr = doc["payload"];
-      if(arr.size() != 4)
-      {
-        std::cout << "IGNORING NODE WITH INCORRECT PAYLOAD" << std::endl;
-        continue;
-      }
-
-      for(std::size_t i = 0; i < 4; ++i)
-      {
-        item.payload[i] = arr[i].As<int64_t>();
-      }
-
-      items.push_back( vm_->CreateNewObject< ItemWrapper >( item ) );
+      items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n.second ) );
     }
 
     return CreateNewArray(vm_, items);

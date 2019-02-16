@@ -1,5 +1,5 @@
 @problem
-function createProblem() : Matrix< Float64 >
+function createProblem() : Array< Float64 >
   PrintLn("Generating problem");
 
   // Getting data from DAG
@@ -8,7 +8,7 @@ function createProblem() : Matrix< Float64 >
   var N = lengthOf(nodes);
 
   // Generating problem
-  var problem = Matrix< Float64 >(N,N) ;
+  var problem = Array< Float64 >(N*N) ;
 
   Print("Nodes contain ");
   Print(N);
@@ -18,35 +18,31 @@ function createProblem() : Matrix< Float64 >
     Print("Element ");
     Print(i);
     Print(": ");
-    for(j in 0:3)
-      if(j!=0)
-        Print(", ");
-      endif
-      Print(nodes[i].payload(j));      
-    endfor
+    Print(nodes[i].getArrayInt32("bid_on"));
     Print(" by ");
     PrintLn(nodes[i].owner());
+    PrintLn(nodes[i].getFloat32("price"));
   endfor
 
   return problem;
 endfunction
 
 @objective
-function evaluate(problem : Matrix< Float64 >, solution : Array< Int64 >) : Float64
+function evaluate(problem : Array< Float64 >, solution : Array< Int64 >) : Float64
   var cost : Float64 = toFloat64(0);
 
   return cost;
 endfunction
 
 @clear
-function sellItems(problem : Matrix< Float64 >, solution : Array< Int64 >)
+function sellItems(problem : Array< Float64 >, solution : Array< Int64 >)
 
 endfunction
 
 @work
-function leisureMarketWork(problem : Matrix< Float64 >, nonce : Int64) : Array< Int64 >
+function leisureMarketWork(problem : Array< Float64 >, nonce : Int64) : Array< Int64 >
   Print("Mining solution for problem of ");
-  PrintLn(problem.height());
+  PrintLn(lengthOf(problem));
   
   // Algorithm parameters  
   var beta0 : Float64 = 0.1;
