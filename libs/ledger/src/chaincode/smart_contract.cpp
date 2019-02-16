@@ -45,38 +45,13 @@ bool RunSmartContract(std::string &source, std::string const &target_fn,
 SmartContract::SmartContract()
   : Contract("fetch.smart_contract")
 {
-  OnTransaction("create_initial_contract", this, &SmartContract::CreateInitialContract);
-  OnTransaction("invoke_smart_contract", this, &SmartContract::InvokeContract);
-}
-
-Contract::Status SmartContract::CreateInitialContract(Transaction const &tx)
-{
-  variant::Variant data;
-  if (!ParseAsJson(tx, data))
-  {
-    return Status::FAILED;
-  }
-
-  byte_array::ConstByteArray contract_source;
-
-  if (Extract(data, CONTRACT_SOURCE, contract_source))
-  {
-    auto smart_contract_hash = crypto::Hash<crypto::SHA256>(contract_source);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding smart contract, PK: ", smart_contract_hash);
-
-    SetRawState(contract_source, smart_contract_hash);
-  }
-  else
-  {
-    return Status::FAILED;
-  }
-
-  return Status::OK;
+  OnTransaction("main", this, &SmartContract::InvokeContract);
 }
 
 Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 {
+  std::cerr << "in main here" << std::endl;
+
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
@@ -91,14 +66,29 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
     return Status::FAILED;
   }
 
-  if (!GetRawState(contract_source, contract_hash))
+  if( !CheckRawState(contract_hash))
   {
     return Status::FAILED;
   }
 
-  std::string as_string{contract_source};
+  if(source_.size() == 0)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Source for SC not found. Populating.");
 
-  if (!RunSmartContract(as_string, "main", contract_hash))
+    if (!GetRawState(contract_source, contract_hash))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup hash!", ToHex(contract_hash));
+      return Status::FAILED;
+    }
+
+    source_ = std::string{contract_source};
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Using already existing SC cached.");
+  }
+
+  if (!RunSmartContract(source_, "main", contract_hash))
   {
     return Status::FAILED;
   }

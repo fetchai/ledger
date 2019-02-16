@@ -166,6 +166,10 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
           item->AddLane(resource_id.lane(block.log2_num_lanes));
         }
       }
+      else
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Contract not found or created in cache!");
+      }
 
       // If the tx uses smart contract(s), need to lock those lanes without a namespace
       for (auto const &smart_contract_hash : tx.contract_hashes)
@@ -173,6 +177,7 @@ bool ExecutionManager::PlanExecution(Block::Body const &block)
         // TX verification guarantees this is a valid hash
         storage::ResourceID const resource_id{smart_contract_hash};
         item->AddLane(resource_id.lane(block.log2_num_lanes));
+        FETCH_LOG_INFO(LOGGING_NAME, "LOCKING: ", ToHex(smart_contract_hash));
       }
 
       // insert the item into the execution plan

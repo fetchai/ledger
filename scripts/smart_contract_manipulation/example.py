@@ -57,9 +57,10 @@ except:
     exit(1)
 
 time.sleep(5)
+#dummy = input("here: ")
 
 # Now invoke the SC!
-arg = { "smart_contract" : SC_HASH }
+arg = { "smart_contract" : SC_HASH, "UUID" : SC_HASH + ".PUBKEY.main" }
 
 resp = HTTPpost(endpoint, 'api/wallet/invoke_smart_contract', arg)
 

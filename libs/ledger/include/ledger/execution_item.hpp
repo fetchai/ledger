@@ -72,6 +72,12 @@ public:
   void AddLane(LaneIndex lane)
   {
     lanes_.insert(lane);
+
+    /*
+    lanes_.insert(0);
+    lanes_.insert(1);
+    lanes_.insert(2);
+    lanes_.insert(3); */
   }
 
 private:

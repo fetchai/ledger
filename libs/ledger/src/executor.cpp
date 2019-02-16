@@ -95,9 +95,14 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   identifier.Parse(tx.contract_name());
 
   // Lookup the chain code associated with the transaction
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Loookup: ", identifier.name_space());
+
   auto chain_code = chain_code_cache_.Lookup(identifier.name_space());
+
   if (!chain_code)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Chain code lookup failure!");
     return Status::CHAIN_CODE_LOOKUP_FAILURE;
   }
 
@@ -105,9 +110,13 @@ Executor::Status Executor::Execute(TxDigest const &hash, std::size_t slice, Lane
   chain_code->Attach(*resources_);
 
   // Dispatch the transaction to the contract
+  FETCH_LOG_INFO(LOGGING_NAME, "Dispatch: ", identifier.name());
+
   auto result = chain_code->DispatchTransaction(identifier.name(), tx);
+
   if (Contract::Status::OK != result)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to dispatch transaction!");
     return Status::CHAIN_CODE_EXEC_FAILURE;
   }
 

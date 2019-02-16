@@ -55,6 +55,7 @@ public:
   using CounterMap            = std::unordered_map<ContractName, Counter>;
   using StorageInterface      = ledger::StorageInterface;
   using ResourceSet           = TransactionSummary::ResourceSet;
+  using ContractHashes        = TransactionSummary::ContractHashes;
 
   Contract()                 = default;
   Contract(Contract const &) = delete;
@@ -99,9 +100,38 @@ protected:
   template <typename T>
   void SetStateRecord(T const &record, byte_array::ByteArray const &address);
 
+  // TODO(HUT): push into cpp
+  bool CheckRawState(byte_array::ByteArray const &address)
+  {
+    auto document = state().Get(storage::ResourceAddress{address});
+
+    return !document.failed;
+  }
+
+  void SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address)
+  {
+    state().Set(storage::ResourceAddress{address}, payload);
+  }
+
+  bool GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address)
+  {
+    auto document = state().Get(storage::ResourceAddress{address});
+
+    if (document.failed)
+    {
+      return false;
+    }
+
+    // update the document if it wasn't created
+    serializers::ByteArrayBuffer buffer(document.document);
+    payload = buffer.data();
+
+    return true;
+  }
+
 private:
-  bool LockResources(ResourceSet const &resources);
-  bool UnlockResources(ResourceSet const &resources);
+  bool LockResources(ResourceSet const &resources, ContractHashes const &hashes);
+  bool UnlockResources(ResourceSet const &resources, ContractHashes const &hashes);
 
   Identifier            contract_identifier_;
   QueryHandlerMap       query_handlers_{};

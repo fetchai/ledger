@@ -22,19 +22,17 @@
 namespace fetch {
 namespace ledger {
 
-class SmartContract : public Contract
+class SmartContractManager : public Contract
 {
 public:
-  SmartContract();
-  ~SmartContract() = default;
+  SmartContractManager();
+  ~SmartContractManager() = default;
 
-  static constexpr char const *LOGGING_NAME = "SmartContract";
+  static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
 private:
   // transaction handlers
-  Status InvokeContract(Transaction const &tx);
-
-  std::string source_;
+  Status CreateInitialContract(Transaction const &tx);
 };
 
 }  // namespace ledger
