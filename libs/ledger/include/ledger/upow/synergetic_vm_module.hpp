@@ -1,15 +1,15 @@
 #pragma once
 
-#include "crypto_rng.hpp"
-#include "exp.hpp"
-#include "sqrt.hpp"
-#include "bitshifting.hpp"
-#include "bitwise_ops.hpp"
-#include "byte_array_wrapper.hpp"
-#include "print.hpp"
-#include "dag_node_wrapper.hpp"
-#include "dag_accessor.hpp"
-#include "length.hpp"
+#include "vm_modules/core/crypto_rng.hpp"
+#include "vm_modules/math/exp.hpp"
+#include "vm_modules/math/sqrt.hpp"
+#include "vm_modules/polyfill/bitshifting.hpp"
+#include "vm_modules/polyfill/bitwise_ops.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/ledger/dag_node_wrapper.hpp"
+#include "vm_modules/ledger/dag_accessor.hpp"
+#include "vm_modules/polyfill/length.hpp"
 
 namespace fetch
 {

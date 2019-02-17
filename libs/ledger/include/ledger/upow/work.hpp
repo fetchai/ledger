@@ -17,11 +17,13 @@ struct Work
   using WorkId          = byte_array::ConstByteArray;
   using Digest          = byte_array::ConstByteArray;
 
+  /// 
   ContractAddress contract_address;
   WorkId work_id; // TODO(tfr): Not relevant yet
   Identity miner;    
   int64_t nonce;
-
+  double score = std::numeric_limits<double>::infinity();
+  
   int64_t operator()()
   {
     crypto::SHA256 hasher;
@@ -44,7 +46,8 @@ struct Work
     return fnv.Final<int64_t>();
   }  
 
-  double score = std::numeric_limits<double>::infinity();
+  
+
 };
 
 }

@@ -37,32 +37,6 @@ DAG::DAG()
   FETCH_LOG_INFO("DAG", "Number of initial nodes: ", last_nodes_.size());
 }
 
-/**
- * @brief gets the time for a give DAG ndoe.
- *
- * The time is defined as maximum distance to the last certified node in the graph.
- */
-uint64_t DAG::GetNodeTime(DAGNode const & node)
-{
-  LOG_STACK_TRACE_POINT;
-  uint64_t ret = 0;
-
-  for(auto const &h: node.previous)
-  {
-    auto it = nodes_.find(h);
-    if(it == nodes_.end())
-    {
-      ret = std::numeric_limits< uint64_t >::max();
-      break;
-    }
-
-    // The time is the longest chain to a notorized
-    // block.
-    ret = std::max(ret, it->second.timestamp + 1);
-  }
-
-  return ret;
-}
 
 /**
  * @brief push a node to the DAG.
@@ -180,37 +154,29 @@ bool DAG::PushInternal(DAGNode node)
   LOG_STACK_TRACE_POINT;
   // Finalise and get the node time.
   node.Finalise();
-  uint64_t time = GetNodeTime(node);
 
-  // We only add a node if it has a time or it is the first node
-  if( (time != std::numeric_limits< uint64_t >::max()) || (nodes_.size() == 0) )
+  for(auto &h: node.previous)
   {
-    node.timestamp = time;
-    for(auto &h: node.previous)
+    auto it = tips_.find(h);
+    if(it != tips_.end())
     {
-      auto it = tips_.find(h);
-      if(it != tips_.end())
-      {
-        tips_.erase(it);
-      }
+      tips_.erase(it);
     }
-
-    tips_.insert(node.hash);
-
-    nodes_[node.hash] = node;
-    all_node_hashes_.push_back(node.hash);
-    last_nodes_.push_back(node.hash);
-
-    if(last_nodes_.size() > 6 ) // TODO(tfr): Set as pamareter;
-    {
-      last_nodes_.pop_front();
-    }
-
-    SignalNewNode(node);
-    return true;
   }
 
-  return false;
+  tips_.insert(node.hash);
+
+  nodes_[node.hash] = node;
+  all_node_hashes_.push_back(node.hash);
+  last_nodes_.push_back(node.hash);
+
+  if(last_nodes_.size() > 6 ) // TODO(tfr): Set as pamareter;
+  {
+    last_nodes_.pop_front();
+  }
+
+  SignalNewNode(node);
+  return true;
 }
 
 } // namespace ledger

@@ -85,14 +85,14 @@ endfunction
 
 @clear
 function clearMarketPool(problem : Array< Float64 >, state : Array< Int32 >)
-  Print("Cost = ");
-  PrintLn( computeExtractedValue(problem, state) );
+  print("Cost = ");
+  printLn( computeExtractedValue(problem, state) );
   for(j in 0:lengthOf(state)-1)
-    Print(state[j]);
-    Print(", ");
+    print(state[j]);
+    print(", ");
   endfor
 
-  PrintLn("");
+  printLn("");
   // TODO: Needs states before this bit can be implemented.  
 endfunction
 

@@ -14,24 +14,23 @@ namespace fetch
 namespace consensus
 {
 
-
-class ContractRegister
+class SynergeticContractRegister
 {
 public:
   using ContractAddress = byte_array::ConstByteArray;
 
-  ContractRegister()
+  SynergeticContractRegister()
   {
     CreateConensusVMModule(module_);    
     compiler_ = new fetch::vm::Compiler(&module_); // TODO: Make unique_ptr;
   }
 
-  ~ContractRegister()
+  ~SynergeticContractRegister()
   {
     delete compiler_;
   }
 
-  SynergeticContract AddContract(ContractAddress const &contract_address, std::string const &source)
+  SynergeticContract CreateContract(ContractAddress const &contract_address, std::string const &source)
   {
     SynergeticContract ret = NewSynergeticContract(compiler_, contract_address, source);
     contracts_[contract_address] = ret;

@@ -23,10 +23,10 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
-#include "miner.hpp"
-#include "contract_register.hpp"
-#include "work.hpp"
-#include "work_register.hpp"
+#include "ledger/upow/synergetic_miner.hpp"
+#include "ledger/upow/synergetic_contract_register.hpp"
+#include "ledger/upow/work.hpp"
+#include "ledger/upow/work_register.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -140,14 +140,14 @@ int main(int argc, char **argv)
   fetch::ledger::DAG dag;
   LoadDAG(argv[1], dag);
 
-  fetch::consensus::ContractRegister cregister;
-  if(!cregister.AddContract("0xf232", source))
+  fetch::consensus::SynergeticContractRegister cregister;
+  if(!cregister.CreateContract("0xf232", source))
   {
     std::cout << "Could not attach contract."  << std::endl;
     return 0;
   }
 
-  fetch::consensus::Miner miner(dag);
+  fetch::consensus::SynergeticMiner miner(dag);
   fetch::consensus::Work work;
   work.contract_address = "0xf232";
   work.miner = "troels";

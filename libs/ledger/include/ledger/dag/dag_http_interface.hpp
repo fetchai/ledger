@@ -43,25 +43,21 @@ public:
     , dag_(dag)
     , dag_rpc_(rpc)
   {
-    Post("/api/dag/add-work",
-        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return AddWork(params, request);
-        });
 
-    Post("/api/dag/add-bid",
+    Post("/api/dag/add-data",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return AddBid(params, request);
+          return AddData(params, request);
         }); 
 
     Get("/api/dag/status",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return Status(params, request);
-        });        
+        });
 
     Get("/api/dag/list",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return List(params, request);
-        });            
+        });
 
     certificate_.GenerateKeys();
   }
@@ -115,33 +111,7 @@ private:
   }
   // TODO(tfr): end of temporary function
 
-  http::HTTPResponse AddWork(http::ViewParameters const & /*params*/,
-                             http::HTTPRequest const &request)
-  {
-
-    Variant response     = Variant::Object();
-
-    json::JSONDocument doc;
-    doc.Parse(request.body());
-
-    if(!doc.Has("payload"))
-    {
-      response["error"] = "Work request did not have a payload.";
-      return http::CreateJsonResponse(response);
-    }
-
-    // TODO(tfr): Use wire format.
-    auto payload = doc["payload"].As<ConstByteArray>();
-    DAGNode node = GenerateNode(payload, DAGNode::WORK);
-
-    dag_rpc_.BroadcastDAGNode(node);
-    dag_.Push(node);
-
-
-    return http::CreateJsonResponse(response);
-  }
-
-  http::HTTPResponse AddBid(http::ViewParameters const & /*params*/,
+  http::HTTPResponse AddData(http::ViewParameters const & /*params*/,
                             http::HTTPRequest const &request)
   {
     Variant response     = Variant::Object();
@@ -151,7 +121,7 @@ private:
 
     if(!doc.Has("payload"))
     {
-      response["error"] = "Work request did not have a payload.";
+      response["error"] = "Data request did not have a payload.";
       return http::CreateJsonResponse(response);
     }
 
@@ -177,8 +147,6 @@ private:
   http::HTTPResponse List(http::ViewParameters const & /*params*/,
                           http::HTTPRequest const &request)
   {
-
-
     uint64_t from = 0;
     uint64_t to = dag_.node_count();
 

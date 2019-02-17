@@ -17,9 +17,9 @@ namespace consensus
  * Thoughts on VM:
  *   - Can I pass variants from one VM to another safely?
  **/
-class Miner {
+class SynergeticMiner {
 public:
-  Miner(fetch::ledger::DAG &dag)
+  SynergeticMiner(fetch::ledger::DAG &dag)
   : dag_(dag)
   {
     CreateConensusVMModule(module_);
@@ -29,7 +29,7 @@ public:
     vm_->RegisterGlobalPointer(&dag_);
   }
 
-  ~Miner() 
+  ~SynergeticMiner() 
   {
     delete vm_;
   }

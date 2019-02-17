@@ -24,8 +24,8 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "ledger/dag/dag.hpp"
-#include "byte_array_wrapper.hpp"
 #include "core/json/document.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
 namespace fetch
 {
 namespace modules

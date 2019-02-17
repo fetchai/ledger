@@ -48,8 +48,6 @@ public:
   DAG(DAG &&) = delete;
   ~DAG() = default;
 
-  uint64_t GetNodeTime(DAGNode const & node);
-
   bool Push(DAGNode node);
   bool PushBlock(DAGNode node);
   DigestSet const tips() const;
@@ -82,10 +80,7 @@ public:
   /// @{
   void SetNodeTime(uint64_t block_number, DigestArray hashes)
   {
-    FETCH_LOCK(maintenance_mutex_);
-    std::cout << "========================================================================" << std::endl;
-    std::cout << "CERTIFYING" << std::endl;
-    std::cout << "========================================================================" << std::endl;    
+    FETCH_LOCK(maintenance_mutex_); 
 
     std::queue< Digest > queue;
     for(auto const& h :hashes)
@@ -119,6 +114,7 @@ public:
   void ClearNodeTime(DigestArray hashes)
   {
     FETCH_LOCK(maintenance_mutex_);
+    // TODO: Implement to revert.
   }
 
   NodeArray ExtractSegment(uint64_t block_number, DigestArray hashes)

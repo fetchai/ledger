@@ -1,7 +1,6 @@
 #pragma once
-#include "byte_array_wrapper.hpp"
+#include "vm_modules/core/byte_array_wrapper.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "dag_node_wrapper.hpp"
 
 namespace fetch
 {
