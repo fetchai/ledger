@@ -75,7 +75,9 @@ private:
  */
 inline ResourceID::ResourceID(byte_array::ConstByteArray id)
   : id_(std::move(id))
-{}
+{
+  assert(id.size() == RESOURCE_ID_SIZE_IN_BYTES);
+}
 
 /**
  * Gets the current id (hashed) value
@@ -179,6 +181,16 @@ public:
   ResourceID const &as_resource_id() const
   {
     return *this;
+  }
+
+  bool operator<(ResourceAddress const &other) const
+  {
+    return address_ < other.address_;
+  }
+
+  bool operator==(ResourceAddress const &other) const
+  {
+    return address_ == other.address_;
   }
 
 private:

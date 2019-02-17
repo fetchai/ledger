@@ -23,6 +23,7 @@ namespace fetch {
 namespace ledger {
 
 extern const byte_array::ConstByteArray GENESIS_DIGEST;
+extern const byte_array::ConstByteArray GENESIS_MERKLE_ROOT;
 
 }  // namespace ledger
 }  // namespace fetch

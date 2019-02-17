@@ -17,10 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/constants.hpp"
-
 #include <memory>
+
+namespace fetch {
+namespace ledger {
+class Block;
+}  // namespace ledger
+}  // namespace fetch
 
 class BlockGenerator
 {
@@ -28,37 +31,16 @@ public:
   using Block    = fetch::ledger::Block;
   using BlockPtr = std::shared_ptr<Block>;
 
-  void Reset()
-  {
-    block_count_ = 0;
-  }
+  BlockGenerator(std::size_t num_lanes, std::size_t num_slices);
 
-  BlockPtr operator()(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u)
-  {
-    BlockPtr block = std::make_shared<Block>();
+  void Reset();
 
-    // set the weight for this block
-    block->weight = weight;
+  BlockPtr Generate(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
 
-    if (from)
-    {
-      block->nonce              = ++block_count_;
-      block->total_weight       = from->total_weight + block->weight;
-      block->body.previous_hash = from->body.hash;
-      block->body.block_number  = from->body.block_number + 1u;
-    }
-    else
-    {
-      // update the previous hash
-      block->body.previous_hash = fetch::ledger::GENESIS_DIGEST;
-    }
-
-    // compute the digest for the block
-    block->UpdateDigest();
-
-    return block;
-  }
+  BlockPtr operator()(BlockPtr const &from = BlockPtr{}, uint64_t weight = 1u);
 
 private:
-  uint64_t block_count_{0};
+  uint64_t    block_count_{0};
+  std::size_t num_slices_{0};
+  uint32_t    log2_num_lanes_{0};
 };

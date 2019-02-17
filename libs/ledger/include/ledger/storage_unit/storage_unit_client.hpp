@@ -38,6 +38,8 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
+#include "crypto/merkle_tree.hpp"
+
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -84,14 +86,13 @@ public:
 
   explicit StorageUnitClient(NetworkManager const &tm)
     : network_manager_(tm)
-  {}
+  {
+    //    state_merkle_cache_.Load("merkle_hash_cache_index.db", "merkle_hash_cache.db", true);
+  }
 
   StorageUnitClient(StorageUnitClient const &) = delete;
-
-  StorageUnitClient(StorageUnitClient &&) = delete;
-
+  StorageUnitClient(StorageUnitClient &&)      = delete;
   StorageUnitClient &operator=(StorageUnitClient const &) = delete;
-
   StorageUnitClient &operator=(StorageUnitClient &&) = delete;
 
   void SetNumberOfLanes(LaneIndex count)
@@ -199,7 +200,7 @@ public:
     std::vector<service::Promise> promises;
     TxSummaries                   new_txs;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Polling recent transactions from lanes");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Polling recent transactions from lanes");
 
     // Assume that the lanes are roughly balanced in terms of new TXs
     for (auto const &lane_index : lane_to_identity_map_)
@@ -255,6 +256,7 @@ public:
     return true;
   }
 
+  // TODO(HUT): comment these doxygen-style
   Document GetOrCreate(ResourceAddress const &key) override
   {
     LaneIndex lane = key.lane(log2_lanes_);
@@ -304,6 +306,36 @@ public:
     return promise->As<storage::Document>();
   }
 
+  void Set(ResourceAddress const &key, StateValue const &value) override
+  {
+    LaneIndex lane = key.lane(log2_lanes_);
+
+    Address address;
+    try
+    {
+      GetAddressForLane(lane, address);
+    }
+    catch (std::runtime_error &e)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
+      return;
+    }
+    auto client  = GetClientForLane(lane);
+    auto promise = client->CallSpecificAddress(address, RPC_STATE,
+                                               fetch::storage::RevertibleDocumentStoreProtocol::SET,
+                                               key.as_resource_id(), value);
+
+    FETCH_LOG_PROMISE();
+    promise->Wait();  // TODO(HUT): no error state is checked/allowed for setting things?
+  }
+
+  // state hash functions
+  byte_array::ConstByteArray CurrentHash() override;
+  byte_array::ConstByteArray LastCommitHash() override;
+  bool                       RevertToHash(Hash const &hash) override;
+  byte_array::ConstByteArray Commit() override;
+  bool                       HashExists(Hash const &hash) override;
+
   bool Lock(ResourceAddress const &key) override
   {
     LaneIndex lane = key.lane(log2_lanes_);
@@ -348,88 +380,6 @@ public:
     return promise->As<bool>();
   }
 
-  void Set(ResourceAddress const &key, StateValue const &value) override
-  {
-    LaneIndex lane = key.lane(log2_lanes_);
-
-    Address address;
-    try
-    {
-      GetAddressForLane(lane, address);
-    }
-    catch (std::runtime_error &e)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to call SET (store document), because: ", e.what());
-      return;
-    }
-    auto client  = GetClientForLane(lane);
-    auto promise = client->CallSpecificAddress(address, RPC_STATE,
-                                               fetch::storage::RevertibleDocumentStoreProtocol::SET,
-                                               key.as_resource_id(), value);
-
-    FETCH_LOG_PROMISE();
-    promise->Wait();
-  }
-
-  void Commit(bookmark_type const &bookmark) override
-  {
-    std::vector<service::Promise> promises;
-    for (auto const &lanedata : lane_to_identity_map_)
-    {
-      auto const &address = lanedata.second;
-      auto        client  = GetClientForLane(lanedata.first);
-      auto        promise = client->CallSpecificAddress(
-          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::COMMIT, bookmark);
-      promises.push_back(promise);
-    }
-
-    for (auto &p : promises)
-    {
-      FETCH_LOG_PROMISE();
-      p->Wait();
-    }
-  }
-
-  void Revert(bookmark_type const &bookmark) override
-  {
-    std::vector<service::Promise> promises;
-    for (auto const &lanedata : lane_to_identity_map_)
-    {
-      auto const &address = lanedata.second;
-      auto        client  = GetClientForLane(lanedata.first);
-      auto        promise = client->CallSpecificAddress(
-          address, RPC_STATE, fetch::storage::RevertibleDocumentStoreProtocol::REVERT, bookmark);
-      promises.push_back(promise);
-    }
-
-    for (auto &p : promises)
-    {
-      FETCH_LOG_PROMISE();
-      p->Wait();
-    }
-  }
-
-  byte_array::ConstByteArray Hash() override
-  {
-    // TODO(issue 33): Which lane?
-    Address address;
-    try
-    {
-      GetAddressForLane(0, address);
-    }
-    catch (std::runtime_error &e)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Lanes array empty when trying to get a hash from L0: ", e.what());
-      throw e;
-    }
-    auto client = GetClientForLane(0);
-    return client
-        ->CallSpecificAddress(address, RPC_STATE,
-                              fetch::storage::RevertibleDocumentStoreProtocol::HASH)
-        ->As<byte_array::ByteArray>();
-  }
-
   std::size_t lanes() const
   {
     return lane_to_identity_map_.size();
@@ -467,6 +417,10 @@ private:
   using Muddles                   = std::vector<MuddlePtr>;
   using Clients                   = std::vector<ClientPtr>;
   using TxSummaries               = std::vector<TransactionSummary>;
+  using MerkleCache               = storage::ObjectStore<crypto::MerkleTree>;
+  using MerkleTree                = crypto::MerkleTree;
+  using MerkleTreePtr             = std::shared_ptr<MerkleTree>;
+  using MerkleStack               = std::vector<MerkleTreePtr>;
 
   void WorkCycle();
 
@@ -486,6 +440,8 @@ private:
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
+  bool HashInStack(Hash const &hash);
+
   NetworkManager            network_manager_;
   uint32_t                  log2_lanes_ = 0;
   mutable Mutex             mutex_{__LINE__, __FILE__};
@@ -494,6 +450,12 @@ private:
   BackgroundedWorkThreadPtr workthread_;
   Muddles                   muddles_;
   Clients                   clients_;
+
+  // Mutex only needs to protect current merkle and merkle stack, the cache is thread safe
+  mutable Mutex merkle_mutex_{__LINE__, __FILE__};
+  MerkleTreePtr current_merkle_;
+  MerkleStack   state_merkle_stack_;
+  //  MerkleCache               state_merkle_cache_;
 };
 
 }  // namespace ledger
