@@ -89,7 +89,7 @@ public:
       {
         continue;
       }
-
+      // TODO: Ignore everything that isn't data.
       items.push_back( vm_->CreateNewObject< DAGNodeWrapper >( n.second ) );
     }
 

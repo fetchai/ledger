@@ -45,26 +45,26 @@ public:
     return true;
   }
 
-  int64_t ExecuteWork(SynergeticContract contract, Work work) 
+  double ExecuteWork(SynergeticContract contract, Work work) 
   { 
     // Executing the work function
     int64_t nonce = work();
     if (!vm_->Execute(contract->script, contract->work_function, error_, solution_, problem_, nonce))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;
-      return std::numeric_limits< int64_t >::infinity();
+      return std::numeric_limits< double >::infinity();
     }
 
     // Computing objective function
     if (!vm_->Execute(contract->script, contract->objective_function, error_, score_, problem_, solution_))
     {
       std::cerr << "Runtime error: " << error_ << std::endl;      
-      return std::numeric_limits< int64_t >::infinity(); 
+      return std::numeric_limits< double >::infinity(); 
     }
 
     // TODO: validate that it is i64
     
-    return score_.primitive.i64;
+    return score_.primitive.f64; // TODO: Migrate to i64 and fixed points
   }
 private:
   fetch::ledger::DAG  &dag_;

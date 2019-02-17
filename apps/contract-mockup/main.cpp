@@ -41,7 +41,7 @@ void LoadDAG(std::string const &filename, fetch::ledger::DAG &dag)
   data_file >> std::ws;
 
   uint32_t i = 0;
-
+  int j = 0;
   for(; i < item_count; ++i)
   {
     double price;
@@ -50,6 +50,7 @@ void LoadDAG(std::string const &filename, fetch::ledger::DAG &dag)
     data_file >> id >> price >> std::ws;
 
     doc["type"] = 2;
+    doc["id"] = j++;
     doc["agent"] = id;
     doc["price"] = price;
 
@@ -68,6 +69,7 @@ void LoadDAG(std::string const &filename, fetch::ledger::DAG &dag)
   }  
 
   // #agent_id, #items item0 ... itemN price #exludes exclude0 ... exludeM
+  j = 0;
   for(; i < bid_count; ++i)  
   {
     fetch::variant::Variant doc = fetch::variant::Variant::Object();
@@ -95,7 +97,7 @@ void LoadDAG(std::string const &filename, fetch::ledger::DAG &dag)
       data_file >> exclude;
       excludes[j] = exclude;
     }
-
+    doc["id"] = j++;
     doc["type"] = 3;
     doc["agent"] = agent_id;
     doc["price"] = price;
@@ -157,6 +159,8 @@ int main(int argc, char **argv)
     exit(-1);
   }
   work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
+
+  std::cout << "Solution score: " << work.score << std::endl;
 
   return 0;
 }

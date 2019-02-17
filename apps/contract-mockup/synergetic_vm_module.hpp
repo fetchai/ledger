@@ -2,6 +2,9 @@
 
 #include "crypto_rng.hpp"
 #include "exp.hpp"
+#include "sqrt.hpp"
+#include "bitshifting.hpp"
+#include "bitwise_ops.hpp"
 #include "byte_array_wrapper.hpp"
 #include "print.hpp"
 #include "dag_node_wrapper.hpp"
@@ -31,8 +34,11 @@ void CreateConensusVMModule(fetch::vm::Module &module)
   fetch::modules::DAGWrapper::Bind(module);
 
   fetch::modules::BindExp(module);
+  fetch::modules::BindSqrt(module);  
   fetch::modules::BindPrint(module);
   fetch::modules::BindLen(module);
+  fetch::modules::BindBitShift(module);
+  fetch::modules::BindBitwiseOps(module);
 }
 
 }

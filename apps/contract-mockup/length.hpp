@@ -37,7 +37,7 @@ void BindLen(vm::Module &module)
 
   module.CreateFreeFunction("lengthOf", &LenByteArray);
   module.CreateFreeFunction("lengthOf", &LenString);
-  module.CreateFreeFunction("lengthOf", &LenArray<int64_t>);  
+  module.CreateFreeFunction("lengthOf", &LenArray<int32_t>);  
   module.CreateFreeFunction("lengthOf", &LenArray<int64_t>);    
   module.CreateFreeFunction("lengthOf", &LenArray<uint32_t>);  
   module.CreateFreeFunction("lengthOf", &LenArray<uint64_t>);

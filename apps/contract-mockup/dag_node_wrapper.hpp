@@ -102,7 +102,7 @@ public:
 
   double GetNumber(vm::Ptr< vm::String > const& s)
   {
-    double ret;
+    double ret = 0;
     try 
     {
       ret = contents_[s->str].As<double>();
@@ -111,7 +111,7 @@ public:
     {    
       try 
       {
-        ret = contents_[s->str].As<int64_t>();
+        ret = static_cast<double>(contents_[s->str].As<int64_t>());
       }
       catch(std::runtime_error const& e)
       {
@@ -124,7 +124,7 @@ public:
   template< typename T > 
   T Get(vm::Ptr< vm::String > const& s)
   {
-    T ret;
+    T ret = 0;
 
     try 
     {

@@ -44,7 +44,7 @@ struct Work
     return fnv.Final<int64_t>();
   }  
 
-  int64_t score = std::numeric_limits<int64_t>::infinity();
+  double score = std::numeric_limits<double>::infinity();
 };
 
 }
