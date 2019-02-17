@@ -25,38 +25,6 @@
 #include <fstream>
 #include <sstream>
 
-struct IntPair : public fetch::vm::Object
-{
-  IntPair()          = delete;
-  virtual ~IntPair() = default;
-
-  IntPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id, int32_t i, int32_t j)
-    : fetch::vm::Object(vm, type_id)
-    , first_(i)
-    , second_(j)
-  {}
-
-  static fetch::vm::Ptr<IntPair> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                             int const &i, int const &j)
-  {
-    return new IntPair(vm, type_id, i, j);
-  }
-
-  int first()
-  {
-    return first_;
-  }
-
-  int second()
-  {
-    return second_;
-  }
-
-private:
-  int first_;
-  int second_;
-};
-
 static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
   std::cout << s->str << std::endl;
@@ -68,6 +36,28 @@ fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
   return ret;
 }
 
+struct System : public fetch::vm::Object
+{
+  System()          = delete;
+  virtual ~System() = default;
+
+  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
+  {
+    return int32_t(System::args.size());
+  }
+
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
+                                                int32_t const &a)
+  {
+    return fetch::vm::Ptr<fetch::vm::String>(
+        new fetch::vm::String(vm, System::args[std::size_t(a)]));
+  }
+
+  static std::vector<std::string> args;
+};
+
+std::vector<std::string> System::args;
+
 int main(int argc, char **argv)
 {
   if (argc < 2)
@@ -76,30 +66,40 @@ int main(int argc, char **argv)
     exit(-9);
   }
 
+  for (int i = 1; i < argc; ++i)
+  {
+    System::args.push_back(std::string(argv[i]));
+  }
+
   // Reading file
-  std::ifstream      file(argv[1], std::ios::binary);
+  std::ifstream file(argv[1], std::ios::binary);
+  if (!file)
+  {
+    throw std::runtime_error("Failed to find input file.");
+  }
+
   std::ostringstream ss;
   ss << file.rdbuf();
   const std::string source = ss.str();
   file.close();
 
+  // Creating new VM module
   fetch::vm::Module module;
 
   module.CreateFreeFunction("Print", &Print);
   module.CreateFreeFunction("toString", &toString);
-
-  module.CreateClassType<IntPair>("IntPair")
-      .CreateTypeConstuctor<int, int>()
-      .CreateInstanceFunction("first", &IntPair::first)
-      .CreateInstanceFunction("second", &IntPair::second);
+  module.CreateClassType<System>("System")
+      .CreateTypeFunction("Argc", &System::Argc)
+      .CreateTypeFunction("Argv", &System::Argv);
 
   // Setting compiler up
-  fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
-  fetch::vm::Script        script;
-  std::vector<std::string> errors;
 
-  // Compiling
-  bool compiled = compiler->Compile(source, "myscript", script, errors);
+  fetch::vm::Compiler *compiler = new fetch::vm::Compiler(&module);
+  fetch::vm::VM *      vm       = new fetch::vm::VM(&module);
+
+  fetch::vm::Script  script;
+  fetch::vm::Strings errors;
+  bool               compiled = compiler->Compile(source, "myscript", script, errors);
 
   if (!compiled)
   {
@@ -117,15 +117,17 @@ int main(int argc, char **argv)
     return -2;
   }
 
-  // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
 
-  fetch::vm::VM vm(&module);
-  if (!vm.Execute(script, "main", error, output))
+  // Setting VM up and running
+  if (!vm->Execute(script, "main", error, output))
   {
-    std::cout << "Runtime error on line " << error << std::endl;
+    std::cout << "Runtime error: " << error << std::endl;
   }
+
   delete compiler;
+  delete vm;
+
   return 0;
 }

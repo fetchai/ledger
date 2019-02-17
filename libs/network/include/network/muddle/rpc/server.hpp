@@ -108,9 +108,9 @@ private:
   void OnMessage(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
                  Packet::Payload const &payload, Address const &transmitter)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
-                   " via:", byte_array::ToBase64(transmitter), " on: ", service, ':', channel, ':',
-                   counter);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Recv message from: ", byte_array::ToBase64(from),
+                    " via:", byte_array::ToBase64(transmitter), " on: ", service, ':', channel, ':',
+                    counter);
 
     // insert data into the metadata
     uint64_t index = 0;

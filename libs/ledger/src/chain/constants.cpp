@@ -25,5 +25,8 @@ namespace ledger {
 extern const byte_array::ConstByteArray GENESIS_DIGEST =
     byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
 
+extern const byte_array::ConstByteArray GENESIS_MERKLE_ROOT =
+    byte_array::FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
 }  // namespace ledger
 }  // namespace fetch

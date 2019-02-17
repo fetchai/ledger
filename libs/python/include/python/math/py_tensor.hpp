@@ -26,21 +26,23 @@ namespace py = pybind11;
 namespace fetch {
 namespace math {
 
+template <typename T>
 void BuildTensor(std::string const &custom_name, pybind11::module &module)
 {
 
-  py::class_<fetch::math::Tensor<float>, std::shared_ptr<fetch::math::Tensor<float>>>(
-      module, custom_name.c_str())
+  py::class_<fetch::math::Tensor<T>, std::shared_ptr<fetch::math::Tensor<T>>>(module,
+                                                                              custom_name.c_str())
       .def(py::init<std::vector<size_t> const &>())
-      .def("ToString", &fetch::math::Tensor<float>::ToString)
-      .def("Size", &fetch::math::Tensor<float>::size)
-      .def("Fill", &fetch::math::Tensor<float>::Fill)
-      .def("Slice", &fetch::math::Tensor<float>::Slice)
-      .def("At", [](fetch::math::Tensor<float> &a, size_t i) { return a.At(i); })
-      .def("Set", (void (fetch::math::Tensor<float>::*)(std::vector<size_t> const &, float)) &
-                      fetch::math::Tensor<float>::Set)
+      .def("ToString", &fetch::math::Tensor<T>::ToString)
+      .def("Size", &fetch::math::Tensor<T>::size)
+      .def("Fill", &fetch::math::Tensor<T>::Fill)
+      .def("Slice", &fetch::math::Tensor<T>::Slice)
+      .def("At", [](fetch::math::Tensor<T> &a, size_t i) { return a.At(i); })
+      .def("Set", (void (fetch::math::Tensor<T>::*)(std::vector<size_t> const &, T)) &
+                      fetch::math::Tensor<T>::Set)
       .def("Set",
-           (void (fetch::math::Tensor<float>::*)(size_t, float)) & fetch::math::Tensor<float>::Set);
+           [](fetch::math::Tensor<T> &a, std::vector<size_t> const &i, float v) { a.Set(i, T(v)); })
+      .def("Set", (void (fetch::math::Tensor<T>::*)(size_t, T)) & fetch::math::Tensor<T>::Set);
 }
 
 }  // namespace math

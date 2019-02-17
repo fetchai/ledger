@@ -174,6 +174,10 @@ public:
     }
   }
 
+  /////////////////
+  /// ACCESSORS ///
+  /////////////////
+
   T &At(size_t i)
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
@@ -182,6 +186,11 @@ public:
   T const &At(size_t i) const
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
+  }
+
+  T const &operator()(std::vector<size_t> const &indices) const
+  {
+    return Get(indices);
   }
 
   T const &Get(std::vector<size_t> const &indices) const
@@ -193,6 +202,10 @@ public:
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
+
+  ///////////////
+  /// SETTERS ///
+  ///////////////
 
   void Set(std::vector<size_t> const &indices, T value)
   {

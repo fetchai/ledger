@@ -17,16 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "miner/miner_interface.hpp"
 
 #include <atomic>
 #include <thread>
 
 namespace fetch {
 namespace ledger {
+
+class StorageUnitInterface;
+class BlockPackerInterface;
 
 class TransactionProcessor : public UnverifiedTransactionSink, public VerifiedTransactionSink
 {
@@ -37,7 +38,7 @@ public:
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
 
   // Construction / Destruction
-  TransactionProcessor(StorageUnitInterface &storage, miner::MinerInterface &miner,
+  TransactionProcessor(StorageUnitInterface &storage, BlockPackerInterface &packer,
                        std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
@@ -72,11 +73,13 @@ protected:
   /// @}
 
 private:
-  StorageUnitInterface & storage_;
-  miner::MinerInterface &miner_;
-  TransactionVerifier    verifier_;
-  ThreadPtr              poll_new_tx_thread_;
-  std::atomic_bool       running_;
+  using Flag = std::atomic<bool>;
+
+  StorageUnitInterface &storage_;
+  BlockPackerInterface &packer_;
+  TransactionVerifier   verifier_;
+  ThreadPtr             poll_new_tx_thread_;
+  Flag                  running_{false};
 
   void ThreadEntryPoint();
 };

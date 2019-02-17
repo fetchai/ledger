@@ -17,6 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "python/fetch_pybind.hpp"
+
+#include "python/core/fixed_point/py_fixed_point.hpp"
+
 #include "python/math/py_shapeless_array.hpp"
 #include "python/memory/py_array.hpp"
 #include "python/memory/py_range.hpp"
@@ -84,6 +87,7 @@ PYBIND11_MODULE(fetch, module)
 
   // Namespaces
 
+  py::module ns_fetch_fixed_point      = module.def_submodule("fixed_point");
   py::module ns_fetch_random           = module.def_submodule("random");
   py::module ns_fetch_vectorize        = module.def_submodule("vectorize");
   py::module ns_fetch_image            = module.def_submodule("image");
@@ -101,7 +105,10 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_math_linalg      = ns_fetch_math.def_submodule("linalg");
   py::module ns_fetch_auctions         = module.def_submodule("auctions");
 
-  fetch::math::BuildTensor("Tensor", ns_fetch_math_tensor);
+  fetch::math::BuildTensor<float>("TensorFloat", ns_fetch_math_tensor);
+  fetch::math::BuildTensor<double>("TensorDouble", ns_fetch_math_tensor);
+  fetch::math::BuildTensor<fetch::fixed_point::FixedPoint<32, 32>>("TensorFixed32_32",
+                                                                   ns_fetch_math_tensor);
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_memory);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_memory);
@@ -235,6 +242,9 @@ PYBIND11_MODULE(fetch, module)
 
   // py::module ns_fetch_network_swarm = module.def_submodule("network_swarm");
   // fetch::swarm::BuildSwarmAgentApi(ns_fetch_network_swarm);
+
+  // FixedPoint
+  fetch::fixed_point::BuildFixedPoint<32, 32>("FixedPoint32_32", ns_fetch_fixed_point);
 
   // Machine Learning
   py::module ns_fetch_ml_float = ns_fetch_ml.def_submodule("float");

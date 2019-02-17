@@ -111,7 +111,8 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 }
 
 	/* strings */
-\"{STR}\" {
+\"{STR}\" |
+\'{STR}\' {
 	return Set(yylval, fetch::vm::Token::Kind::String, yytext, yyleng, yyextra);
 }
 
