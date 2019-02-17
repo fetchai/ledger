@@ -211,5 +211,34 @@ bool Contract::UnlockResources(ResourceSet const &resources, ContractHashes cons
   return success;
 }
 
+bool Contract::CheckRawState(byte_array::ByteArray const &address)
+{
+  auto document = state().Get(storage::ResourceAddress{address});
+
+  return !document.failed;
+}
+
+void Contract::SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address)
+{
+  state().Set(storage::ResourceAddress{address}, payload);
+}
+
+bool Contract::GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address)
+{
+  auto document = state().Get(storage::ResourceAddress{address});
+
+  if (document.failed)
+  {
+    return false;
+  }
+
+  // update the document if it wasn't created
+  serializers::ByteArrayBuffer buffer(document.document);
+  payload = buffer.data();
+
+  return true;
+}
+
+
 }  // namespace ledger
 }  // namespace fetch

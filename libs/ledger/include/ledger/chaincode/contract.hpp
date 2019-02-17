@@ -100,34 +100,9 @@ protected:
   template <typename T>
   void SetStateRecord(T const &record, byte_array::ByteArray const &address);
 
-  // TODO(HUT): push into cpp
-  bool CheckRawState(byte_array::ByteArray const &address)
-  {
-    auto document = state().Get(storage::ResourceAddress{address});
-
-    return !document.failed;
-  }
-
-  void SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address)
-  {
-    state().Set(storage::ResourceAddress{address}, payload);
-  }
-
-  bool GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address)
-  {
-    auto document = state().Get(storage::ResourceAddress{address});
-
-    if (document.failed)
-    {
-      return false;
-    }
-
-    // update the document if it wasn't created
-    serializers::ByteArrayBuffer buffer(document.document);
-    payload = buffer.data();
-
-    return true;
-  }
+  bool CheckRawState(byte_array::ByteArray const &address);
+  void SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address);
+  bool GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address);
 
 private:
   bool LockResources(ResourceSet const &resources, ContractHashes const &hashes);

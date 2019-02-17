@@ -193,16 +193,6 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                  " remaining: ", remaining_transactions, ")");
 
-  if(packed_transactions > 0)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-    FETCH_LOG_INFO(LOGGING_NAME, "");
-  }
-
   main_queue_size_ = main_queue_.size();
 }
 

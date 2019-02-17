@@ -69,7 +69,6 @@ ChainCodeCache::ContractPtr ChainCodeCache::CreateContract(byte_array::ConstByte
 {
   ContractPtr contract = factory_.Create(name);
 
-  FETCH_LOG_WARN("eee", "Adding to cache");
   // update the cache
   cache_.emplace(name, contract);
 
@@ -79,14 +78,6 @@ ChainCodeCache::ContractPtr ChainCodeCache::CreateContract(byte_array::ConstByte
 void ChainCodeCache::RunMaintenance()
 {
   static const std::chrono::hours CACHE_LIFETIME{1};
-
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
-  FETCH_LOG_INFO("argh", "maintenence !!");
 
   Timepoint const now = Clock::now();
 
