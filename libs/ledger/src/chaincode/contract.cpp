@@ -218,7 +218,8 @@ bool Contract::CheckRawState(byte_array::ByteArray const &address)
   return !document.failed;
 }
 
-void Contract::SetRawState(byte_array::ByteArray const &payload, byte_array::ByteArray const &address)
+void Contract::SetRawState(byte_array::ByteArray const &payload,
+                           byte_array::ByteArray const &address)
 {
   state().Set(storage::ResourceAddress{address}, payload);
 }
@@ -238,7 +239,6 @@ bool Contract::GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray
 
   return true;
 }
-
 
 }  // namespace ledger
 }  // namespace fetch

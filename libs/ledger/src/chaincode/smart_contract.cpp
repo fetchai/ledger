@@ -66,12 +66,12 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
     return Status::FAILED;
   }
 
-  if( !CheckRawState(contract_hash))
+  if (!CheckRawState(contract_hash))
   {
     return Status::FAILED;
   }
 
-  if(source_.size() == 0)
+  if (source_.size() == 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Source for SC not found. Populating.");
 

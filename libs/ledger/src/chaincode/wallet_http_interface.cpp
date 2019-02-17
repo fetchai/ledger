@@ -77,15 +77,15 @@ WalletHttpInterface::WalletHttpInterface(StorageInterface &state, TransactionPro
          return OnTransactions(request);
        });
 
-    Post("/api/wallet/create_smart_contract",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnCreateSC(request);
-         });
+  Post("/api/wallet/create_smart_contract",
+       [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+         return OnCreateSC(request);
+       });
 
-    Post("/api/wallet/invoke_smart_contract",
-         [this](http::ViewParameters const &, http::HTTPRequest const &request) {
-           return OnInvokeSC(request);
-         });
+  Post("/api/wallet/invoke_smart_contract",
+       [this](http::ViewParameters const &, http::HTTPRequest const &request) {
+         return OnInvokeSC(request);
+       });
 }
 
 /**

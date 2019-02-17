@@ -40,7 +40,9 @@ FactoryRegistry CreateRegistry()
 
   registry["fetch.dummy"]                  = []() { return std::make_shared<DummyContract>(); };
   registry["fetch.token"]                  = []() { return std::make_shared<TokenContract>(); };
-  registry["fetch.smart_contract_manager"] = []() { return std::make_shared<SmartContractManager>(); };
+  registry["fetch.smart_contract_manager"] = []() {
+    return std::make_shared<SmartContractManager>();
+  };
 
   return registry;
 }
@@ -57,7 +59,7 @@ ContractNameSet CreateContractSet(FactoryRegistry const &registry)
   return contracts;
 }
 
-FactoryRegistry global_registry     = CreateRegistry();
+FactoryRegistry       global_registry     = CreateRegistry();
 ContractNameSet const global_contract_set = CreateContractSet(global_registry);
 
 }  // namespace
@@ -69,7 +71,8 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(ContractName const &name)
   auto it = global_registry.find(name);
   if (it == global_registry.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup requested chain code: ", name, ". Creating new SC");
+    FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup requested chain code: ", name,
+                   ". Creating new SC");
 
     return std::make_shared<SmartContract>();
   }
