@@ -25,13 +25,13 @@ namespace vm {
 class IState : public Object
 {
 public:
-  IState() = delete;
+  IState()          = delete;
   virtual ~IState() = default;
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
-  static Ptr<IState> Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
-    TemplateParameter const &value);
-  virtual TemplateParameter Get() const = 0;
-  virtual void Set(TemplateParameter const &value) = 0;
+  static Ptr<IState>        Constructor(VM *vm, TypeId type_id, Ptr<String> const &name);
+  static Ptr<IState>        Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
+                                        TemplateParameter const &value);
+  virtual TemplateParameter Get() const                         = 0;
+  virtual void              Set(TemplateParameter const &value) = 0;
 
 protected:
   IState(VM *vm, TypeId type_id)
@@ -45,24 +45,24 @@ template <typename T>
 class State : public IState
 {
 public:
-  State() = delete;
+  State()          = delete;
   virtual ~State() = default;
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
   {
-    value_ = Value(0);
+    value_         = Value(0);
     value_type_id_ = value_type_id;
-    name_ = name->str;
+    name_          = name->str;
   }
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
-      TemplateParameter const &value)
+        TemplateParameter const &value)
     : IState(vm, type_id)
   {
-    value_ = value.Get<Value>();
+    value_         = value.Get<Value>();
     value_type_id_ = value_type_id;
-    name_ = name->str;
+    name_          = name->str;
   }
 
   virtual TemplateParameter Get() const override
@@ -78,8 +78,8 @@ public:
 private:
   using Value = typename GetStorageType<T>::type;
   std::string name_;
-  Value   value_;
-  TypeId value_type_id_;
+  Value       value_;
+  TypeId      value_type_id_;
 };
 
 template <typename... Args>
@@ -137,7 +137,7 @@ inline Ptr<IState> IState::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new State<Ptr<Object>>(vm, type_id, value_type_id, std::forward<Args>(args)...);
   }
-  } // switch
+  }  // switch
 }
 
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name)
@@ -146,7 +146,7 @@ inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const
 }
 
 inline Ptr<IState> IState::Constructor(VM *vm, TypeId type_id, Ptr<String> const &name,
-   TemplateParameter const &value)
+                                       TemplateParameter const &value)
 {
   return Construct(vm, type_id, name, value);
 }

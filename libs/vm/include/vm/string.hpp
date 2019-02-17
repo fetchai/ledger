@@ -24,7 +24,7 @@ namespace vm {
 
 struct String : public Object
 {
-  String() = delete;
+  String()          = delete;
   virtual ~String() = default;
 
   String(VM *vm, std::string str__, bool is_literal__ = false)

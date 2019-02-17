@@ -124,31 +124,31 @@ void Analyser::UnInitialise()
     global_symbol_table_->Reset();
     global_symbol_table_ = nullptr;
   }
-  any_type_             = nullptr;
-  template_parameter1_type_      = nullptr;
-  template_parameter2_type_      = nullptr;
-  void_type_            = nullptr;
-  null_type_            = nullptr;
-  bool_type_            = nullptr;
-  int8_type_            = nullptr;
-  byte_type_            = nullptr;
-  int16_type_           = nullptr;
-  uint16_type_          = nullptr;
-  int32_type_           = nullptr;
-  uint32_type_          = nullptr;
-  int64_type_           = nullptr;
-  uint64_type_          = nullptr;
-  float32_type_         = nullptr;
-  float64_type_         = nullptr;
-  integer_variant_type_ = nullptr;
-  real_variant_type_    = nullptr;
-  number_variant_type_  = nullptr;
-  cast_variant_type_    = nullptr;
-  matrix_type_          = nullptr;
-  array_type_           = nullptr;
-  map_type_             = nullptr;
-  state_type_           = nullptr;
-  string_type_          = nullptr;
+  any_type_                 = nullptr;
+  template_parameter1_type_ = nullptr;
+  template_parameter2_type_ = nullptr;
+  void_type_                = nullptr;
+  null_type_                = nullptr;
+  bool_type_                = nullptr;
+  int8_type_                = nullptr;
+  byte_type_                = nullptr;
+  int16_type_               = nullptr;
+  uint16_type_              = nullptr;
+  int32_type_               = nullptr;
+  uint32_type_              = nullptr;
+  int64_type_               = nullptr;
+  uint64_type_              = nullptr;
+  float32_type_             = nullptr;
+  float64_type_             = nullptr;
+  integer_variant_type_     = nullptr;
+  real_variant_type_        = nullptr;
+  number_variant_type_      = nullptr;
+  cast_variant_type_        = nullptr;
+  matrix_type_              = nullptr;
+  array_type_               = nullptr;
+  map_type_                 = nullptr;
+  state_type_               = nullptr;
+  string_type_              = nullptr;
   op_table_.clear();
   left_op_table_.clear();
   right_op_table_.clear();
@@ -785,8 +785,8 @@ bool Analyser::AnnotateModuloAssignOp(ExpressionNodePtr const &node)
   {
     AddError(node->token, "modulo not implemented yet");
     return false;
-    //SetRV(node, lhs->type);
-    //return true;
+    // SetRV(node, lhs->type);
+    // return true;
   }
   AddError(node->token, "integer type expected");
   return false;
@@ -1173,8 +1173,8 @@ bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
   {
     AddError(node->token, "modulo not implemented yet");
     return false;
-    //SetRV(node, lhs->type);
-    //return true;
+    // SetRV(node, lhs->type);
+    // return true;
   }
   AddError(node->token, "integer type expected");
   return false;

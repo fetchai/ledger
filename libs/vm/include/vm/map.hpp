@@ -25,10 +25,10 @@ namespace vm {
 class IMap : public Object
 {
 public:
-  IMap() = delete;
+  IMap()          = delete;
   virtual ~IMap() = default;
   static Ptr<IMap> Constructor(VM *vm, TypeId type_id);
-  virtual int32_t Count() const = 0;
+  virtual int32_t  Count() const = 0;
 
 protected:
   IMap(VM *vm, TypeId type_id)
@@ -79,7 +79,7 @@ struct Map : public IMap
 {
   using Pair = std::pair<Variant, Variant>;
 
-  Map() = delete;
+  Map()          = delete;
   virtual ~Map() = default;
 
   Map(VM *vm, TypeId type_id)

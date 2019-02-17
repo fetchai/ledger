@@ -25,10 +25,10 @@ namespace vm {
 class IArray : public Object
 {
 public:
-  IArray() = delete;
+  IArray()          = delete;
   virtual ~IArray() = default;
   static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
-  virtual int32_t Count() const = 0;
+  virtual int32_t    Count() const = 0;
 
 protected:
   IArray(VM *vm, TypeId type_id)
@@ -43,7 +43,7 @@ struct Array : public IArray
 {
   using ElementType = typename GetStorageType<T>::type;
 
-  Array() = delete;
+  Array()          = delete;
   virtual ~Array() = default;
 
   Array(VM *vm, TypeId type_id, int32_t size)
@@ -106,7 +106,7 @@ struct Array : public IArray
 template <typename... Args>
 inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
-  TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
+  TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
   switch (element_type_id)
   {
@@ -158,7 +158,7 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
     return new Array<Ptr<Object>>(vm, type_id, std::forward<Args>(args)...);
   }
-  } // switch
+  }  // switch
 }
 
 inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)

@@ -27,7 +27,7 @@ namespace vm {
 class IMatrix : public Object
 {
 public:
-  IMatrix() = delete;
+  IMatrix()          = delete;
   virtual ~IMatrix() = default;
   static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns);
 
@@ -40,7 +40,7 @@ protected:
 template <typename T>
 struct Matrix : public IMatrix
 {
-  Matrix() = delete;
+  Matrix()          = delete;
   virtual ~Matrix() = default;
 
   Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)

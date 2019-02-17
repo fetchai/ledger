@@ -21,12 +21,12 @@
 #include "vm/compiler.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"
-#include "vm/state.hpp"
 #include "vm/module/base.hpp"
 #include "vm/module/free_function_invoke.hpp"
 #include "vm/module/instance_function_invoke.hpp"
 #include "vm/module/type_constructor_invoke.hpp"
 #include "vm/module/type_function_invoke.hpp"
+#include "vm/state.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -166,8 +166,8 @@ public:
   TypeId CreateTemplateInstantiationType(TypeId template_type_id)
   {
     using InstantiationType = Template<T, Ts...>;
-    TypeIndex type_index = TypeIndex(typeid(InstantiationType));
-    TypeId type_id = registered_types_.GetTypeId(type_index);
+    TypeIndex type_index    = TypeIndex(typeid(InstantiationType));
+    TypeId    type_id       = registered_types_.GetTypeId(type_index);
     if (type_id != TypeIds::Unknown)
     {
       // The instantiation has been created already

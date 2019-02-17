@@ -153,7 +153,7 @@ struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 class Object
 {
 public:
-  Object() = delete;
+  Object()          = delete;
   virtual ~Object() = default;
 
   Object(VM *vm, TypeId type_id)
