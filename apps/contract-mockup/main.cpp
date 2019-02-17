@@ -26,6 +26,7 @@
 #include "miner.hpp"
 #include "contract_register.hpp"
 #include "work.hpp"
+#include "work_register.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -136,7 +137,6 @@ int main(int argc, char **argv)
   const std::string source = ss.str();
   file.close();
 
-
   fetch::ledger::DAG dag;
   LoadDAG(argv[1], dag);
 
@@ -151,16 +151,23 @@ int main(int argc, char **argv)
   fetch::consensus::Work work;
   work.contract_address = "0xf232";
   work.miner = "troels";
-  work.nonce = 29188;
 
   if(!miner.DefineProblem(cregister.GetContract(work.contract_address), work))
   {
     std::cout << "Could not define problem!" << std::endl;
     exit(-1);
   }
-  work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
 
-  std::cout << "Solution score: " << work.score << std::endl;
+  // Let's mine
+  fetch::consensus::WorkRegister wreg;
+
+  for(int64_t i = 0; i < 10; ++i) {
+    work.nonce = 29188 + i;
+    work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
+    wreg.RegisterWork(work);
+  }
+
+  wreg.ClearWorkPool( cregister.GetContract(work.contract_address) );
 
   return 0;
 }

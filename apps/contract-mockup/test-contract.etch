@@ -91,7 +91,9 @@ function clearMarketPool(problem : Array< Float64 >, state : Array< Int32 >)
     Print(state[j]);
     Print(", ");
   endfor
+
   PrintLn("");
+  // TODO: Needs states before this bit can be implemented.  
 endfunction
 
 @work

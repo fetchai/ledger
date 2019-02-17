@@ -157,7 +157,7 @@ private:
 
     // TODO(tfr): Use wire format.
     auto payload = doc["payload"].As<ConstByteArray>();
-    DAGNode node = GenerateNode(payload, DAGNode::BID);    
+    DAGNode node = GenerateNode(payload, DAGNode::DATA);    
 
     dag_rpc_.BroadcastDAGNode(node);
     dag_.Push(node);

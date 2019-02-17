@@ -33,6 +33,7 @@ static SynergeticContract NewSynergeticContract(vm::Compiler *compiler, byte_arr
 {
   SynergeticContract ret = std::make_shared<SynergeticContractClass>();
 
+  ret->address = address;
   ret->work_function = "";
   ret->objective_function = "";
   ret->problem_function = "";
