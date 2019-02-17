@@ -59,6 +59,8 @@ public:
     interface
       .CreateInstanceFunction("owner", &DAGNodeWrapper::owner)
       // TODO: Create variant wrapper
+      .CreateInstanceFunction("has", &DAGNodeWrapper::Has)      
+      .CreateInstanceFunction("getNumber", &DAGNodeWrapper::GetNumber)      
       .CreateInstanceFunction("getArrayFloat32", &DAGNodeWrapper::GetArray<float>)
       .CreateInstanceFunction("getArrayFloat64", &DAGNodeWrapper::GetArray<double>)      
       .CreateInstanceFunction("getArrayInt32", &DAGNodeWrapper::GetArray<int32_t>)
@@ -93,12 +95,45 @@ public:
     return vm_->CreateNewObject<ByteArrayWrapper>(node_.identity.identifier());
   }
 
+  bool Has(vm::Ptr< vm::String > const& s)
+  {
+    return contents_.Has(s->str);
+  }
+
+  double GetNumber(vm::Ptr< vm::String > const& s)
+  {
+    double ret;
+    try 
+    {
+      ret = contents_[s->str].As<double>();
+    }
+    catch(std::runtime_error const& e)
+    {    
+      try 
+      {
+        ret = contents_[s->str].As<int64_t>();
+      }
+      catch(std::runtime_error const& e)
+      {
+        vm_->RuntimeError(e.what());
+      }
+    }
+    return ret;
+  }
+
   template< typename T > 
   T Get(vm::Ptr< vm::String > const& s)
   {
     T ret;
-    // TODO: Try catch
-    ret = contents_[s->str].As<T>();
+
+    try 
+    {
+      ret = contents_[s->str].As<T>();
+    }
+    catch(std::runtime_error const& e)
+    {
+      vm_->RuntimeError(e.what());
+    } 
     return ret;
   }
 

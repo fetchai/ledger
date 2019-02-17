@@ -8,22 +8,42 @@ function createProblem() : Array< Float64 >
   var N = lengthOf(nodes);
 
   // Generating problem
-  var problem = Array< Float64 >(N*N) ;
-
   Print("Nodes contain ");
   Print(N);
   PrintLn(" elements");
 
+  var item_count = 0;
+  var bid_count = 0;
+
   for(i in 0: N-1) 
-    Print("Element ");
-    Print(i);
-    Print(": ");
-    Print(nodes[i].getArrayInt32("bid_on"));
-    Print(" by ");
-    PrintLn(nodes[i].owner());
-    PrintLn(nodes[i].getFloat32("price"));
+    var type = nodes[i].getInt32("type");
+    if(type == 2)
+      item_count += 1;
+    else
+      bid_count += 1;
+    endif
   endfor
 
+  // Sorting elements according to type
+  var items = Array< Float64 >(item_count);
+  var bids = Array< DAGNode >(bid_count);  
+  var problem = Array< Float64 >(bid_count * bid_count);
+
+  var bid = 0;
+  var itm = 0;
+  for(i in 0: N-1) 
+    var type = nodes[i].getInt32("type");  
+    if(type == 2)    
+      items[itm] = nodes[i].getNumber("price");
+      itm += 1;
+    else
+      bids[bid] = nodes[i];
+      bid += 1;    
+    endif
+  endfor
+
+  // Building problem
+  // TODO
   return problem;
 endfunction
 

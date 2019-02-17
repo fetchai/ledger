@@ -30,47 +30,113 @@
 #include <fstream>
 #include <sstream>
 
-int main(int argc, char **argv)
+void LoadDAG(std::string const &filename, fetch::ledger::DAG &dag)
 {
-  if (argc < 2)
-  {
-    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    exit(-9);
-  }
+  std::fstream data_file(filename, std::ios::in);
+  uint32_t item_count = uint32_t(-1), bid_count = uint32_t(-1);
+  data_file >> item_count >> bid_count;
 
-  // Reading file
-  std::ifstream      file(argv[1], std::ios::binary);
-  std::ostringstream ss;
-  ss << file.rdbuf();
-  const std::string source = ss.str();
-  file.close();
+  bid_count += item_count;
 
-  fetch::ledger::DAG dag;
-  for(std::size_t j = 0 ; j < 100; ++j)
+  data_file >> std::ws;
+
+  uint32_t i = 0;
+
+  for(; i < item_count; ++i)
   {
+    double price;
+    std::string id;
+    fetch::variant::Variant doc = fetch::variant::Variant::Object();
+    data_file >> id >> price >> std::ws;
+
+    doc["type"] = 2;
+    doc["agent"] = id;
+    doc["price"] = price;
+
+    // Saving to DAG.
     fetch::ledger::DAGNode node;
-
     for(auto const &n: dag.nodes())
     {
       node.previous.push_back(n.second.hash);
     }
 
-    fetch::variant::Variant payload = fetch::variant::Variant::Array(4); 
-    payload[0] = j + j*3;
-    payload[1] = j + j*4;
-    payload[2] = j + j*5;
-    payload[3] = j + j*6;
-
-    fetch::variant::Variant doc = fetch::variant::Variant::Object();
-    doc["type"] = 1;
-    doc["price"] = 19.23;
-    doc["bid_on"] = payload;
     std::stringstream body;
     body << doc;
-
     node.contents  = body.str();
     dag.Push(node);
+
+  }  
+
+  // #agent_id, #items item0 ... itemN price #exludes exclude0 ... exludeM
+  for(; i < bid_count; ++i)  
+  {
+    fetch::variant::Variant doc = fetch::variant::Variant::Object();
+
+    uint32_t agent_id, no_items, no_excludes;
+    double price;
+
+    data_file >> agent_id >> no_items;
+    fetch::variant::Variant bid_on = fetch::variant::Variant::Array(no_items);     
+
+    for(uint32_t j=0; j < no_items; ++j)
+    {
+      uint32_t item;
+      data_file >> item;
+      bid_on[j] = item;
+    }
+
+    data_file >> price;
+    data_file >> no_excludes;
+    fetch::variant::Variant excludes = fetch::variant::Variant::Array(no_excludes);
+
+    for(uint32_t j=0; j < no_excludes; ++j)
+    {
+      uint32_t exclude;      
+      data_file >> exclude;
+      excludes[j] = exclude;
+    }
+
+    doc["type"] = 3;
+    doc["agent"] = agent_id;
+    doc["price"] = price;
+    doc["bid_on"] = bid_on;
+    doc["excludes"] = excludes;
+    std::cout << "Adding " << doc << std::endl;
+    
+    // Saving to DAG.
+    fetch::ledger::DAGNode node;
+    for(auto const &n: dag.nodes())
+    {
+      node.previous.push_back(n.second.hash);
+    }
+
+    std::stringstream body;
+    body << doc;
+    node.contents  = body.str();
+    dag.Push(node);
+
   }
+
+}
+
+int main(int argc, char **argv)
+{
+  if (argc < 3)
+  {
+    std::cerr << "usage ./" << argv[0] << " [dag] [script]" << std::endl;
+    exit(-9);
+  }
+
+  // Reading the script
+  std::ifstream      file(argv[2], std::ios::binary);
+  std::ostringstream ss;
+  ss << file.rdbuf();
+  const std::string source = ss.str();
+  file.close();
+
+
+  fetch::ledger::DAG dag;
+  LoadDAG(argv[1], dag);
 
   fetch::consensus::ContractRegister cregister;
   if(!cregister.AddContract("0xf232", source))
@@ -85,7 +151,11 @@ int main(int argc, char **argv)
   work.miner = "troels";
   work.nonce = 29188;
 
-  miner.DefineProblem(cregister.GetContract(work.contract_address), work);
+  if(!miner.DefineProblem(cregister.GetContract(work.contract_address), work))
+  {
+    std::cout << "Could not define problem!" << std::endl;
+    exit(-1);
+  }
   work.score = miner.ExecuteWork(cregister.GetContract(work.contract_address), work);
 
   return 0;

@@ -39,6 +39,7 @@ public:
     // Defining problem
     if (!vm_->Execute(contract->script, contract->problem_function, error_, problem_))
     {
+      std::cerr << "Runtime error: " << error_ << std::endl;
       return false;
     }
     return true;
@@ -50,12 +51,14 @@ public:
     int64_t nonce = work();
     if (!vm_->Execute(contract->script, contract->work_function, error_, solution_, problem_, nonce))
     {
+      std::cerr << "Runtime error: " << error_ << std::endl;
       return std::numeric_limits< int64_t >::infinity();
     }
 
     // Computing objective function
     if (!vm_->Execute(contract->script, contract->objective_function, error_, score_, problem_, solution_))
     {
+      std::cerr << "Runtime error: " << error_ << std::endl;      
       return std::numeric_limits< int64_t >::infinity(); 
     }
 
