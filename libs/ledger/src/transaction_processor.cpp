@@ -18,6 +18,8 @@
 
 #include "ledger/transaction_processor.hpp"
 #include "core/threading.hpp"
+#include "ledger/block_packer_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "metrics/metrics.hpp"
 
 namespace fetch {
@@ -29,10 +31,10 @@ namespace ledger {
  * @param storage The reference to the storage unit
  * @param miner The reference to the system miner
  */
-TransactionProcessor::TransactionProcessor(StorageUnitInterface & storage,
-                                           miner::MinerInterface &miner, std::size_t num_threads)
+TransactionProcessor::TransactionProcessor(StorageUnitInterface &storage,
+                                           BlockPackerInterface &packer, std::size_t num_threads)
   : storage_{storage}
-  , miner_{miner}
+  , packer_{packer}
   , verifier_{*this, num_threads, "TxV-P"}
   , running_{false}
 {}
@@ -68,7 +70,7 @@ void TransactionProcessor::OnTransaction(VerifiedTransaction const &tx)
   FETCH_METRIC_TX_STORED(tx.digest());
 
   // dispatch the summary to the miner
-  miner_.EnqueueTransaction(tx.summary());
+  packer_.EnqueueTransaction(tx.summary());
 
   FETCH_METRIC_TX_QUEUED(tx.digest());
 }
@@ -98,7 +100,7 @@ void TransactionProcessor::OnTransactions(TransactionList const &txs)
   // enqueue all of the transactions
   for (auto const &tx : txs)
   {
-    miner_.EnqueueTransaction(tx.summary());
+    packer_.EnqueueTransaction(tx.summary());
   }
 
 #ifdef FETCH_ENABLE_METRICS
@@ -129,7 +131,7 @@ void TransactionProcessor::ThreadEntryPoint()
       // Note: metric for TX stored will not fire this way
       // dispatch the summary to the miner
       assert(summary.IsWellFormed());
-      miner_.EnqueueTransaction(summary);
+      packer_.EnqueueTransaction(summary);
 
       FETCH_METRIC_TX_QUEUED(summary.transaction_hash);
     }

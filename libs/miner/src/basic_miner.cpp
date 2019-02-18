@@ -18,6 +18,8 @@
 
 #include "miner/basic_miner.hpp"
 #include "core/logger.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
 #include "miner/resource_mapper.hpp"
 
 #include <algorithm>
@@ -108,7 +110,7 @@ void BasicMiner::EnqueueTransaction(ledger::TransactionSummary const &tx)
  * @param num_lanes The number of lanes for the block
  * @param num_slices The number of slices for the block
  */
-void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::size_t num_slices,
+void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                                MainChain const &chain)
 {
   assert(num_lanes == (1u << log2_num_lanes_));
@@ -135,7 +137,7 @@ void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::s
   std::size_t const main_transactions = main_queue_.size();
 
   // Before packing transactions, we must be sure they're unique
-  const_cast<MainChain &>(chain).StripAlreadySeenTx(block.previous_hash, main_queue_);
+  const_cast<MainChain &>(chain).StripAlreadySeenTx(block.body.previous_hash, main_queue_);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Backlog: ", num_transactions,
                  ", main queue: ", main_queue_.size(), " pending: ", pending_.size());
@@ -145,12 +147,12 @@ void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::s
       Clip3<std::size_t>(main_queue_.size() / 1000u, 1u, max_num_threads_);
 
   // prepare the basic formatting for the block
-  block.slices.resize(num_slices);
+  block.body.slices.resize(num_slices);
 
   // skip thread generation in the simple case
   if (num_threads == 1)
   {
-    GenerateSlices(main_queue_, block, 0, 1, num_lanes);
+    GenerateSlices(main_queue_, block.body, 0, 1, num_lanes);
   }
   else
   {
@@ -171,7 +173,7 @@ void BasicMiner::GenerateBlock(Block::Body &block, std::size_t num_lanes, std::s
       txs.splice(txs.end(), main_queue_, start, end);
 
       thread_pool_.Dispatch([&txs, &block, i, num_threads, num_lanes]() {
-        GenerateSlices(txs, block, i, num_threads, num_lanes);
+        GenerateSlices(txs, block.body, i, num_threads, num_lanes);
       });
     }
 

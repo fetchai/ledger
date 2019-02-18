@@ -1,5 +1,5 @@
 #pragma once
-///------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
 //
@@ -17,32 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction.hpp"
-
 namespace fetch {
 namespace ledger {
-namespace examples {
-namespace common {
 
-template <typename T>
-void ToBase64(T &stream, Signatory const &signature)
+class Block;
+
+class BlockSinkInterface
 {
-  stream << "signature: " << byte_array::ToBase64(signature.second.signature_data)
-         << ", sig.type: " << byte_array::ToBase64(signature.second.type)
-         << ", identity: " << byte_array::ToBase64(signature.first.identifier())
-         << ", ident.params: " << byte_array::ToBase64(signature.first.parameters()) << std::endl;
-}
+public:
+  // Construction / Destruction
+  BlockSinkInterface()          = default;
+  virtual ~BlockSinkInterface() = default;
 
-template <typename T>
-void ToBase64(T &stream, Signatories const &signatures)
-{
-  for (auto const &sig : signatures)
-  {
-    ToBase64(stream, sig);
-  }
-}
+  /// @name Block Sink Interface
+  /// @{
+  virtual void OnBlock(Block const &block) = 0;
+  /// @}
+};
 
-}  // namespace common
-}  // namespace examples
 }  // namespace ledger
 }  // namespace fetch

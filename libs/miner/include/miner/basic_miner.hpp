@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "ledger/block_packer_interface.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/transaction.hpp"
 #include "meta/is_log2.hpp"
-#include "miner/miner_interface.hpp"
 #include "miner/optimisation/bitvector.hpp"
 #include "vectorise/threading/pool.hpp"
 #include <list>
@@ -36,7 +38,7 @@ namespace miner {
  * transferred to the main queue when it is evaluated in order to generate new blocks. During this
  * operation the main queue is locked.
  */
-class BasicMiner : public MinerInterface
+class BasicMiner : public ledger::BlockPackerInterface
 {
 public:
   static constexpr char const *LOGGING_NAME = "BasicMiner";
@@ -53,7 +55,7 @@ public:
   /// @name Miner Interface
   /// @{
   void EnqueueTransaction(ledger::TransactionSummary const &tx) override;
-  void GenerateBlock(Block::Body &block, std::size_t num_lanes, std::size_t num_slices,
+  void GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                      MainChain const &chain) override;
   /// @}
 

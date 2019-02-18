@@ -7,8 +7,8 @@ else:
     sys.exit(0)
 
 import fetch
-import fetch.ml.float as ml
-#            ^ change type here to work with double or fixed point
+
+import fetch.ml.fixed_32_32 as ml
 
 output_layer = "Softmax"
 learning_rate = 0.01
@@ -25,10 +25,10 @@ g.AddSoftmax("Softmax", "FC3")
 
 criterion = ml.MeanSquareError()
 
-gt = fetch.math.tensor.Tensor([10])
+gt = fetch.math.tensor.TensorFixed32_32([10])
 gt.Set([4], 1) # Overfitting the network to always output 1 in  pos 4
 for i in range(0, training_iteration):
-    t = fetch.math.tensor.Tensor([28, 28])
+    t = fetch.math.tensor.TensorFixed32_32([28, 28])
     g.SetInput("Input", t)
     res = g.Evaluate("Softmax")
     

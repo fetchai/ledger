@@ -19,6 +19,7 @@
 
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
+
 #include "vm/defs.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
@@ -29,15 +30,19 @@ namespace ledger {
 class SmartContract : public Contract
 {
 public:
-  SmartContract(vm::Script const &script);
+  SmartContract();
   ~SmartContract() = default;
 
-private:
-  Status InvokeContract(Transaction const &tx);
+  static constexpr char const *LOGGING_NAME = "SmartContract";
 
-  //  vm::Script                  script_;
-  //  std::unique_ptr<vm::Module> module_;
-  //  std::unique_ptr<vm::VM>     vm_;
+private:
+  // transaction handlers
+  Status CreateInitialContract(Transaction const &tx);
+  Status Invoke(Transaction const &tx);
+  Status DeleteContract(Transaction const &tx);
+
+  // queries
+  /* Status Balance(Query const &query, Query &response); */
 };
 
 }  // namespace ledger

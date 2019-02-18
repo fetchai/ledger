@@ -17,59 +17,51 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/merkle_tree.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "vectorise/platform.hpp"
 
 namespace fetch {
 namespace crypto {
 
-using HashArray = MerkleTree::HashArray;
+using HashArray = MerkleTree::Digest;
 using Container = MerkleTree::Container;
 
-MerkleTree::MerkleTree()                      = default;
-MerkleTree::MerkleTree(MerkleTree const &rhs) = default;
-MerkleTree::MerkleTree(MerkleTree &&rhs)      = default;
-MerkleTree &MerkleTree::operator=(MerkleTree const &rhs) = default;
-MerkleTree &MerkleTree::operator=(MerkleTree &&rhs) = default;
+MerkleTree::MerkleTree(std::size_t count)
+  : leaf_nodes_{count}
+  , root_{}
+{}
 
-HashArray &MerkleTree::operator[](std::size_t const &n)
+HashArray &MerkleTree::operator[](std::size_t n)
 {
-  return leaf_nodes_[std::to_string(n)];
-}
-
-HashArray &MerkleTree::operator[](HashArray const &n)
-{
-  return leaf_nodes_[n];
+  return leaf_nodes_.at(n);
 }
 
 void MerkleTree::CalculateRoot() const
 {
-  if (leaf_nodes_.size() == 0)
+  if (leaf_nodes_.empty())
   {
-    root_ = Hash<crypto::SHA256>(HashArray{});
+    root_ = Hash<crypto::SHA256>(Digest{});
     return;
   }
 
-  std::vector<HashArray> hashes;
-
-  for (auto const &kv_iterator : leaf_nodes_)
-  {
-    auto &value = kv_iterator.second;
-    hashes.push_back(value);
-  }
+  // make a copy of the leaf nodes which are then condensed
+  std::vector<Digest> hashes = leaf_nodes_;
 
   // If necessary bump the 'leaves' up to a power of 2
   while (!platform::IsLog2(uint64_t(hashes.size())))
   {
-    hashes.push_back(HashArray{});
+    hashes.push_back(Digest{});
   }
 
   // Now, repeatedly condense the vector by calculating the parents of each of the roots
   while (hashes.size() > 1)
   {
-    for (std::size_t i = 0; i < hashes.size(); i += 2)
+    for (std::size_t i = 0, j = 0; i < hashes.size(); i += 2, ++j)
     {
-      HashArray concantenated_hash = hashes[i] + hashes[i + 1];
-      concantenated_hash           = Hash<crypto::SHA256>(concantenated_hash);
-      hashes[i]                    = concantenated_hash;
+      Digest concantenated_hash = hashes[i] + hashes[i + 1];
+      concantenated_hash        = Hash<crypto::SHA256>(concantenated_hash);
+      hashes[j]                 = concantenated_hash;
     }
 
     hashes.resize(hashes.size() / 2);
@@ -77,16 +69,6 @@ void MerkleTree::CalculateRoot() const
 
   assert(hashes.size() == 1);
   root_ = hashes[0];
-}
-
-HashArray const &MerkleTree::root() const
-{
-  return root_;
-}
-
-Container const &MerkleTree::leaf_nodes() const
-{
-  return leaf_nodes_;
 }
 
 }  // namespace crypto
