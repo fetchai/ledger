@@ -33,13 +33,13 @@ class Tensor  // Using name Tensor to not clash with current NDArray
 public:
   using Type                                  = T;
   using SizeType                              = typename std::uint64_t;
-  static const std::uint64_t DefaultAlignment = 8;  // Arbitrary picked
+  static const SizeType DefaultAlignment = 8;  // Arbitrary picked
 
 public:
-  Tensor(std::vector<std::uint64_t>      shape   = std::vector<std::uint64_t>(),
-         std::vector<std::uint64_t>      strides = std::vector<std::uint64_t>(),
-         std::vector<std::uint64_t>      padding = std::vector<std::uint64_t>(),
-         std::shared_ptr<std::vector<T>> storage = nullptr, std::uint64_t offset = 0)
+  Tensor(std::vector<SizeType>      shape   = std::vector<SizeType>(),
+         std::vector<SizeType>      strides = std::vector<SizeType>(),
+         std::vector<SizeType>      padding = std::vector<SizeType>(),
+         std::shared_ptr<std::vector<T>> storage = nullptr, SizeType offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
     , strides_(std::move(strides))
@@ -51,28 +51,28 @@ public:
     Init(strides_, padding_);
   }
 
-  Tensor(std::uint64_t size)
+  Tensor(SizeType size)
     : shape_({size})
   {
     Init(strides_, padding_);
   }
 
-  void Init(std::vector<std::uint64_t> const &strides = std::vector<std::uint64_t>(),
-            std::vector<std::uint64_t> const &padding = std::vector<std::uint64_t>())
+  void Init(std::vector<SizeType> const &strides = std::vector<SizeType>(),
+            std::vector<SizeType> const &padding = std::vector<SizeType>())
   {
     if (!shape_.empty())
     {
       if (strides.empty())
       {
-        strides_ = std::vector<std::uint64_t>(shape_.size(), 1);
+        strides_ = std::vector<SizeType>(shape_.size(), 1);
       }
       if (padding.empty())
       {
-        padding_        = std::vector<std::uint64_t>(shape_.size(), 0);
+        padding_        = std::vector<SizeType>(shape_.size(), 0);
         padding_.back() = DefaultAlignment - ((strides_.back() * shape_.back()) % DefaultAlignment);
       }
-      std::uint64_t dim = 1;
-      for (std::uint64_t i(shape_.size()); i-- > 0;)
+      SizeType dim = 1;
+      for (SizeType i(shape_.size()); i-- > 0;)
       {
         dim *= strides_[i];
         strides_[i] = dim;
@@ -85,19 +85,19 @@ public:
         if (!shape_.empty())
         {
           storage_ = std::make_shared<std::vector<T>>(
-              std::max(std::uint64_t(1), DimensionSize(0) * shape_[0] + padding_[0]));
+              std::max(SizeType(1), DimensionSize(0) * shape_[0] + padding_[0]));
         }
       }
     }
   }
 
-  std::vector<std::uint64_t> const &shape()
+  std::vector<SizeType> const &shape()
       const  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
   {
     return shape_;
   }
 
-  std::uint64_t DimensionSize(std::uint64_t dim) const
+  SizeType DimensionSize(SizeType dim) const
   {
     if (!shape_.empty() && dim < shape_.size())
     {
@@ -106,20 +106,20 @@ public:
     return 0;
   }
 
-  std::uint64_t Capacity() const
+  SizeType Capacity() const
   {
     return storage_ ? storage_->size() : 0;
   }
 
   // TODO(private, 520): fix capitalisation (kepping it consistent with NDArray for now)
-  std::uint64_t size() const
+  SizeType size() const
   {
     if (shape_.empty())
     {
       return 0;
     }
-    std::uint64_t n(1);
-    for (std::uint64_t d : shape_)
+    SizeType n(1);
+    for (SizeType d : shape_)
     {
       n *= d;
     }
@@ -131,12 +131,12 @@ public:
    * @param element     ordinal position of the element we want
    * @return            coordinate of said element in the tensor
    */
-  std::vector<std::uint64_t> IndicesOfElement(std::uint64_t element) const
+  std::vector<SizeType> IndicesOfElement(SizeType element) const
   {
     ASSERT(element < size());
-    std::vector<std::uint64_t> results(shape_.size());
+    std::vector<SizeType> results(shape_.size());
     results.back() = element;
-    for (std::uint64_t i(shape_.size() - 1); i > 0; --i)
+    for (SizeType i(shape_.size() - 1); i > 0; --i)
     {
       results[i - 1] = results[i] / shape_[i];
       results[i] %= shape_[i];
@@ -149,10 +149,10 @@ public:
    * @param indices     coordinate of requested element in the tensor
    * @return            offset in low level memory array
    */
-  std::uint64_t OffsetOfElement(std::vector<std::uint64_t> const &indices) const
+  SizeType OffsetOfElement(std::vector<SizeType> const &indices) const
   {
-    std::uint64_t index(offset_);
-    for (std::uint64_t i(0); i < indices.size(); ++i)
+    SizeType index(offset_);
+    for (SizeType i(0); i < indices.size(); ++i)
     {
       ASSERT(indices[i] < shape_[i]);
       index += indices[i] * DimensionSize(i);
@@ -162,7 +162,7 @@ public:
 
   void Fill(T const &value)
   {
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = value;
     }
@@ -171,7 +171,7 @@ public:
   void Copy(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = o.At(i);
     }
@@ -181,27 +181,27 @@ public:
   /// ACCESSORS ///
   /////////////////
 
-  T &At(std::uint64_t i)
+  T &At(SizeType i)
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
   }
 
-  T const &At(std::uint64_t i) const
+  T const &At(SizeType i) const
   {
     return (*storage_)[OffsetOfElement(IndicesOfElement(i))];
   }
 
-  T const &operator()(std::vector<std::uint64_t> const &indices) const
+  T const &operator()(std::vector<SizeType> const &indices) const
   {
     return Get(indices);
   }
 
-  T const &Get(std::vector<std::uint64_t> const &indices) const
+  T const &Get(std::vector<SizeType> const &indices) const
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
 
-  T &Get(std::vector<std::uint64_t> const &indices)
+  T &Get(std::vector<SizeType> const &indices)
   {
     return (*storage_)[OffsetOfElement(indices)];
   }
@@ -210,17 +210,17 @@ public:
   /// SETTERS ///
   ///////////////
 
-  void Set(std::vector<std::uint64_t> const &indices, T value)
+  void Set(std::vector<SizeType> const &indices, T value)
   {
     (*storage_)[OffsetOfElement(indices)] = value;
   }
 
-  void Set(std::uint64_t i, T value)
+  void Set(SizeType i, T value)
   {
     (*storage_)[OffsetOfElement(IndicesOfElement(i))] = value;
   }
 
-  T &operator[](std::uint64_t i)
+  T &operator[](SizeType i)
   {
     return At(i);
   }
@@ -228,16 +228,16 @@ public:
   /*
    * return a slice of the tensor along the first dimension
    */
-  Tensor<T> Slice(std::uint64_t i)
+  Tensor<T> Slice(SizeType i)
   {
     assert(shape_.size() > 1 && i < shape_[0]);
     Tensor<T> ret(
-        std::vector<std::uint64_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
-        std::vector<std::uint64_t>(std::next(strides_.begin()), strides_.end()), /* stride */
-        std::vector<std::uint64_t>(std::next(padding_.begin()), padding_.end()), /* padding */
+        std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
+        std::vector<SizeType>(std::next(strides_.begin()), strides_.end()), /* stride */
+        std::vector<SizeType>(std::next(padding_.begin()), padding_.end()), /* padding */
         storage_, offset_ + i * DimensionSize(0));
-    ret.strides_ = std::vector<std::uint64_t>(std::next(strides_.begin()), strides_.end());
-    ret.padding_ = std::vector<std::uint64_t>(std::next(padding_.begin()), padding_.end());
+    ret.strides_ = std::vector<SizeType>(std::next(strides_.begin()), strides_.end());
+    ret.padding_ = std::vector<SizeType>(std::next(padding_.begin()), padding_.end());
     return ret;
   }
 
@@ -252,7 +252,7 @@ public:
     // Only enforcing number of elements
     // we allow for different shapes as long as element are in same order
     ASSERT(o.size() == size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       T e1 = Get(IndicesOfElement(i));
       T e2 = o.Get(o.IndicesOfElement(i));
@@ -275,7 +275,7 @@ public:
 
   Tensor<T> &InlineAdd(T const &o)
   {
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) + o;
     }
@@ -285,7 +285,7 @@ public:
   Tensor<T> &InlineAdd(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) + o.At(i);
     }
@@ -294,7 +294,7 @@ public:
 
   Tensor<T> &InlineSubtract(T const &o)
   {
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) - o;
     }
@@ -304,7 +304,7 @@ public:
   Tensor<T> &InlineSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) - o.At(i);
     }
@@ -314,7 +314,7 @@ public:
   Tensor<T> &InlineReverseSubtract(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = o.At(i) - At(i);
     }
@@ -323,7 +323,7 @@ public:
 
   Tensor<T> &InlineMultiply(T const &o)
   {
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) * o;
     }
@@ -333,7 +333,7 @@ public:
   Tensor<T> &InlineMultiply(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) * o.At(i);
     }
@@ -342,7 +342,7 @@ public:
 
   Tensor<T> &InlineDivide(T const &o)
   {
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) / o;
     }
@@ -352,7 +352,7 @@ public:
   Tensor<T> &InlineDivide(Tensor<T> const &o)
   {
     assert(size() == o.size());
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       At(i) = At(i) / o.At(i);
     }
@@ -362,7 +362,7 @@ public:
   T Sum() const
   {
     T sum(0);
-    for (std::uint64_t i(0); i < size(); ++i)
+    for (SizeType i(0); i < size(); ++i)
     {
       sum = sum + At(i);
     }
@@ -372,12 +372,12 @@ public:
   Tensor<T> Transpose() const
   {
     assert(shape_.size() == 2);
-    Tensor<T> ret(std::vector<std::uint64_t>({shape_[1], shape_[0]}), /* shape */
-                  std::vector<std::uint64_t>(),                       /* stride */
-                  std::vector<std::uint64_t>(),                       /* padding */
+    Tensor<T> ret(std::vector<SizeType>({shape_[1], shape_[0]}), /* shape */
+                  std::vector<SizeType>(),                       /* stride */
+                  std::vector<SizeType>(),                       /* padding */
                   storage_, offset_);
-    ret.strides_ = std::vector<std::uint64_t>(strides_.rbegin(), strides_.rend());
-    ret.padding_ = std::vector<std::uint64_t>(padding_.rbegin(), padding_.rend());
+    ret.strides_ = std::vector<SizeType>(strides_.rbegin(), strides_.rend());
+    ret.padding_ = std::vector<SizeType>(padding_.rbegin(), padding_.rend());
     return ret;
   }
 
@@ -387,9 +387,9 @@ public:
     ss << std::setprecision(5) << std::fixed << std::showpos;
     if (shape_.size() == 2)
     {
-      for (std::uint64_t i(0); i < shape_[0]; ++i)
+      for (SizeType i(0); i < shape_[0]; ++i)
       {
-        for (std::uint64_t j(0); j < shape_[1]; ++j)
+        for (SizeType j(0); j < shape_[1]; ++j)
         {
           ss << Get({i, j}) << "\t";
         }
@@ -400,11 +400,11 @@ public:
   }
 
 private:
-  std::vector<std::uint64_t>      shape_;
-  std::vector<std::uint64_t>      padding_;
-  std::vector<std::uint64_t>      strides_;
+  std::vector<SizeType>      shape_;
+  std::vector<SizeType>      padding_;
+  std::vector<SizeType>      strides_;
   std::shared_ptr<std::vector<T>> storage_;
-  std::uint64_t                   offset_;
+  SizeType                   offset_;
 };
 }  // namespace math
 }  // namespace fetch
