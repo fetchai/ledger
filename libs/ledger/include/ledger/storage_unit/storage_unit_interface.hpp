@@ -47,9 +47,7 @@ public:
 class StorageUnitInterface : public StorageInterface
 {
 public:
-  using Hash = byte_array::ConstByteArray;
-  // using bookmark_type = uint64_t;  // TODO(issue 33): From keyvalue index
-
+  using Hash            = byte_array::ConstByteArray;
   using TransactionList = std::vector<Transaction>;
   using ConstByteArray  = byte_array::ConstByteArray;
   using TxSummaries     = std::vector<TransactionSummary>;

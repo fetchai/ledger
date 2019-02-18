@@ -84,15 +84,14 @@ private:
   using Mutex             = std::mutex;
   using Counter           = std::atomic<std::size_t>;
   using Flag              = std::atomic<bool>;
-  // using Bookmark          = StorageUnitInterface::bookmark_type; // TODO(HUT): remove
-  using StateHash      = StorageUnitInterface::Hash;
-  using ExecutorList   = std::vector<ExecutorPtr>;
-  using StateHashCache = storage::ObjectStore<StateHash>;
-  using ThreadPtr      = std::unique_ptr<std::thread>;
-  using BlockSliceList = ledger::Block::Slices;
-  using Condition      = std::condition_variable;
-  using ResourceID     = storage::ResourceID;
-  using AtomicState    = std::atomic<State>;
+  using StateHash         = StorageUnitInterface::Hash;
+  using ExecutorList      = std::vector<ExecutorPtr>;
+  using StateHashCache    = storage::ObjectStore<StateHash>;
+  using ThreadPtr         = std::unique_ptr<std::thread>;
+  using BlockSliceList    = ledger::Block::Slices;
+  using Condition         = std::condition_variable;
+  using ResourceID        = storage::ResourceID;
+  using AtomicState       = std::atomic<State>;
 
   Flag        running_{false};
   Flag        monitor_ready_{false};
