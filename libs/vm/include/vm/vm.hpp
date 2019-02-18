@@ -40,7 +40,7 @@ struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename PtrManagedType<std::decay_t<T>>::type;
+    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -128,6 +128,18 @@ public:
     script_   = &script;
     function_ = f;
     return Execute(error, output);
+  }
+
+  template <typename T>
+  TypeId GetTypeId()
+  {
+    return registered_types_.GetTypeId(std::type_index(typeid(T)));
+  }
+
+  template <typename T, typename... Args>
+  Ptr<T> CreateNewObject(Args &&... args)
+  {
+    return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
   }
 
 private:

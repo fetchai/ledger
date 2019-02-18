@@ -21,7 +21,6 @@
 #include "ml/ops/fully_connected.hpp"
 
 #include "ml/ops/cross_entropy.hpp"
-#include "ml/ops/mean_square_error.hpp"
 
 #include "ml/ops/relu.hpp"
 #include "ml/ops/softmax.hpp"

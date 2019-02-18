@@ -17,38 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/kernels/standard_functions/abs.hpp"
-#include "math/meta/math_type_traits.hpp"
+#include "math/tensor.hpp"
 
-/**
- * assigns the absolute of x to this array
- * @param x
- */
+#include <memory>
+#include <utility>
 
-namespace fetch {
-namespace math {
-
-template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Abs(ArrayType &x)
+class MNISTLoader
 {
-  math::free_functions::kernels::Abs<typename ArrayType::Type> kernel;
-  x.data().in_parallel().Apply(kernel, x.data());
-}
 
-template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x)
-{
-  x = std::abs(x);
-}
+public:
+  MNISTLoader();
 
-template <std::size_t I, std::size_t F>
-void Abs(fetch::fixed_point::FixedPoint<I, F> &n)
-{
-  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
-  {
-    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
-  }
-}
+  unsigned int size() const;
+  bool         IsDone() const;
+  void         Reset();
+  void         Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const;
 
-}  // namespace math
-}  // namespace fetch
+  std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> GetNext(
+      std::shared_ptr<fetch::math::Tensor<float>> buffer);
+
+private:
+  std::uint32_t cursor_;
+  std::uint32_t size_;
+
+  unsigned char **data_;
+  unsigned char * labels_;
+};
