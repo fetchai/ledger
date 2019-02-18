@@ -26,7 +26,7 @@ namespace ml {
 class TensorWrapper : public fetch::vm::Object, public std::shared_ptr<fetch::math::Tensor<float>>
 {
 public:
-  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::size_t> const &shape)
+  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
     , std::shared_ptr<fetch::math::Tensor<float>>(new fetch::math::Tensor<float>(shape))
   {}

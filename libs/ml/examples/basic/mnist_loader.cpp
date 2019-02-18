@@ -142,9 +142,9 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
 {
   if (!buffer)
   {
-    buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<size_t>({28u, 28u}));
+    buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<std::uint64_t>({28u, 28u}));
   }
-  for (std::size_t i(0); i < 28 * 28; ++i)
+  for (std::uint64_t i(0); i < 28 * 28; ++i)
   {
     buffer->At(i) = float(data_[cursor_][i]) / 256.0f;
   }
@@ -160,7 +160,7 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
 
 void MNISTLoader::Display(std::shared_ptr<fetch::math::Tensor<float>> const &data) const
 {
-  for (std::size_t j(0); j < 784; ++j)
+  for (std::uint64_t j(0); j < 784; ++j)
   {
     std::cout << (data->At(j) > 0.5 ? char(219) : ' ') << ((j % 28 == 0) ? "\n" : "");
   }

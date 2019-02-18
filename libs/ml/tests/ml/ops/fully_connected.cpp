@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/fully_connected.hpp"
-#include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
@@ -27,8 +26,7 @@ class FullyConnectedTest : public ::testing::Test
 };
 
 // TODO (private 507)
-using MyTypes = ::testing::Types<fetch::math::NDArray<int>, fetch::math::NDArray<float>,
-                                 fetch::math::NDArray<double>, fetch::math::Tensor<int>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
                                  fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 TYPED_TEST_CASE(FullyConnectedTest, MyTypes);
 
