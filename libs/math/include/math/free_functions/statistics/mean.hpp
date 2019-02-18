@@ -36,7 +36,7 @@ inline typename ArrayType::Type Mean(ArrayType const &a)
   {
     ret += a.At(j);
   }
-  ret /= a.size();
+  ret /= static_cast<typename ArrayType::Type>(a.size());
   return ret;
 }
 

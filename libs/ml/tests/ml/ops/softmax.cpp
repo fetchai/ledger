@@ -18,7 +18,6 @@
 
 #include "ml/ops/softmax.hpp"
 #include "core/fixed_point/fixed_point.hpp"
-#include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

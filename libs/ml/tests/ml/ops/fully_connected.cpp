@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/fully_connected.hpp"
-#include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

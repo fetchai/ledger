@@ -18,7 +18,6 @@
 
 #include "ml/ops/mean_square_error.hpp"
 #include "core/fixed_point/fixed_point.hpp"
-#include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include <gtest/gtest.h>
 

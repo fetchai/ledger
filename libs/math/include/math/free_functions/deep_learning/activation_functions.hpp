@@ -24,7 +24,6 @@
 
 #include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "math/ndarray_broadcast.hpp"
 #include "vectorise/memory/range.hpp"
 #include <algorithm>
 #include <cassert>

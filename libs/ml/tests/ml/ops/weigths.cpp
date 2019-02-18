@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/fixed_point/fixed_point.hpp"
-#include "math/ndarray.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/weights.hpp"
 #include <gtest/gtest.h>
