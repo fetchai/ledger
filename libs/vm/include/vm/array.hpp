@@ -22,39 +22,41 @@
 namespace fetch {
 namespace vm {
 
-struct IArray : public Object
+class IArray : public Object
 {
-  IArray() = delete;
+public:
+  IArray()          = delete;
+  virtual ~IArray() = default;
+  static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
+  virtual int32_t    Count() const = 0;
+
+protected:
   IArray(VM *vm, TypeId type_id)
     : Object(vm, type_id)
   {}
-  virtual ~IArray() = default;
-  static Ptr<IArray> Constructor(VM *vm, TypeId type_id, int32_t size);
+  template <typename... Args>
+  static Ptr<IArray> Construct(VM *vm, TypeId type_id, Args &&... args);
 };
 
 template <typename T>
 struct Array : public IArray
 {
-  using ElementType = typename StorageType<T>::type;
+  using ElementType = typename GetStorageType<T>::type;
 
-  Array() = delete;
+  Array()          = delete;
+  virtual ~Array() = default;
+
   Array(VM *vm, TypeId type_id, int32_t size)
     : IArray(vm, type_id)
   {
-    Init<ElementType>(size_t(size));
+    elements = std::vector<ElementType>(size_t(size), 0);
   }
-  virtual ~Array() = default;
 
-  template <typename U, typename std::enable_if_t<IsPrimitive<U>::value> * = nullptr>
-  void Init(size_t size)
+  virtual int32_t Count() const override
   {
-    elements = std::vector<U>(size, 0);
+    return int32_t(elements.size());
   }
-  template <typename U, typename std::enable_if_t<IsPtr<U>::value> * = nullptr>
-  void Init(size_t size)
-  {
-    elements = std::vector<U>(size);
-  }
+
   ElementType *Find()
   {
     Variant &positionv = Pop();
@@ -101,66 +103,72 @@ struct Array : public IArray
   std::vector<ElementType> elements;
 };
 
-inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
+template <typename... Args>
+inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
+  switch (element_type_id)
+  {
+  case TypeIds::Bool:
+  {
+    return new Array<uint8_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Int8:
+  {
+    return new Array<int8_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Byte:
+  {
+    return new Array<uint8_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Int16:
+  {
+    return new Array<int16_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::UInt16:
+  {
+    return new Array<uint16_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Int32:
+  {
+    return new Array<int32_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::UInt32:
+  {
+    return new Array<uint32_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Int64:
+  {
+    return new Array<int64_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::UInt64:
+  {
+    return new Array<uint64_t>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Float32:
+  {
+    return new Array<float>(vm, type_id, std::forward<Args>(args)...);
+  }
+  case TypeIds::Float64:
+  {
+    return new Array<double>(vm, type_id, std::forward<Args>(args)...);
+  }
+  default:
+  {
+    return new Array<Ptr<Object>>(vm, type_id, std::forward<Args>(args)...);
+  }
+  }  // switch
+}
+
+inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)
+{
   if (size < 0)
   {
     vm->RuntimeError("negative size");
     return Ptr<IArray>();
   }
-  switch (element_type_id)
-  {
-  case TypeIds::Bool:
-  {
-    return Ptr<IArray>(new Array<uint8_t>(vm, type_id, size));
-  }
-  case TypeIds::Int8:
-  {
-    return Ptr<IArray>(new Array<int8_t>(vm, type_id, size));
-  }
-  case TypeIds::Byte:
-  {
-    return Ptr<IArray>(new Array<uint8_t>(vm, type_id, size));
-  }
-  case TypeIds::Int16:
-  {
-    return Ptr<IArray>(new Array<int16_t>(vm, type_id, size));
-  }
-  case TypeIds::UInt16:
-  {
-    return Ptr<IArray>(new Array<uint16_t>(vm, type_id, size));
-  }
-  case TypeIds::Int32:
-  {
-    return Ptr<IArray>(new Array<int32_t>(vm, type_id, size));
-  }
-  case TypeIds::UInt32:
-  {
-    return Ptr<IArray>(new Array<uint32_t>(vm, type_id, size));
-  }
-  case TypeIds::Int64:
-  {
-    return Ptr<IArray>(new Array<int64_t>(vm, type_id, size));
-  }
-  case TypeIds::UInt64:
-  {
-    return Ptr<IArray>(new Array<uint64_t>(vm, type_id, size));
-  }
-  case TypeIds::Float32:
-  {
-    return Ptr<IArray>(new Array<float>(vm, type_id, size));
-  }
-  case TypeIds::Float64:
-  {
-    return Ptr<IArray>(new Array<double>(vm, type_id, size));
-  }
-  default:
-  {
-    return Ptr<IArray>(new Array<Ptr<Object>>(vm, type_id, size));
-  }
-  }  // switch
+  return Construct(vm, type_id, size);
 }
 
 }  // namespace vm
