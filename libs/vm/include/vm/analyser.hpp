@@ -68,8 +68,8 @@ private:
   SymbolTablePtr    global_symbol_table_;
   TypeId            next_instantiation_type_id_;
   TypePtr           any_type_;
-  TypePtr           parameter1_type_;
-  TypePtr           parameter2_type_;
+  TypePtr           template_parameter1_type_;
+  TypePtr           template_parameter2_type_;
   TypePtr           void_type_;
   TypePtr           null_type_;
   TypePtr           bool_type_;
@@ -90,6 +90,7 @@ private:
   TypePtr           matrix_type_;
   TypePtr           array_type_;
   TypePtr           map_type_;
+  TypePtr           state_type_;
   TypePtr           string_type_;
   OpTable           op_table_;
   OpTable           left_op_table_;
@@ -118,6 +119,7 @@ private:
   void        AnnotateConditionalBlock(BlockNodePtr const &conditional_node);
   bool        AnnotateTypeExpression(ExpressionNodePtr const &node);
   bool        AnnotateAssignOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloAssignOp(ExpressionNodePtr const &node);
   bool        AnnotateArithmeticAssignOp(ExpressionNodePtr const &node);
   bool        AnnotateExpression(ExpressionNodePtr const &node);
   bool        AnnotateEqualityOp(ExpressionNodePtr const &node);
@@ -126,6 +128,7 @@ private:
   bool        AnnotateUnaryLogicalOp(ExpressionNodePtr const &node);
   bool        AnnotateIncDecOp(ExpressionNodePtr const &node);
   bool        AnnotateUnaryMinusOp(ExpressionNodePtr const &node);
+  bool        AnnotateModuloOp(ExpressionNodePtr const &node);
   bool        AnnotateArithmeticOp(ExpressionNodePtr const &node);
   bool        AnnotateIndexOp(ExpressionNodePtr const &node);
   bool        AnnotateDotOp(ExpressionNodePtr const &node);

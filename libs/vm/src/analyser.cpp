@@ -30,8 +30,8 @@ void Analyser::Initialise()
   next_instantiation_type_id_ = 2000;
 
   CreateMetaType("Any", TypeIds::Any, any_type_);
-  CreateMetaType("Parameter1", TypeIds::Parameter1, parameter1_type_);
-  CreateMetaType("Parameter2", TypeIds::Parameter2, parameter2_type_);
+  CreateMetaType("TemplateParameter1", TypeIds::TemplateParameter1, template_parameter1_type_);
+  CreateMetaType("TemplateParameter2", TypeIds::TemplateParameter2, template_parameter2_type_);
 
   CreatePrimitiveType("Void", TypeIds::Void, false, void_type_);
   CreatePrimitiveType("Null", TypeIds::Null, false, null_type_);
@@ -62,9 +62,23 @@ void Analyser::Initialise()
                      uint32_type_, int64_type_, uint64_type_, float32_type_, float64_type_},
                     cast_variant_type_);
 
+  CreateOpcodeFreeFunction("toInt8", Opcodes::ToInt8, {cast_variant_type_}, int8_type_);
+  CreateOpcodeFreeFunction("toByte", Opcodes::ToByte, {cast_variant_type_}, byte_type_);
+  CreateOpcodeFreeFunction("toInt16", Opcodes::ToInt16, {cast_variant_type_}, int16_type_);
+  CreateOpcodeFreeFunction("toUInt16", Opcodes::ToUInt16, {cast_variant_type_}, uint16_type_);
+  CreateOpcodeFreeFunction("toInt32", Opcodes::ToInt32, {cast_variant_type_}, int32_type_);
+  CreateOpcodeFreeFunction("toUInt32", Opcodes::ToUInt32, {cast_variant_type_}, uint32_type_);
+  CreateOpcodeFreeFunction("toInt64", Opcodes::ToInt64, {cast_variant_type_}, int64_type_);
+  CreateOpcodeFreeFunction("toUInt64", Opcodes::ToUInt64, {cast_variant_type_}, uint64_type_);
+  CreateOpcodeFreeFunction("toFloat32", Opcodes::ToFloat32, {cast_variant_type_}, float32_type_);
+  CreateOpcodeFreeFunction("toFloat64", Opcodes::ToFloat64, {cast_variant_type_}, float64_type_);
+
+  CreateClassType("String", TypeIds::String, string_type_);
+  EnableOp(string_type_, Node::Kind::AddOp);
+
   CreateTemplateType("Matrix", TypeIds::IMatrix, {real_variant_type_}, matrix_type_);
   EnableIndexOperator(matrix_type_, {integer_variant_type_, integer_variant_type_},
-                      parameter1_type_);
+                      template_parameter1_type_);
   EnableOp(matrix_type_, Node::Kind::UnaryMinusOp);
   EnableOp(matrix_type_, Node::Kind::AddOp);
   EnableOp(matrix_type_, Node::Kind::SubtractOp);
@@ -88,24 +102,12 @@ void Analyser::Initialise()
   EnableRightOp(matrix_type_, Node::Kind::DivideAssignOp);
 
   CreateTemplateType("Array", TypeIds::IArray, {any_type_}, array_type_);
-  EnableIndexOperator(array_type_, {integer_variant_type_}, parameter1_type_);
+  EnableIndexOperator(array_type_, {integer_variant_type_}, template_parameter1_type_);
 
   CreateTemplateType("Map", TypeIds::IMap, {any_type_, any_type_}, map_type_);
-  EnableIndexOperator(map_type_, {parameter1_type_}, parameter2_type_);
+  EnableIndexOperator(map_type_, {template_parameter1_type_}, template_parameter2_type_);
 
-  CreateClassType("String", TypeIds::String, string_type_);
-  EnableOp(string_type_, Node::Kind::AddOp);
-
-  CreateOpcodeFreeFunction("toInt8", Opcodes::ToInt8, {cast_variant_type_}, int8_type_);
-  CreateOpcodeFreeFunction("toByte", Opcodes::ToByte, {cast_variant_type_}, byte_type_);
-  CreateOpcodeFreeFunction("toInt16", Opcodes::ToInt16, {cast_variant_type_}, int16_type_);
-  CreateOpcodeFreeFunction("toUInt16", Opcodes::ToUInt16, {cast_variant_type_}, uint16_type_);
-  CreateOpcodeFreeFunction("toInt32", Opcodes::ToInt32, {cast_variant_type_}, int32_type_);
-  CreateOpcodeFreeFunction("toUInt32", Opcodes::ToUInt32, {cast_variant_type_}, uint32_type_);
-  CreateOpcodeFreeFunction("toInt64", Opcodes::ToInt64, {cast_variant_type_}, int64_type_);
-  CreateOpcodeFreeFunction("toUInt64", Opcodes::ToUInt64, {cast_variant_type_}, uint64_type_);
-  CreateOpcodeFreeFunction("toFloat32", Opcodes::ToFloat32, {cast_variant_type_}, float32_type_);
-  CreateOpcodeFreeFunction("toFloat64", Opcodes::ToFloat64, {cast_variant_type_}, float64_type_);
+  CreateTemplateType("State", TypeIds::IState, {any_type_}, state_type_);
 }
 
 void Analyser::UnInitialise()
@@ -122,30 +124,31 @@ void Analyser::UnInitialise()
     global_symbol_table_->Reset();
     global_symbol_table_ = nullptr;
   }
-  any_type_             = nullptr;
-  parameter1_type_      = nullptr;
-  parameter2_type_      = nullptr;
-  void_type_            = nullptr;
-  null_type_            = nullptr;
-  bool_type_            = nullptr;
-  int8_type_            = nullptr;
-  byte_type_            = nullptr;
-  int16_type_           = nullptr;
-  uint16_type_          = nullptr;
-  int32_type_           = nullptr;
-  uint32_type_          = nullptr;
-  int64_type_           = nullptr;
-  uint64_type_          = nullptr;
-  float32_type_         = nullptr;
-  float64_type_         = nullptr;
-  integer_variant_type_ = nullptr;
-  real_variant_type_    = nullptr;
-  number_variant_type_  = nullptr;
-  cast_variant_type_    = nullptr;
-  matrix_type_          = nullptr;
-  array_type_           = nullptr;
-  map_type_             = nullptr;
-  string_type_          = nullptr;
+  any_type_                 = nullptr;
+  template_parameter1_type_ = nullptr;
+  template_parameter2_type_ = nullptr;
+  void_type_                = nullptr;
+  null_type_                = nullptr;
+  bool_type_                = nullptr;
+  int8_type_                = nullptr;
+  byte_type_                = nullptr;
+  int16_type_               = nullptr;
+  uint16_type_              = nullptr;
+  int32_type_               = nullptr;
+  uint32_type_              = nullptr;
+  int64_type_               = nullptr;
+  uint64_type_              = nullptr;
+  float32_type_             = nullptr;
+  float64_type_             = nullptr;
+  integer_variant_type_     = nullptr;
+  real_variant_type_        = nullptr;
+  number_variant_type_      = nullptr;
+  cast_variant_type_        = nullptr;
+  matrix_type_              = nullptr;
+  array_type_               = nullptr;
+  map_type_                 = nullptr;
+  state_type_               = nullptr;
+  string_type_              = nullptr;
   op_table_.clear();
   left_op_table_.clear();
   right_op_table_.clear();
@@ -459,6 +462,11 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       AnnotateAssignOp(ConvertToExpressionNodePtr(child));
       break;
     }
+    case Node::Kind::ModuloAssignOp:
+    {
+      AnnotateModuloAssignOp(ConvertToExpressionNodePtr(child));
+      break;
+    }
     case Node::Kind::AddAssignOp:
     case Node::Kind::SubtractAssignOp:
     case Node::Kind::MultiplyAssignOp:
@@ -758,6 +766,32 @@ bool Analyser::AnnotateAssignOp(ExpressionNodePtr const &node)
   return true;
 }
 
+bool Analyser::AnnotateModuloAssignOp(ExpressionNodePtr const &node)
+{
+  for (NodePtr const &child : node->children)
+  {
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
+  }
+  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
+  if (IsWriteable(lhs) == false)
+  {
+    return false;
+  }
+  if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
+  {
+    AddError(node->token, "modulo not implemented yet");
+    return false;
+    // SetRV(node, lhs->type);
+    // return true;
+  }
+  AddError(node->token, "integer type expected");
+  return false;
+}
+
 bool Analyser::AnnotateArithmeticAssignOp(ExpressionNodePtr const &node)
 {
   for (NodePtr const &child : node->children)
@@ -907,6 +941,14 @@ bool Analyser::AnnotateExpression(ExpressionNodePtr const &node)
   case Node::Kind::UnaryMinusOp:
   {
     if (AnnotateUnaryMinusOp(node) == false)
+    {
+      return false;
+    }
+    break;
+  }
+  case Node::Kind::ModuloOp:
+  {
+    if (AnnotateModuloOp(node) == false)
     {
       return false;
     }
@@ -1113,6 +1155,28 @@ bool Analyser::AnnotateUnaryMinusOp(ExpressionNodePtr const &node)
     return true;
   }
   AddError(node->token, "operator not supported");
+  return false;
+}
+
+bool Analyser::AnnotateModuloOp(ExpressionNodePtr const &node)
+{
+  for (NodePtr const &child : node->children)
+  {
+    if (AnnotateExpression(ConvertToExpressionNodePtr(child)) == false)
+    {
+      return false;
+    }
+  }
+  ExpressionNodePtr lhs = ConvertToExpressionNodePtr(node->children[0]);
+  ExpressionNodePtr rhs = ConvertToExpressionNodePtr(node->children[1]);
+  if ((lhs->type == rhs->type) && IsIntegerType(lhs->type))
+  {
+    AddError(node->token, "modulo not implemented yet");
+    return false;
+    // SetRV(node, lhs->type);
+    // return true;
+  }
+  AddError(node->token, "integer type expected");
   return false;
 }
 
@@ -1623,11 +1687,11 @@ TypePtr Analyser::ConvertType(TypePtr const &type, TypePtr const &instantiated_t
   {
     converted_type = instantiated_template_type;
   }
-  else if (type->id == TypeIds::Parameter1)
+  else if (type->id == TypeIds::TemplateParameter1)
   {
     converted_type = instantiated_template_type->types[0];
   }
-  else if (type->id == TypeIds::Parameter2)
+  else if (type->id == TypeIds::TemplateParameter2)
   {
     converted_type = instantiated_template_type->types[1];
   }

@@ -96,9 +96,9 @@ struct IsConstRef<
 };
 
 template <typename T>
-struct PtrManagedType;
+struct GetManagedType;
 template <typename T>
-struct PtrManagedType<Ptr<T>>
+struct GetManagedType<Ptr<T>>
 {
   using type = T;
 };
@@ -138,14 +138,14 @@ struct IsVariantParameter<T,
 };
 
 template <typename T, typename = void>
-struct StorageType;
+struct GetStorageType;
 template <typename T>
-struct StorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
 };
@@ -153,14 +153,16 @@ struct StorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
 class Object
 {
 public:
-  Object() = delete;
+  Object()          = delete;
+  virtual ~Object() = default;
+
   Object(VM *vm, TypeId type_id)
   {
     vm_        = vm;
     type_id_   = type_id;
     ref_count_ = 1;
   }
-  virtual ~Object() = default;
+
   virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const;
   virtual size_t GetHashCode() const;
   virtual void   UnaryMinusOp(Ptr<Object> &object);
@@ -749,20 +751,33 @@ struct Variant
       Construct(std::forward<T>(other), other_type_id);
     }
   }
+
+  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  void Assign(T const &other, TypeId /* other_type_id */)
+  {
+    operator=(other);
+  }
+
+  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  void Assign(T &&other, TypeId /* other_type_id */)
+  {
+    operator=(std::forward<T>(other));
+  }
+
   template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Copy()
+  typename std::enable_if_t<IsPrimitive<T>::value, T> Get() const
   {
     return primitive.Get<T>();
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Copy()
+  typename std::enable_if_t<IsPtr<T>::value, T> Get() const
   {
     return object;
   }
 
   template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Copy()
+  typename std::enable_if_t<IsVariant<T>::value, T> Get() const
   {
     T variant;
     variant.type_id = type_id;
@@ -828,16 +843,19 @@ struct Variant
   }
 };
 
-struct T : public Variant
+struct TemplateParameter : public Variant
 {
+  using Variant::Variant;
 };
 
-struct MapKey : public Variant
+struct TemplateParameter1 : public Variant
 {
+  using Variant::Variant;
 };
 
-struct MapValue : public Variant
+struct TemplateParameter2 : public Variant
 {
+  using Variant::Variant;
 };
 
 struct Script

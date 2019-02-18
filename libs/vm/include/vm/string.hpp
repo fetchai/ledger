@@ -24,13 +24,15 @@ namespace vm {
 
 struct String : public Object
 {
-  String() = delete;
+  String()          = delete;
+  virtual ~String() = default;
+
   String(VM *vm, std::string str__, bool is_literal__ = false)
     : Object(vm, TypeIds::String)
     , str(std::move(str__))
     , is_literal(is_literal__)
   {}
-  virtual ~String() = default;
+
   virtual bool   Equals(Ptr<Object> const &lhso, Ptr<Object> const &rhso) const override;
   virtual size_t GetHashCode() const override;
   virtual void   AddOp(Ptr<Object> &lhso, Ptr<Object> &rhso) override;

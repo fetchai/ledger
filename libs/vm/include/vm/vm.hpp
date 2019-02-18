@@ -40,7 +40,7 @@ struct Getter<T, typename std::enable_if_t<IsPtr<std::decay_t<T>>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename PtrManagedType<std::decay_t<T>>::type;
+    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
     return TypeIndex(typeid(ManagedType));
   }
 };

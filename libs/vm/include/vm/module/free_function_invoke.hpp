@@ -26,7 +26,7 @@ struct FreeFunctionInvokerHelper
   static void Invoke(VM *vm, int sp_offset, TypeId return_type_id, FreeFunction f,
                      Ts const &... parameters)
   {
-    ReturnType result = (*f)(vm, parameters...);
+    ReturnType result((*f)(vm, parameters...));
     StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
     vm->sp_ -= sp_offset;
   };

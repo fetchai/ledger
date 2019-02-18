@@ -22,14 +22,18 @@
 namespace fetch {
 namespace vm {
 
-struct IMap : public Object
+class IMap : public Object
 {
-  IMap() = delete;
+public:
+  IMap()          = delete;
+  virtual ~IMap() = default;
+  static Ptr<IMap> Constructor(VM *vm, TypeId type_id);
+  virtual int32_t  Count() const = 0;
+
+protected:
   IMap(VM *vm, TypeId type_id)
     : Object(vm, type_id)
   {}
-  virtual ~IMap() = default;
-  static Ptr<IMap> Constructor(VM *vm, TypeId type_id);
 };
 
 template <typename T, typename = void>
@@ -75,11 +79,17 @@ struct Map : public IMap
 {
   using Pair = std::pair<Variant, Variant>;
 
-  Map() = delete;
+  Map()          = delete;
+  virtual ~Map() = default;
+
   Map(VM *vm, TypeId type_id)
     : IMap(vm, type_id)
   {}
-  virtual ~Map() = default;
+
+  virtual int32_t Count() const override
+  {
+    return int32_t(map.size());
+  }
 
   Value *Find(Variant &keyv)
   {
