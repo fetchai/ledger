@@ -29,7 +29,7 @@ namespace math {
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Sin(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Sin(ArrayType &x)
 {
   kernels::stdlib::Sin<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -40,7 +40,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Sin(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Cos(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Cos(ArrayType &x)
 {
   kernels::stdlib::Cos<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -51,7 +51,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Cos(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Tan(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Tan(ArrayType &x)
 {
   kernels::stdlib::Tan<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -62,7 +62,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Tan(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Asin(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Asin(ArrayType &x)
 {
   kernels::stdlib::Asin<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -73,7 +73,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Asin(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Acos(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Acos(ArrayType &x)
 {
   kernels::stdlib::Acos<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -84,7 +84,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Acos(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Atan(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Atan(ArrayType &x)
 {
   kernels::stdlib::Atan<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -96,7 +96,7 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Atan(ArrayType &x)
  * @param x: this value represents the proportion of the x-coordinate
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Atan2(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Atan2(ArrayType &x)
 {
   kernels::stdlib::Atan2<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -135,7 +135,7 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Tanh(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Tanh(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {
@@ -143,7 +143,7 @@ fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Tanh(ArrayType &x)
   }
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Tanh(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {

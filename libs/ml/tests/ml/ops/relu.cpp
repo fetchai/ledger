@@ -27,8 +27,8 @@ class ReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ReluTest, MyTypes);

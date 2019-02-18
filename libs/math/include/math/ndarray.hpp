@@ -28,13 +28,13 @@
 //#include <utility>
 //#include <vector>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
-//template <typename T, typename C = memory::SharedArray<T>>
-//class NDArray : public ShapelessArray<T, C>
+// template <typename T, typename C = memory::SharedArray<T>>
+// class NDArray : public ShapelessArray<T, C>
 //{
-//public:
+// public:
 //  using type                 = T;
 //  using container_type       = C;
 //  using vector_register_type = typename container_type::vector_register_type;
@@ -133,7 +133,8 @@
 //  /**
 //   * Copies input data into current array
 //   *
-//   * @param[in]     x is another NDArray of which the data, size, and shape will be copied locally.
+//   * @param[in]     x is another NDArray of which the data, size, and shape will be copied
+//   locally.
 //   *
 //   **/
 //  void Copy(self_type const &x)
@@ -480,7 +481,8 @@
 //
 //  void MajorOrderFlip()
 //  {
-//    // it's rather strange to invoke ColumnToRow for a 1D array, but it's technically legal (all we
+//    // it's rather strange to invoke ColumnToRow for a 1D array, but it's technically legal (all
+//    we
 //    // do is changed the label)
 //    if (this->shape().size() > 1)
 //    {
@@ -503,7 +505,8 @@
 //   * Copies data from a row major numpy array into the current column major array
 //   * @param new_array
 //   */
-//  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> & /*stride*/,
+//  void CopyFromNumpy(T *ptr, std::vector<std::size_t> &shape, std::vector<std::size_t> &
+//  /*stride*/,
 //                     std::vector<std::size_t> & /*index*/)
 //  {
 //    std::size_t total_size = NDArray<T>::SizeFromShape(shape);
@@ -603,7 +606,7 @@
 //    return *this;
 //  }
 //
-//private:
+// private:
 //  // TODO(tfr): replace with strides
 //  std::size_t ComputeRowIndex(std::vector<std::size_t> const &indices) const
 //  {

@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Log(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Log(ArrayType &x)
 {
   fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -43,8 +43,8 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
   Log(ret);
   return ret;
 }
-//template <typename ArrayType>
-//fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
+// template <typename ArrayType>
+// fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
 //{
 //  ArrayType ret{x.size()};
 //  ret.Copy(x);
@@ -66,7 +66,7 @@ meta::IfIsFixedPoint<T, void> Log(T &n)
 }
 
 template <typename ArrayType>
-meta::IfIsNonBlasArray <ArrayType, void> Log(ArrayType &x)
+meta::IfIsNonBlasArray<ArrayType, void> Log(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {
@@ -74,7 +74,7 @@ meta::IfIsNonBlasArray <ArrayType, void> Log(ArrayType &x)
   }
 }
 template <typename ArrayType>
-meta::IfIsMathFixedPointArray <ArrayType, void> Log(ArrayType &x)
+meta::IfIsMathFixedPointArray<ArrayType, void> Log(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {

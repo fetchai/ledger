@@ -21,14 +21,15 @@
 //#include <assert.h>
 //#include <iostream>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
 //// need to forward declare
-//template <typename T, typename C>
-//class NDArray;
+// template <typename T, typename C>
+// class NDArray;
 //
-//inline bool ShapeFromBroadcast(std::vector<std::size_t> const &a, std::vector<std::size_t> const &b,
+// inline bool ShapeFromBroadcast(std::vector<std::size_t> const &a, std::vector<std::size_t> const
+// &b,
 //                               std::vector<std::size_t> &c)
 //{
 //  c.resize(std::max(a.size(), b.size()));
@@ -79,8 +80,8 @@
 //  return true;
 //}
 //
-//template <typename T, typename C>
-//bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
+// template <typename T, typename C>
+// bool UpgradeIteratorFromBroadcast(std::vector<std::size_t> const &a,
 //                                  NDArrayIterator<T, C> &         iterator)
 //{
 //  assert(iterator.counter_ == 0);    // Only upgrade untouched iterators.
@@ -120,8 +121,8 @@
 //  return true;
 //}
 //
-//template <typename F, typename T, typename C>
-//bool Broadcast(F function, NDArray<T, C> &a, NDArray<T, C> &b, NDArray<T, C> &c)
+// template <typename F, typename T, typename C>
+// bool Broadcast(F function, NDArray<T, C> &a, NDArray<T, C> &b, NDArray<T, C> &c)
 //{
 //  std::vector<std::size_t> cshape;
 //

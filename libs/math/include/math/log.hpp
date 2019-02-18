@@ -23,12 +23,12 @@
 //
 //#include <cmath>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
-//namespace details {
-//template <typename T>
-//inline void LogImplementation(T const &array, T &ret)
+// namespace details {
+// template <typename T>
+// inline void LogImplementation(T const &array, T &ret)
 //{
 //  ret.ResizeFromShape(array.shape());
 //
@@ -37,8 +37,8 @@
 //    ret[i] = std::log(array[i]);
 //  }
 //}
-//template <typename T>
-//inline void LogImplementation(T const &array, memory::Range r, T &ret)
+// template <typename T>
+// inline void LogImplementation(T const &array, memory::Range r, T &ret)
 //{
 //  ret.Reshape(array.shape());
 //
@@ -59,13 +59,13 @@
 //}
 //}  // namespace details
 //
-//template <typename T, typename C = memory::SharedArray<T>>
-//inline void Log(NDArray<T, C> const &array, NDArray<T, C> &ret)
+// template <typename T, typename C = memory::SharedArray<T>>
+// inline void Log(NDArray<T, C> const &array, NDArray<T, C> &ret)
 //{
 //  details::LogImplementation<NDArray<T, C>>(array, ret);
 //}
-//template <typename T, typename C = memory::SharedArray<T>>
-//inline void Log(RectangularArray<T, C> const &array, RectangularArray<T, C> &ret)
+// template <typename T, typename C = memory::SharedArray<T>>
+// inline void Log(RectangularArray<T, C> const &array, RectangularArray<T, C> &ret)
 //{
 //  details::LogImplementation<RectangularArray<T, C>>(array, ret);
 //}
@@ -78,13 +78,14 @@
 // * @return
 // */
 //
-//template <typename T, typename C = memory::SharedArray<T>>
-//inline void Log(NDArray<T, C> const &array, memory::Range r, NDArray<T, C> &ret)
+// template <typename T, typename C = memory::SharedArray<T>>
+// inline void Log(NDArray<T, C> const &array, memory::Range r, NDArray<T, C> &ret)
 //{
 //  details::LogImplementation<NDArray<T, C>>(array, r, ret);
 //}
-//template <typename T, typename C = memory::SharedArray<T>>
-//inline void Log(RectangularArray<T, C> const &array, memory::Range r, RectangularArray<T, C> &ret)
+// template <typename T, typename C = memory::SharedArray<T>>
+// inline void Log(RectangularArray<T, C> const &array, memory::Range r, RectangularArray<T, C>
+// &ret)
 //{
 //  details::LogImplementation<RectangularArray<T, C>>(array, r, ret);
 //}

@@ -27,9 +27,9 @@
 //#include "math/ndarray_view.hpp"
 ////#include "vectorise/threading/pool.hpp"
 //
-//using namespace fetch::math;
+// using namespace fetch::math;
 //
-//TEST(ndarray, simple_broadcast_test)
+// TEST(ndarray, simple_broadcast_test)
 //{
 //  NDArray<double> a = NDArray<double>::Arange(0u, 20u, 1u);
 //  a.Reshape({1, a.size()});
@@ -50,7 +50,7 @@
 //  }
 //}
 //
-//TEST(ndarray, broadcast_3D_test)
+// TEST(ndarray, broadcast_3D_test)
 //{
 //  NDArray<double> a = NDArray<double>::Arange(0u, 21u, 1u);
 //  ASSERT_TRUE(a.size() == 21);
@@ -93,7 +93,7 @@
 //  }
 //}
 //
-//TEST(ndarray, broadcast_shape_size_test)
+// TEST(ndarray, broadcast_shape_size_test)
 //{
 //
 //  NDArray<double> a = NDArray<double>::Arange(0u, 90u, 1u);

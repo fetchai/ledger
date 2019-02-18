@@ -90,9 +90,8 @@ using IfIsArithmetic = EnableIf<IsArithmetic<T>, R>;
 template <typename T, typename R>
 using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<T>, R>;
 
-
-//template <typename T, typename R>
-//using IfIsArithmetic = fetch::meta::IfIsArithmetic<T, R>;
+// template <typename T, typename R>
+// using IfIsArithmetic = fetch::meta::IfIsArithmetic<T, R>;
 
 // template <typename T, typename R>
 // using IfIsArithmetic = typename std::enable_if<fetch::meta::IfIsArithmetic<T, R> ||
@@ -176,7 +175,6 @@ using IfIsMathArray = typename IsMathArrayImpl<T, R>::Type;
 template <typename T, typename R>
 using IfIsMathNonFixedPointArray = IfIsNotFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
 
-
 ///////////////////////////////////////////
 /// MATH ARRAY - SHAPE - NO FIXED POINT ///
 ///////////////////////////////////////////
@@ -199,7 +197,8 @@ template <typename T, typename R = void>
 using IfIsMathShapeArray = typename IsMathShapeArrayImpl<T, R>::Type;
 
 template <typename T, typename R = void>
-using IfIsMathNonFixedPointShapeArray = IfIsNotFixedPoint<typename T::Type, IfIsMathShapeArray<T, R>>;
+using IfIsMathNonFixedPointShapeArray =
+    IfIsNotFixedPoint<typename T::Type, IfIsMathShapeArray<T, R>>;
 
 //////////////////////////////////////////////
 /// MATH ARRAY - NO SHAPE - NO FIXED POINT ///
@@ -219,7 +218,8 @@ template <typename T, typename R = void>
 using IfIsMathShapelessArray = typename IsMathShapelessArrayImpl<T, R>::Type;
 
 template <typename T, typename R = void>
-using IfIsMathNonFixedPointShapelessArray = IfIsNotFixedPoint<typename T::Type, IfIsMathShapelessArray<T, R>>;
+using IfIsMathNonFixedPointShapelessArray =
+    IfIsNotFixedPoint<typename T::Type, IfIsMathShapelessArray<T, R>>;
 
 ////////////////////////////////
 /// MATH ARRAY - FIXED POINT ///
@@ -300,13 +300,13 @@ struct IsBlasArrayImpl<ShapelessArray<T, C>, R>
 {
   using Type = R;
 };
-//template <typename R, typename T, typename C, bool H, bool W>
-//struct IsBlasArrayImpl<RectangularArray<T, C, H, W>, R>
+// template <typename R, typename T, typename C, bool H, bool W>
+// struct IsBlasArrayImpl<RectangularArray<T, C, H, W>, R>
 //{
 //  using Type = R;
 //};
 template <typename T, typename R = void>
-using IfIsBlasArray = IfIsNotFixedPoint <typename T::Type, typename IsBlasArrayImpl<T, R>::Type>;
+using IfIsBlasArray = IfIsNotFixedPoint<typename T::Type, typename IsBlasArrayImpl<T, R>::Type>;
 
 //////////////////////////////////////
 ///// NON BLAS ARRAY SPECIALIZATIONS
@@ -322,39 +322,40 @@ struct IsNonBlasArrayImpl<Tensor<T>, R>
   using Type = R;
 };
 template <typename A, typename R>
-using IfIsNonBlasArray = IfIsNotFixedPoint <typename A::Type, typename IsNonBlasArrayImpl<A, R>::Type>;
+using IfIsNonBlasArray =
+    IfIsNotFixedPoint<typename A::Type, typename IsNonBlasArrayImpl<A, R>::Type>;
 
 //////////////////////////////////////
 ///// BLAS ARRAY WITH SHAPE SPECIALIZATIONS
 //////////////////////////////////////
 //
-//template <typename A, typename R>
-//struct IsBlasAndShapedArrayImpl
+// template <typename A, typename R>
+// struct IsBlasAndShapedArrayImpl
 //{
 //};
-//template <typename R, typename T, typename C, bool H, bool W>
-//struct IsBlasAndShapedArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
+// template <typename R, typename T, typename C, bool H, bool W>
+// struct IsBlasAndShapedArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 //{
 //  using Type = R;
 //};
-//template <typename A, typename R>
-//using IsBlasAndShapedArray = typename IsBlasAndShapedArrayImpl<A, R>::Type;
+// template <typename A, typename R>
+// using IsBlasAndShapedArray = typename IsBlasAndShapedArrayImpl<A, R>::Type;
 //
 //////////////////////////////////////
 ///// BLAS ARRAY WITHOUT SHAPE SPECIALIZATIONS
 //////////////////////////////////////
 //
-//template <typename A, typename R>
-//struct IsBlasAndNoShapeArrayLike
+// template <typename A, typename R>
+// struct IsBlasAndNoShapeArrayLike
 //{
 //};
-//template <typename R, typename T, typename C>
-//struct IsBlasAndNoShapeArrayLike<fetch::math::ShapelessArray<T, C>, R>
+// template <typename R, typename T, typename C>
+// struct IsBlasAndNoShapeArrayLike<fetch::math::ShapelessArray<T, C>, R>
 //{
 //  using Type = R;
 //};
-//template <typename A, typename R>
-//using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
+// template <typename A, typename R>
+// using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
 
 }  // namespace meta
 }  // namespace math

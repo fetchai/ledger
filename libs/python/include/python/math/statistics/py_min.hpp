@@ -36,12 +36,12 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-//  module.def(custom_name.c_str(), &WrapperMin<ShapelessArray<double>>)
-//      .def(custom_name.c_str(), &WrapperMin<ShapelessArray<float>>)
-//      .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
-//      .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
-//      .def(custom_name.c_str(), &WrapperMin<Tensor<double>>)
-//      .def(custom_name.c_str(), &WrapperMin<Tensor<float>>);
+  //  module.def(custom_name.c_str(), &WrapperMin<ShapelessArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<ShapelessArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMin<Tensor<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<Tensor<float>>);
   module.def(custom_name.c_str(), &WrapperMin<Tensor<double>>)
       .def(custom_name.c_str(), &WrapperMin<Tensor<float>>);
 }

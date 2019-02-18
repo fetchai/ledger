@@ -33,14 +33,14 @@
 //// using namespace fetch::threading;
 //// using namespace std::chrono;
 //
-//using namespace fetch::math;
+// using namespace fetch::math;
 //
-//using data_type            = double;
-//using container_type       = fetch::memory::SharedArray<data_type>;
-//using vector_register_type = typename container_type::vector_register_type;
+// using data_type            = double;
+// using container_type       = fetch::memory::SharedArray<data_type>;
+// using vector_register_type = typename container_type::vector_register_type;
 //#define N 200
 //
-//NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t /*m*/)
+// NDArray<data_type, container_type> RandomArray(std::size_t n, std::size_t /*m*/)
 //{
 //  static fetch::random::LinearCongruentialGenerator gen;
 //  NDArray<data_type, container_type>                array1(n);
@@ -51,13 +51,13 @@
 //  return array1;
 //}
 //
-//template <typename D>
-//using _S = fetch::memory::SharedArray<D>;
+// template <typename D>
+// using _S = fetch::memory::SharedArray<D>;
 //
-//template <typename D>
-//using _A = NDArray<D, _S<D>>;
+// template <typename D>
+// using _A = NDArray<D, _S<D>>;
 //
-//TEST(ndarray, simple_reshape)
+// TEST(ndarray, simple_reshape)
 //{
 //  _A<double> a = NDArray<double>(49);
 //  a.Reshape({7, 7});
@@ -71,14 +71,14 @@
 //  ASSERT_TRUE(a.shape()[1] == 49);
 //}
 //
-//TEST(ndarray, faulty_reshape)
+// TEST(ndarray, faulty_reshape)
 //{
 //  _A<double> a = NDArray<double>(49);
 //
 //  ASSERT_FALSE(a.CanReshape({2, 4}));
 //}
 //
-//TEST(ndarray, max_axis_tests)
+// TEST(ndarray, max_axis_tests)
 //{
 //  // test parameters
 //  std::vector<std::size_t> orig_shape{7, 4, 6, 9};
@@ -118,7 +118,7 @@
 //  }
 //}
 //
-//TEST(ndarray, col_row_major_tets)
+// TEST(ndarray, col_row_major_tets)
 //{
 //  // Nothing interesting happens in a 1D major order flip
 //  std::vector<std::size_t> shape{10};
@@ -160,7 +160,7 @@
 //  ASSERT_TRUE(array1 == array2);
 //}
 //
-//TEST(ndarray, concat_test)
+// TEST(ndarray, concat_test)
 //{
 //  // A trivial concat
 //  std::vector<std::size_t> shape{10};

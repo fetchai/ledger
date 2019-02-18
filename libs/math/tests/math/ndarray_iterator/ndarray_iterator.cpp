@@ -28,9 +28,9 @@
 //#include "math/ndarray_view.hpp"
 ////#include "vectorise/threading/pool.hpp"
 //
-//using namespace fetch::math;
+// using namespace fetch::math;
 //
-//TEST(ndarray, simple_iterator_permute_test)
+// TEST(ndarray, simple_iterator_permute_test)
 //{
 //
 //  // set up an initial array
@@ -71,7 +71,7 @@
 //  }
 //}
 //
-//TEST(ndarray, iterator_4dim_copy_test)
+// TEST(ndarray, iterator_4dim_copy_test)
 //{
 //
 //  // set up an initial array
@@ -111,7 +111,7 @@
 //  }
 //}
 //
-//TEST(ndarray, iterator_4dim_permute_test)
+// TEST(ndarray, iterator_4dim_permute_test)
 //{
 //
 //  // set up an initial array
@@ -153,7 +153,7 @@
 //  }
 //}
 //
-//TEST(ndarray, simple_iterator_transpose_test)
+// TEST(ndarray, simple_iterator_transpose_test)
 //{
 //  std::vector<std::size_t> perm{2, 1, 0};
 //  std::vector<std::size_t> unperm{0, 1, 2};
@@ -167,11 +167,13 @@
 //
 //  // set up an initial array
 //  NDArray<double> array =
-//      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
+//      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size,
+//      static_cast<std::size_t>(1u));
 //  array.Reshape(original_shape);
 //
 //  NDArray<double> ret =
-//      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size, static_cast<std::size_t>(1u));
+//      NDArray<double>::Arange(static_cast<std::size_t>(0u), arr_size,
+//      static_cast<std::size_t>(1u));
 //  ret.Reshape(original_shape);
 //
 //  NDArray<double> test_array{original_shape};

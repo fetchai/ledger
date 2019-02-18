@@ -23,15 +23,15 @@
 //#include <vector>
 ////
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
 //// template <typename T, typename C>
 //// class ShapelessArray;
-//template <typename T, typename C>
-//class NDArray;
+// template <typename T, typename C>
+// class NDArray;
 //
-//struct NDIteratorRange
+// struct NDIteratorRange
 //{
 //  std::size_t index       = 0;
 //  std::size_t from        = 0;
@@ -49,10 +49,10 @@
 //  std::size_t current_n_dim_position = 0;
 //};
 //
-//template <typename T, typename C>
-//class NDArrayIterator
+// template <typename T, typename C>
+// class NDArrayIterator
 //{
-//public:
+// public:
 //  using type         = T;
 //  using ndarray_type = NDArray<T, C>;
 //
@@ -254,12 +254,12 @@
 //    return ranges_[i];
 //  }
 //
-//protected:
+// protected:
 //  std::vector<NDIteratorRange> ranges_;
 //  std::size_t                  total_runs_ = 1;
 //  std::size_t                  size_       = 0;
 //
-//private:
+// private:
 //  void Setup(std::vector<std::vector<std::size_t>> const &step,
 //             std::vector<std::size_t> const &             shape)
 //  {

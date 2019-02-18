@@ -30,20 +30,20 @@
 //// using namespace fetch::threading;
 //// using namespace std::chrono;
 //
-//using namespace fetch::math;
+// using namespace fetch::math;
 //
-//using data_type            = double;
-//using container_type       = fetch::memory::SharedArray<data_type>;
-//using vector_register_type = typename container_type::vector_register_type;
+// using data_type            = double;
+// using container_type       = fetch::memory::SharedArray<data_type>;
+// using vector_register_type = typename container_type::vector_register_type;
 //#define N 200
 //
-//template <typename D>
-//using _S = fetch::memory::SharedArray<D>;
+// template <typename D>
+// using _S = fetch::memory::SharedArray<D>;
 //
-//template <typename D>
-//using _A = NDArray<D, _S<D>>;
+// template <typename D>
+// using _A = NDArray<D, _S<D>>;
 //
-//TEST(ndarray, 2d_view_full)
+// TEST(ndarray, 2d_view_full)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {3, 3};
@@ -76,7 +76,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 3d_view_full)
+// TEST(ndarray, 3d_view_full)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {5, 5, 5};
@@ -107,7 +107,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 4d_view_full)
+// TEST(ndarray, 4d_view_full)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {5, 5, 5, 5};
@@ -138,7 +138,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 6d_view_full)
+// TEST(ndarray, 6d_view_full)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {5, 5, 5, 5, 5, 5};
@@ -170,7 +170,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 2d_irregular_view)
+// TEST(ndarray, 2d_irregular_view)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {5, 10};
@@ -201,7 +201,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 3d_irregular_view)
+// TEST(ndarray, 3d_irregular_view)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {5, 10, 10};
@@ -232,7 +232,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 6d_irregular_view)
+// TEST(ndarray, 6d_irregular_view)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {1, 2, 3, 4, 5, 6};
@@ -264,7 +264,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 2d_big_step)
+// TEST(ndarray, 2d_big_step)
 //{
 //  std::size_t step = 2;
 //
@@ -298,7 +298,7 @@
 //  }
 //}
 //
-//TEST(ndarray, 2d_subset_view)
+// TEST(ndarray, 2d_subset_view)
 //{
 //  // set up a 4d array
 //  std::vector<std::size_t> shape      = {4, 4};

@@ -25,11 +25,11 @@
 //#include "python/fetch_pybind.hpp"
 //#include <pybind11/stl.h>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
-//template <typename T>
-//void BuildNDArray(std::string const &custom_name, pybind11::module &module)
+// template <typename T>
+// void BuildNDArray(std::string const &custom_name, pybind11::module &module)
 //{
 //
 //  namespace py = pybind11;
@@ -211,7 +211,8 @@
 //             }
 //             if (new_shape != a.shape())
 //             {
-//               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+//               py::print("broadcast shape (", new_shape, ") does not match shape of output array
+//               (",
 //                         a.shape(), ")");
 //               throw py::value_error();
 //             }
@@ -227,7 +228,8 @@
 //             }
 //             if (new_shape != a.shape())
 //             {
-//               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+//               py::print("broadcast shape (", new_shape, ") does not match shape of output array
+//               (",
 //                         a.shape(), ")");
 //               throw py::value_error();
 //             }
@@ -244,7 +246,8 @@
 //             }
 //             if (new_shape != a.shape())
 //             {
-//               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+//               py::print("broadcast shape (", new_shape, ") does not match shape of output array
+//               (",
 //                         a.shape(), ")");
 //               throw py::value_error();
 //             }
@@ -261,7 +264,8 @@
 //             }
 //             if (new_shape != a.shape())
 //             {
-//               py::print("broadcast shape (", new_shape, ") does not match shape of output array (",
+//               py::print("broadcast shape (", new_shape, ") does not match shape of output array
+//               (",
 //                         a.shape(), ")");
 //               throw py::value_error();
 //             }
@@ -384,7 +388,8 @@
 //             }
 //             for (std::size_t i = 0; i < slices.size(); ++i)
 //             {
-//               if (!slices[i].compute(s.shape()[i], &start[i], &stop[i], &step[i], &slicelength[i]))
+//               if (!slices[i].compute(s.shape()[i], &start[i], &stop[i], &step[i],
+//               &slicelength[i]))
 //               {
 //                 throw py::error_already_set();
 //               }
@@ -437,9 +442,8 @@
 //           })
 //      .def("max",
 //           [](NDArray<T> &a) {
-//             typename NDArray<T>::Type ret = -std::numeric_limits<typename NDArray<T>::Type>::max();
-//             Max(a, ret);
-//             return a;
+//             typename NDArray<T>::Type ret = -std::numeric_limits<typename
+//             NDArray<T>::Type>::max(); Max(a, ret); return a;
 //           })
 //      .def("max",
 //           [](NDArray<T> &a, std::size_t const axis) {
@@ -463,9 +467,8 @@
 //           })
 //      .def("min",
 //           [](NDArray<T> const &a) {
-//             typename NDArray<T>::Type ret = std::numeric_limits<typename NDArray<T>::Type>::max();
-//             Min(a, ret);
-//             return a;
+//             typename NDArray<T>::Type ret = std::numeric_limits<typename
+//             NDArray<T>::Type>::max(); Min(a, ret); return a;
 //           })
 //      .def("min",
 //           [](NDArray<T> &a, std::size_t const axis) {

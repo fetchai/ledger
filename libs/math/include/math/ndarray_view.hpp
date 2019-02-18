@@ -21,9 +21,9 @@
 //#include <cassert>
 //#include <vector>
 //
-//class NDArrayView
+// class NDArrayView
 //{
-//public:
+// public:
 //  std::vector<std::size_t> from;
 //  std::vector<std::size_t> to;
 //  std::vector<std::size_t> step;
@@ -59,7 +59,7 @@
 //    }
 //  }
 //
-//private:
+// private:
 //  /**
 //   * resets input and output indices and dimensions size
 //   */
@@ -78,7 +78,8 @@
 //  /**
 //   * recursively ascend dimensions until we can find a valid dimension to increment
 //   *
-//   * after finished copying all data by iterating through final dimension, ascend until we find the
+//   * after finished copying all data by iterating through final dimension, ascend until we find
+//   the
 //   * next dimension to increment
 //   *
 //   * @return still_copying    indicates whether there is more work to do or whether to finish
@@ -126,7 +127,8 @@
 //  /**
 //   * descend towards trailing dimension and reset indices as we go
 //   *
-//   * after ascending completes we'll descend through all the dimensions until we get to the trailing
+//   * after ascending completes we'll descend through all the dimensions until we get to the
+//   trailing
 //   * dimension where we can perform index iterations and copy data
 //   *
 //   * @tparam ArrayType
@@ -153,8 +155,8 @@
 //        dest.Set(output_idxs, new_val);
 //      }
 //
-//      // eith increment index of final dimension or switch to ascending if it would be out of bounds
-//      if (input_idxs[cur_dim] + step[cur_dim] <= to[cur_dim] - 1)
+//      // eith increment index of final dimension or switch to ascending if it would be out of
+//      bounds if (input_idxs[cur_dim] + step[cur_dim] <= to[cur_dim] - 1)
 //      {
 //        output_idxs[cur_dim] += 1;
 //        input_idxs[cur_dim] += step[cur_dim];

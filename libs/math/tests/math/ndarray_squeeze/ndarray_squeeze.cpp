@@ -25,9 +25,9 @@
 //#include "math/ndarray_squeeze.hpp"
 //#include "math/ndarray_view.hpp"
 //
-//using namespace fetch::math;
+// using namespace fetch::math;
 //
-//TEST(ndarray, ndarray_reduce_test)
+// TEST(ndarray, ndarray_reduce_test)
 //{
 //  NDArray<double> a = NDArray<double>::Arange(0u, 3u * 4u * 5u, 1u);
 //  a.Reshape({3, 4, 5});
@@ -52,7 +52,7 @@
 //  }
 //}
 //
-//TEST(ndarray, dimension_reduction)
+// TEST(ndarray, dimension_reduction)
 //{
 //  NDArray<double> a = NDArray<double>::Arange(0u, 3u * 4u * 5u, 1u);
 //  a.Reshape({3, 4, 5});

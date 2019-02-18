@@ -21,19 +21,19 @@
 //#include <cassert>
 //#include <unordered_set>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
 //// need to forward declare
-//template <typename T, typename C>
-//class NDArray;
+// template <typename T, typename C>
+// class NDArray;
 //
 ///* Computes the shape resulting from squeezing.
 // * @param a is the input shape.
 // * @param b is the output shape.
 // * @param axis is the axis to squeeze.
 // */
-//bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
+// bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
 //                      uint64_t const &axis = uint64_t(-1))
 //{
 //  std::size_t i = 0;
@@ -69,7 +69,7 @@
 // * @param b is the output shape.
 // * @param axes are the axes to squeeze.
 // */
-//bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
+// bool ShapeFromSqueeze(std::vector<std::size_t> const &a, std::vector<std::size_t> &b,
 //                      std::unordered_set<uint64_t> const &axes)
 //{
 //  std::size_t i = 0;
@@ -90,8 +90,8 @@
 // * @param arr is the array.
 // * @param axis is the axes to squeeze.
 // */
-//template <typename T, typename C>
-//void Squeeze(NDArray<T, C> &arr, uint64_t const &axis = uint64_t(-1))
+// template <typename T, typename C>
+// void Squeeze(NDArray<T, C> &arr, uint64_t const &axis = uint64_t(-1))
 //{
 //  std::vector<std::size_t> newshape;
 //  ShapeFromSqueeze(arr.shape(), newshape, axis);
@@ -102,8 +102,8 @@
 // * @param arr is the array.
 // * @param axes are the axes to squeeze.
 // */
-//template <typename T, typename C>
-//void Squeeze(NDArray<T, C> &arr, std::unordered_set<uint64_t> const &axes)
+// template <typename T, typename C>
+// void Squeeze(NDArray<T, C> &arr, std::unordered_set<uint64_t> const &axes)
 //{
 //  std::vector<std::size_t> newshape;
 //  ShapeFromSqueeze(arr.shape(), newshape, axes);
@@ -116,8 +116,8 @@
 // * @param output is the array the output array.
 // * @param axis are the axis along which the reduction happens.
 // */
-//template <typename F, typename T, typename C>
-//void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, uint64_t const &axis = 0)
+// template <typename F, typename T, typename C>
+// void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, uint64_t const &axis = 0)
 //{
 //  std::size_t N;
 //
@@ -167,8 +167,9 @@
 // * @param output is the array the output array.
 // * @param axes are the axes along which the reduction happens.
 // */
-//template <typename F, typename T, typename C>
-//void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, std::vector<uint64_t> const &axes)
+// template <typename F, typename T, typename C>
+// void Reduce(F fnc, NDArray<T, C> &input, NDArray<T, C> &output, std::vector<uint64_t> const
+// &axes)
 //{
 //  std::size_t N;
 //

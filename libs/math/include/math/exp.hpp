@@ -25,12 +25,12 @@
 //
 //#include <cmath>
 //
-//namespace fetch {
-//namespace math {
+// namespace fetch {
+// namespace math {
 //
-//namespace details {
-//template <typename T>
-//inline void ExpImplementation(T const &array, T &ret)
+// namespace details {
+// template <typename T>
+// inline void ExpImplementation(T const &array, T &ret)
 //{
 //  ret.ResizeFromShape(array.shape());
 //  for (std::size_t i = 0; i < array.size(); ++i)
@@ -38,8 +38,8 @@
 //    ret[i] = std::exp(array[i]);
 //  }
 //}
-//template <typename T>
-//inline void ExpImplementation(T const &array, memory::Range const &r, T &ret)
+// template <typename T>
+// inline void ExpImplementation(T const &array, memory::Range const &r, T &ret)
 //{
 //  ret.Reshape(array.shape());
 //
@@ -60,8 +60,8 @@
 //}
 //}  // namespace details
 //
-//template <typename ArrayType>
-//inline void Exp(ArrayType const &array, ArrayType ret)
+// template <typename ArrayType>
+// inline void Exp(ArrayType const &array, ArrayType ret)
 //{
 //  details::ExpImplementation<ArrayType>(array, ret);
 //}
@@ -74,8 +74,8 @@
 // * @return
 // */
 //
-//template <typename ArrayType>
-//inline void Exp(ArrayType const &array, memory::Range r, ArrayType &ret)
+// template <typename ArrayType>
+// inline void Exp(ArrayType const &array, memory::Range r, ArrayType &ret)
 //{
 //  details::ExpImplementation<ArrayType>(array, r, ret);
 //}

@@ -25,7 +25,7 @@
 TEST(node_test, node_placeholder)
 {
   fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>
-                                             placeholder("PlaceHolder");
+                                            placeholder("PlaceHolder");
   std::shared_ptr<fetch::math::Tensor<int>> data =
       std::make_shared<fetch::math::Tensor<int>>(std::vector<std::size_t>({5, 5}));
   placeholder.SetData(data);
@@ -45,10 +45,9 @@ TEST(node_test, node_relu)
 
   std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
                                   fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>
-      relu =
-          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-                                           fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>(
-              "Relu");
+      relu = std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
+                                              fetch::ml::ops::ReluLayer<fetch::math::Tensor<int>>>>(
+          "Relu");
 
   relu->AddInput(placeholder);
 

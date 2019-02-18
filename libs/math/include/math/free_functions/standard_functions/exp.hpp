@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/kernels/standard_functions/exp.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include "core/fixed_point/fixed_point.hpp"
 
 /**
  * e^x
@@ -42,14 +42,14 @@ void Exp(fixed_point::FixedPoint<I, F> &x)
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsBlasArray <ArrayType, void> Exp(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Exp(ArrayType &x)
 {
   free_functions::kernels::Exp<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Exp(ArrayType &x)
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Exp(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {
@@ -57,7 +57,7 @@ fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Exp(ArrayType &x)
   }
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Exp(ArrayType &x)
+fetch::math::meta::IfIsMathFixedPointArray<ArrayType, void> Exp(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {

@@ -24,7 +24,7 @@ TEST(placeholder_test, setData)
 {
   std::shared_ptr<fetch::math::Tensor<int>> data = std::make_shared<fetch::math::Tensor<int>>(8);
   std::shared_ptr<fetch::math::Tensor<int>> gt   = std::make_shared<fetch::math::Tensor<int>>(8);
-  std::size_t                                i(0);
+  std::size_t                               i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
     data->Set(i, e);
