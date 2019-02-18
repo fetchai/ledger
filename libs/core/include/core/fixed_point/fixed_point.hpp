@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "fixed_point_tag.hpp"
 #include "meta/tags.hpp"
 #include "meta/type_traits.hpp"
 
