@@ -27,15 +27,15 @@ class FlattenTest : public ::testing::Test
 };
 
 // TODO(private, 520) Adapt for NDArray
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(FlattenTest, MyTypes);
 
 TYPED_TEST(FlattenTest, forward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({8, 8}));
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
   std::shared_ptr<TypeParam>         prediction = op.Forward({data});
 
@@ -47,7 +47,7 @@ TYPED_TEST(FlattenTest, forward_test)
 
 TYPED_TEST(FlattenTest, backward_test)
 {
-  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<size_t>({8, 8}));
+  std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(std::vector<std::uint64_t>({8, 8}));
   fetch::ml::ops::Flatten<TypeParam> op;
   std::shared_ptr<TypeParam>         prediction  = op.Forward({data});
   std::shared_ptr<TypeParam>         errorSignal = std::make_shared<TypeParam>(prediction->shape());

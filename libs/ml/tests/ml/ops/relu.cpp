@@ -26,8 +26,8 @@ class ReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
+                                 fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(ReluTest, MyTypes);
@@ -36,7 +36,7 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(8);
-  std::uint64_t                i(0);
+  std::uint64_t              i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
     data->Set(i, typename TypeParam::Type(e));
@@ -54,7 +54,7 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(8);
-  std::uint64_t                i(0);
+  std::uint64_t              i(0);
   for (int e : {-1, -2, -3, -4, -5, -6, -7, -8})
   {
     data->Set(i, typename TypeParam::Type(e));

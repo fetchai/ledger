@@ -31,13 +31,14 @@ template <typename T>
 class Tensor  // Using name Tensor to not clash with current NDArray
 {
 public:
-  using Type                           = T;
+  using Type                                  = T;
+  using SizeType                              = typename std::uint64_t;
   static const std::uint64_t DefaultAlignment = 8;  // Arbitrary picked
 
 public:
-  Tensor(std::vector<std::uint64_t>             shape   = std::vector<std::uint64_t>(),
-         std::vector<std::uint64_t>             strides = std::vector<std::uint64_t>(),
-         std::vector<std::uint64_t>             padding = std::vector<std::uint64_t>(),
+  Tensor(std::vector<std::uint64_t>      shape   = std::vector<std::uint64_t>(),
+         std::vector<std::uint64_t>      strides = std::vector<std::uint64_t>(),
+         std::vector<std::uint64_t>      padding = std::vector<std::uint64_t>(),
          std::shared_ptr<std::vector<T>> storage = nullptr, std::uint64_t offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
@@ -230,10 +231,11 @@ public:
   Tensor<T> Slice(std::uint64_t i)
   {
     assert(shape_.size() > 1 && i < shape_[0]);
-    Tensor<T> ret(std::vector<std::uint64_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
-                  std::vector<std::uint64_t>(std::next(strides_.begin()), strides_.end()), /* stride */
-                  std::vector<std::uint64_t>(std::next(padding_.begin()), padding_.end()), /* padding */
-                  storage_, offset_ + i * DimensionSize(0));
+    Tensor<T> ret(
+        std::vector<std::uint64_t>(std::next(shape_.begin()), shape_.end()),     /* shape */
+        std::vector<std::uint64_t>(std::next(strides_.begin()), strides_.end()), /* stride */
+        std::vector<std::uint64_t>(std::next(padding_.begin()), padding_.end()), /* padding */
+        storage_, offset_ + i * DimensionSize(0));
     ret.strides_ = std::vector<std::uint64_t>(std::next(strides_.begin()), strides_.end());
     ret.padding_ = std::vector<std::uint64_t>(std::next(padding_.begin()), padding_.end());
     return ret;
@@ -398,11 +400,11 @@ public:
   }
 
 private:
-  std::vector<std::uint64_t>             shape_;
-  std::vector<std::uint64_t>             padding_;
-  std::vector<std::uint64_t>             strides_;
+  std::vector<std::uint64_t>      shape_;
+  std::vector<std::uint64_t>      padding_;
+  std::vector<std::uint64_t>      strides_;
   std::shared_ptr<std::vector<T>> storage_;
-  std::uint64_t                          offset_;
+  std::uint64_t                   offset_;
 };
 }  // namespace math
 }  // namespace fetch
