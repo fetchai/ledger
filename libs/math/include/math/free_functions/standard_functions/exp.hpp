@@ -41,5 +41,11 @@ fetch::math::meta::IfIsArithmetic<Type, void> Exp(Type &x)
   x = std::exp(x);
 }
 
+template <std::size_t I, std::size_t F>
+void Exp(fetch::fixed_point::FixedPoint<I, F> &x)
+{
+  x = fetch::fixed_point::FixedPoint<I, F>(std::exp(double(x)));
+}
+
 }  // namespace math
 }  // namespace fetch

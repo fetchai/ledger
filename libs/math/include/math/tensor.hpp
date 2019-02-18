@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/free_functions/standard_functions/abs.hpp"
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -250,10 +252,17 @@ public:
     ASSERT(o.size() == size());
     for (size_t i(0); i < size(); ++i)
     {
-      T e1        = Get(IndicesOfElement(i));
-      T e2        = o.Get(o.IndicesOfElement(i));
-      T tolerance = std::max(absolute_tolerance, std::max(abs(e1), abs(e2)) * relative_tolerance);
-      if (abs(e1 - e2) > tolerance)
+      T e1 = Get(IndicesOfElement(i));
+      T e2 = o.Get(o.IndicesOfElement(i));
+
+      T abs_e1 = e1;
+      fetch::math::Abs(abs_e1);
+      T abs_e2 = e2;
+      fetch::math::Abs(abs_e2);
+      T abs_diff = e1 - e2;
+      fetch::math::Abs(abs_diff);
+      T tolerance = std::max(absolute_tolerance, std::max(abs_e1, abs_e2) * relative_tolerance);
+      if (abs_diff > tolerance)
       {
         std::cout << "AllClose[" << i << "] - " << e1 << " != " << e2 << std::endl;
         return false;

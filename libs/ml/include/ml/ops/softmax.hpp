@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/free_functions/deep_learning/activation_functions.hpp"
+#include "math/free_functions/standard_functions/exp.hpp"
 #include "ml/ops/ops.hpp"
 
 namespace fetch {
@@ -55,8 +56,9 @@ public:
     }
     for (std::size_t i(0); i < inputs[0]->size(); ++i)
     {
-      typename ArrayType::Type v = typename ArrayType::Type(exp(inputs[0]->At(i) - maxValue));
-      this->output_->At(i)       = v;
+      typename ArrayType::Type v = inputs[0]->At(i) - maxValue;
+      fetch::math::Exp(v);
+      this->output_->At(i) = v;
       sum += v;
     }
     for (std::size_t i(0); i < inputs[0]->size(); ++i)

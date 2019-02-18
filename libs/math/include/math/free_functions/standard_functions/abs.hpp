@@ -41,5 +41,14 @@ fetch::math::meta::IfIsArithmetic<Type, void> Abs(Type &x)
   x = std::abs(x);
 }
 
+template <std::size_t I, std::size_t F>
+void Abs(fetch::fixed_point::FixedPoint<I, F> &n)
+{
+  if (n < fetch::fixed_point::FixedPoint<I, F>(0))
+  {
+    n *= fetch::fixed_point::FixedPoint<I, F>(-1);
+  }
+}
+
 }  // namespace math
 }  // namespace fetch
