@@ -163,7 +163,7 @@ public:
 
   // e.g. CreateTemplateInstantiationType<Array, Ptr<MyClass>>(TypeIds::IArray);
   template <template <class, class...> class Template, typename T, typename... Ts>
-  TypeId CreateTemplateInstantiationType(TypeId template_type_id)
+  void CreateTemplateInstantiationType(TypeId template_type_id)
   {
     using InstantiationType = Template<T, Ts...>;
     TypeIndex type_index    = TypeIndex(typeid(InstantiationType));
@@ -171,7 +171,7 @@ public:
     if (type_id != TypeIds::Unknown)
     {
       // The instantiation has been created already
-      return type_id;
+      return;
     }
     type_id = GetNextTypeId();
     registered_types_.RegisterType(type_index, type_id);
@@ -182,7 +182,6 @@ public:
       compiler->CreateTemplateInstantiationType(type_id, template_type_id, type_id_array);
     };
     AddCompilerSetupFunction(compiler_setup_function);
-    return type_id;
   }
 
 private:
