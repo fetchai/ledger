@@ -42,7 +42,6 @@
 #include "python/math/py_bignumber.hpp"
 #include "python/math/py_exp.hpp"
 #include "python/math/py_log.hpp"
-#include "python/math/py_ndarray.hpp"
 #include "python/math/py_tensor.hpp"
 #include "python/math/spline/py_linear.hpp"
 
