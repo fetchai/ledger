@@ -135,7 +135,15 @@ fetch::math::meta::IfIsBlasArray<ArrayType, void> Tanh(ArrayType &x)
   x.data().in_parallel().Apply(kernel, x.data());
 }
 template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Tanh(ArrayType &x)
+fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Tanh(ArrayType &x)
+{
+  for (std::size_t j = 0; j < x.size(); ++j)
+  {
+    x.Set(j, std::tanh(x.At(j)));
+  }
+}
+template <typename ArrayType>
+fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Tanh(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {

@@ -173,17 +173,17 @@ meta::IfIsFixedPoint <S, void> Add(S const &scalar1, S const &scalar2, S &ret)
 }
 
 template <typename T, typename ArrayType>
-meta::IfIsMathShapeArray<ArrayType, void> Add(ArrayType const &array, T const &scalar,
-                                              ArrayType &ret)
+meta::IfIsNonBlasArray <ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
-  assert(array.shape() == ret.shape());
+  assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.At(i) = array.At(i) + scalar;
+    ret.Set(i, array.At(i) + scalar);
   }
 }
+
 template <typename T, typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
+meta::IfIsMathFixedPointArray <ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
@@ -407,18 +407,17 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(T const &scalar, ArrayTyp
 
 
 template <typename ArrayType, typename T>
-meta::IfIsMathShapeArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
+meta::IfIsMathFixedPointArray <ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                    ArrayType &ret)
 {
   assert(array.size() == ret.size());
-  assert(array.shape() == ret.shape());
   for (std::size_t i = 0; i < ret.size(); ++i)
   {
     ret.At(i) = array.At(i) - scalar;
   }
 }
 template <typename ArrayType, typename T>
-meta::IfIsMathShapelessArray<ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
+meta::IfIsNonBlasArray <ArrayType, void> Subtract(ArrayType const &array, T const &scalar,
                                                    ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -889,8 +888,7 @@ meta::IfIsBlasArray <ArrayType, void> Divide(ArrayType const &array, T const &sc
  * @param ret
  */
 template <typename ArrayType, typename T>
-meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
-                                                     ArrayType &ret)
+meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
 {
   assert(array.size() == ret.size());
   typename ArrayType::vector_register_type val(scalar);
@@ -899,6 +897,43 @@ meta::IfIsBlasArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
       [val](typename ArrayType::vector_register_type const &x,
             typename ArrayType::vector_register_type &      z) { z = val / x; },
       array.data());
+}
+
+template <typename ArrayType, typename T>
+meta::IfIsNonBlasArray <ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array.At(i) / scalar;
+  }
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathFixedPointArray <ArrayType, void> Divide(ArrayType const &array, T const &scalar, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = array.At(i) / scalar;
+  }
+}
+template <typename ArrayType, typename T>
+meta::IfIsNonBlasArray <ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = scalar / array.At(i);
+  }
+}
+template <typename ArrayType, typename T>
+meta::IfIsMathFixedPointArray <ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
+{
+  assert(array.size() == ret.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
+  {
+    ret.At(i) = scalar / array.At(i);
+  }
 }
 
 template <typename ArrayType>
@@ -945,29 +980,6 @@ meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayTyp
   return ret;
 }
 
-///////////////////////////////
-/// DIVIDE - SHAPE & SCALAR ///
-///////////////////////////////
-
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &array, T const &scalar,
-                                                 ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = array.At(i) / scalar;
-  }
-}
-template <typename ArrayType, typename T>
-meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array, ArrayType &ret)
-{
-  assert(array.size() == ret.size());
-  for (std::size_t i = 0; i < ret.size(); ++i)
-  {
-    ret.At(i) = scalar / array.At(i);
-  }
-}
 
 
 

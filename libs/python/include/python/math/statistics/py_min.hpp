@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
@@ -27,7 +27,7 @@ namespace math {
 template <typename A>
 inline void WrapperMin(A const &a, typename A::Type &ret)
 {
-  Min<typename A::Type>(a, ret);
+  Min(a, ret);
 }
 
 inline void BuildMinStatistics(std::string const &custom_name, pybind11::module &module)

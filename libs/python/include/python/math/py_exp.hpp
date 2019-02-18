@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/exp.hpp"
+#include "math/free_functions/standard_functions/exp.hpp"
 #include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 

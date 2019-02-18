@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/log.hpp"
+#include "math/free_functions/standard_functions/log.hpp"
 #include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 

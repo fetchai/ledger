@@ -66,11 +66,28 @@ meta::IfIsFixedPoint<T, void> Log(T &n)
 }
 
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsNonBlasArray <ArrayType, void> Log(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {
     fetch::math::Log(x[i]);
+  }
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray <ArrayType, void> Log(ArrayType &x)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    fetch::math::Log(x[i]);
+  }
+}
+
+template <typename T>
+meta::IfIsMathArray<T, void> Log(T const &array, T &ret)
+{
+  for (std::size_t i = 0; i < array.size(); ++i)
+  {
+    ret.Set(i, std::log(array.At(i)));
   }
 }
 

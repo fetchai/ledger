@@ -49,11 +49,28 @@ fetch::math::meta::IfIsBlasArray <ArrayType, void> Exp(ArrayType &x)
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathArray <ArrayType, void> Exp(ArrayType &x)
+fetch::math::meta::IfIsNonBlasArray <ArrayType, void> Exp(ArrayType &x)
 {
   for (std::size_t j = 0; j < x.size(); ++j)
   {
     Exp(x.At(j));
+  }
+}
+template <typename ArrayType>
+fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Exp(ArrayType &x)
+{
+  for (std::size_t j = 0; j < x.size(); ++j)
+  {
+    Exp(x.At(j));
+  }
+}
+
+template <typename T>
+fetch::math::meta::IfIsMathArray<T, void> Exp(T const &array, T &ret)
+{
+  for (std::size_t i = 0; i < array.size(); ++i)
+  {
+    ret.Set(i, std::exp(array.At(i)));
   }
 }
 
