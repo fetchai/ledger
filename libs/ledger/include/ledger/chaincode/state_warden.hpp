@@ -17,32 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+//#include "ledger/chain/mutable_transaction.hpp"
+#include <string>
 
 namespace fetch {
-namespace crypto {
+namespace ledger {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
+class StateWarden
 {
-  T hasher;
+public:
+  //StateWarden(Transaction const &tx);
+  StateWarden(std::string name) {meta = name;};
+  ~StateWarden() = default;
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
-}
+  static constexpr char const *LOGGING_NAME = "StateWarden";
 
-template <typename T>
-byte_array::ByteArray HashMultiple(byte_array::ConstByteArray const &a, byte_array::ConstByteArray const &b, byte_array::ConstByteArray const &c)
-{
-  T hasher;
+  int doIt()
+  {
+    return 55;
+  }
 
-  hasher.Reset();
-  hasher.Update(a);
-  hasher.Update(b);
-  hasher.Update(c);
-  return hasher.Final();
-}
+  int (StateWarden::*x)();
 
-}  // namespace crypto
+private:
+  std::string meta{"thingiea"};
+  //TransactionSummary::ResourceSet resources_;
+};
+
+}  // namespace ledger
 }  // namespace fetch

@@ -327,6 +327,7 @@ http::HTTPResponse WalletHttpInterface::OnCreateSC(http::HTTPRequest const &requ
   // construct the TX to create the SC
   ledger::MutableTransaction mtx;
   mtx.set_contract_name("fetch.smart_contract_manager.create_initial_contract");
+  byte_array::ConstByteArray contract_hash;
 
   // Add the SC to the TX
   {
@@ -336,10 +337,30 @@ http::HTTPResponse WalletHttpInterface::OnCreateSC(http::HTTPRequest const &requ
     std::ostringstream oss;
     oss << TX_data;
     mtx.set_data(oss.str());
+
+    std::ostringstream other_oss;
+    other_oss << TX_data["contract_source"];
+
+    /*
+    std::cerr << "Hashing0 --" <<  TX_data["contract_source"].As<std::string>() << "--" << std::endl;
+    std::cerr << "Hashing1 --" <<  smart_contract << "--" << std::endl;
+    std::cerr << "Hashing1 ++" <<  TX_data["contract_source"] << "++" << std::endl;
+
+    std::cerr << "Hashing1 XX" <<  oss.str() << "++" << std::endl;
+    std::cerr << "Hashing1 XX" <<  other_oss.str() << "++" << std::endl;
+
+    std::cerr << "This is: " <<  ToHex(crypto::Hash<crypto::SHA256>(smart_contract)) << std::endl;
+    std::cerr << "This is: " <<  ToHex(crypto::Hash<crypto::SHA256>(smart_contract)) << std::endl;
+    std::cerr << "This is: " <<  ToHex(crypto::Hash<crypto::SHA256>(smart_contract)) << std::endl;*/
+
+    std::cerr << "Hashing1 XX" <<  other_oss.str() << "++" << std::endl;
+
+    contract_hash = crypto::Hash<crypto::SHA256>(other_oss.str());
+    std::cerr << "This is: " <<  ToHex(contract_hash) << std::endl;
   }
 
   mtx.set_fee(0xADDED);
-  mtx.PushContractHash(crypto::Hash<crypto::SHA256>(smart_contract));
+  mtx.PushContractHash(contract_hash);
 
   // sign the transaction
   mtx.Sign(signer.private_key());
@@ -354,7 +375,7 @@ http::HTTPResponse WalletHttpInterface::OnCreateSC(http::HTTPRequest const &requ
 
   data = variant::Variant::Object();
 
-  data["SC_HASH"] = byte_array::ToHex(crypto::Hash<crypto::SHA256>(smart_contract));
+  data["SC_HASH"] = byte_array::ToHex(contract_hash);
   data["success"] = true;
 
   oss << data;
@@ -389,8 +410,6 @@ http::HTTPResponse WalletHttpInterface::OnInvokeSC(http::HTTPRequest const &requ
     return BadJsonResponse(ErrorCode::PARSE_FAILURE);
   }
 
-  smart_contract = byte_array::FromHex(smart_contract);
-
   // We now have our smart contract body
   crypto::ECDSASigner signer;
   signer.GenerateKeys();
@@ -408,6 +427,8 @@ http::HTTPResponse WalletHttpInterface::OnInvokeSC(http::HTTPRequest const &requ
     oss << TX_data;
     mtx.set_data(oss.str());
   }
+
+  smart_contract = byte_array::FromHex(smart_contract);
 
   mtx.set_fee(0XCA11AB1E);
   mtx.PushContractHash(smart_contract);

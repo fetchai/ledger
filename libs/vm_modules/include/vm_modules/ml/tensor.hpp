@@ -34,7 +34,9 @@ public:
   static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                    fetch::vm::Ptr<fetch::vm::Array<uint64_t>> shape)
   {
-    return new TensorWrapper(vm, type_id, shape->elements);
+    // TODO(HUT): no clue why this is wrong
+    //return new TensorWrapper(vm, type_id, shape->elements);
+    return {};
   }
 
   void SetAt(uint64_t index, float value)

@@ -141,3 +141,20 @@ TEST_F(VMTests, CheckCustomBinding)
 
   EXPECT_EQ(binding_called_count, 3);
 }
+
+TEST_F(VMTests, CheckCustomBindingWithState)
+{
+  const std::string source =
+    "function main()"
+    " var a = 2;"
+    " var b : Int32 = 1;"
+    " b = a + b;"
+    " Print('The result is: ' + toString(b));"
+    " var s = State<Int32>('hello');"
+    " endfunction";
+
+  bool res = Compile(source);
+
+  res = Execute();
+  EXPECT_EQ(res, true);
+}

@@ -55,6 +55,7 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse data from SC. TX data: ", tx.data());
     return Status::FAILED;
   }
 
@@ -63,11 +64,13 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 
   if (!Extract(data, CONTRACT_HASH, contract_hash))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse contract hash from SC");
     return Status::FAILED;
   }
 
-  if (!CheckRawState(contract_hash))
+  if (!CheckRawState(byte_array::FromHex(contract_hash)))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to find SC in main DB");
     return Status::FAILED;
   }
 
@@ -75,18 +78,35 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Source for SC not found. Populating.");
 
-    if (!GetRawState(contract_source, contract_hash))
+    if (!GetRawState(contract_source, byte_array::FromHex(contract_hash)))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup hash!", ToHex(contract_hash));
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to lookup hash!", contract_hash);
       return Status::FAILED;
     }
 
     source_ = std::string{contract_source};
+
+    size_t index = 0;
+    while (true) {
+      /* Locate the substring to replace. */
+      index = source_.find("\\\\n", index);
+      if (index == std::string::npos) break;
+
+      /* Make the replacement. */
+      source_.replace(index, 3, "\n");
+
+      /* Advance index forward so the next iteration doesn't pick it up as well. */
+      index += 3;
+    }
+
+    std::cerr << "Recovered: " << source_ << std::endl;
   }
   else
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Using already existing SC cached.");
   }
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract");
 
   if (!RunSmartContract(source_, "main", contract_hash))
   {

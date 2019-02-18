@@ -21,6 +21,7 @@
 #include "math/free_functions/free_functions.hpp"
 #include "vm/defs.hpp"
 #include "vm/string.hpp"
+#include "vm/pointer_register.hpp"
 
 namespace fetch {
 namespace vm {
@@ -142,6 +143,23 @@ public:
     return new T(this, GetTypeId<T>(), std::forward<Args>(args)...);
   }
 
+  template< typename T >
+  void RegisterGlobalPointer(T* ptr)
+  {
+    pointer_register_.Set(ptr);
+  }
+
+  template< typename T >
+  T* GetGlobalPointer()
+  {
+    T* ptr = pointer_register_.Get<T>();
+    if(ptr == nullptr)
+    {
+      RuntimeError("could not find pointer.");
+    }
+    return ptr;
+  }
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
@@ -170,6 +188,7 @@ private:
     int   scope_number;
   };
 
+  PointerRegister            pointer_register_;
   std::vector<OpcodeHandler> opcode_handlers_;
   RegisteredTypes            registered_types_;
   Script::Function const *   function_;

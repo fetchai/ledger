@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,32 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "ledger/chaincode/state_warden.hpp"
 
 namespace fetch {
-namespace crypto {
+namespace ledger {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
-{
-  T hasher;
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
-}
-
-template <typename T>
-byte_array::ByteArray HashMultiple(byte_array::ConstByteArray const &a, byte_array::ConstByteArray const &b, byte_array::ConstByteArray const &c)
-{
-  T hasher;
-
-  hasher.Reset();
-  hasher.Update(a);
-  hasher.Update(b);
-  hasher.Update(c);
-  return hasher.Final();
-}
-
-}  // namespace crypto
+}  // namespace ledger
 }  // namespace fetch
