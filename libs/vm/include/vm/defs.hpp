@@ -41,8 +41,8 @@ struct IsPrimitive<T, typename std::enable_if_t<
                           std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value ||
                           std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value ||
                           std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value ||
-                          std::is_same<T, float>::value || std::is_same<T, double>::value>>
-  : std::true_type
+                          std::is_same<T, std::size_t>::value || std::is_same<T, float>::value ||
+                          std::is_same<T, double>::value>> : std::true_type
 {
 };
 
