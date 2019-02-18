@@ -32,7 +32,7 @@ class Tensor  // Using name Tensor to not clash with current NDArray
 {
 public:
   using Type                             = T;
-  using SizeType                         = typename std::uint64_t;
+  using SizeType                         = std::uint64_t;
   static const SizeType DefaultAlignment = 8;  // Arbitrary picked
 
 public:
