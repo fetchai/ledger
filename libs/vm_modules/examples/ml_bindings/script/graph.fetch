@@ -15,7 +15,7 @@ var gt = Tensor(s);
 var g = Graph();
 var d = MNISTLoader();
 var p = TrainingPair(t);
-var c = MeanSquareError();
+var c = CrossEntropy();
 
 g.AddPlaceholder("Input");
 g.AddFullyConnected("FC_1", "Input", 28*28, 128);
@@ -38,6 +38,9 @@ for(i in 0:trainingIterations)
     if (remainder == 0) // No % operator :(
       Print(average);
       average = 0.0f;
+      d.Display(p.Data());
+      Print("Expected  : " + gt.ToString());
+      Print("Predicted : " + pred.ToString());
     endif
     var dt = c.Backward(pred, gt);
     g.Backpropagate("Softmax", dt);

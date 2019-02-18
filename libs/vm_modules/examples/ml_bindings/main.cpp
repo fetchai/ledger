@@ -30,8 +30,8 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include "vm_modules/ml/cross_entropy.hpp"
 #include "vm_modules/ml/graph.hpp"
-#include "vm_modules/ml/mean_square_error.hpp"
 
 #include "mnist_loader.hpp"
 
@@ -93,6 +93,11 @@ public:
     return dataHolder;
   }
 
+  void Display(fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper> const &d)
+  {
+    loader_.Display(*d);
+  }
+
 private:
   MNISTLoader loader_;
 };
@@ -142,7 +147,7 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::ml::CreateTensor(module);
   fetch::vm_modules::ml::CreateGraph(module);
-  fetch::vm_modules::ml::CreateMeanSquareError(module);
+  fetch::vm_modules::ml::CreateCrossEntropy(module);
 
   module.CreateClassType<TrainingPairWrapper>("TrainingPair")
       .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm_modules::ml::TensorWrapper>>()
@@ -151,7 +156,8 @@ int main(int argc, char **argv)
 
   module.CreateClassType<DataLoaderWrapper>("MNISTLoader")
       .CreateTypeConstuctor<>()
-      .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData);
+      .CreateInstanceFunction("GetData", &DataLoaderWrapper::GetData)
+      .CreateInstanceFunction("Display", &DataLoaderWrapper::Display);
 
   // Setting compiler up
   fetch::vm::Compiler *    compiler = new fetch::vm::Compiler(&module);
