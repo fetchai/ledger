@@ -25,7 +25,7 @@ struct TypeConstructorInvokerHelper
 {
   static void Invoke(VM *vm, int sp_offset, TypeId type_id, Ts const &... parameters)
   {
-    ReturnType result = ObjectType::Constructor(vm, type_id, parameters...);
+    ReturnType result(ObjectType::Constructor(vm, type_id, parameters...));
     StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), type_id);
     vm->sp_ -= sp_offset;
   };

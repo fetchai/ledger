@@ -34,11 +34,10 @@ using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
 namespace TypeIds {
-static TypeId const Unknown = 0;
-
-static TypeId const Any        = 1;
-static TypeId const Parameter1 = 2;
-static TypeId const Parameter2 = 3;
+static TypeId const Unknown            = 0;
+static TypeId const Any                = 1;
+static TypeId const TemplateParameter1 = 2;
+static TypeId const TemplateParameter2 = 3;
 
 static TypeId const Void    = 20;
 static TypeId const Null    = 21;
@@ -63,6 +62,7 @@ static TypeId const ObjectMinId = 70;
 static TypeId const IMatrix     = 70;
 static TypeId const IArray      = 71;
 static TypeId const IMap        = 72;
+static TypeId const IState      = 73;
 
 static TypeId const String = 90;
 
