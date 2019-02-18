@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/placeholder.hpp"
-#include "math/ndarray.hpp"
+#include "math/tensor.hpp"
 #include <gtest/gtest.h>
 
 TEST(placeholder_test, setData)
 {
-  std::shared_ptr<fetch::math::NDArray<int>> data = std::make_shared<fetch::math::NDArray<int>>(8);
-  std::shared_ptr<fetch::math::NDArray<int>> gt   = std::make_shared<fetch::math::NDArray<int>>(8);
+  std::shared_ptr<fetch::math::Tensor<int>> data = std::make_shared<fetch::math::Tensor<int>>(8);
+  std::shared_ptr<fetch::math::Tensor<int>> gt   = std::make_shared<fetch::math::Tensor<int>>(8);
   std::size_t                                i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
@@ -31,9 +31,9 @@ TEST(placeholder_test, setData)
     gt->Set(i, e);
     i++;
   }
-  fetch::ml::ops::PlaceHolder<fetch::math::NDArray<int>> op;
+  fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::NDArray<int>> prediction = op.Forward({});
+  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));
@@ -41,8 +41,8 @@ TEST(placeholder_test, setData)
 
 TEST(placeholder_test, resetData)
 {
-  std::shared_ptr<fetch::math::NDArray<int>> data = std::make_shared<fetch::math::NDArray<int>>(8);
-  std::shared_ptr<fetch::math::NDArray<int>> gt   = std::make_shared<fetch::math::NDArray<int>>(8);
+  std::shared_ptr<fetch::math::Tensor<int>> data = std::make_shared<fetch::math::Tensor<int>>(8);
+  std::shared_ptr<fetch::math::Tensor<int>> gt   = std::make_shared<fetch::math::Tensor<int>>(8);
   {
     std::size_t i(0);
     for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
@@ -52,9 +52,9 @@ TEST(placeholder_test, resetData)
       i++;
     }
   }
-  fetch::ml::ops::PlaceHolder<fetch::math::NDArray<int>> op;
+  fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>> op;
   op.SetData(data);
-  std::shared_ptr<fetch::math::NDArray<int>> prediction = op.Forward({});
+  std::shared_ptr<fetch::math::Tensor<int>> prediction = op.Forward({});
 
   // test correct values
   ASSERT_TRUE(prediction->AllClose(*gt));

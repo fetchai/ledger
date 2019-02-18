@@ -33,7 +33,7 @@ namespace math {
 
 namespace details {
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathArray <ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                          memory::Range const &range, ArrayType &ret)
 {
   assert(array1.size() == array2.size());
@@ -59,7 +59,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   }
 }
 template <typename ArrayType>
-meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathArray <ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType const &array2,
                                               memory::Range const &range)
 {
   ArrayType ret{array1.size()};
@@ -86,6 +86,18 @@ meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
 }
 template <typename S>
 meta::IfIsArithmetic<S, S> Add(S const &scalar1, S const &scalar2)
+{
+  S ret;
+  Add(scalar1, scalar2, ret);
+  return ret;
+}
+template <typename S>
+meta::IfIsFixedPoint <S, void> Add(S const &scalar1, S const &scalar2, S &ret)
+{
+  ret = scalar1 + scalar2;
+}
+template <typename S>
+meta::IfIsFixedPoint<S, S> Add(S const &scalar1, S const &scalar2)
 {
   S ret;
   Add(scalar1, scalar2, ret);
@@ -122,9 +134,7 @@ meta::IfIsMathShapeArray<ArrayType, void> Add(T const &scalar, ArrayType const &
 template <typename T, typename ArrayType>
 meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
-  ArrayType ret{array.shape()};
-  Add(scalar, array, ret);
-  return ret;
+  return Add(array, scalar);
 }
 
 /////////////////////////////////////////
@@ -132,7 +142,7 @@ meta::IfIsMathShapeArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType co
 /////////////////////////////////////////
 
 template <typename T, typename ArrayType>
-meta::IfIsFixedPoint<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
+meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Add(ArrayType const &array, T const &scalar, ArrayType &ret)
 {
   assert(array.size() == ret.size());
   for (std::size_t i = 0; i < ret.size(); ++i)
@@ -140,8 +150,9 @@ meta::IfIsFixedPoint<ArrayType, void> Add(ArrayType const &array, T const &scala
     ret[i] = array[i] + scalar;
   }
 }
+
 template <typename T, typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array, T const &scalar,
+meta::IfIsMathShapelessArray <ArrayType, void> Add(ArrayType const &array, T const &scalar,
                                                   ArrayType &ret)
 {
   assert(array.size() == ret.size());
@@ -153,25 +164,26 @@ meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array, T cons
       array.data());
 }
 template <typename T, typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
+meta::IfIsMathShapelessArray <ArrayType, void> Add(T const &scalar, ArrayType const &array,
+                                                  ArrayType &ret)
+{
+  ret = Add(array, scalar, ret);
+}
+
+template <typename T, typename ArrayType>
+meta::IfIsMathShapelessArray <ArrayType, ArrayType> Add(ArrayType const &array, T const &scalar)
 {
   ArrayType ret{array.size()};
   Add(array, scalar, ret);
   return ret;
 }
 template <typename T, typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, void> Add(T const &scalar, ArrayType const &array,
-                                                  ArrayType &ret)
+meta::IfIsMathShapelessArray <ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
 {
-  ret = Add(array, scalar, ret);
+  return Add(array, scalar);
 }
-template <typename T, typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(T const &scalar, ArrayType const &array)
-{
-  ArrayType ret{array.size()};
-  Add(scalar, array, ret);
-  return ret;
-}
+
+
 
 ///////////////////////////////////////////////
 /// SHAPED ARRAY - SHAPED ARRAY  ADDITION   ///
@@ -226,7 +238,7 @@ meta::IfIsMathFixedPointShapelessArray<ArrayType, void> Add(ArrayType const &arr
 ////////////////////////////////////////////////////////////////////
 
 template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
+meta::IfIsMathShapelessArray <ArrayType, ArrayType> Add(ArrayType const &array1,
                                                        ArrayType const &array2)
 {
   assert(array1.size() == array2.size());
@@ -235,7 +247,7 @@ meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &array1,
   return ret;
 }
 template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    array1,
+meta::IfIsMathShapelessArray <ArrayType, ArrayType> Add(ArrayType const &    array1,
                                                        ArrayType const &    array2,
                                                        memory::Range const &range)
 {
@@ -245,7 +257,7 @@ meta::IfIsMathShapelessArray<ArrayType, ArrayType> Add(ArrayType const &    arra
   return ret;
 }
 template <typename ArrayType>
-meta::IfIsMathShapelessArray<ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
+meta::IfIsMathShapelessArray <ArrayType, void> Add(ArrayType const &array1, ArrayType const &array2,
                                                   ArrayType &ret)
 {
   assert(array1.size() == array2.size());
@@ -908,6 +920,7 @@ template <typename ArrayType, typename T>
 meta::IfIsMathShapelessArray<ArrayType, void> Divide(T const &scalar, ArrayType const &array,
                                                      ArrayType &ret)
 {
+  Divide(array, scalar, ret);
   assert(array.size() == ret.size());
   typename ArrayType::vector_register_type val(scalar);
 
@@ -1144,19 +1157,6 @@ template <typename S>
 meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
   ret = scalar1 / scalar2;
-}
-template <typename T>
-meta::IfIsFixedPoint<T, void> Divide(T const &scalar1, T const &scalar2, T &ret)
-{
-  ret = scalar1 / scalar2;
-}
-
-template <typename T>
-meta::IfIsFixedPoint<T, T> Divide(T const &scalar1, T const &scalar2)
-{
-  T ret;
-  Divide(scalar1, scalar2, ret);
-  return ret;
 }
 
 template <typename S>

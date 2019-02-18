@@ -27,8 +27,7 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::NDArray<float>, fetch::math::NDArray<double>,
-                                 fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
 
