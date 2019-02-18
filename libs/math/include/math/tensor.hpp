@@ -31,14 +31,14 @@ template <typename T>
 class Tensor  // Using name Tensor to not clash with current NDArray
 {
 public:
-  using Type                                  = T;
-  using SizeType                              = typename std::uint64_t;
+  using Type                             = T;
+  using SizeType                         = typename std::uint64_t;
   static const SizeType DefaultAlignment = 8;  // Arbitrary picked
 
 public:
-  Tensor(std::vector<SizeType>      shape   = std::vector<SizeType>(),
-         std::vector<SizeType>      strides = std::vector<SizeType>(),
-         std::vector<SizeType>      padding = std::vector<SizeType>(),
+  Tensor(std::vector<SizeType>           shape   = std::vector<SizeType>(),
+         std::vector<SizeType>           strides = std::vector<SizeType>(),
+         std::vector<SizeType>           padding = std::vector<SizeType>(),
          std::shared_ptr<std::vector<T>> storage = nullptr, SizeType offset = 0)
     : shape_(std::move(shape))
     , padding_(std::move(padding))
@@ -231,11 +231,10 @@ public:
   Tensor<T> Slice(SizeType i)
   {
     assert(shape_.size() > 1 && i < shape_[0]);
-    Tensor<T> ret(
-        std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
-        std::vector<SizeType>(std::next(strides_.begin()), strides_.end()), /* stride */
-        std::vector<SizeType>(std::next(padding_.begin()), padding_.end()), /* padding */
-        storage_, offset_ + i * DimensionSize(0));
+    Tensor<T> ret(std::vector<SizeType>(std::next(shape_.begin()), shape_.end()),     /* shape */
+                  std::vector<SizeType>(std::next(strides_.begin()), strides_.end()), /* stride */
+                  std::vector<SizeType>(std::next(padding_.begin()), padding_.end()), /* padding */
+                  storage_, offset_ + i * DimensionSize(0));
     ret.strides_ = std::vector<SizeType>(std::next(strides_.begin()), strides_.end());
     ret.padding_ = std::vector<SizeType>(std::next(padding_.begin()), padding_.end());
     return ret;
@@ -400,11 +399,11 @@ public:
   }
 
 private:
-  std::vector<SizeType>      shape_;
-  std::vector<SizeType>      padding_;
-  std::vector<SizeType>      strides_;
+  std::vector<SizeType>           shape_;
+  std::vector<SizeType>           padding_;
+  std::vector<SizeType>           strides_;
   std::shared_ptr<std::vector<T>> storage_;
-  SizeType                   offset_;
+  SizeType                        offset_;
 };
 }  // namespace math
 }  // namespace fetch
