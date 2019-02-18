@@ -28,7 +28,7 @@ namespace fetch {
 namespace math {
 
 template <typename T>
-class Tensor  // Using name Tensor to not clash with current NDArray
+class Tensor
 {
 public:
   using Type                           = T;
@@ -94,6 +94,12 @@ public:
       const  // TODO(private, 520) fix capitalisation (kepping it consistent with NDArray for now)
   {
     return shape_;
+  }
+
+  void Reshape(std::vector<size_t> new_shape)
+  {
+    assert(fetch::math::Product(shape_) == fetch::math::Product(new_shape));
+    shape_ = new_shape;
   }
 
   size_t DimensionSize(size_t dim) const

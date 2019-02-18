@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapelessArray <ArrayType, void> Log(ArrayType &x)
+fetch::math::meta::IfIsBlasArray <ArrayType, void> Log(ArrayType &x)
 {
   fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -53,20 +53,20 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
 //}
 
 template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Log(Type &x)
+meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x)
 {
   x = std::log(x);
 }
 
 //
 template <typename T>
-fetch::math::meta::IfIsFixedPoint<T, void> Log(T &n)
+meta::IfIsFixedPoint<T, void> Log(T &n)
 {
   n = T(std::log(double(n)));
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsMathArray<ArrayType, void> Log(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {

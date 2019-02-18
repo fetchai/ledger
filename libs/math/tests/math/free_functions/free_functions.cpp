@@ -23,6 +23,7 @@
 #include "core/random/lcg.hpp"
 #include "math/free_functions/free_functions.hpp"
 
+#include "core/fixed_point/fixed_point.hpp"
 #include "math/tensor.hpp"
 
 template <typename T>
@@ -44,20 +45,20 @@ TYPED_TEST(FreeFunctionsTest, sigmoid_2x2)
   TypeParam array1{4};
   array1.Reshape({2, 2});
 
-  array1[0] = TypeParam::Type(0.3);
-  array1[1] = TypeParam::Type(1.2);
-  array1[2] = TypeParam::Type(0.7);
-  array1[3] = TypeParam::Type(22);
+  array1[0] = typename TypeParam::Type(0.3);
+  array1[1] = typename TypeParam::Type(1.2);
+  array1[2] = typename TypeParam::Type(0.7);
+  array1[3] = typename TypeParam::Type(22);
 
   TypeParam output = fetch::math::Sigmoid(array1);
 
   TypeParam numpy_output{4};
   numpy_output.Reshape({2, 2});
 
-  numpy_output[0] = TypeParam::Type(0.57444252);
-  numpy_output[1] = TypeParam::Type(0.76852478);
-  numpy_output[2] = TypeParam::Type(0.66818777);
-  numpy_output[3] = TypeParam::Type(1);
+  numpy_output[0] = typename TypeParam::Type(0.57444252);
+  numpy_output[1] = typename TypeParam::Type(0.76852478);
+  numpy_output[2] = typename TypeParam::Type(0.66818777);
+  numpy_output[3] = typename TypeParam::Type(1);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
@@ -72,12 +73,12 @@ TYPED_TEST(FreeFunctionsTest, sigmoid_11)
   TypeParam output{1};
   TypeParam numpy_output{1};
 
-  input[0]        = TypeParam::Type(0.3);
-  numpy_output[0] = 0;
+  input[0]        = typename TypeParam::Type(0.3);
+  numpy_output.Set(0, typename TypeParam::Type(0));
 
   output = fetch::math::Sigmoid(input);
 
-  numpy_output[0] = TypeParam::Type(0.574442516811659);
+  numpy_output[0] = typename TypeParam::Type(0.574442516811659);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }
@@ -92,10 +93,10 @@ TYPED_TEST(FreeFunctionsTest, tanh_22)
   TypeParam array1{4};
   array1.Reshape({2, 2});
 
-  array1[0] = TypeParam::Type(0.3);
-  array1[1] = TypeParam::Type(1.2);
-  array1[2] = TypeParam::Type(0.7);
-  array1[3] = TypeParam::Type(22);
+  array1[0] = typename TypeParam::Type(0.3);
+  array1[1] = typename TypeParam::Type(1.2);
+  array1[2] = typename TypeParam::Type(0.7);
+  array1[3] = typename TypeParam::Type(22);
 
   TypeParam output = array1;
   fetch::math::Tanh(output);
@@ -103,10 +104,10 @@ TYPED_TEST(FreeFunctionsTest, tanh_22)
   TypeParam numpy_output{4};
   array1.Reshape({2, 2});
 
-  numpy_output[0] = TypeParam::Type(0.29131261);
-  numpy_output[1] = TypeParam::Type(0.83365461);
-  numpy_output[2] = TypeParam::Type(0.60436778);
-  numpy_output[3] = TypeParam::Type(1);
+  numpy_output[0] = typename TypeParam::Type(0.29131261);
+  numpy_output[1] = typename TypeParam::Type(0.83365461);
+  numpy_output[2] = typename TypeParam::Type(0.60436778);
+  numpy_output[3] = typename TypeParam::Type(1);
 
   ASSERT_TRUE(output.AllClose(numpy_output));
 }

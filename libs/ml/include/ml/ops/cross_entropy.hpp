@@ -80,7 +80,7 @@ public:
         }
       }
     }
-    ArrayType cel = fetch::math::Multiply(plogx, -1.0);
+    ArrayType cel = fetch::math::Multiply(plogx, DataType(-1.0));
 
     // every true class label now has a negative log loss
 

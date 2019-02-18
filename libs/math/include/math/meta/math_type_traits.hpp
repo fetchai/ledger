@@ -39,9 +39,6 @@ class ShapelessArray;
 template <typename T, typename C, bool H, bool W>
 class RectangularArray;
 
-template <typename T, typename C>
-class NDArray;
-
 template <typename T>
 class Tensor;
 
@@ -71,18 +68,17 @@ constexpr bool IsFixedPoint = HasFixedPointTag<T>::value;
 template <typename T>
 constexpr bool IsNotFixedPoint = !IsFixedPoint<T>;
 
+template <typename T>
+constexpr bool IsArithmetic = std::is_arithmetic<T>::value || IsFixedPoint<T>;
+
+template <typename T>
+constexpr bool IsNonFixedPointArithmetic = std::is_arithmetic<T>::value;
+
 template <typename T, typename R>
 using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<T>, R>::type;
 
 template <typename T, typename R>
 using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<T>, R>::type;
-
-template <typename T>
-constexpr bool IsArithmetic = std::is_arithmetic<T>::value;
-
-template <typename T>
-constexpr bool IsArithmeticOrFixedPoint = std::is_arithmetic<T>::value || IsFixedPoint<T>;
-
 
 ////////////////////////////////////////////////
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
@@ -92,7 +88,11 @@ template <typename T, typename R>
 using IfIsArithmetic = EnableIf<IsArithmetic<T>, R>;
 
 template <typename T, typename R>
-using IfIsArithmeticOrFixedPoint = EnableIf<IsArithmeticOrFixedPoint<T>, R>;
+using IfIsNonFixedPointArithmetic = EnableIf<IsNonFixedPointArithmetic<T>, R>;
+
+
+//template <typename T, typename R>
+//using IfIsArithmetic = fetch::meta::IfIsArithmetic<T, R>;
 
 // template <typename T, typename R>
 // using IfIsArithmetic = typename std::enable_if<fetch::meta::IfIsArithmetic<T, R> ||
@@ -139,11 +139,6 @@ struct IsMathImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C>
-struct IsMathImpl<NDArray<T, C>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T>
 struct IsMathImpl<Tensor<T>, R>
 {
@@ -170,20 +165,17 @@ struct IsMathArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C>
-struct IsMathArrayImpl<NDArray<T, C>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T>
 struct IsMathArrayImpl<Tensor<T>, R>
 {
   using Type = R;
 };
-// template <typename T, typename R>
-// using IfIsMathArray = IfIsNotFixedPoint<typename T::Type, typename IsMathArrayImpl<T, R>::Type>;
 template <typename T, typename R>
 using IfIsMathArray = typename IsMathArrayImpl<T, R>::Type;
+
+template <typename T, typename R>
+using IfIsMathNonFixedPointArray = IfIsNotFixedPoint<typename T::Type, IfIsMathArray<T, R>>;
+
 
 ///////////////////////////////////////////
 /// MATH ARRAY - SHAPE - NO FIXED POINT ///
@@ -198,20 +190,16 @@ struct IsMathShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-template <typename R, typename T, typename C>
-struct IsMathShapeArrayImpl<NDArray<T, C>, R>
-{
-  using Type = R;
-};
 template <typename R, typename T>
 struct IsMathShapeArrayImpl<Tensor<T>, R>
 {
   using Type = R;
 };
 template <typename T, typename R = void>
-// using IfIsMathShapeArray =
-//    IfIsNotFixedPoint<typename T::Type, typename IsMathShapeArrayImpl<T, R>::Type>;
 using IfIsMathShapeArray = typename IsMathShapeArrayImpl<T, R>::Type;
+
+template <typename T, typename R = void>
+using IfIsMathNonFixedPointShapeArray = IfIsNotFixedPoint<typename T::Type, IfIsMathShapeArray<T, R>>;
 
 //////////////////////////////////////////////
 /// MATH ARRAY - NO SHAPE - NO FIXED POINT ///
@@ -227,14 +215,11 @@ struct IsMathShapelessArrayImpl<ShapelessArray<T, C>, R>
   using Type = R;
 };
 
-//template <typename T, typename R = void>
-//using IfIsMathShapelessArray =
-//    IfIsNotFixedPoint<typename T::Type, typename IsMathShapelessArrayImpl<T, R>::Type>;
 template <typename T, typename R = void>
 using IfIsMathShapelessArray = typename IsMathShapelessArrayImpl<T, R>::Type;
 
-// template <typename T, typename R = void>
-// using IfIsMathShapelessArray = typename IsMathShapelessArrayImpl<T, R>::Type;
+template <typename T, typename R = void>
+using IfIsMathNonFixedPointShapelessArray = IfIsNotFixedPoint<typename T::Type, IfIsMathShapelessArray<T, R>>;
 
 ////////////////////////////////
 /// MATH ARRAY - FIXED POINT ///
@@ -254,16 +239,14 @@ struct IsMathFixedPointArrayImpl<fetch::math::RectangularArray<T, C, H, W>, R>
 {
   using Type = R;
 };
-//template <typename R, typename T, typename C>
-//struct IsMathFixedPointArrayImpl<NDArray<T, C>, R>
-//{
-//  using Type = R;
-//};
+template <typename R, typename T>
+struct IsMathFixedPointArrayImpl<fetch::math::Tensor<T>, R>
+{
+  using Type = R;
+};
 template <typename T, typename R>
 using IfIsMathFixedPointArray =
     IfIsFixedPoint<typename T::Type, typename IsMathFixedPointArrayImpl<T, R>::Type>;
-//template <typename T, typename R>
-//using IfIsMathFixedPointArray = typename IsMathFixedPointArrayImpl<T, R>::Type;
 
 ///////////////////////////////////////////
 /// MATH ARRAY - SHAPE - FIXED POINT ///
@@ -278,20 +261,18 @@ struct IsMathFixedPointShapeArrayImpl<fetch::math::RectangularArray<T, C, H, W>,
 {
   using Type = R;
 };
-//template <typename R, typename T, typename C>
-//struct IsMathFixedPointShapeArrayImpl<NDArray<T, C>, R>
-//{
-//  using Type = R;
-//};
+template <typename R, typename T>
+struct IsMathFixedPointShapeArrayImpl<fetch::math::Tensor<T>, R>
+{
+  using Type = R;
+};
 template <typename T, typename R>
 using IfIsMathFixedPointShapeArray =
     IfIsFixedPoint<typename T::Type, typename IsMathFixedPointShapeArrayImpl<T, R>::Type>;
-//template <typename T, typename R>
-//using IfIsMathFixedPointShapeArray = typename IsMathFixedPointShapeArrayImpl<T, R>::Type;
 
-/////////////////////////////////////////////
-///// MATH ARRAY - NO SHAPE - FIXED POINT ///
-/////////////////////////////////////////////
+///////////////////////////////////////////
+/// MATH ARRAY - NO SHAPE - FIXED POINT ///
+///////////////////////////////////////////
 
 template <typename A, typename R>
 struct IsMathFixedPointShapelessArrayImpl
@@ -305,50 +286,44 @@ struct IsMathFixedPointShapelessArrayImpl<ShapelessArray<T, C>, R>
 template <typename T, typename R = void>
 using IfIsMathFixedPointShapelessArray =
     IfIsFixedPoint<typename T::Type, typename IsMathFixedPointShapelessArrayImpl<T, R>::Type>;
-//template <typename T, typename R = void>
-//using IfIsMathFixedPointShapelessArray = typename IsMathFixedPointShapelessArrayImpl<T, R>::Type;
 
-
-
-
-//
 //////////////////////////////////////
 ///// BLAS ARRAY SPECIALIZATIONS
 //////////////////////////////////////
-//
-//template <typename A, typename R>
-//struct IsBlasArrayImpl
-//{
-//};
-//template <typename R, typename T, typename C>
-//struct IsBlasArrayImpl<ShapelessArray<T, C>, R>
-//{
-//  using Type = R;
-//};
+
+template <typename A, typename R>
+struct IsBlasArrayImpl
+{
+};
+template <typename R, typename T, typename C>
+struct IsBlasArrayImpl<ShapelessArray<T, C>, R>
+{
+  using Type = R;
+};
 //template <typename R, typename T, typename C, bool H, bool W>
 //struct IsBlasArrayImpl<RectangularArray<T, C, H, W>, R>
 //{
 //  using Type = R;
 //};
-//template <typename A, typename R>
-//using IfIsBlasArray = typename IsBlasArrayImpl<A, R>::Type;
-//
+template <typename T, typename R = void>
+using IfIsBlasArray = IfIsNotFixedPoint <typename T::Type, typename IsBlasArrayImpl<T, R>::Type>;
+
 //////////////////////////////////////
 ///// NON BLAS ARRAY SPECIALIZATIONS
 //////////////////////////////////////
-//
-//template <typename A, typename R>
-//struct IsNonBlasArrayImpl
-//{
-//};
-//template <typename R, typename T, typename C>
-//struct IsNonBlasArrayImpl<NDArray<T, C>, R>
-//{
-//  using Type = R;
-//};
-//template <typename A, typename R>
-//using IfIsNonBlasArray = typename IsNonBlasArrayImpl<A, R>::Type;
-//
+
+template <typename A, typename R>
+struct IsNonBlasArrayImpl
+{
+};
+template <typename R, typename T>
+struct IsNonBlasArrayImpl<Tensor<T>, R>
+{
+  using Type = R;
+};
+template <typename A, typename R>
+using IfIsNonBlasArray = IfIsNotFixedPoint <typename A::Type, typename IsNonBlasArrayImpl<A, R>::Type>;
+
 //////////////////////////////////////
 ///// BLAS ARRAY WITH SHAPE SPECIALIZATIONS
 //////////////////////////////////////
@@ -363,7 +338,7 @@ using IfIsMathFixedPointShapelessArray =
 //  using Type = R;
 //};
 //template <typename A, typename R>
-//using IfIsBlasAndShapedArray = typename IsBlasAndShapedArrayImpl<A, R>::Type;
+//using IsBlasAndShapedArray = typename IsBlasAndShapedArrayImpl<A, R>::Type;
 //
 //////////////////////////////////////
 ///// BLAS ARRAY WITHOUT SHAPE SPECIALIZATIONS
@@ -379,7 +354,7 @@ using IfIsMathFixedPointShapelessArray =
 //  using Type = R;
 //};
 //template <typename A, typename R>
-//using IfIsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
+//using IsBlasAndNoShapeArray = typename IsBlasAndNoShapeArrayLike<A, R>::Type;
 
 }  // namespace meta
 }  // namespace math

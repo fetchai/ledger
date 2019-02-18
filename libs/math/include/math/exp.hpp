@@ -21,7 +21,7 @@
 #include "math/shapeless_array.hpp"
 #include "vectorise/memory/range.hpp"
 
-#include "math/ndarray.hpp"
+//#include "math/ndarray.hpp"
 
 #include <cmath>
 
