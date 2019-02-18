@@ -31,10 +31,11 @@ public:
     , std::shared_ptr<fetch::math::Tensor<float>>(new fetch::math::Tensor<float>(shape))
   {}
 
-  static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                   fetch::vm::Ptr<fetch::vm::Array<uint64_t>> shape)
+  static fetch::vm::Ptr<TensorWrapper> Constructor(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+      fetch::vm::Ptr<fetch::vm::Array<std::size_t>> shape)
   {
-    return new TensorWrapper(vm, type_id, shape->elements);
+    return {new TensorWrapper(vm, type_id, shape->elements)};
   }
 
   void SetAt(uint64_t index, float value)
@@ -51,7 +52,7 @@ public:
 inline void CreateTensor(fetch::vm::Module &module)
 {
   module.CreateClassType<TensorWrapper>("Tensor")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<uint64_t>>>()
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<std::size_t>>>()
       .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
       .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
 }
