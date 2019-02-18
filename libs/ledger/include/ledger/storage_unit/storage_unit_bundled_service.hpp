@@ -47,14 +47,15 @@ public:
   StorageUnitBundledService &operator=(StorageUnitBundledService const &) = delete;
   StorageUnitBundledService &operator=(StorageUnitBundledService &&) = delete;
 
-  void Setup(std::string const &storage_path, std::size_t const &lanes, uint16_t const &port,
+  void Setup(crypto::Identity const &hub_identity, std::string const &storage_path,
+             std::size_t const &lanes, uint16_t const &port,
              fetch::network::NetworkManager const &tm, std::size_t verification_threads,
              bool refresh_storage = false)
   {
     for (std::size_t i = 0; i < lanes; ++i)
     {
       auto id = network::ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)};
-      lanes_.push_back(std::make_shared<LaneService>(storage_path, uint32_t(i), lanes,
+      lanes_.push_back(std::make_shared<LaneService>(hub_identity, storage_path, uint32_t(i), lanes,
                                                      uint16_t(port + i), NetworkId(id.ToString("")),
                                                      tm, verification_threads, refresh_storage));
     }

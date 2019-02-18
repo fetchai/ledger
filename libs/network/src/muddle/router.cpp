@@ -490,14 +490,17 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 bool Router::IsConnected(Address const &target) const
 {
   auto raw_address = ConvertAddress(target);
-  auto iter        = routing_table_.find(raw_address);
   bool connected   = false;
-  if (iter != routing_table_.end())
   {
-    auto conn = register_.LookupConnection(iter->second.handle).lock();
-    if (conn)
+    FETCH_LOCK(routing_table_lock_);
+    auto iter = routing_table_.find(raw_address);
+    if (iter != routing_table_.end())
     {
-      connected = conn->is_alive();
+      auto conn = register_.LookupConnection(iter->second.handle).lock();
+      if (conn)
+      {
+        connected = conn->is_alive();
+      }
     }
   }
   return connected;
@@ -552,7 +555,13 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
       // remove association of the previous handle with the address (if required)
       if (prev_handle)
       {
-        routing_table_handles_[prev_handle].erase(address);
+        auto &addresses = routing_table_handles_[prev_handle];
+        addresses.erase(address);
+        // dropping orphaned handle
+        if (addresses.empty())
+        {
+          routing_table_handles_.erase(prev_handle);
+        }
       }
 
       // associate the new handle with the address
@@ -577,7 +586,7 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
     char const *route_type = (direct) ? "direct" : "normal";
 
     FETCH_LOG_INFO(LOGGING_NAME, "==> Adding ", route_type,
-                   " route for: ", ToBase64(ToConstByteArray(address)));
+                   " route for: ", ToBase64(ToConstByteArray(address)), ", handle=", handle);
   }
 
   return update_complete;
@@ -666,6 +675,7 @@ void Router::KillConnection(Handle handle, Address const &peer)
     conn->Close();
     routing_table_.erase(ConvertAddress(peer));
     direct_address_map_.erase(handle);
+    FETCH_LOG_WARN(LOGGING_NAME, "KILL CONNECTION: handle=", handle, ", address=", peer.ToBase64());
   }
   else
   {

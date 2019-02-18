@@ -72,9 +72,10 @@ public:
 
   // TODO(issue 7): Make config JSON
   LaneService(
-      std::string const &storage_path, uint32_t const &lane, uint32_t const &total_lanes,
-      uint16_t port, NetworkId network_id, fetch::network::NetworkManager tm,
-      std::size_t verification_threads, bool refresh_storage = false,
+      crypto::Identity const &hub_identity, std::string const &storage_path, uint32_t const &lane,
+      uint32_t const &total_lanes, uint16_t port, NetworkId network_id,
+      fetch::network::NetworkManager tm, std::size_t verification_threads,
+      bool                      refresh_storage              = false,
       std::chrono::milliseconds sync_service_timeout         = std::chrono::milliseconds(5000),
       std::chrono::milliseconds sync_service_promise_timeout = std::chrono::milliseconds(2000),
       std::chrono::milliseconds sync_service_fetch_period    = std::chrono::milliseconds(5000))
@@ -82,6 +83,9 @@ public:
     , lane_(lane)
   {
     std::unique_ptr<crypto::Prover> certificate_ = std::make_unique<crypto::ECDSASigner>();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_,
+                   " IDENTITY = ", certificate_->identity().identifier().ToBase64());
 
     lane_identity_ = std::make_shared<LaneIdentity>(tm, certificate_->identity());
     muddle_        = std::make_shared<Muddle>(network_id, std::move(certificate_), tm);
@@ -117,7 +121,7 @@ public:
     server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
     // Controller
-    controller_          = std::make_shared<LaneController>(lane_identity_, muddle_);
+    controller_          = std::make_shared<LaneController>(lane_identity_, hub_identity, muddle_);
     controller_protocol_ = std::make_unique<LaneControllerProtocol>(controller_.get());
     server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
@@ -191,7 +195,10 @@ public:
 
     // TX Sync service
     workthread_ = std::make_shared<BackgroundedWorkThread>(
-        &bg_work_, "BW:LS-" + std::to_string(lane_), [this]() { tx_sync_service_->Work(); });
+        &bg_work_, "BW:LS-" + std::to_string(lane_), [this]() {
+          tx_sync_service_->Work();
+          controller_->WorkCycle();
+        });
     workthread_->ChangeWaitTime(std::chrono::milliseconds{unsigned{SYNC_PERIOD_MS}});
   }
 

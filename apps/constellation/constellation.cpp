@@ -184,8 +184,8 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   reactor_.Attach(block_coordinator_.GetWeakRunnable());
 
   // configure all the lane services
-  lane_services_.Setup(cfg_.db_prefix, cfg_.num_lanes(), lane_port_start_, network_manager_,
-                       cfg_.verification_threads);
+  lane_services_.Setup(muddle_.identity(), cfg_.db_prefix, cfg_.num_lanes(), lane_port_start_,
+                       network_manager_, cfg_.verification_threads);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));

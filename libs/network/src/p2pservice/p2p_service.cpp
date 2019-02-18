@@ -129,7 +129,15 @@ void P2PService::WorkCycle()
     // ideally desired peer list because this means that we know we've
     // got one connection to the target and hence the subsystem
     // connections can be more expected to work.
-    UpdateManifests(active_addresses);
+    AddressSet non_muddle_addresses;
+    for (auto const &active_conn : active_connections)
+    {
+      if (Uri::Scheme::Tcp == active_conn.second.scheme())
+      {
+        non_muddle_addresses.insert(active_conn.first);
+      }
+    }
+    UpdateManifests(non_muddle_addresses);
 
     // At this point, if we aren't doing the peer-churning section
     // above, we'll "fake" the trust system's contents by adding the

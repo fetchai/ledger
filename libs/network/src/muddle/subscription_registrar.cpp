@@ -146,12 +146,12 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 
 void SubscriptionRegistrar::Debug(std::string const &prefix) const
 {
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "SubscriptionRegistrar: --------------------------------------");
+  auto px = prefix + ": ";
+  FETCH_LOG_WARN(LOGGING_NAME, px, "SubscriptionRegistrar: --------------------------------------");
 
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(), " entries.");
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+  FETCH_LOG_WARN(LOGGING_NAME, px, "SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(),
+                 " entries.");
+  FETCH_LOG_WARN(LOGGING_NAME, px,
                  "SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(),
                  " entries.");
 
@@ -159,7 +159,7 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
   {
     auto numb = std::get<0>(mapping.first);
     auto addr = std::get<1>(mapping.first);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
+    FETCH_LOG_WARN(LOGGING_NAME, px,
                    "SubscriptionRegistrar:address_dispatch_map_ Addr=", ToBase64(addr),
                    "  Service=", ((numb >> 16) & 0xFFFF));
   }
@@ -168,10 +168,10 @@ void SubscriptionRegistrar::Debug(std::string const &prefix) const
     auto numb = mapping.first;
     auto serv = (numb >> 16) & 0xFFFF;
     auto chan = numb & 0xFFFF;
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
+    FETCH_LOG_WARN(LOGGING_NAME, px, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
                    "  Chan=", chan);
   }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
+  FETCH_LOG_WARN(LOGGING_NAME, px,
                  ":subscriptionRegistrar: --------------------------------------");
 }
 

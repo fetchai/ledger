@@ -156,9 +156,9 @@ public:
   TestService(uint16_t port, NetworkManager const &tm, uint32_t lane = 0, uint32_t total_lanes = 1,
               std::chrono::milliseconds timeout              = std::chrono::milliseconds(2000),
               std::size_t               verification_threads = 1)
-    : Super("test_", lane, total_lanes, port, NetworkId("Lane" + std::to_string(lane)), tm,
-            verification_threads, true, timeout, std::chrono::milliseconds(1000),
-            std::chrono::milliseconds(1000))
+    : Super(crypto::ECDSASigner{}.identity(), "test_", lane, total_lanes, port,
+            NetworkId("Lane" + std::to_string(lane)), tm, verification_threads, true, timeout,
+            std::chrono::milliseconds(1000), std::chrono::milliseconds(1000))
   {}
 };
 
@@ -365,6 +365,11 @@ TEST(storage_object_store_sync_gtest, transaction_store_protocol_local_threads_c
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
   } while (!services.back()->SyncIsReady());
+
+  // TODO(private issue): The `LaneService::SyncIsReady()` method does not seem to do justice to
+  //                      what we need here (wait until all transactions have actually synced across
+  //                      all services), thus as quick workaround, we need to wait here a bit.
+  std::this_thread::sleep_for(std::chrono::milliseconds(6000));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Verifying new joiner sync.");
 

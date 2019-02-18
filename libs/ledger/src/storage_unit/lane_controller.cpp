@@ -38,8 +38,10 @@
 namespace fetch {
 namespace ledger {
 
-LaneController::LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle)
+LaneController::LaneController(std::weak_ptr<LaneIdentity> identity, crypto::Identity hub_identity,
+                               MuddlePtr muddle)
   : lane_identity_(std::move(identity))
+  , hub_identity_{std::move(hub_identity)}
   , muddle_(std::move(muddle))
 {}
 
@@ -68,15 +70,12 @@ void LaneController::WorkCycle()
     }
   }
 }
+
 /// External controls
 /// @{
-void LaneController::RPCConnectToURIs(const std::vector<Uri> &uris)
+void LaneController::RPCConnectToURIs(const std::vector<Uri> & /*uris*/)
 {
-  for (auto const &uri : uris)
-  {
-    FETCH_LOG_VARIABLE(uri);
-    FETCH_LOG_INFO(LOGGING_NAME, "WILL ATTEMPT TO CONNECT TO: ", uri.uri());
-  }
+  TODO_FAIL("Needs to be implemented");
 }
 
 void LaneController::Shutdown()
@@ -93,28 +92,34 @@ void LaneController::StopSync()
 {
   TODO_FAIL("Needs to be implemented");
 }
+/// @}
 
+/// Internal controls
+/// @{
 void LaneController::UseThesePeers(UriSet uris)
 {
   FETCH_LOCK(desired_connections_mutex_);
   desired_connections_ = std::move(uris);
-
+  FETCH_LOG_WARN(LOGGING_NAME, "UseThesePeers(URIs): URIs.size()=", desired_connections_.size());
   {
     FETCH_LOCK(services_mutex_);
+    auto       ident   = lane_identity_.lock();
+    auto const log_fnc = [ident](auto const &uri_str, auto const &prefix) {
+      if (ident)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, prefix, " : ", ident->GetLaneNumber(), " : ", uri_str);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, prefix, " :( : ", uri_str);
+      }
+    };
+
     for (auto &peer_conn : peer_connections_)
     {
       if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
       {
-        auto ident = lane_identity_.lock();
-        if (ident)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane ", ident->GetLaneNumber(), " : ",
-                         peer_conn.first.ToString());
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "DROP PEER to lane :( : ", peer_conn.first.ToString());
-        }
+        log_fnc(peer_conn.first.ToString(), "DROP PEER from lane");
         muddle_->DropPeer(peer_conn.first);
       }
     }
@@ -123,16 +128,7 @@ void LaneController::UseThesePeers(UriSet uris)
     {
       if (peer_connections_.find(uri) == peer_connections_.end())
       {
-        auto ident = lane_identity_.lock();
-        if (ident)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane ", ident->GetLaneNumber(), " : ",
-                         uri.ToString());
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "ADD PEER to lane :( : ", uri.ToString());
-        }
+        log_fnc(uri.ToString(), "ADD PEER to lane");
         muddle_->AddPeer(uri);
       }
     }
@@ -143,47 +139,51 @@ LaneController::AddressSet LaneController::GetPeers()
 {
   FETCH_LOCK(desired_connections_mutex_);
   AddressSet addresses;
-  for (auto &uri : desired_connections_)
+
+  auto const &connections = muddle_->GetConnections(true);
+  for (auto const &conn : connections)
   {
-    Address address;
-    if (muddle_->UriToDirectAddress(uri, address))
+    if (Uri::Scheme::Unknown != conn.second.scheme() && conn.first != hub_identity_.identifier())
     {
-      addresses.insert(address);
+      addresses.insert(conn.first);
     }
   }
+
   return addresses;
 }
 
 void LaneController::GeneratePeerDeltas(UriSet &create, UriSet &remove)
 {
-  FETCH_LOCK(desired_connections_mutex_);
-  FETCH_LOCK(services_mutex_);
-
-  // this method is the only one which needs both mutexes. It is
-  // the moving interface between the DESIRED goal and the acting
-  // to get closer to it. The mutexes are acquired in alphabetic
-  // order.
-
-  auto ident = lane_identity_.lock();
-  if (!ident)
   {
-    return;
-  }
+    FETCH_LOCK(desired_connections_mutex_);
+    FETCH_LOCK(services_mutex_);
 
-  for (auto &peer_conn : peer_connections_)
-  {
-    if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
+    // this method is the only one which needs both mutexes. It is
+    // the moving interface between the DESIRED goal and the acting
+    // to get closer to it. The mutexes are acquired in alphabetic
+    // order.
+
+    auto ident = lane_identity_.lock();
+    if (!ident)
     {
-      remove.insert(peer_conn.first);
+      return;
     }
-  }
 
-  for (auto &uri : desired_connections_)
-  {
-    if (peer_connections_.find(uri) == peer_connections_.end())
+    for (auto &peer_conn : peer_connections_)
     {
-      create.insert(uri);
-      FETCH_LOG_WARN(LOGGING_NAME, "Scheduling Connection To ", uri.ToString());
+      if (desired_connections_.find(peer_conn.first) == desired_connections_.end())
+      {
+        remove.insert(peer_conn.first);
+      }
+    }
+
+    for (auto &uri : desired_connections_)
+    {
+      if (peer_connections_.find(uri) == peer_connections_.end())
+      {
+        create.insert(uri);
+        FETCH_LOG_WARN(LOGGING_NAME, "Scheduling Connection To ", uri.ToString());
+      }
     }
   }
 }

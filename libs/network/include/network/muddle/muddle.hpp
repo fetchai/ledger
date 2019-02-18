@@ -248,7 +248,7 @@ inline MuddleEndpoint &Muddle::AsEndpoint()
 
 inline void Muddle::AddPeer(Uri const &peer)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), "to  muddle ",
+  FETCH_LOG_WARN(LOGGING_NAME, "AddPeer: ", peer.ToString(), " to  muddle ",
                  byte_array::ToBase64(identity_.identifier()));
   clients_.AddPersistentPeer(peer);
 }

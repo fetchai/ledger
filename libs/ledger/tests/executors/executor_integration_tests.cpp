@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
+#include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "ledger/chain/mutable_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -32,6 +33,10 @@
 #include <memory>
 #include <random>
 #include <thread>
+
+namespace fetch {
+
+namespace {
 
 using LaneIndex = fetch::ledger::StorageUnitClient::LaneIndex;
 
@@ -145,7 +150,8 @@ protected:
     // --- Start the STORAGE SERVICE --------------------------------
 
     storage_service_ = std::make_shared<StorageUnitBundledService>();
-    storage_service_->Setup("teststore", NUM_LANES, LANE_RPC_PORT_START, *network_manager_, true);
+    storage_service_->Setup(crypto::ECDSASigner{}.identity(), "teststore", NUM_LANES,
+                            LANE_RPC_PORT_START, *network_manager_, true);
     storage_service_->Start();
 
     storage_.reset(new StorageUnitClient{*network_manager_});
@@ -292,3 +298,6 @@ TEST_F(ExecutorIntegrationTests, CheckTokenContract)
   auto const status = executor_->Execute(tx.digest(), 0, {0});
   EXPECT_EQ(status, fetch::ledger::ExecutorInterface::Status::SUCCESS);
 }
+
+}  // namespace
+}  // namespace fetch

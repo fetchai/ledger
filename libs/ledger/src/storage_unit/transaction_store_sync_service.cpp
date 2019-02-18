@@ -21,6 +21,14 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
+// Reverse bits in byte
+uint8_t Reverse(uint8_t c)
+{
+  // https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64Bits
+  return static_cast<uint8_t>(((c * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
+}
+}  // namespace
 
 const std::size_t TransactionStoreSyncService::BATCH_SIZE = 30;
 
@@ -57,9 +65,9 @@ TransactionStoreSyncService::~TransactionStoreSyncService()
 {
   FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": teardown sync service");
   muddle_->Shutdown();
-  client_ = nullptr;
-  muddle_ = nullptr;
-  store_  = nullptr;
+  client_.reset();
+  muddle_.reset();
+  store_.reset();
   FETCH_LOG_WARN(LOGGING_NAME, "Lane ", id_, ": sync service done!");
 }
 
@@ -94,7 +102,8 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   {
   case State::INITIAL:
   {
-    result = false;
+    current_state = State::QUERY_OBJECT_COUNTS;
+    result        = true;
     break;
   }
   case State::QUERY_OBJECT_COUNTS:
@@ -252,6 +261,7 @@ bool TransactionStoreSyncService::PossibleNewState(State &current_state)
   {
     if (!fetch_object_wait_timeout_.IsDue())
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "QUERY_OBJECTS: NOT due yet");
       result = false;
       break;
     }

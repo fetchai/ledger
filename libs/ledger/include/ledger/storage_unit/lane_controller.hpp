@@ -40,7 +40,8 @@ public:
   static constexpr char const *LOGGING_NAME = "LaneController";
 
   // Construction / Destruction
-  LaneController(std::weak_ptr<LaneIdentity> identity, MuddlePtr muddle);
+  LaneController(std::weak_ptr<LaneIdentity> identity, crypto::Identity hub_identity,
+                 MuddlePtr muddle);
   LaneController(LaneController const &) = delete;
   LaneController(LaneController &&)      = delete;
   ~LaneController()                      = default;
@@ -68,6 +69,7 @@ public:
 
 private:
   std::weak_ptr<LaneIdentity> lane_identity_;
+  crypto::Identity            hub_identity_;
 
   // Most methods do not need both mutexes. If they do, they should
   // acquire them in alphabetic order
