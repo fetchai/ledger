@@ -32,7 +32,7 @@ class Tensor
 {
 public:
   using Type                           = T;
-  static const size_t DefaultAlignment = 1;  // Arbitrary picked
+  static const size_t DefaultAlignment = 8;  // Arbitrary picked
 
 public:
   Tensor(std::vector<size_t>             shape   = std::vector<size_t>(),
