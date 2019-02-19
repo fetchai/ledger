@@ -56,7 +56,7 @@ public:
     ArrayPtrType       weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
     std::random_device rd{};
     std::mt19937       gen{rd()};
-    // https://medium.com/usf-msds/deep-learning-best-practices-1-weight-initialization-14e5c0295b94
+    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in)));
     for (std::uint64_t i(0); i < weights->size(); ++i)
     {
@@ -64,11 +64,6 @@ public:
     }
     this->SetInput(name + "_Weights", weights);
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
-    // Naive random init, range [-.5, .5]
-    for (std::uint64_t i(0); i < bias->size(); ++i)
-    {
-      bias->At(i) = typename ArrayType::Type(rng(gen));
-    }
     this->SetInput(name + "_Bias", bias);
   }
 };
