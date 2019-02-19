@@ -45,7 +45,7 @@ struct Matrix : public IMatrix
 
   Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
     : IMatrix(vm, type_id)
-    , matrix(std::vector<std::size_t>(columns, rows))
+    , matrix(std::vector<typename fetch::math::Tensor<T>::SizeType>(columns, rows))
   {}
 
   static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
@@ -352,7 +352,7 @@ struct Matrix : public IMatrix
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.Get(std::vector<std::size_t>(column, row));
+    return &matrix.Get(std::vector<typename fetch::math::Tensor<T>::SizeType>(column, row));
   }
 
   virtual void *FindElement() override
