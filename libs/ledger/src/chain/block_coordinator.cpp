@@ -184,9 +184,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronizing()
       FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Path..: ", ToBase64(block->body.hash));
     }
 
-    auto         block_path_it = blocks.crbegin();
-    BlockPtr     common_parent = *block_path_it++;
-    BlockPtr     next_block    = *block_path_it++;
+    auto     block_path_it = blocks.crbegin();
+    BlockPtr common_parent = *block_path_it++;
+    BlockPtr next_block    = *block_path_it++;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Common Parent: ", ToBase64(common_parent->body.hash));
     FETCH_LOG_INFO(LOGGING_NAME, "Sync: Next Block...: ", ToBase64(next_block->body.hash));
@@ -227,7 +227,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronized(State current, State pr
   else if (mining_ && (Clock::now() >= next_block_time_))
   {
     // create a new block
-    next_block_ = std::make_unique<Block>();
+    next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = identity_;
@@ -438,8 +438,7 @@ BlockCoordinator::State BlockCoordinator::OnPackNewBlock()
     FETCH_LOG_INFO(LOGGING_NAME,
                    "New Block: Merkle.......: ", ToBase64(next_block_->body.merkle_hash));
     FETCH_LOG_INFO(LOGGING_NAME, "New Block: Block Number.: ", next_block_->body.block_number);
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "New Block: Miner........: ", ToBase64(next_block_->body.miner));
+    FETCH_LOG_INFO(LOGGING_NAME, "New Block: Miner........: ", ToBase64(next_block_->body.miner));
     FETCH_LOG_INFO(LOGGING_NAME, "New Block: Log2 Lanes...: ", next_block_->body.log2_num_lanes);
 
     std::size_t slice_index{1};

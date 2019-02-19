@@ -21,8 +21,8 @@
 
 #include <benchmark/benchmark.h>
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
 namespace {
 

@@ -281,11 +281,13 @@ void MainChainRpcService::RequestedChainArrived(Address const &address, BlockLis
 
       if (BlockStatus::ADDED == status)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Received Block: ", ToBase64(it->body.hash), " from: ", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Received Block: ", ToBase64(it->body.hash),
+                       " from: ", ToBase64(address));
       }
       else if (BlockStatus::LOOSE == status)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Received Loose Block: ", ToBase64(it->body.hash), " from: ", ToBase64(address));
+        FETCH_LOG_INFO(LOGGING_NAME, "Received Loose Block: ", ToBase64(it->body.hash),
+                       " from: ", ToBase64(address));
 
         // request the loose block to the remote?
         AddLooseBlock(it->body.hash, address);

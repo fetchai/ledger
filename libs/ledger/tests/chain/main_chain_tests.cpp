@@ -33,7 +33,7 @@ using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::byte_array::ToBase64; // needed for debug messages
+using fetch::byte_array::ToBase64;  // needed for debug messages
 
 using Rng               = std::mt19937_64;
 using BlockHash         = Block::Digest;
@@ -45,15 +45,11 @@ static constexpr char const *LOGGING_NAME = "MainChainTests";
 
 static bool IsSameBlock(Block const &a, Block const &b)
 {
-  return (a.body.hash == b.body.hash) &&
-    (a.body.previous_hash == b.body.previous_hash) &&
-    (a.body.merkle_hash == b.body.merkle_hash) &&
-    (a.body.block_number == b.body.block_number) &&
-    (a.body.miner == b.body.miner) &&
-    (a.body.log2_num_lanes == b.body.log2_num_lanes) &&
-    (a.body.slices == b.body.slices) &&
-    (a.proof == b.proof) &&
-    (a.nonce == b.nonce);
+  return (a.body.hash == b.body.hash) && (a.body.previous_hash == b.body.previous_hash) &&
+         (a.body.merkle_hash == b.body.merkle_hash) &&
+         (a.body.block_number == b.body.block_number) && (a.body.miner == b.body.miner) &&
+         (a.body.log2_num_lanes == b.body.log2_num_lanes) && (a.body.slices == b.body.slices) &&
+         (a.proof == b.proof) && (a.nonce == b.nonce);
 }
 
 template <typename Container, typename Value>
@@ -143,7 +139,7 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash); // because of hash values
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);  // because of hash values
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
@@ -179,7 +175,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));
-  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash); // because of hash values
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), side2->body.hash);  // because of hash values
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main3));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main3->body.hash);
 
@@ -340,7 +336,7 @@ TEST_P(MainChainTests, CheckReindexingOfWithLooseTips)
   }
 
   // cache the state of the original tips
-  auto const original_tips = chain_->GetTips();
+  auto const original_tips  = chain_->GetTips();
   auto const missing_hashes = chain_->GetMissingBlockHashes();
   ASSERT_TRUE(!missing_hashes.empty());
 
@@ -422,21 +418,30 @@ TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
   auto main2   = generator_->Generate(main1);
   auto main3   = generator_->Generate(main2);
   auto main4   = generator_->Generate(main3);
-  auto main5   = generator_->Generate(main4); // break
+  auto main5   = generator_->Generate(main4);  // break
   auto main6   = generator_->Generate(main5);
   auto main7   = generator_->Generate(main6);
   auto main8   = generator_->Generate(main7);
   auto main9   = generator_->Generate(main8);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "M1: ", ToBase64(main1->body.hash), " <- ", ToBase64(main1->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M2: ", ToBase64(main2->body.hash), " <- ", ToBase64(main2->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M3: ", ToBase64(main3->body.hash), " <- ", ToBase64(main3->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M4: ", ToBase64(main4->body.hash), " <- ", ToBase64(main4->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M5: ", ToBase64(main5->body.hash), " <- ", ToBase64(main5->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M6: ", ToBase64(main6->body.hash), " <- ", ToBase64(main6->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M7: ", ToBase64(main7->body.hash), " <- ", ToBase64(main7->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M8: ", ToBase64(main8->body.hash), " <- ", ToBase64(main8->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M9: ", ToBase64(main9->body.hash), " <- ", ToBase64(main9->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M1: ", ToBase64(main1->body.hash), " <- ",
+                 ToBase64(main1->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M2: ", ToBase64(main2->body.hash), " <- ",
+                 ToBase64(main2->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M3: ", ToBase64(main3->body.hash), " <- ",
+                 ToBase64(main3->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M4: ", ToBase64(main4->body.hash), " <- ",
+                 ToBase64(main4->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M5: ", ToBase64(main5->body.hash), " <- ",
+                 ToBase64(main5->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M6: ", ToBase64(main6->body.hash), " <- ",
+                 ToBase64(main6->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M7: ", ToBase64(main7->body.hash), " <- ",
+                 ToBase64(main7->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M8: ", ToBase64(main8->body.hash), " <- ",
+                 ToBase64(main8->body.previous_hash));
+  FETCH_LOG_INFO(LOGGING_NAME, "M9: ", ToBase64(main9->body.hash), " <- ",
+                 ToBase64(main9->body.previous_hash));
 
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
@@ -543,17 +548,17 @@ TEST_P(MainChainTests, CheckMultipleMissing)
   auto side1_1 = generator_->Generate(common1);
   auto side1_2 = generator_->Generate(side1_1);
 
-  auto side2_1   = generator_->Generate(common1);
-  auto side2_2   = generator_->Generate(side2_1);
+  auto side2_1 = generator_->Generate(common1);
+  auto side2_2 = generator_->Generate(side2_1);
 
-  auto side3_1   = generator_->Generate(common1);
-  auto side3_2   = generator_->Generate(side3_1);
+  auto side3_1 = generator_->Generate(common1);
+  auto side3_2 = generator_->Generate(side3_1);
 
-  auto side4_1   = generator_->Generate(common1);
-  auto side4_2   = generator_->Generate(side4_1);
+  auto side4_1 = generator_->Generate(common1);
+  auto side4_2 = generator_->Generate(side4_1);
 
-  auto side5_1   = generator_->Generate(common1);
-  auto side5_2   = generator_->Generate(side5_1);
+  auto side5_1 = generator_->Generate(common1);
+  auto side5_2 = generator_->Generate(side5_1);
 
   // add the common block
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*common1));
@@ -619,4 +624,6 @@ TEST_P(MainChainTests, CheckLongChainWrite)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests, ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB, MainChain::Mode::IN_MEMORY_DB),);
+INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
+                        ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
+                                          MainChain::Mode::IN_MEMORY_DB), );

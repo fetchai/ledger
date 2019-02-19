@@ -39,18 +39,18 @@ char const *ToString(BlockStatus status)
 
   switch (status)
   {
-    case BlockStatus::ADDED:
-      text = "Added";
-      break;
-    case BlockStatus ::LOOSE:
-      text = "Loose";
-      break;
-    case BlockStatus::DUPLICATE:
-      text = "Duplicate";
-      break;
-    case BlockStatus ::INVALID:
-      text = "Invalid";
-      break;
+  case BlockStatus::ADDED:
+    text = "Added";
+    break;
+  case BlockStatus ::LOOSE:
+    text = "Loose";
+    break;
+  case BlockStatus::DUPLICATE:
+    text = "Duplicate";
+    break;
+  case BlockStatus ::INVALID:
+    text = "Invalid";
+    break;
   }
 
   return text;
@@ -514,7 +514,8 @@ void MainChain::WriteToFile()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Updating HEAD to ", ToBase64(block->body.hash));
 
       // Walk down the file to check we have an unbroken chain
-      while (LookupBlock(block->body.previous_hash, block) && !block_store_->Has(storage::ResourceID(block->body.hash)))
+      while (LookupBlock(block->body.previous_hash, block) &&
+             !block_store_->Has(storage::ResourceID(block->body.hash)))
       {
         block_store_->Set(storage::ResourceID(block->body.hash), *block);
 
@@ -559,7 +560,8 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
   BlockHashList blocks_to_add = std::move(it->second);
   loose_blocks_.erase(it);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from ", ToBase64(block->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, blocks_to_add.size(), " are resolved from ",
+                  ToBase64(block->body.hash));
 
   while (!blocks_to_add.empty())
   {
@@ -570,7 +572,7 @@ void MainChain::CompleteLooseBlocks(IntBlockPtr const &block)
     for (auto const &hash : blocks_to_add)
     {
       // This should be guaranteed safe
-      IntBlockPtr add_block = block_chain_.at(hash); // TODO(EJF): What happens when this fails
+      IntBlockPtr add_block = block_chain_.at(hash);  // TODO(EJF): What happens when this fails
 
       // This won't re-call this function due to the flag
       InsertBlock(add_block, true);
@@ -660,7 +662,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   block->is_loose = false;
 
   IntBlockPtr prev_block{};
-  if (evaluate_loose_blocks) // normal case - not being called from inside CompleteLooseBlocks
+  if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
   {
     // First check if block already exists (not checking in object store)
     if (IsBlockInCache(block->body.hash))
@@ -675,7 +677,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // TODO(EJF): Add check to validate the block number (it is relied on heavily now)
       if (block->body.block_number != (prev_block->body.block_number + 1))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Block ", ToBase64(block->body.hash), " has invalid block number");
+        FETCH_LOG_INFO(LOGGING_NAME, "Block ", ToBase64(block->body.hash),
+                       " has invalid block number");
         return BlockStatus::INVALID;
       }
 
@@ -693,10 +696,11 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
       // This is the normal case where we do not have a previous hash
       block->is_loose = true;
 
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Previous block not found: ", byte_array::ToBase64(block->body.previous_hash));
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Previous block not found: ",
+                      byte_array::ToBase64(block->body.previous_hash));
     }
   }
-  else // special case - being called from inside CompleteLooseBlocks
+  else  // special case - being called from inside CompleteLooseBlocks
   {
     // This branch is a small optimisation since loose / missing blocks are not flushed to disk
 
@@ -960,7 +964,7 @@ bool MainChain::ReindexTips()
  */
 MainChain::IntBlockPtr MainChain::CreateGenesisBlock()
 {
-  auto genesis = std::make_shared<Block>();
+  auto genesis                = std::make_shared<Block>();
   genesis->body.previous_hash = GENESIS_DIGEST;
   genesis->body.merkle_hash   = GENESIS_MERKLE_ROOT;
   genesis->is_loose           = false;
@@ -990,8 +994,7 @@ bool MainChain::HeaviestTip::Update(Block const &block)
 {
   bool updated{false};
 
-  if ((block.total_weight > weight) ||
-      ((block.total_weight == weight) && (block.body.hash > hash)))
+  if ((block.total_weight > weight) || ((block.total_weight == weight) && (block.body.hash > hash)))
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "New heaviest tip: ", ToBase64(block.body.hash));
 

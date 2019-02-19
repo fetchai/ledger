@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace ledger {

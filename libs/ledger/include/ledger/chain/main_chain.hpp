@@ -62,10 +62,10 @@ struct Tip
 
 enum class BlockStatus
 {
-  ADDED,     ///< The block has been added to the chain
-  LOOSE,     ///< The block has been added to the chain but is currently loose
-  DUPLICATE, ///< The block has been detected as a duplicate
-  INVALID    ///< The block is invalid and has not been added to the chain
+  ADDED,      ///< The block has been added to the chain
+  LOOSE,      ///< The block has been added to the chain but is currently loose
+  DUPLICATE,  ///< The block has been detected as a duplicate
+  INVALID     ///< The block is invalid and has not been added to the chain
 };
 
 char const *ToString(BlockStatus status);
@@ -98,29 +98,30 @@ public:
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &block);
-  BlockPtr GetBlock(BlockHash hash) const;
-  bool RemoveBlock(BlockHash hash);
+  BlockPtr    GetBlock(BlockHash hash) const;
+  bool        RemoveBlock(BlockHash hash);
   /// @}
 
   /// @name Chain Queries
   /// @{
-  BlockPtr GetHeaviestBlock() const;
+  BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
-  Blocks GetHeaviestChain(uint64_t limit = ALL) const;
-  Blocks GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
-  bool GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = ALL) const;
+  Blocks    GetHeaviestChain(uint64_t limit = ALL) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = ALL) const;
+  bool      GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
+                                    uint64_t limit = ALL) const;
   /// @}
 
   /// @name Tips
   /// @{
   BlockHashSet GetTips() const;
-  bool ReindexTips(); // testing only
+  bool         ReindexTips();  // testing only
   /// @}
 
   /// @name Missing / Loose Management
   /// @{
   BlockHashs GetMissingBlockHashes(std::size_t limit = ALL) const;
-  bool HasMissingBlocks() const;
+  bool       HasMissingBlocks() const;
   /// @}
 
   template <typename T>
@@ -150,7 +151,7 @@ private:
     bool Update(Block const &);
   };
 
-  static constexpr uint32_t    block_confirmation_ = 10;
+  static constexpr uint32_t block_confirmation_ = 10;
 
   /// @name Persistence Management
   /// @{
@@ -168,11 +169,11 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool LookupBlock(BlockHash hash, IntBlockPtr &block) const;
-  bool LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
-  bool LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const;
-  bool IsBlockInCache(BlockHash hash) const;
-  void AddBlockToCache(IntBlockPtr const &) const;
+  bool        LookupBlock(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromCache(BlockHash hash, IntBlockPtr &block) const;
+  bool        LookupBlockFromStorage(BlockHash hash, IntBlockPtr &block) const;
+  bool        IsBlockInCache(BlockHash hash) const;
+  void        AddBlockToCache(IntBlockPtr const &) const;
   /// @}
 
   /// @name Tip Management
@@ -184,15 +185,15 @@ private:
 
   static IntBlockPtr CreateGenesisBlock();
 
-  BlockStorePtr block_store_;   /// < Long term storage and backup
+  BlockStorePtr block_store_;  /// < Long term storage and backup
 
   mutable RMutex   main_mutex_;   ///< Mutex protecting block_chain_, tips_ & heaviest_
   mutable BlockMap block_chain_;  ///< All recent blocks are kept in memory
-  TipsMap        tips_;         ///< Keep track of the tips
-  HeaviestTip    heaviest_;     ///< Heaviest block/tip
+  TipsMap          tips_;         ///< Keep track of the tips
+  HeaviestTip      heaviest_;     ///< Heaviest block/tip
 
-  mutable RMutex loose_mutex_;  ///< Mutex protecting the loose blocks
-  LooseBlockMap  loose_blocks_; ///< Waiting (loose) blocks
+  mutable RMutex loose_mutex_;   ///< Mutex protecting the loose blocks
+  LooseBlockMap  loose_blocks_;  ///< Waiting (loose) blocks
 };
 
 /**
@@ -292,7 +293,7 @@ bool MainChain::StripAlreadySeenTx(BlockHash starting_hash, T &container)
   auto   t2         = std::chrono::high_resolution_clock::now();
   double time_taken = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 
-  FETCH_UNUSED(time_taken); // when logging is disabled
+  FETCH_UNUSED(time_taken);  // when logging is disabled
   FETCH_LOG_INFO(LOGGING_NAME, "Finished TX uniqueness verify - time (s): ", time_taken,
                  " checked blocks: ", blocks_checked);
   return true;
