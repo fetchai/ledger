@@ -46,13 +46,13 @@ public:
     assert(inputs[0]->size() == inputs[1]->size());
 
     //    // we can't handle taking log(0), and the user should ensure this is never asked for
-    //    for (std::size_t k = 0; k < inputs[0]->size(); ++k)
+    //    for (std::uint64_t k = 0; k < inputs[0]->size(); ++k)
     //    {
     //      assert(inputs[0]->At(k) != 0);
     //    }
 
-    std::size_t n_data    = inputs[0]->shape()[0];
-    std::size_t n_classes = inputs[0]->shape()[1];
+    std::uint64_t n_data    = inputs[0]->shape()[0];
+    std::uint64_t n_classes = inputs[0]->shape()[1];
 
     // deep copy and take log of input
     ArrayType logx{inputs[0]->shape()};
@@ -61,9 +61,9 @@ public:
 
     // assuming 2D input[0],
     ArrayType plogx{logx.shape()};
-    for (std::size_t i = 0; i < n_data; ++i)
+    for (std::uint64_t i = 0; i < n_data; ++i)
     {
-      for (std::size_t j = 0; j < n_classes; ++j)
+      for (std::uint64_t j = 0; j < n_classes; ++j)
       {
         if (inputs[1]->At(j) == DataType(0))
         {
@@ -100,7 +100,7 @@ public:
     typename ArrayType::Type n_classes = static_cast<typename ArrayType::Type>(inputs[1]->size());
 
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
     {
       ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i)) / n_classes;
     }

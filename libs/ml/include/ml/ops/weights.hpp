@@ -60,7 +60,7 @@ public:
 
   virtual void Step(typename T::Type learningRate)
   {
-    for (std::size_t i(0); i < this->gradientAccumulation_->size(); ++i)
+    for (std::uint64_t i(0); i < this->gradientAccumulation_->size(); ++i)
     {
       this->gradientAccumulation_->At(i) = this->gradientAccumulation_->At(i) * -learningRate;
     }

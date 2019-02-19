@@ -34,27 +34,27 @@ TYPED_TEST_CASE(MatrixMultiplyTest, MyTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
-  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::size_t>({1, 5}));
-  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::size_t>({5, 4}));
-  std::shared_ptr<TypeParam> gt = std::make_shared<TypeParam>(std::vector<std::size_t>({1, 4}));
+  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
+  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
+  std::shared_ptr<TypeParam> gt = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
       {-11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 53, 54});
   std::vector<int> results({357, 388, 397, 406});
 
-  for (std::size_t i(0); i < data.size(); ++i)
+  for (std::uint64_t i(0); i < data.size(); ++i)
   {
     a->Set(i, typename TypeParam::Type(data[i]));
   }
-  for (std::size_t i(0); i < 5; ++i)
+  for (std::uint64_t i(0); i < 5; ++i)
   {
-    for (std::size_t j(0); j < 4; ++j)
+    for (std::uint64_t j(0); j < 4; ++j)
     {
-      b->Set(std::vector<std::size_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (std::size_t i(0); i < results.size(); ++i)
+  for (std::uint64_t i(0); i < results.size(); ++i)
   {
     gt->Set(i, typename TypeParam::Type(results[i]));
   }
@@ -71,11 +71,11 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
 TYPED_TEST(MatrixMultiplyTest, backward_test)
 {
-  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::size_t>({1, 5}));
-  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::size_t>({5, 4}));
-  std::shared_ptr<TypeParam> e  = std::make_shared<TypeParam>(std::vector<std::size_t>({1, 4}));
-  std::shared_ptr<TypeParam> ig = std::make_shared<TypeParam>(std::vector<std::size_t>({1, 5}));
-  std::shared_ptr<TypeParam> wg = std::make_shared<TypeParam>(std::vector<std::size_t>({5, 4}));
+  std::shared_ptr<TypeParam> a  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
+  std::shared_ptr<TypeParam> b  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
+  std::shared_ptr<TypeParam> e  = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 4}));
+  std::shared_ptr<TypeParam> ig = std::make_shared<TypeParam>(std::vector<std::uint64_t>({1, 5}));
+  std::shared_ptr<TypeParam> wg = std::make_shared<TypeParam>(std::vector<std::uint64_t>({5, 4}));
 
   std::vector<int> data({1, 2, -3, 4, 5});
   std::vector<int> weights(
@@ -85,30 +85,30 @@ TYPED_TEST(MatrixMultiplyTest, backward_test)
   std::vector<int> weightsGrad(
       {1, 2, 3, -4, 2, 4, 6, -8, -3, -6, -9, 12, 4, 8, 12, -16, 5, 10, 15, -20});
 
-  for (std::size_t i(0); i < data.size(); ++i)
+  for (std::uint64_t i(0); i < data.size(); ++i)
   {
     a->Set(i, typename TypeParam::Type(data[i]));
   }
-  for (std::size_t i(0); i < 5; ++i)
+  for (std::uint64_t i(0); i < 5; ++i)
   {
-    for (std::size_t j(0); j < 4; ++j)
+    for (std::uint64_t j(0); j < 4; ++j)
     {
-      b->Set(std::vector<std::size_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
+      b->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weights[i * 4 + j]));
     }
   }
-  for (std::size_t i(0); i < errorSignal.size(); ++i)
+  for (std::uint64_t i(0); i < errorSignal.size(); ++i)
   {
     e->Set(i, typename TypeParam::Type(errorSignal[i]));
   }
-  for (std::size_t i(0); i < inputGrad.size(); ++i)
+  for (std::uint64_t i(0); i < inputGrad.size(); ++i)
   {
     ig->Set(i, typename TypeParam::Type(inputGrad[i]));
   }
-  for (std::size_t i(0); i < 5; ++i)
+  for (std::uint64_t i(0); i < 5; ++i)
   {
-    for (std::size_t j(0); j < 4; ++j)
+    for (std::uint64_t j(0); j < 4; ++j)
     {
-      wg->Set(std::vector<std::size_t>({i, j}), typename TypeParam::Type(weightsGrad[i * 4 + j]));
+      wg->Set(std::vector<std::uint64_t>({i, j}), typename TypeParam::Type(weightsGrad[i * 4 + j]));
     }
   }
 

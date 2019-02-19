@@ -24,25 +24,29 @@
 namespace fetch {
 namespace vm {
 
-struct IMatrix : public Object
+class IMatrix : public Object
 {
-  IMatrix() = delete;
+public:
+  IMatrix()          = delete;
+  virtual ~IMatrix() = default;
+  static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns);
+
+protected:
   IMatrix(VM *vm, TypeId type_id)
     : Object(vm, type_id)
   {}
-  virtual ~IMatrix() = default;
-  static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t rows, int32_t columns);
 };
 
 template <typename T>
 struct Matrix : public IMatrix
 {
-  Matrix() = delete;
+  Matrix()          = delete;
+  virtual ~Matrix() = default;
+
   Matrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
     : IMatrix(vm, type_id)
-    , matrix(std::vector<std::size_t>(columns, rows))
+    , matrix(std::vector<typename fetch::math::Tensor<T>::SizeType>(columns, rows))
   {}
-  virtual ~Matrix() = default;
 
   static Ptr<Matrix> AcquireMatrix(VM *vm, TypeId type_id, size_t rows, size_t columns)
   {
@@ -348,7 +352,7 @@ struct Matrix : public IMatrix
       RuntimeError("index out of bounds");
       return nullptr;
     }
-    return &matrix.Get(std::vector<std::size_t>(column, row));
+    return &matrix.Get(std::vector<typename fetch::math::Tensor<T>::SizeType>(column, row));
   }
 
   virtual void *FindElement() override

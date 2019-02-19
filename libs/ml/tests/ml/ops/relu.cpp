@@ -36,7 +36,7 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(8);
-  std::size_t                i(0);
+  std::uint64_t              i(0);
   for (int e : {1, 2, 3, 4, 5, 6, 7, 8})
   {
     data->Set(i, typename TypeParam::Type(e));
@@ -54,7 +54,7 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
   std::shared_ptr<TypeParam> data = std::make_shared<TypeParam>(8);
   std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(8);
-  std::size_t                i(0);
+  std::uint64_t              i(0);
   for (int e : {-1, -2, -3, -4, -5, -6, -7, -8})
   {
     data->Set(i, typename TypeParam::Type(e));
@@ -74,7 +74,7 @@ TYPED_TEST(ReluTest, forward_mixed_test)
   std::shared_ptr<TypeParam> gt   = std::make_shared<TypeParam>(8);
   std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int>           gtInput({1, 0, 3, 0, 5, 0, 7, 0});
-  for (std::size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     data->Set(i, typename TypeParam::Type(dataInput[i]));
     gt->Set(i, typename TypeParam::Type(gtInput[i]));
@@ -94,7 +94,7 @@ TYPED_TEST(ReluTest, backward_mixed_test)
   std::vector<int>           dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int>           errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int>           gtInput({-1, 0, 3, 0, -8, 0, -21, 0});
-  for (std::size_t i(0); i < 8; ++i)
+  for (std::uint64_t i(0); i < 8; ++i)
   {
     data->Set(i, typename TypeParam::Type(dataInput[i]));
     error->Set(i, typename TypeParam::Type(errorInput[i]));

@@ -25,16 +25,21 @@ namespace vm_modules {
 namespace ml {
 class TensorWrapper : public fetch::vm::Object, public std::shared_ptr<fetch::math::Tensor<float>>
 {
+
 public:
-  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::vector<std::size_t> const &shape)
+  using ArrayType = fetch::math::Tensor<float>;
+  using SizeType  = ArrayType::SizeType;
+
+  TensorWrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                std::vector<std::uint64_t> const &shape)
     : fetch::vm::Object(vm, type_id)
-    , std::shared_ptr<fetch::math::Tensor<float>>(new fetch::math::Tensor<float>(shape))
+    , std::shared_ptr<ArrayType>(new ArrayType(shape))
   {}
 
   static fetch::vm::Ptr<TensorWrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                   fetch::vm::Ptr<fetch::vm::Array<uint64_t>> shape)
+                                                   fetch::vm::Ptr<fetch::vm::Array<SizeType>> shape)
   {
-    return new TensorWrapper(vm, type_id, shape->elements);
+    return {new TensorWrapper(vm, type_id, shape->elements)};
   }
 
   void SetAt(uint64_t index, float value)
@@ -51,7 +56,7 @@ public:
 inline void CreateTensor(fetch::vm::Module &module)
 {
   module.CreateClassType<TensorWrapper>("Tensor")
-      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<uint64_t>>>()
+      .CreateTypeConstuctor<fetch::vm::Ptr<fetch::vm::Array<TensorWrapper::SizeType>>>()
       .CreateInstanceFunction("SetAt", &TensorWrapper::SetAt)
       .CreateInstanceFunction("ToString", &TensorWrapper::ToString);
 }
