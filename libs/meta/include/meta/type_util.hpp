@@ -31,13 +31,13 @@ static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
 template <class T, class... Ts>
 struct Conjunction<T, Ts...>
 {
-  static constexpr bool value = T::value && ConjunctionV<Ts...>;
+  enum: bool { value = T::value && ConjunctionV<Ts...> };
 };
 
 template <>
 struct Conjunction<>
 {
-  static constexpr bool value = true;
+  enum: bool { value = true };
 };
 
 template <template <class...> class F, class... Ts>
@@ -55,13 +55,13 @@ static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
 template <class T, class... Ts>
 struct Disjunction<T, Ts...>
 {
-  static constexpr bool value = T::value || DisjunctionV<Ts...>;
+  enum: bool { value = T::value || DisjunctionV<Ts...> };
 };
 
 template <>
 struct Disjunction<>
 {
-  static constexpr bool value = false;
+  enum: bool { value = false };
 };
 
 template <template <class...> class F, class... Ts>
@@ -80,7 +80,7 @@ struct Bind
 template <class T, class... Ts>
 struct IsAnyOf
 {
-  static constexpr auto value = AnyV<Bind<std::is_same, T>::template type, Ts...>;
+  enum: bool { value = AnyV<Bind<std::is_same, T>::template type, Ts...> };
 };
 
 template <class T, class... Ts>
