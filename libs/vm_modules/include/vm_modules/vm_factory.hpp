@@ -62,11 +62,11 @@ public:
     // math modules
     CreateAbs(module);
 
-    // ml modules
-    ml::CreateCrossEntropy(module);
-    ml::CreateGraph(module);
-    ml::CreateMeanSquareError(module);
+    // ml modules - order is important!!
     ml::CreateTensor(module);
+    ml::CreateGraph(module);
+    ml::CreateCrossEntropy(module);
+    ml::CreateMeanSquareError(module);
 
     return module;
   }
