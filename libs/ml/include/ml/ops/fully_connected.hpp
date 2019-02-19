@@ -35,7 +35,7 @@ public:
   using ArrayType    = T;
   using ArrayPtrType = std::shared_ptr<ArrayType>;
 
-  FullyConnected(std::size_t in, std::size_t out, std::string const &name = "FC")
+  FullyConnected(std::uint64_t in, std::uint64_t out, std::string const &name = "FC")
   {
     this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
     this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten",
@@ -50,17 +50,17 @@ public:
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_Add");
 
-    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::size_t>({in, out}));
+    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
     // Naive random init, range [-.5, .5]
-    for (std::size_t i(0); i < weights->size(); ++i)
+    for (std::uint64_t i(0); i < weights->size(); ++i)
     {
       weights->At(i) =
           typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
     }
     this->SetInput(name + "_Weights", weights);
-    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::size_t>({1, out}));
+    ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, out}));
     // Naive random init, range [-.5, .5]
-    for (std::size_t i(0); i < bias->size(); ++i)
+    for (std::uint64_t i(0); i < bias->size(); ++i)
     {
       bias->At(i) =
           typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);

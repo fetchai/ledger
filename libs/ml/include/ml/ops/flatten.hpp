@@ -37,9 +37,9 @@ public:
   {
     ASSERT(inputs.size() == 1);
     input_shape_  = inputs[0]->shape();
-    this->output_ = std::make_shared<ArrayType>(std::vector<std::size_t>({1, inputs[0]->size()}));
+    this->output_ = std::make_shared<ArrayType>(std::vector<std::uint64_t>({1, inputs[0]->size()}));
     // TODO(private, 521) remove useless copy and replace with lightweight view
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
     {
       this->output_->At(i) = inputs[0]->At(i);
     }
@@ -51,7 +51,7 @@ public:
   {
     ASSERT(inputs.size() == 1);
     std::shared_ptr<ArrayType> ret = std::make_shared<ArrayType>(input_shape_);
-    for (std::size_t i(0); i < ret->size(); ++i)
+    for (std::uint64_t i(0); i < ret->size(); ++i)
     {
       ret->At(i) = errorSignal->At(i);
     }
@@ -59,7 +59,7 @@ public:
   }
 
 private:
-  std::vector<std::size_t> input_shape_;
+  std::vector<std::uint64_t> input_shape_;
 };
 
 }  // namespace ops

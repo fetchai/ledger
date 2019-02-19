@@ -786,8 +786,9 @@ void DotTranspose(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[1]; ++k)
       {
-        ret.Get(std::vector<size_t>({i, j})) +=
-            A.Get(std::vector<size_t>({i, k})) * B.Get(std::vector<size_t>({j, k}));
+        ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.Get(std::vector<typename ArrayType::SizeType>({i, k})) *
+            B.Get(std::vector<typename ArrayType::SizeType>({j, k}));
       }
     }
   }
@@ -823,8 +824,9 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
     {
       for (size_t k(0); k < A.shape()[0]; ++k)
       {
-        ret.Get(std::vector<size_t>({i, j})) +=
-            A.Get(std::vector<size_t>({k, i})) * B.Get(std::vector<size_t>({k, j}));
+        ret.Get(std::vector<typename ArrayType::SizeType>({i, j})) +=
+            A.Get(std::vector<typename ArrayType::SizeType>({k, i})) *
+            B.Get(std::vector<typename ArrayType::SizeType>({k, j}));
       }
     }
   }
@@ -833,8 +835,8 @@ void TransposeDot(ArrayType const &A, ArrayType const &B, ArrayType &ret)
 template <class ArrayType>
 ArrayType TransposeDot(ArrayType const &A, ArrayType const &B)
 {
-  std::vector<std::size_t> return_shape{A.shape()[1], B.shape()[1]};
-  ArrayType                ret(return_shape);
+  std::vector<typename ArrayType::SizeType> return_shape{A.shape()[1], B.shape()[1]};
+  ArrayType                                 ret(return_shape);
   TransposeDot(A, B, ret);
   return ret;
 }

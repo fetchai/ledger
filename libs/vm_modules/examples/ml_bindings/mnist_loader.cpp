@@ -142,7 +142,8 @@ std::pair<unsigned int, std::shared_ptr<fetch::math::Tensor<float>>> MNISTLoader
 {
   if (!buffer)
   {
-    buffer = std::make_shared<fetch::math::Tensor<float>>(std::vector<size_t>({28u, 28u}));
+    buffer = std::make_shared<fetch::math::Tensor<float>>(
+        std::vector<typename fetch::math::Tensor<float>::SizeType>({28u, 28u}));
   }
   for (std::size_t i(0); i < 28 * 28; ++i)
   {

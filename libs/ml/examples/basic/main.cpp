@@ -52,7 +52,8 @@ int main()
   //  MeanSquareErrorLayer<ArrayType> criterion;
 
   std::pair<size_t, std::shared_ptr<ArrayType>> input;
-  std::shared_ptr<ArrayType> gt = std::make_shared<ArrayType>(std::vector<size_t>({1, 10}));
+  std::shared_ptr<ArrayType>                    gt =
+      std::make_shared<ArrayType>(std::vector<typename ArrayType::SizeType>({1, 10}));
 
   gt->At(0)         = 1.0;
   DataType     loss = 0;
