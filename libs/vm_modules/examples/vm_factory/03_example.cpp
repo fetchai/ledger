@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/vm_factory.hpp"
+#include "vm_modules/vm_factory.hpp"
 #include <fstream>
 #include <sstream>
 
 using namespace fetch;
-using namespace fetch::vm;
+using namespace fetch::vm_modules;
 
 int main(int argc, char **argv)
 {

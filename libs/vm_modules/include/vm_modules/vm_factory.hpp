@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/free_functions.hpp"
-
 #include "vm/analyser.hpp"
 #include "vm/typeids.hpp"
 
@@ -26,8 +24,11 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include "vm_modules/core/print.hpp"
+#include "vm_modules/core/type_convert.hpp"
+
 namespace fetch {
-namespace vm {
+namespace vm_modules {
 
 /**
  * VMFactory provides the user with convenient management of the VM
@@ -47,9 +48,8 @@ public:
   {
     auto module = std::make_shared<fetch::vm::Module>();
 
-    // Bind our vm free functions to the module
-    module->CreateFreeFunction("Print", &Print);
-    module->CreateFreeFunction("toString", &toString);
+    CreatePrint(module);
+    CreateToString(module);
 
     return module;
   }
@@ -97,5 +97,5 @@ public:
   }
 };
 
-}  // namespace vm
+}  // namespace vm_modules
 }  // namespace fetch

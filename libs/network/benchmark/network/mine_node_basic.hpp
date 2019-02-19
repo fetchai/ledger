@@ -85,8 +85,7 @@ public:
         std::thread{[this, block] {
           BlockType copy = block;
           this->SyncBlock(copy);
-        }}
-            .detach();
+        }}.detach();
       }
     }
   }
