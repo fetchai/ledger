@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm/common.hpp"
+#include "core/type_util.hpp"
 #include <cmath>
 
 namespace fetch {
@@ -35,14 +36,10 @@ struct IsPrimitive : std::false_type
 {
 };
 template <typename T>
-struct IsPrimitive<T, typename std::enable_if_t<
-                          std::is_same<T, void>::value || std::is_same<T, bool>::value ||
-                          std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value ||
-                          std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value ||
-                          std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value ||
-                          std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value ||
-                          std::is_same<T, std::size_t>::value || std::is_same<T, float>::value ||
-                          std::is_same<T, double>::value>> : std::true_type
+struct IsPrimitive<T, typename std::enable_if_t<type_util::IsAnyOfV<T,
+	void, bool, int8_t, uint8_t, int16_t, uint16_t,
+	int32_t, uint32_t, int64_t, uint64_t, std::size_t, float, double>>>
+	: std::true_type
 {
 };
 
