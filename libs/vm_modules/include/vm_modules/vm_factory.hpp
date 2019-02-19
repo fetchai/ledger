@@ -34,8 +34,6 @@
 #include "vm_modules/ml/mean_square_error.hpp"
 #include "vm_modules/ml/tensor.hpp"
 
-
-
 namespace fetch {
 namespace vm_modules {
 
@@ -69,9 +67,6 @@ public:
     ml::CreateGraph(module);
     ml::CreateMeanSquareError(module);
     ml::CreateTensor(module);
-
-
-
 
     return module;
   }
