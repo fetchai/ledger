@@ -31,7 +31,7 @@ namespace {
 
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
-using fetch::byte_array::ToBase64;
+using fetch::byte_array::ToBase64; // NOLINT - needed for debug messages
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr    = std::unique_ptr<MainChain>;

@@ -33,7 +33,7 @@ using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::byte_array::ToBase64;  // needed for debug messages
+using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
 
 using Rng               = std::mt19937_64;
 using BlockHash         = Block::Digest;
