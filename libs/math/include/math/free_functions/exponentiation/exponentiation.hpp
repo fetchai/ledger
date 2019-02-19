@@ -109,10 +109,26 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Log1p(ArrayType &x)
  * @param x - array
  */
 template <typename ArrayType>
-fetch::math::meta::IfIsMathArray<ArrayType, void> Sqrt(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Sqrt(ArrayType &x)
 {
   kernels::stdlib::Sqrt<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
+}
+template <typename ArrayType>
+fetch::math::meta::IfIsNonBlasArray<ArrayType, void> Sqrt(ArrayType &x)
+{
+  for (std::size_t j = 0; j < x.size(); ++j)
+  {
+    x.Set(j, static_cast<typename ArrayType::Type>(std::sqrt(static_cast<double>(x.At(j)))));
+  }
+}
+template <typename ArrayType>
+fetch::math::meta::IfIsMathFixedPointArray <ArrayType, void> Sqrt(ArrayType &x)
+{
+  for (std::size_t j = 0; j < x.size(); ++j)
+  {
+    x.Set(j, static_cast<typename ArrayType::Type>(std::sqrt(static_cast<double>(x.At(j)))));
+  }
 }
 
 /**

@@ -20,9 +20,13 @@
 #include "core/assert.hpp"
 #include "math/free_functions/standard_functions/abs.hpp"
 
+#include "core/random/lcg.hpp"
+
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <random>
+#include <numeric>
 
 namespace fetch {
 namespace math {
@@ -57,6 +61,48 @@ public:
     Init(strides_, padding_);
   }
 
+  /**
+  * constructor that provides a deep copy of a tensor
+  * @param t
+  */
+  Tensor(Tensor const &t)
+  {
+    shape_ = t.shape();
+    Init(t.strides_, t.padding_);
+
+    // deep copy
+    for (std::size_t j = 0; j < t.size(); ++j)
+    {
+      this->Set(j, t.At(j));
+    }
+  }
+
+  /**
+   * move semantic constructor
+   * @param t
+   */
+  Tensor(Tensor &&t) noexcept  = default;
+
+#if 0
+  strides_(std::move(t.strides_)),
+  padding_(std::move(t.padding_)),
+  storage_(std::move(t.storage_)),
+  offset_(std::move(t.offset_)),
+  shape_(std::move(t.shape))
+  {
+  }
+#endif
+
+  Tensor &operator=(Tensor const &) = default;
+  Tensor &operator=(Tensor &&) = default;
+
+
+
+  /**
+   * Initialises default values for stride padding etc.
+   * @param strides
+   * @param padding
+   */
   void Init(std::vector<SizeType> const &strides = std::vector<SizeType>(),
             std::vector<SizeType> const &padding = std::vector<SizeType>())
   {
@@ -378,6 +424,31 @@ public:
     ret.strides_ = std::vector<SizeType>(strides_.rbegin(), strides_.rend());
     ret.padding_ = std::vector<SizeType>(padding_.rbegin(), padding_.rend());
     return ret;
+  }
+
+  /**
+   * randomly reassigns the data within the tensor - expensive method since it requires data copy
+   */
+  void Shuffle()
+  {
+    std::default_random_engine rng{};
+    std::vector<SizeType> idxs{size()};
+    std::iota(std::begin(idxs), std::end(idxs), 0);
+    std::shuffle(idxs.begin(), idxs.end(), rng);
+
+    // instantiate new tensor with copy of data
+    Tensor<Type> tmp{*this};
+
+    // copy data back according to shuffle
+    for (std::size_t j = 0; j < tmp.size(); ++j)
+    {
+      this->Set(j, tmp.At(idxs[j]));
+    }
+  }
+
+  void Reshape(std::vector<SizeType> new_shape)
+  {
+    Tensor()
   }
 
   std::string ToString() const
