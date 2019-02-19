@@ -22,6 +22,140 @@
 using namespace fetch;
 using namespace fetch::vm;
 
+class ByteWrapper
+{
+public:
+
+  explicit ByteWrapper() {}
+
+  // copy data into bytewrapper
+  ByteWrapper(uint8_t const * const data, uint64_t data_size)
+  {
+    auto bytes = (uint8_t *)malloc(data_size);
+    memset(bytes, 0, data_size);
+    memcpy(bytes, data, data_size);
+    length_    = data_size;
+    data_ = bytes;
+  }
+
+  // create new bytewrapper
+  explicit ByteWrapper(uint64_t data_size)
+  {
+    uint8_t * bytes = (uint8_t *)malloc(data_size);
+    memset(bytes, 0, data_size);
+    length_    = data_size;
+    data_ = bytes;
+  }
+
+  explicit ByteWrapper(ByteWrapper &&rhs)
+  {
+    data_ = rhs.data_;
+    length_ = rhs.length_;
+    rhs.length_ = 0;
+  }
+
+  ByteWrapper &operator=(ByteWrapper&& rhs)
+  {
+    data_ = rhs.data_;
+    length_ = rhs.length_;
+    rhs.length_ = 0;
+    return *this;
+  }
+
+  ~ByteWrapper()
+  {
+    if(length_ > 0)
+    {
+      free(data_);
+    }
+  }
+
+  bool operator<(ByteWrapper const &rhs) const
+  {
+    if(length_ != rhs.length_)
+    {
+      return length_ < rhs.length_;
+    }
+
+    return memcmp(data_, rhs.data_, length_) > 0;
+  }
+
+  uint8_t * data()
+  {
+    return data_;
+  }
+
+  void set_data(uint8_t * data)
+  {
+    data_ = data;
+  }
+
+private:
+  uint8_t * data_ = nullptr;
+  uint64_t                length_ = 0;
+};
+
+
+class DummyReadWriteInterface : public ReadWriteInterface
+{
+public:
+
+  ~DummyReadWriteInterface() = default;
+
+  bool read(uint8_t *dest, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) override
+  {
+
+    ByteWrapper key_wrapper{key, key_size};
+
+    if(dummy_db_.find(key_wrapper) == dummy_db_.end())
+    {
+      // Create memory
+      ByteWrapper mem{dest_size};
+
+      // Copy to caller
+      memcpy(dest, mem.data(), dest_size);
+
+      // Save for later
+      dummy_db_[std::move(key_wrapper)] = std::move(mem);
+    }
+    else
+    {
+      uint8_t * data_ptr = dummy_db_[std::move(key_wrapper)].data();
+      memcpy(dest, data_ptr, dest_size);
+    }
+
+    return true;
+  }
+
+  bool write(uint8_t const * const source, uint64_t dest_size, uint8_t const * const key, uint64_t key_size) override
+  {
+    // We should never have a write before a read. So this will throw if that is the case
+    ByteWrapper key_wrapper{key, key_size};
+
+    auto &byte_wrapper = dummy_db_.at(key_wrapper);
+
+    uint8_t *data_ptr = byte_wrapper.data();
+
+    memcpy(data_ptr, source, dest_size);
+
+    return true;
+  }
+
+  template <typename T>
+  T Lookup(std::string const &str)
+  {
+    T ret;
+    if(!read(reinterpret_cast<uint8_t *>(&ret), sizeof(T), reinterpret_cast<uint8_t const * const>(str.c_str()), str.size()))
+    {
+      throw std::runtime_error("Failed to lookup data value!");
+    }
+    return ret;
+  }
+
+private:
+  std::map<ByteWrapper, ByteWrapper> dummy_db_;
+};
+
 class VMTests : public ::testing::Test
 {
 protected:
@@ -61,6 +195,10 @@ protected:
     std::string        error;
     fetch::vm::Variant output;
 
+    // Attach our state
+    ReadWriteInterface *parent_ptr = &interface_;
+    vm_->GetGlobalPointer<StateSentinel>()->SetReadWriteInterface(parent_ptr);
+
     // Execute our fn
     if (!vm_->Execute(script_, function, error, output))
     {
@@ -71,73 +209,106 @@ protected:
     return true;
   }
 
-  Module            module_ = VMFactory::GetModule();
-  VM                vm_;
-  fetch::vm::Script script_;
+  DummyReadWriteInterface & GetState()
+  {
+    return interface_;
+  }
+
+  Module                  module_ = VMFactory::GetModule();
+  VM                      vm_;
+  fetch::vm::Script       script_;
+  DummyReadWriteInterface interface_;
 };
 
-// Test we can compile and run a fairly inoffensive smart contract
-TEST_F(VMTests, CheckCompileAndExecute)
+//// Test we can compile and run a fairly inoffensive smart contract
+//TEST_F(VMTests, CheckCompileAndExecute)
+//{
+//  const std::string source =
+//      " function main() "
+//      "   Print(\"Hello, world\");"
+//      " endfunction ";
+//
+//  bool res = Compile(source);
+//
+//  EXPECT_EQ(res, true);
+//
+//  res = Execute();
+//
+//  EXPECT_EQ(res, true);
+//}
+//
+//TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
+//{
+//  const std::string source =
+//      " function main() "
+//      "   Print('Hello, world');"
+//      " endfunction ";
+//
+//  bool res = Compile(source);
+//
+//  EXPECT_EQ(res, true);
+//
+//  res = Execute();
+//
+//  EXPECT_EQ(res, true);
+//}
+//
+//// Test to add a custom binding that will increment this counter when
+//// the smart contract is executed
+//static int32_t binding_called_count = 0;
+//
+//static void CustomBinding(fetch::vm::VM * /*vm*/)
+//{
+//  binding_called_count++;
+//}
+//
+//TEST_F(VMTests, CheckCustomBinding)
+//{
+//  const std::string source =
+//      " function main() "
+//      "   CustomBinding();"
+//      " endfunction ";
+//
+//  EXPECT_EQ(binding_called_count, 0);
+//
+//  AddBinding("CustomBinding", &CustomBinding);
+//
+//  bool res = Compile(source);
+//
+//  EXPECT_EQ(res, true);
+//
+//  for (uint64_t i = 0; i < 3; ++i)
+//  {
+//    res = Execute();
+//    EXPECT_EQ(res, true);
+//  }
+//
+//  EXPECT_EQ(binding_called_count, 3);
+//}
+
+TEST_F(VMTests, CheckCustomBindingWithState)
 {
   const std::string source =
-      " function main() "
-      "   Print(\"Hello, world\");"
-      " endfunction ";
+    "function main()                                      \n "
+    " var a : Int32 = 2;                                  \n "
+    " var b : Int32 = 1;                                  \n "
+    " b = a + b;                                          \n "
+    " Print('The result is: ' + toString(b));             \n "
+    " var s = State<Int32>('hello');                      \n "
+    " Print('The STATE result is: ' + toString(s.get())); \n "
+    " s.set(8);                                           \n "
+    "                                                     \n "
+    " endfunction                                         \n ";
 
   bool res = Compile(source);
 
-  EXPECT_EQ(res, true);
-
-  res = Execute();
-
-  EXPECT_EQ(res, true);
-}
-
-TEST_F(VMTests, CheckCompileAndExecuteAltStrings)
-{
-  const std::string source =
-      " function main() "
-      "   Print('Hello, world');"
-      " endfunction ";
-
-  bool res = Compile(source);
-
-  EXPECT_EQ(res, true);
-
-  res = Execute();
-
-  EXPECT_EQ(res, true);
-}
-
-// Test to add a custom binding that will increment this counter when
-// the smart contract is executed
-static int32_t binding_called_count = 0;
-
-static void CustomBinding(fetch::vm::VM * /*vm*/)
-{
-  binding_called_count++;
-}
-
-TEST_F(VMTests, CheckCustomBinding)
-{
-  const std::string source =
-      " function main() "
-      "   CustomBinding();"
-      " endfunction ";
-
-  EXPECT_EQ(binding_called_count, 0);
-
-  AddBinding("CustomBinding", &CustomBinding);
-
-  bool res = Compile(source);
-
-  EXPECT_EQ(res, true);
-
-  for (std::size_t i = 0; i < 3; ++i)
+  for (uint64_t i = 0; i < 3; ++i)
   {
     res = Execute();
     EXPECT_EQ(res, true);
   }
 
-  EXPECT_EQ(binding_called_count, 3);
+  uint32_t out = GetState().Lookup<uint32_t>("hello");
+
+  EXPECT_EQ(out, 8);
 }

@@ -221,6 +221,12 @@ template <typename T>
 class Ptr
 {
 public:
+
+  operator int()
+  {
+    return 5; // guaranteed to be random
+  }
+
   Ptr()
   {
     ptr_ = nullptr;

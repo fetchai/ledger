@@ -18,11 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
-
-#include "vm/defs.hpp"
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -30,19 +25,21 @@ namespace ledger {
 class SmartContract : public Contract
 {
 public:
-  SmartContract();
+  SmartContract(byte_array::ConstByteArray const &identifier);
   ~SmartContract() = default;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
+  bool Get(byte_array::ByteArray &record, byte_array::ByteArray const &address);
+  void Set(byte_array::ByteArray const &record, byte_array::ByteArray const &address);
+
 private:
   // transaction handlers
-  Status CreateInitialContract(Transaction const &tx);
-  Status Invoke(Transaction const &tx);
-  Status DeleteContract(Transaction const &tx);
+  Status InvokeContract(Transaction const &tx);
 
-  // queries
-  /* Status Balance(Query const &query, Query &response); */
+  bool RunSmartContract(std::string &source, std::string const &target_fn, byte_array::ConstByteArray const &hash, Transaction const &tx);
+
+  std::string source_;
 };
 
 }  // namespace ledger

@@ -17,32 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
+#include "ledger/chaincode/contract.hpp"
 
 namespace fetch {
-namespace crypto {
+namespace ledger {
 
-template <typename T>
-byte_array::ByteArray Hash(byte_array::ConstByteArray const &str)
+class SmartContractManager : public Contract
 {
-  T hasher;
+public:
+  SmartContractManager();
+  ~SmartContractManager() = default;
 
-  hasher.Reset();
-  hasher.Update(str);
-  return hasher.Final();
-}
+  static constexpr char const *LOGGING_NAME = "SmartContractManager";
 
-template <typename T>
-byte_array::ByteArray HashMultiple(byte_array::ConstByteArray const &a, byte_array::ConstByteArray const &b, byte_array::ConstByteArray const &c)
-{
-  T hasher;
+private:
+  // transaction handlers
+  Status CreateInitialContract(Transaction const &tx);
+};
 
-  hasher.Reset();
-  hasher.Update(a);
-  hasher.Update(b);
-  hasher.Update(c);
-  return hasher.Final();
-}
-
-}  // namespace crypto
+}  // namespace ledger
 }  // namespace fetch

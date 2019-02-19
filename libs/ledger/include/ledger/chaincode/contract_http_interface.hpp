@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "http/module.hpp"
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 
 #include <algorithm>
 #include <iostream>

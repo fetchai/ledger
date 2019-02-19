@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/cache.hpp"
+#include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/chaincode/factory.hpp"
 #include "meta/is_log2.hpp"
 
@@ -30,6 +30,8 @@ namespace ledger {
 
 ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray const &contract_name)
 {
+  std::cerr << "looking up: " << contract_name << std::endl;
+
   // attempt to locate the contract in the cache
   ContractPtr contract = FindInCache(contract_name);
 

@@ -51,7 +51,7 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
   {
 
     // lock the contract resources
-    if (!LockResources(tx.summary().resources))
+    if (!LockResources(tx.summary().resources, tx.summary().contract_hashes))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "LockResources failed.");
       return Status::FAILED;
@@ -61,7 +61,7 @@ Contract::Status Contract::DispatchTransaction(byte_array::ConstByteArray const 
     status = it->second(tx);
 
     // unlock the contract resources
-    if (!UnlockResources(tx.summary().resources))
+    if (!UnlockResources(tx.summary().resources, tx.summary().contract_hashes))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "UnlockResources failed.");
       return Status::FAILED;
@@ -123,6 +123,7 @@ bool Contract::ParseAsJson(Transaction const &tx, variant::Variant &output)
   }
   catch (json::JSONParseException &ex)
   {
+    // TODO(HUT): this can't be good for performance
     // expected
   }
 
@@ -152,7 +153,8 @@ Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
 storage::ResourceAddress Contract::CreateStateIndex(byte_array::ByteArray const &suffix) const
 {
   byte_array::ByteArray index;
-  index.Append(contract_identifier_.name_space(), ".state.", suffix);
+  std::cerr << "XXYY: " << contract_identifier_[0] << " " <<  contract_identifier_[1] << std::endl;
+  index.Append(contract_identifier_[0], contract_identifier_[1], ".state.", suffix);
   return storage::ResourceAddress{index};
 }
 
@@ -162,7 +164,7 @@ StorageInterface &Contract::state()
   return *state_;
 }
 
-bool Contract::LockResources(ResourceSet const &resources)
+bool Contract::LockResources(ResourceSet const &resources, ContractHashes const &hashes)
 {
   bool success = true;
 
@@ -174,10 +176,19 @@ bool Contract::LockResources(ResourceSet const &resources)
     }
   }
 
+  // Lock raw locations for SC
+  for (auto const &hash : hashes)
+  {
+    if (!state().Lock(storage::ResourceAddress{hash}))
+    {
+      success = false;
+    }
+  }
+
   return success;
 }
 
-bool Contract::UnlockResources(ResourceSet const &resources)
+bool Contract::UnlockResources(ResourceSet const &resources, ContractHashes const &hashes)
 {
   bool success = true;
 
@@ -189,7 +200,45 @@ bool Contract::UnlockResources(ResourceSet const &resources)
     }
   }
 
+  // Unlock raw locations for SC
+  for (auto const &hash : hashes)
+  {
+    if (!state().Unlock(storage::ResourceAddress{hash}))
+    {
+      success = false;
+    }
+  }
+
   return success;
+}
+
+bool Contract::CheckRawState(byte_array::ByteArray const &address)
+{
+  auto document = state().Get(storage::ResourceAddress{address});
+
+  return !document.failed;
+}
+
+void Contract::SetRawState(byte_array::ByteArray const &payload,
+                           byte_array::ByteArray const &address)
+{
+  state().Set(storage::ResourceAddress{address}, payload);
+}
+
+bool Contract::GetRawState(byte_array::ByteArray &payload, byte_array::ByteArray const &address)
+{
+  auto document = state().Get(storage::ResourceAddress{address});
+
+  if (document.failed)
+  {
+    return false;
+  }
+
+  // update the document if it wasn't created
+  serializers::ByteArrayBuffer buffer(document.document);
+  payload = buffer.data();
+
+  return true;
 }
 
 }  // namespace ledger

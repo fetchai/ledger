@@ -36,6 +36,10 @@ Compiler::~Compiler()
 bool Compiler::Compile(std::string const &source, std::string const &name, Script &script,
                        Strings &errors)
 {
+  std::cerr << "" << std::endl;
+  std::cerr << "" << std::endl;
+  std::cerr << source << std::endl;
+
   BlockNodePtr root = parser_.Parse(source, errors);
   if (root == nullptr)
   {
