@@ -141,33 +141,3 @@ TEST_F(VMTests, CheckCustomBinding)
 
   EXPECT_EQ(binding_called_count, 3);
 }
-
-//static int64_t x_int = 0;
-//static float_t x_float = 0;
-//
-//TEST_F(VMTests, CheckAbs)
-//{
-//  const std::string source =
-//       " "
-//       " function main()"
-//       " "
-//       "   // negative int 32"
-//       "   x_int = -1;"
-//       "   Abs(x_int);"
-//       " "
-//       "   // negative float 64"
-//       "   x_float = -7.151;"
-//       "   Abs(x_float);"
-//      " endfunction ";
-//
-//  EXPECT_EQ(binding_called_count, 0);
-//
-//  bool res = Compile(source);
-//  EXPECT_EQ(res, true);
-//
-//  res = Execute();
-//  EXPECT_EQ(res, true);
-//
-//  EXPECT_EQ(x_int, 1);
-//  EXPECT_EQ(x_float, 7.151);
-//}
