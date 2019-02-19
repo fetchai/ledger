@@ -27,6 +27,15 @@
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/type_convert.hpp"
 
+#include "vm_modules/math/abs.hpp"
+
+#include "vm_modules/ml/cross_entropy.hpp"
+#include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/mean_square_error.hpp"
+#include "vm_modules/ml/tensor.hpp"
+
+
+
 namespace fetch {
 namespace vm_modules {
 
@@ -48,8 +57,21 @@ public:
   {
     auto module = std::make_shared<fetch::vm::Module>();
 
+    // core modules
     CreatePrint(module);
     CreateToString(module);
+
+    // math modules
+    CreateAbs(module);
+
+    // ml modules
+    ml::CreateCrossEntropy(module);
+    ml::CreateGraph(module);
+    ml::CreateMeanSquareError(module);
+    ml::CreateTensor(module);
+
+
+
 
     return module;
   }
