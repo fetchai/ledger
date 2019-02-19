@@ -60,7 +60,7 @@ except:
     print("Failed to find sc hash")
     exit(1)
 
-time.sleep(5)
+time.sleep(7)
 #dummy = input("here: ")
 
 # Now invoke the SC!
@@ -68,6 +68,11 @@ arg = { "smart_contract" : SC_HASH, "UUID" : SC_HASH + ".PUBKEY.main" }
 
 resp = HTTPpost(endpoint, 'api/wallet/invoke_smart_contract', arg)
 time.sleep(1)
+resp = HTTPpost(endpoint, 'api/wallet/invoke_smart_contract', arg)
+
+#invoke with different pubkey
+arg = { "smart_contract" : SC_HASH, "UUID" : SC_HASH + ".PUBKEYY.main" }
+
 resp = HTTPpost(endpoint, 'api/wallet/invoke_smart_contract', arg)
 
 SC_HASH = ""

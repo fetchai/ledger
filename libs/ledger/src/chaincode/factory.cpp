@@ -74,7 +74,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(ContractName const &name)
     FETCH_LOG_INFO(LOGGING_NAME, "Unable to lookup requested chain code: ", name,
                    ". Creating new SC");
 
-    return std::make_shared<SmartContract>();
+    return std::make_shared<SmartContract>(name);
   }
 
   // create the chain code instance

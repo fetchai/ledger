@@ -30,6 +30,8 @@ namespace ledger {
 
 ChainCodeCache::ContractPtr ChainCodeCache::Lookup(byte_array::ConstByteArray const &contract_name)
 {
+  std::cerr << "looking up: " << contract_name << std::endl;
+
   // attempt to locate the contract in the cache
   ContractPtr contract = FindInCache(contract_name);
 

@@ -25,7 +25,7 @@ namespace ledger {
 class SmartContract : public Contract
 {
 public:
-  SmartContract();
+  SmartContract(byte_array::ConstByteArray const &identifier);
   ~SmartContract() = default;
 
   static constexpr char const *LOGGING_NAME = "SmartContract";

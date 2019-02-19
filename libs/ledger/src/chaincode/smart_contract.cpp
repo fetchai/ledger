@@ -41,9 +41,13 @@ namespace ledger {
 byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source"};
 byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
 
-SmartContract::SmartContract()
-  : Contract("fetch.smart_contract")
+SmartContract::SmartContract(byte_array::ConstByteArray const &identifier)
+  : Contract(identifier)
 {
+  std::cerr << "const: " << identifier << std::endl;
+  std::cerr << "const: " << identifier << std::endl;
+  std::cerr << "const: " << identifier << std::endl;
+  std::cerr << "const: " << identifier << std::endl;
   OnTransaction("main", this, &SmartContract::InvokeContract);
 }
 
