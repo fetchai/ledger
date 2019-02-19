@@ -424,25 +424,6 @@ TEST_P(MainChainTests, AdditionOfBlocksWithABreak)
   auto main8   = generator_->Generate(main7);
   auto main9   = generator_->Generate(main8);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "M1: ", ToBase64(main1->body.hash), " <- ",
-                 ToBase64(main1->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M2: ", ToBase64(main2->body.hash), " <- ",
-                 ToBase64(main2->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M3: ", ToBase64(main3->body.hash), " <- ",
-                 ToBase64(main3->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M4: ", ToBase64(main4->body.hash), " <- ",
-                 ToBase64(main4->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M5: ", ToBase64(main5->body.hash), " <- ",
-                 ToBase64(main5->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M6: ", ToBase64(main6->body.hash), " <- ",
-                 ToBase64(main6->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M7: ", ToBase64(main7->body.hash), " <- ",
-                 ToBase64(main7->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M8: ", ToBase64(main8->body.hash), " <- ",
-                 ToBase64(main8->body.previous_hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "M9: ", ToBase64(main9->body.hash), " <- ",
-                 ToBase64(main9->body.previous_hash));
-
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->body.hash);
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main2));

@@ -39,8 +39,6 @@ using BlockPtr        = MainChain::BlockPtr;
 using MutableBlockPtr = BlockGenerator::BlockPtr;
 using Blocks          = std::vector<MutableBlockPtr>;
 
-static constexpr char const *LOGGING_NAME = "MainChainSubTreeTests";
-
 class MainChainSubTreeTests : public ::testing::Test
 {
 protected:
@@ -206,11 +204,6 @@ TEST_F(MainChainSubTreeTests, CheckLooseBlocks)
   auto b1      = block_generator_(genesis);
   auto b2      = block_generator_(genesis);  // (missing block)
   auto b3      = block_generator_(b2);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Genesis: ", ToBase64(genesis->body.hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B1     : ", ToBase64(b1->body.hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B1     : ", ToBase64(b2->body.hash));
-  FETCH_LOG_INFO(LOGGING_NAME, "B1     : ", ToBase64(b3->body.hash));
 
   // add the blocks to the main chain
   ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*b1));
