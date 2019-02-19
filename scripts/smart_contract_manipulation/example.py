@@ -42,9 +42,9 @@ endpoint  = {"HTTPPort": 8000, "TCPPort": 9080, "IP": "localhost"}
 
 #arg = { "smart_contract" : "function main() Print('Hello, world');  endfunction" }
 
-#arg = { "smart_contract" : "function main() \nPrint('Hello, world'); \nvar s = State<Int32>('hello');\n Print(toString(s));\n s.set(12.34);\n Print(toString(s)); endfunction " }
+arg = { "smart_contract" : "function main() \nPrint('Hello, world'); \nvar s = State<Int32>('hello');\n Print(toString(s.get()));\n s.set(12);\n Print(toString(s.get())); endfunction " }
 
-arg = { "smart_contract" : "function main() var a = 2; var b : Int32 = 1; b = a + b; Print('The result is: ' + toString(b)); endfunction" }
+#arg = { "smart_contract" : "function main() var a = 2; var b : Int32 = 1; b = a + b; Print('The result is: ' + toString(b)); endfunction" }
 
 resp = HTTPpost(endpoint, 'api/wallet/create_smart_contract', arg)
 

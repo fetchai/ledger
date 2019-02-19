@@ -17,36 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/node.hpp"
-#include "vm/string.hpp"
-
-#include <iostream>
+#include "vm/vm.hpp"
+#include "vm/state_sentinel.hpp"
 
 namespace fetch {
 namespace vm {
 
-// VM free functions. These will be available for all smart contracts and MUST NOT RETAIN STATE (be
-// thread safe)
-
-static fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
+class StateSentinel
 {
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
+public:
+  StateSentinel()          = default;
 
-static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
-{
-  std::cerr << "print called" << std::endl;
-  std::cout << s->str << std::endl;
-}
+  template <typename T>
+  T get()
+  {
+    //reinterpret_cast<char const *>(&magic), sizeof(magic)
+    auto bytes = (uint8_t *)malloc(sizeof(T));
 
-/*
-fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t const &a)
-{
-  fetch::vm::Ptr<fetch::vm::String> ret(new fetch::vm::String(vm, std::to_string(a)));
-  return ret;
-}
-*/
+    bytes[0] = '9';
+
+    T ret;
+
+    memcpy(&ret, bytes, sizeof(T));
+
+    free(bytes);
+
+    return ret;
+  }
+
+};
 
 }  // namespace vm
 }  // namespace fetch

@@ -22,6 +22,7 @@
 #include "vm/defs.hpp"
 #include "vm/string.hpp"
 #include "vm/pointer_register.hpp"
+#include "vm/state_sentinel.hpp"
 
 namespace fetch {
 namespace vm {
@@ -188,6 +189,7 @@ private:
     int   scope_number;
   };
 
+  StateSentinel              state_sentinel_;
   PointerRegister            pointer_register_;
   std::vector<OpcodeHandler> opcode_handlers_;
   RegisteredTypes            registered_types_;
