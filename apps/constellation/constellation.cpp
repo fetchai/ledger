@@ -153,7 +153,7 @@ Constellation::Constellation(CertificatePtr &&certificate, Config config)
   , lane_control_(storage_)
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, storage_, [this] { return std::make_shared<Executor>(storage_); })}
-  , chain_{true}
+  , chain_{ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes, cfg_.num_slices}
   , block_coordinator_{chain_,
                        *execution_manager_,

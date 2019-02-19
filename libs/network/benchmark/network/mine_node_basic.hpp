@@ -98,7 +98,7 @@ public:
     BlockType walkBlock;
     BlockHash hash = block.body.previous_hash;
 
-    do
+    for (;;)
     {
       bool success = node_directory_.GetHeader(hash, walkBlock);
       if (!success)
@@ -109,16 +109,23 @@ public:
       walkBlock.UpdateDigest();  // critical we update the hash after transmission
       hash = walkBlock.body.previous_hash;
 
-    } while (main_chain_.AddBlock(walkBlock));
+      auto status = main_chain_.AddBlock(walkBlock);
+
+      if (status != ledger::BlockStatus::ADDED)
+      {
+        break;
+      }
+    }
   }
 
   // Nodes will provide each other with headers
   std::pair<bool, BlockType> ProvideHeader(BlockHash hash)
   {
-    BlockType block;
-    bool      success = main_chain_.Get(hash, block);
+    auto block = main_chain_.GetBlock(std::move(hash));
 
-    return std::make_pair(success, block);
+    bool const success = static_cast<bool>(block);
+
+    return std::make_pair(success, success ? *block : BlockType{});
   }
 
   ///////////////////////////////////////////////////////////
@@ -134,7 +141,6 @@ public:
   void reset()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting miner");
-    main_chain_.Reset();
     stopped_ = true;
   }
 
@@ -148,13 +154,13 @@ public:
       while (!stopped_)
       {
         // Get heaviest block
-        auto &block = main_chain_.HeaviestBlock();
+        auto block = main_chain_.GetHeaviestBlock();
 
         // Create another block sequential to previous
         BlockType nextBlock;
         body_type nextBody;
-        nextBody.block_number  = block.body.block_number + 1;
-        nextBody.previous_hash = block.body.hash;
+        nextBody.block_number  = block->body.block_number + 1;
+        nextBody.previous_hash = block->body.hash;
 
         nextBlock.body = nextBody;
         nextBlock.UpdateDigest();
@@ -189,7 +195,17 @@ public:
   // HTTP functions to check that synchronisation was successful
   std::vector<BlockType> HeaviestChain()
   {
-    return main_chain_.HeaviestChain();
+    auto heaviest_chain = main_chain_.GetHeaviestChain();
+
+    std::vector<BlockType> output{};
+    output.reserve(heaviest_chain.size());
+
+    for (auto const &block : heaviest_chain)
+    {
+      output.emplace_back(*block);
+    }
+
+    return output;
   }
 
   // std::pair<BlockType, std::vector<std::vector<BlockType>>> AllChain()

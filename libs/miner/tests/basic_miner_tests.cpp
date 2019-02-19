@@ -108,10 +108,9 @@ TEST_P(BasicMinerTests, SimpleExample)
   PopulateWithTransactions(num_tx);
 
   Block     block;
-  MainChain dummy{true};
+  MainChain dummy{MainChain::Mode::IN_MEMORY_DB};
 
-  auto &heaviest_block     = dummy.HeaviestBlock();
-  block.body.previous_hash = heaviest_block.body.hash;
+  block.body.previous_hash = dummy.GetHeaviestBlockHash();
 
   miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, dummy);
 
@@ -154,7 +153,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   miner_->log2_num_lanes() = uint32_t(fetch::platform::ToLog2(uint32_t(lanes)));
 
   PopulateWithTransactions(num_tx, 1);
-  MainChain                    chain{true};
+  MainChain                    chain{MainChain::Mode::IN_MEMORY_DB};
   std::set<TransactionSummary> transactions_already_seen;
   std::set<TransactionSummary> transactions_within_block;
 
@@ -162,8 +161,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   {
     Block block;
 
-    auto &heaviest_block     = chain.HeaviestBlock();
-    block.body.previous_hash = heaviest_block.body.hash;
+    block.body.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, lanes, slices, chain);
 
@@ -206,8 +204,7 @@ TEST_P(BasicMinerTests, reject_replayed_transactions)
   {
     Block block;
 
-    auto &heaviest_block     = chain.HeaviestBlock();
-    block.body.previous_hash = heaviest_block.body.hash;
+    block.body.previous_hash = chain.GetHeaviestBlockHash();
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 

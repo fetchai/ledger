@@ -22,8 +22,8 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/testing/block_generator.hpp"
 
-#include "block_generator.hpp"
 #include "fake_block_sink.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
@@ -35,10 +35,12 @@
 
 using fetch::ledger::BlockCoordinator;
 using fetch::ledger::MainChain;
+using fetch::ledger::BlockStatus;
 using fetch::ledger::Block;
 using fetch::byte_array::ToBase64;
 using fetch::ledger::GENESIS_DIGEST;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::testing::BlockGenerator;
 
 using ::testing::_;
 using ::testing::InSequence;
@@ -68,7 +70,7 @@ protected:
     // generate a public/private key pair
     ECDSASigner const signer{};
 
-    main_chain_        = std::make_unique<MainChain>(true);
+    main_chain_        = std::make_unique<MainChain>(MainChain::Mode::IN_MEMORY_DB);
     storage_unit_      = std::make_unique<MockStorageUnit>();
     execution_manager_ = std::make_unique<MockExecutionManager>(storage_unit_->fake);
     packer_            = std::make_unique<MockBlockPacker>();
@@ -260,9 +262,9 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   auto b5      = block_generator_(b4);
 
   // add all the blocks to the chain
-  main_chain_->AddBlock(*b1);
-  main_chain_->AddBlock(*b2);
-  main_chain_->AddBlock(*b3);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Genesis: ", ToBase64(genesis->body.hash), " <- ",
                  ToBase64(genesis->body.previous_hash));
@@ -447,8 +449,9 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
 
   // simulate new blocks being added  (from the network or similar)
-  main_chain_->AddBlock(*b4);
-  main_chain_->AddBlock(*b5);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b4));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b5));
+  // TODO(EJF): More ticks here please
 }
 
 TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
@@ -482,18 +485,6 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
     // syncing
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-
-    // -- TEST CONFIG --
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->body.merkle_hash));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->body.merkle_hash));
-
-    // syncing
-    EXPECT_CALL(*storage_unit_, CurrentHash());
-    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
   }
 
   // processing of genesis block
@@ -520,14 +511,10 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   b1->body.block_number = 100;  // invalid block number
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  // main chain now rejects outright any blocks with invalid block numbers
+  ASSERT_EQ(BlockStatus::INVALID, main_chain_->AddBlock(*b1));
 
-  Tick(State::SYNCHRONIZED, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::PRE_EXEC_BLOCK_VALIDATION);
-  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::RESET);
-  Tick(State::RESET, State::SYNCHRONIZING);
-  Tick(State::SYNCHRONIZING, State::SYNCHRONIZED);
+  Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
   Tick(State::SYNCHRONIZED, State::SYNCHRONIZED);
@@ -604,7 +591,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidMinerIdentity)
   b1->body.miner = Block::Identity{};
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -688,7 +675,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   b1->body.log2_num_lanes = 10;
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
@@ -772,7 +759,7 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   b1->body.slices.resize(100);  // zero slices is always invalid
   b1->UpdateDigest();
 
-  main_chain_->AddBlock(*b1);
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
 
   Tick(State::SYNCHRONIZED, State::RESET);
   Tick(State::RESET, State::SYNCHRONIZING);
