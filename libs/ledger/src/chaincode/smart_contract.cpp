@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chaincode/database_interface.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chaincode/vm_definition.hpp"
@@ -38,9 +40,6 @@ namespace ledger {
 
 byte_array::ConstByteArray const CONTRACT_SOURCE{"contract_source"};
 byte_array::ConstByteArray const CONTRACT_HASH{"contract_hash"};
-
-bool RunSmartContract(std::string &source, std::string const &target_fn,
-                      byte_array::ConstByteArray const &hash);
 
 SmartContract::SmartContract()
   : Contract("fetch.smart_contract")
@@ -108,7 +107,7 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
 
   FETCH_LOG_WARN(LOGGING_NAME, "Running smart contract");
 
-  if (!RunSmartContract(source_, "main", contract_hash))
+  if (!RunSmartContract(source_, "main", contract_hash, tx))
   {
     return Status::FAILED;
   }
@@ -116,15 +115,13 @@ Contract::Status SmartContract::InvokeContract(Transaction const &tx)
   return Status::OK;
 }
 
-bool RunSmartContract(std::string &source, std::string const &target_fn,
-                      byte_array::ConstByteArray const &hash)
+
+bool SmartContract::RunSmartContract(std::string &source, std::string const &target_fn,
+                      byte_array::ConstByteArray const &hash, Transaction const &tx)
 {
   FETCH_UNUSED(hash);
   char const *LOGGING_NAME = "RunSmartContract";
   auto        module       = vm::VMFactory::GetModule();
-
-  // ********** Attach way to interface with state here **********
-  // module->state
 
   // Compile source, get runnable script
   fetch::vm::Script        script;
@@ -148,13 +145,36 @@ bool RunSmartContract(std::string &source, std::string const &target_fn,
   // Get clean VM instance
   auto vm = vm::VMFactory::GetVM(module);
 
+  DatabaseInterface interface{this};
+
+  for(auto const &resource : tx.resources())
+  {
+    interface.Allow(resource);
+  }
+
+  // Attach our state
+  vm->GetGlobalPointer<vm::StateSentinel>()->SetReadWriteInterface(&interface);
+
   // Execute our fn
   if (!vm->Execute(script, target_fn, error, output))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Runtime error: ", error);
   }
 
+  // Successfully ran the VM. Write back the state
+  interface.WriteBackToState();
+
   return true;
+}
+
+bool SmartContract::Get(byte_array::ByteArray &record, byte_array::ByteArray const &address)
+{
+  return GetStateRecord(record, address);
+}
+
+void SmartContract::Set(byte_array::ByteArray const &record, byte_array::ByteArray const &address)
+{
+  return SetStateRecord(record, address);
 }
 
 }  // namespace ledger

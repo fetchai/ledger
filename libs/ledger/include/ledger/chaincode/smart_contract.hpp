@@ -30,9 +30,14 @@ public:
 
   static constexpr char const *LOGGING_NAME = "SmartContract";
 
+  bool Get(byte_array::ByteArray &record, byte_array::ByteArray const &address);
+  void Set(byte_array::ByteArray const &record, byte_array::ByteArray const &address);
+
 private:
   // transaction handlers
   Status InvokeContract(Transaction const &tx);
+
+  bool RunSmartContract(std::string &source, std::string const &target_fn, byte_array::ConstByteArray const &hash, Transaction const &tx);
 
   std::string source_;
 };

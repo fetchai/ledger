@@ -46,7 +46,6 @@ class State : public IState
 {
 public:
   State()          = delete;
-  virtual ~State() = default;
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name)
     : IState(vm, type_id)
@@ -57,7 +56,7 @@ public:
     name_          = name->str;
 
     auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
-    value_ = ptr->template get<T>();
+    value_ = ptr->template get<T>(name_);
   }
 
   State(VM *vm, TypeId type_id, TypeId value_type_id, Ptr<String> const &name,
@@ -70,9 +69,18 @@ public:
     name_          = name->str;
   }
 
+  virtual ~State()
+  {
+  }
+
   virtual TemplateParameter Get() const override
   {
     std::cerr << "CONS3" << std::endl;
+
+    /*
+    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
+    value_ = ptr->template get<T>(name_);
+    */
 
     return TemplateParameter(value_, value_type_id_);
   }
@@ -80,7 +88,16 @@ public:
   virtual void Set(TemplateParameter const &value) override
   {
     std::cerr << "CONS4" << std::endl;
+
+    /*
+    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
+    ptr->template set<T>(name_, value_);
+    */
+
     value_ = value.Get<Value>();
+
+    auto ptr = this->vm_->template GetGlobalPointer<StateSentinel>();
+    ptr->template set<T>(name_, value_);
   }
 
 private:

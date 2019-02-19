@@ -430,6 +430,8 @@ http::HTTPResponse WalletHttpInterface::OnInvokeSC(http::HTTPRequest const &requ
 
   smart_contract = byte_array::FromHex(smart_contract);
 
+  mtx.PushResource("hello");
+
   mtx.set_fee(0XCA11AB1E);
   mtx.PushContractHash(smart_contract);
 

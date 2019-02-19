@@ -36,8 +36,7 @@ static fetch::vm::Ptr<fetch::vm::String> toString(fetch::vm::VM *vm, int32_t con
 
 static void Print(fetch::vm::VM * /*vm*/, fetch::vm::Ptr<fetch::vm::String> const &s)
 {
-  std::cerr << "print called" << std::endl;
-  std::cout << s->str << std::endl;
+  std::cout << ">>>>>>>> FETCHLANG: " << s->str << std::endl;
 }
 
 /*
