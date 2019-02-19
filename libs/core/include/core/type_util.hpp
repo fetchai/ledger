@@ -46,7 +46,6 @@ using All = Conjunction<F<Ts>...>;
 template <template <class...> class F, class... Ts>
 static constexpr auto AllV = All<F, Ts...>::value;
 
-
 template <class... Ts>
 struct Disjunction;
 
@@ -71,21 +70,21 @@ using Any = Disjunction<F<Ts>...>;
 template <template <class...> class F, class... Ts>
 static constexpr auto AnyV = Any<F, Ts...>::value;
 
-
-template <template<class...> class F, class... Prefix> struct Bind
+template <template <class...> class F, class... Prefix>
+struct Bind
 {
-  template<class... Args> using type = F<Prefix..., Args...>;
+  template <class... Args>
+  using type = F<Prefix..., Args...>;
 };
 
-
-template <class T, class... Ts> struct IsAnyOf
+template <class T, class... Ts>
+struct IsAnyOf
 {
   static constexpr auto value = AnyV<Bind<std::is_same, T>::template type, Ts...>;
 };
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
-
 
 }  // namespace type_util
 }  // namespace fetch
