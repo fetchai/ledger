@@ -19,7 +19,6 @@
 
 #include <cassert>
 #include <iostream>
-#include <math/tensor.hpp>
 
 namespace fetch {
 namespace math {
@@ -30,7 +29,8 @@ namespace combinatorics {
  * @param n - Integer for which this function calculates the factorial
  * @return - Integer solution to n!
  */
-std::size_t factorial(std::size_t n)
+template <typename SizeType>
+SizeType factorial(SizeType n)
 {
   // Trivial case
   if (n == 0)
@@ -39,7 +39,7 @@ std::size_t factorial(std::size_t n)
   }
 
   // General solution
-  for (std::size_t i = n - 1; i > 1; i--)
+  for (SizeType i = n - 1; i > 1; i--)
   {
     n *= i;
   }
@@ -54,7 +54,8 @@ std::size_t factorial(std::size_t n)
  * @param r - The size of each combination
  * @return - Number of combinations as float
  */
-std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
+template <typename SizeType>
+SizeType calculateNumCombinations(SizeType n, SizeType r)
 {
   assert(r <= n);
 
@@ -81,7 +82,7 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
   {
     fraction *= static_cast<double>(--n) / static_cast<double>(r);
   }
-  return static_cast<std::size_t>(fraction * static_cast<double>(--n));
+  return static_cast<SizeType>(fraction * static_cast<double>(--n));
 }
 
 /**
@@ -91,30 +92,31 @@ std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
  * @return - Matrix of size (num possible combinations, r), where each row contains a unique
  * combination of r items
  */
-fetch::math::Tensor<double> combinations(std::size_t n, std::size_t r)
+template <typename ArrayType, typename SizeType>
+ArrayType combinations(SizeType n, SizeType r)
 {
   assert(r <= n);
   if (r == 0)
   {
-    fetch::math::Tensor<double> output_array({});
+    ArrayType output_array({});
     return output_array;
   }
 
-  std::size_t n_combinations = calculateNumCombinations(n, r);
-  std::size_t current_dim    = 0;
-  std::size_t current_row    = 0;
+  SizeType n_combinations = calculateNumCombinations(n, r);
+  SizeType current_dim    = 0;
+  SizeType current_row    = 0;
 
   std::vector<bool> v(n);
   std::fill(v.end() - static_cast<int>(r), v.end(), true);
 
-  fetch::math::Tensor<double> output_array({r, n_combinations});
+  ArrayType output_array({r, n_combinations});
   do
   {
-    for (std::size_t i = 0; i < n; ++i)
+    for (SizeType i = 0; i < n; ++i)
     {
       if (v[i])
       {
-        std::size_t dim = (i + 1);
+        SizeType dim = (i + 1);
         output_array.Set({current_dim, current_row}, static_cast<float>(dim));
         if (current_dim == r - 1)
         {

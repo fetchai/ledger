@@ -37,14 +37,14 @@ namespace fetch {
 namespace math {
 
 namespace details {
-template <typename T>
-void SquareImpl(T const &x, T &ret)
+template <typename ArrayType>
+void SquareImpl(ArrayType const &x, ArrayType &ret)
 {
   {
     assert(x.size() == ret.size());
-    for (std::size_t i = 0; i < x.size(); ++i)
+    for (typename ArrayType::SizeType i = 0; i < x.size(); ++i)
     {
-      ret[i] = x[i] * x[i];
+      ret.Set(i, x.At(i) * x.At(i));
     }
   }  // namespace details
 }
