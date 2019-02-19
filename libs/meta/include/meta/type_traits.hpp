@@ -32,9 +32,6 @@ class ConstByteArray;
 namespace fixed_point {
 template <std::size_t I, std::size_t F>
 class FixedPoint;
-//{
-//    struct fixed_point_tag {};
-//}
 }  // namespace fixed_point
 
 namespace meta {

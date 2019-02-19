@@ -28,7 +28,7 @@ namespace fetch {
 namespace math {
 
 template <typename T>
-class Tensor  // Using name Tensor to not clash with current NDArray
+class Tensor
 {
 public:
   using Type                             = T;

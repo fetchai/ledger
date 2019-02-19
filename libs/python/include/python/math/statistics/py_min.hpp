@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/free_functions/free_functions.hpp"
-#include "math/ndarray.hpp"
+#include "math/free_functions/matrix_operations/matrix_operations.hpp"
+#include "math/tensor.hpp"
 #include "python/fetch_pybind.hpp"
 
 namespace fetch {
@@ -27,7 +27,7 @@ namespace math {
 template <typename A>
 inline void WrapperMin(A const &a, typename A::Type &ret)
 {
-  Min<typename A::Type, typename A::container_type>(a, ret);
+  Min(a, ret);
 }
 
 inline void BuildMinStatistics(std::string const &custom_name, pybind11::module &module)
@@ -36,12 +36,14 @@ inline void BuildMinStatistics(std::string const &custom_name, pybind11::module 
   using namespace fetch::memory;
 
   namespace py = pybind11;
-  module.def(custom_name.c_str(), &WrapperMin<ShapelessArray<double>>)
-      .def(custom_name.c_str(), &WrapperMin<ShapelessArray<float>>)
-      .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
-      .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
-      .def(custom_name.c_str(), &WrapperMin<NDArray<double>>)
-      .def(custom_name.c_str(), &WrapperMin<NDArray<float>>);
+  //  module.def(custom_name.c_str(), &WrapperMin<ShapelessArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<ShapelessArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMin<RectangularArray<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<RectangularArray<float>>)
+  //      .def(custom_name.c_str(), &WrapperMin<Tensor<double>>)
+  //      .def(custom_name.c_str(), &WrapperMin<Tensor<float>>);
+  module.def(custom_name.c_str(), &WrapperMin<Tensor<double>>)
+      .def(custom_name.c_str(), &WrapperMin<Tensor<float>>);
 }
 
 }  // namespace math

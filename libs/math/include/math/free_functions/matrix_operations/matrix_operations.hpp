@@ -261,6 +261,19 @@ T Max(ShapelessArray<T, C> const &array)
   return ret;
 }
 
+template <typename ArrayType, typename T>
+meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, T &ret)
+{
+  ret = -std::numeric_limits<T>::max();
+  for (std::size_t j = 0; j < array.size(); ++j)
+  {
+    if (array.At(j) > ret)
+    {
+      ret = array.At(j);
+    }
+  }
+}
+
 /**
  * Finds the maximum value in a range of the array
  * @tparam T
@@ -363,6 +376,19 @@ inline void Min(ShapelessArray<T, C> const &array, T &ret)
   ret = array.data().in_parallel().Reduce(
       memory::TrivialRange(0, array.size()),
       [](vector_register_type const &a, vector_register_type const &b) { return min(a, b); });
+}
+
+template <typename ArrayType, typename T>
+meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, T &ret)
+{
+  ret = std::numeric_limits<T>::max();
+  for (std::size_t j = 0; j < array.size(); ++j)
+  {
+    if (ret < array.At(j))
+    {
+      ret = array.At(j);
+    }
+  }
 }
 
 /**

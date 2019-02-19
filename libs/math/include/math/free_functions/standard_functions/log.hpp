@@ -29,7 +29,7 @@ namespace fetch {
 namespace math {
 
 template <typename ArrayType>
-fetch::math::meta::IsBlasAndShapedArray<ArrayType, void> Log(ArrayType &x)
+fetch::math::meta::IfIsBlasArray<ArrayType, void> Log(ArrayType &x)
 {
   fetch::math::free_functions::kernels::Log<typename ArrayType::Type> kernel;
   x.data().in_parallel().Apply(kernel, x.data());
@@ -43,33 +43,51 @@ fetch::math::meta::IfIsMathShapeArray<ArrayType, ArrayType> Log(ArrayType const 
   Log(ret);
   return ret;
 }
-template <typename ArrayType>
-fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
-{
-  ArrayType ret{x.size()};
-  ret.Copy(x);
-  Log(ret);
-  return ret;
-}
+// template <typename ArrayType>
+// fetch::math::meta::IfIsMathShapelessArray<ArrayType, ArrayType> Log(ArrayType const &x)
+//{
+//  ArrayType ret{x.size()};
+//  ret.Copy(x);
+//  Log(ret);
+//  return ret;
+//}
 
 template <typename Type>
-fetch::math::meta::IfIsArithmetic<Type, void> Log(Type &x)
+meta::IfIsNonFixedPointArithmetic<Type, void> Log(Type &x)
 {
   x = std::log(x);
 }
 
-template <std::size_t I, std::size_t F>
-void Log(fetch::fixed_point::FixedPoint<I, F> &n)
+//
+template <typename T>
+meta::IfIsFixedPoint<T, void> Log(T &n)
 {
-  n = fetch::fixed_point::FixedPoint<I, F>(std::log(double(n)));
+  n = T(std::log(double(n)));
 }
 
 template <typename ArrayType>
-fetch::math::meta::IfIsMathShapeArray<ArrayType, void> Log(ArrayType &x)
+meta::IfIsNonBlasArray<ArrayType, void> Log(ArrayType &x)
 {
   for (std::size_t i = 0; i < x.size(); ++i)
   {
     fetch::math::Log(x[i]);
+  }
+}
+template <typename ArrayType>
+meta::IfIsMathFixedPointArray<ArrayType, void> Log(ArrayType &x)
+{
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    fetch::math::Log(x[i]);
+  }
+}
+
+template <typename T>
+meta::IfIsMathArray<T, void> Log(T const &array, T &ret)
+{
+  for (std::size_t i = 0; i < array.size(); ++i)
+  {
+    ret.Set(i, std::log(array.At(i)));
   }
 }
 
