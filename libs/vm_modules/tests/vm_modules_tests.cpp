@@ -142,10 +142,10 @@ TEST_F(VMTests, CheckCustomBinding)
   EXPECT_EQ(binding_called_count, 3);
 }
 
-//static int64_t x_int = 0;
-//static float_t x_float = 0;
+// static int64_t x_int = 0;
+// static float_t x_float = 0;
 //
-//TEST_F(VMTests, CheckAbs)
+// TEST_F(VMTests, CheckAbs)
 //{
 //  const std::string source =
 //       " "
