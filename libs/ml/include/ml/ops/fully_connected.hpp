@@ -53,11 +53,11 @@ public:
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_Add");
 
-    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
+    ArrayPtrType       weights = std::make_shared<ArrayType>(std::vector<std::uint64_t>({in, out}));
     std::random_device rd{};
     std::mt19937       gen{rd()};
     // https://medium.com/usf-msds/deep-learning-best-practices-1-weight-initialization-14e5c0295b94
-    std::normal_distribution<> rng(0, std::sqrt(2.0 / in));
+    std::normal_distribution<> rng(0, std::sqrt(2.0 / double(in)));
     for (std::uint64_t i(0); i < weights->size(); ++i)
     {
       weights->At(i) = typename ArrayType::Type(rng(gen));
