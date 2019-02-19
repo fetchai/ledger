@@ -23,7 +23,6 @@
 #include <iostream>
 #include <list>
 
-using fetch::ledger::MainChain;
 using fetch::ledger::consensus::DummyMiner;
 using fetch::ledger::Block;
 

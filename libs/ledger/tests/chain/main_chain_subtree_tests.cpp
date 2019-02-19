@@ -29,7 +29,6 @@
 
 namespace {
 
-using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::byte_array::ToBase64;
