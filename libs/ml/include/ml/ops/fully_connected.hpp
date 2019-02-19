@@ -24,6 +24,9 @@
 #include "ml/ops/weights.hpp"
 #include "ml/subgraph.hpp"
 
+#include <cmath>
+#include <random>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -50,20 +53,20 @@ public:
     this->AddInputNodes(name + "_Input");
     this->SetOutputNode(name + "_Add");
 
-    ArrayPtrType weights = std::make_shared<ArrayType>(std::vector<std::size_t>({in, out}));
-    // Naive random init, range [-.5, .5]
+    ArrayPtrType       weights = std::make_shared<ArrayType>(std::vector<std::size_t>({in, out}));
+    std::random_device rd{};
+    std::mt19937       gen{rd()};
+    // https://medium.com/usf-msds/deep-learning-best-practices-1-weight-initialization-14e5c0295b94
+    std::normal_distribution<> rng(0, std::sqrt(2.0 / in));
     for (std::size_t i(0); i < weights->size(); ++i)
     {
-      weights->At(i) =
-          typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
+      weights->At(i) = typename ArrayType::Type(rng(gen));
     }
     this->SetInput(name + "_Weights", weights);
     ArrayPtrType bias = std::make_shared<ArrayType>(std::vector<std::size_t>({1, out}));
-    // Naive random init, range [-.5, .5]
     for (std::size_t i(0); i < bias->size(); ++i)
     {
-      bias->At(i) =
-          typename ArrayType::Type(static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - .5);
+      bias->At(i) = typename ArrayType::Type(rng(gen));
     }
     this->SetInput(name + "_Bias", bias);
   }
