@@ -617,7 +617,7 @@ void MainChain::RecordLooseBlock(IntBlockPtr const &block)
  * @param prev_block The previous block
  * @return true if the heaviest tip was advanced, otherwise false
  */
-bool MainChain::UpdateTips(IntBlockPtr const &block, IntBlockPtr const &prev_block)
+bool MainChain::UpdateTips(IntBlockPtr const &block)
 {
   assert(!block->is_loose);
   assert(block->weight != 0);
@@ -720,10 +720,19 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     return BlockStatus::LOOSE;
   }
 
+  // we exepect only non-loose blocks here
+  assert(!block->is_loose);
+
+  // by definition this also means we expect blocks to have a valid parent block too
+  assert(static_cast<bool>(prev_block));
+
+  // update the final (total) weight for this block
+  block->total_weight = prev_block->total_weight + block->weight;
+
   // At this point we can proceed knowing that the block is building upon existing tip
 
   // At this point we have a new block with a prev that's known and not loose. Update tips
-  bool const heaviest_advanced = UpdateTips(block, prev_block);
+  bool const heaviest_advanced = UpdateTips(block);
 
   // Add block
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding block to chain: ", ToBase64(block->body.hash));

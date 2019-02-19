@@ -179,7 +179,7 @@ private:
   /// @name Tip Management
   /// @{
   bool AddTip(IntBlockPtr const &block);
-  bool UpdateTips(IntBlockPtr const &block, IntBlockPtr const &prev_block);
+  bool UpdateTips(IntBlockPtr const &block);
   bool DetermineHeaviestTip();
   /// @}
 
