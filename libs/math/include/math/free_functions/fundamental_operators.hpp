@@ -51,12 +51,11 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ArrayType::vector_register_type const &x,
-           typename ArrayType::vector_register_type const &y,
-           typename ArrayType::vector_register_type &      z) { z = x + y; },
-        array1.data(), array2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x + y; },
+                                   array1.data(), array2.data());
   }
 }
 template <typename ArrayType>
@@ -439,12 +438,11 @@ meta::IfIsMathShapelessArray<ArrayType, void> Subtract(ArrayType const &obj1, Ar
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ArrayType::vector_register_type const &x,
-           typename ArrayType::vector_register_type const &y,
-           typename ArrayType::vector_register_type &      z) { z = x - y; },
-        obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x - y; },
+                                   obj1.data(), obj2.data());
   }
 }
 
@@ -664,12 +662,11 @@ meta::IfIsMathShapelessArray<ArrayType, void> Multiply(ArrayType const &obj1, Ar
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ArrayType::vector_register_type const &x,
-           typename ArrayType::vector_register_type const &y,
-           typename ArrayType::vector_register_type &      z) { z = x * y; },
-        obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x * y; },
+                                   obj1.data(), obj2.data());
   }
 }
 template <typename ArrayType>
@@ -759,12 +756,11 @@ meta::IfIsMathShapeArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayT
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ArrayType::vector_register_type const &x,
-           typename ArrayType::vector_register_type const &y,
-           typename ArrayType::vector_register_type &      z) { z = x * y; },
-        obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x * y; },
+                                   obj1.data(), obj2.data());
   }
 }
 template <typename ArrayType>
@@ -852,12 +848,11 @@ meta::IfIsMathShapelessArray<ArrayType, void> Divide(ArrayType const &obj1, Arra
   {
     auto r = range.ToTrivialRange(ret.data().size());
 
-    ret.data().in_parallel().Apply(
-        r,
-        [](typename ArrayType::vector_register_type const &x,
-           typename ArrayType::vector_register_type const &y,
-           typename ArrayType::vector_register_type &      z) { z = x / y; },
-        obj1.data(), obj2.data());
+    ret.data().in_parallel().Apply(r,
+                                   [](typename ArrayType::vector_register_type const &x,
+                                      typename ArrayType::vector_register_type const &y,
+                                      typename ArrayType::vector_register_type &z) { z = x / y; },
+                                   obj1.data(), obj2.data());
   }
 }
 template <typename ArrayType>
@@ -982,12 +977,11 @@ meta::IfIsMathShapeArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayTyp
     {
       auto r = range.ToTrivialRange(ret.data().size());
 
-      ret.data().in_parallel().Apply(
-          r,
-          [](typename ArrayType::vector_register_type const &x,
-             typename ArrayType::vector_register_type const &y,
-             typename ArrayType::vector_register_type &      z) { z = x / y; },
-          obj1.data(), obj2.data());
+      ret.data().in_parallel().Apply(r,
+                                     [](typename ArrayType::vector_register_type const &x,
+                                        typename ArrayType::vector_register_type const &y,
+                                        typename ArrayType::vector_register_type &z) { z = x / y; },
+                                     obj1.data(), obj2.data());
     }
   }
   else if (obj1.shape()[0] == obj2.shape()[0])

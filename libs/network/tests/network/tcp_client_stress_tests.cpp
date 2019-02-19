@@ -384,7 +384,8 @@ TEST(tcp_client_stress_gtest, open_connection_to_existing_port_async)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         i->Send("test");
         threadCount++;
-      }).detach();
+      })
+          .detach();
     }
     if (index % 2 == 0)
     {

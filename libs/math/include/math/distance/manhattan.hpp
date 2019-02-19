@@ -35,12 +35,12 @@ inline typename memory::VectorSlice<T, S>::Type Manhattan(memory::VectorSlice<T,
   using Type                 = typename memory::VectorSlice<T, S>::Type;
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
 
-  Type dist = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) {
-        return max(x, y) - min(x, y);
-      },
-      b);
+  Type dist =
+      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                [](vector_register_type const &x, vector_register_type const &y) {
+                                  return max(x, y) - min(x, y);
+                                },
+                                b);
 
   return dist;
 }

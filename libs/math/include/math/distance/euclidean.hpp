@@ -35,13 +35,13 @@ inline typename memory::VectorSlice<T, S>::Type Euclidean(memory::VectorSlice<T,
   using vector_register_type = typename memory::VectorSlice<T, S>::vector_register_type;
   using Type                 = typename memory::VectorSlice<T, S>::Type;
 
-  Type dist = a.in_parallel().SumReduce(
-      memory::TrivialRange(0, a.size()),
-      [](vector_register_type const &x, vector_register_type const &y) {
-        vector_register_type d = x - y;
-        return d * d;
-      },
-      b);
+  Type dist =
+      a.in_parallel().SumReduce(memory::TrivialRange(0, a.size()),
+                                [](vector_register_type const &x, vector_register_type const &y) {
+                                  vector_register_type d = x - y;
+                                  return d * d;
+                                },
+                                b);
 
   return std::sqrt(dist);
 }
