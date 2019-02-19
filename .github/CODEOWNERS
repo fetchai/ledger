@@ -1,6 +1,10 @@
 # Default catch all
 *                   @uvue-git/ledger-dev
 
+# External dependencies
+docker-images       @ejfitzgerald @n-hutton
+vendor/*            @ejfitzgerald @n-hutton
+
 # CI / CD
 cmake/*             @ejfitzgerald @n-hutton
 .clang-tidy         @ejfitzgerald @n-hutton

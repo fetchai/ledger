@@ -26,7 +26,7 @@ struct TypeFunctionInvokerHelper
   static void Invoke(VM *vm, int sp_offset, TypeId type_id, TypeId return_type_id, TypeFunction f,
                      Ts const &... parameters)
   {
-    ReturnType result = (*f)(vm, type_id, parameters...);
+    ReturnType result((*f)(vm, type_id, parameters...));
     StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
     vm->sp_ -= sp_offset;
   };

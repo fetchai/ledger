@@ -29,7 +29,7 @@ namespace vm {
 
 Parser::Parser()
 {
-  template_names_ = {"Matrix", "Array", "Map"};
+  template_names_ = {"Matrix", "Array", "Map", "State"};
 }
 
 BlockNodePtr Parser::Parse(std::string const &source, Strings &errors)
@@ -862,7 +862,11 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
     return lhs;
   }
   Node::Kind kind;
-  if (token_->kind == Token::Kind::AddAssign)
+  if (token_->kind == Token::Kind::ModuloAssign)
+  {
+    kind = Node::Kind::ModuloAssignOp;
+  }
+  else if (token_->kind == Token::Kind::AddAssign)
   {
     kind = Node::Kind::AddAssignOp;
   }
@@ -1103,6 +1107,14 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     case Token::Kind::Null:
     {
       if (HandleLiteral(Node::Kind::Null) == false)
+      {
+        return nullptr;
+      }
+      break;
+    }
+    case Token::Kind::Modulo:
+    {
+      if (HandleBinaryOp(Node::Kind::ModuloOp, OpInfo(6, Association::Left, 2)) == false)
       {
         return nullptr;
       }

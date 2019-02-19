@@ -30,7 +30,7 @@ struct InstanceFunctionInvokerHelper
     Ptr<ObjectType> object = v.object;
     if (object)
     {
-      ReturnType result = (*object.*f)(parameters...);
+      ReturnType result((*object.*f)(parameters...));
       StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
       vm->sp_ -= sp_offset;
       return;
@@ -111,6 +111,18 @@ void InvokeInstanceFunction(VM *vm, TypeId return_type_id, ReturnType (ObjectTyp
   constexpr int first_parameter_offset = num_parameters - 1;
   constexpr int sp_offset              = num_parameters;
   using InstanceFunction               = ReturnType (ObjectType::*)(Ts...);
+  using InstanceFunctionInvoker        = typename InstanceFunctionInvoker<
+      ObjectType, ReturnType, InstanceFunction>::template Invoker<first_parameter_offset, Ts...>;
+  InstanceFunctionInvoker::Invoke(vm, sp_offset, return_type_id, f);
+}
+
+template <typename ObjectType, typename ReturnType, typename... Ts>
+void InvokeInstanceFunction(VM *vm, TypeId return_type_id, ReturnType (ObjectType::*f)(Ts...) const)
+{
+  constexpr int num_parameters         = int(sizeof...(Ts));
+  constexpr int first_parameter_offset = num_parameters - 1;
+  constexpr int sp_offset              = num_parameters;
+  using InstanceFunction               = ReturnType (ObjectType::*)(Ts...) const;
   using InstanceFunctionInvoker        = typename InstanceFunctionInvoker<
       ObjectType, ReturnType, InstanceFunction>::template Invoker<first_parameter_offset, Ts...>;
   InstanceFunctionInvoker::Invoke(vm, sp_offset, return_type_id, f);
