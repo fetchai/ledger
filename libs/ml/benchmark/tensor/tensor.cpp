@@ -29,8 +29,8 @@ void BM_tensorIterator(benchmark::State &state)
   for (auto _ : state)
   {
     T                      sum(0);
-    fetch::math::Tensor<T> t(std::vector<std::size_t>{C, H, W});
-    for (std::size_t i(0); i < t.size(); ++i)
+    fetch::math::Tensor<T> t(std::vector<std::uint64_t>{C, H, W});
+    for (std::uint64_t i(0); i < t.size(); ++i)
     {
       sum += t.At(i);
     }

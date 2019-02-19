@@ -42,7 +42,7 @@ public:
     assert(inputs[0]->shape() == inputs[1]->shape());
 
     typename ArrayType::Type sum(0);
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
     {
       sum += (inputs[0]->At(i) - inputs[1]->At(i)) * (inputs[0]->At(i) - inputs[1]->At(i));
     }
@@ -56,7 +56,7 @@ public:
     assert(inputs.size() == 2);
     assert(inputs[0]->shape() == inputs[1]->shape());
     ArrayPtrType ret = std::make_shared<ArrayType>(inputs[0]->shape());
-    for (std::size_t i(0); i < inputs[0]->size(); ++i)
+    for (std::uint64_t i(0); i < inputs[0]->size(); ++i)
     {
       ret->At(i) = (inputs[0]->At(i) - inputs[1]->At(i));
     }
