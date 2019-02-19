@@ -122,7 +122,7 @@ struct CommandLineArguments
   static const uint32_t DEFAULT_NUM_EXECUTORS   = DEFAULT_NUM_LANES;
   static const uint16_t DEFAULT_PORT            = 8000;
   static const uint32_t DEFAULT_NETWORK_ID      = 0x10;
-  static const uint32_t DEFAULT_BLOCK_INTERVAL  = 1000;  // milliseconds - zero means no mining
+  static const uint32_t DEFAULT_BLOCK_INTERVAL  = 0;  // milliseconds - zero means no mining
   static const uint32_t DEFAULT_MAX_PEERS       = 3;
   static const uint32_t DEFAULT_TRANSIENT_PEERS = 1;
 
